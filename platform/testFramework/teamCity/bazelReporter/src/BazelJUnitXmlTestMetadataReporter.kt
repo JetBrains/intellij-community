@@ -53,6 +53,7 @@ object BazelJUnitXmlTestMetadataReporter {
     val name: String,
     val className: String?,
     val suiteName: String? = null,
+    val isFailed: Boolean = false,
   )
 
   data class JUnitXmlReport(val path: Path, val testCases: List<JUnitXmlTestCase>)
@@ -63,8 +64,8 @@ object BazelJUnitXmlTestMetadataReporter {
   }
 
   /**
-   * Creates a workflow attaching a [metadataName] artifact link to the sibling `test.log` of every test case's
-   * JUnit XML report, reported under [reportedPathBase].
+   * Creates a workflow that attaches a [metadataName] link to the sibling `test.log` for each failed test case.
+   * Reports the artifact path under [reportedPathBase].
    */
   fun createBazelTestLogMetadataWorkflow(
     reportedPathBase: String,
@@ -73,7 +74,7 @@ object BazelJUnitXmlTestMetadataReporter {
   ): BazelTestReportsWorkflow = BazelTestReportsWorkflow { testReports ->
     for (report in testReports.junitXmlReports) {
       val reportedTestLogPath = reportedArtifactPath(report.path.resolveSibling(TEST_LOG_FILE_NAME), reportedPathBase)
-      for (testCase in report.testCases) {
+      for (testCase in report.testCases.filter { it.isFailed }) {
         TeamCityReporter.reportTestMetadata(
           testName = testNameFormat.format(testCase),
           value = reportedTestLogPath,
@@ -249,7 +250,8 @@ object BazelJUnitXmlTestMetadataReporter {
         for (testCase in suiteElement.childElements("testcase")) {
           val name = testCase.nonBlankAttribute("name") ?: continue
           val className = testCase.nonBlankAttribute("classname")
-          add(JUnitXmlTestCase(name = name, className = className, suiteName = suiteName))
+          val isFailed = testCase.childElements("failure").any() || testCase.childElements("error").any()
+          add(JUnitXmlTestCase(name = name, className = className, suiteName = suiteName, isFailed = isFailed))
         }
       }
     }

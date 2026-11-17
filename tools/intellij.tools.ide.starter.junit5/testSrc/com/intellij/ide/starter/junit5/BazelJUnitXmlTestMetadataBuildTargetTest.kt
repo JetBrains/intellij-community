@@ -36,7 +36,7 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
   }
 
   @Test
-  fun `reports sibling test log metadata for every testcase in bazel testlogs`(@TempDir tempRoot: Path) {
+  fun `reports sibling test log metadata only for failed test cases in bazel testlogs`(@TempDir tempRoot: Path) {
     val execroot = tempRoot / "2bd3cb95011b89f245615c4315705f58" / "execroot" / "_main"
     val javaRunfiles = execroot / "bazel-out" / "local_linux-fastbuild" / "bin" / "build" / "report.runfiles"
     javaRunfiles.createDirectories()
@@ -45,8 +45,10 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
     firstTestDir.createDirectories()
     firstTestDir.resolve("test.xml").writeText(
       junitXml(
-        """<testcase classname="com.example.FirstTest" name="simpleTest"/>""",
-        """<testcase classname="com.example.SecondTest" name="parameterized[1]"/>""",
+        """<testcase classname="com.example.FirstTest" name="successfulTest"/>""",
+        """<testcase classname="com.example.FirstTest" name="simpleTest"><failure/></testcase>""",
+        """<testcase classname="com.example.SecondTest" name="parameterized[1]"><error/></testcase>""",
+        """<testcase classname="com.example.SecondTest" name="skippedTest"><skipped/></testcase>""",
       )
     )
     firstTestDir.resolve("test.log").writeText("first log")
@@ -54,9 +56,16 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
     val secondTestDir = bazelTestLogs / "beta" / "test"
     secondTestDir.createDirectories()
     secondTestDir.resolve("test.xml").writeText(
-      junitXml("""<testcase classname="com.example.ThirdTest" name="thirdTest"/>""")
+      junitXml("""<testcase classname="com.example.ThirdTest" name="thirdTest"><failure/></testcase>""")
     )
     secondTestDir.resolve("test.log").writeText("second log")
+
+    val successfulTestDir = bazelTestLogs / "gamma" / "test"
+    successfulTestDir.createDirectories()
+    successfulTestDir.resolve("test.xml").writeText(
+      junitXml("""<testcase classname="com.example.FourthTest" name="successfulTest"/>""")
+    )
+    successfulTestDir.resolve("test.log").writeText("successful log")
 
     val lines = captureStdout {
       runBazelTestReportsWorkflow(
@@ -96,7 +105,7 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
     val testDir = bazelTestLogs / "alpha" / "test"
     testDir.createDirectories()
     testDir.resolve("test.xml").writeText(
-      junitXml("""<testcase classname="com.example.FirstTest" name="simpleTest"/>""")
+      junitXml("""<testcase classname="com.example.FirstTest" name="simpleTest"><failure/></testcase>""")
     )
 
     val lines = captureStdout {
@@ -313,7 +322,10 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
     val testDir = bazelTestLogs / "alpha" / "test"
     testDir.createDirectories()
     testDir.resolve("test.xml").writeText(
-      junitXml("""<testcase classname="com.example.FirstTest" name="simpleTest"/>""")
+      junitXml(
+        """<testcase classname="com.example.FirstTest" name="simpleTest"><failure/></testcase>""",
+        """<testcase classname="com.example.FirstTest" name="successfulTest"/>""",
+      )
     )
     val testClassOwners = tempRoot / "test-class-owners.ndjson"
     testClassOwners.writeText("""{"fqn":"com.example.FirstTest","owner":"First Team"}""")
@@ -330,12 +342,15 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
       )
     }
 
-    lines.size.shouldBe(2)
+    lines.size.shouldBe(3)
     lines[0].shouldContain("testName='com.example.FirstTest.simpleTest'")
     lines[0].shouldContain("type='artifact'")
     lines[1].shouldContain("testName='com.example.FirstTest.simpleTest'")
     lines[1].shouldContain("name='Code Owner'")
     lines[1].shouldContain("value='First Team'")
+    lines[2].shouldContain("testName='com.example.FirstTest.successfulTest'")
+    lines[2].shouldContain("name='Code Owner'")
+    lines[2].shouldContain("value='First Team'")
   }
 
   @Test
