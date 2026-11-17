@@ -116,6 +116,35 @@ class WebBrowserBrowseTest {
     assertEquals(listOf("not found"), errors)
   }
 
+  @Test
+  fun `external browser is the system default browser when the default browser shows pages in editor tabs`() {
+    val launcher = SelectionLauncher(defaultBrowser = RecordingBrowser())
+
+    launcher.browseInExternalBrowser(HTTP_URL, null)
+
+    assertEquals(listOf<WebBrowser?>(SystemDefaultBrowser), launcher.selected)
+  }
+
+  @Test
+  fun `external link names no browser when the default browser is outside the IDE`() {
+    val launcher = SelectionLauncher(WebBrowserManager.getInstance().getFirstBrowser(BrowserFamily.FIREFOX))
+
+    launcher.browseInExternalBrowser(HTTP_URL, null)
+
+    assertEquals(listOf<WebBrowser?>(null), launcher.selected)
+  }
+
+  /** Records the browser that the launcher selects, and opens nothing. */
+  private class SelectionLauncher(private val defaultBrowser: WebBrowser) : BrowserLauncherImpl() {
+    val selected = mutableListOf<WebBrowser?>()
+
+    override fun getDefaultBrowser(): WebBrowser = defaultBrowser
+
+    override fun browse(url: String, browser: WebBrowser?, project: Project?) {
+      selected += browser
+    }
+  }
+
   private companion object {
     const val HTTP_URL = "http://localhost:3000/"
     const val FILE_URL = "file:///tmp/page.html"

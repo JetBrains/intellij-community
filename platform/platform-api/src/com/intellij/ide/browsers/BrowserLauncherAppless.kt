@@ -171,6 +171,11 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     browse(uri, browser, project)
   }
 
+  override fun browseInExternalBrowser(url: String, project: Project?) {
+    // a `null` browser keeps the steps of a link without a browser, such as the mail application for `mailto:`
+    browse(url, SystemDefaultBrowser.takeIf { getDefaultBrowser() is EditorTabWebBrowser }, project)
+  }
+
   private fun browse(uri: URI, browser: WebBrowser?, project: Project?) {
     if (processWithUrlOpener(browser, uri.toString(), project)) {
       return
