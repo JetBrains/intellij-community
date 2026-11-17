@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.emojipicker.Emoji;
 import org.jetbrains.plugins.emojipicker.EmojiCategory;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
@@ -147,7 +148,7 @@ public final class EmojiPicker extends JLayeredPane {
     return EmojiPickerStyle.isEmojiFontAvailable();
   }
 
-  public static JBPopup createPopup(Project project, Consumer<String> inputCallback) {
+  public static JBPopup createPopup(Project project, Consumer<? super @NotNull String> inputCallback) {
     EmojiPicker picker = new EmojiPicker();
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(picker, picker.mySearchField)
       .setProject(project)
