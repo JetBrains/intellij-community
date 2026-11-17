@@ -31,13 +31,12 @@ use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use avl_control::proxy::{self, Command, Commands, ControlEndpoint, Lifecycle, Proxy};
+use avl_control::websocket::{self, Message, Receiver, Sender};
 use serde::Serialize;
 
-use self::proxy::{Command, Commands, Lifecycle, Proxy};
 use super::super::http::{self, Request, Response};
-use super::super::websocket::{self, Message, Receiver, Sender};
 
-mod proxy;
 #[cfg(test)]
 mod tests;
 
@@ -52,15 +51,6 @@ pub(crate) const UNAUTHORIZED: u16 = 401;
 
 /// What an MCP command of the control server gets.
 const NO_MCP_SERVER: &str = "a remote spawner offers no MCP server";
-
-/// Where the control server in the IDE listens, with the token of the credential, and the agent key that a dial
-/// connects as.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ControlEndpoint {
-    /// `ws://127.0.0.1:<port>/control?token=<token>`.
-    pub url: String,
-    pub agent_key: String,
-}
 
 /// One dial of the IDE, in arrival order.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]

@@ -10,6 +10,7 @@ members = [
     "crates/avl-aom-sys",
     "crates/avl-base",
     "crates/avl-bridge",
+    "crates/avl-control",
     "crates/avl-guest",
     "crates/avl-host-sys",
     "crates/avl-host-testkit",
@@ -147,6 +148,7 @@ avl-affected = { path = "crates/avl-affected" }
 avl-aom-sys = { path = "crates/avl-aom-sys" }
 avl-base = { path = "crates/avl-base" }
 avl-bridge = { path = "crates/avl-bridge" }
+avl-control = { path = "crates/avl-control" }
 avl-guest = { path = "crates/avl-guest" }
 avl-host-sys = { path = "crates/avl-host-sys" }
 avl-host-testkit = { path = "crates/avl-host-testkit" }

@@ -215,10 +215,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "avl-control"
+version = "0.1.0"
+dependencies = [
+ "pretty_assertions",
+ "serde_json",
+]
+
+[[package]]
 name = "avl-guest"
 version = "0.1.0"
 dependencies = [
  "avl-bridge",
+ "avl-control",
  "avl-junit",
  "avl-testkit",
  "avl-trace",

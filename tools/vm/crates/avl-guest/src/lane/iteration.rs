@@ -15,6 +15,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use avl_control::proxy::ControlEndpoint;
 use avl_trace::protocol;
 use avl_wire::daemon::{LaneClass, LaneInputs, PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, WatchdogState};
 use avl_wire::program::lane::{LaneDocument, parse_lane_document};
@@ -33,7 +34,6 @@ use super::package::sha256_hex;
 use super::program::{Failure, IdeProcess, Lane, Runner, Suite, case_identity, class_label, kind};
 use super::readiness::{self, Bridge, READY_TIMEOUT, request};
 use super::rerun::Rerun;
-use super::services::cloud::spawner::ControlEndpoint;
 use super::session_logs;
 use super::split::RunnerSplit;
 use super::stream::Stream;

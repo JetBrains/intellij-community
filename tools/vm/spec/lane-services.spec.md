@@ -309,7 +309,7 @@ suite attaches the spawner to the Cloud agent of the suite, see [The UI-lane Con
 
 - The `101` answer has the accept key of RFC 6455. No extension or subprotocol is accepted.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
-  [@test] ../crates/avl-guest/src/lane/services/websocket/tests.rs
+  [@test] ../crates/avl-control/src/websocket/tests.rs
 
 - The spawner checks only that a bearer token is present. It does not check the value.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
@@ -353,11 +353,11 @@ A command of the control server acts on the dial in this way:
 
 - A ping of the dial gets a pong with the same payload. A message is at most 16 MiB.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
-  [@test] ../crates/avl-guest/src/lane/services/websocket/tests.rs
+  [@test] ../crates/avl-control/src/websocket/tests.rs
 
 - A frame that breaks the protocol closes the dial with 1002.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
-  [@test] ../crates/avl-guest/src/lane/services/websocket/tests.rs
+  [@test] ../crates/avl-control/src/websocket/tests.rs
 
 - A stopped emulator ends every open dial and its control connection.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs

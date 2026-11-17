@@ -6,15 +6,15 @@ use std::net::{SocketAddr, TcpListener};
 use std::sync::{Arc, mpsc};
 use std::time::{Duration, Instant};
 
+use avl_control::encoding::Base64;
+use avl_control::websocket::{Role, encode_frame, opcode, read_frame};
 use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
 
 use super::*;
 use crate::lane::services::Service;
 use crate::lane::services::cloud::{self, Cloud, Organization};
-use crate::lane::services::encoding::Base64;
 use crate::lane::services::testing::{self, TOKEN};
-use crate::lane::services::websocket::{Role, encode_frame, opcode, read_frame};
 
 /// The token of the one credential of the fake control server.
 const CONTROL_TOKEN: &str = "control-test-token";

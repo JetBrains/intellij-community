@@ -11,19 +11,27 @@ use std::time::Duration;
 
 use serde_json::{Map, Value, json};
 
-use super::ControlEndpoint;
-use crate::lane::services::encoding::Base64;
-use crate::lane::services::websocket::{self, Message, Receiver, Sender};
+use crate::encoding::Base64;
+use crate::websocket::{self, Message, Receiver, Sender};
 
 /// The version of the control protocol that the proxy says and that the `helloAck` must answer.
-pub(super) const PROTOCOL_VERSION: u64 = 2;
+pub const PROTOCOL_VERSION: u64 = 2;
+
+/// Where the control server in the IDE listens, with the token of the credential, and the agent key that a proxy
+/// connects as.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ControlEndpoint {
+    /// `ws://127.0.0.1:<port>/control?token=<token>`.
+    pub url: String,
+    pub agent_key: String,
+}
 
 /// Bounds the connection and the `hello`, as the control client of the agent jar does.
 const HELLO_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// One `kind` of a `lifecycle` envelope.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum Lifecycle {
+pub enum Lifecycle {
     StdinEof,
     StdoutClosed,
     ProcessExit,
@@ -43,7 +51,7 @@ impl Lifecycle {
 
 /// One command of the control server.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(super) enum Command {
+pub enum Command {
     /// Sends the line to the IDE.
     Write { id: String, line: String },
     /// Sends the bytes to the IDE.
@@ -85,7 +93,7 @@ impl Identity {
 }
 
 /// The writing half of the proxy. Each method sends one envelope.
-pub(super) struct Proxy {
+pub struct Proxy {
     sender: Sender,
     identity: Identity,
     sequence: AtomicU64,
@@ -94,13 +102,13 @@ pub(super) struct Proxy {
 }
 
 /// The reading half of the proxy: the commands of the control server.
-pub(super) struct Commands {
+pub struct Commands {
     receiver: Receiver,
     identity: Identity,
 }
 
 /// Connects to the control server of `control` as the agent process `process_id`, and completes the `hello`.
-pub(super) fn connect(control: &ControlEndpoint, process_id: &str) -> io::Result<(Proxy, Commands)> {
+pub fn connect(control: &ControlEndpoint, process_id: &str) -> io::Result<(Proxy, Commands)> {
     let (sender, mut receiver) = websocket::connect(&control.url, &[], HELLO_TIMEOUT)?;
     let hello = json!({
         "type": "hello",
@@ -142,7 +150,7 @@ pub(super) fn connect(control: &ControlEndpoint, process_id: &str) -> io::Result
 
 impl Proxy {
     /// Forwards one line that the IDE sent, as the next `inbound` frame.
-    pub(super) fn inbound(&self, line: &str) -> io::Result<()> {
+    pub fn inbound(&self, line: &str) -> io::Result<()> {
         let frame = self.frames.fetch_add(1, Ordering::SeqCst) + 1;
         let sequence = self.sequence.fetch_add(1, Ordering::SeqCst) + 1;
         self.send(
@@ -152,17 +160,17 @@ impl Proxy {
     }
 
     /// Acknowledges the write, close or exit command `id`.
-    pub(super) fn ack(&self, id: &str) -> io::Result<()> {
+    pub fn ack(&self, id: &str) -> io::Result<()> {
         self.send("writeAck", json!({ "commandId": id }))
     }
 
     /// Answers the MCP command `id` with an error result of `text`.
-    pub(super) fn mcp_error(&self, id: &str, text: &str) -> io::Result<()> {
+    pub fn mcp_error(&self, id: &str, text: &str) -> io::Result<()> {
         self.send("mcpResult", json!({ "commandId": id, "isError": true, "text": text }))
     }
 
     /// Reports one event of the agent process.
-    pub(super) fn lifecycle(&self, kind: Lifecycle, details: &str, exit_code: Option<i64>) -> io::Result<()> {
+    pub fn lifecycle(&self, kind: Lifecycle, details: &str, exit_code: Option<i64>) -> io::Result<()> {
         let mut fields = json!({ "kind": kind.wire(), "details": details });
         if let Some(code) = exit_code {
             fields["exitCode"] = json!(code);
@@ -171,20 +179,20 @@ impl Proxy {
     }
 
     /// Closes the connection with a normal close, once. A later envelope is not sent.
-    pub(super) fn close(&self) {
+    pub fn close(&self) {
         if !self.closed.swap(true, Ordering::SeqCst) {
             self.sender.close(websocket::NORMAL_CLOSURE);
         }
     }
 
     /// Ends the connection at once, without a close frame.
-    pub(super) fn shutdown(&self) {
+    pub fn shutdown(&self) {
         self.closed.store(true, Ordering::SeqCst);
         self.sender.shutdown();
     }
 
     /// The sender of the connection, which answers a ping of the control server.
-    pub(super) const fn sender(&self) -> &Sender {
+    pub const fn sender(&self) -> &Sender {
         &self.sender
     }
 
@@ -205,7 +213,7 @@ impl Proxy {
 impl Commands {
     /// The next command of the control server. A ping gets its pong through `proxy`. The end of the connection, a
     /// close and a command that breaks the protocol are an error.
-    pub(super) fn next(&mut self, proxy: &Proxy) -> io::Result<Command> {
+    pub fn next(&mut self, proxy: &Proxy) -> io::Result<Command> {
         let text = match self.receiver.next(proxy.sender())? {
             Message::Text(text) => text,
             Message::Close(code) => return Err(broken(&format!("the control server closed with {code:?}"))),
