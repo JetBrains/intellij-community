@@ -3,6 +3,7 @@ package com.intellij.python.pyproject.model.evolution
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -46,6 +47,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.jetbrains.python.project.project
 import java.nio.file.Path
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,6 +60,7 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.minutes
 import com.intellij.openapi.diagnostic.fileLogger
@@ -298,7 +301,9 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    */
   val interpreter: StateFlow<PythonInterpreter?> get() = interpreterState.asStateFlow()
 
-  private fun selectedFile(): VirtualFile? = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
+  private suspend fun selectedFile(): VirtualFile? = withContext(Dispatchers.UI) {
+    FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
+  }
 
   /**
    * An event for each SDK table change of an SDK in [Snapshot.sdkReferences].
