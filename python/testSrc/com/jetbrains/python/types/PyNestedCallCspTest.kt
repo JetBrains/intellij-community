@@ -56,6 +56,31 @@ class PyNestedCallCspTest : PyCodeInsightTestCase() {
     assertTrue(deep < 20, "inference variables: shallow=$shallow deep=$deep")
   }
 
+  @Test
+  fun `partly generic overloads keep the type of each nesting level`() {
+    val file = myFixture.configureByText("a.py", GENERIC_CODE)
+    runReadActionBlocking {
+      val context = TypeEvalContext.codeAnalysis(myFixture.project, file)
+      assertEquals("Pair[int, str]", typeOfTarget(file, "shallow", context))
+      assertEquals("Box[bytes]", typeOfTarget(file, "other_overload", context))
+      assertEquals("Box[str]", typeOfTarget(file, "pair_and_str", context))
+      assertEquals("str", typeOfTarget(file, "pair_and_int", context))
+      assertEquals("int", typeOfTarget(file, "direct_bytes", context))
+      assertEquals("Box[str]", typeOfTarget(file, "reboxed_level_2", context))
+      assertEquals("Box[str]", typeOfTarget(file, "deep_level_3", context))
+      assertEquals("Box[bytes]", typeOfTarget(file, "deep_level_4", context))
+      assertEquals("Box[bytes]", typeOfTarget(file, "deep", context))
+    }
+  }
+
+  @Test
+  fun `the nested problem of partly generic overloads does not multiply with candidates above it`() {
+    val file = myFixture.configureByText("a.py", GENERIC_CODE)
+    val deep = countInferenceVariables(file, "deep")
+    // The measured count is 281; keep the limit below twice that value.
+    assertTrue(deep < 562, "inference variables: deep=$deep")
+  }
+
   private fun countInferenceVariables(file: PsiFile, name: String): Long {
     val counts = PyCodeInsightCounters.countOnCurrentThread {
       runReadActionBlocking {
@@ -99,6 +124,50 @@ class PyNestedCallCspTest : PyCodeInsightTestCase() {
       shallow = pick(rebox(1))
       other_overload = pick(rebox("s"))
       deep = pick(rebox(pick(rebox(pick(rebox(1))))))
+    """.trimIndent()
+
+    private val GENERIC_CODE = """
+      from typing import Generic, TypeVar, overload
+
+      T = TypeVar("T")
+      U = TypeVar("U")
+
+      text: str = "s"
+      number: int = 7
+
+      class Box(Generic[T]):
+          def get(self) -> T: ...
+
+      class Pair(Generic[T, U]):
+          pass
+
+      def rebox(value: T) -> Box[T]: ...
+
+      def pair(first: T, second: U) -> Pair[T, U]: ...
+
+      @overload
+      def mix(a: Box[int], b: T) -> Pair[int, T]: ...
+      @overload
+      def mix(a: Box[str], b: T) -> Box[T]: ...
+      @overload
+      def mix(a: Pair[T, U], b: str) -> Box[U]: ...
+      @overload
+      def mix(a: Pair[T, U], b: T) -> U: ...
+      @overload
+      def mix(a: T, b: bytes) -> T: ...
+      def mix(a, b): ...
+
+      shallow = mix(rebox(1), "s")
+      other_overload = mix(rebox("s"), b"raw")
+      pair_and_str = mix(pair(1, text), "tag")
+      pair_and_int = mix(pair(1, text), number)
+      direct_bytes = mix(number, b"raw")
+
+      deep_level_2 = mix(mix(rebox(1), "s"), 3)
+      reboxed_level_2 = rebox(mix(mix(rebox(1), "s"), 3))
+      deep_level_3 = mix(pair(1, text), "tag")
+      deep_level_4 = mix(deep_level_3, b"raw")
+      deep = mix(pair(1, mix(pair(1, mix(mix(mix(pair(1, text), "tag"), b"raw"), b"raw")), 7)), 7)
     """.trimIndent()
   }
 }
