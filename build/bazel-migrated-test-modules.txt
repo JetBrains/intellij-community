@@ -426,3 +426,4 @@ intellij.kotlin.refactorings.tests
 intellij.kotlin.projectStructure.tests
 intellij.kotlin.codeInsight.intentions.tests
 intellij.kotlin.codeInsight.fixes.tests
+intellij.kotlin.compilerPlugins.parcelize.tests
