@@ -529,8 +529,13 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // The snapshot waited for the project model, so a widget refresh during startup reads a configured SDK rather than
     // the `null` a half-loaded SDK table answers with — one of the two ways the widget said "No interpreter" for a
     // project that had one (PY-91871).
-    // A project whose entry names an interpreter that is gone shows that interpreter as unavailable.
-    val interpreter = pyProject.interpreter ?: return pyProject.entryKey?.let(::unavailableInterpreterDto)
+    // A project whose entry names an interpreter that is gone shows that interpreter as unavailable. A snapshot can come
+    // before the registry reads the record of the entry, so the registry answers, and an environment that is there is
+    // not shown as gone.
+    val entryKey = pyProject.entryKey
+    val interpreter = pyProject.interpreter
+                      ?: entryKey?.let { PythonInterpreterRegistry.getInstance(project).resolveEntryKey(it) }
+                      ?: return entryKey?.let(::unavailableInterpreterDto)
     // The other way was here: a remote or target SDK (WSL, SSH, Docker) used to be left out, and is now reported like
     // any other. Nothing below reads the interpreter's machine — the presentation is the label the classic widget
     // shows, and the dependency file is resolved from the module.
