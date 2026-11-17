@@ -77,6 +77,10 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private final int myInitialState;
   private HighlighterClient myEditor;
   private SegmentArrayWithData mySegments;
+  /**
+   * The segment index that the last {@link #createIterator} found. It only makes the next search faster. Guarded by {@code this}.
+   */
+  private int myLastFoundSegmentIndex;
   private volatile AttributesState myAttributesState;
   private CharSequence myText;
 
@@ -798,7 +802,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         );
       }
       try {
-        return segments.findSegmentIndex(startOffset);
+        int index = segments.findSegmentIndex(startOffset, myLastFoundSegmentIndex);
+        myLastFoundSegmentIndex = index;
+        return index;
       } catch (IllegalStateException e) {
         throw new InvalidStateException(LexerEditorHighlighter.this, "wrong state", e);
       }

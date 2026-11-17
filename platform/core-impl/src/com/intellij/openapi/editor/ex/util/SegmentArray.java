@@ -113,6 +113,39 @@ public class SegmentArray {
     return segmentNotFound(offset, start);
   }
 
+  /**
+   * Returns the same index as {@link #findSegmentIndex(int)}, and throws the same exceptions.
+   * The search is faster when the index is {@code hint} or a little greater.
+   */
+  @ApiStatus.Internal
+  public final int findSegmentIndex(int offset, int hint) {
+    int count = mySegmentCount;
+    if (hint < 0 || hint >= count || offset < myStarts[hint] || offset >= getLastValidOffset()) {
+      return findSegmentIndex(offset);
+    }
+    int[] ends = myEnds;
+    int low = hint;
+    int high = hint;
+    int step = 1;
+    while (ends[high] <= offset) {
+      low = high + 1;
+      high = Math.min(high + step, count - 1);
+      step <<= 1;
+    }
+    while (low < high) {
+      int middle = (low + high) >>> 1;
+      if (ends[middle] <= offset) {
+        low = middle + 1;
+      } else {
+        high = middle;
+      }
+    }
+    if (offset < myStarts[low]) {
+      return findSegmentIndex(offset);
+    }
+    return low;
+  }
+
   protected int segmentNotFound(int offset, int start) {
     // This means that there is a gap at given offset
     if (offset < myStarts[start] || offset >= myEnds[start]) {
