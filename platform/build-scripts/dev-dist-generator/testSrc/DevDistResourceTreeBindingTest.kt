@@ -49,7 +49,7 @@ class DevDistResourceTreeBindingTest {
 
   @Test
   fun `a resource tree with exclusions is a plain copy of the filtered filegroup`() {
-    val layout = PluginLayout.pluginAutoWithCustomDirName(plugin) {
+    val layout = PluginLayout.pluginWithCustomLayout(plugin) {
       it.withResourceTree(moduleName = plugin, resourcePath = "helpers", relativeOutputPath = "helpers", excludedDirectories = listOf("tests"))
     }
 
@@ -74,7 +74,7 @@ class DevDistResourceTreeBindingTest {
 
   @Test
   fun `a resource tree without exclusions reads the package filegroup`() {
-    val layout = PluginLayout.pluginAutoWithCustomDirName(plugin) {
+    val layout = PluginLayout.pluginWithCustomLayout(plugin) {
       it.withResourceTree(moduleName = plugin, resourcePath = "helpers", relativeOutputPath = "lib/helpers")
     }
 
@@ -89,7 +89,7 @@ class DevDistResourceTreeBindingTest {
 
   @Test
   fun `a resource tree over the destination of a withResource directory is refused`() {
-    val layout = PluginLayout.pluginAutoWithCustomDirName(plugin) {
+    val layout = PluginLayout.pluginWithCustomLayout(plugin) {
       it.withResource("helpers", "helpers")
       it.withResourceTree(moduleName = plugin, resourcePath = "helpers", relativeOutputPath = "helpers", excludedDirectories = listOf("tests"))
     }

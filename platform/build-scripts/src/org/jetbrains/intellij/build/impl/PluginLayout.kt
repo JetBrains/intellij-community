@@ -292,9 +292,12 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       return layout
     }
 
+    /**
+     * Defines layout for a plugin where additional customization are applied
+     */
     @Deprecated("Use `pluginAuto` instead")
     @Suppress("DEPRECATION")
-    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+    fun pluginWithCustomLayout(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       return plugin(mainModuleName = mainModuleName, auto = true, body = body)
     }
 

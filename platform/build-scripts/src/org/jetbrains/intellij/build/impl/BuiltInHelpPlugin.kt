@@ -36,7 +36,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair
   }
 
   val pluginXml = helpPluginXml(pluginVersion, context.buildNumber, productName)
-  return PluginLayout.pluginAutoWithCustomDirName(BUILT_IN_HELP_MODULE_NAME) { spec ->
+  return PluginLayout.pluginWithCustomLayout(BUILT_IN_HELP_MODULE_NAME) { spec ->
     val productLowerCase = productName.replace(' ', '-').lowercase()
     spec.mainJarName = "$productLowerCase-help.jar"
     spec.directoryName = "${productName.replace(" ", "")}Help"

@@ -32,7 +32,7 @@ class DevDistTestPluginsTest {
       properties = properties,
       tier = tier,
       variant = linuxX64,
-      layout = PluginLayout.pluginAutoWithCustomDirName(mainModule) { },
+      layout = PluginLayout.pluginWithCustomLayout(mainModule) { },
       testPlugin = testPlugin,
     )
   }

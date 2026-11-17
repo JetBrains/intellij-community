@@ -24,7 +24,7 @@ internal class AutoLayoutTest {
    */
   @Test
   fun `a taken module is not an auto layout child`() {
-    val layout = PluginLayout.pluginAutoWithCustomDirName("demo.plugin") { }
+    val layout = PluginLayout.pluginWithCustomLayout("demo.plugin") { }
     val taken = mutableSetOf("demo.plugin", "demo.plugin.backend")
 
     val children = inferredAutoLayoutChildren(
