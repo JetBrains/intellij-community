@@ -1,0 +1,12 @@
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":1,"agentCapabilities":{"loadSession":true,"sessionCapabilities":{"fork":{}}},"authMethods":[],"implementation":{"name":"acp-debug-integration-mock","version":"1"}}}
+{"jsonrpc":"2.0","id":2,"result":{"sessionId":"acp-integration-session-test-1","configOptions":[{"type":"select","id":"model","name":"Model","category":"model","currentValue":"air-flow-small","options":[{"value":"air-flow-small","name":"Air Flow Small"},{"value":"air-flow-large","name":"Air Flow Large"}]}]}}
+{"jsonrpc":"2.0","id":3,"result":{"configOptions":[{"type":"select","id":"model","name":"Model","category":"model","currentValue":"air-flow-large","options":[{"value":"air-flow-small","name":"Air Flow Small"},{"value":"air-flow-large","name":"Air Flow Large"}]}]}}
+{"jsonrpc":"2.0","id":"acp-integration-permission-test-1","method":"session/request_permission","params":{"sessionId":"acp-integration-session-test-1","toolCall":{"toolCallId":"acp-integration-tool-call-1","title":"Edit the scenario file","kind":"edit","status":"pending"},"options":[{"optionId":"allow","name":"Allow","kind":"allow_once"},{"optionId":"reject","name":"Reject","kind":"reject_once"}]}}
+{"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"acp-integration-session-test-1","update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"event 1"}}}}
+{"jsonrpc":"2.0","id":4,"result":{"stopReason":"end_turn"}}
+{"jsonrpc":"2.0","id":5,"result":{"sessionId":"acp-integration-session-test-2"}}
+{"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"acp-integration-session-test-2","update":{"sessionUpdate":"user_message_chunk","content":{"type":"text","text":"event loaded prompt"}}}}
+{"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"acp-integration-session-test-2","update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"event loaded answer of acp-integration-session-test-2"}}}}
+{"jsonrpc":"2.0","id":6,"result":{}}
+{"jsonrpc":"2.0","id":7,"error":{"code":-32602,"message":"unknown sessionId 'unknown'"}}
+{"jsonrpc":"2.0","id":8,"result":{}}

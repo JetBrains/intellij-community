@@ -11,6 +11,7 @@ members = [
     "crates/avl-base",
     "crates/avl-bridge",
     "crates/avl-control",
+    "crates/avl-fake-agent",
     "crates/avl-guest",
     "crates/avl-host-sys",
     "crates/avl-host-testkit",

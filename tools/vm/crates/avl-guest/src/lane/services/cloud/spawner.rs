@@ -331,9 +331,9 @@ fn forward_inbound(dial: &mut Receiver, ide: &Sender, proxy: &Proxy, ends: &Ends
     if ends.exited() {
         return;
     }
-    let reported = forwarded.and_then(|()| proxy.lifecycle(Lifecycle::StdinEof, "the WebSocket closed", None));
+    let reported = forwarded.and_then(|()| proxy.lifecycle(Lifecycle::StdinEof, Some("the WebSocket closed"), None));
     if let Err(error) = reported {
-        let _ = proxy.lifecycle(Lifecycle::ControlFailure, &format!("{:?}", error.kind()), None);
+        let _ = proxy.lifecycle(Lifecycle::ControlFailure, Some(&format!("{:?}", error.kind())), None);
         ide.close(websocket::INTERNAL_ERROR);
     }
     proxy.close();
@@ -358,16 +358,16 @@ fn apply_commands(index: usize, commands: &mut Commands, ide: &Sender, proxy: &P
                 proxy.ack(&id)
             }
             Command::CloseStdout { id } => proxy
-                .lifecycle(Lifecycle::StdoutClosed, "the WebSocket closed by control", None)
+                .lifecycle(Lifecycle::StdoutClosed, Some("the WebSocket closed by control"), None)
                 .and_then(|()| proxy.ack(&id))
                 .map(|()| {
                     ide.close(websocket::NORMAL_CLOSURE);
                 }),
             Command::Exit { id, code } => proxy
-                .lifecycle(Lifecycle::ProcessExit, "exit command", Some(code))
+                .lifecycle(Lifecycle::ProcessExit, Some("exit command"), Some(code))
                 .and_then(|()| proxy.ack(&id))
                 .map(|()| exit(ide, proxy, ends)),
-            Command::Mcp { id } => proxy.mcp_error(&id, NO_MCP_SERVER),
+            Command::Mcp { id, .. } => proxy.mcp_result(&id, true, NO_MCP_SERVER),
         };
         if let Err(error) = applied {
             break error;

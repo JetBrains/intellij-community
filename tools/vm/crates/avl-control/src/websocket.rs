@@ -296,6 +296,49 @@ pub fn accept(stream: TcpStream) -> io::Result<(Sender, Receiver)> {
     Ok((Sender::new(stream, Role::Server), Receiver::new(reader, Role::Server)))
 }
 
+/// Reads the head of an HTTP message on `stream`, with its line ends, for a peer without an HTTP layer. It reads byte
+/// by byte, so no byte of the first frame leaves the stream. A stream that ends early gives the bytes before its end.
+pub fn read_head(mut stream: &TcpStream) -> io::Result<String> {
+    let mut head = Vec::new();
+    while !head.ends_with(b"\r\n\r\n") && head.len() < usize::try_from(MAX_HEAD_LINE).unwrap_or(usize::MAX) {
+        let mut byte = [0];
+        if stream.read(&mut byte)? == 0 {
+            break;
+        }
+        head.push(byte[0]);
+    }
+    String::from_utf8(head).map_err(|_invalid| invalid("the head is not UTF-8"))
+}
+
+/// Completes the upgrade of the request on `stream` when its request line is `GET <target> HTTP/1.1`, as the control
+/// server checks the token of its URL. Another request gets `401` and answers `None`.
+pub fn accept_target(stream: TcpStream, target: &str) -> io::Result<Option<(Sender, Receiver)>> {
+    let head = read_head(&stream)?;
+    if head.lines().next() != Some(&format!("GET {target} HTTP/1.1")) {
+        (&stream).write_all(b"HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")?;
+        return Ok(None);
+    }
+    complete_upgrade(stream, &head).map(Some)
+}
+
+/// Answers the upgrade request `head` on `stream` with `101` and the accept key of its `Sec-WebSocket-Key`, and splits
+/// the stream for the server side. A head without the key is refused.
+pub fn complete_upgrade(stream: TcpStream, head: &str) -> io::Result<(Sender, Receiver)> {
+    let key = head
+        .lines()
+        .find_map(|line| {
+            let (name, value) = line.split_once(':')?;
+            name.trim().eq_ignore_ascii_case("Sec-WebSocket-Key").then(|| value.trim())
+        })
+        .ok_or_else(|| invalid("the upgrade request has no Sec-WebSocket-Key"))?;
+    let answer = format!(
+        "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {}\r\n\r\n",
+        accept_key(key)
+    );
+    (&stream).write_all(answer.as_bytes())?;
+    accept(stream)
+}
+
 /// Connects to `url`, `ws://<host>:<port><target>`, sends the upgrade with `headers`, and checks the answer. Each step
 /// waits at most `timeout`, and so does each later read until the caller sets another bound. A refusal names the
 /// address and the path of the URL, never its query, because the query of a control URL carries its token.
