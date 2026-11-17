@@ -60,6 +60,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
+import java.util.function.Function
 import java.util.function.Supplier
 
 /** The JDK that [ExecutionTestCase] uses to compile and to run the test app. */
@@ -133,6 +134,22 @@ class ExecutionTestOptions {
   var projectLanguageLevel: LanguageLevel = LanguageLevel.JDK_1_6
     private set
 
+  /**
+   * Gives the test app directory for the name of the test method, in place of the `testAppPath` argument of [executionTestFixture].
+   * It replaces a `getTestAppPath` override that depends on the test. When it is `null`, all tests of the class use the argument.
+   */
+  var testAppPathByTest: Function<String, String>? = null
+    private set
+
+  /**
+   * Gives the name of the compiler output directory under the output root of the JVM, for the name of the test method.
+   * It replaces an override of [ExecutionTestCase.getModuleOutputDir].
+   * The fixture compiles the project once for each directory in the JVM, so a test that compiles the test app against other
+   * libraries needs its own directory. When it is `null`, the directory is the name of the test app directory.
+   */
+  var moduleOutputDirByTest: Function<String, String>? = null
+    private set
+
   fun withTestProjectJdk(jdk: Supplier<Sdk>): ExecutionTestOptions = apply { testProjectJdk = jdk }
 
   fun withOverrideCompileJdkAndOutput(value: Boolean): ExecutionTestOptions = apply { overrideCompileJdkAndOutput = value }
@@ -148,6 +165,13 @@ class ExecutionTestOptions {
   fun withProjectFileName(name: String?): ExecutionTestOptions = apply { projectFileName = name }
 
   fun withProjectLanguageLevel(level: LanguageLevel): ExecutionTestOptions = apply { projectLanguageLevel = level }
+
+  fun withTestAppPathByTest(path: Function<String, String>?): ExecutionTestOptions = apply { testAppPathByTest = path }
+
+  fun withModuleOutputDirByTest(name: Function<String, String>?): ExecutionTestOptions = apply { moduleOutputDirByTest = name }
+
+  /** The test app directory of the test method [methodName]: [testAppPathByTest], or [defaultPath]. */
+  internal fun testAppPath(defaultPath: String, methodName: String): String = testAppPathByTest?.apply(methodName) ?: defaultPath
 }
 
 /**
@@ -163,7 +187,8 @@ class ExecutionTestOptions {
  *    All of this runs in one write action on the EDT, as in the JUnit 3 base.
  *    Then it sets the project language level to [ExecutionTestOptions.projectLanguageLevel].
  * 3. It compiles the project with [CompilerTester] when the output directory of the test app does not exist yet.
- *    The output root is shared by the JVM, so the compile runs once for each test app in the JVM.
+ *    The output root is shared by the JVM, so the compile runs once for each output directory in the JVM.
+ *    The output directory is the name of the test app directory, or [ExecutionTestOptions.moduleOutputDirByTest].
  * 4. It calls [OutputChecker.init] with [ExecutionTestFixture.testName].
  *
  * With [ExecutionTestOptions.projectFileName], steps 1 and 2 change.
@@ -207,12 +232,13 @@ internal fun executionTestFixture(
     IllegalStateException("Declare executionTestFixture as an instance field: it needs the test method")
   }.name
   val name = FileUtil.sanitizeFileName(methodName, false)
+  val appPath = options.testAppPath(testAppPath, methodName)
   val projectFileName = options.projectFileName
   val projectFixture = if (projectFileName == null) {
     projectFixture(tempPathFixture(), OpenProjectTask { projectName = name }, openAfterCreation = true)
   }
   else {
-    projectFixture(projectCopyFixture(testAppPath, projectFileName))
+    projectFixture(projectCopyFixture(appPath, projectFileName))
   }
   if (afterProjectClose != null) {
     projectFixture.dependsOn(afterProjectClose)
@@ -223,7 +249,8 @@ internal fun executionTestFixture(
     project = project,
     disposable = disposable,
     testName = options.outputName ?: PlatformTestUtil.getTestName(methodName, true),
-    testAppPath = if (projectFileName == null) testAppPath else Path.of(requireNotNull(project.basePath)).toString(),
+    testAppPath = if (projectFileName == null) appPath else Path.of(requireNotNull(project.basePath)).toString(),
+    moduleOutputDirName = options.moduleOutputDirByTest?.apply(methodName),
     options = options,
     outputChecker = outputChecker,
   )
@@ -287,11 +314,12 @@ class ExecutionTestFixture internal constructor(
   val testName: String,
   /** The directory of the test app. */
   val testAppPath: String,
+  moduleOutputDirName: String?,
   private val options: ExecutionTestOptions,
   outputChecker: OutputCheckerFactory,
 ) {
-  /** The compiler output directory of the main module. */
-  val moduleOutputDir: Path = outputRoot.resolve(PathUtil.getFileName(testAppPath))
+  /** The compiler output directory of the main module. See [ExecutionTestOptions.moduleOutputDirByTest]. */
+  val moduleOutputDir: Path = outputRoot.resolve(moduleOutputDirName ?: PathUtil.getFileName(testAppPath))
 
   /** The compiler output path of the main module, the class path of [createJavaParameters]. */
   val appOutputPath: String

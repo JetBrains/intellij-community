@@ -228,7 +228,8 @@ fun debuggerTestFixture(
       debugger?.checkAfterProjectClose(testFailed = context.extensionContext.executionException.isPresent)
     }
   }
-  refreshSources(testAppPath)
+  val methodName = context.extensionContext.testMethod.map { it.name }.orElse(null)
+  refreshSources(if (methodName == null) testAppPath else options.execution.testAppPath(testAppPath, methodName))
   val execution = executionTestFixture(testAppPath, outputChecker, options.execution, afterProjectClose).init()
   edtWriteAction {
     JavaTestUtil.setupInternalJdkAsTestJDK(execution.disposable, DebuggerTestFixture.TEST_JDK_NAME)
