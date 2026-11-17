@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
@@ -118,6 +119,9 @@ class PythonInterpreterRecords(private val project: Project) : PersistentStateCo
    * registry subscribes is not lost.
    */
   val changes: Flow<Unit> get() = version.map { }
+
+  /** The number of changes of the store so far, see [changes]. A collector gets the current number first. */
+  internal val versions: StateFlow<Long> get() = version
 
   /** For tests: how many changes the store has reported, see [changes]. */
   @get:TestOnly

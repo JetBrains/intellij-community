@@ -31,7 +31,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -61,10 +60,19 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
   private val changeEvents = MutableSharedFlow<PythonInterpreterKey?>(extraBufferCapacity = Int.MAX_VALUE)
 
   init {
+    // Only the source of the flow of this session, which a restart changes: the interpreter library flow ignores the SDK
+    // table, which also holds other SDKs, such as a Java one.
+    val source = if (isInterpreterLibraryFlowEnabled()) {
+      // The version of the store now, read before the collector starts. A change between this read and the start of the
+      // collector is newer, so the collector still reports it.
+      val records = PythonInterpreterRecords.getInstance(project)
+      val seen = records.versions.value
+      records.versions.filter { it > seen }.map { }
+    }
+    else {
+      sdkTableChanges()
+    }
     scope.launch {
-      // Only the source of the flow of this session, which a restart changes: the interpreter library flow ignores the SDK
-      // table, which also holds other SDKs, such as a Java one.
-      val source = if (isInterpreterLibraryFlowEnabled()) PythonInterpreterRecords.getInstance(project).changes.drop(1) else sdkTableChanges()
       source.collect { changeEvents.emit(null) }
     }
   }

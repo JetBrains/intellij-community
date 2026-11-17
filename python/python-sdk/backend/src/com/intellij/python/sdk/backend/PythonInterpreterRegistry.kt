@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -487,7 +488,16 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
    * target interpreter, or the owner that PythonSdkAdditionalDataMigrationActivity writes for an SDK of an older build.
    */
   private fun sdkTableChanges(): Flow<Unit> =
-    merge(PythonInterpreterDetails.getInstance(project).changes.map { }, moduleChanges())
+    merge(PythonInterpreterDetails.getInstance(project).changes.map { }, moduleChanges(), recordChanges())
+
+  /**
+   * The changes of the records in the interpreter library flow. The details report them as events, and the loop of the
+   * list subscribes to those only after its first computation. A record put in between, such as by the first set of an
+   * interpreter, would be lost, and [resolveEntryKey] would wait for it forever. The records are a state, so the first
+   * value covers that gap.
+   */
+  private fun recordChanges(): Flow<Unit> =
+    if (isInterpreterLibraryFlowEnabled()) PythonInterpreterRecords.getInstance(project).changes else emptyFlow()
 
   private fun moduleChanges(): Flow<Unit> =
     project.workspaceModel.eventLog.filter { it.getChanges(ModuleEntity::class.java).isNotEmpty() }.map { }
