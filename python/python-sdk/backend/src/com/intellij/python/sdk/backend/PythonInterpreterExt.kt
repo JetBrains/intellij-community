@@ -378,5 +378,4 @@ val PythonInterpreter.isReadOnly: Boolean
 /** Why packages cannot be installed into this interpreter. See [isReadOnly]. */
 @get:Internal
 val PythonInterpreter.readOnlyErrorMessage: @Nls String
-  @Suppress("DEPRECATION") // The fallback names the SDK.
-  get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PySdkBundle.message("python.sdk.read.only", getSdkAPI().name)
+  get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PySdkBundle.message("python.sdk.read.only", sdk.name)

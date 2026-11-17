@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.venv.PY_REQ_TOOL_ID
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -61,7 +60,7 @@ internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigur
     val isRequirements = requirementsTxtOrSetupPyFile.name != SETUP_PY
 
     if (isRequirements) {
-      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(project, pythonInterpreter.getSdkAPI(), requirementsTxtOrSetupPyFile.toNioPath())
+      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(project, pythonInterpreter, requirementsTxtOrSetupPyFile.toNioPath())
     }
 
     return PythonPackageManager.forPythonInterpreter(project, pythonInterpreter).syncLocked().mapSuccess { pythonInterpreter }

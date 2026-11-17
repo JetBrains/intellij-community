@@ -63,6 +63,7 @@ import com.intellij.python.pytools.backend.impl.detectExecutableOnEel
 import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.binaryPathString
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
@@ -71,6 +72,7 @@ import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.getPythonInfo
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.python.sdk.common.PyEnvRef
@@ -355,7 +357,7 @@ data class EelFileSystem(
 
   override suspend fun wrapSdk(pythonInterpreter: PythonInterpreter): PythonInterpreterWrapper<PathHolder.Eel> =
     withContext(Dispatchers.IO) {
-      val adjustedHomePath = PythonSdkType.getInstance().adjustSelectedSdkHome(pythonInterpreter.getSdkAPI().homePath!!)
+      val adjustedHomePath = PythonSdkType.getInstance().adjustSelectedSdkHome(pythonInterpreter.binaryPathString)
       PythonInterpreterWrapper(pythonInterpreter, PathHolder.Eel(Path.of(adjustedHomePath)))
     }
 
@@ -709,7 +711,7 @@ internal data class TargetFileSystem(
   }
 
   override suspend fun wrapSdk(pythonInterpreter: PythonInterpreter): PythonInterpreterWrapper<PathHolder.Target> {
-    return PythonInterpreterWrapper(pythonInterpreter, PathHolder.Target(pythonInterpreter.getSdkAPI().homePath!!))
+    return PythonInterpreterWrapper(pythonInterpreter, PathHolder.Target(pythonInterpreter.binaryPathString))
   }
 
   override fun getBinaryToExec(path: PathHolder.Target, workingDir: Path?): BinaryToExec {
