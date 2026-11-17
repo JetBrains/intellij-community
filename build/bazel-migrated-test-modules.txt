@@ -433,3 +433,4 @@ intellij.kotlin.searching.test
 intellij.kotlin.analysis.platform.tests
 intellij.kotlin.base.scripting.main.kts.tests
 intellij.kotlin.codeInsight.structuralSearch.tests
+intellij.kotlin.gradle.codeInsight.groovy.tests

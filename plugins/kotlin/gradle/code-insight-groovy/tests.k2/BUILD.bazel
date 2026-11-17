@@ -1,6 +1,25 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
+jps_test(
+    name = "kotlin-gradle-codeInsight-groovy-tests_test",
+    data = [
+        "@community//plugins/kotlin/gradle/code-insight-groovy/tests.k2:testData",
+        "@community//plugins/kotlin/idea/tests:testData",
+    ] + all_test_dep_targets,
+    tags = ["kotlin-tests"],
+    runtime_deps = [":kotlin-gradle-codeInsight-groovy-tests_test_lib"],
+)
+
+### skip generation section `test intellij.kotlin.gradle.codeInsight.groovy.tests`
 
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.groovy.tests` start
 jvm_library(
@@ -57,10 +76,3 @@ jps_module(
     target = "kotlin-gradle-codeInsight-groovy-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.gradle.codeInsight.groovy.tests` end
-
-### auto-generated section `test intellij.kotlin.gradle.codeInsight.groovy.tests` start
-jps_test(
-    name = "kotlin-gradle-codeInsight-groovy-tests_test",
-    runtime_deps = [":kotlin-gradle-codeInsight-groovy-tests_test_lib"],
-)
-### auto-generated section `test intellij.kotlin.gradle.codeInsight.groovy.tests` end
