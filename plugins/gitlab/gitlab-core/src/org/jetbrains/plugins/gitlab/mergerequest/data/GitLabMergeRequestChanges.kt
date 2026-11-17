@@ -12,14 +12,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.GitBranchComparisonResultUtil
 import git4idea.changes.GitCommitShaWithPatches
-import git4idea.changes.create
 import git4idea.changes.filePath
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitCodeReviewUtils
@@ -151,7 +150,6 @@ internal suspend fun GitLabMergeRequestChanges.loadRevisionsAndParseChanges(): G
 
 internal class GitLabMergeRequestChangesImpl(
   parentCs: CoroutineScope,
-  private val project: Project,
   private val projectId: String,
   private val projectPath: GitLabProjectPath,
   private val gitRemoteUrlCoordinates: GitRemoteUrlCoordinates,
@@ -216,8 +214,8 @@ internal class GitLabMergeRequestChangesImpl(
     // repair the repairable (not too large) unexpected empty diffs with the local ones
     val localPatches = loadLocalPatches(mergeBaseSha, headSha, headDiffs.filter { it.needsLocalPatch }, location)
     val headPatches = processDiffs(headDiffs, localPatches, location)
-    val comparisonResult = GitBranchComparisonResult.create(project, gitRemoteUrlCoordinates.repository.root, baseSha, mergeBaseSha,
-                                                            commitsWithPatches, headPatches.map { it.patch })
+    val comparisonResult = GitBranchComparisonResultUtil.create(gitRemoteUrlCoordinates.repository.root, baseSha, mergeBaseSha,
+                                                                commitsWithPatches, headPatches.map { it.patch })
     return GitLabMergeRequestParsedChangesImpl(comparisonResult, headPatches)
   }
 

@@ -18,29 +18,29 @@ import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * Create a three-dot-diff comparison result holder for the repository at [vcsRoot].
- *
- * The changes use [GitRevisionNumber], so [createVcsChange] can load their content.
- *
- * @param project not used. It stays, so that the callers of the earlier factory need no change.
- * @param vcsRoot root of the git repository
- * @param baseSha head revision of the "left" branch
- * @param mergeBaseSha merge base revision
- * @param commits commits from the "right" branch (not present in the "left")
- * where the last commit should be the head of the "right" branch
- * @param headPatches patches between merge base and last commit of the "right" branch
- */
 @ApiStatus.Experimental
-fun GitBranchComparisonResult.Companion.create(
-  @Suppress("unused") project: Project,
-  vcsRoot: VirtualFile,
-  baseSha: String,
-  mergeBaseSha: String,
-  commits: List<GitCommitShaWithPatches>,
-  headPatches: List<FilePatch>,
-): GitBranchComparisonResult =
-  create(baseSha, mergeBaseSha, commits, headPatches, ::GitRevisionNumber) { VcsUtil.getFilePath(vcsRoot, it) }
+object GitBranchComparisonResultUtil {
+  /**
+   * Create a three-dot-diff comparison result holder for the repository at [vcsRoot].
+   *
+   * The changes use [GitRevisionNumber], so [createVcsChange] can load their content.
+   *
+   * @param vcsRoot root of the git repository
+   * @param baseSha head revision of the "left" branch
+   * @param mergeBaseSha merge base revision
+   * @param commits commits from the "right" branch (not present in the "left")
+   * where the last commit should be the head of the "right" branch
+   * @param headPatches patches between merge base and last commit of the "right" branch
+   */
+  fun create(
+    vcsRoot: VirtualFile,
+    baseSha: String,
+    mergeBaseSha: String,
+    commits: List<GitCommitShaWithPatches>,
+    headPatches: List<FilePatch>,
+  ): GitBranchComparisonResult =
+    GitBranchComparisonResult.create(baseSha, mergeBaseSha, commits, headPatches, ::GitRevisionNumber) { VcsUtil.getFilePath(vcsRoot, it) }
+}
 
 @ApiStatus.Experimental
 fun GitTextFilePatchWithHistory.getDiffComputer(): DiffUserDataKeysEx.DiffComputer? {

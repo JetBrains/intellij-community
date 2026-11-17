@@ -6,9 +6,8 @@ import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
-import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.GitBranchComparisonResultUtil
 import git4idea.changes.GitCommitShaWithPatches
-import git4idea.changes.create
 import git4idea.changes.filePath
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.repo.GitRepository
@@ -44,8 +43,8 @@ class GitLabMergeRequestViewedStateTest {
     every { iid } returns "5"
     every { gitRemote } returns GitRemoteUrlCoordinates("https://gitlab.com/owner/repo.git", mockk(), repository)
   }
-  private val parsedChanges = GitBranchComparisonResult.create(
-    mockk(), root, MERGE_BASE_SHA, MERGE_BASE_SHA,
+  private val parsedChanges = GitBranchComparisonResultUtil.create(
+    root, MERGE_BASE_SHA, MERGE_BASE_SHA,
     listOf(
       GitCommitShaWithPatches(COMMIT_A, listOf(MERGE_BASE_SHA), listOf(patch(FILE_X))),
       GitCommitShaWithPatches(COMMIT_B, listOf(COMMIT_A), listOf(patch(FILE_Y))),
