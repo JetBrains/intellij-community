@@ -102,6 +102,7 @@ class ExecutionTestOptions {
   /**
    * Runs after the fixture sets the roots, the language level and the compiler output of the main module, and before it sets the JDK.
    * It runs in a write action on the EDT, in the same place as an override of `setUpModule` of [ExecutionTestCase].
+   * With [projectFileName], it runs on the main module of the opened project, before the compile.
    */
   var setUpModule: Consumer<Module> = Consumer { }
     private set
@@ -120,6 +121,18 @@ class ExecutionTestOptions {
   var outputName: String? = null
     private set
 
+  /**
+   * The name of an `.ipr` file in the test app directory, or `null`.
+   * When it is set, the fixture copies the test app directory to a new temp directory and opens the copy of this project file.
+   * It does not create the main module then. See [executionTestFixture].
+   */
+  var projectFileName: String? = null
+    private set
+
+  /** The language level of the project. It replaces `JavaProjectTestCase.getProjectLanguageLevel`. The default is 1.6. */
+  var projectLanguageLevel: LanguageLevel = LanguageLevel.JDK_1_6
+    private set
+
   fun withTestProjectJdk(jdk: Supplier<Sdk>): ExecutionTestOptions = apply { testProjectJdk = jdk }
 
   fun withOverrideCompileJdkAndOutput(value: Boolean): ExecutionTestOptions = apply { overrideCompileJdkAndOutput = value }
@@ -131,6 +144,10 @@ class ExecutionTestOptions {
   fun withUpdateJavaParameters(action: Consumer<JavaParameters>): ExecutionTestOptions = apply { updateJavaParameters = action }
 
   fun withOutputName(name: String?): ExecutionTestOptions = apply { outputName = name }
+
+  fun withProjectFileName(name: String?): ExecutionTestOptions = apply { projectFileName = name }
+
+  fun withProjectLanguageLevel(level: LanguageLevel): ExecutionTestOptions = apply { projectLanguageLevel = level }
 }
 
 /**
@@ -138,15 +155,23 @@ class ExecutionTestOptions {
  *
  * Declare it as an instance field of a `@TestApplication` class, because each test needs its own project and test name.
  * The fixture does this setup, in this order:
- * 1. It opens a new project. The project name is the name of the test method, as in JUnit 3. The project language level is 1.6.
+ * 1. It opens a new project. The project name is the name of the test method, as in JUnit 3.
  * 2. It creates the main Java module with the same name in the project directory.
  *    The content root is [testAppPath], and the source root is its `src` directory.
  *    The module language level is 1.8, and the compiler output is [ExecutionTestFixture.appOutputPath].
  *    Then it runs [ExecutionTestOptions.setUpModule]. Then it sets the JDK of each module and registers the JDK.
  *    All of this runs in one write action on the EDT, as in the JUnit 3 base.
+ *    Then it sets the project language level to [ExecutionTestOptions.projectLanguageLevel].
  * 3. It compiles the project with [CompilerTester] when the output directory of the test app does not exist yet.
  *    The output root is shared by the JVM, so the compile runs once for each test app in the JVM.
  * 4. It calls [OutputChecker.init] with [ExecutionTestFixture.testName].
+ *
+ * With [ExecutionTestOptions.projectFileName], steps 1 and 2 change.
+ * The fixture copies [testAppPath] to a new temp directory and opens the project file in the copy.
+ * [ExecutionTestFixture.testAppPath] is the copy. The main module is the module with the name of the project file.
+ * The fixture does not change its roots, its language level, its compiler output or its JDK.
+ * It runs only [ExecutionTestOptions.setUpModule] on it, in a write action on the EDT.
+ * The output directory of the copy is new, so step 3 compiles the project in each test.
  *
  * Only the module setup runs on the EDT. The project opening, the compile and the test body run off the EDT, as in the JUnit 3 base.
  *
@@ -182,7 +207,13 @@ internal fun executionTestFixture(
     IllegalStateException("Declare executionTestFixture as an instance field: it needs the test method")
   }.name
   val name = FileUtil.sanitizeFileName(methodName, false)
-  val projectFixture = projectFixture(tempPathFixture(), OpenProjectTask { projectName = name }, openAfterCreation = true)
+  val projectFileName = options.projectFileName
+  val projectFixture = if (projectFileName == null) {
+    projectFixture(tempPathFixture(), OpenProjectTask { projectName = name }, openAfterCreation = true)
+  }
+  else {
+    projectFixture(projectCopyFixture(testAppPath, projectFileName))
+  }
   if (afterProjectClose != null) {
     projectFixture.dependsOn(afterProjectClose)
   }
@@ -192,7 +223,7 @@ internal fun executionTestFixture(
     project = project,
     disposable = disposable,
     testName = options.outputName ?: PlatformTestUtil.getTestName(methodName, true),
-    testAppPath = testAppPath,
+    testAppPath = if (projectFileName == null) testAppPath else Path.of(requireNotNull(project.basePath)).toString(),
     options = options,
     outputChecker = outputChecker,
   )
@@ -214,6 +245,19 @@ internal fun executionTestFixture(
       },
     )
   }
+}
+
+/**
+ * Copies the directory [projectDir] to a new temp directory and gives the path of the project file [projectFileName] in the copy.
+ * The copy follows symbolic links, because a Bazel test sees the test data through them, and the compile writes into the copy.
+ */
+@Suppress("SSBasedInspection")
+private fun projectCopyFixture(projectDir: String, projectFileName: String): TestFixture<Path> = testFixture("projectCopyFixture") {
+  val copy = tempPathFixture().init()
+  FileUtil.copyDir(Path.of(projectDir).toFile(), copy.toFile())
+  val projectFile = copy.resolve(projectFileName)
+  assertTrue(Files.isRegularFile(projectFile), "No project file: $projectFile")
+  initialized(projectFile) {}
 }
 
 /**
@@ -278,6 +322,29 @@ class ExecutionTestFixture internal constructor(
   internal suspend fun setUp(moduleName: String) {
     val jdk = options.testProjectJdk.get()
     testProjectJdk = jdk
+    val projectFileName = options.projectFileName
+    if (projectFileName == null) {
+      setUpNewModule(moduleName, jdk)
+    }
+    else {
+      val mainModuleName = FileUtil.getNameWithoutExtension(projectFileName)
+      val mainModule = requireNotNull(ModuleManager.getInstance(project).findModuleByName(mainModuleName)) {
+        "No module $mainModuleName in $projectFileName"
+      }
+      module = mainModule
+      edtWriteAction {
+        ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
+          options.setUpModule.accept(mainModule)
+        }
+      }
+    }
+    IdeaTestUtil.setProjectLanguageLevel(project, options.projectLanguageLevel)
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    compileProjectOncePerJvm()
+    checker.init(testName)
+  }
+
+  private suspend fun setUpNewModule(moduleName: String, jdk: Sdk) {
     val moduleFile = Path.of(requireNotNull(project.basePath)).resolve("$moduleName.iml")
     edtWriteAction {
       ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
@@ -290,10 +357,6 @@ class ExecutionTestFixture internal constructor(
         setUpJdk(jdk)
       }
     }
-    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_6)
-    IndexingTestUtil.suspendUntilIndexesAreReady(project)
-    compileProjectOncePerJvm()
-    checker.init(testName)
   }
 
   private fun compileProjectOncePerJvm() {
