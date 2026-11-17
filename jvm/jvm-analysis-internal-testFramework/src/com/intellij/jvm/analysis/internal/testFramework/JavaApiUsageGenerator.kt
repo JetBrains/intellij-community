@@ -4,7 +4,9 @@ import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.JDK_HOME
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.LANGUAGE_LEVEL
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.SINCE_VERSION
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.JdkApiCompatibilityService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentIterator
@@ -30,11 +32,17 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.lang.JavaVersion
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
-import org.junit.Ignore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.extension
@@ -42,14 +50,16 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.readLines
 import kotlin.io.path.writeLines
+import kotlin.time.Duration.Companion.hours
 
 /**
  * Generator which is used to generate required api files for [com.intellij.codeInspection.JavaApiUsageInspection].
  * To generate new API lists for next release, you will need to set [JDK_HOME], [LANGUAGE_LEVEL], [SINCE_VERSION] and then run
  * [testCollectSinceApiUsages]. The API list will be printed on standard out.
  */
-@Ignore
-class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
+@Disabled("Run it by hand to generate the API lists")
+@TestApplication
+class JavaApiUsageGenerator {
 
   companion object {
     /**
@@ -76,15 +86,31 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
      * Dir to API lists. Used in [testGenerateRemovedEntries] and [testRemoveNonPublicApi]
      */
     private const val API_DIR = "REPLACE_ME"
+
+    private val projectFixture = lightJavaProjectFixture(object : LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(LANGUAGE_LEVEL) {
+      override fun getSdk(): Sdk {
+        val sdk = SdkTableImplementationDelegate.getInstance().createSdk("java-gen", JavaSdk.getInstance(), JDK_HOME)
+        JavaSdk.getInstance().setupSdkPaths(sdk)
+        return sdk
+      }
+    })
   }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  private val project: Project
+    get() = myFixture.project
 
 
   /**
    * Generates an API list for the specified [JDK_HOME], [LANGUAGE_LEVEL] and [SINCE_VERSION].
    */
-  fun testCollectSinceApiUsages() {
-    IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
-      doCollectSinceApiUsages()
+  @Test
+  fun testCollectSinceApiUsages(): Unit = timeoutRunBlocking(timeout = 1.hours) {
+    withContext(Dispatchers.EDT) {
+      IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
+        doCollectSinceApiUsages()
+      }
     }
   }
 
@@ -92,23 +118,21 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
    * Generates removed entries. This can be useful when re-generating API lists for whatever reason. When using a modern JDK to generate the
    * API lists, it will lose the tagged API that got removed. This script can be used to compare new and old API lists and find removed API.
    */
-  fun testGenerateRemovedEntries() {
-    IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
-      removedEntries(Path.of(TEMP_API_DIR), Path.of(API_DIR))
+  @Test
+  fun testGenerateRemovedEntries(): Unit = timeoutRunBlocking(timeout = 1.hours) {
+    withContext(Dispatchers.EDT) {
+      IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
+        removedEntries(Path.of(TEMP_API_DIR), Path.of(API_DIR))
+      }
     }
   }
 
-  fun testRemoveNonPublicApi() {
-    IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
-      filterSignatures(Path.of(API_DIR)) { isPublicApi() }
-    }
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LANGUAGE_LEVEL) {
-    override fun getSdk(): Sdk {
-      val sdk = SdkTableImplementationDelegate.getInstance().createSdk("java-gen", JavaSdk.getInstance(), JDK_HOME)
-      JavaSdk.getInstance().setupSdkPaths(sdk)
-      return sdk
+  @Test
+  fun testRemoveNonPublicApi(): Unit = timeoutRunBlocking(timeout = 1.hours) {
+    withContext(Dispatchers.EDT) {
+      IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
+        filterSignatures(Path.of(API_DIR)) { isPublicApi() }
+      }
     }
   }
 
