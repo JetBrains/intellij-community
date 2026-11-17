@@ -14,20 +14,22 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.ActionLink
-import com.intellij.util.ui.InlineIconButton
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import icons.DvcsImplIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.event.ActionListener
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.SwingConstants
 
 object CodeReviewDetailsBranchComponentFactory {
@@ -37,8 +39,7 @@ object CodeReviewDetailsBranchComponentFactory {
     scope: CoroutineScope,
     branchesVm: CodeReviewBranchesViewModel,
   ): JComponent {
-    val statusIcon = InlineIconButton(DvcsImplIcons.BranchLabel).apply {
-      actionListener = ActionListener { branchesVm.showBranches() }
+    val statusIcon = JLabel().apply {
       scope.launchNow {
         branchesVm.isCheckedOut.collect { isCheckedOut ->
           icon = when {
@@ -49,12 +50,10 @@ object CodeReviewDetailsBranchComponentFactory {
         }
       }
     }
-    val sourceBranch = ActionLink().apply {
-      addActionListener { branchesVm.showBranches() }
-      setDropDownLinkIcon()
+    val sourceBranch = JBLabel().apply {
       bindTextIn(scope, branchesVm.sourceBranch)
       bindTooltipTextIn(scope, branchesVm.sourceBranch)
-      minimumSize = Dimension(0,0)
+      minimumSize = Dimension(0, 0)
     }
 
     val panelWithIcon = HorizontalListPanel(BRANCH_ICON_LINK_GAP).apply {
@@ -62,10 +61,24 @@ object CodeReviewDetailsBranchComponentFactory {
       add(sourceBranch)
     }
 
+    return panelWithIcon
+  }
+
+  fun createMoreActionsLink(
+    scope: CoroutineScope,
+    branchesVm: CodeReviewBranchesViewModel,
+  ): JComponent {
+    val moreAction = DumbAwareAction.create(AllIcons.Actions.More) {
+      branchesVm.showBranches()
+    }
+    val moreLink = ActionButton(moreAction, null, MORE_ACTIONS_PLACE, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).apply {
+      accessibleContext.accessibleName = CollaborationToolsBundle.message("review.details.more.action")
+    }
+
     scope.launchNow {
       branchesVm.showBranchesRequests.collectLatest { branches ->
         val (source, target, hasRemoteBranch) = branches
-        val point = RelativePoint.getSouthWestOf(panelWithIcon)
+        val point = RelativePoint.getSouthWestOf(moreLink)
         val advertiser = if (!hasRemoteBranch) {
           HintUtil.createAdComponent(CollaborationToolsBundle.message("review.details.branch.cannot.checkout.as.branch"), JBUI.CurrentTheme.Advertiser.border(), SwingConstants.LEFT).apply {
             icon = AllIcons.General.Warning
@@ -75,7 +88,7 @@ object CodeReviewDetailsBranchComponentFactory {
           HintUtil.createAdComponent(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source), JBUI.CurrentTheme.Advertiser.border(), SwingConstants.LEFT)
         }
         val dataContext = SimpleDataContext.builder()
-          .setParent(DataManager.getInstance().getDataContext(panelWithIcon))
+          .setParent(DataManager.getInstance().getDataContext(moreLink))
           .add(CodeReviewBranchActionDataKeys.VIEW_MODEL, branchesVm)
           .add(CodeReviewBranchActionDataKeys.BRANCHES, branches)
           .build()
@@ -88,6 +101,8 @@ object CodeReviewDetailsBranchComponentFactory {
       }
     }
 
-    return panelWithIcon
+    return moreLink
   }
+
+  private const val MORE_ACTIONS_PLACE = "CodeReview.Branch.More"
 }

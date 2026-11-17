@@ -62,7 +62,8 @@ object GHPRDetailsComponentFactory {
       val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
         showTimelineAction(it.source as JComponent)
       }
-      ReviewDetailsUIUtil.createTitlePanel(title, branches, timelineLink)
+      val moreLink = CodeReviewDetailsBranchComponentFactory.createMoreActionsLink(scope, detailsVm.branchesVm)
+      ReviewDetailsUIUtil.createTitlePanel(title, branches, timelineLink, moreLink)
     }
     else {
       null

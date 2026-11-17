@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
@@ -20,15 +21,18 @@ object ReviewDetailsUIUtil {
   private const val TITLE_PANEL_GAP: Int = 8
 
   /**
-   * Puts [branches] in its own row between [title] and [timelineLink].
+   * Puts [branches] in its own row and puts [timelineLink] and [moreLink] in the last row.
    *
    * @see CodeReviewDetailsBranchComponentFactory.create
    */
-  fun createTitlePanel(title: JComponent, branches: JComponent, timelineLink: JComponent): JComponent =
+  fun createTitlePanel(title: JComponent, branches: JComponent, timelineLink: JComponent, moreLink: JComponent): JComponent =
     VerticalListPanel(TITLE_PANEL_GAP).apply {
       add(title)
       add(branches)
-      add(timelineLink)
+      add(HorizontalListPanel(TITLE_PANEL_GAP).apply {
+        add(timelineLink)
+        add(moreLink)
+      })
     }
 
   fun getRequestStateText(state: ReviewRequestState): @NlsSafe String = when (state) {
