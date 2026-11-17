@@ -210,6 +210,10 @@
 - f:setPrefix(java.lang.String):V
 *f:com.intellij.platform.settings.v2.SettingsKeyPrefixBean$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+*:com.intellij.platform.settings.v2.SettingsKeyPromoter
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsKeyPromoter$Companion
+- a:promote(kotlin.jvm.functions.Function1):V
+*f:com.intellij.platform.settings.v2.SettingsKeyPromoter$Companion
 *f:com.intellij.platform.settings.v2.SettingsMapKey
 - com.intellij.platform.settings.v2.SettingsKey
 - <init>(java.lang.String,com.intellij.platform.settings.v2.SettingsKey,com.intellij.platform.settings.v2.SettingsMapKey):V

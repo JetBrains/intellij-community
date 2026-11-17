@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.settings.v2.SettingsContext
 import com.intellij.platform.settings.v2.SettingsKey
-import com.intellij.platform.settings.v2.impl.SettingsKeyPromoter
+import com.intellij.platform.settings.v2.SettingsKeyPromoter
 import org.jetbrains.annotations.ApiStatus
 
 /**
