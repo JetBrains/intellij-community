@@ -90,7 +90,7 @@ class PyGenericBaseMethodOverrideTest : PyCodeInsightTestCase() {
         pass
 
     class CreateUserCommandHandler(CommandHandler[CreateUserCommand, int]):
-    #                                             ^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'TResponse ≤: Command', got 'int' instead
+    #                                                                ^^^ WARNING Expected type 'TResponse ≤: Command', got 'int' instead
         async def handle(self, command: CreateUserCommand) -> int:
             return 123
     """)
