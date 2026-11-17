@@ -91,6 +91,7 @@ private const val SOURCE_RANGE_ATTRIBUTE = "md-src-pos"
  */
 internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) : MarkdownLivePreviewElementRenderer {
   private var revealedHeadings = emptyList<RevealedHeading>()
+  private val styleSheets = ConcurrentHashMap<String, StyleSheet>()
 
   init {
     editor.addEditorMouseListener(object : EditorMouseListener {
@@ -200,7 +201,7 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
       val look = look()
       val width = wrapWidth(editor)
       return Supplier<Runnable> {
-        val headingPainter = HeadingPainter(editor, look, width)
+        val headingPainter = HeadingPainter(editor, look, width, styleSheets)
         Runnable { painter = headingPainter }
       }
     }
@@ -208,7 +209,7 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
     /** The painter for the current look. A reveal and a refold in one presentation reuse it. */
     fun painter(): HeadingPainter {
       val look = look()
-      return painter?.takeIf { it.look == look } ?: HeadingPainter(editor, look, wrapWidth(editor)).also { painter = it }
+      return painter?.takeIf { it.look == look } ?: HeadingPainter(editor, look, wrapWidth(editor), styleSheets).also { painter = it }
     }
 
     /** The look of the JCEF preview: bold, the default foreground, and the info foreground for h6. */
@@ -277,7 +278,12 @@ private data class HeadingLook(
  * Paints one heading with its own [JBHtmlPane]. The layout is cached for the current wrap width.
  * The constructor lays out the pane at [width]. It needs no EDT, so a background thread can create the painter.
  */
-private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook, width: Int?) : CustomFoldRegionRenderer, CustomHighlighterRenderer {
+private class HeadingPainter(
+  private val editor: EditorEx,
+  val look: HeadingLook,
+  width: Int?,
+  private val styleSheets: ConcurrentHashMap<String, StyleSheet>,
+) : CustomFoldRegionRenderer, CustomHighlighterRenderer {
   private val pane = createPane()
   private var layoutWidth: Int? = null
   private var isWrapped = false
@@ -390,7 +396,7 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
       },
       JBHtmlPaneConfiguration.builder()
         .fontResolver(EditorCssFontResolver.getInstance(editor))
-        .customStyleSheetProvider { headingStyleSheet(css) }
+        .customStyleSheetProvider { styleSheets.computeIfAbsent(css) { StyleSheetUtil.loadStyleSheet(it) } }
         .build(),
     ).apply {
       border = JBUI.Borders.empty()
@@ -404,10 +410,6 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
     }
   }
 }
-
-private val headingStyleSheets = ConcurrentHashMap<String, StyleSheet>()
-
-private fun headingStyleSheet(css: String): StyleSheet = headingStyleSheets.computeIfAbsent(css) { StyleSheetUtil.loadStyleSheet(it) }
 
 /** The width that soft wraps use, or null when the editor does not soft-wrap. */
 private fun wrapWidth(editor: EditorEx): Int? {
