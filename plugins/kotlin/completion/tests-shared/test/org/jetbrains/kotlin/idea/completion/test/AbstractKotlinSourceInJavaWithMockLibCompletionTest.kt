@@ -9,7 +9,7 @@ abstract class AbstractKotlinSourceInJavaWithMockLibCompletionTest : KotlinFixtu
     override fun getPlatform() = JvmPlatforms.unspecifiedJvmPlatform
 
     override fun doTest(testPath: String) {
-        val mockLibDir = File(COMPLETION_TEST_DATA_BASE, "inJavaWithMockLib/mockLib")
+        val mockLibDir = File(testDataDirectory, "mockLib")
 
         val files = mockLibDir.walk().filter { it.isFile }
         for (file in files) {

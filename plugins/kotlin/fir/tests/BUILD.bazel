@@ -1,7 +1,36 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
+jps_test(
+    name = "tests_test",
+    data = [
+        BAZEL_TARGETS_JSON,
+        "@community//plugins/kotlin/code-insight:testData",
+        "@community//plugins/kotlin/completion:testData",
+        "@community//plugins/kotlin/fir/tests:testData",
+        "@community//plugins/kotlin/idea/tests:testData",
+        "@community//plugins/kotlin/refactorings/rename.k2:testData",
+    ] + all_test_dep_targets,
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
+    tags = ["kotlin-tests"],
+    runtime_deps = [":tests_test_lib"],
+)
+
+### skip generation section `test kotlin.fir.tests`
 
 ### auto-generated section `build kotlin.fir.tests` start
 create_kotlinc_options(
@@ -162,10 +191,3 @@ jps_module(
     target = "tests_test_lib",
 )
 ### auto-generated section `iml kotlin.fir.tests` end
-
-### auto-generated section `test kotlin.fir.tests` start
-jps_test(
-    name = "tests_test",
-    runtime_deps = [":tests_test_lib"],
-)
-### auto-generated section `test kotlin.fir.tests` end

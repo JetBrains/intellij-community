@@ -5,6 +5,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
@@ -15,15 +16,15 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.K2IdeKotlinAnchorModuleProvider
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import java.io.File
 
 abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest() {
 
     override fun getTestDataDirectory(): File {
-        return KotlinRoot.DIR.resolve("fir/tests/testData/resolve/anchors")
+        return TestMetadataUtil.getTestData(javaClass)!!
     }
 
     override fun setUpModule() {
@@ -33,6 +34,9 @@ abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest()
     @OptIn(KaPlatformInterface::class)
     override fun setUp() {
         super.setUp()
+
+        //TODO: MRI-5957 org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated
+        VfsRootAccess.allowRootAccess(testRootDisposable, testDataPath)
 
         val stdLibrary = TestKotlinArtifacts.kotlinStdlib
         val dependencyModule = module("dependencyModule")
