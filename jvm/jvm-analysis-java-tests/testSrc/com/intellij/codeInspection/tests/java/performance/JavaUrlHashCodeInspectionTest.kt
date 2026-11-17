@@ -1,9 +1,20 @@
 package com.intellij.codeInspection.tests.java.performance
 
-import com.intellij.jvm.analysis.internal.testFramework.performance.UrlHashCodeInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.performance.urlHashCodeInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
+@TestApplication
+class JavaUrlHashCodeInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  private val myFixture by urlHashCodeInspectionFixture(projectFixture)
+
+  @Test
   fun `test url hashcode call`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.net.URL;
@@ -17,6 +28,7 @@ class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test url equals call`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.net.URL;
@@ -31,6 +43,7 @@ class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test url variable with URL maps or sets`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.net.URL;
@@ -46,6 +59,7 @@ class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test url URL map operations`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.net.URL;
@@ -65,6 +79,7 @@ class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test url URL set operations`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.net.URL;
@@ -84,6 +99,7 @@ class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test URL doesn't highlight when comparing with null`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.net.URL;

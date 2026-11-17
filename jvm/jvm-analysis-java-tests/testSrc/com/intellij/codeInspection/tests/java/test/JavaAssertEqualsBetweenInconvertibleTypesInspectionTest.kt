@@ -1,15 +1,21 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.jvm.analysis.internal.testFramework.test.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.assertEqualsBetweenInconvertibleTypesInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.test.assertEqualsBetweenInconvertibleTypesProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
 import org.intellij.lang.annotations.Language
-import org.junit.Ignore
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.BlockJUnit4ClassRunner
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
-@RunWith(BlockJUnit4ClassRunner::class)
-class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase() {
+@TestApplication
+class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest {
+  companion object {
+    private val projectFixture = assertEqualsBetweenInconvertibleTypesProjectFixture()
+  }
+
+  private val myFixture by assertEqualsBetweenInconvertibleTypesInspectionFixture(projectFixture)
+
   @Test
   fun `test JUnit 4 assertEquals`() {
 
@@ -553,7 +559,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     myFixture.testHighlighting(JvmLanguage.JAVA, code)
   }
 
-  @Ignore("We are aware of this edge case, but do not support it for now.")
+  @Disabled("We are aware of this edge case, but do not support it for now.")
   @Test
   fun `test AssertJ extracting method reference by string type mismatch`() {
     @Language("JAVA") val code = """
@@ -645,7 +651,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     myFixture.testHighlighting(JvmLanguage.JAVA, code)
   }
 
-  @Ignore("We are aware of this edge case, but do not support it for now. See IDEA-360595")
+  @Disabled("We are aware of this edge case, but do not support it for now. See IDEA-360595")
   @Test
   fun `test AssertJ assertEquals List and generic List subclass warns if types do not match`() {
     @Language("JAVA") val code = """
@@ -843,7 +849,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     myFixture.testHighlighting(JvmLanguage.JAVA, code)
   }
 
-  @Ignore("We are aware of this edge case, but do not support it for now. See IDEA-360595")
+  @Disabled("We are aware of this edge case, but do not support it for now. See IDEA-360595")
   @Test
   fun `test AssertJ assertEquals List and Stream with non-matching generics (more complex case)`() {
     @Language("JAVA") val code = """

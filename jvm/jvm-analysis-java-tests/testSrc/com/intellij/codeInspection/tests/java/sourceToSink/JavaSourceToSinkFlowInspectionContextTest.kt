@@ -1,42 +1,45 @@
 package com.intellij.codeInspection.tests.java.sourceToSink
 
-import com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.sourceToSinkFlowInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.sourceToSinkFlowProjectFixture
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow/context"
 @TestDataPath("\$CONTENT_ROOT/testData$INSPECTION_PATH")
-class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTestBase() {
-
-  override val inspection: SourceToSinkFlowInspection
-    get() = super.inspection.apply {
-      untaintedParameterWithPlaceMethodClass.add("java.io.PrintWriter")
-      untaintedParameterWithPlaceMethodName.add("write|print")
-      untaintedParameterWithPlaceIndex.add("0")
-      untaintedParameterWithPlacePlaceClass.add("com.example.sqlinjection.Complete.HttpServletResponse")
-      untaintedParameterWithPlacePlaceMethod.add("getWriter")
-      checkedTypes.add("java.util.List")
-      checkedTypes.add("com.example.sqlinjection.CleanQualifier")
-      depthInside = 10
-      depthOutsideMethods = 1
-      getUntaintedMethodMatcher().classNames.add("com.example.sqlinjection.utils.Utils")
-      getUntaintedMethodMatcher().methodNamePatterns.add("safe")
-
-      qualifierCleanerClass.add("com.example.sqlinjection.CleanQualifier")
-      qualifierCleanerMethod.add("setSafe")
-      qualifierCleanerParams.add("true")
-    }
-
-  override fun getTestDataPath(): String {
-    return JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH
+@TestApplication
+class JavaSourceToSinkFlowInspectionContextTest {
+  companion object {
+    private val projectFixture = sourceToSinkFlowProjectFixture()
   }
 
+  private val myFixture by sourceToSinkFlowInspectionFixture(projectFixture, JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH) {
+    untaintedParameterWithPlaceMethodClass.add("java.io.PrintWriter")
+    untaintedParameterWithPlaceMethodName.add("write|print")
+    untaintedParameterWithPlaceIndex.add("0")
+    untaintedParameterWithPlacePlaceClass.add("com.example.sqlinjection.Complete.HttpServletResponse")
+    untaintedParameterWithPlacePlaceMethod.add("getWriter")
+    checkedTypes.add("java.util.List")
+    checkedTypes.add("com.example.sqlinjection.CleanQualifier")
+    depthInside = 10
+    depthOutsideMethods = 1
+    getUntaintedMethodMatcher().classNames.add("com.example.sqlinjection.utils.Utils")
+    getUntaintedMethodMatcher().methodNamePatterns.add("safe")
+
+    qualifierCleanerClass.add("com.example.sqlinjection.CleanQualifier")
+    qualifierCleanerMethod.add("setSafe")
+    qualifierCleanerParams.add("true")
+  }
+
+  @Test
   fun `test simple with context`() {
     myFixture.testHighlighting("Simple.java")
   }
+  @Test
   fun `test static propagation`(){
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     val configureByText = myFixture.configureByText("Utils.java", """
       package com.example.sqlinjection.utils;
 
@@ -55,16 +58,19 @@ class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTest
     myFixture.allowTreeAccessForFile(configureByText.virtualFile)
     myFixture.testHighlighting("StaticPropagation.java")
   }
+  @Test
   fun `test for not string as a parameter`() {
     myFixture.testHighlighting("SimpleObject.java")
   }
+  @Test
   fun `test depth`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("TaintDepth.java")
   }
 
+  @Test
   fun `test clean qualifier`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("CleanQualifier.java")
   }
 }

@@ -1,9 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
-import com.intellij.junit.testFramework.JUnitParameterizedSourceCompletionTestBase
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
+import com.intellij.junit.testFramework.junitProjectFixture
+import com.intellij.jvm.analysis.testFramework.jvmCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompletionTestBase() {
+@TestApplication
+class JavaJUnitParameterizedSourceCompletionTest {
+  companion object {
+    private val projectFixture = junitProjectFixture(JUNIT5)
+  }
+
+  private val myFixture by jvmCodeInsightFixture(projectFixture)
+
+  @Test
   fun `test completion method source`() {
     myFixture.configureByText("Test.java", """ 
       import org.junit.jupiter.params.ParameterizedTest;
@@ -22,9 +34,10 @@ class JavaJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompl
         }
       }
     """)
-    myFixture.testCompletionVariants(file.name, "abc")
+    myFixture.testCompletionVariants(myFixture.file.name, "abc")
   }
 
+  @Test
   fun `test completion method source several methods`() {
     myFixture.configureByText("Test.java", """ 
       import org.junit.jupiter.params.ParameterizedTest;
@@ -55,9 +68,10 @@ class JavaJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompl
         }
       }
     """)
-    myFixture.testCompletionVariants(file.name, "aaa", "bbb", "ccc", "ddd")
+    myFixture.testCompletionVariants(myFixture.file.name, "aaa", "bbb", "ccc", "ddd")
   }
 
+  @Test
   fun `test completion method source non-static method`() {
     myFixture.configureByText("Test.java", """ 
       import org.junit.jupiter.params.ParameterizedTest;
@@ -88,8 +102,9 @@ class JavaJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompl
         }
       }
     """)
-    myFixture.testCompletionVariants(file.name, "aaa", "bbb", "ccc")
+    myFixture.testCompletionVariants(myFixture.file.name, "aaa", "bbb", "ccc")
   }
+  @Test
   fun `test completion method source non-static method with annotation`() {
     myFixture.configureByText("Test.java", """ 
       import org.junit.jupiter.api.TestInstance;
@@ -122,8 +137,9 @@ class JavaJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompl
         }
       }
     """)
-    myFixture.testCompletionVariants(file.name, "ddd")
+    myFixture.testCompletionVariants(myFixture.file.name, "ddd")
   }
+  @Test
   fun `test completion field source`() {
     myFixture.configureByText("Test.java", """ 
       import org.junit.jupiter.params.ParameterizedTest;
@@ -139,8 +155,9 @@ class JavaJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompl
         public static List<Integer> abc = new ArrayList<>();
       }
       """)
-    myFixture.testCompletionVariants(file.name, "abc")
+    myFixture.testCompletionVariants(myFixture.file.name, "abc")
   }
+  @Test
   fun `test completion field source several fields`() {
     myFixture.configureByText("Test.java", """ 
       import org.junit.jupiter.params.ParameterizedTest;
@@ -159,9 +176,10 @@ class JavaJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompl
         public static List<Integer> ddd = new ArrayList<>();
       }
       """)
-    myFixture.testCompletionVariants(file.name, "aaa", "bbb", "ccc", "ddd")
+    myFixture.testCompletionVariants(myFixture.file.name, "aaa", "bbb", "ccc", "ddd")
   }
 
+  @Test
   fun `test completion field source non-static field`() {
     myFixture.configureByText("Test.java", """ 
       import org.junit.jupiter.params.ParameterizedTest;
@@ -180,9 +198,10 @@ class JavaJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompl
         public List<Integer> ddd = new ArrayList<>();
       }
       """)
-    myFixture.testCompletionVariants(file.name, "aaa", "bbb", "ccc")
+    myFixture.testCompletionVariants(myFixture.file.name, "aaa", "bbb", "ccc")
   }
 
+  @Test
   fun `test completion field source non-static field with annotation`() {
     myFixture.configureByText("Test.java", """ 
       import org.junit.jupiter.api.TestInstance;
@@ -203,6 +222,6 @@ class JavaJUnitParameterizedSourceCompletionTest : JUnitParameterizedSourceCompl
         public List<Integer> ddd = new ArrayList<>();
       }
       """)
-    myFixture.testCompletionVariants(file.name, "aaa", "bbb", "ccc", "ddd")
+    myFixture.testCompletionVariants(myFixture.file.name, "aaa", "bbb", "ccc", "ddd")
   }
 }

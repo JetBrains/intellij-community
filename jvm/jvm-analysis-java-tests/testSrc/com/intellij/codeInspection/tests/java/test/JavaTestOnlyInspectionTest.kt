@@ -1,9 +1,20 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.jvm.analysis.internal.testFramework.test.TestOnlyInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.testOnlyInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
+@TestApplication
+class JavaTestOnlyInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  private val myFixture by testOnlyInspectionFixture(projectFixture)
+
+  @Test
   fun `test @TestOnly not highlighting in javadoc`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       package test;
@@ -29,6 +40,7 @@ class JavaTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test @TestOnly in production code`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       package test;
@@ -76,6 +88,7 @@ class JavaTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test @VisibleForTesting in production code`() {
     myFixture.addFileToProject("VisibleForTestingTestApi.java", """
       package test;

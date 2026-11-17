@@ -3,6 +3,11 @@ package com.intellij.jvm.analysis.internal.testFramework.test
 import com.intellij.codeInspection.test.TestOnlyInspection
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 
+/**
+ * @deprecated Use [testOnlyInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use testOnlyInspectionFixture in a JUnit 5 test")
 abstract class TestOnlyInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: TestOnlyInspection = TestOnlyInspection()
 

@@ -1,11 +1,22 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.jvm.analysis.internal.testFramework.test.TestFailedLineInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.testFailedLineInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.test.testFailedLineProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
+@TestApplication
+class JavaTestFailedLineInspectionTest {
+  companion object {
+    private val projectFixture = testFailedLineProjectFixture()
+  }
+
+  private val myFixture by testFailedLineInspectionFixture(projectFixture)
+
+  @Test
   fun `test non qualified call`() {
-    doTest(
+    myFixture.doTest(
       lang = JvmLanguage.JAVA,
       text = """
         public class MainTest extends junit.framework.TestCase {
@@ -28,8 +39,9 @@ class JavaTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
     )
   }
 
+  @Test
   fun `test qualified call`() {
-    doTest(
+    myFixture.doTest(
       lang = JvmLanguage.JAVA,
       text = """
         public class QualifiedTest extends junit.framework.TestCase {

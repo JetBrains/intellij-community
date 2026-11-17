@@ -2,6 +2,11 @@ package com.intellij.jvm.analysis.internal.testFramework.logging
 
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
 
+/**
+ * @deprecated Use [loggingPlaceholderCountMatchesArgumentCountInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use loggingPlaceholderCountMatchesArgumentCountInspectionFixture in a JUnit 5 test")
 abstract class LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase : LoggingInspectionTestBase() {
   override val inspection: LoggingPlaceholderCountMatchesArgumentCountInspection =  LoggingPlaceholderCountMatchesArgumentCountInspection().apply {
     this.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.YES

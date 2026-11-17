@@ -1,9 +1,20 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.jvm.analysis.internal.testFramework.test.TestCaseWithConstructorInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.testCaseWithConstructorInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.test.testCaseWithConstructorProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspectionTestBase() {
+@TestApplication
+class JavaTestCaseWithConstructorInspectionTest {
+  companion object {
+    private val projectFixture = testCaseWithConstructorProjectFixture()
+  }
+
+  private val myFixture by testCaseWithConstructorInspectionFixture(projectFixture)
+
+  @Test
   fun `test no highlighting parameterized test case`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.Test;
@@ -35,6 +46,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
     """.trimIndent(), "ParameterizedTest")
   }
 
+  @Test
   fun `test no highlighting trivial constructor`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -51,6 +63,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
     """.trimIndent(), "TestCaseWithConstructorInspection2")
   }
 
+  @Test
   fun `test highlighting simple non-trivial constructor`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -63,6 +76,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
     """.trimIndent(), "TestCaseWithConstructorInspection1")
   }
 
+  @Test
   fun `test highlighting complex non-trivial constructor`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -77,6 +91,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
     """.trimIndent(), "TestCaseWithConstructorInspection3")
   }
 
+  @Test
   fun `test highlighting Junit 4`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class JUnit4TestCaseWithConstructor {

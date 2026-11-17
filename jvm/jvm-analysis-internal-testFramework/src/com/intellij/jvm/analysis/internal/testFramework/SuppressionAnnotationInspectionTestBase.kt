@@ -8,6 +8,11 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.testFramework.LightProjectDescriptor
 
+/**
+ * @deprecated Use [jvmAnnotationsProjectFixture] and [suppressionAnnotationInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use jvmAnnotationsProjectFixture and suppressionAnnotationInspectionFixture in a JUnit 5 test")
 abstract class SuppressionAnnotationInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: SuppressionAnnotationInspection = SuppressionAnnotationInspection()
 

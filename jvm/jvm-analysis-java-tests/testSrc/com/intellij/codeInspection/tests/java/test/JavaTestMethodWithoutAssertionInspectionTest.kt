@@ -1,9 +1,20 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.jvm.analysis.internal.testFramework.test.TestMethodWithoutAssertionInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.testMethodWithoutAssertionInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.test.testMethodWithoutAssertionProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionInspectionTestBase() {
+@TestApplication
+class JavaTestMethodWithoutAssertionInspectionTest {
+  companion object {
+    private val projectFixture = testMethodWithoutAssertionProjectFixture()
+  }
+
+  private val myFixture by testMethodWithoutAssertionInspectionFixture(projectFixture)
+
+  @Test
   fun `test highlighting for empty method body`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -22,6 +33,7 @@ class JavaTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionI
     """.trimIndent(), "TestMethodWithoutAssertion")
   }
 
+  @Test
   fun `test no highlighting for AssertJ`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -40,6 +52,7 @@ class JavaTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionI
     """.trimIndent(), "TestMethodWithAssertion")
   }
 
+  @Test
   fun `test no highlighting when assertion is present`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -84,6 +97,7 @@ class JavaTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionI
     """.trimIndent(), "TestMethodWithoutAssertion")
   }
 
+  @Test
   fun `test no highlighting on @BeforeEach`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.jupiter.api.BeforeEach;
@@ -109,6 +123,7 @@ class JavaTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionI
     """.trimIndent(), "SimpleTest")
   }
 
+  @Test
   fun `test no highlighting on before and after suite`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.platform.suite.api.AfterSuite;

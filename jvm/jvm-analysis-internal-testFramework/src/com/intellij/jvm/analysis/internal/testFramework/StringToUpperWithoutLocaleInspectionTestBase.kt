@@ -12,6 +12,11 @@ import com.intellij.util.PathUtil
 import org.jetbrains.annotations.NonNls
 import java.io.File
 
+/**
+ * @deprecated Use [stringToUpperWithoutLocaleProjectFixture] and [stringToUpperWithoutLocaleInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use stringToUpperWithoutLocaleProjectFixture and stringToUpperWithoutLocaleInspectionFixture in a JUnit 5 test")
 abstract class StringToUpperWithoutLocaleInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: StringToUpperWithoutLocale2Inspection = StringToUpperWithoutLocale2Inspection()
 

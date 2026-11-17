@@ -4,15 +4,30 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.java.JavaBundle
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingSimilarMessageInspectionTestBase
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingTestUtils
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingSimilarMessageInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.runInEdtAndWait
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
-class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionTestBase() {
+@TestApplication
+class JavaLoggingSimilarMessageInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
 
+  private val myFixture by loggingSimilarMessageInspectionFixture(projectFixture)
+
+  @Test
   fun `test equals log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -34,10 +49,11 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
         }
      }
     """.trimIndent())
-    val availableIntention = myFixture.getAvailableIntention(JavaBundle.message("navigate.to.duplicate.fix"))
-    assertNotNull(availableIntention)
-    availableIntention?.invoke(project, editor, file)
-    myFixture.checkResult("""
+    runInEdtAndWait {
+      val availableIntention = myFixture.getAvailableIntention(JavaBundle.message("navigate.to.duplicate.fix"))
+      assertNotNull(availableIntention)
+      availableIntention?.invoke(myFixture.project, myFixture.editor, myFixture.file)
+      myFixture.checkResult("""
      import org.apache.logging.log4j.*;
      class Logging {
         private static final Logger LOG = LogManager.getLogger();
@@ -56,9 +72,11 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
             LOG.error(msg, new RuntimeException());
         }
      }
-    """.trimIndent())
+        """.trimIndent())
+    }
   }
 
+  @Test
   fun `test not completed log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -78,6 +96,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test not completed 2 log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -97,6 +116,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test many equals log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -156,6 +176,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test equals slf4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -180,6 +201,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
   }
 
 
+  @Test
   fun `test setMessage equals slf4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -201,6 +223,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test not equals level slf4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -225,6 +248,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
       """.trimIndent())
   }
 
+  @Test
   fun `test not equals log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -244,6 +268,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test not equals end log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -263,6 +288,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test endWith log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -282,6 +308,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test endWith2 log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -301,6 +328,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test startWith log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -320,6 +348,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test startWith 2 log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -339,6 +368,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test equals end log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -358,6 +388,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test many equals end log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -410,6 +441,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test equals middle log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -429,6 +461,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test equals middle contains log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -448,6 +481,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test equals middle contains 2 log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -467,6 +501,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test equals middle contains 3 log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -486,6 +521,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test equals middle contains 4 log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -505,6 +541,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test not equals middle log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -524,6 +561,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test equals log4j2 with placeholders`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -543,6 +581,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
   }
 
 
+  @Test
   fun `test equals idea`() {
     LoggingTestUtils.addIdeaLog(myFixture)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -564,6 +603,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test idea with additional info`() {
     LoggingTestUtils.addIdeaLog(myFixture)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -586,6 +626,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
   }
 
 
+  @Test
   fun `test sequence`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -604,6 +645,7 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test non-distinguished`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -621,8 +663,9 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun `test virtual file is null`() {
-    val psiFile = myFixture.configureByText("${generateFileName()}${JvmLanguage.JAVA.ext}", """
+    val psiFile = myFixture.configureByText("${myFixture.generateFileName()}${JvmLanguage.JAVA.ext}", """
        import org.apache.logging.log4j.*;
        class Logging {
           private static final Logger LOG = LogManager.getLogger();
@@ -638,16 +681,18 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
           }
        }
       """.trimIndent())
-    val similarMessageInspection = inspection
-    val copy = psiFile.copy()
-    val copyFile = copy as PsiFile
-    assertNull(copyFile.virtualFile)
-    val textRange = TextRange(0, copyFile.fileDocument.charsSequence.length)
-    val visitor = similarMessageInspection.buildVisitor(
-      holder = ProblemsHolder(InspectionManager.getInstance(project), copyFile, true),
-      isOnTheFly = true,
-      session = LocalInspectionToolSession(copyFile, textRange, textRange, null))
-    assertFalse(visitor == PsiElementVisitor.EMPTY_VISITOR)
+    runReadActionBlocking {
+      val similarMessageInspection = myFixture.inspection
+      val copy = psiFile.copy()
+      val copyFile = copy as PsiFile
+      assertNull(copyFile.virtualFile)
+      val textRange = TextRange(0, copyFile.fileDocument.charsSequence.length)
+      val visitor = similarMessageInspection.buildVisitor(
+        holder = ProblemsHolder(InspectionManager.getInstance(myFixture.project), copyFile, true),
+        isOnTheFly = true,
+        session = LocalInspectionToolSession(copyFile, textRange, textRange, null))
+      assertFalse(visitor == PsiElementVisitor.EMPTY_VISITOR)
+    }
   }
 }
 

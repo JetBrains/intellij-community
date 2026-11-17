@@ -1,26 +1,28 @@
 package com.intellij.codeInspection.tests.java.sourceToSink
 
-import com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.sourceToSinkFlowInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.sourceToSinkFlowProjectFixture
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow/unknown"
 
 @TestDataPath("\$CONTENT_ROOT/testData$INSPECTION_PATH")
-class JavaSourceToSinkFlowInspectionUnknownTest : SourceToSinkFlowInspectionTestBase() {
-
-  override val inspection: SourceToSinkFlowInspection
-    get() = super.inspection.also {
-      it.showUnknownObject = false
-    }
-
-  override fun getTestDataPath(): String {
-    return JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH
+@TestApplication
+class JavaSourceToSinkFlowInspectionUnknownTest {
+  companion object {
+    private val projectFixture = sourceToSinkFlowProjectFixture()
   }
 
+  private val myFixture by sourceToSinkFlowInspectionFixture(projectFixture, JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH) {
+    showUnknownObject = false
+  }
+
+  @Test
   fun testSimple() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Simple.java")
   }
 }

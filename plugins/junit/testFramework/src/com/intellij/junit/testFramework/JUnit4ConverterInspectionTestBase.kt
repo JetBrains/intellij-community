@@ -10,6 +10,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT3, JUNIT4)
 
+/**
+ * @deprecated Use [junitProjectFixture] and [junit4ConverterInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use junitProjectFixture and junit4ConverterInspectionFixture in a JUnit 5 test")
 abstract class JUnit4ConverterInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnit4ConverterInspection = JUnit4ConverterInspection()
 

@@ -1,9 +1,20 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.jvm.analysis.internal.testFramework.DependencyInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.dependencyInspectionFixture
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
-  fun `test illegal imported dependency Java API`() = dependencyViolationTest(javaFooFile, "ImportClientJava.java", """
+@TestApplication
+class JavaDependencyInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  private val myFixture by dependencyInspectionFixture(projectFixture)
+
+  @Test
+  fun `test illegal imported dependency Java API`() = myFixture.dependencyViolationTest(myFixture.javaFooFile, "ImportClientJava.java", """
       package pkg.client;
       
       import <error descr="Dependency rule 'Deny usages of scope 'JavaFoo' in scope 'ImportClientJava'.' is violated">pkg.api.JavaFoo</error>;
@@ -15,7 +26,8 @@ class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
       }            
     """.trimIndent())
 
-  fun `test illegal imported dependency skip imports`() = dependencyViolationTest(javaFooFile, "ImportClientJava.java", """
+  @Test
+  fun `test illegal imported dependency skip imports`() = myFixture.dependencyViolationTest(myFixture.javaFooFile, "ImportClientJava.java", """
       package pkg.client;
       
       import pkg.api.JavaFoo;
@@ -27,7 +39,8 @@ class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
       }            
     """.trimIndent(), skipImports = true)
 
-  fun `test illegal imported dependency skip static imports`() = dependencyViolationTest(javaFooFile, "ImportClientJava.java", """
+  @Test
+  fun `test illegal imported dependency skip static imports`() = myFixture.dependencyViolationTest(myFixture.javaFooFile, "ImportClientJava.java", """
       package pkg.client;
       
       import static pkg.api.JavaFoo.foo;
@@ -39,7 +52,8 @@ class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
       }            
     """.trimIndent(), skipImports = true)
 
-  fun `test illegal imported dependency qualified expression`() = dependencyViolationTest(javaFooFile, "ImportClientJava.java", """
+  @Test
+  fun `test illegal imported dependency qualified expression`() = myFixture.dependencyViolationTest(myFixture.javaFooFile, "ImportClientJava.java", """
       package pkg.client;
       
       import pkg.api.JavaFoo;
@@ -51,7 +65,8 @@ class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
       }            
     """.trimIndent(), skipImports = true)
 
-  fun `test illegal fully qualified dependency Java API`() = dependencyViolationTest(javaFooFile, "FqClientJava.java", """
+  @Test
+  fun `test illegal fully qualified dependency Java API`() = myFixture.dependencyViolationTest(myFixture.javaFooFile, "FqClientJava.java", """
       package pkg.client;
       
       class Client {

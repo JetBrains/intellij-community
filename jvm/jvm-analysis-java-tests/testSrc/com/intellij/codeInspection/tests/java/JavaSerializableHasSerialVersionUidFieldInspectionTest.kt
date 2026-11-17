@@ -1,10 +1,21 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.jvm.analysis.internal.testFramework.SerializableHasSerialVersionUidFieldInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.jvmSdkProjectFixture
+import com.intellij.jvm.analysis.internal.testFramework.serializableHasSerialVersionUidFieldInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase() {
+@TestApplication
+class JavaSerializableHasSerialVersionUidFieldInspectionTest {
+  companion object {
+    private val projectFixture = jvmSdkProjectFixture()
+  }
+
+  private val myFixture by serializableHasSerialVersionUidFieldInspectionFixture(projectFixture)
+
+  @Test
   fun `test highlighting`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.io.Serializable;
@@ -13,6 +24,7 @@ class JavaSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSe
     """.trimIndent())
   }
 
+  @Test
   fun `test quickfix`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_11) // no @Serial annotation for any JDK lower than 14
     myFixture.testQuickFix(JvmLanguage.JAVA, """
@@ -28,6 +40,7 @@ class JavaSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSe
     """.trimIndent(), "Create constant field 'serialVersionUID' in 'Foo'")
   }
 
+  @Test
   fun `test quickfix @Serial annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_14) // @Serial was introduced in JDK 14
     myFixture.testQuickFix(JvmLanguage.JAVA, """
