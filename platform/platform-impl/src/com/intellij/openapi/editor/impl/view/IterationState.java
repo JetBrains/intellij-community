@@ -484,7 +484,8 @@ public final class IterationState {
 
   /**
    * Moves the iterator over the next lexer tokens whose attributes add nothing to a step, and gives the end of the last of them.
-   * The given end is the end of the current token. The result does not pass the first token end that reaches the end of the iteration.
+   * The given end is the end of the current token. The scan stops at the first token that reaches the end of the iteration.
+   * The result is not inside a surrogate pair.
    */
   private int extendSyntaxRun(@NotNull HighlighterIterator iterator, int end) {
     int runEnd = end;
@@ -493,9 +494,9 @@ public final class IterationState {
       if (iterator.atEnd() || !addsNothing(iterator.getTextAttributes())) {
         break;
       }
-      runEnd = alignOffset(tokenEnd(iterator));
+      runEnd = tokenEnd(iterator);
     }
-    return runEnd;
+    return alignOffset(runEnd);
   }
 
   /**
