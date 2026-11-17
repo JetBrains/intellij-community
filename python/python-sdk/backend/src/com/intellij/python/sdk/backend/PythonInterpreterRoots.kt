@@ -91,6 +91,10 @@ class PythonInterpreterRoots(private val project: Project, scope: CoroutineScope
     pending.update { it + (interpreter.key to Request(interpreter)) }
   }
 
+  /** For tests: the interpreters whose roots the writer did not commit yet, for the report of a wait that does not end. */
+  @TestOnly
+  fun describePendingForTests(): String = "pending roots: ${pending.value.keys}"
+
   /** For tests: suspends until the writer committed the roots of every request, see [requestDerive]. */
   @TestOnly
   suspend fun awaitCommittedForTests() {

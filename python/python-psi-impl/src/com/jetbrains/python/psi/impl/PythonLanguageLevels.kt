@@ -97,6 +97,15 @@ internal class PythonLanguageLevels(private val project: Project, private val co
   }
 }
 
+/** For tests: the layout that the pusher pushed last and the layout of the current snapshot, for the report of a wait that does not end. */
+@ApiStatus.Internal
+@TestOnly
+fun describePythonLanguageLevelsForTests(project: Project): String {
+  val levels = PythonLanguageLevels.getInstance(project)
+  val expected = EvoPyProjectModel.getInstance(project).snapshotOrNull()?.let { PythonLanguageLevelLayout.of(project, it) }
+  return "language levels: pushed ${levels.layout.value}, expected ${expected}"
+}
+
 /** For tests: [PythonLanguageLevels.awaitPushedForTests] of [project]. */
 @ApiStatus.Internal
 @TestOnly

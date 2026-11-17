@@ -104,6 +104,15 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
 
   private val state = MutableStateFlow<Computed?>(null)
 
+  /** For tests: the last computation of the list against the store, for the report of a wait that does not end. */
+  @TestOnly
+  fun describeForTests(): String {
+    val computed = state.value
+    val records = PythonInterpreterRecords.getInstance(project)
+    return "registry: computed at records version ${computed?.recordsVersion} of ${records.versions.value}, " +
+           "interpreters ${computed?.interpreters?.map { it.key }}, records ${records.keys()}"
+  }
+
   /**
    * Makes the search for an SDK to adopt and the add one step. Without it, two parallel adds for one Python both find
    * nothing to adopt, and both add an SDK.
