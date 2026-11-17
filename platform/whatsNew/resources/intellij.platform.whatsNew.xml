@@ -28,6 +28,8 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.whatsNew.collectors.WhatsNewCounterUsageCollector"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.platform.whatsNew.collectors.WhatsNewMultipageIdValidationRule"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.platform.whatsNew.collectors.WhatsNewPageElementIdValidationRule"/>
     <registryKey defaultValue="false" description="Whats new test mode" key="whats.new.test.mode" restartRequired="false" />
   </extensions>
   <actions resource-bundle="messages.ActionsBundle">

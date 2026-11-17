@@ -198,6 +198,8 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
   private val myActionWhiteList: Set<String>
   private val visionActionIds = setOf(GIF_VALUE, ZOOM_VALUE)
   internal val multipageIds: List<String>
+  private val tabGroups: List<WhatsNewInVisionContentProvider.TabGroup> = page.tabIds
+  private val anchorIds: Set<String> = page.anchorIds.toSet()
 
   init {
     var html = page.html
@@ -348,19 +350,26 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
       isChinaRegion = isChinaRegion,
       isAiNotAllowed = !airPluginLoaded,
     )
-    // One-page case
-    val request = if (startPageId == WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID || multipageIds.size == 1) {
-      html(pageContent)
-    }
-    // Multipage case
-    else {
-      html(pageContent, "file:///jbcefbrowser#/$startPageId").withOnUrlChanged { oldUrl, newUrl ->
-        WhatsNewCounterUsageCollector.multipageIdChanged(dataContext?.project, oldUrl?.substringAfter("#/"), newUrl.substringAfter("#/"))
-      }
-    }
+    val isOnePage = startPageId == WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID || multipageIds.size == 1
+    val request = if (isOnePage) html(pageContent) else html(pageContent, "file:///jbcefbrowser#/$startPageId")
+    val fallbackPageId = if (isOnePage) WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID else startPageId
     return request
+      .withOnUrlChanged { oldUrl, newUrl -> logUrlChanges(project, oldUrl, newUrl, fallbackPageId) }
       .withQueryHandler(getQueryHandler(dataContext, project, showsAirPromo(isChinaRegion, airPluginLoaded)))
       .withResourceHandler(getRequestHandler(dataContext))
+  }
+
+  private fun logUrlChanges(project: Project, oldUrl: String?, newUrl: String, fallbackPageId: String) {
+    for (change in findUrlChanges(oldUrl, newUrl, fallbackPageId, tabGroups, anchorIds)) {
+      when (change) {
+        is WhatsNewUrlChange.PageChanged ->
+          WhatsNewCounterUsageCollector.multipageIdChanged(project, change.oldPageId, change.newPageId)
+        is WhatsNewUrlChange.TabSelected ->
+          WhatsNewCounterUsageCollector.pageTabSelected(project, change.pageId, change.tabsGroupId, change.tabId)
+        is WhatsNewUrlChange.AnchorNavigated ->
+          WhatsNewCounterUsageCollector.anchorNavigated(project, change.pageId, change.anchorId)
+      }
+    }
   }
 }
 
