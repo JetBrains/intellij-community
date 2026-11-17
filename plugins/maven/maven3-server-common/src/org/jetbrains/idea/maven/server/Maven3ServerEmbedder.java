@@ -181,22 +181,42 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
     try {
       MavenSession mavenSession = createMavenSession(request, maven);
-      sessionScope.seed(MavenSession.class, mavenSession);
-      LegacySupport legacySupport = getComponent(LegacySupport.class);
-      MavenSession oldSession = legacySupport.getSession();
-      legacySupport.setSession(mavenSession);
-
-      notifyAfterSessionStart(mavenSession);
-      // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
       try {
-        runnable.run();
+        sessionScope.seed(MavenSession.class, mavenSession);
+        LegacySupport legacySupport = getComponent(LegacySupport.class);
+        MavenSession oldSession = legacySupport.getSession();
+        legacySupport.setSession(mavenSession);
+
+        notifyAfterSessionStart(mavenSession);
+        // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
+        try {
+          runnable.run();
+        }
+        finally {
+          legacySupport.setSession(oldSession);
+        }
       }
       finally {
-        legacySupport.setSession(oldSession);
+        closeRepositorySession(mavenSession.getRepositorySession());
       }
     }
     finally {
       sessionScope.exit();
+    }
+  }
+
+  /**
+   * Maven Resolver 2 (Maven 3.10+) returns a closeable repository session. The resolver keeps the thread pools of a session
+   * until the session is closed. Older resolver versions have no closeable session: then this method does nothing.
+   */
+  protected static void closeRepositorySession(@Nullable RepositorySystemSession session) {
+    if (session instanceof AutoCloseable) {
+      try {
+        ((AutoCloseable)session).close();
+      }
+      catch (Exception e) {
+        MavenServerGlobals.getLogger().warn(e);
+      }
     }
   }
 

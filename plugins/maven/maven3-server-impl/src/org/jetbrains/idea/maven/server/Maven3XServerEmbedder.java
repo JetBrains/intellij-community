@@ -1121,36 +1121,41 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession session = maven.newRepositorySession(request);
-      myImporterSpy.setIndicator(task.getIndicator());
+      try {
+        myImporterSpy.setIndicator(task.getIndicator());
 
-      List<PluginResolutionData> resolutions = new ArrayList<>();
+        List<PluginResolutionData> resolutions = new ArrayList<>();
 
-      for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
-        MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
-        List<RemoteRepository> remoteRepos = RepositoryUtils.toRepos(convertRepositories(pluginResolutionRequest.getRepositories()));
+        for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
+          MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
+          List<RemoteRepository> remoteRepos = RepositoryUtils.toRepos(convertRepositories(pluginResolutionRequest.getRepositories()));
 
-        List<Dependency> dependencies = new ArrayList<>();
-        for (MavenId dependencyId : pluginResolutionRequest.getPluginDependencies()) {
-          Dependency dependency = new Dependency();
-          dependency.setGroupId(dependencyId.getGroupId());
-          dependency.setArtifactId(dependencyId.getArtifactId());
-          dependency.setVersion(dependencyId.getVersion());
-          dependencies.add(dependency);
+          List<Dependency> dependencies = new ArrayList<>();
+          for (MavenId dependencyId : pluginResolutionRequest.getPluginDependencies()) {
+            Dependency dependency = new Dependency();
+            dependency.setGroupId(dependencyId.getGroupId());
+            dependency.setArtifactId(dependencyId.getArtifactId());
+            dependency.setVersion(dependencyId.getVersion());
+            dependencies.add(dependency);
+          }
+
+          PluginResolutionData resolution =
+            new PluginResolutionData(
+              mavenPluginId,
+              pluginResolutionRequest.resolvePluginDependencies(),
+              dependencies,
+              remoteRepos);
+          resolutions.add(resolution);
         }
-
-        PluginResolutionData resolution =
-          new PluginResolutionData(
-            mavenPluginId,
-            pluginResolutionRequest.resolvePluginDependencies(),
-            dependencies,
-            remoteRepos);
-        resolutions.add(resolution);
+        List<PluginResolutionResponse> results = ParallelRunnerForServer.execute(runInParallel, resolutions, resolution ->
+          resolvePlugin(task, resolution.mavenPluginId, resolution.resolveDependencies, resolution.dependencies, resolution.remoteRepos, session)
+        );
+        telemetry.shutdown();
+        return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token));
       }
-      List<PluginResolutionResponse> results = ParallelRunnerForServer.execute(runInParallel, resolutions, resolution ->
-        resolvePlugin(task, resolution.mavenPluginId, resolution.resolveDependencies, resolution.dependencies, resolution.remoteRepos, session)
-      );
-      telemetry.shutdown();
-      return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token));
+      finally {
+        closeRepositorySession(session);
+      }
     }
   }
 
@@ -1371,21 +1376,25 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
+      try {
+        initLogging(myConsoleWrapper);
 
-      initLogging(myConsoleWrapper);
+        // do not use request.getRemoteRepositories() here,
+        // it can be broken after DefaultMaven#newRepositorySession => MavenRepositorySystem.injectMirror invocation
+        RemoteRepositoryManager remoteRepositoryManager = getComponent(RemoteRepositoryManager.class);
+        org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
+        List<RemoteRepository> repositories = RepositoryUtils.toRepos(repos);
+        repositories =
+          remoteRepositoryManager.aggregateRepositories(repositorySystemSession, new ArrayList<RemoteRepository>(), repositories, false);
 
-      // do not use request.getRemoteRepositories() here,
-      // it can be broken after DefaultMaven#newRepositorySession => MavenRepositorySystem.injectMirror invocation
-      RemoteRepositoryManager remoteRepositoryManager = getComponent(RemoteRepositoryManager.class);
-      org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
-      List<RemoteRepository> repositories = RepositoryUtils.toRepos(repos);
-      repositories =
-        remoteRepositoryManager.aggregateRepositories(repositorySystemSession, new ArrayList<RemoteRepository>(), repositories, false);
+        ArtifactResult artifactResult = repositorySystem.resolveArtifact(
+          repositorySystemSession, new ArtifactRequest(RepositoryUtils.toArtifact(artifact), repositories, null));
 
-      ArtifactResult artifactResult = repositorySystem.resolveArtifact(
-        repositorySystemSession, new ArtifactRequest(RepositoryUtils.toArtifact(artifact), repositories, null));
-
-      return RepositoryUtils.toArtifact(artifactResult.getArtifact());
+        return RepositoryUtils.toArtifact(artifactResult.getArtifact());
+      }
+      finally {
+        closeRepositorySession(repositorySystemSession);
+      }
     }
   }
 
