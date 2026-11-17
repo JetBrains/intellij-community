@@ -3037,7 +3037,8 @@ com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory
 - sf:Companion:com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory$Companion
 - a:canUseIn(com.intellij.openapi.project.Project):Z
 - a:createFileChooser(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.fileChooser.FileChooserDialog
-- a:createFileChooser(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor,java.util.Collection):com.intellij.openapi.fileChooser.FileChooserDialog
+- a:createFileChooser(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor,java.util.Collection,kotlin.jvm.functions.Function1):com.intellij.openapi.fileChooser.FileChooserDialog
+- bs:createFileChooser$default(com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory,com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor,java.util.Collection,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.fileChooser.FileChooserDialog
 - a:createFileSaver(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileSaverDescriptor):com.intellij.openapi.fileChooser.FileSaverDialog
 - a:createPathChooser(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.fileChooser.PathChooserDialog
 - s:getInstanceOrNull():com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory

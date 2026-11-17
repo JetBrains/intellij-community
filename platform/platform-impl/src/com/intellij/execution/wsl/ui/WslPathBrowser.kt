@@ -48,7 +48,7 @@ fun browseWslPath(
     FileChooserFactory.getInstance().createFileChooser(descriptor, project, parent)
   }
   else {
-    factory.createFileChooser(project = project, parent = parent, descriptor = descriptor, contributors = contributors)
+    factory.createFileChooser(project, parent, descriptor, contributors, preselectPath = { distro.getUNCRootPath() })
   }
   val files = if (windowsPath != null) dialog.choose(null, windowsPath) else dialog.choose(null)
   val linuxPath = files.firstOrNull()?.toNioPath()?.let { distro.getWslPath(it) } ?: return

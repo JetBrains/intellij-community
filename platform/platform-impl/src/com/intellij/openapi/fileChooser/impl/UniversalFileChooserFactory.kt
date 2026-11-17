@@ -11,6 +11,7 @@ import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributo
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.nio.file.Path
 
 /**
  * Creates the dialogs of the universal file chooser.
@@ -35,12 +36,17 @@ interface UniversalFileChooserFactory {
 
   /**
    * Creates a file chooser that shows only the roots of [contributors].
+   *
+   * [FileChooserDialog.choose] without a file to select navigates to the path from [preselectPath].
+   * The chooser calls [preselectPath] on a background thread.
+   * When [preselectPath] is null or gives null, the chooser navigates to the default path.
    */
   fun createFileChooser(
     project: Project,
     parent: Component?,
     descriptor: FileChooserDescriptor,
     contributors: Collection<UniversalFileChooserContributor>,
+    preselectPath: (suspend () -> Path?)? = null,
   ): FileChooserDialog
 
   fun createFileSaver(project: Project?, parent: Component?, descriptor: FileSaverDescriptor): FileSaverDialog

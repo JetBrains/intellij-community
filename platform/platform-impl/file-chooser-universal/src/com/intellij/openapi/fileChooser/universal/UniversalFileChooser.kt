@@ -166,6 +166,7 @@ object UniversalFileChooser {
   /**
    * Capable of choosing files in a local file system and in Docker/WSL containers.
    */
+  @ApiStatus.Experimental
   class Dialog(
     val project: Project,
     private val parent: Component? = null,
@@ -200,6 +201,7 @@ object UniversalFileChooser {
 
     /**
      * Shows the dialog and converts the selection to virtual files.
+     * When [toPreselect] is null, preselects the path from [preselectPath].
      * Validates the result with [validateChosenFiles] before it returns the files.
      * When the validation fails, reopens the dialog and preselects the first selected file.
      * Returns null when the user cancels the dialog.
@@ -208,7 +210,7 @@ object UniversalFileChooser {
       var dialog = this
       var preselect = toPreselect
       while (true) {
-        dialog.mainPanel.preselect(preselect?.let { path -> suspend { path } })
+        dialog.mainPanel.preselect(preselect?.let { path -> suspend { path } } ?: dialog.preselectPath)
         if (!dialog.showAndGet()) return null
         val selection = dialog.getSelectedFiles()
         val chosen = toVirtualFiles(descriptor, project, selection)
