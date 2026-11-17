@@ -343,7 +343,7 @@
 *f:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsBranchComponentFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsBranchComponentFactory
 - f:create(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel):javax.swing.JComponent
-- f:createMoreActionsLink(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel):javax.swing.JComponent
+- f:createActionLinks(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel,javax.swing.JComponent):javax.swing.JComponent
 *f:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommitInfoComponentFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommitInfoComponentFactory
 - f:create(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0):javax.swing.JComponent
@@ -414,7 +414,7 @@
 - s:values():com.intellij.collaboration.ui.codereview.details.GroupedRenderer$SeparatorPosition[]
 *f:com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
-- f:createTitlePanel(javax.swing.JComponent,javax.swing.JComponent,javax.swing.JComponent,javax.swing.JComponent):javax.swing.JComponent
+- f:createTitlePanel(javax.swing.JComponent,javax.swing.JComponent,javax.swing.JComponent):javax.swing.JComponent
 - f:getACTIONS_GAPS():java.awt.Insets
 - f:getCOMMIT_INFO_GAPS():java.awt.Insets
 - f:getCOMMIT_POPUP_BRANCHES_GAPS():java.awt.Insets

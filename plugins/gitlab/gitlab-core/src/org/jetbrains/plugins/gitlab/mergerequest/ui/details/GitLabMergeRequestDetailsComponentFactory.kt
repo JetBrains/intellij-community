@@ -106,8 +106,8 @@ object GitLabMergeRequestDetailsComponentFactory {
       val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
         detailsVm.showTimeline()
       }
-      val moreLink = CodeReviewDetailsBranchComponentFactory.createMoreActionsLink(cs, detailsVm.branchesVm)
-      ReviewDetailsUIUtil.createTitlePanel(title, branches, timelineLink, moreLink)
+      val actionLinks = CodeReviewDetailsBranchComponentFactory.createActionLinks(cs, detailsVm.branchesVm, timelineLink)
+      ReviewDetailsUIUtil.createTitlePanel(title, branches, actionLinks)
     }
     else {
       null
