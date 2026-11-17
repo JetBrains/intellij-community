@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.lang
 
 import com.intellij.codeInsight.generation.CommenterDataHolder
+import com.intellij.codeInsight.generation.CommenterWithLineSuffix
 import com.intellij.codeInsight.generation.SelfManagingCommenter
 import com.intellij.codeInsight.generation.SelfManagingCommenterUtil
 import com.intellij.lang.Commenter
@@ -28,7 +29,7 @@ import com.intellij.util.text.CharArrayUtil.regionMatches
  * It writes `[//]: # (text)` when [MarkdownCommentSyntax.LINK_DEFINITION_SYNTAX_REGISTRY_KEY] is true,
  * or when the line contains `-->`.
  */
-class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> {
+class MarkdownCommenter : Commenter, CommenterWithLineSuffix, SelfManagingCommenter<CommenterDataHolder> {
   private data class CommentSyntax(val prefix: String, val suffix: String, val isLinkDefinition: Boolean = false)
 
   private val htmlCommentSyntax = CommentSyntax(HTML_COMMENT_PREFIX, HTML_COMMENT_SUFFIX)
@@ -54,6 +55,7 @@ class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> 
   }
 
   override fun getLineCommentPrefix(): String = commentSyntaxToWrite().prefix
+  override fun getLineCommentSuffix(): String = commentSyntaxToWrite().suffix
   override fun getCommentPrefix(line: Int, document: Document, data: CommenterDataHolder): String = lineCommentPrefix
 
   override fun getBlockCommentPrefix(): String = HTML_COMMENT_PREFIX
