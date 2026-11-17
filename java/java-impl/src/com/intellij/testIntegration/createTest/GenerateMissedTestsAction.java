@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.ListSelectionModel;
 import java.util.Collection;
 
 public final class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
@@ -73,12 +74,13 @@ public final class GenerateMissedTestsAction extends PsiElementBaseIntentionActi
       return;
     }
 
-    PsiTargetNavigator<PsiClass> navigator = new PsiTargetNavigator<>(ContainerUtil.map(testClasses, PsiClass.class::cast));
-    navigator.presentationProvider(aClass -> PsiElementRenderingInfo.targetPresentation(aClass, PsiClassRenderingInfo.INSTANCE));
-    navigator.navigate(editor, JavaBundle.message("popup.title.choose.test"), selectedClass -> {
-      generateMissedTests(selectedClass, srcClass, editor);
-      return false;
-    });
+    new PsiTargetNavigator<>(ContainerUtil.map(testClasses, PsiClass.class::cast))
+      .builderConsumer(b -> b.setSelectionMode(ListSelectionModel.SINGLE_SELECTION))
+      .presentationProvider(aClass -> PsiElementRenderingInfo.targetPresentation(aClass, PsiClassRenderingInfo.INSTANCE))
+      .navigate(editor, JavaBundle.message("popup.title.choose.test"), selectedClass -> {
+        generateMissedTests(selectedClass, srcClass, editor);
+        return false;
+      });
   }
 
   private static void generateMissedTests(final PsiClass testClass, final PsiClass srcClass, Editor srcEditor) {
