@@ -1,6 +1,18 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "kotlin-grazie-tests_test",
+    data = [
+        "@community//plugins/kotlin/idea/tests:testData",
+    ] + all_test_dep_targets,
+    tags = ["kotlin-tests"],
+    runtime_deps = [":kotlin-grazie-tests_test_lib"],
+)
+
+### skip generation section `test intellij.kotlin.grazie.tests`
 
 ### auto-generated section `build intellij.kotlin.grazie.tests` start
 jvm_library(
@@ -45,10 +57,3 @@ jps_module(
     target = "kotlin-grazie-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.grazie.tests` end
-
-### auto-generated section `test intellij.kotlin.grazie.tests` start
-jps_test(
-    name = "kotlin-grazie-tests_test",
-    runtime_deps = [":kotlin-grazie-tests_test_lib"],
-)
-### auto-generated section `test intellij.kotlin.grazie.tests` end
