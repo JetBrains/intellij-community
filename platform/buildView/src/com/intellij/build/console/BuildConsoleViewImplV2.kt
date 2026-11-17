@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.addComponentInlay
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -172,15 +173,9 @@ internal class BuildConsoleViewImplV2(
   override fun scrollToNodeOutput(nodeId: Any) {
     state.accessFlushed {
       val inlay = nodeInlays(nodeId).firstOrNull()
-      val bounds = inlay?.bounds
-      if (inlay != null && bounds != null) {
+      if (inlay != null) {
         editor.caretModel.moveToOffset(inlay.offset)
-        if (ClientId.isCurrentlyUnderLocalId) {
-          editor.scrollingModel.scrollVertically(bounds.y)
-        } else {
-          val targetOffset = editor.offsetToLogicalPosition(inlay.offset)
-          editor.scrollingModel.scrollTo(targetOffset, ScrollType.CENTER)
-        }
+        EditorUtil.scrollToInlay(editor, inlay)
       }
       else {
         val outputRanges = sortedOutputMarkers(nodeId)
