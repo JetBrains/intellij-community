@@ -215,7 +215,7 @@
     <bidiRegionsSeparator language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownBidiRegionsSeparator"/>
 
     <completion.contributor language="Markdown"
-                            implementationClass="org.intellij.plugins.markdown.editor.MarkdownFenceLangCompletionContributor"/>
+                            implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
 
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
 
