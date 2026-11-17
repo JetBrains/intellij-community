@@ -51,6 +51,16 @@ its own format, so neither the key nor the serializer knows the format.
 
 - A key with a scalar default of type `Int`, `Long`, `Double`, `Boolean` or `String` infers its serializer.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsResolutionTest.kt
+- A key with an enum entry as its default infers the enum serializer, also for an entry with a body.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsEnumSerializerTest.kt
+- The enum serializer must store an entry by its constant name, as a string, with no conversion of the name. Two
+  constants that differ only by the case or by an underscore stay distinct. See
+  [ADR 0178](../adr/0178-an-enum-is-stored-by-its-constant-name-with-no-conversion.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsEnumSerializerTest.kt
+- `enumSerializer<E>()` gives the enum serializer for explicit use, and it composes with `nullable()`, `listOf()` and
+  `mapOf()`. `enumSerializer(enumClass)` gives the same serializer where the enum is known only as a class, for
+  example in Java code.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsEnumSerializerTest.kt
 - A key with any other default type must pass a serializer. Otherwise its construction fails.
 - `nullable()` wraps a serializer so that `null` round-trips as the null value.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNullDefaultTest.kt
@@ -86,6 +96,9 @@ its own format, so neither the key nor the serializer knows the format.
   wrong value of a map, and a wrong value of a nullable serializer must each give `IllegalArgumentException`, so the
   key resolves to its default with a warning.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMalformedValueTest.kt
+- A stored enum name that no constant has, and a stored value that is not a string, must make an enum key resolve to
+  its default with a warning.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsEnumSerializerTest.kt
 - A custom serializer that throws `IllegalArgumentException` must make its key resolve to the default with a warning.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMalformedValueTest.kt
 
@@ -98,4 +111,6 @@ its own format, so neither the key nor the serializer knows the format.
 
 ## Open Questions / Risks
 
-- None.
+- A rename of an enum constant breaks the values stored under the old name. A mechanism that lets a constant declare
+  its exact stored value would keep them. See
+  [ADR 0178](../adr/0178-an-enum-is-stored-by-its-constant-name-with-no-conversion.md).

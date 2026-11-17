@@ -43,12 +43,14 @@ interface Serializer<T> {
 /**
  * Returns this stored value as a [V], for a deserializer that expects that type of value.
  *
+ * @param target names what the deserializer restores, such as an enum class, for the message of the failure, or `null`
  * @throws IllegalArgumentException when this value is not a [V]
  */
-internal inline fun <reified V : SettingsValue> SettingsValue.requireValue(): V =
-  this as? V ?: throw IllegalArgumentException("Expected a stored ${V::class.java.simpleName}, but found a ${javaClass.simpleName}")
+internal inline fun <reified V : SettingsValue> SettingsValue.requireValue(target: String? = null): V =
+  this as? V ?: throw IllegalArgumentException(
+    "Expected a stored ${V::class.java.simpleName}${target?.let { " of $it" }.orEmpty()}, but found $this")
 
-/** Serializes an [Int] as an [IntValue]. The scalar shortcut form of [SettingsKey] picks it automatically. */
+/** Serializes an [Int] as an [IntValue]. The eager-default constructor of [SettingsKey] infers it. */
 @Experimental
 object IntSerializer : Serializer<Int> {
   override fun serialize(value: Int): SettingsValue = IntValue(value)
@@ -56,7 +58,7 @@ object IntSerializer : Serializer<Int> {
   override fun deserialize(value: SettingsValue): Int = value.requireValue<IntValue>().value
 }
 
-/** Serializes a [Long] as a [LongValue]. The scalar shortcut form of [SettingsKey] picks it automatically. */
+/** Serializes a [Long] as a [LongValue]. The eager-default constructor of [SettingsKey] infers it. */
 @Experimental
 object LongSerializer : Serializer<Long> {
   override fun serialize(value: Long): SettingsValue = LongValue(value)
@@ -64,7 +66,7 @@ object LongSerializer : Serializer<Long> {
   override fun deserialize(value: SettingsValue): Long = value.requireValue<LongValue>().value
 }
 
-/** Serializes a [Double] as a [DoubleValue]. The scalar shortcut form of [SettingsKey] picks it automatically. */
+/** Serializes a [Double] as a [DoubleValue]. The eager-default constructor of [SettingsKey] infers it. */
 @Experimental
 object DoubleSerializer : Serializer<Double> {
   override fun serialize(value: Double): SettingsValue = DoubleValue(value)
@@ -72,7 +74,7 @@ object DoubleSerializer : Serializer<Double> {
   override fun deserialize(value: SettingsValue): Double = value.requireValue<DoubleValue>().value
 }
 
-/** Serializes a [Boolean] as a [BooleanValue]. The scalar shortcut form of [SettingsKey] picks it automatically. */
+/** Serializes a [Boolean] as a [BooleanValue]. The eager-default constructor of [SettingsKey] infers it. */
 @Experimental
 object BooleanSerializer : Serializer<Boolean> {
   override fun serialize(value: Boolean): SettingsValue = BooleanValue(value)
@@ -80,7 +82,7 @@ object BooleanSerializer : Serializer<Boolean> {
   override fun deserialize(value: SettingsValue): Boolean = value.requireValue<BooleanValue>().value
 }
 
-/** Serializes a [String] as a [StringValue]. The scalar shortcut form of [SettingsKey] picks it automatically. */
+/** Serializes a [String] as a [StringValue]. The eager-default constructor of [SettingsKey] infers it. */
 @Experimental
 object StringSerializer : Serializer<String> {
   override fun serialize(value: String): SettingsValue = StringValue(value)
@@ -91,7 +93,7 @@ object StringSerializer : Serializer<String> {
 /**
  * Wraps this serializer so that `null` is a first-class value. A `null` serializes to [SettingsValue.NullValue] and
  * back, and the receiver handles any other value. So a key can declare a nullable type with a `null` default:
- * `SettingsKey<String?>("x", default = null, serializer = StringSerializer.nullable())`. The scalar shortcut cannot
+ * `SettingsKey<String?>("x", default = null, serializer = StringSerializer.nullable())`. The eager-default constructor cannot
  * infer that, because a `null` default carries no type.
  */
 @Experimental
@@ -138,25 +140,61 @@ object DumbMapValueSerializer : Serializer<MapValue> {
 }
 
 /**
- * Returns the built-in serializer inferred from the runtime class of [default].
+ * Returns a serializer that stores an entry of [E] by its constant name, [Enum.name], as a [StringValue], with no
+ * conversion of the name (ADR 0178). A user edits the config by hand, so the stored value is readable. The constant
+ * name is unique within [E], so two entries never share a stored value. A rename of a constant makes the stored value
+ * unknown, and a read then falls back to the default.
  *
- * Backs the scalar shortcut constructor of [SettingsKey]: `SettingsKey<Int>("editor.indent.size", default = 4)`.
+ * Use it for a key with no eager default, for example a nullable key or a key with a default factory:
+ * `SettingsKey("x", serializer = enumSerializer<MyEnum>().nullable(), default = null)`. A key with an enum default needs
+ * no serializer: the eager-default constructor of [SettingsKey] infers this one. It composes with [nullable], [listOf]
+ * and [mapOf].
+ */
+@Experimental
+inline fun <reified E : Enum<E>> enumSerializer(): Serializer<E> = enumSerializer(E::class.java)
+
+/**
+ * Returns the [enumSerializer] of [enumClass]. Use this form where the enum is known only as a class, for example in
+ * Java code. The inference from a default value calls it too, because it has only the runtime class.
+ */
+@Experimental
+fun <E : Enum<E>> enumSerializer(enumClass: Class<E>): Serializer<E> = EnumSerializer(enumClass)
+
+private class EnumSerializer<E : Enum<E>>(private val enumClass: Class<E>) : Serializer<E> {
+  override fun serialize(value: E): SettingsValue = StringValue(value.name)
+
+  override fun deserialize(value: SettingsValue): E {
+    val name = value.requireValue<StringValue>(enumClass.name).value
+    return requireNotNull(enumClass.enumConstants.firstOrNull { it.name == name }) {
+      "'$name' is not a constant of ${enumClass.name}"
+    }
+  }
+}
+
+/**
+ * Returns the built-in serializer inferred from the runtime class of [default]: a scalar serializer, or the
+ * [enumSerializer] of the enum of an entry. An entry with a body has a class of its own, so the enum comes from
+ * [declaringJavaClass].
  *
- * @throws IllegalStateException when [default] is not one of the scalar types [Int], [Long], [Double], [Boolean] and
- *   [String]
+ * Backs the eager-default constructor of [SettingsKey]: `SettingsKey<Int>("editor.indent.size", default = 4)`.
+ *
+ * @throws IllegalStateException when [default] is not an enum entry or one of the scalar types [Int], [Long],
+ *   [Double], [Boolean] and [String]
  */
 @Suppress("UNCHECKED_CAST")
-internal fun <T> inferScalarSerializer(default: T): Serializer<T> = when (default) {
+internal fun <T> inferSerializerFromDefault(default: T): Serializer<T> = when (default) {
   is Int -> IntSerializer as Serializer<T>
   is Long -> LongSerializer as Serializer<T>
   is Double -> DoubleSerializer as Serializer<T>
   is Boolean -> BooleanSerializer as Serializer<T>
   is String -> StringSerializer as Serializer<T>
-  else -> error("Cannot infer a serializer from default '$default'; pass one explicitly (only scalar Int/Long/Double/Boolean/String are inferred).")
+  is Enum<*> -> enumSerializer(default.declaringJavaClass) as Serializer<T>
+  else -> error("Cannot infer a serializer from default '$default'; pass one explicitly (only an enum and the scalars " +
+                "Int/Long/Double/Boolean/String are inferred).")
 }
 
 /**
- * Returns the built-in serializer inferred from the static type [T], with its nullability. [inferScalarSerializer]
+ * Returns the built-in serializer inferred from the static type [T], with its nullability. [inferSerializerFromDefault]
  * needs a runtime value instead. A nullable [T] gives a [nullable] serializer, so a key can have no default at all:
  * `SettingsKey<String?>("x")`. Only the scalar types [Int], [Long], [Double], [Boolean] and [String] are supported.
  * Any other type must pass a serializer explicitly.
