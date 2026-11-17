@@ -85,10 +85,12 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    * @param excludedPattern Ant-like pattern describing files to be excluded (relatively to the module output root); e.g., `foo&#47;**`
    * to exclude `foo` directory
    */
+  @Deprecated("Move the files out of module resource/source roots instead of excluding them in build scripts")
   fun excludeFromModule(moduleName: String, excludedPattern: String) {
     layout.excludeFromModule(moduleName, excludedPattern)
   }
 
+  @Deprecated("Move the files out of module resource/source roots instead of excluding them in build scripts")
   fun excludeFromModule(moduleName: String, excludedPatterns: List<String>) {
     layout.excludeFromModule(moduleName, excludedPatterns)
   }
