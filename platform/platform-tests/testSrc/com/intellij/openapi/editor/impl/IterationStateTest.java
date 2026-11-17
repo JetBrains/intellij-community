@@ -497,6 +497,25 @@ public class IterationStateTest {
     });
   }
 
+  @Test
+  public void testRetreatKeepsUsedHighlighterAfterOffset() {
+    myFixture.runTest(() -> {
+      init("ab cd ef");
+      addRangeHighlighter(6, 8, 0, Color.red);
+      IterationState it = new IterationState((EditorEx)myFixture.getEditor(), 0, 8, null, false, false, false, false);
+      it.advance();
+      assertEquals(6, it.getStartOffset());
+      assertEquals(Color.red, it.getMergedAttributes().getBackgroundColor());
+      it.retreat(3);
+      assertEquals(3, it.getStartOffset());
+      assertEquals(6, it.getEndOffset());
+      it.advance();
+      assertEquals(6, it.getStartOffset());
+      assertEquals(8, it.getEndOffset());
+      assertEquals(Color.red, it.getMergedAttributes().getBackgroundColor());
+    });
+  }
+
   /**
    * Sets a plain text highlighter that gives the parentheses the foreground color, and no attributes to the other tokens.
    */

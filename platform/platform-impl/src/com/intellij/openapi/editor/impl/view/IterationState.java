@@ -1101,7 +1101,8 @@ public final class IterationState {
     }
 
     private void retreat(int offset) {
-      for (int j = i - 2; j >= 0; j--) {
+      int lastUsed = myNextHighlighter == null ? i - 1 : i - 2;
+      for (int j = lastUsed; j >= 0; j--) {
         RangeHighlighterEx highlighter = highlighters[j];
         if (skipHighlighter(highlighter)) continue;
         if (getAlignedStartOffset(highlighter) > offset) {
