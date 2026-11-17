@@ -393,7 +393,7 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
    * Holds [sdk] as the SDK of [key] in [PythonInterpreterSdks]. The SDK takes the name of the interpreter library of
    * [key], see [PyInterpreterLibraryName]. That name is unique in the project, so no other SDK of the project has it.
    */
-  private suspend fun holdSdk(key: PythonInterpreterKey, sdk: Sdk) {
+  private suspend fun holdSdk(key: PythonInterpreterKey, sdk: Sdk, fromRecord: Boolean = false) {
     val name = project.interpreterOwnerProjectDir?.let { PyInterpreterLibraryName.of(it, key).toString() }
     if (name != null && sdk.name != name) {
       val rename = { modificator: SdkModificator ->
@@ -407,7 +407,7 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
       if (PythonSdkTable.tableSdks().none { it === sdk }) sdk.sdkModificator.apply(rename).applyChangesWithoutWriteAction()
       else edtWriteAction { sdk.sdkModificator.apply(rename).commitChanges() }
     }
-    PythonInterpreterSdks.getInstance(project).put(key, sdk)
+    PythonInterpreterSdks.getInstance(project).put(key, sdk, fromRecord)
   }
 
   /** The interpreter of [sdk], when the list holds it. */
@@ -476,7 +476,7 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
     data.associatedModulePath = key.ownerDir.toString()
     applyRecord(data, record)
     val sdk = newSdk(homePath, data, suggestedName = null, knownVersion = record.version)
-    holdSdk(key, sdk)
+    holdSdk(key, sdk, fromRecord = true)
     return sdk
   }
 

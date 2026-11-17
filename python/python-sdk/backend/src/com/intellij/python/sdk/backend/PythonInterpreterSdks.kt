@@ -58,12 +58,13 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
   /**
    * Holds [sdk] as the SDK of [key], and stores its record. An SDK held before for [key] is disposed. The data of [sdk]
    * must name the owner directory of [key], so that the interpreter built from it has [key]. The record keeps its facts
-   * when [sdk] is the SDK held before, and takes them from [sdk] otherwise, see [recordOf]. A project with no directory
-   * of its own holds the SDK and no record, see [interpreterOwnerProjectDir].
+   * when [sdk] is the SDK held before, or when [fromRecord] says that [sdk] was built from the record. It takes them from
+   * [sdk] otherwise, see [recordOf]. A project with no directory of its own holds the SDK and no record, see
+   * [interpreterOwnerProjectDir].
    *
    * One SDK is one interpreter. When the data of [sdk] changed its ref, the key it had before goes with its record.
    */
-  fun put(key: PythonInterpreterKey, sdk: Sdk) {
+  fun put(key: PythonInterpreterKey, sdk: Sdk, fromRecord: Boolean = false) {
     val store = PythonInterpreterRecords.getInstance(project)
     for (oldKey in sdks.entries.filter { it.value === sdk && it.key != key }.map { it.key }) {
       sdks.remove(oldKey)
@@ -72,8 +73,10 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
     val previous = sdks.put(key, sdk)
     previous?.takeIf { it !== sdk }?.let(::dispose)
     val projectDir = project.interpreterOwnerProjectDir ?: return
-    // The facts of the record are of the SDK held before. Another SDK, such as a new SDK for the same key, brings its own.
-    store.put(key, recordOf(projectDir, key, sdk, store.recordOf(key).takeIf { previous === sdk }))
+    // The facts of the record are of the SDK held before, or of the record that [sdk] was built from. An SDK built from a
+    // record holds no fact, so its own facts would erase the `sys.path` that the probe wrote. Another SDK, such as a new
+    // SDK of a new environment for the same key, brings its own.
+    store.put(key, recordOf(projectDir, key, sdk, store.recordOf(key).takeIf { previous === sdk || fromRecord }))
   }
 
   /**
