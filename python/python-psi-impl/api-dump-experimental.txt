@@ -66,10 +66,9 @@ f:com.jetbrains.python.psi.impl.PyEvaluator$Companion
 - f:addConstraint(com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.PyVariance,com.jetbrains.python.psi.types.ConstraintPriority,Z):V
 - bs:addConstraint$default(com.jetbrains.python.psi.types.CspBuilder,com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.PyVariance,com.jetbrains.python.psi.types.ConstraintPriority,Z,I,java.lang.Object):V
 - f:addInferenceVariable(com.jetbrains.python.psi.types.PyTypeVarType,com.jetbrains.python.psi.types.SubstitutionsIdentifier):com.jetbrains.python.psi.types.PyInferenceVariable
-- f:getAllSubstitutions():java.util.Set
+- f:getAllSubstitutions():java.util.Map
 - f:getContext():com.jetbrains.python.psi.types.TypeEvalContext
 - f:getSolution():com.jetbrains.python.psi.types.PyCspSolution
-- f:putSubstitutions(com.jetbrains.python.psi.types.SubstitutionsIdentifier,com.jetbrains.python.psi.types.PyTypeChecker$GenericSubstitutions):V
 - f:solve():V
 *a:com.jetbrains.python.psi.types.PyCloningTypeVisitor
 - com.jetbrains.python.psi.types.PyTypeVisitorExt
