@@ -431,3 +431,4 @@ intellij.kotlin.codeInsight.lineMarkers.tests
 intellij.kotlin.codeInsight.postfixTemplates.tests
 intellij.kotlin.searching.test
 intellij.kotlin.analysis.platform.tests
+intellij.kotlin.base.scripting.main.kts.tests
