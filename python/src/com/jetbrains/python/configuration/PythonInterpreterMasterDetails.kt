@@ -129,6 +129,12 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
       if (isInterpreterLibraryFlowEnabled()) PythonSdkTable.allSdks(project) else projectSdksModel.sdks.toList()
     )
 
+  /** The SDKs that the tree lists: [allPythonSdksInEdit], without the environments of other projects when they are hidden. */
+  private fun visiblePythonSdks(): List<Sdk> = when {
+    hideOtherProjectVirtualenvs -> allPythonSdksInEdit.filter { !it.isAssociatedWithAnotherModule(module) }
+    else -> allPythonSdksInEdit
+  }
+
   override fun reset() {
     pythonPathsModified = false
 
@@ -138,10 +144,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
 
     myRoot.removeAllChildren()
 
-    val visiblePythonSdks = when {
-      hideOtherProjectVirtualenvs -> allPythonSdksInEdit.filter { !it.isAssociatedWithAnotherModule(module) }
-      else -> allPythonSdksInEdit
-    }
+    val visiblePythonSdks = visiblePythonSdks()
     // One progress for the whole list, because a row states whether its interpreter is usable and only the interpreter
     // can answer that. Before PY-91967 every row probed the file system while it was being painted, under a modal
     // progress of its own.
@@ -165,12 +168,19 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
   }
 
   /**
-   * Rebuilds the tree, so it lists [interpreter], which the dialog of an add action has set on the module, and selects
-   * it. The remove action rebuilds the tree in the same way.
+   * Lists [interpreter], which the dialog of an add action has set on the module, and selects it. Only the new SDKs get
+   * a node, so an edit of another interpreter that is not applied yet stays. The legacy flow lists the SDKs of the
+   * editable model, which gets a new SDK only with a reset, so there the tree is rebuilt, as the remove action does.
    */
   private fun showAddedInterpreter(interpreter: PythonInterpreter) {
-    reset()
-    val node = TreeUtil.findNode(myRoot, Condition { it.item?.ref == interpreter.ref }) ?: return
+    val shown = (0 until myRoot.childCount).mapNotNull { myRoot.getChildAt(it).sdk }
+    val added = visiblePythonSdks().filter { sdk -> shown.none { it === sdk } }
+    added.zip(interpreterItems(added)).forEach { (sdk, item) -> addSdkNode(sdk, item) }
+    val isAdded = Condition<DefaultMutableTreeNode> { it.item?.ref == interpreter.ref }
+    val node = TreeUtil.findNode(myRoot, isAdded) ?: run {
+      reset()
+      TreeUtil.findNode(myRoot, isAdded)
+    } ?: return
     selectNodeInTree(node)
   }
 
