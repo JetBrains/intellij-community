@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.getSdkAPI
@@ -616,8 +617,10 @@ abstract class PyCodeInsightTestCase {
     }
 
     if (myTestCaseOptions.assertSdkRootsNotParsed) {
+      // The wait for the interpreter needs write actions, so it runs before the read action, not in it.
+      val interpreter = findPythonInterpreterForTests(myFixture.module)
       runReadActionBlocking {
-        assertSdkRootsNotParsed(currentFile)
+        assertSdkRootsNotParsed(currentFile, interpreter)
       }
     }
   }
@@ -672,8 +675,7 @@ abstract class PyCodeInsightTestCase {
     }
   }
 
-  private fun assertSdkRootsNotParsed(currentFile: PsiFile) {
-    val interpreter = findPythonInterpreterForTests(myFixture.module)
+  private fun assertSdkRootsNotParsed(currentFile: PsiFile, interpreter: PythonInterpreter?) {
     if (interpreter == null) {
       logger.warn("The interpreter is null. assertSdkRootsNotParsed is skipped")
       return
