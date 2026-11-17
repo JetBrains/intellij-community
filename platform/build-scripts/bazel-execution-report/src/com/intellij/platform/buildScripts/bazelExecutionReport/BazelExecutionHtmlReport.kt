@@ -3,6 +3,7 @@ package com.intellij.platform.buildScripts.bazelExecutionReport
 
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReportOutput.blobCount
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReportOutput.formatSize
+import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReportOutput.formatWallTime
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReport.Source
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReport.Summary
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReportOutput.blobTotalText
@@ -80,11 +81,15 @@ internal object BazelExecutionHtmlReport {
       write("<p class=\"note\">No actions run locally.</p>\n")
       return
     }
-    write("<table>\n<tr><th>Action kind</th><th>Actions</th></tr>\n")
-    for ((mnemonic, count) in summary.localActionsByMnemonic) {
-      write("<tr><td>${escape(mnemonic)}</td>${number(count)}</tr>\n")
+    write("<table>\n<tr><th>Action kind</th><th>Actions</th><th>Wall time</th></tr>\n")
+    for (actions in summary.localActionsByMnemonic) {
+      write("<tr><td>${escape(actions.mnemonic)}</td>${number(actions.count)}<td class=\"number\">${formatWallTime(actions.wallTimeNanos)}</td></tr>\n")
     }
+    write("<tr class=\"total\"><td>total</td>${number(summary.localActionsByMnemonic.sumOf { it.count })}")
+    write("<td class=\"number\">${formatWallTime(summary.localWallTimeNanos)}</td></tr>\n")
     write("</table>\n")
+    write("<p class=\"note\">The wall time is the sum over the actions, not CPU time. ")
+    write("Parallel actions can make it exceed the build time.</p>\n")
   }
 
   /**

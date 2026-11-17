@@ -18,6 +18,7 @@ import com.intellij.platform.buildScripts.bazelExecutionReport.TestExecutionLog.
 import com.intellij.platform.buildScripts.bazelExecutionReport.TestExecutionLog.message
 import com.intellij.platform.buildScripts.bazelExecutionReport.TestExecutionLog.spawnEntry
 import com.intellij.platform.buildScripts.bazelExecutionReport.TestExecutionLog.unresolvedSymlinkEntry
+import com.intellij.platform.buildScripts.bazelExecutionReport.TestExecutionLog.writeMetrics
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -135,6 +136,23 @@ class BazelCompactExecutionLogTest {
 
     assertThat(spawn.mnemonic).isEqualTo("Javac")
     assertThat(spawn.outputs.map { it.path }).containsExactly("bazel-out/bin/a.jar")
+  }
+
+  @Test
+  fun `reads the execution wall time, falls back to the total time, and reads no metrics as zero`() {
+    val log = writeLog(
+      spawnEntry(mnemonic = "Both") { writeMetrics(executionWallTimeMillis = 1_250, totalTimeMillis = 9_000) },
+      spawnEntry(mnemonic = "TotalOnly") { writeMetrics(totalTimeMillis = 2_500) },
+      spawnEntry(mnemonic = "None"),
+    )
+
+    val spawns = BazelCompactExecutionLog.readSpawns(log) { true }
+
+    assertThat(spawns.map { it.mnemonic to it.wallTimeNanos }).containsExactly(
+      "Both" to 1_250_000_000L,
+      "TotalOnly" to 2_500_000_000L,
+      "None" to 0L,
+    )
   }
 
   @Test

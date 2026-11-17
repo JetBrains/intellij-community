@@ -19,11 +19,14 @@ internal object BazelExecutionReportOutput {
     reportSources("test actions ($TEST_MNEMONIC)", summary.testActions, summary)
     write("note: the counts leave out the hits of the local action cache, because the execution log does not hold them\n")
 
-    write("actions run locally by action kind: ${summary.localActionsByMnemonic.size} action kinds\n")
-    val countWidth = summary.localActionsByMnemonic.maxOfOrNull { it.second.toString().length } ?: 0
-    for ((mnemonic, count) in summary.localActionsByMnemonic) {
-      write("  ${count.toString().padStart(countWidth)}  $mnemonic\n")
+    val local = summary.localActionsByMnemonic
+    write("actions run locally by action kind: ${local.size} action kinds, ${formatWallTime(summary.localWallTimeNanos)} wall time\n")
+    val countWidth = local.maxOfOrNull { it.count.toString().length } ?: 0
+    val timeWidth = local.maxOfOrNull { formatWallTime(it.wallTimeNanos).length } ?: 0
+    for (actions in local) {
+      write("  ${actions.count.toString().padStart(countWidth)}  ${formatWallTime(actions.wallTimeNanos).padStart(timeWidth)}  ${actions.mnemonic}\n")
     }
+    write("note: the wall time is the sum over the actions, not CPU time. Parallel actions can make it exceed the build time\n")
 
     write("uploadable outputs of the actions run locally: ${blobCount(summary.uploads)}, ${formatSize(summary.uploads.values.sum())}\n")
     for ((mnemonic, blobs) in summary.uploadsByMnemonic) {
@@ -107,6 +110,14 @@ internal object BazelExecutionReportOutput {
     val noun = if (count == 1) "blob" else "blobs"
     val tail = if (shown < count) " ($shown shown)" else ""
     return "$count $noun, ${formatSize(sizeBytes)} total$tail"
+  }
+
+  /**
+   * Formats a duration as seconds to one decimal place, for example `225.3 s`.
+   */
+  fun formatWallTime(nanos: Long): String {
+    val tenths = (nanos + 50_000_000L) / 100_000_000L
+    return "${tenths / 10}.${tenths % 10} s"
   }
 
   fun formatSize(sizeBytes: Long): String {
