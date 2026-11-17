@@ -4,8 +4,12 @@ package org.jetbrains.idea.maven.quickfixes
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.xml.XmlFile
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.quickfix.UpdateXmlsTo410
 import org.jetbrains.idea.maven.model.MavenConstants
@@ -17,7 +21,14 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.mockito.internal.progress.ThreadSafeMockingProgress
 
-class UpdateXmlsTo410Test : LightJavaCodeInsightFixtureTestCase5() {
+@TestApplication
+class UpdateXmlsTo410Test {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST))
+  }
+
+  private val fixture by lightJavaCodeInsightFixture(projectFixture)
+
   @Test
   fun testUpdateMavenXmlTo410() = runBlocking {
     val xmlContent = """
