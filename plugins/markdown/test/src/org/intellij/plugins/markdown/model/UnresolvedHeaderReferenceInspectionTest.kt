@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.model
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -29,6 +30,14 @@ class UnresolvedHeaderReferenceInspectionTest: BasePlatformTestCase() {
   fun `test github line fragments in non markdown file links are ignored`() = doTest()
 
   fun `test header with uppercase anchor is resolved`() = doTest()
+
+  fun `test unresolved header warning is visible when link destination is folded`() {
+    myFixture.enableInspections(UnresolvedHeaderReferenceInspection())
+    myFixture.configureByText("unresolved_anchor.md", "[some link](#unresolved-header)")
+
+    val warning = myFixture.doHighlighting().single { it.severity == HighlightSeverity.WARNING }
+    assertTrue("The warning must stay visible when the link destination is folded", warning.highlighter.isVisibleIfFolded)
+  }
 
   fun `test header in saved file outside project is resolved`() {
     val text = "# First heading\n\n[First](#first-heading)"

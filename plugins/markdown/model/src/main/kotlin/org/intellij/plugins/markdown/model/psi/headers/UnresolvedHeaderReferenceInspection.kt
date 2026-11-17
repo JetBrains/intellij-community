@@ -30,7 +30,7 @@ class UnresolvedHeaderReferenceInspection: LocalInspectionTool() {
       holder.registerProblem(
         element,
         MarkdownBundle.message("markdown.unresolved.header.reference.inspection.text", text),
-        ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
         reference.rangeInElement
       )
     }
