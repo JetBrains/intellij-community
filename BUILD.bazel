@@ -626,7 +626,7 @@ jvm_library(
         "//platform/platform-impl/initial-config-import:ide-initialConfigImport-tests_test_lib",
         "//platform/platform-impl/tab-in-editor:ide-tabInEditor-tests_test_lib",
         "//platform/non-modal-welcome-screen:ide-nonModalWelcomeScreen-tests_test_lib",
-        "//platform/platform-impl/presentation-assistant:ide-presentationAssistant-tests_test_lib",
+        "//platform/platform-impl/presentation-assistant/tests:tests_test_lib",
         "//platform/build-scripts/usages:buildScripts-usages-tests_test_lib",
         "//platform/ijent:ijent-tests_test_lib",
         "//platform/build-scripts/icons:images-build-tests_test_lib",
