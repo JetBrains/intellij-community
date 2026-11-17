@@ -206,6 +206,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -645,6 +646,14 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
+    PsiClass aClass = Objects.requireNonNullElse(enumConstant.getInitializingClass(), enumConstant.getContainingClass());
+    PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
+    if (abstractMethod != null && enumConstant.getInitializingClass() != abstractMethod.getContainingClass()) {
+      myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("method.is.not.implemented", abstractMethod.getName()))
+        .range(enumConstant)
+        .withFix(QuickFixFactory.getInstance().createImplementMethodsFix(enumConstant))
+        .create();
+    }
     super.visitEnumConstant(enumConstant);
     if (GroovyConfigUtils.getInstance().isVersionAtLeast(enumConstant, GroovyConfigUtils.GROOVY2_2)) {
       // Map constructors implemented in Groovy 2.2, see https://issues.apache.org/jira/browse/GROOVY-4485
