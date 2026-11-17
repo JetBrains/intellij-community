@@ -428,3 +428,4 @@ intellij.kotlin.codeInsight.intentions.tests
 intellij.kotlin.codeInsight.fixes.tests
 intellij.kotlin.compilerPlugins.parcelize.tests
 intellij.kotlin.codeInsight.lineMarkers.tests
+intellij.kotlin.codeInsight.postfixTemplates.tests
