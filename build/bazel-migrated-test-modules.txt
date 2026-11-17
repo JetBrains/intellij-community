@@ -407,3 +407,4 @@ intellij.kotlin.base.codeInsight.tests
 intellij.kotlin.uast.idea.tests
 intellij.kotlin.completion.ml.tests
 intellij.kotlin.codeInsight.tests
+kotlin.project-wizard.tests
