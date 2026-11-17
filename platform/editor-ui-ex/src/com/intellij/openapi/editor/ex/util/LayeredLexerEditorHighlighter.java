@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -64,14 +64,6 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     getSegments().removeAll();
   }
 
-  protected synchronized void unregisterLayer(@NotNull IElementType tokenType) {
-    LayerDescriptor layer = myTokensToLayer.remove(tokenType);
-    if (layer != null) {
-      getMappingSegments().myLayerBuffers.remove(layer);
-      getSegments().removeAll();
-    }
-  }
-
   private final class LightMapper {
     final Mapper mapper;
     final StringBuilder text = new StringBuilder();
@@ -116,7 +108,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         Document mainDocument = getDocument();
         VirtualFile file = mainDocument == null ? null : FileDocumentManager.getInstance().getFile(mainDocument);
         LOG.error("Expected null range on " + type + ", found " + range + "; highlighter=" + getSyntaxHighlighter(),
-                  new Attachment(file != null ? file.getName() : "editorText.txt", myText.toString()));
+                  new Attachment(file != null ? file.getName() : "editorText.txt", getLexedText().toString()));
       }
     }
   }
@@ -319,7 +311,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
         int endIndex = startIndex + segmentArray.getSegmentCount();
 
-        TokenProcessor processor = createTokenProcessor(startIndex, getSegments(), myText);
+        TokenProcessor processor = createTokenProcessor(startIndex, getSegments(), getLexedText());
         for (int i = startIndex; i < endIndex; i++) {
           int data = getSegmentData(i);
           IElementType token = getSegments().unpackTokenFromData(data);
@@ -377,8 +369,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
             LOG.error(e.getMessage() +
                       "\nLayer highlighter: " + highlighter.getSyntaxHighlighter() +
                       "\nTop level highlighter: " + LayeredLexerEditorHighlighter.this.getSyntaxHighlighter(), e,
-                      new Attachment("layerTextAfterChange.txt", highlighter.myText.toString()),
-                      new Attachment("editorTextAfterChange.txt", myText.toString()));
+                      new Attachment("layerTextAfterChange.txt", highlighter.getLexedText().toString()),
+                      new Attachment("editorTextAfterChange.txt", getLexedText().toString()));
           }
         });
         myFreezedHighlighters = null;
@@ -498,7 +490,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     private @NotNull CharSequence getTokenText(int tokenIndex) {
-      return myText.subSequence(getSegments().getSegmentStart(tokenIndex), getSegments().getSegmentEnd(tokenIndex));
+      return getLexedText().subSequence(getSegments().getSegmentStart(tokenIndex), getSegments().getSegmentEnd(tokenIndex));
     }
 
     @Nullable
@@ -706,7 +698,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
       sortUpdates();
       mergeUpdates();
-      Document document = updates.get(0).document;
+      Document document = updates.getFirst().document;
       int documentSize = document.getTextLength();
       int processedOffset = -1;
       for (DocumentUpdate event : updates) {
@@ -735,7 +727,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     private static boolean mergeUpdate(@NotNull List<? extends DocumentUpdate> updates, int eventOffset, int eventOldLength, int eventNewLength) {
       if (updates.isEmpty()) return false;
       final int MERGE_MARGIN = 5;
-      DocumentUpdate a = updates.get(updates.size() - 1);
+      DocumentUpdate a = updates.getLast();
       if (eventOffset < a.offset) {
         // a not sorted update, ignore as it will be merged after sorting all updates
         return false;
@@ -765,7 +757,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
     private void mergeUpdates() {
       List<DocumentUpdate> result = new ArrayList<>(updates.size());
-      result.add(updates.get(0));
+      result.add(updates.getFirst());
       for (int i = 1; i < updates.size(); i++) {
         DocumentUpdate b = updates.get(i);
         if (!mergeUpdate(result, b.offset, b.oldLength, b.newLength)) {
@@ -825,6 +817,6 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
   @Override
   public @NonNls String toString() {
-    return getClass().getName() + ": '" + myText.toString() + "'";
+    return getClass().getName() + ": '" + getLexedText().toString() + "'";
   }
 }
