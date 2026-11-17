@@ -45,6 +45,9 @@ class GradleProgressListener(
   private var myLastStatusChange: ExternalSystemTaskNotificationEvent? = null
   private val sendProgressEventsToOutput: Boolean = `is`(SEND_PROGRESS_EVENTS_TO_OUTPUT_KEY, true)
 
+  @Volatile
+  private var nonDownloadEventReceived = false
+
   override fun statusChanged(event: ProgressEvent) {
     if (myDownloadProgressMapper.canMap(event)) {
       val downloadEvent: ExternalSystemTaskNotificationEvent? = myDownloadProgressMapper.map(myTaskId, event)
@@ -55,6 +58,9 @@ class GradleProgressListener(
         }
         return
       }
+    }
+    else {
+      nonDownloadEventReceived = true
     }
     val progressBuildEvent = myProgressMapper.map(myTaskId, event)
     if (progressBuildEvent != null && progressBuildEvent != myLastStatusChange) {
@@ -110,7 +116,9 @@ class GradleProgressListener(
       val text = String.format("%s, took %s", operationName, StringUtil.formatDuration(duration))
       myListener.onTaskOutput(myTaskId, "\r" + text + "\n", ProcessOutputType.STDOUT)
     }
-    if (buildEvent is FileDownloadEventImpl) {
+    // nonDownloadEventReceived is false until Gradle wrapper is not downloaded and the execution is not started
+    // we show Gradle-wrapper related progress, but hide intermediate messages for project dependencies
+    if (buildEvent is FileDownloadEventImpl && !nonDownloadEventReceived) {
       val progress = buildEvent.progress
       val total = buildEvent.total
       val operationName = buildEvent.message
