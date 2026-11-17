@@ -1,6 +1,13 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "javadoc-tests_test",
+    tags = ["java-javadoc-tests"],
+    runtime_deps = [":javadoc-tests_test_lib"],
+)
+### skip generation section `test intellij.java.javadoc.tests`
+
 ### auto-generated section `build intellij.java.javadoc.tests` start
 jvm_library(
     name = "javadoc-tests_test_lib",
@@ -61,10 +68,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.javadoc.tests` end
-
-### auto-generated section `test intellij.java.javadoc.tests` start
-jps_test(
-    name = "javadoc-tests_test",
-    runtime_deps = [":javadoc-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.javadoc.tests` end
