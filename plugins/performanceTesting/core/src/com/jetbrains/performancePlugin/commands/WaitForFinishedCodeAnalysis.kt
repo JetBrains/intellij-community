@@ -33,13 +33,14 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.util.StackTraceSnapshot
-import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.disposeOnCompletion
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.performancePlugin.utils.HighlightingTestUtil
@@ -128,11 +129,14 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   private var analysisFinishedAtNanos: Long? = null
 
   init {
+    // a closing project can create this service with a cancelled scope: register first, then attach to the scope
+    val editorReleases = Disposer.newDisposable("editor releases of $this")
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
         forgetReleasedEditor(event.editor)
       }
-    }, cs.asDisposable())
+    }, editorReleases)
+    editorReleases.disposeOnCompletion(cs)
   }
 
   private fun ensureLockedIfNeeded() {
