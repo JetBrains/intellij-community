@@ -43,6 +43,11 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
         runTest("../testData/evaluationExpression/atomicfuPrefill.kt");
     }
 
+    @TestMetadata("castToClassNamedAsJdkClass.kt")
+    public void testCastToClassNamedAsJdkClass() throws Exception {
+        runTest("../testData/evaluationExpression/castToClassNamedAsJdkClass.kt");
+    }
+
     @TestMetadata("castToInnerClass.kt")
     public void testCastToInnerClass() throws Exception {
         runTest("../testData/evaluationExpression/castToInnerClass.kt");
@@ -51,6 +56,16 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
     @TestMetadata("castToInnerClassInPackage.kt")
     public void testCastToInnerClassInPackage() throws Exception {
         runTest("../testData/evaluationExpression/castToInnerClassInPackage.kt");
+    }
+
+    @TestMetadata("genericCastBoundedParameters.kt")
+    public void testGenericCastBoundedParameters() throws Exception {
+        runTest("../testData/evaluationExpression/genericCastBoundedParameters.kt");
+    }
+
+    @TestMetadata("genericCastInChain.kt")
+    public void testGenericCastInChain() throws Exception {
+        runTest("../testData/evaluationExpression/genericCastInChain.kt");
     }
 
     @TestMetadata("genericCastInPackage.kt")
@@ -68,9 +83,29 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
         runTest("../testData/evaluationExpression/genericCastKeepsStarProjections.kt");
     }
 
+    @TestMetadata("genericCastOnCollectionElement.kt")
+    public void testGenericCastOnCollectionElement() throws Exception {
+        runTest("../testData/evaluationExpression/genericCastOnCollectionElement.kt");
+    }
+
+    @TestMetadata("genericCastToJavaClass.kt")
+    public void testGenericCastToJavaClass() throws Exception {
+        runTest("../testData/evaluationExpression/genericCastToJavaClass.kt");
+    }
+
+    @TestMetadata("genericSuperclassNoStarProjection.kt")
+    public void testGenericSuperclassNoStarProjection() throws Exception {
+        runTest("../testData/evaluationExpression/genericSuperclassNoStarProjection.kt");
+    }
+
     @TestMetadata("mapEntry.kt")
     public void testMapEntry() throws Exception {
         runTest("../testData/evaluationExpression/mapEntry.kt");
+    }
+
+    @TestMetadata("nestedClassCast.kt")
+    public void testNestedClassCast() throws Exception {
+        runTest("../testData/evaluationExpression/nestedClassCast.kt");
     }
 
     @TestMetadata("redundantCastOnCollectionElement.kt")
