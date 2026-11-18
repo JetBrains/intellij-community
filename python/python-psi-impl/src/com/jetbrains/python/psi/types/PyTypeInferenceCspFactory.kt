@@ -275,8 +275,10 @@ object PyTypeInferenceCspFactory {
 
   private fun buildCallSiteExpressionCsp(callSite: PyCallSiteExpression, builder: CspBuilder, context: TypeEvalContext) : PyType? {
     if (callSite !is PyCallExpression) throw NotSupportedException()
-    val resolveContext = PyResolveContext.defaultContext(context)
-    val callableTypes = callSite.multiResolveCallee(resolveContext)
+    val callee = callSite.callee ?: throw NotSupportedException()
+    val calleeType = PyCallExpressionHelper.getCalleeType(callee, PyResolveContext.defaultContext(context))
+    val arguments = callSite.arguments.map { PyCallableArgument(it) }
+    val callableTypes = selectCallableTypes(calleeType, arguments, context)
     val returnTypes = mutableListOf<PyType?>()
     var allNotSupported = callableTypes.isNotEmpty()
     for (callableType in callableTypes) {
@@ -289,6 +291,18 @@ object PyTypeInferenceCspFactory {
     }
     if (allNotSupported) throw NotSupportedException()
     return PyUnionType.unionOrUnknown(returnTypes)
+  }
+
+  /**
+   * Flattens [calleeType] to the callable types that take part in the CSP.
+   * Of an overloaded callable, only the overloads that match the [arguments] take part, as in a call outside a CSP.
+   */
+  private fun selectCallableTypes(calleeType: PyType?, arguments: List<PyCallableArgument>, context: TypeEvalContext): List<PyCallableType> {
+    return when (calleeType) {
+      is PyCompositeType -> calleeType.members.flatMap { selectCallableTypes(it, arguments, context) }
+      is PyOverloadType -> PyCallExpressionHelper.selectMatchingOverloads(calleeType.items, arguments, context).ifEmpty { calleeType.items }
+      else -> PyTypeUtil.getCallableItems(calleeType)
+    }
   }
 
   private fun buildCallSiteExpressionCsp(si: SubstitutionsIdentifier, builder: CspBuilder, context: TypeEvalContext) : NestedCsp {

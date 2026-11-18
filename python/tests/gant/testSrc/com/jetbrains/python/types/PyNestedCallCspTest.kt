@@ -66,7 +66,7 @@ class PyNestedCallCspTest : PyCodeInsightTestCase() {
       assertEquals("Box[str]", typeOfTarget(file, "pair_and_str", context))
       assertEquals("str", typeOfTarget(file, "pair_and_int", context))
       assertEquals("int", typeOfTarget(file, "direct_bytes", context))
-      assertEquals("str", typeOfTarget(file, "deep_level_2", context))
+      assertEquals("Literal[\"s\"]", typeOfTarget(file, "deep_level_2", context))
       assertEquals("Box[str]", typeOfTarget(file, "reboxed_level_2", context))
       assertEquals("Box[str]", typeOfTarget(file, "deep_level_3", context))
       assertEquals("Box[bytes]", typeOfTarget(file, "deep_level_4", context))
