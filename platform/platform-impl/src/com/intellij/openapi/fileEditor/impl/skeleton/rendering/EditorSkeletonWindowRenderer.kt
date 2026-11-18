@@ -352,6 +352,10 @@ internal class EditorSkeletonWindowRenderer(
     return area
   }
 
+  /**
+   * Listens to [containers], [components] and [window], and stops listening to the components of the previous call.
+   * It runs inside hierarchy events, so it must not add or remove a hierarchy listener: AWT counts them while it dispatches.
+   */
   private fun track(containers: Set<Container>, components: Set<Component>, window: Window?) {
     for (container in trackedContainers) {
       if (container !in containers) {
@@ -366,14 +370,12 @@ internal class EditorSkeletonWindowRenderer(
     for (component in trackedComponents) {
       if (component !in components) {
         component.removeComponentListener(targetUpdater)
-        component.removeHierarchyListener(targetUpdater)
         component.removePropertyChangeListener(OPAQUE_PROPERTY, targetUpdater)
       }
     }
     for (component in components) {
       if (component !in trackedComponents) {
         component.addComponentListener(targetUpdater)
-        component.addHierarchyListener(targetUpdater)
         component.addPropertyChangeListener(OPAQUE_PROPERTY, targetUpdater)
       }
     }
