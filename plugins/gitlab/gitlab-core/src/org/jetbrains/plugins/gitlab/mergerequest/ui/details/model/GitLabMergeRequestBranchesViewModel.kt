@@ -44,6 +44,7 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   override val sourceBranch: StateFlow<String> = mergeRequest.details.mapState(cs, ::getSourceBranchName)
   override val targetBranch: StateFlow<String> = mergeRequest.details.mapState(cs) { it.targetBranch }
+  override val hasRemoteBranch: StateFlow<Boolean> = mergeRequest.details.mapState(cs) { it.sourceProject != null }
 
   private fun getSourceBranchName(details: GitLabMergeRequestFullDetails): String {
     if (details.sourceProject == null) {

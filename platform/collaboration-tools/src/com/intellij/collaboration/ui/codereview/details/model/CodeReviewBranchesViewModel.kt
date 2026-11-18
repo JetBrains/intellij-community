@@ -1,12 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details.model
 
+import com.intellij.collaboration.async.stateFlowOf
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
 
 interface CodeReviewBranchesViewModel {
   val sourceBranch: StateFlow<String>
   val targetBranch: StateFlow<String>
+  val hasRemoteBranch: StateFlow<Boolean> get() = stateFlowOf(true)
   val isCheckedOut: SharedFlow<Boolean>
   val isCheckoutInProgress: StateFlow<Boolean>
 

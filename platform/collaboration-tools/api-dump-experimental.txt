@@ -457,6 +457,7 @@
 - fetchAndShowInLog():V
 - getCanCheckoutInNewWorktree():Z
 - getCanShowInLog():Z
+- getHasRemoteBranch():kotlinx.coroutines.flow.StateFlow
 - a:getShowBranchesRequests():kotlinx.coroutines.flow.SharedFlow
 - a:getSourceBranch():kotlinx.coroutines.flow.StateFlow
 - a:getTargetBranch():kotlinx.coroutines.flow.StateFlow

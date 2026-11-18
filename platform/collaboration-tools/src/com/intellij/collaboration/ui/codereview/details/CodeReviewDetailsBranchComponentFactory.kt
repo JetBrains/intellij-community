@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindTooltipTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.popup.showAndAwait
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -67,6 +68,7 @@ object CodeReviewDetailsBranchComponentFactory {
     val checkoutLink = AnActionLink("CodeReview.Branch.Checkout", ACTION_LINKS_PLACE).apply {
       autoHideOnDisable = false
       bindEnabledIn(scope, branchesVm.isCheckoutInProgress.map { !it })
+      bindVisibilityIn(scope, branchesVm.hasRemoteBranch)
     }
     val worktreeLink = AnActionLink("CodeReview.Branch.CheckoutInNewWorktree", ACTION_LINKS_PLACE).apply {
       autoHideOnDisable = false
