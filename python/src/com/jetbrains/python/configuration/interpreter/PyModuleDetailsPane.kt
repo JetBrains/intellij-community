@@ -174,8 +174,9 @@ internal class PyModuleDetailsPane(
     AllIcons.General.Add,
   ) {
     override fun actionPerformed(e: AnActionEvent) {
+      val rootPyProject = comboSource.rootPyProject ?: return
       val group = DefaultActionGroup().apply {
-        addAll(collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(comboSource.rootPyProject)) { interpreter ->
+        addAll(collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(rootPyProject)) { interpreter ->
           reloadComboSource { findExisting(interpreter) ?: findExisting(selectedInterpreter()) }
         })
       }
@@ -184,6 +185,11 @@ internal class PyModuleDetailsPane(
       )
       val source = e.inputEvent?.component
       if (source != null) popup.showUnderneathOf(source) else popup.showInBestPositionFor(e.dataContext)
+    }
+
+    // The new interpreter belongs to the workspace root, which is known only after the first read of the combo source.
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = comboSource.rootPyProject != null
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -232,7 +238,7 @@ internal class PyModuleDetailsPane(
   }
 
   /** What the combo lists, read off the EDT by [loadComboSource]. Empty until the first read completes. */
-  private var comboSource: ComboSource = ComboSource(null, pyProject, emptyList(), emptyList())
+  private var comboSource: ComboSource = ComboSource(null, null, emptyList(), emptyList())
 
   /** Whether the combo also lists the interpreters of the other Python projects, see [SdkComboItem.ToggleOtherProjects]. */
   private var showOtherProjects: Boolean = false
@@ -568,8 +574,8 @@ internal class PyModuleDetailsPane(
 private class ComboSource(
   /** The interpreter the module uses, or `null` when it has none. */
   val moduleInterpreter: PythonInterpreter?,
-  /** The root of the workspace of the module. It owns the interpreters the module can share. */
-  val rootPyProject: PyProject,
+  /** The root of the workspace of the module, or `null` before the first read. It owns the interpreters the module can share. */
+  val rootPyProject: PyProject?,
   /** The interpreters of [rootPyProject]. The combo lists them by default. */
   val rootInterpreters: List<PythonInterpreter>,
   /** The interpreters of every Python project, for [SdkComboItem.ToggleOtherProjects]. */

@@ -36,12 +36,13 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
-import com.intellij.python.sdk.backend.associatedModuleDir
 import com.intellij.python.sdk.backend.binaryPathString
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.InlineBanner
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.SideBorder
@@ -52,6 +53,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.hover.ListHoverListener
 import com.intellij.ui.popup.list.SelectablePanel
@@ -141,6 +143,13 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
    */
   private lateinit var rootComponent: JComponent
 
+  /** Says that the SDK table has SDKs that name no interpreter, and removes them. Only the legacy flow has such SDKs. */
+  private val brokenSdksBanner: InlineBanner = InlineBanner(status = EditorNotificationPanel.Status.Warning)
+    .showCloseButton(false)
+    .addAction(PyBundle.message("configurable.PyAllInterpretersConfigurable.broken.sdks.remove")) { removeBrokenSdks() }
+
+  private lateinit var brokenSdksRow: Row
+
   override fun getId(): String = ID
 
   override fun getDisplayName(): String = PyBundle.message("configurable.PyAllInterpretersConfigurable.display.name")
@@ -154,6 +163,9 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
       ),
     )
     val component = panel {
+      brokenSdksRow = row {
+        cell(brokenSdksBanner).align(Align.FILL).resizableColumn()
+      }.visible(false)
       row {
         text(hintText) { event ->
           if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return@text
@@ -302,13 +314,30 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
       val ownerOrder = snapshot.evoPyProjects.map { it.pyProject.residesOnModule.name }.toList()
       val showGroups = snapshot.workspaces.size > 1
       val visible = groupByOwner(filterInterpreters(rows, hideOthers, moduleBasePaths), ownerOrder)
+      val brokenSdkCount = PythonInterpreterRegistry.getInstance(project).brokenSdkCount()
       withContext(Dispatchers.EDT) {
+        showBrokenSdks(brokenSdkCount)
         interpretersList.putClientProperty(SHOW_GROUPS, showGroups)
         currentSnapshot = visible
         applySearchFilter()
         val pickedKey = pickSelection(listModel.items.map { it.selectionKey }, previouslySelected)
         val toSelect = pickedKey?.let { key -> listModel.items.firstOrNull { it.selectionKey == key } }
         if (toSelect != null) interpretersList.setSelectedValue(toSelect, true)
+      }
+    }
+  }
+
+  private fun showBrokenSdks(count: Int) {
+    if (count > 0) brokenSdksBanner.setMessage(PyBundle.message("configurable.PyAllInterpretersConfigurable.broken.sdks", count))
+    brokenSdksRow.visible(count > 0)
+  }
+
+  private fun removeBrokenSdks() {
+    PyPackageCoroutine.launch(project) {
+      PythonInterpreterRegistry.getInstance(project).removeBrokenSdks()
+      withContext(Dispatchers.EDT) {
+        projectSdksModel.reset(project)
+        reloadList()
       }
     }
   }
@@ -567,9 +596,8 @@ internal suspend fun PythonInterpreter.openPathsDialog(project: Project, onCommi
 
 /**
  * Pure filter for the "hide interpreters that belong to another project" toggle. Passing `hideOthers = false`
- * keeps the full list; otherwise an interpreter is kept when it has no association or when its association
- * matches one of the project's module base dirs. Association writes go through `setAssociationToModule`, so
- * the association path is always a module base — no project-base fallback.
+ * keeps the full list. Otherwise an interpreter is kept when its [PythonInterpreter.ownerDir] is the base directory of
+ * a Python project of this project. The owner dir is a stored path, so a deleted directory still hides the row.
  */
 internal fun filterInterpreters(
   rows: List<PyInterpreterRow>,
@@ -578,8 +606,7 @@ internal fun filterInterpreters(
 ): List<PyInterpreterRow> {
   if (!hideOthers) return rows
   return rows.filter { row ->
-    val associated = row.interpreter.associatedModuleDir?.toNioPath() ?: return@filter true
-    associated in moduleBasePaths
+    row.interpreter.ownerDir in moduleBasePaths
   }
 }
 

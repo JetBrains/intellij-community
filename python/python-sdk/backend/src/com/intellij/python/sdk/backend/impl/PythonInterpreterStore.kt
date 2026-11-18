@@ -567,6 +567,23 @@ internal class PythonInterpreterStore(val project: Project, scope: CoroutineScop
     ModuleOrProject.ProjectOnly(project).filterAssignablePythonSdks(projectSdks()).mapNotNull { it.pythonInterpreterResultAsync().successOrNull }
 
   /**
+   * The Python SDKs of the SDK table that name no interpreter, see [interpreterRefOf]: an SDK without the SDK data, without
+   * a home path, or a target SDK without a target configuration. An SDK without an owner directory names an interpreter,
+   * so it is not in the list. Only the legacy flow has such SDKs.
+   */
+  suspend fun brokenTableSdks(): List<Sdk> {
+    if (isInterpreterLibraryFlowEnabled()) return emptyList()
+    return withContext(Dispatchers.IO) { PythonSdkTable.pythonSdks().filter { interpreterRefOf(it) == null } }
+  }
+
+  /** Removes [brokenTableSdks] from the SDK table. The list holds no interpreter of them, so nothing waits for it. */
+  suspend fun removeBrokenTableSdks() {
+    val broken = brokenTableSdks()
+    if (broken.isEmpty()) return
+    edtWriteAction { broken.forEach(ProjectJdkTable.getInstance()::removeJdk) }
+  }
+
+  /**
    * Every SDK of this project, also a broken one. In the interpreter library flow they are the SDKs of this project.
    * Otherwise they are the SDKs of the SDK table.
    */

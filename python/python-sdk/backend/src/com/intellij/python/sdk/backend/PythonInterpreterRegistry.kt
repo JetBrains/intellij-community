@@ -84,6 +84,17 @@ class PythonInterpreterRegistry(project: Project, private val scope: CoroutineSc
   }
 
   /**
+   * How many Python SDKs of the SDK table name no interpreter. No list shows them, so All Interpreters offers to remove
+   * them. The interpreter library flow has none, so there it is `0`.
+   */
+  suspend fun brokenSdkCount(): Int = store.brokenTableSdks().size
+
+  /** Removes the SDKs that [brokenSdkCount] counts. */
+  suspend fun removeBrokenSdks() {
+    store.removeBrokenTableSdks()
+  }
+
+  /**
    * The registered interpreter that [key] names, or `null`. A module of the legacy flow names an SDK instead, see
    * `findBySdkName` in `com.jetbrains.python.sdk.legacy`.
    */
