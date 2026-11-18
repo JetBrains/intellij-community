@@ -286,7 +286,7 @@ public final class TypeConversionUtil {
       return isNarrowingReferenceConversionAllowed(((PsiDisjunctionType)fromType).getLeastUpperBound(), toType);
     }
     if (toType instanceof PsiDisjunctionType) {
-      return false;
+      return isNarrowingReferenceConversionAllowed(fromType, ((PsiDisjunctionType)toType).getLeastUpperBound());
     }
 
     if (fromType instanceof PsiWildcardType) {
