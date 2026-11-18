@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.engine.ContextUtil
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -20,8 +21,11 @@ import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiElement
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.xdebugger.XDebuggerTestUtil
+import com.intellij.xdebugger.frame.XValueModifier.XModificationCallback
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.request.EventRequest
@@ -32,6 +36,7 @@ import org.jetbrains.eval4j.ObjectValue
 import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.KotlinLanguage
 
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
@@ -44,17 +49,22 @@ import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import java.io.File
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import javax.swing.tree.TreeNode
 
 private data class CodeFragment(val text: String, val result: String, val kind: CodeFragmentKind)
 
 private data class DebugLabel(val name: String, val localName: String)
 
+private data class Assignment(val variableName: String, val expression: String)
+
 private class EvaluationTestData(
     val instructions: List<SteppingInstruction>,
     val fragments: List<CodeFragment>,
-    val debugLabels: List<DebugLabel>
+    val debugLabels: List<DebugLabel>,
+    val assignments: List<Assignment>
 )
 
 abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWithStepping(), FramePrinterDelegate {
@@ -117,8 +127,9 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
         val expressions = loadExpressions(wholeFile)
         val blocks = loadCodeBlocks(files.originalFile)
         val debugLabels = loadDebugLabels(wholeFile)
+        val assignments = loadAssignments(wholeFile)
 
-        val data = EvaluationTestData(instructions, expressions + blocks, debugLabels)
+        val data = EvaluationTestData(instructions, expressions + blocks, debugLabels, assignments)
 
         isFrameTest = preferences[DebuggerPreferenceKeys.PRINT_FRAME]
 
@@ -137,20 +148,29 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
             executeOnDMT(suspendContext) {
                 try {
                     createDebugLabels(data.debugLabels)
-
-                    for ((expression, expected, kind) in data.fragments) {
-                        mayThrow(expression) {
-                            if (myWasUsedOnlyDefaultSuspendPolicy) {
-                                // It would be more correct to extract the policy from the breakpoint declaration (in test),
-                                // but it is not a very easy task
-                                TestCase.assertEquals("Invalid suspend policy on breakpoint", EventRequest.SUSPEND_ALL, suspendPolicy,)
-                            }
-                            evaluate(suspendContext, expression, kind, expected)
-                        }
-                    }
-                } finally {
+                } catch (e: Throwable) {
                     printFrameIfNeeded(suspendContext) {
                         resume(this)
+                    }
+                    throw e
+                }
+
+                setValues(suspendContext, data.assignments) {
+                    try {
+                        for ((expression, expected, kind) in data.fragments) {
+                            mayThrow(expression) {
+                                if (myWasUsedOnlyDefaultSuspendPolicy) {
+                                    // It would be more correct to extract the policy from the breakpoint declaration (in test),
+                                    // but it is not a very easy task
+                                    TestCase.assertEquals("Invalid suspend policy on breakpoint", EventRequest.SUSPEND_ALL, suspendPolicy,)
+                                }
+                                evaluate(this, expression, kind, expected)
+                            }
+                        }
+                    } finally {
+                        printFrameIfNeeded(this) {
+                            resume(this)
+                        }
                     }
                 }
             }
@@ -165,6 +185,53 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
             return
         }
         printFrame(suspendContext, completion)
+    }
+
+    /**
+     * Sets the values of the top frame variables with the Set Value action of the variables view.
+     * Then runs [completion] in a new command.
+     */
+    private fun setValues(suspendContext: SuspendContextImpl, assignments: List<Assignment>, completion: SuspendContextImpl.() -> Unit) {
+        if (assignments.isEmpty()) {
+            completion(suspendContext)
+            return
+        }
+
+        // The Kotlin evaluator of the new values gets the debugger context from the context element
+        val debuggerContext = createEvaluationDebuggerContext(suspendContext)
+        val contextElement = runReadAction { debuggerContext.getContextElement() }
+        DebugContextProvider.supplyTestDebugContext(contextElement!!, debuggerContext)
+        tuneContextElement(debuggerContext)?.let { DebugContextProvider.supplyTestDebugContext(it, debuggerContext) }
+
+        processStackFramesOnPooledThread {
+            val variables = XDebuggerTestUtil.collectChildren(first())
+            for ((variableName, expression) in assignments) {
+                mayThrow("$variableName = $expression") {
+                    val variable = XDebuggerTestUtil.findVar(variables, variableName)
+                    // The variables view allows Set Value only after it shows the value
+                    XDebuggerTestUtil.computePresentation(variable)
+                    val modifier = variable.modifier ?: error("The value of $variableName cannot be set")
+                    val result = CompletableFuture<Unit>()
+                    modifier.setValue(XExpressionImpl(expression, KotlinLanguage.INSTANCE, null), object : XModificationCallback {
+                        override fun valueModified() {
+                            result.complete(Unit)
+                        }
+
+                        override fun errorOccurred(errorMessage: String) {
+                            result.completeExceptionally(AssertionError("Cannot set $variableName = $expression: $errorMessage"))
+                        }
+                    })
+                    result.get(XDebuggerTestUtil.TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
+                }
+            }
+            suspendContext.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
+                override fun contextAction(suspendContext: SuspendContextImpl) {
+                    completion(suspendContext)
+                }
+
+                override fun commandCancelled() = error(message = "Test was cancelled")
+            })
+        }
     }
 
     private fun performMultipleBreakpointTest(data: EvaluationTestData) {
@@ -195,15 +262,8 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
         val evaluationContext = this.evaluationContext
         val sourcePosition = ContextUtil.getSourcePosition(suspendContext)
 
-        // Default test debuggerContext doesn't provide a valid stackFrame so we have to create one more for evaluation purposes.
-        val frameProxy = getFrameProxy(suspendContext)
-        val threadProxy = frameProxy?.threadProxy()
-        val debuggerContext = createDebuggerContext(myDebuggerSession, suspendContext, threadProxy, frameProxy)
-        debuggerContext.initCaches()
-
-        val contextElement = runReadAction {
-            CodeFragmentContextTuner.getInstance().tuneContextElement(debuggerContext.getContextElement())!!
-        }
+        val debuggerContext = createEvaluationDebuggerContext(suspendContext)
+        val contextElement = tuneContextElement(debuggerContext)!!
 
         val codeFragmentFactory = CodeFragmentFactory.EXTENSION_POINT_NAME.extensions
             .first { it.fileType == KotlinFileType.INSTANCE }
@@ -253,6 +313,19 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                 )
             }
         }
+    }
+
+    private fun createEvaluationDebuggerContext(suspendContext: SuspendContextImpl): DebuggerContextImpl {
+        // Default test debuggerContext doesn't provide a valid stackFrame so we have to create one more for evaluation purposes.
+        val frameProxy = getFrameProxy(suspendContext)
+        val threadProxy = frameProxy?.threadProxy()
+        val debuggerContext = createDebuggerContext(myDebuggerSession, suspendContext, threadProxy, frameProxy)
+        debuggerContext.initCaches()
+        return debuggerContext
+    }
+
+    private fun tuneContextElement(debuggerContext: DebuggerContextImpl): PsiElement? = runReadAction {
+        CodeFragmentContextTuner.getInstance().tuneContextElement(debuggerContext.getContextElement())
     }
 
     override fun logDescriptor(descriptor: NodeDescriptorImpl, text: String) {
@@ -343,6 +416,15 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                 val localName = labelParts[0].trim()
                 val name = labelParts[1].trim()
                 DebugLabel(name, localName)
+            }
+    }
+
+    private fun loadAssignments(testFile: KotlinBaseTest.TestFile): List<Assignment> {
+        return findLinesWithPrefixesRemoved(testFile.content, "// SET_VALUE: ")
+            .map { text ->
+                val parts = text.split("=", limit = 2)
+                assert(parts.size == 2) { "Wrong format for SET_VALUE directive: // SET_VALUE: {localVariableName} = {expression}" }
+                Assignment(parts[0].trim(), parts[1].trim())
             }
     }
 

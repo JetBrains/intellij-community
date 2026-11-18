@@ -914,6 +914,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/singleBreakpoint/frame/frameInlineArgumentInsideInlineFun.kt");
             }
 
+            @TestMetadata("frameInlineClassSetValueModalProgress.kt")
+            public void testFrameInlineClassSetValueModalProgress() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/frame/frameInlineClassSetValueModalProgress.kt");
+            }
+
             @TestMetadata("frameInlineFun.kt")
             public void testFrameInlineFun() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/frame/frameInlineFun.kt");

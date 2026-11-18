@@ -1,0 +1,16 @@
+LineBreakpoint created at frameInlineClassSetValueModalProgress.kt:12
+Run Java
+Connected to the target VM
+frameInlineClassSetValueModalProgress.kt:12
+Compile bytecode for (IntHolder(3)) as Any?
+Compile bytecode for (IntHolder(4)) as Any?
+Compile bytecode for (any as IntHolder).i
+Compile bytecode for nullable!!.i
+KotlinStackFrame (frameInlineClassSetValueModalProgress.kt:12)
+    JavaValue[local] any: java.lang.Object = IntHolder(i=3) (frameInlineClassSetValueModalProgress.kt:9)
+        JavaValue[field] i: int = 3 (frameInlineClassSetValueModalProgress.kt:6)
+    JavaValue[local] nullable: frameInlineClassSetValueModalProgress.IntHolder = IntHolder(i=4) (frameInlineClassSetValueModalProgress.kt:10)
+        JavaValue[field] i: int = 4 (frameInlineClassSetValueModalProgress.kt:6)
+Disconnected from the target VM
+
+Process finished with exit code 0
