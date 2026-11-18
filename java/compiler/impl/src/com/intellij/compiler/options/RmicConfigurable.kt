@@ -17,8 +17,7 @@ import com.intellij.ui.layout.selected
 import javax.swing.JCheckBox
 
 class RmicConfigurable(private val myProject: Project) :
-  BoundSearchableConfigurable(JavaCompilerBundle.message("rmi.compiler.description"), "reference.projectsettings.compiler.rmicompiler"),
-  NoScroll {
+  BoundSearchableConfigurable(JavaCompilerBundle.message("rmi.compiler.description"), "reference.projectsettings.compiler.rmicompiler") {
 
   private val settings = RmicConfiguration.getOptions(myProject)
 
