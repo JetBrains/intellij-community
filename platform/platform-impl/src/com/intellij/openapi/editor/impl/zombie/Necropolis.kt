@@ -61,6 +61,10 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
   companion object {
     private val LOG: Logger = logger<Necropolis>()
     private val NECROMANCER_EP = ExtensionPointName<NecromancerAwaker<Zombie>>("com.intellij.textEditorNecromancerAwaker")
+
+    /**
+     * Stays below [ManagedCacheCloseBarrier.MAX_WAIT], so that a grave closes after its burials.
+     */
     private val BURIAL_TIMEOUT: Duration = 8.seconds
 
     @JvmStatic
@@ -193,7 +197,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     if (LOG.isDebugEnabled) {
       LOG.debug("Turned into zombies for ${recipe.fileId}: ${zombies.map { it.first.name() }}")
     }
-    if (zombies.isNotEmpty()) {
+    if (zombies.isNotEmpty() && !burialScope.coroutineContext.job.isCompleted) {
       burialScope.launch(start = CoroutineStart.ATOMIC) {
         withContext(NonCancellable) {
           withTimeout(BURIAL_TIMEOUT) {

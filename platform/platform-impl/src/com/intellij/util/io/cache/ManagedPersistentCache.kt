@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.cache
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -18,9 +19,12 @@ import com.intellij.util.io.VersionUpdatedException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -53,10 +57,12 @@ import kotlin.time.TimeSource.Monotonic.ValueTimeMark
  * A cache created while the previous owner of the file closes opens the file after that close.
  * Until then, [get] and [entries] wait up to 300 ms from the creation of the cache, and then return no data.
  * [put] and [remove] wait up to 10 s from the creation of the cache, and then do nothing.
+ * When the previous owner does not close in these 10 s, the cache stays closed.
+ * A cancel of [coroutineScope] does not stop a pending open.
  * A cache is active while its [coroutineScope] is not cancelled.
  * A cache created while an active cache owns the file logs an error and stores nothing.
  */
-@OptIn(AwaitCancellationAndInvoke::class)
+@OptIn(AwaitCancellationAndInvoke::class, DelicateCoroutinesApi::class)
 class ManagedPersistentCache<K, V>(
   private val name: String,
   private val mapBuilder: PersistentMapBuilder<K, V>,
@@ -79,8 +85,10 @@ class ManagedPersistentCache<K, V>(
     if (previousOwnerClosed != null) {
       this.previousOwnerClosed = previousOwnerClosed
       val cacheScope = coroutineScope.childScope("ManagedPersistentCache $name")
-      opened = cacheScope.launch(dispatcher) {
-        open()
+      opened = cacheScope.launch(dispatcher, start = CoroutineStart.ATOMIC) {
+        withContext(NonCancellable) {
+          open()
+        }
       }
       cacheScope.launch {
         forceOnRequests()
@@ -144,7 +152,12 @@ class ManagedPersistentCache<K, V>(
       do {
         delay(FORCE_ON_DISK_DELAY)
       } while (forceRequests.tryReceive().isSuccess)
-      force()
+      try {
+        force()
+      } catch (e: Throwable) {
+        rethrowControlFlowException(e)
+        LOG.warn("error forcing $name", e)
+      }
     }
   }
 
@@ -186,10 +199,13 @@ class ManagedPersistentCache<K, V>(
   private suspend fun open() {
     if (!previousOwnerClosed.isCompleted) {
       LOG.info("$name waits for the previous owner to close")
-      val isPreviousOwnerClosed = withTimeoutOrNull(PREVIOUS_OWNER_WAIT) { previousOwnerClosed.await() } != null
-      if (!isPreviousOwnerClosed) {
-        LOG.warn("the previous owner of $name did not close in $PREVIOUS_OWNER_WAIT, $name waits for that close")
+      val remaining = PREVIOUS_OWNER_WAIT - createdAt.elapsedNow()
+      val isPreviousOwnerClosed = withTimeoutOrNull(remaining) {
         previousOwnerClosed.await()
+      } != null
+      if (!isPreviousOwnerClosed) {
+        LOG.warn("the previous owner of $name did not close in $PREVIOUS_OWNER_WAIT, $name stays closed")
+        return
       }
     }
     val persistentMap = createPersistentMap()
@@ -207,23 +223,37 @@ class ManagedPersistentCache<K, V>(
   }
 
   private suspend fun close() {
-    awaitCloseBarrier()
     opened.join()
-    val isPreviousOwnerClosed = withTimeoutOrNull(PREVIOUS_OWNER_WAIT) { previousOwnerClosed.await() } != null
-    if (!isPreviousOwnerClosed) {
-      LOG.warn("the previous owner of $name did not close in $PREVIOUS_OWNER_WAIT, $name releases the file")
+    if (persistentMapRef.get() == null) {
+      releaseAfterPreviousOwner()
+    } else {
+      awaitCloseBarrier()
+      withContext(dispatcher) {
+        closeAndRelease(delete=false)
+      }
     }
-    withContext(dispatcher) {
-      closeAndRelease(delete=false)
+  }
+
+  /**
+   * Releases [storageFile] of a cache without a map after the close of its previous owner.
+   */
+  private fun releaseAfterPreviousOwner() {
+    previousOwnerClosed.invokeOnCompletion {
+      release()
     }
   }
 
   private suspend fun awaitCloseBarrier() {
     val barrier = coroutineScope.coroutineContext[ManagedCacheCloseBarrier]
     if (barrier != null) {
-      val isBarrierPassed = withTimeoutOrNull(CLOSE_BARRIER_WAIT) { barrier.await() } != null
+      val isBarrierPassed = withTimeoutOrNull(ManagedCacheCloseBarrier.MAX_WAIT) {
+        barrier.await()
+      } != null
       if (!isBarrierPassed) {
-        LOG.warn("the close barrier of $name did not pass in $CLOSE_BARRIER_WAIT, $name closes")
+        LOG.warn(
+          "the close barrier of $name did not pass in ${ManagedCacheCloseBarrier.MAX_WAIT}, " +
+          "$name closes"
+        )
       }
     }
   }
@@ -311,7 +341,9 @@ class ManagedPersistentCache<K, V>(
         PREVIOUS_OWNER_WAIT
       }
       val remaining = wait - createdAt.elapsedNow()
-      val isPreviousOwnerClosed = withTimeoutOrNull(remaining) { previousOwnerClosed.await() } != null
+      val isPreviousOwnerClosed = withTimeoutOrNull(remaining) {
+        previousOwnerClosed.await()
+      } != null
       if (!isPreviousOwnerClosed) {
         return false
       }
@@ -386,7 +418,6 @@ class ManagedPersistentCache<K, V>(
     private val FORCE_ON_DISK_DELAY: Duration = 500.milliseconds
     private val PREVIOUS_OWNER_READ_WAIT: Duration = 300.milliseconds
     private val PREVIOUS_OWNER_WAIT: Duration = 10.seconds
-    private val CLOSE_BARRIER_WAIT: Duration = 10.seconds
     private val LOG: Logger = logger<ManagedPersistentCache<*, *>>()
     private val OWNERS: ConcurrentHashMap<Path, ManagedPersistentCache<*, *>> = ConcurrentHashMap()
     private val OPENED_CACHES: MutableSet<ManagedPersistentCache<*, *>> = ConcurrentHashMap.newKeySet()
