@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
-import com.sun.jdi.Value;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.MethodExitEvent;
@@ -29,22 +28,21 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene Zhuravlev
  */
-public class MethodReturnValueWatcher {
-  private static final Logger LOG = Logger.getInstance(MethodReturnValueWatcher.class);
-  private @Nullable Method myLastExecutedMethod;
-  private @Nullable Value myLastMethodReturnValue;
+public class NativeReturnValueWatcher implements ReturnValueWatcher {
+  private static final Logger LOG = Logger.getInstance(NativeReturnValueWatcher.class);
+  private @Nullable MethodReturnValue myLastMethodReturnValue;
 
   private ThreadReference myThread;
   private @Nullable MethodEntryRequest myEntryRequest;
   private @Nullable Method myEntryMethod;
   private @Nullable MethodExitRequest myExitRequest;
 
-  private volatile boolean myTrackingEnabled;
+  private volatile boolean myCapturing;
   private final EventRequestManager myRequestManager;
   private final DebugProcessImpl myProcess;
   private final Overhead myOverhead;
 
-  public MethodReturnValueWatcher(EventRequestManager requestManager, DebugProcessImpl process) {
+  public NativeReturnValueWatcher(EventRequestManager requestManager, DebugProcessImpl process) {
     myRequestManager = requestManager;
     myProcess = process;
     myOverhead = new Overhead(process);
@@ -68,12 +66,9 @@ public class MethodReturnValueWatcher {
         }
       }
       final Method method = event.method();
-      final Value retVal = event.returnValue();
-
-      if (method == null || !DebuggerUtilsEx.isVoid(method)) {
+      if (method != null && !DebuggerUtilsEx.isVoid(method)) {
         // remember methods with non-void return types only
-        myLastExecutedMethod = method;
-        myLastMethodReturnValue = retVal;
+        myLastMethodReturnValue = new MethodReturnValue(method, event.returnValue());
       }
     }
     catch (UnsupportedOperationException ex) {
@@ -110,44 +105,29 @@ public class MethodReturnValueWatcher {
     }
   }
 
-  public @Nullable Method getLastExecutedMethod() {
-    return myLastExecutedMethod;
-  }
-
-  public @Nullable Value getLastMethodReturnValue() {
+  @Override
+  public @Nullable MethodReturnValue getLastMethodReturnValue() {
     return myLastMethodReturnValue;
   }
 
-  private static boolean isEnabled() {
-    return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
+  @Override
+  public void startCapture(@NotNull ThreadReference thread) {
+    setCapturing(true, thread);
   }
 
-  public void setEnabled(final boolean enabled) {
-    DebuggerSettings.getInstance().WATCH_RETURN_VALUES = enabled;
-    clear();
+  @Override
+  public void stopCapture() {
+    setCapturing(false, null);
   }
 
-  public boolean isTrackingEnabled() {
-    return myTrackingEnabled;
+  private void setCapturing(boolean capturing, final @Nullable ThreadReference thread) {
+    myCapturing = capturing;
+    updateRequestState(capturing, thread);
   }
 
-  public void enable(ThreadReference thread) {
-    setTrackingEnabled(true, thread);
-  }
-
-  public void disable() {
-    setTrackingEnabled(false, null);
-  }
-
-  private void setTrackingEnabled(boolean trackingEnabled, final ThreadReference thread) {
-    myTrackingEnabled = trackingEnabled;
-    updateRequestState(trackingEnabled && isEnabled(), thread);
-  }
-
+  @Override
   public void clear() {
-    myLastExecutedMethod = null;
     myLastMethodReturnValue = null;
-    myThread = null;
   }
 
   private void updateRequestState(final boolean enabled, final @Nullable ThreadReference thread) {
@@ -174,8 +154,6 @@ public class MethodReturnValueWatcher {
     catch (ObjectCollectedException ignored) {
     }
   }
-
-  private static final String WATCHER_REQUEST_KEY = "WATCHER_REQUEST_KEY";
 
   private MethodEntryRequest createEntryRequest() {
     DebuggerManagerThreadImpl.assertIsManagerThread(); // to ensure EventRequestManager synchronization
@@ -206,10 +184,15 @@ public class MethodReturnValueWatcher {
     return request;
   }
 
-  public boolean processEvent(Event event) {
+  @Override
+  public boolean processEvent(@NotNull Event event) {
     EventRequest request = event.request();
     if (request == null || request.getProperty(WATCHER_REQUEST_KEY) == null) {
       return false;
+    }
+    if (!myCapturing) {
+      // ignore a late event after stopCapture
+      return true;
     }
 
     if (event instanceof MethodEntryEvent entryEvent) {
@@ -230,11 +213,12 @@ public class MethodReturnValueWatcher {
 
     @Override
     public boolean isEnabled() {
-      return MethodReturnValueWatcher.isEnabled();
+      return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
     }
 
     @Override
     public void setEnabled(final boolean enabled) {
+      DebuggerSettings.getInstance().WATCH_RETURN_VALUES = enabled;
       myProcess.setWatchMethodReturnValuesEnabled(enabled);
     }
 

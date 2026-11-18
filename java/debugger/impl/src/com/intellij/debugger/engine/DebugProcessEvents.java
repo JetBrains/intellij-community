@@ -13,7 +13,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
-import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
+import com.intellij.debugger.engine.requests.NativeReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -215,11 +215,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
               protected void action() {
                 int processed = 0;
                 for (Event event : eventSet) {
-                  if (myReturnValueWatcher != null && myReturnValueWatcher.isTrackingEnabled()) {
-                    if (myReturnValueWatcher.processEvent(event)) {
-                      processed++;
-                      continue;
-                    }
+                  if (myReturnValueWatcher != null && myReturnValueWatcher.processEvent(event)) {
+                    processed++;
+                    continue;
                   }
                   Consumer<? super Event> handler = getEventRequestHandler(event);
                   if (handler != null) {
@@ -434,7 +432,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final EventRequestManager requestManager = machineProxy.eventRequestManager();
 
         if (machineProxy.canGetMethodReturnValues()) {
-          myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
+          myReturnValueWatcher = new NativeReturnValueWatcher(requestManager, this);
         }
 
         enableNonSuspendingRequest(platformThreadsOnly(requestManager.createThreadStartRequest()),

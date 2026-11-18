@@ -21,8 +21,9 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
+import com.intellij.debugger.engine.requests.MethodReturnValue;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.engine.requests.ReturnValueWatcher;
 import com.intellij.debugger.engine.requests.StepRequestor;
 import com.intellij.debugger.impl.DebugUtilsKt;
 import com.intellij.debugger.impl.DebuggerCompletableFuture;
@@ -250,7 +251,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
   private final AtomicBoolean myRootProcessClosed = new AtomicBoolean(false);
   protected volatile DebuggerSession mySession;
-  protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
+  protected @Nullable ReturnValueWatcher myReturnValueWatcher;
   private final CoroutineScope myCoroutineScope;
   private final CompletableJob myWorkJob = SupervisorKt.SupervisorJob(null);
   private final ShowStatusManager myShowStatusManager;
@@ -346,21 +347,26 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     });
   }
 
-  public @Nullable Pair<Method, Value> getLastExecutedMethod() {
-    final MethodReturnValueWatcher watcher = myReturnValueWatcher;
-    if (watcher == null) {
-      return null;
-    }
-    final Method method = watcher.getLastExecutedMethod();
-    if (method == null) {
-      return null;
-    }
-    return Pair.create(method, watcher.getLastMethodReturnValue());
+  public @Nullable MethodReturnValue getLastMethodReturnValue() {
+    final ReturnValueWatcher watcher = myReturnValueWatcher;
+    return watcher != null ? watcher.getLastMethodReturnValue() : null;
   }
 
+  /**
+   * @deprecated Use {@link #getLastMethodReturnValue()}.
+   */
+  @Deprecated
+  public @Nullable Pair<Method, Value> getLastExecutedMethod() {
+    final MethodReturnValue returnValue = getLastMethodReturnValue();
+    return returnValue != null ? Pair.create(returnValue.getMethod(), returnValue.getValue()) : null;
+  }
+
+  /**
+   * Call this method after a change of {@link DebuggerSettings#WATCH_RETURN_VALUES}.
+   */
   public void setWatchMethodReturnValuesEnabled(boolean enabled) {
     if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.setEnabled(enabled);
+      myReturnValueWatcher.clear();
     }
   }
 
@@ -2449,6 +2455,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       showStatusText(JavaDebuggerBundle.message("status.process.resumed"));
+      if (myReturnValueWatcher != null) {
+        myReturnValueWatcher.clear();
+      }
       if (!(this instanceof StepCommand)) {
         forEachSafe(SteppingListener.getExtensions(), listener -> listener.beforeResume(suspendContext));
       }
@@ -3049,9 +3058,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         breakpointManager.removeThreadFilter(DebugProcessImpl.this); // clear the filter on resume
-        if (myReturnValueWatcher != null) {
-          myReturnValueWatcher.clear();
-        }
         super.contextAction(suspendContext);
       }
 
@@ -3190,8 +3196,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
-    if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.enable(thread.getThreadReference());
+    if (myReturnValueWatcher != null && DebuggerSettings.getInstance().WATCH_RETURN_VALUES) {
+      myReturnValueWatcher.startCapture(thread.getThreadReference());
     }
   }
 
@@ -3212,7 +3218,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   void stopWatchingMethodReturn() {
     if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.disable();
+      myReturnValueWatcher.stopCapture();
     }
   }
 
