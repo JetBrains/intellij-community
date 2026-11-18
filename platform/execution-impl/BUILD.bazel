@@ -46,7 +46,7 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "//platform/kernel/rpc",
+        "//platform/kernel/rpc.lite",
         "@lib//:kotlin-stdlib",
         "//platform/analysis-api:analysis",
         "//platform/core-impl",
