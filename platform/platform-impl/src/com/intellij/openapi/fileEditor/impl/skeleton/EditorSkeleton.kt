@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonFra
 import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.ui.DrawUtil
 import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
@@ -26,7 +27,7 @@ import kotlin.math.ceil
 
 /**
  * Shows a file editor skeleton with a renderer selected for the current toolkit.
- * The skeleton fades in over [skeletonDelayMs], then pulses when animation is enabled.
+ * The skeleton fades in over [skeletonDelayMs], then pulses when animation is enabled and the UI is not simplified.
  * [nowMs] supplies the clock for rendering frames with a fixed timeline.
  */
 class EditorSkeleton(
@@ -39,7 +40,7 @@ class EditorSkeleton(
   private val colorManager = EditorSkeletonColorManager(
     skeletonDelayMs = skeletonDelayMs,
     nowMs = { renderer.frameTimeMs(nowMs()) },
-    animationEnabled = RegistryManager.getInstance().`is`(ANIMATION_ENABLED_KEY),
+    animationEnabled = RegistryManager.getInstance().`is`(ANIMATION_ENABLED_KEY) && !DrawUtil.isSimplifiedUI(),
     animationDurationMs = RegistryManager.getInstance().intValue(ANIMATION_DURATION_KEY).toLong(),
   )
 
