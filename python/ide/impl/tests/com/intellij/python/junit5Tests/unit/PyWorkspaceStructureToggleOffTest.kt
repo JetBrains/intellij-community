@@ -45,8 +45,9 @@ import kotlin.time.Duration.Companion.minutes
 internal class PyWorkspaceStructureToggleOffTest {
 
   // The feature is off by default in the registry, which hides the checkbox and reports the
-  // setting as off, so the toggle transition under test could not happen at all.
-  private val pyProjectModelKey = registryKeyFixture("intellij.python.pyproject.model") { setValue("on") }
+  // setting as off, so the toggle transition under test could not happen at all. The key is a
+  // multi-value one, so the whole `[a|b*|c]` list is the value — a bare "on" fails `asEnum`.
+  private val pyProjectModelKey = registryKeyFixture("intellij.python.pyproject.model") { setValue("[off|on*|ask]") }
 
   private val projectFixture = projectFixture()
 
