@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 import com.intellij.openapi.components.service
 import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.awaitCancellation
@@ -104,8 +105,13 @@ internal class EditorSkeletonDirectRenderer(private val frames: EditorSkeletonFr
   }
 
   override fun removeNotify() {
-    track(containers = emptySet(), components = emptySet(), window = null)
-    publish(null)
+    if (EDT.isCurrentThreadEdt()) {
+      track(containers = emptySet(), components = emptySet(), window = null)
+      publish(null)
+    } else {
+      renderThread.unregister(this)
+      SwingUtilities.invokeLater { updateTarget() }
+    }
     super.removeNotify()
   }
 
@@ -254,7 +260,14 @@ internal class EditorSkeletonDirectRenderer(private val frames: EditorSkeletonFr
            height != target.height
   }
 
+  /**
+   * Computes the target on the EDT. On another thread, it posts itself to the EDT.
+   */
   private fun updateTarget() {
+    if (!EDT.isCurrentThreadEdt()) {
+      SwingUtilities.invokeLater { updateTarget() }
+      return
+    }
     val rootPane = if (isShowing) rootPane else null
     val window = rootPane?.let { SwingUtilities.getWindowAncestor(it) }
     if (rootPane == null || window == null) {

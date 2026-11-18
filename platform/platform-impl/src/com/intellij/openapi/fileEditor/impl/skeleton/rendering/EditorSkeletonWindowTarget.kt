@@ -13,6 +13,9 @@ import javax.swing.JRootPane
  * [origin], [clip] and [excluded] are in the coordinates of [window]. [rootPaneClip] is [clip] in the coordinates of [rootPane].
  * A frame draws into [clip] except [excluded], the areas of the overlays on top of the renderer.
  * While [covered] is true, the overlays or the glass pane can paint anywhere on the renderer, so a frame goes through a Swing repaint.
+ *
+ * The EDT creates each target from new AWT objects and publishes it to the render thread.
+ * Nobody changes a target, its rectangles, its point or its list after that.
  */
 internal data class EditorSkeletonWindowTarget(
   val window: Window,
