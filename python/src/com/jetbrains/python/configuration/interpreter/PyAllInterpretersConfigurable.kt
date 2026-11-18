@@ -29,7 +29,6 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
@@ -39,7 +38,6 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.associatedModuleDir
 import com.intellij.python.sdk.backend.binaryPathString
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.GroupHeaderSeparator
@@ -535,15 +533,6 @@ private fun newInUseLabel(): JBLabel = JBLabel(PyBundle.message("python.interpre
 }
 
 /**
- * The [Sdk] behind [PythonInterpreter], for the redesigned page's per-row edit / remove / paths flows
- * that still bottom out in `Sdk`-typed APIs (`ProjectSdksModel`, `PyInterpreterEditDialogLauncher`, …).
- * The `getSdkAPI` bridge is deprecated by design; this single file-local accessor keeps the
- * suppression in one place instead of scattering it across every call site.
- */
-private val PythonInterpreter.sdk: Sdk
-  get() = getSdkAPI()
-
-/**
  * A row of the page: an interpreter of the project. [inUse] when a project uses it, so it cannot be removed. [owner] is
  * the name of the Python project that owns it, see [ownerNameOf].
  */
@@ -569,9 +558,9 @@ internal class PyInterpreterRow(val interpreter: PythonInterpreter, val inUse: B
 internal fun PythonInterpreter.editorFor(project: Project, parent: Configurable): DialogWrapper? =
   PyInterpreterEditDialogLauncher.editorFor(project, this, parent)
 
-/** Opens the interpreter-paths dialog for this interpreter and reports the mutated SDK. */
-internal suspend fun PythonInterpreter.openPathsDialog(project: Project, onCommit: (Sdk) -> Unit) {
-  PyInterpreterPathsDialogLauncher.open(project, sdk, onCommit)
+/** Opens the interpreter-paths dialog for this interpreter, and calls [onCommit] when the user changed the paths. */
+internal suspend fun PythonInterpreter.openPathsDialog(project: Project, onCommit: () -> Unit) {
+  PyInterpreterPathsDialogLauncher.open(project, this, onCommit)
 }
 
 /**
