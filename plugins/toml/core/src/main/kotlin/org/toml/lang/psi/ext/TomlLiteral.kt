@@ -67,13 +67,26 @@ fun offsetsForTomlText(node: ASTNode): LiteralOffsets {
             when {
                 escape -> escape = false
                 needEscape && ch == '\\' -> escape = true
-                text.startsWith(quote, i) -> return@doLocate i
+                text.startsWith(quote, i) -> return@doLocate i + extraQuotesBeforeCloseDelim(text, i, quote)
             }
         }
         text.length
     }
     val closeDelimEnd = doLocate(node, valueEnd) { if (it.startsWith(quote)) quote.length else 0 }
     return LiteralOffsets.fromEndOffsets(0, openDelimEnd, valueEnd, closeDelimEnd, 0)
+}
+
+/**
+ * Returns the number of quotes at [start] that belong to the value of a multiline string.
+ * TOML lets the value end in one or two quotes, so `"""say "hi""""` has the value `say "hi"`.
+ */
+private fun extraQuotesBeforeCloseDelim(text: CharSequence, start: Int, quote: String): Int {
+    if (quote.length != 3) return 0
+    var end = start
+    while (end < text.length && text[end] == quote[0]) {
+        end++
+    }
+    return (end - start - quote.length).coerceIn(0, 2)
 }
 
 private inline fun doLocate(node: ASTNode, start: Int, locator: (CharSequence) -> Int): Int =

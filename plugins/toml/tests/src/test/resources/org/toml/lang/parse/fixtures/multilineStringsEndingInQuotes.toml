@@ -1,0 +1,6 @@
+basic1 = ["""say "hi"""", 'x']
+basic2 = [""""two""""", 'x']
+basic3 = ["""""", 'x']
+literal1 = ['''say 'hi'''', 'x']
+literal2 = [''''two''''', 'x']
+literal3 = ['''''', 'x']
