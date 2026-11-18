@@ -141,10 +141,18 @@ internal class EditorSkeletonFallbackRenderer : JComponent(), EditorSkeletonRend
 
   private fun startRepainting() {
     val cs = scope ?: return
+    val frames = frames ?: return
     if (renderingJob != null) return
     renderingJob = cs.launch(Dispatchers.UI) {
+      var repaintedColors: EditorSkeletonColorManager.FrameColors? = null
       while (isActive) {
-        if (isShowing) repaint()
+        if (isShowing) {
+          val colors = frames.currentColors()
+          if (colors != repaintedColors) {
+            repaintedColors = colors
+            repaint()
+          }
+        }
         delay(EditorSkeletonRenderer.TICK_MS)
       }
     }
