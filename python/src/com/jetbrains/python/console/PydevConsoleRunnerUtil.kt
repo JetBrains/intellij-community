@@ -188,9 +188,9 @@ private fun getConsoleCommunication(element: PsiElement): ConsoleCommunication? 
   return containingFile?.getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY)
 }
 
-internal fun getConsoleSdk(element: PsiElement): Sdk? {
+internal fun getConsoleInterpreter(element: PsiElement): PythonInterpreter? {
   val containingFile = element.containingFile
-  return containingFile?.getCopyableUserData(PydevConsoleRunner.CONSOLE_SDK)
+  return containingFile?.getCopyableUserData(PydevConsoleRunner.CONSOLE_INTERPRETER)
 }
 
 @ApiStatus.Internal

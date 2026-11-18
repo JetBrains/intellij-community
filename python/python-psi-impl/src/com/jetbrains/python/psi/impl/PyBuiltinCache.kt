@@ -258,9 +258,9 @@ class PyBuiltinCache private constructor(
       var interpreter: PythonInterpreter? = null
       if (vfile != null) { // reality
         val projectRootManager = ProjectRootManager.getInstance(psiFile.project)
-        // A Python console is served by `PythonRuntimeService.getConsoleSdk` together with `visitAllModules`, so
+        // A Python console is served by `PythonRuntimeService.getConsoleInterpreter` together with `visitAllModules`, so
         // answering here would hand it a second, competing interpreter (PY-89831).
-        if (PythonRuntimeService.getInstance().getConsoleSdk(psiFile) == null) {
+        if (PythonRuntimeService.getInstance().getConsoleInterpreter(psiFile) == null) {
           interpreter = psiFile.project.mainPythonInterpreter()
         }
         if (interpreter == null) {

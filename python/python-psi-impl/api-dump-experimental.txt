@@ -2,7 +2,7 @@
 - <init>():V
 - createPydevDoc(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):java.lang.String
 - formatDocstring(com.intellij.openapi.module.Module,com.jetbrains.python.documentation.docstrings.DocStringFormat,java.lang.String,java.util.List):java.lang.String
-- getConsoleSdk(com.intellij.psi.PsiElement):com.intellij.openapi.projectRoots.Sdk
+- getConsoleInterpreter(com.intellij.psi.PsiElement):com.intellij.python.sdk.backend.PythonInterpreter
 - s:getInstance():com.jetbrains.python.PythonRuntimeService
 - getLanguageLevelForSdk(com.intellij.openapi.projectRoots.Sdk):com.jetbrains.python.psi.LanguageLevel
 - getPydevConsoleReference(com.jetbrains.python.psi.PyReferenceExpression,com.jetbrains.python.psi.resolve.PyResolveContext):com.intellij.psi.PsiPolyVariantReference

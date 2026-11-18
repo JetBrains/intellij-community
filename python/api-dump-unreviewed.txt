@@ -222,7 +222,7 @@ pc:com.jetbrains.python.console.PydevConsoleCommunication$CommunicationClosedExc
 - p:<init>():V
 com.jetbrains.python.console.PydevConsoleRunner
 - sf:CONSOLE_COMMUNICATION_KEY:com.intellij.openapi.util.Key
-- sf:CONSOLE_SDK:com.intellij.openapi.util.Key
+- sf:CONSOLE_INTERPRETER:com.intellij.openapi.util.Key
 - a:addConsoleListener(com.jetbrains.python.console.PydevConsoleRunner$ConsoleListener):V
 - createRerunAction():com.intellij.openapi.actionSystem.AnAction
 - a:getConsoleExecuteActionHandler():com.jetbrains.python.console.PythonConsoleExecuteActionHandler

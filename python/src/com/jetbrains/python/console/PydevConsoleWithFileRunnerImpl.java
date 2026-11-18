@@ -4,7 +4,7 @@ package com.jetbrains.python.console;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.util.NlsContexts;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,7 +19,7 @@ class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
   private final @NotNull PythonRunConfiguration myConfig;
 
   PydevConsoleWithFileRunnerImpl(@NotNull Project project,
-                                        @Nullable Sdk sdk,
+                                        @Nullable PythonInterpreter interpreter,
                                         @NotNull PyConsoleType consoleType,
                                         @NotNull @NlsContexts.TabTitle String title,
                                         @Nullable String workingDir,
@@ -27,12 +27,12 @@ class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
                                         @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                         @NotNull PythonRunConfiguration config,
                                         String... statementsToExecute) {
-    super(project, sdk, consoleType, title, workingDir, environmentVariables, settingsProvider, statementsToExecute);
+    super(project, interpreter, consoleType, title, workingDir, environmentVariables, settingsProvider, statementsToExecute);
     myConfig = config;
   }
 
   PydevConsoleWithFileRunnerImpl(@NotNull Project project,
-                                 @Nullable Sdk sdk,
+                                 @Nullable PythonInterpreter interpreter,
                                  @NotNull PyConsoleType consoleType,
                                  @NotNull @NlsContexts.TabTitle String title,
                                  @Nullable Function<TargetEnvironment, String> workingDir,
@@ -40,15 +40,15 @@ class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
                                  @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                  @NotNull PythonRunConfiguration config,
                                  @NotNull Function<TargetEnvironment, @NotNull String> startScriptFun) {
-    super(project, sdk, consoleType, title, workingDir, environmentVariables, settingsProvider, startScriptFun);
+    super(project, interpreter, consoleType, title, workingDir, environmentVariables, settingsProvider, startScriptFun);
     myConfig = config;
   }
 
   @Override
   protected @NotNull PythonConsoleRunParams createConsoleRunParams(@Nullable String workingDir,
-                                                                   @NotNull Sdk sdk,
+                                                                   @NotNull PythonInterpreter interpreter,
                                                                    @NotNull Map<String, String> environmentVariables) {
-    return new PythonConsoleWithFileRunParams(myConsoleSettings, workingDir, sdk, environmentVariables);
+    return new PythonConsoleWithFileRunParams(myConsoleSettings, workingDir, interpreter, environmentVariables);
   }
 
   @Override
@@ -60,8 +60,8 @@ class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
 
     public PythonConsoleWithFileRunParams(@NotNull PyConsoleOptions.PyConsoleSettings consoleSettings,
                                           @Nullable String workingDir,
-                                          @NotNull Sdk sdk, @NotNull Map<String, String> envs) {
-      super(consoleSettings, workingDir, sdk, envs);
+                                          @NotNull PythonInterpreter interpreter, @NotNull Map<String, String> envs) {
+      super(consoleSettings, workingDir, interpreter, envs);
     }
 
     @Override
