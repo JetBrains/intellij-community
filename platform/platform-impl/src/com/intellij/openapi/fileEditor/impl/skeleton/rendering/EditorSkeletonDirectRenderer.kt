@@ -47,6 +47,9 @@ internal class EditorSkeletonDirectRenderer(private val frames: EditorSkeletonFr
   override val component: JComponent
     get() = this
 
+  /**
+   * The place of the next frame. Only the EDT writes it.
+   */
   @Volatile
   private var target: EditorSkeletonWindowTarget? = null
 
@@ -115,6 +118,7 @@ internal class EditorSkeletonDirectRenderer(private val frames: EditorSkeletonFr
 
   /**
    * Renders one frame when its colors or its target differ from the last rendered frame. Only [EditorSkeletonRenderThread] calls it.
+   * It does not draw a frame whose target changed while the frame was painted.
    */
   fun renderFrame() {
     if (stopped || failed) {
@@ -151,7 +155,11 @@ internal class EditorSkeletonDirectRenderer(private val frames: EditorSkeletonFr
       if (target.excluded.isNotEmpty()) {
         g.clip(clipWithoutOverlays(target))
       }
-      g.drawImage(buffer, target.origin.x, target.origin.y, null)
+      if (isCurrent(target)) {
+        g.drawImage(buffer, target.origin.x, target.origin.y, null)
+      } else {
+        false
+      }
     }
     if (!drawn) {
       return
@@ -189,9 +197,20 @@ internal class EditorSkeletonDirectRenderer(private val frames: EditorSkeletonFr
     renderedColors = colors
   }
 
+  private fun isCurrent(target: EditorSkeletonWindowTarget): Boolean {
+    return !stopped &&
+           !failed &&
+           this.target === target
+  }
+
+  /**
+   * Stops the frames off the EDT for good. Any thread can call it.
+   */
   private fun stop() {
     stopped = true
-    publish(null)
+    renderThread.unregister(this)
+    val target = target
+    target?.rootPane?.repaint(target.rootPaneClip)
   }
 
   private fun publish(newTarget: EditorSkeletonWindowTarget?) {
