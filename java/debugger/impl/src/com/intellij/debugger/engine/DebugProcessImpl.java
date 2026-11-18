@@ -2175,6 +2175,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(getThreadFilterFromContext(suspendContext));
+      startWatchingMethodReturn(stepThread);
       if (myBreakpoint != null) {
         prepareAndSetSteppingBreakpoint(suspendContext, myBreakpoint, hint, false);
       }
