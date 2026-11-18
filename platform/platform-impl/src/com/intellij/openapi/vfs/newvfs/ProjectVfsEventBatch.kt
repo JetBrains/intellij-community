@@ -116,8 +116,7 @@ class ProjectVfsEventBatch @RequiresReadLock constructor(private val project: Pr
                          info.symlinkTarget, info.children, info.isAllChildren)
         }
         else {
-          VFileCreateEvent(requestor, realParent, name, info.fileAttributes?.isDirectory ?: realChild.isDirectory,
-                           info.fileAttributes, info.symlinkTarget, info.children, info.isAllChildren)
+          VFileCreateEvent(requestor, realParent, info, info.fileAttributes?.isDirectory ?: realChild.isDirectory)
         }
 
         output.add(event)
