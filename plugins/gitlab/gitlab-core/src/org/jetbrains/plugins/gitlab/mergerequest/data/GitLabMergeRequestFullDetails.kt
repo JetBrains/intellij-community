@@ -3,12 +3,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.openapi.util.NlsSafe
-import git4idea.GitRemoteBranch
-import git4idea.push.GitSpecialRefRemoteBranch
-import git4idea.remote.GitRemoteUrlCoordinates
-import git4idea.remote.hosting.HostedGitRepositoryRemote
-import git4idea.remote.hosting.createHostedGitRepositoryRemote
-import git4idea.repo.GitRemote
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffRefs
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelGQLDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestPermissionsDTO
@@ -122,29 +116,6 @@ val GitLabMergeRequestFullDetails.reviewState: ReviewRequestState
       GitLabMergeRequestState.OPENED -> ReviewRequestState.OPENED
       else -> ReviewRequestState.OPENED // to avoid null state
     }
-
-/**
- * Creates the descriptor of the remote for this project.
- * The descriptor uses the host of [defaultCoordinates], so it also matches a remote with an SSH alias.
- */
-fun GitLabMergeRequestFullDetails.ProjectDetails.getRemoteDescriptor(defaultCoordinates: GitRemoteUrlCoordinates): HostedGitRepositoryRemote =
-  createHostedGitRepositoryRemote(path.owner, path.fullPath(), httpUrlToRepo, sshUrlToRepo, defaultCoordinates)
-
-fun GitLabMergeRequestFullDetails.getSourceRemoteDescriptor(defaultCoordinates: GitRemoteUrlCoordinates): HostedGitRepositoryRemote? =
-  sourceProject?.getRemoteDescriptor(defaultCoordinates)
-
-fun GitLabMergeRequestFullDetails.getTargetRemoteDescriptor(defaultCoordinates: GitRemoteUrlCoordinates): HostedGitRepositoryRemote =
-  targetProject.getRemoteDescriptor(defaultCoordinates)
-
-/**
- * Gets a special remote ref for the head of the merge request.
- * This special reference does not represent a remote branch,
- * only a reference to the last commit of the MR.
- *
- * https://gitlab.com/gitlab-org/gitlab-foss/-/issues/47110
- */
-fun GitLabMergeRequestFullDetails.getSpecialRemoteBranchForHead(remote: GitRemote): GitRemoteBranch =
-  GitSpecialRefRemoteBranch("refs/merge-requests/${iid}/head", remote)
 
 fun GitLabMergeRequestFullDetails.isFork(): Boolean =
   sourceProject != targetProject
