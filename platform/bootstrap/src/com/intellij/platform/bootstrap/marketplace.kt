@@ -80,8 +80,7 @@ internal fun initMarketplace() {
   }
 
   val marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar")
-  val classLoader = AppMode::class.java.classLoader as? PathClassLoader
-                    ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+  val classLoader = AppMode::class.java.classLoader as? PathClassLoader ?: return
   if (Files.exists(marketplaceImpl)) {
     classLoader.classPath.addFiles(listOf(marketplaceImpl))
   }

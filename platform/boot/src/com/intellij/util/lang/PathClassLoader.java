@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -102,14 +103,20 @@ public final class PathClassLoader extends UrlClassLoader {
   @Override
   public Class<?> consumeClassData(@NotNull String name, byte[] data)
     throws IOException {
+    return consumeClassData(name, data, null);
+  }
+
+  @Override
+  public Class<?> consumeClassData(@NotNull String name, byte[] data, @Nullable ProtectionDomain protectionDomain)
+    throws IOException {
     BytecodeTransformer transformer = this.transformer;
     if (transformer != null && transformer.isApplicable(name, this)) {
       byte[] transformedData = transformer.transform(this, name, data);
       if (transformedData != null) {
-        return super.consumeClassData(name, transformedData);
+        return super.consumeClassData(name, transformedData, protectionDomain);
       }
     }
-    return super.consumeClassData(name, data);
+    return super.consumeClassData(name, data, protectionDomain);
   }
 
   @SuppressWarnings("IO_FILE_USAGE")

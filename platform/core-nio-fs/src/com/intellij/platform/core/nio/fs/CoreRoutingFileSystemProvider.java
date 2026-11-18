@@ -346,7 +346,8 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
       ClassLoader loader = (myUseContextClassLoader ? Thread.currentThread().getContextClassLoader()
                                                     : CoreRoutingFileSystemProvider.class.getClassLoader());
       String loaderName = loader.getClass().getName();
-      if (!("com.intellij.util.lang.PathClassLoader").equals(loaderName) &&
+      if (loader != ClassLoader.getSystemClassLoader() &&
+          !("com.intellij.util.lang.PathClassLoader").equals(loaderName) &&
           !("com.intellij.util.lang.UrlClassLoader").equals(loaderName) &&
           !("com.intellij.ide.plugins.cl.PluginClassLoader" /* Downburst */).equals(loaderName)) {
         throw new RuntimeException("Trying to initialize a mounted file system with wrong classloader: " + loader);

@@ -12,6 +12,7 @@ import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.security.ProtectionDomain;
 import java.util.Enumeration;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
@@ -89,7 +90,10 @@ final class JdkZipResourceFile implements ResourceFile {
       try (InputStream stream = zipFile.getInputStream(entry)) {
         bytes = loadBytes(stream, (int)entry.getSize());
       }
-      return classConsumer.consumeClassData(className, bytes);
+      ProtectionDomain protectionDomain = jarLoader.getProtectionDomain();
+      return protectionDomain == null
+             ? classConsumer.consumeClassData(className, bytes)
+             : classConsumer.consumeClassData(className, bytes, protectionDomain);
     }
     finally {
       if (!lockJars) {

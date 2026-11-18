@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs.tests
 
+import com.intellij.platform.core.nio.fs.CoreRoutingFileSystemProvider
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.net.URI
+import java.net.URLClassLoader
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -92,6 +94,27 @@ class MultiRoutingFileSystemProviderTest {
         assertSame(backend, actual.initialDelegate.fileSystem)
         assertEquals(fs.getPath(localPath.toString()), actual)
       }
+    }
+  }
+
+  @Test
+  fun `CoreRoutingFileSystemProvider createInstance allows system classloader and rejects unrelated classloader`() {
+    val provider = CoreRoutingFileSystemProvider(defaultSunNioFs.provider(), true)
+    val previousContextLoader = Thread.currentThread().contextClassLoader
+    try {
+      Thread.currentThread().contextClassLoader = ClassLoader.getSystemClassLoader()
+      val value = provider.createInstance<String>("java.lang.String", arrayOf(String::class.java), "mounted")
+      value shouldBe "mounted"
+
+      URLClassLoader(emptyArray(), ClassLoader.getSystemClassLoader()).use { unrelatedLoader ->
+        Thread.currentThread().contextClassLoader = unrelatedLoader
+        shouldThrow<RuntimeException> {
+          provider.createInstance<String>("java.lang.String", arrayOf(String::class.java), "mounted")
+        }
+      }
+    }
+    finally {
+      Thread.currentThread().contextClassLoader = previousContextLoader
     }
   }
 

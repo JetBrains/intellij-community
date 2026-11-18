@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +44,9 @@ import java.util.function.Predicate;
  */
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
   public static final String CLASSPATH_INDEX_PROPERTY_NAME = "idea.classpath.index.enabled";
+
+  @Internal
+  public static final String DEFINE_PROTECTION_DOMAIN_PROPERTY = "idea.classloader.define.protection.domain";
 
   private static final boolean isClassPathIndexEnabledGlobalValue =
     Boolean.parseBoolean(System.getProperty(CLASSPATH_INDEX_PROPERTY_NAME, "false"));
@@ -334,14 +338,26 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   @Override
   public Class<?> consumeClassData(@NotNull String name, byte[] data) throws IOException {
-    definePackageIfNeeded(name);
-    return super.defineClass(name, data, 0, data.length, null);
+    return consumeClassData(name, data, null);
   }
 
   @Override
   public Class<?> consumeClassData(@NotNull String name, ByteBuffer data) {
+    return consumeClassData(name, data, null);
+  }
+
+  @Internal
+  @Override
+  public Class<?> consumeClassData(@NotNull String name, byte[] data, @Nullable ProtectionDomain protectionDomain) throws IOException {
     definePackageIfNeeded(name);
-    return super.defineClass(name, data, null);
+    return super.defineClass(name, data, 0, data.length, protectionDomain);
+  }
+
+  @Internal
+  @Override
+  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, @Nullable ProtectionDomain protectionDomain) {
+    definePackageIfNeeded(name);
+    return super.defineClass(name, data, protectionDomain);
   }
 
   @Override
@@ -626,6 +642,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     final boolean isSystemClassLoader;
 
     boolean isClassPathIndexEnabled = isClassPathIndexEnabledGlobalValue;
+    boolean defineProtectionDomain = Boolean.getBoolean(DEFINE_PROTECTION_DOMAIN_PROPERTY);
     boolean isBootstrapResourcesAllowed;
     @Nullable CachePoolImpl cachePool;
     Predicate<? super Path> cachingCondition;

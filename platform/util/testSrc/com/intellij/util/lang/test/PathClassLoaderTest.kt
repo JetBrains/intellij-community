@@ -10,6 +10,8 @@ import com.intellij.util.lang.UrlClassLoader
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -110,5 +112,84 @@ class PathClassLoaderTest {
     finally {
       System.clearProperty(PathClassLoader.RESET_CLASSPATH_FROM_MANIFEST_PROPERTY)
     }
+  }
+
+  @Test
+  fun `protection domain code source is disabled by default and populated when property is enabled`(@TempDir dir: Path) {
+    val jarPath = dir.resolve("sample.jar")
+    val className = "p.Sample"
+    val classBytes = minimalClassBytes("p/Sample")
+    val secondClassBytes = minimalClassBytes("p/Sample2")
+    Compressor.Zip(jarPath).use { compressor ->
+      compressor.addFile("p/Sample.class", classBytes)
+      compressor.addFile("p/Sample2.class", secondClassBytes)
+    }
+
+    val defaultUrlLoader = UrlClassLoader.build().files(listOf(jarPath)).allowLock(false).parent(null).get()
+    assertThat(defaultUrlLoader.loadClass(className).protectionDomain.codeSource?.location).isNull()
+
+    val defaultPathLoader = PathClassLoader(UrlClassLoader.build().files(listOf(jarPath)).allowLock(false).parent(null))
+    assertThat(defaultPathLoader.loadClass(className).protectionDomain.codeSource?.location).isNull()
+
+    try {
+      System.setProperty(UrlClassLoader.DEFINE_PROTECTION_DOMAIN_PROPERTY, "true")
+
+      val urlLoader = UrlClassLoader.build().files(listOf(jarPath)).allowLock(false).parent(null).get()
+      val urlLoaded = urlLoader.loadClass(className)
+      assertThat(urlLoaded.protectionDomain.codeSource).isNotNull()
+      assertThat(Paths.get(urlLoaded.protectionDomain.codeSource.location.toURI())).isEqualTo(jarPath)
+
+      val pathLoader = PathClassLoader(UrlClassLoader.build().files(listOf(jarPath)).allowLock(false).parent(null))
+      val firstLoaded = pathLoader.loadClass(className)
+      val secondLoaded = pathLoader.loadClass("p.Sample2")
+      assertThat(firstLoaded.protectionDomain.codeSource).isNotNull()
+      assertThat(Paths.get(firstLoaded.protectionDomain.codeSource.location.toURI())).isEqualTo(jarPath)
+      assertThat(secondLoaded.protectionDomain).isSameAs(firstLoaded.protectionDomain)
+
+      val transformedPathLoader = PathClassLoader(UrlClassLoader.build().files(listOf(jarPath)).allowLock(false).parent(null))
+      var transformCalled = false
+      transformedPathLoader.setTransformer(object : PathClassLoader.BytecodeTransformer {
+        override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray {
+          transformCalled = true
+          return classBytes.clone()
+        }
+      })
+      val transformedLoaded = transformedPathLoader.loadClass(className)
+      assertThat(transformCalled).isTrue()
+      assertThat(transformedLoaded.protectionDomain.codeSource).isNotNull()
+      assertThat(Paths.get(transformedLoaded.protectionDomain.codeSource.location.toURI())).isEqualTo(jarPath)
+    }
+    finally {
+      System.clearProperty(UrlClassLoader.DEFINE_PROTECTION_DOMAIN_PROPERTY)
+    }
+  }
+
+  private fun minimalClassBytes(internalName: String): ByteArray {
+    val out = ByteArrayOutputStream()
+    DataOutputStream(out).use { dos ->
+      dos.writeInt(0xCAFEBABE.toInt())
+      dos.writeShort(0)
+      dos.writeShort(52) // Java 8
+      dos.writeShort(5)  // constant pool count: 1..4
+      dos.writeByte(7)   // #1 Class -> #2
+      dos.writeShort(2)
+      dos.writeUTF8Entry(internalName) // #2 Utf8
+      dos.writeByte(7)   // #3 Class -> #4
+      dos.writeShort(4)
+      dos.writeUTF8Entry("java/lang/Object") // #4 Utf8
+      dos.writeShort(0x0021) // ACC_PUBLIC | ACC_SUPER
+      dos.writeShort(1)      // this_class
+      dos.writeShort(3)      // super_class
+      dos.writeShort(0)      // interfaces_count
+      dos.writeShort(0)      // fields_count
+      dos.writeShort(0)      // methods_count
+      dos.writeShort(0)      // attributes_count
+    }
+    return out.toByteArray()
+  }
+
+  private fun DataOutputStream.writeUTF8Entry(value: String) {
+    writeByte(1)
+    writeUTF(value)
   }
 }
