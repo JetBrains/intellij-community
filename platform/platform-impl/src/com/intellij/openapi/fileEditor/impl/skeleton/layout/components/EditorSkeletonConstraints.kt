@@ -20,9 +20,13 @@ internal class Padding(
   val horizontal: Int = leftInset + rightInset
   val vertical: Int = top + bottom
 
-  fun contentWidth(width: Int, x: Int = leftInset): Int = (width - rightInset - x).coerceAtLeast(0)
+  fun contentWidth(width: Int, x: Int = leftInset): Int {
+    return (width - rightInset - x).coerceAtLeast(0)
+  }
 
-  fun contentHeight(height: Int): Int = (height - vertical).coerceAtLeast(0)
+  fun contentHeight(height: Int): Int {
+    return (height - vertical).coerceAtLeast(0)
+  }
 
   fun paintBorder(g: Graphics2D, width: Int, height: Int) {
     when (borderSide) {

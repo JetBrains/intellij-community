@@ -36,7 +36,7 @@ internal class EditorSkeletonNew(
   private val colorManager = EditorSkeletonColorManager(
     skeletonDelayMs = fadeInMs,
     nowMs = { renderer.frameTimeMs(System.currentTimeMillis()) },
-    animationEnabled = Registry.`is`("editor.skeleton.animation.enabled", true) && !DrawUtil.isSimplifiedUI(),
+    animationEnabled = !DrawUtil.isSimplifiedUI(),
     animationDurationMs = Registry.intValue("editor.skeleton.animation.duration.ms", 1500).toLong(),
   )
   private val skeletonPanel = EditorSkeletonPanel(HORIZONTAL, fillLast = true) {

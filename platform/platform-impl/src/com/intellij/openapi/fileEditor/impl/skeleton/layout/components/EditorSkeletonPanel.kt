@@ -34,8 +34,9 @@ internal class EditorSkeletonPanel private constructor(
         Layout.HORIZONTAL -> {
           val childWidth = if (fillLast && index == children.lastIndex) {
             padding.contentWidth(width, x)
+          } else {
+            child.preferredWidth
           }
-          else child.preferredWidth
           child.paint(g, x, y, childWidth, contentHeight)
           x += childWidth + gap
         }
@@ -57,8 +58,18 @@ internal class EditorSkeletonPanel private constructor(
       rightAligned: Boolean = false,
       fillLast: Boolean = false,
       content: EditorSkeletonBuilder.() -> Unit,
-    ): EditorSkeletonPanel = EditorSkeletonPanel(
-      buildList { EditorSkeletonBuilder(this).content() }, layout, gap, padding, rightAligned, fillLast,
-    )
+    ): EditorSkeletonPanel {
+      val children = buildList {
+        EditorSkeletonBuilder(this).content()
+      }
+      return EditorSkeletonPanel(
+        children,
+        layout,
+        gap,
+        padding,
+        rightAligned,
+        fillLast,
+      )
+    }
   }
 }

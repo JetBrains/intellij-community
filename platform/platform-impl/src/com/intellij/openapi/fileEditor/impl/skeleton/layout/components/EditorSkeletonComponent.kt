@@ -8,19 +8,16 @@ internal sealed class EditorSkeletonComponent {
   abstract val preferredWidth: Int
   abstract val preferredHeight: Int
 
+  protected abstract fun paintComponent(g: Graphics2D, width: Int, height: Int)
+
   fun paint(g: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
-    if (width <= 0 || height <= 0 || !g.hitClip(x, y, width, height)) return
-    (g.create(x, y, width, height) as Graphics2D).use { graphics ->
+    if (width <= 0 || height <= 0 || !g.hitClip(x, y, width, height)) {
+      return
+    }
+    val g2 = g.create(x, y, width, height) as Graphics2D
+    g2.use { graphics ->
       paintComponent(graphics, width, height)
     }
   }
-
-  protected abstract fun paintComponent(g: Graphics2D, width: Int, height: Int)
 }
 
-internal class EditorSkeletonSpace(
-  override val preferredWidth: Int,
-  override val preferredHeight: Int,
-) : EditorSkeletonComponent() {
-  override fun paintComponent(g: Graphics2D, width: Int, height: Int) {}
-}
