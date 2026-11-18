@@ -45,11 +45,6 @@ def is_test_mode():
     return ENV_TEST_MODE_FLAG in os.environ
 
 
-@cached
-def is_pregeneration_mode():
-    return ENV_PREGENERATION_MODE_FLAG in os.environ
-
-
 # find_binaries functionality
 def cut_binary_lib_suffix(path, f):
     # type: (str, str) -> Optional[str]
@@ -222,7 +217,6 @@ def version_to_tuple(version):
 class OriginType(object):
     FILE = 'FILE'
     BUILTIN = '(built-in)'
-    PREGENERATED = '(pre-generated)'
 
 
 class SkeletonStatus(object):
@@ -409,11 +403,6 @@ class GenerationStatus(object):
 def get_module_origin(mod_path, mod_qname):
     if mod_qname in sys.builtin_module_names:
         return OriginType.BUILTIN
-
-    # Unless it's a builtin module all bundled skeletons should have
-    # file system independent "(pre-generated)" marker in their header
-    if is_pregeneration_mode():
-        return OriginType.PREGENERATED
 
     if not mod_path:
         return None

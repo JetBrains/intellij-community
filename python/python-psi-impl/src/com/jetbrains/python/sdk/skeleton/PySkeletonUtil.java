@@ -90,8 +90,7 @@ public final class PySkeletonUtil {
       }
 
       final String binaryPath = header.getBinaryFile();
-      // XXX Assume that all pre-generated stubs belong to the interpreter's stdlib -- might change in future with PY-32229
-      if (binaryPath.equals(PySkeletonHeader.BUILTIN_NAME) || binaryPath.equals(PySkeletonHeader.PREGENERATED)) {
+      if (binaryPath.equals(PySkeletonHeader.BUILTIN_NAME)) {
         return true;
       }
       if (isRemote(pythonSdk)) {

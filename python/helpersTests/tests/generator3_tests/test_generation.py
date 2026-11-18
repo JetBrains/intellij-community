@@ -185,27 +185,6 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
                     mod.py
         """.format(hash=generator3.core.module_hash('mod', mod_path)))
 
-    # PY-36884
-    def test_pregenerated_skeletons_mode(self):
-        self.check_generator_output('mod', mod_path='mod.py', extra_env={
-            'IS_PREGENERATED_SKELETONS': '1'
-        })
-
-    # PY-36884
-    def test_pregenerated_skeletons_mode_for_builtin_module(self):
-        self.run_generator('sys', extra_env={
-            'IS_PREGENERATED_SKELETONS': '1'
-        })
-        sys_cached_skeleton_path = os.path.join(self.temp_cache_dir, generator3.core.module_hash('sys', None), 'sys.py')
-        self.assertTrue(os.path.exists(sys_cached_skeleton_path))
-        with open(sys_cached_skeleton_path, 'r') as f:
-            self.assertTrue('# from (pre-generated)\n' in f.read())
-
-        sys_skeleton_path = os.path.join(self.temp_skeletons_dir, 'sys.py')
-        self.assertTrue(os.path.exists(sys_skeleton_path))
-        with open(sys_skeleton_path, 'r') as f:
-            self.assertTrue('# from (built-in)\n' in f.read())
-
     def test_skeleton_regenerated_for_changed_module(self):
         self.check_generator_output('mod', mod_path='mod.py', extra_syspath=['versions/v2'])
 

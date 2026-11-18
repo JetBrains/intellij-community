@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 @ApiStatus.Internal
 public final class PySkeletonHeader {
   public static final @NonNls String BUILTIN_NAME = "(built-in)"; // version required for built-ins
-  public static final @NonNls String PREGENERATED = "(pre-generated)"; // pre-generated skeleton
 
   // Path (the first component) may contain spaces, this header spec is deprecated
   private static final Pattern VERSION_LINE_V1 = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
