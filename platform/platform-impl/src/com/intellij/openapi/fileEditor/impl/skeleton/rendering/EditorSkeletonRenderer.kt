@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
@@ -24,12 +25,21 @@ internal interface EditorSkeletonRenderer {
   companion object {
     val TICK_MS = 8.milliseconds
 
-    fun create(): EditorSkeletonRenderer = if (StartupUiUtil.isWaylandToolkit() || isWindowsFrontend()) {
-      EditorSkeletonFallbackRenderer()
-    } else {
-      EditorSkeletonCanvas()
+    fun create(): EditorSkeletonRenderer {
+      if (StartupUiUtil.isWaylandToolkit()) {
+        return EditorSkeletonFallbackRenderer()
+      }
+      if (RegistryManager.getInstance().`is`(WINDOW_RENDERER_KEY)) {
+        return EditorSkeletonWindowRenderer()
+      }
+      if (isWindowsFrontend()) {
+        return EditorSkeletonFallbackRenderer()
+      }
+      return EditorSkeletonCanvas()
     }
 
     private fun isWindowsFrontend(): Boolean = SystemInfoRt.isWindows && PlatformUtils.isJetBrainsClient()
+
+    private const val WINDOW_RENDERER_KEY = "editor.skeleton.window.renderer"
   }
 }
