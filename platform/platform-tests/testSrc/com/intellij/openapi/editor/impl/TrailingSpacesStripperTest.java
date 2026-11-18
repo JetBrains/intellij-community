@@ -1,13 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.HeadlessDataManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
@@ -58,6 +64,31 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     WriteCommandAction.runWriteCommandAction(null, () -> {
       TrailingSpacesStripper.strip(getEditor().getDocument(), true, true);
     });
+  }
+
+  public void testUnopenedDocumentDoesNotQueryEditorDataForSaveOptions() throws IOException {
+    VirtualFile file = WriteAction.compute(() -> getSourceRoot().createChildData(this, "unopened.txt"));
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    assertNotNull(document);
+    assertTrue(EditorFactory.getInstance().editors(document).findAny().isEmpty());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "text   \n"));
+    assertTrue(document.isLineModified(0));
+    TrailingSpacesStripper stripper = new TrailingSpacesStripper();
+
+    Disposable dataProviderDisposable = Disposer.newDisposable();
+    try {
+      ((HeadlessDataManager)DataManager.getInstance()).setTestDataProvider(dataId -> {
+        assertFalse("An unopened document must not query editor data", CommonDataKeys.EDITOR.is(dataId));
+        return null;
+      }, dataProviderDisposable);
+      assertNotNull(TrailingSpacesStripper.getOptions(document));
+      stripper.clearLineModificationFlags(document);
+    }
+    finally {
+      Disposer.dispose(dataProviderDisposable);
+    }
+    assertFalse(document.isLineModified(0));
   }
 
   public void testDoNotStripModifiedOnCurrentLine() {

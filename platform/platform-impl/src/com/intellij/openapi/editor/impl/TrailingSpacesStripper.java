@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -176,6 +177,9 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     Application application = ApplicationManager.getApplication();
     // ignore caret placing when exiting
     if (application.isDisposed()) {
+      return Collections.emptyList();
+    }
+    if (EditorFactory.getInstance().editors(PsiDocumentManagerBase.getTopLevelDocument(document)).findAny().isEmpty()) {
       return Collections.emptyList();
     }
     List<Editor> activeEditors = new ArrayList<>();
