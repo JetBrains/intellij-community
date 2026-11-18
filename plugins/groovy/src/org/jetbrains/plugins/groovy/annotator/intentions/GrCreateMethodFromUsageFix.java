@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -38,11 +38,14 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import java.util.List;
+import java.util.Objects;
 
 public class GrCreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implements IntentionAction {
+  private final @NotNull String myInitialReferenceName;
 
   public GrCreateMethodFromUsageFix(@NotNull GrReferenceExpression refExpression) {
     super(refExpression);
+    myInitialReferenceName = Objects.requireNonNull(refExpression.getReferenceName());
   }
 
   @Override
@@ -126,7 +129,9 @@ public class GrCreateMethodFromUsageFix extends GrCreateFromUsageBaseFix impleme
   }
 
   protected @NotNull String getMethodName() {
-    return getRefExpr().getReferenceName();
+    var ref = getRefExpr();
+    var name = ref == null ? null : ref.getReferenceName();
+    return name != null ? name : myInitialReferenceName;
   }
 
   protected boolean shouldBeAbstract(PsiClass aClass) {

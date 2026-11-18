@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.FileModifier;
@@ -51,6 +51,6 @@ public class GrCreateSetterFromUsageFix extends GrCreateMethodFromUsageFix imple
 
   @Override
   protected @NotNull String getMethodName() {
-    return GroovyPropertyUtils.getSetterName(getRefExpr().getReferenceName());
+    return GroovyPropertyUtils.getSetterName(super.getMethodName());
   }
 }
