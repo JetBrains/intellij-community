@@ -61,6 +61,7 @@ private data class RasterizedImageDataLoaderDescriptor(
   // the defaults let older data decode
   @JvmField val expUICacheKey: Int = 0,
   @JvmField val expUIFlags: Int = 0,
+  @JvmField val customVersionSize: Int = 0,
 ) : ImageDataLoaderDescriptor {
   override fun createIcon(): ImageDataLoader? {
     ImageDataLoaderStatisticsService.getInstance()?.iconDecoded(expUIPath = expUIPath, expUICacheKey = expUICacheKey)
@@ -71,13 +72,17 @@ private data class RasterizedImageDataLoaderDescriptor(
                                      cacheKey = cacheKey,
                                      flags = flags,
                                      expUICacheKey = expUICacheKey,
-                                     expUIFlags = expUIFlags)
+                                     expUIFlags = expUIFlags,
+                                     customVersionSize = customVersionSize)
   }
 }
 
 /**
  * [expUICacheKey] and [expUIFlags] describe the [expUIPath] file in the same way as [cacheKey] and [flags] describe the [path] file.
  * [expUICacheKey] is 0 if the icon class has no data for the [expUIPath] file.
+ *
+ * If [customVersionSize] is not 0, the [path] file is a custom version, such as `name@20x20.svg`.
+ * Then [cacheKey] is the cache key of `name.svg`, and [customVersionSize] keeps their images apart in the disk cache.
  */
 private class RasterizedImageDataLoader(override val path: String,
                                         override val expUIPath: String?,
@@ -85,7 +90,8 @@ private class RasterizedImageDataLoader(override val path: String,
                                         private val cacheKey: Int,
                                         override val flags: Int,
                                         private val expUICacheKey: Int,
-                                        private val expUIFlags: Int) : ImageDataLoader {
+                                        private val expUIFlags: Int,
+                                        private val customVersionSize: Int = 0) : ImageDataLoader {
   private val isSvg: Boolean
     get() = cacheKey != 0
   
@@ -103,6 +109,7 @@ private class RasterizedImageDataLoader(override val path: String,
       cacheKey = cacheKey,
       expUICacheKey = expUICacheKey,
       expUIFlags = expUIFlags,
+      customVersionSize = customVersionSize,
     )
   }
 
@@ -117,7 +124,8 @@ private class RasterizedImageDataLoader(override val path: String,
                                  classLoader = classLoader,
                                  isSvg = isSvg,
                                  rasterizedCacheKey = cacheKey,
-                                 imageFlags = flags)
+                                 imageFlags = flags,
+                                 customVersionSize = customVersionSize)
 
       if (start != -1L) {
         IconLoadMeasurer.loadFromResources.end(start)
@@ -171,6 +179,11 @@ private class RasterizedImageDataLoader(override val path: String,
 
   override fun isMyClassLoader(classLoader: ClassLoader) = classLoaderRef.get() === classLoader
 
+  override fun getCustomVersion(width: Int, height: Int): ImageCustomVersion {
+    return findCustomVersion(path = path, classLoaderRef = classLoaderRef, cacheKey = cacheKey, flags = flags,
+                             width = width, height = height)
+  }
+
   override fun toString() = "RasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
 }
 
@@ -219,7 +232,8 @@ private class PatchedRasterizedImageDataLoader(override val path: String,
                        classLoader = classLoader,
                        isSvg = isSvg,
                        rasterizedCacheKey = cacheKey,
-                       imageFlags = flags)
+                       imageFlags = flags,
+                       customVersionSize = 0)
       }
 
       if (start != -1L) {
@@ -241,8 +255,55 @@ private class PatchedRasterizedImageDataLoader(override val path: String,
 
   override fun isMyClassLoader(classLoader: ClassLoader) = classLoaderRef.get() === classLoader
 
+  override fun getCustomVersion(width: Int, height: Int): ImageCustomVersion {
+    return findCustomVersion(path = path, classLoaderRef = classLoaderRef, cacheKey = cacheKey, flags = flags,
+                             width = width, height = height)
+  }
+
   override fun toString() = "PatchedRasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
 }
+
+/**
+ * Finds the custom version of the [path] file by [flags]. The custom version uses the [cacheKey] of the [path] file.
+ * Without the [cacheKey], [flags] can describe another file, so the result is [ImageCustomVersion.Unknown].
+ */
+private fun findCustomVersion(path: String,
+                              classLoaderRef: WeakReference<ClassLoader>,
+                              cacheKey: Int,
+                              @MagicConstant(flagsFromClass = ImageDescriptor::class) flags: Int,
+                              width: Int,
+                              height: Int): ImageCustomVersion {
+  if (cacheKey == 0 || flags and ImageDescriptor.HAS_CUSTOM_VERSION_DATA == 0 || width != height || !path.endsWith(".svg")) {
+    return ImageCustomVersion.Unknown
+  }
+
+  val (hasVersion, hasDarkVersion) = when (width) {
+    20 -> ImageDescriptor.HAS_20x20 to ImageDescriptor.HAS_20x20_DARK
+    14 -> ImageDescriptor.HAS_14x14 to ImageDescriptor.HAS_14x14_DARK
+    else -> return ImageCustomVersion.Unknown
+  }
+  if (flags and hasVersion == 0) {
+    return ImageCustomVersion.Missing
+  }
+
+  var versionFlags = flags and ImageDescriptor.IS_MODIFIER_ICON
+  if (flags and hasDarkVersion != 0) {
+    versionFlags = versionFlags or ImageDescriptor.HAS_DARK
+  }
+  return ImageCustomVersion.Found(RasterizedImageDataLoader(path = getCustomVersionPath(path = path, width = width, height = height),
+                                                            expUIPath = null,
+                                                            classLoaderRef = classLoaderRef,
+                                                            cacheKey = cacheKey,
+                                                            flags = versionFlags,
+                                                            expUICacheKey = 0,
+                                                            expUIFlags = 0,
+                                                            customVersionSize = width))
+}
+
+/**
+ * The path of the custom version of the [path] SVG file, such as `name@20x20.svg` for `name.svg`.
+ */
+internal fun getCustomVersionPath(path: String, width: Int, height: Int): String = "${path.removeSuffix(".svg")}@${width}x${height}.svg"
 
 private fun loadRasterized(path: String,
                            scaleContext: ScaleContext,
@@ -250,7 +311,8 @@ private fun loadRasterized(path: String,
                            classLoader: ClassLoader,
                            isSvg: Boolean,
                            rasterizedCacheKey: Int,
-                           @MagicConstant(flagsFromClass = ImageDescriptor::class) imageFlags: Int): ImageWithShape<Image>? {
+                           @MagicConstant(flagsFromClass = ImageDescriptor::class) imageFlags: Int,
+                           customVersionSize: Int): ImageWithShape<Image>? {
   val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
   val dotIndex = path.lastIndexOf('.')
   val name = if (dotIndex < 0) path else path.substring(0, dotIndex)
@@ -290,7 +352,12 @@ private fun loadRasterized(path: String,
       path = effectivePath,
       precomputedCacheKey = rasterizedCacheKey,
       scale = scale,
-      compoundCacheKey = SvgCacheClassifier(scale = scale, isDark = isEffectiveDark, isStroke = parameters.isStroke),
+      compoundCacheKey = if (customVersionSize == 0) {
+        SvgCacheClassifier(scale = scale, isDark = isEffectiveDark, isStroke = parameters.isStroke)
+      }
+      else {
+        SvgCacheClassifier(scale = scale, isDark = isEffectiveDark, isStroke = parameters.isStroke, size = customVersionSize)
+      },
       colorPatcherProvider = parameters.colorPatcher,
       withShape = imageFlags and ImageDescriptor.IS_MODIFIER_ICON == ImageDescriptor.IS_MODIFIER_ICON
     )

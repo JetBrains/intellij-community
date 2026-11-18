@@ -46,6 +46,12 @@ value class SvgCacheClassifier(internal val key: Int) {
     this((scale + (if (isDark) 1_000 else 0) + (if (isStroke) 1_100 else 0)).toBits())
 
   constructor(scale: Float, size: Int) : this((scale + (10_000 + size)).toBits())
+
+  /**
+   * The classifier of the custom version with the [size], such as `name@20x20.svg`, under the cache key of the image itself.
+   */
+  constructor(scale: Float, isDark: Boolean, isStroke: Boolean, size: Int) :
+    this((scale + (if (isDark) 1_000 else 0) + (if (isStroke) 1_100 else 0) + (10_000 + size)).toBits())
 }
 
 private class IconValue(

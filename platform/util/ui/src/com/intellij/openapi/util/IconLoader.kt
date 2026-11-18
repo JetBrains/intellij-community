@@ -19,6 +19,7 @@ import com.intellij.ui.icons.FilteredIcon
 import com.intellij.ui.icons.HiDPIImage
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.ImageCustomVersion
 import com.intellij.ui.icons.ImageDataByPathResourceLoader
 import com.intellij.ui.icons.ImageDataLoader
 import com.intellij.ui.icons.RgbImageFilterSupplier
@@ -26,6 +27,7 @@ import com.intellij.ui.icons.checkIconSize
 import com.intellij.ui.icons.clearCacheOnUpdateTransform
 import com.intellij.ui.icons.copyIcon
 import com.intellij.ui.icons.findIconByPath
+import com.intellij.ui.icons.getCustomVersionPath
 import com.intellij.ui.icons.getDisabledIcon
 import com.intellij.ui.icons.getOriginIcon
 import com.intellij.ui.icons.getReflectiveIcon
@@ -369,6 +371,35 @@ fun findUserIconByPath(file: Path): CachedImageIcon {
 @Internal
 fun findIconUsingNewImplementation(path: String, classLoader: ClassLoader, toolTip: Supplier<String?>? = null): Icon? {
   return findIconByPath(path = path, classLoader = classLoader, cache = iconCache, toolTip = toolTip)
+}
+
+/**
+ * Finds the custom version of [icon] with the [width] and the [height], such as `name@20x20.svg` for `name.svg`.
+ * If the image flags tell that the version does not exist, the function returns `null` and reads no resource.
+ * A path patcher can still give such a version, for example the one of a theme.
+ */
+@Internal
+fun findIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int): Icon? {
+  val version = icon.getCustomVersion(width = width, height = height)
+  val [path, classLoader] = icon.getCoords() ?: return null
+  if (!path.endsWith(".svg")) {
+    return null
+  }
+
+  val versionPath = getCustomVersionPath(path = path, width = width, height = height)
+  return when (version) {
+    // the key of findIconUsingNewImplementation, so both give the same icon for the path of the version
+    is ImageCustomVersion.Found -> iconCache.get(Pair(versionPath, classLoader)) { CachedImageIcon(loader = version.loader) }
+    ImageCustomVersion.Missing -> {
+      if (patchIconPath(originalPath = versionPath, classLoader = classLoader) == null) {
+        null
+      }
+      else {
+        findIconUsingNewImplementation(path = versionPath, classLoader = classLoader)
+      }
+    }
+    ImageCustomVersion.Unknown -> findIconUsingNewImplementation(path = versionPath, classLoader = classLoader)
+  }
 }
 
 @Internal

@@ -40,6 +40,27 @@ interface ImageDataLoader {
    */
   val modificationCount: Int
     get() = -1
+
+  /**
+   * Finds the custom version of the image with the [width] and the [height], such as `name@20x20.svg` for `name.svg`.
+   * The loader uses only its own data, so the call reads no resource.
+   */
+  fun getCustomVersion(width: Int, height: Int): ImageCustomVersion = ImageCustomVersion.Unknown
+}
+
+/**
+ * The result of [ImageDataLoader.getCustomVersion].
+ */
+@ApiStatus.Internal
+sealed interface ImageCustomVersion {
+  /**
+   * The loader does not know if the custom version exists. The caller must look for the file.
+   */
+  data object Unknown : ImageCustomVersion
+
+  data object Missing : ImageCustomVersion
+
+  class Found(@JvmField val loader: ImageDataLoader) : ImageCustomVersion
 }
 
 @ApiStatus.Internal

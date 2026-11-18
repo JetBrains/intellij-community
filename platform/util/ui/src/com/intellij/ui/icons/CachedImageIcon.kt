@@ -445,6 +445,14 @@ open class CachedImageIcon private constructor(
       loader.flags
     }
 
+  /**
+   * Finds the custom version of the image that the icon loads. The path patch can change it.
+   */
+  internal fun getCustomVersion(width: Int, height: Int): ImageCustomVersion = synchronized(iconCache) {
+    checkPathTransform()
+    loader.getCustomVersion(width = width, height = height)
+  }
+
   override fun equals(other: Any?): Boolean = when {
     this === other -> true
     other === null -> false

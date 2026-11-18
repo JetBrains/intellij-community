@@ -26,6 +26,16 @@ class ImageDescriptor(
     const val HAS_STROKE: Int = 8
     const val NO_TREE_PRESENTATION_CACHE: Int = 16
     const val IS_MODIFIER_ICON: Int = 32
+
+    /**
+     * Tells that [HAS_20x20], [HAS_20x20_DARK], [HAS_14x14] and [HAS_14x14_DARK] are known.
+     * Without it, the flags do not tell which custom versions exist, such as `name@20x20.svg` for `name.svg`.
+     */
+    const val HAS_CUSTOM_VERSION_DATA: Int = 64
+    const val HAS_20x20: Int = 128
+    const val HAS_20x20_DARK: Int = 256
+    const val HAS_14x14: Int = 512
+    const val HAS_14x14_DARK: Int = 1024
   }
 
   internal fun toSvgMapper(): SvgCacheClassifier = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = isStroke)

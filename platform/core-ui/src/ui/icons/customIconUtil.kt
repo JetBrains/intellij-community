@@ -2,7 +2,7 @@
 package com.intellij.ui.icons
 
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.openapi.util.findIconUsingNewImplementation
+import com.intellij.openapi.util.findIconCustomVersion
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
@@ -36,14 +36,7 @@ fun scaleIconOrLoadCustomVersion(icon: Icon, scale: Float): Icon {
 }
 
 private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int, isDark: Boolean? = null): Icon? {
-  val coords = icon.getCoords() ?: return null
-  val path = coords.first
-  if (!path.endsWith(".svg")) {
-    return null
-  }
-
-  val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x${height}.svg"
-  val foundIcon = findIconUsingNewImplementation(path = modifiedPath, classLoader = coords.second) ?: return null
+  val foundIcon = findIconCustomVersion(icon = icon, width = width, height = height) ?: return null
   if (foundIcon is CachedImageIcon &&
       foundIcon.getIconWidth() == JBUIScale.scale(width) &&
       foundIcon.getIconHeight() == JBUIScale.scale(height)) {
