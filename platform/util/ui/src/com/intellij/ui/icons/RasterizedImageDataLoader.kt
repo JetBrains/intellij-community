@@ -63,7 +63,7 @@ private data class RasterizedImageDataLoaderDescriptor(
   @JvmField val expUIFlags: Int = 0,
 ) : ImageDataLoaderDescriptor {
   override fun createIcon(): ImageDataLoader? {
-    ImageDataLoaderStatisticsService.getInstance()?.iconDecoded(expUIPath = expUIPath, expUICacheKey = 0)
+    ImageDataLoaderStatisticsService.getInstance()?.iconDecoded(expUIPath = expUIPath, expUICacheKey = expUICacheKey)
     val classLoader = IconManager.getInstance().getClassLoader(pluginId, moduleId) ?: return null
     return RasterizedImageDataLoader(path = path,
                                      expUIPath = expUIPath,
@@ -190,7 +190,7 @@ private class PatchedRasterizedImageDataLoader(override val path: String,
       get() = path.endsWith(".svg")
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? {
-    ImageDataLoaderStatisticsService.getInstance()?.refineCurrentLoad(0)
+    ImageDataLoaderStatisticsService.getInstance()?.refineCurrentLoad(cacheKey)
     val classLoader = classLoaderRef.get() ?: return null
     try {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
