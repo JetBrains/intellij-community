@@ -116,14 +116,18 @@ class ManagedPersistentCache<K, V>(
 
   override suspend fun entries(): Flow<Pair<K, V>> {
     // Implementation detail: flow could not be used here since processExistingKeys is not suspendable
-    return buildList {
-      withPersistentMap(opName="entries", isRead=true) { map ->
-        map.processExistingKeys { key ->
-          add(key to map.get(key)!!)
-          true
+    val entries = withPersistentMap(opName="entries", isRead=true) { map ->
+      val result = ArrayList<Pair<K, V>>()
+      map.processExistingKeys { key ->
+        val value = map.get(key)
+        if (value != null) {
+          result.add(key to value)
         }
+        true
       }
-    }.asFlow()
+      result
+    }
+    return entries.orEmpty().asFlow()
   }
 
   private fun requestForce() {
