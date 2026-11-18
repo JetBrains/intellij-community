@@ -1,15 +1,11 @@
 # PolySymbols migration
 
-Part of [poly-symbols](../SKILL.md). This doc is about *changing* an existing PSI-based
-integration to PolySymbols, not building a new one from scratch — read the main
-[poly-symbols](../SKILL.md) skill first for the framework itself, and [testing.md](testing.md)
-for the test-writing API this migration moves tests onto.
+Part of [poly-symbols](../SKILL.md). [testing.md](testing.md) holds the test-writing API that this
+migration moves tests onto.
 
 ## The core principle: additive is a transient state, not a resting one
 
-Per the main skill's ["additive, not authoritative"](../SKILL.md#the-rule-polysymbols-is-additive-not-automatically-authoritative)
-rule, every real PolySymbols integration studied in this repo runs dual-track with legacy PSI for
-some period. That's expected *during* a migration — but it is not a place to stop. The tell that a
+Dual-track with legacy PSI is expected *during* a migration, but it is not a place to stop. The tell that a
 kind has been left dual-track too long: duplicate Find Usages results (once from the legacy
 `PsiReferenceContributor`-backed search, once from the Symbol-API path). If you see that, the fix
 is to finish migrating that kind (Phase B below), not to suppress the duplicate.
@@ -22,7 +18,7 @@ migrated — see [testing.md](testing.md#symbol-api-first-classic-psi-fallback--
 so that later, per-kind production migrations (Phase B) have a pre-verified regression baseline and
 never need the test itself to change again.
 
-1. **Inventory.** `search_regex` the test tree for direct calls to the forbidden
+1. **Inventory.** Run `accio locate '<regex>' --mode regex --scope <test dir>/` for direct calls to the forbidden
    `CodeInsightTestFixture` methods (table below). Exclude any test suite that's already fully on
    `PolySymbolsTestCase`/named `*PolySymbol*` — those are tracked as already migrated, out of scope
    for this pass.
@@ -52,8 +48,7 @@ never need the test itself to change again.
    **real, pre-existing production gap being surfaced by the test-infra change**, not a bug in the
    migration. Decide explicitly, per case: update the gold file *and* record the gap somewhere
    durable, `@Ignore` the specific test/assertion with a comment pointing at the gap, or fix the
-   gap immediately if it's in scope. Do not let "the test infra migration is done" quietly become
-   "we changed what these tests verify."
+   gap immediately if it's in scope.
 
 ### Forbidden `CodeInsightTestFixture` methods
 
@@ -70,10 +65,10 @@ Replacement mapping:
 
 | Forbidden call | Replace with |
 |---|---|
-| `getElementAtCaret()` / `elementAtCaret` | `symbolAtCaret()?.toPsiElementOrNull()` |
+| `getElementAtCaret()` / `elementAtCaret` | `symbolAtCaret(includePsiSymbols = true)?.toPsiElementOrNull()` |
 | `findUsages(target: PsiElement)` / `testFindUsages(...)` / `testFindUsagesUsingAction(...)` | `usagesAtCaret()` / `usagesAtOffsetBySignature(signature)` |
 | `renameElementAtCaret(newName)` / `renameElementAtCaretUsingHandler(newName)` / `testRename(...)` / `testRenameUsingHandler(...)` | `renameSymbolAtCaret(newName)` |
-| `getReferenceAtCaretPosition(...)` / `getReferenceAtCaretPositionWithAssertion(...)` / `findSingleReferenceAtCaret()` | `resolveSymbolReference(signature)` / `symbolAtCaret()` |
+| `getReferenceAtCaretPosition(...)` / `getReferenceAtCaretPositionWithAssertion(...)` / `findSingleReferenceAtCaret()` | `resolveSymbolReference(signature)` / `symbolAtCaret(includePsiSymbols = true)` |
 | Direct instantiation of a legacy `PsiReference` class (e.g. `SomeReference(element).resolveDeclaration()`) | `resolveSymbolReference(element)`-style helpers — never construct the legacy reference class from test code |
 
 Two sanctioned exceptions, both because they're the *execution* primitive rather than a
@@ -86,22 +81,9 @@ Two sanctioned exceptions, both because they're the *execution* primitive rather
 - **`findUsages(target: SearchTarget)`** (the `PolySymbolsTestUtil.kt` overload, distinct from the
   forbidden `findUsages(PsiElement)`) is the sanctioned Symbol-API replacement.
 
-A worked example of Phase A end to end, from the GDScript migration: `ResolveTestBase`'s dumper was
-switched from `element.references` + `ref.resolve()` to `psiSymbolReferences()` +
-`resolveReference()`; direct legacy-reference-class construction in
-`ResolveNestedClassMethodsTest` and `RenameTest.renameElementAtCaret()` were replaced the same way;
-dictionary-key tests (`GdDictionaryLuaStyleKeyTest`/`GdDictionaryStringKeyTest`, a reference kind
-with **no** PolySymbols coverage planned at all) migrated cleanly with zero behavior change, proving
-the classic-fallback design works even for kinds that will *never* get a PolySymbols implementation.
-Separately, the rewrite of `ResolveTestBase` surfaced 4 genuinely new test failures purely by
-switching the resolve mechanism on already-partially-migrated kinds (`GdRefIdRef`/`GdSetGetMethodIdRef`)
-— static-access filtering and constructor-qualifier-chain resolution gaps that the classic-only
-dumper had never exercised. Those were left as an open, explicitly-tracked decision rather than
-papered over — exactly the step-5 discipline above. (TSCN↔GDScript cross-language rename tests,
-`ScriptClassRenamingTest`/`ResourceFieldRenamingTest`, were in the same "no PolySymbols coverage yet,
-classic-fallback only" bucket at the time this migration ran — that has since changed: TSCN's
-`TscnNamedElement` gained its own own-references implementation, and these two tests now exercise
-real PolySymbols resolve/rename, not fallback. See [case-studies.md](case-studies.md#gdscript).)
+A worked example of Phase A step 2: GDScript's `GdResolveFixture`
+(`dotnet/Plugins/godot-support/gdscript/src/test/kotlin/com/jetbrains/godot/gdscript/GdResolveFixture.kt`)
+dumps every reference of a file through `psiSymbolReferences()` and `resolveReference()`.
 
 ## Phase B — per-kind production migration unit
 
@@ -112,28 +94,20 @@ change:
 1. Make the host PSI class's own interface implement `PolySymbolOwnReferenceHost`, then override
    `getOwnReferences()` on the impl class and build the result with the `polySymbolOwnReferences { ... }`
    DSL — see [query-model.md](query-model.md#references--own-references-polysymbolownreferences) for
-   the exact shape. (An older iteration of this API had you implement a since-deleted
-   `PolySymbolOwnReferencesHost.buildOwnReferences()` method instead — if you see that name in old
-   code/notes, it's stale; the direct-override form is current.)
+   the exact shape.
 2. Delete the matching legacy `PsiReferenceContributor` + its `PsiReference` class.
-3. Delete the corresponding `polySymbols.psiReferenceProvider` EP registration + provider class
-   (own-references pre-empt EP-registered external references once non-empty — see
-   [query-model.md](query-model.md#references--own-references-polysymbolownreferences) —
-   so once a kind has own-references, its EP registration is dead code, not a supplement).
+3. Delete the corresponding `polySymbols.psiReferenceProvider` EP registration + provider class:
+   own references pre-empt it ([query-model.md](query-model.md#references--own-references-polysymbolownreferences)).
 4. If declarations for that kind still lean on `PsiLinkedPolySymbol` purely as a bridge to the
    legacy PSI-reference mechanism you just deleted, switch them onto `PolySymbolDeclaredInPsi` + a
    hand-written `PolySymbolDeclarationProvider` instead — the bridge has no reason to exist once
    nothing needs it. **Expect to lose "usage search finds the raw PSI declaration" behavior when you
    do this** (`PolySymbolDeclaredInPsi`'s own doc comment says so explicitly) — if that matters for
    the kind you're migrating, budget for a hand-written `ReferencesSearch` executor to recover it.
-   GDScript's real migration hit exactly this and wrote `GdOwnReferencesSearcher` (a generic
-   word-search-then-resolve-own-references executor) to close the gap; see
-   [case-studies.md](case-studies.md#gdscript).
+   Example: GDScript's `GdOwnReferencesSearcher`, a generic word-search-then-resolve-own-references
+   executor ([case-studies.md](case-studies.md#gdscript)).
 5. Update the Phase-A-ported test for that kind to assert fully through the Symbol API (drop any
    remaining plain-PSI fallback assertion for that kind specifically).
-
-**Never leave a kind migrated-but-still-dual-track longer than one change.** That's exactly the
-resting-dual-track state the "core principle" above warns against.
 
 **Risk to check before dropping `PsiLinkedPolySymbol` for a kind**: it currently makes
 raw-PSI-triggered Find Usages/Rename (invoked directly on a declaration, not via a resolved
@@ -145,14 +119,7 @@ caller (unused-code inspections, constructor-usage searchers, custom Find Usages
 on it; if so, either add a `PsiLinkedPolySymbolProvider` for the reverse element→symbol lookup, or
 migrate that caller too, before the same change lands.
 
-**Verification loop**: run the specific test module after every atomic per-kind change. Don't batch
-multiple kinds into one uncommitted change — if something regresses, you want it obvious which kind
-caused it.
-
 ## Related skills
 
-- **[poly-symbols](../SKILL.md)** — the framework, and the "additive, not authoritative" rule this
-  migration exists to eventually resolve; see [testing.md](testing.md) for the test-writing API
-  Phase A moves a test suite onto.
 - **[symbols-api](../../symbols-api/SKILL.md)** — the `Symbol`/`PsiSymbolReference`/
   `PsiSymbolDeclaration` platform layer both phases build on.

@@ -2,8 +2,7 @@
 
 Part of [poly-symbols](../SKILL.md). Web Types is a JSON metadata format for contributing
 **statically defined** `PolySymbol`s — no Kotlin/Java code required. It's open source and
-IDE-agnostic (schema published on GitHub / JSON Schema Store); it originated for the Vue framework,
-which is why a few legacy/deprecated properties still exist.
+IDE-agnostic (schema published on GitHub / JSON Schema Store).
 
 ## When to use Web Types vs. a hand-written `PolySymbolScope`
 
@@ -16,10 +15,10 @@ SDK classes parsed from doctool XML). Most real integrations use **both**, mergi
 library/framework vocabulary with dynamically-extracted user symbols (see
 [case-studies.md](case-studies.md) — Vue's `VueWebTypesMergedSymbol` is the concrete merge point).
 
-Important, evidence-backed nuance from this repo: **standard HTML5 tags/attributes and standard CSS
+**Standard HTML5 tags/attributes and standard CSS
 properties/pseudo-classes/functions are NOT shipped as Web Types.** They still come from the
 bundled RelaxNG HTML5 schema and webref-derived CSS XML respectively (pre-PolySymbols machinery —
-see [case-studies.md](case-studies.md#js-ts-html-css)). Web Types in this repo is used for
+see [case-studies.md](case-studies.md#jsts-html-css)). Web Types in this repo is used for
 **framework/library augmentation** (Vue, Angular, htmx, npm packages) and small enumerable
 vocabularies (CSS units) — not core spec knowledge.
 
@@ -41,15 +40,16 @@ vocabularies (CSS units) — not core spec knowledge.
 }
 ```
 
-Required top-level: `name`, `version`, `contributions`. `contributions` is organized by
+Required top-level: `name` and `version`. `contributions` is organized by
 **namespace** — currently `html`, `css`, or `js` — each holding **symbol kind** names as
 properties (some directly supported by the IDE, listed below). Each kind maps to an array of
 contributions; each contribution needs at minimum a `name`, and can carry sub-contributions
 (nested arrays/objects) and custom properties. Sub-contributions default to the parent's namespace
 unless nested explicitly under a different namespace key (`js`/`css`/`html`).
 
-**Every contribution corresponds 1:1 to a `PsiSourcedPolySymbol`**, with custom JSON properties
-exposed via its `properties` field.
+**Every contribution corresponds 1:1 to a `WebTypesSymbol`** (a `PsiLinkedPolySymbol`). The symbol
+exposes its custom JSON properties through the `PolySymbol.get` operator (`symbol[property]`), by
+property name.
 
 ### Patterns in JSON
 
@@ -62,7 +62,7 @@ Angular custom-event-modifier example.
 Three mechanisms:
 - **npm**: auto-discovered via the `"web-types"` field in a package's `package.json` (string or
   array of paths) — this is how `PackageJsonPolySymbolsRegistryManager` picks up third-party
-  library Web Types (see [case-studies.md](case-studies.md#js-ts-html-css)).
+  library Web Types (see [case-studies.md](case-studies.md#jsts-html-css)).
 - **Local project**: the same `"web-types"` field, usable directly in the project's own
   `package.json`.
 - **IDE plugin**: register at EP `com.intellij.polySymbols.webTypes`
@@ -89,8 +89,8 @@ normal `getMatchingSymbols`/`getSymbols`/`getCodeCompletions` `PolySymbolScope` 
 ## Directly-supported symbol kinds
 
 IDEs natively understand: `html/elements`, `html/attributes`, `css/properties`,
-`css/pseudo-classes`, `css/pseudo-elements`, `css/functions`, `css/classes`, `css/parts` (added
-2023.2; before 2023.1 the JS plugin was required). Anything else is understood only by whichever
+`css/pseudo-classes`, `css/pseudo-elements`, `css/functions`, `css/classes`, `css/parts`,
+`js/properties`, `js/events`. Anything else is understood only by whichever
 framework's PolySymbols integration defines behavior for that kind.
 
 ### Framework-specific kinds
@@ -107,6 +107,5 @@ framework's PolySymbols integration defines behavior for that kind.
 
 ## Related
 
-- [Patterns](patterns.md) — the pattern DSL these JSON `pattern` blocks compile down to.
 - [poly-context](../../poly-context/SKILL.md) — `contexts-config` inside a Web Types file gates when its symbols are active.
 - Official docs: [Web Types](https://plugins.jetbrains.com/docs/intellij/polysymbols-web-types.html).
