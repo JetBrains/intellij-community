@@ -5,6 +5,7 @@ import com.intellij.diagnostic.CoroutineDumperKt;
 import com.intellij.diagnostic.JVMResponsivenessMonitor;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.ide.RegionUrlMapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -146,6 +147,7 @@ public final class ThreadLeakTracker {
       "qtp", // used in tests for mocking via WireMock in integration testing
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
+      RegionUrlMapper.LOADER_THREAD_PREFIX,
       "Rider.Backend", // ignore process + io threads because backend follows application lifecycle and can be started during the test
       "Rider.LightweightBackend", // same as Rider.Backend, but for the lightweight backend process
       "RMI GC Daemon",

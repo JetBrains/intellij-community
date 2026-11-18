@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /// @see Region
@@ -36,6 +37,8 @@ import java.util.concurrent.TimeUnit;
 @ApiStatus.Internal
 public final class RegionUrlMapper {
   private static final Logger LOG = Logger.getInstance(RegionUrlMapper.class);
+
+  public static final String LOADER_THREAD_PREFIX = "RegionUrlMapper loader ";
 
   private static final int CACHE_DATA_EXPIRATION_MIN = SystemProperties.getIntProperty("ide.region.url.mapping.expiration.timeout", 2);
   private static final String CONFIG_URL_DEFAULT = "https://www.jetbrains.com/config/JetBrainsResourceMapping.json";
@@ -62,6 +65,7 @@ public final class RegionUrlMapper {
 
   private static final AsyncLoadingCache<@NotNull Region, @NotNull RegionMapping> ourCache = Caffeine.newBuilder()
     .expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES)
+    .executor(Executors.newCachedThreadPool(Thread.ofPlatform().name(LOADER_THREAD_PREFIX, 1).daemon().factory()))
     .buildAsync(RegionUrlMapper::doLoadMappingOrThrow);
 
   private RegionUrlMapper() { }
