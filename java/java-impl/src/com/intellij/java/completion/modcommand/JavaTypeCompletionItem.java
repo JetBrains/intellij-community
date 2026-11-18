@@ -11,7 +11,19 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A completion item of a Java class or type.
+ * A completion item of a Java class or type. There are two implementations:
+ * <ul>
+ *   <li>{@link ClassReferenceCompletionItem} is a reference to a {@link PsiClass}. It is used where only a class name is meant:
+ *   it shortens or imports the class, and inserts the qualified name in {@code import} statements and in Javadoc when the code
+ *   style asks for it. It never inserts type arguments or brackets. Its equality is based on the qualified name, so the same class
+ *   offered by several providers is shown once.</li>
+ *   <li>{@link PsiTypeCompletionItem} is a {@link PsiType}. It is the only choice for what is not a class: a primitive type, an array,
+ *   or a type with type arguments. Besides the import, it inserts the type arguments (or the diamond), the array brackets
+ *   and, if asked, the array initializer. Its equality is based on the type, so it is not merged with a class item of the same class.</li>
+ * </ul>
+ * The type item cannot always replace the class item: it does not handle {@code import} statements and Javadoc, and it does not
+ * deduplicate against class items. Use {@link #create(PsiType)}: it chooses the class item for a resolved class type without
+ * type arguments, and the type item otherwise.
  */
 @NotNullByDefault
 public sealed interface JavaTypeCompletionItem extends ModCompletionItem permits ClassReferenceCompletionItem, PsiTypeCompletionItem {
