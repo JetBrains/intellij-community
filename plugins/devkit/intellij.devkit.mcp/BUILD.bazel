@@ -37,6 +37,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
         "//platform/progress/shared:ide-progress",
+        "//java/openapi:java",
     ],
 )
 ### auto-generated section `build intellij.devkit.mcp` end

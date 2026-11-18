@@ -159,6 +159,7 @@ jvm_library(
         "//platform/testFramework/junit5",
         "//libraries/junit6",
         "//libraries/assertj-core",
+        "//plugins/devkit/intellij.devkit.mcp:mcp",
     ],
 )
 ### auto-generated section `build intellij.devkit.gradle.tests` end
