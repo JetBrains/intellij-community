@@ -10,7 +10,6 @@ import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.HtmlChunk
-import git4idea.repo.GitRepository
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementType
 import org.intellij.markdown.MarkdownElementTypes
@@ -52,6 +51,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinks
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 import java.nio.file.InvalidPathException
+import java.nio.file.Path
 
 
 /**
@@ -60,7 +60,7 @@ import java.nio.file.InvalidPathException
 @ApiStatus.Internal
 class GitLabMarkdownToHtmlConverter(
   private val project: Project,
-  private val repository: GitRepository,
+  private val repositoryRoot: Path,
   private val serverPath: GitLabServerPath,
   projectId: String,
   private val projectPath: GitLabProjectPath,
@@ -87,7 +87,7 @@ class GitLabMarkdownToHtmlConverter(
     if (markdownSource.isBlank()) return markdownSource
     // TODO: fix bug with CRLF line endings from markdown library
     val text = processIssueIdsMarkdown(project, markdownSource).replace("\r", "")
-    val flavourDescriptor = GitLabFlavourDescriptor(repository, projectPath, CodeBlockHtmlSyntaxHighlighter(project),
+    val flavourDescriptor = GitLabFlavourDescriptor(repositoryRoot, projectPath, CodeBlockHtmlSyntaxHighlighter(project),
                                                     projectWebUrlBase, projectApiUri)
 
     return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, serverPath.uri.ensureEndsWithSlash())
@@ -96,7 +96,7 @@ class GitLabMarkdownToHtmlConverter(
   private fun String.ensureEndsWithSlash(): String = if (endsWith("/")) this else "$this/"
 
   private class GitLabFlavourDescriptor(
-    private val gitRepository: GitRepository,
+    private val repositoryRoot: Path,
     private val projectPath: GitLabProjectPath,
     private val htmlSyntaxHighlighter: HtmlSyntaxHighlighter,
     private val projectWebUrlBase: String,
@@ -121,7 +121,7 @@ class GitLabMarkdownToHtmlConverter(
 
     override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
       val map = super.createHtmlGeneratingProviders(linkMap, baseURI)
-      val linkProcessor = LinkDestinationProcessor(gitRepository, projectPath, projectWebUrlBase)
+      val linkProcessor = LinkDestinationProcessor(repositoryRoot, projectPath, projectWebUrlBase)
       val referenceLinkProvider = GitLabReferenceLinksGeneratingProvider(linkMap, baseURI,
                                                                          absolutizeAnchorLinks,
                                                                          linkProcessor).makeXssSafe(useSafeLinks)
@@ -407,7 +407,7 @@ class GitLabMarkdownToHtmlConverter(
   }
 
   private class LinkDestinationProcessor(
-    val gitRepository: GitRepository,
+    val repositoryRoot: Path,
     val projectPath: GitLabProjectPath,
     val projectWebUrlBase: String,
   ) : DestinationProcessor() {
@@ -432,7 +432,7 @@ class GitLabMarkdownToHtmlConverter(
 
       // Otherwise, the destination is a file in the current git repo, so we can make the link go to it directly
       try {
-        val fileDestination = gitRepository.root.toNioPath()
+        val fileDestination = repositoryRoot
           .resolve(linkDestination.replace('\\', '/'))
           .toCanonicalPath()
         val fileDescription = "$OPEN_FILE_LINK_PREFIX${fileDestination}"

@@ -72,7 +72,7 @@ internal class GitLabMergeRequestViewModels(
   private val htmlConverter: GitLabMarkdownToHtmlConverter =
     GitLabMarkdownToHtmlConverter(
       project,
-      gitRemote.repository,
+      gitRemote.repository.root.toNioPath(),
       projectData.projectCoordinates.serverPath,
       projectData.projectId,
       projectData.projectCoordinates.projectPath

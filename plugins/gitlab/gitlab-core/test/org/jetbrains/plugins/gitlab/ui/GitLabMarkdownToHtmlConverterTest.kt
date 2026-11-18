@@ -546,7 +546,7 @@ class GitLabMarkdownToHtmlConverterTest {
     val serverPath = GitLabServerPath(BASE_URL)
     val projectId = "1"
     val projectFullPath = extractProjectPath("test-account/mr-test") ?: error("Failed to extract project path")
-    val converter = GitLabMarkdownToHtmlConverter(project, gitRepository, serverPath, projectId, projectFullPath)
+    val converter = GitLabMarkdownToHtmlConverter(project, gitRepository.root.toNioPath(), serverPath, projectId, projectFullPath)
     return converter.convertToHtml(markdownSource)
   }
 }
