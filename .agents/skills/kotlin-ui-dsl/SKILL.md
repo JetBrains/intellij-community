@@ -7,7 +7,7 @@ description: Write IntelliJ dialogs and settings with Kotlin UI DSL v2 panels.
 
 Use Kotlin UI DSL (`com.intellij.ui.dsl.builder`, "version 2") for new IntelliJ forms: dialogs, settings pages, and form-like tool-window content. `panel { }` returns a `DialogPanel` with layout, data binding, and validation wired together.
 
-Version 1 (the `com.intellij.ui.layout` builder: `LayoutBuilder`, `CellBuilder`, `PropertyBinding`, `noteRow`, `titledRow`, ...) was **removed in July 2026** — never write against it and do not copy old snippets that import it. `ComponentPredicate` and `ValidationInfoBuilder` still live in the `com.intellij.ui.layout` package, but they are current v2 support code, not leftovers.
+Version 1 (the `com.intellij.ui.layout` builder: `LayoutBuilder`, `CellBuilder`, `PropertyBinding`, `noteRow`, `titledRow`, ...) is removed. Never write against it. `ComponentPredicate` and `ValidationInfoBuilder` in the same package are v2 support code.
 
 For component architecture (state flow, EDT, lifecycle) apply the [Swing component architecture skill](../kotlin-ui-swing-component-architecture/SKILL.md); for accessibility review apply the [UI accessibility skill](../ui-accessibility/SKILL.md).
 
@@ -15,7 +15,7 @@ For component architecture (state flow, EDT, lifecycle) apply the [Swing compone
 
 - API: `community/platform/platform-api/src/com/intellij/ui/dsl/builder/` — `Panel.kt`, `Row.kt`, `Cell.kt`, plus per-component extensions (`textField.kt`, `button.kt`, `comboBox.kt`, `spinner.kt`, ...). Implementations: `community/platform/platform-impl/src/com/intellij/ui/dsl/builder/impl/`.
 - **UI DSL Showcase** — documentation-grade demos: `community/plugins/devkit/intellij.devkit.uiDsl/src/showcase/Demo*.kt` (Basics, RowLayout, ComponentLabels, Comments, Components, Gaps, Groups, Availability, Validation, Binding, Examples). Run via `Tools | Internal Actions | UI | Kotlin UI DSL | UI DSL Showcase`.
-- **UI Sandbox** — ~80 stress-test panels including edge cases: `community/plugins/devkit/intellij.devkit.uiDsl/src/sandbox/`. Run via `Tools | Internal Actions | UI | UI Sandbox`.
+- **UI Sandbox** — ~100 stress-test panels including edge cases: `community/plugins/devkit/intellij.devkit.uiDsl/src/sandbox/`. Run via `Tools | Internal Actions | UI | UI Sandbox`.
 - Online reference: <https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl-version-2.html>
 
 Before inventing a pattern, check whether a `Demo*.kt` or sandbox panel already demonstrates it.
@@ -25,7 +25,7 @@ Before inventing a pattern, check whether a `Demo*.kt` or sandbox panel already 
 A panel is a grid built row by row:
 
 - Rows go top to bottom; cells in a row go left to right, one per factory call.
-- The last cell of a row occupies the remaining width; trailing empty cells merge into it.
+- The last cell of a row occupies the remaining width.
 - A cell holds one component or a sub-panel with its own grid.
 
 ```kotlin
@@ -173,7 +173,7 @@ textField().cellValidation {
 
 ## List and combo renderers
 
-Never hand-write `ListCellRenderer`s for combo boxes and `JBList` — use the DSL from `com.intellij.ui.dsl.listCellRenderer`, which handles selection shapes (old/new UI), disabled colors, scaling, accessibility, and speed search:
+Never hand-write `ListCellRenderer`s for combo boxes and `JBList`. Use the DSL from `com.intellij.ui.dsl.listCellRenderer`:
 
 ```kotlin
 comboBox(items, textListCellRenderer { it?.displayName })          // simple text
@@ -188,13 +188,11 @@ comboBox(items, listCellRenderer {                                  // rich rows
 
 ## Settings pages
 
-- Extend `BoundConfigurable(displayName)` or `BoundSearchableConfigurable(displayName, helpTopic)` and build the UI in `createPanel(): DialogPanel`; use the inherited `disposable` for UI that needs one. Apply/reset/isModified/validation are handled by the base class.
+- Extend `BoundConfigurable(displayName)` or `BoundSearchableConfigurable(displayName, helpTopic)` and build the UI in `createPanel(): DialogPanel`; use the inherited `disposable` for UI that needs one.
 - For a fragment embedded in a composite configurable, implement `UiDslUnnamedConfigurable.Simple` and override `Panel.createContent()`; root your content in `group { }` or `panel { }` so it doesn't interfere with the parent grid.
 
 ## Hard rules
 
-- Every user-visible string comes from a message bundle (`MyBundle.message("key")`); `@NlsContexts` annotations on the factory parameters enforce this. Sentence capitalization, no ending period on checkbox/radio labels, labels end with `:`.
-- No `javax.swing.ButtonGroup`; use `buttonsGroup { }`.
+- `@NlsContexts` annotations on the factory parameters require message bundle strings. Checkbox, radio button and label texts use sentence capitalization. Checkbox and radio button texts have no ending period. A label text ends with `:`.
 - No manual `JPanel`/`GridBagLayout` wrappers inside DSL forms; nest `panel { }` / use `rowsRange` / `customize(UnscaledGaps)` instead.
 - Custom components with their own borders confuse layout — set `putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)` (see also `DslComponentProperty.INTERACTIVE_COMPONENT` for composite components so `labelFor`, validation, and `onChanged` target the right child).
-- `DialogPanel` construction is EDT work like any Swing; do not run services or I/O inside the `panel { }` block.
