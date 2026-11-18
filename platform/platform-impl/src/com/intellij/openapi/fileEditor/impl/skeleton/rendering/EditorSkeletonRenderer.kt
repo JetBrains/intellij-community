@@ -12,6 +12,11 @@ import kotlin.time.Duration.Companion.milliseconds
 internal interface EditorSkeletonRenderer {
   val component: Component
 
+  /**
+   * Starts the rendering of frames with [paintFrame] in [cs].
+   * The renderer renders a frame only while [component] is displayable.
+   * While [component] is not displayable, the renderer does not wake up.
+   */
   fun startRendering(cs: CoroutineScope, paintFrame: (Graphics2D, Int, Int, Float) -> Unit)
 
   fun frameTimeMs(nowMs: Long): Long = nowMs

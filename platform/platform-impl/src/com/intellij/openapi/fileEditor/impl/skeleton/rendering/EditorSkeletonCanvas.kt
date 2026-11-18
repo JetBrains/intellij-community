@@ -6,6 +6,8 @@ import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.awt.Canvas
@@ -22,6 +24,7 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
     get() = this
 
   private val renderingStarted = AtomicBoolean()
+  private val displayable = MutableStateFlow(false)
   private val removedArea = AtomicReference<RemovedArea?>()
   private val backBuffer = EditorSkeletonBackBuffer()
 
@@ -30,10 +33,18 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
     ignoreRepaint = true
   }
 
+  override fun addNotify() {
+    super.addNotify()
+    displayable.value = true
+  }
+
   override fun removeNotify() {
+    val rootPane = SwingUtilities.getRootPane(this)
+    if (rootPane != null) {
+      removedArea.set(RemovedArea(rootPane, SwingUtilities.convertRectangle(this, Rectangle(width, height), rootPane)))
+    }
+    displayable.value = false
     super.removeNotify()
-    val rootPane = SwingUtilities.getRootPane(this) ?: return
-    removedArea.set(RemovedArea(rootPane, SwingUtilities.convertRectangle(this, Rectangle(width, height), rootPane)))
   }
 
   override fun paint(g: Graphics) {}
@@ -45,8 +56,13 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
     cs.launch(Dispatchers.Default) {
       try {
         while (isActive) {
-          renderFrame(paintFrame)
-          delay(EditorSkeletonRenderer.TICK_MS)
+          displayable.first { it }
+          while (displayable.value) {
+            renderFrame(paintFrame)
+            delay(EditorSkeletonRenderer.TICK_MS)
+          }
+          backBuffer.release()
+          removedArea.set(null)
         }
       }
       finally {
