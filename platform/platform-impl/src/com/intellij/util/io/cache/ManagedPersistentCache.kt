@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.IOUtil
@@ -18,9 +20,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -44,6 +45,7 @@ import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 /**
  * Wrapper for PersistentHashMap closed on [coroutineScope] cancel.
+ * [coroutineScope] must end by cancellation only, because the cache keeps it from completing normally.
  * Values are forced on disk after putting into the map with a specified delay.
  *
  * One cache at a time owns the storage file of [mapBuilder].
@@ -53,7 +55,8 @@ import kotlin.time.TimeSource.Monotonic.ValueTimeMark
  * A cache is active while its [coroutineScope] is not cancelled.
  * A cache created while an active cache owns the file logs an error and stores nothing.
  */
-class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) constructor(
+@OptIn(AwaitCancellationAndInvoke::class)
+class ManagedPersistentCache<K, V>(
   private val name: String,
   private val mapBuilder: PersistentMapBuilder<K, V>,
   private val coroutineScope: CoroutineScope,
@@ -63,7 +66,7 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
 ) : ManagedCache<K, V> {
   private val storageFile: Path = mapBuilder.file.toAbsolutePath()
   private val persistentMapRef: AtomicReference<PersistentMapBase<K, V>> = AtomicReference()
-  private val scheduledForce: AtomicReference<Job> = AtomicReference<Job>()
+  private val forceRequests: Channel<Unit> = Channel(Channel.CONFLATED)
   private val errorCounter: AtomicInteger = AtomicInteger()
   private val closed: CompletableDeferred<Unit> = CompletableDeferred()
   private val createdAt: ValueTimeMark = TimeSource.Monotonic.markNow()
@@ -74,10 +77,14 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     val previousOwnerClosed = takeOwnership()
     if (previousOwnerClosed != null) {
       this.previousOwnerClosed = previousOwnerClosed
-      opened = coroutineScope.launch(dispatcher) {
+      val cacheScope = coroutineScope.childScope("ManagedPersistentCache $name")
+      opened = cacheScope.launch(dispatcher) {
         open()
       }
-      coroutineScope.awaitCancellationAndInvoke {
+      cacheScope.launch {
+        forceOnRequests()
+      }
+      cacheScope.awaitCancellationAndInvoke {
         close()
       }
     } else {
@@ -91,7 +98,7 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     withPersistentMap(opName="put", isRead=false) { map ->
       map.put(key, value)
     }
-    forceAsync()
+    requestForce()
   }
 
   override suspend fun get(key: K): V? {
@@ -104,7 +111,7 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     withPersistentMap(opName="remove", isRead=false) { map ->
       map.remove(key)
     }
-    forceAsync()
+    requestForce()
   }
 
   override suspend fun entries(): Flow<Pair<K, V>> {
@@ -119,23 +126,20 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     }.asFlow()
   }
 
-  private fun forceAsync() {
-    coroutineScope.launch {
-      scheduleForce()
-    }
+  private fun requestForce() {
+    forceRequests.trySend(Unit)
   }
 
-  private suspend fun scheduleForce() {
-    scheduledForce.getAndSet(null)?.cancel()
-    coroutineScope {
-      val job = launch {
-        delay(FORCE_ON_DISK_DELAY_MS)
-        force()
-      }
-      val alreadyScheduled = !scheduledForce.compareAndSet(null, job)
-      if (alreadyScheduled) {
-        job.cancel()
-      }
+  /**
+   * Forces the map on disk when no force request comes during [FORCE_ON_DISK_DELAY].
+   */
+  private suspend fun forceOnRequests() {
+    while (true) {
+      forceRequests.receive()
+      do {
+        delay(FORCE_ON_DISK_DELAY)
+      } while (forceRequests.tryReceive().isSuccess)
+      force()
     }
   }
 
@@ -191,7 +195,7 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
       if (closeOnAppShutdown) {
         OPENED_CACHES.add(this)
         if (APP_SHUTDOWN_STARTED.get()) {
-          closeAndRelease()
+          closeAndRelease(delete=false)
         }
       }
     }
@@ -204,22 +208,22 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
       LOG.warn("the previous owner of $name did not close in $PREVIOUS_OWNER_WAIT, $name releases the file")
     }
     withContext(dispatcher) {
-      closeAndRelease()
+      closeAndRelease(delete=false)
     }
   }
 
-  private fun closeAndRelease() {
+  private fun closeAndRelease(delete: Boolean) {
     try {
       val persistentMap = persistentMapRef.getAndSet(null)
       if (persistentMap != null) {
-        close(persistentMap)
+        close(persistentMap, delete)
       }
     } finally {
       release()
     }
   }
 
-  private fun close(persistentMap: PersistentMapBase<K, V>, delete: Boolean = false) {
+  private fun close(persistentMap: PersistentMapBase<K, V>, delete: Boolean) {
     ThreadingAssertions.assertBackgroundThread()
     LOG.info("${if (delete) "deleting" else "closing"} $name with ${persistentMap.keysCount()} elements")
     try {
@@ -239,13 +243,13 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     closed.complete(Unit)
   }
 
-  private fun createPersistentMap(): PersistentMapBase<K, V>? {
+  private suspend fun createPersistentMap(): PersistentMapBase<K, V>? {
     ThreadingAssertions.assertBackgroundThread()
     var map: PersistentMapBase<K, V>? = null
     var exception: Exception? = null
     for (attempt in 0 until CREATE_ATTEMPT_COUNT) {
       if (attempt > 1) {
-        Thread.sleep(CREATE_ATTEMPT_DELAY_MS)
+        delay(CREATE_ATTEMPT_DELAY)
       }
       try {
         map = PersistentMapImpl(mapBuilder)
@@ -259,7 +263,7 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
           LOG.warn("error creating $name, attempt $attempt", e)
         }
       } catch (e: Exception) {
-        // e.g., IllegalStateException storage is already registered
+        // e.g., IllegalStateException when another storage still uses the file
         exception = e
         break
       }
@@ -325,11 +329,8 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
         val count = errorCounter.incrementAndGet()
         if (count > IO_ERRORS_THRESHOLD) {
           LOG.warn("error count exceeds the threshold, closing $name")
-          if (persistentMapRef.compareAndSet(persistentMap, null)) {
-            // IJPL-158564 release the storage file if too many io errors occurred
-            close(persistentMap, delete=true)
-            release()
-          }
+          // IJPL-158564 release the storage file if too many io errors occurred
+          closeAndRelease(delete=true)
         }
         return@withContext null
       }
@@ -365,8 +366,8 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
   companion object {
     private const val IO_ERRORS_THRESHOLD: Int = 50
     private const val CREATE_ATTEMPT_COUNT: Int = 5
-    private const val CREATE_ATTEMPT_DELAY_MS: Long = 10
-    private const val FORCE_ON_DISK_DELAY_MS: Long = 500
+    private val CREATE_ATTEMPT_DELAY: Duration = 10.milliseconds
+    private val FORCE_ON_DISK_DELAY: Duration = 500.milliseconds
     private val PREVIOUS_OWNER_READ_WAIT: Duration = 300.milliseconds
     private val PREVIOUS_OWNER_WAIT: Duration = 10.seconds
     private val LOG: Logger = logger<ManagedPersistentCache<*, *>>()
@@ -377,7 +378,7 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
       ShutDownTracker.getInstance().registerCacheShutdownTask {
         APP_SHUTDOWN_STARTED.set(true)
         for (cache in OPENED_CACHES) {
-          cache.closeAndRelease()
+          cache.closeAndRelease(delete=false)
         }
       }
     }
