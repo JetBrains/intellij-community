@@ -5,8 +5,6 @@ description: Add or modify IntelliJ module dependencies in `.iml` files.
 
 # Module Dependencies Management
 
-This document describes how to manage module dependencies when working with IntelliJ IDEA codebase.
-
 ## Documentation
 
 - [Modularization Overview](../../../../docs/IntelliJ-Platform/4_man/Modularization/) - Module organization principles:
@@ -15,13 +13,6 @@ This document describes how to manage module dependencies when working with Inte
   - [Modules at Runtime](../../../../docs/IntelliJ-Platform/4_man/Modularization/2_Modules-at-runtime.md)
   - [Modules in Build Scripts](../../../../docs/IntelliJ-Platform/4_man/Modularization/3_Modules-in-build-scripts.md)
 - [Project Structure](../../../../docs/IntelliJ-Platform/4_man/Project-Structure/) - Naming conventions, Kotlin usage, dependencies
-
-## Build System Overview
-
-The repository uses a hybrid build system:
-- **JPS (*.iml files)**: Source of truth for module dependencies
-- **Bazel (BUILD files)**: Auto-generated from *.iml files
-- **Generator**: run `build/jpsModelToBazel.cmd` after changing .iml files
 
 ## JPS Module Registration Helper
 
@@ -39,69 +30,9 @@ The helper:
 
 Use `bun build/jps-module.mjs check <path-to-iml> --fix-iml-eof` to verify without writing.
 
-## Running the IML-to-Bazel Generator
-
-To manually run the converter that generates Bazel BUILD files from .iml files:
-
-```bash
-./build/jpsModelToBazel.cmd
-```
-
-This is useful when:
-- The automatic converter didn't run (e.g., .iml files were modified outside the IDE)
-- You need to regenerate BUILD files after git operations
-- Troubleshooting build system synchronization issues
-
 ## Library Version Changes
 
-Bump a library with the dashboard tool, not by hand: `bun community/build/libraries-dashboard/libraries-dashboard.mjs bump <groupId:artifactId>=<version> --kind=wrapper`. It rewrites the `maven-id`, the jar URLs and every `<sha256sum>`, and prints the follow-up commands.
-
-### The artifact list must match the POM
-
-JPS resolves a repository library from its POM and requires the `<verification>` artifact set to equal the resolved jar set. Bazel downloads the listed URLs instead, so a mismatch passes every local Bazel build and fails the first JPS step on TeamCity ("Library 'x': not found expected artifacts"). Two rules follow:
-
-- A transitive artifact in a library block stays at the version the POM of the main artifact declares. Do not align it with another wrapper by editing the version.
-- To share one version across wrappers, exclude the dependency and add a module dependency on its wrapper. `community/libraries/mockk/jvm/intellij.libraries.mockk.jvm.iml` excludes `byte-buddy-agent` and depends on `intellij.libraries.byte.buddy.agent`.
-
-The bump command checks a multi-artifact library against the direct dependencies of the new POM and fails on a mismatch. After a manual edit of a library block, run the same check:
-
-```bash
-bun community/build/libraries-dashboard/libraries-dashboard.mjs check <groupId:artifactId>
-```
-
-The check reads one POM without its parents and compares direct dependencies only. To reproduce the JPS resolution that TeamCity runs before every build, run `./build/downloadLibraries.cmd`. It needs Space credentials.
-
-### Version copies outside the JPS model
-
-After you change the version of a repository library in an `*.iml` or in `.idea/libraries/*.xml`, run the Fleet generator in the monorepo checkout:
-
-```bash
-./fleet/build/generateProjectModel.cmd dump
-```
-
-The Fleet generator copies the JPS library versions into `fleet/build/jps-library-mappings.tsv` and both `fleet/kmp.MODULE.bazel` files. Its `check` mode fails on drift.
-
-When the dump changes a `kmp.MODULE.bazel`, update both Bazel lockfiles:
-
-```bash
-./bazel.cmd mod deps --lockfile_mode=update
-(cd community && ./bazel.cmd mod deps --lockfile_mode=update)
-```
-
-The `kmp` module extension records its artifact list in the `MODULE.bazel.lock` of each module, and CI runs Bazel with `--lockfile_mode=error`, so a stale lockfile fails the build. `bun community/build/libraries-dashboard/libraries-dashboard.mjs bump` prints these commands after a bump.
-
-Some files outside the JPS model copy a library version, and the project structure tests check each copy:
-
-- `community/platform/jps-bootstrap/pom.xml` copies every library that jps-bootstrap uses (`JpsBoostrapStructureTest`).
-- `JetBrainsAnnotationsExternalLibraryResolver.VERSION` copies `org.jetbrains:annotations` (`IdeaUltimateProjectStructureTest`).
-
-The bump command rewrites these copies and reports a copy that still differs. After a manual version change, edit them by hand. Then run the tests that gate the Smoke Tests build:
-
-```bash
-./tests.cmd --module intellij.projectStructureTests --test 'com.intellij.ideaProjectStructure.fast.*'
-```
-
-These tests also check the Kotlin, Compose and LanguageTool version alignment and the unused project libraries.
+To change the version or the library block of a repository library, follow [Library Version Changes](references/library-versions.md).
 
 ## BUILD.bazel Auto-Generated Sections
 
@@ -129,25 +60,7 @@ To prevent auto-generation of a section (so you can provide custom content):
 ### skip generation section `test module.name`
 ```
 
-**Example - Custom test target with preserved content:**
-
-```starlark
-load("@community//build:tests-options.bzl", "jps_test")
-
-# Custom test target (before auto-generated sections)
-jps_test(
-  name = "my-tests_test",
-  runtime_deps = [
-    ":my-tests_test_lib",
-    "//:main_test_lib",
-  ],
-)
-
-### skip generation section `test my.module.name`
-
-### auto-generated section `build my.module.name` start
-... (let generator handle the build section)
-```
+For a custom `jps_test` target with this marker, see `community/platform/eel/BUILD.bazel`.
 
 ## Content Modules and Wrapper Plugins
 
@@ -160,9 +73,8 @@ Test plugin resolution is different because tests often do not run with the full
 A Kotlin `internal` declaration is visible to a test only when the test module is a friend of the
 production module.
 
-**The same module.** A test source root of a module sees the `internal` declarations of the
-production sources. Nothing to configure. The generator adds the production target to the
-`associates` attribute of the `_test_lib` target.
+**The same module.** The generator rejects a module that has both production and test source roots.
+Put the tests in a separate test module.
 
 **A separate test module.** Add the `TestModuleProperties` component to the test module `.iml`:
 
@@ -172,19 +84,18 @@ production sources. Nothing to configure. The generator adds the production targ
 
 Then run `./build/jpsModelToBazel.cmd`. The generator moves the production module from `deps` to
 `associates`, and the Kotlin compiler gets it as a friend path. For a complete example, see
-`community/notebooks/visualization/intellij.notebooks.visualization.tests.iml`.
+`community/platform/configuration-store-impl/intellij.platform.configurationStore.tests.iml`.
 
 The component holds one module. A test module cannot be a friend of two production modules, and the
 friendship is not transitive.
 
-**Java.** Java has no `internal` modifier. Put the test class in the same package as a
-package-private declaration. For a member that carries `@ApiStatus.Internal`, add
-`@VisibleForTesting` or `@TestOnly`, because the compiler makes no check here.
+**Java.** For a member that carries `@ApiStatus.Internal`, add `@VisibleForTesting` or `@TestOnly`,
+because the compiler makes no check here.
 
 ## Important Notes
 
 When you need to fix missing dependencies:
-1. Edit the `.iml` with the repo-approved edit tool.
+1. Edit the `.iml`.
 2. Run `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` for every changed module file.
 3. Run `./build/jpsModelToBazel.cmd` so generated `BUILD.bazel` files match the `.iml` source of truth.
 4. Verify compilation or tests for the affected module.
