@@ -1,0 +1,8 @@
+FunctionBreakpoint created at functionBreakpointPassCountInSuspendOverride.kt:18 passCount = 2
+Run Java
+Connected to the target VM
+functionBreakpointPassCountInSuspendOverride.kt:18
+Compile bytecode for n
+Disconnected from the target VM
+
+Process finished with exit code 0

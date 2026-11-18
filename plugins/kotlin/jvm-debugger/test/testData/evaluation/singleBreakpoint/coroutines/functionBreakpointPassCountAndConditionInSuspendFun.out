@@ -1,0 +1,9 @@
+FunctionBreakpoint created at functionBreakpointPassCountAndConditionInSuspendFun.kt:22 condition = n % 2 == 1 passCount = 2
+Run Java
+Connected to the target VM
+Compile bytecode for n % 2 == 1
+functionBreakpointPassCountAndConditionInSuspendFun.kt:22
+Compile bytecode for n
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -599,14 +599,34 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/coroutineScopeReceiver.kt");
                 }
 
+                @TestMetadata("functionBreakpointPassCountAndConditionInSuspendFun.kt")
+                public void testFunctionBreakpointPassCountAndConditionInSuspendFun() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/functionBreakpointPassCountAndConditionInSuspendFun.kt");
+                }
+
+                @TestMetadata("functionBreakpointPassCountInNonSuspendingSuspendFun.kt")
+                public void testFunctionBreakpointPassCountInNonSuspendingSuspendFun() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/functionBreakpointPassCountInNonSuspendingSuspendFun.kt");
+                }
+
                 @TestMetadata("functionBreakpointPassCountInSuspendFun.kt")
                 public void testFunctionBreakpointPassCountInSuspendFun() throws Exception {
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/functionBreakpointPassCountInSuspendFun.kt");
                 }
 
+                @TestMetadata("functionBreakpointPassCountInSuspendFunDefaultArg.kt")
+                public void testFunctionBreakpointPassCountInSuspendFunDefaultArg() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/functionBreakpointPassCountInSuspendFunDefaultArg.kt");
+                }
+
                 @TestMetadata("functionBreakpointPassCountInSuspendFunNotEmulated.kt")
                 public void testFunctionBreakpointPassCountInSuspendFunNotEmulated() throws Exception {
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/functionBreakpointPassCountInSuspendFunNotEmulated.kt");
+                }
+
+                @TestMetadata("functionBreakpointPassCountInSuspendOverride.kt")
+                public void testFunctionBreakpointPassCountInSuspendOverride() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/functionBreakpointPassCountInSuspendOverride.kt");
                 }
 
                 @TestMetadata("functionCallWithSuspendFunctionInside.kt")
