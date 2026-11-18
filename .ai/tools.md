@@ -40,6 +40,9 @@ Below, `accio` stands for `accio.cmd`. `accio <command> --help` lists the option
 
 - Do not pass a literal `<`, `>`, `|`, or `&` through a `.cmd` search wrapper, even inside quotes.
 - For `rg.cmd` alternation, repeat `-e` (`rg.cmd -n -e "foo" -e "bar" path/to/file.kt`) instead of `"foo|bar"`.
+- Git Bash converts an argument that starts with `/` to a Windows path. Pass such text on stdin.
+- Git Bash cuts `//` to `/` in a label of a one-segment package, such as `//.ai:render-guides`. Prefix the command
+  with `MSYS_NO_PATHCONV=1`.
 - To check one file for conflict markers, use
   `Select-String -SimpleMatch -Pattern '<<<<<<<','=======','>>>>>>>' -Path <file>`.
 
