@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 internal class EditorSkeletonColorManager(
   skeletonDelayMs: Long,
-  private val nowMs: () -> Long,
   animationEnabled: Boolean,
   animationDurationMs: Long,
 ) {
@@ -25,16 +24,15 @@ internal class EditorSkeletonColorManager(
     background.set(snapshotBackground())
   }
 
-  fun frameColors(): SkeletonFrameColor {
+  fun colorsAt(timeMs: Long): SkeletonFrameColor {
     val background = background.get()
     val palette = palette.updateAndGet {
       if (it.background == background) it else EditorSkeletonPalette(background)
     }
-    val now = nowMs()
-    if (fadeInStartTime.compareAndSet(Long.MIN_VALUE, now)) {
+    if (fadeInStartTime.compareAndSet(Long.MIN_VALUE, timeMs)) {
       return SkeletonFrameColor(background, background)
     }
-    val state = timeline.stateAt(now - fadeInStartTime.get())
+    val state = timeline.stateAt(timeMs - fadeInStartTime.get())
     return SkeletonFrameColor(background, palette.blocksColor(state))
   }
 

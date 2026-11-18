@@ -88,7 +88,7 @@ internal class EditorSkeletonRepaintRenderer(private val frames: EditorSkeletonF
   private var scope: CoroutineScope? = null
   private var renderingJob: Job? = null
   private var lastFrameTimeMs: Long? = null
-  private var animationTimeMs = 0L
+  private var animationClockMs = 0L
 
   init {
     isFocusable = false
@@ -115,19 +115,24 @@ internal class EditorSkeletonRepaintRenderer(private val frames: EditorSkeletonF
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    frames.paint(g as Graphics2D, width, height, JBUIScale.scale(1f), frames.currentColors())
+    frames.paint(g as Graphics2D, width, height, JBUIScale.scale(1f), frames.colorsAt(animationTimeMs()))
   }
 
-  override fun frameTimeMs(nowMs: Long): Long {
+  /**
+   * Returns the time on the clock of the animation. A gap of more than [MAX_FRAME_GAP_MS] between two frames does not count,
+   * so the animation does not jump after the EDT was busy.
+   */
+  private fun animationTimeMs(): Long {
+    val nowMs = System.currentTimeMillis()
     val previousFrameTimeMs = lastFrameTimeMs
     if (previousFrameTimeMs != null) {
       val elapsedMs = nowMs - previousFrameTimeMs
       if (elapsedMs in 0L..MAX_FRAME_GAP_MS) {
-        animationTimeMs += elapsedMs
+        animationClockMs += elapsedMs
       }
     }
     lastFrameTimeMs = nowMs
-    return animationTimeMs
+    return animationClockMs
   }
 
   private fun startRepainting() {
@@ -137,7 +142,7 @@ internal class EditorSkeletonRepaintRenderer(private val frames: EditorSkeletonF
       var repaintedColors: SkeletonFrameColor? = null
       while (isActive) {
         if (isShowing) {
-          val colors = frames.currentColors()
+          val colors = frames.colorsAt(animationTimeMs())
           if (colors != repaintedColors) {
             repaintedColors = colors
             repaint()

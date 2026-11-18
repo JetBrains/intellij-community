@@ -37,13 +37,12 @@ internal class EditorSkeletonNew(
 ) : JComponent() {
   private val colorManager = EditorSkeletonColorManager(
     skeletonDelayMs = fadeInMs,
-    nowMs = { renderer.frameTimeMs(System.currentTimeMillis()) },
     animationEnabled = !DrawUtil.isSimplifiedUI(),
     animationDurationMs = Registry.intValue("editor.skeleton.animation.duration.ms", 1500).toLong(),
   )
   private val frames = object : EditorSkeletonFrames {
-    override fun currentColors(): SkeletonFrameColor {
-      return colorManager.frameColors()
+    override fun colorsAt(timeMs: Long): SkeletonFrameColor {
+      return colorManager.colorsAt(timeMs)
     }
     override fun paint(g: Graphics2D, width: Int, height: Int, scale: Float, colors: SkeletonFrameColor) {
       paintFrame(g, width, height, scale, colors)

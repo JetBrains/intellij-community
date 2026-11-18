@@ -119,7 +119,7 @@ internal class EditorSkeletonDirectRenderer(private val frames: EditorSkeletonFr
     if (isTargetStale()) {
       updateTarget()
     }
-    frames.paint(g as Graphics2D, width, height, JBUIScale.scale(1f), frames.currentColors())
+    frames.paint(g as Graphics2D, width, height, JBUIScale.scale(1f), frames.colorsAt(System.currentTimeMillis()))
   }
 
   /**
@@ -132,7 +132,7 @@ internal class EditorSkeletonDirectRenderer(private val frames: EditorSkeletonFr
       return
     }
     val target = target ?: return
-    val colors = frames.currentColors()
+    val colors = frames.colorsAt(System.currentTimeMillis())
     val now = System.nanoTime()
     if (colors == renderedColors && target === renderedTarget) {
       if (!settled && now - lastChangeNanos > SETTLE_NANOS) {

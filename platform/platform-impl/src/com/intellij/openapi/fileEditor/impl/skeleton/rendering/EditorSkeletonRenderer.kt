@@ -19,8 +19,6 @@ internal interface EditorSkeletonRenderer {
    */
   fun startRendering(cs: CoroutineScope)
 
-  fun frameTimeMs(nowMs: Long): Long = nowMs
-
   companion object {
     val TICK_MS = 8.milliseconds
 

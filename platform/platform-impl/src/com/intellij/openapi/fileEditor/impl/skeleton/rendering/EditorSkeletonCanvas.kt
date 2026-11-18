@@ -82,7 +82,7 @@ internal class EditorSkeletonCanvas(private val frames: EditorSkeletonFrames) : 
 
     val buffer = backBuffer.createOrUpdateImageBuffer(gc, w, h)
     buffer.createGraphics().use { g ->
-      frames.paint(g, w, h, JBUIScale.scale(1f), frames.currentColors())
+      frames.paint(g, w, h, JBUIScale.scale(1f), frames.colorsAt(System.currentTimeMillis()))
     }
 
     if (buffer.contentsLost()) return

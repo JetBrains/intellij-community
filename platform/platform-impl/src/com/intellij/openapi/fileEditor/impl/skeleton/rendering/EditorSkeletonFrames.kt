@@ -8,9 +8,9 @@ import java.awt.Graphics2D
  */
 internal interface EditorSkeletonFrames {
   /**
-   * Returns the colors of the frame at the current time.
+   * Returns the colors of the frame at [timeMs] on the clock of the renderer. The first call starts the fade-in.
    */
-  fun currentColors(): SkeletonFrameColor
+  fun colorsAt(timeMs: Long): SkeletonFrameColor
 
   /**
    * Paints a frame of [width] by [height] with [colors] into [g]. [scale] is the user scale of the IDE.
