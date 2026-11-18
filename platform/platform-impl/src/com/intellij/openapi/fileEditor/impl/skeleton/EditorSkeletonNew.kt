@@ -26,7 +26,9 @@ import kotlin.math.ceil
 
 /**
  * Shows a file editor skeleton with a renderer selected for the current toolkit.
- * The skeleton fades in over [fadeInMs], then pulses when animation is enabled and the UI is not simplified.
+ * The skeleton fades in over [fadeInMs], then pulses unless the UI is simplified.
+ *
+ * Any thread can create the skeleton. The skeleton shows nothing until [start] runs on the EDT.
  */
 internal class EditorSkeletonNew(
   private val cs: CoroutineScope,
@@ -61,13 +63,15 @@ internal class EditorSkeletonNew(
     isOpaque = false
     minimumSize = JBDimension(0, 0)
     preferredSize = JBDimension(skeletonPanel.preferredWidth, skeletonPanel.preferredHeight)
-    add(renderer.component, BorderLayout.CENTER)
   }
 
   /**
-   * Starts the animation in the scope of the skeleton. Call it on the EDT after the skeleton is added to its parent.
+   * Adds the renderer and starts the frames in the scope of the skeleton.
+   * Call it once on the EDT, after the skeleton is added to its parent.
    */
-  fun startAnimation() {
+  fun start() {
+    colorManager.reloadColorScheme()
+    add(renderer.component, BorderLayout.CENTER)
     renderer.startRendering(cs)
   }
 
