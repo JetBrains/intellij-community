@@ -6,8 +6,6 @@ description: Create or modify IntelliJ Structural Search and Replace patterns.
 
 # Structural Search and Replace
 
-- You must use terminal search (`ls`, `cat` and `grep`) to read directory `.idea`. Do not use IDE search.
-
 - The contents of structural search inspections is located in `.idea/inspectionProfiles/idea_default.xml`
 
 - Here is an example of a Structural Search and Replace inspection:
@@ -27,8 +25,6 @@ description: Create or modify IntelliJ Structural Search and Replace patterns.
 </replaceConfiguration>
 ```
 
-This node should be located under `<inspection_tool class="SSBasedInspection"` tag.
-
 - Here is an example of a Structural Search inspection:
 
 ```xml
@@ -44,7 +40,7 @@ This node should be located under `<inspection_tool class="SSBasedInspection"` t
 </searchConfiguration>
 ```
 
-This node should be located under `<inspection_tool class="SSBasedInspection"` tag.
+Both nodes should be located under `<inspection_tool class="SSBasedInspection"` tag.
 
 - To configure the scope of inspection, you need to make changes similar to this pattern, where class is UUID of the created replace
   configuration.
