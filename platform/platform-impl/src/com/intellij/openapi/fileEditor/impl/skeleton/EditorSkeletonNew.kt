@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBDimension
 import kotlinx.coroutines.CoroutineScope
 import java.awt.AlphaComposite
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Graphics2D
 import javax.swing.JComponent
 import kotlin.math.ceil
@@ -36,9 +37,10 @@ internal class EditorSkeletonNew(
   fadeInMs: Long,
 ) : JComponent() {
   private val colorManager = EditorSkeletonColorManager(
-    skeletonDelayMs = fadeInMs,
-    animationEnabled = !DrawUtil.isSimplifiedUI(),
-    animationDurationMs = Registry.intValue("editor.skeleton.animation.duration.ms", 1500).toLong(),
+    background = schemeBackground(),
+    fadeInMs = fadeInMs,
+    pulseEnabled = !DrawUtil.isSimplifiedUI(),
+    pulseDurationMs = Registry.intValue("editor.skeleton.animation.duration.ms", 1500).toLong(),
   )
   private val frames = object : EditorSkeletonFrames {
     override fun colorsAt(timeMs: Long): SkeletonFrameColor {
@@ -52,7 +54,7 @@ internal class EditorSkeletonNew(
 
   init {
     project.messageBus.connect(cs).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
-      colorManager.reloadColorScheme()
+      colorManager.setBackground(schemeBackground())
     })
     layout = BorderLayout()
     isOpaque = false
@@ -65,9 +67,13 @@ internal class EditorSkeletonNew(
    * Call it once on the EDT, after the skeleton is added to its parent.
    */
   fun start() {
-    colorManager.reloadColorScheme()
+    colorManager.setBackground(schemeBackground())
     add(renderer.component, BorderLayout.CENTER)
     renderer.startRendering(cs)
+  }
+
+  private fun schemeBackground(): Color {
+    return EditorColorsManager.getInstance().globalScheme.defaultBackground
   }
 
   private fun paintFrame(g: Graphics2D, width: Int, height: Int, scale: Float, colors: SkeletonFrameColor) {
