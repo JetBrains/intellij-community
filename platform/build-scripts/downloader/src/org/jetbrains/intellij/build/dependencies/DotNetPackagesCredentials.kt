@@ -55,7 +55,9 @@ object DotNetPackagesCredentials {
   @Throws(IOException::class, SAXException::class)
   private fun loadFromNuGetConfig(): Boolean {
     val nuGetConfig: File = if (BuildDependenciesUtil.isWindows) {
-      Path.of(System.getenv("APPDATA"), "NuGet", "NuGet.Config").toFile()
+      // A Bazel test sandbox does not pass APPDATA through.
+      val appData = System.getenv("APPDATA") ?: Path.of(System.getProperty("user.home"), "AppData", "Roaming").toString()
+      Path.of(appData, "NuGet", "NuGet.Config").toFile()
     }
     else {
       Path.of(System.getProperty("user.home"), ".nuget", "NuGet", "NuGet.Config").toFile()
