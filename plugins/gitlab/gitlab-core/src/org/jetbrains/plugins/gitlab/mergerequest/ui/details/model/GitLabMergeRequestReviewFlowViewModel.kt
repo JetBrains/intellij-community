@@ -303,11 +303,12 @@ private val GitLabMergeRequestFullDetails.isMergeBlockedByPipeline: Boolean
     if (!onlyAllowMergeIfPipelineSucceeds) return false
 
     return headPipeline?.jobs?.any {
-      val mandatory = it.allowFailure ?: true
-      if (!mandatory) return@any false
+      if (it.allowFailure == true) return@any false
 
-      val skippedWhenNotAllowed = it.status == GitLabCiJobStatus.SKIPPED && !allowMergeOnSkippedPipeline
-      val notSuccessful = it.status != GitLabCiJobStatus.SUCCESS
-      skippedWhenNotAllowed || notSuccessful
+      when (it.status) {
+        GitLabCiJobStatus.SUCCESS -> false
+        GitLabCiJobStatus.SKIPPED -> !allowMergeOnSkippedPipeline
+        else -> true
+      }
     } ?: false
   }
