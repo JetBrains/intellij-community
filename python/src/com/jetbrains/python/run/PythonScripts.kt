@@ -390,7 +390,14 @@ fun TargetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project: P
 
 @ApiStatus.Internal
 fun PythonExecution.disableBuiltinBreakpoint(sdk: Sdk?) {
-  if (sdk != null && PythonSdkFlavor.getFlavor(sdk)?.getLanguageLevel(sdk)?.isAtLeast(LanguageLevel.PYTHON37) == true) {
+  val languageLevel = sdk?.let { PythonSdkFlavor.getFlavor(it)?.getLanguageLevel(it) } ?: return
+  disableBuiltinBreakpoint(languageLevel)
+}
+
+/** [disableBuiltinBreakpoint] for a Python of [languageLevel]: Python 3.7 and later have the built-in `breakpoint()`. */
+@ApiStatus.Internal
+fun PythonExecution.disableBuiltinBreakpoint(languageLevel: LanguageLevel) {
+  if (languageLevel.isAtLeast(LanguageLevel.PYTHON37)) {
     addEnvironmentVariable("PYTHONBREAKPOINT", "0")
   }
 }
