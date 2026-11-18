@@ -5,7 +5,6 @@ import com.intellij.debugger.HelpID;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.SmartList;
@@ -140,14 +139,7 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
 
   @Override
   public @Nullable JavaMethodBreakpointProperties createProperties() {
-    JavaMethodBreakpointProperties properties = new JavaMethodBreakpointProperties();
-    if (Registry.is("debugger.emulate.method.breakpoints")) {
-      properties.EMULATED = true; // create all new emulated
-    }
-    if (Registry.is("debugger.method.breakpoints.entry.default")) {
-      properties.WATCH_EXIT = false;
-    }
-    return properties;
+    return JavaMethodBreakpointProperties.create(null, null);
   }
 
   @Override

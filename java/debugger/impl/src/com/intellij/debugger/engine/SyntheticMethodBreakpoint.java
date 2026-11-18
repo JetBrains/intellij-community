@@ -16,16 +16,13 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 public class SyntheticMethodBreakpoint extends WildcardMethodBreakpoint implements SyntheticBreakpoint {
-  private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
+  private final JavaMethodBreakpointProperties myProperties;
   private final String mySignature;
   private String mySuspendPolicy;
 
   public SyntheticMethodBreakpoint(String className, String methodName, @Nullable String signature, Project project) {
     super(project, null);
-    myProperties.EMULATED = true;
-    myProperties.WATCH_EXIT = false;
-    myProperties.myClassPattern = className;
-    myProperties.myMethodName = methodName;
+    myProperties = JavaMethodBreakpointProperties.createEmulatedWatchOnlyEntry(className, methodName);
     mySignature = signature;
   }
 

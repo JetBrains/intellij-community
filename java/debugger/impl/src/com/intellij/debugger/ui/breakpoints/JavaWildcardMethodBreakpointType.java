@@ -5,7 +5,6 @@ import com.intellij.debugger.HelpID;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -76,8 +75,8 @@ public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBa
   //}
 
   @Override
-  public @Nullable JavaMethodBreakpointProperties createProperties() {
-    return new JavaMethodBreakpointProperties();
+  public @NotNull JavaMethodBreakpointProperties createProperties() {
+    return JavaMethodBreakpointProperties.create();
   }
 
   @Override
@@ -86,13 +85,7 @@ public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBa
     if (!dialog.showAndGet()) {
       return null;
     }
-    JavaMethodBreakpointProperties properties = new JavaMethodBreakpointProperties(dialog.getClassPattern(), dialog.getMethodName());
-    if (Registry.is("debugger.emulate.method.breakpoints")) {
-      properties.EMULATED = true; // create all new emulated
-    }
-    if (Registry.is("debugger.method.breakpoints.entry.default")) {
-      properties.WATCH_EXIT = false;
-    }
+    var properties = JavaMethodBreakpointProperties.create(dialog.getClassPattern(), dialog.getMethodName());
     return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(this, properties);
   }
 
