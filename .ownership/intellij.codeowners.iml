@@ -30,43 +30,69 @@
     <orderEntry type="library" scope="RUNTIME" name="kotlin-stdlib" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="jetbrains.patronus.codeowners.lib.ownership" type="repository">
-        <properties maven-id="org.jetbrains.patronus:codeowners-lib-ownership:2026.04.09-1517">
+      <library name="jetbrains.patronus.codeowners.lib.core" type="repository">
+        <properties maven-id="org.jetbrains.patronus:codeowners-lib-core:2026.11.17-1859">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-ownership/2026.04.09-1517/codeowners-lib-ownership-2026.04.09-1517.jar">
-              <sha256sum>2f155bba83f73e89e84685bbb3597d7316bdcb1e69142652638c212af5f94fc0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-core/2026.11.17-1859/codeowners-lib-core-2026.11.17-1859.jar">
+              <sha256sum>fa7fcb1e2572b6fe9e6e839908a585375fa828af906d4eb0337c71b92105068d</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-core/2026.04.09-1517/codeowners-lib-core-2026.04.09-1517.jar">
-              <sha256sum>e45ef8e37723f34f23736f546658f6e59b4e88c46b13e8635346c99da31d9d98</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/patronus/gitignore/2026.11.17-1859/gitignore-2026.11.17-1859.jar">
+              <sha256sum>56e01b05efc04b7bacac4c8e0b97603e8210f6bf2f5cfea54911bffc6e9ef9bc</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/patronus/gitignore/2026.04.09-1517/gitignore-2026.04.09-1517.jar">
-              <sha256sum>a10131c4613d82046a3931b1b1eeb3998a945441d1d7d50e09a781521a126588</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/patronus/logging/2026.11.17-1859/logging-2026.11.17-1859.jar">
+              <sha256sum>5edbc0611ee28662aa8bbf23d2d8804554b0acca08fc39b40a3f084fecaf0c79</sha256sum>
             </artifact>
           </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.patronus:logging" />
             <dependency maven-id="org.jetbrains.patronus:patronus-api-annotations" />
             <dependency maven-id="org.slf4j:slf4j-api" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j" />
-            <dependency maven-id="com.charleskorn.kaml:kaml-jvm" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-ownership/2026.04.09-1517/codeowners-lib-ownership-2026.04.09-1517.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-core/2026.04.09-1517/codeowners-lib-core-2026.04.09-1517.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/gitignore/2026.04.09-1517/gitignore-2026.04.09-1517.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-core/2026.11.17-1859/codeowners-lib-core-2026.11.17-1859.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/gitignore/2026.11.17-1859/gitignore-2026.11.17-1859.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/logging/2026.11.17-1859/logging-2026.11.17-1859.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-ownership/2026.04.09-1517/codeowners-lib-ownership-2026.04.09-1517-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-core/2026.04.09-1517/codeowners-lib-core-2026.04.09-1517-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/gitignore/2026.04.09-1517/gitignore-2026.04.09-1517-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-core/2026.11.17-1859/codeowners-lib-core-2026.11.17-1859-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/gitignore/2026.11.17-1859/gitignore-2026.11.17-1859-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/logging/2026.11.17-1859/logging-2026.11.17-1859-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="jetbrains.patronus.codeowners.lib.serialization" type="repository">
+        <properties maven-id="org.jetbrains.patronus:codeowners-lib-serialization:2026.11.17-1859">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-serialization/2026.11.17-1859/codeowners-lib-serialization-2026.11.17-1859.jar">
+              <sha256sum>800a4419d4b8dcc0b091dec608eba0f10fc156a169b85d10b6e5295cd26a15de</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.patronus:codeowners-lib-core" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.patronus:patronus-api-annotations" />
+            <dependency maven-id="org.jetbrains.patronus:logging" />
+            <dependency maven-id="com.charleskorn.kaml:kaml-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-serialization/2026.11.17-1859/codeowners-lib-serialization-2026.11.17-1859.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/patronus/codeowners-lib-serialization/2026.11.17-1859/codeowners-lib-serialization-2026.11.17-1859-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.slf4j" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.squareup.okio.jvm" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />

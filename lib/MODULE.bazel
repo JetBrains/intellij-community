@@ -323,45 +323,59 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_patronus-codeowners-lib-ownership-2026_04_09-1517_http",
-    downloaded_file_path = "codeowners-lib-ownership-2026.04.09-1517.jar",
-    sha256 = "2f155bba83f73e89e84685bbb3597d7316bdcb1e69142652638c212af5f94fc0",
-    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/codeowners-lib-ownership/2026.04.09-1517/codeowners-lib-ownership-2026.04.09-1517.jar",
+    name = "org_jetbrains_patronus-codeowners-lib-core-2026_11_17-1859_http",
+    downloaded_file_path = "codeowners-lib-core-2026.11.17-1859.jar",
+    sha256 = "fa7fcb1e2572b6fe9e6e839908a585375fa828af906d4eb0337c71b92105068d",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/codeowners-lib-core/2026.11.17-1859/codeowners-lib-core-2026.11.17-1859.jar",
 )
 
 http_file(
-    name = "org_jetbrains_patronus-codeowners-lib-core-2026_04_09-1517_http",
-    downloaded_file_path = "codeowners-lib-core-2026.04.09-1517.jar",
-    sha256 = "e45ef8e37723f34f23736f546658f6e59b4e88c46b13e8635346c99da31d9d98",
-    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/codeowners-lib-core/2026.04.09-1517/codeowners-lib-core-2026.04.09-1517.jar",
+    name = "org_jetbrains_patronus-gitignore-2026_11_17-1859_http",
+    downloaded_file_path = "gitignore-2026.11.17-1859.jar",
+    sha256 = "56e01b05efc04b7bacac4c8e0b97603e8210f6bf2f5cfea54911bffc6e9ef9bc",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/gitignore/2026.11.17-1859/gitignore-2026.11.17-1859.jar",
 )
 
 http_file(
-    name = "org_jetbrains_patronus-gitignore-2026_04_09-1517_http",
-    downloaded_file_path = "gitignore-2026.04.09-1517.jar",
-    sha256 = "a10131c4613d82046a3931b1b1eeb3998a945441d1d7d50e09a781521a126588",
-    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/gitignore/2026.04.09-1517/gitignore-2026.04.09-1517.jar",
+    name = "org_jetbrains_patronus-logging-2026_11_17-1859_http",
+    downloaded_file_path = "logging-2026.11.17-1859.jar",
+    sha256 = "5edbc0611ee28662aa8bbf23d2d8804554b0acca08fc39b40a3f084fecaf0c79",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/logging/2026.11.17-1859/logging-2026.11.17-1859.jar",
 )
 
 http_file(
-    name = "org_jetbrains_patronus-codeowners-lib-ownership-2026_04_09-1517-sources_http",
-    downloaded_file_path = "codeowners-lib-ownership-2026.04.09-1517-sources.jar",
-    sha256 = "30094a532cd7443d65aa6bd8131e9581d5b15ca7b1c29554b615d4c195de9606",
-    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/codeowners-lib-ownership/2026.04.09-1517/codeowners-lib-ownership-2026.04.09-1517-sources.jar",
+    name = "org_jetbrains_patronus-codeowners-lib-core-2026_11_17-1859-sources_http",
+    downloaded_file_path = "codeowners-lib-core-2026.11.17-1859-sources.jar",
+    sha256 = "b689ba9db5b6e9aca6ce776c34daa0c67755f41d9c290aba41a2650e69ae1f65",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/codeowners-lib-core/2026.11.17-1859/codeowners-lib-core-2026.11.17-1859-sources.jar",
 )
 
 http_file(
-    name = "org_jetbrains_patronus-codeowners-lib-core-2026_04_09-1517-sources_http",
-    downloaded_file_path = "codeowners-lib-core-2026.04.09-1517-sources.jar",
-    sha256 = "426581b87fd9612b15c3fc249baf5a14773865b13bc712dd2b4459237cc80137",
-    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/codeowners-lib-core/2026.04.09-1517/codeowners-lib-core-2026.04.09-1517-sources.jar",
+    name = "org_jetbrains_patronus-gitignore-2026_11_17-1859-sources_http",
+    downloaded_file_path = "gitignore-2026.11.17-1859-sources.jar",
+    sha256 = "776dbb72856b89ec7d072c78c58405f16728505d020bdbc55ae5313e06ce2961",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/gitignore/2026.11.17-1859/gitignore-2026.11.17-1859-sources.jar",
 )
 
 http_file(
-    name = "org_jetbrains_patronus-gitignore-2026_04_09-1517-sources_http",
-    downloaded_file_path = "gitignore-2026.04.09-1517-sources.jar",
-    sha256 = "79cdf3715327a46f1650749ea13efbf4d2fd6afa7a7b7ccb7ff92422928a18e5",
-    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/gitignore/2026.04.09-1517/gitignore-2026.04.09-1517-sources.jar",
+    name = "org_jetbrains_patronus-logging-2026_11_17-1859-sources_http",
+    downloaded_file_path = "logging-2026.11.17-1859-sources.jar",
+    sha256 = "43b08d65147435d9aa5bf1c6667a7ed9422662c54650a507fa003eb1aa4af09e",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/logging/2026.11.17-1859/logging-2026.11.17-1859-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_patronus-codeowners-lib-serialization-2026_11_17-1859_http",
+    downloaded_file_path = "codeowners-lib-serialization-2026.11.17-1859.jar",
+    sha256 = "800a4419d4b8dcc0b091dec608eba0f10fc156a169b85d10b6e5295cd26a15de",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/codeowners-lib-serialization/2026.11.17-1859/codeowners-lib-serialization-2026.11.17-1859.jar",
+)
+
+http_file(
+    name = "org_jetbrains_patronus-codeowners-lib-serialization-2026_11_17-1859-sources_http",
+    downloaded_file_path = "codeowners-lib-serialization-2026.11.17-1859-sources.jar",
+    sha256 = "909ac13d997c8399c51be65ff14fa0ed8425c191c0549475c620ee3dbcff7fa0",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/patronus/codeowners-lib-serialization/2026.11.17-1859/codeowners-lib-serialization-2026.11.17-1859-sources.jar",
 )
 
 http_file(
