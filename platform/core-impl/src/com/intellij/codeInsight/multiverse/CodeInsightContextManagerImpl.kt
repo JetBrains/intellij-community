@@ -226,11 +226,18 @@ class CodeInsightContextManagerImpl(
       }
     }
 
-    return defaultContext()
+    // No provider owns a light file. A file copy can carry the context of its original, see setCodeInsightContextOfLightFile.
+    return lightFileContextOf(file) ?: defaultContext()
   }
 
-  /** The provider whose contexts [file] carries. Derived from the contexts, so the cache stores no owner per file. */
-  private fun findOwner(file: VirtualFile): CodeInsightContextProvider? = findOwnerOf(getContextsOf(file))
+  /**
+   * The provider whose contexts [file] carries. Derived from the contexts, so the cache stores no owner per file.
+   * A light file with an explicit context has no owner, see [setCodeInsightContextOfLightFile].
+   */
+  private fun findOwner(file: VirtualFile): CodeInsightContextProvider? {
+    if (lightFileContextOf(file) != null) return null
+    return findOwnerOf(getContextsOf(file))
+  }
 
   private fun findOwnerOf(contexts: ContextOrArray): CodeInsightContextProvider? {
     val context = contexts.getFirstContextOrNull() ?: return null
@@ -356,7 +363,7 @@ class CodeInsightContextManagerImpl(
   }
 
   override fun getCodeInsightContextRaw(fileViewProvider: FileViewProvider): CodeInsightContext =
-    fileViewProvider.getUserData(codeInsightContextKey) ?: defaultContext()
+    fileViewProvider.getUserData(codeInsightContextKey) ?: lightFileContextOf(fileViewProvider.virtualFile) ?: defaultContext()
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun setCodeInsightContext(fileViewProvider: FileViewProvider, context: CodeInsightContext) {
@@ -364,6 +371,22 @@ class CodeInsightContextManagerImpl(
 
     val effectiveContext = context.takeUnless { it == defaultContext() }
     fileViewProvider.putUserData(codeInsightContextKey, effectiveContext)
+  }
+
+  /**
+   * Sets [context] on [file], a light file that no provider owns, such as the file of a completion copy.
+   * Then [getCodeInsightContexts] of [file] reports [context], and so does [getCodeInsightContext] of each view provider
+   * of [file] that has no context of its own.
+   * Without it, the file reports only the default context, and a smart pointer into the copy holds a dead context.
+   */
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  fun setCodeInsightContextOfLightFile(file: LightVirtualFile, context: CodeInsightContext) {
+    log.trace { "set context of LightVirtualFile ${file.path} to $context" }
+
+    log.assertTrue(context != anyContext()) { "a light file must not get anyContext: ${file.path}" }
+    file.putUserData(lightFileContextKey, context.takeUnless { it == defaultContext() })
+    allContexts.remove(listOf(file))
+    preferredContext.remove(listOf(file))
   }
 
   @TestOnly
@@ -413,6 +436,12 @@ class CodeInsightContextManagerImpl(
 private val EP_NAME = ExtensionPointName.create<CodeInsightContextProvider>("com.intellij.multiverse.codeInsightContextProvider")
 
 private val codeInsightContextKey = Key.create<CodeInsightContext>("codeInsightContextKey")
+
+/** The context of a light file that no provider owns. [CodeInsightContextManagerImpl.setCodeInsightContextOfLightFile] sets it. */
+private val lightFileContextKey = Key.create<CodeInsightContext>("lightFileCodeInsightContextKey")
+
+/** The context that [CodeInsightContextManagerImpl.setCodeInsightContextOfLightFile] set on [file], or `null`. */
+private fun lightFileContextOf(file: VirtualFile): CodeInsightContext? = (file as? LightVirtualFile)?.getUserData(lightFileContextKey)
 
 private val log = logger<CodeInsightContextManagerImpl>()
 

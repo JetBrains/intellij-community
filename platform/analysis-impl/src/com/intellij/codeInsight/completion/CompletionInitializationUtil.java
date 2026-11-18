@@ -3,8 +3,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
-import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.codeInsight.multiverse.LightFileCodeInsightContexts;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -285,10 +285,8 @@ public final class CompletionInitializationUtil {
     CompletionAssertions.assertCorrectOriginalFile("New", file, copy);
 
     if (CodeInsightContexts.isSharedSourceSupportEnabled(file.getProject())) {
-      CodeInsightContextManagerImpl codeInsightContextManager =
-        (CodeInsightContextManagerImpl)CodeInsightContextManager.getInstance(file.getProject());
-      CodeInsightContext context = codeInsightContextManager.getCodeInsightContext(file.getViewProvider());
-      codeInsightContextManager.setCodeInsightContext(copy.getViewProvider(), context);
+      CodeInsightContext context = CodeInsightContextManager.getInstance(file.getProject()).getCodeInsightContext(file.getViewProvider());
+      LightFileCodeInsightContexts.setCodeInsightContextOfLightFile(copy, context);
     }
 
     if (mayCacheCopy) {

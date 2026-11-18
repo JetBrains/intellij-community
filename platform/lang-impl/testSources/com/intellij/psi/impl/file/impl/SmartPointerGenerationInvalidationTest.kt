@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -28,6 +29,7 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
@@ -465,6 +467,219 @@ internal class SmartPointerGenerationInvalidationTest {
     assertSame(copy, readAction { second.element }, "The new pointer must resolve to the copy")
   }
 
+  /**
+   * Completion sets the context of the original on the copy and on its light file, as `CompletionInitializationUtil` does.
+   * So the context of the copy stays actual, and a pointer made after the first invalidation resolves after the next one.
+   */
+  @Test
+  fun `a new pointer into a completion file copy resolves after repeated invalidations`() = timeoutRunBlocking {
+    val copy = createCompletionCopy()
+    readAction {
+      assertNotEquals(defaultContext(), copy.codeInsightContext, "The copy must keep the context of the original")
+      assertEquals(listOf(copy.codeInsightContext), contextManager.getCodeInsightContexts(copy.viewProvider.virtualFile),
+                   "The light file of the copy must report the context of the copy")
+    }
+
+    val first = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(0, 1)) }
+    triggerBulkInvalidation()
+    assertSame(copy, readAction { first.element }, "The first pointer must resolve after the initial invalidation")
+
+    val second = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(1, 2)) }
+    triggerBulkInvalidation()
+    assertSame(copy, readAction { second.element }, "The new pointer must resolve after the next invalidation")
+  }
+
+  /**
+   * A provider owns the light file of the copy, so the file does not report the context of the copy.
+   * The first invalidation moves the context of the copy to the single actual context.
+   * The context then becomes actual again. When it dies for the second time, among two actual contexts, its new pointer detaches.
+   * The tracker keeps no earlier move, so the pointer does not move to the old target.
+   */
+  @Test
+  fun `a context that becomes actual again does not move to its old target`() = timeoutRunBlocking {
+    val contextManager = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
+    val sourceContext = TestContext("source")
+    val actualContext = TestContext("actual")
+    val otherContext = TestContext("other")
+    val copy = readAction {
+      val original = PsiManager.getInstance(project).findFile(copiedTextFile)!!
+      val copy = original.copy() as PsiFile
+      contextManager.setCodeInsightContext(copy.viewProvider, sourceContext)
+      assertNotNull(copy.viewProvider.document, "A tracked pointer needs a document")
+      copy
+    }
+    val copyFile = copy.viewProvider.virtualFile
+    val provider = TestFileContextProvider(copyFile, listOf(actualContext))
+    edtWriteAction { contextManager.registerTestOnlyCodeInsightContextProvider(provider, disposable) }
+    assertEquals(listOf(actualContext), readAction { contextManager.getCodeInsightContexts(copyFile) })
+
+    val first = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(0, 1)) }
+    triggerBulkInvalidation()
+    readAction { first.element }
+
+    provider.contexts = listOf(sourceContext, actualContext)
+    contextManager.requestInvalidationNow(setOf(copyFile))
+    triggerBulkInvalidation()
+    readAction { first.element }
+
+    val second = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(1, 2)) }
+    provider.contexts = listOf(actualContext, otherContext)
+    contextManager.requestInvalidationNow(setOf(copyFile))
+    triggerBulkInvalidation()
+    assertNull(readAction { second.element }, "The pointer must not move to the target of the forgotten record")
+  }
+
+  /**
+   * A provider owns the light file of the copy, so the file does not report the context of the copy.
+   * The first invalidation moves the context of the copy to the single actual context. That target then dies.
+   * When the target is actual again, among two actual contexts, a new pointer with the old context detaches.
+   * The tracker keeps no earlier move, so the pointer does not move to the old target.
+   */
+  @Test
+  fun `a context does not move to a target that died after the move`() = timeoutRunBlocking {
+    val contextManager = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
+    val sourceContext = TestContext("source")
+    val actualContext = TestContext("actual")
+    val replacementContext = TestContext("replacement")
+    val otherContext = TestContext("other")
+    val copy = readAction {
+      val original = PsiManager.getInstance(project).findFile(copiedTextFile)!!
+      val copy = original.copy() as PsiFile
+      contextManager.setCodeInsightContext(copy.viewProvider, sourceContext)
+      assertNotNull(copy.viewProvider.document, "A tracked pointer needs a document")
+      copy
+    }
+    val copyFile = copy.viewProvider.virtualFile
+    val provider = TestFileContextProvider(copyFile, listOf(actualContext))
+    edtWriteAction { contextManager.registerTestOnlyCodeInsightContextProvider(provider, disposable) }
+    assertEquals(listOf(actualContext), readAction { contextManager.getCodeInsightContexts(copyFile) })
+
+    val first = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(0, 1)) }
+    triggerBulkInvalidation()
+    readAction { first.element }
+
+    provider.contexts = listOf(replacementContext)
+    contextManager.requestInvalidationNow(setOf(copyFile))
+    triggerBulkInvalidation()
+    readAction { first.element }
+
+    provider.contexts = listOf(actualContext, otherContext)
+    contextManager.requestInvalidationNow(setOf(copyFile))
+    val second = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(1, 2)) }
+    triggerBulkInvalidation()
+    assertNull(readAction { second.element }, "The pointer must not move to a target that died after the move")
+  }
+
+  /**
+   * A provider owns the light file of the copy, so the file does not report the context of the copy.
+   * The first invalidation moves the context of the copy. Then every live pointer detaches, so the tracker knows no context.
+   * The old context becomes actual again. When it dies again, among two actual contexts, its new pointer detaches.
+   * The tracker keeps no earlier move, so the pointer does not move to the old target.
+   */
+  @Test
+  fun `a tracker with only detached pointers forgets a context that becomes actual again`() = timeoutRunBlocking {
+    val contextManager = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
+    val sourceContext = TestContext("source")
+    val actualContext = TestContext("actual")
+    val detachedContext = TestContext("detached")
+    val otherContext = TestContext("other")
+    val copy = readAction {
+      val original = PsiManager.getInstance(project).findFile(copiedTextFile)!!
+      val copy = original.copy() as PsiFile
+      contextManager.setCodeInsightContext(copy.viewProvider, sourceContext)
+      assertNotNull(copy.viewProvider.document, "A tracked pointer needs a document")
+      copy
+    }
+    val copyFile = copy.viewProvider.virtualFile
+    val provider = TestFileContextProvider(copyFile, listOf(actualContext))
+    edtWriteAction { contextManager.registerTestOnlyCodeInsightContextProvider(provider, disposable) }
+    assertEquals(listOf(actualContext), readAction { contextManager.getCodeInsightContexts(copyFile) })
+
+    val first = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(0, 1)) }
+    triggerBulkInvalidation()
+    readAction { first.element }
+    readAction { SmartPointerManager.getInstance(project).removePointer(first) }
+
+    readAction { contextManager.setCodeInsightContext(copy.viewProvider, detachedContext) }
+    val detached = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(0, 1)) }
+    provider.contexts = listOf(actualContext, otherContext)
+    contextManager.requestInvalidationNow(setOf(copyFile))
+    triggerBulkInvalidation()
+    assertNull(readAction { detached.element }, "The pointer with a dead context and no record must detach")
+
+    provider.contexts = listOf(sourceContext, actualContext, otherContext)
+    contextManager.requestInvalidationNow(setOf(copyFile))
+    triggerBulkInvalidation()
+    readAction { detached.element }
+
+    readAction { contextManager.setCodeInsightContext(copy.viewProvider, sourceContext) }
+    provider.contexts = listOf(actualContext, otherContext)
+    contextManager.requestInvalidationNow(setOf(copyFile))
+    val second = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(1, 2)) }
+    triggerBulkInvalidation()
+    assertNull(readAction { second.element }, "The pointer must not move to the target of the forgotten record")
+  }
+
+  /**
+   * Completion sets the context of the original on the light file of the copy. Then the original gets another context.
+   * The light file keeps the context of the copy, so the pointers into the copy keep their context and resolve.
+   */
+  @Test
+  fun `pointers into a completion file copy resolve after the context of the original changes`() = timeoutRunBlocking {
+    val sourceContext = TestContext("source")
+    val renamedContext = TestContext("renamed")
+    val provider = TestFileContextProvider(copiedTextFile, listOf(sourceContext))
+    edtWriteAction { contextManager.registerTestOnlyCodeInsightContextProvider(provider, disposable) }
+    val copy = createCompletionCopy()
+    val copyFile = copy.viewProvider.virtualFile
+    readAction {
+      assertEquals(sourceContext, copy.codeInsightContext, "The copy must get the context of the original")
+      assertEquals(listOf(sourceContext), contextManager.getCodeInsightContexts(copyFile))
+    }
+
+    val first = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(0, 1)) }
+    triggerBulkInvalidation()
+    assertSame(copy, readAction { first.element }, "The first pointer must resolve after the first invalidation")
+
+    provider.contexts = listOf(renamedContext)
+    contextManager.requestInvalidationNow(setOf(copiedTextFile))
+    val second = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(1, 2)) }
+    triggerBulkInvalidation()
+    readAction {
+      assertEquals(listOf(sourceContext), contextManager.getCodeInsightContexts(copyFile), "The light file must keep the context of the copy")
+      assertSame(copy, first.element, "The first pointer must resolve after the context of the original changes")
+      assertSame(copy, second.element, "The second pointer must resolve after the context of the original changes")
+    }
+  }
+
+  /** A provider owns the context type, but not a light file with an explicit context of that type. */
+  @Test
+  fun `a light file with an explicit context has no owner`() = timeoutRunBlocking {
+    val context = TestContext("light")
+    val provider = TestFileContextProvider(copiedTextFile, listOf(TestContext("other")))
+    edtWriteAction { contextManager.registerTestOnlyCodeInsightContextProvider(provider, disposable) }
+    val file = LightVirtualFile("light.txt", PlainTextFileType.INSTANCE, "text")
+    readAction {
+      assertTrue(provider.isOwnerOf(context), "Precondition: the provider owns the type of the context")
+      contextManager.setCodeInsightContextOfLightFile(file, context)
+      assertEquals(listOf(context), contextManager.getCodeInsightContexts(file))
+      assertNull(contextManager.withOwnerOf(file) { it }, "A light file with an explicit context must have no owner")
+    }
+  }
+
+  /** A cached answer for a light file must not hide the context that a later call sets on the file. */
+  @Test
+  fun `the context of a light file replaces a cached answer`() = timeoutRunBlocking {
+    val context = TestContext("light")
+    val file = LightVirtualFile("light.txt", PlainTextFileType.INSTANCE, "text")
+    readAction {
+      assertEquals(listOf(defaultContext()), contextManager.getCodeInsightContexts(file), "The answer is cached")
+      contextManager.setCodeInsightContextOfLightFile(file, context)
+      assertEquals(listOf(context), contextManager.getCodeInsightContexts(file))
+      assertEquals(context, contextManager.getPreferredContext(file))
+    }
+  }
+
   ///**
   // * `SmartPointerManagerEx.getInstanceEx(project).getPossiblyInvalidatedGeneration()` and
   // * `((PsiManagerImpl)).fileManagerEx.getPossiblyInvalidatedGeneration()` are independent
@@ -531,6 +746,19 @@ internal class SmartPointerGenerationInvalidationTest {
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project)
     assertEquals(contexts, readAction { CodeInsightContextManager.getInstance(project).getCodeInsightContexts(file) })
+  }
+
+  private val contextManager: CodeInsightContextManagerImpl
+    get() = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
+
+  /** Makes a copy of [copiedTextFile] with the context of the original, as `CompletionInitializationUtil` does. */
+  private suspend fun createCompletionCopy(): PsiFile = readAction {
+    val original = PsiManager.getInstance(project).findFile(copiedTextFile)!!
+    val copy = original.copy() as PsiFile
+    contextManager.setCodeInsightContextOfLightFile(copy.viewProvider.virtualFile as LightVirtualFile,
+                                                    contextManager.getCodeInsightContext(original.viewProvider))
+    assertNotNull(copy.viewProvider.document, "A tracked pointer needs a document")
+    copy
   }
 
   private suspend fun createPsiFile(name: String): Pair<VirtualFile, PsiFile> {
