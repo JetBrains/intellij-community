@@ -32,6 +32,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.sdk.ShellType
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -40,21 +41,21 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.CoreMatchers.endsWith
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.MatcherAssert.assertThat
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
-import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptionsImpl
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
 import org.jetbrains.plugins.terminal.util.ShellIntegration
-import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.io.TempDir
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import java.io.IOException
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -62,6 +63,7 @@ import kotlin.io.path.isExecutable
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
+import org.jetbrains.plugins.terminal.util.ShellType as TermShellType
 
 
 /**
@@ -100,7 +102,10 @@ internal class PyVirtualEnvTerminalCustomizerTest {
       PathEnvironmentVariableUtil.findFirst("powershell.exe")
       ?: Path((System.getenv("SystemRoot") ?: "c:\\windows"), "system32", "WindowsPowerShell", "v1.0", "powershell.exe")
     }
-    ShellType.FISH, ShellType.BASH, ShellType.ZSH -> {
+    ShellType.CMD -> {
+      System.getenv("ComSpec")?.let { Path(it) } ?: Path((System.getenv("SystemRoot") ?: "c:\\windows"), "system32", "cmd.exe")
+    }
+    ShellType.FISH, ShellType.BASH, ShellType.ZSH, ShellType.CSH, ShellType.SH -> {
       localEel.exec.where(shellType.name.lowercase())?.asNioPath()
       ?: Path("/usr/bin/${shellType.name.lowercase()}")
     }
@@ -115,26 +120,13 @@ internal class PyVirtualEnvTerminalCustomizerTest {
     @CondaEnv condaEnv: PyCondaEnv,
     @TempDir venvPath: Path,
   ): Unit = timeoutRunBlocking(10.minutes) {
-    when (shellType) {
-      ShellType.POWERSHELL -> Assumptions.assumeTrue(OS.CURRENT == OS.Windows, "PowerShell is Windows only")
-      ShellType.FISH -> Assumptions.abort("Fish terminal activation isn't supported")
-      ShellType.ZSH, ShellType.BASH -> Assumptions.assumeFalse(OS.CURRENT == OS.Windows, "Unix shells do not work on Windows")
-    }
-
-    val shellPath = getShellPath(shellType)
-    if (!withContext(Dispatchers.IO) { shellPath.exists() && shellPath.isExecutable() }) {
-      when (shellType) {
-        ShellType.ZSH -> Assumptions.assumeFalse(OS.CURRENT == OS.macOS, "Zsh is mandatory on mac")
-        ShellType.BASH -> error("$shellPath not found")
-        ShellType.FISH -> error("Fish must be ignored")
-        ShellType.POWERSHELL -> error("Powershell is mandatory on Windows")
-      }
-    }
+    ensureShellSupported(shellType)
 
     val (pythonBinary, venvDirName) =
       if (useConda) {
         val envDir = venvPath.resolve("some_path_with_underscores")
-        val interpreter = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(projectFixture.get(), null, emptyList(), envDir).getOrThrow()
+        val interpreter =
+          createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(projectFixture.get(), null, emptyList(), envDir).getOrThrow()
         val sdk = interpreter.getSdkAPI()
         sdkToDelete = sdk
         pyProjectFixture.get().residesOnModule.pythonSdk = sdk
@@ -146,9 +138,10 @@ internal class PyVirtualEnvTerminalCustomizerTest {
         Pair(venv, venvDir.name)
       }
 
-    // binary might be like ~8.3, we need to expand it as venv might report both
+    // The shell can report the path as it is or as the real path: on Windows an 8.3 short name expands,
+    // on Unix a symlink resolves (conda bin/python -> bin/python3.11). The assertion accepts both.
     val pythonBinaryReal = try {
-      pythonBinary.toRealPath()
+      pythonBinary.toRealPath(LinkOption.NOFOLLOW_LINKS)
     }
     catch (_: IOException) {
       pythonBinary
@@ -156,7 +149,7 @@ internal class PyVirtualEnvTerminalCustomizerTest {
     // The terminal's working directory is always inside the project (a content root of
     // some module), regardless of where the SDK's env lives on disk. The customizer
     // looks up the SDK via the module that owns this directory.
-    val shellOptions = getShellStartupOptions(tempDirFixture.get(), shellType)
+    val shellOptions = getShellStartupOptions(shellType)
     val command = shellOptions.shellCommand!!
     val exe = command[0]
     val args = if (command.size == 1) emptyList() else command.subList(1, command.size)
@@ -178,6 +171,7 @@ internal class PyVirtualEnvTerminalCustomizerTest {
 
       // tool -- where.exe Windows, "type(1)" **nix
       // "$TOOL python" returns $PREFIX [path-to-python] $POSTFIX
+      // A shell with no shell integration (sh) prints its prompt ("# " or "$ ") on the same line as the output.
       val (locateTool, prefix) = if (OS.CURRENT == OS.Windows) {
         Pair(PathEnvironmentVariableUtil.findFirst("where.exe")?.toString() ?: "where.exe", "")
       }
@@ -192,7 +186,7 @@ internal class PyVirtualEnvTerminalCustomizerTest {
       fileLogger().info("Output was $output")
 
       assertThat("We ran `$locateTool`, so we there should be python path", output,
-                 anyOf(hasItem(prefix + pythonBinary.pathString), hasItem(prefix + pythonBinaryReal.pathString)))
+                 anyOf(hasItem(endsWith(prefix + pythonBinary.pathString)), hasItem(endsWith(prefix + pythonBinaryReal.pathString))))
       if (OS.CURRENT == OS.Windows) {
         assertThat("There must be a line with ($venvDirName)", output, hasItem(containsString("($venvDirName)")))
       }
@@ -209,6 +203,43 @@ internal class PyVirtualEnvTerminalCustomizerTest {
     }
   }
 
+  private suspend fun getPathAndExecOptions(shellType: ShellType): Triple<Path, MutableShellExecOptionsImpl, MutableMap<String, String>> {
+    ensureShellSupported(shellType)
+
+    val shellPath = getShellPath(shellType)
+    if (!withContext(Dispatchers.IO) { shellPath.exists() && shellPath.isExecutable() }) {
+      when (shellType) {
+        ShellType.ZSH -> Assumptions.assumeFalse(OS.CURRENT == OS.macOS, "Zsh is mandatory on mac")
+        ShellType.BASH, ShellType.SH -> error("$shellPath not found")
+        ShellType.FISH, ShellType.CSH -> error("ensureShellSupported must skip $shellType")
+        ShellType.POWERSHELL, ShellType.CMD -> error("$shellType is mandatory on Windows")
+      }
+    }
+
+    // The terminal working directory is the module content root that owns the venv (see testShellActivation).
+    val envs = mutableMapOf<String, String>()
+    val execOptions = MutableShellExecOptionsImpl(
+      _execCommand = ShellExecCommandImpl(listOf(shellPath.pathString)),
+      workingDirectory = tempDirFixture.get().asEelPath(),
+      mutableEnvs = envs,
+      // Shell integration only enabled for shells explicitly mentioned in termShellType
+      shellIntegrationAvailable = shellType.shellIntegrationAvailable,
+      requester = PyVirtualEnvTerminalCustomizer::class.java,
+    )
+
+    PyVirtualEnvTerminalCustomizer().customizeExecOptions(projectFixture.get(), execOptions)
+
+    return Triple(shellPath, execOptions, envs)
+  }
+
+  private fun ensureShellSupported(shellType: ShellType) {
+    when (shellType) {
+      ShellType.POWERSHELL, ShellType.CMD -> Assumptions.assumeTrue(OS.CURRENT == OS.Windows, "$shellType is Windows only")
+      ShellType.FISH, ShellType.CSH -> Assumptions.abort("$shellType terminal activation isn't supported")
+      ShellType.ZSH, ShellType.BASH, ShellType.SH -> Assumptions.assumeFalse(OS.CURRENT == OS.Windows, "Unix shells do not work on Windows")
+    }
+  }
+
   /**
    * Regression test for PY-90240.
    *
@@ -217,33 +248,13 @@ internal class PyVirtualEnvTerminalCustomizerTest {
    * `_INTELLIJ_FORCE_SET_<name>` copy. An *empty* `_INTELLIJ_FORCE_SET_JEDITERM_SOURCE_ARGS` breaks
    * the PowerShell integration on Windows (`Get-ChildItem` lists the empty-valued var, but
    * `Remove-Item` reports it as non-existent), so we must never force-set an empty value.
-   *
-   * Unlike [testShellActivation], this exercises [PyVirtualEnvTerminalCustomizer.customizeExecOptions]
-   * (the `_INTELLIJ_FORCE_SET_*` path), not the [PyVirtualEnvTerminalCustomizer.customizeEnvironment]
-   * plain-map overload, which is why the original change slipped through.
    */
   @CartesianTest
   fun forceSetVariablesAreNeverEmpty(
     @CartesianTest.Enum shellType: ShellType,
   ): Unit = timeoutRunBlocking {
-    when (shellType) {
-      ShellType.POWERSHELL -> Assumptions.assumeTrue(OS.CURRENT == OS.Windows, "PowerShell is Windows only")
-      ShellType.FISH -> Assumptions.abort("Fish terminal activation isn't supported")
-      ShellType.ZSH, ShellType.BASH -> Assumptions.assumeFalse(OS.CURRENT == OS.Windows, "Unix shells do not work on Windows")
-    }
-    val shellPath = getShellPath(shellType)
-    Assumptions.assumeTrue(withContext(Dispatchers.IO) { shellPath.exists() && shellPath.isExecutable() }, "$shellPath not found")
-
-    // The terminal working directory is the module content root that owns the venv (see testShellActivation).
-    val execOptions = MutableShellExecOptionsImpl(
-      _execCommand = ShellExecCommandImpl(listOf(shellPath.pathString)),
-      workingDirectory = tempDirFixture.get().asEelPath(),
-      mutableEnvs = mutableMapOf(),
-      shellIntegrationAvailable = true,
-      requester = PyVirtualEnvTerminalCustomizer::class.java,
-    )
-
-    PyVirtualEnvTerminalCustomizer().customizeExecOptions(projectFixture.get(), execOptions)
+    Assumptions.assumeTrue(shellType.shellIntegrationAvailable, "Terminal doesn't support integration with $shellType")
+    val (_, execOptions) = getPathAndExecOptions(shellType)
 
     // Sanity: the venv was actually activated, otherwise the check below would be vacuous.
     assertThat("venv must be activated via JEDITERM_SOURCE", execOptions.envs.keys,
@@ -255,24 +266,41 @@ internal class PyVirtualEnvTerminalCustomizerTest {
                           "No _INTELLIJ_FORCE_SET_* variable may be empty (PY-90240, breaks PowerShell on Windows), but found: $emptyForceSet")
   }
 
-  private suspend fun getShellStartupOptions(workDir: Path, shellType: ShellType): ShellStartupOptions {
-    val sut = PyVirtualEnvTerminalCustomizer()
-    val env = mutableMapOf<String, String>()
-    val shellPath = getShellPath(shellType)
-    val command = arrayOf(shellPath.pathString)
-    sut.customizeEnvironment(
-      projectFixture.get(),
-      workDir.pathString,
-      ShellName.of(shellPath.fileName.name),
-      env,
-      localEel.descriptor)
+  private suspend fun getShellStartupOptions(shellType: ShellType): ShellStartupOptions {
+    val (shellPath, execOptions, env) = getPathAndExecOptions(shellType)
 
     val options = ShellStartupOptions.Builder()
-      .setFinalWorkingDirectoryEelPath(workDir.asEelPath())
+      .setFinalWorkingDirectoryEelPath(execOptions.workingDirectory)
       .envVariables(env)
-      .shellCommand(command.toList())
-      .shellIntegration(ShellIntegration(shellType, false))
+      .shellCommand(listOf(shellPath.pathString))
+      .apply {
+        val termShellType: TermShellType? = shellType.termShellType
+        if (termShellType != null) {
+          // `null` means the platform Terminal doesn't support integration,
+          // See PY-94080, IJPL-262202
+          shellIntegration(ShellIntegration(termShellType, false))
+        }
+      }
       .build()
     return LocalShellIntegrationInjector.injectShellIntegration(options, false, false)
   }
 }
+
+/**
+ * See [ShellType.termShellType]
+ */
+private val ShellType.shellIntegrationAvailable: Boolean get() = termShellType != null
+
+/**
+ * Terminal plugin uses [TermShellType] which is smaller than [ShellType].
+ * Shells that aren't in [TermShellType] do not support shell integration
+ */
+private val ShellType.termShellType: TermShellType?
+  get() =
+    when (this) {
+      ShellType.BASH -> TermShellType.BASH
+      ShellType.ZSH -> TermShellType.ZSH
+      ShellType.POWERSHELL -> TermShellType.POWERSHELL
+      ShellType.FISH -> TermShellType.FISH
+      ShellType.CSH, ShellType.SH, ShellType.CMD -> null
+    }

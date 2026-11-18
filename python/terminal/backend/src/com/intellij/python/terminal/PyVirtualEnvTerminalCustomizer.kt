@@ -26,14 +26,13 @@ import com.intellij.python.sdk.backend.pythonInterpreter
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.orLogException
+import com.jetbrains.python.sdk.ShellType
 import com.jetbrains.python.sdk.activationEnvironment
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.ShellType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
 import java.nio.file.Path
@@ -95,7 +94,8 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
   /**
    * What the shell must run to activate [environment], or null when there is nothing to run.
    *
-   * When [shell] is null, the shell is not known and cannot source anything. So the default shell reads the
+   * When [shell] is null, the shell is not known or the terminal has no shell integration for it, so the shell
+   * cannot source anything. So the default shell reads the
    * environment, and the terminal gets it as variables. Every other shell asks the environment itself, so no kind of environment is named here.
    */
   @RequiresBackgroundThread
@@ -115,7 +115,7 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
     customizeEnvironment(
       project = project,
       workingDirectory = shellExecOptions.workingDirectory.asNioPath().toString(),
-      shellName = shellExecOptions.execCommand.shellName,
+      shell = shellExecOptions.shell,
       envs = activationEnvs,
       terminalEelDescriptor = shellExecOptions.eelDescriptor,
     )
@@ -125,7 +125,7 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
   }
 
   /**
-   * Computes the virtual env activation for a shell running [shellName] in [workingDirectory], writing the
+   * Computes the virtual env activation for [shell] (see [activate]) in [workingDirectory], writing the
    * activation environment variables into [envs]. The SDK is taken from the module that owns [workingDirectory].
    *
    * Activation is skipped if the SDK lives in an environment other than [terminalEelDescriptor]
@@ -136,7 +136,7 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
   internal fun customizeEnvironment(
     project: Project,
     workingDirectory: String?,
-    shellName: ShellName,
+    shell: ShellType?,
     envs: MutableMap<String, String>,
     terminalEelDescriptor: EelDescriptor,
   ) {
@@ -182,7 +182,7 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       logger.debug("Nothing to activate for ${sdk.homePath}")
       return
     }
-    val jediterm = activate(ShellType.resolve(shellName.value), sdk, pythonEnvironment, envs)
+    val jediterm = activate(shell, sdk, pythonEnvironment, envs)
     jediterm?.buildEnvironmentVariables()?.let { envs.putAll(it) }
 
     logger.debug("Activating ${sdk.homePath} with ${envs.entries.joinToString("\n")}")
@@ -220,3 +220,16 @@ fun pyTerminalDefaultWorkingDirectory(project: Project, file: VirtualFile?): Pat
   // Follow the module only if it's a Python module; otherwise keep the platform default.
   return if (module.type?.name == PYTHON_MODULE_ID) contentRoot.toNioPathOrNull() else null
 }
+
+private val MutableShellExecOptions.shell: ShellType?
+  get() =
+    // `null` means the platform Terminal doesn't support integration,
+    // so it makes no sense to return a shell here
+    // Instead, we will fall back to activateUnknownShell
+    // See PY-94080, IJPL-262202
+    if (shellIntegrationConfigurer != null) {
+      ShellType.resolve(execCommand.shellName.value)
+    }
+    else {
+      null
+    }
