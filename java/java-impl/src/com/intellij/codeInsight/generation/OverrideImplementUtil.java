@@ -242,11 +242,11 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     return result -> decorateMethod(aClass, method, toCopyJavaDoc, insertOverrideIfPossible, result);
   }
 
-  public static @NotNull PsiMethod decorateMethod(@NotNull PsiClass aClass,
-                                                  @NotNull PsiMethod method,
-                                                  boolean toCopyJavaDoc,
-                                                  boolean insertOverrideIfPossible,
-                                                  @NotNull PsiMethod result) {
+  public static void decorateMethod(@NotNull PsiClass aClass,
+                                    @NotNull PsiMethod method,
+                                    boolean toCopyJavaDoc,
+                                    boolean insertOverrideIfPossible,
+                                    @NotNull PsiMethod result) {
     PsiUtil.setModifierProperty(result, PsiModifier.ABSTRACT, aClass.isInterface() && method.hasModifierProperty(PsiModifier.ABSTRACT));
     PsiUtil.setModifierProperty(result, PsiModifier.NATIVE, false);
 
@@ -298,12 +298,11 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     javaSettings.KEEP_LINE_BREAKS = false;
     try {
       result = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
-      result = (PsiMethod)codeStyleManager.reformat(result);
+      codeStyleManager.reformat(result);
     }
     finally {
       javaSettings.KEEP_LINE_BREAKS = keepBreaks;
     }
-    return result;
   }
 
   public static void deleteDocComment(@NotNull PsiMethod result) {
@@ -358,14 +357,11 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   public static @NotNull PsiGenerationInfo<PsiMethod> createGenerationInfo(@NotNull PsiMethod s) {
-    return createGenerationInfo(s, true);
-  }
-
-  private static @NotNull PsiGenerationInfo<PsiMethod> createGenerationInfo(@NotNull PsiMethod s, boolean mergeIfExists) {
     for (MethodImplementor implementor : getImplementors()) {
-      final GenerationInfo info = implementor.createGenerationInfo(s, mergeIfExists);
+      GenerationInfo info = implementor.createGenerationInfo(s, true);
       if (info instanceof PsiGenerationInfo) {
-        @SuppressWarnings("unchecked") final PsiGenerationInfo<PsiMethod> psiGenerationInfo = (PsiGenerationInfo<PsiMethod>)info;
+        @SuppressWarnings("unchecked")
+        PsiGenerationInfo<PsiMethod> psiGenerationInfo = (PsiGenerationInfo<PsiMethod>)info;
         return psiGenerationInfo;
       }
     }
@@ -817,7 +813,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
   }
 
-  public static @Nullable PsiClass getContextClass(Project project, @NotNull Editor editor, @NotNull PsiFile file, boolean allowInterface) {
+  public static @Nullable PsiClass getContextClass(Project ignoredProject, @NotNull Editor editor, @NotNull PsiFile file, boolean allowInterface) {
     return getContextClass(file, editor.getCaretModel().getOffset(), allowInterface);
   }
 
