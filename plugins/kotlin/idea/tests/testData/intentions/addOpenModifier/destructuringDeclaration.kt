@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// K2_ERROR: SYNTAX
+// K2_ERROR: NON_LOCAL_DESTRUCTURING_DECLARATION
 
 data class Bar(val foo: Int, val bar: Int)
 
