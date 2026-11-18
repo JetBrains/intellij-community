@@ -511,8 +511,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
           }
         }
       };
-      for(PsiDirectory directory: getDirectories()) {
-        processFile.accept(directory.findFile(PACKAGE_INFO_FILE));
+      for (PsiFile file : getPackageInfoFiles(allScope())) {
+        processFile.accept(file);
       }
 
       for (PsiClass aClass : getFacade().findClasses(getQualifiedName() + ".package-info", allScope())) {

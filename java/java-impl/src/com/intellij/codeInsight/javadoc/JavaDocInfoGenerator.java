@@ -1208,17 +1208,17 @@ public class JavaDocInfoGenerator {
   }
 
   private static @Nullable PsiElement findPackageDocumentation(PsiPackage psiPackage) {
-    for (var directory : psiPackage.getDirectories(GlobalSearchScope.everythingScope(psiPackage.getProject()))) {
-      PsiFile packageInfoFile = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
-      if (packageInfoFile != null) {
-        ASTNode node = packageInfoFile.getNode();
-        if (node != null) {
-          ASTNode docCommentNode = findRelevantCommentNode(node);
-          if (docCommentNode != null) {
-            return docCommentNode.getPsi();
-          }
+    GlobalSearchScope scope = GlobalSearchScope.everythingScope(psiPackage.getProject());
+    for (PsiFile packageInfoFile : psiPackage.getPackageInfoFiles(scope)) {
+      ASTNode node = packageInfoFile.getNode();
+      if (node != null) {
+        ASTNode docCommentNode = findRelevantCommentNode(node);
+        if (docCommentNode != null) {
+          return docCommentNode.getPsi();
         }
       }
+    }
+    for (var directory : psiPackage.getDirectories(scope)) {
       PsiFile packageHtmlFile = directory.findFile("package.html");
       if (packageHtmlFile != null) {
         return packageHtmlFile;
