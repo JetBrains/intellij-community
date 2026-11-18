@@ -20,6 +20,7 @@ import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -31,6 +32,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -114,6 +116,12 @@ import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberCho
 public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private static final Logger LOG = Logger.getInstance(OverrideImplementUtil.class);
   public static final String IMPLEMENT_COMMAND_MARKER = "implement";
+  /**
+   * The mode of {@link #overrideOrImplementMethodsInRightPlace(ModNavigator, PsiClass, Collection, OverrideOrImplementOptions, boolean)}:
+   * true to implement, false to override.
+   * When the value is not bound, the mode comes from the name of the current command.
+   */
+  private static final ScopedValue<Boolean> IMPLEMENT_MODE = ScopedValue.newInstance();
 
   private OverrideImplementUtil() { }
 
@@ -476,6 +484,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (!PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, targetClass)){
       return false;
     }
+    if (IMPLEMENT_MODE.isBound()) return IMPLEMENT_MODE.get();
     String commandName = CommandProcessor.getInstance().getCurrentCommandName();
     return commandName != null && StringUtil.containsIgnoreCase(commandName, IMPLEMENT_COMMAND_MARKER);
   }
@@ -593,10 +602,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     return chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE ? null : chooser;
   }
 
-  private static @Nullable JavaOverrideImplementMemberChooserContainer prepareJavaOverrideImplementChooser(@NotNull PsiElement aClass,
-                                                                                                           boolean toImplement,
-                                                                                                           @NotNull Collection<CandidateInfo> candidates,
-                                                                                                           @NotNull Collection<CandidateInfo> secondary) {
+  static @Nullable JavaOverrideImplementMemberChooserContainer prepareJavaOverrideImplementChooser(@NotNull PsiElement aClass,
+                                                                                                   boolean toImplement,
+                                                                                                   @NotNull Collection<CandidateInfo> candidates,
+                                                                                                   @NotNull Collection<CandidateInfo> secondary) {
     Computable<JavaOverrideImplementMemberChooserContainer> computable = () -> {
       if (toImplement) {
         for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
@@ -674,53 +683,82 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                             @NotNull PsiClass aClass,
                                                             @NotNull Collection<? extends PsiMethodMember> candidates,
                                                             OverrideOrImplementOptions options) {
+    insertMethodsAndMoveCaret(editor.asModNavigator(), aClass, candidates, options);
+  }
+
+  /**
+   * Inserts the methods into the class like {@link #overrideOrImplementMethodsInRightPlace(Editor, PsiClass, Collection, OverrideOrImplementOptions)},
+   * but in the writable copy of {@link ModPsiUpdater}. The caret offset of the updater sets the place of the methods.
+   * <p>
+   * The Editor variant decides on a {@code default} method in an interface from the name of the current command.
+   * A {@link com.intellij.modcommand.ModCommand} has no command at this time, so the caller gives the mode explicitly.
+   *
+   * @param aClass      the class in the writable copy of the updater
+   * @param toImplement true to implement the methods; then an interface gets {@code default} methods with a body
+   */
+  public static void overrideOrImplementMethodsInRightPlace(@NotNull ModNavigator updater,
+                                                            @NotNull PsiClass aClass,
+                                                            @NotNull Collection<? extends PsiMethodMember> candidates,
+                                                            @NotNull OverrideOrImplementOptions options,
+                                                            boolean toImplement) {
+    ScopedValue.where(IMPLEMENT_MODE, toImplement).run(() -> insertMethodsAndMoveCaret(updater, aClass, candidates, options));
+  }
+
+  private static void insertMethodsAndMoveCaret(@NotNull ModNavigator updater,
+                                                @NotNull PsiClass aClass,
+                                                @NotNull Collection<? extends PsiMethodMember> candidates,
+                                                @NotNull OverrideOrImplementOptions options) {
     try {
-      int offset = editor.getCaretModel().getOffset();
-      PsiElement brace = aClass.getLBrace();
-      if (brace == null && !(aClass instanceof PsiImplicitClass)) {
-        PsiClass psiClass = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass("X");
-        brace = aClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), aClass.getLastChild());
-        LOG.assertTrue(brace != null, aClass.getLastChild());
-      }
-
-      int lbraceOffset = brace == null ? 0 : brace.getTextOffset();
-      List<PsiGenerationInfo<PsiMethod>> resultMembers;
-      if (offset <= lbraceOffset || aClass.isEnum()) {
-        resultMembers = new ArrayList<>();
-        for (PsiMethodMember candidate : candidates) {
-          ProgressManager.progress(candidate.getElement().getName());
-          Collection<PsiMethod> prototypes = overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(),
-                                                                       options.isCopyJavaDoc(), options.isInsertOverrideWherePossible());
-          List<PsiGenerationInfo<PsiMethod>> infos = convert2GenerationInfos(prototypes);
-          for (PsiGenerationInfo<PsiMethod> info : infos) {
-            PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, candidate.getElement(), candidate.getSubstitutor());
-            info.insert(aClass, anchor, true);
-            resultMembers.add(info);
-          }
-        }
-      }
-      else {
-        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, options.isCopyJavaDoc(),
-                                                                                   options.isInsertOverrideWherePossible());
-        resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass, offset, prototypes);
-      }
-
-      if (!resultMembers.isEmpty()) {
+      List<PsiGenerationInfo<PsiMethod>> resultMembers = insertMethodsInRightPlace(aClass, updater.getCaretOffset(), candidates, options);
+      if (resultMembers.isEmpty()) return;
+      if (options.isGenerateJavaDoc()) {
         for (PsiGenerationInfo<PsiMethod> info : resultMembers) {
           PsiMethod method = info.getPsiMember();
-          if (options.isGenerateJavaDoc() && method != null && method.getDocComment() == null) {
+          if (method != null && method.getDocComment() == null) {
             method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
             if (method != null) {
-              FixDocCommentAction.generateOrFixComment(method, method.getProject(), editor);
+              FixDocCommentAction.generateComment(method, method.getProject(), updater);
             }
           }
         }
-        resultMembers.getFirst().positionCaret(editor, true);
       }
+      resultMembers.getFirst().positionCaret(updater, true);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  private static @NotNull List<PsiGenerationInfo<PsiMethod>> insertMethodsInRightPlace(@NotNull PsiClass aClass,
+                                                                                      int offset,
+                                                                                      @NotNull Collection<? extends PsiMethodMember> candidates,
+                                                                                      @NotNull OverrideOrImplementOptions options) {
+    PsiElement brace = aClass.getLBrace();
+    if (brace == null && !(aClass instanceof PsiImplicitClass)) {
+      PsiClass psiClass = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass("X");
+      brace = aClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), aClass.getLastChild());
+      LOG.assertTrue(brace != null, aClass.getLastChild());
+    }
+
+    int lbraceOffset = brace == null ? 0 : brace.getTextOffset();
+    if (offset <= lbraceOffset || aClass.isEnum()) {
+      List<PsiGenerationInfo<PsiMethod>> resultMembers = new ArrayList<>();
+      for (PsiMethodMember candidate : candidates) {
+        ProgressManager.progress(candidate.getElement().getName());
+        Collection<PsiMethod> prototypes = overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(),
+                                                                     options.isCopyJavaDoc(), options.isInsertOverrideWherePossible());
+        List<PsiGenerationInfo<PsiMethod>> infos = convert2GenerationInfos(prototypes);
+        for (PsiGenerationInfo<PsiMethod> info : infos) {
+          PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, candidate.getElement(), candidate.getSubstitutor());
+          info.insert(aClass, anchor, true);
+          resultMembers.add(info);
+        }
+      }
+      return resultMembers;
+    }
+    List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, options.isCopyJavaDoc(),
+                                                                               options.isInsertOverrideWherePossible());
+    return GenerateMembersUtil.insertMembersAtOffset(aClass, offset, prototypes);
   }
 
   public static @Nullable PsiElement getDefaultAnchorToOverrideOrImplement(@NotNull PsiClass aClass, @NotNull PsiMethod baseMethod, @NotNull PsiSubstitutor substitutor){
@@ -780,7 +818,13 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   public static @Nullable PsiClass getContextClass(Project project, @NotNull Editor editor, @NotNull PsiFile file, boolean allowInterface) {
-    int offset = editor.getCaretModel().getOffset();
+    return getContextClass(file, editor.getCaretModel().getOffset(), allowInterface);
+  }
+
+  /**
+   * @return the class to override or implement the methods in, for the caret at {@code offset} in {@code file}, or null
+   */
+  public static @Nullable PsiClass getContextClass(@NotNull PsiFile file, int offset, boolean allowInterface) {
     PsiElement element = file.findElementAt(offset);
     do {
       element = PsiTreeUtil.getParentOfType(element, PsiClass.class);

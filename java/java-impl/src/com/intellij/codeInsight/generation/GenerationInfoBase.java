@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -55,7 +55,7 @@ public abstract class GenerationInfoBase implements GenerationInfo {
   }
 
   @Override
-  public void positionCaret(@NotNull ModPsiUpdater updater, boolean toEditMethodBody) {
+  public void positionCaret(@NotNull ModNavigator updater, boolean toEditMethodBody) {
     PsiMember member = getPsiMember();
     if (member != null) {
       GenerateMembersUtil.positionCaret(updater, member, toEditMethodBody);
