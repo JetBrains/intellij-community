@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ClientEditorManager.Companion.getClientEditor
 import com.intellij.openapi.editor.ComponentInlayAlignment
 import com.intellij.openapi.editor.ComponentInlayRenderer
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
@@ -190,7 +191,8 @@ internal class BuildConsoleViewImplV2(
   private fun Editor.selectOutputText(outputRanges: List<TextRange>) {
     caretModel.removeSecondaryCarets()
     caretModel.primaryCaret.removeSelection()
-    for ([index, outputRange] in outputRanges.withIndex()) {
+    val trimmedRanges = trimRanges(document, outputRanges)
+    for ([index, outputRange] in trimmedRanges.withIndex()) {
       if (index == 0) {
         caretModel.primaryCaret.moveToOffset(outputRange.startOffset)
         caretModel.primaryCaret.setSelection(outputRange.startOffset, outputRange.endOffset)
@@ -204,6 +206,17 @@ internal class BuildConsoleViewImplV2(
         secondaryCaret.setSelection(outputRange.startOffset, outputRange.endOffset)
       }
     }
+  }
+
+  private fun trimRanges(document: Document, outputRanges: List<TextRange>): List<TextRange> {
+    val text = document.immutableCharSequence
+    val notEmptyRanges = outputRanges.dropLastWhile { range -> range.subSequence(text).isBlank() }
+    val tailRange = notEmptyRanges.lastOrNull() ?: return emptyList()
+    val head = notEmptyRanges.dropLast(1)
+    val lastTextOffset = tailRange.startOffset + tailRange.subSequence(text).trimEnd().length
+    val trimmedTailEnd = document.getLineNumber(lastTextOffset)
+    val trimmedTailEndOffset = document.getLineEndOffset(trimmedTailEnd)
+    return head + TextRange(tailRange.startOffset, minOf(trimmedTailEndOffset, tailRange.endOffset))
   }
 
   private fun Editor.configureEditor() {
