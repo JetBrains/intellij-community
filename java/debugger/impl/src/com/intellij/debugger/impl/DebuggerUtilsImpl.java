@@ -288,7 +288,16 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   @Override
   public @NotNull VirtualMachineProxy getVmProxy() {
     DebuggerManagerThreadImpl managerThread = DebuggerManagerThreadImpl.getCurrentThread();
-    return Objects.requireNonNull(managerThread.getVmProxy(), "VM is not set in DMT");
+    VirtualMachineProxyImpl vmProxy = managerThread.getVmProxy();
+    if (vmProxy == null) {
+      // A stopped worker can still run its command after the new worker has detached the VM
+      InvokeThread.WorkerThreadRequest<?> request = InvokeThread.getCurrentThreadRequest();
+      if (request != null && request.isStopRequested()) {
+        throw new VMDisconnectedException("VM is detached, the worker is stopped");
+      }
+      throw new NullPointerException("VM is not set in DMT");
+    }
+    return vmProxy;
   }
 
   @Override
