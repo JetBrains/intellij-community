@@ -8,9 +8,10 @@ Always glob `idea*.log` and sort by mtime to reconstruct chronological order or 
 IDE Starter writes each test's log to a dedicated directory:
 
 ```
-<repo>/out/ide-tests/tests/<productCode>-<buildNumber>/<testName>/log/idea*.log
+<repo>/out/ide-tests/tests/<productCode>-<buildNumber>/<testName>/<class>/<index>_<method>/<launch>/frontend/log/idea*.log
 ```
 
+Each level between `<testName>` and `log` is there only when it applies.
 `buildNumber` is `LOCAL` for local runs and a numeric build ID on CI. Glob for both:
 
 ```python
@@ -19,7 +20,7 @@ from pathlib import Path
 def find_log(test_name: str) -> Path:
     matches = sorted(
         (repo_root / 'out' / 'ide-tests' / 'tests').glob(
-            f'IU-*/{test_name}/log/idea*.log'
+            f'IU-*/{test_name}/**/log/idea*.log'
         ),
         key=lambda p: p.stat().st_mtime,
     )
@@ -35,13 +36,9 @@ def find_log(test_name: str) -> Path:
 
 Each IDE Starter test name maps to its own directory, so log files from different tests are already separated — no marker parsing is needed.
 
-The `find_log` function above raises `FileNotFoundError` when the log is missing — this is intentional.
-The test must be run before the notebook can analyse anything; a missing log is a hard prerequisite,
-not an optional mode, so an exception is the right signal.
-
 ## Regular (non-Starter) tests
 
-Regular tests write to the shared system log directory:
+Regular tests that run from the IDE write to the shared system log directory:
 
 ```
 system/test/testlog/idea*.log
@@ -61,7 +58,7 @@ The test finished successfully: ClassName::testMethodName
 ```
 
 `LogTestName` (`com.intellij.testFramework.junit5.LogTestName`) is a JUnit 5 `InvocationInterceptor`.
-Add `@ExtendWith(LogTestName::class)` to the test class, or it may already be registered transitively via `@TestApplication`.
+Add `@ExtendWith(LogTestName::class)` to the test class, or it may already be registered through the `META-INF/services/org.junit.jupiter.api.extension.Extension` file of the test framework.
 If `LogTestName` is not applicable (JUnit 4, no application context, etc.), emit equivalent markers manually with a `LOG.info` call at the start and end of the test body.
 
 Parsing between markers:
