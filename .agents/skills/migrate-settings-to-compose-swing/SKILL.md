@@ -16,7 +16,7 @@ and [testing](https://github.com/JetBrains/compose-swing-ui/blob/v0.1.0-alpha06/
 
 ## Steps
 
-Preserve unrelated files. Report unrelated renderer failures separately.
+Report unrelated renderer failures separately.
 
 1. Inventory every page, nested editor, and extension-provided form in the requested screen.
    Identify its model, UI owner, validation, search, and Apply, Reset, and Cancel behavior.
@@ -38,7 +38,6 @@ Preserve unrelated files. Report unrelated renderer failures separately.
 5. Rebuild a Kotlin UI DSL `panel { }` with `FormPanel`. A page without the DSL keeps its layout structure.
    Preserve bundle keys, spacing, focus, labels, accessibility, and validation.
    Derive enabled and visible regions from state. Use one authority for each property.
-   Keep hidden controls in the composition when their identity or state must survive.
 6. Add zero-argument composables with `org.jetbrains.compose.swing.tooling.Preview` beside each production form.
    Preview state and callbacks must call the same form. Include inherited values and disabled regions. Use the default preview size.
    A preview must not construct a project, configurable, transaction, or composition host.
@@ -47,7 +46,7 @@ Preserve unrelated files. Report unrelated renderer failures separately.
    Drive user actions, adopt callbacks into state, and assert the rendered result after recomposition.
    Test Reset, enabled regions, selection, labels, and value preservation.
    Test Apply, Cancel, model validation, disposal, and rebuilding through the owner's public API.
-   Lifecycle tests alone do not verify the form. Confirm that the runner executed the intended tests.
+   Lifecycle tests alone do not verify the form.
 8. Open and interact with the previews in the IDE. Compare the live pages with the original.
    Check spacing, focus traversal, accessibility, keyboard actions, resizing, and the IDE look and feel.
    The running IDE must use the same form APIs as the compiled source.
@@ -61,16 +60,8 @@ Preserve unrelated files. Report unrelated renderer failures separately.
 - **Transactions.** Keep edits in the existing working model.
   Use `bind(...)` for persisted settings owned by `ComposeSwingSearchableConfigurable`.
   Preserve property transformations and change notifications.
-  A standalone configurable calls `requestModifiedCheck()` for state changes without a user gesture.
 - **Lifecycle.** Dispose the root composition with its UI owner. Rebuilding creates a new composition.
-  Do not dispose on temporary detachment. Do not add a disposable for each child form.
-  An override of `ComposeSwingSearchableConfigurable.disposeUIResources` must call `super`.
-- **Threading.** Reach PSI, VFS, documents, and the project model from a `LaunchedEffect`.
-- **Validation.** Keep input-time and apply-time checks.
-  Use `ConfigurationException` for apply-time refusal and the error-outline modifier for field errors.
-- **Search.** A composition host waits for a window and is empty during offscreen traversal.
-  Use the standalone configurable's immediate composition when that traversal is required.
-  Index conditionally absent strings with a `SearchableOptionContributor` when they must remain findable.
+  Do not dispose on temporary detachment.
 - **Verification.** The headless harness verifies state, callbacks, and structure.
   Verify painting, preferred sizes, attach-scoped behavior, and visual parity in a realized IDE window.
   Report unconverted pages and unavailable checks. A wrapper around an unchanged form is not a completed page.
