@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details
 
-import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
@@ -30,7 +29,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
@@ -38,7 +36,6 @@ import java.awt.LayoutManager
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
-import javax.swing.SwingConstants
 
 object CodeReviewDetailsBranchComponentFactory {
   /**
@@ -113,16 +110,7 @@ object CodeReviewDetailsBranchComponentFactory {
 
     scope.launch {
       branchesVm.showBranchesRequests.collectLatest { branches ->
-        val (source, target, hasRemoteBranch) = branches
         val point = RelativePoint.getSouthWestOf(moreLink)
-        val advertiser = if (!hasRemoteBranch) {
-          HintUtil.createAdComponent(CollaborationToolsBundle.message("review.details.branch.cannot.checkout.as.branch"), JBUI.CurrentTheme.Advertiser.border(), SwingConstants.LEFT).apply {
-            icon = AllIcons.General.Warning
-          }
-        }
-        else {
-          HintUtil.createAdComponent(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source), JBUI.CurrentTheme.Advertiser.border(), SwingConstants.LEFT)
-        }
         val dataContext = SimpleDataContext.builder()
           .setParent(DataManager.getInstance().getDataContext(moreLink))
           .add(CodeReviewBranchActionDataKeys.VIEW_MODEL, branchesVm)
@@ -131,9 +119,7 @@ object CodeReviewDetailsBranchComponentFactory {
         val actions = ActionManager.getInstance().getAction("CodeReview.Branch.Actions") as ActionGroup
         JBPopupFactory.getInstance().createActionGroupPopup(
           null, actions, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true
-        ).apply {
-          content.add(advertiser, BorderLayout.SOUTH)
-        }.showAndAwait(point, ShowDirection.BELOW)
+        ).showAndAwait(point, ShowDirection.BELOW)
       }
     }
 
