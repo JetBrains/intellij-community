@@ -55,6 +55,23 @@ class MarkdownSupportTest {
   }
 
   @Test
+  fun `test no whitespace warning for aligned continuation of a list item in a block quote`() {
+    GrazieConfig.update { it.copy(userEnabledRules = it.userEnabledRules + "LanguageTool.EN.WHITESPACE_RULE") }
+    grazie.fixture.configureByText("a.md", """
+      > [!NOTE]
+      > It consists of the following things
+      > - additional metadata of each node (e.g., description, display name, group
+      >   name, attributes)
+
+      - Hello world
+        Typing here
+
+      This is a<STYLE_SUGGESTION descr="WHITESPACE_RULE">  </STYLE_SUGGESTION>real double space.
+    """.trimIndent())
+    grazie.fixture.checkHighlighting()
+  }
+
+  @Test
   fun `test replacement with markup inside`() {
     grazie.fixture.configureByText("a.md", "Please, <STYLE_SUGGESTION descr=\"GATHER_UP\">gather<caret> </STYLE_SUGGESTION>[<STYLE_SUGGESTION descr=\"GATHER_UP\">up</STYLE_SUGGESTION> the](url) documentation.")
     grazie.fixture.checkHighlighting()

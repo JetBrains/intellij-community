@@ -30,7 +30,7 @@ class MarkdownTextExtractor : TextExtractor() {
           e.elementType in markup ||
           e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e) && !isShortRefLinkLabel(e)
         }
-        .excluding { it.elementType == MarkdownElementTypes.IMAGE }
+        .excluding { it.elementType == MarkdownElementTypes.IMAGE || it.elementType == MarkdownTokenTypes.BLOCK_QUOTE }
         .removingIndents(" \t").removingLineSuffixes(" \t")
         .build(root, TextContent.TextDomain.PLAIN_TEXT)
       return excludeHtml(content)
