@@ -82,8 +82,7 @@ class PyCodeInsightBaselinePerformanceTest : PyCodeInsightTestCase() {
     finally {
       myFixture.disableInspections(inspection)
     }
-    assertExpectation("pyparsing_core/deprecation", "no library AST load, the loads: $loads", loads.libraryFiles == 0L,
-                      PyKnownDefect("PY-92689"))
+    assertExpectation("pyparsing_core/deprecation", "no library AST load, the loads: $loads", loads.libraryFiles == 0L)
   }
 
   private fun configurePyparsingCore() {
