@@ -349,11 +349,25 @@ object PyInferredVarianceJudgment {
         return collectReferencesInTypeExpr(syntheticElement)
       }
       else {
+        // PEP 593: only the first argument of `Annotated[...]` is a type, the rest is metadata.
+        val annotatedType = annotatedTypeArgument(element)
+        if (annotatedType != null) {
+          return collectReferencesInTypeExpr(annotatedType)
+        }
         val refExpressions = PsiTreeUtil.findChildrenOfAnyType(element, PyReferenceExpression::class.java, PyStringLiteralExpression::class.java)
         for (refExpression in refExpressions) {
           collectReferencesInTypeExpr(refExpression)
         }
       }
+    }
+
+    /** The type argument of `Annotated[T, ...]`, or null when [element] is not an `Annotated` subscription. */
+    private fun annotatedTypeArgument(element: PyExpression): PyExpression? {
+      if (element !is PySubscriptionExpression) return null
+      val names = PyTypingTypeProvider.resolveToQualifiedNames(element.operand, context)
+      if (PyTypingTypeProvider.ANNOTATED !in names && PyTypingTypeProvider.ANNOTATED_EXT !in names) return null
+      val indexExpression = element.indexExpression
+      return if (indexExpression is PyTupleExpression) indexExpression.elements.firstOrNull() else indexExpression
     }
   }
 
