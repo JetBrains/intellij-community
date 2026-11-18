@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -42,7 +43,13 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
       it?.currentMergeRequestReviewVm ?: flowOf(null)
     }.onStart {
       toolWindowVm.loginIfPossible()
-    }.stateIn(cs, SharingStarted.Eagerly, null)
+    }.stateIn(cs, SharingStarted.Eagerly, null).also { state ->
+      cs.launch {
+        state.flatMapLatest { it?.actualChangesState ?: flowOf(null) }.collect {
+          project.messageBus.syncPublisher(GitCurrentBranchPresenter.PRESENTATION_UPDATED).presentationUpdated()
+        }
+      }
+    }
   }
 
   class BranchPresenter : GitCurrentBranchPresenter {

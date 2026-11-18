@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import git4idea.changes.GitTextFilePatchWithHistory
-import git4idea.ui.branch.GitCurrentBranchPresenter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +66,7 @@ private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 @ApiStatus.Internal
 class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
-  private val project: Project,
+  project: Project,
   private val localRepository: GitLabLocalRepository,
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
@@ -174,12 +173,6 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
             _actualChangesState.value = ChangesState.Error
           }
         }
-      }
-    }
-
-    cs.launch {
-      actualChangesState.collectLatest {
-        project.messageBus.syncPublisher(GitCurrentBranchPresenter.PRESENTATION_UPDATED).presentationUpdated()
       }
     }
   }
