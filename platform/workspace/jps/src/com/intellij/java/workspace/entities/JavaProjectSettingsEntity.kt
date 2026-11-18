@@ -6,8 +6,8 @@ import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SingletonWorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  * lost when the project is reopened. To store additional data, declare a new entity with a
  * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
-interface JavaProjectSettingsEntity : WorkspaceEntity {
+interface JavaProjectSettingsEntity : WorkspaceEntity, SingletonWorkspaceEntity {
   @Parent
   val projectSettings: ProjectSettingsEntity
   val compilerOutput: VirtualFileUrl?
