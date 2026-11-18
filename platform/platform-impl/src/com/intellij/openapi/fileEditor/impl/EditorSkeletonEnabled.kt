@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * The platform asks the policies in the order of the extension point. The first policy that does not answer [ThreeState.UNSURE] decides.
  * When no policy decides, the composite shows no skeleton. On the backend, a composite never shows a skeleton.
  *
- * @see EditorSkeleton
+ * @see com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNew
  */
 @ApiStatus.Internal
 interface EditorSkeletonPolicy {

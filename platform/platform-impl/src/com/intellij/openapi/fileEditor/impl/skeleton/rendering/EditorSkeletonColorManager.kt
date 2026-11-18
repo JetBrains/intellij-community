@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 
-import com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import java.awt.Color
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -40,6 +40,6 @@ internal class EditorSkeletonColorManager(
 
   @Suppress("UseJBColor")
   private fun snapshotBackground(): Color {
-    return Color(EditorSkeleton.EDITOR_BACKGROUND_COLOR.rgb, true)
+    return Color(EditorColorsManager.getInstance().globalScheme.defaultBackground.rgb, true)
   }
 }

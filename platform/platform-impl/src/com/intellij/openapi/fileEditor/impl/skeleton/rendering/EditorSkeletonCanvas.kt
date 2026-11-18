@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
-internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
+internal class EditorSkeletonCanvas(private val frames: EditorSkeletonFrames) : Canvas(), EditorSkeletonRenderer {
   override val component: Canvas
     get() = this
 
@@ -50,14 +50,14 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
 
   override fun update(g: Graphics) {}
 
-  override fun startRendering(cs: CoroutineScope, frames: EditorSkeletonFrames) {
+  override fun startRendering(cs: CoroutineScope) {
     if (!renderingStarted.compareAndSet(false, true)) return
     cs.launch(Dispatchers.Default) {
       try {
         while (isActive) {
           displayable.first { it }
           while (displayable.value) {
-            renderFrame(frames)
+            renderFrame()
             delay(EditorSkeletonRenderer.TICK_MS)
           }
           backBuffer.release()
@@ -71,7 +71,7 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
     }
   }
 
-  private fun renderFrame(frames: EditorSkeletonFrames) {
+  private fun renderFrame() {
     val w = width
     val h = height
     val gc = graphicsConfiguration
@@ -91,7 +91,7 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
     removedArea.getAndSet(null)?.repaintBounds()
   }
 
-  private data class RemovedArea(private val rootPane: JRootPane, private val bounds: Rectangle) {
+  private class RemovedArea(private val rootPane: JRootPane, private val bounds: Rectangle) {
     fun repaintBounds() = rootPane.repaint(bounds)
   }
 }

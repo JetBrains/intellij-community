@@ -50,7 +50,7 @@ import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ID_ATTRI
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.MANAGING_FS_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.PROTOCOL_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
-import com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton
+import com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNew
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.project.DumbService
@@ -1219,7 +1219,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
       val fadeInMs = EditorSkeletonPolicy.fadeInMs(composite)
       skeletonScope.launch(Dispatchers.Default) {
-        val skeleton = EditorSkeleton(skeletonScope, composite.project, fadeInMs)
+        val skeleton = EditorSkeletonNew(skeletonScope, composite.project, fadeInMs)
         withContext(Dispatchers.UI) {
           setNewSkeleton(skeleton)
         }
@@ -1230,7 +1230,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     }
   }
 
-  private fun setNewSkeleton(skeleton: EditorSkeleton?) {
+  private fun setNewSkeleton(skeleton: EditorSkeletonNew?) {
     if (skeleton == null) return
     if (components.isEmpty()) {
       add(skeleton, BorderLayout.CENTER)

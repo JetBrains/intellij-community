@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 
 import com.intellij.openapi.application.UI
-import com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton
 import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -82,13 +81,12 @@ import javax.swing.JComponent
  *
  * This renderer creates no `Canvas`, so it avoids JBR-10643
  */
-internal class EditorSkeletonFallbackRenderer : JComponent(), EditorSkeletonRenderer {
+internal class EditorSkeletonFallbackRenderer(private val frames: EditorSkeletonFrames) : JComponent(), EditorSkeletonRenderer {
   override val component: JComponent
     get() = this
 
   private var scope: CoroutineScope? = null
   private var renderingJob: Job? = null
-  private var frames: EditorSkeletonFrames? = null
   private var lastFrameTimeMs: Long? = null
   private var animationTimeMs = 0L
 
@@ -97,10 +95,9 @@ internal class EditorSkeletonFallbackRenderer : JComponent(), EditorSkeletonRend
     isOpaque = true
   }
 
-  override fun startRendering(cs: CoroutineScope, frames: EditorSkeletonFrames) {
+  override fun startRendering(cs: CoroutineScope) {
     if (scope != null) return
     scope = cs
-    this.frames = frames
     if (isDisplayable) startRepainting()
   }
 
@@ -118,12 +115,6 @@ internal class EditorSkeletonFallbackRenderer : JComponent(), EditorSkeletonRend
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    val frames = frames
-    if (frames == null || !isShowing) {
-      g.color = EditorSkeleton.EDITOR_BACKGROUND_COLOR
-      g.fillRect(0, 0, width, height)
-      return
-    }
     frames.paint(g as Graphics2D, width, height, JBUIScale.scale(1f), frames.currentColors())
   }
 
@@ -141,7 +132,6 @@ internal class EditorSkeletonFallbackRenderer : JComponent(), EditorSkeletonRend
 
   private fun startRepainting() {
     val cs = scope ?: return
-    val frames = frames ?: return
     if (renderingJob != null) return
     renderingJob = cs.launch(Dispatchers.UI) {
       var repaintedColors: SkeletonFrameColor? = null

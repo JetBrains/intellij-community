@@ -26,5 +26,4 @@ internal data class EditorSkeletonWindowTarget(
   val rootPaneClip: Rectangle,
   val scale: Float,
   val covered: Boolean,
-  val frames: EditorSkeletonFrames,
 )

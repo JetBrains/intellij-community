@@ -297,7 +297,7 @@ kotlinx.serialization.json.JsonEncoder
 kotlinx.serialization.encoding.Encoder
 kotlinx.serialization.encoding.CompositeEncoder
 kotlinx.serialization.encoding.AbstractEncoder
-com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton$frames$1
+com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNew$frames$1
 kotlinx.serialization.json.internal.ComposersKt
 kotlinx.serialization.json.internal.ComposerWithPrettyPrint
 kotlinx.serialization.json.internal.Composer
@@ -318,7 +318,7 @@ com.intellij.ui.paint.LinePainter2D$StrokeType
 com.intellij.ui.paint.LinePainter2D
 java.awt.geom.Line2D$Double
 com.intellij.openapi.rd.GraphicsExKt
-com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonColorManager$FrameColors
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.SkeletonFrameColor
 com.intellij.openapi.application.impl.islands.EditorSearchComponentState
 com.intellij.openapi.ui.GraphicsConfig
 com.intellij.openapi.application.impl.islands.EditorSearchComponentState$Companion
@@ -10061,8 +10061,6 @@ com.intellij.ide.project.impl.BaseProjectDirectoriesImpl$1
 com.intellij.openapi.application.impl.NonBlockingReadActionImpl$OTelMonitor
 com.intellij.openapi.application.impl.NonBlockingReadActionImpl$OTelMonitor$MonitoredComputation
 com.intellij.openapi.application.impl.SubmissionTracker
-com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton$1
-com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton$Companion
 com.intellij.openapi.fileEditor.impl.skeleton.layout.components.EditorSkeletonBuilder
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonBackBuffer
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderer$Companion

@@ -3,4 +3,4 @@ package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 
 import java.awt.Color
 
-data class SkeletonFrameColor(val background: Color, val blocks: Color)
+internal data class SkeletonFrameColor(val background: Color, val blocks: Color)

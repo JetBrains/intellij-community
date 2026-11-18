@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton
 import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.CoroutineScope
@@ -42,7 +41,7 @@ import javax.swing.SwingUtilities
  * While such a component is large, or the glass pane paints over the renderer, a frame goes through a Swing repaint.
  * The EDT paints the current frame each time Swing repaints the renderer.
  */
-internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRenderer {
+internal class EditorSkeletonWindowRenderer(private val frames: EditorSkeletonFrames) : JComponent(), EditorSkeletonRenderer {
   private val renderThread: EditorSkeletonRenderThread = service()
   override val component: JComponent
     get() = this
@@ -56,7 +55,7 @@ internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRender
   @Volatile
   private var failed = false
 
-  private var frames: EditorSkeletonFrames? = null
+  private var started = false
   private val targetUpdater = TargetUpdater()
   private var trackedContainers: Set<Container> = emptySet()
   private var trackedComponents: Set<Component> = emptySet()
@@ -76,11 +75,11 @@ internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRender
     addPropertyChangeListener("graphicsConfiguration", targetUpdater)
   }
 
-  override fun startRendering(cs: CoroutineScope, frames: EditorSkeletonFrames) {
-    if (this.frames != null) {
+  override fun startRendering(cs: CoroutineScope) {
+    if (started) {
       return
     }
-    this.frames = frames
+    started = true
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       try {
         awaitCancellation()
@@ -95,7 +94,7 @@ internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRender
   @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
   override fun reshape(x: Int, y: Int, w: Int, h: Int) {
     super.reshape(x, y, w, h)
-    if (frames != null) {
+    if (started) {
       updateTarget()
     }
   }
@@ -107,12 +106,6 @@ internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRender
   }
 
   override fun paintComponent(g: Graphics) {
-    val frames = frames
-    if (frames == null) {
-      g.color = EditorSkeleton.EDITOR_BACKGROUND_COLOR
-      g.fillRect(0, 0, width, height)
-      return
-    }
     if (isTargetStale()) {
       updateTarget()
     }
@@ -128,7 +121,7 @@ internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRender
       return
     }
     val target = target ?: return
-    val colors = target.frames.currentColors()
+    val colors = frames.currentColors()
     val now = System.nanoTime()
     if (colors == renderedColors && target === renderedTarget) {
       if (!settled && now - lastChangeNanos > SETTLE_NANOS) {
@@ -146,7 +139,7 @@ internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRender
     }
     val buffer = backBuffer.createOrUpdateImageBuffer(target.graphicsConfiguration, target.width, target.height)
     buffer.createGraphics().use { g ->
-      target.frames.paint(g, target.width, target.height, target.scale, colors)
+      frames.paint(g, target.width, target.height, target.scale, colors)
     }
     if (buffer.contentsLost()) {
       return
@@ -257,8 +250,7 @@ internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRender
   }
 
   private fun computeTarget(rootPane: JRootPane, window: Window): EditorSkeletonWindowTarget? {
-    val frames = frames
-    if (frames == null || stopped || failed || width <= 0 || height <= 0) {
+    if (!started || stopped || failed || width <= 0 || height <= 0) {
       return null
     }
     if (window is Frame && (window.extendedState and Frame.ICONIFIED) != 0) {
@@ -283,7 +275,6 @@ internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRender
       rootPaneClip = SwingUtilities.convertRectangle(this, visibleRect, rootPane),
       scale = JBUIScale.scale(1f),
       covered = overlays.covered,
-      frames = frames,
     )
   }
 
@@ -461,18 +452,18 @@ internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRender
     val covered: Boolean,
   )
 
-  companion object {
-    private const val OPAQUE_PROPERTY = "opaque"
+  private companion object {
+    const val OPAQUE_PROPERTY = "opaque"
 
     /**
      * The overlays may hide at most one quarter of the renderer. Above that, the frames go through Swing repaints.
      */
-    private const val LARGE_OVERLAY_DIVISOR = 4L
+    const val LARGE_OVERLAY_DIVISOR = 4L
 
     /**
      * The time after the last color change when the render thread asks Swing to paint the current frame once.
      * Then the Swing back buffer holds the current frame.
      */
-    private const val SETTLE_NANOS = 250_000_000L
+    const val SETTLE_NANOS = 250_000_000L
   }
 }

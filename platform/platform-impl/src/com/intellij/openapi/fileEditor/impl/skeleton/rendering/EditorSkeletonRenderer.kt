@@ -13,28 +13,31 @@ internal interface EditorSkeletonRenderer {
   val component: Component
 
   /**
-   * Starts the rendering of [frames] in [cs].
+   * Starts the rendering of the frames of the renderer in [cs].
    * The renderer renders a frame only while [component] is displayable.
    * While [component] is not displayable, the renderer does not wake up.
    */
-  fun startRendering(cs: CoroutineScope, frames: EditorSkeletonFrames)
+  fun startRendering(cs: CoroutineScope)
 
   fun frameTimeMs(nowMs: Long): Long = nowMs
 
   companion object {
     val TICK_MS = 8.milliseconds
 
-    fun create(): EditorSkeletonRenderer {
+    /**
+     * Creates the renderer of [frames] for the current toolkit.
+     */
+    fun create(frames: EditorSkeletonFrames): EditorSkeletonRenderer {
       if (StartupUiUtil.isWaylandToolkit()) {
-        return EditorSkeletonFallbackRenderer()
+        return EditorSkeletonFallbackRenderer(frames)
       }
       if (Registry.`is`("editor.skeleton.window.renderer", true)) {
-        return EditorSkeletonWindowRenderer()
+        return EditorSkeletonWindowRenderer(frames)
       }
       if (isWindowsFrontend()) {
-        return EditorSkeletonFallbackRenderer()
+        return EditorSkeletonFallbackRenderer(frames)
       }
-      return EditorSkeletonCanvas()
+      return EditorSkeletonCanvas(frames)
     }
 
     private fun isWindowsFrontend(): Boolean {
