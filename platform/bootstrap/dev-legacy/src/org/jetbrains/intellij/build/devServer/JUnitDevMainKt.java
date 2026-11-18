@@ -116,7 +116,7 @@ public final class JUnitDevMainKt {
       String junitRtJar = File.separator + "junit" + version + "-rt.jar";
       String junitRtPackage = File.separator + "intellij.junit" + (version.isEmpty() ? "" : ".v" + version) + ".rt";
       for (String s : testEntryPointClasspath.split(File.pathSeparator)) {
-        if (s.endsWith(junitRtJar) || s.endsWith(junitRtPackage)) {
+        if (s.endsWith(junitRtJar) || s.endsWith(junitRtPackage) || s.endsWith(junitRtPackage + ".jar")) {
           result = result == null ? s : result + File.pathSeparator + s;
           break;
         }
