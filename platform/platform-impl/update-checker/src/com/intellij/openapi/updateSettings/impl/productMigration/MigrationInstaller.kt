@@ -5,6 +5,7 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.PathManager
@@ -32,6 +33,14 @@ private val LOG = logger<MigrationInstallException>()
 private const val DOWNLOAD_FILE_NAME = "distribution.dmg"
 private const val PROCESS_TIMEOUT_MS = 30 * 60 * 1000
 private const val DETACH_TIMEOUT_MS = 60 * 1000
+private const val CODESIGN_DISPLAY_TIMEOUT_MS = 60 * 1000
+
+private const val CODESIGN = "/usr/bin/codesign"
+private const val CODESIGN_INVALID = 1
+private const val CODESIGN_REQUIREMENT_FAILED = 3
+private const val ALLOW_UNSIGNED_PROPERTY = "ide.update.migration.allow.unsigned"
+private const val TEAM_ID_PREFIX = "TeamIdentifier="
+private val TEAM_ID = Regex("[A-Z0-9]{10}")
 
 private val SHA256_LINE = Regex("([0-9a-fA-F]{64})(?:\\s+\\*?\\S.*)?")
 
@@ -139,34 +148,51 @@ private fun installMacApp(dmg: Path, product: String, indicator: ProgressIndicat
     runCommand(GeneralCommandLine("hdiutil", "attach", "-readonly", "-nobrowse", "-noautoopen", "-noautofsck", "-noverify",
                                   "-mountpoint", mountPoint.toString(), dmg.toString()), indicator)
     val app = findSingleApp(mountPoint) ?: throw installError("the disk image has no single application: ${mountPoint.listDirectoryEntries()}")
-
     val applications = Path.of(SystemProperties.getUserHome(), "Applications")
-    Files.createDirectories(applications)
-    val target = applications.resolve(app.fileName.toString())
-    if (Files.exists(target, LinkOption.NOFOLLOW_LINKS)) {
-      val productCode = readInstalledProductInfo(target)?.productCode
-      if (productCode != product) {
-        throw MigrationInstallException(IdeBundle.message("updates.migration.error.exists", target.toString()),
-                                        "${target} has the product code ${productCode}, expected ${product}")
-      }
-      LOG.info("${target} is already installed and is not copied")
-      return target
-    }
-
-    copyApp(app, target, indicator)
-    return target
+    return installMountedApp(app, applications, product, indicator) { isTrustedMacApp(it, indicator) }
   }
   finally {
     detach(mountPoint)
   }
 }
 
-private fun copyApp(app: Path, target: Path, indicator: ProgressIndicator) {
+/**
+ * Copies [app] into [applications], or reuses an installed application with the product code [product].
+ * The IDE uses an application only when [isTrusted] accepts it. It never deletes or changes an application that exists before the call.
+ */
+@ApiStatus.Internal
+fun installMountedApp(app: Path, applications: Path, product: String, indicator: ProgressIndicator, isTrusted: (Path) -> Boolean): Path {
+  Files.createDirectories(applications)
+  val target = applications.resolve(app.fileName.toString())
+  if (Files.exists(target, LinkOption.NOFOLLOW_LINKS)) {
+    val productCode = readInstalledProductInfo(target)?.productCode
+    if (productCode != product) {
+      throw MigrationInstallException(IdeBundle.message("updates.migration.error.exists", target.toString()),
+                                      "${target} has the product code ${productCode}, expected ${product}")
+    }
+    indicator.text = IdeBundle.message("updates.migration.progress.verify")
+    if (!isTrusted(target)) {
+      throw MigrationInstallException(IdeBundle.message("updates.migration.error.exists", target.toString()),
+                                      "${target} fails the signature check")
+    }
+    LOG.info("${target} is already installed and is not copied")
+    return target
+  }
+
+  copyApp(app, target, indicator, isTrusted)
+  return target
+}
+
+private fun copyApp(app: Path, target: Path, indicator: ProgressIndicator, isTrusted: (Path) -> Boolean) {
   val partial = target.resolveSibling(".${target.fileName}.partial")
   NioFiles.deleteRecursively(partial)
   var copied = false
   try {
     runCommand(GeneralCommandLine("ditto", app.toString(), partial.toString()), indicator)
+    indicator.text = IdeBundle.message("updates.migration.progress.verify")
+    if (!isTrusted(partial)) {
+      throw installError("${partial} fails the signature check")
+    }
     Files.move(partial, target)
     copied = true
   }
@@ -177,7 +203,93 @@ private fun copyApp(app: Path, target: Path, indicator: ProgressIndicator) {
   }
 }
 
+/** Returns the value of the `TeamIdentifier=` line of the `codesign -dv` output, or `null` when the value is not a team ID. */
+@ApiStatus.Internal
+fun parseCodesignTeam(output: String): String? {
+  val team = output.lineSequence().firstOrNull { it.startsWith(TEAM_ID_PREFIX) }?.removePrefix(TEAM_ID_PREFIX) ?: return null
+  return team.takeIf { TEAM_ID.matches(it) }
+}
+
+/**
+ * The two Developer ID fields reject an "Apple Development" certificate of the same team, which has the same OU.
+ */
+@ApiStatus.Internal
+fun macCodeRequirement(team: String): String {
+  require(TEAM_ID.matches(team)) { "not a team ID: ${team}" }
+  return "anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] " +
+         "and certificate leaf[field.1.2.840.113635.100.6.1.13] and certificate leaf[subject.OU] = \"${team}\""
+}
+
+/** Returns the team of the signature of [app], or `null` for no signature, an ad hoc signature, or a failure. */
+private fun readMacAppTeam(app: Path): String? {
+  val command = GeneralCommandLine(CODESIGN, "-dv", "--verbose=2", app.toString())
+  val output = try {
+    ExecUtil.execAndGetOutput(command, CODESIGN_DISPLAY_TIMEOUT_MS)
+  }
+  catch (e: ExecutionException) {
+    LOG.warn("cannot run ${command.commandLineString}", e)
+    return null
+  }
+  if (output.exitCode != 0) {
+    LOG.info("${command.commandLineString}: exit code ${output.exitCode}, timeout ${output.isTimeout}, ${output.stderr.trim()}")
+    return null
+  }
+  // codesign writes the information to stderr
+  return parseCodesignTeam(output.stderr) ?: null.also { LOG.info("${app} has no team ID") }
+}
+
+/**
+ * Returns `false` when the signature of [app] is not a valid signature of the team of the running IDE.
+ * Throws the usual install error when the check cannot run.
+ */
+@ApiStatus.Internal
+fun isTrustedMacApp(
+  app: Path,
+  indicator: ProgressIndicator,
+  allowUnsigned: Boolean = System.getProperty(ALLOW_UNSIGNED_PROPERTY).toBoolean(),
+  runningTeam: () -> String? = { runningAppBundle()?.let(::readMacAppTeam) },
+): Boolean {
+  if (allowUnsigned) {
+    LOG.info("the signature check of ${app} is off: -D${ALLOW_UNSIGNED_PROPERTY}=true")
+    return true
+  }
+  val team = runningTeam() ?: throw installError("the running IDE has no team ID, so the signature of ${app} cannot be checked")
+  return macCodeSatisfies(app, macCodeRequirement(team), indicator)
+}
+
+/** Returns `false` when `codesign` rejects [app]. Throws the usual install error when `codesign` fails for another reason. */
+private fun macCodeSatisfies(app: Path, requirement: String, indicator: ProgressIndicator): Boolean {
+  val command = GeneralCommandLine(CODESIGN, "--verify", "--deep", "--strict", "-R=${requirement}", app.toString())
+  val output = runProcess(command, indicator)
+  return when (output.exitCode) {
+    0 -> true
+    CODESIGN_INVALID, CODESIGN_REQUIREMENT_FAILED -> {
+      LOG.info("${app} fails the signature check: exit code ${output.exitCode}, ${output.stderr.trim()}")
+      false
+    }
+    else -> throw commandError(command, output)
+  }
+}
+
+private fun runningAppBundle(): Path? {
+  val home = PathManager.getHomeDir()
+  val app = home.parent
+  if (home.fileName?.toString() != "Contents" || app?.fileName?.toString()?.endsWith(".app") != true) {
+    LOG.info("the running IDE is not in an application bundle: ${home}")
+    return null
+  }
+  return app
+}
+
 private fun runCommand(command: GeneralCommandLine, indicator: ProgressIndicator) {
+  val output = runProcess(command, indicator)
+  if (output.exitCode != 0) {
+    throw commandError(command, output)
+  }
+}
+
+/** It does not check the exit code. */
+private fun runProcess(command: GeneralCommandLine, indicator: ProgressIndicator): ProcessOutput {
   val commandLine = command.commandLineString
   LOG.info("running ${commandLine}")
   val output = try {
@@ -189,10 +301,14 @@ private fun runCommand(command: GeneralCommandLine, indicator: ProgressIndicator
   if (output.isCancelled) {
     throw ProcessCanceledException()
   }
-  if (output.isTimeout || output.exitCode != 0) {
-    throw installError("${commandLine} failed: exit code ${output.exitCode}, timeout ${output.isTimeout}, ${output.stderr.trim()}")
+  if (output.isTimeout) {
+    throw commandError(command, output)
   }
+  return output
 }
+
+private fun commandError(command: GeneralCommandLine, output: ProcessOutput): MigrationInstallException =
+  installError("${command.commandLineString} failed: exit code ${output.exitCode}, timeout ${output.isTimeout}, ${output.stderr.trim()}")
 
 private fun detach(mountPoint: Path) {
   try {

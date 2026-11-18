@@ -14,6 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -30,6 +31,9 @@ import kotlin.io.path.writeBytes
 import kotlin.io.path.writeText
 
 private const val HEX = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+private const val TEAM = "2ZEFAR8TH3"
+private const val APP_NAME = "Unified IDE.app"
+
 
 class MigrationInstallerTest {
   @get:Rule
@@ -169,6 +173,116 @@ class MigrationInstallerTest {
       withMigrationWorkDir(workDir) { downloadFile(url(source), it, indicator) }
     }
     assertFalse(workDir.exists())
+  }
+
+  @Test
+  fun `team is read from the codesign output`() {
+    val output = """
+      Executable=/Users/me/Applications/GoLand.app/Contents/MacOS/goland
+      Identifier=com.jetbrains.goland-EAP
+      Authority=Developer ID Application: JetBrains s.r.o. (2ZEFAR8TH3)
+      Authority=Developer ID Certification Authority
+      Authority=Apple Root CA
+      TeamIdentifier=2ZEFAR8TH3
+    """.trimIndent()
+    assertEquals(TEAM, parseCodesignTeam(output))
+  }
+
+  @Test
+  fun `value that is not a team ID gives no team`() {
+    assertNull(parseCodesignTeam("Identifier=com.example\nSignature=adhoc\nTeamIdentifier=not set"))
+    assertNull(parseCodesignTeam("Identifier=com.example"))
+    assertNull(parseCodesignTeam("TeamIdentifier=2ZEFAR8TH\n3"))
+    for (team in listOf("2zefar8th3", "2ZEFAR8TH", "2ZEFAR8TH3X", "2ZEFAR8TH\"", "2ZEFAR 8TH", "2ZEFAR8TH]", "${TEAM} ")) {
+      assertNull(team, parseCodesignTeam("TeamIdentifier=${team}"))
+    }
+  }
+
+  @Test
+  fun `requirement has the Apple anchor, the Developer ID fields and the team`() {
+    assertEquals("anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] " +
+                 "and certificate leaf[field.1.2.840.113635.100.6.1.13] and certificate leaf[subject.OU] = \"2ZEFAR8TH3\"",
+                 macCodeRequirement(TEAM))
+  }
+
+  @Test
+  fun `team with another character does not reach the requirement`() {
+    for (team in listOf("2ZEFAR8TH\"", "2ZEFAR8TH)", "2ZEFAR 8TH", "2ZEFAR8TH\n", "")) {
+      assertThrows(team, IllegalArgumentException::class.java) { macCodeRequirement(team) }
+    }
+  }
+
+  @Test
+  fun `dev property turns the signature check off`() {
+    val app = tempDir.root.toPath().resolve("Missing.app")
+    assertTrue(isTrustedMacApp(app, indicator(), allowUnsigned = true, runningTeam = { error("the check is off") }))
+  }
+
+  @Test
+  fun `running IDE with no team fails the signature check`() {
+    val app = tempDir.root.toPath().resolve("Missing.app")
+    val error = assertThrows(MigrationInstallException::class.java) {
+      isTrustedMacApp(app, indicator(), allowUnsigned = false, runningTeam = { null })
+    }
+    assertEquals(IdeBundle.message("updates.migration.error.install"), error.userMessage)
+  }
+
+  @Test
+  fun `existing application that fails the signature check stays unchanged`() {
+    val applications = tempDir.newFolder("Applications").toPath()
+    val target = existingApp(applications)
+    val before = snapshot(target)
+    var checked: Path? = null
+    val error = assertThrows(MigrationInstallException::class.java) {
+      installMountedApp(mountedApp(), applications, "JB", indicator()) {
+        checked = it
+        false
+      }
+    }
+    assertEquals(IdeBundle.message("updates.migration.error.exists", target.toString()), error.userMessage)
+    assertEquals(target, checked)
+    assertEquals(before, snapshot(target))
+    assertEquals(listOf(target), applications.listDirectoryEntries())
+  }
+
+  @Test
+  fun `check that cannot run gives the install error for an existing application`() {
+    val applications = tempDir.newFolder("Applications").toPath()
+    val target = existingApp(applications)
+    val before = snapshot(target)
+    val error = assertThrows(MigrationInstallException::class.java) {
+      installMountedApp(mountedApp(), applications, "JB", indicator()) {
+        throw MigrationInstallException(IdeBundle.message("updates.migration.error.install"), "the running IDE has no team ID")
+      }
+    }
+    assertEquals(IdeBundle.message("updates.migration.error.install"), error.userMessage)
+    assertEquals(before, snapshot(target))
+  }
+
+  @Test
+  fun `existing application with another product code is not checked`() {
+    val applications = tempDir.newFolder("Applications").toPath()
+    val target = existingApp(applications, productCode = "GO")
+    val before = snapshot(target)
+    var checked = false
+    val error = assertThrows(MigrationInstallException::class.java) {
+      installMountedApp(mountedApp(), applications, "JB", indicator()) {
+        checked = true
+        true
+      }
+    }
+    assertEquals(IdeBundle.message("updates.migration.error.exists", target.toString()), error.userMessage)
+    assertFalse(checked)
+    assertEquals(before, snapshot(target))
+  }
+
+  private fun mountedApp(): Path = tempDir.newFolder("mount").toPath().resolve(APP_NAME).also { writeProductInfo(it) }
+
+  private fun existingApp(applications: Path, productCode: String = "JB"): Path {
+    val app = applications.resolve(APP_NAME)
+    writeProductInfo(app, productCode)
+    app.resolve("Contents/MacOS").createDirectories().resolve("light").writeText("the launcher")
+    return app
   }
 
   private fun downloadFile(url: String, workDir: Path, indicator: ProgressIndicator): Path =
