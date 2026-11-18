@@ -3,9 +3,11 @@ package com.intellij.platform.problemsView.shared
 
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEventDto
 import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.QuickFixModelDto
+import com.intellij.ide.rpc.awaitWithOptionalLocalFallback
 import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -32,7 +34,7 @@ interface ProblemsViewApi : RemoteApi<Unit> {
 
   companion object {
     suspend fun getInstance(): ProblemsViewApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<ProblemsViewApi>())
+      return LiteRemoteApiProviderService.awaitWithOptionalLocalFallback(remoteApiDescriptor<ProblemsViewApi>()) { serviceOrNull<ProblemsViewApi>() }
     }
   }
 }

@@ -34,7 +34,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//platform/backend",
+        "//platform/backend/baseline",
         "//platform/util/coroutines",
         "//platform/util/concurrency",
     ],
@@ -63,7 +63,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//fleet/rpc",
         "//platform/project/shared:project",
-        "//platform/kernel/rpc.backend",
         "//platform/core-impl",
     ],
 )

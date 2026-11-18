@@ -25,6 +25,7 @@
     <module name="intellij.platform.problemView.shared"/>
     <module name="intellij.platform.problemView.ui"/>
     <module name="intellij.platform.problemView.backend"/>
+    <module name="intellij.platform.problemView.rpc.backend"/>
     <module name="intellij.platform.problemView.frontend"/>
     <module name="intellij.platform.problemView.security" loading="on-demand"/>
     <module name="intellij.platform.problemView.security.backend" loading="on-demand"/>

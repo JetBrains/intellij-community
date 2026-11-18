@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.problemView.rpc.backend` start
+content_module_jar(module = ":rpc.backend")
+### auto-generated section `dev intellij.platform.problemView.rpc.backend` end
+
+### auto-generated section `build intellij.platform.problemView.rpc.backend` start
+jvm_library(
+    name = "rpc.backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.problemView.rpc.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//platform/problemsView/backend",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//fleet/rpc",
+        "//platform/kernel/rpc.backend",
+        "//platform/problemsView/shared",
+    ],
+)
+### auto-generated section `build intellij.platform.problemView.rpc.backend` end
+
+### auto-generated section `iml intellij.platform.problemView.rpc.backend` start
+exports_files(
+    [
+        "intellij.platform.problemView.rpc.backend.iml",
+        "resources/intellij.platform.problemView.rpc.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.problemView.rpc.backend` end

@@ -1,0 +1,16 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rpc"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.problemView.backend"/>
+    <module name="intellij.platform.problemView.shared"/>
+    <module name="intellij.platform.rpc.backend"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.problemView.rpc.backend.ProblemsViewRemoteApiProvider"
+                                            apiInterfaces="com.intellij.platform.problemsView.shared.ProblemsViewApi"/>
+  </extensions>
+</idea-plugin>

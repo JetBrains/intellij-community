@@ -5,7 +5,7 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
-    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.backend.baseline"/>
     <module name="intellij.platform.buildView"/>
     <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
@@ -24,15 +24,15 @@
     <module name="intellij.platform.problemView.ui"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApi apiInterface="com.intellij.platform.problemsView.shared.ProblemsViewApi"
-                                    implementationClass="com.intellij.platform.problemsView.backend.BackendProblemsViewApi"/>
+    <!-- An application service, so a light IDE reaches it without the rpc backend; intellij.platform.problemView.rpc.backend serves it to a frontend. -->
+    <applicationService serviceInterface="com.intellij.platform.problemsView.shared.ProblemsViewApi"
+                        serviceImplementation="com.intellij.platform.problemsView.backend.BackendProblemsViewApi"/>
     <problemsViewPanelProvider implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewHighlightingPanelProvider" order="first"/>
     <problemsViewPanelProvider implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewProjectErrorsPanelProvider"/>
     

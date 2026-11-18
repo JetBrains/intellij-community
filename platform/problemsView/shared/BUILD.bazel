@@ -37,7 +37,7 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/lang-api:lang",
         "//fleet/rpc",
-        "//platform/kernel/rpc",
+        "//platform/kernel/rpc.lite",
         "//libraries/kotlinx/serialization/core",
         "//platform/util/coroutines",
         "//platform/project/shared:project",

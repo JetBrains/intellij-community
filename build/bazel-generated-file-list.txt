@@ -1040,6 +1040,7 @@ platform/problemsView/collector
 platform/problemsView/core
 platform/problemsView/frontend
 platform/problemsView/plugin
+platform/problemsView/rpc.backend
 platform/problemsView/security
 platform/problemsView/security/backend
 platform/problemsView/shared
