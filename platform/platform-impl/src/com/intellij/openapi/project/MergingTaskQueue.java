@@ -28,10 +28,12 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
@@ -88,6 +90,34 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
       myTasksQueue.clear();
       myJobs.clear();
+    }
+
+    cancelIndicatorSafe(jobQueue);
+    disposeSafe(disposeQueue);
+  }
+
+  /**
+   * Disposes the queued tasks that match the predicate, and cancels the job of a running task that matches it.
+   * The running task ends on its indicator, and {@link QueuedTask#close()} disposes it.
+   */
+  public void disposeTasks(@NotNull Predicate<? super T> predicate) {
+    List<T> disposeQueue = new ArrayList<>();
+    List<Job> jobQueue = new ArrayList<>();
+    synchronized (myLock) {
+      for (Iterator<T> iterator = myTasksQueue.iterator(); iterator.hasNext(); ) {
+        T task = iterator.next();
+        if (predicate.test(task)) {
+          iterator.remove();
+          disposeQueue.add(task);
+        }
+      }
+      for (Iterator<Map.Entry<T, Job>> iterator = myJobs.entrySet().iterator(); iterator.hasNext(); ) {
+        Map.Entry<T, Job> entry = iterator.next();
+        if (predicate.test(entry.getKey())) {
+          iterator.remove();
+          jobQueue.add(entry.getValue());
+        }
+      }
     }
 
     cancelIndicatorSafe(jobQueue);

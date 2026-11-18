@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.Application
@@ -222,6 +224,15 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }
     balloon = DumbServiceBalloon(myProject, this)
     alternativeResolveTracker = DumbServiceAlternativeResolveTracker()
+    myProject.messageBus.connect(this).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun pluginsUnloaded() {
+        // A content module of the core plugin keeps the plugin id, so the purge goes by the state of the class loader.
+        taskQueue.disposeTasks { task ->
+          val classLoader = task.javaClass.classLoader
+          classLoader is PluginAwareClassLoader && classLoader.state == PluginAwareClassLoader.UNLOAD_IN_PROGRESS
+        }
+      }
+    })
     // any project starts in dumb mode (except a default project which is always smart)
     // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance DUMB > SMART
   }
