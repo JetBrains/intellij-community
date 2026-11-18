@@ -240,14 +240,16 @@ object PyInferredVarianceJudgment {
     }
 
     fun collectInFunctionReturn(function: PyFunction) {
-      if (effectiveScopeOwnerIsReturnedCallable(function)) {
-        // TODO: Aliases and quoted type annotations
-        val returnedCallableExpression = PyTypingTypeProvider.getAnnotationValue(function, context) as? PySubscriptionExpression
-        val callableTupleExpression = returnedCallableExpression?.indexExpression as? PyTupleExpression
-        val callableReturnExpression = callableTupleExpression?.elements?.getOrNull(1)
-        if (callableReturnExpression != null) {
-          collectReferencesInTypeExpr(callableReturnExpression)
-        }
+      // TODO: Aliases and quoted type annotations
+      // The returned-callable case reads the second element of a `Callable[[...], R]` index, so the annotation
+      // decides whether that case can apply at all, and reading the annotation is syntax. Asking
+      // [effectiveScopeOwnerIsReturnedCallable] second for performance reasons since it resolves the annotation
+      // of EVERY parameter.
+      val returnedCallableExpression = PyTypingTypeProvider.getAnnotationValue(function, context) as? PySubscriptionExpression
+      val callableTupleExpression = returnedCallableExpression?.indexExpression as? PyTupleExpression
+      val callableReturnExpression = callableTupleExpression?.elements?.getOrNull(1)
+      if (callableReturnExpression != null && effectiveScopeOwnerIsReturnedCallable(function)) {
+        collectReferencesInTypeExpr(callableReturnExpression)
       }
       else {
         collectReferencesInAnnotation(function)
