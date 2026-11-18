@@ -108,6 +108,9 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
 
   private val modulePanes: MutableMap<Module, PyModuleDetailsPane> = LinkedHashMap()
 
+  /** The panes of the modules that are not Python projects yet, see [PyNoPythonProjectPane]. */
+  private val noPythonProjectPanes: MutableMap<Module, JComponent> = LinkedHashMap()
+
   /** Owns the auto-configure checkbox. */
   private lateinit var dialogPanel: DialogPanel
 
@@ -242,6 +245,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
         // Snapshot before clear — the pipeline disposes these.
         val panesToDispose = modulePanes.values.toList()
         modulePanes.clear()
+        noPythonProjectPanes.clear()
         detailsHolder.removeAll()
         detailsHolder.add(buildPlaceholder(), CARD_PLACEHOLDER)
         detailsCards.show(detailsHolder, CARD_PLACEHOLDER)
@@ -284,6 +288,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     sessionScope.cancel()
     modulePanes.values.forEach { it.dispose() }
     modulePanes.clear()
+    noPythonProjectPanes.clear()
   }
 
   /** Refreshes the interpreter combos after an interpreter was added or removed outside this page. */
@@ -370,7 +375,11 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     // preload (sibling PyProjects + current live deps), then build + show in one EDT hop so the
     // Project Links tab paints its final state from the first frame.
     sessionScope.launch {
-      val pyProject = module.asPyProject() ?: return@launch
+      val pyProject = module.asPyProject()
+      if (pyProject == null) {
+        withContext(Dispatchers.EDT) { showNoPythonProjectPane(module) }
+        return@launch
+      }
       val projectLinkCandidates = project.getPyProjects().filter { it.baseDir != pyProject.baseDir }
       val initialProjectLinks = pyProject.getPythonDependencies()
       withContext(Dispatchers.EDT) {
@@ -390,6 +399,24 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
       }
     }
     detailsCards.show(detailsHolder, CARD_PLACEHOLDER)
+  }
+
+  /** Shows the pane that adds the first interpreter of [module], which is not a Python project yet. */
+  private fun showNoPythonProjectPane(module: Module) {
+    if (modulePanes[module] != null) return
+    val cardName = "noPythonProject:${module.name}"
+    if (noPythonProjectPanes[module] == null) {
+      val pane = PyNoPythonProjectPane(module) {
+        // The module is a Python project now, so it gets the pane of a Python project.
+        noPythonProjectPanes.remove(module)?.let(detailsHolder::remove)
+        showModulePane(module)
+      }
+      noPythonProjectPanes[module] = pane.component
+      detailsHolder.add(pane.component, cardName)
+    }
+    if (moduleList.selectedValue == module || !isMultiModule()) {
+      detailsCards.show(detailsHolder, cardName)
+    }
   }
 
   private fun showPlaceholder() {
