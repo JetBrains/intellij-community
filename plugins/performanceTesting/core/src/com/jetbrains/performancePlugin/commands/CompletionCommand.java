@@ -10,9 +10,8 @@ import com.intellij.codeInsight.completion.CompletionPhaseListener;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupListener;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +38,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CompletionCommand extends PerformanceCommand {
 
@@ -96,22 +94,22 @@ public class CompletionCommand extends PerformanceCommand {
     Ref<Span> span = new Ref<>();
     Ref<Scope> scope = new Ref<>();
     Ref<Long> completionTimeStarted = new Ref<>();
-    AtomicBoolean lookupListenerInited = new AtomicBoolean(false);
+    // The lookup fires firstElementShown once, so the listener must be added when the lookup is created, before its first items.
+    context.getProject().getMessageBus().connect(listenerDisposable)
+      .subscribe(LookupManagerListener.TOPIC, (oldLookup, newLookup) -> {
+        if (newLookup != null && !span.isNull()) {
+          newLookup.addLookupListener(new LookupListener() {
+            @Override
+            public void firstElementShown() {
+              span.get().setAttribute("firstElementShown", System.currentTimeMillis() - completionTimeStarted.get());
+            }
+          });
+        }
+      });
     ApplicationManager.getApplication().getMessageBus().connect(listenerDisposable)
       .subscribe(CompletionPhaseListener.TOPIC, new CompletionPhaseListener() {
         @Override
         public void completionPhaseChanged(boolean isCompletionRunning) {
-          Editor editor = getEditor(context);
-          LookupEx lookup = LookupManager.getActiveLookup(editor);
-          if (lookup != null && !lookupListenerInited.get()) {
-            lookup.addLookupListener(new LookupListener() {
-              @Override
-              public void firstElementShown() {
-                span.get().setAttribute("firstElementShown", System.currentTimeMillis() - completionTimeStarted.get());
-              }
-            });
-            lookupListenerInited.set(true);
-          }
           if (!isCompletionRunning && !CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class) && !span.isNull()) {
             if (CompletionServiceImpl.getCurrentCompletionProgressIndicator() == null) {
               String description =
