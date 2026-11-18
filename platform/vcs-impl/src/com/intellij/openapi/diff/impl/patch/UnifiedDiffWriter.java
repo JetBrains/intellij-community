@@ -31,14 +31,14 @@ public final class UnifiedDiffWriter {
   private static final @NonNls String INDEX_SIGNATURE = "Index: {0}{1}";
   public static final @NonNls String SUBJECT_HEADER = "Subject: [PATCH] ";
   public static final @NonNls String HEADER_END_MARKER = "---";
-  public static final @NonNls String ADDITIONAL_PREFIX = "IDEA additional info:";
-  public static final @NonNls String ADD_INFO_HEADER = "Subsystem: ";
-  public static final @NonNls String ADD_INFO_LINE_START = "<+>";
+  public static final @NonNls String ADDITIONAL_PREFIX = PatchFormatConstants.ADDITIONAL_PREFIX;
+  public static final @NonNls String ADD_INFO_HEADER = PatchFormatConstants.ADD_INFO_HEADER;
+  public static final @NonNls String ADD_INFO_LINE_START = PatchFormatConstants.ADD_INFO_LINE_START;
   private static final String HEADER_SEPARATOR = "===================================================================";
-  public static final @NonNls String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
-  public static final @NonNls String DEV_NULL = "/dev/null";
-  public static final @NonNls String A_PREFIX = "a/";
-  public static final @NonNls String B_PREFIX = "b/";
+  public static final @NonNls String NO_NEWLINE_SIGNATURE = PatchFormatConstants.NO_NEWLINE_SIGNATURE;
+  public static final @NonNls String DEV_NULL = PatchFormatConstants.DEV_NULL;
+  public static final @NonNls String A_PREFIX = PatchFormatConstants.A_PREFIX;
+  public static final @NonNls String B_PREFIX = PatchFormatConstants.B_PREFIX;
 
   private UnifiedDiffWriter() {
   }

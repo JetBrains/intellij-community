@@ -31,7 +31,7 @@ import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.findAll;
 
 public final class PatchReader {
-  public static final @NonNls String NO_NEWLINE_SIGNATURE = UnifiedDiffWriter.NO_NEWLINE_SIGNATURE;
+  public static final @NonNls String NO_NEWLINE_SIGNATURE = PatchFormatConstants.NO_NEWLINE_SIGNATURE;
   private final List<String> myLines;
   private final PatchReader.PatchContentParser myPatchContentParser;
   private final AdditionalInfoParser myAdditionalInfoParser;
@@ -78,8 +78,7 @@ public final class PatchReader {
     if (!map.isEmpty()) {
       final Map<String, CharSequence> inner = map.get(relativeFilePath);
       if (inner != null) {
-        BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class);
-        return inner.get(baseRevisionTextPatchEP.getName());
+        return inner.get(PatchFormatConstants.BASE_REVISION_TEXT_SUBSYSTEM);
       }
     }
     return null;
@@ -195,7 +194,7 @@ public final class PatchReader {
     @Override
     public boolean testIsStart(String start) {
       if (myIgnoreMode || mySyntaxException != null) return false;  // stop on first error
-      return start != null && start.contains(UnifiedDiffWriter.ADDITIONAL_PREFIX);
+      return start != null && start.contains(PatchFormatConstants.ADDITIONAL_PREFIX);
     }
 
     @Override
@@ -210,7 +209,7 @@ public final class PatchReader {
       }
       while (true) {
         final String header = iterator.next();
-        final int idxHead = header.indexOf(UnifiedDiffWriter.ADD_INFO_HEADER);
+        final int idxHead = header.indexOf(PatchFormatConstants.ADD_INFO_HEADER);
         if (idxHead == -1) {
           if (myAddMap.isEmpty()) {
             mySyntaxException = new PatchSyntaxException(iterator.previousIndex(), VcsBundle.message("patch.empty.additional.info.header"));
@@ -219,7 +218,7 @@ public final class PatchReader {
           return;
         }
 
-        final String subsystem = header.substring(idxHead + UnifiedDiffWriter.ADD_INFO_HEADER.length()).trim();
+        final String subsystem = header.substring(idxHead + PatchFormatConstants.ADD_INFO_HEADER.length()).trim();
         if (!iterator.hasNext()) {
           mySyntaxException = new PatchSyntaxException(iterator.previousIndex(),
                                                        VcsBundle.message("patch.empty.0.data.section", subsystem));
@@ -230,14 +229,14 @@ public final class PatchReader {
         myAddMap.put(subsystem, sb);
         while (iterator.hasNext()) {
           final String line = iterator.next();
-          if (!line.startsWith(UnifiedDiffWriter.ADD_INFO_LINE_START)) {
+          if (!line.startsWith(PatchFormatConstants.ADD_INFO_LINE_START)) {
             iterator.previous();
             break;
           }
           if (!sb.isEmpty()) {
             sb.append("\n");
           }
-          sb.append(StringUtil.unescapeStringCharacters(line.substring(UnifiedDiffWriter.ADD_INFO_LINE_START.length())));
+          sb.append(StringUtil.unescapeStringCharacters(line.substring(PatchFormatConstants.ADD_INFO_LINE_START.length())));
         }
       }
     }
@@ -583,8 +582,8 @@ public final class PatchReader {
     }
 
     static @Nullable String stripPatchNameIfNeeded(@NotNull String fileName, boolean before) {
-      if (UnifiedDiffWriter.DEV_NULL.equals(fileName)) return null;
-      String prefix = before ? UnifiedDiffWriter.A_PREFIX : UnifiedDiffWriter.B_PREFIX;
+      if (PatchFormatConstants.DEV_NULL.equals(fileName)) return null;
+      String prefix = before ? PatchFormatConstants.A_PREFIX : PatchFormatConstants.B_PREFIX;
       return StringUtil.trimStart(fileName, prefix);
     }
   }

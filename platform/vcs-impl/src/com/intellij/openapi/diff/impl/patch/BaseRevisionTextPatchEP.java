@@ -33,7 +33,7 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
 
   @Override
   public @NotNull String getName() {
-    return "com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP";
+    return PatchFormatConstants.BASE_REVISION_TEXT_SUBSYSTEM;
   }
 
   @Override
