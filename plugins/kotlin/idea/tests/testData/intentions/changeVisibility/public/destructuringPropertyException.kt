@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// K2_ERROR: SYNTAX
+// K2_ERROR: NON_LOCAL_DESTRUCTURING_DECLARATION
 
 // See KT-7929: exception
 class C {
