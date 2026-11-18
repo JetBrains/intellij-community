@@ -13,7 +13,7 @@ import com.intellij.openapi.startup.ProjectActivity
 
  Full list of settings in Pycharm group with weights and configurables ids:
 
- Interpreter, weight=200 (set in XML) / projectConfigurable "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+ All Interpreters, weight=199 (set in XML) / projectConfigurable "com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyAllInterpretersConfigurable"
  Type Engine, weight=190 (set in XML) / projectConfigurable "com.intellij.python.lsp.core.PyTypeEngineConfigurable"
  Debugger, weight=80 (set here), width=119 (set in XML) / projectConfigurable "reference.idesettings.debugger.python"
    - TypeRenderers / applicationConfigurable "debugger.dataViews.python.type.renderers"
@@ -54,6 +54,11 @@ internal class PyCharmProjectConfigurableStartupActivity : ProjectActivity {
         "com.intellij.python.pro.flask.configuration.FlaskConfigurable" -> {
           ep.groupId = PYTHON_GROUP_ID
           ep.groupWeight = 40
+        }
+        // The plugin puts the Workspace page in the Python group. PyCharm shows it at the top level.
+        "com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurable" -> {
+          ep.groupId = "root"
+          ep.groupWeight = 1010
         }
       }
     }

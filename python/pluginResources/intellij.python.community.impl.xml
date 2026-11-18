@@ -234,6 +234,28 @@
                          key="python.packaging.repository.configurable.name"
                          nonDefaultProject="true"/>
     <projectSettings service="com.jetbrains.python.sdk.PyVirtualEnvVcsSettings"/>
+
+    <!-- The interpreter settings of every IDE with the Python plugin (PY-89840). PyCharm moves the Workspace page to the
+      top level, see PyCharmProjectConfigurableStartupActivity. The ids keep their old names, so saved settings and
+      links still find the pages. -->
+    <projectConfigurable groupId="python.group.settings"
+                         id="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyAllInterpretersConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyAllInterpretersConfigurable.display.name"
+                         instance="com.jetbrains.python.configuration.interpreter.PyAllInterpretersConfigurable"
+                         groupWeight="199"/>
+    <projectConfigurable groupId="python.group.settings"
+                         id="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyWorkspaceStructureConfigurable.display.name"
+                         instance="com.jetbrains.python.configuration.interpreter.PyWorkspaceStructureConfigurable"
+                         groupWeight="200"
+                         nonDefaultProject="true"/>
+    <!-- "Auto-configure project workspace from pyproject.toml" checkbox + cleanup on the Workspace Structure page. -->
+    <registryKey defaultValue="true"
+                 description="Show the 'Auto-configure project workspace from pyproject.toml' checkbox on the Workspace Structure page. When off, the checkbox and the cleanup it triggers are hidden entirely."
+                 key="python.pyproject.toggle.in.settings"
+                 restartRequired="false"/>
   </extensions>
 
   <projectListeners>

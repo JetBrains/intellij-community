@@ -27,10 +27,8 @@ import org.jetbrains.annotations.ApiStatus
  * Public entry point that opens the legacy [PythonPathDialog] for a given [Sdk].
  *
  * [PythonPathDialog] and [PythonPathEditor] are package-private to `com.jetbrains.python.configuration`,
- * so downstream modules (redesigned "All Interpreters" page — PY-89840) can't instantiate them
- * directly. This wrapper mirrors [PythonInterpreterMasterDetails.ShowPathsAction]'s legacy flow
- * (`reset → showAndGet → apply → commitChanges → reload`) so the new page keeps the exact same
- * commit / reload semantics without duplicating the four-step orchestration on the caller side.
+ * so other packages, such as the All Interpreters page (PY-89840), cannot instantiate them directly. This wrapper runs
+ * the flow `reset → showAndGet → apply → commitChanges → reload`, so the caller does not repeat it.
  */
 @ApiStatus.Internal
 object PyInterpreterPathsDialogLauncher {
@@ -49,7 +47,6 @@ object PyInterpreterPathsDialogLauncher {
       // re-detection: `PythonInterpreterUpdater` walks the SDK binary again and refreshes version +
       // site-packages / typeshed roots. Without this callback the toolbar button would only
       // refresh the editor's view of already-known roots, not re-scan the interpreter itself.
-      // Same wiring as legacy `PythonInterpreterMasterDetails.ShowPathsAction` (`reloadSdk`).
       editor.addReloadPathsActionCallback { PythonInterpreterUpdater.getInstance(project).request(sdk, PythonInterpreterUpdateRequest(packages = true, background = false)) }
       val sdkModificator = sdk.sdkModificator
       val dialog = PythonPathDialog(project, editor)

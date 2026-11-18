@@ -102,15 +102,10 @@ private fun EvoLeafDto.toStubAction(): AnAction = object : AnAction({ title }, {
 /** Synthetic node id for the "Shortcuts" autoconfigure rows (the backend ignores it for a [EvoRowAction.Autoconfigure] ref). */
 private const val SHORTCUTS_NODE_ID: String = EvoNodeIds.SHORTCUTS
 
-/** The project's Python interpreter settings page, matched by id the way `ShowSettingsUtil` matches one. */
-private const val PY_INTERPRETER_CONFIGURABLE_ID: String = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-
 /**
- * The redesigned "Workspace Structure" / "Project Structure" page (PY-89840). Duplicated as a
- * string literal on purpose: `intellij.python.sdk.frontend` has no back-dependency on the
- * `intellij.pycharm.community.ide.impl` module that owns `PyWorkspaceStructureConfigurable`, so
- * we address it the same way `ShowSettingsUtil` does — by its configurable id. Keep in sync with
- * `PyWorkspaceStructureConfigurable.ID`.
+ * The Workspace page, where each module of a Python project sets its interpreter (PY-89840). A string literal on
+ * purpose: `intellij.python.sdk.frontend` has no dependency on `intellij.python.community.impl`, which owns the page,
+ * so it addresses the page by its id, as `ShowSettingsUtil` does. Keep in sync with `PY_WORKSPACE_CONFIGURABLE_ID`.
  */
 private const val PY_WORKSPACE_STRUCTURE_CONFIGURABLE_ID: String =
   "com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurable"
@@ -578,7 +573,7 @@ class EvoPySdkSwitchPopupFactory(
     object : AnAction({ PySdkFrontendBundle.message("evo.sdk.status.bar.popup.interpreter.settings") },
                       { "" }, AllIcons.General.Settings), DumbAware {
       override fun actionPerformed(e: AnActionEvent) {
-        ShowSettingsUtilImpl.showSettingsDialog(project, PY_INTERPRETER_CONFIGURABLE_ID, null)
+        ShowSettingsUtilImpl.showSettingsDialog(project, PY_WORKSPACE_STRUCTURE_CONFIGURABLE_ID, null)
       }
     }
 
