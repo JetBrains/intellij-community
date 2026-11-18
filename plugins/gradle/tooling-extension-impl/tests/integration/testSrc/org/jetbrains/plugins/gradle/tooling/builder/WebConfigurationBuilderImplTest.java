@@ -35,13 +35,13 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
     // Use a non-default charset (UTF-16) to verify custom encoding
     createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
       .applyPlugin("war")
-      .addPostfix(
-        "war {\n" +
-        "  manifestContentCharset = 'UTF-16'\n" +
-        "  manifest {\n" +
-        "    attributes 'Implementation-Title': 'Test Application'\n" +
-        "  }\n" +
-        "}"
+      .addPostfix("""
+          war {
+            manifestContentCharset = 'UTF-16'
+            manifest {
+              attributes 'Implementation-Title': 'Test Application'
+            }
+          }"""
       )
       .generate()
     );
@@ -55,7 +55,7 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
     WebConfiguration webConfiguration = models.getProjectModel(ideaModule, WebConfiguration.class);
     assertNotNull(webConfiguration);
     assertEquals(1, webConfiguration.getWarModels().size());
-    WarModel warModel = webConfiguration.getWarModels().get(0);
+    WarModel warModel = webConfiguration.getWarModels().getFirst();
 
     String manifestContent = warModel.getManifestContent();
     assertNotNull("Manifest content should not be null", manifestContent);
@@ -72,17 +72,17 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
     createProjectFile("project/build.gradle", "");
     createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
       .applyPlugin("war")
-      .addPostfix(
-        "configurations { moreLibs }\n" +
-        "war {\n" +
-        "  from('src/rootContent') { into 'bar' }\n" +
-        "  webInf { from 'src/additionalWebInf' } // adds a file-set to the WEB-INF dir.\n" +
-        "  exclude 'excl'\n" +
-        "  classpath fileTree('additionalLibs') // adds a file-set to the WEB-INF/lib dir.\n" +
-        "  classpath configurations.moreLibs // adds a configuration to the WEB-INF/lib dir.\n" +
-        "  webXml = file('src/someWeb.xml') // copies a file to WEB-INF/web.xml\n" +
-        "  classpath file('src/bbb')\n" +
-        "}"
+      .addPostfix("""
+          configurations { moreLibs }
+          war {
+            from('src/rootContent') { into 'bar' }
+            webInf { from 'src/additionalWebInf' } // adds a file-set to the WEB-INF dir.
+            exclude 'excl'
+            classpath fileTree('additionalLibs') // adds a file-set to the WEB-INF/lib dir.
+            classpath configurations.moreLibs // adds a configuration to the WEB-INF/lib dir.
+            webXml = file('src/someWeb.xml') // copies a file to WEB-INF/web.xml
+            classpath file('src/bbb')
+          }"""
       )
       .generate()
     );
@@ -96,7 +96,7 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
 
     WebConfiguration webConfiguration = models.getProjectModel(ideaModule, WebConfiguration.class);
     assertEquals(1, webConfiguration.getWarModels().size());
-    WarModel warModel = webConfiguration.getWarModels().get(0);
+    WarModel warModel = webConfiguration.getWarModels().getFirst();
 
     String webAppDirPath = FileUtil.toSystemIndependentName(warModel.getWebAppDir().getAbsolutePath());
     assertTrue("Expect", webAppDirPath.endsWith("src/main/webapp"));
