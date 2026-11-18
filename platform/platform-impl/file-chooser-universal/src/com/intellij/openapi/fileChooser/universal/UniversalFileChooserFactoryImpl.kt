@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.FileSaverDialog
+import com.intellij.openapi.fileChooser.NioFileChooserDialog
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory
 import com.intellij.openapi.project.Project
@@ -19,6 +20,10 @@ internal class UniversalFileChooserFactoryImpl : UniversalFileChooserFactory {
   }
 
   override fun createPathChooser(project: Project?, parent: Component?, descriptor: FileChooserDescriptor): PathChooserDialog {
+    return UniversalFileChooser.create(project, parent, descriptor)
+  }
+
+  override fun createNioFileChooser(project: Project?, parent: Component?, descriptor: FileChooserDescriptor): NioFileChooserDialog {
     return UniversalFileChooser.create(project, parent, descriptor)
   }
 

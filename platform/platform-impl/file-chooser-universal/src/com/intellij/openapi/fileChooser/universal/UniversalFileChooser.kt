@@ -27,6 +27,7 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
+import com.intellij.openapi.fileChooser.NioFileChooserDialog
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooser.Panel
@@ -174,7 +175,7 @@ object UniversalFileChooser {
     private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
     private val persistLocation: Boolean = true,
     private val preselectPath: (suspend () -> Path?)? = null
-  ) : DialogWrapper(project, parent, true, IdeModalityType.IDE), FileChooserDialog, PathChooserDialog {
+  ) : DialogWrapper(project, parent, true, IdeModalityType.IDE), FileChooserDialog, PathChooserDialog, NioFileChooserDialog {
     private lateinit var mainPanel: Panel
 
     init {
@@ -200,6 +201,17 @@ object UniversalFileChooser {
     }
 
     /**
+     * Shows the dialog and returns the selected paths without a conversion to virtual files.
+     * When [toSelect] is empty, preselects the path from [preselectPath].
+     * Returns an empty list when the user cancels the dialog.
+     */
+    override fun choose(vararg toSelect: Path, preferLastOverToSelect: Boolean): List<Path> {
+      val explicit = toSelect.firstOrNull()
+      mainPanel.preselect(preferLastOverToSelect, explicit?.let { path -> suspend { path } } ?: preselectPath)
+      return if (showAndGet()) getSelectedFiles() else emptyList()
+    }
+
+    /**
      * Shows the dialog and converts the selection to virtual files.
      * When [toPreselect] is null, preselects the path from [preselectPath].
      * Validates the result with [validateChosenFiles] before it returns the files.
@@ -210,7 +222,7 @@ object UniversalFileChooser {
       var dialog = this
       var preselect = toPreselect
       while (true) {
-        dialog.mainPanel.preselect(preselect?.let { path -> suspend { path } } ?: dialog.preselectPath)
+        dialog.mainPanel.preselect(toSelect = preselect?.let { path -> suspend { path } } ?: dialog.preselectPath)
         if (!dialog.showAndGet()) return null
         val selection = dialog.getSelectedFiles()
         val chosen = toVirtualFiles(descriptor, project, selection)
@@ -424,7 +436,7 @@ object UniversalFileChooser {
         tabbedPane
       }
 
-      preselect(preselectPath)
+      preselect(toSelect = preselectPath)
       updateOkEnabled()
 
       if (leftPanel) {
@@ -642,11 +654,12 @@ object UniversalFileChooser {
 
     /**
      * Navigates to the path from [toSelect], or to the default path when [toSelect] gives null.
+     * When [preferLast] is `true`, navigates to the last opened path instead of the path from [toSelect].
      * A later call or a navigation cancels this request.
      *
      * Call it on the EDT. The returned job completes after the request schedules its navigation on the EDT.
      */
-    fun preselect(toSelect: (suspend () -> Path?)?): Job {
+    fun preselect(preferLast: Boolean = false, toSelect: (suspend () -> Path?)?): Job {
       val requestId = ++preselectRequestId
       return scope.launch {
         withContext(Dispatchers.IO) {
@@ -658,7 +671,7 @@ object UniversalFileChooser {
             logger<UniversalFileChooser>().warn("Failed to compute the path to preselect", e)
             null
           }
-          val target = pathToSelect(requested) ?: return@withContext
+          val target = pathToSelect(requested, preferLast) ?: return@withContext
           val effective = if (descriptor is FileSaverDescriptor && Files.exists(target) && !Files.isDirectory(target)) {
             target.parent ?: target
           }
@@ -676,12 +689,12 @@ object UniversalFileChooser {
       }
     }
 
-    private suspend fun pathToSelect(toSelect: Path?): Path? {
+    private suspend fun pathToSelect(toSelect: Path?, preferLast: Boolean): Path? {
       // Use the last opened path only when one of the shown contributors owns it. The last path is
       // stored per project, and for the default project it can come from an unrelated chooser
       // whose environment is not shown here (see IJPL-254193).
       val last = NioFileChooserUtil.getLastOpenedPath(project)?.takeIf { effectiveContributors.findOwner(it) != null }
-      if (last != null && (toSelect == null || descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT) == true)) {
+      if (last != null && (toSelect == null || preferLast || descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT) == true)) {
         return last
       }
       if (toSelect != null) {

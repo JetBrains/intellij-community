@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.FileSaverDialog
+import com.intellij.openapi.fileChooser.NioFileChooserDialog
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor
 import com.intellij.openapi.project.Project
@@ -33,6 +34,14 @@ interface UniversalFileChooserFactory {
   fun createFileChooser(project: Project?, parent: Component?, descriptor: FileChooserDescriptor): FileChooserDialog
 
   fun createPathChooser(project: Project?, parent: Component?, descriptor: FileChooserDescriptor): PathChooserDialog
+
+  /**
+   * Creates a file chooser that returns the chosen files as [Path] values.
+   *
+   * When [project] is `null`, the chooser uses the default project.
+   */
+  @ApiStatus.Experimental
+  fun createNioFileChooser(project: Project?, parent: Component?, descriptor: FileChooserDescriptor): NioFileChooserDialog
 
   /**
    * Creates a file chooser that shows only the roots of [contributors].
