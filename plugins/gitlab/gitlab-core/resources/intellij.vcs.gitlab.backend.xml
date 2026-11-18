@@ -12,7 +12,6 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
-    <module name="intellij.libraries.markdown"/>
     <module name="intellij.libraries.miglayout.swing"/>
     <module name="intellij.libraries.netty.buffer"/>
     <module name="intellij.libraries.netty.codec.http"/>
@@ -38,7 +37,6 @@
     <module name="intellij.platform.ide.util.netty"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
-    <module name="intellij.platform.markdown.utils"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.statistics"/>

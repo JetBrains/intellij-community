@@ -58,6 +58,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/editor-ui-api:editor-ui",
         "//platform/ide-core",
+        "//libraries/markdown",
+        "//platform/markdown-utils",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab.shared` end

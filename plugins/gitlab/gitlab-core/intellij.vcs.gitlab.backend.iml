@@ -58,8 +58,6 @@
     <orderEntry type="module" module-name="intellij.vcs.git.shared" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
-    <orderEntry type="module" module-name="intellij.libraries.markdown" />
-    <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />

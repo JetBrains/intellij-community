@@ -9,8 +9,8 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_FILE_LINK_PREFIX
-import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_MR_LINK_PREFIX
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinks.OPEN_FILE_LINK_PREFIX
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinks.OPEN_MR_LINK_PREFIX
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath.Companion.extractProjectPath
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

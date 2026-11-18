@@ -82,8 +82,6 @@ jvm_library(
         "//plugins/git4idea/shared",
         "//platform/vcs-log/impl",
         "//platform/vcs-impl",
-        "//libraries/markdown",
-        "//platform/markdown-utils",
         "//libraries/miglayout-swing",
         "//libraries/caffeine",
         "//platform/diff-impl",
