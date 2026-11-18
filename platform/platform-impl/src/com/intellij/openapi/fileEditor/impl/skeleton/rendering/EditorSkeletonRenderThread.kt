@@ -19,13 +19,13 @@ import java.util.concurrent.Executors
 /**
  * The thread that renders the frames of each registered [EditorSkeletonWindowRenderer].
  *
- * The thread serves only the skeleton, so a frame does not wait for the EDT or for [kotlinx.coroutines.Dispatchers.Default].
+ * A frame does not wait for the EDT or for [kotlinx.coroutines.Dispatchers.Default].
  * The thread does not wake up while no renderer is registered.
  */
 @Service(Service.Level.APP)
 internal class EditorSkeletonRenderThread(private val coroutineScope: CoroutineScope) {
   private val dispatcher = Executors.newSingleThreadScheduledExecutor(
-    ConcurrencyUtil.newNamedThreadFactory("Editor Skeleton Renderer", true, Thread.MAX_PRIORITY),
+    ConcurrencyUtil.newNamedThreadFactory("Editor Skeleton Renderer", true, Thread.NORM_PRIORITY),
   ).asCoroutineDispatcher()
   private val renderers = MutableStateFlow<Set<EditorSkeletonWindowRenderer>>(emptySet())
 
@@ -80,8 +80,9 @@ internal class EditorSkeletonRenderThread(private val coroutineScope: CoroutineS
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
-      LOG.warn("The editor skeleton cannot render into the window. The skeleton continues with Swing repaints.", e)
-      renderer.useSwingRepaints()
+      if (renderer.renderFailed()) {
+        LOG.warn("The editor skeleton cannot render into the window. The skeleton stops its frames off the EDT.", e)
+      }
     }
   }
 }

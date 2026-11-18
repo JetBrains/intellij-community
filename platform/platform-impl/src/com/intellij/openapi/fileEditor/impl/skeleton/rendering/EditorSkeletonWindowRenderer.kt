@@ -9,6 +9,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
+import java.awt.Component
+import java.awt.Container
 import java.awt.Frame
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -23,18 +25,21 @@ import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
 import java.awt.event.WindowEvent
 import java.awt.event.WindowStateListener
+import java.awt.geom.Area
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import java.util.Collections
+import java.util.IdentityHashMap
 import javax.swing.JComponent
-import javax.swing.JLayeredPane
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
 /**
- * Renders the skeleton off the EDT into the graphics of its window. It is a lightweight component, so it does not turn on AWT mixing.
+ * Renders the skeleton off the EDT into the graphics of its window. The renderer does not turn on AWT mixing.
  *
- * [renderThread] renders the frames while the renderer is showing and its window is not minimized.
- * While an overlay can be on top of the renderer, a frame goes through a Swing repaint, so the overlay stays on top.
+ * [renderThread] renders a frame while the renderer is showing and its window is not minimized, each time the colors change.
+ * A frame does not draw over a component that Swing paints on top of the renderer.
+ * While such a component is large, or the glass pane paints over the renderer, a frame goes through a Swing repaint.
  * The EDT paints the current frame each time Swing repaints the renderer.
  */
 internal class EditorSkeletonWindowRenderer(
@@ -50,20 +55,23 @@ internal class EditorSkeletonWindowRenderer(
   private var stopped = false
 
   @Volatile
-  private var swingRepaintsOnly = false
+  private var failed = false
 
   private var frames: EditorSkeletonFrames? = null
   private val targetUpdater = TargetUpdater()
-  private var trackedRootPane: JRootPane? = null
+  private var trackedContainers: Set<Container> = emptySet()
+  private var trackedComponents: Set<Component> = emptySet()
   private var trackedWindow: Window? = null
+
   private val backBuffer = EditorSkeletonBackBuffer()
   private var renderedTarget: EditorSkeletonWindowTarget? = null
   private var renderedColors: EditorSkeletonColorManager.FrameColors? = null
+  private var lastChangeNanos = 0L
+  private var settled = true
 
   init {
     isOpaque = true
     isFocusable = false
-    addComponentListener(targetUpdater)
     addHierarchyListener(targetUpdater)
     addHierarchyBoundsListener(targetUpdater)
     addPropertyChangeListener("graphicsConfiguration", targetUpdater)
@@ -85,8 +93,16 @@ internal class EditorSkeletonWindowRenderer(
     updateTarget()
   }
 
+  @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
+  override fun reshape(x: Int, y: Int, w: Int, h: Int) {
+    super.reshape(x, y, w, h)
+    if (frames != null) {
+      updateTarget()
+    }
+  }
+
   override fun removeNotify() {
-    track(rootPane = null, window = null)
+    track(containers = emptySet(), components = emptySet(), window = null)
     publish(null)
     super.removeNotify()
   }
@@ -98,6 +114,9 @@ internal class EditorSkeletonWindowRenderer(
       g.fillRect(0, 0, width, height)
       return
     }
+    if (isTargetStale()) {
+      updateTarget()
+    }
     frames.paint(g as Graphics2D, width, height, JBUIScale.scale(1f), frames.currentColors())
   }
 
@@ -105,17 +124,25 @@ internal class EditorSkeletonWindowRenderer(
    * Renders one frame when its colors or its target differ from the last rendered frame. Only [EditorSkeletonRenderThread] calls it.
    */
   internal fun renderFrame() {
-    val target = target
-    if (target == null || stopped) {
+    if (stopped || failed) {
+      renderThread.unregister(this)
       return
     }
+    val target = target ?: return
     val colors = target.frames.currentColors()
+    val now = System.nanoTime()
     if (colors == renderedColors && target === renderedTarget) {
+      if (!settled && now - lastChangeNanos > SETTLE_NANOS) {
+        settled = true
+        repaint()
+      }
       return
     }
-    if (target.covered || swingRepaintsOnly) {
+    lastChangeNanos = now
+    if (target.covered) {
       repaint()
       rendered(target, colors)
+      settled = true
       return
     }
     val buffer = backBuffer.createOrUpdateImageBuffer(target.graphicsConfiguration, target.width, target.height)
@@ -125,12 +152,16 @@ internal class EditorSkeletonWindowRenderer(
     if (buffer.contentsLost()) {
       return
     }
-    val windowGraphics = target.window.graphics ?: return
+    val windowGraphics = target.window.graphics as? Graphics2D ?: return
     windowGraphics.use { g ->
       g.clipRect(target.clip.x, target.clip.y, target.clip.width, target.clip.height)
+      if (target.excluded.isNotEmpty()) {
+        g.clip(clipWithoutOverlays(target))
+      }
       g.drawImage(buffer, target.origin.x, target.origin.y, null)
     }
     rendered(target, colors)
+    settled = false
     if (this.target !== target) {
       target.rootPane.repaint(target.rootPaneClip)
     }
@@ -142,13 +173,19 @@ internal class EditorSkeletonWindowRenderer(
   internal fun releaseBackBuffer() {
     backBuffer.release()
     rendered(target = null, colors = null)
+    settled = true
   }
 
   /**
-   * Makes each later frame go through a Swing repaint. [EditorSkeletonRenderThread] calls it after a frame fails.
+   * Stops the frames off the EDT for good, and asks Swing for the current frame.
+   * [EditorSkeletonRenderThread] calls it after a frame fails. It returns `true` only for the first failure.
    */
-  internal fun useSwingRepaints() {
-    swingRepaintsOnly = true
+  internal fun renderFailed(): Boolean {
+    val first = !failed
+    failed = true
+    renderThread.unregister(this)
+    repaint()
+    return first
   }
 
   private fun rendered(target: EditorSkeletonWindowTarget?, colors: EditorSkeletonColorManager.FrameColors?) {
@@ -162,26 +199,46 @@ internal class EditorSkeletonWindowRenderer(
   }
 
   private fun publish(newTarget: EditorSkeletonWindowTarget?) {
-    target = newTarget
-    if (newTarget != null && !stopped) {
+    val oldTarget = target
+    if (newTarget != oldTarget) {
+      target = newTarget
+      if (oldTarget != null && (newTarget == null || newTarget.window !== oldTarget.window || newTarget.clip != oldTarget.clip)) {
+        oldTarget.rootPane.repaint(oldTarget.rootPaneClip)
+      }
+    }
+    if (newTarget != null && !stopped && !failed) {
       renderThread.register(this)
     } else {
       renderThread.unregister(this)
     }
   }
 
-  private fun updateTarget() {
-    val rootPane = if (isShowing) rootPane else null
-    track(rootPane, rootPane?.let { SwingUtilities.getWindowAncestor(it) })
-    publish(computeTarget(rootPane))
+  private fun isTargetStale(): Boolean {
+    val target = target ?: return isShowing
+    val origin = SwingUtilities.convertPoint(this, 0, 0, target.window)
+    return origin != target.origin || width != target.width || height != target.height
   }
 
-  private fun computeTarget(rootPane: JRootPane?): EditorSkeletonWindowTarget? {
+  private fun updateTarget() {
+    val rootPane = if (isShowing) rootPane else null
+    val window = rootPane?.let { SwingUtilities.getWindowAncestor(it) }
+    if (rootPane == null || window == null) {
+      track(containers = emptySet(), components = emptySet(), window = null)
+      publish(null)
+      return
+    }
+    val containers = identitySet<Container>()
+    val components = identitySet<Component>()
+    collectOverlayHolders(rootPane, containers, components)
+    track(containers, components, window)
+    publish(computeTarget(rootPane, window))
+  }
+
+  private fun computeTarget(rootPane: JRootPane, window: Window): EditorSkeletonWindowTarget? {
     val frames = frames
-    if (frames == null || stopped || rootPane == null || width <= 0 || height <= 0) {
+    if (frames == null || stopped || failed || width <= 0 || height <= 0) {
       return null
     }
-    val window = SwingUtilities.getWindowAncestor(this) ?: return null
     if (window is Frame && (window.extendedState and Frame.ICONIFIED) != 0) {
       return null
     }
@@ -190,41 +247,138 @@ internal class EditorSkeletonWindowRenderer(
     if (visibleRect.isEmpty) {
       return null
     }
+    val clip = SwingUtilities.convertRectangle(this, visibleRect, window)
+    val overlays = findOverlays(rootPane, window, clip)
     return EditorSkeletonWindowTarget(
       window = window,
       graphicsConfiguration = graphicsConfiguration,
       origin = SwingUtilities.convertPoint(this, 0, 0, window),
       width = width,
       height = height,
-      clip = SwingUtilities.convertRectangle(this, visibleRect, window),
+      clip = clip,
+      excluded = overlays.excluded,
       rootPane = rootPane,
       rootPaneClip = SwingUtilities.convertRectangle(this, visibleRect, rootPane),
       scale = JBUIScale.scale(1f),
-      covered = isCovered(rootPane, SwingUtilities.convertRectangle(this, visibleRect, rootPane.layeredPane)),
+      covered = overlays.covered,
       frames = frames,
     )
   }
 
-  private fun isCovered(rootPane: JRootPane, area: Rectangle): Boolean {
-    if (rootPane.glassPane.isVisible) {
-      return true
-    }
-    val layeredPane = rootPane.layeredPane
-    for (component in layeredPane.components) {
-      val isOverlay = layeredPane.getLayer(component) > JLayeredPane.FRAME_CONTENT_LAYER
-      if (isOverlay && component.isVisible && component.bounds.intersects(area)) {
-        return true
+  /**
+   * Finds the components that Swing paints on top of the renderer within [clip]: the siblings before each ancestor of the renderer,
+   * and the children of the glass pane.
+   */
+  private fun findOverlays(rootPane: JRootPane, window: Window, clip: Rectangle): Overlays {
+    val excluded = ArrayList<Rectangle>()
+    var covered = false
+    forEachComponentOnTop(rootPane) { parent, component ->
+      if (!component.isVisible) {
+        return@forEachComponentOnTop
       }
+      if (component === rootPane.glassPane) {
+        if (paintsOverChildren(component)) {
+          covered = true
+          return@forEachComponentOnTop
+        }
+        for (child in (component as? Container)?.components.orEmpty()) {
+          if (child.isVisible) {
+            addOverlay(SwingUtilities.convertRectangle(component, child.bounds, window), clip, excluded)
+          }
+        }
+        return@forEachComponentOnTop
+      }
+      addOverlay(SwingUtilities.convertRectangle(parent, component.bounds, window), clip, excluded)
     }
-    return false
+    val excludedArea = excluded.sumOf { it.width.toLong() * it.height.toLong() }
+    if (excludedArea * LARGE_OVERLAY_DIVISOR > clip.width.toLong() * clip.height.toLong()) {
+      covered = true
+    }
+    return Overlays(excluded = if (covered) emptyList() else excluded, covered = covered)
   }
 
-  private fun track(rootPane: JRootPane?, window: Window?) {
-    if (rootPane !== trackedRootPane) {
-      trackedRootPane?.let { untrackRootPane(it) }
-      rootPane?.let { trackRootPane(it) }
-      trackedRootPane = rootPane
+  private fun addOverlay(bounds: Rectangle, clip: Rectangle, excluded: MutableList<Rectangle>) {
+    val overlap = bounds.intersection(clip)
+    if (!overlap.isEmpty) {
+      excluded.add(overlap)
     }
+  }
+
+  private fun paintsOverChildren(glassPane: Component): Boolean {
+    return glassPane !is JComponent || glassPane.isOpaque || !glassPane.isOptimizedDrawingEnabled
+  }
+
+  private fun collectOverlayHolders(rootPane: JRootPane, containers: MutableSet<Container>, components: MutableSet<Component>) {
+    var ancestor: Container? = parent
+    while (ancestor != null && ancestor !is Window) {
+      containers.add(ancestor)
+      ancestor = ancestor.parent
+    }
+    forEachComponentOnTop(rootPane) { _, component ->
+      components.add(component)
+      if (component === rootPane.glassPane && component is Container) {
+        containers.add(component)
+        components.addAll(component.components)
+      }
+    }
+  }
+
+  /**
+   * Calls [action] for each component that Swing paints after the branch of the renderer.
+   * It goes from the parent of the renderer up to [rootPane].
+   * Swing paints the child at index 0 of a container last, so the children before the branch are on top of it.
+   */
+  private inline fun forEachComponentOnTop(rootPane: JRootPane, action: (parent: Container, component: Component) -> Unit) {
+    var branch: Component = this
+    var parent: Container? = branch.parent
+    while (parent != null && parent !is Window) {
+      val index = parent.getComponentZOrder(branch)
+      for (i in 0 until index) {
+        action(parent, parent.getComponent(i))
+      }
+      if (parent === rootPane) {
+        return
+      }
+      branch = parent
+      parent = parent.parent
+    }
+  }
+
+  private fun clipWithoutOverlays(target: EditorSkeletonWindowTarget): Area {
+    val area = Area(target.clip)
+    for (overlay in target.excluded) {
+      area.subtract(Area(overlay))
+    }
+    return area
+  }
+
+  private fun track(containers: Set<Container>, components: Set<Component>, window: Window?) {
+    for (container in trackedContainers) {
+      if (container !in containers) {
+        container.removeContainerListener(targetUpdater)
+      }
+    }
+    for (container in containers) {
+      if (container !in trackedContainers) {
+        container.addContainerListener(targetUpdater)
+      }
+    }
+    for (component in trackedComponents) {
+      if (component !in components) {
+        component.removeComponentListener(targetUpdater)
+        component.removeHierarchyListener(targetUpdater)
+        component.removePropertyChangeListener(OPAQUE_PROPERTY, targetUpdater)
+      }
+    }
+    for (component in components) {
+      if (component !in trackedComponents) {
+        component.addComponentListener(targetUpdater)
+        component.addHierarchyListener(targetUpdater)
+        component.addPropertyChangeListener(OPAQUE_PROPERTY, targetUpdater)
+      }
+    }
+    trackedContainers = containers
+    trackedComponents = components
     if (window !== trackedWindow) {
       trackedWindow?.removeWindowStateListener(targetUpdater)
       window?.addWindowStateListener(targetUpdater)
@@ -232,21 +386,7 @@ internal class EditorSkeletonWindowRenderer(
     }
   }
 
-  private fun trackRootPane(rootPane: JRootPane) {
-    rootPane.layeredPane.addContainerListener(targetUpdater)
-    for (component in rootPane.layeredPane.components) {
-      component.addComponentListener(targetUpdater)
-    }
-    rootPane.glassPane.addComponentListener(targetUpdater)
-  }
-
-  private fun untrackRootPane(rootPane: JRootPane) {
-    rootPane.layeredPane.removeContainerListener(targetUpdater)
-    for (component in rootPane.layeredPane.components) {
-      component.removeComponentListener(targetUpdater)
-    }
-    rootPane.glassPane.removeComponentListener(targetUpdater)
-  }
+  private class Overlays(val excluded: List<Rectangle>, val covered: Boolean)
 
   private inner class TargetUpdater :
     ComponentListener,
@@ -284,12 +424,10 @@ internal class EditorSkeletonWindowRenderer(
     }
 
     override fun componentAdded(e: ContainerEvent) {
-      e.child.addComponentListener(this)
       updateTarget()
     }
 
     override fun componentRemoved(e: ContainerEvent) {
-      e.child.removeComponentListener(this)
       updateTarget()
     }
 
@@ -302,3 +440,18 @@ internal class EditorSkeletonWindowRenderer(
     }
   }
 }
+
+private fun <T> identitySet(): MutableSet<T> = Collections.newSetFromMap(IdentityHashMap())
+
+private const val OPAQUE_PROPERTY = "opaque"
+
+/**
+ * The overlays may hide at most one quarter of the renderer. Above that, the frames go through Swing repaints.
+ */
+private const val LARGE_OVERLAY_DIVISOR = 4L
+
+/**
+ * The time after the last color change when the render thread asks Swing to paint the current frame once.
+ * Then the Swing back buffer holds the current frame.
+ */
+private const val SETTLE_NANOS = 250_000_000L

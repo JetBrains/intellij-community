@@ -8,18 +8,20 @@ import java.awt.Window
 import javax.swing.JRootPane
 
 /**
- * The place of one [EditorSkeletonWindowRenderer] frame, as the EDT saw it. The EDT makes a new target for each change.
+ * The place of one [EditorSkeletonWindowRenderer] frame, as the EDT saw it. Two targets with equal values describe the same place.
  *
- * [origin] and [clip] are in the coordinates of [window]. [rootPaneClip] is the same area in the coordinates of [rootPane].
- * While [covered] is true, an overlay can be on top of the renderer, so a frame goes through a Swing repaint.
+ * [origin], [clip] and [excluded] are in the coordinates of [window]. [rootPaneClip] is [clip] in the coordinates of [rootPane].
+ * A frame draws into [clip] except [excluded], the areas of the overlays on top of the renderer.
+ * While [covered] is true, the overlays or the glass pane can paint anywhere on the renderer, so a frame goes through a Swing repaint.
  */
-internal class EditorSkeletonWindowTarget(
+internal data class EditorSkeletonWindowTarget(
   val window: Window,
   val graphicsConfiguration: GraphicsConfiguration,
   val origin: Point,
   val width: Int,
   val height: Int,
   val clip: Rectangle,
+  val excluded: List<Rectangle>,
   val rootPane: JRootPane,
   val rootPaneClip: Rectangle,
   val scale: Float,
