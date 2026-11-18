@@ -1,18 +1,18 @@
 com.jetbrains.python.extensions.ContextAnchor
+- a:getInterpreter():com.intellij.python.sdk.backend.PythonInterpreter
 - a:getProject():com.intellij.openapi.project.Project
 - a:getQualifiedNameResolveContext():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 - getRoots():com.intellij.openapi.vfs.VirtualFile[]
 - a:getScope():com.intellij.psi.search.GlobalSearchScope
-- a:getSdk():com.intellij.openapi.projectRoots.Sdk
 f:com.jetbrains.python.extensions.ModuleBasedContextAnchor
 - com.jetbrains.python.extensions.ContextAnchor
 - <init>(com.intellij.openapi.module.Module):V
+- getInterpreter():com.intellij.python.sdk.backend.PythonInterpreter
 - f:getModule():com.intellij.openapi.module.Module
 - getProject():com.intellij.openapi.project.Project
 - getQualifiedNameResolveContext():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 - getRoots():com.intellij.openapi.vfs.VirtualFile[]
 - getScope():com.intellij.psi.search.GlobalSearchScope
-- getSdk():com.intellij.openapi.projectRoots.Sdk
 f:com.jetbrains.python.extensions.NameAndElement
 - <init>(com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement):V
 - f:component1():com.intellij.psi.util.QualifiedName
@@ -23,30 +23,30 @@ f:com.jetbrains.python.extensions.NameAndElement
 - f:getElement():com.intellij.psi.PsiElement
 - f:getName():com.intellij.psi.util.QualifiedName
 - hashCode():I
-f:com.jetbrains.python.extensions.ProjectSdkContextAnchor
+f:com.jetbrains.python.extensions.ProjectContextAnchor
 - com.jetbrains.python.extensions.ContextAnchor
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):V
+- getInterpreter():com.intellij.python.sdk.backend.PythonInterpreter
 - getProject():com.intellij.openapi.project.Project
 - getQualifiedNameResolveContext():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 - getRoots():com.intellij.openapi.vfs.VirtualFile[]
 - getScope():com.intellij.psi.search.GlobalSearchScope
-- getSdk():com.intellij.openapi.projectRoots.Sdk
 f:com.jetbrains.python.extensions.QNameResolveContext
-- <init>(com.jetbrains.python.extensions.ContextAnchor,com.intellij.openapi.projectRoots.Sdk,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z):V
-- b:<init>(com.jetbrains.python.extensions.ContextAnchor,com.intellij.openapi.projectRoots.Sdk,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.jetbrains.python.extensions.ContextAnchor,com.intellij.python.sdk.backend.PythonInterpreter,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z):V
+- b:<init>(com.jetbrains.python.extensions.ContextAnchor,com.intellij.python.sdk.backend.PythonInterpreter,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():com.jetbrains.python.extensions.ContextAnchor
-- f:component2():com.intellij.openapi.projectRoots.Sdk
+- f:component2():com.intellij.python.sdk.backend.PythonInterpreter
 - f:component3():com.jetbrains.python.psi.types.TypeEvalContext
 - f:component4():com.intellij.openapi.vfs.VirtualFile
 - f:component5():Z
-- f:copy(com.jetbrains.python.extensions.ContextAnchor,com.intellij.openapi.projectRoots.Sdk,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z):com.jetbrains.python.extensions.QNameResolveContext
-- bs:copy$default(com.jetbrains.python.extensions.QNameResolveContext,com.jetbrains.python.extensions.ContextAnchor,com.intellij.openapi.projectRoots.Sdk,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z,I,java.lang.Object):com.jetbrains.python.extensions.QNameResolveContext
+- f:copy(com.jetbrains.python.extensions.ContextAnchor,com.intellij.python.sdk.backend.PythonInterpreter,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z):com.jetbrains.python.extensions.QNameResolveContext
+- bs:copy$default(com.jetbrains.python.extensions.QNameResolveContext,com.jetbrains.python.extensions.ContextAnchor,com.intellij.python.sdk.backend.PythonInterpreter,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z,I,java.lang.Object):com.jetbrains.python.extensions.QNameResolveContext
 - equals(java.lang.Object):Z
 - f:getAllowInaccurateResult():Z
 - f:getContextAnchor():com.jetbrains.python.extensions.ContextAnchor
 - f:getEvalContext():com.jetbrains.python.psi.types.TypeEvalContext
 - f:getFolderToStart():com.intellij.openapi.vfs.VirtualFile
-- f:getSdk():com.intellij.openapi.projectRoots.Sdk
+- f:getInterpreter():com.intellij.python.sdk.backend.PythonInterpreter
 - hashCode():I
 f:com.jetbrains.python.extensions.QualifiedNameExtKt
 - sf:getElementAndResolvableName(com.intellij.psi.util.QualifiedName,com.jetbrains.python.extensions.QNameResolveContext,Z):com.jetbrains.python.extensions.NameAndElement

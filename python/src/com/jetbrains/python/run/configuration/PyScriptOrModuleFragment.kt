@@ -17,7 +17,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySymbolFieldWithBrowseButton
 import com.jetbrains.python.extensions.ModuleBasedContextAnchor
-import com.jetbrains.python.extensions.ProjectSdkContextAnchor
+import com.jetbrains.python.extensions.ProjectContextAnchor
 import com.jetbrains.python.isPythonModule
 import com.jetbrains.python.run.PythonRunConfiguration
 import org.jetbrains.annotations.ApiStatus
@@ -93,7 +93,7 @@ class PyScriptOrModuleFragment : SettingsEditorFragment<PythonRunConfiguration, 
     hints[scriptField] = PyBundle.message("python.run.configuration.fragments.script.path.hint")
 
     val module = config.module
-    val contentAnchor = if (module == null) ProjectSdkContextAnchor(config.project, config.sdk) else ModuleBasedContextAnchor(module)
+    val contentAnchor = if (module == null) ProjectContextAnchor(config.project, config.pythonInterpreter) else ModuleBasedContextAnchor(module)
     val workingDirectory = config.workingDirectory
     val moduleField = PySymbolFieldWithBrowseButton(
       contentAnchor,

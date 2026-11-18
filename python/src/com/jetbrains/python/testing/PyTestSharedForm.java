@@ -26,7 +26,7 @@ import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.PySymbolFieldWithBrowseButton;
 import com.jetbrains.python.extensions.ContextAnchor;
 import com.jetbrains.python.extensions.ModuleBasedContextAnchor;
-import com.jetbrains.python.extensions.ProjectSdkContextAnchor;
+import com.jetbrains.python.extensions.ProjectContextAnchor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.reflection.ReflectionUtilsKt;
 import com.jetbrains.python.reflection.SimplePropertiesProvider;
@@ -173,7 +173,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
 
 
     ContextAnchor contentAnchor =
-      (module != null ? new ModuleBasedContextAnchor(module) : new ProjectSdkContextAnchor(project, configuration.getSdk()));
+      (module != null ? new ModuleBasedContextAnchor(module) : new ProjectContextAnchor(project, configuration.getPythonInterpreter()));
     myPythonTarget = new PySymbolFieldWithBrowseButton(contentAnchor,
                                                        element -> {
                                                          if (element instanceof PsiDirectory) {
