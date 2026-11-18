@@ -22,6 +22,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -151,6 +152,8 @@ private const val leftPanel: Boolean = false
 private const val defaultWidth: Int = 700
 private const val defaultHeight: Int = 500
 
+private val LOG = logger<UniversalFileChooser>()
+
 object UniversalFileChooser {
   @JvmStatic
   fun canUseIn(project: Project?): Boolean {
@@ -186,13 +189,13 @@ object UniversalFileChooser {
     override fun getDimensionServiceKey(): String? = if (persistLocation) "UniversalFileChooserDialog" else null
 
     override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<out VirtualFile?> {
-      val explicit = toSelect.firstOrNull()?.let { runCatching { it.toNioPath() }.getOrNull() }
+      val explicit = toSelect.firstOrNull()?.let { toNioPathForPreselect(it) }
       val chosen = chooseWithValidation(explicit) ?: return emptyArray()
       return chosen.toArray(VirtualFile.EMPTY_ARRAY)
     }
 
     override fun choose(toSelect: VirtualFile?, callback: Consumer<in MutableList<VirtualFile>>) {
-      val explicit = toSelect?.let { runCatching { it.toNioPath() }.getOrNull() }
+      val explicit = toSelect?.let { toNioPathForPreselect(it) }
       deliverChosenFiles(
         chosen = chooseWithValidation(explicit),
         onChosen = { callback.consume(it.toMutableList()) },
@@ -207,6 +210,7 @@ object UniversalFileChooser {
      */
     override fun choose(vararg toSelect: Path, preferLastOverToSelect: Boolean): List<Path> {
       val explicit = toSelect.firstOrNull()
+      LOG.debug { "Dialog.choose(Path): explicit=$explicit, preferLast=$preferLastOverToSelect, preselectPath=${preselectPath != null}" }
       mainPanel.preselect(preferLastOverToSelect, explicit?.let { path -> suspend { path } } ?: preselectPath)
       return if (showAndGet()) getSelectedFiles() else emptyList()
     }
@@ -222,14 +226,27 @@ object UniversalFileChooser {
       var dialog = this
       var preselect = toPreselect
       while (true) {
+        LOG.debug { "Dialog.chooseWithValidation: preselect=$preselect, preselectPath=${dialog.preselectPath != null}" }
         dialog.mainPanel.preselect(toSelect = preselect?.let { path -> suspend { path } } ?: dialog.preselectPath)
         if (!dialog.showAndGet()) return null
         val selection = dialog.getSelectedFiles()
         val chosen = toVirtualFiles(descriptor, project, selection)
         if (validateChosenFiles(descriptor, project, chosen)) return chosen
         preselect = selection.firstOrNull()
+        LOG.debug { "Dialog.chooseWithValidation: the validation failed, reopening the dialog with $preselect" }
         dialog = Dialog(project, parent, descriptor, contributors, persistLocation)
       }
+    }
+
+    /**
+     * Converts [file] to a NIO path to preselect. Returns null when the conversion fails.
+     */
+    private fun toNioPathForPreselect(file: VirtualFile): Path? {
+      val path = runCatching { file.toNioPath() }
+        .onFailure { e -> if (LOG.isDebugEnabled) LOG.debug("Dialog.choose(VirtualFile): cannot convert $file to a NIO path", e) }
+        .getOrNull()
+      LOG.debug { "Dialog.choose(VirtualFile): toSelect=$file, explicit=$path" }
+      return path
     }
 
     override fun createCenterPanel(): JComponent {
@@ -436,6 +453,7 @@ object UniversalFileChooser {
         tabbedPane
       }
 
+      LOG.debug { "Panel.init: initial preselect, preselectPath=${preselectPath != null}" }
       preselect(toSelect = preselectPath)
       updateOkEnabled()
 
@@ -661,6 +679,7 @@ object UniversalFileChooser {
      */
     fun preselect(preferLast: Boolean = false, toSelect: (suspend () -> Path?)?): Job {
       val requestId = ++preselectRequestId
+      LOG.debug { "Panel.preselect #$requestId: scheduled, preferLast=$preferLast, toSelect=${toSelect != null}" }
       return scope.launch {
         withContext(Dispatchers.IO) {
           val requested = try {
@@ -668,10 +687,15 @@ object UniversalFileChooser {
           }
           catch (e: Exception) {
             rethrowControlFlowException(e)
-            logger<UniversalFileChooser>().warn("Failed to compute the path to preselect", e)
+            LOG.warn("Failed to compute the path to preselect", e)
             null
           }
-          val target = pathToSelect(requested, preferLast) ?: return@withContext
+          LOG.debug { "Panel.preselect #$requestId: requested=$requested" }
+          val target = pathToSelect(requested, preferLast)
+          if (target == null) {
+            LOG.debug { "Panel.preselect #$requestId: no path to select" }
+            return@withContext
+          }
           val effective = if (descriptor is FileSaverDescriptor && Files.exists(target) && !Files.isDirectory(target)) {
             target.parent ?: target
           }
@@ -679,7 +703,11 @@ object UniversalFileChooser {
             target
           }
           runOnEdt {
-            if (requestId != preselectRequestId) return@runOnEdt
+            if (requestId != preselectRequestId) {
+              LOG.debug { "Panel.preselect #$requestId: dropped $effective, because request #$preselectRequestId is newer" }
+              return@runOnEdt
+            }
+            LOG.debug { "Panel.preselect #$requestId: navigating to $effective" }
             navigateToFile(effective, preselectPathText = true)
             if (requested == null) {
               preselectProjectTab(project)
@@ -695,18 +723,23 @@ object UniversalFileChooser {
       // whose environment is not shown here (see IJPL-254193).
       val last = NioFileChooserUtil.getLastOpenedPath(project)?.takeIf { effectiveContributors.findOwner(it) != null }
       if (last != null && (toSelect == null || preferLast || descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT) == true)) {
+        LOG.debug { "Panel.pathToSelect: the last opened path $last, toSelect=$toSelect, preferLast=$preferLast" }
         return last
       }
       if (toSelect != null) {
+        LOG.debug { "Panel.pathToSelect: the explicit path $toSelect" }
         return toSelect
       }
       if (!project.isDefault) {
         val projectPath = project.guessedProjectPath()
         if (projectPath != null) {
+          LOG.debug { "Panel.pathToSelect: the project path $projectPath" }
           return projectPath
         }
       }
-      return getHomeDirectory()
+      val home = getHomeDirectory()
+      LOG.debug { "Panel.pathToSelect: the home directory $home" }
+      return home
     }
 
 
@@ -751,10 +784,14 @@ object UniversalFileChooser {
 
     internal fun navigateToFile(file: Path, preselectPathText: Boolean = false) {
       val index = fileViews.indexOfFirst { it.contributor.ownsPath(file) }
-      if (index < 0) return
+      if (index < 0) {
+        LOG.debug { "Panel.navigateToFile: no tab owns $file" }
+        return
+      }
 
       // Cancel preselect requests scheduled before this navigation
       preselectRequestId++
+      LOG.debug { "Panel.navigateToFile: $file in tab #$index, requests up to #${preselectRequestId - 1} are cancelled" }
       if (fileViews.size > 1) {
         tabbedPane.selectedIndex = index
       }
@@ -1205,7 +1242,7 @@ object UniversalFileChooser {
             }
             catch (e: Exception) {
               rethrowControlFlowException(e)
-              logger<UniversalFileChooser>().warn("Failed to load the roots of ${contributor.tabTitle}", e)
+              LOG.warn("Failed to load the roots of ${contributor.tabTitle}", e)
               withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
                 if (loadRootsJob !== loadJob) return@withContext
                 cacheUpdateJob?.cancel()
