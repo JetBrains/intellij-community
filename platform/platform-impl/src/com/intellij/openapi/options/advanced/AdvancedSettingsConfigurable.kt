@@ -91,18 +91,23 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
   private var searchAlarm: SingleAlarm? = null
 
-  private val searchField = SearchTextField().apply {
-    textEditor.emptyText.text = ApplicationBundle.message("search.advanced.settings")
+  private lateinit var searchField: SearchTextField
 
-    addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        val alarm = searchAlarm ?: createSearchAlarm().also { searchAlarm = it }
-        alarm.cancelAndRequest()
-      }
-    })
+  private fun createSearchField(): SearchTextField {
+    return SearchTextField().apply {
+      textEditor.emptyText.text = ApplicationBundle.message("search.advanced.settings")
+
+      addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          val alarm = searchAlarm ?: createSearchAlarm().also { searchAlarm = it }
+          alarm.cancelAndRequest()
+        }
+      })
+    }
   }
 
   override fun createPanel(): DialogPanel {
+    searchField = createSearchField()
     val extensionSettings = createExtensionSettings()
     val result = panel {
       row {
