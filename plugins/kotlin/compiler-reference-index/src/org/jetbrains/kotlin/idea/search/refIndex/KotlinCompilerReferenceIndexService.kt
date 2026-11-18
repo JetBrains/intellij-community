@@ -21,8 +21,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
@@ -30,6 +32,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -63,6 +66,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceS
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.refIndex.bta.BtaFileWatcher
+import org.jetbrains.kotlin.idea.util.application.isHeadlessEnvironment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -142,25 +146,9 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
     private fun subscribeToEvents() {
         dirtyScopeHolder.installVFSListener(this)
 
-        val connection = project.messageBus.connect(this)
-        connection.subscribe(BuildManagerListener.TOPIC, object : BuildManagerListener {
-            override fun buildStarted(project: Project, sessionId: UUID, isAutomake: Boolean) {
-                if (project === this@KotlinCompilerReferenceIndexService.project) {
-                    compilationStarted()
-                }
-            }
-
-            override fun buildFinished(project: Project, sessionId: UUID, isAutomake: Boolean) {
-                if (project === this@KotlinCompilerReferenceIndexService.project) {
-                    executeOnBuildThread {
-                        compilationFinished()
-                    }
-                }
-            }
-        })
-
         if (isUnitTestMode()) return
 
+        val connection = project.messageBus.connect(this)
         connection.subscribe(PortableCachesLoadListener.TOPIC, object : PortableCachesLoadListener {
             override fun loadingStarted() {
                 withWriteLock { closeStorage() }
@@ -168,25 +156,22 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
         })
 
         // TODO KTIJ-37446 Make Kotlin Compiler Reference Index JPS-agnostic
-        // eager attempt covers reopened projects
+        // eager attempt covers a service that a search creates in a reopened project
         // Note: this needs to run in a different thread to prevent blocking the calling thread when waiting for a read lock
         // and to allow for cancellation when closing the project.
         coroutineScope.launch { installBtaFileWatcherIfApplicable() }
-        // for first-time project `GradleSettings.linkedProjectsSettings` is still empty,
-        // so we retry once Gradle import registers linked projects
-        connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
-            override fun onImportFinished(projectPath: String?) {
-                installBtaFileWatcherIfApplicable()
-            }
-        })
     }
 
     /**
      * Installs the BTA file watcher if / when it is applicable for this project; idempotent
      */
-    @ApiStatus.Internal
-    fun installBtaFileWatcherIfApplicable() {
+    private fun installBtaFileWatcherIfApplicable() {
+        if (btaWatcherInstalled.get()) return
         if (!BtaFileWatcher.isApplicable(project)) return
+        installBtaFileWatcher()
+    }
+
+    private fun installBtaFileWatcher() {
         if (!btaWatcherInstalled.compareAndSet(false, true)) return
         BtaFileWatcher(project).watchIn(coroutineScope) { updatedModules ->
             executeOnBuildThread {
@@ -229,6 +214,52 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
 
             val service = getInstanceIfEnabled(project) ?: return
             executeOnBuildThread(service::markAsUpToDate)
+        }
+    }
+
+    /**
+     * Sends the build events of the [project] to the service.
+     * The first build creates the service, except in a headless environment.
+     */
+    internal class KCRIBuildManagerListener(private val project: Project) : BuildManagerListener {
+        override fun buildStarted(project: Project, sessionId: UUID, isAutomake: Boolean) {
+            if (project !== this.project || project.isDisposed) return
+            val service = project.serviceIfCreated<KotlinCompilerReferenceIndexService>()
+            if (service == null && isHeadlessEnvironment()) {
+                return
+            }
+            // The service must see the build also when the index is disabled, so that it closes the storage.
+            (service ?: get(project)).compilationStarted()
+        }
+
+        override fun buildFinished(project: Project, sessionId: UUID, isAutomake: Boolean) {
+            if (project !== this.project) return
+            // the service that does not exist at the build start has no build to finish
+            val service = project.serviceIfCreated<KotlinCompilerReferenceIndexService>() ?: return
+            executeOnBuildThread(service::compilationFinished)
+        }
+    }
+
+    /**
+     * Installs the BTA file watcher after an external system import.
+     * In a new project, the BTA CRI applies only after the first Gradle import registers the linked projects.
+     */
+    internal class KCRIProjectDataImportListener(private val project: Project) : ProjectDataImportListener {
+        override fun onImportFinished(projectPath: String?) {
+            installBtaFileWatcherIfApplicable(project)
+        }
+    }
+
+    /**
+     * Installs the BTA file watcher in a reopened project.
+     */
+    internal class KCRIStartupActivity : ProjectActivity {
+        init {
+            if (isUnitTestMode() || isHeadlessEnvironment()) throw ExtensionNotApplicableException.create()
+        }
+
+        override suspend fun execute(project: Project) {
+            installBtaFileWatcherIfApplicable(project)
         }
     }
 
@@ -570,6 +601,20 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
         fun getInstanceIfEnabled(project: Project): KotlinCompilerReferenceIndexService? = if (isEnabled(project)) get(project) else null
         fun isEnabled(project: Project): Boolean {
             return AdvancedSettings.getBoolean("kotlin.compiler.ref.index") && KotlinCompilerWorkspaceSettings.getInstance(project).preciseIncrementalEnabled
+        }
+
+        /**
+         * Installs the BTA file watcher if it is applicable for the [project].
+         * The function creates the service only when the index is enabled and the environment is not headless.
+         */
+        @ApiStatus.Internal
+        fun installBtaFileWatcherIfApplicable(project: Project) {
+            val createdService = project.serviceIfCreated<KotlinCompilerReferenceIndexService>()
+            if (createdService != null) {
+                createdService.installBtaFileWatcherIfApplicable()
+            } else if (!isHeadlessEnvironment() && isEnabled(project) && BtaFileWatcher.isApplicable(project)) {
+                get(project).installBtaFileWatcher()
+            }
         }
 
         private val LOG = logger<KotlinCompilerReferenceIndexService>()
