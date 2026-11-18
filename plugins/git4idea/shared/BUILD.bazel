@@ -50,7 +50,6 @@ jvm_library(
         "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/util:util-ui",
         "//platform/collaboration-tools/shared",
-        "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/util/diff",
     ],
 )
