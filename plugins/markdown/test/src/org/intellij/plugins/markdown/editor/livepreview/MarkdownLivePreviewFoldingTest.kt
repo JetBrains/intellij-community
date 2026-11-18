@@ -1928,6 +1928,14 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertBackspaceAfterElement("---")
   }
 
+  fun testBackspaceAfterHeadingDeletesOneCharacterAtATime() {
+    configure("# Header\n<caret>")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+    myFixture.checkResult("# Header<caret>")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+    myFixture.checkResult("# Heade<caret>")
+  }
+
   fun testBackspaceAfterImageDoesNotDeleteTheImage() {
     addPng(120, 60)
     val image = "![logo](image.png)"
