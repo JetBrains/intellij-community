@@ -37,3 +37,17 @@ com.intellij.codeInsight.editorActions.JavaTypingSupport
 com.intellij.execution.configurations.RunConfigurationVcsSupport
 com.intellij.openapi.vcs.actions.VcsContextFactory
 com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider
+org.jetbrains.plugins.ruby.ruby.codeInsight.types.RTypeUtilService
+org.jetbrains.plugins.ruby.rdoc.yard.YARDService
+org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiPresentationService
+org.jetbrains.plugins.ruby.ruby.codeInsight.symbolicExecution.summary.SummaryUtilService
+org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RubyCallTypesService
+org.jetbrains.plugins.ruby.ruby.lang.psi.controlFlow.impl.RControlFlowBuilderService
+org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.scope.ScopeUtilService
+org.jetbrains.plugins.ruby.ruby.lang.psi.impl.holders.utils.RContainerUtilService
+org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RubySymbolUtilService
+org.jetbrains.plugins.ruby.ruby.lang.psi.holders.RubyDocumentationSymbolsService
+org.jetbrains.plugins.ruby.ruby.lang.references.RubyPsiReferencesService
+org.jetbrains.plugins.ruby.ruby.lang.psi.impl.RubyLanguageLevelService
+org.jetbrains.plugins.ruby.ruby.codeInsight.types.TypeInferenceContextService
+org.jetbrains.plugins.ruby.gem.bundler.BundleConfigService
