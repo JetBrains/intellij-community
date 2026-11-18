@@ -114,7 +114,7 @@ class GradleProgressListener(
       val duration = buildEvent.duration
       val operationName = buildEvent.message
       val text = String.format("%s, took %s", operationName, StringUtil.formatDuration(duration))
-      myListener.onTaskOutput(myTaskId, "\r" + text + "\n", ProcessOutputType.STDOUT)
+      myListener.onTaskOutput(myTaskId, "\r" + text + "\n", ProcessOutputType.SYSTEM)
     }
     // nonDownloadEventReceived is false until Gradle wrapper is not downloaded and the execution is not started
     // we show Gradle-wrapper related progress, but hide intermediate messages for project dependencies
@@ -124,10 +124,10 @@ class GradleProgressListener(
       val operationName = buildEvent.message
       val text = String.format("%s (%s / %s)", operationName, formatFileSize(progress), formatFileSize(total))
       if (buildEvent.isFirstInGroup) {
-        myListener.onTaskOutput(myTaskId, text, ProcessOutputType.STDOUT)
+        myListener.onTaskOutput(myTaskId, text, ProcessOutputType.SYSTEM)
       }
       else {
-        myListener.onTaskOutput(myTaskId, "\r" + text, ProcessOutputType.STDOUT)
+        myListener.onTaskOutput(myTaskId, "\r" + text, ProcessOutputType.SYSTEM)
       }
     }
   }
@@ -146,13 +146,13 @@ class GradleProgressListener(
    */
   private fun reportGradleDaemonStartingEvent(eventDescription: String) {
     if (StringUtil.equals(STARTING_GRADLE_DAEMON_EVENT, eventDescription) && !myStatusEventIds.containsKey(STARTING_GRADLE_DAEMON_EVENT)) {
-      myListener.onTaskOutput(myTaskId, "$STARTING_GRADLE_DAEMON_EVENT...\n", ProcessOutputType.STDOUT)
+      myListener.onTaskOutput(myTaskId, "$STARTING_GRADLE_DAEMON_EVENT...\n", ProcessOutputType.SYSTEM)
       myStatusEventIds[STARTING_GRADLE_DAEMON_EVENT] = System.currentTimeMillis()
     }
     else if (StringUtil.equals(EXECUTING_BUILD, eventDescription) && myStatusEventIds.containsKey(STARTING_GRADLE_DAEMON_EVENT)) {
       val startTime: Long = myStatusEventIds.remove(STARTING_GRADLE_DAEMON_EVENT)!!
       val duration = StringUtil.formatDuration(System.currentTimeMillis() - startTime)
-      myListener.onTaskOutput(myTaskId, "\rGradle Daemon started in $duration\n", ProcessOutputType.STDOUT)
+      myListener.onTaskOutput(myTaskId, "\rGradle Daemon started in $duration\n", ProcessOutputType.SYSTEM)
     }
   }
 
