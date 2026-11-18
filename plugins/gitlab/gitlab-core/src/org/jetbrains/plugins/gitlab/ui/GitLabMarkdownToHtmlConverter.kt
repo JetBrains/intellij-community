@@ -81,7 +81,7 @@ class GitLabMarkdownToHtmlConverter(
    * Makes file links relative to the git repository root or to the external root.
    * Also, parses issue IDs and merge request IDs and makes appropriate links.
    * Custom links are processed again by a custom hyperlink listener to perform appropriate actions.
-   * @see org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
+   * @see GitLabNoteLinks.addHyperlinkListener
    */
   fun convertToHtml(markdownSource: @NonNls String): String {
     if (markdownSource.isBlank()) return markdownSource

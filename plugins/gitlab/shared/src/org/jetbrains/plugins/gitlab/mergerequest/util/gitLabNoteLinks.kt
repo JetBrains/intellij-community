@@ -17,6 +17,16 @@ object GitLabNoteLinks {
   const val OPEN_MR_LINK_PREFIX: String = "glmergerequest:"
 
   fun isGitLabLink(link: String): Boolean = link.startsWith(OPEN_FILE_LINK_PREFIX) || link.startsWith(OPEN_MR_LINK_PREFIX)
+
+  /**
+   * Opens the links of [GitLabNoteLinks] in [pane] with [linkHandler] and the other links in the browser.
+   */
+  fun addHyperlinkListener(pane: JEditorPane, linkHandler: GitLabNoteLinkHandler) {
+    pane.onHyperlinkActivated { e ->
+      if (isGitLabLink(e.description)) linkHandler.openGitLabLink(e.description)
+      else BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e)
+    }
+  }
 }
 
 /**
@@ -30,16 +40,5 @@ fun interface GitLabNoteLinkHandler {
 
   companion object {
     fun getInstance(project: Project): GitLabNoteLinkHandler = project.service()
-  }
-}
-
-/**
- * Opens the links of [GitLabNoteLinks] with [linkHandler] and the other links in the browser.
- */
-@ApiStatus.Internal
-fun JEditorPane.addGitLabHyperlinkListener(linkHandler: GitLabNoteLinkHandler) {
-  onHyperlinkActivated { e ->
-    if (GitLabNoteLinks.isGitLabLink(e.description)) linkHandler.openGitLabLink(e.description)
-    else BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e)
   }
 }

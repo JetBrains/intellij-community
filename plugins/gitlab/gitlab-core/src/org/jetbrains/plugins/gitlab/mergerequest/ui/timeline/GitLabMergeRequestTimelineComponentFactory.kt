@@ -52,7 +52,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinkHandler
-import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinks
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabCodeReviewCommentTextFieldFactory
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteType
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
@@ -254,8 +254,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         return VerticalListPanel().apply {
           add(SimpleHtmlPane(addBrowserListener = false).apply {
             setHtmlBody(title)
-            addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
-          })
+          }.also { GitLabNoteLinks.addHyperlinkListener(it, GitLabNoteLinkHandler.getInstance(project)) })
           add(StatusMessageComponentFactory.create(createCommitsListPane(project, commits)))
         }
       }
@@ -265,8 +264,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     }
     return StatusMessageComponentFactory.create(SimpleHtmlPane(addBrowserListener = false).apply {
       setHtmlBody(item.contentHtml ?: "")
-      addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
-    })
+    }.also { GitLabNoteLinks.addHyperlinkListener(it, GitLabNoteLinkHandler.getInstance(project)) })
   }
 
   private val noUlGapsStyleSheet by lazy {
@@ -276,8 +274,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
   private fun createCommitsListPane(project: Project, commits: @NlsSafe String) =
     SimpleHtmlPane(noUlGapsStyleSheet, addBrowserListener = false).apply {
       setHtmlBody(commits)
-      addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
-    }
+    }.also { GitLabNoteLinks.addHyperlinkListener(it, GitLabNoteLinkHandler.getInstance(project)) }
 
   private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItemViewModel.LabelEvent): JComponent {
     val text = when (item.event.actionEnum) {

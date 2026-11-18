@@ -45,7 +45,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeReq
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestErrorUtil
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinkHandler
-import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinks
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -98,8 +98,8 @@ object GitLabMergeRequestDetailsComponentFactory {
     val titlePanel = if (withTitle) {
       val title = CodeReviewDetailsTitleComponentFactory.create(cs, detailsVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
                                                                 htmlPaneFactory = {
-                                                                  SimpleHtmlPane(addBrowserListener = false).apply {
-                                                                    addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
+                                                                  SimpleHtmlPane(addBrowserListener = false).also {
+                                                                    GitLabNoteLinks.addHyperlinkListener(it, GitLabNoteLinkHandler.getInstance(project))
                                                                   }
                                                                 })
       val branches = CodeReviewDetailsBranchComponentFactory.create(cs, detailsVm.branchesVm)
@@ -189,8 +189,8 @@ object GitLabMergeRequestDetailsComponentFactory {
         createCommitInfoPresenter(commit)
       },
       htmlPaneFactory = {
-        SimpleHtmlPane(addBrowserListener = false).apply {
-          addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
+        SimpleHtmlPane(addBrowserListener = false).also {
+          GitLabNoteLinks.addHyperlinkListener(it, GitLabNoteLinkHandler.getInstance(project))
         }
       }
     )

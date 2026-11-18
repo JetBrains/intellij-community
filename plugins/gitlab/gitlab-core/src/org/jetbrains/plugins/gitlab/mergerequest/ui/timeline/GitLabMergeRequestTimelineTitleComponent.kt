@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinkHandler
-import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinks
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 
@@ -27,7 +27,6 @@ internal object GitLabMergeRequestTimelineTitleComponent {
           tooltip = GitLabBundle.message("open.on.gitlab.tooltip")
         )
       })
-      addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
-    }
+    }.also { GitLabNoteLinks.addHyperlinkListener(it, GitLabNoteLinkHandler.getInstance(project)) }
   }
 }

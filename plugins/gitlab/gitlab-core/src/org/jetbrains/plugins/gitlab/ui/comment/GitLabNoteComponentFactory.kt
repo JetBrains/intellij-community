@@ -31,7 +31,7 @@ import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsPickerComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinkHandler
-import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinks
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.net.URL
 import javax.swing.JComponent
@@ -168,6 +168,5 @@ internal object GitLabNoteComponentFactory {
   ): JComponent =
     SimpleHtmlPane(baseUrl = baseUrl, addBrowserListener = false, customImageLoader = imageLoader).apply {
       bindTextIn(cs, textFlow)
-      addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
-    }
+    }.also { GitLabNoteLinks.addHyperlinkListener(it, GitLabNoteLinkHandler.getInstance(project)) }
 }
