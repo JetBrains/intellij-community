@@ -6,4 +6,9 @@
     <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
+
+  <applicationListeners>
+    <listener class="com.intellij.platform.backend.workspace.WorkspaceEntityClassesUnloadListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
 </idea-plugin>

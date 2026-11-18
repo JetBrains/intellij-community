@@ -49,6 +49,8 @@ internal class Object2IntWithDefaultMap<K> private constructor(internal val back
     backingMap.putIfAbsent(key, value)
   }
 
+  fun removeInt(key: K): Int = backingMap.removeInt(key)
+
   val values: IntCollection get() = backingMap.values
   fun forEach(consumer: BiConsumer<K, Int>) {
     backingMap.forEach(consumer)

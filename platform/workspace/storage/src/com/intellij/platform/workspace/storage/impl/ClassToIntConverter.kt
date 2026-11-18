@@ -23,6 +23,11 @@ internal interface ClassToIntConverter {
 
   fun fromMap(map: Object2IntWithDefaultMap<Class<*>>)
 
+  /**
+   * Drops each class that matches [predicate]. The id of a dropped class is never reused.
+   */
+  fun removeIf(predicate: (Class<*>) -> Boolean)
+
   companion object {
     fun getInstance(): ClassToIntConverter = INSTANCE
 
@@ -48,7 +53,7 @@ internal class ClassToIntConverterImpl : ClassToIntConverter {
       val entry = map.get()
       val result = entry.classToInt.getInt(clazz)
       if (result != -1) return result
-      val classId = entry.classToInt.size
+      val classId = entry.intToClass.size
       val newEntry = Entry(
         Object2IntWithDefaultMap.from(entry.classToInt).also { it.put(clazz, classId) },
         entry.intToClass.copyExtendAndPut(classId, clazz)
@@ -60,6 +65,21 @@ internal class ClassToIntConverterImpl : ClassToIntConverter {
   override fun getClassOrDie(id: Int): Class<*> = map.get().intToClass[id] ?: error("Cannot find class by id: $id")
 
   override fun getMap(): Map<Class<*>, Int> = map.get().classToInt.toMap()
+
+  override fun removeIf(predicate: (Class<*>) -> Boolean) {
+    while (true) {
+      val entry = map.get()
+      val removed = entry.classToInt.toMap().filterKeys(predicate)
+      if (removed.isEmpty()) return
+      val classToInt = Object2IntWithDefaultMap.from(entry.classToInt)
+      val intToClass = entry.intToClass.copyOf()
+      for ((clazz, classId) in removed) {
+        classToInt.removeInt(clazz)
+        intToClass[classId] = null
+      }
+      if (map.compareAndSet(entry, Entry(classToInt, intToClass))) return
+    }
+  }
 
   override fun fromMap(map: Object2IntWithDefaultMap<Class<*>>) {
     val entry = Entry(
@@ -82,4 +102,13 @@ internal fun Class<*>.toClassId(): Int = ClassToIntConverter.getInstance().getIn
 @Suppress("UNCHECKED_CAST")
 @ApiStatus.Internal
 public fun Int.findWorkspaceEntity(): Class<WorkspaceEntity> = ClassToIntConverter.getInstance().getClassOrDie(this) as Class<WorkspaceEntity>
+
+/**
+ * Drops the entity classes that match [predicate], such as the classes of unloaded modules.
+ * No storage may hold an entity of such a class any more.
+ */
+@ApiStatus.Internal
+public fun forgetWorkspaceEntityClasses(predicate: (Class<*>) -> Boolean) {
+  ClassToIntConverter.getInstance().removeIf(predicate)
+}
 

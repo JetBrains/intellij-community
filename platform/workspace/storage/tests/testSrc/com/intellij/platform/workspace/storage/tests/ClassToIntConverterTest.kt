@@ -5,6 +5,7 @@ import com.intellij.platform.workspace.storage.impl.ClassToIntConverterImpl
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.Callable
 import kotlin.random.Random
 import kotlin.test.assertEquals
@@ -31,6 +32,39 @@ class ClassToIntConverterTest {
       val res = classes.map { converter.getInt(it.javaClass) }.sorted()
       assertEquals(List(20) { it }, res)
     }
+  }
+
+  @Test
+  fun `a removed class frees its slot and keeps the other ids`() {
+    val converter = ClassToIntConverterImpl()
+    assertEquals(0, converter.getInt(MyClass1.javaClass))
+    assertEquals(1, converter.getInt(MyClass2.javaClass))
+
+    converter.removeIf { it == MyClass1.javaClass }
+
+    assertEquals(MyClass2.javaClass, converter.getClassOrDie(1))
+    assertThrows<IllegalStateException> { converter.getClassOrDie(0) }
+  }
+
+  @Test
+  fun `a new class never takes a freed id`() {
+    val converter = ClassToIntConverterImpl()
+    converter.getInt(MyClass1.javaClass)
+    converter.getInt(MyClass2.javaClass)
+    converter.removeIf { it == MyClass1.javaClass }
+
+    assertEquals(2, converter.getInt(MyClass3.javaClass))
+  }
+
+  @Test
+  fun `a removed class gets a new id when it comes back`() {
+    val converter = ClassToIntConverterImpl()
+    converter.getInt(MyClass1.javaClass)
+    converter.getInt(MyClass2.javaClass)
+    converter.removeIf { it == MyClass1.javaClass }
+    converter.getInt(MyClass3.javaClass)
+
+    assertEquals(3, converter.getInt(MyClass1.javaClass))
   }
 }
 
