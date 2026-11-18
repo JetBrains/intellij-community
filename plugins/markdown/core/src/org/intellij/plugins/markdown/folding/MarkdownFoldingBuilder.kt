@@ -102,7 +102,9 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         addDescriptors(element, element.textRange, descriptors, document)
       }
     })
-    val headerVisitor = HeaderRegionsBuildingVisitor { header, range -> addDescriptors(header, range, descriptors, document) }
+    val headerVisitor = HeaderRegionsBuildingVisitor { header, range ->
+      addDescriptors(header, range, descriptors, document)
+    }
     root.accept(headerVisitor)
     headerVisitor.processLastHeaderIfNeeded()
     if (root is MarkdownFile) {

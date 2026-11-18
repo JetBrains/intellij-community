@@ -2,14 +2,19 @@ package org.intellij.plugins.markdown.folding;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
+import com.intellij.psi.LanguageFileViewProviders;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
+import org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory;
+import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.jdom.Element;
 
 import java.util.Arrays;
@@ -198,6 +203,37 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
 
     String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
     assertTrue(foldingDescription, foldingDescription.contains("<fold"));
+  }
+
+  public void testDetails() {
+    doTest();
+  }
+
+  public void testDetailsWithoutHtmlRoot() {
+    LanguageFileViewProviders.INSTANCE.addExplicitExtension(
+      MarkdownLanguage.INSTANCE, new MarkdownFileViewProviderFactory(), getTestRootDisposable());
+    var block = "<details>\n<summary>The summary</summary>\n\n## Heading\n\nHeading content.\n\n</details>";
+    myFixture.configureByText("details.md", block + "\n\nText\n");
+    assertEquals(1, myFixture.getFile().getViewProvider().getLanguages().size());
+
+    var foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
+    assertFalse(foldingDescription, foldingDescription.contains("▶"));
+    assertTrue(foldingDescription, foldingDescription.contains("<fold text='h2: ## Heading'>"));
+  }
+
+  public void testDetailsFoldAppearsWhenClosingTagIsTyped() {
+    var open = "<details>\n<summary>The summary</summary>\n\nContent.\n\n";
+    myFixture.configureByText("details.md", open + "\nText\n");
+    var before = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
+    assertFalse(before, before.contains("▶"));
+
+    var editor = myFixture.getEditor();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> editor.getDocument().insertString(open.length(), "</details>\n"));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> CodeFoldingManager.getInstance(getProject()).updateFoldRegions(editor));
+
+    var after = CodeInsightTestFixtureImpl.getFoldingData(editor, false, false);
+    assertTrue(after, after.contains("<fold text='▶ The summary'><details"));
   }
 
   private void doTest() {

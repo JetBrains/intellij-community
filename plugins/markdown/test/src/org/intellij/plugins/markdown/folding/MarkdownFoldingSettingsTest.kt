@@ -16,6 +16,7 @@ class MarkdownFoldingSettingsTest: BasePlatformTestCase() {
       collapseTables = false
       collapseCodeFences = false
       collapseTableOfContents = false
+      collapseDetails = false
     }
     checkFolding()
   }
@@ -27,6 +28,7 @@ class MarkdownFoldingSettingsTest: BasePlatformTestCase() {
       collapseTables = true
       collapseCodeFences = true
       collapseTableOfContents = true
+      collapseDetails = true
     }
     checkFolding()
   }
