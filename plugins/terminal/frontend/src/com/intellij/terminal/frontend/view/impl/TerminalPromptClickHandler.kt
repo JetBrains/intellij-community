@@ -6,6 +6,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.view.TerminalOffset
@@ -23,16 +26,41 @@ import javax.swing.SwingUtilities
  * The editor reports no click after a drag, or if a listener consumed the press or the release, for example, the mouse reporting.
  */
 internal fun installPromptClickHandling(
-  editor: Editor,
+  editor: EditorEx,
   outputModel: TerminalOutputModel,
   shellIntegration: TerminalShellIntegration,
   terminalInput: TerminalInput,
   parentDisposable: Disposable,
 ) {
+  var isFocused = editor.contentComponent.hasFocus()
+  var isFocusedOnPress = false
+
+  // Actually, `editor.contentComponent.hasFocus()` can be used instead of tracking `isFocused` state via listener.
+  // But it would complicate headless testing a lot, so we use this approach.
+  editor.addFocusListener(object : FocusChangeListener {
+    override fun focusGained(editor: Editor) {
+      isFocused = true
+    }
+
+    override fun focusLost(editor: Editor) {
+      isFocused = false
+    }
+  }, parentDisposable)
+
   editor.addEditorMouseListener(object : EditorMouseListener {
+    override fun mousePressed(event: EditorMouseEvent) {
+      // On the window activation, the editor gets the focus back before the press of the activating click.
+      // Only the IDE frame detects this click via some heuristic.
+      // In the case when the terminal is in a detached window, it won't be detected.
+      val frame = SwingUtilities.getWindowAncestor(editor.contentComponent) as? IdeFrameImpl
+      isFocusedOnPress = isFocused && frame?.wasJustActivatedByClick != true
+    }
+
     override fun mouseClicked(event: EditorMouseEvent) {
       val mouseEvent = event.mouseEvent
       if (event.area != EditorMouseEventArea.EDITING_AREA || !SwingUtilities.isLeftMouseButton(mouseEvent)) return
+      // The click brings the focus to the terminal, so the user does not aim to move the cursor.
+      if (!isFocusedOnPress) return
       // A click with a modifier is for the editor, for example, Shift+click extends the selection.
       if (mouseEvent.modifiersEx and CLICK_MODIFIERS_MASK != 0) return
       // The click selected text, for example, a double click selects a word.

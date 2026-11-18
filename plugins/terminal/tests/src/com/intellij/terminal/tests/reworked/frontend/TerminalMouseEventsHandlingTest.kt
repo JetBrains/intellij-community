@@ -60,6 +60,7 @@ import org.junit.jupiter.params.provider.EnumSource
 import java.awt.Color
 import java.awt.Font
 import java.awt.Point
+import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -1003,6 +1004,31 @@ internal class TerminalMouseEventsHandlingTest {
       }
 
     @Test
+    fun `click that brings the focus to the terminal does not move the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        fixture.activeEditor.dispatchFocusLost()
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 5, bringsFocus = true) }
+
+        assertThat(written).isEmpty()
+      }
+
+    @Test
+    fun `click after the click that brought the focus moves the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        fixture.activeEditor.dispatchFocusLost()
+
+        val written = fixture.awaitInputEventsHandled {
+          fixture.click(column = 5, bringsFocus = true)
+          fixture.click(column = 5)
+        }
+
+        assertThat(written.joinToString("")).isEqualTo(LEFT_ARROW.repeat(3))
+      }
+
+    @Test
     fun `click without the shell integration does not move the cursor`(): Unit =
       doPromptClickTest { fixture ->
         fixture.connector.feed("${PROMPT}ls -la")
@@ -1024,11 +1050,15 @@ internal class TerminalMouseEventsHandlingTest {
         }
       }
 
-    /** Prints [PROMPT] between the prompt marks of the shell integration, then [command], as a shell does. */
+    /**
+     * Prints [PROMPT] between the prompt marks of the shell integration, then [command], as a shell does.
+     * The terminal has the focus, as when the user types.
+     */
     private suspend fun TerminalViewFixture.typeCommand(command: String) {
       connector.feed(shellIntegrationInitializedOsc(WORKING_DIRECTORY) + promptStartedOsc() + PROMPT + promptFinishedOsc() + command)
       // The prompt click handling is installed in this job.
       view.shellIntegrationFeaturesInitJob.join()
+      activeEditor.dispatchFocusGained()
       val model = view.outputModels.regular
       // JediTerm keeps the printed text in the NFC form.
       val typedText = Normalizer.normalize(PROMPT + command, Normalizer.Form.NFC)
@@ -1047,9 +1077,19 @@ internal class TerminalMouseEventsHandlingTest {
       assertOutputModelState(view.outputModels.regular) { it.cursorOffset == it.startOffset + column.toLong() }
     }
 
-    private fun TerminalViewFixture.click(column: Int, xInCell: Float = 1f / 3f, modifiers: Int = 0, clickCount: Int = 1) {
+    /** If [bringsFocus] is true, the editor gets the focus after the press, as AWT does for the focus request of the editor. */
+    private fun TerminalViewFixture.click(
+      column: Int,
+      xInCell: Float = 1f / 3f,
+      modifiers: Int = 0,
+      clickCount: Int = 1,
+      bringsFocus: Boolean = false,
+    ) {
       val point = activeEditor.pointAtCell(column, xInCell = xInCell)
       activeEditor.dispatchMouseEvent(MouseEventKind.PRESSED, point, modifiers or InputEvent.BUTTON1_DOWN_MASK, clickCount)
+      if (bringsFocus) {
+        activeEditor.dispatchFocusGained()
+      }
       activeEditor.dispatchMouseEvent(MouseEventKind.RELEASED, point, modifiers, clickCount)
     }
 
@@ -1292,6 +1332,18 @@ private fun EditorImpl.dispatchMouseEvent(kind: MouseEventKind, point: Point, mo
     MouseEventKind.DRAGGED -> contentComponent.mouseMotionListeners.forEach { it.mouseDragged(event) }
   }
   return event
+}
+
+/** Dispatches FOCUS_GAINED to the editor, as AWT does. */
+private fun EditorImpl.dispatchFocusGained() {
+  val event = FocusEvent(contentComponent, FocusEvent.FOCUS_GAINED)
+  contentComponent.focusListeners.forEach { it.focusGained(event) }
+}
+
+/** Dispatches FOCUS_LOST to the editor, as AWT does. */
+private fun EditorImpl.dispatchFocusLost() {
+  val event = FocusEvent(contentComponent, FocusEvent.FOCUS_LOST)
+  contentComponent.focusListeners.forEach { it.focusLost(event) }
 }
 
 @OptIn(LowLevelLocalMachineAccess::class)
