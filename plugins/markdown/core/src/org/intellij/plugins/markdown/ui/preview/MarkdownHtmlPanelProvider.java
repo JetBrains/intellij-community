@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.ui.preview;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
@@ -23,6 +24,15 @@ public abstract class MarkdownHtmlPanelProvider {
   @ApiStatus.Experimental
   public @NotNull MarkdownHtmlPanel createHtmlPanel(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     return createHtmlPanel();
+  }
+
+  /**
+   * Does the slow work that the first {@link #createHtmlPanel(Project, VirtualFile)} call needs, such as the startup of a browser engine.
+   * The preview editor calls this method on a background thread before it creates a panel on the EDT.
+   */
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public void prepare() {
   }
 
   public abstract @NotNull AvailabilityInfo isAvailable();
