@@ -497,15 +497,20 @@ mod tests {
     }
 
     #[test]
+    #[cfg(any(target_family = "unix", feature = "win_con"))]
     fn stdout_redirect() {
-        let test = prepare_test_env(LauncherLocation::Standard);
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n\n");
 
         let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_args(&["stdout-redirect", "--stdio"]));
 
         let expected_out = "<<redirected stdout>>";
         let expected_err = "<<original stdout>>";
+        let expected_jdwp = "Listening for transport dt_socket at address:";
         assert!(result.stdout.contains(expected_out), "'{expected_out}' is not in the output:\n{result:?}");
         assert!(!result.stdout.contains(expected_err), "'{expected_err}' is in the output:\n{result:?}");
         assert!(result.stderr.contains(expected_err), "'{expected_err}' is not in the error:\n{result:?}");
+        assert!(!result.stdout.contains(expected_jdwp), "'{expected_jdwp}' is in the output:\n{result:?}");
+        assert!(result.stderr.contains(expected_jdwp), "'{expected_jdwp}' is not in the error:\n{result:?}");
     }
 }

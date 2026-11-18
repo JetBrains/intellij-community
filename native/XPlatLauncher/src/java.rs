@@ -34,9 +34,60 @@ const JVM_LIB_REL_PATH: &str = "lib/libjli.dylib";
 #[cfg(target_os = "linux")]
 const JVM_LIB_REL_PATH: &str = "lib/server/libjvm.so";
 
+#[cfg(target_os = "windows")]
+struct UcrtSymbols {
+    vfprintf: unsafe extern "C" fn(
+        options: u64, stream: *const c_void, format: *const c_char, locale: *const c_void, args: VaList<'_>
+    ) -> c_int,
+    #[cfg(feature = "win_con")]
+    dup: unsafe extern "C" fn(fd: c_int) -> c_int,
+    #[cfg(feature = "win_con")]
+    dup2: unsafe extern "C" fn(src_fd: c_int, dst_fd: c_int) -> c_int,
+    #[cfg(feature = "win_con")]
+    get_osfhandle: unsafe extern "C" fn(fd: c_int) -> isize,
+    #[cfg(feature = "win_con")]
+    errno: unsafe extern "C" fn() -> *mut c_int,
+}
+
 static DEBUG_MODE: AtomicBool = AtomicBool::new(true);
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
+#[cfg(target_os = "windows")]
+static UCRT_SYMBOLS: std::sync::OnceLock<UcrtSymbols> = std::sync::OnceLock::new();
+
+#[cfg(target_os = "windows")]
+extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: VaList<'_>) -> jint {
+    unsafe extern "C" {
+        fn __stdio_common_vsprintf(
+            options: u64, buffer: *mut c_char, buffer_count: usize, format: *const c_char, locale: *const c_void, args: VaList<'_>
+        ) -> c_int;
+    }
+
+    const CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR: u64 = 1 << 1;
+
+    match &mut *HOOK_MESSAGES.lock().unwrap() {
+        None => {
+            match UCRT_SYMBOLS.get() {
+                Some(ucrt) => unsafe { (ucrt.vfprintf)(0, fp, format, std::ptr::null(), args) },
+                None => 0,
+            }
+        },
+        Some(messages) => {
+            let mut buffer = [0; 4096];
+            let len = unsafe {
+                __stdio_common_vsprintf(
+                    CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer.as_mut_ptr(), buffer.len(), format, std::ptr::null(), args
+                )
+            };
+            let message = unsafe { CStr::from_ptr(buffer.as_ptr()) }.to_string_lossy().to_string();
+            debug!("[JVM] vfprintf_hook: {message:?}");
+            messages.push(message);
+            if len < 0 { -1 } else { len }
+        }
+    }
+}
+
+#[cfg(target_family = "unix")]
 extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: VaList<'_>) -> jint {
     unsafe extern "C" {
         fn vfprintf(fp: *const c_void, format: *const c_char, args: VaList<'_>) -> c_int;
@@ -89,6 +140,11 @@ pub fn run_jvm_and_event_loop(
 ) -> Result<()> {
     debug!("Preparing a JVM environment");
     DEBUG_MODE.store(debug_mode, Ordering::Release);
+
+    #[cfg(target_os = "windows")]
+    {
+        load_UCRT_symbols()?;
+    }
 
     #[cfg(target_family = "unix")]
     {
@@ -161,6 +217,34 @@ pub fn run_jvm_and_event_loop(
     }
 }
 
+#[cfg(target_os = "windows")]
+#[allow(non_snake_case)]
+fn load_UCRT_symbols() -> Result<()> {
+    unsafe {
+        let ucrt = libloading::Library::new("ucrtbase.dll")?;
+        #[cfg(feature = "win_con")]
+        {
+            const CRT_CONSOLE_APP: c_int = 1;
+            let set_app_type = ucrt.get::<unsafe extern "C" fn(c_int)>("_set_app_type")?;
+            set_app_type(CRT_CONSOLE_APP);  // required for updating `STD_OUTPUT_HANDLE` by `_dup2`
+        }
+        let symbols = UcrtSymbols {
+            vfprintf: *ucrt.get("__stdio_common_vfprintf")?,
+            #[cfg(feature = "win_con")]
+            dup: *ucrt.get("_dup")?,
+            #[cfg(feature = "win_con")]
+            dup2: *ucrt.get("_dup2")?,
+            #[cfg(feature = "win_con")]
+            get_osfhandle: *ucrt.get("_get_osfhandle")?,
+            #[cfg(feature = "win_con")]
+            errno: *ucrt.get("_errno")?,
+        };
+        let _ = UCRT_SYMBOLS.set(symbols);
+        std::mem::forget(ucrt);
+    }
+    Ok(())
+}
+
 #[cfg(target_family = "unix")]
 fn reset_signal_handler(signal: c_int) -> Result<()> {
     unsafe {
@@ -179,28 +263,46 @@ fn exit_launcher(status: i32) -> ! {
     std::process::exit(status)
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", not(feature = "win_con")))]
 fn redirect_stdout_to_stderr() -> Result<i64> {
-    use windows::Win32::Foundation::{DuplicateHandle, DUPLICATE_SAME_ACCESS, HANDLE};
-    use windows::Win32::System::Console::{GetStdHandle, SetStdHandle, STD_ERROR_HANDLE, STD_OUTPUT_HANDLE};
-    use windows::Win32::System::Threading::GetCurrentProcess;
+    debug!("No stdout redirection in the GUI mode");
+    Ok(0)
+}
 
-    unsafe {
-        let h_process = GetCurrentProcess();
-        let stdout = GetStdHandle(STD_OUTPUT_HANDLE)?;
-        let stderr = GetStdHandle(STD_ERROR_HANDLE)?;
-        let mut saved_handle = HANDLE::default();
-        DuplicateHandle(h_process, stdout, h_process, &mut saved_handle, 0, true, DUPLICATE_SAME_ACCESS)?;
-        SetStdHandle(STD_OUTPUT_HANDLE, stderr)?;
-        Ok(saved_handle.0 as i64)
+#[cfg(all(target_os = "windows", feature = "win_con"))]
+fn redirect_stdout_to_stderr() -> Result<i64> {
+    const STDOUT_FILENO: c_int = 1;
+    const STDERR_FILENO: c_int = 2;
+
+    debug!("Setting stdout redirection");
+    let ucrt = UCRT_SYMBOLS.get().context("UCRT symbols not initialized")?;
+    let saved_fd = unsafe { (ucrt.dup)(STDOUT_FILENO) };
+    if saved_fd < 0 {
+        bail!("_dup(stdout): errno={}", unsafe { *(ucrt.errno)() });
     }
+    if unsafe { (ucrt.dup2)(STDERR_FILENO, STDOUT_FILENO) } < 0 {
+        bail!("_dup2(stderr, stdout): errno={}", unsafe { *(ucrt.errno)() });
+    }
+    let saved_handle = unsafe { (ucrt.get_osfhandle)(saved_fd) };
+    if saved_handle == -1 {
+        bail!("_get_osfhandle({saved_fd}): errno={}", unsafe { *(ucrt.errno)() });
+    }
+    unsafe {
+        windows::Win32::Foundation::SetHandleInformation(
+            windows::Win32::Foundation::HANDLE(saved_handle as *mut c_void),
+            windows::Win32::Foundation::HANDLE_FLAG_INHERIT.0,
+            windows::Win32::Foundation::HANDLE_FLAGS(0)
+        )
+    }.context("SetHandleInformation(saved stdout)")?;
+    Ok(saved_handle as i64)
 }
 
 #[cfg(target_family = "unix")]
 fn redirect_stdout_to_stderr() -> Result<i64> {
-    let saved_fd = unsafe { libc::dup(libc::STDOUT_FILENO) };
+    debug!("Setting stdout redirection");
+    let saved_fd = unsafe { libc::fcntl(libc::STDOUT_FILENO, libc::F_DUPFD_CLOEXEC, 0) };
     if saved_fd < 0 {
-        bail!("dup(stdout): {}", std::io::Error::last_os_error());
+        bail!("fcntl(F_DUPFD_CLOEXEC, stdout): {}", std::io::Error::last_os_error());
     }
     if unsafe { libc::dup2(libc::STDERR_FILENO, libc::STDOUT_FILENO) } < 0 {
         bail!("dup2(stderr, stdout): {}", std::io::Error::last_os_error());
