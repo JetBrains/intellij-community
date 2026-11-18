@@ -32,14 +32,12 @@ import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.addComponentInlay
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.Alarm
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.TestOnly
@@ -83,11 +81,6 @@ internal class BuildConsoleViewImplV2(
   /** User intent to follow the tail. Only a user scroll gesture changes it, not content growth. Read and written on EDT. */
   private var autoScroll = true
   private var followListenersAttached = false
-
-  /** Restores the component that the last click flashed. Read and written on EDT. */
-  private val flashAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
-  private var flashRestore: (() -> Unit)? = null
-
 
   init {
     consoleView.editor?.configureEditor()
@@ -181,7 +174,6 @@ internal class BuildConsoleViewImplV2(
           val targetOffset = editor.offsetToLogicalPosition(inlay.offset)
           editor.scrollingModel.scrollTo(targetOffset, ScrollType.CENTER)
         }
-        editor.flashInlayComponent(inlay.renderer.component)
       }
       else {
         val outputRanges = sortedOutputMarkers(nodeId)
@@ -193,28 +185,6 @@ internal class BuildConsoleViewImplV2(
         editor.selectOutputText(outputRanges)
       }
     }
-  }
-
-  /** Flashes the inlay component background, so the user finds the clicked callout among similar ones. */
-  private fun Editor.flashInlayComponent(component: JComponent) {
-    val flashColor = colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR) ?: return
-    flashAlarm.cancelAllRequests()
-    flashRestore?.invoke()
-    val originalOpaque = component.isOpaque
-    val originalBackground = component.background
-    component.isOpaque = true
-    component.background = flashColor
-    component.repaint()
-    val restore = {
-      component.isOpaque = originalOpaque
-      component.background = originalBackground
-      component.repaint()
-    }
-    flashRestore = restore
-    flashAlarm.addRequest({
-      restore()
-      flashRestore = null
-    }, 700)
   }
 
   private fun Editor.selectOutputText(outputRanges: List<TextRange>) {
