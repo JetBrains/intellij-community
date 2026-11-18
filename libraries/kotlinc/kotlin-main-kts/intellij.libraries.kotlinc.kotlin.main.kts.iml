@@ -8,11 +8,11 @@
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-main-kts">
         <CLASSES>
-          <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-main-kts/2.5.255-dev-255/kotlin-main-kts-2.5.255-dev-255.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-main-kts/2.5.255-dev-255/kotlin-main-kts-2.5.255-dev-255.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-main-kts/2.5.255-dev-255/kotlin-main-kts-2.5.255-dev-255-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-main-kts/2.5.255-dev-255/kotlin-main-kts-2.5.255-dev-255-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
