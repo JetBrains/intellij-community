@@ -455,6 +455,7 @@ com.intellij.openapi.fileEditor.impl.StartupEditorCompositeProvider
 com.intellij.openapi.fileEditor.impl.TabMouseListener
 com.intellij.openapi.fileEditor.impl.TabToOpenOnStartup
 com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNew
+com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNewKt
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonCanvas$RemovedArea
 com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 com.intellij.openapi.fileEditor.impl.tabActions.CloseTabKt

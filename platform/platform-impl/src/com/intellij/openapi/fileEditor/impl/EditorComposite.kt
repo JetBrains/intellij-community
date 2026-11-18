@@ -1190,6 +1190,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   private val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
 
   init {
+    installSkeleton()
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
         composite.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -1215,27 +1216,29 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
       override fun getDefaultComponent(aContainer: Container) = composite.focusComponent
     }
     isFocusCycleRoot = true
+  }
 
-    if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
-      val fadeInMs = EditorSkeletonPolicy.fadeInMs(composite)
-      skeletonScope.launch(Dispatchers.Default) {
-        val skeleton = EditorSkeletonNew(skeletonScope, composite.project, fadeInMs)
-        withContext(Dispatchers.UI) {
-          setNewSkeleton(skeleton)
+  private fun installSkeleton() {
+    if (!EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
+      skeletonScope.cancel()
+      return
+    }
+    val fadeInMs = EditorSkeletonPolicy.fadeInMs(composite)
+    if (EDT.isCurrentThreadEdt()) {
+      addSkeleton(fadeInMs)
+    } else {
+      skeletonScope.launch(Dispatchers.UI) {
+        if (components.isEmpty()) {
+          addSkeleton(fadeInMs)
         }
       }
     }
-    else {
-      skeletonScope.cancel()
-    }
   }
 
-  private fun setNewSkeleton(skeleton: EditorSkeletonNew?) {
-    if (skeleton == null) return
-    if (components.isEmpty()) {
-      add(skeleton, BorderLayout.CENTER)
-      skeleton.start()
-    }
+  private fun addSkeleton(fadeInMs: Long) {
+    val skeleton = EditorSkeletonNew(skeletonScope, composite.project, fadeInMs)
+    add(skeleton, BorderLayout.CENTER)
+    skeleton.start()
   }
 
   override fun updateUI() {

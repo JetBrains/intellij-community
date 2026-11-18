@@ -41,10 +41,6 @@ internal class EditorSkeletonNew(
     animationEnabled = !DrawUtil.isSimplifiedUI(),
     animationDurationMs = Registry.intValue("editor.skeleton.animation.duration.ms", 1500).toLong(),
   )
-  private val skeletonPanel = EditorSkeletonPanel(HORIZONTAL, fillLast = true) {
-    Gutter()
-    Editor()
-  }
   private val frames = object : EditorSkeletonFrames {
     override fun currentColors(): SkeletonFrameColor {
       return colorManager.frameColors()
@@ -62,7 +58,7 @@ internal class EditorSkeletonNew(
     layout = BorderLayout()
     isOpaque = false
     minimumSize = JBDimension(0, 0)
-    preferredSize = JBDimension(skeletonPanel.preferredWidth, skeletonPanel.preferredHeight)
+    preferredSize = JBDimension(SKELETON_PANEL.preferredWidth, SKELETON_PANEL.preferredHeight)
   }
 
   /**
@@ -87,7 +83,15 @@ internal class EditorSkeletonNew(
       graphics.color = colors.blocks
       val scaledWidth = ceil(width / scale.toDouble()).toInt()
       val scaledHeight = ceil(height / scale.toDouble()).toInt()
-      skeletonPanel.paint(graphics, 0, 0, scaledWidth, scaledHeight)
+      SKELETON_PANEL.paint(graphics, 0, 0, scaledWidth, scaledHeight)
     }
   }
+}
+
+/**
+ * The layout of every skeleton. It is immutable, so all skeletons share it.
+ */
+private val SKELETON_PANEL: EditorSkeletonPanel = EditorSkeletonPanel(HORIZONTAL, fillLast = true) {
+  Gutter()
+  Editor()
 }
