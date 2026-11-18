@@ -153,12 +153,15 @@ internal class EditorSkeletonWindowRenderer(
       return
     }
     val windowGraphics = target.window.graphics as? Graphics2D ?: return
-    windowGraphics.use { g ->
+    val drawn = windowGraphics.use { g ->
       g.clipRect(target.clip.x, target.clip.y, target.clip.width, target.clip.height)
       if (target.excluded.isNotEmpty()) {
         g.clip(clipWithoutOverlays(target))
       }
       g.drawImage(buffer, target.origin.x, target.origin.y, null)
+    }
+    if (!drawn) {
+      return
     }
     rendered(target, colors)
     settled = false
