@@ -21,16 +21,10 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.actions.VcsContextFactory
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
-import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitTextFilePatchWithHistory
-import git4idea.remote.GitRemoteUrlCoordinates
-import git4idea.remote.hosting.localCommitsSyncStatus
-import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitCurrentBranchPresenter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -46,8 +40,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
@@ -58,12 +53,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabReviewSettings
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLocalRepository
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestParsedChanges
 import org.jetbrains.plugins.gitlab.mergerequest.ui.createDiffDataFlow
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
-import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.EventListener
 
@@ -73,7 +68,7 @@ private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
-  private val gitRemote: GitRemoteUrlCoordinates,
+  private val localRepository: GitLabLocalRepository,
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   private val discussionsVms: GitLabMergeRequestDiscussionsViewModels,
@@ -87,8 +82,6 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   if (GitLabReviewSettings.getInstance(project).editorReviewEnabled) DiscussionsViewOption.UNRESOLVED_ONLY else DiscussionsViewOption.DONT_SHOW
 ), CodeReviewInEditorViewModel {
   private val preferences = GitLabReviewSettings.getInstance(project)
-
-  private val gitRepository: GitRepository = gitRemote.repository
 
   val mergeRequestIid: String = mergeRequest.iid
 
@@ -149,20 +142,20 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
       }.associateBy { note -> note.trackingId }
     }
 
+  /**
+   * Whether the local branch misses some commits of the merge request, or `null` while this is unknown.
+   */
   @OptIn(ExperimentalCoroutinesApi::class)
-  val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?> by lazy {
-    val repository = gitRepository
+  val hasIncomingCommits: StateFlow<ComputedResult<Boolean>?> by lazy {
     _actualChangesState.map {
       (it as? ChangesState.Loaded)?.changes?.commits?.map { it.sha }
     }.distinctUntilChanged().transformLatest {
       if (it == null) emit(null)
-      else flowOf(it).localCommitsSyncStatus(repository).collect(this)
+      else localRepository.hasIncomingCommits(it).collect(this)
     }.stateIn(cs, SharingStarted.Eagerly, null)
   }
 
-  override val updateRequired: StateFlow<Boolean> = localRepositorySyncStatus.mapState {
-    it?.getOrNull()?.incoming == true
-  }
+  override val updateRequired: StateFlow<Boolean> = hasIncomingCommits.mapState { it?.getOrNull() == true }
 
   init {
     cs.launchNow {
@@ -201,7 +194,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   override fun updateBranch() {
     cs.launch {
       val details = mergeRequest.refreshDataNow()
-      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(gitRemote, details)
+      localRepository.checkoutBranch(details)
     }
   }
 
@@ -249,15 +242,20 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   /**
    * A view model for [virtualFile] review
    */
-  fun getFileStateFlow(virtualFile: VirtualFile): Flow<FileReviewState> {
-    if (!virtualFile.isValid || virtualFile.isDirectory ||
-        !VfsUtilCore.isAncestor(gitRepository.root, virtualFile, true)) {
-      return flowOf(FileReviewState.NotInReview)
+  fun getFileStateFlow(virtualFile: VirtualFile): Flow<FileReviewState> = flow {
+    val filePath = localRepository.findFilePath(virtualFile)
+    if (filePath == null) {
+      emit(FileReviewState.NotInReview)
     }
-    val filePath = VcsContextFactory.getInstance().createFilePathOn(virtualFile)
-    changesRequest.tryEmit(Unit)
+    else {
+      changesRequest.tryEmit(Unit)
+      emitAll(getFileStateFlow(filePath))
+    }
+  }
+
+  private fun getFileStateFlow(filePath: FilePath): Flow<FileReviewState> =
     //TODO: do not recreate VMs on changes change
-    return filesVms.getOrPut(filePath) {
+    filesVms.getOrPut(filePath) {
       actualChanges.filterNotNull().mapScoped { parsedChanges ->
         val change = parsedChanges.changes.find { it.filePathAfter == filePath }
         if (change == null) {
@@ -277,7 +275,6 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
         FileReviewState.ReviewEnabled(createChangeVm(changeSelection, diffData))
       }
     }
-  }
 
   suspend fun handleDiffRequests(listener: (ListSelection<RefComparisonChange>, DiffLineLocation?) -> Unit): Nothing {
     val actualListener = DiffRequestListener { list, location -> listener(list, location) }
@@ -292,7 +289,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
 
   private fun CoroutineScope.createChangeVm(changes: ListSelection<RefComparisonChange>, diffData: GitTextFilePatchWithHistory) =
     GitLabMergeRequestEditorReviewFileViewModelImpl(
-      this, project, mergeRequest, changes.selectedItem!!, diffData,
+      this, mergeRequest, localRepository, changes.selectedItem!!, diffData,
       discussionsVms, this@GitLabMergeRequestEditorReviewViewModel,
       discussionsViewOption, avatarIconsProvider, imageLoader
     ).also { vm ->

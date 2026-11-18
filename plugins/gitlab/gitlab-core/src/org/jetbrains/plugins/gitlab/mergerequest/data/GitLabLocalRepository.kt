@@ -1,14 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
+import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * The local git repository of a GitLab project, as the merge request data needs it.
+ * The local git repository of a GitLab project, as the merge request data and the review in editors need it.
  */
 @ApiStatus.Internal
 interface GitLabLocalRepository {
@@ -45,4 +48,25 @@ interface GitLabLocalRepository {
    * @throws com.intellij.openapi.diff.impl.patch.PatchSyntaxException when the output of git is not a patch
    */
   suspend fun loadPatches(baseRev: String, headRev: String, paths: List<String>): List<TextFilePatch>
+
+  /**
+   * Whether the local branch misses some of the [commits] of the merge request, re-emitted when the repository changes.
+   * The flow emits `null` while this is unknown.
+   */
+  fun hasIncomingCommits(commits: List<String>): Flow<ComputedResult<Boolean>?>
+
+  /**
+   * Fetches the source branch of the merge request and checks it out.
+   */
+  suspend fun checkoutBranch(details: GitLabMergeRequestFullDetails)
+
+  /**
+   * The path of [file] in the repository, or `null` when [file] is not a file of the repository.
+   */
+  suspend fun findFilePath(file: VirtualFile): FilePath?
+
+  /**
+   * The content of the file after [change], with the line separators converted to `\n`.
+   */
+  suspend fun loadContentAfter(change: RefComparisonChange): String
 }

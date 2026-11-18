@@ -1,17 +1,32 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.map
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitRevisionNumber
 import git4idea.GitStandardRemoteBranch
+import git4idea.changes.createVcsChange
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitCodeReviewUtils
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.changesSignalFlow
+import git4idea.remote.hosting.localCommitsSyncStatus
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 
 /**
  * The git repository of [remote].
@@ -51,4 +66,23 @@ internal class GitLabGitLocalRepository(private val remote: GitRemoteUrlCoordina
 
   override suspend fun loadPatches(baseRev: String, headRev: String, paths: List<String>): List<TextFilePatch> =
     GitCodeReviewUtils.loadPatches(repository, baseRev, headRev, paths)
+
+  override fun hasIncomingCommits(commits: List<String>): Flow<ComputedResult<Boolean>?> =
+    flowOf(commits).localCommitsSyncStatus(repository).map { result -> result?.map { it?.incoming == true } }
+
+  override suspend fun checkoutBranch(details: GitLabMergeRequestFullDetails) {
+    GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(remote, details)
+  }
+
+  override suspend fun findFilePath(file: VirtualFile): FilePath? {
+    if (!file.isValid || file.isDirectory || !VfsUtilCore.isAncestor(repository.root, file, true)) return null
+    return VcsContextFactory.getInstance().createFilePathOn(file)
+  }
+
+  override suspend fun loadContentAfter(change: RefComparisonChange): String = withContext(Dispatchers.IO) {
+    val content = coroutineToIndicator {
+      change.createVcsChange(repository.project).afterRevision?.content ?: ""
+    }
+    StringUtil.convertLineSeparators(content)
+  }
 }

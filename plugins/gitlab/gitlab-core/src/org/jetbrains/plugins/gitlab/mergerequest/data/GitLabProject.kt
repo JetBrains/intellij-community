@@ -61,6 +61,11 @@ interface GitLabProject {
   val projectCoordinates: GitLabProjectCoordinates
   val projectId: String
 
+  /**
+   * The local git repository of the project, as the merge request data and the review need it.
+   */
+  val localRepository: GitLabLocalRepository
+
   val dataReloadSignal: SharedFlow<Unit>
   val mergeRequests: GitLabProjectMergeRequestsStore
 
@@ -118,7 +123,7 @@ internal class GitLabProjectImpl(
   private val details: GitLabProjectDetails,
   private val currentUser: GitLabUserDTO,
   override val projectCoordinates: GitLabProjectCoordinates,
-  private val localRepository: GitLabLocalRepository,
+  override val localRepository: GitLabLocalRepository,
 ) : GitLabProject {
 
   private val cs = parentCs.childScope(javaClass.name)

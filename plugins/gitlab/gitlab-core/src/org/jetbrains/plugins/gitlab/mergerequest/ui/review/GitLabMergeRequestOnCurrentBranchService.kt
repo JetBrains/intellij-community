@@ -65,7 +65,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
         )
         GitLabMergeRequestEditorReviewViewModel.ChangesState.NotLoaded,
         is GitLabMergeRequestEditorReviewViewModel.ChangesState.Loaded -> {
-          if (vm.localRepositorySyncStatus.value?.getOrNull()?.incoming == true) {
+          if (vm.hasIncomingCommits.value?.getOrNull() == true) {
             GitCurrentBranchPresenter.PresentationData(
               GitlabIcons.GitLabWarning,
               GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
@@ -101,7 +101,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible =
-        e.project?.let(::getCurrentVm)?.localRepositorySyncStatus?.value?.getOrNull()?.incoming == true
+        e.project?.let(::getCurrentVm)?.hasIncomingCommits?.value?.getOrNull() == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -114,7 +114,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
 
     override fun update(e: AnActionEvent) {
       val vm = e.project?.let(::getCurrentVm)
-      val enabledAndVisible = vm != null && vm.localRepositorySyncStatus.value?.getOrNull()?.incoming != true
+      val enabledAndVisible = vm != null && vm.hasIncomingCommits.value?.getOrNull() != true
       e.presentation.isEnabledAndVisible = enabledAndVisible
       if (enabledAndVisible) {
         super.update(e)

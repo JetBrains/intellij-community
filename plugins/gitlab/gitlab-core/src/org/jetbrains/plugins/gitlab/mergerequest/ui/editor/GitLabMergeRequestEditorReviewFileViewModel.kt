@@ -16,12 +16,8 @@ import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.withoutContext
-import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
-import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,11 +26,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLocalRepository
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNewDiscussionPositionFactory
@@ -82,8 +78,8 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
 
 internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   parentCs: CoroutineScope,
-  private val project: Project,
   mergeRequest: GitLabMergeRequest,
+  private val localRepository: GitLabLocalRepository,
   override val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
@@ -95,17 +91,8 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
   override val headContent: StateFlow<ComputedResult<String>?> = flow {
-    ComputedResult.compute {
-      coroutineToIndicator {
-        change.createVcsChange(project).afterRevision?.content ?: ""
-      }.let {
-        StringUtil.convertLineSeparators(it)
-      }
-    }.let {
-      emit(it)
-    }
-  }.flowOn(Dispatchers.IO)
-    .stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
+    emit(ComputedResult.compute { localRepository.loadContentAfter(change) })
+  }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
   override val changedRanges: List<Range> = diffData.patch.hunks.withoutContext().toList()
 

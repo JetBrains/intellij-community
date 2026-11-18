@@ -107,7 +107,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
       }
 
       val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
-      val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.getOrNull()?.incoming != true }
+      val syncedFlow = reviewVm.hasIncomingCommits.map { it?.getOrNull() != true }
       combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.distinctUntilChanged().collectLatest { enabled ->
         if (enabled) showReview(fileVm, editor)
       }

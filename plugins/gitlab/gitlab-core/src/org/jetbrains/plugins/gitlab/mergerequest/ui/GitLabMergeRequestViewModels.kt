@@ -115,7 +115,7 @@ internal class GitLabMergeRequestViewModels(
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
     GitLabMergeRequestEditorReviewViewModel(cs, project,
-                                            gitRemote,
+                                            projectData.localRepository,
                                             currentUser, mergeRequest,
                                             discussionsVms, avatarIconProvider, imageLoader,
                                             openMergeRequestDetails, openMergeRequestDiff).apply {
