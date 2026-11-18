@@ -21,7 +21,8 @@ import os
 import subprocess
 import sys
 
-PYTHON_VERSIONS = ("3.15", "3.14", "3.13", "3.12", "3.11", "3.10")
+from python_versions import PYTHON_VERSIONS
+
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
