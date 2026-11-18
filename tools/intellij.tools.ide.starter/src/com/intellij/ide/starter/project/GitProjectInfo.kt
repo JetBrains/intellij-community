@@ -187,6 +187,10 @@ data class GitProjectInfo(
     if (isInWslGuest(targetRoot)) {
       checkoutInTarget(hostRoot, targetRoot, cleanWorkingTree = !isReusable)
     }
+    check(isCheckout(targetRoot)) {
+      "The project directory $targetRoot has no checkout of $repositoryUrl. Its environment is ${targetRoot.getEelDescriptor()}. " +
+      "The directory must be the host checkout $hostRoot, a bind mount of it, or a checkout in a WSL guest."
+    }
     return targetRoot.let(projectHomeRelativePath)
   }
 
