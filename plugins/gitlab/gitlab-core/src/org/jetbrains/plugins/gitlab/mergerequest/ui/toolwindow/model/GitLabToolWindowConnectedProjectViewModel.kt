@@ -53,7 +53,7 @@ internal class GitLabToolWindowConnectedProjectViewModel(
     is GitLabReviewTab.ReviewSelected ->
       GitLabReviewTabViewModel.Details(cs, tab.mrIid, getDetailsViewModel(tab.mrIid))
     GitLabReviewTab.NewMergeRequest -> GitLabReviewTabViewModel.CreateMergeRequest(
-      project, cs, projectsManager, connection.projectData, avatarIconProvider,
+      project, cs, projectsManager, connection.projectData, connection.repo.remote, avatarIconProvider,
       openReviewTabAction = { mrIid ->
         tabsHelper.showTabInstead(GitLabReviewTab.NewMergeRequest, GitLabReviewTab.ReviewSelected(mrIid), {
           GitLabStatistics.logTwTabOpened(project, tab.toStatistics(), GitLabStatistics.ToolWindowOpenTabActionPlace.CREATION)

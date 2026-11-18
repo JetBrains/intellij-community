@@ -9,7 +9,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import git4idea.changes.GitBranchComparisonResultUtil
 import git4idea.changes.GitCommitShaWithPatches
 import git4idea.changes.filePath
-import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.repo.GitRepository
 import io.mockk.every
 import io.mockk.mockk
@@ -41,7 +40,6 @@ class GitLabMergeRequestViewedStateTest {
     every { serverPath } returns GitLabServerPath("https://gitlab.com")
     every { projectId } returns "42"
     every { iid } returns "5"
-    every { gitRemote } returns GitRemoteUrlCoordinates("https://gitlab.com/owner/repo.git", mockk(), repository)
   }
   private val parsedChanges = GitBranchComparisonResultUtil.create(
     root, MERGE_BASE_SHA, MERGE_BASE_SHA,
@@ -78,32 +76,32 @@ class GitLabMergeRequestViewedStateTest {
   fun `a viewed file stores the last commit that changed it`() {
     val changeX = cumulativeChange(FILE_X)
 
-    viewedState.markViewed(mergeRequest, parsedChanges, listOf(changeX), viewed = true)
+    viewedState.markViewed(mergeRequest, repository, parsedChanges, listOf(changeX), viewed = true)
 
     assertThat(viewedState.state.states.single().viewedFiles).isEqualTo(mapOf(FILE_X to COMMIT_A))
-    assertThat(viewedState.isViewed(mergeRequest, parsedChanges, changeX)).isTrue()
-    assertThat(viewedState.isViewed(mergeRequest, parsedChanges, cumulativeChange(FILE_Y))).isFalse()
+    assertThat(viewedState.isViewed(mergeRequest, repository, parsedChanges, changeX)).isTrue()
+    assertThat(viewedState.isViewed(mergeRequest, repository, parsedChanges, cumulativeChange(FILE_Y))).isFalse()
   }
 
   @Test
   fun `marking a file as not viewed removes its viewed state`() {
     val changeX = cumulativeChange(FILE_X)
-    viewedState.markViewed(mergeRequest, parsedChanges, listOf(changeX), viewed = true)
+    viewedState.markViewed(mergeRequest, repository, parsedChanges, listOf(changeX), viewed = true)
 
-    viewedState.markViewed(mergeRequest, parsedChanges, listOf(changeX), viewed = false)
+    viewedState.markViewed(mergeRequest, repository, parsedChanges, listOf(changeX), viewed = false)
 
-    assertThat(viewedState.isViewed(mergeRequest, parsedChanges, changeX)).isFalse()
+    assertThat(viewedState.isViewed(mergeRequest, repository, parsedChanges, changeX)).isFalse()
   }
 
   @Test
   fun `a change of a single commit does not change the viewed state`() {
-    viewedState.markViewed(mergeRequest, parsedChanges, listOf(cumulativeChange(FILE_X)), viewed = true)
+    viewedState.markViewed(mergeRequest, repository, parsedChanges, listOf(cumulativeChange(FILE_X)), viewed = true)
 
-    viewedState.markViewed(mergeRequest, parsedChanges, listOf(commitChange(COMMIT_A)), viewed = false)
-    viewedState.markViewed(mergeRequest, parsedChanges, listOf(commitChange(COMMIT_B)), viewed = true)
+    viewedState.markViewed(mergeRequest, repository, parsedChanges, listOf(commitChange(COMMIT_A)), viewed = false)
+    viewedState.markViewed(mergeRequest, repository, parsedChanges, listOf(commitChange(COMMIT_B)), viewed = true)
 
     assertThat(viewedState.state.states.single().viewedFiles).isEqualTo(mapOf(FILE_X to COMMIT_A))
-    assertThat(viewedState.isViewed(mergeRequest, parsedChanges, commitChange(COMMIT_A))).isFalse()
+    assertThat(viewedState.isViewed(mergeRequest, repository, parsedChanges, commitChange(COMMIT_A))).isFalse()
   }
 
   private fun cumulativeChange(path: String): RefComparisonChange =

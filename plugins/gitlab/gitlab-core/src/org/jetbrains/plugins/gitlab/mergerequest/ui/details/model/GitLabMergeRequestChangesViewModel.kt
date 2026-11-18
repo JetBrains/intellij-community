@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharedFlow
@@ -41,6 +42,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   mergeRequest: GitLabMergeRequest,
+  private val gitRepository: GitRepository,
   private val htmlConverter: GitLabMarkdownToHtmlConverter,
 ) : GitLabMergeRequestChangesViewModel,
     CodeReviewChangesViewModel<GitLabCommitViewModel> {
@@ -59,7 +61,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     val parsedChanges = changesContainer.changes
     // a single-commit merge request has no separate cumulative diff, so its only change list is the cumulative one
     if (changeList.commitSha == null || parsedChanges.commits.size == 1) {
-      GitLabMergeRequestCumulativeChangeListViewModelImpl(project, this, mergeRequest, parsedChanges, changeList)
+      GitLabMergeRequestCumulativeChangeListViewModelImpl(project, this, mergeRequest, gitRepository, parsedChanges, changeList)
     }
     else {
       GitLabMergeRequestCommitChangeListViewModelImpl(project, this, mergeRequest, parsedChanges, changeList)

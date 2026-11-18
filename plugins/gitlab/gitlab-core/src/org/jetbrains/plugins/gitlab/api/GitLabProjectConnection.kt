@@ -10,6 +10,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.data.GitLabProjectDetails
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabGitLocalRepository
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProjectImpl
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
@@ -40,7 +41,7 @@ class GitLabProjectConnection(
                                                      currentUser,
                                                      // handle the project rename
                                                      repo.repository.copy(projectPath = projectDetails.path),
-                                                     repo.remote)
+                                                     GitLabGitLocalRepository(repo.remote))
 
   val serverVersion: GitLabVersion? = glMetadata?.version
 

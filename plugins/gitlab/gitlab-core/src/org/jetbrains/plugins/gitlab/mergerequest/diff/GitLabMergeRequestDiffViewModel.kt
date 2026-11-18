@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -90,6 +91,7 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
+  private val gitRepository: GitRepository,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   private val imageLoader: GitLabImageLoader,
@@ -229,7 +231,7 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   ) =
     GitLabMergeRequestDiffReviewViewModelImpl(
       project, this,
-      mergeRequest, parsedChanges, diffData, change,
+      mergeRequest, gitRepository, parsedChanges, diffData, change,
       this@GitLabMergeRequestDiffProcessorViewModelImpl,
       discussionsContainer, discussionsViewOption, avatarIconsProvider,
       imageLoader

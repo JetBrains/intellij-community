@@ -16,7 +16,6 @@ import com.intellij.collaboration.util.asFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import git4idea.changes.GitBranchComparisonResult
-import git4idea.remote.GitRemoteUrlCoordinates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -73,7 +72,6 @@ private val LOG = logger<GitLabMergeRequest>()
 @CodeReviewDomainEntity
 interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val serverPath: GitLabServerPath
-  val gitRemote: GitRemoteUrlCoordinates
   val projectId: String
 
   val iid: String
@@ -154,7 +152,6 @@ internal class LoadedGitLabMergeRequest(
   private val glMetadata: GitLabServerMetadata?,
   private val projectCoordinates: GitLabProjectCoordinates,
   override val projectId: String,
-  override val gitRemote: GitRemoteUrlCoordinates,
   private val localRepository: GitLabLocalRepository,
   currentUser: GitLabUserDTO,
   mergeRequest: GitLabMergeRequestDTO,

@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.codereview.issues.processIssueIdsHtml
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import git4idea.remote.GitRemoteUrlCoordinates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -51,6 +52,7 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
   projectData: GitLabProject,
+  gitRemote: GitRemoteUrlCoordinates,
   private val mergeRequest: GitLabMergeRequest,
   avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   htmlConverter: GitLabMarkdownToHtmlConverter,
@@ -92,17 +94,17 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   override val branchesVm = GitLabMergeRequestBranchesViewModel(
     cs,
     mergeRequest,
-    projectData.gitRemote,
+    gitRemote,
     preferredProjectAndAccount
   )
   override val statusVm = GitLabMergeRequestStatusViewModelImpl(
     project,
     cs,
-    projectData.gitRemote,
+    gitRemote,
     projectData.projectCoordinates.serverPath,
     mergeRequest
   )
-  override val changesVm = GitLabMergeRequestChangesViewModelImpl(project, cs, mergeRequest, htmlConverter)
+  override val changesVm = GitLabMergeRequestChangesViewModelImpl(project, cs, mergeRequest, gitRemote.repository, htmlConverter)
 
   override fun reloadData() {
     cs.launchNow {

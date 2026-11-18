@@ -11,6 +11,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -63,8 +64,12 @@ internal class GitLabPersistentMergeRequestChangesViewedState
    * Checks the viewed state of [change].
    * A change of a single commit is never viewed, because the viewed state describes only the cumulative diff.
    */
-  fun isViewed(mergeRequest: GitLabMergeRequest, parsedChanges: GitBranchComparisonResult, change: RefComparisonChange): Boolean {
-    val gitRepository = mergeRequest.gitRemote.repository
+  fun isViewed(
+    mergeRequest: GitLabMergeRequest,
+    gitRepository: GitRepository,
+    parsedChanges: GitBranchComparisonResult,
+    change: RefComparisonChange,
+  ): Boolean {
     val sha = parsedChanges.findViewedStateSha(gitRepository, change) ?: return false
     val relPath = VcsFileUtil.relativePath(gitRepository.root, change.filePath)
 
@@ -79,11 +84,11 @@ internal class GitLabPersistentMergeRequestChangesViewedState
    */
   fun markViewed(
     mergeRequest: GitLabMergeRequest,
+    gitRepository: GitRepository,
     parsedChanges: GitBranchComparisonResult,
     changes: Iterable<RefComparisonChange>,
     viewed: Boolean,
   ) {
-    val gitRepository = mergeRequest.gitRemote.repository
     val relPathsAndShas = changes.mapNotNull { change ->
       parsedChanges.findViewedStateSha(gitRepository, change)?.let { sha ->
         VcsFileUtil.relativePath(gitRepository.root, change.filePath) to sha

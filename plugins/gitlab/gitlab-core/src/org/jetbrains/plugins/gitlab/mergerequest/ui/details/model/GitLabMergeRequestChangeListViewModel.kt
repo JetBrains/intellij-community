@@ -11,6 +11,7 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -110,6 +111,7 @@ internal class GitLabMergeRequestCumulativeChangeListViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
   mergeRequest: GitLabMergeRequest,
+  private val gitRepository: GitRepository,
   parsedChanges: GitBranchComparisonResult,
   changeList: CodeReviewChangeList,
 ) : GitLabMergeRequestChangeListViewModelBase(project, parentCs, mergeRequest, parsedChanges, changeList),
@@ -127,11 +129,11 @@ internal class GitLabMergeRequestCumulativeChangeListViewModelImpl(
     }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
 
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
-    persistentChangesViewedState.markViewed(mergeRequest, parsedChanges, changes, viewed)
+    persistentChangesViewedState.markViewed(mergeRequest, gitRepository, parsedChanges, changes, viewed)
   }
 
   private fun isViewed(change: RefComparisonChange): Boolean =
-    persistentChangesViewedState.isViewed(mergeRequest, parsedChanges, change)
+    persistentChangesViewedState.isViewed(mergeRequest, gitRepository, parsedChanges, change)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

@@ -184,7 +184,7 @@ internal class GitLabMergeRequestDiffReviewViewModelTest {
       every { newDiscussions } returns mappedNewDiscussions
     }
     val reviewVm: GitLabMergeRequestDiffReviewViewModel = GitLabMergeRequestDiffReviewViewModelImpl(
-      project, cs, mergeRequest, mockk(), diffData, change, diffVm, discussionsContainer, discussionsViewOption, mockk(), mockk()
+      project, cs, mergeRequest, mockk(), mockk(), diffData, change, diffVm, discussionsContainer, discussionsViewOption, mockk(), mockk()
     )
 
     suspend fun assertLocation(expected: DiffLineLocation) {

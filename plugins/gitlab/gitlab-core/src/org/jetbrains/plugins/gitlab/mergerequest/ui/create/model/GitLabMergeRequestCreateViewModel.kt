@@ -30,6 +30,7 @@ import git4idea.GitPushUtil
 import git4idea.GitRemoteBranch
 import git4idea.config.GitSharedSettings
 import git4idea.history.GitLogUtil
+import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.changesSignalFlow
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
@@ -119,6 +120,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   parentCs: CoroutineScope,
   private val projectsManager: GitLabProjectsManager,
   private val projectData: GitLabProject,
+  private val gitRemote: GitRemoteUrlCoordinates,
   override val avatarIconProvider: IconsProvider<GitLabUserDTO>,
   private val openReviewTabAction: suspend (mrIid: String) -> Unit,
   private val onReviewCreated: () -> Unit,
@@ -177,8 +179,8 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     }
   }.stateIn(cs, SharingStarted.Eagerly, null)
 
-  private val gitRepository: GitRepository = projectData.gitRemote.repository
-  override val projectMapping: GitLabProjectMapping = GitLabProjectMapping(projectData.projectCoordinates, projectData.gitRemote)
+  private val gitRepository: GitRepository = gitRemote.repository
+  override val projectMapping: GitLabProjectMapping = GitLabProjectMapping(projectData.projectCoordinates, gitRemote)
 
   private val commitRevisionComparisonFlow: Flow<CommitRevisionComparison?> =
     combine(gitRepository.changesSignalFlow().withInitial(Unit), branchState) { _, state -> state }
@@ -295,7 +297,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   }
 
   private fun initBranchState() {
-    val baseRepo = GitLabProjectMapping(projectData.projectCoordinates, projectData.gitRemote)
+    val baseRepo = GitLabProjectMapping(projectData.projectCoordinates, gitRemote)
     val baseGitRepo = baseRepo.gitRepository
     val defaultBranch = projectData.defaultBranch ?: return
     val baseBranch = baseGitRepo.getBranchTrackInfo(defaultBranch)?.remoteBranch ?: return

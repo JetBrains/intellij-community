@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -63,6 +64,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
   private val mergeRequest: GitLabMergeRequest,
+  private val gitRepository: GitRepository,
   private val parsedChanges: GitBranchComparisonResult,
   private val diffData: GitTextFilePatchWithHistory,
   private val change: RefComparisonChange,
@@ -118,7 +120,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   }
 
   override fun markViewed() {
-    persistentChangesViewedState.markViewed(mergeRequest, parsedChanges, listOf(change), true)
+    persistentChangesViewedState.markViewed(mergeRequest, gitRepository, parsedChanges, listOf(change), true)
   }
 
   override fun showDiffAtComment(commentId: String) {

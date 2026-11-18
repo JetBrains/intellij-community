@@ -155,7 +155,7 @@ abstract class GitLabConnectedProjectViewModelBase(
     connection.projectData.mergeRequests.getShared(iid)
       .transformConsecutiveSuccesses {
         mapScoped {
-          GitLabMergeRequestViewModels(project, this, connection.projectData, avatarIconProvider,
+          GitLabMergeRequestViewModels(project, this, connection.projectData, connection.repo.remote, avatarIconProvider,
                                        connection.imageLoader, it, connection.currentUser, preferredProjectAndAccount,
                                        ::openMergeRequestDetails, ::openMergeRequestTimeline, ::openMergeRequestDiff)
         }

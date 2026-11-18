@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.nullize
-import git4idea.remote.GitRemoteUrlCoordinates
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -60,7 +59,6 @@ private val LOG = logger<GitLabProject>()
 @CodeReviewDomainEntity
 interface GitLabProject {
   val projectCoordinates: GitLabProjectCoordinates
-  val gitRemote: GitRemoteUrlCoordinates
   val projectId: String
 
   val dataReloadSignal: SharedFlow<Unit>
@@ -120,7 +118,7 @@ internal class GitLabProjectImpl(
   private val details: GitLabProjectDetails,
   private val currentUser: GitLabUserDTO,
   override val projectCoordinates: GitLabProjectCoordinates,
-  override val gitRemote: GitRemoteUrlCoordinates,
+  private val localRepository: GitLabLocalRepository,
 ) : GitLabProject {
 
   private val cs = parentCs.childScope(javaClass.name)
@@ -139,7 +137,7 @@ internal class GitLabProjectImpl(
 
   override val mergeRequests: GitLabProjectMergeRequestsStore by lazy {
     CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, currentUser,
-                                           projectCoordinates, projectId, gitRemote)
+                                           projectCoordinates, projectId, localRepository)
   }
 
   private val labelsLoader by lazy {

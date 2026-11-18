@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.toolwindow.ReviewTabViewModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import git4idea.remote.GitRemoteUrlCoordinates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
@@ -39,6 +40,7 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     parentCs: CoroutineScope,
     projectsManager: GitLabProjectsManager,
     projectData: GitLabProject,
+    gitRemote: GitRemoteUrlCoordinates,
     avatarIconProvider: IconsProvider<GitLabUserDTO>,
     openReviewTabAction: suspend (mrIid: String) -> Unit,
     onReviewCreated: () -> Unit
@@ -50,7 +52,7 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
 
     val createVm = GitLabMergeRequestCreateViewModelImpl(
       project, cs,
-      projectsManager, projectData, avatarIconProvider,
+      projectsManager, projectData, gitRemote, avatarIconProvider,
       openReviewTabAction, onReviewCreated
     )
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import git4idea.remote.GitRemoteUrlCoordinates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -53,6 +54,7 @@ internal class GitLabMergeRequestViewModels(
   private val project: Project,
   parentCs: CoroutineScope,
   projectData: GitLabProject,
+  private val gitRemote: GitRemoteUrlCoordinates,
   private val avatarIconProvider: IconsProvider<GitLabUserDTO>,
   private val imageLoader: GitLabImageLoader,
   private val mergeRequest: GitLabMergeRequest,
@@ -70,7 +72,7 @@ internal class GitLabMergeRequestViewModels(
   private val htmlConverter: GitLabMarkdownToHtmlConverter =
     GitLabMarkdownToHtmlConverter(
       project,
-      projectData.gitRemote.repository,
+      gitRemote.repository,
       projectData.projectCoordinates.serverPath,
       projectData.projectId,
       projectData.projectCoordinates.projectPath
@@ -79,7 +81,7 @@ internal class GitLabMergeRequestViewModels(
   private val cs = parentCs.childScope(javaClass.name)
 
   private val lazyDetailsVm = lazy {
-    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest, avatarIconProvider, htmlConverter,
+    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, gitRemote, mergeRequest, avatarIconProvider, htmlConverter,
                                            preferredProjectAndAccount).also {
       setupDetailsVm(it)
     }
@@ -104,7 +106,7 @@ internal class GitLabMergeRequestViewModels(
   }
 
   private val _diffVm by lazy {
-    GitLabMergeRequestDiffProcessorViewModelImpl(project, cs, currentUser, mergeRequest, discussionsVms,
+    GitLabMergeRequestDiffProcessorViewModelImpl(project, cs, currentUser, mergeRequest, gitRemote.repository, discussionsVms,
                                                  avatarIconProvider, imageLoader).apply {
       setup()
     }
@@ -113,7 +115,7 @@ internal class GitLabMergeRequestViewModels(
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
     GitLabMergeRequestEditorReviewViewModel(cs, project,
-                                            projectData.gitRemote,
+                                            gitRemote,
                                             currentUser, mergeRequest,
                                             discussionsVms, avatarIconProvider, imageLoader,
                                             openMergeRequestDetails, openMergeRequestDiff).apply {
