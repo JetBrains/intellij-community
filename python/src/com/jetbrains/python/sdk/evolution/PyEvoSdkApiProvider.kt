@@ -58,6 +58,7 @@ import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.EvoWorkspace
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
+import com.intellij.python.sdk.backend.evolution.areToolsEnabledFor
 import com.intellij.python.sdk.backend.evolution.discoverVenvs
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.nodeIdFor
@@ -515,6 +516,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
         workspaceRootKey = workspace.rootKey,
         // A ref is the name of the SDK, so building one reads nothing.
         interpreterRef = member.interpreter?.asInterpreterRef(),
+        // Stated here because only this side knows the project's eel: a client's own machine is the user's laptop
+        // even when the project lives on an SSH host (PY-94224).
+        toolsEnabled = areToolsEnabledFor(member.pyProject.eelDescriptor),
       )
     }
   }
@@ -1367,9 +1371,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
  */
 private data class EvoTarget(val workspace: EvoWorkspace, val pyProject: EvoPyProject)
 
-/** Whether the widget offers the tools and their actions for this target — see [PyEvoRegistry.areToolsEnabledFor]. */
+/** Whether the widget offers the tools and their actions for this target — see [areToolsEnabledFor]. */
 private val EvoTarget.toolsEnabled: Boolean
-  get() = PyEvoRegistry.areToolsEnabledFor(pyProject.pyProject.eelDescriptor)
+  get() = areToolsEnabledFor(pyProject.pyProject.eelDescriptor)
 
 /** Owns the project-level parent scope for the widget's per-tree root coroutines, so they are never unparented. */
 @Service(Service.Level.PROJECT)

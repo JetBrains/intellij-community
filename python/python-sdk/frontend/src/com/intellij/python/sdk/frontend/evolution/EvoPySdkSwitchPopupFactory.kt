@@ -60,8 +60,6 @@ import javax.swing.Icon
 import com.intellij.python.sdk.common.evolution.requestEvoShowToolProcessOutput
 import kotlinx.coroutines.launch
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 
 private val managePackagesAction = object : AnAction(
   { PySdkFrontendBundle.message("evo.sdk.python.packaging.interpreter.widget.manage.packages") },
@@ -143,6 +141,13 @@ class EvoPySdkSwitchPopupFactory(
   val expandTools: () -> Unit,
   /** The package-manager rows the backend admitted for the current interpreter — see [packageManagerRows]. */
   val packageManagerActions: List<EvoLeafDto>,
+  /**
+   * Whether the tools and their actions are offered here — the backend's answer, see [EvoPyProjectDto.toolsEnabled].
+   *
+   * Asked of the backend and not of this process: the gate is about the project's machine, and this one is the user's
+   * laptop even when the project lives on an SSH host (PY-94224).
+   */
+  val toolsEnabled: Boolean,
 ) {
   /** The tool's own name for [nodeId], as the popup writes it, falling back to the id when no node claims it. */
   private fun nodeLabel(nodeId: String): @NlsSafe String = nodes.firstOrNull { it.id == nodeId }?.label ?: nodeId
@@ -486,7 +491,7 @@ class EvoPySdkSwitchPopupFactory(
       // A rebuild runs a tool, so it is left out where the tools are (PY-93438). The backend leaves out the
       // package-manager rows there by itself.
       elements = buildList {
-        if (PyEvoRegistry.areToolsEnabledFor(project.getEelDescriptor())) add(recreateCurrentEnvNode(traceId))
+        if (toolsEnabled) add(recreateCurrentEnvNode(traceId))
         addAll(packageManagerRows())
         add(EvoTreeLeafElement(managePackagesAction))
       },
