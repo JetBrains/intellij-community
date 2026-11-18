@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.cache
 
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -14,8 +13,10 @@ import com.intellij.util.io.PersistentMapBase
 import com.intellij.util.io.PersistentMapBuilder
 import com.intellij.util.io.PersistentMapImpl
 import com.intellij.util.io.VersionUpdatedException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -23,18 +24,34 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
+import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 
 /**
  * Wrapper for PersistentHashMap closed on [coroutineScope] cancel.
  * Values are forced on disk after putting into the map with a specified delay.
- * The name should be unique across the application to support emergency closing on application shutdown.
+ *
+ * One cache at a time owns the storage file of [mapBuilder].
+ * A cache created while the previous owner of the file closes opens the file after that close.
+ * Until then, [get] and [entries] wait up to 300 ms from the creation of the cache, and then return no data.
+ * [put] and [remove] wait up to 10 s from the creation of the cache, and then do nothing.
+ * A cache is active while its [coroutineScope] is not cancelled.
+ * A cache created while an active cache owns the file logs an error and stores nothing.
  */
 class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) constructor(
   private val name: String,
@@ -44,31 +61,47 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
   private val closeOnAppShutdown: Boolean = true,
   private val cleanDirOnFailure: Boolean = !ApplicationManager.getApplication().isUnitTestMode, // IJPL-149672
 ) : ManagedCache<K, V> {
-  private val persistentMapRef: AtomicReference<PersistentMapBase<K, V>> = AtomicReference(createPersistentMap())
+  private val storageFile: Path = mapBuilder.file.toAbsolutePath()
+  private val persistentMapRef: AtomicReference<PersistentMapBase<K, V>> = AtomicReference()
   private val scheduledForce: AtomicReference<Job> = AtomicReference<Job>()
   private val errorCounter: AtomicInteger = AtomicInteger()
+  private val closed: CompletableDeferred<Unit> = CompletableDeferred()
+  private val createdAt: ValueTimeMark = TimeSource.Monotonic.markNow()
+  private val previousOwnerClosed: Deferred<Unit>
+  private val opened: Job
 
   init {
-    coroutineScope.awaitCancellationAndInvoke {
-      close()
+    val previousOwnerClosed = takeOwnership()
+    if (previousOwnerClosed != null) {
+      this.previousOwnerClosed = previousOwnerClosed
+      opened = coroutineScope.launch(dispatcher) {
+        open()
+      }
+      coroutineScope.awaitCancellationAndInvoke {
+        close()
+      }
+    } else {
+      this.previousOwnerClosed = CompletableDeferred(Unit)
+      opened = CompletableDeferred(Unit)
+      closed.complete(Unit)
     }
   }
 
   override suspend fun put(key: K, value: V) {
-    withPersistentMap(opName="put") { map ->
+    withPersistentMap(opName="put", isRead=false) { map ->
       map.put(key, value)
     }
     forceAsync()
   }
 
   override suspend fun get(key: K): V? {
-    return withPersistentMap(opName="get") { map ->
+    return withPersistentMap(opName="get", isRead=true) { map ->
       map.get(key)
     }
   }
 
   override suspend fun remove(key: K) {
-    withPersistentMap(opName="remove") { map ->
+    withPersistentMap(opName="remove", isRead=false) { map ->
       map.remove(key)
     }
     forceAsync()
@@ -77,7 +110,7 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
   override suspend fun entries(): Flow<Pair<K, V>> {
     // Implementation detail: flow could not be used here since processExistingKeys is not suspendable
     return buildList {
-      withPersistentMap(opName="entries") { map ->
+      withPersistentMap(opName="entries", isRead=true) { map ->
         map.processExistingKeys { key ->
           add(key to map.get(key)!!)
           true
@@ -107,26 +140,83 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
   }
 
   private suspend fun force() {
-    withPersistentMap(opName="force") { map ->
+    withPersistentMap(opName="force", isRead=false) { map ->
       map.force()
     }
   }
 
-  private suspend fun close() {
-    withContext(dispatcher) {
-      close(isAppShutdown=false)
+  /**
+   * Makes this cache the owner of [storageFile], unless an active cache owns it.
+   *
+   * @return the close signal of the previous owner, or `null` when an active cache owns the file
+   */
+  private fun takeOwnership(): Deferred<Unit>? {
+    var previousOwner: ManagedPersistentCache<*, *>? = null
+    var isOwner = false
+    OWNERS.compute(storageFile) { _, currentOwner ->
+      previousOwner = currentOwner
+      isOwner = currentOwner == null || !currentOwner.coroutineScope.isActive
+      if (isOwner) {
+        this
+      } else {
+        currentOwner
+      }
+    }
+    val owner = previousOwner
+    if (!isOwner) {
+      val exception = IllegalStateException(
+        "the cache ${owner?.name} already uses [$storageFile], and its scope is not cancelled. " +
+        "Two caches cannot use one file at the same time"
+      )
+      LOG.error("cannot create $name", exception)
+      return null
+    }
+    return owner?.closed ?: CompletableDeferred(Unit)
+  }
+
+  private suspend fun open() {
+    if (!previousOwnerClosed.isCompleted) {
+      LOG.info("$name waits for the previous owner to close")
+      val isPreviousOwnerClosed = withTimeoutOrNull(PREVIOUS_OWNER_WAIT) { previousOwnerClosed.await() } != null
+      if (!isPreviousOwnerClosed) {
+        LOG.warn("the previous owner of $name did not close in $PREVIOUS_OWNER_WAIT, $name waits for that close")
+        previousOwnerClosed.await()
+      }
+    }
+    val persistentMap = createPersistentMap()
+    if (persistentMap == null) {
+      release()
+    } else {
+      persistentMapRef.set(persistentMap)
+      if (closeOnAppShutdown) {
+        OPENED_CACHES.add(this)
+        if (APP_SHUTDOWN_STARTED.get()) {
+          closeAndRelease()
+        }
+      }
     }
   }
 
-  private fun close(isAppShutdown: Boolean) {
-    val persistentMap = persistentMapRef.getAndSet(null)
-    if (persistentMap == null) {
-      return
+  private suspend fun close() {
+    opened.join()
+    val isPreviousOwnerClosed = withTimeoutOrNull(PREVIOUS_OWNER_WAIT) { previousOwnerClosed.await() } != null
+    if (!isPreviousOwnerClosed) {
+      LOG.warn("the previous owner of $name did not close in $PREVIOUS_OWNER_WAIT, $name releases the file")
     }
-    if (!isAppShutdown) {
-      TRACKED_CACHES.remove(this)
+    withContext(dispatcher) {
+      closeAndRelease()
     }
-    close(persistentMap)
+  }
+
+  private fun closeAndRelease() {
+    try {
+      val persistentMap = persistentMapRef.getAndSet(null)
+      if (persistentMap != null) {
+        close(persistentMap)
+      }
+    } finally {
+      release()
+    }
   }
 
   private fun close(persistentMap: PersistentMapBase<K, V>, delete: Boolean = false) {
@@ -141,6 +231,12 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     } catch (e: Exception) {
       LOG.warn("error closing $name", e)
     }
+  }
+
+  private fun release() {
+    OPENED_CACHES.remove(this)
+    OWNERS.remove(storageFile, this)
+    closed.complete(Unit)
   }
 
   private fun createPersistentMap(): PersistentMapBase<K, V>? {
@@ -179,22 +275,41 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
       return null
     }
     LOG.info("created $name with size ${map.keysCount()}")
-    if (closeOnAppShutdown) {
-      val added = TRACKED_CACHES.add(this)
-      if (!added) {
-        LOG.error(
-          "Probably the project was not disposed properly before reopening. " +
-          "Persistent map $name has already been registered. " +
-          "List of registered maps: $TRACKED_CACHES"
-        )
-        close(map)
-        return null
-      }
-    }
     return map
   }
 
-  private suspend fun <T> withPersistentMap(opName: String, operation: (PersistentMapBase<K, V>) -> T?): T? {
+  /**
+   * Waits for the open of the map.
+   *
+   * @return `false` when the operation must not wait longer for the previous owner
+   */
+  private suspend fun awaitOpened(isRead: Boolean): Boolean {
+    if (!previousOwnerClosed.isCompleted) {
+      val wait = if (isRead) {
+        PREVIOUS_OWNER_READ_WAIT
+      } else {
+        PREVIOUS_OWNER_WAIT
+      }
+      val remaining = wait - createdAt.elapsedNow()
+      val isPreviousOwnerClosed = withTimeoutOrNull(remaining) { previousOwnerClosed.await() } != null
+      if (!isPreviousOwnerClosed) {
+        return false
+      }
+    }
+    opened.join()
+    return true
+  }
+
+  private suspend fun <T> withPersistentMap(
+    opName: String,
+    isRead: Boolean,
+    operation: (PersistentMapBase<K, V>) -> T?,
+  ): T? {
+    val isOpened = awaitOpened(isRead)
+    if (!isOpened) {
+      LOG.trace { "skipped '$opName' by $name, the previous owner is not closed yet" }
+      return null
+    }
     return withContext(dispatcher) {
       val persistentMap = persistentMapRef.get()
       if (persistentMap == null) {
@@ -211,25 +326,14 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
         if (count > IO_ERRORS_THRESHOLD) {
           LOG.warn("error count exceeds the threshold, closing $name")
           if (persistentMapRef.compareAndSet(persistentMap, null)) {
-            // IJPL-158564 unregister tracked cache if too many io errors occurred
-            TRACKED_CACHES.remove(this@ManagedPersistentCache)
+            // IJPL-158564 release the storage file if too many io errors occurred
             close(persistentMap, delete=true)
+            release()
           }
         }
         return@withContext null
       }
     }
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is ManagedPersistentCache<*, *>) return false
-    if (name != other.name) return false
-    return true
-  }
-
-  override fun hashCode(): Int {
-    return name.hashCode()
   }
 
   override fun toString(): String {
@@ -241,14 +345,14 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
 
   @TestOnly
   suspend fun size(): Int {
-    return withPersistentMap("isClosed") { map ->
+    return withPersistentMap(opName="size", isRead=true) { map ->
       map.keysCount()
     } ?: throw IllegalStateException("persistent map is already closed")
   }
 
   @TestOnly
   suspend fun isClosed(): Boolean {
-    return withPersistentMap("isClosed") { map ->
+    return withPersistentMap(opName="isClosed", isRead=true) { map ->
       map.isClosed
     } ?: true
   }
@@ -263,12 +367,18 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     private const val CREATE_ATTEMPT_COUNT: Int = 5
     private const val CREATE_ATTEMPT_DELAY_MS: Long = 10
     private const val FORCE_ON_DISK_DELAY_MS: Long = 500
+    private val PREVIOUS_OWNER_READ_WAIT: Duration = 300.milliseconds
+    private val PREVIOUS_OWNER_WAIT: Duration = 10.seconds
     private val LOG: Logger = logger<ManagedPersistentCache<*, *>>()
-    private val TRACKED_CACHES: MutableSet<ManagedPersistentCache<*, *>> = ConcurrentCollectionFactory.createConcurrentSet()
+    private val OWNERS: ConcurrentHashMap<Path, ManagedPersistentCache<*, *>> = ConcurrentHashMap()
+    private val OPENED_CACHES: MutableSet<ManagedPersistentCache<*, *>> = ConcurrentHashMap.newKeySet()
+    private val APP_SHUTDOWN_STARTED: AtomicBoolean = AtomicBoolean()
     init {
       ShutDownTracker.getInstance().registerCacheShutdownTask {
-        TRACKED_CACHES.forEach { cache -> cache.close(isAppShutdown=true) }
-        TRACKED_CACHES.clear()
+        APP_SHUTDOWN_STARTED.set(true)
+        for (cache in OPENED_CACHES) {
+          cache.closeAndRelease()
+        }
       }
     }
   }
