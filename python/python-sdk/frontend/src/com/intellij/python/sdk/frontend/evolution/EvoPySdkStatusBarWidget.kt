@@ -26,6 +26,7 @@ import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.evoRpcOrNull
 import com.intellij.python.sdk.common.evolution.requestEvoAssociatedInterpreters
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import com.intellij.python.sdk.common.evolution.requestEvoCurrentInterpreter
 import com.intellij.python.sdk.common.evolution.requestEvoNodes
 import com.intellij.python.sdk.common.evolution.requestEvoPyProjects
@@ -96,7 +97,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
    * widget knows of no target at all and stays hidden. Every later emission replaces this wholesale, so the three
    * questions below are always answered from one consistent generation.
    */
-  private class Structure(dtos: List<EvoPyProjectDto>) {
+  private class Structure(private val dtos: List<EvoPyProjectDto>) {
     private val byKey: Map<String, EvoPyProjectDto> = dtos.associateBy { it.key }
 
     /** The `PyProject` rooted at the project's own base dir; `null` when the project root is not a Python one. */
@@ -115,6 +116,9 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
      */
     fun of(module: Module): EvoPyProjectDto? =
       ModuleRootManager.getInstance(module).contentRoots.firstNotNullOfOrNull { byKey[it.path] }
+
+    /** The `PyProject` whose module holds [path], by the content roots the backend sent — see [pyProjectForPath]. */
+    fun ofPath(path: String): EvoPyProjectDto? = pyProjectForPath(dtos, path)
 
     /** Display name of the workspace [target] takes part in, or `null` when it is standalone. */
     fun workspaceRootName(target: EvoPyProjectDto): String? = target.workspaceRootKey?.let { byKey[it] }?.name
@@ -606,20 +610,48 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
    * This copy exists because the frontend holds [EvoPyProjectDto] and not `EvoPyProject`. Change the two together: a
    * surface that answers on its own rule names an interpreter another surface does not (PY-90174).
    *
-   * No test covers this copy. `EvoPyProjectModelTest` and `PyConsoleSubprojectTargetTest` prove the backend rule
-   * only, so a change here that disagrees with it stays green. Covering it means either lifting the rule off this
-   * widget into something a unit test can call, or writing it in the UI suite.
+   * Which module a file belongs to is asked of the module model first, so where there is one it stays the authority
+   * and a file it owns by nobody still takes the fallback. A JetBrains Client has no module model at all, its
+   * silence is no answer, and the question goes to the content roots the backend sent — [pyProjectForPath], which
+   * states that rule and is where a unit test reaches it (PY-94235).
    */
   private fun forFile(file: VirtualFile?): EvoPyProjectDto? {
     val structure = this.structure ?: return null
-    val module = file?.let { findModule(it) }
-    return if (module != null) structure.of(module) else structure.main
+    file ?: return structure.main
+    findModule(file)?.let { return structure.of(it) }
+    return structure.ofPath(file.path) ?: structure.main
   }
 
   private fun findModule(file: VirtualFile): Module? =
     ModuleManager.getInstance(project).modules.firstOrNull { it.moduleContentScope.contains(file) }
 
 }
+
+/**
+ * The `PyProject` of [dtos] whose module holds the file at [path], or `null` when none does.
+ *
+ * The frontend's stand-in for `ProjectFileIndex.getModuleForFile` where there is no module model to ask: a file
+ * belongs to the module whose content root holds it, and the backend states those roots on
+ * [EvoPyProjectDto.contentRoots]. A JetBrains Client is such a frontend — the modules are the backend's — and
+ * asking its empty module model sent every file to the fallback, so the widget spoke for the project root whatever
+ * was open and a multi-module project showed "No interpreter" in Remote Development (PY-94235).
+ *
+ * The **longest** matching root wins, so a project nested in another is answered with itself and not with the one it
+ * sits in — which is what the module model does too, a nested content root belonging to the module that declares it.
+ *
+ * Matching is on whole path segments, so `/home/me/uvtools` is not held by `/home/me/uv`. Both sides spell a path
+ * system-independently (forward slashes, no trailing one), so this is plain string work — no VFS, no path parsing.
+ *
+ * [EvoPyProjectDto.key] is a content root of its own module, so a DTO from a backend that does not state the roots
+ * yet still matches files under its base dir.
+ */
+@ApiStatus.Internal
+fun pyProjectForPath(dtos: List<EvoPyProjectDto>, path: @NonNls String): EvoPyProjectDto? =
+  dtos.asSequence()
+    .flatMap { dto -> (dto.contentRoots.asSequence() + dto.key).map { it to dto } }
+    .filter { (root, _) -> path == root || path.startsWith("$root/") }
+    .maxByOrNull { (root, _) -> root.length }
+    ?.second
 
 /**
  * Whether [fresh] rows would draw differently from the [shown] ones, which is when the popup has to be rebuilt.

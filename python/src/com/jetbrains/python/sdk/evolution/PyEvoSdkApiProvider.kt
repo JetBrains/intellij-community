@@ -30,6 +30,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.eel.provider.toEelApi
@@ -500,13 +501,15 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     get() = PyEvoRegistry.slowToolCacheSeconds.seconds
 
   override suspend fun pyProjects(projectId: ProjectId): Flow<List<EvoPyProjectDto>> =
-    projectId.findProjectOrNull()?.let { EvoPyProjectModel.getInstance(it) }?.snapshotFlow()?.map { it.toDtos() } ?: flowOf(emptyList())
+    projectId.findProjectOrNull()?.let { EvoPyProjectModel.getInstance(it) }?.snapshotFlow()?.map { readAction { it.toDtos() } } ?: flowOf(emptyList())
 
   /**
    * The wire view of one generation, in project-model order.
    *
    * Built here, where it is pushed, and not held on the structure: everything a DTO states lives on the generation
    * already, and only a connected frontend ever asks for one.
+   *
+   * Under a read action, because the content roots of a module are project-model state.
    */
   @Suppress("DEPRECATION")
   private fun EvoPyProjectModel.Snapshot.toDtos(): List<EvoPyProjectDto> = workspaces.flatMap { workspace ->
@@ -523,6 +526,13 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
         // Stated here because only this side knows the project's eel: a client's own machine is the user's laptop
         // even when the project lives on an SSH host (PY-94224).
         toolsEnabled = areToolsEnabledFor(member.pyProject.eelDescriptor),
+        // A frontend with no module model of its own matches the open file against these (PY-94235). A generation
+        // can outlive a module, and asking a disposed one throws, so it states no roots and is matched by its key
+        // alone — the same rejection `Snapshot.forModule` makes.
+        contentRoots = member.pyProject.residesOnModule
+          .takeUnless { it.isDisposed }
+          ?.let { ModuleRootManager.getInstance(it).contentRoots.map { root -> root.path } }
+          .orEmpty(),
       )
     }
   }

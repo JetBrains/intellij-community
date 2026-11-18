@@ -386,6 +386,14 @@ data class EvoPyProjectDto(
    * machine is the user's laptop even when the project lives on an SSH host (PY-94224).
    */
   val toolsEnabled: Boolean = true,
+  /**
+   * Every content root of the module this `PyProject` resides on, in system-independent form, [key] among them.
+   *
+   * Stated here because a frontend with no module model of its own cannot read it, and it is how such a frontend
+   * answers "which `PyProject` holds this file" — see `pyProjectForPath` (PY-94235). Defaults to empty, which is
+   * wire-compatible and leaves the match to [key] alone.
+   */
+  val contentRoots: List<@NonNls String> = emptyList(),
 )
 
 /**
