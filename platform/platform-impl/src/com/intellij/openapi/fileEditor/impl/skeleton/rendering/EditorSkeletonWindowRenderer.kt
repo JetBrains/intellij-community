@@ -202,14 +202,32 @@ internal class EditorSkeletonWindowRenderer(
     val oldTarget = target
     if (newTarget != oldTarget) {
       target = newTarget
-      if (oldTarget != null && (newTarget == null || newTarget.window !== oldTarget.window || newTarget.clip != oldTarget.clip)) {
-        oldTarget.rootPane.repaint(oldTarget.rootPaneClip)
+      if (oldTarget != null) {
+        repairAfterChange(oldTarget, newTarget)
       }
     }
     if (newTarget != null && !stopped && !failed) {
       renderThread.register(this)
     } else {
       renderThread.unregister(this)
+    }
+  }
+
+  /**
+   * Asks Swing to repaint the areas where a frame with [oldTarget] can have drawn over a component that is now on top of the renderer.
+   * A frame can be late by one posted bounds event.
+   */
+  private fun repairAfterChange(oldTarget: EditorSkeletonWindowTarget, newTarget: EditorSkeletonWindowTarget?) {
+    if (newTarget == null || newTarget.window !== oldTarget.window || newTarget.clip != oldTarget.clip) {
+      oldTarget.rootPane.repaint(oldTarget.rootPaneClip)
+      return
+    }
+    val dx = newTarget.rootPaneClip.x - newTarget.clip.x
+    val dy = newTarget.rootPaneClip.y - newTarget.clip.y
+    for (overlay in newTarget.excluded) {
+      if (overlay !in oldTarget.excluded) {
+        newTarget.rootPane.repaint(overlay.x + dx, overlay.y + dy, overlay.width, overlay.height)
+      }
     }
   }
 
