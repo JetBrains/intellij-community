@@ -690,6 +690,11 @@
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
+    <option name="MARKDOWN_LIST_MARKER">
+      <value>
+        <option name="FOREGROUND" value="7A7E85" />
+      </value>
+    </option>
     <option name="MARKED_FOR_REMOVAL_ATTRIBUTES">
       <value>
         <option name="EFFECT_COLOR" value="F75464" deuteranopia="e57132" protanopia="e57132" />

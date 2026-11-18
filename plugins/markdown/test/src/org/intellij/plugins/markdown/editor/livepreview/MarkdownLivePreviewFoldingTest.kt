@@ -7,6 +7,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.markdown.frontend.editor.livepreview.CodeFenceRenderingService
 import com.intellij.markdown.frontend.editor.livepreview.CodeFenceView
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownBlockQuotePainter
+import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewBulletInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCheckboxInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewListIndentInlayRenderer
@@ -677,7 +678,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     configure("$content<caret>")
     assertEquals("• one\n  ◦ two\n    ▪ three\n      • four\n\ntail", visibleText())
     assertEquals(listOf("-" to "•", "*" to "◦", "+" to "▪", "-" to "•"), concealedWithPlaceholders())
-    assertTrue(concealedLivePreviewRegions(myFixture.editor).all { FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(it) })
   }
 
   fun testCaretOnTheElementRevealsItsMarkers() {
@@ -1019,7 +1019,8 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val content = "- parent\n- child\n\ntail"
     configure("$content<caret>")
     assertEquals(listOf("-" to "•", "-" to "•"), concealedWithPlaceholders())
-    val staleChildRegion = concealedLivePreviewRegions(myFixture.editor)[1]
+    val staleChildBullet = concealedLivePreviewRegions(myFixture.editor)[1].bulletInlay(myFixture.editor)
+    assertNotNull(staleChildBullet)
 
     val childText = content.indexOf("child")
     select(childText + 1, childText + 2)
@@ -1030,7 +1031,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     moveCaretTo(myFixture.editor.document.textLength)
 
     assertEquals(listOf("-" to "•", "-" to "◦"), concealedWithPlaceholders())
-    assertNotSame(staleChildRegion, concealedLivePreviewRegions(myFixture.editor)[1])
+    assertFalse("The stale bullet must be disposed", staleChildBullet!!.isValid)
   }
 
   fun testNestedElementRevealsItsAncestor() {
@@ -1469,6 +1470,17 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     }
 
     assertEquals(Color.BLUE.rgb, bitmap.getRGB(editor.offsetToXY(rule.startOffset).x, editor.lineHeight / 2))
+  }
+
+  fun testBulletTakesTheListMarkerColor() {
+    configure("- item\n\ntail<caret>")
+    val editor = myFixture.editor
+    editor.colorsScheme.setAttributes(MarkdownHighlighterColors.LIST_MARKER, TextAttributes(Color.BLUE, null, null, null, Font.PLAIN))
+    val bounds = concealedLivePreviewRegions(editor).single().bulletInlay(editor)!!.bounds!!
+
+    val image = MarkdownTestingUtil.paintEditor(editor)
+    val pixels = (bounds.x until bounds.x + bounds.width).flatMap { x -> (bounds.y until bounds.y + bounds.height).map { y -> image.getRGB(x, y) } }
+    assertTrue("The bullet must use the list marker color", Color.BLUE.rgb in pixels)
   }
 
   fun testPlaceholdersShowTheBackgroundOfTheirText() {
@@ -2356,9 +2368,15 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   private fun concealedWithPlaceholders(editor: Editor = myFixture.editor): List<Pair<String, String>> {
     val text = editor.document.charsSequence
     return concealedLivePreviewRegions(editor).map {
-      text.subSequence(it.startOffset, it.endOffset).toString() to it.placeholderText
+      text.subSequence(it.startOffset, it.endOffset).toString() to it.shownText(editor)
     }
   }
+
+  /** The text that [this] region shows: its placeholder, or the glyph of the bullet inlay at its end. */
+  private fun FoldRegion.shownText(editor: Editor): String = placeholderText.ifEmpty { bulletInlay(editor)?.renderer?.glyph.orEmpty() }
+
+  private fun FoldRegion.bulletInlay(editor: Editor): Inlay<out MarkdownLivePreviewBulletInlayRenderer>? =
+    editor.inlayModel.getInlineElementsInRange(endOffset, endOffset, MarkdownLivePreviewBulletInlayRenderer::class.java).firstOrNull()
 
   /** Returns the logical text with markup removed. Blank quote placeholders only reserve visual space. */
   private fun visibleText(): String {
@@ -2368,7 +2386,8 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     var offset = 0
     for (region in concealedLivePreviewRegions(editor)) {
       if (region.startOffset > offset) result.append(text, offset, region.startOffset)
-      if (region.placeholderText.any { !it.isWhitespace() }) result.append(region.placeholderText)
+      val shown = region.shownText(editor)
+      if (shown.any { !it.isWhitespace() }) result.append(shown)
       offset = maxOf(offset, region.endOffset)
     }
     result.append(text, offset, text.length)
@@ -2377,6 +2396,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
   /** Returns the pixel at the top right of a placeholder, clear of its glyph and of a blockquote rule. */
   private fun placeholderBackground(image: BufferedImage, region: FoldRegion): Int {
+    region.bulletInlay(myFixture.editor)?.bounds?.let { return image.getRGB(it.x + it.width - 1, it.y + 1) }
     val end = myFixture.editor.offsetToXY(region.endOffset)
     return image.getRGB(end.x - 1, end.y + 1)
   }
