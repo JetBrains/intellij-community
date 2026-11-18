@@ -6,24 +6,13 @@ description: Debug `bt.cmd` and `tests.cmd` runs, discovery, and runner internal
 
 # Test Execution Internals
 
-This document explains `tests.cmd` internals and helps troubleshoot test execution issues.
-
 ## Overview
 
 The test execution chains:
 ```
 bt.cmd → ./bazel.cmd test <jps_test label> → JUnit5BazelRunner
-tests.cmd → Bazel → IdeaUltimateRunTestsBuildTarget → TestingTasksImpl → JUnit 5
+tests.cmd → Bazel → LocalIdeaUltimateRunTestsBuildTarget → TestingTasksImpl → JUnit 5
 ```
-
-A module of the migrated list or of a `bt.json` area runs through bt. Every other module runs through `tests.cmd`.
-
-Key components:
-- **tests.cmd**: Shell script that invokes Bazel with test parameters
-- **Bazel target**: `//build:local_idea_ultimate_run_tests_build_target`
-- **TestingOptions**: Parses `-Dintellij.build.test.*` system properties
-- **TestingTasksImpl**: Orchestrates classpath assembly and JVM setup
-- **JUnit runners**: Execute tests in a forked JVM process
 
 ## Common Issues & Solutions
 
@@ -35,43 +24,9 @@ Key components:
 
 **Causes & Solutions:**
 
-1. **Pattern mismatch** - Simple class names don't work (see Pattern Matching below):
-   ```bash
-   # WRONG - simple name won't match FQN
-   -Dintellij.build.test.patterns=MyTest
-
-   # CORRECT - use wildcard or FQN
-   -Dintellij.build.test.patterns=*MyTest
-   -Dintellij.build.test.patterns=com.example.MyTest
-   ```
+1. **Pattern mismatch** - Simple class names don't work (see [Pattern Transformation Table](#pattern-transformation-table)).
 
 2. **Test not in classpath** - The test class must be in a module that's part of the test classpath. Check if the module is included in the build.
-
-3. **Test class not recognized** - Ensure class has JUnit annotations.
-
-### OutOfMemoryError
-
-**Solution:** Increase heap size:
-```bash
-./tests.cmd \
-  --module <module> \
-  --test MyTest \
-  -Dintellij.build.test.jvm.memory.options=-Xmx8g
-```
-
-### Bazel Build Fails
-
-**Symptoms:**
-- Build errors before tests run
-- Missing dependencies
-
-**Solutions:**
-
-1. **Check module dependencies** - Ensure test module has required dependencies in `.iml` file.
-
-2. **Verify BUILD.bazel is synced** - Run `./build/jpsModelToBazel.cmd` after changing `.iml` files.
-
-**Note:** Bazel incremental builds are always correct. Do not use `./bazel.cmd clean` - it won't help.
 
 ### Test Discovery Issues
 
@@ -92,112 +47,22 @@ Key components:
 
 3. Check class filters - `TestCaseLoader` applies pattern matching before test execution.
 
-### Debug Mode
-
-Enable debug mode to attach a debugger:
-```bash
-./tests.cmd \
-  --module <module> \
-  --test MyTest \
-  -Dintellij.build.test.debug.enabled=true \
-  -Dintellij.build.test.debug.port=5005 \
-  -Dintellij.build.test.debug.suspend=true
-```
-
-Then attach debugger to port 5005.
-
-## Quick Reference
-
-| Property | Purpose |
-|----------|---------|
-| `intellij.build.test.patterns` | Test class patterns (semicolon-separated) |
-| `intellij.build.test.groups` | Test groups to run |
-| `intellij.build.test.attempt.count` | Retry count for flaky tests |
-| `intellij.build.test.jvm.memory.options` | JVM memory settings |
-| `intellij.build.test.debug.enabled` | Enable remote debugging |
-
 ---
 
 ## Detailed Reference
 
-### Execution Flow Diagram
+### Execution Flow
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  1. COMMAND LINE                                                            │
-│     ./tests.cmd --module <module> --test MyTest                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  2. SHELL SCRIPT                                                            │
-│     tests.cmd → community/build/run_build_target.sh                         │
-│     Maps --module/--test to -D properties, wraps as --jvm_flag=<arg>        │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  3. BAZEL                                                                   │
-│     ./bazel.cmd run //build:local_idea_ultimate_run_tests_build_target      │
-│     (defined in build/BUILD.bazel)                                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  4. BUILD TARGET ENTRY POINT                                                │
-│     IdeaUltimateRunTestsBuildTarget.main()                                  │
-│     → UltimateProjectTestingTasks.runTests()                                │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  5. TEST OPTIONS PARSING                                                    │
-│     UltimateProjectTestingOptions (extends TestingOptions)                  │
-│     Reads all -Dintellij.build.test.* system properties                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  6. TEST EXECUTION ORCHESTRATION                                            │
-│     TestingTasksImpl.runTests()                                             │
-│     - Builds test classpath                                                 │
-│     - Prepares JVM arguments and system properties                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  7. FORKED TEST PROCESS                                                     │
-│     TestingTasksImpl.runJUnit5Engine()                                      │
-│     Spawns new JVM with bootstrap classpath                                 │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                    ┌───────────────┴───────────────┐
-                    ▼                               ▼
-┌───────────────────────────────────┐ ┌───────────────────────────────────────┐
-│  8a. JUNIT 5 TESTS                │ │  8b. JUNIT 3/4 TESTS (Legacy)         │
-│  JUnit5TeamCityRunner.main()      │ │  JUnit5TeamCityRunner.main()          │
-│  - Uses JUnit Platform Launcher   │ │  - Uses JUnit Platform Launcher       │
-│  - ClassNameFilter                │ │  - ClassNameFilter                    │
-│  - PostDiscoveryFilter            │ │  - PostDiscoveryFilter                │
-└───────────────────────────────────┘ └───────────────────────────────────────┘
-                    │                               │
-                    └───────────────┬───────────────┘
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  9. TEST DISCOVERY & FILTERING                                              │
-│     TestCaseLoader                                                          │
-│     - Loads test classes from classpath roots                               │
-│     - Applies pattern/group filters                                         │
-│     - Handles bucketing for parallel execution                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  10. TEST EXECUTION                                                         │
-│      JUnit Platform executes tests                                          │
-│      TCExecutionListener reports results to TeamCity                        │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+1. Command line: `./tests.cmd --module <module> --test <pattern>`.
+2. Shell script: `tests.cmd` maps `--module` and `--test` to `-D` properties, and wraps each one as `--jvm_flag=<arg>`.
+3. Bazel: `./bazel.cmd run //build:local_idea_ultimate_run_tests_build_target`. `build/BUILD.bazel` defines the target.
+4. Build target entry point: `LocalIdeaUltimateRunTestsBuildTarget.main()` calls `UltimateProjectTestingTasks.runTests()`.
+5. Test options parsing: `UltimateProjectTestingOptions` extends `TestingOptions`. It reads all `-Dintellij.build.test.*` system properties.
+6. Test execution orchestration: `TestingTasksImpl.runTests()` builds the test classpath. It prepares the JVM arguments and the system properties.
+7. Forked test process: `TestingTasksImpl.runJUnit5Engine()` starts a new JVM with the bootstrap classpath.
+8. JUnit runner: `JUnit5TeamCityRunner.main()` runs the JUnit 5 tests and the legacy JUnit 3/4 tests. It uses the JUnit Platform Launcher, a `ClassNameFilter` and a `PostDiscoveryFilter`.
+9. Test discovery and filtering: `TestCaseLoader` loads the test classes from the classpath roots. It applies the pattern and group filters, and it handles the bucketing for parallel execution.
+10. Test execution: the JUnit Platform executes the tests. `TCExecutionListener` reports the results to TeamCity.
 
 ### Key Classes Reference
 
@@ -207,7 +72,7 @@ Then attach debugger to port 5005.
 |-------|---------|
 | `IdeaUltimateRunTestsBuildTarget` | Ultimate tests entry point, calls `UltimateProjectTestingTasks` |
 | `CommunityRunTestsBuildTarget` | Community tests entry point, calls `TestingTasks` |
-| `UltimateProjectTestingTasks` | Ultimate-specific test orchestration (YourKit, network restrictions) |
+| `UltimateProjectTestingTasks` | Ultimate-specific test orchestration (YourKit) |
 | `TestingTasks` | Interface for test execution |
 | `TestingTasksImpl` | Core test execution logic |
 
@@ -230,7 +95,6 @@ Then attach debugger to port 5005.
 | Class | Purpose |
 |-------|---------|
 | `TestCaseLoader` | Discovers and filters test classes |
-| `TestAll` | JUnit 3 test suite, collects all tests |
 | `TestClassesFilter` | Pattern/group-based test filtering |
 
 #### Bucketing & Distribution
@@ -253,8 +117,6 @@ Then attach debugger to port 5005.
 | RubyMine | `RubyRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `ruby/build/src/` |
 | CLion | `CLionRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `CIDR/clion-build/src/` |
 
-**Note:** Product entry points (RustRover, RubyMine, CLion) inherit `intellij.idea.ultimate.tests.main` as the default, but to run product-specific tests, use the dedicated test module via `--module`. See [TESTING.md](../testing/SKILL.md#known-test-modules-by-product) for the correct module per product.
-
 ### CI-Defined Test Modules
 
 From `.teamcity/src/ijplatform/KnownModules.kt`:
@@ -262,43 +124,38 @@ From `.teamcity/src/ijplatform/KnownModules.kt`:
 | CI Constant | Module Name                  |
 |-------------|------------------------------|
 | `ULTIMATE_TESTS` | `intellij.idea.ultimate.tests.main` |
-| `COMMUNITY_MAIN` | `intellij.idea.community.main.tests` |
+| `COMMUNITY_MAIN_TESTS` | `intellij.idea.community.main.tests` |
 | `GOLAND_TESTS` | `intellij.goland.tests`      |
 | `PYTHON_TESTS` | `intellij.python.tests`      |
-| `PHPSTORM_MAIN` | `intellij.phpstorm.main.tests` |
-| `CLION_MAIN` | `intellij.clion.main.tests`  |
-| `RUSTROVER_MAIN` | `intellij.rustrover.main.tests` |
+| `PHPSTORM_MAIN_TESTS` | `intellij.phpstorm.main.tests` |
+| `CLION_MAIN_TESTS` | `intellij.clion.main.tests`  |
+| `RUSTROVER_MAIN_TESTS` | `intellij.rustrover.main.tests` |
 | `KOTLIN_TESTS` | `intellij.kotlin.tests`      |
-| `KOTLIN_ULTIMATE_ALL_TESTS` | `intellij.kotlin-ultimate.all-tests` |
-| `DATABASE_TESTS` | `intellij.database.tests`    |
 | `DATABASE_SQL_TESTS` | `intellij.database.sql.tests` |
 
 ### Module Configuration
 
 Default mainModule is set in:
 - `UltimateProjectTestingOptions.kt:36` - Ultimate: `intellij.idea.ultimate.tests.main`
-- `CommunityRunTestsBuildTarget.kt:28` - Community: `intellij.idea.community.main.tests`
+- `CommunityRunTestsBuildTarget.kt:29` - Community: `intellij.idea.community.main.tests`
 
 ### Ultimate Test Module Tree (Simplified)
 
 ```
 intellij.idea.ultimate.tests.main
 ├── intellij.idea.ultimate.tests
-├── intellij.idea.ultimate.tests.kotlin
 ├── intellij.platform.tests
 ├── intellij.java.tests
 └── ... (hundreds of test modules)
 
 Separate hierarchies (NOT in .main):
+├── intellij.idea.ultimate.tests.kotlin
 ├── intellij.idea.ultimate.tests.kotlin.k2
 │   └── intellij.devkit.kotlin.fir.tests
-├── intellij.idea.ultimate.tests.devBuildTests
 └── intellij.kotlin.tests
 ```
 
 ## TestingOptions Properties
-
-### TestingOptions Properties
 
 Most options use the `intellij.build.test.*` prefix. Bucketing uses `idea.test.*` prefix.
 
@@ -337,7 +194,7 @@ The test target is defined in `build/BUILD.bazel`:
 java_binary(
   name = "local_idea_ultimate_run_tests_build_target",
   runtime_deps = [":build"],
-  main_class = "IdeaUltimateRunTestsBuildTarget",
+  main_class = "LocalIdeaUltimateRunTestsBuildTarget",
   data = ALL_ULTIMATE_TARGETS + [BAZEL_TARGETS_JSON_ULTIMATE],
   jvm_flags = [
     "-Dintellij.build.console.exporter.to.temp.file=true",
@@ -370,99 +227,15 @@ java_binary(
 
 ### Passing JVM Args to Test Process
 
-There are two mechanisms for passing JVM arguments to the test JVM process:
-
 #### 1. Memory Options (`intellij.build.test.jvm.memory.options`)
 
-For JVM memory settings like heap size, use the dedicated property:
-
-```bash
-./tests.cmd --module <module> --test <pattern> -Dintellij.build.test.jvm.memory.options="-Xmx4g -Xms2g"
-```
-
-Multiple options are space-separated within quotes. These options are added to the beginning of the JVM arguments via `VmOptionsGenerator.generate()`.
-
-**Implementation** (see `TestingTasksImpl.kt`, `runJUnit5Engine` method):
-```kotlin
-val customMemoryOptions = options.jvmMemoryOptions?.trim()?.split(Regex("\\s+"))?.takeIf { it.isNotEmpty() }
-jvmArgs.addAll(
-  index = 0,
-  elements = VmOptionsGenerator.generate(
-    customVmMemoryOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
-    additionalVmOptions = customMemoryOptions ?: emptyList(),
-    // ... other parameters omitted
-  ),
-)
-```
+Multiple options are space-separated within quotes. These options are added to the beginning of the JVM arguments via `generateVmOptions()`.
 
 #### 2. Pass-through System Properties (`pass.*` prefix)
 
-To pass arbitrary system properties to the test JVM, use the `pass.` prefix. The prefix is stripped before passing to the test process:
-
-```bash
-./tests.cmd --module <module> --test <pattern> -Dpass.my.custom.property=value -Dpass.some.flag=true
-```
-
-Results in test JVM receiving:
-- `-Dmy.custom.property=value`
-- `-Dsome.flag=true`
-
-**Implementation** (see `TestingTasksImpl.kt`, `prepareEnvForTestRun` method):
-```kotlin
-for ((key, value) in System.getProperties()) {
-  key as String
-  if (key.startsWith("pass.")) {
-    systemProperties.put(key.substring("pass.".length), value as String)
-  }
-}
-```
-
-This is a TeamCity convention for passing properties to nested processes.
-
-#### Combined Example
-
-```bash
-./tests.cmd \
-  --module <module> \
-  --test MyTest \
-  -Dintellij.build.test.jvm.memory.options="-Xmx4g" \
-  -Dpass.my.test.flag=enabled \
-  -Dpass.debug.level=verbose
-```
+To pass arbitrary system properties to the test JVM, use the `pass.` prefix. `TestingTasksImpl.prepareEnvForTestRun()` strips the prefix, so `-Dpass.my.custom.property=value` reaches the test JVM as `-Dmy.custom.property=value`.
 
 **Important**: Properties without `pass.` prefix are consumed by the build scripts, NOT passed to the test JVM.
-
-### Test Discovery Flow
-
-### Step-by-Step Pattern Matching
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  PATTERN INPUT                                                              │
-│  -Dintellij.build.test.patterns=*MyTest                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  PATTERN COMPILATION (TestClassesFilter.compilePattern)                     │
-│  filter.replace("$","\\$").replace(".","\\.");replace("*",".*")             │
-│  "*MyTest" → ".*MyTest"                                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  CLASS DISCOVERY (ClassFinder)                                              │
-│  Scans JARs for *Test.class files, extracts FQN:                            │
-│  org/example/MyTest.class → "org.example.MyTest"                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  PATTERN MATCHING (PatternListTestClassFilter.matches)                      │
-│  pattern.matcher(className).matches()  ← FULL STRING MATCH                  │
-│  ".*MyTest".matches("org.example.MyTest") → true                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
 
 ### Pattern Transformation Table
 
@@ -482,7 +255,7 @@ This is a TeamCity convention for passing properties to nested processes.
    return Pattern.compile(filter);
    ```
 
-2. **Pattern Matching** (`PatternListTestClassFilter.matches()`):
+2. **Pattern Matching** (`PatternListTestClassFilter.matches()` calls `TestClassesFilter.matchesAnyPattern()`):
    ```java
    return ContainerUtil.exists(patterns, pattern -> pattern.matcher(className).matches());
    ```
@@ -493,35 +266,18 @@ This is a TeamCity convention for passing properties to nested processes.
    - Calls `TestCaseLoader.isClassNameIncluded(className)`
    - Applied to EVERY class in classpath (must be fast)
 
-4. **PostDiscoveryFilter** (JUnit 5) - Post-discovery filter
-   - Calls `TestCaseLoader.isClassIncluded(className)`
+4. **BucketingClassNameFilter** (JUnit 5) - Class name filter
+   - Calls `TestCaseLoader.matchesCurrentBucket(className)`
    - Checks bucketing (which runner should execute this test)
 
-5. **TestCaseLoader.fillTestCases()** (JUnit 3/4) - Scans classpath roots
-   - Uses `ClassFinder` to find all `*Test.class` files
+5. **TestCaseLoader.fillTestCases()** (only test suites call it) - Scans classpath roots
+   - Uses `ClassFinder` to find all `.class` files
    - Calls `isPotentiallyTestCase()` which calls filter's `matches()`
    - Applies group-based filtering from `testGroups.properties`
-
-### Why Simple Class Names NEVER Work
-
-**Root Cause**: `Pattern.matches()` requires the ENTIRE string to match.
-
-```java
-// Pattern: "MyTest" → Regex: "MyTest"
-// className: "org.example.MyTest"
-"MyTest".matches("org.example.MyTest")  // Returns FALSE
-
-// Pattern: "*MyTest" → Regex: ".*MyTest"
-".*MyTest".matches("org.example.MyTest")  // Returns TRUE
-```
-
-This applies to ALL modules (default and non-default). Always use:
-- FQN: `org.example.MyTest`
-- Or wildcard: `*MyTest`
 
 ---
 
 ## Related Documentation
 
-- [TESTING.md](../testing/SKILL.md) - How to run tests via `tests.cmd` (quick start, parameters, examples)
+- [testing](../testing/SKILL.md) - How to run tests via `tests.cmd` (quick start, parameters, examples)
 - [Writing Tests](../writing-tests/SKILL.md) - How to write tests (framework, `@TestApplication`, fixtures, EDT)
