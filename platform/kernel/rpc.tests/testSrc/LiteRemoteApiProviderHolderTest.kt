@@ -2,6 +2,7 @@
 package com.intellij.platform.rpc.tests
 
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderHolder
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CoroutineStart
@@ -11,6 +12,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.CyclicBarrier
+import kotlin.concurrent.thread
 
 @Timeout(30)
 internal class LiteRemoteApiProviderHolderTest {
@@ -76,6 +79,26 @@ internal class LiteRemoteApiProviderHolderTest {
 
     assertThat(holder.tryResolve(LiteTestApiDescriptor)).isSameAs(api)
     assertThat(holder.awaitConnectionAndResolve(LiteTestApiDescriptor)).isSameAs(api)
+  }
+
+  @Test
+  fun `concurrent installers keep one provider and report the other`() {
+    val holder = LiteRemoteApiProviderHolder()
+    val apis = List(2) { LiteTestApi() }
+    val barrier = CyclicBarrier(apis.size)
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      val installers = apis.map { api ->
+        thread {
+          barrier.await()
+          holder.install(LiteTestApiProvider(api))
+        }
+      }
+      installers.forEach { it.join() }
+    }
+
+    assertThat(error.message).contains("already installed")
+    assertThat(holder.isConnected()).isTrue()
+    assertThat(holder.tryResolve(LiteTestApiDescriptor)).isIn(apis)
   }
 
   @Test

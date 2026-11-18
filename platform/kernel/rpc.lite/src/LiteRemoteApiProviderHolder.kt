@@ -19,17 +19,17 @@ class LiteRemoteApiProviderHolder {
   private val provider = MutableStateFlow<RemoteApiProvider?>(null)
 
   fun install(remoteApiProvider: RemoteApiProvider) {
-    val current = provider.value
-    if (current === remoteApiProvider) return
-    if (current != null) {
-      thisLogger().error(
-        "Remote API provider is already installed. " +
-        "Tried to setup ${remoteApiProvider::class.java.simpleName}, " +
-        "but ${current.javaClass.simpleName} is installed"
-      )
+    while (!provider.compareAndSet(null, remoteApiProvider)) {
+      val current = provider.value ?: continue
+      if (current !== remoteApiProvider) {
+        thisLogger().error(
+          "Remote API provider is already installed. " +
+          "Tried to setup ${remoteApiProvider::class.java.simpleName}, " +
+          "but ${current.javaClass.simpleName} is installed"
+        )
+      }
       return
     }
-    provider.value = remoteApiProvider
   }
 
   fun uninstall() {
