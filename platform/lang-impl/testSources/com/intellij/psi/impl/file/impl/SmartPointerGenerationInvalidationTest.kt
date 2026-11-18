@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
+import com.intellij.codeInsight.completion.CompletionInitializationUtil
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
@@ -40,6 +41,7 @@ import com.intellij.testFramework.utils.vfs.createFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -649,6 +651,34 @@ internal class SmartPointerGenerationInvalidationTest {
       assertEquals(listOf(sourceContext), contextManager.getCodeInsightContexts(copyFile), "The light file must keep the context of the copy")
       assertSame(copy, first.element, "The first pointer must resolve after the context of the original changes")
       assertSame(copy, second.element, "The second pointer must resolve after the context of the original changes")
+    }
+  }
+
+  /** Completion caches its file copy. A change of the context of the original must make a new copy with the new context. */
+  @Test
+  fun `completion makes a new file copy after the context of the original changes`() = timeoutRunBlocking {
+    val sourceContext = TestContext("source")
+    val renamedContext = TestContext("renamed")
+    val provider = TestFileContextProvider(copiedTextFile, listOf(sourceContext))
+    edtWriteAction { contextManager.registerTestOnlyCodeInsightContextProvider(provider, disposable) }
+    val (original, first) = readAction {
+      val original = PsiManager.getInstance(project).findFile(copiedTextFile)!!
+      val first = CompletionInitializationUtil.obtainFileCopy(original)
+      assertSame(first, CompletionInitializationUtil.obtainFileCopy(original), "Precondition: completion reuses the cached copy")
+      assertEquals(sourceContext, first.codeInsightContext)
+      original to first
+    }
+
+    provider.contexts = listOf(renamedContext)
+    contextManager.requestInvalidationNow(setOf(copiedTextFile))
+    // The next findFile after a bulk invalidation reassigns the view provider of the original to the new context.
+    triggerBulkInvalidation()
+    readAction {
+      assertSame(original, PsiManager.getInstance(project).findFile(copiedTextFile), "Precondition: the original keeps its PSI file")
+      assertEquals(renamedContext, original.codeInsightContext, "Precondition: the original has the new context")
+      val second = CompletionInitializationUtil.obtainFileCopy(original)
+      assertNotSame(first, second, "The cached copy has the old context, so completion must make a new copy")
+      assertEquals(renamedContext, second.codeInsightContext)
     }
   }
 
