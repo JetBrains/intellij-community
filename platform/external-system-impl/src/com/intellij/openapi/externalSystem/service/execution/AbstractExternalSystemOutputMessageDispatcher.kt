@@ -62,14 +62,17 @@ abstract class AbstractExternalSystemOutputMessageDispatcher(
         .withOutputType(outputType)
         .build())
 
-      @Suppress("RAW_RUN_BLOCKING") runBlocking {
-        notifyParserTextAvailable(BuildOutputText.createOutputText(outputId, text), outputType)
-      }
+      notifyParserTextAvailableImpl(BuildOutputText.createOutputText(outputId, text), outputType)
     }
     else {
-      @Suppress("RAW_RUN_BLOCKING") runBlocking {
-        notifyParserTextAvailable(BuildOutputText.createOutputText(text), outputType)
-      }
+      notifyParserTextAvailableImpl(BuildOutputText.createOutputText(text), outputType)
+    }
+  }
+
+  private fun notifyParserTextAvailableImpl(text: BuildOutputText, outputType: ProcessOutputType) {
+    if (outputType == ProcessOutputType.SYSTEM) return
+    @Suppress("RAW_RUN_BLOCKING") runBlocking {
+      notifyParserTextAvailable(text, outputType)
     }
   }
 
