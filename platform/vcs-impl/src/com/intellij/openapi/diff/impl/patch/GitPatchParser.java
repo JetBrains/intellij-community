@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.openapi.vcs.util.paths.PathUnescapeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -101,8 +101,8 @@ public final class GitPatchParser {
         else if (fileRenameFromMatcher.matches() && iterator.hasNext()) {
           Matcher fileRenameToMatcher = ourRenameToPattern.matcher(iterator.next());
           if (fileRenameToMatcher.matches()) {
-            beforeAfterName = Couple.of(VcsFileUtil.unescapeGitPath(fileRenameFromMatcher.group(1).trim()),
-                                        VcsFileUtil.unescapeGitPath(fileRenameToMatcher.group(1).trim()));
+            beforeAfterName = Couple.of(PathUnescapeUtil.unescape(fileRenameFromMatcher.group(1).trim()),
+                                        PathUnescapeUtil.unescape(fileRenameToMatcher.group(1).trim()));
             preferPatchInfoPaths = true; // this form has non-ambiguous parsing, prefer it to other sources
           }
           else {
@@ -162,7 +162,7 @@ public final class GitPatchParser {
   }
 
   private static @Nullable String getFileNameFromGitHeaderLine(@NotNull String line, boolean before) {
-    return stripPatchNameIfNeeded(VcsFileUtil.unescapeGitPath(line), before);
+    return stripPatchNameIfNeeded(PathUnescapeUtil.unescape(line), before);
   }
 
   private static @NotNull FileStatus parseFileStatus(@NotNull String status) {

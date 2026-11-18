@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.util.paths.PathUnescapeUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -394,100 +394,11 @@ public final class VcsFileUtil {
   }
 
   /**
-   * <p>Unescape path returned by Git.</p>
-   * <p>
-   * If there are quotes in the file name, Git not only escapes them, but also encloses the file name into quotes:
-   * {@code "\"quote"}
-   * </p>
-   * <p>
-   * If there are spaces in the file name, Git displays the name as is, without escaping spaces and without enclosing name in quotes.
-   * </p>
+   * Unescapes a path that Git returns.
    *
-   * @param path a path to unescape
-   * @return unescaped path ready to be searched in the VFS or file system.
-   * @throws IllegalArgumentException if the path is invalid
+   * @see PathUnescapeUtil#unescape(String)
    */
   public static @NotNull String unescapeGitPath(@NotNull String path) throws IllegalArgumentException {
-    final String QUOTE = "\"";
-    if (path.startsWith(QUOTE) && path.endsWith(QUOTE)) {
-      path = path.substring(1, path.length() - 1);
-    }
-    if (path.indexOf('\\') == -1) return path;
-
-    Charset encoding = Charset.defaultCharset();
-
-    final int l = path.length();
-    StringBuilder rc = new StringBuilder(l);
-    for (int i = 0; i < path.length(); i++) {
-      char c = path.charAt(i);
-      if (c == '\\') {
-        //noinspection AssignmentToForLoopParameter
-        i++;
-        if (i >= l) {
-          throw new IllegalArgumentException("Unterminated escape sequence in the path: " + path);
-        }
-        final char e = path.charAt(i);
-        switch (e) {
-          case '\\' -> rc.append('\\');
-          case 't' -> rc.append('\t');
-          case 'n' -> rc.append('\n');
-          case 'r' -> rc.append('\r');
-          case 'a' -> rc.append('\u0007');
-          case 'b' -> rc.append('\b');
-          case 'f' -> rc.append('\f');
-          case '"' -> rc.append('"');
-          default -> {
-            if (isOctal(e)) {
-              // collect sequence of characters as a byte array.
-              // count bytes first
-              int n = 0;
-              for (int j = i; j < l; ) {
-                if (isOctal(path.charAt(j))) {
-                  n++;
-                  for (int k = 0; k < 3 && j < l && isOctal(path.charAt(j)); k++) {
-                    j++;
-                  }
-                }
-                if (j + 1 >= l || path.charAt(j) != '\\' || !isOctal(path.charAt(j + 1))) {
-                  break;
-                }
-                j++;
-              }
-              // convert to byte array
-              byte[] b = new byte[n];
-              n = 0;
-              while (i < l) {
-                if (isOctal(path.charAt(i))) {
-                  int code = 0;
-                  for (int k = 0; k < 3 && i < l && isOctal(path.charAt(i)); k++) {
-                    code = code * 8 + (path.charAt(i) - '0');
-                    //noinspection AssignmentToForLoopParameter
-                    i++;
-                  }
-                  b[n++] = (byte)code;
-                }
-                if (i + 1 >= l || path.charAt(i) != '\\' || !isOctal(path.charAt(i + 1))) {
-                  break;
-                }
-                //noinspection AssignmentToForLoopParameter
-                i++;
-              }
-              //noinspection AssignmentToForLoopParameter
-              i--;
-              assert n == b.length;
-              // add them to string
-              rc.append(new String(b, encoding));
-            }
-            else {
-              throw new IllegalArgumentException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
-            }
-          }
-        }
-      }
-      else {
-        rc.append(c);
-      }
-    }
-    return rc.toString();
+    return PathUnescapeUtil.unescape(path);
   }
 }

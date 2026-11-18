@@ -7,9 +7,9 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.util.paths.PathUnescapeUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.PathKt;
-import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -570,7 +570,7 @@ public final class PatchReader {
       // Git escapes a path only inside double quotes.
       // Keep an unquoted path unchanged, so a Windows path such as C:\Users\... does not fail.
       if (fileName.length() > 1 && fileName.charAt(0) == '"' && fileName.charAt(fileName.length() - 1) == '"') {
-        fileName = VcsFileUtil.unescapeGitPath(fileName);
+        fileName = PathUnescapeUtil.unescape(fileName);
       }
       String newFileName = stripPatchNameIfNeeded(fileName, before);
       if (newFileName == null) return;
