@@ -350,6 +350,12 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/projectModel-impl",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl.tests` end

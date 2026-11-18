@@ -19,6 +19,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.python.pyproject.model.PyProjectModelSettings
 import com.intellij.python.pyproject.model.usePyprojectToml
@@ -241,7 +244,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     updateAutoConfigWarningVisibility()
     when (outcome) {
       PyWorkspaceStructurePresenter.ToggleOutcome.ToggledOff -> {
-        // Snapshot before clear — pipeline disposes these on sessionScope.
+        // Snapshot before clear — the pipeline disposes these.
         val panesToDispose = modulePanes.values.toList()
         modulePanes.clear()
         detailsHolder.removeAll()
@@ -251,18 +254,27 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
         // Null when the Configurable is shown outside Settings (search preview, standalone test
         // host) — the tree-label refresh is cosmetic there, so a missing host just skips it.
         val settingsHost = Settings.KEY.getData(DataManager.getInstance().getDataContext(dialogPanel))
-        sessionScope.launch {
+        // Sync via modal progress, like every other commit on this page. On OK the dialog closes
+        // right after `apply()` and `disposeUIResources` cancels `sessionScope`, so a cleanup
+        // launched there died before `workspaceModel.update`: the setting persisted as off while
+        // every pyproject module stayed in the model, with the sync service already stopped to
+        // repair it (PY-94202).
+        // Non-cancellable: the pipeline rewrites the workspace model, and a half-applied cleanup
+        // is exactly the broken state this fix removes.
+        runWithModalProgressBlocking(
+          ModalTaskOwner.project(project),
+          PyBundle.message("configurable.PyWorkspaceStructureConfigurable.auto.configure.pyproject.toml.cleanup"),
+          TaskCancellation.nonCancellable(),
+        ) {
           presenter.runToggledOffPipeline(
             project = project,
             disposeUi = { panesToDispose.forEach { it.disposeAsync() } },
           )
-          withContext(Dispatchers.EDT) {
-            isMultiModuleCached = null
-            swapContentLayout()
-            reloadModulesModel()
-            settingsHost?.revalidate()
-          }
         }
+        isMultiModuleCached = null
+        swapContentLayout()
+        reloadModulesModel()
+        settingsHost?.revalidate()
       }
       PyWorkspaceStructurePresenter.ToggleOutcome.ToggledOn -> {
         modulePanes.values.forEach { it.refreshDependenciesEnabled() }
