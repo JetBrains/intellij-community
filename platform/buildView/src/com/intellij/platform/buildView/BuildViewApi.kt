@@ -6,8 +6,9 @@ import com.intellij.build.BuildId
 import com.intellij.build.BuildViewEvent
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
+import com.intellij.ide.rpc.awaitWithLocalFallback
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -48,7 +49,7 @@ interface BuildViewApi : RemoteApi<Unit> {
   companion object {
     suspend fun getInstance(): BuildViewApi {
       val isCWM = (FrontendApplicationInfo.getFrontendType() as? FrontendType.Remote)?.isGuest() == true
-      return if (isCWM) BuildViewApiImpl else RemoteApiProviderService.resolve(remoteApiDescriptor<BuildViewApi>())
+      return if (isCWM) BuildViewApiImpl else LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<BuildViewApi>()) { BuildViewApiImpl }
     }
   }
 }

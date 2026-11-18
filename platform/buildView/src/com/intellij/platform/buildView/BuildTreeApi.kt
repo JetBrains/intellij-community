@@ -5,7 +5,8 @@ import com.intellij.build.BuildTreeEvent
 import com.intellij.build.BuildTreeNavigationContext
 import com.intellij.build.BuildTreeNavigationRequest
 import com.intellij.build.BuildViewId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.ide.rpc.awaitWithLocalFallback
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -23,7 +24,7 @@ interface BuildTreeApi : RemoteApi<Unit> {
 
   companion object {
     suspend fun getInstance(): BuildTreeApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<BuildTreeApi>())
+      return LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<BuildTreeApi>()) { BuildTreeApiImpl }
     }
   }
 }
