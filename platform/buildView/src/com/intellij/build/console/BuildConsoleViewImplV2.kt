@@ -33,12 +33,14 @@ import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.addComponentInlay
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.JBColor
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.TestOnly
@@ -221,6 +223,9 @@ internal class BuildConsoleViewImplV2(
 
   private fun Editor.configureEditor() {
     settings.isHighlightSelectionOccurrences = false
+    colorsScheme.setColor(EditorColors.SELECTION_BACKGROUND_COLOR_INACTIVE, JBColor.lazy {
+      JBColor.namedColor("Tree.selectionInactiveBackground")
+    })
   }
 
   private fun isVScrollAtBottom(editor: EditorEx): Boolean {
