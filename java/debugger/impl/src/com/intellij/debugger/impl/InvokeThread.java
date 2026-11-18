@@ -6,6 +6,7 @@ import com.intellij.concurrency.ThreadContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -43,7 +44,15 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   public static final class WorkerThreadRequest<E extends PrioritizedTask> implements ContextAwareRunnable {
     private final InvokeThread<E> myOwner;
     private final CompletableJob myWorkerJob;
-    private final ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
+    private final ProgressIndicator myProgressIndicator = new EmptyProgressIndicator() {
+      @Override
+      public @NotNull ModalityState getModalityState() {
+        // ModalityState.defaultModalityState() gets the modality from this indicator
+        DebuggerCommandImpl command = DebuggerManagerThreadImpl.getCurrentCommand();
+        ModalityState commandModality = command != null ? command.getModalityState() : null;
+        return commandModality != null ? commandModality : super.getModalityState();
+      }
+    };
     private volatile Future<?> myRequestFuture;
     private final int myId = ourWorkerCounter.getAndIncrement();
     private final @Nullable WorkerThreadRequest<?> myPreviousRequest;

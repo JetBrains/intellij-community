@@ -279,6 +279,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
       withModalProgress(project, title) {
         coroutineToIndicator { indicator ->
           val command = commandProvider(indicator)
+          command.modalityState = indicator.modalityState
           invokeAndWait(command)
         }
       }

@@ -4,6 +4,7 @@ package com.intellij.debugger.engine.events
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.impl.DebuggerTaskImpl
 import com.intellij.debugger.impl.PrioritizedTask
+import com.intellij.openapi.application.ModalityState
 import org.jetbrains.annotations.ApiStatus
 
 abstract class DebuggerCommandImpl(override val priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW) : DebuggerTaskImpl() {
@@ -17,6 +18,15 @@ abstract class DebuggerCommandImpl(override val priority: PrioritizedTask.Priori
     }
     myThread = value
   }
+
+  /**
+   * The modality of the modal progress that waits for this command, see [DebuggerManagerThreadImpl.startCommandWithModalProgress].
+   * While the command runs, [ModalityState.defaultModalityState] returns this modality.
+   * Thus, the command can wait for the EDT while the progress dialog is shown.
+   */
+  @ApiStatus.Internal
+  var modalityState: ModalityState? = null
+    internal set
 
   @Throws(Exception::class)
   protected abstract fun action()
