@@ -1029,6 +1029,34 @@ internal class TerminalMouseEventsHandlingTest {
       }
 
     @Test
+    fun `click in the block inlay below the last line does not move the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        val editor = fixture.activeEditor
+        // The bottom inset of the terminal is a block inlay right below the last line.
+        val point = Point(editor.pointAtCell(5).x, editor.visualLineToY(editor.lastVisualLine) + editor.lineHeight + 1)
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(point) }
+
+        assertThat(written).isEmpty()
+      }
+
+    @Test
+    fun `click below the block inlays after the last line does not move the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        // The editor maps this click to the text end, so the cursor must not stand there.
+        fixture.moveCursorToColumn(2)
+        val editor = fixture.activeEditor
+        // The y of a line after the text counts all the block inlays above it.
+        val point = Point(editor.pointAtCell(5).x, editor.visualLineToY(editor.lastVisualLine + 1) + editor.lineHeight / 2)
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(point) }
+
+        assertThat(written).isEmpty()
+      }
+
+    @Test
     fun `click without the shell integration does not move the cursor`(): Unit =
       doPromptClickTest { fixture ->
         fixture.connector.feed("${PROMPT}ls -la")
@@ -1077,7 +1105,6 @@ internal class TerminalMouseEventsHandlingTest {
       assertOutputModelState(view.outputModels.regular) { it.cursorOffset == it.startOffset + column.toLong() }
     }
 
-    /** If [bringsFocus] is true, the editor gets the focus after the press, as AWT does for the focus request of the editor. */
     private fun TerminalViewFixture.click(
       column: Int,
       xInCell: Float = 1f / 3f,
@@ -1085,7 +1112,11 @@ internal class TerminalMouseEventsHandlingTest {
       clickCount: Int = 1,
       bringsFocus: Boolean = false,
     ) {
-      val point = activeEditor.pointAtCell(column, xInCell = xInCell)
+      click(activeEditor.pointAtCell(column, xInCell = xInCell), modifiers, clickCount, bringsFocus)
+    }
+
+    /** If [bringsFocus] is true, the editor gets the focus after the press, as AWT does for the focus request of the editor. */
+    private fun TerminalViewFixture.click(point: Point, modifiers: Int = 0, clickCount: Int = 1, bringsFocus: Boolean = false) {
       activeEditor.dispatchMouseEvent(MouseEventKind.PRESSED, point, modifiers or InputEvent.BUTTON1_DOWN_MASK, clickCount)
       if (bringsFocus) {
         activeEditor.dispatchFocusGained()
@@ -1333,6 +1364,9 @@ private fun EditorImpl.dispatchMouseEvent(kind: MouseEventKind, point: Point, mo
   }
   return event
 }
+
+private val EditorImpl.lastVisualLine: Int
+  get() = offsetToVisualLine(document.textLength, false)
 
 /** Dispatches FOCUS_GAINED to the editor, as AWT does. */
 private fun EditorImpl.dispatchFocusGained() {

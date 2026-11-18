@@ -67,7 +67,8 @@ internal fun installPromptClickHandling(
       if (editor.selectionModel.hasSelection()) return
 
       val block = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return
-      val clickOffset = outputModel.startOffset + event.clickedCharacterOffset().toLong()
+      val characterOffset = event.clickedCharacterOffset() ?: return
+      val clickOffset = outputModel.startOffset + characterOffset.toLong()
       val move = calculateCursorMoveToClick(outputModel, block, clickOffset) ?: return
       when (move.direction) {
         TerminalCursorMove.Direction.LEFT -> terminalInput.sendLeft(times = move.keyCount)
@@ -81,8 +82,17 @@ internal fun installPromptClickHandling(
  * Returns the offset of the character under the pointer, as for a block cursor.
  * [EditorMouseEvent.getOffset] is the nearest character boundary, so it is after the character for a click on its right half.
  * The zero-width code points after a character, for example, a combining mark, belong to this character.
+ *
+ * Returns null if the pointer is not in the row of a text line.
+ * The editor maps a point in a block inlay or below the last line to the nearest line, for example, a point below the command.
  */
-private fun EditorMouseEvent.clickedCharacterOffset(): Int {
+private fun EditorMouseEvent.clickedCharacterOffset(): Int? {
+  val lineY = editor.visualLineToY(visualPosition.line)
+  // A block inlay above or below the line takes this space.
+  if (mouseEvent.y < lineY || mouseEvent.y >= lineY + editor.lineHeight) return null
+  // The pointer is below the last line.
+  if (editor.offsetToLogicalPosition(offset).line != logicalPosition.line) return null
+
   val text = editor.document.immutableCharSequence
   val isLeftOfBoundary = isOverText && visualPosition.column > 0 &&
                          mouseEvent.x < editor.visualPositionToPoint2D(visualPosition).x
