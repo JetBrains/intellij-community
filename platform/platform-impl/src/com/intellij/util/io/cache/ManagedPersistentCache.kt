@@ -46,6 +46,7 @@ import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 /**
  * Wrapper for PersistentHashMap closed on [coroutineScope] cancel.
  * [coroutineScope] must end by cancellation only, because the cache keeps it from completing normally.
+ * The close waits for the [ManagedCacheCloseBarrier] of [coroutineScope], if it has one.
  * Values are forced on disk after putting into the map with a specified delay.
  *
  * One cache at a time owns the storage file of [mapBuilder].
@@ -206,6 +207,7 @@ class ManagedPersistentCache<K, V>(
   }
 
   private suspend fun close() {
+    awaitCloseBarrier()
     opened.join()
     val isPreviousOwnerClosed = withTimeoutOrNull(PREVIOUS_OWNER_WAIT) { previousOwnerClosed.await() } != null
     if (!isPreviousOwnerClosed) {
@@ -213,6 +215,16 @@ class ManagedPersistentCache<K, V>(
     }
     withContext(dispatcher) {
       closeAndRelease(delete=false)
+    }
+  }
+
+  private suspend fun awaitCloseBarrier() {
+    val barrier = coroutineScope.coroutineContext[ManagedCacheCloseBarrier]
+    if (barrier != null) {
+      val isBarrierPassed = withTimeoutOrNull(CLOSE_BARRIER_WAIT) { barrier.await() } != null
+      if (!isBarrierPassed) {
+        LOG.warn("the close barrier of $name did not pass in $CLOSE_BARRIER_WAIT, $name closes")
+      }
     }
   }
 
@@ -374,6 +386,7 @@ class ManagedPersistentCache<K, V>(
     private val FORCE_ON_DISK_DELAY: Duration = 500.milliseconds
     private val PREVIOUS_OWNER_READ_WAIT: Duration = 300.milliseconds
     private val PREVIOUS_OWNER_WAIT: Duration = 10.seconds
+    private val CLOSE_BARRIER_WAIT: Duration = 10.seconds
     private val LOG: Logger = logger<ManagedPersistentCache<*, *>>()
     private val OWNERS: ConcurrentHashMap<Path, ManagedPersistentCache<*, *>> = ConcurrentHashMap()
     private val OPENED_CACHES: MutableSet<ManagedPersistentCache<*, *>> = ConcurrentHashMap.newKeySet()
