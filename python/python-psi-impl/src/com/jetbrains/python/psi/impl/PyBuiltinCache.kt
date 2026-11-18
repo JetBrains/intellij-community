@@ -283,6 +283,7 @@ class PyBuiltinCache private constructor(
     }
 
     /** [getBuiltinsForInterpreter] for the interpreter that the registry of [project] holds for [sdk]. */
+    @Deprecated("Use getBuiltinsForInterpreter", ReplaceWith("getBuiltinsForInterpreter(project, interpreter)"))
     @JvmStatic
     fun getBuiltinsForSdk(project: Project, sdk: Sdk): PyFile? =
       project.findPythonInterpreterIfReady(sdk)?.let { getBuiltinsForInterpreter(project, it) }

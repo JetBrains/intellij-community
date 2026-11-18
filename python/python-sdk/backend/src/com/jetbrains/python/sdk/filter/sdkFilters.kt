@@ -19,8 +19,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
 /**
- * Filters and sorts [sdks] the same way [com.jetbrains.python.sdk.getAssignablePythonSdks] does. The "Python Interpreters" dialog
- * passes the editable copies from its own `ProjectSdksModel` here, so the displayed list matches the live one.
+ * The SDKs of [sdks] that this module or project can use, sorted with the remote ones last and then by name. The SDKs of
+ * All Interpreters come through here, see `PythonInterpreterRegistry.allInterpreters`.
  */
 @Internal
 fun ModuleOrProject.filterAssignablePythonSdks(sdks: Collection<Sdk>): List<Sdk> =

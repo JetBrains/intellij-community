@@ -19,17 +19,23 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public abstract class PythonConfigurationFactoryBase extends ConfigurationFactory {
   protected PythonConfigurationFactoryBase(@NotNull ConfigurationType type) {
     super(type);
   }
 
+  /** Outside PyCharm, a Python run configuration is offered only when a Python project of {@code project} has an interpreter. */
   @Override
   public boolean isApplicable(@NotNull Project project) {
-    return PlatformUtils.isPyCharm() || PythonSdkUtil.hasValidSdk();
+    if (PlatformUtils.isPyCharm()) return true;
+    Set<PythonInterpreter> interpreters = EvoPyProjectModelKt.pythonInterpretersIfReady(project);
+    return interpreters != null && !interpreters.isEmpty();
   }
 
   @Override

@@ -156,15 +156,6 @@ suspend fun Sdk.interpreterItem(): PyInterpreterItem? = pythonInterpreterResultA
 fun Sdk.isInterpreterUsable(): Boolean =
   runBlockingMaybeCancellable { pythonInterpreterResultAsync().successOrNull?.getPythonInfo() } is Result.Success<*>
 
-/**
- * The SDK this item names, or `null` when no SDK has its key any more.
- *
- * A list is built once and applied later, so the interpreter it named can be removed in between. `null` is that case,
- * and the caller decides what to tell the user. It does not wait: it reads the SDK table, because a Java combo box
- * calls it on the EDT.
- */
-fun PyInterpreterItem.findSdk(): Sdk? = PythonSdkUtil.getAllSdks().firstOrNull { interpreterRefOf(it) == ref }
-
 /** The flavor this interpreter was set up with. */
 val PythonInterpreter.flavor: PythonSdkFlavor<*>
   get() = sdk.pySdkAdditionalData.flavor

@@ -14,6 +14,7 @@ import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
@@ -37,13 +38,17 @@ import java.util.List;
 final class PyManagePackagesDialog extends DialogWrapper {
   private final JPanel myMainPanel;
 
+  @SuppressWarnings("deprecation") // The packages panel of this dialog still takes an SDK.
   PyManagePackagesDialog(final @NotNull Project project, @NotNull Sdk sdk) {
     super(project, true);
     setTitle(PyBundle.message("manage.python.packages"));
 
-    List<Sdk> sdks = new ArrayList<>(ContainerUtil.sorted(PySdkRenderingKt.pyProjectPythonSdksUnderProgress(project, null), new PreferredSdkComparator()));
-    // The combo holds items, not SDKs: a row states whether its interpreter can be used, which takes running it.
-    List<PyInterpreterItem> items = PySdkRenderingKt.interpreterItemsUnderProgress(sdks, project);
+    // The combo holds items, not SDKs. The item, the interpreter and the SDK of one row have the same index.
+    PreferredSdkComparator comparator = new PreferredSdkComparator();
+    List<PythonInterpreter> interpreters = new ArrayList<>(PySdkRenderingKt.pyProjectInterpretersUnderProgress(project, null));
+    interpreters.sort((a, b) -> comparator.compare(PythonInterpreterExtKt.getSdkAPI(a), PythonInterpreterExtKt.getSdkAPI(b)));
+    List<Sdk> sdks = ContainerUtil.map(interpreters, PythonInterpreterExtKt::getSdkAPI);
+    List<PyInterpreterItem> items = ContainerUtil.map(interpreters, PythonInterpreterExtKt::asItem);
     PyInterpreterItem selected = null;
     for (int i = 0; i < sdks.size(); i++) {
       if (sdks.get(i).equals(sdk)) selected = items.get(i);
@@ -67,8 +72,8 @@ final class PyManagePackagesDialog extends DialogWrapper {
     sdkComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        // The combo holds items, not SDKs. An item can outlive the interpreter it names, so this may be null.
-        Sdk selected = sdkComboBox.getSelectedItem() instanceof PyInterpreterItem item ? PythonInterpreterExtKt.findSdk(item) : null;
+        int index = sdkComboBox.getSelectedIndex();
+        Sdk selected = index >= 0 ? sdks.get(index) : null;
         packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(project, selected));
         packagesPanel.updateNotifications(selected);
       }

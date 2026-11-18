@@ -58,11 +58,8 @@ import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -244,12 +241,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
   }
 
   private static void reportMissingInterpreter() {
-    LOG.info("Found no suitable interpreter to run pycodestyle.py. Available interpreters are: [");
-    List<Sdk> allSdks = ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), PreferredSdkComparator.INSTANCE);
-    for (Sdk sdk : allSdks) {
-      LOG.info("  Path: " + sdk.getHomePath() + "; Flavor: " + PythonSdkFlavor.getFlavor(sdk) + "; Remote: " + PythonSdkUtil.isRemote(sdk));
-    }
-    LOG.info("]");
+    LOG.info("Found no suitable interpreter to run pycodestyle.py");
   }
 
   @Override
