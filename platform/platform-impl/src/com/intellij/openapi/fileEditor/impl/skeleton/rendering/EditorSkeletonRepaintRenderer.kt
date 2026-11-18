@@ -81,7 +81,7 @@ import javax.swing.JComponent
  *
  * This renderer creates no `Canvas`, so it avoids JBR-10643
  */
-internal class EditorSkeletonFallbackRenderer(private val frames: EditorSkeletonFrames) : JComponent(), EditorSkeletonRenderer {
+internal class EditorSkeletonRepaintRenderer(private val frames: EditorSkeletonFrames) : JComponent(), EditorSkeletonRenderer {
   override val component: JComponent
     get() = this
 

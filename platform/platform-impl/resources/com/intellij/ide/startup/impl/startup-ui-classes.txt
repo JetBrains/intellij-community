@@ -10082,11 +10082,11 @@ com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonFrameState
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonOklab
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonOklab$Ramp
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonFrames
-com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowRenderer
-com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowRenderer$TargetUpdater
-com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowRenderer$Overlays
-com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowRenderer$startRendering$1
-com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowRendererKt
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonDirectRenderer
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonDirectRenderer$TargetUpdater
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonDirectRenderer$Overlays
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonDirectRenderer$startRendering$1
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonDirectRenderer$Companion
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowTarget
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderThread
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderThread$renderLoop$1

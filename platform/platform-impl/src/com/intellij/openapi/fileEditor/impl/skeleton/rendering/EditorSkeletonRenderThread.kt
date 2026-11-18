@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 /**
- * The thread that renders the frames of each registered [EditorSkeletonWindowRenderer].
+ * The thread that renders the frames of each registered [EditorSkeletonDirectRenderer].
  *
  * A frame does not wait for the EDT or for [kotlinx.coroutines.Dispatchers.Default].
  * The thread does not wake up while no renderer is registered.
@@ -27,7 +27,7 @@ internal class EditorSkeletonRenderThread(private val coroutineScope: CoroutineS
   private val dispatcher = Executors.newSingleThreadScheduledExecutor(
     ConcurrencyUtil.newNamedThreadFactory("Editor Skeleton Renderer", true, Thread.NORM_PRIORITY),
   ).asCoroutineDispatcher()
-  private val renderers = MutableStateFlow<Set<EditorSkeletonWindowRenderer>>(emptySet())
+  private val renderers = MutableStateFlow<Set<EditorSkeletonDirectRenderer>>(emptySet())
 
   init {
     coroutineScope.coroutineContext.job.invokeOnCompletion { dispatcher.close() }
@@ -39,7 +39,7 @@ internal class EditorSkeletonRenderThread(private val coroutineScope: CoroutineS
   /**
    * Makes the thread render the frames of [renderer]. A second call for the same [renderer] does nothing.
    */
-  fun register(renderer: EditorSkeletonWindowRenderer) {
+  fun register(renderer: EditorSkeletonDirectRenderer) {
     if (renderer !in renderers.value) {
       renderers.update { it + renderer }
     }
@@ -48,7 +48,7 @@ internal class EditorSkeletonRenderThread(private val coroutineScope: CoroutineS
   /**
    * Stops the frames of [renderer]. A frame in progress can still end after this call.
    */
-  fun unregister(renderer: EditorSkeletonWindowRenderer) {
+  fun unregister(renderer: EditorSkeletonDirectRenderer) {
     val previous = renderers.getAndUpdate { it - renderer }
     if (renderer !in previous) {
       return
@@ -74,7 +74,7 @@ internal class EditorSkeletonRenderThread(private val coroutineScope: CoroutineS
     }
   }
 
-  private fun renderSafely(renderer: EditorSkeletonWindowRenderer) {
+  private fun renderSafely(renderer: EditorSkeletonDirectRenderer) {
     try {
       renderer.renderFrame()
     }

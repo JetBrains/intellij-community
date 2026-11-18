@@ -8,7 +8,7 @@ import java.awt.Window
 import javax.swing.JRootPane
 
 /**
- * The place of one [EditorSkeletonWindowRenderer] frame, as the EDT saw it. Two targets with equal values describe the same place.
+ * The place of one [EditorSkeletonDirectRenderer] frame, as the EDT saw it. Two targets with equal values describe the same place.
  *
  * [origin], [clip] and [excluded] are in the coordinates of [window]. [rootPaneClip] is [clip] in the coordinates of [rootPane].
  * A frame draws into [clip] except [excluded], the areas of the overlays on top of the renderer.

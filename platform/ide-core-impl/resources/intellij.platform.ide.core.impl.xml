@@ -512,9 +512,9 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
       description="Skeleton fade in duration (in milliseconds)"
     />
     <registryKey
-      key="editor.skeleton.window.renderer"
+      key="editor.skeleton.direct.renderer.enabled"
       defaultValue="true"
-      description="Render the editor skeleton off the EDT into the window graphics, without a heavyweight Canvas"
+      description="Render the editor skeleton off the EDT directly into the window graphics, without a heavyweight Canvas"
     />
   </extensions>
 </idea-plugin>

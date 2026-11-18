@@ -34,14 +34,15 @@ import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
 /**
- * Renders the skeleton off the EDT into the graphics of its window. The renderer does not turn on AWT mixing.
+ * Renders the skeleton off the EDT directly into the graphics of its window, outside Swing repaint.
+ * The renderer does not turn on AWT mixing.
  *
  * [renderThread] renders a frame while the renderer is showing and its window is not minimized, each time the colors change.
  * A frame does not draw over a component that Swing paints on top of the renderer.
  * While such a component is large, or the glass pane paints over the renderer, a frame goes through a Swing repaint.
  * The EDT paints the current frame each time Swing repaints the renderer.
  */
-internal class EditorSkeletonWindowRenderer(private val frames: EditorSkeletonFrames) : JComponent(), EditorSkeletonRenderer {
+internal class EditorSkeletonDirectRenderer(private val frames: EditorSkeletonFrames) : JComponent(), EditorSkeletonRenderer {
   private val renderThread: EditorSkeletonRenderThread = service()
   override val component: JComponent
     get() = this

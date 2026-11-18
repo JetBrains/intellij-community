@@ -28,15 +28,19 @@ internal interface EditorSkeletonRenderer {
      * Creates the renderer of [frames] for the current toolkit.
      */
     fun create(frames: EditorSkeletonFrames): EditorSkeletonRenderer {
+      // Wayland shows a frame only after a commit of the window surface, and only Swing repaint commits it.
       if (StartupUiUtil.isWaylandToolkit()) {
-        return EditorSkeletonFallbackRenderer(frames)
+        return EditorSkeletonRepaintRenderer(frames)
       }
-      if (Registry.`is`("editor.skeleton.window.renderer", true)) {
-        return EditorSkeletonWindowRenderer(frames)
+      // The default: the frames do not wait for the EDT, and no heavyweight component turns on AWT mixing.
+      if (Registry.`is`("editor.skeleton.direct.renderer.enabled", true)) {
+        return EditorSkeletonDirectRenderer(frames)
       }
+      // A Canvas on the Windows client hits JBR-10643.
       if (isWindowsFrontend()) {
-        return EditorSkeletonFallbackRenderer(frames)
+        return EditorSkeletonRepaintRenderer(frames)
       }
+      // The frames do not wait for the EDT, but the heavyweight Canvas turns on AWT mixing.
       return EditorSkeletonCanvas(frames)
     }
 
