@@ -1438,8 +1438,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myView.reinitSettings();
     // After the view, because the mutator adopts the caret measurements that the view reinit recomputes.
     caretMutator.reinitSettings();
-    myFoldingModel.refreshSettings();
-    myFoldingModel.rebuild();
+    myFoldingModel.refreshSettings(fontOnly);
     myInlayModel.execute(fontOnly, myInlayModel::reinitSettings);
 
     if (softWrapsUsedBefore ^ mySoftWrapModel.isSoftWrappingEnabled()) {
