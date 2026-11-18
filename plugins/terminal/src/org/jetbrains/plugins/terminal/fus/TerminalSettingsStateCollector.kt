@@ -22,7 +22,7 @@ import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 
 internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("terminalShell.settings", 8)
+  private val GROUP = EventLogGroup("terminalShell.settings", 9)
 
   private val NON_DEFAULT_OPTIONS = GROUP.registerEvent(
     "non.default.options",
@@ -151,6 +151,7 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     addBooleanIfNotDefault(metrics, BooleanOptions.ENABLE_SHELL_INTEGRATION, curOptions, defaultOptions) { it.myShellIntegration }
     addBooleanIfNotDefault(metrics, BooleanOptions.HIGHLIGHT_HYPERLINKS, curOptions, defaultOptions) { it.myHighlightHyperlinks }
     addBooleanIfNotDefault(metrics, BooleanOptions.USE_OPTION_AS_META, curOptions, defaultOptions) { it.useOptionAsMetaKey }
+    addBooleanIfNotDefault(metrics, BooleanOptions.MOVE_CURSOR_ON_CLICK, curOptions, defaultOptions) { it.moveCursorOnClick }
 
     val curBlockOptions = BlockTerminalOptions.getInstance().state
     val defaultBlockOptions = BlockTerminalOptions.State()
@@ -212,6 +213,7 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     USE_OPTION_AS_META("use_option_as_meta"),
     RUN_COMMANDS_USING_IDE("run_commands_using_ide"),
     SHOW_SEPARATORS_BETWEEN_COMMANDS("show_separators_between_commands"),
+    MOVE_CURSOR_ON_CLICK("move_cursor_on_click"),
   }
 }
 
