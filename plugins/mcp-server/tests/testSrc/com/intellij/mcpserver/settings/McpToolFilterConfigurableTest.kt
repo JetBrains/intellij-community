@@ -172,6 +172,52 @@ class McpToolFilterConfigurableTest {
   }
 
   @Test
+  fun `apply keeps the stored router mode while the router controls are off`(): Unit = runBlocking(Dispatchers.EDT) {
+    McpToolFilterSettings.getInstance().invocationMode = McpSessionInvocationMode.VIA_ROUTER
+    val configurable = McpToolFilterConfigurable()
+
+    try {
+      configurable.createComponent()
+      configurable.loadToolsAndUpdateUi()
+
+      assertThat(configurable.isModified()).isFalse()
+
+      configurable.apply()
+
+      assertThat(McpToolFilterSettings.getInstance().invocationMode).isEqualTo(McpSessionInvocationMode.VIA_ROUTER)
+    }
+    finally {
+      configurable.disposeUIResources()
+    }
+  }
+
+  @Test
+  fun `apply keeps a stored router-only flag when the user toggles enabled while the router controls are off`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolKey = McpServerServiceImpl.getInstance()
+      .getMcpToolsFilteredAsync(useFiltersFromEP = false, excludeProviders = emptySet())
+      .first { it.descriptor.name != UniversalToolset::execute_tool.name }
+      .descriptor
+      .fullyQualifiedName
+    val storedState = ToolState(enabled = true, routerOnly = false)
+    McpToolDisallowListSettings.getInstance().toolStates = mapOf(toolKey to storedState)
+    val configurable = McpToolFilterConfigurable()
+
+    try {
+      configurable.createComponent()
+      configurable.loadToolsAndUpdateUi()
+
+      toolEnabledCheckBox(configurable, toolKey).doClick()
+      configurable.apply()
+
+      assertThat(McpToolDisallowListSettings.getInstance().toolStates[toolKey])
+        .isEqualTo(ToolState(enabled = false, routerOnly = false))
+    }
+    finally {
+      configurable.disposeUIResources()
+    }
+  }
+
+  @Test
   fun `tool state toggled back to default clears modified state`(): Unit = runBlocking(Dispatchers.EDT) {
     val toolKey = McpServerServiceImpl.getInstance()
       .getMcpToolsFilteredAsync(useFiltersFromEP = false, excludeProviders = emptySet())

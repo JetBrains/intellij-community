@@ -116,6 +116,12 @@ class McpToolFilterPanel @RequiresEdt constructor() {
   private val hasManagedSessionSupport: Boolean
     get() = McpManagedSessionSupport.isAvailable()
 
+  /**
+   * False hides every router control. The stored router values stay as they are. See [McpToolFilterSettings.isRouterConfigurable].
+   * The panel reads it once, because it builds the router widgets once.
+   */
+  private val showRouterControls: Boolean = McpToolFilterSettings.getInstance().isRouterConfigurable
+
   private val showAdvancedFilterUi: Boolean
     get() = Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)
 
@@ -221,7 +227,7 @@ class McpToolFilterPanel @RequiresEdt constructor() {
   // region Top Panel
 
   private fun createTopPanel(): JComponent = panel {
-    if (hasManagedSessionSupport) {
+    if (showRouterControls && hasManagedSessionSupport) {
       row(McpServerBundle.message("configurable.mcp.tool.filter.managed.router.label")) {
         val comboBox = comboBox(ManagedSessionRouterMode.entries, textListCellRenderer("") { it.displayName })
           .onChanged {
@@ -233,7 +239,7 @@ class McpToolFilterPanel @RequiresEdt constructor() {
         managedSessionRouterModeComboBox = comboBox.component
       }.rowComment(McpServerBundle.message("configurable.mcp.tool.filter.router.comment"))
     }
-    else {
+    else if (showRouterControls) {
       row {
         val checkbox = checkBox(McpServerBundle.message("configurable.mcp.tool.filter.router.checkbox"))
           .selected(initialInvocationMode == McpSessionInvocationMode.VIA_ROUTER)
@@ -685,11 +691,12 @@ class McpToolFilterPanel @RequiresEdt constructor() {
       toolState.enabled && toolState.routerOnly
     }
     countLabel?.let { label ->
-      label.text = McpServerBundle.message(
-        "configurable.mcp.tool.filter.section.counts",
-        enabledCount,
-        routerOnlyCount,
-      )
+      label.text = if (showRouterControls) {
+        McpServerBundle.message("configurable.mcp.tool.filter.section.counts", enabledCount, routerOnlyCount)
+      }
+      else {
+        McpServerBundle.message("configurable.mcp.tool.filter.section.counts.enabled.only", enabledCount)
+      }
       label.repaint()
     }
   }
@@ -703,7 +710,10 @@ class McpToolFilterPanel @RequiresEdt constructor() {
   }
 
   private fun currentInvocationMode(): McpSessionInvocationMode {
-    return if (hasManagedSessionSupport) {
+    return if (!showRouterControls) {
+      initialInvocationMode
+    }
+    else if (hasManagedSessionSupport) {
       val selected = managedSessionRouterModeComboBox?.selectedItem as? ManagedSessionRouterMode
       selected?.invocationMode ?: initialInvocationMode
     }
@@ -716,7 +726,7 @@ class McpToolFilterPanel @RequiresEdt constructor() {
   }
 
   private fun isRouterOnlyAvailable(): Boolean {
-    return hasManagedSessionSupport || currentInvocationMode() == McpSessionInvocationMode.VIA_ROUTER
+    return showRouterControls && (hasManagedSessionSupport || currentInvocationMode() == McpSessionInvocationMode.VIA_ROUTER)
   }
 
   private fun updateToolGroupsVisibility() {

@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings
+import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
 import com.intellij.openapi.Disposable
@@ -36,10 +37,12 @@ class McpToolInvocationModeTest {
 
   private lateinit var disposable: Disposable
   private val settings = McpToolDisallowListSettings.getInstance()
+  private var routerControls: AutoCloseable? = null
 
   @BeforeEach
   fun setUp() {
     disposable = Disposer.newDisposable()
+    routerControls = setRouterControls(true)
     settings.toolStates = emptyMap()
     application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(
       object : McpToolsProvider {
@@ -62,6 +65,7 @@ class McpToolInvocationModeTest {
   @AfterEach
   fun tearDown() {
     settings.toolStates = emptyMap()
+    routerControls?.close()
     Disposer.dispose(disposable)
   }
 

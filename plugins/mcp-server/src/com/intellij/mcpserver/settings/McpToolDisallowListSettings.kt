@@ -28,6 +28,12 @@ interface McpToolDisallowListSettings {
 
   fun toolStateFor(tool: McpTool): ToolState
 
+  /**
+   * The state that applies at runtime. It is [toolStateFor], except that the stored router-only flag applies only while
+   * [McpToolFilterSettings.isRouterConfigurable] is true. Otherwise the flag is the default of the tool.
+   */
+  fun effectiveToolStateFor(tool: McpTool): ToolState
+
   data class ToolState(
     val enabled: Boolean = true,
     val routerOnly: Boolean = true,
@@ -71,6 +77,12 @@ internal class McpToolDisallowListSettingsImpl : McpToolDisallowListSettings, Si
     return states[tool.descriptor.fullyQualifiedName]
            ?: states[tool.descriptor.name]
            ?: ToolState.defaultFor(tool)
+  }
+
+  override fun effectiveToolStateFor(tool: McpTool): ToolState {
+    val state = toolStateFor(tool)
+    if (McpToolFilterSettings.getInstance().isRouterConfigurable) return state
+    return state.copy(routerOnly = ToolState.defaultFor(tool).routerOnly)
   }
 
   internal class ToolStateBean() : BaseState() {
