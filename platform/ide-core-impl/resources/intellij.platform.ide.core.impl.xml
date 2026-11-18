@@ -513,7 +513,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     />
     <registryKey
       key="editor.skeleton.window.renderer"
-      defaultValue="false"
+      defaultValue="true"
       description="Render the editor skeleton off the EDT into the window graphics, without a heavyweight Canvas"
     />
   </extensions>
