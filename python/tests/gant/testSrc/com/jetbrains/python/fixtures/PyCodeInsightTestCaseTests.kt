@@ -12,6 +12,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.psi.LanguageLevel
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -183,12 +184,22 @@ class PyCodeInsightTestCaseComputeAssertionsTest : PyCodeInsightTestCase() {
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @Subsystems.CodeInsight
 @Layers.Functional
-class PyCodeInsightTestCaseFixtureReuseTest : PyCodeInsightTestCase() {
+internal class PyCodeInsightTestCaseFixtureReuseTest : PyCodeInsightTestCase() {
 
   companion object {
     private var fixtureFromFirstTest: CodeInsightTestFixture? = null
     private var projectFromFirstTest: Project? = null
     private var tempDirFromFirstTest: TempDirTestFixture? = null
+
+    // The fields are static, so they keep the project alive after the class is done.
+    // Clear them, or the project leak check finds the disposed project.
+    @AfterAll
+    @JvmStatic
+    fun clearReferencesFromFirstTest() {
+      fixtureFromFirstTest = null
+      projectFromFirstTest = null
+      tempDirFromFirstTest = null
+    }
   }
 
   @Test
