@@ -39,6 +39,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLocalRepository
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 import org.jetbrains.plugins.gitlab.mergerequest.data.loadRevisionsAndParseChanges
@@ -92,12 +93,13 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   private val gitRepository: GitRepository,
+  localRepository: GitLabLocalRepository,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   private val imageLoader: GitLabImageLoader,
 ) : GitLabMergeRequestDiffViewModel, GitLabMergeRequestReviewViewModelBase(
   parentCs.childScope("GitLab Merge Request Diff Review VM"),
-  project, currentUser, mergeRequest,
+  project, localRepository, currentUser, mergeRequest,
   project.service<GitLabMergeRequestsPreferences>().diffReviewViewOption
 ) {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()

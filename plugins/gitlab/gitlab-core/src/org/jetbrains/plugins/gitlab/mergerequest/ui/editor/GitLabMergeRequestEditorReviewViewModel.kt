@@ -77,7 +77,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val openMergeRequestDiff: (String, Boolean) -> Unit,
 ) : GitLabMergeRequestReviewViewModelBase(
   parentCs.childScope("GitLab Merge Request Editor Review VM"),
-  project, currentUser, mergeRequest,
+  project, localRepository, currentUser, mergeRequest,
   if (GitLabReviewSettings.getInstance(project).editorReviewEnabled) DiscussionsViewOption.UNRESOLVED_ONLY else DiscussionsViewOption.DONT_SHOW
 ), CodeReviewInEditorViewModel {
   private val preferences = GitLabReviewSettings.getInstance(project)

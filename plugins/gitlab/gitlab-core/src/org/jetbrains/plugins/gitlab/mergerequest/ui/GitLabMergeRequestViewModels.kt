@@ -106,7 +106,8 @@ internal class GitLabMergeRequestViewModels(
   }
 
   private val _diffVm by lazy {
-    GitLabMergeRequestDiffProcessorViewModelImpl(project, cs, currentUser, mergeRequest, gitRemote.repository, discussionsVms,
+    GitLabMergeRequestDiffProcessorViewModelImpl(project, cs, currentUser, mergeRequest, gitRemote.repository,
+                                                 projectData.localRepository, discussionsVms,
                                                  avatarIconProvider, imageLoader).apply {
       setup()
     }

@@ -126,7 +126,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val project: Project,
   parentScope: CoroutineScope,
   override val currentUser: GitLabUserDTO,
-  projectData: GitLabProject,
+  private val projectData: GitLabProject,
   private val mergeRequest: GitLabMergeRequest,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
 ) : GitLabMergeRequestReviewFlowViewModel {
@@ -217,7 +217,9 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
       val handler = submitReviewInputHandler
       check(handler != null)
       val ctx = currentCoroutineContext()
-      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, project, mergeRequest, currentUser, review) {
+      val localRepository = projectData.localRepository
+      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, project, localRepository, mergeRequest, currentUser, review,
+                                                           localRepository.isLinkedWorktree()) {
         ctx.cancel()
       }
       handler.invoke(vm)

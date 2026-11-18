@@ -69,4 +69,14 @@ interface GitLabLocalRepository {
    * The content of the file after [change], with the line separators converted to `\n`.
    */
   suspend fun loadContentAfter(change: RefComparisonChange): String
+
+  /**
+   * Whether the project is a linked git worktree. The user can delete this worktree after a review submit.
+   */
+  suspend fun isLinkedWorktree(): Boolean
+
+  /**
+   * Starts to delete the linked git worktree of the project. The deletion continues after the project closes.
+   */
+  suspend fun deleteWorktree()
 }

@@ -7,7 +7,6 @@ import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLocalRepository
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
 
@@ -76,18 +76,18 @@ internal fun GitLabMergeRequest.getSubmittableReview(currentUser: GitLabUserDTO)
 
 internal class GitLabMergeRequestSubmitReviewViewModelImpl(
   parentCs: CoroutineScope,
-  private val project: Project,
+  project: Project,
+  private val localRepository: GitLabLocalRepository,
   private val mergeRequest: GitLabMergeRequest,
   private val currentUser: GitLabUserDTO,
   currentReview: SubmittableReview,
+  override val canDeleteWorktree: Boolean,
   private val onDone: () -> Unit,
 ) : GitLabMergeRequestSubmitReviewViewModel {
   private val cs = parentCs.childScope(this::class, Dispatchers.Default)
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   private val worktreeSessionState = project.service<GitLabReviewWorktreeSessionState>()
-
-  override val canDeleteWorktree: Boolean = GitWorkingTreesService.getInstance(project).isCurrentProjectLinkedWorktree()
 
   // Unchecked on the first use. The last choice is kept for the rest of the IDE session.
   private val _deleteWorktreeAfterSubmit = MutableStateFlow(worktreeSessionState.deleteWorktreeAfterSubmit)
@@ -153,10 +153,10 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
     onDone()
   }
 
-  private fun deleteWorktreeIfRequested() {
+  private suspend fun deleteWorktreeIfRequested() {
     if (canDeleteWorktree && deleteWorktreeAfterSubmit.value) {
       // Runs on the worktree service scope, so it survives when onDone() closes this project.
-      GitWorkingTreesService.getInstance(project).deleteCurrentProjectWorktree()
+      localRepository.deleteWorktree()
     }
   }
 

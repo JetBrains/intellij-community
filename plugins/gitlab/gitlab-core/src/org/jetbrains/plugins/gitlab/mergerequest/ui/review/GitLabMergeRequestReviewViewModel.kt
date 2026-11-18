@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLocalRepository
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
 interface GitLabMergeRequestReviewViewModel : CodeReviewDiscussionsViewModel {
@@ -36,6 +37,7 @@ interface GitLabMergeRequestReviewViewModel : CodeReviewDiscussionsViewModel {
 open class GitLabMergeRequestReviewViewModelBase(
   protected val cs: CoroutineScope,
   private val project: Project,
+  private val localRepository: GitLabLocalRepository,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   initialViewOption: DiscussionsViewOption,
@@ -60,7 +62,8 @@ open class GitLabMergeRequestReviewViewModelBase(
       val handler = submitReviewInputHandler
       check(handler != null)
       val ctx = currentCoroutineContext()
-      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, project, mergeRequest, currentUser, review) {
+      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, project, localRepository, mergeRequest, currentUser, review,
+                                                           localRepository.isLinkedWorktree()) {
         ctx.cancel()
       }
       handler.invoke(vm)

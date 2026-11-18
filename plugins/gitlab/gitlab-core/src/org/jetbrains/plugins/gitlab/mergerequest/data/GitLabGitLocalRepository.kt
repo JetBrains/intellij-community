@@ -21,6 +21,7 @@ import git4idea.remote.hosting.GitCodeReviewUtils
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.changesSignalFlow
 import git4idea.remote.hosting.localCommitsSyncStatus
+import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -84,5 +85,12 @@ internal class GitLabGitLocalRepository(private val remote: GitRemoteUrlCoordina
       change.createVcsChange(repository.project).afterRevision?.content ?: ""
     }
     StringUtil.convertLineSeparators(content)
+  }
+
+  override suspend fun isLinkedWorktree(): Boolean =
+    GitWorkingTreesService.getInstance(repository.project).isCurrentProjectLinkedWorktree()
+
+  override suspend fun deleteWorktree() {
+    GitWorkingTreesService.getInstance(repository.project).deleteCurrentProjectWorktree()
   }
 }
