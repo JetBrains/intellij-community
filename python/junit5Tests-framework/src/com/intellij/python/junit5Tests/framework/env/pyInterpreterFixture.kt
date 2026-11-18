@@ -45,7 +45,7 @@ fun TestFixture<PyProject>.pyMockInterpreterFixture(homePath: TestFixture<Path>)
   val registry = PythonInterpreterRegistry.getInstance(pyProject.project)
   val interpreter = registry.addMockPythonInterpreter(pyProject, createMockSdk(pyProject.project, homePath.init()))
   initialized(interpreter) {
-    registry.removePythonInterpreter(pyProject, interpreter)
+    registry.remove(interpreter)
   }
 }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.sdk.backend.setPythonSdkForTests
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
@@ -22,7 +23,6 @@ import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtensio
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.sdk.inspections.PyInterpreterNotificationProvider
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.setPythonSdkForTests
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach

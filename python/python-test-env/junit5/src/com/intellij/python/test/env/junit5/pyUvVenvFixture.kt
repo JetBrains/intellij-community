@@ -86,6 +86,6 @@ private suspend fun TestFixtureInitializer.R<PythonInterpreter>.initUvVenvInterp
   return initialized(interpreter) {
     awaitPythonInterpreterUpdateBeforeRemoval(interpreter)
     pyProject.setPythonInterpreter(null)
-    PythonInterpreterRegistry.getInstance(pyProject.project).removePythonInterpreter(pyProject, interpreter)
+    PythonInterpreterRegistry.getInstance(pyProject.project).remove(interpreter)
   }
 }

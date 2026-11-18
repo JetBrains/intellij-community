@@ -151,7 +151,7 @@ internal class PythonPackageManagerUnusedSdkTest {
 
     val watcherGone = AtomicBoolean()
     Disposer.register(service.impl().interpreterPathsWatcher(interpreter)!!, Disposable { watcherGone.set(true) })
-    PythonInterpreterRegistry.getInstance(project).removePythonInterpreter(pyProjectFixture.get(), interpreter)
+    PythonInterpreterRegistry.getInstance(project).remove(interpreter)
 
     assertThat(watcherGone.get()).describedAs("The watcher outlived the interpreter it watches").isTrue()
   }

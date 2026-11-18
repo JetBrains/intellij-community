@@ -155,7 +155,7 @@ internal class PythonInterpreterDetailsTest {
       body(interpreter)
     }
     finally {
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 

@@ -42,7 +42,7 @@ internal class PySdkUsageTest {
       assertThat(EvoPyProjectModel.getInstance(project).snapshot().usesSdk(sdk)).isFalse()
     }
     finally {
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 
@@ -60,7 +60,7 @@ internal class PySdkUsageTest {
     }
     finally {
       pyProject.setPythonInterpreter(null)
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 
@@ -76,7 +76,7 @@ internal class PySdkUsageTest {
       assertThat(PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = true, background = true))).isFalse()
     }
     finally {
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 
@@ -93,7 +93,7 @@ internal class PySdkUsageTest {
     }
     finally {
       pyProject.setPythonInterpreter(null)
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 
@@ -115,8 +115,8 @@ internal class PySdkUsageTest {
     }
     finally {
       pyProject.setPythonInterpreter(null)
-      registry.removePythonInterpreter(pyProject, first)
-      registry.removePythonInterpreter(pyProject, second)
+      registry.remove(first)
+      registry.remove(second)
     }
   }
 }

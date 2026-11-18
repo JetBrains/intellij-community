@@ -2126,9 +2126,9 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
           "install", "--manifest-path", manifest.pathString, "--environment", environmentName,
         ))
         assertThat(installed.isSuccess).isTrue()
-        val created = registry.newPythonInterpreter(pyProject, PyInterpreterRef.native(tool.fusId, PyEnvRef(environmentName)))
+        val created = registry.build(pyProject, PyInterpreterRef.native(tool.fusId, PyEnvRef(environmentName)))
         assertThat(created.isSuccess).isTrue()
-        registry.registerPythonInterpreter(created.getOrThrow())
+        registry.register(created.getOrThrow())
       }
       beforeManager(manifest)
       val manager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), interpreter)
@@ -2137,7 +2137,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
     }
     finally {
       errors.clear()
-      for (interpreter in registry.interpreters(pyProject)) registry.removePythonInterpreter(pyProject, interpreter)
+      for (interpreter in registry.interpreters(pyProject)) registry.remove(interpreter)
       tool.setCustomExecutablePath(localEel.descriptor, previousExecutable)
     }
   }

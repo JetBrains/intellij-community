@@ -102,7 +102,7 @@ internal abstract class PyDependencyModuleInterpreterResolveTest {
       val registry = PythonInterpreterRegistry.getInstance(project)
       for ((pyProject, interpreter) in interpreters) {
         pyProject.setPythonInterpreter(null)
-        registry.removePythonInterpreter(pyProject, interpreter)
+        registry.remove(interpreter)
       }
     }
   }

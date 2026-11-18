@@ -3,735 +3,167 @@ package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkModificator
-import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.projectRoots.impl.createSdkForEnvironment
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.intellij.python.sdk.backend.impl.PythonInterpreterStore
 import com.intellij.python.sdk.common.PyInterpreterRef
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.jetbrains.python.PyNames
-import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.project.getPyProjectsWithoutJpsSync
-import com.jetbrains.python.project.project
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.add.v2.EelOrTarget
-import com.jetbrains.python.sdk.add.v2.FileSystem
-import com.jetbrains.python.sdk.add.v2.FileSystemFactory
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.pythonBinaryPath
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.util.UUID
-import kotlin.time.Duration.Companion.seconds
 
 /**
- * The interpreters of each [PyProject] of this project, and the one way to add or remove a Python SDK.
+ * The interpreters of each [PyProject] of this project, and the one way to add or remove one.
  *
- * Every interpreter belongs to one [PyProject], see [PythonInterpreter.ownerDir]. There are no shared interpreters. An
- * interpreter is found by its [PyInterpreterRef].
+ * Each interpreter belongs to one [PyProject], its owner, see [PythonInterpreter.ownerDir]. A [PythonInterpreterKey]
+ * names an interpreter: the owner directory and the [PyInterpreterRef].
  *
- * A flow builds an interpreter with [newPythonInterpreter], which adds nothing to the SDK table. Only
- * `PyProject.setPythonInterpreter` adds it, through [registerPythonInterpreter]. A [PyProject] can use an interpreter
- * of another owner. An importer such as Bazel does so: it builds one interpreter for each environment and sets it on
- * many modules. The UI lists only the interpreters a [PyProject] owns, see [interpreters].
+ * A flow builds an interpreter with [build]. That registers nothing. Only `PyProject.setPythonInterpreter` registers
+ * it, through [register]. A [PyProject] can use an interpreter of another owner. For example, Bazel builds one
+ * interpreter for each environment and sets it on many modules.
  *
- * In the interpreter library flow, see [isInterpreterLibraryFlowEnabled], the [PythonInterpreterRecords] of the project
- * saves a record for each interpreter, and the registry builds its SDK in memory from the ref and that record, see
- * [PythonInterpreterSdks]. The SDKs are in no SDK table, and the key of each one gives its owner, so nothing is adopted
- * and no owner changes. The only read of the SDK table imports the SDK that a module of an older build names, see
- * [Legacy.importTableSdk]. The SDK table keeps the SDKs of an older build as they are, so that build still opens the project.
+ * The registry computes the list of its interpreters in the background. A suspending read waits for the first
+ * computation. A read with the suffix `IfReady` does not wait, and it finds nothing before the first computation.
  *
- * In the legacy flow the storage is the SDK table of the application. An SDK belongs to the [PyProject] whose base
- * directory is its associated path. An SDK with no associated path belongs to the [PyProject] whose base directory is
- * its working directory. Any other SDK has no owner: this registry does not show it, and adopts it for the first
- * [PyProject] that registers an interpreter for the same binary.
+ * This class is the API. [PythonInterpreterStore] keeps the state and the storage. In the interpreter library flow,
+ * see [isInterpreterLibraryFlowEnabled], the storage is [PythonInterpreterRecords]. In the legacy flow, it is the SDK
+ * table of the application.
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class PythonInterpreterRegistry(internal val project: Project, private val scope: CoroutineScope) {
+class PythonInterpreterRegistry(project: Project, private val scope: CoroutineScope) {
+  /** The state and the storage behind this API. */
+  internal val store: PythonInterpreterStore = PythonInterpreterStore(project, scope)
+
   /**
-   * One computed list, with one interpreter for each SDK. It compares by reference, so each recompute emits. It is a
-   * list because [PythonInterpreter] compares by its ref, and two SDKs can have one ref. A set keeps only one of them, so
-   * a lookup by the other SDK finds nothing. [recordsVersion] is the change count of [PythonInterpreterRecords] that the
-   * computation read, so a caller that changed the store can wait for a list that holds the change.
+   * The interpreters that [pyProject] owns. An interpreter of another owner that [pyProject] uses is not in the list.
+   * In the legacy flow, two SDKs can have one ref, so the list can hold two equal interpreters.
    */
-  private class Computed(val interpreters: List<PythonInterpreter>, val recordsVersion: Long)
+  suspend fun interpreters(pyProject: PyProject): List<PythonInterpreter> = store.interpretersFlow(pyProject).first()
 
-  private val state = MutableStateFlow<Computed?>(null)
-
-  /** For tests: the last computation of the list against the store, for the report of a wait that does not end. */
-  @TestOnly
-  fun describeForTests(): String {
-    val computed = state.value
-    val records = PythonInterpreterRecords.getInstance(project)
-    return "registry: computed at records version ${computed?.recordsVersion} of ${records.versions.value}, " +
-           "interpreters ${computed?.interpreters?.map { it.key }}, records ${records.keys()}"
-  }
+  /** [interpreters] without the wait. The list is empty before the first computation. */
+  fun interpretersIfReady(pyProject: PyProject): List<PythonInterpreter> = store.interpretersIfReady(pyProject)
 
   /**
-   * Makes the search for an SDK to adopt and the add one step. Without it, two parallel adds for one Python both find
-   * nothing to adopt, and both add an SDK.
-   */
-  private val registerMutex = Mutex()
-
-  init {
-    // A change made outside this registry, for example by the platform Settings, reaches the list through this listener.
-    scope.launch {
-      sdkTableChanges()
-        .onStart { emit(Unit) }
-        .conflate()
-        .collect {
-          val recordsVersion = PythonInterpreterRecords.getInstance(project).versions.value
-          val interpreters = compute()
-          state.value = Computed(interpreters, recordsVersion)
-          // The roots of an interpreter that the registry no longer holds are of no use, see PythonInterpreterDetails.
-          project.serviceIfCreated<PythonInterpreterRoots>()?.retain(interpreters.mapTo(mutableSetOf()) { it.key })
-        }
-    }
-  }
-
-  /** Every Python SDK of the table, each time the table changes. The first value comes after the first computation. */
-  private val tableFlow: Flow<List<PythonInterpreter>> = state.filterNotNull().map { it.interpreters }
-
-  /**
-   * The interpreters that [pyProject] owns, one for each SDK. Two SDKs can have one ref, so two entries can be equal.
-   * An interpreter of another owner that [pyProject] uses is not here, so the UI does not show it. Waits for the first
-   * computation.
-   */
-  suspend fun interpreters(pyProject: PyProject): List<PythonInterpreter> = interpretersFlow(pyProject).first()
-
-  /** [interpreters] each time they change. The first value comes after the first computation. */
-  fun interpretersFlow(pyProject: PyProject): Flow<List<PythonInterpreter>> =
-    tableFlow.map { it.belongingTo(pyProject) }.distinctUntilChanged()
-
-  /** The interpreter of [pyProject] that [ref] names, or `null` when [pyProject] has none. Waits for the first computation. */
-  private suspend fun findPythonInterpreter(pyProject: PyProject, ref: PyInterpreterRef): PythonInterpreter? =
-    interpreters(pyProject).firstOrNull { it.ref == ref }
-
-  /**
-   * The interpreter that [ref] names for [pyProject], before it is registered: its SDK is not in the SDK table yet,
-   * unless [pyProject] already has an interpreter for [ref]. The file system of [ref] gives the SDK home path and the
-   * SDK data, see [com.jetbrains.python.sdk.add.v2.FileSystem.sdkHomeAndData]. Register it with
-   * [registerPythonInterpreter].
-   */
-  suspend fun newPythonInterpreter(pyProject: PyProject, ref: PyInterpreterRef): PyResult<PythonInterpreter> {
-    findPythonInterpreter(pyProject, ref)?.let { return PyResult.success(it) }
-    val fileSystem = ref.fileSystem(pyProject.project)
-                     ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", ref.toString()))
-    val (homePath, sdkData) = fileSystem.sdkHomeAndData(pyProject, ref).getOr { return it }
-    sdkData.associatedModulePath = pyProject.baseDir.toString()
-    return newSdk(homePath, sdkData, suggestedName = null).pythonInterpreterResultAsync()
-  }
-
-  /**
-   * The interpreter whose Python binary is [pythonBinary] with the data [data], for the PyProject at [ownerDir], before
-   * it is registered: its SDK is not in the SDK table yet. [ownerDir] is the base directory of that PyProject. The
-   * PyProject does not have to exist yet: the new project wizard passes the directory of the project it creates.
+   * The interpreter that [ref] names for [pyProject]. When [pyProject] already owns an interpreter for [ref], that
+   * interpreter is the result. Otherwise the result is a new interpreter that is not registered. Register it with
+   * [register].
    *
-   * A flow that has just created the environment builds it from what it knows, so the environment is not probed
-   * again. Register it with [registerPythonInterpreter]. A failure when the binary is not found, or when [data] names no
-   * interpreter.
+   * The file system of [ref] gives the Python binary and its data, see
+   * [com.jetbrains.python.sdk.add.v2.FileSystem.sdkHomeAndData]. A failure when the environment of [ref] is not found.
    */
-  suspend fun newPythonInterpreter(
+  suspend fun build(pyProject: PyProject, ref: PyInterpreterRef): PyResult<PythonInterpreter> =
+    store.build(pyProject, ref)
+
+  /**
+   * A new interpreter of [pythonBinary] with the data [data], for the [PyProject] at [ownerDir]. It is not registered.
+   * Register it with [register].
+   *
+   * A flow that has just created an environment calls it. [ownerDir] is the base directory of the owner. The owner does
+   * not have to exist yet. For example, the new project wizard passes the directory of the project that it creates.
+   *
+   * Only the legacy flow uses [suggestedName]. In the interpreter library flow, the interpreter takes the name of its
+   * library when it is registered. A failure when [pythonBinary] is not found, or when [data] names no interpreter.
+   */
+  suspend fun build(
     ownerDir: Path,
     pythonBinary: PathHolder,
     data: PythonSdkAdditionalData,
     suggestedName: String? = null,
-  ): PyResult<PythonInterpreter> {
-    val homePath = when (pythonBinary) {
-      // The SDK home path is the path of the VFS file, so it matches what the SDK table holds for the same binary.
-      is PathHolder.Eel -> withContext(Dispatchers.IO) { VirtualFileManager.getInstance().refreshAndFindFileByNioPath(pythonBinary.path) }?.path
-                           ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", pythonBinary.path.toString()))
-      is PathHolder.Target -> pythonBinary.pathString
-    }
-    data.associatedModulePath = ownerDir.toString()
-    return newSdk(homePath, data, suggestedName).pythonInterpreterResultAsync()
-  }
+  ): PyResult<PythonInterpreter> = store.build(ownerDir, pythonBinary, data, suggestedName)
 
   /**
-   * Registers [interpreter] under its owner, see [PythonInterpreter.ownerDir], and returns the interpreter the registry
-   * then holds. Only `PyProject.setPythonInterpreter` calls it. The [PyProject] that sets [interpreter] does not have to
-   * be its owner: an importer such as Bazel builds one interpreter for each environment and sets it on many modules.
+   * Registers [interpreter] under its owner and returns the interpreter that the registry then holds. Only
+   * `PyProject.setPythonInterpreter` calls it. The [PyProject] that sets [interpreter] does not have to be its owner.
    *
-   * The owner keeps an interpreter it already has for the ref of [interpreter]. Otherwise a local SDK for the same
-   * binary is adopted, when it has the same owner or none. It takes the data of [interpreter] and keeps its name, and
-   * [interpreter] then holds that SDK. Else the SDK of [interpreter] is added, and its paths are set up. When that fails,
-   * the SDK is removed again.
+   * When the owner already has an interpreter for the ref of [interpreter], the result is that interpreter. In the
+   * legacy flow, a local SDK of the same binary is adopted, when it has the same owner or no owner. When the setup of
+   * the paths fails, the registry removes the interpreter again and the call throws.
    */
-  suspend fun registerPythonInterpreter(interpreter: PythonInterpreter): PythonInterpreter {
-    if (isRegistered(interpreter)) return interpreter
-    tableFlow.first().firstOrNull { it.ownerDir == interpreter.ownerDir && it.ref == interpreter.ref }?.let { return it }
-    return registerInterpreter(interpreter) { it == null || it == interpreter.ownerDir }
-  }
-
-  /** Whether the registry holds [interpreter]: its owner registered it. Waits for the first computation. */
-  suspend fun isRegistered(interpreter: PythonInterpreter): Boolean = tableFlow.first().any { it.isFor(interpreter.sdk) }
+  suspend fun register(interpreter: PythonInterpreter): PythonInterpreter = store.register(interpreter)
 
   /**
-   * A Python SDK at [homePath] with the data [data] that is not in the SDK table. The SDK is in no table yet, so its
-   * changes need no write action: the first computation builds SDKs, and a caller under a modal progress waits for it,
-   * while a write action on the EDT waits for the modal progress (PY-93821). The legacy flow adds the SDK to the table
-   * later, in a write action, see [addSdk].
+   * Removes [interpreter]. Returns when the list no longer holds it. The registry does not check that a module uses
+   * [interpreter], so the caller checks it.
    */
-  private suspend fun newSdk(homePath: String, data: PythonSdkAdditionalData, suggestedName: String?, knownVersion: String? = null): Sdk {
-    val sdkType = pythonSdkType()
-    // In the library flow the SDK is in no table, so its name is unique among the stored SDKs only.
-    val existing = if (isInterpreterLibraryFlowEnabled()) PythonInterpreterSdks.getInstance(project).sdks() else PythonSdkTable.tableSdks()
-    val name = if (suggestedName == null) SdkConfigurationUtil.createUniqueSdkName(sdkType, homePath, existing)
-               else SdkConfigurationUtil.createUniqueSdkName(suggestedName, existing)
-    @Suppress("SETUP_SDK_DIRECTLY") // The registry is the only place that creates a Python SDK.
-    val sdk = ProjectJdkTable.getInstance().createSdkForEnvironment(project, name, sdkType, homePath)
-    val parsedHomePath = Path.of(homePath)
-    val fileSystem = FileSystemFactory.createForPythonSdkAdditionalData(data, parsedHomePath)
-    val version = knownVersion ?: probeVersionString(fileSystem, parsedHomePath)
-    
-    sdk.sdkModificator.apply {
-      sdkAdditionalData = data
-      this.homePath = homePath
-      versionString = version
-    }.applyChangesWithoutWriteAction()
-    
-    return sdk
+  suspend fun remove(interpreter: PythonInterpreter) {
+    store.remove(interpreter)
   }
 
   /**
-   * The version of the interpreter at [homePath] on [fileSystem], or `null` when [fileSystem] cannot tell it. An Eel
-   * machine reads the version from [homePath]. A target runs the interpreter, and the probe keeps the modality of the
-   * caller. A target interpreter has no detected environment, so this version is the only one it states before it is
-   * registered.
+   * The registered interpreter that [key] names, or `null`. A module of the legacy flow names an SDK instead, see
+   * `findBySdkName` in `com.jetbrains.python.sdk.legacy`.
    */
-  private suspend fun probeVersionString(fileSystem: FileSystem<*>, homePath: Path): String? = withContext(Dispatchers.IO) {
-    when (fileSystem.eelOrTarget) {
-      is EelOrTarget.IsEel -> pythonSdkType().getVersionString(homePath.toString())
-      is EelOrTarget.IsTarget -> when (val version = fileSystem.pythonLanguageLevel(homePath.toString())) {
-        is Result.Success -> version.result.toPythonVersion()
-        is Result.Failure -> {
-          // An unreachable target says nothing about the interpreter, so the SDK keeps no version.
-          thisLogger().info("Cannot read the version of python at \"${homePath}\": ${version.error.message}")
-          null
-        }
-      }
-    }
-  }
+  suspend fun find(key: PythonInterpreterKey): PythonInterpreter? = store.allFlow.first().firstOrNull { it.key == key }
 
-  private suspend fun <P : PathHolder> FileSystem<P>.pythonLanguageLevel(pythonBinary: String): PyResult<LanguageLevel> {
-    val path = parsePath(pythonBinary).getOr { return it }
-    return getBinaryToExec(path).validatePythonAndGetInfo().mapSuccess { it.languageLevel }
-  }
+  /** [find] without the wait. The result is `null` before the first computation. */
+  fun findIfReady(key: PythonInterpreterKey): PythonInterpreter? = store.allIfReady?.firstOrNull { it.key == key }
 
-  private fun pythonSdkType(): SdkType = SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME) ?: error("The Python SDK type is not registered")
+  /** The keys of all the registered interpreters, each time the set of keys changes. */
+  val keysFlow: Flow<Set<PythonInterpreterKey>>
+    get() = store.allFlow.map { list -> list.mapTo(mutableSetOf()) { it.key } }.distinctUntilChanged()
 
   /**
-   * Adds the SDK of [interpreter] to the table, or adopts a local SDK whose owner directory passes [canAdopt], see
-   * [ownerDirectory]. An adopted SDK takes the data of [interpreter], and [interpreter] then holds it.
-   */
-  private suspend fun registerInterpreter(interpreter: PythonInterpreter, canAdopt: (Path?) -> Boolean): PythonInterpreter {
-    val sdk = interpreter.sdk
-    val libraryFlow = isInterpreterLibraryFlowEnabled()
-    // An interpreter that the registry already holds is registered: adding its SDK again would add it twice.
-    val held = if (libraryFlow) PythonInterpreterSdks.getInstance(project).sdkOf(interpreter.key) === sdk else PythonSdkTable.pythonSdks().any { it === sdk }
-    if (held) return awaitInterpreter(sdk)
-    val data = sdk.sdkAdditionalData as PythonSdkAdditionalData
-    val homePath = sdk.homePath ?: error("$interpreter has an SDK without a home path")
-    val registered = registerMutex.withLock {
-      // The library flow has no table to adopt from: the store holds one SDK for each key, and the key decides.
-      if (!libraryFlow && data !is PyRemoteSdkAdditionalDataMarker) {
-        val adoptable = PythonSdkTable.pythonSdks().filter { it !== sdk && canAdopt(it.ownerDirectory()) }
-        findSdkToAdopt(Path.of(homePath), adoptable) { pythonSdkType().suggestSdkName(null, homePath) }?.let { adopted ->
-          edtWriteAction {
-            val modificator = adopted.sdkModificator
-            modificator.sdkAdditionalData = data
-            modificator.commitChanges()
-          }
-          interpreter.sdk = adopted
-          return awaitInterpreter(adopted)
-        }
-      }
-      addSdk(sdk)
-    }
-    try {
-      PythonInterpreterPathsSetup.getInstance(project).setUpPaths(registered)
-    }
-    catch (e: Throwable) {
-      // Do not leave a broken SDK in the table.
-      withContext(NonCancellable) { removeSdk(sdk) }
-      throw e
-    }
-    return registered
-  }
-
-  /** Removes [interpreter] from [pyProject]. Returns when the interpreters of [pyProject] no longer hold it. */
-  suspend fun removePythonInterpreter(@Suppress("UNUSED_PARAMETER") pyProject: PyProject, interpreter: PythonInterpreter) {
-    removeSdk(interpreter.sdk)
-  }
-
-  /**
-   * Adds [sdk] to the SDK table and returns its interpreter. The table event recomputes the list, and this function
-   * returns when the list holds the interpreter, so a caller that reads the list next finds it.
+   * Stores a record for [key] when [PythonInterpreterRecords] has none. The record holds the owner, the ref and a new
+   * UUID. Returns `true` when it stored a record.
    *
-   * The name check and the add are one write action, so two parallel calls cannot add two SDKs with one name.
+   * A module names [key] by its interpreter library entry. A project without the record, such as a fresh checkout,
+   * still gets the interpreter this way. The next computation builds the interpreter. While the environment is gone,
+   * the record stays and the interpreter is not in the list. In the legacy flow, the call does nothing and returns
+   * `false`.
    */
-  internal suspend fun addSdk(sdk: Sdk): PythonInterpreter {
-    if (isInterpreterLibraryFlowEnabled()) {
-      // The registry built [sdk] with an owner and a home path, so it names an interpreter.
-      val key = checkNotNull(sdk.pythonInterpreterResultAsync().successOrNull) { "$sdk names no interpreter" }.key
-      holdSdk(key, sdk)
-      return awaitInterpreter(sdk)
-    }
-    edtWriteAction {
-      makeSureNameIsUnique(sdk)
-      ProjectJdkTable.getInstance().addJdk(sdk)
-    }
-    return awaitInterpreter(sdk)
-  }
+  fun ensureRecord(key: PythonInterpreterKey): Boolean = store.ensureRecord(key)
 
   /**
-   * Holds [sdk] as the SDK of [key] in [PythonInterpreterSdks]. The SDK takes the name of the interpreter library of
-   * [key], see [PyInterpreterLibraryName]. That name is unique in the project, so no other SDK of the project has it.
-   */
-  internal suspend fun holdSdk(key: PythonInterpreterKey, sdk: Sdk, fromRecord: Boolean = false) {
-    val name = project.interpreterOwnerProjectDir?.let { PyInterpreterLibraryName.of(it, key).toString() }
-    if (name != null && sdk.name != name) {
-      val rename = { modificator: SdkModificator ->
-        modificator.name = name
-        // A caller can set the data in place, such as the owner of a mock SDK. The modificator copies the data of the
-        // last commit, so it takes the data that the SDK holds now, or the commit drops that change.
-        modificator.sdkAdditionalData = sdk.sdkAdditionalData
-      }
-      // A held SDK is in no table, so its change needs no write action: the first computation holds SDKs, see [newSdk].
-      // A test can hold an SDK of the table, see `putTestSdk`, and a change of a table SDK is a write of the model.
-      if (PythonSdkTable.tableSdks().none { it === sdk }) sdk.sdkModificator.apply(rename).applyChangesWithoutWriteAction()
-      else edtWriteAction { sdk.sdkModificator.apply(rename).commitChanges() }
-    }
-    PythonInterpreterSdks.getInstance(project).put(key, sdk, fromRecord)
-  }
-
-  /** The interpreter of [sdk], when the list holds it. */
-  internal suspend fun awaitInterpreter(sdk: Sdk): PythonInterpreter =
-    tableFlow.mapNotNull { list -> list.firstOrNull { it.isFor(sdk) } }.first()
-
-  /**
-   * Removes [sdk] from the SDK table. Returns when the list no longer holds its interpreter. See [remove] and
-   * [removePythonSdk].
-   */
-  internal suspend fun removeSdk(sdk: Sdk) {
-    if (isInterpreterLibraryFlowEnabled()) {
-      val sdks = PythonInterpreterSdks.getInstance(project)
-      sdks.keyOf(sdk)?.let(sdks::remove)
-      awaitRemoved(sdk)
-      // Disposed only when the list no longer holds it, so no reader of the list meets a disposed SDK.
-      edtWriteAction { sdks.dispose(sdk) }
-      return
-    }
-    edtWriteAction { ProjectJdkTable.getInstance().removeJdk(sdk) }
-    awaitRemoved(sdk)
-  }
-
-  /**
-   * Waits until the list no longer holds the interpreter of [sdk]. A list that still holds it after [REMOVE_TIMEOUT] is
-   * a bug, so the wait logs an error and returns, and the caller does not hang.
-   */
-  private suspend fun awaitRemoved(sdk: Sdk) {
-    withTimeoutOrNull(REMOVE_TIMEOUT) { tableFlow.first { list -> list.none { it.isFor(sdk) } } }
-    ?: thisLogger().error("The interpreter list still holds ${sdk.name} after $REMOVE_TIMEOUT")
-  }
-
-  /**
-   * Every Python SDK that has a ref. A broken SDK, one without a home path or a target configuration, has none: no
-   * [PyProject] can address it, so it is not an interpreter. The Settings page that lists the SDK table still shows it.
-   */
-  private suspend fun compute(): List<PythonInterpreter> {
-    if (isInterpreterLibraryFlowEnabled()) {
-      // The store holds the record of each interpreter, and the SDK is built from it. The key names the interpreter, so
-      // nothing is adopted, and no change of the SDK data moves it.
-      val store = PythonInterpreterRecords.getInstance(project)
-      val sdks = PythonInterpreterSdks.getInstance(project)
-      return store.keys().mapNotNull { key ->
-        val sdk = sdks.sdkOf(key) ?: buildSdk(key, store.recordOf(key) ?: return@mapNotNull null) ?: return@mapNotNull null
-        sdk.pythonInterpreterOfKey(key).successOrNull
-      }
-    }
-    // The computation writes nothing, so a caller under a modal progress can wait for it (PY-93821). An SDK of an older
-    // build gets its owner from PythonSdkAdditionalDataMigrationActivity, and the commit of that owner recomputes the list.
-    return PythonSdkTable.pythonSdks().mapNotNull { it.pythonInterpreterResultAsync().successOrNull }
-  }
-
-  /**
-   * The SDK of [key], built from the ref of [key] and from [record], and held by [PythonInterpreterSdks]. `null` when
-   * the PyProject that owns [key] is not there yet, or when the ref names no environment any more: the record stays,
-   * so a later recompute builds the SDK, and a missing environment that comes back keeps the paths of the user.
-   */
-  private suspend fun buildSdk(key: PythonInterpreterKey, record: PythonInterpreterRecords.StoredInterpreter): Sdk? {
-    // Not `getPyProjects`: the model waits for the first computation, and a modal dialog holds the JPS model back. A
-    // module change recomputes, so the synchronization with the JPS model corrects this read.
-    val pyProject = project.getPyProjectsWithoutJpsSync().firstOrNull { it.baseDir == key.ownerDir } ?: return null
-    val fileSystem = key.ref.fileSystem(project) ?: return null
-    val (homePath, data) = fileSystem.sdkHomeAndData(pyProject, key.ref).successOrNull ?: return null
-    data.associatedModulePath = key.ownerDir.toString()
-    applyRecord(data, record)
-    val sdk = newSdk(homePath, data, suggestedName = null, knownVersion = record.version)
-    holdSdk(key, sdk, fromRecord = true)
-    return sdk
-  }
-
-  /**
-   * An event for each change of the data of an interpreter, see [PythonInterpreterDetails.changes], and for each module
-   * change: the SDK of a stored record is built once the PyProject that owns it is there, see [buildSdk].
+   * [find] for a [key] that a module names by its interpreter library entry. It calls [ensureRecord] first, and it
+   * waits for the computation that reads the record. The result is `null` while the environment is gone.
    *
-   * In the legacy flow the data is the SDK table. A commit of an SDK can change what the interpreter is: the target of a
-   * target interpreter, or the owner that PythonSdkAdditionalDataMigrationActivity writes for an SDK of an older build.
+   * A caller that needs a true answer at this instant uses it, such as the configuration lock. The call writes the
+   * records, so the computation of a snapshot does not call it.
    */
-  private fun sdkTableChanges(): Flow<Unit> =
-    merge(PythonInterpreterDetails.getInstance(project).changes.map { }, moduleChanges(), recordChanges())
+  suspend fun findEnsuringRecord(key: PythonInterpreterKey): PythonInterpreter? = store.findEnsuringRecord(key)
 
   /**
-   * The changes of the records in the interpreter library flow. The details report them as events, and the loop of the
-   * list subscribes to those only after its first computation. A record put in between, such as by the first set of an
-   * interpreter, would be lost, and [resolveEntryKey] would wait for it forever. The records are a state, so the first
-   * value covers that gap.
+   * Calls [listener] on the EDT after each computation of the list, until [parentDisposable] is disposed. A computation
+   * that changes nothing also calls it. For a UI that cannot collect a flow, such as a Java form.
    */
-  private fun recordChanges(): Flow<Unit> =
-    if (isInterpreterLibraryFlowEnabled()) PythonInterpreterRecords.getInstance(project).changes else emptyFlow()
-
-  private fun moduleChanges(): Flow<Unit> =
-    project.workspaceModel.eventLog.filter { it.getChanges(ModuleEntity::class.java).isNotEmpty() }.map { }
-
-  /** The interpreter of [sdk], whichever [PyProject] it belongs to. Waits for the first computation. See [findPythonInterpreter]. */
-  internal suspend fun interpreterOfSdk(sdk: Sdk): PythonInterpreter? = tableFlow.first().firstOrNull { it.isFor(sdk) }
-
-  /** [interpreterOfSdk] without the wait. `null` also before the first computation. */
-  internal fun interpreterOfSdkIfReady(sdk: Sdk): PythonInterpreter? = state.value?.interpreters?.firstOrNull { it.isFor(sdk) }
-
-  /**
-   * The interpreter that [ref] names in the Python project at [baseDir], or `null`. Waits for the first computation.
-   *
-   * A ref means something only in the Python project that owns the interpreter, so it is looked up among the
-   * interpreters whose owner directory is [baseDir]. For now it finds only an interpreter that is already registered:
-   * the storage still holds the SDK of each interpreter. A module of the legacy flow names an SDK instead, see
-   * [Legacy.findByModuleSdkName].
-   */
-  suspend fun resolve(baseDir: Path, ref: PyInterpreterRef): PythonInterpreter? = resolve(PythonInterpreterKey(baseDir, ref))
-
-  /** [resolve] for the owner directory and the ref that [key] holds. */
-  suspend fun resolve(key: PythonInterpreterKey): PythonInterpreter? = tableFlow.first().firstOrNull { it.key == key }
-
-  /** [resolve] without the wait: `null` also before the first computation. For code that cannot suspend. */
-  fun resolveIfReady(key: PythonInterpreterKey): PythonInterpreter? = state.value?.interpreters?.firstOrNull { it.key == key }
-
-  /** The key of each interpreter the registry holds, each time they change. See [resolve]. */
-  val interpreterKeysFlow: Flow<Set<PythonInterpreterKey>>
-    get() = tableFlow.map { list -> list.mapTo(mutableSetOf()) { it.key } }.distinctUntilChanged()
-
-  /**
-   * Stores a record for [key] when the store has none: the owner, the ref and a new UUID. A module names [key] by its
-   * interpreter library entry, and the key gives the interpreter, see [PythonInterpreterRecords]. So a project whose
-   * workspace file has no record of it, such as a fresh checkout, still gets the interpreter. Returns whether it stored
-   * a record. The recompute that follows builds the interpreter, or keeps the record while the environment is gone, see
-   * [buildSdk]. Only the interpreter library flow names an interpreter by its key, see [isInterpreterLibraryFlowEnabled].
-   */
-  fun adoptEntryKey(key: PythonInterpreterKey): Boolean {
-    if (!isInterpreterLibraryFlowEnabled()) return false
-    val projectDir = project.interpreterOwnerProjectDir ?: return false
-    val record = PythonInterpreterRecords.StoredInterpreter().apply {
-      // In the form that `recordOf` writes, relative to the project, so the record follows the project when it moves.
-      ownerDir = PyInterpreterOwnerDir.of(projectDir, key.ownerDir).toString()
-      ref = key.ref.toString()
-      uuid = UUID.randomUUID().toString()
-    }
-    return PythonInterpreterRecords.getInstance(project).putIfAbsent(key, record)
-  }
-
-  /**
-   * The interpreter of [key], which a module names by its interpreter library entry, or `null` while its environment is
-   * gone. A key without a record gets one first, see [adoptEntryKey], and the call waits for the computation that reads
-   * it. For a caller that needs a true answer at this instant, such as the configuration lock. It writes the store, so the
-   * computation of a snapshot does not call it.
-   *
-   * A computation that does not read the record after [RESOLVE_TIMEOUT] is a bug. The wait then logs an error and answers
-   * from the last computation, so a caller that holds a lock does not hang.
-   */
-  suspend fun resolveEntryKey(key: PythonInterpreterKey): PythonInterpreter? {
-    adoptEntryKey(key)
-    val needed = PythonInterpreterRecords.getInstance(project).versions.value
-    val computed = withTimeoutOrNull(RESOLVE_TIMEOUT) { state.filterNotNull().first { it.recordsVersion >= needed } }
-    if (computed == null) {
-      thisLogger().error("No computation read the records at version $needed after $RESOLVE_TIMEOUT, the last one read ${state.value?.recordsVersion}")
-    }
-    return (computed ?: state.value)?.interpreters?.firstOrNull { it.key == key }
-  }
-
-  /** The readers of the SDK names that older builds store. Only the snapshot build and the migration call them. */
-  @ApiStatus.Obsolete
-  val legacy: Legacy = Legacy()
-
-  /**
-   * The readers of the SDK names that older builds store: a module SDK, a run configuration, a facet. They go away with
-   * the legacy flow, see [isInterpreterLibraryFlowEnabled].
-   */
-  @ApiStatus.Obsolete
-  inner class Legacy internal constructor() {
-    /**
-     * The interpreter whose SDK has the name [sdkName] that a module stores, or `null`. Waits for the first computation.
-     * Only the legacy flow names an interpreter by its SDK name, see [isInterpreterLibraryFlowEnabled].
-     */
-    suspend fun findByModuleSdkName(sdkName: String): PythonInterpreter? = tableFlow.first().firstOrNull { it.sdk.name == sdkName }
-
-    /**
-     * The key of the interpreter for the SDK named [sdkName], for the PyProject at [ownerDir], or `null` when there is no
-     * such Python SDK, or when the project has no directory to name the owner relative to, see [interpreterOwnerProjectDir].
-     * Only the migration of a module of an older build calls it, in the interpreter library flow, see
-     * [isInterpreterLibraryFlowEnabled].
-     *
-     * The import saves the record of the SDK, see [PythonInterpreterRecords], and the registry builds the SDK of the
-     * interpreter from its ref and that record. The key keeps the owner that the SDK names, see [tableSdkKeyOf]. The SDK
-     * of the table stays as it is, so an older build that opens the project still finds it.
-     *
-     * The import does not wait for the interpreter. The registry cannot build it when its environment is gone, and the
-     * record then stays until the environment comes back.
-     */
-    fun importTableSdk(sdkName: String, ownerDir: Path): PythonInterpreterKey? {
-      val (key, tableSdk) = tableSdkKeyOf(sdkName, ownerDir) ?: return null
-      val projectDir = project.interpreterOwnerProjectDir ?: return null
-      val store = PythonInterpreterRecords.getInstance(project)
-      // An earlier import of the same SDK already stored it.
-      if (store.recordOf(key) == null) store.put(key, recordOf(projectDir, key, tableSdk))
-      return key
-    }
-
-    /**
-     * The URLs of the paths that the legacy flow transferred to a module from the SDK of the SDK table named [sdkName]: the
-     * source roots that an `.iml` stores for it. Empty when the table has no such SDK. Only the migration of a module of an
-     * older build calls it, which removes these roots: the interpreter library flow derives them, see
-     * [PythonInterpreterDetails.sourceRoots].
-     */
-    fun transferredPathsOfTableSdk(sdkName: String): Set<String> {
-      val data = PythonSdkTable.tableFindByName(sdkName)?.sdkAdditionalData as? PythonSdkAdditionalData ?: return emptySet()
-      return data.pathsToTransfer.mapTo(LinkedHashSet()) { it.url }
-    }
-
-    /**
-     * The interpreter for the SDK named [sdkName] that a run configuration of an older build stores, without the wait:
-     * `null` also before the first computation. In the interpreter library flow the SDK of the table gives the key, see
-     * [tableSdkKeyOf], and [ownerDir] is the owner when the SDK names none. In the legacy flow the SDK name answers.
-     */
-    fun findByLegacySdkNameIfReady(sdkName: String, ownerDir: Path?): PythonInterpreter? {
-      if (!isInterpreterLibraryFlowEnabled()) return state.value?.interpreters?.firstOrNull { it.sdk.name == sdkName }
-      val key = tableSdkKeyOf(sdkName, ownerDir ?: return null)?.first ?: return null
-      return resolveIfReady(key)
-    }
-  }
-
-  /**
-   * The key of the Python SDK of the SDK table named [sdkName], and that SDK, or `null` when the table has no such SDK
-   * or the SDK names no interpreter. The key keeps the owner that the SDK names, and takes [ownerDir] only when the SDK
-   * names none: PyProjects can share one interpreter, such as the members of a workspace.
-   */
-  private fun tableSdkKeyOf(sdkName: String, ownerDir: Path): Pair<PythonInterpreterKey, Sdk>? {
-    val tableSdk = PythonSdkTable.tableFindByName(sdkName)?.takeIf { PythonSdkUtil.isPythonSdk(it, false) } ?: return null
-    val data = tableSdk.sdkAdditionalData as? PythonSdkAdditionalData ?: return null
-    val homePath = pathEnvRef(tableSdk) ?: return null
-    val owner = tableSdk.ownerDirectory() ?: ownerDir
-    val mode = when (data) {
-      is PyTargetAwareAdditionalData -> PyInterpreterRef.Mode.Target(data.targetEnvironmentConfiguration?.uuid ?: return null)
-      else -> PyInterpreterRef.Mode.Native
-    }
-    val binary = when (mode) {
-      is PyInterpreterRef.Mode.Target -> PathHolder.Target(homePath)
-      PyInterpreterRef.Mode.Native -> PathHolder.Eel(homePath.toNioPathOrNull() ?: return null)
-    }
-    return PythonInterpreterKey(owner, interpreterRefOf(binary, data, mode)) to tableSdk
-  }
-
-  /** [interpreters] without the wait: empty also before the first computation. For code that cannot suspend. */
-  fun interpretersIfReady(pyProject: PyProject): List<PythonInterpreter> = state.value?.interpreters.orEmpty().belongingTo(pyProject)
-
-  /**
-   * Calls [listener] on the EDT each time an interpreter of any [PyProject] is added or removed, until
-   * [parentDisposable] is disposed. For a Java form that lists the interpreters of a module it can change.
-   */
-  fun addTableChangeListener(parentDisposable: Disposable, listener: Runnable) {
+  fun addChangeListener(parentDisposable: Disposable, listener: Runnable) {
     val job = scope.launch(Dispatchers.EDT) {
-      tableFlow.drop(1).collect { listener.run() }
+      store.allFlow.drop(1).collect { listener.run() }
     }
     Disposer.register(parentDisposable) { job.cancel() }
   }
 
   /**
-   * Every interpreter that this project knows, for the interpreter settings: one that the registry holds, and one that
-   * names no interpreter now, so the user can remove it, see [PythonInterpreterEntry]. A caller that needs the
-   * interpreters of a [PyProject] reads [interpreters] instead.
+   * The interpreters of all the [PyProject]s of this project, for All Interpreters. That page shows them as a history.
+   * An SDK that names no interpreter is not in the list. For the interpreters of one [PyProject], use [interpreters].
    */
-  suspend fun interpreterEntries(): List<PythonInterpreterEntry> =
-    ModuleOrProject.ProjectOnly(project).filterAssignablePythonSdks(projectSdks()).map { sdk ->
-      when (val result = sdk.pythonInterpreterResultAsync()) {
-        is Result.Success -> PythonInterpreterEntry.Available(result.result)
-        is Result.Failure -> PythonInterpreterEntry.Unavailable(sdk, result.error.message)
-      }
-    }
-
-  /** Removes [entry]. Returns when the registry no longer holds its interpreter. */
-  suspend fun remove(entry: PythonInterpreterEntry) {
-    when (entry) {
-      is PythonInterpreterEntry.Available -> removeSdk(entry.interpreter.sdk)
-      is PythonInterpreterEntry.Unavailable -> removeSdk(entry.sdk)
-    }
-  }
-
-  /**
-   * Every SDK of this project, also a broken one. In the interpreter library flow they are the SDKs of this project.
-   * Otherwise they are the SDKs of the SDK table. See [pythonSdksForSettings].
-   */
-  internal fun projectSdks(): List<Sdk> = PythonSdkTable.allSdks(project)
+  suspend fun allInterpreters(): List<PythonInterpreter> = store.allInterpreters()
 
   companion object {
-    private val REMOVE_TIMEOUT = 30.seconds
-    private val RESOLVE_TIMEOUT = 30.seconds
-
     @JvmStatic
     fun getInstance(project: Project): PythonInterpreterRegistry = project.service()
   }
 }
 
 /**
- * The SDK table as the registry reads it. Only this file reads the table, see [PythonInterpreterRegistry.interpreterEntries]
- * and [pythonSdksOfOpenProjects] for the other code.
- *
- * It holds every Python SDK, broken ones included: a list in the settings shows a broken SDK, so the user can remove it.
- */
-private object PythonSdkTable {
-  /**
-   * The SDKs this build uses. In the interpreter library flow they are the SDKs of the open projects, see
-   * [PythonInterpreterSdks], and the SDK table is not read. Otherwise they are the SDKs of the table.
-   */
-  private fun usedSdks(): List<Sdk> =
-    if (isInterpreterLibraryFlowEnabled()) {
-      ProjectManager.getInstance().openProjects.flatMap { it.serviceIfCreated<PythonInterpreterSdks>()?.sdks().orEmpty() }
-    }
-    else {
-      tableSdks()
-    }
-
-  /** Every Python SDK this build uses, see [PythonSdkUtil.isPythonSdk]. */
-  fun pythonSdks(): List<Sdk> = usedSdks().filter { PythonSdkUtil.isPythonSdk(it, false) }
-
-  /** Every SDK this build uses, of every type, for a filter that picks the Python ones itself. */
-  fun allSdks(): List<Sdk> = usedSdks()
-
-  /**
-   * [allSdks] for [project]. In the interpreter library flow they are the SDKs of [project], also when it is not open,
-   * such as a project of a test.
-   */
-  fun allSdks(project: Project): List<Sdk> =
-    if (isInterpreterLibraryFlowEnabled()) PythonInterpreterSdks.getInstance(project).sdks() else tableSdks()
-
-  /** Every SDK of the SDK table: the legacy flow, and the migration. */
-  fun tableSdks(): List<Sdk> = ProjectJdkTable.getInstance().allJdks.asList()
-
-  /** The SDK of the SDK table named [name]. */
-  fun tableFindByName(name: String): Sdk? = ProjectJdkTable.getInstance().findJdk(name)
-}
-
-/** Every SDK that this build uses, see [pythonSdksOfOpenProjects]. */
-internal fun usedSdks(): List<Sdk> = PythonSdkTable.allSdks()
-
-/** The interpreters that belong to [pyProject]. See [PythonInterpreterRegistry]. */
-private fun List<PythonInterpreter>.belongingTo(pyProject: PyProject): List<PythonInterpreter> {
-  val baseDir = pyProject.baseDir
-  return filter { it.sdk.ownerDirectory() == baseDir }
-}
-
-/** The base directory of the [PyProject] this SDK belongs to, see [projectDirOf]. */
-/**
- * The owner directory and the ref of an interpreter: what names it in a module, see [PythonInterpreterRegistry.resolve].
- * A ref means something only in the directory of its owner, so two owners can have one ref for two interpreters.
+ * The owner directory and the ref of an interpreter. The key names the interpreter in a module, see
+ * [PythonInterpreterRegistry.find]. A ref is unique only for one owner, so two owners can have one ref.
  */
 @ApiStatus.Internal
 data class PythonInterpreterKey(val ownerDir: Path, val ref: PyInterpreterRef)
 
 /** The key of this interpreter, see [PythonInterpreterKey]. */
 internal val PythonInterpreter.key: PythonInterpreterKey get() = PythonInterpreterKey(ownerDir, ref)
-
-private fun Sdk.ownerDirectory(): Path? = (sdkAdditionalData as? PythonSdkAdditionalData)?.let { projectDirOf(it) }
-
-/**
- * The usual SDK that already stands for the interpreter at [pythonBinaryPath], or `null` when none does. A usual SDK is
- * one whose data carries no [PyRemoteSdkAdditionalDataMarker].
- *
- * The IDE keeps one usual SDK for each interpreter, not one for each interpreter and tool. A `.venv` that poetry
- * created, and uv then adopted, is one environment. A second SDK for it reads as a second interpreter in every list the
- * IDE shows.
- *
- * Older builds also keyed on the tool, so one path can carry several SDKs already. The SDK named [preferredName] wins,
- * because that is the name a new SDK gets here. If no SDK has that name, the first one wins, so the answer is stable.
- * [preferredName] is read only when there is more than one candidate, because it reads the file system.
- */
-private fun findSdkToAdopt(pythonBinaryPath: PythonBinary, existingSdks: List<Sdk>, preferredName: () -> String): Sdk? {
-  // Compared as paths, not as strings, because `c:\windows` and `c:/Windows` name one file.
-  val candidates = existingSdks.filter {
-    it.sdkAdditionalData !is PyRemoteSdkAdditionalDataMarker && it.pythonBinaryPath().successOrNull == pythonBinaryPath
-  }
-  if (candidates.size < 2) return candidates.firstOrNull()
-  val name = preferredName()
-  return candidates.firstOrNull { it.name == name } ?: candidates.first()
-}
-
-/**
- * Renames [sdk] until no other SDK of the table has its name. The table can hold [sdk] itself, which keeps its name.
- */
-@RequiresWriteLock
-private fun makeSureNameIsUnique(sdk: Sdk) {
-  val name = sdk.name
-  var i = 1
-  while (PythonSdkTable.tableFindByName(sdk.name).let { it != null && it !== sdk }) {
-    val m = sdk.sdkModificator
-    m.name = "$name@$i"
-    i += 1
-    m.commitChanges()
-  }
-}

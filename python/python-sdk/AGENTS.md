@@ -30,9 +30,10 @@ keeps one flow.
 3. **A record holds the facts.** `PythonInterpreterRecords` saves one record for each `PythonInterpreterKey` (owner
    dir and ref) in `workspace.xml`. The record holds the UUID, the version, `sys.path`, the requirements path, the
    added and excluded paths, and the path mappings of a target. An entry without a record is valid, for example after
-   a fresh checkout. `PythonInterpreterRegistry.adoptEntryKey` then makes the record.
-4. **An SDK lives only in memory.** `PythonInterpreterRegistry` builds an `Sdk` from the ref and the record, and
-   `PythonInterpreterSdks` holds it for the project. No SDK table holds it. The project disposes it when it closes.
+   a fresh checkout. `PythonInterpreterRegistry.ensureRecord` then makes the record.
+4. **An SDK lives only in memory.** `PythonInterpreterStore`, behind the registry, builds an `Sdk` from the ref and
+   the record, and `PythonInterpreterSdks` holds it for the project. No SDK table holds it. The project disposes it
+   when it closes.
 5. **Facts and roots are separate.** `PythonInterpreterDetails` is the only writer of facts. `PythonInterpreterRoots`
    derives the class roots and the source roots from the facts and from each `PythonInterpreterRootsContributor`.
    An update has two levels:

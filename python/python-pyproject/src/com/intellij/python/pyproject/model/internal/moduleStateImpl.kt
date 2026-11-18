@@ -29,7 +29,7 @@ internal suspend fun PyProject.getModuleSdkStateImpl(
   // interpreter, so no configurator chooses another one for it.
   val key = residesOnModule.storedInterpreterKey()
   if (key != null) {
-    val interpreter = PythonInterpreterRegistry.getInstance(project).resolveEntryKey(key)
+    val interpreter = PythonInterpreterRegistry.getInstance(project).findEnsuringRecord(key)
     if (interpreter != null) return ModuleSdkState.HasSdk(interpreter)
     return ModuleSdkState.Unavailable(key, unavailableInstruction(key, configuratorsByTool))
   }

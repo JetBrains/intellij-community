@@ -47,7 +47,7 @@ private val logger = fileLogger()
  * names the interpreter.
  *
  * It is the one way to set an interpreter, and the one way to add one to the registry, see
- * [PythonInterpreterRegistry.registerPythonInterpreter]. [interpreter] does not have to belong to this project, see
+ * [PythonInterpreterRegistry.register]. [interpreter] does not have to belong to this project, see
  * [PythonInterpreter.ownerDir]. A member of a tool workspace uses the interpreter of the workspace root, a module can use
  * the interpreter of its parent, and an importer such as Bazel sets one interpreter on many modules. Tests that cannot
  * use it call `Module.setPythonSdkForTests`.
@@ -58,7 +58,7 @@ private val logger = fileLogger()
  */
 @ApiStatus.Internal
 suspend fun PyProject.setPythonInterpreter(interpreter: PythonInterpreter?, waitForSnapshot: Boolean = true): PyResult<PythonInterpreter?> {
-  val set = interpreter?.let { PythonInterpreterRegistry.getInstance(project).registerPythonInterpreter(it) }
+  val set = interpreter?.let { PythonInterpreterRegistry.getInstance(project).register(it) }
   val libraryFlow = isInterpreterLibraryFlowEnabled()
   val name = if (libraryFlow) set?.let { libraryNameOf(it) } else null
   val previous = residesOnModule.readStoredInterpreter()

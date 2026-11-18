@@ -37,7 +37,7 @@ fun TestFixture<Project>.pyMockInterpreterFixture(pyProject: TestFixture<PyProje
   pyProject.setPythonInterpreter(interpreter)
   initialized(interpreter) {
     pyProject.setPythonInterpreter(null)
-    registry.removePythonInterpreter(pyProject, interpreter)
+    registry.remove(interpreter)
   }
 }
 

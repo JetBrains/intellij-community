@@ -75,7 +75,7 @@ internal class CondaInterpreterByRefTest {
     val pyProject = pyProjectFixture.get()
     val ref = PyInterpreterRef.native(CondaPyTool.getInstance().fusId, PyEnvRef(name))
     val registry = PythonInterpreterRegistry.getInstance(pyProject.project)
-    val interpreter = pyProject.setPythonInterpreter(registry.newPythonInterpreter(pyProject, ref).getOrThrow()).getOrThrow()!!
+    val interpreter = pyProject.setPythonInterpreter(registry.build(pyProject, ref).getOrThrow()).getOrThrow()!!
     try {
       assertThat(interpreter.ref).isEqualTo(ref)
       assertThat(interpreter.flavor).isEqualTo(CondaEnvSdkFlavor)
@@ -84,7 +84,7 @@ internal class CondaInterpreterByRefTest {
     }
     finally {
       pyProject.setPythonInterpreter(null).getOrThrow()
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 

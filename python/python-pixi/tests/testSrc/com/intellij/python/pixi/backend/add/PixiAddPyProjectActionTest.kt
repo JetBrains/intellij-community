@@ -23,6 +23,7 @@ import com.intellij.python.junit5Tests.framework.env.pyMockSdkFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pixi.backend.sdk.PixiSdkFlavor
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.setPythonSdkForTests
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -36,7 +37,6 @@ import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

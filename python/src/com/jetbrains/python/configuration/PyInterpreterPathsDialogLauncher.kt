@@ -97,7 +97,7 @@ private sealed interface PathEditorStrategy {
  */
 private fun moduleSourceRootsOf(project: Project, sdk: Sdk): Collection<VirtualFile> {
   val key = PythonInterpreterSdks.getInstance(project).keyOf(sdk) ?: return emptyList()
-  val interpreter = PythonInterpreterRegistry.getInstance(project).resolveIfReady(key) ?: return emptyList()
+  val interpreter = PythonInterpreterRegistry.getInstance(project).findIfReady(key) ?: return emptyList()
   return PythonInterpreterRoots.getInstance(project).sourceRoots(interpreter)
 }
 
@@ -109,7 +109,7 @@ private fun moduleSourceRootsOf(project: Project, sdk: Sdk): Collection<VirtualF
 @ApiStatus.Internal
 suspend fun writeUserPaths(project: Project, sdk: Sdk, added: Collection<VirtualFile>, excluded: Collection<VirtualFile>) {
   val key = PythonInterpreterSdks.getInstance(project).keyOf(sdk) ?: return
-  val interpreter = PythonInterpreterRegistry.getInstance(project).resolveIfReady(key) ?: return
+  val interpreter = PythonInterpreterRegistry.getInstance(project).findIfReady(key) ?: return
   val details = PythonInterpreterDetails.getInstance(project)
   details.writeAddedPaths(interpreter, added.mapNotNull { it.toNioPathOrNull() })
   details.writeExcludedPaths(interpreter, excluded.mapNotNullTo(HashSet()) { it.toNioPathOrNull() })

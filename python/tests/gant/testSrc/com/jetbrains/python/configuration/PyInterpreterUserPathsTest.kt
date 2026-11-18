@@ -52,7 +52,7 @@ internal class PyInterpreterUserPathsTest {
       assertThat(facts.excludedPaths).containsExactly(excluded.toNioPath())
     }
     finally {
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 

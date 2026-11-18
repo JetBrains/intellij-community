@@ -342,7 +342,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    */
   private fun interpreterChanges(): Flow<Unit> {
     val libraryFlow = isInterpreterLibraryFlowEnabled()
-    return PythonInterpreterRegistry.getInstance(project).interpreterKeysFlow
+    return PythonInterpreterRegistry.getInstance(project).keysFlow
       .zipWithNext()
       .filter { (before, after) ->
         val snapshot = state.value ?: return@filter false
@@ -354,7 +354,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
   /**
    * Replaces the SDK references of the modules, see [migrateSdkReferences], and builds the interpreter libraries of
    * [snapshot], see [PyInterpreterLibrarySync]. It gives a record to each interpreter that an entry names and the store
-   * does not hold, see [PythonInterpreterRegistry.adoptEntryKey]. A module of an older build, the platform or a facet
+   * does not hold, see [PythonInterpreterRegistry.ensureRecord]. A module of an older build, the platform or a facet
    * can still refer to an SDK. The migration waits for the synchronization with the JPS model, see [jpsSynchronized].
    * The pass does not wait for it, so the libraries do not wait either. The legacy flow reads the SDK name of each
    * module, see [isInterpreterLibraryFlowEnabled], so it migrates nothing.
@@ -365,7 +365,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
       // An entry needs no record to name its interpreter, such as after a fresh checkout. The stored record makes the
       // registry build the interpreter, and the change of the registry starts the next pass.
       val registry = PythonInterpreterRegistry.getInstance(project)
-      snapshot.interpreterKeys.forEach(registry::adoptEntryKey)
+      snapshot.interpreterKeys.forEach(registry::ensureRecord)
     }
     PyInterpreterLibrarySync.getInstance(project).sync(snapshot.evoPyProjects)
   }
@@ -381,7 +381,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
       pyProject.residesOnModule to pyProject.residesOnModule.findModuleEntity(storage)?.let { project.storedInterpreterReferenceOf(it, storage) }
     }
     val registry = PythonInterpreterRegistry.getInstance(project)
-    val interpreters = references.mapValues { (_, reference) -> reference?.let { registry.resolve(it) } }
+    val interpreters = references.mapValues { (_, reference) -> reference?.let { registry.find(it) } }
     val interpreterKeys = references.values.filterIsInstance<StoredInterpreterReference.Library>().mapTo(mutableSetOf()) { it.key }
 
     // Every project first, indexed by its module: a project states nothing about a workspace, and a workspace is built
@@ -438,7 +438,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    *
    * An entry names an interpreter that the registry builds from its record, and a record written a moment ago is not in
    * the registry yet. The expected interpreter of an entry therefore comes from the computation that read the record,
-   * see [PythonInterpreterRegistry.resolveEntryKey], and never from an older list that answers `null`.
+   * see [PythonInterpreterRegistry.findEnsuringRecord], and never from an older list that answers `null`.
    */
   suspend fun awaitInterpreterOf(pyProjects: Collection<PyProject>): Snapshot? {
     // A test can still write an SDK to a module. Replace it first, so the expected interpreter is the one it names. The
@@ -452,8 +452,8 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     val registry = PythonInterpreterRegistry.getInstance(project)
     val expected = pyProjects.associateWith { pyProject ->
       when (val reference = pyProject.residesOnModule.findModuleEntity(storage)?.let { project.storedInterpreterReferenceOf(it, storage) }) {
-        is StoredInterpreterReference.Library -> registry.resolveEntryKey(reference.key)
-        is StoredInterpreterReference.SdkName -> registry.resolve(reference)
+        is StoredInterpreterReference.Library -> registry.findEnsuringRecord(reference.key)
+        is StoredInterpreterReference.SdkName -> registry.find(reference)
         null -> null
       }
     }

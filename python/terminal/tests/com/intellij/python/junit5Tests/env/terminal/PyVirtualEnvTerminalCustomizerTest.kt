@@ -89,7 +89,7 @@ internal class PyVirtualEnvTerminalCustomizerTest {
     condaInterpreter?.let { interpreter ->
       val pyProject = pyProjectFixture.get()
       pyProject.setPythonInterpreter(null).getOrThrow()
-      PythonInterpreterRegistry.getInstance(projectFixture.get()).removePythonInterpreter(pyProject, interpreter)
+      PythonInterpreterRegistry.getInstance(projectFixture.get()).remove(interpreter)
       if (OS.CURRENT == OS.Windows) {
         deleteCheckLocking(Path.of(interpreter.getSdkAPI().homePath!!))
       }

@@ -25,6 +25,7 @@ import com.intellij.python.pyproject.model.evolution.interpreterSourceRootUrls
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.setPythonSdkForTests
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.IndexingTestUtil

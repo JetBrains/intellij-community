@@ -18,6 +18,7 @@ import com.intellij.python.pyproject.model.internal.addPyProject.AddPyProjectAct
 import com.intellij.python.pyproject.model.internal.addPyProject.ConvertToPyProjectAction
 import com.intellij.python.pyproject.model.internal.addPyProject.PyProjectPresenter
 import com.intellij.python.pyproject.model.internal.addPyProject.projectCreationPresenter
+import com.intellij.python.sdk.backend.setPythonSdkForTests
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -25,7 +26,6 @@ import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

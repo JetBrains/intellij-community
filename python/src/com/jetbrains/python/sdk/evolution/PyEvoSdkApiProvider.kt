@@ -548,7 +548,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // not shown as gone.
     val entryKey = pyProject.entryKey
     val interpreter = pyProject.interpreter
-                      ?: entryKey?.let { PythonInterpreterRegistry.getInstance(project).resolveEntryKey(it) }
+                      ?: entryKey?.let { PythonInterpreterRegistry.getInstance(project).findEnsuringRecord(it) }
                       ?: return entryKey?.let(::unavailableInterpreterDto)
     // The other way was here: a remote or target SDK (WSL, SSH, Docker) used to be left out, and is now reported like
     // any other. Nothing below reads the interpreter's machine — the presentation is the label the classic widget

@@ -83,7 +83,7 @@ internal abstract class PythonSitePackagesExclusionTest {
     }
     finally {
       pyProject.setPythonInterpreter(null)
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 

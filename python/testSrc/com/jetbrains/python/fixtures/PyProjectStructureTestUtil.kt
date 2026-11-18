@@ -18,6 +18,7 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.addMockPythonInterpreter
+import com.intellij.python.sdk.backend.describeForTests
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT

@@ -346,11 +346,11 @@ interface PyEvoEnvironmentProvider {
 
   /**
    * The interpreter of the *existing* environment that [ref] names, for the project of [context]. It is not
-   * registered yet: the caller sets it on the project, see [PythonInterpreterRegistry.newPythonInterpreter]. A tool
+   * registered yet: the caller sets it on the project, see [PythonInterpreterRegistry.build]. A tool
    * that also creates a missing environment, such as hatch, overrides it.
    */
   suspend fun createInterpreter(context: EvoToolContext, ref: PyInterpreterRef): PyResult<PythonInterpreter> =
-    PythonInterpreterRegistry.getInstance(context.workspace.project).newPythonInterpreter(context.workspace.pyProject, ref)
+    PythonInterpreterRegistry.getInstance(context.workspace.project).build(context.workspace.pyProject, ref)
 
   /**
    * Builds the SDK for an environment that does not exist yet, creating it first via the tool's own "create" logic —

@@ -8,7 +8,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
-import com.intellij.python.sdk.backend.PythonInterpreterEntry
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.impl.presentation
 import com.intellij.python.sdk.backend.impl.PythonInterpreterPresentation
@@ -296,18 +295,10 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   private fun reloadList() {
     val previouslySelected = selectedRow()?.selectionKey
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      // An entry that names no interpreter gets a row that says why, and the user can remove it.
       // The interpreters a project uses: this page is a history of environments, so they cannot be removed here.
       val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
-      val rows = PythonInterpreterRegistry.getInstance(project).interpreterEntries().map { entry ->
-        when (entry) {
-          is PythonInterpreterEntry.Available -> PyInterpreterRow.Interpreter(
-            entry,
-            inUse = snapshot.isInUse(entry.interpreter),
-            owner = snapshot.ownerNameOf(entry.interpreter),
-          )
-          is PythonInterpreterEntry.Unavailable -> PyInterpreterRow.Broken(entry)
-        }
+      val rows = PythonInterpreterRegistry.getInstance(project).allInterpreters().map { interpreter ->
+        PyInterpreterRow(interpreter, inUse = snapshot.isInUse(interpreter), owner = snapshot.ownerNameOf(interpreter))
       }
       val moduleBasePaths = project.getPyProjects().mapTo(HashSet()) { it.baseDir }
       val ownerOrder = snapshot.evoPyProjects.map { it.pyProject.residesOnModule.name }.toList()
@@ -332,7 +323,7 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   private fun selectedRow(): PyInterpreterRow? = currentlySelectedRow
 
   /** The interpreter of the selected row, or `null` for no selection or a broken SDK. BGT-safe. */
-  private fun selectedInterpreter(): PythonInterpreter? = (currentlySelectedRow as? PyInterpreterRow.Interpreter)?.interpreter
+  private fun selectedInterpreter(): PythonInterpreter? = currentlySelectedRow?.interpreter
 
   /**
    * Toolbar action that operates on the currently selected interpreter. Handles the "no selection →
@@ -371,7 +362,7 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
 
     override fun update(e: AnActionEvent) {
       val row = selectedRow()
-      val inUse = row?.isInUse() == true
+      val inUse = row?.inUse == true
       e.presentation.isEnabled = row != null && !inUse
       e.presentation.description = if (inUse) PyBundle.message("python.interpreters.remove.in.use.description") else null
     }
@@ -429,11 +420,11 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   }
 
-  /** Removes the SDK of [row]. It also works for a broken SDK, which the user can only remove or recreate. */
+  /** Removes the interpreter of [row], when no project uses it. */
   private fun removeRow(row: PyInterpreterRow) {
-    if (row.isInUse()) return
+    if (row.inUse) return
     PyPackageCoroutine.launch(project) {
-      PythonInterpreterRegistry.getInstance(project).remove(row.entry)
+      PythonInterpreterRegistry.getInstance(project).remove(row.interpreter)
       withContext(Dispatchers.EDT) {
         projectSdksModel.reset(project)
         reloadList()
@@ -552,45 +543,22 @@ private fun newInUseLabel(): JBLabel = JBLabel(PyBundle.message("python.interpre
 private val PythonInterpreter.sdk: Sdk
   get() = getSdkAPI()
 
-/** A row of the page: an entry of the registry, see [PythonInterpreterEntry]. */
-internal sealed interface PyInterpreterRow {
-  val entry: PythonInterpreterEntry
-
+/**
+ * A row of the page: an interpreter of the project. [inUse] when a project uses it, so it cannot be removed. [owner] is
+ * the name of the Python project that owns it, see [ownerNameOf].
+ */
+internal class PyInterpreterRow(val interpreter: PythonInterpreter, val inUse: Boolean, val owner: @NlsSafe String) {
   /** The name that the row shows, for the search field. */
-  val name: @NlsSafe String
+  val name: @NlsSafe String get() = presentation().name
 
-  /** The path of the Python binary, for the search field and Copy Path, or `null` when the row has none. */
-  val path: @NlsSafe String?
+  /** The path of the Python binary, for the search field and Copy Path. */
+  val path: @NlsSafe String get() = interpreter.binaryPathString
 
   /** What keeps the row selected across a reload, see [pickSelection]. */
-  val selectionKey: PySdkName
+  val selectionKey: PySdkName get() = PySdkName("${interpreter.ownerDir}|${interpreter.ref}")
 
   /** What the row draws. */
-  fun presentation(): PythonInterpreterPresentation
-
-  /**
-   * A row of an interpreter. [inUse] when a project uses it, so it cannot be removed, see [isInUse]. [owner] is the name
-   * of the Python project that owns it, see [ownerNameOf].
-   */
-  class Interpreter(
-    override val entry: PythonInterpreterEntry.Available,
-    val inUse: Boolean = false,
-    val owner: @NlsSafe String? = null,
-  ) : PyInterpreterRow {
-    val interpreter: PythonInterpreter get() = entry.interpreter
-    override val name: String get() = presentation().name
-    override val path: String get() = interpreter.binaryPathString
-    override val selectionKey: PySdkName get() = PySdkName("${interpreter.ownerDir}|${interpreter.ref}")
-    override fun presentation(): PythonInterpreterPresentation = interpreter.presentation()
-  }
-
-  /** An entry that names no interpreter. [PythonInterpreterEntry.Unavailable.reason] says why. */
-  class Broken(override val entry: PythonInterpreterEntry.Unavailable) : PyInterpreterRow {
-    override val name: String get() = entry.name
-    override val path: String? get() = entry.path
-    override val selectionKey: PySdkName get() = PySdkName(entry.name)
-    override fun presentation(): PythonInterpreterPresentation = entry.presentation
-  }
+  fun presentation(): PythonInterpreterPresentation = interpreter.presentation()
 }
 
 /**
@@ -619,11 +587,7 @@ internal fun filterInterpreters(
 ): List<PyInterpreterRow> {
   if (!hideOthers) return rows
   return rows.filter { row ->
-    val associated = when (row) {
-      is PyInterpreterRow.Interpreter -> row.interpreter.associatedModuleDir?.toNioPath() ?: return@filter true
-      // An entry that names no interpreter stays, so the user can remove it.
-      is PyInterpreterRow.Broken -> return@filter true
-    }
+    val associated = row.interpreter.associatedModuleDir?.toNioPath() ?: return@filter true
     associated in moduleBasePaths
   }
 }
@@ -645,7 +609,7 @@ internal fun filterBySearchQuery(rows: List<PyInterpreterRow>, query: String): L
   val q = query.trim().lowercase()
   if (q.isEmpty()) return rows
   return rows.filter { row ->
-    row.name.lowercase().contains(q) || (row.path?.lowercase()?.contains(q) == true)
+    row.name.lowercase().contains(q) || row.path.lowercase().contains(q)
   }
 }
 
@@ -697,7 +661,7 @@ private class PyInterpreterNameAndVersionRenderer : ListCellRenderer<PyInterpret
       label.icon = item.icon.icon()
       renderPyInterpreterItemText(label, item)
     }
-    inUseLabel.isVisible = value?.isInUse() == true
+    inUseLabel.isVisible = value?.inUse == true
     val title = if (list != null && index >= 0) groupTitleAt(list, index) else null
     groupHeader.isVisible = title != null
     groupHeader.caption = title
@@ -715,25 +679,16 @@ private class PyInterpreterNameAndVersionRenderer : ListCellRenderer<PyInterpret
   }
 }
 
-/**
- * The title of the owner group of this row: the name of the Python project that owns the interpreter. A broken SDK
- * names no interpreter, so it goes to the group of unavailable interpreters.
- */
-private fun PyInterpreterRow.groupTitle(): @Nls String = when (this) {
-  is PyInterpreterRow.Interpreter -> owner ?: PyBundle.message("python.interpreters.group.unavailable")
-  is PyInterpreterRow.Broken -> PyBundle.message("python.interpreters.group.unavailable")
-}
+/** The title of the owner group of this row: the name of the Python project that owns the interpreter. */
+private fun PyInterpreterRow.groupTitle(): @NlsSafe String = owner
 
 /**
  * [rows] grouped by owner, in the order of [ownerOrder], the names of the Python projects of the project. Owners that
- * are not in [ownerOrder] follow, and the unavailable interpreters come last. The order inside a group stays.
+ * are not in [ownerOrder] follow. The order inside a group stays.
  */
 internal fun groupByOwner(rows: List<PyInterpreterRow>, ownerOrder: List<String>): List<PyInterpreterRow> {
-  fun rank(row: PyInterpreterRow): Int = when (row) {
-    is PyInterpreterRow.Interpreter -> row.owner?.let { owner -> ownerOrder.indexOf(owner).takeIf { it >= 0 } } ?: ownerOrder.size
-    is PyInterpreterRow.Broken -> ownerOrder.size + 1
-  }
-  return rows.groupBy { it.groupTitle() }.values.sortedBy { rank(it.first()) }.flatten()
+  fun rank(row: PyInterpreterRow): Int = ownerOrder.indexOf(row.owner).takeIf { it >= 0 } ?: ownerOrder.size
+  return rows.groupBy { it.owner }.values.sortedBy { rank(it.first()) }.flatten()
 }
 
 /**
@@ -744,12 +699,6 @@ internal fun EvoPyProjectModel.Snapshot.ownerNameOf(interpreter: PythonInterpret
   evoPyProjects.firstOrNull { it.pyProject.baseDir == interpreter.ownerDir }?.pyProject?.residesOnModule?.name
   ?: interpreter.ownerDir.fileName?.toString()
   ?: interpreter.ownerDir.toString()
-
-/** Whether a project uses the interpreter of this row. A broken SDK names no interpreter, so no project uses it. */
-private fun PyInterpreterRow.isInUse(): Boolean = when (this) {
-  is PyInterpreterRow.Interpreter -> inUse
-  is PyInterpreterRow.Broken -> false
-}
 
 /**
  * Whether a project of this snapshot uses [interpreter]: an interpreter library entry names it, or in the legacy flow a

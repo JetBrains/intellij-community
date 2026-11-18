@@ -11,6 +11,7 @@ import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.jetbrains.python.sdk.legacy.findBySdkName
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
 import com.intellij.python.sdk.backend.interpreterOwnerProjectDir
@@ -49,9 +50,9 @@ internal fun Project.storedInterpreterReferenceOf(module: ModuleEntity, storage:
   else sdkReferenceOf(module, storage)?.let(StoredInterpreterReference::SdkName)
 
 /** The interpreter that [reference] names, see [StoredInterpreterReference]. Waits for the first list of the registry. */
-internal suspend fun PythonInterpreterRegistry.resolve(reference: StoredInterpreterReference): PythonInterpreter? = when (reference) {
-  is StoredInterpreterReference.Library -> resolve(reference.key)
-  is StoredInterpreterReference.SdkName -> legacy.findByModuleSdkName(reference.name)
+internal suspend fun PythonInterpreterRegistry.find(reference: StoredInterpreterReference): PythonInterpreter? = when (reference) {
+  is StoredInterpreterReference.Library -> find(reference.key)
+  is StoredInterpreterReference.SdkName -> findBySdkName(reference.name)
 }
 
 /** What this module stores to name its interpreter now, see [StoredInterpreterReference], or `null`. */
@@ -82,4 +83,4 @@ internal fun Module.storedInterpreterKey(): PythonInterpreterKey? =
  */
 @ApiStatus.Internal
 suspend fun Module.readStoredInterpreter(): PythonInterpreter? =
-  storedInterpreterReference()?.let { PythonInterpreterRegistry.getInstance(project).resolve(it) }
+  storedInterpreterReference()?.let { PythonInterpreterRegistry.getInstance(project).find(it) }

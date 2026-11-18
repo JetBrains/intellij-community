@@ -130,7 +130,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     reloadModulesModel()
 
     // An interpreter can be added or removed outside this page, such as on All Interpreters. The combos follow the registry.
-    PythonInterpreterRegistry.getInstance(project).addTableChangeListener(sessionDisposable) { refreshAllModuleCombos() }
+    PythonInterpreterRegistry.getInstance(project).addChangeListener(sessionDisposable) { refreshAllModuleCombos() }
 
     // The interpreter of a module can change outside this page, such as in the widget, and the interpreter library flow
     // fires no JDK-table event for it. Each snapshot states the interpreters after the change, so the panes follow it.

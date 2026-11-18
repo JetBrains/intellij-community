@@ -218,7 +218,7 @@ private suspend fun createSdkImpl(
       PathHolder.Target(request.path)
     }
   }
-  return PythonInterpreterRegistry.getInstance(project).newPythonInterpreter(ownerDir, pythonBinary, request.pythonData, suggestedSdkName)
+  return PythonInterpreterRegistry.getInstance(project).build(ownerDir, pythonBinary, request.pythonData, suggestedSdkName)
 }
 
 /** The data of the SDK. Both kinds of request carry [PythonSdkAdditionalData]. */

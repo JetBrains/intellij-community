@@ -4,6 +4,7 @@ package com.intellij.python.sdk.backend
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.impl.PythonInterpreterStore
 import org.jetbrains.annotations.ApiStatus
 
 /*
@@ -19,13 +20,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @ApiStatus.Obsolete
 suspend fun Project.findPythonInterpreter(sdk: Sdk): PythonInterpreter? =
-  PythonInterpreterRegistry.getInstance(this).interpreterOfSdk(sdk)
+  PythonInterpreterRegistry.getInstance(this).store.findBySdk(sdk)
 
 /** [findPythonInterpreter] without the wait: `null` also before the first computation. */
 @ApiStatus.Internal
 @ApiStatus.Obsolete
 fun Project.findPythonInterpreterIfReady(sdk: Sdk): PythonInterpreter? =
-  PythonInterpreterRegistry.getInstance(this).interpreterOfSdkIfReady(sdk)
+  PythonInterpreterRegistry.getInstance(this).store.findBySdkIfReady(sdk)
 
 /**
  * The interpreter of [sdk] in the registry of any open project, or `null`. It does not wait. For a holder of run
@@ -45,22 +46,12 @@ fun findPythonInterpreterInOpenProjectsIfReady(sdk: Sdk): PythonInterpreter? =
  */
 @ApiStatus.Internal
 @ApiStatus.Obsolete
-fun pythonSdksOfOpenProjects(): List<Sdk> = usedSdks()
+fun pythonSdksOfOpenProjects(): List<Sdk> = PythonInterpreterStore.usedSdks()
 
 /**
  * Every SDK of this project, also a broken one, for the legacy interpreter settings that edit an [Sdk]. Other code reads
- * [PythonInterpreterRegistry.interpreterEntries].
+ * [PythonInterpreterRegistry.allInterpreters].
  */
 @ApiStatus.Internal
 @ApiStatus.Obsolete
-fun Project.pythonSdksForSettings(): List<Sdk> = PythonInterpreterRegistry.getInstance(this).projectSdks()
-
-/**
- * Removes [sdk] of this project, for the legacy interpreter settings that edit an [Sdk]. Returns when the registry no
- * longer holds its interpreter. Other code calls [PythonInterpreterRegistry.remove].
- */
-@ApiStatus.Internal
-@ApiStatus.Obsolete
-suspend fun Project.removePythonSdk(sdk: Sdk) {
-  PythonInterpreterRegistry.getInstance(this).removeSdk(sdk)
-}
+fun Project.pythonSdksForSettings(): List<Sdk> = PythonInterpreterRegistry.getInstance(this).store.projectSdks()

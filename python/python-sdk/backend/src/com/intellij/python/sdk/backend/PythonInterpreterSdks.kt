@@ -83,7 +83,7 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
    * Drops the SDK and the record of [key]. The caller disposes the SDK, see [dispose], when no reader holds it.
    *
    * The SDK goes first. The removal of the record recomputes the list, and a module entry that still names [key] can put
-   * the record back before that, see [PythonInterpreterRegistry.adoptEntryKey]. The list then gets a new SDK of the
+   * the record back before that, see [PythonInterpreterRegistry.ensureRecord]. The list then gets a new SDK of the
    * record, not the dropped one.
    */
   fun remove(key: PythonInterpreterKey): Sdk? {

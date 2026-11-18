@@ -107,7 +107,7 @@ internal abstract class PythonInterpreterModuleRootsTest {
     }
     finally {
       pyProject.setPythonInterpreter(null)
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 

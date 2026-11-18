@@ -152,7 +152,7 @@ class TargetPythonInterpreter internal constructor(
  *
  * A failure when this SDK names no interpreter: it is not a Python SDK, it has no home path, it has no owner directory,
  * or it is a target SDK without a target configuration. The registry adopts an SDK without an owner directory, see
- * [PythonInterpreterRegistry.registerPythonInterpreter]. The user can only recreate any other such SDK.
+ * [PythonInterpreterRegistry.register]. The user can only recreate any other such SDK.
  *
  * Triggers file I/O on the calling thread via the underlying detector; must not be called on EDT.
  *

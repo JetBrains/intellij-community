@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.intellij.python.sdk.backend.setPythonSdkForTests
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
@@ -25,7 +26,6 @@ import com.intellij.testFramework.writeChild
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import com.jetbrains.python.fixtures.awaitPythonInterpreters
-import com.jetbrains.python.sdk.setPythonSdkForTests
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test

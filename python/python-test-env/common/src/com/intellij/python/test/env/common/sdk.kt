@@ -51,7 +51,7 @@ suspend fun PyEnvironmentFactory.createSdk(project: Project, request: SdkCreatio
       catch (e: RemoteSdkException) {
         throw RuntimeException("Error running $PYTHON_PATH_ON_TARGET", e)
       }
-      val built = registry.newPythonInterpreter(workingDir, PathHolder.Target(PYTHON_PATH_ON_TARGET), targetData, PYTHON_PATH_ON_TARGET).getOrThrow()
+      val built = registry.build(workingDir, PathHolder.Target(PYTHON_PATH_ON_TARGET), targetData, PYTHON_PATH_ON_TARGET).getOrThrow()
       val interpreter = registry.addTestInterpreter(built)
       Pair(interpreter, AutoCloseable { runBlocking { registry.removeTestInterpreter(interpreter) } })
     }

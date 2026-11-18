@@ -11,6 +11,7 @@ import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.binaryPathString
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
+import com.jetbrains.python.sdk.legacy.findBySdkNameIfReady
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
 import com.intellij.python.sdk.backend.interpreterOwnerProjectDir
@@ -47,11 +48,11 @@ fun findRunConfigurationInterpreterIfReady(
   val registry = PythonInterpreterRegistry.getInstance(project)
   if (!text.isNullOrEmpty()) {
     val name = PyInterpreterLibraryName.parse(text) ?: return null
-    return project.keyOf(name)?.let { registry.resolveIfReady(it) }
+    return project.keyOf(name)?.let { registry.findIfReady(it) }
   }
   val root = workspaceRootOf(project, module)
   if (!sdkName.isNullOrEmpty()) {
-    registry.legacy.findByLegacySdkNameIfReady(sdkName, root?.pyProject?.baseDir)?.let { return it }
+    registry.findBySdkNameIfReady(sdkName, root?.pyProject?.baseDir)?.let { return it }
   }
   if (!sdkHome.isNullOrEmpty() && root != null) {
     registry.interpretersIfReady(root.pyProject).firstOrNull { FileUtil.pathsEqual(it.binaryPathString, sdkHome) }?.let { return it }

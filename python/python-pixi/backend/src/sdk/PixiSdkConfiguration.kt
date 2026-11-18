@@ -60,7 +60,7 @@ internal class PixiSdkConfiguration : PyProjectSdkConfigurationExtension {
           }.getOr { return@creator it }
         }
         val ref = PyInterpreterRef.native(PixiPyTool.getInstance().fusId, PyEnvRef(DEFAULT_ENVIRONMENT))
-        PythonInterpreterRegistry.getInstance(pyProject.project).newPythonInterpreter(pyProject, ref)
+        PythonInterpreterRegistry.getInstance(pyProject.project).build(pyProject, ref)
       }
     }
   }

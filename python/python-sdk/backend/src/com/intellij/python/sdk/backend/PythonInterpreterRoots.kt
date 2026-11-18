@@ -201,7 +201,7 @@ class PythonInterpreterRoots(private val project: Project, scope: CoroutineScope
   }
 
   private fun interpreterOf(key: PythonInterpreterKey): PythonInterpreter? =
-    PythonInterpreterRegistry.getInstance(project).resolveIfReady(key)
+    PythonInterpreterRegistry.getInstance(project).findIfReady(key)
 
   private fun derive(interpreter: PythonInterpreter): PythonInterpreterRootFiles {
     val facts = PythonInterpreterDetails.getInstance(project).facts(interpreter)
