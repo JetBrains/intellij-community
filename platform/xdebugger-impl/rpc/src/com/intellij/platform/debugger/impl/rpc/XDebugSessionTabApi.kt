@@ -5,10 +5,12 @@ import com.intellij.execution.ExecutionEnvironmentIdImpl
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.ide.rpc.awaitWithOptionalLocalFallback
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.xdebugger.ui.IXDebuggerSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import fleet.rpc.RemoteApi
@@ -37,7 +39,7 @@ interface XDebugSessionTabApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebugSessionTabApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDebugSessionTabApi>())
+      return LiteRemoteApiProviderService.awaitWithOptionalLocalFallback(remoteApiDescriptor<XDebugSessionTabApi>()) { serviceOrNull<XDebugSessionTabApi>() }
     }
   }
 }

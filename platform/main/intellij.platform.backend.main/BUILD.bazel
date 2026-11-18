@@ -17,6 +17,7 @@ jvm_library(
         "//platform/project/backend",
         "//platform/progress/backend",
         "//platform/xdebugger-impl/backend",
+        "//platform/xdebugger-impl/rpc.backend",
         "//plugins/stream-debugger/backend",
         "//platform/searchEverywhere/backend",
         "//platform/vcs-impl",

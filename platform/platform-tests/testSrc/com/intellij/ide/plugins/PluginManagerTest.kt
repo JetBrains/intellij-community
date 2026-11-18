@@ -208,7 +208,7 @@ class PluginManagerTest {
         "- intellij.platform.backend",
         "+ intellij.platform.backend.baseline",
         "- intellij.platform.backend.split",
-        "- intellij.platform.debugger",
+        "+ intellij.platform.debugger",
         "- intellij.platform.execution",
         "+ intellij.platform.frontend",
         "- intellij.platform.frontend.split",
@@ -261,8 +261,9 @@ class PluginManagerTest {
     for (mode in ProductMode.entries.filter { it.isLight }) {
       val enabled = productModeModules(mode, enableExecution = true)
       val disabled = productModeModules(mode, enableExecution = false)
-      assertThat(enabled["intellij.platform.debugger"]).describedAs("debugger in '${mode.id}'").isFalse()
-      assertThat(disabled["intellij.platform.debugger"]).describedAs("debugger in '${mode.id}'").isFalse()
+      val debuggerAvailable = mode == ProductMode.LIGHT_MONOLITH
+      assertThat(enabled["intellij.platform.debugger"]).describedAs("debugger in '${mode.id}'").isEqualTo(debuggerAvailable)
+      assertThat(disabled["intellij.platform.debugger"]).describedAs("debugger in '${mode.id}'").isEqualTo(debuggerAvailable)
       assertThat(enabled["intellij.platform.execution"]).describedAs("execution in '${mode.id}'").isTrue()
       assertThat(disabled["intellij.platform.execution"]).describedAs("execution in '${mode.id}'").isFalse()
     }

@@ -2,13 +2,15 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.rpc.DocumentPatchVersion
+import com.intellij.ide.rpc.awaitWithOptionalLocalFallback
 import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
@@ -53,7 +55,7 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XBreakpointTypeApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XBreakpointTypeApi>())
+      return LiteRemoteApiProviderService.awaitWithOptionalLocalFallback(remoteApiDescriptor<XBreakpointTypeApi>()) { serviceOrNull<XBreakpointTypeApi>() }
     }
   }
 }

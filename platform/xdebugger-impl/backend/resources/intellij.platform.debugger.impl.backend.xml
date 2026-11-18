@@ -5,10 +5,13 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.debugger.impl.backend" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="fleet.rpc"/>
+    <module name="fleet.util.core"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.backend.baseline"/>
     <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.consoleView"/>
     <module name="intellij.platform.core"/>
@@ -21,7 +24,6 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
-    <module name="intellij.platform.execution.impl.backend"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
@@ -30,7 +32,6 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>

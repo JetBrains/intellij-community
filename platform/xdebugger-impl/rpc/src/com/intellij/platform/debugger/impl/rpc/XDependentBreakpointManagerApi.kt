@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.rpc
 
+import com.intellij.ide.rpc.awaitWithOptionalLocalFallback
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
@@ -22,7 +24,7 @@ interface XDependentBreakpointManagerApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDependentBreakpointManagerApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDependentBreakpointManagerApi>())
+      return LiteRemoteApiProviderService.awaitWithOptionalLocalFallback(remoteApiDescriptor<XDependentBreakpointManagerApi>()) { serviceOrNull<XDependentBreakpointManagerApi>() }
     }
   }
 }

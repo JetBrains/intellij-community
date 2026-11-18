@@ -24,9 +24,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//platform/backend",
+        "//platform/backend/baseline",
         "//libraries/kotlinx/serialization/json",
-        "//platform/execution-impl/backend",
     ],
     deps = [
         # do not sort,
@@ -42,7 +41,6 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/core-impl",
         "//platform/xdebugger-impl:debugger-impl",
-        "//platform/kernel/rpc.backend",
         "//libraries/kotlinx/serialization/core",
         "//libraries/fastutil",
         "//platform/util/concurrency",
@@ -59,6 +57,8 @@ jvm_library(
         "//platform/consoleView",
         "//platform/xdebugger-impl/shared",
         "//platform/xdebugger-impl/rpc",
+        "//fleet/rpc",
+        "//fleet/util/core",
     ],
 )
 ### auto-generated section `build intellij.platform.debugger.impl.backend` end

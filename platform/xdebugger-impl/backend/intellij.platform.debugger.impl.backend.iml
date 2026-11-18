@@ -33,7 +33,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.backend.baseline" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
@@ -44,7 +44,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
@@ -59,9 +58,10 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="module" module-name="intellij.platform.execution.impl.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.consoleView" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
+    <orderEntry type="module" module-name="fleet.rpc" />
+    <orderEntry type="module" module-name="fleet.util.core" />
   </component>
 </module>

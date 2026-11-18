@@ -1652,6 +1652,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/frontend/intellij.platform.debugger.impl.frontend.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/frontend/intellij.platform.debugger.impl.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/frontend/intellij.platform.debugger.impl.frontend.tests.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/frontend/intellij.platform.debugger.impl.frontend.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/rpc/intellij.platform.debugger.impl.rpc.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/rpc/intellij.platform.debugger.impl.rpc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/rpc.backend/intellij.platform.debugger.impl.rpc.backend.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/rpc.backend/intellij.platform.debugger.impl.rpc.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/shared/intellij.platform.debugger.impl.shared.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/shared/intellij.platform.debugger.impl.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/intellij.platform.debugger.impl.tests.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/intellij.platform.debugger.impl.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/ui/intellij.platform.debugger.impl.ui.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/ui/intellij.platform.debugger.impl.ui.iml" />

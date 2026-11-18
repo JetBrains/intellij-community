@@ -109,6 +109,7 @@ object CommunityModuleSets {
   fun debugger(): ModuleSet = moduleSet("debugger") {
     module("intellij.platform.debugger.impl.frontend")
     module("intellij.platform.debugger.impl.backend")
+    module("intellij.platform.debugger.impl.rpc.backend")
     module("intellij.platform.debugger.impl.shared")
     module("intellij.platform.debugger.impl.rpc")
     module("intellij.platform.debugger.impl.ui")

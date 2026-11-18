@@ -6,22 +6,36 @@
 -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider
-      implementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerRemoteApiProviders"
-      apiInterfaces="com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi,
-                     com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorApi,
-                     com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi,
-                     com.intellij.platform.debugger.impl.rpc.XDebugSessionApi,
-                     com.intellij.platform.debugger.impl.rpc.XDebugSessionTabApi,
-                     com.intellij.platform.debugger.impl.rpc.XDebuggerHotSwapApi,
-                     com.intellij.platform.debugger.impl.rpc.XDebuggerValueModifierApi,
-                     com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi,
-                     com.intellij.platform.debugger.impl.rpc.XDebuggerNavigationApi,
-                     com.intellij.platform.debugger.impl.rpc.XValueApi,
-                     com.intellij.platform.debugger.impl.rpc.XExecutionStackApi,
-                     com.intellij.platform.debugger.impl.rpc.XBreakpointApi,
-                     com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi,
-                     com.intellij.platform.debugger.impl.rpc.XDependentBreakpointManagerApi,
-                     com.intellij.platform.debugger.impl.rpc.XMixedModeApi"/>
+    <!-- the debugger APIs; intellij.platform.debugger.impl.rpc.backend serves them to a frontend -->
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerValueLookupHintsRemoteApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerEvaluatorApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerManagerApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XDebugSessionApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXDebugSessionApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XDebugSessionTabApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXDebugSessionTabApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XDebuggerHotSwapApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.hotswap.BackendXDebuggerHotSwapApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XDebuggerValueModifierApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerValueModifierApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerValueMarkupApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XDebuggerNavigationApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerNavigationApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XValueApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXValueApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XExecutionStackApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXExecutionStackApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XBreakpointApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXBreakpointApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXBreakpointTypeApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XDependentBreakpointManagerApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXDependentBreakpointManagerApi"/>
+    <applicationService serviceInterface="com.intellij.platform.debugger.impl.rpc.XMixedModeApi"
+                        serviceImplementation="com.intellij.platform.debugger.impl.backend.BackendXMixedModeApi"/>
   </extensions>
 </idea-plugin>

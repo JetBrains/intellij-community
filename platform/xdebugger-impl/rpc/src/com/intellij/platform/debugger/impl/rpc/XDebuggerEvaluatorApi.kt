@@ -2,13 +2,15 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.rpc.DocumentId
+import com.intellij.ide.rpc.awaitWithOptionalLocalFallback
 import com.intellij.ide.ui.colors.SerializableSimpleTextAttributes
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
@@ -43,7 +45,7 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerEvaluatorApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerEvaluatorApi>())
+      return LiteRemoteApiProviderService.awaitWithOptionalLocalFallback(remoteApiDescriptor<XDebuggerEvaluatorApi>()) { serviceOrNull<XDebuggerEvaluatorApi>() }
     }
   }
 }

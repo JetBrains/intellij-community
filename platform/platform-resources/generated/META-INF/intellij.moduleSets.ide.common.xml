@@ -438,6 +438,7 @@
     <!-- region nested: debugger -->
     <module name="intellij.platform.debugger.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.backend"/>
+    <module name="intellij.platform.debugger.impl.rpc.backend"/>
     <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.platform.debugger.impl.rpc"/>
     <module name="intellij.platform.debugger.impl.ui"/>

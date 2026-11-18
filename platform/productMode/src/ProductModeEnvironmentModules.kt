@@ -30,7 +30,8 @@ object ProductModeEnvironmentModules {
                                   "intellij.rd.client")) {
           this[moduleName] = false
         }
-        this["intellij.platform.debugger"] = false
+        // a standalone light process runs the debugger locally; it also needs `intellij.platform.execution`
+        this["intellij.platform.debugger"] = mode == ProductMode.LIGHT_MONOLITH
         // the property is temporary
         this["intellij.platform.execution"] = getBooleanProperty("intellij.platform.light.mode.enable.execution", false)
         this["intellij.platform.split.connection"] = mode == ProductMode.LIGHT_WITH_RD_CONNECTION

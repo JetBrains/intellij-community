@@ -1247,6 +1247,7 @@ platform/xdebugger-impl/bookmarks
 platform/xdebugger-impl/dashboard
 platform/xdebugger-impl/frontend
 platform/xdebugger-impl/rpc
+platform/xdebugger-impl/rpc.backend
 platform/xdebugger-impl/shared
 platform/xdebugger-impl/ui
 platform/xdebugger-testFramework
