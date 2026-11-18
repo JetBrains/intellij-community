@@ -1,11 +1,9 @@
 ---
 name: safe-push
-description: Push IntelliJ repository changes through the Safe Push workflow.
+description: Push IntelliJ repository changes through Safe Push.
 ---
 
 # Safe Push Guide for AI Agents
-
-This guide covers the Safe Push process for pushing changes to the IntelliJ repository.
 
 ## Overview
 
@@ -23,9 +21,6 @@ The `safePush.cmd` script in the repository root provides command-line access to
 
 # Push specific commit to master
 ./safePush.cmd <commit-hash>:master
-
-# Push from feature branch to master
-./safePush.cmd HEAD:master  # while on feature branch
 
 # Dry run (test without pushing)
 ./safePush.cmd -dry-run HEAD:master
@@ -61,11 +56,11 @@ After starting a Safe Push you'll receive a Patronus URL like:
 https://patronus.labs.jb.gg/robot/<uuid>
 ```
 
-Always print this URL back to the user — it is their primary handle for the run (link to share, cancel button, restore-branch button). The `<uuid>` segment is the **robot id**.
+Always print this URL back to the user. Its page has the cancel button.
 
-You can also track the Safe Push directly: check current status, enumerate failing checks, drill into a specific attempt, or babysit a long-running robot until it finishes. All of that is in the [[patronus]] skill — pick it up when the user asks for status or when offering to follow up. It's reasonable to proactively suggest tracking or babysitting once the Safe Push is in flight; the user can say no. The [[patronus]] skill also documents the hand-off to [[teamcity-cli]] when an individual TC build needs deeper inspection.
+Use the [[patronus]] skill to check the status, list the failing checks, inspect an attempt, babysit the Safe Push until it finishes, or cancel it. After the Safe Push starts, you can offer to track or babysit it. The user can say no.
 
-Cancel and restore-branch actions stay in the browser.
+The restore-branch action stays in the browser.
 
 ## Emergency Push
 
@@ -80,31 +75,13 @@ Use `./safePush.cmd -emergency` **ONLY** for:
 - Skipping tests because you're in a hurry
 - Pushing large changes that conflict with concurrent pushes
 
-## Bazel Tests and Environment Variables
-
-When writing tests that spawn external processes (like `bazel.cmd`), ensure required environment variables are passed:
-
-```java
-// In BUILD.bazel for java_test targets:
-env_inherit = [
-    "LOCALAPPDATA",      // Windows
-    "PROCESSOR_ARCHITECTURE",  // Windows
-    "USERPROFILE",       // Windows
-    "HOME",              // Unix/macOS - required for bazel cache directory
-],
-```
-
-The Bazel sandbox does NOT inherit environment variables by default. Use `env_inherit` to explicitly pass variables from the host environment to tests.
-
 ## Troubleshooting
 
 ### Safe Push stuck or slow
 - Check `#ij-builds` Slack channel for infrastructure issues
-- Safe Push duration varies based on infrastructure load
 
 ### Tests failing that seem unrelated
-- Patronus retries tests up to 4 times
-- If tests fail all 4 attempts and pass in master, your changes likely caused the failure
+- If tests fail in all attempts and pass in master, your changes likely caused the failure
 - Report suspected infrastructure issues to `#ij-qa-watch`
 
 ### Need to debug a failed Safe Push
