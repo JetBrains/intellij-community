@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.junit5Tests.unit
+package com.jetbrains.python.configuration.interpreter
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
 import com.intellij.project.stateStore
-import com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurable
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.internal.platformBridge.rebuildPyProjectModelForTest
@@ -20,6 +19,8 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.registryKeyFixture
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
@@ -41,6 +42,8 @@ import kotlin.time.Duration.Companion.minutes
  * `PyProjectCleanupModulesTest`. This class pins only that `apply()` has finished it before it
  * returns, so the dispose that follows has nothing left to cancel.
  */
+@Subsystems.Interpreters
+@Layers.Functional
 @TestApplication
 internal class PyWorkspaceStructureToggleOffTest {
 
