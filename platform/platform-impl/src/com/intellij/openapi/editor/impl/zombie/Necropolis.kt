@@ -43,7 +43,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
 
-
 /**
  * Service managing all necromancers.
  *
@@ -61,17 +60,14 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       return if (isEnabled()) {
         if (onlyIfCreated) {
           project.serviceIfCreated<Necropolis>()
-        }
-        else {
+        } else {
           project.service<Necropolis>()
         }
-      }
-      else {
+      } else {
         null
       }
     }
 
-    @JvmStatic
     suspend fun getInstanceAsync(project: Project): Necropolis? {
       return if (isEnabled()) project.serviceAsync<Necropolis>() else null
     }
@@ -80,7 +76,9 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       return PathManager.getSystemDir().resolve("editor")
     }
 
-    private fun isEnabled(): Boolean = !AppMode.isRemoteDevHost() && !IdeProductMode.isLight
+    private fun isEnabled(): Boolean {
+      return !AppMode.isRemoteDevHost() && !IdeProductMode.isLight
+    }
   }
 
   private val necromancersDeferred: Deferred<List<Necromancer<Zombie>>>
@@ -135,11 +133,9 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
                     necromancer.spawnZombie(recipe, zombie)
                   }
                 }
-              }
-              catch (e: CancellationException) {
+              } catch (e: CancellationException) {
                 throw e
-              }
-              catch (e: Throwable) {
+              } catch (e: Throwable) {
                 LOG.warn(
                   "Exception during editor loading",
                   if (e is ControlFlowException) RuntimeException(e) else e
@@ -217,8 +213,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     val documentContent = readActionBlocking {
       if (recipe.isValid()) {
         recipe.document.immutableCharSequence
-      }
-      else {
+      } else {
         LOG.debug("Invalid recipe for ${recipe.fileId}}")
         null
       }
