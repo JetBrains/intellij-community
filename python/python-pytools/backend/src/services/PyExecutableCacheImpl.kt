@@ -9,11 +9,10 @@ import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.PyExecutableCache
+import com.intellij.python.pytools.backend.getOrLoad
 import com.intellij.python.pytools.backend.impl.detectExecutableOnEel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.future.future
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.Optional
@@ -65,9 +64,9 @@ internal class PyExecutableCacheImpl(private val coroutineScope: CoroutineScope)
    * future. The load runs on the service scope, so a cancelled caller doesn't kill it.
    */
   private suspend fun detect(cacheKey: Key, eelDescriptor: EelDescriptor, executable: PyExecutable): Path? =
-    detectionCache.get(cacheKey) { _, _ ->
-      coroutineScope.future { Optional.ofNullable(detectExecutableOnEel(eelDescriptor.toEelApi(), executable.toolCommandSpec)) }
-    }.await().orElse(null)
+    detectionCache.getOrLoad(cacheKey, coroutineScope) {
+      Optional.ofNullable(detectExecutableOnEel(eelDescriptor.toEelApi(), executable.toolCommandSpec))
+    }.orElse(null)
 
   override fun invalidate(eelDescriptor: EelDescriptor, executable: PyExecutable) {
     eelDescriptor.getResolvedEelMachine()?.let {

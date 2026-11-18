@@ -15,9 +15,8 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.PySdkListener
+import com.intellij.python.pytools.backend.getOrLoad
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
@@ -77,12 +76,12 @@ internal class PySdkConfiguratorsCache(private val project: Project, private val
   /**
    * The cached answer for [pyProject], probing only if no live or recent one exists.
    *
-   * `AsyncCache.get` runs the mapping at most once per key, so the callers that arrive together while a
-   * project opens share a single probe rather than each starting one. The load runs on this service's
-   * scope, so whichever caller happened to trigger it can be cancelled without killing it for the rest.
+   * The callers that arrive together while a project opens share a single probe rather than each starting one.
+   * The load runs on this service's scope, so whichever caller happened to trigger it can be cancelled without
+   * killing it for the rest (see [getOrLoad]).
    */
   suspend fun get(pyProject: PyProject): PyProjectConfigurators =
-    cache.get(pyProject.residesOnModule) { key, _ ->
+    cache.getOrLoad(pyProject.residesOnModule, scope) { key ->
       // Break the strong reference chain from a cached value to a disposed module: the options hold
       // creator closures that capture the project (and WillInstallTool holds a pathPersister that does
       // too), and a project holds its module, which would otherwise keep a closed project alive until
@@ -97,8 +96,8 @@ internal class PySdkConfiguratorsCache(private val project: Project, private val
       if (!Disposer.tryRegister(key) { invalidate(key) }) {
         throw AlreadyDisposedException("Module $key is disposed, its configurators are not probed")
       }
-      scope.future { probe(pyProject) }
-    }.await()
+      probe(pyProject)
+    }
 
   /** Drops [module]'s entry, for a caller that has just changed what a probe would find (installing a tool). */
   fun invalidate(module: Module) {
