@@ -48,12 +48,14 @@ internal class GitLabMergeRequestBranchesViewModel(
   override val hasRemoteBranch: StateFlow<Boolean> = mergeRequest.details.mapState(cs) { it.sourceProject != null }
 
   private fun getSourceBranchName(details: GitLabMergeRequestFullDetails): String {
-    if (details.sourceProject == null) {
-      if (details.diffRefs != null) return DvcsUtil.getShortHash(details.diffRefs.headSha)
+    val sourceProject = details.sourceProject
+    if (sourceProject == null) {
+      val diffRefs = details.diffRefs
+      if (diffRefs != null) return DvcsUtil.getShortHash(diffRefs.headSha)
       else return details.sourceBranch
     }
-    if (details.targetProject == details.sourceProject) return details.sourceBranch
-    val sourceProjectOwner = details.sourceProject.path.owner
+    if (details.targetProject == sourceProject) return details.sourceBranch
+    val sourceProjectOwner = sourceProject.path.owner
     return "$sourceProjectOwner:${details.sourceBranch}"
   }
 

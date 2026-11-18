@@ -49,8 +49,8 @@ object GitLabMergeRequestBranchUtil {
 
   private fun getLocalBranchPrefix(details: GitLabMergeRequestFullDetails): String? =
     if (details.isFork()) {
-      if (details.sourceProject != null) "${FORK_BRANCH_PREFIX}/${details.sourceProject.path.owner}"
-      else "${FORK_BRANCH_PREFIX}/${details.author.username}"
+      details.sourceProject?.let { "${FORK_BRANCH_PREFIX}/${it.path.owner}" }
+      ?: "${FORK_BRANCH_PREFIX}/${details.author.username}"
     } else null
 
   suspend fun fetchAndCheckoutBranch(
