@@ -30,6 +30,7 @@ fun renderAdditionalJvmArguments(
   fun String.quoteIfNeeded(): String = if (isScript) "\"$this\"" else this
 
   val result = ArrayList<String>()
+
   val macroName = when (os) {
     OsFamily.WINDOWS -> "%IDE_HOME%"
     OsFamily.MACOS -> $$"$APP_PACKAGE$${if (isPortableDist) "" else "/Contents"}"
@@ -103,5 +104,6 @@ fun renderAdditionalJvmArguments(
   result.add("-XX:-UseBASE64Intrinsics")
 
   result.addAll(openedPackages)
+
   return result
 }
