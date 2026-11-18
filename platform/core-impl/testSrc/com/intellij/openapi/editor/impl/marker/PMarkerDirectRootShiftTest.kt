@@ -17,6 +17,71 @@ internal class PMarkerDirectRootShiftTest {
   private val before: DocumentText = DocumentImpl("x".repeat(200), true).core.snapshot().text()
 
   @Test
+  fun `edits in a gap preserve the preceding subtree`() {
+    val marker = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+    val entries = List(15) { index ->
+      MarkerEntry(SnapshotMarkerReference.create(marker, true), index * 10 + 1, index * 10 + 3,
+                  MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), 0)
+    }
+    val root = PMarkerDirectRoot.empty().insertMany(entries)
+    for (patch in listOf(
+      DocumentPatch.simple(65, 65, "xx", 1, false),
+      DocumentPatch.simple(65, 67, "", 1, false),
+      DocumentPatch.simple(65, 67, "x", 1, false),
+      DocumentPatch.simple(65, 67, "xx", 1, false),
+    )) {
+      val edited = apply(root, patch)
+      val shift = patch.newFragment().length - (patch.endOffset() - patch.startOffset())
+      assertSame(node(root).left, node(edited).left)
+      if (shift == 0) assertSame(root, edited)
+      for (entry in entries) {
+        val delta = if (entry.nodeStart < 65) 0 else shift
+        assertEquals(TextRangeScalarUtil.shift(entry.range(), delta), edited.resolve(entry.handle))
+        assertEquals(entry.range(), root.resolve(entry.handle))
+      }
+    }
+  }
+
+  @Test
+  fun `edits in a gap transform preceding ranges and report invalidation`() {
+    val marker = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+    var transformed = 0
+    val policy = MarkerPolicy { _, _, _, _ ->
+      transformed++
+      MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
+    }
+    val entries = List(15) { index ->
+      MarkerEntry(SnapshotMarkerReference.create(marker, true), index * 10 + 1, index * 10 + 3,
+                  MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), 0)
+    }.mapIndexed { index, entry ->
+      when (index) {
+        0 -> entry.copy(nodeEnd = 100, policy = policy)
+        1 -> entry.copy(nodeEnd = 90)
+        else -> entry
+      }
+    }
+    val root = PMarkerDirectRoot.empty().insertMany(entries)
+    for (replacement in listOf("", "x", "xx", "xxxx")) {
+      val patch = DocumentPatch.simple(65, 67, replacement, 1, false)
+      val after = before.replace(65, 67, replacement)
+      val invalidated = ArrayList<SnapshotMarkerReference<*>>()
+      val affected = ArrayList<SnapshotMarkerReference<*>>()
+      transformed = 0
+      val edited = root.applyPatch(patch, before, after, { invalidated.add(it) }, { affected.add(it) })
+
+      assertEquals(1, transformed)
+      assertEquals(listOf(entries.first().handle), invalidated)
+      assertTrue(affected.contains(entries[1].handle))
+      for (entry in entries) {
+        val expected = if (entry.policy === policy) PMarkerResolution.invalid(entry.range())
+        else DefaultMarkerPolicy.transform(entry, patch, before, after).range
+        assertEquals(expected, edited.resolve(entry.handle))
+        assertEquals(entry.range(), root.resolve(entry.handle))
+      }
+    }
+  }
+
+  @Test
   fun `edits before all markers share both subtrees and preserve snapshots`() = withEntries { entries ->
     val root = PMarkerDirectRoot.empty().insertMany(entries)
     for (entry in entries) root.resolve(entry.handle)
