@@ -14,7 +14,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [compose-ui](compose-ui/SKILL.md) | Write or audit Compose Desktop UI state, effects, and boundaries. |
 | [conda-env-tests](conda-env-tests/SKILL.md) | Bump the Miniconda version of the Python conda env tests. |
 | [content-module](content-module/SKILL.md) | Create, convert or extract an IntelliJ plugin content module. |
-| [debugging](debugging/SKILL.md) | Debug IntelliJ IDE failures with repository-specific techniques. |
+| [debugging](debugging/SKILL.md) | Debug IntelliJ IDE failures. |
 | [driver-ui-tests](driver-ui-tests/SKILL.md) | Write IntelliJ UI tests with IDE Starter or UI Driver, or run one off-screen to verify a change. |
 | [duplicate-and-dead-code](duplicate-and-dead-code/SKILL.md) | Find semantic copies and dead code before a plan or a review. |
 | [eel](eel/SKILL.md) | Use IntelliJ EEL APIs for process execution, paths, WSL, or Docker. |
