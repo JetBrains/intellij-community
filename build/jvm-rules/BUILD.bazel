@@ -622,7 +622,6 @@ kt_kotlinc_options(
     x_sam_conversions = "indy",
     x_xlanguage = [
         "+AllowEagerSupertypeAccessibilityChecks",
-        "-WrapContinuationForTailCallFunctions",
     ],
 )
 
