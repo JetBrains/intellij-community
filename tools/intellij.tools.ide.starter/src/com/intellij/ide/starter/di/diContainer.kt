@@ -43,6 +43,7 @@ import com.intellij.ide.starter.runner.targets.LocalOnlyTargetResolver
 import com.intellij.ide.starter.runner.targets.TargetResolver
 import com.intellij.ide.starter.telemetry.NoopTestTelemetryService
 import com.intellij.ide.starter.telemetry.TestTelemetryService
+import com.intellij.ide.starter.utils.DownloadMirror
 import com.intellij.tools.ide.util.common.logOutput
 import org.kodein.di.DI
 import org.kodein.di.bindArgSet
@@ -100,6 +101,7 @@ private var _di = DI {
 
   bindProvider<TestContainer> { if (ConfigurationStorage.splitMode()) RemDevTestContainer() else TestContainerImpl() }
   bindSingleton<JBRDownloader> { StarterJBRDownloader }
+  bindSingleton<DownloadMirror> { object : DownloadMirror {} }
   bindSingleton<TargetResolver> { LocalOnlyTargetResolver }
   bindSingleton<ScrambleToolProvider> { object : ScrambleToolProvider {} }
   bindSingleton<DevBuildServerRunner> { NoOpDevBuildServerRunner }

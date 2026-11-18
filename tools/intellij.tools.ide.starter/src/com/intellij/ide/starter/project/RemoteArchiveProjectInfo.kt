@@ -97,11 +97,10 @@ data class RemoteArchiveProjectInfo(
   }
 
   private fun String.transformUrlToZipName(): String {
-    // The mirror is reached directly or through cache-redirector; both name the same archive.
-    val spaceVcsArchiveMirrorPrefix = listOf(
-      "https://packages.jetbrains.team/files/p/ij/space-vcs-archive-mirror/",
-      "https://cache-redirector.jetbrains.com/files/p/ij/space-vcs-archive-mirror/",
-    ).firstOrNull { projectURL.startsWith(it) }
+    // A host can serve the mirror under this path. The rest of the url names the archive on each host.
+    val mirrorPath = "/files/p/ij/space-vcs-archive-mirror/"
+    val spaceVcsArchiveMirrorPrefix = projectURL.indexOf(mirrorPath).takeIf { it >= 0 }
+      ?.let { projectURL.substring(0, it + mirrorPath.length) }
     return when {
       projectURL.contains("https://github.com") -> {
         this.removePrefix("https://github.com/").split("/").joinToString("_", postfix = ".zip")
