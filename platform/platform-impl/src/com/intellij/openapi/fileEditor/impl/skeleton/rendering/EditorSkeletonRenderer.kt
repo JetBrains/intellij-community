@@ -9,7 +9,13 @@ import kotlinx.coroutines.CoroutineScope
 import java.awt.Component
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Shows the frames of one skeleton. [create] selects the renderer for the current toolkit.
+ */
 internal interface EditorSkeletonRenderer {
+  /**
+   * The component that shows the frames. The skeleton adds it as its only child.
+   */
   val component: Component
 
   /**

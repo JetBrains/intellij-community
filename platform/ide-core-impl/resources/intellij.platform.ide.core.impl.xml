@@ -512,6 +512,11 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
       description="Skeleton fade in duration (in milliseconds)"
     />
     <registryKey
+      key="editor.skeleton.animation.duration.ms"
+      defaultValue="1500"
+      description="Sets the editor skeleton animation duration in milliseconds"
+    />
+    <registryKey
       key="editor.skeleton.direct.renderer.enabled"
       defaultValue="true"
       description="Render the editor skeleton off the EDT directly into the window graphics, without a heavyweight Canvas"

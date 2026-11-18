@@ -3,4 +3,7 @@ package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 
 import java.awt.Color
 
+/**
+ * The colors of one skeleton frame: the [background] of the editor and the color of the [blocks].
+ */
 internal data class SkeletonFrameColor(val background: Color, val blocks: Color)

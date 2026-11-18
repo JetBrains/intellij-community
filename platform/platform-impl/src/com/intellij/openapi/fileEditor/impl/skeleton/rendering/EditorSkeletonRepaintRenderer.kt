@@ -114,7 +114,6 @@ internal class EditorSkeletonRepaintRenderer(private val frames: EditorSkeletonF
   }
 
   override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
     frames.paint(g as Graphics2D, width, height, JBUIScale.scale(1f), frames.colorsAt(animationTimeMs()))
   }
 

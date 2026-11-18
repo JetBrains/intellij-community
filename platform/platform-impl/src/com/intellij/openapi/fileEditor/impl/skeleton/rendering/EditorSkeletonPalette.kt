@@ -26,7 +26,7 @@ internal class EditorSkeletonPalette(val background: Color) {
 
   private fun createRamp(): EditorSkeletonOklab.Ramp {
     val delta = if (ColorUtil.isDark(background)) SKELETON_LIGHTNESS_DELTA else -SKELETON_LIGHTNESS_DELTA
-    return EditorSkeletonOklab.ramp(background, EditorSkeletonOklab.shiftLightness(background, delta))
+    return EditorSkeletonOklab.Ramp(background, EditorSkeletonOklab.shiftLightness(background, delta))
   }
 }
 

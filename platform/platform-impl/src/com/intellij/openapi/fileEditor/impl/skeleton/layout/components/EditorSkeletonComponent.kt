@@ -20,4 +20,3 @@ internal sealed class EditorSkeletonComponent {
     }
   }
 }
-

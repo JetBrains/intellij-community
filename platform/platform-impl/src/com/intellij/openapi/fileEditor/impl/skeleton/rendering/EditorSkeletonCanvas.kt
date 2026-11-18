@@ -18,6 +18,10 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
+/**
+ * Renders the skeleton on `Dispatchers.Default` through a heavyweight [Canvas], while the canvas is displayable.
+ * The canvas turns on AWT mixing.
+ */
 internal class EditorSkeletonCanvas(private val frames: EditorSkeletonFrames) : Canvas(), EditorSkeletonRenderer {
   override val component: Canvas
     get() = this
@@ -60,15 +64,18 @@ internal class EditorSkeletonCanvas(private val frames: EditorSkeletonFrames) : 
             renderFrame()
             delay(EditorSkeletonRenderer.TICK_MS)
           }
-          backBuffer.release()
-          removedArea.set(null)
+          releaseResources()
         }
       }
       finally {
-        backBuffer.release()
-        removedArea.set(null)
+        releaseResources()
       }
     }
+  }
+
+  private fun releaseResources() {
+    backBuffer.release()
+    removedArea.set(null)
   }
 
   private fun renderFrame() {
@@ -92,6 +99,8 @@ internal class EditorSkeletonCanvas(private val frames: EditorSkeletonFrames) : 
   }
 
   private class RemovedArea(private val rootPane: JRootPane, private val bounds: Rectangle) {
-    fun repaintBounds() = rootPane.repaint(bounds)
+    fun repaintBounds() {
+      rootPane.repaint(bounds)
+    }
   }
 }
