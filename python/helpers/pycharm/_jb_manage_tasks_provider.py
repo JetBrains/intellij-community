@@ -25,5 +25,10 @@ if hasattr(django, 'setup'):
     django.setup()
 dumper = _xml.XmlDumper()
 commands_to_skip = str(sys.argv[1]).split(",") if len(sys.argv) > 1 else []
-parser.report_data(dumper, commands_to_skip)
+try:
+    parser.report_data(dumper, commands_to_skip)
+except KeyboardInterrupt:
+    # The IDE interrupts the helper when the command list takes too long, and it shows the warnings of the helper.
+    # A traceback of the wait for a command adds nothing to them.
+    sys.exit(1)
 print(dumper.xml)
