@@ -7,18 +7,17 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
 import java.awt.Component
-import java.awt.Graphics2D
 import kotlin.time.Duration.Companion.milliseconds
 
 internal interface EditorSkeletonRenderer {
   val component: Component
 
   /**
-   * Starts the rendering of frames with [paintFrame] in [cs].
+   * Starts the rendering of [frames] in [cs].
    * The renderer renders a frame only while [component] is displayable.
    * While [component] is not displayable, the renderer does not wake up.
    */
-  fun startRendering(cs: CoroutineScope, paintFrame: (Graphics2D, Int, Int, Float) -> Unit)
+  fun startRendering(cs: CoroutineScope, frames: EditorSkeletonFrames)
 
   fun frameTimeMs(nowMs: Long): Long = nowMs
 

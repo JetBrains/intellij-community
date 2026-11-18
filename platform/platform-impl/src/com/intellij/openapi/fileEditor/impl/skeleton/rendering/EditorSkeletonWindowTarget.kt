@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 
-import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
 import java.awt.Point
 import java.awt.Rectangle
@@ -25,5 +24,5 @@ internal class EditorSkeletonWindowTarget(
   val rootPaneClip: Rectangle,
   val scale: Float,
   val covered: Boolean,
-  val paintFrame: (Graphics2D, Int, Int, Float) -> Unit,
+  val frames: EditorSkeletonFrames,
 )

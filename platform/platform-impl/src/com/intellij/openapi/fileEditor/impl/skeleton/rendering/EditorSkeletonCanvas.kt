@@ -12,7 +12,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.awt.Canvas
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -51,14 +50,14 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
 
   override fun update(g: Graphics) {}
 
-  override fun startRendering(cs: CoroutineScope, paintFrame: (Graphics2D, Int, Int, Float) -> Unit) {
+  override fun startRendering(cs: CoroutineScope, frames: EditorSkeletonFrames) {
     if (!renderingStarted.compareAndSet(false, true)) return
     cs.launch(Dispatchers.Default) {
       try {
         while (isActive) {
           displayable.first { it }
           while (displayable.value) {
-            renderFrame(paintFrame)
+            renderFrame(frames)
             delay(EditorSkeletonRenderer.TICK_MS)
           }
           backBuffer.release()
@@ -72,7 +71,7 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
     }
   }
 
-  private fun renderFrame(paintFrame: (Graphics2D, Int, Int, Float) -> Unit) {
+  private fun renderFrame(frames: EditorSkeletonFrames) {
     val w = width
     val h = height
     val gc = graphicsConfiguration
@@ -83,7 +82,7 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
 
     val buffer = backBuffer.createOrUpdateImageBuffer(gc, w, h)
     buffer.createGraphics().use { g ->
-      paintFrame(g, w, h, JBUIScale.scale(1f))
+      frames.paint(g, w, h, JBUIScale.scale(1f), frames.currentColors())
     }
 
     if (buffer.contentsLost()) return

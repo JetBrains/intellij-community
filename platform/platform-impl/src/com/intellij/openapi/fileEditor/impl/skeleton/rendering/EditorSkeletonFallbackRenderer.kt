@@ -88,7 +88,7 @@ internal class EditorSkeletonFallbackRenderer : JComponent(), EditorSkeletonRend
 
   private var scope: CoroutineScope? = null
   private var renderingJob: Job? = null
-  private var paintFrame: ((Graphics2D, Int, Int, Float) -> Unit)? = null
+  private var frames: EditorSkeletonFrames? = null
   private var lastFrameTimeMs: Long? = null
   private var animationTimeMs = 0L
 
@@ -97,10 +97,10 @@ internal class EditorSkeletonFallbackRenderer : JComponent(), EditorSkeletonRend
     isOpaque = true
   }
 
-  override fun startRendering(cs: CoroutineScope, paintFrame: (Graphics2D, Int, Int, Float) -> Unit) {
+  override fun startRendering(cs: CoroutineScope, frames: EditorSkeletonFrames) {
     if (scope != null) return
     scope = cs
-    this.paintFrame = paintFrame
+    this.frames = frames
     if (isDisplayable) startRepainting()
   }
 
@@ -118,13 +118,13 @@ internal class EditorSkeletonFallbackRenderer : JComponent(), EditorSkeletonRend
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    val paintFrame = paintFrame
-    if (paintFrame == null || !isShowing) {
+    val frames = frames
+    if (frames == null || !isShowing) {
       g.color = EditorSkeleton.EDITOR_BACKGROUND_COLOR
       g.fillRect(0, 0, width, height)
       return
     }
-    paintFrame(g as Graphics2D, width, height, JBUIScale.scale(1f))
+    frames.paint(g as Graphics2D, width, height, JBUIScale.scale(1f), frames.currentColors())
   }
 
   override fun frameTimeMs(nowMs: Long): Long {

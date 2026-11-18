@@ -52,11 +52,13 @@ internal class EditorSkeletonWindowRenderer(
   @Volatile
   private var swingRepaintsOnly = false
 
-  private var paintFrame: ((Graphics2D, Int, Int, Float) -> Unit)? = null
+  private var frames: EditorSkeletonFrames? = null
   private val targetUpdater = TargetUpdater()
   private var trackedRootPane: JRootPane? = null
   private var trackedWindow: Window? = null
   private val backBuffer = EditorSkeletonBackBuffer()
+  private var renderedTarget: EditorSkeletonWindowTarget? = null
+  private var renderedColors: EditorSkeletonColorManager.FrameColors? = null
 
   init {
     isOpaque = true
@@ -67,11 +69,11 @@ internal class EditorSkeletonWindowRenderer(
     addPropertyChangeListener("graphicsConfiguration", targetUpdater)
   }
 
-  override fun startRendering(cs: CoroutineScope, paintFrame: (Graphics2D, Int, Int, Float) -> Unit) {
-    if (this.paintFrame != null) {
+  override fun startRendering(cs: CoroutineScope, frames: EditorSkeletonFrames) {
+    if (this.frames != null) {
       return
     }
-    this.paintFrame = paintFrame
+    this.frames = frames
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       try {
         awaitCancellation()
@@ -90,30 +92,35 @@ internal class EditorSkeletonWindowRenderer(
   }
 
   override fun paintComponent(g: Graphics) {
-    val paintFrame = paintFrame
-    if (paintFrame == null) {
+    val frames = frames
+    if (frames == null) {
       g.color = EditorSkeleton.EDITOR_BACKGROUND_COLOR
       g.fillRect(0, 0, width, height)
       return
     }
-    paintFrame(g as Graphics2D, width, height, JBUIScale.scale(1f))
+    frames.paint(g as Graphics2D, width, height, JBUIScale.scale(1f), frames.currentColors())
   }
 
   /**
-   * Renders one frame. Only [EditorSkeletonRenderThread] calls it.
+   * Renders one frame when its colors or its target differ from the last rendered frame. Only [EditorSkeletonRenderThread] calls it.
    */
   internal fun renderFrame() {
     val target = target
     if (target == null || stopped) {
       return
     }
+    val colors = target.frames.currentColors()
+    if (colors == renderedColors && target === renderedTarget) {
+      return
+    }
     if (target.covered || swingRepaintsOnly) {
       repaint()
+      rendered(target, colors)
       return
     }
     val buffer = backBuffer.createOrUpdateImageBuffer(target.graphicsConfiguration, target.width, target.height)
     buffer.createGraphics().use { g ->
-      target.paintFrame(g, target.width, target.height, target.scale)
+      target.frames.paint(g, target.width, target.height, target.scale, colors)
     }
     if (buffer.contentsLost()) {
       return
@@ -123,16 +130,18 @@ internal class EditorSkeletonWindowRenderer(
       g.clipRect(target.clip.x, target.clip.y, target.clip.width, target.clip.height)
       g.drawImage(buffer, target.origin.x, target.origin.y, null)
     }
+    rendered(target, colors)
     if (this.target !== target) {
       target.rootPane.repaint(target.rootPaneClip)
     }
   }
 
   /**
-   * Releases the back buffer. Only [EditorSkeletonRenderThread] calls it, between frames.
+   * Releases the back buffer and forgets the last rendered frame. Only [EditorSkeletonRenderThread] calls it, between frames.
    */
   internal fun releaseBackBuffer() {
     backBuffer.release()
+    rendered(target = null, colors = null)
   }
 
   /**
@@ -140,6 +149,11 @@ internal class EditorSkeletonWindowRenderer(
    */
   internal fun useSwingRepaints() {
     swingRepaintsOnly = true
+  }
+
+  private fun rendered(target: EditorSkeletonWindowTarget?, colors: EditorSkeletonColorManager.FrameColors?) {
+    renderedTarget = target
+    renderedColors = colors
   }
 
   private fun stop() {
@@ -163,8 +177,8 @@ internal class EditorSkeletonWindowRenderer(
   }
 
   private fun computeTarget(rootPane: JRootPane?): EditorSkeletonWindowTarget? {
-    val paintFrame = paintFrame
-    if (paintFrame == null || stopped || rootPane == null || width <= 0 || height <= 0) {
+    val frames = frames
+    if (frames == null || stopped || rootPane == null || width <= 0 || height <= 0) {
       return null
     }
     val window = SwingUtilities.getWindowAncestor(this) ?: return null
@@ -187,7 +201,7 @@ internal class EditorSkeletonWindowRenderer(
       rootPaneClip = SwingUtilities.convertRectangle(this, visibleRect, rootPane),
       scale = JBUIScale.scale(1f),
       covered = isCovered(rootPane, SwingUtilities.convertRectangle(this, visibleRect, rootPane.layeredPane)),
-      paintFrame = paintFrame,
+      frames = frames,
     )
   }
 

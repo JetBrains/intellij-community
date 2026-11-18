@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.impl.skeleton.layout.Gutter
 import com.intellij.openapi.fileEditor.impl.skeleton.layout.components.EditorSkeletonPanel
 import com.intellij.openapi.fileEditor.impl.skeleton.layout.components.Layout.HORIZONTAL
 import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonColorManager
+import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonFrames
 import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.RegistryManager
@@ -47,6 +48,14 @@ class EditorSkeleton(
     Editor()
   }
 
+  private val frames = object : EditorSkeletonFrames {
+    override fun currentColors(): EditorSkeletonColorManager.FrameColors = colorManager.frameColors()
+
+    override fun paint(g: Graphics2D, width: Int, height: Int, scale: Float, colors: EditorSkeletonColorManager.FrameColors) {
+      paintFrame(g, width, height, scale, colors)
+    }
+  }
+
   init {
     project.messageBus.connect(cs).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       colorManager.reloadColorScheme()
@@ -60,11 +69,14 @@ class EditorSkeleton(
   }
 
   internal fun startAnimation() {
-    renderer.startRendering(cs, ::paintFrame)
+    renderer.startRendering(cs, frames)
   }
 
   fun paintFrame(g: Graphics2D, width: Int, height: Int, scale: Float = JBUIScale.scale(1f)) {
-    val colors = colorManager.frameColors()
+    paintFrame(g, width, height, scale, colorManager.frameColors())
+  }
+
+  private fun paintFrame(g: Graphics2D, width: Int, height: Int, scale: Float, colors: EditorSkeletonColorManager.FrameColors) {
     g.useCopy { graphics ->
       graphics.composite = AlphaComposite.Src
       graphics.color = colors.background
