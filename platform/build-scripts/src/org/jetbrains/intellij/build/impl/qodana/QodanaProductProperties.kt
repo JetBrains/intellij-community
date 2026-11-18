@@ -31,6 +31,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dmaven.default.headless.import=true",
   "-Dide.do.not.check.ls.on.startup=true",
   "-Dfull.scanning.on.startup.can.be.skipped=false", // remove when properly fixing indexing issue
+  "-Dpsi.enable.persistent.syntax.tree=false", // versioned PSI (IJPL-236269) is for concurrent edits in the IDE, a batch analysis only pays its overhead
 )
 
 private const val IS_EAP = false
