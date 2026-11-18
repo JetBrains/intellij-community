@@ -1,30 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow.details
 
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.python.community.helpersLocator.PythonHelpersLocator
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.asBinToExec
+import com.intellij.python.community.execService.python.PyHelper
+import com.intellij.python.community.execService.python.StdInProvider
+import com.intellij.python.community.execService.python.executeHelper
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.impl.PY2_HELPER_DEPENDENCIES_DIR
-import com.jetbrains.python.impl.PY3_HELPER_DEPENDENCIES_DIR
+import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.run.applyHelperPackageToPythonPath
-import com.jetbrains.python.run.buildTargetedCommandLine
-import com.jetbrains.python.run.prepareHelperScriptExecution
-import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.sdkFlavor
+import com.jetbrains.python.sdk.asLocalHelperPython
+import com.jetbrains.python.sdk.findLocalHelperPython
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+/** The RST helper, see `PythonHelper.REST_RUNNER`. */
+private val REST_RUNNER: PyHelper = PyHelper("rest_runners/rst2smth.py")
 
 internal class PyPackageDetailsHtmlRender(val project: Project, val currentInterpreter: PythonInterpreter?) {
   suspend fun getHtml(packageDetails: PythonPackageDetails): String {
@@ -52,52 +48,27 @@ internal class PyPackageDetailsHtmlRender(val project: Project, val currentInter
     }
   }
 
+  /**
+   * Renders [text] with the RST helper. The helper runs on the interpreter of the tool window when that is a local
+   * CPython, else on the local helper Python, see [findLocalHelperPython]. The helper dependencies are for Python 3 only.
+   */
   private suspend fun rstToHtml(text: String, interpreter: PythonInterpreter): String {
-    @Suppress("DEPRECATION") // The rst helper runs on a local CPython that the SDK table resolves.
-    val localSdk = PythonSdkType.findLocalCPythonForSdk(interpreter.getSdkAPI())
-    if (localSdk == null)
+    val python = interpreter.asLocalHelperPython() ?: findLocalHelperPython(project, null)
+    if (python == null || python.languageLevel.isPython2)
       return wrapHtml("<p>${message("python.toolwindow.packages.documentation.local.interpreter")}</p>")
 
-    val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(localSdk, project)
-    val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
-    val pythonExecution = prepareHelperScriptExecution(PythonHelper.REST_RUNNER, helpersAwareTargetRequest)
-
-    // todo[akniazev]: this workaround should can be removed when PY-57134 is fixed
-    val helperLocation = if (localSdk.sdkFlavor.getLanguageLevel(localSdk).isPython2) PY2_HELPER_DEPENDENCIES_DIR else PY3_HELPER_DEPENDENCIES_DIR
-    val path = PythonHelpersLocator.findPathStringInHelpers(helperLocation)
-    pythonExecution.applyHelperPackageToPythonPath(listOf(path), helpersAwareTargetRequest)
-
-    pythonExecution.addParameter("rst2html_no_code")
-    val targetProgressIndicator = TargetProgressIndicator.EMPTY
-    val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(targetProgressIndicator)
-
-    targetEnvironment.uploadVolumes.entries.forEach { (_, value) ->
-      value.upload(".", targetProgressIndicator)
+    val result = withBackgroundProgress(project, message("python.toolwindow.packages.converting.description.progress"), cancellable = true) {
+      ExecService().executeHelper(python = python.binary.asBinToExec(),
+                                  helper = REST_RUNNER,
+                                  helperArgs = Args("rst2html_no_code"),
+                                  stdInProvider = StdInProvider(text.toByteArray()))
     }
-
-    val targetedCommandLine = pythonExecution.buildTargetedCommandLine(targetEnvironment, localSdk, emptyList())
-
-    val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-    val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
-
-    val commandLine = targetedCommandLine.collectCommandsSynchronously()
-    val commandLineString = commandLine.joinToString(" ")
-
-    val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
-
-    val output = withBackgroundProgress(project, message("python.toolwindow.packages.converting.description.progress"), cancellable = true) {
-      reportRawProgress {
-        val processInput = handler.processInput
-        processInput.use {
-          processInput.write(text.toByteArray())
-        }
-        handler.runProcess(10 * 60 * 1000)
+    return when (result) {
+      is Result.Success -> result.result
+      is Result.Failure -> {
+        thisLogger().info("Cannot render the RST description: ${result.error.message}")
+        wrapHtml("<p>${message("python.toolwindow.packages.rst.parsing.failed")}</p>")
       }
-    }
-
-    return when {
-      output.checkSuccess(thisLogger()) -> output.stdout
-      else -> wrapHtml("<p>${message("python.toolwindow.packages.rst.parsing.failed")}</p>")
     }
   }
 

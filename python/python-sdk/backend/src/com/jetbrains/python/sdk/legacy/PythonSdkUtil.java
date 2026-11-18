@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -41,8 +40,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Utility methods for Python {@link Sdk} based on the project model and the file system.
@@ -66,7 +63,6 @@ public final class PythonSdkUtil {
    * In which root type built-in skeletons are put.
    */
   public static final OrderRootType BUILTIN_ROOT_TYPE = OrderRootType.CLASSES;
-  private static final Predicate<Sdk> REMOTE_SDK_PREDICATE = PythonSdkUtil::isRemote;
 
   public static boolean isPythonSdk(@NotNull Sdk sdk) {
     return isPythonSdk(sdk, false);
@@ -224,25 +220,8 @@ public final class PythonSdkUtil {
     return null;
   }
 
-  /**
-   * @deprecated There is no global list of interpreters. Check the interpreters of a {@link PyProject}.
-   */
-  @Deprecated
-  public static boolean hasValidSdk() {
-    return !getAllSdks().isEmpty();
-  }
-
   public static boolean isDisposed(@NotNull Sdk sdk) {
     return sdk instanceof Disposable && Disposer.isDisposed((Disposable)sdk);
-  }
-
-  /**
-   * @deprecated There is no global list of interpreters. Use the interpreter of a {@link PyProject}, or the system Pythons
-   * from {@code SystemPythonService}.
-   */
-  @Deprecated
-  public static List<Sdk> getAllLocalCPythons() {
-    return getAllSdksOn(LocalEelDescriptor.INSTANCE).stream().filter(REMOTE_SDK_PREDICATE.negate()).collect(Collectors.toList());
   }
 
   // It is only here for external plugins

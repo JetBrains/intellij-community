@@ -7,7 +7,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
@@ -19,10 +18,7 @@ import com.intellij.xdebugger.attach.XAttachHost;
 import com.intellij.xdebugger.attach.XAttachPresentationGroup;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.sdk.PreferredSdkComparator;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,34 +43,29 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
   }
 
   /**
-   * Get all local Python Sdks, sort them by version and put the currently selected Sdk (if it exists) to the beginning.
-   * Create a debuggers for attaching based on this list of Sdks.
+   * Creates a debugger for each local interpreter of the Python projects of {@code project}, see
+   * {@link PyLocalAttachInterpretersKt#localAttachInterpreters}. The interpreter of the selected run configuration is first.
    *
    * @return list of debuggers for attaching to process
    */
   private static @NotNull List<XAttachDebugger> getAttachDebuggersForAllLocalSdks(@NotNull Project project) {
-    Sdk selected = null;
+    PythonInterpreter selected = null;
     RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
     if (settings != null) {
       RunConfiguration runConfiguration = settings.getConfiguration();
       if (runConfiguration instanceof AbstractPythonRunConfiguration) {
-        selected = ((AbstractPythonRunConfiguration<?>)runConfiguration).getSdk();
+        selected = ((AbstractPythonRunConfiguration<?>)runConfiguration).getPythonInterpreter();
       }
     }
 
-    final Sdk selectedSdk = selected;
-    // most recent python version goes first
-    final List<XAttachDebugger> result = PythonSdkUtil.getAllLocalCPythons()
+    final PythonInterpreter selectedInterpreter = selected;
+    final List<XAttachDebugger> result = PyLocalAttachInterpretersKt.localAttachInterpreters(project)
       .stream()
-      .filter(sdk -> sdk != selectedSdk)
-      // Runs each interpreter, which the Attach to Process action can afford: the platform asks once per running
-      // process, but this list is built once per invocation and cached under DEBUGGERS_KEY, off the EDT.
-      .filter(sdk -> PythonInterpreterExtKt.isInterpreterUsable(sdk))
-      .sorted(PreferredSdkComparator.INSTANCE)
+      .filter(interpreter -> !interpreter.equals(selectedInterpreter))
       .map(PyLocalAttachDebugger::new)
       .collect(Collectors.toList());
-    if (selectedSdk != null) {
-      result.add(0, new PyLocalAttachDebugger(selectedSdk));
+    if (selectedInterpreter != null) {
+      result.add(0, new PyLocalAttachDebugger(selectedInterpreter));
     }
     return result;
   }
@@ -90,7 +81,7 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
 
       if (processInfo.getExecutableCannonicalPath().isPresent() &&
           new File(processInfo.getExecutableCannonicalPath().get()).exists()) {
-        result = new ArrayList<>(Arrays.asList(new PyLocalAttachDebugger(processInfo.getExecutableCannonicalPath().get())));
+        result = new ArrayList<>(Arrays.asList(new PyLocalAttachDebugger(project, processInfo.getExecutableCannonicalPath().get())));
       }
       else {
         result = contextHolder.getUserData(DEBUGGERS_KEY);
@@ -106,19 +97,17 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
   }
 
   private static class PyLocalAttachDebugger implements XAttachDebugger {
-    private final String mySdkHome;
-    private final @Nullable Sdk mySdk;
+    private final @Nullable PythonInterpreter myInterpreter;
     private final @NotNull @NlsSafe String myName;
 
-    PyLocalAttachDebugger(@NotNull Sdk sdk) {
-      mySdkHome = sdk.getHomePath();
-      mySdk = sdk;
-      myName = PythonSdkType.getInstance().getVersionString(sdk) + " (" + mySdkHome + ")";
+    PyLocalAttachDebugger(@NotNull PythonInterpreter interpreter) {
+      myInterpreter = interpreter;
+      myName = PyLocalAttachInterpretersKt.attachDebuggerName(interpreter);
     }
 
-    PyLocalAttachDebugger(@NotNull String sdkHome) {
-      mySdkHome = sdkHome;
-      mySdk = PythonSdkUtil.findSdkByPath(mySdkHome);
+    /** A debugger for the process of the Python binary at {@code binaryPath}, with the interpreter of the project for it. */
+    PyLocalAttachDebugger(@NotNull Project project, @NotNull String binaryPath) {
+      myInterpreter = PyLocalAttachInterpretersKt.findLocalAttachInterpreter(project, binaryPath);
       myName = "Python Debugger";
     }
 
@@ -131,7 +120,7 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
     public void attachDebugSession(@NotNull Project project,
                                    @NotNull XAttachHost attachHost,
                                    @NotNull ProcessInfo processInfo) throws ExecutionException {
-      PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, processInfo.getPid(), mySdk);
+      PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, processInfo.getPid(), myInterpreter);
       runner.launch();
     }
   }

@@ -69,7 +69,7 @@ internal class PythonAddLocalInterpreterDialog(
     val errorSink = ErrorSink().withProject(project)
 
     val rootPanel = panel {
-      model = PythonLocalAddInterpreterModel(ProjectPathFlows.create(basePath), EelFileSystem(eelApi = eel))
+      model = PythonLocalAddInterpreterModel(ProjectPathFlows.create(basePath), EelFileSystem(eelApi = eel), project)
       model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
       mainPanel = PythonAddCustomInterpreter(
         model = model,

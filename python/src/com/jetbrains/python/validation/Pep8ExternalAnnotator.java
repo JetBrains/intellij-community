@@ -20,8 +20,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,15 +58,14 @@ import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.LocalHelperPython;
+import com.jetbrains.python.sdk.LocalHelperPythonKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -127,22 +126,6 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     if (vFile == null || !FileTypeRegistry.getInstance().isFileOfType(vFile, PythonFileType.INSTANCE)) {
       return null;
     }
-    Sdk sdk = PythonSdkType.findLocalCPython(DocStringParser.getModuleForElement(psiFile));
-    if (sdk == null) {
-      if (!myReportedMissingInterpreter) {
-        myReportedMissingInterpreter = true;
-        reportMissingInterpreter();
-      }
-      return null;
-    }
-    final String homePath = sdk.getHomePath();
-    if (homePath == null) {
-      if (!myReportedMissingInterpreter) {
-        myReportedMissingInterpreter = true;
-        LOG.info("Could not find home path for interpreter " + homePath);
-      }
-      return null;
-    }
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiFile.getProject()).getCurrentProfile();
     final HighlightDisplayKey key = HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME);
     if (!profile.isToolEnabled(key, psiFile)) {
@@ -165,10 +148,8 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
       ignoredErrors.add("E261"); // At least two spaces before inline comment
     }
 
-    return new State(Path.of(homePath), // homePath is always valid!
-                     // The local SDK used to launch the pycodestyle.py script is not necessarily of the same version as the project SDK,
-                     // so LanguageLevel.forElement(file) might lead to launching the script incompatible with the "runner" interpreter.
-                     PySdkUtil.getLanguageLevelForSdk(sdk),
+    return new State(psiFile.getProject(),
+                     DocStringParser.getModuleForElement(psiFile),
                      psiFile.getText(),
                      profile.getErrorLevel(key, psiFile),
                      ignoredErrors,
@@ -196,6 +177,16 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
   @RequiresBackgroundThread
   public @Nullable Results doAnnotate(State collectedInfo) {
     if (collectedInfo == null) return null;
+    // The Python that runs pycodestyle.py can have another version than the interpreter of the project. So the helper is
+    // selected for the language level of that Python, not for LanguageLevel.forElement(file).
+    LocalHelperPython python = LocalHelperPythonKt.findLocalHelperPythonBlocking(collectedInfo.project, collectedInfo.module);
+    if (python == null) {
+      if (!myReportedMissingInterpreter) {
+        myReportedMissingInterpreter = true;
+        reportMissingInterpreter();
+      }
+      return null;
+    }
     ArrayList<String> options = new ArrayList<>();
 
     if (!collectedInfo.ignoredErrors.isEmpty()) {
@@ -207,9 +198,9 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
 
-    var pycodestyleScript = selectPycodestyleHelper(collectedInfo.interpreterVersion);
+    var pycodestyleScript = selectPycodestyleHelper(python.getLanguageLevel());
     var stdin = collectedInfo.fileText.getBytes(StandardCharsets.UTF_8);
-    var output = execPep8Helper(pycodestyleScript, collectedInfo.interpreterPath, stdin, options);
+    var output = execPep8Helper(pycodestyleScript, python.getBinary(), stdin, options);
 
 
     Results results = new Results(collectedInfo.level);
@@ -343,24 +334,23 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
   }
 
   static class State {
-    @NotNull
-    private final Path interpreterPath;
-    private final LanguageLevel interpreterVersion;
+    private final @NotNull Project project;
+    private final @Nullable Module module;
     private final String fileText;
     private final HighlightDisplayLevel level;
     private final List<String> ignoredErrors;
     private final int margin;
     private final boolean hangClosingBrackets;
 
-    State(@NotNull Path interpreterPath,
-          LanguageLevel interpreterVersion,
+    State(@NotNull Project project,
+          @Nullable Module module,
           String fileText,
           HighlightDisplayLevel level,
           List<String> ignoredErrors,
           int margin,
           boolean hangClosingBrackets) {
-      this.interpreterPath = interpreterPath;
-      this.interpreterVersion = interpreterVersion;
+      this.project = project;
+      this.module = module;
       this.fileText = fileText;
       this.level = level;
       this.ignoredErrors = ignoredErrors;

@@ -68,7 +68,12 @@ interface FileSystem<P : PathHolder> {
 
   /** The child [name] of the directory [dir] on this machine. It reads only the path. */
   fun resolveChild(dir: P, name: String): P
+  /**
+   * The interpreters of [project] that this machine runs and that a Python project under [projectPathPrefix] owns. Empty
+   * without [project], for example in the new project wizard: an interpreter belongs to one project.
+   */
   suspend fun getExistingSelectableInterpreters(
+    project: Project?,
     projectPathPrefix: Path,
   ): List<ExistingSelectableInterpreter<P>>
 

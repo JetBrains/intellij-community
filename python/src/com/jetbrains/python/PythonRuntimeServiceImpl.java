@@ -101,7 +101,7 @@ public final class PythonRuntimeServiceImpl extends PythonRuntimeService {
                                 @NotNull DocStringFormat format,
                                 @NotNull String input,
                                 @NotNull List<String> formatterFlags) {
-    return PyRuntimeDocstringFormatter.INSTANCE.runExternalTool(new PyRuntimeDocstringFormatter.ModuleOrSdk.TheModule((module)), format,
+    return PyRuntimeDocstringFormatter.INSTANCE.runExternalTool(new PyRuntimeDocstringFormatter.ModuleOrInterpreter.TheModule(module), format,
                                                                 input, formatterFlags);
   }
 
