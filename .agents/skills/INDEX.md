@@ -18,7 +18,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [driver-ui-tests](driver-ui-tests/SKILL.md) | Write IntelliJ UI tests with IDE Starter or UI Driver, or run one off-screen to verify a change. |
 | [duplicate-and-dead-code](duplicate-and-dead-code/SKILL.md) | Find semantic copies and dead code before a plan or a review. |
 | [eel](eel/SKILL.md) | Use IntelliJ EEL APIs for process execution, paths, WSL, or Docker. |
-| [fix-project-leak-from-tc-report](fix-project-leak-from-tc-report/SKILL.md) | Fix TeamCity project-leak test failures end to end. |
+| [fix-project-leak-from-tc-report](fix-project-leak-from-tc-report/SKILL.md) | Fix TeamCity project-leak test failures. |
 | [icon-resources](icon-resources/SKILL.md) | Manage IntelliJ icons, generated Icons classes, and icon-robots rules. |
 | [icons](icons/SKILL.md) | Create or review IntelliJ New UI SVG icons and theme variants. |
 | [ide-diagnostics-mcp](ide-diagnostics-mcp/SKILL.md) | Inspect a running IntelliJ IDE for freezes or blocked threads via MCP. |
