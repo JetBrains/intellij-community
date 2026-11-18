@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.pycharm.community.ide.impl"/>
+    <module name="intellij.libraries.assertj.core"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.junit6"/>
@@ -16,6 +17,8 @@
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.testFramework"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.python.community.impl.pipenv"/>
