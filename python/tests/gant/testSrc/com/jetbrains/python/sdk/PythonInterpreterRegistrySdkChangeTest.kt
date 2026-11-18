@@ -2,9 +2,10 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
-import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.findPythonInterpreter
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel
@@ -40,7 +41,7 @@ internal class PythonInterpreterRegistrySdkChangeTest {
     @TempDir home: Path,
     @TestDisposable disposable: Disposable,
   ): Unit = timeoutRunBlocking {
-    val registry = PythonInterpreterRegistry.getInstance(projectFixture.get())
+    val project = projectFixture.get()
     val sdk = ProjectJdkImpl("PY-93079 SDK change", PythonSdkType.getInstance())
     val firstOwner = home.resolve("first")
     val secondOwner = home.resolve("second")
@@ -51,7 +52,7 @@ internal class PythonInterpreterRegistrySdkChangeTest {
       modificator.commitChanges()
       ProjectJdkTable.getInstance().addJdk(sdk, disposable)
     }
-    awaitOwner(registry, sdk, firstOwner)
+    awaitOwner(project, sdk, firstOwner)
 
     edtWriteAction {
       val modificator = sdk.sdkModificator
@@ -59,13 +60,13 @@ internal class PythonInterpreterRegistrySdkChangeTest {
       modificator.commitChanges()
     }
 
-    awaitOwner(registry, sdk, secondOwner)
-    assertThat(registry.interpreterOf(sdk)?.ownerDir).isEqualTo(secondOwner)
+    awaitOwner(project, sdk, secondOwner)
+    assertThat(project.findPythonInterpreter(sdk)?.ownerDir).isEqualTo(secondOwner)
   }
 
   /** Waits until the registry holds an interpreter of [sdk] owned by [owner]. The test timeout ends a wait that never does. */
-  private suspend fun awaitOwner(registry: PythonInterpreterRegistry, sdk: ProjectJdkImpl, owner: Path) {
-    while (registry.interpreterOf(sdk)?.ownerDir != owner) {
+  private suspend fun awaitOwner(project: Project, sdk: ProjectJdkImpl, owner: Path) {
+    while (project.findPythonInterpreter(sdk)?.ownerDir != owner) {
       delay(50.milliseconds)
     }
   }

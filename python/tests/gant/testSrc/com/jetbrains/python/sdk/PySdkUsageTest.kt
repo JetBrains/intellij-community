@@ -7,6 +7,7 @@ import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication

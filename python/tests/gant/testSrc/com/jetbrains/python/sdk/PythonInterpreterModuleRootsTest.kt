@@ -15,6 +15,7 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.intellij.python.sdk.backend.classRoots
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel

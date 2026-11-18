@@ -51,7 +51,7 @@ fun findRunConfigurationInterpreterIfReady(
   }
   val root = workspaceRootOf(project, module)
   if (!sdkName.isNullOrEmpty()) {
-    registry.findByLegacySdkNameIfReady(sdkName, root?.pyProject?.baseDir)?.let { return it }
+    registry.legacy.findByLegacySdkNameIfReady(sdkName, root?.pyProject?.baseDir)?.let { return it }
   }
   if (!sdkHome.isNullOrEmpty() && root != null) {
     registry.interpretersIfReady(root.pyProject).firstOrNull { FileUtil.pathsEqual(it.binaryPathString, sdkHome) }?.let { return it }
@@ -85,5 +85,5 @@ private fun workspaceRootOf(project: Project, module: Module?): EvoPyProject? {
   val snapshot = EvoPyProjectModel.getInstance(project).snapshotOrNull() ?: return null
   if (module == null) return snapshot.main
   val evoPyProject = snapshot.forModule(module) ?: return null
-  return snapshot.workspaces.firstOrNull { workspace -> workspace.members.any { it === evoPyProject } }?.root
+  return snapshot.workspaceOf(evoPyProject)?.root
 }

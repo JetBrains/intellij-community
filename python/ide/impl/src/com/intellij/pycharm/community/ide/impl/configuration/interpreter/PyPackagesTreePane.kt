@@ -9,11 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SimpleTextAttributes
@@ -30,8 +27,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -297,7 +292,7 @@ internal class PyPackagesTreePane(
     add(scrollPane, BorderLayout.CENTER)
   }
 
-  /** Latest hierarchical package tree loaded for [currentSdk], filtered on demand by [searchQuery]. */
+  /** Latest hierarchical package tree loaded for [currentInterpreter], filtered on demand by [searchQuery]. */
   private var loadedNodes: List<PackageTreeNode> = emptyList()
   /** Names of workspace-member roots (uv/poetry); the renderer swaps their icon to the Python module glyph. */
   private var workspaceMemberNames: Set<WorkspaceMemberName> = emptySet()
@@ -308,9 +303,9 @@ internal class PyPackagesTreePane(
    */
   private var moduleDepNames: Set<ModuleDepName> = emptySet()
   private var searchQuery: String = ""
-  private var currentSdk: Sdk? = null
+  private var currentInterpreter: PythonInterpreter? = null
 
-  /** Cached package manager for [currentSdk]; kept alongside so the loader / reload paths do not resolve it twice. */
+  /** Cached package manager for [currentInterpreter]; kept alongside so the loader / reload paths do not resolve it twice. */
   private var currentManager: PythonPackageManager? = null
 
   init {
@@ -318,31 +313,28 @@ internal class PyPackagesTreePane(
       PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC,
       object : PythonPackageManagementListener {
         override fun packagesChanged(interpreter: PythonInterpreter) {
-          // Match by name: `currentSdk` may be an editable copy from `ProjectSdksModel` while the
-          // event fires against the original SDK from `ProjectJdkTable`, so `===` would miss it.
-          @Suppress("DEPRECATION") // The pane still holds the SDK of the settings combo.
-          if (interpreter.getSdkAPI().name != currentSdk?.name) return
-          ApplicationManager.getApplication().invokeLater({ reloadCurrentSdk() }, project.disposed)
+          if (interpreter != currentInterpreter) return
+          ApplicationManager.getApplication().invokeLater({ reloadCurrentInterpreter() }, project.disposed)
         }
       },
     )
   }
 
   /**
-   * Re-runs the async load for the SDK currently displayed. Called from the packaging-event listener
+   * Re-runs the async load for the interpreter currently displayed. Called from the packaging-event listener
    * so the tree reflects install / uninstall / change-version outcomes that the user triggered from
-   * inline row actions. [loadSdk] invalidates the cache first so uv / poetry re-scan `uv tree` instead of
+   * inline row actions. [loadInterpreter] invalidates the cache first so uv / poetry re-scan `uv tree` instead of
    * returning the pre-op snapshot.
    *
    * `treeProvider?.invalidateCache()` uses a safe call because a manager without a tree provider
    * still drives this pane (via the flat-list fallback path); there is nothing to
    * invalidate on that side, so the safe call is intentional, not defensive.
    */
-  private fun reloadCurrentSdk() {
-    val sdk = currentSdk ?: return
-    currentSdk = null
+  private fun reloadCurrentInterpreter() {
+    val interpreter = currentInterpreter ?: return
+    currentInterpreter = null
     currentManager = null
-    loadSdk(sdk, invalidateCache = true)
+    loadInterpreter(interpreter, invalidateCache = true)
   }
 
   /**
@@ -356,39 +348,28 @@ internal class PyPackagesTreePane(
     return if (WorkspaceMemberName(name) in workspaceMemberNames) name else null
   }
 
-  fun setSdk(sdk: Sdk?) {
-    if (currentSdk === sdk) return
-    if (sdk == null) {
-      currentSdk = null
+  fun setInterpreter(interpreter: PythonInterpreter?) {
+    if (currentInterpreter == interpreter) return
+    if (interpreter == null) {
+      currentInterpreter = null
       currentManager = null
       applyUiState(PackageTreeUiState.noSdk())
       return
     }
-    loadSdk(sdk, invalidateCache = false)
+    loadInterpreter(interpreter, invalidateCache = false)
   }
 
-  /**
-   * Shows "loading", then the packages of [sdk]. Stops as soon as the user selects another SDK.
-   *
-   * The interpreter is detected here, so the manager is known only inside the coroutine. That is why a reload
-   * invalidates the cache of the manager it gets here, and not of [currentManager], which is `null` during detection.
-   */
-  private fun loadSdk(sdk: Sdk, invalidateCache: Boolean) {
-    currentSdk = sdk
+  /** Shows "loading", then the packages of [interpreter]. Stops as soon as the user selects another interpreter. */
+  private fun loadInterpreter(interpreter: PythonInterpreter, invalidateCache: Boolean) {
+    currentInterpreter = interpreter
     currentManager = null
     applyUiState(PackageTreeUiState.loading())
 
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      // The settings hold an editable copy of the SDK, so the interpreter is detected here and not read from the
-      // project structure.
-      // A broken SDK names no interpreter, so it has no packages: the tab shows it as no SDK.
-      val interpreter = sdk.pythonInterpreterResultAsync().successOrNull ?: return@launch withContext(Dispatchers.EDT) {
-        if (currentSdk === sdk) applyUiState(PackageTreeUiState.noSdk())
-      }
       val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
       if (invalidateCache) manager.treeProvider?.invalidateCache()
       val stillCurrent = withContext(Dispatchers.EDT) {
-        if (currentSdk !== sdk) return@withContext false
+        if (currentInterpreter != interpreter) return@withContext false
         currentManager = manager
         // Paint the cached snapshot first, so the tab is not blank while the tree loader runs.
         applyUiState(snapshotUiState(manager))
@@ -397,7 +378,7 @@ internal class PyPackagesTreePane(
       if (!stillCurrent) return@launch
       val uiState = safeLoadPackageTree(manager)
       withContext(Dispatchers.EDT) {
-        if (currentSdk !== sdk) return@withContext
+        if (currentInterpreter != interpreter) return@withContext
         applyUiState(uiState)
       }
     }
@@ -664,14 +645,12 @@ internal class PyPackagesTreePane(
    * Packages tab, matching PPTW's popup-over-tool-window flow.
    */
   private fun triggerInstallPackageDialog() {
-    val sdkToOpenOn = currentSdk
+    val interpreterToOpenOn = currentInterpreter
     val moduleForPreselect = preselectModuleName
     val prefill = searchQuery.trim().takeIf { it.isNotEmpty() }
     // Taken at the click, so the dialog opens over a modal Settings window instead of waiting for it to close.
     val modality = ModalityState.current().asContextElement()
     PyPackageCoroutine.launch(project) {
-      // A broken SDK names no interpreter, so the dialog opens without one.
-      val interpreterToOpenOn = sdkToOpenOn?.pythonInterpreterResultAsync()?.successOrNull
       withContext(Dispatchers.EDT + modality) {
         PyInstallPackageDialogLauncher.open(
           project = project,
@@ -710,10 +689,10 @@ internal class PyPackagesTreePane(
    * the install dialog path, which needs the workspace as its parent).
    */
   private fun triggerChangeVersionDialog(pkg: PackageTreeNode, workspaceMemberName: String?, anchor: RelativePoint?) {
-    val sdk = currentSdk ?: return
+    val interpreter = currentInterpreter ?: return
     PyChangeVersionPopupLauncher.open(
       project = project,
-      sdk = sdk,
+      interpreter = interpreter,
       packageName = pkg.name.name,
       currentVersion = pkg.version,
       anchor = anchor,
@@ -730,18 +709,13 @@ internal class PyPackagesTreePane(
    * safety net for the case where the SDK is deactivated between commit and event.
    */
   private fun triggerDeletePackage(pkg: PackageTreeNode, workspaceMemberName: String?) {
-    val sdk = currentSdk ?: return
+    val interpreter = currentInterpreter ?: return
     val pkgName = pkg.name.name
     val member = workspaceMemberName?.let { PyWorkspaceMember(it) }
     PyPackageCoroutine.launch(project) {
-      val interpreter = sdk.pythonInterpreterResultAsync().getOr {
-        ErrorSink().emit(it.error, project)
-        return@launch
-      }
       PythonPackageManagerUI.forPythonInterpreter(project, interpreter).uninstallPackagesBackground(listOf(pkgName), workspaceMember = member)
       withContext(Dispatchers.EDT) {
-        val current = currentSdk ?: return@withContext
-        if (current === sdk) reloadCurrentSdk()
+        if (currentInterpreter == interpreter) reloadCurrentInterpreter()
       }
     }
   }

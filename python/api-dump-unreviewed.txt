@@ -1226,7 +1226,7 @@ a:com.jetbrains.python.testing.PyAbstractTestFactory
 - getPackageSpec():com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 - hashCode():I
 - isExplicitChoice():Z
-- isFrameworkInstalled(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk):Z
+- isFrameworkInstalled(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):Z
 - a:onlyClassesAreSupported(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk):Z
 a:com.jetbrains.python.testing.PyAbstractTestSettingsEditor
 - com.intellij.openapi.options.SettingsEditor

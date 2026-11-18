@@ -3,11 +3,10 @@ package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
 import kotlinx.coroutines.flow.drop
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
-import com.intellij.python.sdk.backend.PythonSdkTable
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -20,8 +19,6 @@ import com.intellij.openapi.options.NoAutomaticReset
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -81,25 +78,6 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
   // Cancelling [sessionScope] disposes this child via `asDisposable`.
   private val sessionDisposable: Disposable = sessionScope.asDisposable()
 
-  private val projectSdksModel: ProjectSdksModel = ProjectSdksModel()
-
-  /** [PyWorkspaceStructureModel]'s view of the editable-SDK pool — a thin adapter over [projectSdksModel]. */
-  private val sdksTable: PyWorkspaceStructureModel.SdksTable = object : PyWorkspaceStructureModel.SdksTable {
-    override fun trackedNames(): Set<SdkName> =
-      PythonSdkTable.allSdks(project).mapTo(HashSet()) { SdkName(it.name) }
-
-    override fun syncFromJdkTable() {
-      // Re-read live JdkTable; add-time clone caused PY-92599.
-      projectSdksModel.reset(project)
-    }
-  }
-  private val model: PyWorkspaceStructureModel = PyWorkspaceStructureModel(
-    sdksTable = sdksTable,
-    onSdksChanged = { refreshAllModuleCombos() },
-    // Platform fires JDK-table events from write actions; hop to EDT before touching the model
-    // state so pool resync + combo refresh land after the write action releases (PY-92598).
-    dispatcher = { task -> sessionScope.launch(Dispatchers.EDT) { task.run() } },
-  )
 
   private val presenter: PyWorkspaceStructurePresenter = PyWorkspaceStructurePresenter()
 
@@ -144,15 +122,10 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     else PyBundle.message("configurable.PyWorkspaceStructureConfigurable.project.display.name")
 
   override fun createComponent(): JComponent {
-    projectSdksModel.reset(project)
     reloadModulesModel()
 
-    // Subscription dies with the scope. Model is itself a `ProjectJdkTable.Listener`; its injected
-    // EDT dispatcher defers each handler until the originating write action releases (PY-92598).
-    ApplicationManager.getApplication().messageBus.connect(sessionScope).subscribe(
-      ProjectJdkTable.JDK_TABLE_TOPIC,
-      model,
-    )
+    // An interpreter can be added or removed outside this page, such as on All Interpreters. The combos follow the registry.
+    PythonInterpreterRegistry.getInstance(project).addTableChangeListener(sessionDisposable) { refreshAllModuleCombos() }
 
     // The interpreter of a module can change outside this page, such as in the widget, and the interpreter library flow
     // fires no JDK-table event for it. Each snapshot states the interpreters after the change, so the panes follow it.
@@ -220,7 +193,6 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
   }
 
   override fun isModified(): Boolean {
-    // Don't query `projectSdksModel.isModified` — this page doesn't apply/reset it, so flag never clears.
     if (isAutoConfigToggleVisible() &&
         ::autoConfigCheckBox.isInitialized &&
         autoConfigCheckBox.isSelected != project.usePyprojectToml) return true
@@ -233,7 +205,6 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     PyProjectModelSettings.featureStateInRegistry != PyProjectModelSettings.FeatureState.OFF
 
   override fun reset() {
-    projectSdksModel.reset(project)
     if (isAutoConfigToggleVisible() && ::autoConfigCheckBox.isInitialized) {
       autoConfigCheckBox.isSelected = project.usePyprojectToml
       updateAutoConfigWarningVisibility()
@@ -303,10 +274,9 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     sessionScope.cancel()
     modulePanes.values.forEach { it.dispose() }
     modulePanes.clear()
-    projectSdksModel.disposeUIResources()
   }
 
-  /** Refresh SDK dropdown on JDK-table change from outside this page. */
+  /** Refreshes the interpreter combos after an interpreter was added or removed outside this page. */
   private fun refreshAllModuleCombos() {
     modulePanes.values.forEach { it.refreshSdkCombo() }
   }
@@ -388,7 +358,6 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
         if (modulePanes[module] != null) return@withContext
         val pane = PyModuleDetailsPane(
           pyProject = pyProject,
-          projectSdksModel = projectSdksModel,
           isMultiModuleProvider = ::isMultiModule,
           initialProjectLinkCandidates = projectLinkCandidates,
           initialProjectLinks = initialProjectLinks,

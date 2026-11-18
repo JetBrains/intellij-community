@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.impl
 
+import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.intellij.python.sdk.backend.isIgnoredInterpreterEntry
 import com.intellij.python.sdk.backend.isInterpreterLibraryCarrier
 import com.intellij.openapi.module.ModuleUtilCore
@@ -269,7 +270,7 @@ class PyBuiltinCache private constructor(
             // isIgnoredInterpreterEntry.
             if (orderEntry == null || orderEntry.isIgnoredInterpreterEntry()) continue
             if (orderEntry is JdkOrderEntry) {
-              interpreter = orderEntry.jdk?.let { PythonInterpreterRegistry.getInstance(psiFile.project).interpreterOfIfReady(it) }
+              interpreter = orderEntry.jdk?.let { psiFile.project.findPythonInterpreterIfReady(it) }
             }
             // The interpreter library of a module carries the roots of its interpreter, as its SDK does.
             else if (OrderEntryUtil.isModuleLibraryOrderEntry(orderEntry) || orderEntry.isInterpreterLibraryCarrier()) {
@@ -284,7 +285,7 @@ class PyBuiltinCache private constructor(
     /** [getBuiltinsForInterpreter] for the interpreter that the registry of [project] holds for [sdk]. */
     @JvmStatic
     fun getBuiltinsForSdk(project: Project, sdk: Sdk): PyFile? =
-      PythonInterpreterRegistry.getInstance(project).interpreterOfIfReady(sdk)?.let { getBuiltinsForInterpreter(project, it) }
+      project.findPythonInterpreterIfReady(sdk)?.let { getBuiltinsForInterpreter(project, it) }
 
     @JvmStatic
     fun getBuiltinsForInterpreter(project: Project, interpreter: PythonInterpreter): PyFile? {

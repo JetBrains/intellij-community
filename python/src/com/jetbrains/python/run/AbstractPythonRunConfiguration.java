@@ -34,7 +34,7 @@ import com.jetbrains.python.PythonModuleTypeBase;
 import com.intellij.python.pyproject.model.evolution.PyRunConfigurationInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.python.sdk.backend.PythonInterpreterRegistryKt;
+import com.intellij.python.sdk.backend.PythonInterpreterSdkBoundaryKt;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.run.features.PyRunToolData;
@@ -401,7 +401,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Override
   @Transient
   public void setSdk(@Nullable Sdk sdk) {
-    setPythonInterpreter(sdk != null ? PythonInterpreterRegistryKt.findPythonInterpreterIfReady(getProject(), sdk) : null);
+    setPythonInterpreter(sdk != null ? PythonInterpreterSdkBoundaryKt.findPythonInterpreterIfReady(getProject(), sdk) : null);
   }
 
   /**

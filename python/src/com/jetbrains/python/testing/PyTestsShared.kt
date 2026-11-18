@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.google.gson.Gson
@@ -819,10 +820,10 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
    */
   open val packageSpec: PackageAvailabilitySpec? = null
 
-  open fun isFrameworkInstalled(project: Project, sdk: Sdk): Boolean {
+  open fun isFrameworkInstalled(project: Project, interpreter: PythonInterpreter): Boolean {
     // example is unittest, it's part of stdlib, so no need to check.
     val spec = packageSpec ?: return true
-    return isPackageAvailable(project, sdk, spec)
+    return isPackageAvailable(project, interpreter, spec)
   }
 }
 

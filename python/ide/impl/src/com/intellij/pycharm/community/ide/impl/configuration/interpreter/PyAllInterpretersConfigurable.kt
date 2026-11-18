@@ -1,27 +1,27 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
-import com.intellij.python.sdk.backend.PythonSdkTable
+import com.intellij.python.sdk.backend.PythonInterpreterEntry
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.impl.presentation
 import com.intellij.python.sdk.backend.impl.PythonInterpreterPresentation
-import com.intellij.python.sdk.backend.impl.brokenSdkPresentation
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.icons.icon
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
@@ -33,17 +33,24 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.associatedModuleDir
+import com.intellij.python.sdk.backend.binaryPathString
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
@@ -51,38 +58,33 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.hover.ListHoverListener
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.insets
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.Result
 import com.jetbrains.python.configuration.PyInterpreterEditDialogLauncher
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.configuration.PyInterpreterPathsDialogLauncher
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
-import com.jetbrains.python.sdk.asModuleOrProject
-import com.jetbrains.python.sdk.associatedModuleNioPath
-import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Cursor
 import java.awt.Dimension
-import java.awt.Graphics
 import java.awt.Point
-import java.awt.Rectangle
 import java.awt.datatransfer.StringSelection
-import java.awt.event.MouseAdapter
+import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
+import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
 import javax.swing.SwingUtilities
@@ -97,7 +99,6 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
 
   private val projectSdksModel = ProjectSdksModel()
   private val listModel = CollectionListModel<PyInterpreterRow>()
-  private val rowActionsState = RowActionsState()
 
   /**
    * Selection snapshot updated on EDT by the list's own `ListSelectionListener` and read by toolbar
@@ -111,17 +112,24 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     // Track the viewport width so long paths do not push the list wider than its scroll pane and cause the
     // parent Settings row to expand and clip content when the filter/search changes the row count.
     override fun getScrollableTracksViewportWidth(): Boolean = true
+
+    // A group header is not a row: a click on it selects nothing.
+    override fun processMouseEvent(e: MouseEvent) {
+      if (isOnGroupHeader(this, e.point)) return
+      // The context menu acts on the selected row, so a right click selects the row under the mouse first.
+      if (e.id == MouseEvent.MOUSE_PRESSED && SwingUtilities.isRightMouseButton(e)) {
+        locationToIndex(e.point).takeIf { it >= 0 && getCellBounds(it, it)?.contains(e.point) == true }?.let { selectedIndex = it }
+      }
+      super.processMouseEvent(e)
+    }
   }.apply {
     selectionMode = ListSelectionModel.SINGLE_SELECTION
-    cellRenderer = PyInterpreterNameAndVersionRenderer(this, rowActionsState)
+    cellRenderer = PyInterpreterNameAndVersionRenderer()
     emptyText.text = PyBundle.message("configurable.PyAllInterpretersConfigurable.empty.text")
     selectionBackground = background
     visibleRowCount = DEFAULT_VISIBLE_ROWS
     ListHoverListener.DEFAULT.addTo(this)
     addListSelectionListener { currentlySelectedRow = selectedValue }
-    val handler = RowActionsMouseHandler(this, rowActionsState, ::copyInterpreterPath)
-    addMouseListener(handler)
-    addMouseMotionListener(handler)
   }
 
   /** Snapshot of interpreters after the "hide other projects" filter, before the search-field filter. */
@@ -196,13 +204,25 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
 
   private fun buildToolbarAndList(): JComponent {
     // No Add here: every interpreter belongs to a PyProject, and this page has none. Add one from a module.
+    val remove = RemoveInterpreterAction()
+    val edit = EditInterpreterAction()
+    val showPaths = ShowInterpreterPathsAction()
+    val copyPath = CopyInterpreterPathAction()
     val actionGroup = DefaultActionGroup().apply {
-      add(RemoveInterpreterAction())
+      add(remove)
       addSeparator()
       add(HideOthersToggleAction())
-      add(EditInterpreterAction())
-      add(ShowInterpreterPathsAction())
+      add(edit)
+      add(showPaths)
+      add(copyPath)
     }
+    // The toolbar is not in the Tab order, so the list reaches its actions from the keyboard: by shortcut, and by the
+    // context menu (Shift+F10). A tooltip of a toolbar button shows its shortcut.
+    remove.registerCustomShortcutSet(CommonShortcuts.getDelete(), interpretersList)
+    edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), interpretersList)
+    showPaths.registerCustomShortcutSet(CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), interpretersList)
+    copyPath.registerCustomShortcutSet(CommonShortcuts.getCopy(), interpretersList)
+    PopupHandler.installPopupMenu(interpretersList, DefaultActionGroup(edit, showPaths, copyPath, Separator.getInstance(), remove), ActionPlaces.POPUP)
     val toolbar = ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, true)
       .apply { targetComponent = interpretersList }
@@ -273,26 +293,32 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     projectSdksModel.disposeUIResources()
   }
 
-  private fun reloadList(preferredSelection: Sdk? = null) {
-    val previouslySelected = (preferredSelection?.name ?: selectedRow()?.sdk?.name)?.let(::PySdkName)
-    val allEditable = project.asModuleOrProject.filterAssignablePythonSdks(PythonSdkTable.allSdks(project))
+  private fun reloadList() {
+    val previouslySelected = selectedRow()?.selectionKey
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      // A broken SDK names no interpreter, so it gets a row that says why, and the user can remove it.
+      // An entry that names no interpreter gets a row that says why, and the user can remove it.
       // The interpreters a project uses: this page is a history of environments, so they cannot be removed here.
       val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
-      val rows = allEditable.map { sdk ->
-        when (val result = sdk.pythonInterpreterResultAsync()) {
-          is Result.Success -> PyInterpreterRow.Interpreter(result.result, inUse = snapshot.isInUse(result.result))
-          is Result.Failure -> PyInterpreterRow.Broken(sdk, result.error.message)
+      val rows = PythonInterpreterRegistry.getInstance(project).interpreterEntries().map { entry ->
+        when (entry) {
+          is PythonInterpreterEntry.Available -> PyInterpreterRow.Interpreter(
+            entry,
+            inUse = snapshot.isInUse(entry.interpreter),
+            owner = snapshot.ownerNameOf(entry.interpreter),
+          )
+          is PythonInterpreterEntry.Unavailable -> PyInterpreterRow.Broken(entry)
         }
       }
       val moduleBasePaths = project.getPyProjects().mapTo(HashSet()) { it.baseDir }
-      val visible = filterInterpreters(rows, hideOthers, moduleBasePaths)
+      val ownerOrder = snapshot.evoPyProjects.map { it.pyProject.residesOnModule.name }.toList()
+      val showGroups = snapshot.workspaces.size > 1
+      val visible = groupByOwner(filterInterpreters(rows, hideOthers, moduleBasePaths), ownerOrder)
       withContext(Dispatchers.EDT) {
+        interpretersList.putClientProperty(SHOW_GROUPS, showGroups)
         currentSnapshot = visible
         applySearchFilter()
-        val pickedName = pickSelection(listModel.items.map { PySdkName(it.sdk.name) }, previouslySelected)
-        val toSelect = pickedName?.let { name -> listModel.items.firstOrNull { PySdkName(it.sdk.name) == name } }
+        val pickedKey = pickSelection(listModel.items.map { it.selectionKey }, previouslySelected)
+        val toSelect = pickedKey?.let { key -> listModel.items.firstOrNull { it.selectionKey == key } }
         if (toSelect != null) interpretersList.setSelectedValue(toSelect, true)
       }
     }
@@ -332,21 +358,15 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     protected abstract fun perform(interpreter: PythonInterpreter)
   }
 
-  /** Removes the SDK of the selected row. It also works for a broken SDK, which the user can only remove or recreate. */
+  /** Removes the SDK of the selected row, see [removeRow]. */
   private inner class RemoveInterpreterAction : DumbAwareAction(
     PyBundle.messagePointer("python.interpreters.remove.interpreter.action.text"),
     Presentation.NULL_STRING,
-    AllIcons.General.Remove,
+    // The trash can of the new UI.
+    AllIcons.Actions.GC,
   ) {
     override fun actionPerformed(e: AnActionEvent) {
-      val row = selectedRow()?.takeUnless { it.isInUse() } ?: return
-      PyPackageCoroutine.launch(project) {
-        PythonInterpreterRegistry.getInstance(project).removeSdk(row.sdk)
-        withContext(Dispatchers.EDT) {
-          projectSdksModel.reset(project)
-          reloadList()
-        }
-      }
+      selectedRow()?.let(::removeRow)
     }
 
     override fun update(e: AnActionEvent) {
@@ -369,14 +389,7 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     PyBundle.messagePointer("python.interpreters.show.interpreter.paths.text"),
     AllIcons.Actions.ShowAsTree,
   ) {
-    override fun perform(interpreter: PythonInterpreter) {
-      PyPackageCoroutine.launch(project) {
-        interpreter.openPathsDialog(project) {
-          markSdkModifiedFromRowAction()
-          reloadList(preferredSelection = it)
-        }
-      }
-    }
+    override fun perform(interpreter: PythonInterpreter) = showPaths(interpreter)
   }
 
   /**
@@ -394,15 +407,59 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     override fun update(e: AnActionEvent) {
       val interpreter = selectedInterpreter()
       e.presentation.isEnabledAndVisible =
-        interpreter != null && interpreter.sdk.sdkAdditionalData is PyTargetAwareAdditionalData
+        when (interpreter) {
+          is TargetPythonInterpreter -> true
+          is NativePythonInterpreter, null -> false
+        }
     }
 
-    override fun perform(interpreter: PythonInterpreter) {
-      val editor = interpreter.editorFor(project, this@PyAllInterpretersConfigurable) ?: return
-      if (editor.showAndGet()) {
+    override fun perform(interpreter: PythonInterpreter) = editInterpreter(interpreter)
+  }
+
+  /** Copies the path of the selected row. It also works for a broken SDK that has a path. */
+  private inner class CopyInterpreterPathAction : DumbAwareAction(
+    PyBundle.messagePointer("configurable.PyAllInterpretersConfigurable.row.action.copy.path"),
+    Presentation.NULL_STRING,
+    AllIcons.Actions.Copy,
+  ) {
+    override fun actionPerformed(e: AnActionEvent) {
+      val path = selectedRow()?.path ?: return
+      CopyPasteManager.getInstance().setContents(StringSelection(path))
+    }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = selectedRow()?.path != null
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  }
+
+  /** Removes the SDK of [row]. It also works for a broken SDK, which the user can only remove or recreate. */
+  private fun removeRow(row: PyInterpreterRow) {
+    if (row.isInUse()) return
+    PyPackageCoroutine.launch(project) {
+      PythonInterpreterRegistry.getInstance(project).remove(row.entry)
+      withContext(Dispatchers.EDT) {
+        projectSdksModel.reset(project)
+        reloadList()
+      }
+    }
+  }
+
+  private fun showPaths(interpreter: PythonInterpreter) {
+    PyPackageCoroutine.launch(project) {
+      interpreter.openPathsDialog(project) {
         markSdkModifiedFromRowAction()
         reloadList()
       }
+    }
+  }
+
+  private fun editInterpreter(interpreter: PythonInterpreter) {
+    val editor = interpreter.editorFor(project, this@PyAllInterpretersConfigurable) ?: return
+    if (editor.showAndGet()) {
+      markSdkModifiedFromRowAction()
+      reloadList()
     }
   }
 
@@ -427,11 +484,6 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   }
 
-  private fun copyInterpreterPath(row: PyInterpreterRow) {
-    val path = row.sdk.homePath ?: return
-    CopyPasteManager.getInstance().setContents(StringSelection(path))
-  }
-
   companion object {
     const val ID: String = "com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyAllInterpretersConfigurable"
 
@@ -441,8 +493,6 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     private const val DEFAULT_VISIBLE_ROWS = 12
   }
 }
-
-private const val COPY_PATH_TOOLTIP_KEY = "configurable.PyAllInterpretersConfigurable.row.action.copy.path"
 
 /**
  * Renders an interpreter into [label] as the "All Interpreters" list row draws it:
@@ -454,134 +504,48 @@ internal fun renderPyInterpreterItemText(label: SimpleColoredComponent, item: Py
   val problem = item.problem
   if (problem != null) label.append("[${problem.marker}] ${item.name}", SimpleTextAttributes.ERROR_ATTRIBUTES)
   else label.append(item.name)
-  item.suffix?.let { label.append(" $it", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES) }
+  item.suffix?.let { label.append(" $it") }
   label.append("  ${item.description}", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
   label.toolTipText = problem?.reason
 }
 
 /**
- * Hover / press state for the single Copy-path icon, shared between the mouse handler (writes) and
- * the renderer (reads). The renderer is a stamp with no persistent event stream, so its "is this
- * icon hovered" question is answered by the handler-owned latest row.
+ * The owner group title of the row at [index] of [list] when the row starts a group, else `null`. The rows come
+ * grouped by owner, see [groupByOwner]. Without [SHOW_GROUPS] the list has no groups.
  */
-internal class RowActionsState {
-  var hoveredRow: Int = -1
-    private set
-  var pressedRow: Int = -1
-    private set
+private fun groupTitleAt(list: JList<out PyInterpreterRow>, index: Int): @Nls String? {
+  if (list.getClientProperty(SHOW_GROUPS) != true) return null
+  val model = list.model
+  val title = model.getElementAt(index)?.groupTitle() ?: return null
+  if (index == 0) return title
+  return title.takeIf { model.getElementAt(index - 1)?.groupTitle() != it }
+}
 
-  fun setHover(row: Int): Boolean {
-    if (row == hoveredRow) return false
-    hoveredRow = row
-    return true
-  }
-
-  fun setPressed(row: Int): Boolean {
-    if (row == pressedRow) return false
-    pressedRow = row
-    return true
-  }
+/** Whether [point] of [list] is on the group header above a row. */
+private fun isOnGroupHeader(list: JList<out PyInterpreterRow>, point: Point): Boolean {
+  val row = list.locationToIndex(point).takeIf { it >= 0 } ?: return false
+  val bounds = list.getCellBounds(row, row) ?: return false
+  return bounds.contains(point) && point.y < bounds.y + groupHeaderHeight(list, row)
 }
 
 /**
- * Translates mouse gestures on the list into row lookups against the renderer's icon geometry,
- * updates [RowActionsState], repaints the affected row, adjusts the cursor, and finally routes a
- * click to [onCopyPath]. Press → release on the same row to fire, matching standard button UX.
+ * The client property of the list that says whether the list shows the owner groups: only a project with more than one
+ * workspace has owners to tell apart.
  */
-private class RowActionsMouseHandler(
-  private val list: JBList<PyInterpreterRow>,
-  private val state: RowActionsState,
-  private val onCopyPath: (PyInterpreterRow) -> Unit,
-) : MouseAdapter() {
+private const val SHOW_GROUPS = "PyAllInterpreters.showGroups"
 
-  override fun mouseMoved(e: MouseEvent) = updateHover(e)
-  override fun mouseDragged(e: MouseEvent) = updateHover(e)
-  override fun mouseEntered(e: MouseEvent) = updateHover(e)
+/** The height of the group header that the row at [index] of [list] draws above itself, or 0 without one. */
+private fun groupHeaderHeight(list: JList<out PyInterpreterRow>, index: Int): Int =
+  if (groupTitleAt(list, index) != null) newGroupHeader().apply { caption = "X" }.preferredSize.height else 0
 
-  override fun mouseExited(e: MouseEvent) {
-    if (state.setHover(-1)) list.repaint()
-    list.cursor = Cursor.getDefaultCursor()
-  }
+/** A group header without a line: the caption alone separates the groups. */
+private fun newGroupHeader(): GroupHeaderSeparator =
+  GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets()).apply { setHideLine(true) }
 
-  override fun mousePressed(e: MouseEvent) {
-    if (!SwingUtilities.isLeftMouseButton(e)) return
-    val row = hitTest(e) ?: return
-    if (state.setPressed(row)) repaintRow(row)
-    e.consume()
-  }
-
-  override fun mouseReleased(e: MouseEvent) {
-    if (!SwingUtilities.isLeftMouseButton(e)) return
-    val pressedRow = state.pressedRow
-    if (state.setPressed(-1) && pressedRow >= 0) repaintRow(pressedRow)
-    val row = hitTest(e) ?: return
-    if (row == pressedRow) {
-      list.model.getElementAt(row)?.let(onCopyPath)
-      e.consume()
-    }
-  }
-
-  private fun updateHover(e: MouseEvent) {
-    val row = hitTest(e) ?: -1
-    if (state.setHover(row)) list.repaint()
-    list.cursor = if (row >= 0) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
-    list.toolTipText = if (row >= 0) PyBundle.message(COPY_PATH_TOOLTIP_KEY) else null
-  }
-
-  private fun hitTest(e: MouseEvent): Int? {
-    val row = list.locationToIndex(Point(e.x, e.y)).takeIf { it >= 0 } ?: return null
-    val bounds = list.getCellBounds(row, row) ?: return null
-    if (!bounds.contains(e.x, e.y)) return null
-    return row.takeIf { rowActionRect(bounds).contains(e.x, e.y) }
-  }
-
-  private fun repaintRow(row: Int) {
-    val b = list.getCellBounds(row, row) ?: return
-    list.repaint(b)
-  }
-}
-
-/**
- * Icon geometry for the single Copy-path action, shared between the renderer (paint) and the mouse
- * handler (hit-test) so both sides read the same trailing offsets from the same platform
- * accessors — no drift between where the icon paints and where the click lands. Coordinates are in
- * list-space (relative to the JList itself); the renderer converts back to its inner-panel space.
- */
-private fun rowActionRect(rowBounds: Rectangle): Rectangle {
-  val rowInsetH = rowSelectionBorderInsets().right
-  val trailingPad = JBUI.scale(RowActionMetrics.TRAILING_INSET)
-  val iconW = RowActionMetrics.ICON_SIZE
-  val iconH = RowActionMetrics.ICON_SIZE
-  val y = rowBounds.y + (rowBounds.height - iconH) / 2
-  val copyX = rowBounds.x + rowBounds.width - rowInsetH - trailingPad - iconW
-  return Rectangle(copyX, y, iconW, iconH)
-}
-
-/**
- * Returns the border insets the renderer's [SelectablePanel] wraps around its inner content — same recipe
- * used by [com.intellij.ui.dsl.listCellRenderer.impl.LcrRowImpl] so the icon geometry follows platform LaF
- * and stays in sync with the selection band.
- */
-private fun rowSelectionBorderInsets(): java.awt.Insets {
-  val leftRight = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get()
-  val inner = JBUI.CurrentTheme.Popup.Selection.innerInsets()
-  return insets(0, inner.left + leftRight, 0, inner.right + leftRight)
-}
-
-private object RowActionMetrics {
-  /**
-   * Icon slot dimensions — resolved from the actual icons rather than hardcoded 16px so HiDPI and
-   * theme overrides drive the layout. Both trailing icons are the same size in practice.
-   */
-  val ICON_SIZE: Int
-    get() = AllIcons.Actions.Copy.iconWidth
-
-  /** Space between the last icon and the row's inner selection edge — reuses the standard focus width. */
-  val TRAILING_INSET: Int
-    get() = BW.get()
-  /** Extra pad around each icon inside its hover / pressed background rectangle. Same value. */
-  val HOVER_PAD: Int
-    get() = BW.get()
+/** "in use": small grey text for a row that a project uses, so it cannot be removed. */
+private fun newInUseLabel(): JBLabel = JBLabel(PyBundle.message("python.interpreters.in.use")).apply {
+  font = JBFont.small()
+  foreground = NamedColorUtil.getInactiveTextColor()
 }
 
 /**
@@ -593,22 +557,44 @@ private object RowActionMetrics {
 private val PythonInterpreter.sdk: Sdk
   get() = getSdkAPI()
 
-/** A row of the page: the interpreter of an SDK, or an SDK that names no interpreter. */
+/** A row of the page: an entry of the registry, see [PythonInterpreterEntry]. */
 internal sealed interface PyInterpreterRow {
-  val sdk: Sdk
+  val entry: PythonInterpreterEntry
+
+  /** The name that the row shows, for the search field. */
+  val name: @NlsSafe String
+
+  /** The path of the Python binary, for the search field and Copy Path, or `null` when the row has none. */
+  val path: @NlsSafe String?
+
+  /** What keeps the row selected across a reload, see [pickSelection]. */
+  val selectionKey: PySdkName
 
   /** What the row draws. */
   fun presentation(): PythonInterpreterPresentation
 
-  /** A row of [interpreter]. [inUse] when a project uses it, so it cannot be removed, see [isInUse]. */
-  class Interpreter(val interpreter: PythonInterpreter, val inUse: Boolean = false) : PyInterpreterRow {
-    override val sdk: Sdk get() = interpreter.sdk
+  /**
+   * A row of an interpreter. [inUse] when a project uses it, so it cannot be removed, see [isInUse]. [owner] is the name
+   * of the Python project that owns it, see [ownerNameOf].
+   */
+  class Interpreter(
+    override val entry: PythonInterpreterEntry.Available,
+    val inUse: Boolean = false,
+    val owner: @NlsSafe String? = null,
+  ) : PyInterpreterRow {
+    val interpreter: PythonInterpreter get() = entry.interpreter
+    override val name: String get() = presentation().name
+    override val path: String get() = interpreter.binaryPathString
+    override val selectionKey: PySdkName get() = PySdkName("${interpreter.ownerDir}|${interpreter.ref}")
     override fun presentation(): PythonInterpreterPresentation = interpreter.presentation()
   }
 
-  /** An SDK that names no interpreter. [reason] says why, see [com.intellij.python.sdk.backend.pythonInterpreterResult]. */
-  class Broken(override val sdk: Sdk, val reason: @Nls String) : PyInterpreterRow {
-    override fun presentation(): PythonInterpreterPresentation = brokenSdkPresentation(sdk, reason)
+  /** An entry that names no interpreter. [PythonInterpreterEntry.Unavailable.reason] says why. */
+  class Broken(override val entry: PythonInterpreterEntry.Unavailable) : PyInterpreterRow {
+    override val name: String get() = entry.name
+    override val path: String? get() = entry.path
+    override val selectionKey: PySdkName get() = PySdkName(entry.name)
+    override fun presentation(): PythonInterpreterPresentation = entry.presentation
   }
 }
 
@@ -638,12 +624,16 @@ internal fun filterInterpreters(
 ): List<PyInterpreterRow> {
   if (!hideOthers) return rows
   return rows.filter { row ->
-    val associated = row.sdk.associatedModuleNioPath ?: return@filter true
+    val associated = when (row) {
+      is PyInterpreterRow.Interpreter -> row.interpreter.associatedModuleDir?.toNioPath() ?: return@filter true
+      // An entry that names no interpreter stays, so the user can remove it.
+      is PyInterpreterRow.Broken -> return@filter true
+    }
     associated in moduleBasePaths
   }
 }
 
-/** Typed wrapper for a [com.intellij.openapi.projectRoots.Sdk] name — lets the selection API and its test speak in the same currency, without a raw `String`. */
+/** The identity of a row across a reload, see [PyInterpreterRow.selectionKey]. Typed, so the selection API and its test speak in the same currency, without a raw `String`. */
 @JvmInline
 internal value class PySdkName(val value: String)
 
@@ -655,12 +645,12 @@ internal value class PySdkName(val value: String)
 internal fun pickSelection(candidates: List<PySdkName>, previouslySelected: PySdkName?): PySdkName? =
   candidates.firstOrNull { it == previouslySelected } ?: candidates.firstOrNull()
 
-/** Pure substring filter over `sdkName` / `homePath`. Case-insensitive; empty query keeps every row. */
+/** Pure substring filter over the name and the path of a row. Case-insensitive; empty query keeps every row. */
 internal fun filterBySearchQuery(rows: List<PyInterpreterRow>, query: String): List<PyInterpreterRow> {
   val q = query.trim().lowercase()
   if (q.isEmpty()) return rows
   return rows.filter { row ->
-    row.sdk.name.lowercase().contains(q) || (row.sdk.homePath?.lowercase()?.contains(q) == true)
+    row.name.lowercase().contains(q) || (row.path?.lowercase()?.contains(q) == true)
   }
 }
 
@@ -671,65 +661,22 @@ internal class PyAllInterpretersConfigurableProvider(private val project: Projec
 }
 
 /**
- * Renders each row as `<icon> <name>  <version>` (version in grey), with inline hover/selection actions on
- * the trailing side: **Copy path** and **Open Packages Tool Window for this interpreter**.
+ * Renders each row as `<icon> <name> <version> <path>`, and "in use" on the trailing side for a row that a project uses.
  *
- * Selection paints as a rounded-corner rectangle (per PY-89840 design) via [SelectablePanel]. Panel is
- * opaque and always paints the list background first so `JList`'s default full-width selection band (drawn
- * under the renderer) is fully covered by our own rounded rectangle.
- *
- * Action icons are drawn directly in [InnerPanel.paint] after the label paints so both icons and their
- * hover/pressed backgrounds live above the row content. Positions come from [rowActionRects] so that the
- * renderer and [RowActionsMouseHandler] see identical geometry — the previous JLabel + FlowLayout strip
- * (icons unaligned, no hover feedback, distance-from-right hit test) drifted between painting and clicks.
+ * Selection paints as a rounded-corner rectangle (per PY-89840 design) via [SelectablePanel].
  */
-private class PyInterpreterNameAndVersionRenderer(
-  private val list: JBList<PyInterpreterRow>,
-  private val state: RowActionsState,
-) : ListCellRenderer<PyInterpreterRow> {
+private class PyInterpreterNameAndVersionRenderer : ListCellRenderer<PyInterpreterRow> {
   private val label = SimpleColoredComponent().apply { isOpaque = false }
 
-  private var currentRow: Int = -1
-  private var actionsVisible: Boolean = false
+  private val inUseLabel = newInUseLabel()
 
-  private inner class InnerPanel : JPanel(BorderLayout()) {
-    init {
-      isOpaque = false
-      add(label, BorderLayout.CENTER)
-      // Reserve space on the trailing edge for the single action icon so the label never paints under it.
-      val reserve = RowActionMetrics.TRAILING_INSET +
-                    RowActionMetrics.ICON_SIZE +
-                    RowActionMetrics.HOVER_PAD * 2
-      border = JBUI.Borders.emptyRight(JBUI.scale(reserve))
-    }
-
-    override fun paint(g: Graphics) {
-      super.paint(g)
-      if (!actionsVisible) return
-      val rowBounds = list.getCellBounds(currentRow, currentRow) ?: return
-      val insets = rowSelectionBorderInsets()
-      val rect = rowActionRect(rowBounds)
-      paintCopyPathIcon(g, rect.x - rowBounds.x - insets.left, rect.y - rowBounds.y - insets.top)
-    }
-
-    private fun paintCopyPathIcon(g: Graphics, x: Int, y: Int) {
-      val icon = AllIcons.Actions.Copy
-      val isHovered = state.hoveredRow == currentRow
-      val isPressed = state.pressedRow == currentRow
-      if (isHovered || isPressed) paintHoverBackground(g, x, y, icon.iconWidth, icon.iconHeight, isPressed)
-      icon.paintIcon(this, g, x, y)
-    }
-
-    private fun paintHoverBackground(g: Graphics, x: Int, y: Int, iconW: Int, iconH: Int, pressed: Boolean) {
-      val pad = JBUI.scale(RowActionMetrics.HOVER_PAD)
-      val color = if (pressed) JBUI.CurrentTheme.ActionButton.pressedBackground()
-                  else JBUI.CurrentTheme.ActionButton.hoverBackground()
-      val rect = Rectangle(x - pad, y - pad, iconW + pad * 2, iconH + pad * 2)
-      ActionButtonLook.SYSTEM_LOOK.paintLookBackground(g, rect, color)
-    }
+  private val inner: JPanel = JPanel(BorderLayout()).apply {
+    isOpaque = false
+    add(label, BorderLayout.CENTER)
+    add(inUseLabel, BorderLayout.EAST)
   }
 
-  private val inner = InnerPanel()
+  private val groupHeader: GroupHeaderSeparator = newGroupHeader()
 
   private val panel: SelectablePanel = SelectablePanel.wrap(inner).apply {
     val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.unscaled.toInt()
@@ -740,6 +687,13 @@ private class PyInterpreterNameAndVersionRenderer(
     border = JBUI.Borders.empty(0, innerInsets.left + leftRightInset, 0, innerInsets.right + leftRightInset)
   }
 
+  /** The row with an optional owner group header above it. Only the [panel] below the header paints the selection. */
+  private val cell: JPanel = JPanel(BorderLayout()).apply {
+    isOpaque = true
+    add(groupHeader, BorderLayout.NORTH)
+    add(panel, BorderLayout.CENTER)
+  }
+
   override fun getListCellRendererComponent(
     list: JList<out PyInterpreterRow>?,
     value: PyInterpreterRow?,
@@ -747,28 +701,60 @@ private class PyInterpreterNameAndVersionRenderer(
     isSelected: Boolean,
     cellHasFocus: Boolean,
   ): Component {
-    currentRow = index
     label.clear()
     if (value != null) {
       // The SDK table, a broken SDK included: it has no ref, so it gets a presentation and no ref.
       val item = value.presentation()
       label.icon = item.icon.icon()
       renderPyInterpreterItemText(label, item)
-      if (value.isInUse()) label.append("  " + PyBundle.message("python.interpreters.in.use"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
+    inUseLabel.isVisible = value?.isInUse() == true
+    val title = if (list != null && index >= 0) groupTitleAt(list, index) else null
+    groupHeader.isVisible = title != null
+    groupHeader.caption = title
     val bg = list?.background ?: UIUtil.getListBackground(false, false)
     panel.background = bg
+    // The header paints the list background, so the selection of the row does not cover it.
+    cell.background = bg
     val hovered = list != null && ListHoverListener.getHoveredIndex(list) == index
     panel.selectionColor = when {
       isSelected -> UIUtil.getListSelectionBackground(cellHasFocus)
       hovered -> JBUI.CurrentTheme.List.Hover.background(cellHasFocus)
       else -> null
     }
-    actionsVisible = isSelected || hovered
-    return panel
+    return cell
   }
-
 }
+
+/**
+ * The title of the owner group of this row: the name of the Python project that owns the interpreter. A broken SDK
+ * names no interpreter, so it goes to the group of unavailable interpreters.
+ */
+private fun PyInterpreterRow.groupTitle(): @Nls String = when (this) {
+  is PyInterpreterRow.Interpreter -> owner ?: PyBundle.message("python.interpreters.group.unavailable")
+  is PyInterpreterRow.Broken -> PyBundle.message("python.interpreters.group.unavailable")
+}
+
+/**
+ * [rows] grouped by owner, in the order of [ownerOrder], the names of the Python projects of the project. Owners that
+ * are not in [ownerOrder] follow, and the unavailable interpreters come last. The order inside a group stays.
+ */
+internal fun groupByOwner(rows: List<PyInterpreterRow>, ownerOrder: List<String>): List<PyInterpreterRow> {
+  fun rank(row: PyInterpreterRow): Int = when (row) {
+    is PyInterpreterRow.Interpreter -> row.owner?.let { owner -> ownerOrder.indexOf(owner).takeIf { it >= 0 } } ?: ownerOrder.size
+    is PyInterpreterRow.Broken -> ownerOrder.size + 1
+  }
+  return rows.groupBy { it.groupTitle() }.values.sortedBy { rank(it.first()) }.flatten()
+}
+
+/**
+ * The name of the Python project of this snapshot that owns [interpreter]: its base dir is the owner dir of the
+ * interpreter. Without such a project, the name of the owner dir.
+ */
+internal fun EvoPyProjectModel.Snapshot.ownerNameOf(interpreter: PythonInterpreter): @NlsSafe String =
+  evoPyProjects.firstOrNull { it.pyProject.baseDir == interpreter.ownerDir }?.pyProject?.residesOnModule?.name
+  ?: interpreter.ownerDir.fileName?.toString()
+  ?: interpreter.ownerDir.toString()
 
 /** Whether a project uses the interpreter of this row. A broken SDK names no interpreter, so no project uses it. */
 private fun PyInterpreterRow.isInUse(): Boolean = when (this) {
@@ -783,4 +769,3 @@ private fun PyInterpreterRow.isInUse(): Boolean = when (this) {
  */
 internal fun EvoPyProjectModel.Snapshot.isInUse(interpreter: PythonInterpreter): Boolean =
   PythonInterpreterKey(interpreter.ownerDir, interpreter.ref) in interpreterKeys || interpreter in interpreters
-

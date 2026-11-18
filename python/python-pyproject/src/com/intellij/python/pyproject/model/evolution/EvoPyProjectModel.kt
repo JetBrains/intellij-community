@@ -205,6 +205,10 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     /** The entry of this generation whose `PyProject` resides on [module], or `null`. A disposed module is rejected. */
     fun forModule(module: Module): EvoPyProject? = byModule[module]?.takeUnless { module.isDisposed }
 
+    /** The workspace of this generation that has [evoPyProject] as a member, or `null` when no workspace has it. */
+    fun workspaceOf(evoPyProject: EvoPyProject): EvoWorkspace? =
+      workspaces.firstOrNull { workspace -> workspace.members.any { it === evoPyProject } }
+
     /** Every `PyProject`'s own base dir — a workspace member's own, not its root's. Used to exclude sibling projects from env discovery. */
     val baseDirs: Set<Path> = evoPyProjects.mapTo(mutableSetOf()) { it.pyProject.baseDir }
 

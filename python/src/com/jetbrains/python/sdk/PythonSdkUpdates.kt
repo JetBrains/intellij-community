@@ -9,6 +9,7 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
+import com.intellij.python.sdk.backend.findPythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
@@ -33,7 +34,7 @@ suspend fun updateInterpreterFacts(interpreter: PythonInterpreter, project: Proj
 @ApiStatus.Internal
 fun launchUpdateOrShowError(sdk: Sdk, project: Project) {
   PyPackageCoroutine.launch(project) {
-    val interpreter = PythonInterpreterRegistry.getInstance(project).interpreterOf(sdk) ?: return@launch
+    val interpreter = project.findPythonInterpreter(sdk) ?: return@launch
     updateInterpreterFactsOrShowError(interpreter, project)
   }
 }

@@ -51,7 +51,7 @@ internal fun Project.storedInterpreterReferenceOf(module: ModuleEntity, storage:
 /** The interpreter that [reference] names, see [StoredInterpreterReference]. Waits for the first list of the registry. */
 internal suspend fun PythonInterpreterRegistry.resolve(reference: StoredInterpreterReference): PythonInterpreter? = when (reference) {
   is StoredInterpreterReference.Library -> resolve(reference.key)
-  is StoredInterpreterReference.SdkName -> findByModuleSdkName(reference.name)
+  is StoredInterpreterReference.SdkName -> legacy.findByModuleSdkName(reference.name)
 }
 
 /** What this module stores to name its interpreter now, see [StoredInterpreterReference], or `null`. */

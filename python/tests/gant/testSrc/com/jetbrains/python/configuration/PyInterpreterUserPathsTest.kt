@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel

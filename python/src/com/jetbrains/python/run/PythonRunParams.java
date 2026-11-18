@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreterRegistryKt;
+import com.intellij.python.sdk.backend.PythonInterpreterSdkBoundaryKt;
 import com.intellij.util.PathMappingSettings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ public interface PythonRunParams extends EnvFilesOptions {
    */
   @Deprecated
   default void setSdk(@Nullable Sdk sdk) {
-    setPythonInterpreter(sdk != null ? PythonInterpreterRegistryKt.findPythonInterpreterInOpenProjectsIfReady(sdk) : null);
+    setPythonInterpreter(sdk != null ? PythonInterpreterSdkBoundaryKt.findPythonInterpreterInOpenProjectsIfReady(sdk) : null);
   }
 
   void setModule(Module module);

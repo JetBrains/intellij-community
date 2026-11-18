@@ -1415,7 +1415,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val snapshot = projectId.findProjectOrNull()?.let { EvoPyProjectModel.getInstance(it) }?.snapshot() ?: return null
     // `forKey` states the rule, disposed module included, so the workspace is found by the instance it answers.
     val pyProject = snapshot.forKey(pyProjectKey) ?: return null
-    val workspace = snapshot.workspaces.firstOrNull { w -> w.members.any { it === pyProject } } ?: return null
+    val workspace = snapshot.workspaceOf(pyProject) ?: return null
     return EvoTarget(workspace, pyProject)
   }
 }

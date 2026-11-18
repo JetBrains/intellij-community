@@ -6,6 +6,8 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.addTestInterpreter
+import com.intellij.python.sdk.backend.removeTestInterpreter
 import com.intellij.python.test.env.core.PyEnvironmentFactory
 import com.intellij.remote.RemoteSdkException
 import com.jetbrains.python.getOrThrow

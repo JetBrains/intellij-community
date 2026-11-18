@@ -9,6 +9,8 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
+import com.intellij.python.sdk.backend.removeTestInterpreter
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.project.PyProject

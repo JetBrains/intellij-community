@@ -8,11 +8,11 @@ import com.intellij.python.community.services.internal.impl.VanillaPythonWithPyt
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.featuresTrainer.ift.PythonLangSupport
-import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
+import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
 import com.intellij.python.test.env.common.PredefinedPyEnvironments
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
@@ -89,7 +89,7 @@ class PythonLangSupportTest {
       Assertions.assertTrue(VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonBinary).orThrow().pythonInfo.languageLevel.isPy3K, "Sdk is broken")
     }
     finally {
-      PythonInterpreterRegistry.getInstance(project).removeSdk(sdk)
+      removeTestSdkFromOpenProjects(sdk)
       withContext(Dispatchers.EDT) {
         ProjectManager.getInstance().closeAndDispose(project)
       }

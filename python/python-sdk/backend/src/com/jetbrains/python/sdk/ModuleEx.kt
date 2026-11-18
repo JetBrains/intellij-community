@@ -5,6 +5,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.putTestSdk
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -40,7 +41,7 @@ suspend fun Module.readPythonSdkForConfiguration(): Sdk? =
  * real environment. Every other caller uses `PyProject.setPythonInterpreter`.
  *
  * In the interpreter library flow, see [isInterpreterLibraryFlowEnabled], the registry holds [sdk] itself, owned by the
- * first content root of the module, see [PythonInterpreterRegistry.putTestSdk], and the SDK is in no SDK table. The
+ * first content root of the module, see [putTestSdk], and the SDK is in no SDK table. The
  * module gets the interpreter library entry of [sdk], as `PyProject.setPythonInterpreter` writes it. A test that then
  * edits the roots of [sdk] edits the SDK of the interpreter. Remove it with [removeTestSdk].
  *

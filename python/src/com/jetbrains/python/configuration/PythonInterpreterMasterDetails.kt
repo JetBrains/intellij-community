@@ -23,12 +23,12 @@ import com.intellij.openapi.util.Condition
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
-import com.intellij.python.sdk.backend.PythonSdkTable
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.python.sdk.backend.pyInterpreterItems
+import com.intellij.python.sdk.backend.pythonSdksForSettings
+import com.intellij.python.sdk.backend.removePythonSdk
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.util.IconUtil
@@ -126,7 +126,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
   // The interpreter library flow holds its SDKs in no SDK table, so the model has none of them: they are listed as they are.
   private val allPythonSdksInEdit: List<Sdk>
     get() = moduleOrProject.filterAssignablePythonSdks(
-      if (isInterpreterLibraryFlowEnabled()) PythonSdkTable.allSdks(project) else projectSdksModel.sdks.toList()
+      if (isInterpreterLibraryFlowEnabled()) project.pythonSdksForSettings() else projectSdksModel.sdks.toList()
     )
 
   /** The SDKs that the tree lists: [allPythonSdksInEdit], without the environments of other projects when they are hidden. */
@@ -239,8 +239,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
       val originals = if (isInterpreterLibraryFlowEnabled()) copies.toList()
                       else projectSdksModel.projectSdks.filterValues { it in copies }.keys.toList()
       PyPackageCoroutine.launch(project) {
-        val registry = PythonInterpreterRegistry.getInstance(project)
-        originals.forEach { registry.removeSdk(it) }
+        originals.forEach { project.removePythonSdk(it) }
         withContext(Dispatchers.EDT) { reset() }
       }
     }

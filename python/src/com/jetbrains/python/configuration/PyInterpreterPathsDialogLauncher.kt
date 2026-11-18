@@ -15,6 +15,7 @@ import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.PythonInterpreterSdks
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
+import com.intellij.python.sdk.backend.findPythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.updateInterpreterFacts
@@ -61,7 +62,7 @@ object PyInterpreterPathsDialogLauncher {
       editor.addedPaths.toList() to editor.excludedPaths.toList()
     } ?: return false
     writeUserPaths(project, sdk, added, excluded)
-    PythonInterpreterRegistry.getInstance(project).interpreterOf(sdk)?.let { updateInterpreterFacts(it, project) }
+    project.findPythonInterpreter(sdk)?.let { updateInterpreterFacts(it, project) }
     onPathsChanged(sdk)
     return true
   }

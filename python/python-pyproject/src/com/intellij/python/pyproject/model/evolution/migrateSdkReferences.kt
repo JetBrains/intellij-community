@@ -33,7 +33,7 @@ private val logger = fileLogger()
  *
  * Call it only after the synchronization with the JPS model, so the SDK table is complete. A module that has an entry
  * keeps it. A module without one gets the entry of the SDK, which the registry imports from the SDK table into its
- * store, owned by the PyProject of the module, see [PythonInterpreterRegistry.importTableSdk]. This is the only read of
+ * store, owned by the PyProject of the module, see [PythonInterpreterRegistry.Legacy.importTableSdk]. This is the only read of
  * the table. Then the reference goes in each case, also when the table has no such SDK, so the entry is the only thing
  * that names the interpreter, and a removed entry does not come back. An SDK whose environment is gone gives an entry,
  * and its interpreter appears when the environment comes back.
@@ -52,7 +52,7 @@ internal suspend fun migrateSdkReferences(project: Project) {
     val sdkName = ownSdkReferenceOf(module) ?: return@mapNotNull null
     val hasEntry = interpreterLibraryOf(module) != null
     val entry = if (hasEntry) null else entryOf(module, sdkName, projectDir, registry)
-    MigratedModule(module.symbolicId, sdkName, entry, registry.transferredPathsOfTableSdk(sdkName))
+    MigratedModule(module.symbolicId, sdkName, entry, registry.legacy.transferredPathsOfTableSdk(sdkName))
       .also { if (!hasEntry && entry == null) lost += it }
   }
   logger.info("Replace the Python SDK references of ${migrations.size} modules: $migrations")
@@ -87,7 +87,7 @@ internal suspend fun migrateSdkReferences(project: Project) {
  */
 private fun entryOf(module: ModuleEntity, sdkName: String, projectDir: Path, registry: PythonInterpreterRegistry): PyInterpreterLibraryName? {
   val ownerDir = PyProjectImpl.baseDirOfRoots(module) ?: return null
-  val key = registry.importTableSdk(sdkName, ownerDir) ?: return null
+  val key = registry.legacy.importTableSdk(sdkName, ownerDir) ?: return null
   return PyInterpreterLibraryName.of(projectDir, key)
 }
 

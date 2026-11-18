@@ -3,9 +3,8 @@ package com.jetbrains.python.packaging.toolwindow.ui
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.processOutput.common.ProcessOutputTopic
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
@@ -42,15 +41,13 @@ object PyChangeVersionPopupLauncher {
    */
   fun open(
     project: Project,
-    sdk: Sdk,
+    interpreter: PythonInterpreter,
     packageName: String,
     currentVersion: String? = null,
     anchor: RelativePoint? = null,
     workspaceMember: PyWorkspaceMember? = null,
   ) {
     PyPackageCoroutine.launch(project, Dispatchers.Default) {
-      // A broken SDK has no packages to change. The tool window already shows that the SDK is broken.
-      val interpreter = sdk.pythonInterpreterResultAsync().successOrNull ?: return@launch
       val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
       val trace = TraceContext(PyBundle.message("trace.context.packaging.tool.window.change.version", packageName), null)
       val details = manager.repositoryManager.getPackageDetails(packageName, null).getOrNull()

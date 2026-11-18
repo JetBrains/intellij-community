@@ -33,7 +33,7 @@ internal class PyModuleDetailsModelTest {
 
   @Test
   fun `change detected when the module goes from no SDK to a chosen SDK`() {
-    val model = PyModuleDetailsModel(initialSdkName = null)
+    val model = PyModuleDetailsModel<String>(initialSdkName = null)
     assertTrue(model.isSdkChanged("Python 3.12"))
   }
 
@@ -93,7 +93,7 @@ internal class PyModuleDetailsModelTest {
 
   @Test
   fun `combo preserves the caller order`() {
-    val model = PyModuleDetailsModel(initialSdkName = null)
+    val model = PyModuleDetailsModel<String>(initialSdkName = null)
     val contents = model.buildComboContents(
       pythonSdkNames = listOf("Python 3.10", "Python 3.11", "Python 3.12"),
       currentModuleSdkName = null,
@@ -131,7 +131,7 @@ internal class PyModuleDetailsModelTest {
 
   @Test
   fun `combo shows the no-interpreter placeholder only when the SDK list is empty`() {
-    val model = PyModuleDetailsModel(initialSdkName = null)
+    val model = PyModuleDetailsModel<String>(initialSdkName = null)
     val contents = model.buildComboContents(
       pythonSdkNames = emptyList(),
       currentModuleSdkName = null,

@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterSdkBoundaryKt;
 import com.intellij.python.sdk.backend.evolution.EvoPyProject;
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
@@ -125,7 +126,7 @@ public final class PyTreeStructureProvider implements SelectableTreeStructurePro
     }
     if (!(entry instanceof JdkOrderEntry jdkEntry) || !(jdkEntry.getJdk() instanceof Sdk sdk)) return null;
     if (!PythonSdkUtil.isPythonSdk(sdk, true)) return null;
-    return PythonInterpreterRegistry.Companion.getInstance(project).interpreterOfIfReady(sdk);
+    return PythonInterpreterSdkBoundaryKt.findPythonInterpreterIfReady(project, sdk);
   }
 
   /** The interpreter of the Python project that resides on [module], read from the snapshot. */

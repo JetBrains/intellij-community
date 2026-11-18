@@ -66,6 +66,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.psi.PsiFile;
+import com.intellij.python.sdk.backend.PythonInterpreterSdkBoundaryKt;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
@@ -1286,7 +1287,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     @Override
     public @Nullable PythonInterpreter getPythonInterpreter() {
-      return PythonInterpreterRegistryKt.findPythonInterpreterInOpenProjectsIfReady(mySdk);
+      return PythonInterpreterSdkBoundaryKt.findPythonInterpreterInOpenProjectsIfReady(mySdk);
     }
 
     @Override

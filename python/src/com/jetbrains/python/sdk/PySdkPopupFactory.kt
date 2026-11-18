@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.python.sdk.backend.findPythonInterpreter
 import com.intellij.python.sdk.backend.findSdk
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.icons.icon
@@ -220,7 +221,7 @@ class PySdkPopupFactory(val module: Module) {
         // The popup does not read the snapshot back. The row sets the interpreter that the registry holds for its SDK,
         // with the key of the registry. An interpreter built again from the SDK data can name another owner or target
         // (PY-94164). A row whose interpreter is gone sets nothing.
-        val interpreter = PythonInterpreterRegistry.getInstance(module.project).interpreterOf(sdk) ?: return@runWithSdkConfigurationLock
+        val interpreter = module.project.findPythonInterpreter(sdk) ?: return@runWithSdkConfigurationLock
         module.asPyProject()?.setPythonInterpreter(interpreter, waitForSnapshot = false)
       }
     }

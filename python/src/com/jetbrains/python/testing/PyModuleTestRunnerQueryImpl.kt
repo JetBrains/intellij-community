@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.ThreeState
 import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
@@ -17,9 +16,8 @@ internal class PyModuleTestRunnerQueryImpl : PyModuleTestRunnerQuery {
     if (factory.id == PyTestFactory.id) return true
 
     // Called from code insight, which cannot suspend, so it peeks at the snapshot.
-    @Suppress("DEPRECATION") // The factory takes an SDK.
-    val sdk = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI() ?: return false
-    val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(sdk, module.project) else factory).id
+    val interpreter = module.findEvoPyProjectIfReady()?.interpreter ?: return false
+    val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(interpreter, module.project) else factory).id
     return factoryId == PyTestFactory.id
   }
 
