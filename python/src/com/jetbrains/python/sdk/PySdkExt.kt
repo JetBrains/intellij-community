@@ -18,10 +18,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.nio.file.Path
 
-internal fun resetSystemWideSdksDetectors() {
-  PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
-}
-
 @Internal
 fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
   val basePath = module?.baseDir?.path
