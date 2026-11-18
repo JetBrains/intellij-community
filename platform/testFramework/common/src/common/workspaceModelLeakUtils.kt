@@ -12,6 +12,9 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.reportSoftAssertFailure
@@ -140,6 +143,10 @@ private val IGNORED_FIELDS = setOf(
 
 private const val LEAKED_WSM = "leakedWorkspaceModel"
 
+/**
+ * Can return duplicates
+ */
+@OptIn(WorkspaceEntityInternalApi::class)
 @TestOnly
 private fun Project.collectEntityStorages(): List<EntityStorage> {
   val storages = mutableListOf<EntityStorage>()
@@ -151,6 +158,9 @@ private fun Project.collectEntityStorages(): List<EntityStorage> {
   if (event != null) {
     storages += event.storageBefore
     storages += event.storageAfter
+    storages += (event as? VersionedStorageChangeInternal)?.getAllChanges().orEmpty().mapNotNull {
+      (it.newEntity as? WorkspaceEntityBase)?.snapshot
+    }
   }
   storages += workspaceModel.currentSnapshot
   storages.addIfNotNull((workspaceModel as? WorkspaceModelInternal)?.currentSnapshotOfUnloadedEntities)
