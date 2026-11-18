@@ -1,3 +1,28 @@
+f:com.intellij.openapi.diff.impl.patch.PatchFileHeaderInfo
+- equals(java.lang.Object):Z
+- getAuthor():com.intellij.vcs.log.VcsUser
+- getBaseRevision():java.lang.String
+- getMessage():java.lang.String
+- hashCode():I
+f:com.intellij.openapi.diff.impl.patch.PatchReader
+- sf:NO_NEWLINE_SIGNATURE:java.lang.String
+- <init>(java.lang.CharSequence):V
+- <init>(java.lang.CharSequence,Z):V
+- <init>(java.nio.file.Path):V
+- getAdditionalInfo(java.util.Set):com.intellij.openapi.util.ThrowableComputable
+- getAllPatches():java.util.List
+- getBaseRevision(java.lang.String):java.lang.CharSequence
+- getPatchFileInfo():com.intellij.openapi.diff.impl.patch.PatchFileHeaderInfo
+- getTextPatches():java.util.List
+- s:isPatchContent(java.lang.String):Z
+- parseAllPatches():V
+- readTextPatches():java.util.List
+c:com.intellij.openapi.diff.impl.patch.PatchSyntaxException
+- java.lang.Exception
+- <init>(I,java.lang.String):V
+- <init>(java.lang.String):V
+- getLine():I
+- getMessage():java.lang.String
 c:com.intellij.openapi.vcs.IssueNavigationConfiguration
 - com.intellij.openapi.util.SimpleModificationTracker
 - com.intellij.openapi.components.PersistentStateComponent

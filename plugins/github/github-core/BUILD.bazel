@@ -198,6 +198,7 @@ jvm_library(
         "@lib//:app-cash-turbine-jvm",
         "//libraries/junit6",
         "//libraries/junit6-params",
+        "//platform/vcs-impl/shared",
     ],
 )
 ### auto-generated section `build intellij.vcs.github.tests` end

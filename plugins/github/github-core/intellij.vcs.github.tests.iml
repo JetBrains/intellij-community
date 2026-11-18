@@ -120,6 +120,7 @@
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.testFramework.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.vcs.github" />
 </module>

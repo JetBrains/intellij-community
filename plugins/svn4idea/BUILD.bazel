@@ -154,6 +154,7 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/vcs-impl:vcs-impl-tests_test_lib",
         "//platform/util/concurrency",
+        "//platform/vcs-impl/shared",
     ],
 )
 ### auto-generated section `build intellij.vcs.svn.tests` end

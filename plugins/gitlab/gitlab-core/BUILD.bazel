@@ -193,6 +193,7 @@ jvm_library(
         "//platform/vcs/plugin",
         "//plugins/gitlab",
         "//plugins/gitlab/shared",
+        "//platform/vcs-impl/shared",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab.tests` end
