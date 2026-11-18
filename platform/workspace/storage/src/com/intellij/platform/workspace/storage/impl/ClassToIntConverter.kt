@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap
 import org.jetbrains.annotations.ApiStatus
@@ -105,10 +106,27 @@ public fun Int.findWorkspaceEntity(): Class<WorkspaceEntity> = ClassToIntConvert
 
 /**
  * Drops the entity classes that match [predicate], such as the classes of unloaded modules.
- * No storage may hold an entity of such a class any more.
+ * A class stays registered while one of [liveStorages] holds an entity of it or a reference that names it.
+ * A storage of an unknown implementation keeps every class.
  */
 @ApiStatus.Internal
-public fun forgetWorkspaceEntityClasses(predicate: (Class<*>) -> Boolean) {
-  ClassToIntConverter.getInstance().removeIf(predicate)
+public fun forgetWorkspaceEntityClasses(liveStorages: Collection<EntityStorage>, predicate: (Class<*>) -> Boolean) {
+  val inUse = HashSet<Int>()
+  for (storage in liveStorages) {
+    val impl = storage as? AbstractEntityStorage ?: return
+    impl.collectClassIds(inUse)
+  }
+  ClassToIntConverter.getInstance().removeIf { predicate(it) && it.toClassId() !in inUse }
+}
+
+private fun AbstractEntityStorage.collectClassIds(result: MutableSet<Int>) {
+  entitiesByType.entityFamilies.forEachIndexed { classId, family ->
+    if (family != null && family.size() > 0) result.add(classId)
+  }
+  val containers = listOf(refs.oneToManyContainer, refs.oneToOneContainer, refs.oneToAbstractManyContainer, refs.abstractOneToOneContainer)
+  for (connectionId in containers.flatMap { it.keys }) {
+    result.add(connectionId.parentClass)
+    result.add(connectionId.childClass)
+  }
 }
 
