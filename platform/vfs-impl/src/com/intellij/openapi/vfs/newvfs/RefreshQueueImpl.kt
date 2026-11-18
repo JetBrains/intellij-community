@@ -82,7 +82,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
    * VFS state
    */
   @VisibleForTesting
-  val inFlightScans: InFlightScans = InFlightScans()
+  val inFlightScans: InFlightScans = InFlightScans { Registry.`is`("vfs.refresh.sync.rescans.in.flight.files", true) }
 
   private val myEventCounter = FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN)
   private var myActivityCounter = 0

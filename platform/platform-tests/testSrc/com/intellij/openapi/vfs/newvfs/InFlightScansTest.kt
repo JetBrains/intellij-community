@@ -82,6 +82,26 @@ class InFlightScansTest {
   }
 
   @Test
+  fun `disabled registry registers nothing and sees no file actualizing elsewhere`() {
+    var enabled = false
+    val scans = InFlightScans { enabled }
+    val other = scans.begin()
+    assertThat(other).describedAs("a disabled registry hands out the no-op batch").isSameAs(InFlightScans.Batch.NOOP)
+    other.add(2)
+
+    assertThat(scans.isNotEmpty()).describedAs("the no-op batch is not registered").isFalse()
+    assertThat(scans.isActualizing(2)).describedAs("the no-op batch keeps no files").isFalse()
+
+    enabled = true
+    val tracked = scans.begin().also { it.add(3) }
+    assertThat(scans.isActualizingElsewhere(3, InFlightScans.Batch.NOOP))
+      .describedAs("a session without tracking does not re-scan the files of the others")
+      .isFalse()
+    assertThat(scans.isActualizingElsewhere(3, tracked)).describedAs("the own file is not 'elsewhere'").isFalse()
+    scans.release(tracked)
+  }
+
+  @Test
   fun `batch releases itself without the registry`() {
     val scans = InFlightScans()
     val batch = scans.begin().also { it.add(1) }

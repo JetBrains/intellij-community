@@ -11,20 +11,23 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Each session keeps its own [Batch]. A file is `actualizing` while at least one registered batch contains it.
  *
  * Registry is used by a synchronous [RefreshSession], which needs to know `actualizing` files, with changes in-flight.
+ *
+ * [isEnabled] switches the feature off: it is asked once per [begin], and a disabled registry hands out [Batch.NOOP]. Such a session
+ * registers no files (that is the bookkeeping cost: an id per scanned file), and it does not see any file as `actualizing` elsewhere.
  */
 @ApiStatus.Internal
-class InFlightScans {
+class InFlightScans(private val isEnabled: () -> Boolean = { true }) {
   // there are only a few sessions at a time: copy-on-write keeps the lookups lock-free
-  private val batches = CopyOnWriteArrayList<Batch>()
+  private val batches = CopyOnWriteArrayList<BatchImpl>()
 
   fun isNotEmpty(): Boolean = !batches.isEmpty()
 
   /** Registers a new empty batch for a session */
-  fun begin(): Batch = Batch(this).also { batches.add(it) }
+  fun begin(): Batch = if (isEnabled()) BatchImpl(this).also { batches.add(it) } else Batch.NOOP
 
   /** Forgets the batch and its files. Safe to call twice */
   fun release(batch: Batch) {
-    if (batches.remove(batch)) {
+    if (batch is BatchImpl && batches.remove(batch)) {
       batch.clear()
     }
   }
@@ -41,25 +44,45 @@ class InFlightScans {
 
   /**
    * @return `true` if some other session has scanned the file and has not applied the events yet. The files that the owner
-   * of [own] has scanned itself are not counted: it has read them from the disk, so it does not need to read them again
+   * of [own] has scanned itself are not counted: it has read them from the disk, so it does not need to read them again.
+   * The owner of [Batch.NOOP] does not track files, so for it the answer is always `false`
    */
-  fun isActualizingElsewhere(fileId: Int, own: Batch): Boolean = !own.contains(fileId) && isActualizing(fileId)
+  fun isActualizingElsewhere(fileId: Int, own: Batch): Boolean = own !== Batch.NOOP && !own.contains(fileId) && isActualizing(fileId)
 
   /** Files that one session has scanned and has not applied yet. The scan workers add to it concurrently */
-  class Batch internal constructor(private val owner: InFlightScans) {
+  interface Batch {
+    /** Call it before `markClean`, so the file never looks clean while its events are still in flight */
+    fun add(fileId: Int)
+
+    /** Same as [InFlightScans.release], so a session does not need the registry at the end of its life */
+    fun release()
+
+    fun contains(fileId: Int): Boolean
+
+    companion object {
+      /** The batch of a session that does not track its files: it registers nothing and holds no file */
+      val NOOP: Batch = object : Batch {
+        override fun add(fileId: Int) {}
+
+        override fun release() {}
+
+        override fun contains(fileId: Int): Boolean = false
+      }
+    }
+  }
+
+  private class BatchImpl(private val owner: InFlightScans) : Batch {
     // TODO RC: concurrent hashset<Int> is quite an overkill here. ConcurrentBitSet may be a better option
     private val fileIds: MutableSet<Int> = ConcurrentHashMap.newKeySet()
 
-    /** Call it before `markClean`, so the file never looks clean while its events are still in flight */
-    fun add(fileId: Int) {
+    override fun add(fileId: Int) {
       fileIds.add(fileId)
     }
 
-    /** Same as [InFlightScans.release], so a session does not need the registry at the end of its life */
-    fun release() = owner.release(this)
+    override fun release() = owner.release(this)
 
-    internal fun contains(fileId: Int): Boolean = fileIds.contains(fileId)
+    override fun contains(fileId: Int): Boolean = fileIds.contains(fileId)
 
-    internal fun clear() = fileIds.clear()
+    fun clear() = fileIds.clear()
   }
 }
