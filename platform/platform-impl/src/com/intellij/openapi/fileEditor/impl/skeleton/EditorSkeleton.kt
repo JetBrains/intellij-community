@@ -10,8 +10,9 @@ import com.intellij.openapi.fileEditor.impl.skeleton.layout.components.Layout.HO
 import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonColorManager
 import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonFrames
 import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderer
+import com.intellij.openapi.fileEditor.impl.skeleton.rendering.SkeletonFrameColor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.DrawUtil
 import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
@@ -40,19 +41,18 @@ class EditorSkeleton(
   private val colorManager = EditorSkeletonColorManager(
     skeletonDelayMs = skeletonDelayMs,
     nowMs = { renderer.frameTimeMs(nowMs()) },
-    animationEnabled = RegistryManager.getInstance().`is`(ANIMATION_ENABLED_KEY) && !DrawUtil.isSimplifiedUI(),
-    animationDurationMs = RegistryManager.getInstance().intValue(ANIMATION_DURATION_KEY).toLong(),
+    animationEnabled = Registry.`is`("editor.skeleton.animation.enabled", true) && !DrawUtil.isSimplifiedUI(),
+    animationDurationMs = Registry.intValue("editor.skeleton.animation.duration.ms", 1500).toLong(),
   )
-
   private val skeletonPanel = EditorSkeletonPanel(HORIZONTAL, fillLast = true) {
     Gutter()
     Editor()
   }
-
   private val frames = object : EditorSkeletonFrames {
-    override fun currentColors(): EditorSkeletonColorManager.FrameColors = colorManager.frameColors()
-
-    override fun paint(g: Graphics2D, width: Int, height: Int, scale: Float, colors: EditorSkeletonColorManager.FrameColors) {
+    override fun currentColors(): SkeletonFrameColor {
+      return colorManager.frameColors()
+    }
+    override fun paint(g: Graphics2D, width: Int, height: Int, scale: Float, colors: SkeletonFrameColor) {
       paintFrame(g, width, height, scale, colors)
     }
   }
@@ -61,7 +61,6 @@ class EditorSkeleton(
     project.messageBus.connect(cs).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       colorManager.reloadColorScheme()
     })
-
     layout = BorderLayout()
     isOpaque = false
     minimumSize = JBDimension(0, 0)
@@ -69,15 +68,15 @@ class EditorSkeleton(
     add(renderer.component, BorderLayout.CENTER)
   }
 
-  internal fun startAnimation() {
-    renderer.startRendering(cs, frames)
-  }
-
   fun paintFrame(g: Graphics2D, width: Int, height: Int, scale: Float = JBUIScale.scale(1f)) {
     paintFrame(g, width, height, scale, colorManager.frameColors())
   }
 
-  private fun paintFrame(g: Graphics2D, width: Int, height: Int, scale: Float, colors: EditorSkeletonColorManager.FrameColors) {
+  internal fun startAnimation() {
+    renderer.startRendering(cs, frames)
+  }
+
+  private fun paintFrame(g: Graphics2D, width: Int, height: Int, scale: Float, colors: SkeletonFrameColor) {
     g.useCopy { graphics ->
       graphics.composite = AlphaComposite.Src
       graphics.color = colors.background
@@ -87,15 +86,14 @@ class EditorSkeleton(
       graphics.scale(scale.toDouble(), scale.toDouble())
       GraphicsUtil.setupAAPainting(graphics)
       graphics.color = colors.blocks
-      skeletonPanel.paint(graphics, 0, 0, ceil(width / scale.toDouble()).toInt(), ceil(height / scale.toDouble()).toInt())
+      val scaledWidth = ceil(width / scale.toDouble()).toInt()
+      val scaledHeight = ceil(height / scale.toDouble()).toInt()
+      skeletonPanel.paint(graphics, 0, 0, scaledWidth, scaledHeight)
     }
   }
 
   companion object {
     val EDITOR_BACKGROUND_COLOR: Color
       get() = EditorColorsManager.getInstance().globalScheme.defaultBackground
-
-    private const val ANIMATION_ENABLED_KEY = "editor.skeleton.animation.enabled"
-    private const val ANIMATION_DURATION_KEY = "editor.skeleton.animation.duration.ms"
   }
 }

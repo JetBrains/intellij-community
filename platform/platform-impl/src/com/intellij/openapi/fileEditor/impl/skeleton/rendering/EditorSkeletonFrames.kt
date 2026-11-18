@@ -10,10 +10,10 @@ internal interface EditorSkeletonFrames {
   /**
    * Returns the colors of the frame at the current time.
    */
-  fun currentColors(): EditorSkeletonColorManager.FrameColors
+  fun currentColors(): SkeletonFrameColor
 
   /**
    * Paints a frame of [width] by [height] with [colors] into [g]. [scale] is the user scale of the IDE.
    */
-  fun paint(g: Graphics2D, width: Int, height: Int, scale: Float, colors: EditorSkeletonColorManager.FrameColors)
+  fun paint(g: Graphics2D, width: Int, height: Int, scale: Float, colors: SkeletonFrameColor)
 }

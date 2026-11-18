@@ -144,7 +144,7 @@ internal class EditorSkeletonFallbackRenderer : JComponent(), EditorSkeletonRend
     val frames = frames ?: return
     if (renderingJob != null) return
     renderingJob = cs.launch(Dispatchers.UI) {
-      var repaintedColors: EditorSkeletonColorManager.FrameColors? = null
+      var repaintedColors: SkeletonFrameColor? = null
       while (isActive) {
         if (isShowing) {
           val colors = frames.currentColors()

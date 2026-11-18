@@ -42,9 +42,8 @@ import javax.swing.SwingUtilities
  * While such a component is large, or the glass pane paints over the renderer, a frame goes through a Swing repaint.
  * The EDT paints the current frame each time Swing repaints the renderer.
  */
-internal class EditorSkeletonWindowRenderer(
-  private val renderThread: EditorSkeletonRenderThread = service(),
-) : JComponent(), EditorSkeletonRenderer {
+internal class EditorSkeletonWindowRenderer : JComponent(), EditorSkeletonRenderer {
+  private val renderThread: EditorSkeletonRenderThread = service()
   override val component: JComponent
     get() = this
 
@@ -65,7 +64,7 @@ internal class EditorSkeletonWindowRenderer(
 
   private val backBuffer = EditorSkeletonBackBuffer()
   private var renderedTarget: EditorSkeletonWindowTarget? = null
-  private var renderedColors: EditorSkeletonColorManager.FrameColors? = null
+  private var renderedColors: SkeletonFrameColor? = null
   private var lastChangeNanos = 0L
   private var settled = true
 
@@ -123,7 +122,7 @@ internal class EditorSkeletonWindowRenderer(
   /**
    * Renders one frame when its colors or its target differ from the last rendered frame. Only [EditorSkeletonRenderThread] calls it.
    */
-  internal fun renderFrame() {
+  fun renderFrame() {
     if (stopped || failed) {
       renderThread.unregister(this)
       return
@@ -173,7 +172,7 @@ internal class EditorSkeletonWindowRenderer(
   /**
    * Releases the back buffer and forgets the last rendered frame. Only [EditorSkeletonRenderThread] calls it, between frames.
    */
-  internal fun releaseBackBuffer() {
+  fun releaseBackBuffer() {
     backBuffer.release()
     rendered(target = null, colors = null)
     settled = true
@@ -183,7 +182,7 @@ internal class EditorSkeletonWindowRenderer(
    * Stops the frames off the EDT for good, and asks Swing for the current frame.
    * [EditorSkeletonRenderThread] calls it after a frame fails. It returns `true` only for the first failure.
    */
-  internal fun renderFailed(): Boolean {
+  fun renderFailed(): Boolean {
     val first = !failed
     failed = true
     renderThread.unregister(this)
@@ -191,7 +190,7 @@ internal class EditorSkeletonWindowRenderer(
     return first
   }
 
-  private fun rendered(target: EditorSkeletonWindowTarget?, colors: EditorSkeletonColorManager.FrameColors?) {
+  private fun rendered(target: EditorSkeletonWindowTarget?, colors: SkeletonFrameColor?) {
     renderedTarget = target
     renderedColors = colors
   }
@@ -237,7 +236,9 @@ internal class EditorSkeletonWindowRenderer(
   private fun isTargetStale(): Boolean {
     val target = target ?: return isShowing
     val origin = SwingUtilities.convertPoint(this, 0, 0, target.window)
-    return origin != target.origin || width != target.width || height != target.height
+    return origin != target.origin ||
+           width != target.width ||
+           height != target.height
   }
 
   private fun updateTarget() {
@@ -304,21 +305,30 @@ internal class EditorSkeletonWindowRenderer(
         }
         for (child in (component as? Container)?.components.orEmpty()) {
           if (child.isVisible) {
-            addOverlay(SwingUtilities.convertRectangle(component, child.bounds, window), clip, excluded)
+            val convertedBounds = SwingUtilities.convertRectangle(component, child.bounds, window)
+            addOverlay(convertedBounds, clip, excluded)
           }
         }
         return@forEachComponentOnTop
       }
-      addOverlay(SwingUtilities.convertRectangle(parent, component.bounds, window), clip, excluded)
+      val convertedBounds = SwingUtilities.convertRectangle(parent, component.bounds, window)
+      addOverlay(convertedBounds, clip, excluded)
     }
     val excludedArea = excluded.sumOf { it.width.toLong() * it.height.toLong() }
     if (excludedArea * LARGE_OVERLAY_DIVISOR > clip.width.toLong() * clip.height.toLong()) {
       covered = true
     }
-    return Overlays(excluded = if (covered) emptyList() else excluded, covered = covered)
+    return Overlays(
+      excluded = if (covered) emptyList() else excluded,
+      covered = covered,
+    )
   }
 
-  private fun addOverlay(bounds: Rectangle, clip: Rectangle, excluded: MutableList<Rectangle>) {
+  private fun addOverlay(
+    bounds: Rectangle,
+    clip: Rectangle,
+    excluded: MutableList<Rectangle>,
+  ) {
     val overlap = bounds.intersection(clip)
     if (!overlap.isEmpty) {
       excluded.add(overlap)
@@ -326,10 +336,16 @@ internal class EditorSkeletonWindowRenderer(
   }
 
   private fun paintsOverChildren(glassPane: Component): Boolean {
-    return glassPane !is JComponent || glassPane.isOpaque || !glassPane.isOptimizedDrawingEnabled
+    return glassPane !is JComponent ||
+           glassPane.isOpaque ||
+           !glassPane.isOptimizedDrawingEnabled
   }
 
-  private fun collectOverlayHolders(rootPane: JRootPane, containers: MutableSet<Container>, components: MutableSet<Component>) {
+  private fun collectOverlayHolders(
+    rootPane: JRootPane,
+    containers: MutableSet<Container>,
+    components: MutableSet<Component>,
+  ) {
     var ancestor: Container? = parent
     while (ancestor != null && ancestor !is Window) {
       containers.add(ancestor)
@@ -349,7 +365,10 @@ internal class EditorSkeletonWindowRenderer(
    * It goes from the parent of the renderer up to [rootPane].
    * Swing paints the child at index 0 of a container last, so the children before the branch are on top of it.
    */
-  private inline fun forEachComponentOnTop(rootPane: JRootPane, action: (parent: Container, component: Component) -> Unit) {
+  private inline fun forEachComponentOnTop(
+    rootPane: JRootPane,
+    action: (parent: Container, component: Component) -> Unit,
+  ) {
     var branch: Component = this
     var parent: Container? = branch.parent
     while (parent != null && parent !is Window) {
@@ -377,7 +396,11 @@ internal class EditorSkeletonWindowRenderer(
    * Listens to [containers], [components] and [window], and stops listening to the components of the previous call.
    * It runs inside hierarchy events, so it must not add or remove a hierarchy listener: AWT counts them while it dispatches.
    */
-  private fun track(containers: Set<Container>, components: Set<Component>, window: Window?) {
+  private fun track(
+    containers: Set<Container>,
+    components: Set<Component>,
+    window: Window?,
+  ) {
     for (container in trackedContainers) {
       if (container !in containers) {
         container.removeContainerListener(targetUpdater)
@@ -409,7 +432,9 @@ internal class EditorSkeletonWindowRenderer(
     }
   }
 
-  private class Overlays(val excluded: List<Rectangle>, val covered: Boolean)
+  private fun <T> identitySet(): MutableSet<T> {
+    return Collections.newSetFromMap(IdentityHashMap())
+  }
 
   private inner class TargetUpdater :
     ComponentListener,
@@ -418,63 +443,36 @@ internal class EditorSkeletonWindowRenderer(
     ContainerListener,
     WindowStateListener,
     PropertyChangeListener {
-    override fun componentResized(e: ComponentEvent) {
-      updateTarget()
-    }
+    override fun componentResized(e: ComponentEvent) = updateTarget()
+    override fun componentMoved(e: ComponentEvent) = updateTarget()
+    override fun componentShown(e: ComponentEvent) = updateTarget()
+    override fun componentHidden(e: ComponentEvent) = updateTarget()
+    override fun hierarchyChanged(e: HierarchyEvent) = updateTarget()
+    override fun ancestorMoved(e: HierarchyEvent) = updateTarget()
+    override fun ancestorResized(e: HierarchyEvent) = updateTarget()
+    override fun componentAdded(e: ContainerEvent) = updateTarget()
+    override fun componentRemoved(e: ContainerEvent) = updateTarget()
+    override fun windowStateChanged(e: WindowEvent) = updateTarget()
+    override fun propertyChange(evt: PropertyChangeEvent) = updateTarget()
+  }
 
-    override fun componentMoved(e: ComponentEvent) {
-      updateTarget()
-    }
+  private class Overlays(
+    val excluded: List<Rectangle>,
+    val covered: Boolean,
+  )
 
-    override fun componentShown(e: ComponentEvent) {
-      updateTarget()
-    }
+  companion object {
+    private const val OPAQUE_PROPERTY = "opaque"
 
-    override fun componentHidden(e: ComponentEvent) {
-      updateTarget()
-    }
+    /**
+     * The overlays may hide at most one quarter of the renderer. Above that, the frames go through Swing repaints.
+     */
+    private const val LARGE_OVERLAY_DIVISOR = 4L
 
-    override fun hierarchyChanged(e: HierarchyEvent) {
-      updateTarget()
-    }
-
-    override fun ancestorMoved(e: HierarchyEvent) {
-      updateTarget()
-    }
-
-    override fun ancestorResized(e: HierarchyEvent) {
-      updateTarget()
-    }
-
-    override fun componentAdded(e: ContainerEvent) {
-      updateTarget()
-    }
-
-    override fun componentRemoved(e: ContainerEvent) {
-      updateTarget()
-    }
-
-    override fun windowStateChanged(e: WindowEvent) {
-      updateTarget()
-    }
-
-    override fun propertyChange(evt: PropertyChangeEvent) {
-      updateTarget()
-    }
+    /**
+     * The time after the last color change when the render thread asks Swing to paint the current frame once.
+     * Then the Swing back buffer holds the current frame.
+     */
+    private const val SETTLE_NANOS = 250_000_000L
   }
 }
-
-private fun <T> identitySet(): MutableSet<T> = Collections.newSetFromMap(IdentityHashMap())
-
-private const val OPAQUE_PROPERTY = "opaque"
-
-/**
- * The overlays may hide at most one quarter of the renderer. Above that, the frames go through Swing repaints.
- */
-private const val LARGE_OVERLAY_DIVISOR = 4L
-
-/**
- * The time after the last color change when the render thread asks Swing to paint the current frame once.
- * Then the Swing back buffer holds the current frame.
- */
-private const val SETTLE_NANOS = 250_000_000L

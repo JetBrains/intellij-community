@@ -25,19 +25,21 @@ internal class EditorSkeletonColorManager(
     background.set(snapshotBackground())
   }
 
-  fun frameColors(): FrameColors {
+  fun frameColors(): SkeletonFrameColor {
     val background = background.get()
-    val palette = palette.updateAndGet { if (it.background == background) it else EditorSkeletonPalette(background) }
+    val palette = palette.updateAndGet {
+      if (it.background == background) it else EditorSkeletonPalette(background)
+    }
     val now = nowMs()
     if (fadeInStartTime.compareAndSet(Long.MIN_VALUE, now)) {
-      return FrameColors(background, background)
+      return SkeletonFrameColor(background, background)
     }
     val state = timeline.stateAt(now - fadeInStartTime.get())
-    return FrameColors(background, palette.blocksColor(state))
+    return SkeletonFrameColor(background, palette.blocksColor(state))
   }
 
   @Suppress("UseJBColor")
-  private fun snapshotBackground(): Color = Color(EditorSkeleton.EDITOR_BACKGROUND_COLOR.rgb, true)
-
-  data class FrameColors(val background: Color, val blocks: Color)
+  private fun snapshotBackground(): Color {
+    return Color(EditorSkeleton.EDITOR_BACKGROUND_COLOR.rgb, true)
+  }
 }
