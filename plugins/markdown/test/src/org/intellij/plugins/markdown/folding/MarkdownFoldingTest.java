@@ -107,6 +107,41 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
     doTest();
   }
 
+  public void testHeaderPlaceholderUsesHeaderTextOnly() {
+    String text = """
+      ## Lorem ipsum dolor sed emit
+      Lorem
+      ## Lorem ipsum dolor sed emit est
+      Ipsum
+      """;
+    myFixture.configureByText("test.md", text);
+
+    String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
+    assertTrue(foldingDescription, foldingDescription.contains("text='h2: ## Lorem ipsum dolor sed emit'"));
+    assertTrue(foldingDescription, foldingDescription.contains("text='h2: ## Lorem ipsum dolor sed emit est'"));
+  }
+
+  public void testSetextHeaderPlaceholderUsesContentLine() {
+    myFixture.configureByText("test.md", """
+      Setext title
+      ============
+
+      Setext body
+      """);
+
+    String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
+    assertTrue(foldingDescription, foldingDescription.contains("text='Setext title'"));
+  }
+
+  public void testLongHeaderPlaceholderIsTruncatedAt120Characters() {
+    String longHeader = "## " + "x".repeat(130);
+    myFixture.configureByText("test.md", longHeader + "\nBody");
+
+    String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
+    String expectedPlaceholder = "text='h2: ## " + "x".repeat(109) + "..." + "x".repeat(5) + "'";
+    assertTrue(foldingDescription, foldingDescription.contains(expectedPlaceholder));
+  }
+
   public void testListMultiLineItem() {
     doTest();
   }
