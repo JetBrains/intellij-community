@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginDescriptorLoadUtilsKt;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -33,6 +34,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry.FileTypeDetector;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -1171,6 +1173,75 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
   }
 
+  public void testDeferredFileTypeEventsKeepLookupsCurrent() throws IOException {
+    VirtualFile file = createTempVirtualFile("pending." + MyTestFileType.EXTENSION, null, "text", StandardCharsets.UTF_8);
+    assertSame(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFile(file));
+    List<FileTypeEvent> events = new ArrayList<>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(FileTypeManager.TOPIC,
+      new FileTypeListener() {
+        @Override
+        public void fileTypesChanged(@NotNull FileTypeEvent event) {
+          if (event.getSource() == myFileTypeManager) {
+            events.add(event);
+          }
+        }
+      });
+    List<Disposable> registrations = new ArrayList<>();
+    try {
+      WriteAction.run(() -> {
+        try (AccessToken ignored = myFileTypeManager.deferFileTypesChanged()) {
+          FileTypeBean bean = new FileTypeBean();
+          bean.name = MyTestFileType.NAME;
+          bean.implementationClass = MyTestFileType.class.getName();
+          bean.extensions = MyTestFileType.EXTENSION;
+          registrations.add(registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor()));
+          assertEmpty(events);
+          assertFalse(myFileTypeManager.INSTANTIATED.contains(bean.name));
+          assertInstanceOf(myFileTypeManager.getFileTypeByFile(file), MyTestFileType.class);
+
+          try (AccessToken ignoredNested = myFileTypeManager.deferFileTypesChanged()) {
+            FileTypeBean additional = new FileTypeBean();
+            additional.name = bean.name;
+            additional.fileNames = ".deferredFileTypeTest";
+            registrations.add(registerFileType(additional, FileTypeManagerImpl.coreIdeaPluginDescriptor()));
+          }
+          assertEmpty(events);
+        }
+        assertSize(2, events);
+        assertNull(events.getFirst().getAddedFileType());
+        assertInstanceOf(events.getLast().getAddedFileType(), MyTestFileType.class);
+      });
+    }
+    finally {
+      WriteAction.run(() -> registrations.reversed().forEach(Disposer::dispose));
+    }
+  }
+
+  public void testDeferredFileTypeEventsAreFlushedAfterFailure() {
+    List<FileTypeEvent> events = new ArrayList<>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(FileTypeManager.TOPIC,
+      new FileTypeListener() {
+        @Override
+        public void fileTypesChanged(@NotNull FileTypeEvent event) {
+          if (event.getSource() == myFileTypeManager) {
+            events.add(event);
+          }
+        }
+      });
+    WriteAction.run(() -> {
+      assertThrows(IllegalStateException.class, () -> {
+        try (AccessToken ignored = myFileTypeManager.deferFileTypesChanged()) {
+          myFileTypeManager.makeFileTypesChange("test failure", () -> {
+            throw new IllegalStateException("test failure");
+          });
+        }
+      });
+      assertSize(1, events);
+      myFileTypeManager.makeFileTypesChange("after test failure", () -> { });
+      assertSize(2, events);
+    });
+  }
+
   @SuppressWarnings("deprecation")
   public void testLegacyFileTypesAreUpdatedForPendingExtensions() {
     LanguageFileType xml = StdFileTypes.XML;
@@ -1184,7 +1255,13 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     try {
       StdFileTypes.JAVA = xml;
       StdFileTypes.XML = PlainTextFileType.INSTANCE;
-      WriteAction.run(() -> myFileTypeManager.extensionAdded(xmlBean, xmlBean.getPluginDescriptor()));
+      WriteAction.run(() -> {
+        try (AccessToken ignored = myFileTypeManager.deferFileTypesChanged()) {
+          myFileTypeManager.extensionAdded(xmlBean, xmlBean.getPluginDescriptor());
+          assertSame(xml, StdFileTypes.XML);
+          assertSame(xml, StdFileTypes.JAVA);
+        }
+      });
       assertSame(xml, StdFileTypes.XML);
       assertSame(xml, StdFileTypes.JAVA);
       assertNotEmpty(myFileTypeManager.getStandardMatchers(xml));

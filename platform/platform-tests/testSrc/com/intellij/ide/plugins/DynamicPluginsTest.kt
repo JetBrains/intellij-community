@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ProjectTopics
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import com.intellij.codeInspection.GlobalInspectionTool
@@ -49,10 +50,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.fileTypes.FileTypeEvent
+import com.intellij.openapi.fileTypes.FileTypeListener
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.ModuleConfigurationEditor
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.util.Disposer
@@ -944,14 +950,53 @@ class DynamicPluginsTest {
 
   @Test
   fun loadExistingFileTypeModification() {
+    checkFileTypeEventsAfterPluginLoad()
+  }
+
+  @Test
+  fun loadExistingFileTypeModificationWithoutDeferredExtensionListeners() {
+    Registry.get("ide.plugins.defer.listener.notifications.on.load").setValue(false, testDisposable.disposable)
+    checkFileTypeEventsAfterPluginLoad()
+  }
+
+  private fun checkFileTypeEventsAfterPluginLoad() {
+    FileTypeManager.getInstance()
+    val notifications = mutableListOf<String>()
+    val connection = application.messageBus.connect(testDisposable.disposable)
+    connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+        notifications.add("plugin loaded")
+      }
+
+      override fun pluginsLoaded() {
+        notifications.add("plugins loaded")
+      }
+    })
+    connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
+      override fun fileTypesChanged(event: FileTypeEvent) {
+        notifications.add("file types changed")
+      }
+    })
+    projectRule.project.messageBus.connect(testDisposable.disposable).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        if (event.isCausedByFileTypesChange) {
+          notifications.add("roots changed")
+        }
+      }
+    })
     @Suppress("SpellCheckingInspection")
     val textToLoad = "<fileType name=\"PLAIN_TEXT\" language=\"PLAIN_TEXT\" fileNames=\".texttest\"/>"
-    var disposable = loadExtensionWithText(textToLoad)
-    Disposer.dispose(disposable)
-
-    UIUtil.dispatchAllInvocationEvents()
-    disposable = loadExtensionWithText(textToLoad)
-    Disposer.dispose(disposable)
+    repeat(2) {
+      notifications.clear()
+      val disposable = loadExtensionWithText(textToLoad)
+      try {
+        assertThat(notifications).containsExactly("plugin loaded", "file types changed", "plugins loaded", "roots changed")
+      }
+      finally {
+        Disposer.dispose(disposable)
+      }
+      UIUtil.dispatchAllInvocationEvents()
+    }
   }
 
   @Test
