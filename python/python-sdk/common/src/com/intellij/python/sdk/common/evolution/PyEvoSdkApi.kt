@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NonNls
 private val LOG: Logger = fileLogger()
 
 /**
- * Split-mode wire contract for the "Evo" Python interpreter widget
- * (registry `python.evolution.widget`).
+ * Split-mode wire contract for the "Evo" Python interpreter widget.
  *
  * All Python-SDK discovery is backend-only, so the frontend widget/popup obtain their display data
  * through these read-only RPC calls and render it into UI; [selectInterpreter] is the single mutating

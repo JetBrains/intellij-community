@@ -79,8 +79,6 @@ internal class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
 
   override fun getDisplayName(): String = PySdkFrontendBundle.message("evo.sdk.status.bar.widget.factory.display.name")
 
-  override fun isAvailable(project: Project): Boolean = PyEvoRegistry.isWidgetEnabled
-
   override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget = EvoPySdkStatusBarWidget(project, scope)
 }
 

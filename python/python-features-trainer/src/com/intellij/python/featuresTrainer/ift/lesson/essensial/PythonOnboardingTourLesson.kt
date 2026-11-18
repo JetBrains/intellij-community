@@ -18,7 +18,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.WindowStateService
+import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
 import com.intellij.python.featuresTrainer.ift.PythonLessonsUtil
@@ -578,7 +580,7 @@ class PythonOnboardingTourLesson :
 
     task {
       triggerAndBorderHighlight().component { info: TextPanel.WithIconAndArrows ->
-        info.toolTipText.isToStringContains(PyBundle.message("current.interpreter", ""))
+        info === WindowManager.getInstance().getStatusBar(project)?.getWidget(INTERPRETER_WIDGET_ID)?.let { (it as? CustomStatusBarWidget)?.component }
       }
     }
     task {
@@ -598,3 +600,6 @@ class PythonOnboardingTourLesson :
     }
   }
 }
+
+/** The id of the interpreter widget, see `statusBarWidgetFactory` in `intellij.python.sdk.frontend.xml`. */
+private const val INTERPRETER_WIDGET_ID: String = "EvoPySdkStatusBarWidget"

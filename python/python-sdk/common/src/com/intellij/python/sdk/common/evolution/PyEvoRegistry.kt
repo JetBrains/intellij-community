@@ -12,10 +12,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 object PyEvoRegistry {
-  /** Master switch: show the Evo interpreter widget instead of the classic one. */
-  val isWidgetEnabled: Boolean
-    get() = Registry.`is`("python.evolution.widget")
-
   /** Seconds a closed popup's built tree is reused before a re-open rebuilds (rescans) it. */
   val popupTreeCacheSeconds: Int
     get() = Registry.intValue("python.evolution.widget.cache.seconds")

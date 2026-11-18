@@ -114,10 +114,6 @@
                              instance="com.intellij.pycharm.community.ide.impl.settings.MemoryUsageConfigurable"
                              groupId="root"/>
 
-    <statusBarWidgetFactory id="pythonInterpreterWidget"
-                            implementation="com.intellij.pycharm.community.ide.impl.configuration.PySdkStatusBarWidgetFactory"
-                            order="after CodeStyleStatusBarWidget, before git, before hg, before Notifications"/>
-
     <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
     <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PlatformInspectionProfileConfigurator"/>
