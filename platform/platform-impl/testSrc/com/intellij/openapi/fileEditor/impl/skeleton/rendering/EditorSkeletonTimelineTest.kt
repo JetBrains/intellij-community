@@ -15,7 +15,7 @@ internal class EditorSkeletonTimelineTest {
 
   @Test
   fun `a short open shows the blocks below one just noticeable difference`() {
-    assertThat(timeline.stateAt(300).fadeProgress).isLessThan(ONE_JND_PROGRESS)
+    assertThat(timeline.stateAt(200).fadeProgress).isLessThan(ONE_JND_PROGRESS)
   }
 
   @Test
@@ -64,7 +64,7 @@ internal class EditorSkeletonTimelineTest {
   }
 }
 
-private const val FADE_IN_MS = 1500L
+private const val FADE_IN_MS = 1000L
 private const val PULSE_MS = 1500L
 private const val FRAME_MS = 8L
 
