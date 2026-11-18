@@ -31,6 +31,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
 import com.intellij.openapi.editor.impl.view.IterationState
 import com.intellij.openapi.editor.markup.FontFamilies
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -815,24 +817,26 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertTrue(inlay.isValid)
   }
 
-  /** The soft-wrap engine takes the indent of the original line from the first non-whitespace element. The indent inlay sits before it. */
-  fun testSoftWrappedNestedItemContinuationStartsAtOrAfterItsMarker() {
-    val content = "- parent\n  - a long nested item that wraps over several visual lines\n\ntail"
+  fun testSoftWrappedListItemContinuationStartsUnderTheItemText() {
+    val content = "- bullet item that wraps over several visual lines\n\n" +
+                  "2. ordered item that wraps over several visual lines\n\n" +
+                  "- [ ] task item that wraps over several visual lines\n\n" +
+                  "- parent\n  - nested item that wraps over several visual lines\n\n" +
+                  "> - quoted item that wraps over several visual lines\n\n" +
+                  "plain item that wraps over several visual lines\n\ntail"
     configure("$content<caret>")
     val editor = myFixture.editor
-    EditorTestUtil.configureSoftWraps(editor, 20)
-    assertTrue(editor.settings.isUseCustomSoftWrapIndent)
-    val markerOffset = content.indexOf("- a long")
-    val lineEnd = content.indexOf("\n\ntail")
-    val markerX = editor.offsetToXY(markerOffset).x
-    val continuationX = editor.offsetToXY(editor.softWrapModel.getSoftWrapsForRange(markerOffset, lineEnd).first().start, true, false).x
-    assertTrue("The continuation starts at $continuationX, before the marker at $markerX", continuationX >= markerX)
-    assertTrue(continuationX >= listIndentInlays().single().widthInPixels)
-
-    // Without the custom indent, the continuation starts at the margin. This pins the platform behaviour that the live preview relies on.
-    editor.settings.isUseCustomSoftWrapIndent = false
-    val plainX = editor.offsetToXY(editor.softWrapModel.getSoftWrapsForRange(markerOffset, lineEnd).first().start, true, false).x
-    assertTrue("The continuation starts at $plainX, at or after the marker at $markerX", plainX < markerX)
+    val softWrapModel = editor.softWrapModel as SoftWrapModelImpl
+    softWrapModel.applianceManager.setWidthProvider { 200 }
+    EditorTestUtil.setEditorVisibleSizeInPixels(editor, 200, 1000)
+    softWrapModel.applianceManager.recalculateIfNecessary("test")
+    MarkdownLivePreviewReconciler.getExisting(editor)!!.reconcileNow()
+    assertEquals(0, softWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP))
+    for (item in listOf("bullet", "ordered", "task", "nested", "quoted", "plain")) {
+      val textStart = content.indexOf("$item item")
+      val softWrap = softWrapModel.getSoftWrapsForRange(textStart + 1, content.indexOf('\n', textStart)).first()
+      assertEquals(item, editor.offsetToXY(textStart).x, editor.offsetToXY(softWrap.start, true, false).x)
+    }
   }
 
   fun testSelectionAndMultipleCaretsRevealListMarkers() {

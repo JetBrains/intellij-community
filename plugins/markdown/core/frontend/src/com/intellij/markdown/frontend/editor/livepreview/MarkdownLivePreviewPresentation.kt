@@ -117,7 +117,7 @@ internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: 
   )
 
   init {
-    elementRenderers.forEach { (_, renderer) -> Disposer.register(this, renderer) }
+    elementRenderers.forEach { [_, renderer] -> Disposer.register(this, renderer) }
   }
 
   fun create(specs: MarkdownLivePreviewSpecSet): MarkdownLivePreviewPresentation {

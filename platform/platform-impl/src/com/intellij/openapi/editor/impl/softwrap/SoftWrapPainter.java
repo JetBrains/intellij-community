@@ -19,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Graphics;
+import java.util.function.IntUnaryOperator;
 
 /**
  * Defines contract for the service that manages soft wrap-related graphical effects.
@@ -71,6 +72,24 @@ public interface SoftWrapPainter {
    * @return              width in pixels required for the painting of the given type
    */
   int getMinDrawingWidth(@NotNull SoftWrapDrawingType drawingType);
+
+  /**
+   * Returns the offset in pixels where the soft-wrapped parts of a logical line start.
+   * The offset is measured from the line start.
+   * <p>
+   * The offset can point inside an inlay or a fold placeholder.
+   * If no character or fold starts between the offset and the soft wrap, the editor ignores the offset.
+   * The soft-wrapped parts then start at the custom soft-wrap indent from the line start.
+   * The editor calls this method only with a custom soft-wrap indent, when the line gets its first soft wrap.
+   *
+   * @param lineStartOffset the document offset at the start of the logical line
+   * @param offsetToX gives the width in pixels from the line start to a document offset before the first soft wrap.
+   *                  The width stops before the inlays at that offset.
+   * @return the offset in pixels, or -1 to start the soft-wrapped parts under the first non-whitespace character
+   */
+  default int getIndentOffset(int lineStartOffset, @NotNull IntUnaryOperator offsetToX) {
+    return -1;
+  }
 
   /**
    * Allows to answer if it's possible to use current painter implementation at local environment (e.g. there is a possible
