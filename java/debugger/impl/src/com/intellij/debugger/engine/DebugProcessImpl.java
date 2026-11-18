@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.engine.requests.CaptureScope;
 import com.intellij.debugger.engine.requests.MethodReturnValue;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.engine.requests.ReturnValueWatcher;
@@ -85,7 +86,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -350,24 +350,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public @Nullable MethodReturnValue getLastMethodReturnValue() {
     final ReturnValueWatcher watcher = myReturnValueWatcher;
     return watcher != null ? watcher.getLastMethodReturnValue() : null;
-  }
-
-  /**
-   * @deprecated Use {@link #getLastMethodReturnValue()}.
-   */
-  @Deprecated
-  public @Nullable Pair<Method, Value> getLastExecutedMethod() {
-    final MethodReturnValue returnValue = getLastMethodReturnValue();
-    return returnValue != null ? Pair.create(returnValue.getMethod(), returnValue.getValue()) : null;
-  }
-
-  /**
-   * Call this method after a change of {@link DebuggerSettings#WATCH_RETURN_VALUES}.
-   */
-  public void setWatchMethodReturnValuesEnabled(boolean enabled) {
-    if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.clear();
-    }
   }
 
   public boolean canGetMethodReturnValue() {
@@ -2132,7 +2114,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final ThreadReferenceProxyImpl thread = getContextThread();
       RequestHint hint = getHint(suspendContext, thread, null);
       applyThreadFilter(getThreadFilterFromContext(suspendContext));
-      startWatchingMethodReturn(thread);
+      startWatchingMethodReturn(thread, CaptureScope.BASE_FRAME);
       step(suspendContext, thread, hint, createCommandToken());
       super.contextAction(suspendContext);
     }
@@ -2181,7 +2163,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(getThreadFilterFromContext(suspendContext));
-      startWatchingMethodReturn(stepThread);
+      startWatchingMethodReturn(stepThread, CaptureScope.WITH_CALLS);
       if (myBreakpoint != null) {
         prepareAndSetSteppingBreakpoint(suspendContext, myBreakpoint, hint, false);
       }
@@ -2263,7 +2245,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       applyThreadFilter(getThreadFilterFromContext(suspendContext));
 
-      startWatchingMethodReturn(stepThread);
+      startWatchingMethodReturn(stepThread, CaptureScope.WITH_CALLS);
 
       step(suspendContext, stepThread, hint, createCommandToken());
     }
@@ -3195,9 +3177,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return mySuspendManager.hasPausedContext(suspendContext);
   }
 
-  public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
+  public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread, CaptureScope scope) {
     if (myReturnValueWatcher != null && DebuggerSettings.getInstance().WATCH_RETURN_VALUES) {
-      myReturnValueWatcher.startCapture(thread.getThreadReference());
+      myReturnValueWatcher.startCapture(thread.getThreadReference(), scope);
     }
   }
 

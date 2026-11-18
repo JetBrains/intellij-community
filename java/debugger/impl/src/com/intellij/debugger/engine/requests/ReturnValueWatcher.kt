@@ -6,33 +6,48 @@ import com.sun.jdi.ThreadReference
 import com.sun.jdi.Value
 import com.sun.jdi.event.Event
 
-/** A method and the value that it returned. */
+/** A method and its return value. */
 data class MethodReturnValue(val method: Method, val value: Value?)
 
+/**
+ * What a capture records.
+ * The base frame is the frame where the capture starts. A callee is a method that the base frame calls directly.
+ */
+enum class CaptureScope {
+  /** The return values of the base frame and of its callees. */
+  WITH_CALLS,
+
+  /** Only the return value of the base frame. */
+  BASE_FRAME,
+}
 
 /**
  * Captures method return values between [startCapture] and [stopCapture].
- * The caller checks the user setting before it starts a capture.
+ *
+ * Call all functions on the debugger manager thread. The caller checks the user setting before it starts a capture.
  */
 interface ReturnValueWatcher {
-  // All these functions must only be called if the feature is enabled in settings.
-
-  /** The last non-void method that returned during the capture, or null. */
+  /** The last non-void return value of the capture, or null. */
   val lastMethodReturnValue: MethodReturnValue?
 
-  /** Starts to capture return values in the thread. */
-  fun startCapture(thread: ThreadReference)
+  /** Starts a capture in the thread. A watcher can record more than the [scope] requires. */
+  fun startCapture(thread: ThreadReference, scope: CaptureScope)
 
-  /** Stops the capture. Keeps the last value. Safe to call when the capture is not active. */
+  /** Stops the capture and keeps the last return value. Safe to call when no capture runs. */
   fun stopCapture()
 
-  /** Forgets the last value. */
+  /** Forgets the last return value. */
   fun clear()
 
-  /** Returns true if the event belongs to this watcher. Claims its own events also when the capture is not active. */
+  /** Returns true if the watcher claims the event. A watcher claims its events also after the capture stopped. */
   fun processEvent(event: Event): Boolean
 
   companion object {
-    const val WATCHER_REQUEST_KEY: String = "WATCHER_REQUEST_KEY"
+    /** Returns true if a [ReturnValueWatcher] created the request of the event. Such an event never stops the debugger. */
+    @JvmStatic
+    fun isWatcherEvent(event: Event): Boolean = event.request()?.getProperty(WATCHER_REQUEST_KEY) != null
   }
 }
+
+/** The property that marks each request of a [ReturnValueWatcher]. */
+internal const val WATCHER_REQUEST_KEY: String = "WATCHER_REQUEST_KEY"

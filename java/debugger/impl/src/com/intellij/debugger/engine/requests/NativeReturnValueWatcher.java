@@ -1,16 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests;
 
-import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.overhead.OverheadProducer;
-import com.intellij.debugger.ui.overhead.OverheadTimings;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectCollectedException;
@@ -24,6 +18,8 @@ import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.debugger.engine.requests.ReturnValueWatcherKt.WATCHER_REQUEST_KEY;
 
 /**
  * @author Eugene Zhuravlev
@@ -39,13 +35,9 @@ public class NativeReturnValueWatcher implements ReturnValueWatcher {
 
   private volatile boolean myCapturing;
   private final EventRequestManager myRequestManager;
-  private final DebugProcessImpl myProcess;
-  private final Overhead myOverhead;
 
-  public NativeReturnValueWatcher(EventRequestManager requestManager, DebugProcessImpl process) {
+  public NativeReturnValueWatcher(EventRequestManager requestManager) {
     myRequestManager = requestManager;
-    myProcess = process;
-    myOverhead = new Overhead(process);
   }
 
   private void processMethodExitEvent(MethodExitEvent event) {
@@ -111,7 +103,8 @@ public class NativeReturnValueWatcher implements ReturnValueWatcher {
   }
 
   @Override
-  public void startCapture(@NotNull ThreadReference thread) {
+  public void startCapture(@NotNull ThreadReference thread, @NotNull CaptureScope scope) {
+    // Exit events cannot be limited to one frame, so the scope makes no difference.
     setCapturing(true, thread);
   }
 
@@ -143,7 +136,6 @@ public class NativeReturnValueWatcher implements ReturnValueWatcher {
         myExitRequest = null;
       }
       if (enabled) {
-        OverheadTimings.add(myProcess, myOverhead, 1, null);
         clear();
         myThread = thread;
 
@@ -186,8 +178,7 @@ public class NativeReturnValueWatcher implements ReturnValueWatcher {
 
   @Override
   public boolean processEvent(@NotNull Event event) {
-    EventRequest request = event.request();
-    if (request == null || request.getProperty(WATCHER_REQUEST_KEY) == null) {
+    if (!ReturnValueWatcher.isWatcherEvent(event)) {
       return false;
     }
     if (!myCapturing) {
@@ -202,31 +193,5 @@ public class NativeReturnValueWatcher implements ReturnValueWatcher {
       processMethodExitEvent(exitEvent);
     }
     return true;
-  }
-
-  static class Overhead implements OverheadProducer {
-    private final DebugProcessImpl myProcess;
-
-    Overhead(DebugProcessImpl process) {
-      myProcess = process;
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
-    }
-
-    @Override
-    public void setEnabled(final boolean enabled) {
-      DebuggerSettings.getInstance().WATCH_RETURN_VALUES = enabled;
-      myProcess.setWatchMethodReturnValuesEnabled(enabled);
-    }
-
-    @Override
-    public @NotNull OverheadProducer.Presentation computePresentation() {
-      return new OverheadProducer.Presentation(
-        JavaDebuggerBundle.message("action.watches.method.return.value.enable"),
-        AllIcons.Debugger.WatchLastReturnValue);
-    }
   }
 }

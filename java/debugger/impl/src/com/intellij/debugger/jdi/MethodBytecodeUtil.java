@@ -377,6 +377,7 @@ public final class MethodBytecodeUtil {
       bytecodeOffset = offset;
     }
   }
+
   public static @NotNull Location getMethodEntryLocation(@NotNull Method method) {
     // We assume that all VMs start code indexes from zero.
     return new LocationCodeIndexOnly(method, 0);

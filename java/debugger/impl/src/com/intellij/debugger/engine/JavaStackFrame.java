@@ -267,6 +267,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   protected @NotNull List<? extends XNamedValue> createReturnValueNodes(EvaluationContextImpl evaluationContext) {
+    if (!DebuggerSettings.getInstance().WATCH_RETURN_VALUES) {
+      return Collections.emptyList();
+    }
     MethodReturnValue lastReturnValue = myDebugProcess.getLastMethodReturnValue();
     if (lastReturnValue != null && myDescriptor.getUiIndex() == 0) {
       Value returnValue = lastReturnValue.getValue();
