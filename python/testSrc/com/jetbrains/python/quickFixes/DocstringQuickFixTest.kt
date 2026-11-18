@@ -4,6 +4,7 @@ package com.jetbrains.python.quickFixes
 import com.intellij.idea.TestFor
 import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.allure.Components
@@ -42,5 +43,6 @@ class DocstringQuickFixTest : PyCodeInsightTestCase() {
       assertEquals(name, action.familyName)
       assertNull(action.getPresentation(ActionContext.from(myFixture.editor, myFixture.file)))
     }
+    SuggestedRefactoringProvider.getInstance(myFixture.project).reset()
   }
 }
