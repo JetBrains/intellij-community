@@ -5,19 +5,13 @@ description: Write IntelliJ UI tests with IDE Starter or UI Driver, or run one o
 
 # Driver UI Tests Guide
 
-Guidelines for writing UI tests using IDE Starter and UI Driver frameworks.
-
 Three files sit next to this one. Read [find-elements.md](find-elements.md) when you look for a component or read
 the IDE state. Read [api.md](api.md) when you need the call for an action, a wait or a startup flag. Read
 [debug.md](debug.md) when a test fails.
 
 ## Critical Rules
 
-These hold for every Driver test:
-
 - **Never use `Thread.sleep()`** or `delay()` - Driver framework automatically waits for UI elements
-- **Pass `pauseOnIndicators` instead of a manual `waitForIndicators`** - see "Test Structure" below
-- **Write one call chain** from the context to `useDriverAndCloseIde` - see "Test Structure" below
 - **Wrap test logic in `step("description") { }`** for better logs
 - **Verify assertions actually fail** – Comment out the action being tested and confirm the test fails. If it still passes, your assertion is too weak.
 - **Use common UI components** – create new if necessary
@@ -27,7 +21,7 @@ These hold for every Driver test:
 
 ## Where to look
 
-A test uses JUnit 5 with the IDE Starter framework and the UI Driver framework:
+A test uses JUnit 6 with the IDE Starter framework and the UI Driver framework:
 
 | What you need | Where it is |
 |---|---|
@@ -99,7 +93,7 @@ Two cases need more than the pause:
   dialog, a call such as `singleProject()`, and a key press all run at once. Put `waitForProjectOpen(Timeouts.M)`
   before such a call, and after the test opens or reopens a project.
 - **The pause does not work for the test.** Only then call `waitForIndicators`, and mark the test with
-  `@OptIn(ManualWaitForIndicators::class)`. An inspection warns about each other manual wait.
+  `@OptIn(ManualWaitForIndicators::class)`. The compiler warns about each other manual wait.
 
 ## Running Tests from Terminal
 
@@ -109,59 +103,13 @@ lose the focus to your desktop, and the environment matches the build agent:
 
 ```bash
 USE_DOCKER_CONTAINER=true ./tests.cmd \
-  --module intellij.driver.tests \
-  --test com.intellij.driver.tests.idea.java.FindAndGoToTest
+  --module intellij.driver.tests.java \
+  --test com.intellij.driver.tests.idea.java.navigationTests.FindAndGoToTest
 ```
 
 **Key parameters:**
 - `--test` - fully qualified test class name (or pattern)
-- `--module intellij.driver.tests` - **required** for driver tests
+- `--module` - the module that holds the test class, such as `intellij.driver.tests.java`
 
 After the run in the container passes, run the test once without the flag. Some failures come up in one
-environment only. To keep the focus in that run, use the hidden desktop below.
-
-## Running Tests Without Taking Over Your Screen
-
-`scripts/hidden_desktop.py` runs a test on a hidden desktop, so that the IDE windows do not take the focus from the user. The container runs the Linux IDE. The hidden desktop runs the IDE of the OS of the machine. The script is for an agent that checks a change on the machine where the user works:
-
-1. Edit the code.
-2. Take an existing test, or write a one-shot test. Do not commit a one-shot test.
-3. Run the test on the hidden desktop.
-4. Read the result and the screenshots, and repeat.
-
-The windows and the event loop are real, but no window reaches the screen. Each process that the test starts stays on the hidden desktop. This includes each IDE that IDE Starter starts, and the backend and the frontend in split mode.
-
-| OS | The hidden desktop |
-|----|--------------------|
-| Windows | A separate Windows desktop. |
-| Linux | An Xvfb display with a private session bus. The script needs `xvfb-run`, `xauth` and `dbus-run-session`. IDE Starter starts a window manager only when `fluxbox` and `xprop` are installed. |
-| macOS | Unsupported. The script exits with code 2. |
-
-Run the script from the repository root. After `--`, give the `tests.cmd` command of [Running Tests from Terminal](#running-tests-from-terminal), without `USE_DOCKER_CONTAINER`. On Windows, use PowerShell or cmd.exe, because Git Bash rewrites `/c`.
-
-```powershell
-# Windows
-python .agents/skills/driver-ui-tests/scripts/hidden_desktop.py --timeout 5400 -- cmd /c tests.cmd <arguments>
-```
-
-```bash
-# Linux
-python3 .agents/skills/driver-ui-tests/scripts/hidden_desktop.py --timeout 5400 -- ./tests.cmd <arguments>
-```
-
-- Use `tests.cmd`. It runs `bazel run`, so the Bazel client starts the test on the hidden desktop. Under `bazel test` or `bt.cmd`, the Bazel server starts the test, and the server can run on the user's desktop.
-- Start the Bazel server before the run, for example with `./bazel.cmd info server_pid`. A server that the run starts belongs to the run: it stays on the hidden desktop, or it stops with the run.
-- A build and a UI test take many minutes. Start the script as a background task when the agent can.
-- `--timeout` is in seconds. A timeout and Ctrl+C kill the command and each of its processes. On Linux, SIGTERM and SIGHUP do the same. When the command exits, the script also kills each process that it left. On Windows, the processes also stop when another process kills the script.
-- The output of the command passes through, and the exit code is the exit code of the command.
-- The script needs Python 3.8 or later and no packages.
-- A login can stop the run or reach the user's screen. A new browser opens on the hidden desktop, where nobody can answer it. A browser that runs already opens the page on the user's screen, and so does a UAC prompt. Ask the user to do each login that the run needs before the run, for example the authorization of a package repository.
-
-### Limits on Windows
-
-Xvfb takes OS input and screen captures, so a test on Linux needs no change. The Windows hidden desktop takes neither, so a test there has these limits:
-
-- **Input:** set the system property `driver.robot.use.input.events` to `true`, as in [Enabling a registry flag at startup](api.md#enabling-a-registry-flag-at-startup). The robot then posts clicks, keys, mouse moves and `dragAndDrop` to the IDE event queue. The default robot sends OS input, and OS input does not work on this desktop.
-- **Input that is not posted:** `pressMouse`, `releaseMouse`, `moveMouseAndPress`, `selectAndDrag` and `getColor` still use OS input or screen pixels. To drag, use `dragAndDrop`.
-- **Clicks:** click a component. The input-events robot cannot click an arbitrary screen point (AT-4884).
-- **Screenshots:** a screen capture is black. `driver.takeScreenshot` then paints the IDE windows into `full_screen.png`, so the `beforeIdeClosed` screenshot of IDE Starter works too. A native OS dialog is not in that image. For one image of each window, call `driver.takeScreenshotOfAllWindows("<folder>")`.
+environment only. To keep the focus in that run, use the hidden desktop, see [references/hidden-desktop.md](references/hidden-desktop.md).

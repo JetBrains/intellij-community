@@ -1,7 +1,5 @@
 # Find a UI Element
 
-Read this file when you look for a component, or when a search finds no element or too many.
-
 ## Element Selectors
 
 | Selector | Usage |
@@ -86,7 +84,7 @@ ui.keyboard { hotKey(KeyEvent.VK_META, KeyEvent.VK_COMMA) }  // Cmd+,
 To read state from a service or model in the IDE under test, declare a `@Remote` interface and call it via `driver.service(...)` / `driver.utility(...)`.
 
 - **Plugin classes need the `plugin` field.** Without it the class resolves against the platform/core classloader → `DriverIllegalStateException: No such class '<fqn>' in plugin null`.
-  - Class in a plugin **content module**: `@Remote("<fqn>", plugin = "<plugin.id>/<content.module>")` (e.g. `com.intellij.figma/intellij.figma.core`).
+  - Class in a plugin **content module**: `@Remote("<fqn>", plugin = "<plugin.id>/<content.module>")` (e.g. `com.intellij.figma/intellij.figma.frontend`).
   - Class in the **main / embedded** plugin module: `@Remote("<fqn>", plugin = "<plugin.id>")`.
 - **Method dispatch resolves against the DECLARED `@Remote` class, not the runtime object.** A method declared on a sealed/abstract supertype ref is "not found" at runtime — declare it on the concrete subtype, or expose it via a top-level type. (The `jvm-class-name` injection also cannot resolve a nested `Foo$Bar` name → a cosmetic "Cannot resolve class" inspection error; prefer top-level types.)
 - Add the plugin module as a TEST dependency so the FQNs resolve for code-insight.
