@@ -297,7 +297,7 @@ kotlinx.serialization.json.JsonEncoder
 kotlinx.serialization.encoding.Encoder
 kotlinx.serialization.encoding.CompositeEncoder
 kotlinx.serialization.encoding.AbstractEncoder
-com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton$startAnimation$1
+com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton$frames$1
 kotlinx.serialization.json.internal.ComposersKt
 kotlinx.serialization.json.internal.ComposerWithPrettyPrint
 kotlinx.serialization.json.internal.Composer
@@ -10083,6 +10083,15 @@ com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonPalette
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonFrameState
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonOklab
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonOklab$Ramp
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonFrames
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowRenderer
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowRenderer$TargetUpdater
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowRenderer$Overlays
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowRenderer$startRendering$1
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowRendererKt
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowTarget
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderThread
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderThread$renderLoop$1
 com.intellij.platform.diagnostic.telemetry.exporters.Span
 com.intellij.platform.diagnostic.telemetry.exporters.Span$Companion
 com.intellij.psi.LanguageSubstitutors
