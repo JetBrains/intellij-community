@@ -1217,9 +1217,9 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     isFocusCycleRoot = true
 
     if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
-      val skeletonDelay = EditorSkeletonPolicy.getSkeletonDelayMs(composite)
+      val fadeInMs = EditorSkeletonPolicy.fadeInMs(composite)
       skeletonScope.launch(Dispatchers.Default) {
-        val skeleton = EditorSkeleton(skeletonScope, composite.project, skeletonDelay)
+        val skeleton = EditorSkeleton(skeletonScope, composite.project, fadeInMs)
         withContext(Dispatchers.UI) {
           setNewSkeleton(skeleton)
         }

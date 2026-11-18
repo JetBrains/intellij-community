@@ -8,27 +8,26 @@ import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Represents a policy that defines whether a skeleton view should be shown
- * for a given file editor composite.
+ * Decides whether a file editor composite shows the editor skeleton while its editors load, and how long the skeleton fades in.
  *
- * If there is no policy registered for a given file editor composite, editor skeleton **will not** be shown.
- * If all policies return true from [shouldShowSkeleton], editor skeleton will be shown.
+ * The platform asks the policies in the order of the extension point. The first policy that does not answer [ThreeState.UNSURE] decides.
+ * When no policy decides, the composite shows no skeleton. On the backend, a composite never shows a skeleton.
  *
  * @see EditorSkeleton
  */
 @ApiStatus.Internal
 interface EditorSkeletonPolicy {
   /**
-   * Determines whether a skeleton view should be displayed for the given file editor composite.
-   *
-   * @param fileEditorComposite the file editor composite to evaluate
-   * @return `true` if a skeleton view should be displayed for the provided file editor composite, `false` otherwise.
-   * Returning `true` does not guarantee that a skeleton view will be shown, returning `false` guarantees that a skeleton view will not be shown.
-   *
-   * @see EditorSkeleton
+   * Returns [ThreeState.YES] to show the skeleton for [fileEditorComposite], [ThreeState.NO] to show none,
+   * or [ThreeState.UNSURE] to leave the decision to the next policy.
+   * [ThreeState.YES] does not guarantee a skeleton, because the editors can be ready first.
    */
   fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): ThreeState
 
+  /**
+   * Returns the fade-in duration of the skeleton for [fileEditorComposite] in milliseconds,
+   * or `null` to leave the decision to the next policy.
+   */
   fun getSkeletonFadeInMs(fileEditorComposite: FileEditorComposite): Long? = null
 
   companion object {
@@ -45,12 +44,18 @@ interface EditorSkeletonPolicy {
       return false
     }
 
-    internal fun getSkeletonDelayMs(fileEditorComposite: FileEditorComposite): Long {
+    internal fun fadeInMs(fileEditorComposite: FileEditorComposite): Long {
       for (policy in EP_NAME.extensionList) {
-        val delay = policy.getSkeletonFadeInMs(fileEditorComposite) ?: continue
-        return delay
+        val fadeInMs = policy.getSkeletonFadeInMs(fileEditorComposite) ?: continue
+        return fadeInMs
       }
-      return 500
+      return DEFAULT_FADE_IN_MS
     }
+
+    /**
+     * The fade-in duration when no policy decides.
+     * It is also the default of the `editor.skeleton.delay.ms` registry key.
+     */
+    internal const val DEFAULT_FADE_IN_MS: Long = 1000
   }
 }
