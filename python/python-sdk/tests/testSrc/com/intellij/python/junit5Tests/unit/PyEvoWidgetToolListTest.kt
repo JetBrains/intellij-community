@@ -72,6 +72,8 @@ class PyEvoWidgetToolListTest {
       scope = @OptIn(DelicateCoroutinesApi::class) GlobalScope,
       expandTools = {},
       packageManagerActions = packageManagerActions,
+      // The tools are what this is about, so they are on — the gate is covered by PyEvoToolsGateTest.
+      toolsEnabled = true,
     ).buildTree()
 
   /** A package-manager row as the backend sends one — an ACTION leaf run back by its own action id. */

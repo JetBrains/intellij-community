@@ -534,7 +534,8 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     expandToolsOnce = false
     val factory = EvoPySdkSwitchPopupFactory(project, target.key, target.name, structure.workspaceRootName(target),
                                              cached.current, cached.nodes, cached.associated, cached.shortcuts, scope,
-                                             expandTools = ::expandTools, cached.packageManagerActions)
+                                             expandTools = ::expandTools, cached.packageManagerActions,
+                                             target.toolsEnabled)
     val tree = reusable ?: factory.buildTree().also { popupTree = it; popupTreeKey = target.key }
     // Written on every open, not only where it changes: the tree is reused, so a fold left over from the last popup
     // would decide this one. Every open the user starts is folded; only the reopen the "Show more…" row asks for is
