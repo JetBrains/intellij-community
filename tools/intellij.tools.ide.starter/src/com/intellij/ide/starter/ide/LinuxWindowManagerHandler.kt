@@ -65,12 +65,41 @@ internal val windowManagerScript: String = ($$"""
       echo "xprop or fluxbox is not installed, so no window manager starts on $DISPLAY" >&2
     elif ! wm_running; then
   """ +
+  // fluxbox calls sync() after it copies a missing file into ~/.fluxbox, and sync() waits for the writeback of the whole disk.
+  // So fluxbox then gets its own HOME with the files next to the log, and the IDE keeps its HOME.
+  $$"""
+      wm_files="init keys menu apps overlay windowmenu"
+      wm_home="$HOME"
+      for file in $wm_files; do
+        [ -e "$HOME/.fluxbox/$file" ] || wm_home="${log%/*}/fluxbox-home"
+      done
+      if [ "$wm_home" != "$HOME" ]; then
+        mkdir -p "$wm_home/.fluxbox"
+  """ +
+  // fluxbox -info exits before it copies the files, and it names the defaults of the installed build; apps and overlay are next to init
+  $$"""
+        defaults=$(LC_ALL=C $limit fluxbox -info 2>/dev/null)
+        default_init=$(echo "$defaults" | sed -n 's/^ *init: //p')
+        for file in $wm_files; do
+          case $file in
+            apps|overlay) source="${default_init%/*}/$file" ;;
+            *) source=$(echo "$defaults" | sed -n "s/^ *$file: //p") ;;
+          esac
+          target="$wm_home/.fluxbox/$file"
+          [ -e "$target" ] || cp "$source" "$target" 2>/dev/null || : >"$target"
+        done
+  """ +
+  // an init without the version makes fluxbox update the files and call sync() again
+  $$"""
+        grep -q '^session.configVersion:' "$wm_home/.fluxbox/init" || echo 'session.configVersion: 13' >>"$wm_home/.fluxbox/init"
+      fi
+  """ +
   // on a loaded agent fluxbox can register only after many seconds, so only an exited fluxbox starts again
   $$"""
       attempt=0
       while [ $attempt -lt $wm_attempts ]; do
         attempt=$((attempt + 1))
-        fluxbox >>"$log" 2>&1 &
+        HOME="$wm_home" fluxbox >>"$log" 2>&1 &
         wm=$!
         start=$(date +%s)
         registered=false
