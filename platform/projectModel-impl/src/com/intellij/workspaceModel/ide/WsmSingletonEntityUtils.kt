@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.java.workspace.entities.JavaProjectSettingsEntity
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -10,14 +11,16 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SingletonWorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.TimeUnit.SECONDS
 
 @ApiStatus.Internal
 object WsmSingletonEntityUtils {
   private val LOG: Logger = thisLogger()
+  private val THROTTLED_LOG: ThrottledLogger = ThrottledLogger(thisLogger(), SECONDS.toMillis(60))
 
   fun <E : WorkspaceEntity> getSingleEntity(storage: EntityStorage, entityClass: Class<E>): E? {
     if (!SingletonWorkspaceEntity::class.java.isAssignableFrom(entityClass)) {
-      LOG.warn("Consider marking $entityClass as SingletonWorkspaceEntity")
+      THROTTLED_LOG.warn("Consider marking $entityClass as SingletonWorkspaceEntity")
     }
     val entities = storage.entities(entityClass).toList()
     if (entities.size > 1) {
