@@ -8,14 +8,15 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import org.jetbrains.java.generate.template.TemplateResource
 import org.jetbrains.java.generate.template.TemplatesManager
+import org.jetbrains.plugins.groovy.GroovyBundle
 import java.io.IOException
 
 @Service(Service.Level.APP)
 @State(name = "GroovyToStringTemplates", storages = [Storage("groovyToStringTemplates.xml")], category = SettingsCategory.CODE)
 internal class GroovyToStringTemplatesManager : TemplatesManager() {
   override fun getDefaultTemplates(): List<TemplateResource?> = listOf(
-    TemplateResource("Groovy: String concat (+)", readFile(DEFAULT_CONCAT_GROOVY), true),
-    TemplateResource("Groovy: String concat (+) and super.toString()", readFile(DEFAULT_CONCAT_SUPER_GROOVY), true)
+    TemplateResource(GroovyBundle.message("generate.tostring.template.interpolation"), readFile(DEFAULT_CONCAT_GROOVY), true),
+    TemplateResource(GroovyBundle.message("generate.tostring.template.interpolation.with.super"), readFile(DEFAULT_CONCAT_SUPER_GROOVY), true)
   )
 
   companion object {

@@ -9,6 +9,7 @@ import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.java.generate.GenerateToStringWorker
 import org.jetbrains.java.generate.config.ReplacePolicy
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.actions.GroovyToStringTemplatesManager
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,19 +27,22 @@ class GroovyGenerateToStringTest {
   fun testTemplatesInManager() {
     val templates = GroovyToStringTemplatesManager.getInstance().allTemplates
     assertEquals(
-      setOf("Groovy: String concat (+)", "Groovy: String concat (+) and super.toString()"),
+      setOf(
+        GroovyBundle.message("generate.tostring.template.interpolation"),
+        GroovyBundle.message("generate.tostring.template.interpolation.with.super"),
+      ),
       templates.map { it.fileName }.toSet(),
     )
   }
 
   @Test
   fun testStringConcat() {
-    doTest("fields", "Groovy: String concat (+)")
+    doTest("fields", GroovyBundle.message("generate.tostring.template.interpolation"))
   }
 
   @Test
   fun testStringConcatWithSuper() {
-    doTest("superWithFields", "Groovy: String concat (+) and super.toString()")
+    doTest("superWithFields", GroovyBundle.message("generate.tostring.template.interpolation.with.super"))
   }
 
   private fun doTest(testName: String, templateName: String) {

@@ -1183,7 +1183,7 @@
 
     <!--  from JavaAnalysisPlugin.xml for java.impl-->
     <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringActionHandler"
-                        serviceImplementation="org.jetbrains.java.generate.GenerateToStringActionHandlerImpl"/>
+                        serviceImplementation="org.jetbrains.java.generate.JavaGenerateToStringActionHandler"/>
     <applicationService serviceInterface="com.intellij.codeInsight.intention.QuickFixFactory"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl"/>
     <projectService serviceInterface="com.intellij.execution.filters.ExceptionAnalysisProvider"

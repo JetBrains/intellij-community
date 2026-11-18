@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
@@ -52,7 +52,7 @@ import com.intellij.util.text.matching.MatchedFragment;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.generate.GenerateToStringActionHandlerImpl;
+import org.jetbrains.java.generate.JavaGenerateToStringActionHandler;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import javax.swing.Icon;
@@ -213,7 +213,7 @@ public final class JavaGenerateMemberCompletionContributor {
           else if (MethodUtils.isToString(baseMethod)) {
             result.addElement(
               createOverridingLookupElement(implemented, baseMethod, baseClass, substitutor, generateDefaultMethods, parent, context -> {
-                new GenerateToStringActionHandlerImpl().invoke(context.getProject(), context.getEditor(), context.getFile());
+                new JavaGenerateToStringActionHandler().invoke(context.getProject(), context.getEditor(), context.getFile());
               }));
           }
         }

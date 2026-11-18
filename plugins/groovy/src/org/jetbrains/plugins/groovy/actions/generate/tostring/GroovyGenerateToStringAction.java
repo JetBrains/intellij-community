@@ -5,6 +5,6 @@ import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 
 public class GroovyGenerateToStringAction extends GrBaseGenerateAction {
   public GroovyGenerateToStringAction() {
-    super(new GroovyGenerateToStringActionHandlerImpl());
+    super(new GroovyGenerateToStringActionHandler());
   }
 }

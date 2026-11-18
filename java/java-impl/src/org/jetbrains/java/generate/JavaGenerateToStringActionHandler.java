@@ -86,11 +86,15 @@ import java.util.Set;
 /**
  * The action-handler that does the code generation.
  */
-public abstract class GenerateToStringActionHandlerBase implements GenerateToStringActionHandler, CodeInsightActionHandler {
-  private static final Logger LOG = Logger.getInstance(GenerateToStringActionHandlerBase.class);
+public class JavaGenerateToStringActionHandler implements GenerateToStringActionHandler, CodeInsightActionHandler {
+  private static final Logger LOG = Logger.getInstance(JavaGenerateToStringActionHandler.class);
   private final TemplatesManager myTemplatesManager;
 
-  protected GenerateToStringActionHandlerBase(@NotNull TemplatesManager templatesManager) {
+  public JavaGenerateToStringActionHandler() {
+    this(ToStringTemplatesManager.getInstance());
+  }
+
+  protected JavaGenerateToStringActionHandler(@NotNull TemplatesManager templatesManager) {
     myTemplatesManager = templatesManager;
   }
 
@@ -271,10 +275,6 @@ public abstract class GenerateToStringActionHandlerBase implements GenerateToStr
 
     public void setChooser(MemberChooser<PsiElementClassMember<?>> chooser) {
       this.chooser = chooser;
-    }
-
-    public MemberChooserHeaderPanel(final PsiClass clazz) {
-      this(clazz, ToStringTemplatesManager.getInstance());
     }
 
     public MemberChooserHeaderPanel(final PsiClass clazz, @NotNull TemplatesManager templatesManager) {

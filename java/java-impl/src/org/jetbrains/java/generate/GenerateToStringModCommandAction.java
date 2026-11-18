@@ -78,7 +78,7 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
     PsiClass psiClass = findTargetClass(context);
     if (psiClass == null) return ModCommand.nop();
 
-    List<PsiElementClassMember<?>> members = List.of(GenerateToStringActionHandlerImpl.buildMembersToShow(psiClass));
+    List<PsiElementClassMember<?>> members = List.of(JavaGenerateToStringActionHandler.buildMembersToShow(psiClass));
     List<PsiElementClassMember<?>> preselection = ContainerUtil.filter(members, m -> m.getElement().getContainingClass() == psiClass);
 
     TemplatesManager templatesManager = ToStringTemplatesManager.getInstance();
