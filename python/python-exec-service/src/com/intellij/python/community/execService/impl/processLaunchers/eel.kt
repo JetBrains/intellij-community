@@ -52,7 +52,6 @@ import com.jetbrains.python.sdk.getModuleRoots
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -275,7 +274,12 @@ private class EelProcessCommands(
             launch { proxy.runForever() }
           }
           eelProcess.exitCode.await()
-          cancel()
+          // Stop only new connections. Do not cancel the proxies: a connection in progress must deliver the last data
+          // of the process, for example a reply that the process sends just before it exits.
+          // When the acceptor is closed, each proxy returns after its connections end.
+          for (proxy in portProxies) {
+            proxy.acceptor.close()
+          }
         }
       }
       return Result.success(eelProcess.convertToJVMProcess())
