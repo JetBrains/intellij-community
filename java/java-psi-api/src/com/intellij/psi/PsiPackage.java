@@ -11,8 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Represents a Java package.
@@ -94,6 +96,27 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   default @NotNull @Unmodifiable Collection<@NotNull PsiFile> getIndividualFiles(@NotNull GlobalSearchScope scope,
                                                                                 boolean includeSubpackages) {
     return getIndividualFiles(scope);
+  }
+
+  /**
+   * Returns the {@code package-info.java} files of this package in the directories of the package and among its
+   * {@linkplain #getIndividualFiles(GlobalSearchScope) individual files}.
+   * A package can have both. Under a source root whose {@code packageMatchesDirectory} is {@code false}, and for a single-file
+   * source root, no directory belongs to the package, so only the individual files hold its {@code package-info.java}.
+   *
+   * @param scope scope to limit the query to
+   */
+  @ApiStatus.Experimental
+  default @NotNull @Unmodifiable List<@NotNull PsiFile> getPackageInfoFiles(@NotNull GlobalSearchScope scope) {
+    List<PsiFile> result = new ArrayList<>();
+    for (PsiDirectory directory : getDirectories(scope)) {
+      PsiFile file = directory.findFile(PACKAGE_INFO_FILE);
+      if (file != null) result.add(file);
+    }
+    for (PsiFile file : getIndividualFiles(scope)) {
+      if (PACKAGE_INFO_FILE.equals(file.getName()) && !result.contains(file)) result.add(file);
+    }
+    return Collections.unmodifiableList(result);
   }
 
   /**

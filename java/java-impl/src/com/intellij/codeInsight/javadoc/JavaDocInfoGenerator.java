@@ -1179,30 +1179,25 @@ public class JavaDocInfoGenerator {
   }
 
   private void generatePackageJavaDoc(StringBuilder buffer, PsiPackage psiPackage, boolean generatePrologue) {
-    boolean hasInfo = false;
-    for (PsiDirectory directory : psiPackage.getDirectories(GlobalSearchScope.everythingScope(myProject))) {
-      PsiFile packageInfoFile = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
-      if (packageInfoFile != null) {
-        ASTNode node = packageInfoFile.getNode();
-        if (node != null) {
-          ASTNode docCommentNode = findRelevantCommentNode(node);
-          if (docCommentNode != null) {
-            generatePackageJavaDoc(buffer, (PsiDocComment)docCommentNode.getPsi(), generatePrologue);
-            hasInfo = true;
-            break;
-          }
+    GlobalSearchScope scope = GlobalSearchScope.everythingScope(myProject);
+    for (PsiFile packageInfoFile : psiPackage.getPackageInfoFiles(scope)) {
+      ASTNode node = packageInfoFile.getNode();
+      if (node != null) {
+        ASTNode docCommentNode = findRelevantCommentNode(node);
+        if (docCommentNode != null) {
+          generatePackageJavaDoc(buffer, (PsiDocComment)docCommentNode.getPsi(), generatePrologue);
+          return;
         }
       }
+    }
+    for (PsiDirectory directory : psiPackage.getDirectories(scope)) {
       PsiFile packageHtmlFile = directory.findFile("package.html");
       if (packageHtmlFile != null) {
         generatePackageHtmlJavaDoc(buffer, packageHtmlFile, generatePrologue);
-        hasInfo = true;
-        break;
+        return;
       }
     }
-    if (!hasInfo) {
-      generateDefaultPackageDoc(buffer, psiPackage, generatePrologue);
-    }
+    generateDefaultPackageDoc(buffer, psiPackage, generatePrologue);
   }
 
   private void generateDefaultPackageDoc(StringBuilder buffer, PsiPackage aPackage, boolean generatePrologue) {
