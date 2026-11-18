@@ -64,8 +64,9 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
 
     /**
      * Stays below [ManagedCacheCloseBarrier.MAX_WAIT], so that a grave closes after its burials.
+     * Leaves time for the grave close within the 10 s that a project close waits for its scope.
      */
-    private val BURIAL_TIMEOUT: Duration = 8.seconds
+    private val BURIAL_TIMEOUT: Duration = 5.seconds
 
     @JvmStatic
     fun getInstance(project: Project, onlyIfCreated: Boolean = false): Necropolis? {
