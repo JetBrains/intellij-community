@@ -51,6 +51,10 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test reflow list items with unbreakable first elements`() = doTest()
 
+  fun `test keep long unbreakable list items on one line`() = doTest(rightMargin = 80)
+
+  fun `test reflow after a long first list word`() = doTest(rightMargin = 80)
+
   fun `test reflow list items with long words and links at default margin`() = doTest(
     rightMargin = 120,
     keepLineBreaks = true,

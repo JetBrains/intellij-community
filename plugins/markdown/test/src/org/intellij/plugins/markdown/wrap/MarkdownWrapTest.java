@@ -11,6 +11,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
+import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
@@ -53,6 +54,10 @@ public class MarkdownWrapTest extends BasePlatformTestCase {
 
   public void testWrapInList() {
     doTest(" a b c");
+  }
+
+  public void testReformatAfterLongFirstListWord() {
+    doTestWithReformat("A".repeat(80));
   }
 
   public void testWrapInQuotes() {
@@ -161,4 +166,28 @@ public class MarkdownWrapTest extends BasePlatformTestCase {
     myFixture.type(textToType);
     myFixture.checkResultByFile(testName + ".after.md");
   }
+
+  private void doTestWithReformat(@NotNull String textToType) {
+    final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
+    final MarkdownCustomCodeStyleSettings markdownSettings = settings.getCustomSettings(MarkdownCustomCodeStyleSettings.class);
+    boolean oldWrapTextIfLong = markdownSettings.WRAP_TEXT_IF_LONG;
+    markdownSettings.WRAP_TEXT_IF_LONG = true;
+    try {
+      String testName = getTestName(true);
+      myFixture.configureByFile(testName + ".md");
+      for (char character : textToType.toCharArray()) {
+        myFixture.type(character);
+      }
+      myFixture.type(' ');
+      for (char character : "text more words".toCharArray()) {
+        myFixture.type(character);
+      }
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_REFORMAT);
+      myFixture.checkResultByFile(testName + ".after.md");
+    }
+    finally {
+      markdownSettings.WRAP_TEXT_IF_LONG = oldWrapTextIfLong;
+    }
+  }
+
 }
