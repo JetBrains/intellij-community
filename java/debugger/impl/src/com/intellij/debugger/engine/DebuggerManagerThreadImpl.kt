@@ -216,19 +216,9 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
             // if current command is still in progress, cancel it
             val request = currentRequest
             request.requestStop()
-            try {
-              request.join()
-            }
-            catch (_: InterruptedException) {
-            }
-            catch (e: Exception) {
-              throw RuntimeException(e)
-            }
-            finally {
-              // after close the stopped worker drains the queue itself, and a new worker would outlive the work job
-              if (!myDisposed && !myClosed.get()) {
-                startNewWorkerThread()
-              }
+            // after close the stopped worker drains the queue itself, and a new worker would outlive the work job
+            if (!myDisposed && !myClosed.get()) {
+              startNewWorkerThread(request, COMMAND_TIMEOUT.toLong())
             }
           }
         }, terminateTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
