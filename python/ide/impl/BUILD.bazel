@@ -131,7 +131,15 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
+    runtime_deps = [
+        # do not sort,
+        "//python/python-features-trainer:featuresTrainer",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//json/plugin",
+        "//plugins/yaml/plugin",
+        "//xml/plugin",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -163,6 +171,10 @@ jvm_library(
         "//platform/ide-core",
         "//platform/execution",
         "//platform/scratch/plugin",
+        "//libraries/assertj-core",
+        "//platform/testFramework",
+        "//platform/projectModel-impl",
+        "//plugins/toml/core",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl.tests` end
