@@ -31,18 +31,18 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/util:util-ui",
-        "//platform/core-ui",
-    ],
+    runtime_deps = ["//platform/core-ui"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/util",
         "//libraries/jetbrains/annotations",
+        "//platform/util:util-ui",
         "//platform/execution",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-impl",
+        "//python/common",
         "//python:python-community-impl",
     ],
 )
