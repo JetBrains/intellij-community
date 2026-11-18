@@ -19,7 +19,7 @@ internal class EditorSkeletonColorManager(
   private val background = AtomicReference(snapshotBackground())
   private val ramp = AtomicReference(createRamp(background.get()))
   private val fadeInStartTime = AtomicLong(Long.MIN_VALUE)
-  private val curve = Easing.bezier(0.4, 0.0, 1.0, 1.0)
+  private val curve = Easing.EASE_IN_OUT
 
   fun reloadColorScheme() {
     background.set(snapshotBackground())
