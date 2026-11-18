@@ -18,6 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview.Layout
@@ -255,11 +256,13 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     otherEditor.settings.isLineNumbersShown = true
     otherEditor.settings.isIndentGuidesShown = true
     otherEditor.settings.isRightMarginShown = true
+    otherEditor.settings.isVirtualSpace = true
 
     for (lineNumbersShown in listOf(true, false)) {
       editor.settings.isLineNumbersShown = lineNumbersShown
       editor.settings.isIndentGuidesShown = !lineNumbersShown
       editor.settings.isRightMarginShown = lineNumbersShown
+      editor.settings.isVirtualSpace = lineNumbersShown
       repeat(2) {
         editorWithPreview.setLivePreviewLayout()
         editorWithPreview.waitForFont(StartupUiUtil.labelFont.fontName)
@@ -267,9 +270,11 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
         assertFalse(editor.settings.isLineNumbersShown)
         assertFalse(editor.settings.isIndentGuidesShown)
         assertFalse(editor.settings.isRightMarginShown)
+        assertFalse(editor.settings.isVirtualSpace)
         assertTrue(otherEditor.settings.isLineNumbersShown)
         assertTrue(otherEditor.settings.isIndentGuidesShown)
         assertTrue(otherEditor.settings.isRightMarginShown)
+        assertTrue(otherEditor.settings.isVirtualSpace)
 
         editorWithPreview.setLayout(Layout.SHOW_EDITOR)
         editorWithPreview.waitForFont(editorFont)
@@ -277,8 +282,39 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
         assertEquals(lineNumbersShown, editor.settings.isLineNumbersShown)
         assertEquals(!lineNumbersShown, editor.settings.isIndentGuidesShown)
         assertEquals(lineNumbersShown, editor.settings.isRightMarginShown)
+        assertEquals(lineNumbersShown, editor.settings.isVirtualSpace)
       }
     }
+  }
+
+  fun testSettingsWithoutOverrideFollowTheGlobalSettingsAfterLivePreview() {
+    val globalSettings = EditorSettingsExternalizable.getInstance()
+    val lineNumbersShown = globalSettings.isLineNumbersShown
+    val virtualSpace = globalSettings.isVirtualSpace
+    Disposer.register(testRootDisposable) {
+      globalSettings.isLineNumbersShown = lineNumbersShown
+      globalSettings.isVirtualSpace = virtualSpace
+    }
+    globalSettings.isLineNumbersShown = true
+    globalSettings.isVirtualSpace = true
+    val editorWithPreview = createEditor()
+    val editor = editorWithPreview.editor
+    val editorFont = editor.colorsScheme.editorFontName
+
+    editorWithPreview.setLivePreviewLayout()
+    editorWithPreview.waitForFont(StartupUiUtil.labelFont.fontName)
+    assertFalse(editor.settings.isLineNumbersShown)
+    assertFalse(editor.settings.isVirtualSpace)
+
+    editorWithPreview.setLayout(Layout.SHOW_EDITOR)
+    editorWithPreview.waitForFont(editorFont)
+    assertTrue(editor.settings.isLineNumbersShown)
+    assertTrue(editor.settings.isVirtualSpace)
+
+    globalSettings.isLineNumbersShown = false
+    globalSettings.isVirtualSpace = false
+    assertFalse("The editor must follow the global settings after live preview", editor.settings.isLineNumbersShown)
+    assertFalse("The editor must follow the global settings after live preview", editor.settings.isVirtualSpace)
   }
 
   fun testJcefRendererHidesLivePreview() {

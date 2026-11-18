@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorSettingsState
+import com.intellij.openapi.editor.impl.SettingsImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getIntellisenseLimit
@@ -23,25 +25,35 @@ import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
 import javax.swing.border.EmptyBorder
 import kotlin.math.roundToInt
+import kotlin.reflect.KMutableProperty1
 
 /**
  * Shows one editor in the UI font at the `Preview font size`, with soft wraps and with text margins while live preview is on.
  * Hides line numbers, indent guides and the right margin while live preview is on.
+ * Keeps the caret out of the virtual space after the end of a line while live preview is on.
  * Restores the font of the global scheme, the saved settings and the saved border from before live preview when live preview turns off.
+ * A setting without an override before live preview follows the global settings again after live preview.
  * While live preview is on, keeps soft wraps on. Only a document above the IntelliSense size limit keeps its soft-wrap flag.
  * A wrapped line keeps the indent of its first line, so a nested list item stays indented.
  */
-internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx) : Disposable {
+internal class MarkdownLivePreviewEditorAppearance private constructor(
+  private val editor: EditorEx,
+  private val settings: SettingsImpl,
+) : Disposable {
+  private val settingsState: EditorSettingsState = settings.getState()
+
   /** The editor settings before live preview. Null while live preview is off. */
   private var preLivePreviewState: State? = null
 
-  private data class State(
-    val softWraps: Boolean,
-    val customSoftWrapIndent: Boolean,
-    val lineNumbers: Boolean,
-    val indentGuides: Boolean,
-    val rightMargin: Boolean,
+  private class State(
+    val settings: List<SavedSetting>,
     val contentBorder: Border?,
+  )
+
+  /** A setting before live preview. A null [override] means that the setting had no override. */
+  private class SavedSetting(
+    val property: KMutableProperty1<EditorSettingsState, Boolean>,
+    val override: Boolean?,
   )
 
   init {
@@ -64,17 +76,13 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
   @RequiresEdt
   fun change(isLivePreviewEnabled: Boolean) = if (isLivePreviewEnabled) apply() else restore()
 
-  private fun apply() {
-    val settings = editor.settings
+  // The deferred refresh refreshes the editor once for all changed settings.
+  private fun apply() = settings.runWithDeferredEditorRefresh {
     if (preLivePreviewState == null) {
-      preLivePreviewState = State(
-        settings.isUseSoftWraps,
-        settings.isUseCustomSoftWrapIndent,
-        settings.isLineNumbersShown,
-        settings.isIndentGuidesShown,
-        settings.isRightMarginShown,
-        editor.contentComponent.border,
-      )
+      val savedSettings = SAVED_SETTINGS.map { property ->
+        SavedSetting(property, if (settingsState.isOverridden(property)) property.get(settingsState) else null)
+      }
+      preLivePreviewState = State(savedSettings, editor.contentComponent.border)
     }
     // The content margin reads the saved border, so the state comes first.
     applyFont()
@@ -82,6 +90,7 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
     settings.isIndentGuidesShown = false
     // The UI font puts the margin column in the middle of the text.
     settings.isRightMarginShown = false
+    settings.isVirtualSpace = false
     forceSoftWraps()
     settings.isUseCustomSoftWrapIndent = true
   }
@@ -91,15 +100,15 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
     editor.colorsScheme.editorFontName = null
     // The zoomed global size clears the font size of this editor.
     editor.setFontSize(UISettingsUtils.getInstance().scaledEditorFontSize)
-    (val softWraps, val customSoftWrapIndent, val lineNumbers, val indentGuides, val rightMargin, val contentBorder) =
-      preLivePreviewState ?: return
+    val state = preLivePreviewState ?: return
     preLivePreviewState = null
-    editor.settings.isUseSoftWraps = softWraps
-    editor.settings.isUseCustomSoftWrapIndent = customSoftWrapIndent
-    editor.settings.isLineNumbersShown = lineNumbers
-    editor.settings.isIndentGuidesShown = indentGuides
-    editor.settings.isRightMarginShown = rightMargin
-    setContentBorder(contentBorder)
+    settings.runWithDeferredEditorRefresh {
+      for (setting in state.settings) {
+        val override = setting.override
+        if (override == null) settingsState.clearOverriding(setting.property) else setting.property.set(settingsState, override)
+      }
+    }
+    setContentBorder(state.contentBorder)
   }
 
   override fun dispose() = Unit
@@ -123,7 +132,6 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
 
   /** Turns soft wraps on, unless the document is above the IntelliSense size limit. */
   private fun forceSoftWraps() {
-    val settings = editor.settings
     if (!settings.isUseSoftWraps && editor.document.textLength <= getIntellisenseLimit(MarkdownFileType.INSTANCE.defaultExtension)) {
       settings.isUseSoftWraps = true
     }
@@ -174,11 +182,23 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
 
     private val KEY = Key.create<MarkdownLivePreviewEditorAppearance>("markdown.live.preview.appearance")
 
+    /** The settings that live preview changes and restores. */
+    private val SAVED_SETTINGS: List<KMutableProperty1<EditorSettingsState, Boolean>> = listOf(
+      EditorSettingsState::myUseSoftWraps,
+      EditorSettingsState::myUseCustomSoftWrapIndent,
+      EditorSettingsState::myAreLineNumbersShown,
+      EditorSettingsState::myIndentGuidesShown,
+      EditorSettingsState::myIsRightMarginShown,
+      EditorSettingsState::myIsVirtualSpace,
+    )
+
+    /** Returns null for a disposed editor, and for an editor whose settings are not [SettingsImpl]. */
     @RequiresEdt
     fun getOrCreate(editor: EditorEx): MarkdownLivePreviewEditorAppearance? {
       if (editor.isDisposed) return null
       editor.getUserData(KEY)?.let { return it }
-      return MarkdownLivePreviewEditorAppearance(editor).also {
+      val settings = editor.settings as? SettingsImpl ?: return null
+      return MarkdownLivePreviewEditorAppearance(editor, settings).also {
         editor.putUserData(KEY, it)
         EditorUtil.disposeWithEditor(editor, it)
       }
