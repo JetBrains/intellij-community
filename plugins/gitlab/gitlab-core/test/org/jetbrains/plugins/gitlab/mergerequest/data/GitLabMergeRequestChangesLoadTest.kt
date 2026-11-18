@@ -144,7 +144,7 @@ internal class GitLabMergeRequestChangesLoadTest {
     val changes = GitLabMergeRequestChangesImpl(changesCs,
         PROJECT_ID,
                                                 GitLabProjectPath("owner", "repo"),
-                                                createGitRemote(),
+                                                GitLabGitLocalRepository(createGitRemote()),
                                                 api,
                                                 SERVER_METADATA,
                                                 details)

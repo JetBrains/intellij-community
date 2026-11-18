@@ -88,6 +88,8 @@ class CachingGitLabProjectMergeRequestsStore(
     api.rest.getMergeRequestsSearcher(projectId, searchQuery)
       .mapItems { page -> page.map(GitLabMergeRequestDetails::fromRestDTO) }
 
+  private val localRepository: GitLabLocalRepository = GitLabGitLocalRepository(gitRemote)
+
   override fun getShared(iid: String): SharedFlow<Result<GitLabMergeRequest>> {
     return models.getOrPut(iid) {
       reloadMergeRequest
@@ -102,6 +104,7 @@ class CachingGitLabProjectMergeRequestsStore(
                                                          projectCoordinates,
                                                          projectId,
                                                          gitRemote,
+                                                         localRepository,
                                                          currentUser,
                                                          mrData) }
         }

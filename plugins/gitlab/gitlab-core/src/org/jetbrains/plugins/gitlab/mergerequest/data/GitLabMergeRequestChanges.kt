@@ -17,11 +17,8 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitBranchComparisonResult
-import git4idea.changes.GitBranchComparisonResultUtil
 import git4idea.changes.GitCommitShaWithPatches
 import git4idea.changes.filePath
-import git4idea.remote.GitRemoteUrlCoordinates
-import git4idea.remote.hosting.GitCodeReviewUtils
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -152,7 +149,7 @@ internal class GitLabMergeRequestChangesImpl(
   parentCs: CoroutineScope,
   private val projectId: String,
   private val projectPath: GitLabProjectPath,
-  private val gitRemoteUrlCoordinates: GitRemoteUrlCoordinates,
+  private val localRepository: GitLabLocalRepository,
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
   private val mergeRequestDetails: GitLabMergeRequestFullDetails,
@@ -214,8 +211,8 @@ internal class GitLabMergeRequestChangesImpl(
     // repair the repairable (not too large) unexpected empty diffs with the local ones
     val localPatches = loadLocalPatches(mergeBaseSha, headSha, headDiffs.filter { it.needsLocalPatch }, location)
     val headPatches = processDiffs(headDiffs, localPatches, location)
-    val comparisonResult = GitBranchComparisonResultUtil.create(gitRemoteUrlCoordinates.repository.root, baseSha, mergeBaseSha,
-                                                                commitsWithPatches, headPatches.map { it.patch })
+    val comparisonResult = GitBranchComparisonResult.create(baseSha, mergeBaseSha, commitsWithPatches, headPatches.map { it.patch },
+                                                            localRepository::revisionNumber, localRepository::filePath)
     return GitLabMergeRequestParsedChangesImpl(comparisonResult, headPatches)
   }
 
@@ -234,24 +231,22 @@ internal class GitLabMergeRequestChangesImpl(
   ): Map<GitLabDiffDTO, TextFilePatch> {
     if (apiDiffs.isEmpty() || baseRev == headRev) return emptyMap()
 
-    val repository = gitRemoteUrlCoordinates.repository
     val pathspec = apiDiffs.flatMap { it.localDiffPaths }.distinct()
     val localPatches = try {
       ensureAllRevisionsFetched()
-      GitCodeReviewUtils.loadPatches(repository, baseRev, headRev, pathspec)
+      localRepository.loadPatches(baseRev, headRev, pathspec)
     }
     catch (e: VcsException) {
-      LOG.warn("Failed to read the diff of $baseRev..$headRev in ${repository.root.name}", e)
+      LOG.warn("Failed to read the diff of $baseRev..$headRev in $location", e)
       return emptyMap()
     }
     catch (e: PatchSyntaxException) {
-      LOG.warn("Failed to parse the diff of $baseRev..$headRev in ${repository.root.name}", e)
+      LOG.warn("Failed to parse the diff of $baseRev..$headRev in $location", e)
       return emptyMap()
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
-      LOG.warn("Failed to rebuild the collapsed diff of $baseRev..$headRev in ${repository.root.name} in $location from the local repository",
-               e)
+      LOG.warn("Failed to rebuild the collapsed diff of $baseRev..$headRev in $location from the local repository", e)
       return emptyMap()
     }
 
@@ -267,15 +262,7 @@ internal class GitLabMergeRequestChangesImpl(
       revsToCheck.add(it)
     }
 
-    if (GitCodeReviewUtils.testRevisionsExist(gitRemoteUrlCoordinates.repository, revsToCheck)) return
-
-    GitCodeReviewUtils.fetch(gitRemoteUrlCoordinates.repository, gitRemoteUrlCoordinates.remote, mergeRequestDetails.targetBranch)
-    GitCodeReviewUtils.fetch(gitRemoteUrlCoordinates.repository, gitRemoteUrlCoordinates.remote,
-                             """merge-requests/${mergeRequestDetails.iid}/head:""")
-
-    check(GitCodeReviewUtils.testRevisionsExist(gitRemoteUrlCoordinates.repository, revsToCheck)) {
-      "Failed to fetch some revisions"
-    }
+    localRepository.ensureRevisionsFetched(mergeRequestDetails, revsToCheck)
   }
 
   companion object {

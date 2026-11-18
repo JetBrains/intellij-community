@@ -15,12 +15,8 @@ import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.collaboration.util.asFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import git4idea.GitStandardRemoteBranch
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.remote.GitRemoteUrlCoordinates
-import git4idea.remote.hosting.GitRemoteBranchesUtil
-import git4idea.remote.hosting.changesSignalFlow
-import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -159,6 +155,7 @@ internal class LoadedGitLabMergeRequest(
   private val projectCoordinates: GitLabProjectCoordinates,
   override val projectId: String,
   override val gitRemote: GitRemoteUrlCoordinates,
+  private val localRepository: GitLabLocalRepository,
   currentUser: GitLabUserDTO,
   mergeRequest: GitLabMergeRequestDTO,
 ) : GitLabMergeRequest {
@@ -184,7 +181,7 @@ internal class LoadedGitLabMergeRequest(
   override val changes: SharedFlow<GitLabMergeRequestChanges> = mergeRequestDetailsState
     .distinctUntilChangedBy(GitLabMergeRequestFullDetails::diffRefs)
     .mapScoped { details ->
-      GitLabMergeRequestChangesImpl(this, projectId, projectCoordinates.projectPath, gitRemote,
+      GitLabMergeRequestChangesImpl(this, projectId, projectCoordinates.projectPath, localRepository,
                                     api, glMetadata, details)
     }
     .modelFlow(cs, LOG)
@@ -242,9 +239,8 @@ internal class LoadedGitLabMergeRequest(
     }
 
     cs.launch {
-      val repository = gitRemote.repository
-      repository.changesSignalFlow().withInitial(Unit).combine(details) { _, currentDetails ->
-        isCurrentDataInSyncWithRepository(currentDetails, repository)
+      localRepository.changes.withInitial(Unit).combine(details) { _, currentDetails ->
+        localRepository.isInSync(currentDetails)
       }.distinctUntilChanged().filterNotNull().collectLatest {
         if (!it) {
           mergeRequestRefreshRequest.emit(Unit)
@@ -268,17 +264,6 @@ internal class LoadedGitLabMergeRequest(
       _isLoading.value = false
       detailsLoadingGuard.unlock()
     }
-  }
-
-  private fun isCurrentDataInSyncWithRepository(details: GitLabMergeRequestFullDetails, repository: GitRepository): Boolean? {
-    val remoteMrBranchHash = details.getSourceRemoteDescriptor(gitRemote)?.let {
-      GitRemoteBranchesUtil.findRemote(repository, it)
-    }?.let {
-      val branch = GitStandardRemoteBranch(it, details.sourceBranch)
-      repository.branches.getHash(branch)
-    } ?: return null
-    val knownHead = details.diffRefs?.headSha ?: return null
-    return remoteMrBranchHash.asString() == knownHead
   }
 
   override fun reloadData() {
