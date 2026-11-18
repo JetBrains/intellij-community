@@ -148,19 +148,13 @@ public final class MultiRoutingFileSystemProvider
       path2 = null;
     }
 
-    if (!path1.isAbsolute()) {
-      path1 = path1.toAbsolutePath();
-    }
-
+    // Do not absolutize the path. getBackend routes by the root. A relative path has no root and stays local.
+    // A remote working directory must not route a local relative path to a remote backend.
     String path1String = path1.toString();
     FileSystem backend1 = myFileSystem.getBackend(path1String);
     FileSystemProvider provider1 = backend1.provider();
     if (path2 == null) {
       return provider1;
-    }
-
-    if (!path2.isAbsolute()) {
-      path2 = path2.toAbsolutePath();
     }
 
     String path2String = path2.toString();

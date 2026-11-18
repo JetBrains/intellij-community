@@ -27,10 +27,12 @@ import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.APPEND
 import java.nio.file.StandardOpenOption.READ
+import java.nio.file.attribute.BasicFileAttributeView
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ThreadLocalRandom
 import java.util.zip.ZipOutputStream
@@ -92,6 +94,31 @@ class MultiRoutingFileSystemProviderTest {
         assertSame(backend, actual.initialDelegate.fileSystem)
         assertEquals(fs.getPath(localPath.toString()), actual)
       }
+    }
+  }
+
+  @Test
+  fun `a relative path stays local when its absolute form routes to a remote backend`() {
+    val provider = MultiRoutingFileSystemProvider(defaultSunNioFs.provider())
+    val fs = provider.theOnlyFileSystem
+
+    val remoteProvider = mockk<FileSystemProvider>(relaxed = true)
+    val remoteFs = mockk<FileSystem>(relaxed = true) {
+      every { provider() } returns remoteProvider
+    }
+
+    // A remote working directory routes the absolute form of a relative path to the remote backend.
+    val relativeName = "a-relative-sentinel-name"
+    val absolute = MultiRoutingFileSystem.sanitizeRoot(defaultSunNioFs.getPath(relativeName).toAbsolutePath().toString())
+    fs.setBackendProvider({ local, path -> if (path == absolute) remoteFs else local }, null, null)
+
+    val relativePath = fs.getPath(relativeName)
+    relativePath.shouldBeInstanceOf<MultiRoutingFsPath>()
+
+    // The relative path has no root. The provider must keep it on the local backend.
+    provider.getFileAttributeView(relativePath, BasicFileAttributeView::class.java)
+    verify(exactly = 0) {
+      remoteProvider.getFileAttributeView(any<Path>(), any<Class<BasicFileAttributeView>>(), *anyVararg<LinkOption>())
     }
   }
 
