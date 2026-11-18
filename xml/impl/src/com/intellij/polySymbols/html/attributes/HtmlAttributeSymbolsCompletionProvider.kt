@@ -4,12 +4,15 @@ package com.intellij.polySymbols.html.attributes
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemInsertHandler
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
@@ -22,6 +25,7 @@ import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
+import com.intellij.util.text.CharArrayUtil
 
 class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttribute>() {
 
@@ -69,8 +73,16 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
         }
       },
       consumer = { item ->
-        item.withInsertHandlerAdded(
-          { insertionContext, lookupItem ->
+        item.withInsertHandlerAdded(object : PolySymbolCodeCompletionItemInsertHandler {
+          override fun prepare(insertionContext: InsertionContext, lookupItem: LookupElement, completeAfterInsert: Boolean) = Runnable {
+            val nameEnd = removeDuplicatedNameSuffix(insertionContext)
+            if (completeAfterInsert || nameEnd != insertionContext.editor.caretModel.offset) return@Runnable
+
+            if (hasAttributeValue(insertionContext.document.charsSequence, nameEnd)) {
+              moveCaretToAttributeValue(insertionContext, nameEnd)
+              return@Runnable
+            }
+
             // At this instant the file is already modified by LookupElement, so every PsiElement inside PolySymbolsRegistry is invalid
             // We need freshly constructed registry to avoid PsiInvalidElementAccessException when calling runNameMatchQuery
             val freshRegistry = PolySymbolQueryExecutorFactory.create(context,
@@ -89,7 +101,7 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
               handler.handleInsert(insertionContext, lookupItem)
             }
           }
-        ).addToResult(parameters, patchedResultSet)
+        }).addToResult(parameters, patchedResultSet)
       }
     )
 
@@ -124,5 +136,53 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
   ): Boolean {
     return HtmlFrameworkSymbolsSupport.get(info.symbol)
       .shouldInsertAttributeValue(parameters, item, info)
+  }
+
+  /**
+   * A pattern item can end with delimiters, which the attribute name already has after the caret.
+   * For example, the `stop)` item completes `(click.|)` to `(click.stop|))`.
+   * The function removes such delimiters after the caret.
+   *
+   * @return the end offset of the attribute name
+   */
+  private fun removeDuplicatedNameSuffix(context: InsertionContext): Int {
+    val document = context.document
+    val chars = document.charsSequence
+    val caretOffset = context.editor.caretModel.offset
+    val nameEnd = findAttributeNameEnd(chars, caretOffset)
+    if (caretOffset <= context.startOffset || nameEnd == caretOffset) return nameEnd
+
+    var delimitersEnd = caretOffset
+    while (delimitersEnd < nameEnd && !Character.isLetterOrDigit(chars[delimitersEnd])) delimitersEnd++
+    val inserted = chars.subSequence(context.startOffset, caretOffset).toString()
+    val delimiters = chars.subSequence(caretOffset, delimitersEnd).toString()
+    val duplicated = (delimiters.length downTo 1).firstOrNull { inserted.endsWith(delimiters.substring(0, it)) }
+                     ?: return nameEnd
+    document.deleteString(caretOffset, caretOffset + duplicated)
+    return nameEnd - duplicated
+  }
+
+  private fun findAttributeNameEnd(chars: CharSequence, offset: Int): Int {
+    var result = offset
+    while (result < chars.length && ATTRIBUTE_NAME_TERMINATORS.indexOf(chars[result]) < 0) result++
+    return result
+  }
+
+  private fun hasAttributeValue(chars: CharSequence, nameEnd: Int): Boolean =
+    ATTRIBUTE_VALUE_STARTS.any { CharArrayUtil.regionMatches(chars, nameEnd, it) }
+
+  private fun moveCaretToAttributeValue(context: InsertionContext, nameEnd: Int) {
+    val editor = context.editor
+    editor.caretModel.moveToOffset(nameEnd + 2)
+    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+    editor.selectionModel.removeSelection()
+    if (context.completionChar == '=') {
+      context.setAddCompletionChar(false)
+    }
+  }
+
+  private companion object {
+    const val ATTRIBUTE_NAME_TERMINATORS = " \t\n\r=/>\"'<"
+    val ATTRIBUTE_VALUE_STARTS = listOf("=\"", "='", "={")
   }
 }
