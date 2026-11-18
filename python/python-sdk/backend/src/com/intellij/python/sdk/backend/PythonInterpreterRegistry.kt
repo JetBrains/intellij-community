@@ -11,8 +11,6 @@ import com.intellij.python.sdk.backend.impl.PythonInterpreterStore
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.add.v2.PathHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -66,23 +64,6 @@ class PythonInterpreterRegistry(project: Project, private val scope: CoroutineSc
    */
   suspend fun build(pyProject: PyProject, ref: PyInterpreterRef): PyResult<PythonInterpreter> =
     store.build(pyProject, ref)
-
-  /**
-   * A new interpreter of [pythonBinary] with the data [data], for the [PyProject] at [ownerDir]. It is not registered.
-   * Register it with [register].
-   *
-   * A flow that has just created an environment calls it. [ownerDir] is the base directory of the owner. The owner does
-   * not have to exist yet. For example, the new project wizard passes the directory of the project that it creates.
-   *
-   * Only the legacy flow uses [suggestedName]. In the interpreter library flow, the interpreter takes the name of its
-   * library when it is registered. A failure when [pythonBinary] is not found, or when [data] names no interpreter.
-   */
-  suspend fun build(
-    ownerDir: Path,
-    pythonBinary: PathHolder,
-    data: PythonSdkAdditionalData,
-    suggestedName: String? = null,
-  ): PyResult<PythonInterpreter> = store.build(ownerDir, pythonBinary, data, suggestedName)
 
   /**
    * Registers [interpreter] under its owner and returns the interpreter that the registry then holds. Only

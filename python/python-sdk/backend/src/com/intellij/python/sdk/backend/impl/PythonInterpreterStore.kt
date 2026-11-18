@@ -169,7 +169,16 @@ internal class PythonInterpreterStore(val project: Project, scope: CoroutineScop
   private suspend fun build(homePath: String, data: PythonSdkAdditionalData, suggestedName: String?): PyResult<PythonInterpreter> =
     newSdk(homePath, data, suggestedName, knownVersion = null).pythonInterpreterResultAsync()
 
-  /** [build] for a Python binary that a flow has just created, see [PathHolder]. */
+  /**
+   * A new interpreter of [pythonBinary] with the data [data], for the [PyProject] at [ownerDir]. It is not registered.
+   * A flow that has just created an environment calls it through `createSdk`, see `com.jetbrains.python.sdk`.
+   *
+   * [ownerDir] is the base directory of the owner. The owner does not have to exist yet. For example, the new project
+   * wizard passes the directory of the project that it creates.
+   *
+   * Only the legacy flow uses [suggestedName]. In the interpreter library flow, the interpreter takes the name of its
+   * library when it is registered. A failure when [pythonBinary] is not found, or when [data] names no interpreter.
+   */
   suspend fun build(
     ownerDir: Path,
     pythonBinary: PathHolder,

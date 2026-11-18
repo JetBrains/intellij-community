@@ -199,9 +199,8 @@ private suspend fun createSdkImpl(
 ): PyResult<PythonInterpreter> = createSdkImpl(pyProject.project, pyProject.baseDir, request, suggestedSdkName)
 
 /**
- * The caller has the binary and the data of the environment, so it builds the interpreter itself, and nothing probes
- * the environment again. The interpreter is not registered: `PyProject.setPythonInterpreter` registers it for the
- * [PyProject] at [ownerDir]. A target is registered in [project] first, so the ref can name it.
+ * The interpreter of the binary and the data of [request], for the [PyProject] at [ownerDir]. It is not registered:
+ * `PyProject.setPythonInterpreter` registers it. A target is registered in [project] first, so the ref can name it.
  */
 private suspend fun createSdkImpl(
   project: Project,
@@ -218,7 +217,7 @@ private suspend fun createSdkImpl(
       PathHolder.Target(request.path)
     }
   }
-  return PythonInterpreterRegistry.getInstance(project).build(ownerDir, pythonBinary, request.pythonData, suggestedSdkName)
+  return PythonInterpreterRegistry.getInstance(project).store.build(ownerDir, pythonBinary, request.pythonData, suggestedSdkName)
 }
 
 /** The data of the SDK. Both kinds of request carry [PythonSdkAdditionalData]. */

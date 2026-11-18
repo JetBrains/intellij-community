@@ -76,7 +76,7 @@ internal class TargetInterpreterVersionContextTest {
     val registry = PythonInterpreterRegistry.getInstance(project)
 
     val callerModality = withModalProgress(project, "Creating the interpreter") {
-      registry.build(ownerDir, PathHolder.Target(PYTHON_ON_TARGET), data)
+      registry.buildTestInterpreter(ownerDir, PathHolder.Target(PYTHON_ON_TARGET), data)
       currentThreadContext().contextModality()
     }
 

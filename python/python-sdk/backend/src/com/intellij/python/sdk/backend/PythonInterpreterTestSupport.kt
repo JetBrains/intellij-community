@@ -18,8 +18,10 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.notifyPythonSdkChanged
 import com.jetbrains.python.sdk.writePythonSdk
@@ -32,6 +34,18 @@ import java.nio.file.Path
  * test. Production code does not hand an [Sdk] to the registry, and sets an interpreter only with
  * `PyProject.setPythonInterpreter`.
  */
+
+/**
+ * A new interpreter of [pythonBinary] with the data [data], for the [PyProject] at [ownerDir], for a test. It is not
+ * registered. Production code builds such an interpreter through `createSdk`, see `com.jetbrains.python.sdk`.
+ */
+@TestOnly
+suspend fun PythonInterpreterRegistry.buildTestInterpreter(
+  ownerDir: Path,
+  pythonBinary: PathHolder,
+  data: PythonSdkAdditionalData,
+  suggestedName: String? = null,
+): PyResult<PythonInterpreter> = store.build(ownerDir, pythonBinary, data, suggestedName)
 
 /**
  * Adds a prebuilt mock [sdk] to [pyProject] for a test. A mock SDK has no real interpreter, so
