@@ -3272,6 +3272,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
+            public static class TestKotlinMemberDestructuringEntryUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinMemberDestructuringEntryUsages.0.kt")
+                public void testKotlinMemberDestructuringEntryUsages() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages/kotlinMemberDestructuringEntryUsages.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinMultiRefInImport extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -3449,6 +3462,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @TestMetadata("kotlinPropertyWriteUsages2.0.kt")
                 public void testKotlinPropertyWriteUsages2() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyWriteUsages2.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
+            public static class TestKotlinTopLevelDestructuringEntryUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinTopLevelDestructuringEntryUsages.0.kt")
+                public void testKotlinTopLevelDestructuringEntryUsages() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages/kotlinTopLevelDestructuringEntryUsages.0.kt");
                 }
             }
 

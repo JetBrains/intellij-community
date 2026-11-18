@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.metadata.deserialization.NameResolver
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.serialization.deserialization.getName
 
@@ -23,12 +24,19 @@ class KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameInde
 
     override fun getName(): ID<FqName, List<Name>> = NAME
 
-    override fun getVersion(): Int = 3
+    override fun getVersion(): Int = 4
 
     override fun getDeclarationNamesByKtFile(ktFile: KtFile): List<Name> = buildList {
         for (declaration in ktFile.declarations) {
-            if (declaration is KtCallableDeclaration) {
-                val name = declaration.nameAsName ?: continue
+            // Entries of top-level destructuring declarations are top-level callables like properties
+            val callables = when (declaration) {
+                is KtCallableDeclaration -> listOf(declaration)
+                is KtDestructuringDeclaration -> declaration.entries
+                else -> continue
+            }
+
+            for (callable in callables) {
+                val name = callable.nameAsName ?: continue
                 if (name.isSpecial) continue
                 add(name)
             }

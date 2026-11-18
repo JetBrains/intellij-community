@@ -1,0 +1,5 @@
+[kotlinTopLevelDestructuringEntryUsages.0.kt] Value read 10 fun sameFile(): Int = first + second
+[kotlinTopLevelDestructuringEntryUsages.1.kt] Value read 3 fun samePackage(): Int = first * 2
+[kotlinTopLevelDestructuringEntryUsages.2.kt] Usage in import 3 import server.first
+[kotlinTopLevelDestructuringEntryUsages.2.kt] Value read 5 fun otherPackage(): Int = first + server.first
+[kotlinTopLevelDestructuringEntryUsages.2.kt] Value read 5 fun otherPackage(): Int = first + server.first

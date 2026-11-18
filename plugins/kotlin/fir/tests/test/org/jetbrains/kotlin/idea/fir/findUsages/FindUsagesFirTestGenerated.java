@@ -1358,6 +1358,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages/kotlinLocalPropertyUsages2.0.kt");
             }
 
+            @TestMetadata("kotlinMemberDestructuringEntryUsages.0.kt")
+            public void testKotlinMemberDestructuringEntryUsages() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages/kotlinMemberDestructuringEntryUsages.0.kt");
+            }
+
             @TestMetadata("kotlinMultiRefInImport.0.kt")
             public void testKotlinMultiRefInImport() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages/kotlinMultiRefInImport.0.kt");
@@ -1426,6 +1431,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             @TestMetadata("kotlinPropertyWriteUsages2.0.kt")
             public void testKotlinPropertyWriteUsages2() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyWriteUsages2.0.kt");
+            }
+
+            @TestMetadata("kotlinTopLevelDestructuringEntryUsages.0.kt")
+            public void testKotlinTopLevelDestructuringEntryUsages() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages/kotlinTopLevelDestructuringEntryUsages.0.kt");
             }
 
             @TestMetadata("kotlinTopLevelPropertyUsages.0.kt")

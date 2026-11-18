@@ -1,0 +1,12 @@
+// PSI_ELEMENT: org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+// OPTIONS: usages
+// CRI_IGNORE
+package server
+
+data class Point(val x: Int, val y: Int)
+
+class Holder {
+    val (<caret>first, second) = Point(1, 2)
+
+    fun inside(): Int = first + this.first + second
+}

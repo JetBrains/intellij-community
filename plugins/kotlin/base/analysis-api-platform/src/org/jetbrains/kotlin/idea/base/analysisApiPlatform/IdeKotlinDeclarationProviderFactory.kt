@@ -167,6 +167,11 @@ private class IdeKotlinDeclarationProvider(
         KotlinTopLevelPropertyFqnNameIndex[callableId.asTopLevelStringForIndexes(), project, scope]
     }
 
+    override fun getTopLevelDestructuringDeclarationEntries(callableId: CallableId): Collection<KtDestructuringDeclarationEntry> =
+        withRestrictedDataAccess {
+            KotlinTopLevelDestructuringDeclarationEntryFqNameIndex[callableId.asTopLevelStringForIndexes(), project, scope]
+        }
+
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> = withRestrictedDataAccess {
         KotlinTopLevelFunctionFqnNameIndex[callableId.asTopLevelStringForIndexes(), project, scope]
     }
@@ -177,6 +182,7 @@ private class IdeKotlinDeclarationProvider(
         buildSet {
             collectContainingFilesTo(this, KotlinTopLevelPropertyFqnNameIndex.indexKey, callableIdString)
             collectContainingFilesTo(this, KotlinTopLevelFunctionFqnNameIndex.indexKey, callableIdString)
+            collectContainingFilesTo(this, KotlinTopLevelDestructuringDeclarationEntryFqNameIndex.indexKey, callableIdString)
         }
     }
 
@@ -189,6 +195,16 @@ private class IdeKotlinDeclarationProvider(
     override fun getTopLevelPropertyFiles(callableId: CallableId): Collection<KtFile> = withRestrictedDataAccess {
         buildSet {
             collectContainingFilesTo(this, KotlinTopLevelPropertyFqnNameIndex.indexKey, callableId.asTopLevelStringForIndexes())
+        }
+    }
+
+    override fun getTopLevelDestructuringDeclarationEntryFiles(callableId: CallableId): Collection<KtFile> = withRestrictedDataAccess {
+        buildSet {
+            collectContainingFilesTo(
+                this,
+                KotlinTopLevelDestructuringDeclarationEntryFqNameIndex.indexKey,
+                callableId.asTopLevelStringForIndexes(),
+            )
         }
     }
 

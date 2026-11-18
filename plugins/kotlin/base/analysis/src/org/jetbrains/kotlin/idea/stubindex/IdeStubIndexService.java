@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 import org.jetbrains.kotlin.psi.stubs.KotlinAnnotationEntryStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassOrObjectStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub;
+import org.jetbrains.kotlin.psi.stubs.KotlinDestructuringDeclarationEntryStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinFileStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinFileStubKind;
 import org.jetbrains.kotlin.psi.stubs.KotlinFunctionStub;
@@ -252,6 +253,18 @@ public class IdeStubIndexService extends StubIndexService {
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
             }
         }
+    }
+
+    @Override
+    public void indexDestructuringDeclarationEntry(@NotNull KotlinDestructuringDeclarationEntryStub stub, @NotNull IndexSink sink) {
+        // Only entries of destructuring declarations declared directly in a file are top-level callables
+        StubElement<?> destructuringDeclarationStub = stub.getParentStub();
+        if (destructuringDeclarationStub == null || !(destructuringDeclarationStub.getParentStub() instanceof KotlinFileStub)) return;
+
+        FqName fqName = stub.getFqName();
+        if (fqName == null) return;
+
+        sink.occurrence(KotlinTopLevelDestructuringDeclarationEntryFqNameIndex.Helper.getIndexKey(), fqName.asString());
     }
 
     @Override

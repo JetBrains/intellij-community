@@ -11,4 +11,4 @@ fun test() {
 // Test that this test won't fail with exception
 // Regression for EA-39175
 
-// ABSENT: localFirst, localSecond
+// EXIST: localFirst, localSecond

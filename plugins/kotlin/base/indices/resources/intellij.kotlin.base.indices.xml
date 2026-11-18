@@ -30,6 +30,7 @@
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectPropertyFqNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex"/>
+    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelDestructuringDeclarationEntryFqNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFullTypeAliasNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExtensionsByReceiverTypeIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinExtensionsInObjectsByReceiverTypeIndex"/>

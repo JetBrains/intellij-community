@@ -1,0 +1,4 @@
+[kotlinMemberDestructuringEntryUsages.0.kt] Value read 11 fun inside(): Int = first + this.first + second
+[kotlinMemberDestructuringEntryUsages.0.kt] Value read 11 fun inside(): Int = first + this.first + second
+[kotlinMemberDestructuringEntryUsages.1.kt] Value read 3 fun samePackage(holder: Holder): Int = holder.first * 2
+[kotlinMemberDestructuringEntryUsages.2.kt] Value read 5 fun otherPackage(): Int = Holder().first
