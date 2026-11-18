@@ -53,7 +53,6 @@ jvm_library(
         "//platform/platform-impl/rpc",
         "//python/python-sdk/common",
         "//platform/statistics",
-        "//platform/eel-provider",
     ],
 )
 ### auto-generated section `build intellij.python.sdk.frontend` end

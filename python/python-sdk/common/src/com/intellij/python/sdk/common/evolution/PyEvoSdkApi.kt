@@ -380,6 +380,12 @@ data class EvoPyProjectDto(
    * never asked about renders from what another project on the same interpreter already fetched (PY-90174).
    */
   val interpreterRef: PyInterpreterRef? = null,
+  /**
+   * Whether the popup offers the tools and their actions for this `PyProject` — the backend's answer to
+   * `areToolsEnabledFor`, which only it can give: the gate asks about the project's eel, and the frontend's own
+   * machine is the user's laptop even when the project lives on an SSH host (PY-94224).
+   */
+  val toolsEnabled: Boolean = true,
 )
 
 /**
