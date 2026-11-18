@@ -183,6 +183,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private final boolean myIsOffScreenRendering;
   private final boolean myEnableOpenDevToolsMenuItem;
   private final boolean myUseCertManager;
+  private final @Nullable JBCefRequestContext myRequestContext;
   private final @Nullable CefLoadHandler myLoadHandler;
   private final @Nullable CefRequestHandler myRequestHandler;
   private final @Nullable CefContextMenuHandler myContextMenuHandler;
@@ -215,6 +216,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myUseCertManager = builder.myUseCertManager;
     boolean isDefaultBrowserCreated = false;
     CefBrowser cefBrowser = builder.myCefBrowser;
+    myRequestContext = cefBrowser == null ? builder.myRequestContext : null;
+    if (cefBrowser != null && builder.myRequestContext != null) {
+      LOG.warn("Request context is ignored when wrapping an existing CefBrowser");
+    }
+    CefRequestContext cefRequestContext = myRequestContext == null ? null : myRequestContext.cloneCefRequestContext();
 
     if (cefBrowser == null) {
       if (myIsOffScreenRendering && getCefDelegate() == null) {
@@ -222,11 +228,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         CefBrowserSettings settings = new CefBrowserSettings();
         settings.windowless_frame_rate = builder.myWindowlessFrameRate;
         @NotNull JBCefOSRHandlerFactory factory = ObjectUtils.notNull(builder.myOSRHandlerFactory, JBCefOSRHandlerFactory.getInstance());
-        cefBrowser = createOsrBrowser(factory, myCefClient.getCefClient(), builder.myUrl, null, null, null, builder.myMouseWheelEventEnable,
+        cefBrowser = createOsrBrowser(factory, myCefClient.getCefClient(), builder.myUrl, cefRequestContext, null, null, builder.myMouseWheelEventEnable,
                                       settings);
       }
       else {
-        cefBrowser = myCefClient.getCefClient().createBrowser(validateUrl(builder.myUrl), CefRendering.DEFAULT, false, null);
+        cefBrowser = myCefClient.getCefClient().createBrowser(validateUrl(builder.myUrl), CefRendering.DEFAULT, false, cefRequestContext);
       }
       isDefaultBrowserCreated = true;
     } else {
@@ -466,11 +472,17 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return myCefClient;
   }
 
+  @ApiStatus.Experimental
+  public final @Nullable JBCefRequestContext getRequestContext() {
+    return myRequestContext;
+  }
+
   public static @NotNull JBCefCookieManager getGlobalJBCefCookieManager() {
     return new JBCefCookieManager(CefCookieManager.getGlobalManager());
   }
 
   public final @NotNull JBCefCookieManager getJBCefCookieManager() {
+    if (myRequestContext != null) return myRequestContext.getCookieManager();
     myCookieManagerLock.lock();
     try {
       if (myJBCefCookieManager == null) {
