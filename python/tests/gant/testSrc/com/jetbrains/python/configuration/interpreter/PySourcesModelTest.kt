@@ -4,6 +4,8 @@ package com.jetbrains.python.configuration.interpreter
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -17,6 +19,8 @@ import org.junit.jupiter.api.Test
  * the full root-editing behaviour lives in the Swing pane and needs `ContentEntry` fixtures beyond
  * what this JUnit 5 unit module carries.
  */
+@Subsystems.Interpreters
+@Layers.Functional
 @TestApplication
 class PySourcesModelTest {
 

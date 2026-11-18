@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration.interpreter
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.toolwindow.ModuleDepName
@@ -19,6 +21,8 @@ import javax.swing.tree.DefaultMutableTreeNode
  * The pane itself still lives on top of a `JTree`, but the decision surface is Swing-free here so
  * a silent shape change or a broken rule is caught by a compile-and-run rather than a smoke click.
  */
+@Subsystems.Packaging
+@Layers.Functional
 class PyPackagesTreePaneNavigationTest {
 
   //region packageFromTreeComponent

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration.interpreter
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.configuration.interpreter.PyModuleDependenciesPresenter.DependencyId
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.testFramework.junit5.TestApplication
@@ -15,6 +17,8 @@ import org.junit.jupiter.api.Test
  * [PyModuleDependenciesModelImpl] adds on top of the presenter — adapter wiring and the live-workspace
  * read. The presenter's own semantics live in [PyModuleDependenciesPresenterTest] and are not re-asserted here.
  */
+@Subsystems.Interpreters
+@Layers.Functional
 @TestApplication
 internal class PyModuleDependenciesModelTest {
 
