@@ -418,9 +418,14 @@ class PMarkerDirectRoot private constructor(
     }
   }
 
-  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean = processAll(root, 0) { entry, delta ->
-    cacheResolution(entry, delta)
-    processor.process(entry, delta)
+  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean {
+    if (cachedResolutions?.allMarkersCached == true) return processAll(root, 0, processor)
+    val completed = processAll(root, 0) { entry, delta ->
+      cacheResolution(entry, delta)
+      processor.process(entry, delta)
+    }
+    if (completed) cachedResolutions?.allMarkersCached = true
+    return completed
   }
 
   /**
@@ -476,6 +481,14 @@ class PMarkerDirectRoot private constructor(
 
   /** Stores the first resolution directly and allocates a map for other marker IDs. Metadata changes share this cache. */
   private class ResolutionCache(private val firstId: Long, private val firstResolution: Long) {
+    /**
+     * A full traversal sets this flag after it caches every valid marker's absolute offsets and completes normally.
+     * The volatile write publishes those offsets, so later traversals and lookups can skip cache writes.
+     * Metadata changes preserve this flag. Changes to marker offsets or membership use a new cache.
+     */
+    @Volatile
+    var allMarkersCached: Boolean = false
+
     @Volatile
     private var additionalResolutions: ConcurrentLongLongMap? = null
 
@@ -483,7 +496,7 @@ class PMarkerDirectRoot private constructor(
       if (id == firstId) firstResolution else additionalResolutions?.get(id) ?: PMarkerResolution.UNRESOLVED
 
     fun put(id: Long, resolution: Long) {
-      if (id == firstId) return
+      if (id == firstId || allMarkersCached) return
       var cache = additionalResolutions
       if (cache == null) {
         cache = Java11Shim.createConcurrentLongLongMap(PMarkerResolution.UNRESOLVED)

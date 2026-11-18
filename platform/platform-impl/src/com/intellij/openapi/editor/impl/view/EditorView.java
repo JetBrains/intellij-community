@@ -73,6 +73,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 /**
@@ -84,12 +85,13 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 @ApiStatus.Internal
 public final class EditorView implements TextDrawingCallback, Disposable, Dumpable, HierarchyListener, VisibleAreaListener {
   private static final Logger LOG = Logger.getInstance(EditorView.class);
-  private static final Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
+  private static final Key<FoldRegionTextLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
   private static final LineLayout NOT_INITIALIZED_PREFIX = new SingleChunkLayout(null);
   private static final AtomicReferenceFieldUpdater<EditorView, EditorViewSnapshot> SNAPSHOT_UPDATER
     = AtomicReferenceFieldUpdater.newUpdater(EditorView.class, EditorViewSnapshot.class, "mySnapshot");
 
   private volatile EditorViewSnapshot mySnapshot;
+  private final AtomicInteger myFoldRegionLayoutGeneration = new AtomicInteger();
   private final EditorImpl myEditor;
   private final EditorModel myEditorModel;
   private final DocumentEx myDocument;
@@ -635,18 +637,22 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   @NotNull LineLayout getFoldRegionLayout(@NotNull FoldRegion foldRegion) {
-    LineLayout layout = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
-    if (layout == null) {
+    int generation = myFoldRegionLayoutGeneration.get();
+    FoldRegionTextLayout cached = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
+    if (cached == null || cached.generation() != generation) {
       TextAttributes placeholderAttributes = getFoldingModel().getPlaceholderAttributes();
-      layout = LineLayout.createForStandaloneText(
+      LineLayout layout = LineLayout.createForStandaloneText(
         this,
         StringUtil.replace(foldRegion.getPlaceholderText(), "\n", " "),
         placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType()
       );
-      foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
+      cached = new FoldRegionTextLayout(generation, layout);
+      foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, cached);
     }
-    return layout;
+    return cached.layout();
   }
+
+  private record FoldRegionTextLayout(int generation, @NotNull LineLayout layout) {}
 
   /**
    * Returns the font resolver of the current font settings.
@@ -764,11 +770,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   private void invalidateFoldRegionLayouts() {
-    EditorThreading.run(() -> {
-      for (FoldRegion region : getFoldingModel().getAllFoldRegions()) {
-        invalidateFoldRegionLayout(region);
-      }
-    });
+    EditorThreading.run(() -> myFoldRegionLayoutGeneration.incrementAndGet());
   }
 
   public float getPlainSpaceWidth() {
