@@ -29,7 +29,8 @@ fn show_alert_impl(title: &str, text: &str) {
             None,
             PCSTR::from_raw(c_text.as_bytes_with_nul().as_ptr()),
             PCSTR::from_raw(c_caption.as_bytes_with_nul().as_ptr()),
-            WindowsAndMessaging::MB_OK | WindowsAndMessaging::MB_ICONERROR | WindowsAndMessaging::MB_APPLMODAL);
+            WindowsAndMessaging::MB_OK | WindowsAndMessaging::MB_ICONERROR | WindowsAndMessaging::MB_APPLMODAL
+        );
     }
 }
 
@@ -63,7 +64,8 @@ fn show_alert_impl(title: &str, text: &str) {
             std::ptr::null(), std::ptr::null(), std::ptr::null(),
             header.as_concrete_TypeRef(), message.as_concrete_TypeRef(),
             std::ptr::null(), std::ptr::null(), std::ptr::null(),
-            std::ptr::null_mut())
+            std::ptr::null_mut()
+        )
     };
 }
 

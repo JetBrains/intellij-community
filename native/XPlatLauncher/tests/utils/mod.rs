@@ -92,9 +92,9 @@ impl<'a> TestEnvironment<'a> {
         fs::create_dir_all(file.parent().unwrap())
             .unwrap_or_else(|_| panic!("Cannot create: {:?}", file));
         OpenOptions::new().write(true).create_new(true).open(file)
-            .unwrap_or_else(|_| panic!("Cannot create {:?}", &file))
+            .unwrap_or_else(|_| panic!("Cannot create {:?}", file))
             .write_all(content.as_bytes())
-            .unwrap_or_else(|_| panic!("Cannot write {:?}", &file));
+            .unwrap_or_else(|_| panic!("Cannot write {:?}", file));
     }
 
     #[cfg(target_os = "windows")]
