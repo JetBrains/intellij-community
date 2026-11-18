@@ -89,6 +89,7 @@ targets:
   - ../crates/avl-vm/src/worker/tart.rs
   - ../crates/avl-vm/src/worker/docker.rs
   - ../crates/avl-vm/src/worker/container.rs
+  - ../crates/avl-vm/src/worker/container/install.rs
   - ../crates/avl-testkit/src/tartfake.rs
   - ../crates/avl-vm/src/worker/parallels.rs
   - ../crates/avl-affected/src/affected.rs
@@ -358,6 +359,12 @@ The rest of the scenario matrix is in
 - On Apple `container`, the controller uses the server of the login session and never stops it. It starts a server
   that is down. It refuses a server of another install with another major version.
   [@test] ../crates/avl-vm/src/worker/container/tests.rs
+
+- On Apple `container`, a pinned CLI on another volume than the runtime root runs from a copy under the runtime root.
+  There is one copy per pin. The copy is made once, passes a signature check before it is used, and is reused
+  without one. A copy that fails the check is refused and left nowhere. The copies of other pins go once the server
+  of the session runs from the copy of this pin. A CLI that `CONTAINER_BIN` names runs as it is.
+  [@test] ../crates/avl-vm/src/worker/container/install/tests.rs
 
 - On Apple `container`, each build and each container gets a nameserver, and each container gets the memory and the
   CPUs of one worker. A container that stops while it starts is refused with its log and its boot log.

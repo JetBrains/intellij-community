@@ -15,6 +15,8 @@
 //!   real path. A server of another install and of another major version is refused `container_engine_foreign`.
 //! - **The nameserver.** The DNS proxy of the engine does not answer on every host. Each build and each container
 //!   gets `--dns` ([`AppleContainer::nameserver`]).
+//! - **The install.** The pinned CLI runs from a copy under the runtime root when the pin is on another volume
+//!   ([`install`]).
 //!
 //! The engine rule chooses this engine only on a macOS host. The module compiles on every host, so its suite runs
 //! over the fake `container` on every Unix host.
@@ -35,6 +37,7 @@ use tokio::sync::OnceCell;
 use crate::worker::docker::{log_options, named_engine_remedy, remove_if_present};
 use crate::worker::hypervisor::unsupported;
 
+pub(crate) mod install;
 #[cfg(test)]
 mod tests;
 
@@ -151,6 +154,12 @@ impl AppleContainer {
             nameserver: OnceCell::new(),
             foreign_noted: AtomicBool::new(false),
         }
+    }
+
+    /// The CLI to run for the pinned CLI at the real path `cli`: itself, or the CLI of its copy under the runtime root
+    /// when the pin is on another volume ([`install::runnable_cli`]). A CLI that `CONTAINER_BIN` names is run as it is.
+    pub(crate) async fn runnable_pinned_cli(&self, ctx: &Ctx, cli: &Path) -> Result<PathBuf, Refusal> {
+        install::runnable_cli(ctx, &self.runner, &self.reporter, cli, &self.settings.runtime_root).await
     }
 
     // --- the server --------------------------------------------------------------------------------------
@@ -278,6 +287,11 @@ impl AppleContainer {
         }
         let own = install_root_of(program);
         if same_root(&own, &status.paths.install_root) {
+            if own.parent() == Some(self.settings.runtime_root.join(install::INSTALL_COPIES).as_path()) {
+                for note in install::prune_other_copies(&own) {
+                    self.reporter.note(note, None);
+                }
+            }
             return Ok(());
         }
         let server = major_version(&status.server.version);

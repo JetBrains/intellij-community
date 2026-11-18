@@ -296,6 +296,11 @@ env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUi
   downloads the kernel, about 700 MB, and its log is `<runtime root>/container-system.log`.
 - **A foreign server.** A server of another install with another major version is refused
   `container_engine_foreign`. A server of another install with the same major version is used, with a note.
+- **A pin on another volume.** When `AIR_VM_BAZEL_USER_ROOT` or `--output_user_root` puts the Bazel root on another
+  volume than the runtime root, such as an external disk, the network plugin of the engine does not start from there.
+  The controller then runs a copy of the pinned install, `<runtime root>/apple-container/<pin>`, made once per pin
+  (about 420 MB) and checked with `codesign --verify --strict`. A failed copy or check is `container_copy_failed`
+  ([the pinned Apple container runs from the volume of the runtime root](decisions/2026-11-18-the-pinned-container-runs-from-the-volume-of-the-runtime-root.md)).
 - **The nameserver.** The DNS proxy of the engine does not answer on every host. So each build and each container
   gets `--dns`: `AIR_VM_DNS`, else the first nameserver of the host outside the loopback, else `1.1.1.1`. A guest
   that needs a name that only a VPN resolver knows needs `AIR_VM_DNS`.
