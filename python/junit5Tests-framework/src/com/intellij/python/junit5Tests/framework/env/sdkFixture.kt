@@ -7,7 +7,7 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.sdkFixture
 import com.intellij.python.sdk.backend.addMockPythonInterpreter
-import com.intellij.python.sdk.backend.findPythonInterpreter
+import com.intellij.python.sdk.backend.isFor
 import com.intellij.python.sdk.backend.putTestSdk
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -93,11 +93,12 @@ suspend fun Sdk.pythonInterpreterForTests(project: Project): PythonInterpreter {
     // The legacy flow reads the SDK table. The registry adds the SDK there and removes it with the project.
     return registry.addMockPythonInterpreter(ownerDir, this)
   }
+  suspend fun find() = registry.allInterpreters().firstOrNull { it.isFor(this) }
   return withTimeout(DEFAULT_TEST_TIMEOUT) {
-    var interpreter = project.findPythonInterpreter(this@pythonInterpreterForTests)
+    var interpreter = find()
     while (interpreter == null) {
       delay(50.milliseconds)
-      interpreter = project.findPythonInterpreter(this@pythonInterpreterForTests)
+      interpreter = find()
     }
     interpreter
   }

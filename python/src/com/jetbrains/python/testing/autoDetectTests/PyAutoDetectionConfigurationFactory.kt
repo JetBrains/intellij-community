@@ -2,9 +2,7 @@
 package com.jetbrains.python.testing.autoDetectTests
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.testing.PyAbstractTestFactory
 import com.jetbrains.python.testing.PyUnitTestFactory
@@ -27,10 +25,8 @@ class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurat
   override fun createTemplateConfiguration(project: Project): PyAutoDetectTestConfiguration =
     PyAutoDetectTestConfiguration(project, this)
 
-  override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean {
-    val factory = project.findPythonInterpreterIfReady(sdk)?.let { getFactory(it, project) } ?: PyUnitTestFactory(type)
-    return factory.onlyClassesAreSupported(project, sdk)
-  }
+  override fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean =
+    getFactory(interpreter, project).onlyClassesAreSupported(project, interpreter)
 
   override fun getId(): String = "Autodetect"
 

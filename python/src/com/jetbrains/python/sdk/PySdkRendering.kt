@@ -6,6 +6,10 @@ import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.jetbrains.python.project.PyProject
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.asItem
+import com.intellij.python.sdk.backend.flavor
+import com.intellij.python.sdk.backend.isTargetBased
+import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.diagnostic.thisLogger
@@ -155,6 +159,24 @@ fun pyProjectPythonSdksUnderProgress(project: Project, pyProject: PyProject?): L
   runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
     @Suppress("DEPRECATION") // A Java caller still holds SDKs.
     pyProjectInterpreters(project, pyProject).map { it.getSdkAPI() }
+  }
+
+/**
+ * The interpreters of the [PyProject] of [module] as the interpreter popup lists them, grouped by type. Each row pairs
+ * the item with its interpreter. A row whose interpreter has a problem is dropped. See [pyProjectInterpreters].
+ */
+@ApiStatus.Internal
+suspend fun interpreterRowsByTypes(module: Module): Map<PyRenderedSdkType, List<Pair<PyInterpreterItem, PythonInterpreter>>> =
+  pyProjectInterpreters(module.project, module)
+    .map { it.asItem() to it }
+    .filter { (item, _) -> item.problem == null }
+    .groupBy { (_, interpreter) -> interpreter.renderedSdkType }
+
+private val PythonInterpreter.renderedSdkType: PyRenderedSdkType
+  get() = when {
+    flavor.let { it is VirtualEnvSdkFlavor || it is CondaEnvSdkFlavor } -> PyRenderedSdkType.VIRTUALENV
+    isTargetBased -> PyRenderedSdkType.REMOTE
+    else -> PyRenderedSdkType.SYSTEM
   }
 
 /**

@@ -526,8 +526,8 @@ abstract class PyAbstractTestConfiguration(
 
 
   fun isTestClassRequired(): ThreeState {
-    val sdk = sdk ?: return ThreeState.UNSURE
-    return if (testFactory.onlyClassesAreSupported(project, sdk)) {
+    val interpreter = pythonInterpreter ?: return ThreeState.UNSURE
+    return if (testFactory.onlyClassesAreSupported(project, interpreter)) {
       ThreeState.YES
     }
     else {
@@ -808,10 +808,8 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
   override fun equals(other: Any?): Boolean = ((other as? PyAbstractTestFactory<*>))?.id == id
   override fun hashCode(): Int = id.hashCode()
 
-  /**
-   * Only UnitTest inheritors are supported
-   */
-  abstract fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean
+  /** Whether the framework of this factory runs only test classes, for [interpreter], such as unittest. */
+  abstract fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean
 
   /**
    * Marker fully-qualified name used to detect if the framework is installed.
