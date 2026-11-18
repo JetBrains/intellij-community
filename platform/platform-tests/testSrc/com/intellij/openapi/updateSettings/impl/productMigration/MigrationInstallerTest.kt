@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.EmptyProgressIndicatorBase
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.util.io.sha256Hex
 import org.junit.Assert.assertArrayEquals
@@ -77,7 +78,7 @@ class MigrationInstallerTest {
     val source = source()
     Files.writeString(checksumOf(source), "${sha256Hex(source).uppercase(Locale.ROOT)} *${source.fileName}")
     val workDir = workDir()
-    val result = downloadAndVerify(url(source), workDir, indicator(), allowFileUrls = true)
+    val result = downloadFile(url(source), workDir, indicator())
     assertEquals(workDir, result.parent)
     assertArrayEquals(source.readBytes(), result.readBytes())
   }
@@ -85,7 +86,7 @@ class MigrationInstallerTest {
   @Test
   fun `missing checksum stops before the download`() {
     val workDir = workDir()
-    assertChecksumError { downloadAndVerify(url(source()), workDir, indicator(), allowFileUrls = true) }
+    assertChecksumError { downloadFile(url(source()), workDir, indicator()) }
     assertEquals(emptyList<Path>(), workDir.listDirectoryEntries())
   }
 
@@ -94,7 +95,7 @@ class MigrationInstallerTest {
     val source = source()
     checksumOf(source).writeText("not a checksum")
     val workDir = workDir()
-    assertChecksumError { downloadAndVerify(url(source), workDir, indicator(), allowFileUrls = true) }
+    assertChecksumError { downloadFile(url(source), workDir, indicator()) }
     assertEquals(emptyList<Path>(), workDir.listDirectoryEntries())
   }
 
@@ -103,7 +104,7 @@ class MigrationInstallerTest {
     val source = source()
     checksumOf(source).writeText(HEX)
     val workDir = tempDir.root.toPath().resolve("work")
-    assertChecksumError { withMigrationWorkDir(workDir) { downloadAndVerify(url(source), it, indicator(), allowFileUrls = true) } }
+    assertChecksumError { withMigrationWorkDir(workDir) { downloadFile(url(source), it, indicator()) } }
     assertFalse(workDir.exists())
   }
 
@@ -113,7 +114,7 @@ class MigrationInstallerTest {
     Files.writeString(checksumOf(source), sha256Hex(source))
     val workDir = workDir()
     val error = assertThrows(MigrationInstallException::class.java) {
-      downloadAndVerify(url(source), workDir, indicator(), allowFileUrls = false)
+      downloadAndVerify(url(source), workDir, indicator(), isAllowedUrl = { isAllowedContentUrl(it, allowFileUrls = false) })
     }
     assertEquals(IdeBundle.message("updates.migration.content.invalid"), error.userMessage)
     assertEquals(emptyList<Path>(), workDir.listDirectoryEntries())
@@ -165,10 +166,15 @@ class MigrationInstallerTest {
       override fun isCanceled(): Boolean = canceled
     }
     assertThrows(ProcessCanceledException::class.java) {
-      withMigrationWorkDir(workDir) { downloadAndVerify(url(source), it, indicator, allowFileUrls = true) }
+      withMigrationWorkDir(workDir) { downloadFile(url(source), it, indicator) }
     }
     assertFalse(workDir.exists())
   }
+
+  private fun downloadFile(url: String, workDir: Path, indicator: ProgressIndicator): Path =
+    downloadAndVerify(url, workDir, indicator,
+                      isAllowedUrl = { isAllowedContentUrl(it, allowFileUrls = true) },
+                      isAllowedFinalUrl = { isAllowedFinalContentUrl(it, allowFileUrls = true) })
 
   private fun source(): Path = tempDir.root.toPath().resolve("unified-ide-271.2227-aarch64.dmg").apply { writeBytes(ByteArray(100_000) { it.toByte() }) }
 

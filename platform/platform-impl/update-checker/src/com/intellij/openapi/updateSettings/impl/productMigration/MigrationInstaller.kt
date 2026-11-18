@@ -16,7 +16,6 @@ import com.intellij.openapi.updateSettings.impl.DistributionInfo
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.sha256Hex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -79,16 +78,17 @@ fun downloadAndVerify(
   url: String,
   workDir: Path,
   indicator: ProgressIndicator,
-  allowFileUrls: Boolean = isFileContentUrlAllowed(),
+  isAllowedUrl: (String) -> Boolean = { isAllowedContentUrl(it) },
+  isAllowedFinalUrl: (String) -> Boolean = { isAllowedFinalContentUrl(it) },
 ): Path {
-  if (!isAllowedContentUrl(url, allowFileUrls)) {
+  if (!isAllowedUrl(url)) {
     throw MigrationInstallException(IdeBundle.message("updates.migration.content.invalid"), "the distribution URL is not allowed: ${url}")
   }
 
   indicator.text = IdeBundle.message("updates.migration.progress.checksum")
   val checksumUrl = "${url}.sha256"
   val checksumText = try {
-    download(checksumUrl, indicator).toString(Charsets.UTF_8)
+    download(checksumUrl, indicator, isAllowedUrl, isAllowedFinalUrl).toString(Charsets.UTF_8)
   }
   catch (e: Exception) {
     rethrowControlFlowException(e)
@@ -100,7 +100,10 @@ fun downloadAndVerify(
   val target = workDir.resolve(DOWNLOAD_FILE_NAME)
   LOG.info("downloading ${url}")
   try {
-    HttpRequests.request(url).productNameAsUserAgent().saveToFile(target, indicator, true)
+    connectToAllowedUrl(url, isAllowedUrl, isAllowedFinalUrl) { it.saveToFile(target, indicator, true) }
+  }
+  catch (e: MigrationUrlNotAllowedException) {
+    throw MigrationInstallException(IdeBundle.message("updates.migration.content.invalid"), "cannot download ${url}: ${e.message}", e)
   }
   catch (e: IOException) {
     val reason = e.message ?: e.toString()
