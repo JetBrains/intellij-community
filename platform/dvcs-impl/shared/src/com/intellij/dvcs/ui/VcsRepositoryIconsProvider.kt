@@ -17,11 +17,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
+import java.nio.file.Path
 import javax.swing.Icon
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class VcsRepositoryIconsProvider(project: Project, cs: CoroutineScope) {
+class VcsRepositoryIconsProvider(private val project: Project, cs: CoroutineScope) {
   private var state: VcsRepositoryColorsState = VcsRepositoryColorsState()
 
   init {
@@ -35,7 +36,9 @@ class VcsRepositoryIconsProvider(project: Project, cs: CoroutineScope) {
     }
   }
 
+  /** The icon of a row of the repository: the icon of a [RepositoryNodeIconProvider], or the color of the repository. */
   fun getIcon(repositoryId: RepositoryId): Icon {
+    RepositoryNodeIconProvider.getIcon(project, Path.of(repositoryId.rootPath))?.let { return it }
     val color = getColor(repositoryId)
     return if (color != null) CheckboxIcon.createAndScale(color) else PlatformIcons.FOLDER_ICON
   }
