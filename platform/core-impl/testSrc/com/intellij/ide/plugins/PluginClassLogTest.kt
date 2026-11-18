@@ -4,6 +4,8 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.cl.PluginClassLog
 import com.intellij.ide.plugins.cl.PluginClassLogState
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -55,6 +57,43 @@ internal class PluginClassLogTest {
     assertEquals(listOf("#cost", "3"), trailer.take(2))
     assertEquals("2", trailer[3])
     assertEquals(lines.size - 1, lines.indexOfFirst { it.startsWith("#cost") }, "the trailer is the last line")
+  }
+
+  @Test
+  fun `a resolved stack writes the same S records as a pending one`() {
+    val files = listOf(false, true).map { resolve ->
+      val file = dir.resolve("plugin-classes-$resolve.txt")
+      val log = PluginClassLog.open(file)
+      val state = PluginClassLogState(log = log, pluginId = "p", moduleName = null)
+      log.classDefined(state, "a.First", findClassNanos = 0, stack = log.captureStack())
+      if (resolve) {
+        log.resolveStacks()
+        assertNull(state.stack, "the Throwable is gone after the conversion")
+        assertNotNull(state.frames, "the frames hold the stack until the exit")
+      }
+      log.close()
+      assertNull(state.frames, "the exit drops the frames")
+      log.resolveStacks()
+      file
+    }
+
+    val stacks = files.map { file -> read(file).filter { it.startsWith("S\t0\t") } }
+    assertTrue(stacks[0].isNotEmpty(), "the pending stack has S records")
+    assertEquals(stacks[0], stacks[1])
+  }
+
+  @Test
+  fun `resolveStacks without a pending stack does nothing`() {
+    val file = dir.resolve("plugin-classes.txt")
+    val log = PluginClassLog.open(file)
+    log.resolveStacks()
+    log.classDefined(PluginClassLogState(log = log, pluginId = "p", moduleName = null), "a.First", findClassNanos = 1, stack = null)
+    log.resolveStacks()
+    log.close()
+
+    val lines = read(file)
+    assertEquals(listOf("#plugin-classes\t2", "L\t0\t-\tp", "C\t0\t1\ta.First"), lines.take(3))
+    assertTrue(lines[3].startsWith("#cost\t1\t"), lines[3])
   }
 
   @Test

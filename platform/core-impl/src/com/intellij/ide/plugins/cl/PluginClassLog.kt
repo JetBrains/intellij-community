@@ -48,11 +48,16 @@ internal class PluginClassLogState(@JvmField val log: PluginClassLog, @JvmField 
   var id: Int = -1
 
   /**
-   * The stack of the first class of the loader, until the log writes it at the exit. The loader keeps this state, so the
-   * stack lives no longer than the loader. It keeps the classes of its frames.
+   * The stack of the first class of the loader, until the exit or until the first dynamic unload, whichever comes first.
+   * [PluginClassLog.resolveStacks] moves it to [frames]. The loader keeps this state, so the stack lives no longer than
+   * the loader.
    */
   @JvmField
   var stack: Throwable? = null
+
+  /** The frames of the first class after [PluginClassLog.resolveStacks] ran, until the exit writes them. They hold no class. */
+  @JvmField
+  var frames: Array<StackTraceElement>? = null
 }
 
 /**
@@ -61,7 +66,7 @@ internal class PluginClassLogState(@JvmField val log: PluginClassLog, @JvmField 
  *
  * A record is copied into one byte buffer under one lock. The file is written only when the buffer is full, on a
  * define error, and at the exit. The stack of a first class is only filled on the class-loading path. Its conversion
- * to frames runs at the exit, because the conversion is the costly part of a stack.
+ * to frames runs at the first dynamic unload or at the exit, because the conversion is the costly part of a stack.
  */
 internal class PluginClassLog private constructor(private val channel: FileChannel, bufferSize: Int) {
   private val lock = ReentrantLock()
@@ -74,6 +79,7 @@ internal class PluginClassLog private constructor(private val channel: FileChann
   private var stacks = 0L
   private var stackNanos = 0L
   private val statesWithStack = ArrayList<WeakReference<PluginClassLogState>>()
+  private var pendingStacks = 0
 
   companion object {
     /**
@@ -138,6 +144,7 @@ internal class PluginClassLog private constructor(private val channel: FileChann
       if (stack != null && state.stack == null) {
         state.stack = stack
         statesWithStack.add(WeakReference(state))
+        pendingStacks++
       }
       records++
       writeNanos += System.nanoTime() - start
@@ -162,6 +169,29 @@ internal class PluginClassLog private constructor(private val channel: FileChann
     }
   }
 
+  /**
+   * Converts each pending stack of a live loader to frames. A dynamic unload calls it before it cancels the first loader
+   * of the batch, so no stack of the log keeps a class of an unloaded loader. The leaking stack can belong to a loader
+   * that stays: a frame of the unloaded plugin woke it. So every pending stack is converted, not only the stacks of
+   * the unloaded loaders. A [StackTraceElement] holds no class: `Throwable.getStackTrace` computes the format of each
+   * element and clears its class. The conversion costs 29 to 125 ms per start, so it runs here and not at the record
+   * time: an unload takes seconds off the EDT, and the start-up numbers of `vm bench` do not move.
+   */
+  fun resolveStacks() {
+    lock.withLock {
+      if (isClosed || pendingStacks == 0) {
+        return
+      }
+      for (reference in statesWithStack) {
+        val state = reference.get() ?: continue
+        val stack = state.stack ?: continue
+        state.frames = stack.stackTrace
+        state.stack = null
+      }
+      pendingStacks = 0
+    }
+  }
+
   /** Writes the stacks of the live loaders and the `#cost` trailer, and closes the file. Later records are dropped. */
   fun close() {
     lock.withLock {
@@ -172,9 +202,10 @@ internal class PluginClassLog private constructor(private val channel: FileChann
       // a loader that went has no stack in the log; its L and C records stay
       for (reference in statesWithStack) {
         val state = reference.get() ?: continue
-        val stack = state.stack ?: continue
+        val frames = state.frames ?: state.stack?.stackTrace ?: continue
+        state.frames = null
         state.stack = null
-        putStack(state.id, stack)
+        putStack(state.id, frames)
       }
       statesWithStack.clear()
       putAscii("#cost\t")
@@ -215,11 +246,10 @@ internal class PluginClassLog private constructor(private val channel: FileChann
   }
 
   /**
-   * Writes the `S` records of the loader [id]: the frames of [stack] below the class-loading machinery, at most
+   * Writes the `S` records of the loader [id]: the [frames] below the class-loading machinery, at most
    * [MAX_ACTIVATION_FRAMES]. Called under the lock at the exit.
    */
-  private fun putStack(id: Int, stack: Throwable) {
-    val frames = stack.stackTrace
+  private fun putStack(id: Int, frames: Array<StackTraceElement>) {
     var first = 0
     while (first < frames.size && CLASS_LOADING_MACHINERY_PREFIXES.any { frames[first].className.startsWith(it) }) {
       first++
