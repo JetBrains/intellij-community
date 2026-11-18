@@ -114,8 +114,9 @@ internal object GitLabMergeRequestTimelineComponentFactory {
 
     return ScrollPaneFactory.createScrollPane(timelinePanel, true).apply {
       horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-      viewport.isOpaque = false
-      background = JBColor.lazy {
+      isOpaque = false
+      viewport.isOpaque = true
+      viewport.background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground
       }
