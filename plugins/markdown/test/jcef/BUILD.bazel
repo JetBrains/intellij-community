@@ -14,6 +14,10 @@ jvm_library(
         allow_empty = True,
     ),
     associates = ["//plugins/markdown/core:markdown"],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
