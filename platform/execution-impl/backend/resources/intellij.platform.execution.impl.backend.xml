@@ -3,12 +3,12 @@
   <dependencies>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.backend.baseline"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.project"/>
-    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.util.coroutines"/>
   </dependencies>
   <!-- endregion -->
@@ -19,9 +19,6 @@
     <projectFileScanner implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
     <postStartupActivity implementation="com.intellij.execution.impl.RunConfigurationFeatureCollector"/>
     <executionTargetLanguageRuntimeType implementation="com.intellij.execution.target.java.JavaLanguageRuntimeType"/>
-    <platform.rpc.backend.remoteApiProvider
-      implementation="com.intellij.platform.execution.impl.backend.BackendExecutionRemoteApiProvider"
-      apiInterfaces="com.intellij.execution.rpc.ProcessHandlerApi, com.intellij.execution.rpc.RunSessionsApi"/>
     <execution.impl.runSessionService implementation="com.intellij.platform.execution.impl.backend.BackendRunSessionService"/>
     <programRunner id="ExternalToolRunner" order="first" implementation="com.intellij.tools.ToolProgramRunner"/>
   </extensions>

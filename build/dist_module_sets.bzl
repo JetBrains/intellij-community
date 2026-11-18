@@ -721,6 +721,7 @@ DIST_MODULE_SETS = {
         modules = [
             "intellij.platform.execution.impl.frontend",
             "intellij.platform.execution.impl.backend",
+            "intellij.platform.execution.impl.rpc.backend",
             "intellij.platform.execution.rpc",
         ],
         nested = [
@@ -728,16 +729,19 @@ DIST_MODULE_SETS = {
         packed = {
             "intellij.platform.execution.impl.backend": "//platform/execution-impl/backend:backend_content_module_jar",
             "intellij.platform.execution.impl.frontend": "//platform/execution-impl/frontend:frontend_content_module_jar",
+            "intellij.platform.execution.impl.rpc.backend": "//platform/execution-impl/rpc.backend:rpc.backend_content_module_jar",
             "intellij.platform.execution.rpc": "//platform/execution-impl/rpc:rpc_content_module_jar",
         },
         module_system_loaded = [
             "intellij.platform.execution.impl.backend",
             "intellij.platform.execution.impl.frontend",
+            "intellij.platform.execution.impl.rpc.backend",
             "intellij.platform.execution.rpc",
         ],
         mode_refused = {
             "frontend": [
                 "intellij.platform.execution.impl.backend",
+                "intellij.platform.execution.impl.rpc.backend",
             ],
         },
     ),

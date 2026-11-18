@@ -40,6 +40,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
+    <orderEntry type="module" module-name="intellij.platform.backend.baseline" scope="RUNTIME" />
   </component>
 </module>

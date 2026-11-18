@@ -835,6 +835,7 @@ platform/execution-impl
 platform/execution-impl/backend
 platform/execution-impl/frontend
 platform/execution-impl/rpc
+platform/execution-impl/rpc.backend
 platform/execution-process-elevation
 platform/execution-process-mediator/client
 platform/execution-process-mediator/common

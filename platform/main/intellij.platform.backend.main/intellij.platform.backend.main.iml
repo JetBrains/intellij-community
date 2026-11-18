@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.bookmarks.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl.rpc.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker.xml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker.xml.backend" scope="RUNTIME" />

@@ -97,7 +97,7 @@ public class ExecutorAction extends AnAction implements DumbAware, ActionIdProvi
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace()) || ExecutionActionsInLightModeKt.areExecutionActionsHiddenInLightMode()) {
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }

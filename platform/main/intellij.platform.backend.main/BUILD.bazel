@@ -24,6 +24,7 @@ jvm_library(
         "//platform/bookmarks/backend",
         "//platform/recentFiles/backend",
         "//platform/execution-impl/backend",
+        "//platform/execution-impl/rpc.backend",
         "//platform/execution.dashboard/backend",
         "//spellchecker/xml",
         "//spellchecker/xml/backend",

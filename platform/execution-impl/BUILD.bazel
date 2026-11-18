@@ -166,6 +166,7 @@ jvm_library(
         "//platform/testFramework/junit5",
         "//platform/eel-nioFs",
         "//platform/util/jdom",
+        "//platform/productMode",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.tests` end

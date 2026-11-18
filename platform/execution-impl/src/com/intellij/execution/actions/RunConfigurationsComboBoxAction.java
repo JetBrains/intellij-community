@@ -69,7 +69,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static com.intellij.execution.actions.ExecutionActionsInLightModeKt.areExecutionActionsHiddenInLightMode;
 import static com.intellij.execution.ui.RunToolbarPopupKt.RUN_CONFIGURATION_KEY;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
@@ -134,7 +133,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       presentation.setEnabled(false);
     }
 
-    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace()) || areExecutionActionsHiddenInLightMode()) {
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
       presentation.setEnabledAndVisible(false);
     }
   }

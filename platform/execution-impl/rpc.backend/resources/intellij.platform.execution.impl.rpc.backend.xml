@@ -1,0 +1,18 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rpc"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.execution.impl.backend"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.rpc.backend"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider
+      implementation="com.intellij.platform.execution.impl.rpc.backend.BackendExecutionRemoteApiProvider"
+      apiInterfaces="com.intellij.execution.rpc.ProcessHandlerApi, com.intellij.execution.rpc.RunSessionsApi"/>
+  </extensions>
+</idea-plugin>

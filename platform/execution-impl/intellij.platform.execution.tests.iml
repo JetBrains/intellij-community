@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.productMode" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.execution" />
 </module>

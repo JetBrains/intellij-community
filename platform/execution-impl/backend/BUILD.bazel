@@ -26,6 +26,7 @@ jvm_library(
         # do not sort,
         "//libraries/kotlinx/serialization/json",
         "//platform/platform-impl/rpc",
+        "//platform/backend/baseline",
     ],
     deps = [
         # do not sort,
@@ -38,7 +39,6 @@ jvm_library(
         "//platform/project/shared:project",
         "//platform/execution",
         "//platform/util/coroutines",
-        "//platform/kernel/rpc.backend",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.impl.backend` end

@@ -207,6 +207,7 @@ object CommunityModuleSets {
   fun executionSplit(): ModuleSet = moduleSet("execution.split") {
     module("intellij.platform.execution.impl.frontend")
     module("intellij.platform.execution.impl.backend")
+    module("intellij.platform.execution.impl.rpc.backend")
     module("intellij.platform.execution.rpc")
   }
 

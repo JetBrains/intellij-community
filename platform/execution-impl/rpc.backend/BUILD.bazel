@@ -1,0 +1,52 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.execution.impl.rpc.backend` start
+content_module_jar(module = ":rpc.backend")
+### auto-generated section `dev intellij.platform.execution.impl.rpc.backend` end
+
+### auto-generated section `build intellij.platform.execution.impl.rpc.backend` start
+jvm_library(
+    name = "rpc.backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.execution.impl.rpc.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//platform/execution-impl/backend",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/project/shared:project",
+        "//fleet/rpc",
+        "//platform/kernel/rpc.backend",
+        "//platform/execution-impl",
+    ],
+)
+### auto-generated section `build intellij.platform.execution.impl.rpc.backend` end
+
+### auto-generated section `iml intellij.platform.execution.impl.rpc.backend` start
+exports_files(
+    [
+        "intellij.platform.execution.impl.rpc.backend.iml",
+        "resources/intellij.platform.execution.impl.rpc.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.execution.impl.rpc.backend` end
