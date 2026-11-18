@@ -23,17 +23,16 @@ import com.intellij.psi.JVMElementFactories;
 import com.intellij.psi.JVMElementFactory;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiMethodUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,12 +69,12 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-    return findTargetClass(context) == null ? null : Presentation.of(getFamilyName());
+    return GenerateToStringClassFilter.findTargetClass(context) == null ? null : Presentation.of(getFamilyName());
   }
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    PsiClass psiClass = findTargetClass(context);
+    PsiClass psiClass = GenerateToStringClassFilter.findTargetClass(context);
     if (psiClass == null) return ModCommand.nop();
 
     List<PsiElementClassMember<?>> members = List.of(JavaGenerateToStringActionHandler.buildMembersToShow(psiClass));
@@ -89,28 +88,15 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
     boolean insertOverride = annotationsAvailable &&
                              JavaCodeStyleSettings.getInstance(psiClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
 
+    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.createPointer(psiClass);
     return new ModEditOptions<>(
       getFamilyName(),
       () -> new ToStringOptions(members, templateOptions, annotationsAvailable, preselection, defaultTemplate, insertOverride),
       true,
-      options -> generate(context, psiClass, members, options));
-  }
-
-  private static @Nullable PsiClass findTargetClass(@NotNull ActionContext context) {
-    if (!(context.file() instanceof PsiJavaFile javaFile)) return null;
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(context.findLeaf(), PsiClass.class, false);
-    if (psiClass == null) {
-      PsiClass[] classes = javaFile.getClasses();
-      if (classes.length != 1 || !(classes[0] instanceof PsiImplicitClass implicitClass) ||
-          implicitClass.getFirstChild() == null || !PsiMethodUtil.hasMainMethod(implicitClass)) {
-        return null;
-      }
-      psiClass = implicitClass;
-    }
-    for (GenerateToStringClassFilter filter : GenerateToStringClassFilter.EP_NAME.getExtensionList()) {
-      if (!filter.canGenerateToString(psiClass)) return null;
-    }
-    return psiClass;
+      options -> {
+        PsiClass cls = pointer.getElement();
+        return cls == null ? ModCommand.nop() : generate(context, cls, members, options);
+      });
   }
 
   /**
@@ -245,7 +231,7 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
    * Thus, {@link #getOptionsPane()} needs no PSI access, and the IDE can call it on the EDT.
    */
   private static final class ToStringOptions implements OptionContainer {
-    private final @NotNull List<PsiElementClassMember<?>> myAllMembers;
+    private final @NotNull List<? extends OptMultiSelector.OptElement> myAllMembers;
     private final @NotNull List<OptDropdown.Option> myTemplateOptions;
     private final boolean myAnnotationsAvailable;
 

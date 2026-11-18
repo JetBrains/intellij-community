@@ -21,6 +21,7 @@ import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -41,17 +42,12 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiImplicitClass;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiMethodUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -105,7 +101,8 @@ public class JavaGenerateToStringActionHandler implements GenerateToStringAction
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
-    PsiClass clazz = getSubjectClass(editor, psiFile);
+    ActionContext context = ActionContext.from(editor, psiFile);
+    PsiClass clazz = GenerateToStringClassFilter.findTargetClass(context);
     if (clazz == null) return;
 
     doExecuteAction(project, clazz, editor);
@@ -241,31 +238,6 @@ public class JavaGenerateToStringActionHandler implements GenerateToStringAction
     }
 
     return GenerationUtil.combineToClassMemberList(filteredFields, filteredMethods);
-  }
-
-  private static @Nullable PsiClass getSubjectClass(Editor editor, final PsiFile file) {
-    if (file == null) return null;
-
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement context = file.findElementAt(offset);
-
-    PsiClass clazz = PsiTreeUtil.getParentOfType(context, PsiClass.class, false);
-    if (clazz == null) {
-      if (file instanceof PsiJavaFile javaFile && javaFile.getClasses().length == 1 &&
-          javaFile.getClasses()[0] instanceof PsiImplicitClass implicitClass &&
-          implicitClass.getFirstChild() != null && PsiMethodUtil.hasMainMethod(implicitClass)) {
-        clazz = implicitClass;
-      }
-      else {
-        return null;
-      }
-    }
-
-    //exclude interfaces, non-java classes etc
-    for (GenerateToStringClassFilter filter : GenerateToStringClassFilter.EP_NAME.getExtensionList()) {
-      if (!filter.canGenerateToString(clazz)) return null;
-    }
-    return clazz;
   }
 
   public static class MemberChooserHeaderPanel extends JPanel {
