@@ -417,7 +417,7 @@ internal class EelChannelInterruptionTest {
         when (localEel.descriptor.osFamily) {
           EelOsFamily.Posix -> listOf("sleep", "300")
           EelOsFamily.Windows -> listOf(
-            "powershell.exe",
+            """C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe""",
             "-NoProfile",
             "-ExecutionPolicy", "Bypass",
             "-NonInteractive",
