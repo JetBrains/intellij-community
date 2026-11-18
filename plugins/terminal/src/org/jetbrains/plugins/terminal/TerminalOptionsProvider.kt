@@ -70,6 +70,9 @@ class TerminalOptionsProvider(internal val coroutineScope: CoroutineScope) : Per
     @ApiStatus.Internal
     var applicationTitleShowingMode: TerminalApplicationTitleShowingMode = TerminalApplicationTitleShowingMode.WHEN_COMMAND_RUNNING
 
+    @ApiStatus.Internal
+    var moveCursorOnClick: Boolean = true
+
     var myTabName: @Nls String = defaultTabName()
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
@@ -185,6 +188,18 @@ class TerminalOptionsProvider(internal val coroutineScope: CoroutineScope) : Per
     set(value) {
       if (state.applicationTitleShowingMode != value) {
         state.applicationTitleShowingMode = value
+        fireSettingsChanged()
+      }
+    }
+
+  /** Whether a click in the command that the user types moves the shell cursor to the clicked place. */
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var moveCursorOnClick: Boolean
+    get() = state.moveCursorOnClick
+    set(value) {
+      if (state.moveCursorOnClick != value) {
+        state.moveCursorOnClick = value
         fireSettingsChanged()
       }
     }

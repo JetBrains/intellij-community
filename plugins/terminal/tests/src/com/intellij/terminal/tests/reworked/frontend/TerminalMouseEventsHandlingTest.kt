@@ -19,6 +19,7 @@ import com.intellij.terminal.frontend.view.TerminalTextSelectionListener
 import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.tests.reworked.util.ESC
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.setValueInTest
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
 import com.intellij.terminal.tests.reworked.util.TerminalViewFixture
 import com.intellij.terminal.tests.reworked.util.assertBlocksModelState
@@ -43,6 +44,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
@@ -1067,6 +1069,23 @@ internal class TerminalMouseEventsHandlingTest {
         val written = fixture.awaitInputEventsHandled { fixture.click(column = 5) }
 
         assertThat(written).isEmpty()
+      }
+
+    @Test
+    fun `click does not move the cursor when the option is off`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        val disposable = Disposer.newDisposable()
+        try {
+          TerminalOptionsProvider.instance::moveCursorOnClick.setValueInTest(false, disposable)
+
+          val written = fixture.awaitInputEventsHandled { fixture.click(column = 5) }
+
+          assertThat(written).isEmpty()
+        }
+        finally {
+          Disposer.dispose(disposable)
+        }
       }
 
     private fun doPromptClickTest(test: suspend (TerminalViewFixture) -> Unit): Unit =

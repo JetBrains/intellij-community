@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
@@ -21,6 +22,7 @@ import javax.swing.SwingUtilities
 /**
  * Moves the shell cursor to the clicked place in the command that the user types.
  * The shell gets the left or right arrow keys, as if the user pressed them.
+ * The [TerminalOptionsProvider.moveCursorOnClick] option turns it off.
  *
  * It handles the click, which the editor reports after its own handling of the release, for example, the removal of the selection.
  * The editor reports no click after a drag, or if a listener consumed the press or the release, for example, the mouse reporting.
@@ -57,6 +59,7 @@ internal fun installPromptClickHandling(
     }
 
     override fun mouseClicked(event: EditorMouseEvent) {
+      if (!TerminalOptionsProvider.instance.moveCursorOnClick) return
       val mouseEvent = event.mouseEvent
       if (event.area != EditorMouseEventArea.EDITING_AREA || !SwingUtilities.isLeftMouseButton(mouseEvent)) return
       // The click brings the focus to the terminal, so the user does not aim to move the cursor.
