@@ -152,6 +152,7 @@ public class MethodReturnValueWatcher {
 
   private void updateRequestState(final boolean enabled, final @Nullable ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    myEntryMethod = null;
     try {
       if (myEntryRequest != null) {
         DebuggerUtilsAsync.deleteEventRequest(myRequestManager, myEntryRequest);
