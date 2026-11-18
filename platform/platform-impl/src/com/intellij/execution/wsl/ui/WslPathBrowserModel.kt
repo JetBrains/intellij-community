@@ -12,8 +12,13 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.impl.local.listWindowsLocalDriveRoots
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
 
 private val logger = Logger.getInstance("WslPathBrowser")
 
@@ -39,6 +44,28 @@ fun getBestWindowsPathFromLinuxPath(distro: WSLDistribution, linuxPath: String):
     logger.warn("Failed to find file $linuxPath")
   }
   return file
+}
+
+/**
+ * Returns the Windows path of [linuxPath] on [distro], or the Windows path of its nearest existing parent.
+ * Returns `null` when [linuxPath] does not map to a valid Windows path, or when no part of it exists.
+ * The lookup uses NIO and runs on [Dispatchers.IO].
+ */
+suspend fun findNearestExistingWindowsPath(distro: WSLDistribution, linuxPath: String): Path? = withContext(Dispatchers.IO) {
+  val trimmed = linuxPath.trim()
+  val windowsPath = try {
+    Path.of(distro.getWindowsPath(trimmed))
+  }
+  catch (e: InvalidPathException) {
+    logger.info("Cannot map $trimmed to a Windows path: ${e.message}")
+    return@withContext null
+  }
+  logger.info("Look up the nearest existing parent of $windowsPath for $trimmed")
+  val nearest = generateSequence(windowsPath) { it.parent }.firstOrNull { Files.exists(it) }
+  if (nearest == null) {
+    logger.warn("No part of $windowsPath exists for $trimmed")
+  }
+  nearest
 }
 
 /**

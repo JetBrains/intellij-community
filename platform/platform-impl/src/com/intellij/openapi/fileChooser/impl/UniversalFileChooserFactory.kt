@@ -58,5 +58,21 @@ interface UniversalFileChooserFactory {
     preselectPath: (suspend () -> Path?)? = null,
   ): FileChooserDialog
 
+  /**
+   * Creates a file chooser that shows only the roots of [contributors] and returns the chosen files as [Path] values.
+   *
+   * [NioFileChooserDialog.choose] without a path to select navigates to the path from [preselectPath].
+   * The chooser calls [preselectPath] on a background thread.
+   * When [preselectPath] is null or gives null, the chooser navigates to the default path.
+   */
+  @ApiStatus.Experimental
+  fun createNioFileChooser(
+    project: Project,
+    parent: Component?,
+    descriptor: FileChooserDescriptor,
+    contributors: Collection<UniversalFileChooserContributor>,
+    preselectPath: (suspend () -> Path?)? = null,
+  ): NioFileChooserDialog
+
   fun createFileSaver(project: Project?, parent: Component?, descriptor: FileSaverDescriptor): FileSaverDialog
 }

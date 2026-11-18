@@ -2,9 +2,11 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.wsl.ui.createFileChooserDescriptor
+import com.intellij.execution.wsl.ui.findNearestExistingWindowsPath
 import com.intellij.execution.wsl.ui.getBestWindowsPathFromLinuxPath
 import com.intellij.platform.eel.impl.local.listWindowsLocalDriveRoots
 import com.intellij.testFramework.fixtures.TestFixtureRule
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.fail
@@ -50,6 +52,26 @@ class WslPathBrowserTest {
   @Test
   fun unparsablePath() {
     assertNull(getBestWindowsPathFromLinuxPath(wslRule.wsl, "c:\\windows"))
+  }
+
+  @Test
+  fun nearestCorrectPath(): Unit = runBlocking {
+    assertEquals("${WSLUtil.getUncPrefix()}${wslRule.wsl.msId}\\$DIR_TO_CHECK", findNearestExistingWindowsPath(wslRule.wsl, "/$DIR_TO_CHECK").toString())
+  }
+
+  @Test
+  fun nearestBestPath(): Unit = runBlocking {
+    assertEquals("${WSLUtil.getUncPrefix()}${wslRule.wsl.msId}\\$DIR_TO_CHECK", findNearestExistingWindowsPath(wslRule.wsl, "/$DIR_TO_CHECK/foo/bur/buz").toString())
+  }
+
+  @Test
+  fun nearestWrongPath(): Unit = runBlocking {
+    assertEquals("${WSLUtil.getUncPrefix()}${wslRule.wsl.msId}\\", findNearestExistingWindowsPath(wslRule.wsl, "/something_that_simply_doesnt_exist").toString())
+  }
+
+  @Test
+  fun nearestUnparsablePath(): Unit = runBlocking {
+    assertNull(findNearestExistingWindowsPath(wslRule.wsl, "c:\\windows"))
   }
 
   @Test

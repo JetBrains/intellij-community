@@ -43,6 +43,22 @@ internal class UniversalFileChooserFactoryImpl : UniversalFileChooserFactory {
     )
   }
 
+  override fun createNioFileChooser(
+    project: Project,
+    parent: Component?,
+    descriptor: FileChooserDescriptor,
+    contributors: Collection<UniversalFileChooserContributor>,
+    preselectPath: (suspend () -> Path?)?,
+  ): NioFileChooserDialog {
+    return UniversalFileChooser.Dialog(
+      project = project,
+      parent = parent,
+      descriptor = descriptor,
+      contributors = contributors,
+      preselectPath = preselectPath,
+    )
+  }
+
   override fun createFileSaver(project: Project?, parent: Component?, descriptor: FileSaverDescriptor): FileSaverDialog {
     return UniversalFileSaver.create(project, parent, descriptor)
   }
