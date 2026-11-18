@@ -30,6 +30,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rpc.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.rpc" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.rpc.lite" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics.backend" scope="TEST" />

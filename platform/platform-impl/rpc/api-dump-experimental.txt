@@ -60,6 +60,8 @@ f:com.intellij.ide.rpc.DocumentIdKt
 - *sf:createDocumentPatchVersionForTests(I):com.intellij.ide.rpc.DocumentPatchVersion
 - *sf:maskDocumentPatchVersionsForTests(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - *sf:patchVersion(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):com.intellij.ide.rpc.DocumentPatchVersion
+*f:com.intellij.ide.rpc.DocumentSyncKt
+- sf:awaitDocumentSync(kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.ide.rpc.FileEditorId
 - *sf:Companion:com.intellij.ide.rpc.FileEditorId$Companion
 - <init>():V

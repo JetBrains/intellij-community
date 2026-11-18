@@ -17,4 +17,10 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.documentSync"
+                    interface="com.intellij.ide.rpc.DocumentSync"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

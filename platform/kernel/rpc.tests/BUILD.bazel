@@ -33,6 +33,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/kernel/rpc.backend",
+        "//platform/platform-impl/rpc",
         "//platform/kernel/rpc.lite",
         "//platform/remote-topics/shared:rpc-topics",
         "//platform/remote-topics/backend",
