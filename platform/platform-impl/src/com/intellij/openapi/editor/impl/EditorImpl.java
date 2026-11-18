@@ -1401,13 +1401,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     reinitSettings(updateGutterSize, reinitSettings, false);
   }
 
+  @RequiresEdt
+  void reinitSettingsAfterFontChange(boolean reinitSettings) {
+    reinitSettings(true, reinitSettings, false, true);
+  }
+
+  @RequiresEdt
+  private void reinitSettings(boolean updateGutterSize, boolean reinitSettings, boolean highlightingChanged) {
+    reinitSettings(updateGutterSize, reinitSettings, highlightingChanged, false);
+  }
+
   /**
    * @param highlightingChanged true when the editor highlighter, the colors scheme, the font families registry key or
    *                            the character grid spec changed. The text can then get other widths, so all soft wraps
    *                            are recalculated.
+   * @param fontOnly true when only font settings change
    */
   @RequiresEdt
-  private void reinitSettings(boolean updateGutterSize, boolean reinitSettings, boolean highlightingChanged) {
+  private void reinitSettings(boolean updateGutterSize, boolean reinitSettings, boolean highlightingChanged, boolean fontOnly) {
     myScheme.updateGlobalScheme();
     // before the soft wraps, so that their recalculation reads the text attributes of the current scheme
     myHighlighter.setColorScheme(myScheme);
@@ -1429,7 +1440,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     caretMutator.reinitSettings();
     myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
-    myInlayModel.reinitSettings();
+    myInlayModel.execute(fontOnly, myInlayModel::reinitSettings);
 
     if (softWrapsUsedBefore ^ mySoftWrapModel.isSoftWrappingEnabled()) {
       validateSize();
