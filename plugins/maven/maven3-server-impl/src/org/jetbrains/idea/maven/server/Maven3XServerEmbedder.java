@@ -267,6 +267,14 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     mySystemProperties = ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "systemProperties");
 
+    if (isJsr330Container()) {
+      // disable filtering artifacts based on remote repository prefix lists
+      setDefaultSystemProperty("aether.remoteRepositoryFilter.prefixes", "false");
+      // Maven Resolver 2 uses file locks as the named locks of the local repository. "rwlock-local" locks only inside the process.
+      // This is the legacy name of the property: Maven Resolver reads "aether.system.named.factory" first, so its value has priority.
+      setDefaultSystemProperty("aether.syncContext.named.factory", "rwlock-local");
+    }
+
     if (serverSettings.getProjectJdk() != null) {
       mySystemProperties.setProperty("java.home", serverSettings.getProjectJdk());
     }
@@ -293,6 +301,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       myContainer.addComponent(importerSpy, Maven3ImporterSpy.class.getName());
     }
     myImporterSpy = importerSpy;
+  }
+
+  private void setDefaultSystemProperty(@NotNull String name, @NotNull String value) {
+    if (mySystemProperties.getProperty(name) == null) {
+      mySystemProperties.setProperty(name, value);
+    }
   }
 
   private static @NotNull List<String> createCommandLineOptions(MavenServerSettings serverSettings) {
