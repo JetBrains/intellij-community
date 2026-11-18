@@ -4,6 +4,7 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.testFramework.bodyLimitedCoroutineScope
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.causeChain
 import com.intellij.util.io.blockingDispatcher
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
@@ -108,23 +109,31 @@ internal class BodyLimitedCoroutineScopeTest {
     val acceptableLimit = 1.seconds // Something big enough to avoid test flakiness, yet significantly lower than the sleep timeout.
 
     val duration = measureTime {
-      val tce = shouldThrow<TimeoutCancellationException> {
+      val err = shouldThrow<Exception> {
         bodyLimitedCoroutineScope(finalizeTimeout = innerTestTimeout) {
-          launch {
-            awaitCancellation()
-          }.invokeOnCompletion {
-            val end = System.nanoTime().nanoseconds + sleepTimeout
-            do {
-              try {
-                Thread.sleep((end - System.nanoTime().nanoseconds).inWholeMilliseconds.coerceAtLeast(0))
-              }
-              catch (_: InterruptedException) {
-                // This nasty buggy code ignores interruptions.
-              }
+          launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+              awaitCancellation()
             }
-            while (System.nanoTime().nanoseconds < end)
+            finally {
+              val end = System.nanoTime().nanoseconds + sleepTimeout
+              do {
+                try {
+                  Thread.sleep((end - System.nanoTime().nanoseconds).inWholeMilliseconds.coerceAtLeast(0))
+                }
+                catch (_: InterruptedException) {
+                  // This nasty buggy code ignores interruptions.
+                }
+              }
+              while (System.nanoTime().nanoseconds < end)
+            }
           }
         }
+      }
+      err.shouldNotBeInstanceOf<CancellationException>()
+      err.message shouldBe "Some children didn't manage to exit in $innerTestTimeout"
+      val tce = checkNotNull(err.causeChain().filterIsInstance<TimeoutCancellationException>().firstOrNull()) {
+        "Expected TimeoutCancellationException in cause chain of $err"
       }
       tce.message shouldBe "Timed out waiting for ${innerTestTimeout.inWholeMilliseconds} ms"
     }
