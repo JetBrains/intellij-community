@@ -26,10 +26,12 @@ import com.jetbrains.python.psi.resolve.resolveModuleAt
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 
 
 /** Where a qualified name is resolved: the project, the interpreter, the roots and the scope. */
+@ApiStatus.Internal
 interface ContextAnchor {
   /** The interpreter whose roots and language level the resolve uses, or `null` without one. */
   val interpreter: PythonInterpreter?
@@ -42,6 +44,7 @@ interface ContextAnchor {
     interpreter?.let { PythonInterpreterRoots.getInstance(project).classRoots(it).toTypedArray() } ?: emptyArray()
 }
 
+@ApiStatus.Internal
 class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
   override val interpreter: PythonInterpreter? = module.findEvoPyProjectIfReady()?.interpreter
   override val project: Project = module.project
@@ -54,6 +57,7 @@ class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
 }
 
 /** The anchor of a run configuration without a module: its project and its [interpreter]. */
+@ApiStatus.Internal
 class ProjectContextAnchor(override val project: Project, override val interpreter: PythonInterpreter?) : ContextAnchor {
   override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? = interpreter?.let { fromInterpreter(project, it) }
   override val scope: GlobalSearchScope = GlobalSearchScope.projectScope(project) //TODO: Check if project scope includes SDK
@@ -64,6 +68,7 @@ class ProjectContextAnchor(override val project: Project, override val interpret
 }
 
 
+@ApiStatus.Internal
 data class QNameResolveContext(
   val contextAnchor: ContextAnchor,
   /** The interpreter whose language level the resolve uses. */
@@ -95,6 +100,7 @@ fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
  * Shortcut for [getElementAndResolvableName]
  * @see [getElementAndResolvableName]
  */
+@ApiStatus.Internal
 fun QualifiedName.resolveToElement(context: QNameResolveContext, stopOnFirstFail: Boolean = false): PsiElement? {
   return getElementAndResolvableName(context, stopOnFirstFail)?.element
 }
@@ -107,6 +113,7 @@ data class NameAndElement(val name: QualifiedName, val element: PsiElement)
  * @return element and longest name that was resolved successfully.
  * @see [resolveToElement]
  */
+@ApiStatus.Internal
 fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stopOnFirstFail: Boolean = false): NameAndElement? {
   var currentName = QualifiedName.fromComponents(this.components)
 

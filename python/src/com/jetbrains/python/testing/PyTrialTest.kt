@@ -55,6 +55,8 @@ class PyTrialTestFactory(type:PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun getId(): String = "Twisted Trial"
 
+  @ApiStatus.Internal
+
   override fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean = true
 
   override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC

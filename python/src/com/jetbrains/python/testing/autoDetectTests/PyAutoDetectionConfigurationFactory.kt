@@ -7,6 +7,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.testing.PyAbstractTestFactory
 import com.jetbrains.python.testing.PyUnitTestFactory
 import com.jetbrains.python.testing.PythonTestConfigurationType
+import org.jetbrains.annotations.ApiStatus
 
 
 class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurationType) : PyAbstractTestFactory<PyAutoDetectTestConfiguration>(
@@ -19,12 +20,14 @@ class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurat
         PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().filterNot { it is PyAutoDetectionConfigurationFactory }
   }
 
+  @ApiStatus.Internal
   fun getFactory(interpreter: PythonInterpreter, project: Project): PyAbstractTestFactory<*> =
     factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(project, interpreter) } ?: PyUnitTestFactory(type)
 
   override fun createTemplateConfiguration(project: Project): PyAutoDetectTestConfiguration =
     PyAutoDetectTestConfiguration(project, this)
 
+  @ApiStatus.Internal
   override fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean =
     getFactory(interpreter, project).onlyClassesAreSupported(project, interpreter)
 

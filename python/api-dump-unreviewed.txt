@@ -234,7 +234,6 @@ com.jetbrains.python.console.PydevConsoleRunner
 - a:reRun(Z,java.lang.String):V
 - a:run(Z):V
 - a:runSync(Z):V
-- a:setSdk(com.intellij.openapi.projectRoots.Sdk):V
 com.jetbrains.python.console.PydevConsoleRunner$ConsoleListener
 - a:handleConsoleInitialized(com.intellij.execution.console.LanguageConsoleView):V
 f:com.jetbrains.python.console.PydevConsoleRunnerUtil
@@ -290,7 +289,6 @@ f:com.jetbrains.python.console.PythonConsoleView
 - setConsoleEnabled(Z):V
 - setExecutionHandler(com.jetbrains.python.console.PythonConsoleExecuteActionHandler):V
 - setRunner(com.jetbrains.python.console.PydevConsoleRunner):V
-- setSdk(com.intellij.openapi.projectRoots.Sdk):V
 - setShowQueue(Z):V
 - setShowVars(Z):V
 - setTargetEnvironment(com.intellij.execution.target.TargetEnvironment):V
@@ -1226,8 +1224,6 @@ a:com.jetbrains.python.testing.PyAbstractTestFactory
 - getPackageSpec():com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 - hashCode():I
 - isExplicitChoice():Z
-- isFrameworkInstalled(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):Z
-- a:onlyClassesAreSupported(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):Z
 a:com.jetbrains.python.testing.PyAbstractTestSettingsEditor
 - com.intellij.openapi.options.SettingsEditor
 - <init>(com.jetbrains.python.testing.PyTestSharedForm):V
@@ -1262,7 +1258,6 @@ f:com.jetbrains.python.testing.PyTestFactory
 - getId():java.lang.String
 - getName():java.lang.String
 - getPackageSpec():com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
-- onlyClassesAreSupported(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):Z
 f:com.jetbrains.python.testing.PyTestFactory$Companion
 f:com.jetbrains.python.testing.PyTestSharedForm
 - com.jetbrains.python.reflection.SimplePropertiesProvider
@@ -1295,7 +1290,6 @@ f:com.jetbrains.python.testing.PyUnitTestFactory
 - getId():java.lang.String
 - getName():java.lang.String
 - getPackageSpec():com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
-- onlyClassesAreSupported(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):Z
 f:com.jetbrains.python.testing.PyUnitTestFactory$Companion
 c:com.jetbrains.python.testing.PythonTRunnerConsoleProperties
 - com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
@@ -1391,11 +1385,9 @@ f:com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFacto
 - com.jetbrains.python.testing.PyAbstractTestFactory
 - <init>(com.jetbrains.python.testing.PythonTestConfigurationType):V
 - createTemplateConfiguration(com.intellij.openapi.project.Project):com.jetbrains.python.testing.autoDetectTests.PyAutoDetectTestConfiguration
-- f:getFactory(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.project.Project):com.jetbrains.python.testing.PyAbstractTestFactory
 - getId():java.lang.String
 - getName():java.lang.String
 - isExplicitChoice():Z
-- onlyClassesAreSupported(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):Z
 f:com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer
 - com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer
 - <init>():V

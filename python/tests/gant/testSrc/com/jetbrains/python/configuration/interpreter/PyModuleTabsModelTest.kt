@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.junit5Tests.unit
+package com.jetbrains.python.configuration.interpreter
 
-import com.jetbrains.python.configuration.interpreter.PyModuleTab
-import com.jetbrains.python.configuration.interpreter.PyModuleTabsModel
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.EnumSet

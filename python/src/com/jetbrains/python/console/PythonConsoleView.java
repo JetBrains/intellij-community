@@ -547,6 +547,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
   }
 
   /** Stores {@code interpreter} on the console file, see {@link PydevConsoleRunner#CONSOLE_INTERPRETER}. */
+  @ApiStatus.Internal
   public void setPythonInterpreter(@Nullable PythonInterpreter interpreter) {
     getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_INTERPRETER, interpreter);
   }

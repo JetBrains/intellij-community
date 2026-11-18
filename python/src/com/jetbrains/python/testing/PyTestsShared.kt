@@ -809,6 +809,7 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
   override fun hashCode(): Int = id.hashCode()
 
   /** Whether the framework of this factory runs only test classes, for [interpreter], such as unittest. */
+  @ApiStatus.Internal
   abstract fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean
 
   /**
@@ -818,6 +819,7 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
    */
   open val packageSpec: PackageAvailabilitySpec? = null
 
+  @ApiStatus.Internal
   open fun isFrameworkInstalled(project: Project, interpreter: PythonInterpreter): Boolean {
     // example is unittest, it's part of stdlib, so no need to check.
     val spec = packageSpec ?: return true

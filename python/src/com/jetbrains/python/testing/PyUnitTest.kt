@@ -189,6 +189,8 @@ class PyUnitTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun getId(): String = PyUnitTestFactory.id
 
+  @ApiStatus.Internal
+
   override fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean = true
 
   override val packageSpec: PackageAvailabilitySpec? = null

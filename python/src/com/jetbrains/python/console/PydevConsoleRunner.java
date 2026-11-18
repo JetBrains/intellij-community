@@ -46,9 +46,11 @@ public interface PydevConsoleRunner {
   default @Nullable AnAction createRerunAction() { return null; }
 
   @TestOnly
+  @ApiStatus.Internal
   void setPythonInterpreter(@Nullable PythonInterpreter interpreter);
 
   /** The interpreter that this console runs. */
+  @ApiStatus.Internal
   @Nullable PythonInterpreter getPythonInterpreter();
 
   @TestOnly

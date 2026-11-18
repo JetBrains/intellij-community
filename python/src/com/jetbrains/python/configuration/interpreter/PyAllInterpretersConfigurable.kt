@@ -519,8 +519,10 @@ private fun isOnGroupHeader(list: JList<out PyInterpreterRow>, point: Point): Bo
 private const val SHOW_GROUPS = "PyAllInterpreters.showGroups"
 
 /** The height of the group header that the row at [index] of [list] draws above itself, or 0 without one. */
-private fun groupHeaderHeight(list: JList<out PyInterpreterRow>, index: Int): Int =
-  if (groupTitleAt(list, index) != null) newGroupHeader().apply { caption = "X" }.preferredSize.height else 0
+private fun groupHeaderHeight(list: JList<out PyInterpreterRow>, index: Int): Int {
+  val title = groupTitleAt(list, index) ?: return 0
+  return newGroupHeader().apply { caption = title }.preferredSize.height
+}
 
 /** A group header without a line: the caption alone separates the groups. */
 private fun newGroupHeader(): GroupHeaderSeparator =

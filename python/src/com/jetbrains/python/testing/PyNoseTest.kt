@@ -66,6 +66,8 @@ class PyNoseTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun getName(): String = PyBundle.message("runcfg.nosetests.display_name")
 
+  @ApiStatus.Internal
+
   override fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean = false
 
   override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC

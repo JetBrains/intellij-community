@@ -1,12 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.junit5Tests.unit
+package com.jetbrains.python.configuration.interpreter
 
-import com.jetbrains.python.configuration.interpreter.PkgTreeRow
-import com.jetbrains.python.configuration.interpreter.RowActionabilityInputs
-import com.jetbrains.python.configuration.interpreter.classifyPkgRow
-import com.jetbrains.python.configuration.interpreter.isActionableRow
-import com.jetbrains.python.configuration.interpreter.packageFromTreeComponent
-import com.jetbrains.python.configuration.interpreter.rowFromTreeComponent
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.toolwindow.ModuleDepName
