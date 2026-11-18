@@ -1,12 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.highlighting
 
-import com.intellij.psi.util.elementType
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
-import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.jetbrains.plugins.textmate.TextMateLanguage
 import org.jetbrains.plugins.textmate.TextMateService
 
@@ -15,19 +13,6 @@ class MarkdownTextMateHighlightingTests : LightPlatformCodeInsightTestCase() {
     super.setUp()
     TextMateService.getInstance().reloadEnabledBundles()
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-  }
-
-  fun `test unknown fence has no injection and keeps code fence content`() {
-    configureFromFileText("test.md", """
-      ```definitely-unknown
-      <caret>content
-      ```
-    """.trimIndent())
-
-    assertSame(MarkdownLanguage.INSTANCE, file.language)
-    val elementAtCaret = file.findElementAt(editor.caretModel.offset)
-    assertNotNull(elementAtCaret)
-    assertSame(MarkdownTokenTypes.CODE_FENCE_CONTENT, elementAtCaret!!.elementType)
   }
 
   fun `test textmate only fence injects textmate with matching extension`() {

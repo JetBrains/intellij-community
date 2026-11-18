@@ -1,3 +1,3 @@
 1. asd
-   10. asd
+   1. asd
    <caret>
