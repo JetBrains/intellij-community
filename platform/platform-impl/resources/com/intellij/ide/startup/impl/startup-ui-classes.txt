@@ -10078,7 +10078,9 @@ com.intellij.ide.startup.impl.StartupManagerImpl$runInitProjectActivities$2$2
 com.intellij.openapi.application.impl.NonBlockingReadActionImpl$Submission
 com.intellij.openapi.fileEditor.impl.skeleton.layout.components.EditorSkeletonPanel
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonColorManager
-com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonColorManager$Companion
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonTimeline
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonPalette
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonFrameState
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonOklab
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonOklab$Ramp
 com.intellij.platform.diagnostic.telemetry.exporters.Span
