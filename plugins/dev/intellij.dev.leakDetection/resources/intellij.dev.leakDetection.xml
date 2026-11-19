@@ -22,12 +22,17 @@
                        bundle="messages.DevLeakDetectionBundle" key="notification.group.name"/>
     <registryKey key="dev.leak.detection.runOnWelcomeScreen" defaultValue="false"
                  description="Auto-run disposed Project/Editor leak detection when the Welcome Screen is shown (internal builds only)."/>
+    <registryKey key="dev.leak.detection.runOnIdle" defaultValue="true" restartRequired="true"
+                 description="Run disposed Project/Editor leak detection without a GC after dev.leak.detection.idleDelayMinutes without user activity."/>
+    <registryKey key="dev.leak.detection.idleDelayMinutes" defaultValue="30"
+                 description="The idle leak detection runs after this many minutes without user activity."/>
     <registryKey key="dev.leak.detection.editor.staleThresholdMs" defaultValue="10000"
                  description="Editors still referenced this many milliseconds after disposal are reported as leaks."/>
     <registryKey key="dev.leak.detection.autoupload.snapshot" defaultValue="false"
                  description="Try to auto-upload a memory snapshot. It's turned off by default for now, because of regular timeout exceptions."/>
     <editorFactoryListener implementation="com.intellij.dev.leakDetection.LeakCandidateEditorListener"/>
     <postStartupActivity implementation="com.intellij.dev.leakDetection.LeakCandidateProjectListener"/>
+    <backgroundPostStartupActivity implementation="com.intellij.dev.leakDetection.IdleLeakDetectionStarter"/>
   </extensions>
 
   <applicationListeners>
