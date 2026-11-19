@@ -49,7 +49,7 @@ pins the slot of a multidimensional setting without changing the context.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
 - The chain must reach every directory between the file and its topmost root.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
-- A file under no content root must get the project context, with no file node.
+- A file under no anchor root must get the project context, with no file node.
   See [ADR 0125](../adr/0125-a-file-under-no-content-root-gets-the-project-context.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
 - A file of an archive file system must get the project context. A file inside a jar under the project is such a
@@ -73,8 +73,10 @@ pins the slot of a multidimensional setting without changing the context.
 
 ### Content roots
 
-- One context factory must build the contexts in every product mode. See
-  [ADR 0179](../adr/0179-one-context-factory-serves-every-product-mode-and-an-extension-point-gives-it-the-content-roots.md).
+- A setting must be readable and writable at a context in every product mode, also in a light product mode and
+  after its upgrade. See [ADR 0179](../adr/0179-one-context-factory-serves-every-product-mode-and-an-extension-point-gives-it-the-content-roots.md).
+  [@test] ../../../../platform/unified/integrationTests/testSrc/com/intellij/platform/unified/integrationTests/JetBrainsLightSettingsTest.kt
+  [@test] ../../../../remote-dev/rdct-tests/ijLight/test/com/jetbrains/rdct/ijLight/IjLightSettingsUpgradeTest.kt
 - The factory must take the anchor roots of a project from the first content roots provider. The monolith and the
   backend supply the roots of the project model.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
@@ -82,8 +84,8 @@ pins the slot of a multidimensional setting without changing the context.
 - With no content roots provider, the base directory of the project must be the only anchor root. A light product
   mode has no provider.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNoRootsProviderTest.kt
-- A file must match an anchor root by path: its path is the path of the root, or lies under it. The protocol of
-  the root url does not count, and the context must keep the root url as the provider gave it.
+- A file must match an anchor root by path: its path is the path of the root, or lies under it.
+- The protocol of the root url must not count. The context must keep the root url as the provider gave it.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsRootsProviderTest.kt
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNoRootsProviderTest.kt
 - The anchor roots must be the project content roots with every nested root dropped, sorted.
@@ -92,7 +94,7 @@ pins the slot of a multidimensional setting without changing the context.
 - A root that only shares a name prefix with another root must survive.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsRootCollapsingTest.kt
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
-- The anchor roots must be computed again after the project roots change. The roots cache must signal the change.
+- The anchor roots must be computed again after the project roots change, also after a rename of a root.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
 
 ### Identity
