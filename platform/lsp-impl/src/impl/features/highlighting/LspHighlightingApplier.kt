@@ -3,22 +3,24 @@ package com.intellij.platform.lsp.impl.features.highlighting
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl
 import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.highlighting.HyperlinkAnnotator
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
 import com.intellij.platform.lsp.api.customization.LspDocumentLinkDisabled
@@ -28,19 +30,23 @@ import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
 import com.intellij.platform.lsp.util.getRangeInDocument
 import com.intellij.problems.WolfTheProblemSolver
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Java11Shim
 import java.util.concurrent.ConcurrentMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.util.WeakHashMap
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -49,7 +55,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * When caches are updated (diagnostics received, semantic tokens refreshed, etc.),
  * [scheduleHighlightingRefresh] launches a coroutine on a **serialized dispatcher** that converts cache data
- * to [HighlightInfo] and applies it via [UpdateHighlightersUtil.setHighlightersToEditor] on the EDT.
+ * to [HighlightInfo] and applies it via [BackgroundUpdateHighlightersUtil.setHighlightersToEditor] in a background read action.
  * No [com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.restart] is involved, so other inspections
  * continue undisturbed.
  *
@@ -69,6 +75,8 @@ internal class LspHighlightingApplier(private val project: Project) {
   private val fileToLastWolfWrittenGen = WeakHashMap<VirtualFile, Long>()
 
   private val serializedDispatcher = Dispatchers.Default.limitedParallelism(1)
+
+  private val highlightersLock = ReentrantLock()
 
   /**
    * Called when any LSP cache is updated for the given [file].
@@ -105,9 +113,9 @@ internal class LspHighlightingApplier(private val project: Project) {
       if (generationCounter.get() > gen) return@launch
       val highlights = readAction { collectHighlightsForApply(file) } ?: return@launch
       afterCollectHook?.invoke(file)
-      val applied = withContext(Dispatchers.EDT) {
+      val applied = readAction {
         // An edit after the collect makes the ranges stale, and the edit itself scheduled a replacement refresh.
-        if (highlights.document.modificationStamp != highlights.collectedModStamp) return@withContext false
+        if (highlights.document.modificationStamp != highlights.collectedModStamp) return@readAction false
         applyHighlightsToEditor(highlights)
         true
       }
@@ -116,7 +124,7 @@ internal class LspHighlightingApplier(private val project: Project) {
     }
   }
 
-  /** Invoked after the collect read action and before the EDT apply. Lets a test interleave an edit deterministically. */
+  /** Invoked after the collect read action and before the apply read action. Lets a test interleave an edit deterministically. */
   @set:TestOnly
   @Volatile
   internal var afterCollectHook: (suspend (VirtualFile) -> Unit)? = null
@@ -134,15 +142,42 @@ internal class LspHighlightingApplier(private val project: Project) {
   }
 
   /**
-   * Applies highlights to the editor from EDT, following the [UpdateHighlightersUtil.setHighlightersToEditor] pattern.
+   * Applies highlights to the whole document in an additional highlighting session, outside a daemon pass.
    */
+  @RequiresReadLock
+  @RequiresBackgroundThread
   private fun applyHighlightsToEditor(data: HighlightsToApply) {
-    // Uses deprecated `setHighlightersToEditor` overload because no non-deprecated alternative exists
-    // for applying highlights outside a [com.intellij.codeHighlighting.TextEditorHighlightingPass].
-    @Suppress("DEPRECATION")
-    UpdateHighlightersUtil.setHighlightersToEditor(
-      project, data.document, 0, data.document.textLength, data.highlights, null, data.groupId
-    )
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(data.document) ?: return
+    val document = data.document
+    withHighlightersLock {
+      // The session is the one that setHighlightersToEditor finds through the current progress indicator.
+      DaemonCodeAnalyzerEx.getInstanceEx(project).runInsideAdditionalHighlightingSession(
+        psiFile, null, ProperTextRange(0, document.textLength), false,
+      ) { _ ->
+        BackgroundUpdateHighlightersUtil.setHighlightersToEditor(project, psiFile, document, 0, document.textLength, data.highlights, data.groupId)
+      }
+    }
+  }
+
+  /**
+   * Runs [action], which writes LSP highlighters, while no other write of LSP highlighters in the project runs.
+   *
+   * [LspHighlightingPass] and this service write the highlighters of the same group from different background threads.
+   * Each write first reads the old highlighters and then adds the new ones. Two writes at the same time both read
+   * the same old highlighters, and then both add a highlighter for the same diagnostic.
+   * The wait checks for cancellation, so a pending write action does not wait behind it.
+   */
+  @RequiresBackgroundThread
+  internal fun <T> withHighlightersLock(action: () -> T): T {
+    while (!highlightersLock.tryLock(LOCK_POLL_MS, TimeUnit.MILLISECONDS)) {
+      ProgressManager.checkCanceled()
+    }
+    try {
+      return action()
+    }
+    finally {
+      highlightersLock.unlock()
+    }
   }
 
   private class HighlightsToApply(
@@ -285,6 +320,7 @@ internal class LspHighlightingApplier(private val project: Project) {
 
   companion object {
     private const val LSP_EXTERNAL_SOURCE: String = "LSP"
+    private const val LOCK_POLL_MS: Long = 10
     const val UNREGISTERED_PASS_ID: Int = -1
 
     /** How long [scheduleHighlightingRefreshDebounced] waits, so one refresh serves a whole typing burst. */

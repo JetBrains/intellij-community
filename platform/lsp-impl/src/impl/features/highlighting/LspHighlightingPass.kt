@@ -77,7 +77,9 @@ internal class LspHighlightingPass(
     val highlights = applier.collectHighlightInfos(psiFile, file, myDocument)
     highlightInfos = highlights
 
-    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, psiFile, myDocument, 0, myDocument.textLength, highlights, groupId)
+    applier.withHighlightersLock {
+      BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, psiFile, myDocument, 0, myDocument.textLength, highlights, groupId)
+    }
     applier.reportErrorsToWolf(file, highlights, observedGen)
   }
 
