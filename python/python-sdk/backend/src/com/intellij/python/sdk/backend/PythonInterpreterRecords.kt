@@ -75,6 +75,10 @@ class PythonInterpreterRecords(private val project: Project) : PersistentStateCo
     @XCollection(propertyElementName = "excluded", elementName = "path", valueAttributeName = "url")
     var excludedPaths: MutableList<String> = mutableListOf()
 
+    /** The folders inside the roots that the user excluded, see [PythonInterpreterFacts.excludedFolders]. */
+    @XCollection(propertyElementName = "excludedFolders", elementName = "path", valueAttributeName = "url")
+    var excludedFolders: MutableList<String> = mutableListOf()
+
     /**
      * The `sys.path` of the interpreter, as the SDK updater read it last, see [PythonInterpreterSdks.sysPathOf].
      */
@@ -172,6 +176,6 @@ class PythonInterpreterRecords(private val project: Project) : PersistentStateCo
 /** Whether this record states the same as [other], so a put of [other] changes nothing. */
 private fun PythonInterpreterRecords.StoredInterpreter.sameAs(other: PythonInterpreterRecords.StoredInterpreter): Boolean =
   ownerDir == other.ownerDir && ref == other.ref && uuid == other.uuid && requirementsFile == other.requirementsFile &&
-  addedPaths == other.addedPaths && excludedPaths == other.excludedPaths &&
+  addedPaths == other.addedPaths && excludedPaths == other.excludedPaths && excludedFolders == other.excludedFolders &&
   version == other.version && sysPath == other.sysPath &&
   pathMappings.map { it.local to it.remote } == other.pathMappings.map { it.local to it.remote }
