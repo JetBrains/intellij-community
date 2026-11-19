@@ -314,6 +314,71 @@ def test():
         """);
   }
 
+  @TestFor(issues = "PY-93193")
+  public void testReboundSelfReadBySuperWithoutArguments() {
+    doTestByText(
+      """
+        class A:
+            def foo(self):
+                return 1
+
+        class B(A):
+            def foo(self):
+                if bool():
+                    self = B()
+                return super().foo()
+
+            @classmethod
+            def bar(cls):
+                cls = B
+                return super().foo
+
+            def baz(self):
+                if bool():
+                    <weak_warning descr="Local variable 'self' value is not used">self</weak_warning> = B()
+                return super(B, B()).foo()
+
+            def qux(self):
+                <weak_warning descr="Local variable 'self' value is not used">self</weak_warning> = B()
+                def inner():
+                    return super().foo()
+                return inner
+
+            @staticmethod
+            def quux(<weak_warning descr="Parameter 'x' value is not used">x</weak_warning>):
+                x = B()
+                return super().foo()
+
+            def __new__(cls):
+                cls = B
+                return super().__new__(cls)
+
+            def corge(<weak_warning descr="Parameter 'args' value is not used">*args</weak_warning>):
+                <weak_warning descr="Local variable 'args' value is not used">args</weak_warning> = ()
+                return super().foo()
+
+            def grault(*, <weak_warning descr="Parameter 'self' value is not used">self</weak_warning>):
+                <weak_warning descr="Local variable 'self' value is not used">self</weak_warning> = B()
+                return super().foo()
+        """);
+  }
+
+  @TestFor(issues = "PY-93193")
+  public void testReboundSelfAfterSuperWithoutArguments() {
+    doTestByText(
+      """
+        class A:
+            def foo(self):
+                return 1
+
+        class B(A):
+            def foo(self):
+                result = super().foo()
+                <weak_warning descr="Local variable 'self' value is not used">self</weak_warning> = B()
+                return result
+        """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
