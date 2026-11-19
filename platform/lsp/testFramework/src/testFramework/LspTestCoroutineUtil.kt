@@ -16,10 +16,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import org.junit.ComparisonFailure
 
@@ -29,7 +25,7 @@ import org.junit.ComparisonFailure
 suspend fun awaitFileOpenedByLspServer(project: Project, file: VirtualFile) {
   val topLevelFile = (file as? VirtualFileWindow)?.delegate ?: file
   withTimeout(DEFAULT_TEST_TIMEOUT) {
-    LspClientManager.getInstance(project).eventsFlow().first { event ->
+    LspClientManager.getInstance(project).awaitEvent { event ->
       when (event) {
         is LspClientManagerEvent.FileOpened -> event.file == topLevelFile
         is LspClientManagerEvent.ServerShutdown -> throw AssertionError("LSP server initialization failed")
@@ -50,7 +46,7 @@ suspend fun awaitFileOpenedByLspServer(project: Project, file: VirtualFile) {
 suspend fun awaitDiagnosticsFromLspServer(project: Project, file: VirtualFile) {
   val topLevelFile = (file as? VirtualFileWindow)?.delegate ?: file
   withTimeout(DEFAULT_TEST_TIMEOUT) {
-    LspClientManager.getInstance(project).eventsFlow().first { event ->
+    LspClientManager.getInstance(project).awaitEvent { event ->
       when (event) {
         is LspClientManagerEvent.DiagnosticsReceived -> event.file == topLevelFile
         is LspClientManagerEvent.ServerShutdown -> throw AssertionError("LSP server initialization failed")
@@ -140,7 +136,7 @@ suspend fun CodeInsightTestFixture.checkHighlightingRetrying(data: ExpectedHighl
 }
 
 /**
- * [LspClientManager] events emitted by [eventsFlow].
+ * [LspClientManager] events that [awaitEvent] passes to its predicate.
  */
 private sealed interface LspClientManagerEvent {
   val lspClient: LspClient
@@ -151,29 +147,38 @@ private sealed interface LspClientManagerEvent {
 }
 
 /**
- * Subscribes to [LspClientManager] events as a [Flow].
- * Similar to [com.intellij.util.messages.impl.subscribeAsFlow] for `MessageBus`.
+ * Waits for the first [LspClientManager] event that matches [predicate].
  *
- * TODO improve and move to production module
+ * The listener is added before the first suspension, so a caller that starts this function with
+ * `async(start = CoroutineStart.UNDISPATCHED)` gets every event that comes after the `async` call returns.
+ * A `callbackFlow` adds its listener later, in a producer coroutine, and so can miss an event that comes first.
  *
- * @param sendEventsForExistingClients if true, immediately emits events for already-opened files
+ * Events for the files that are already open come first, as `sendEventsForExistingClients` of [LspClientManager.addListener] gives them.
  */
-private fun LspClientManager.eventsFlow(sendEventsForExistingClients: Boolean = true): Flow<LspClientManagerEvent> = callbackFlow {
+private suspend fun LspClientManager.awaitEvent(predicate: (LspClientManagerEvent) -> Boolean) {
+  val events = Channel<LspClientManagerEvent>(Channel.UNLIMITED)
   val disposable = Disposer.newDisposable()
-  addListener(object : LspClientManagerListener {
-    override fun serverStateChanged(lspClient: LspClient) {
-      if (lspClient.state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) {
-        trySend(LspClientManagerEvent.ServerShutdown(lspClient))
+  try {
+    addListener(object : LspClientManagerListener {
+      override fun serverStateChanged(lspClient: LspClient) {
+        if (lspClient.state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) {
+          events.trySend(LspClientManagerEvent.ServerShutdown(lspClient))
+        }
       }
-    }
 
-    override fun fileOpened(lspClient: LspClient, file: VirtualFile) {
-      trySend(LspClientManagerEvent.FileOpened(lspClient, file))
-    }
+      override fun fileOpened(lspClient: LspClient, file: VirtualFile) {
+        events.trySend(LspClientManagerEvent.FileOpened(lspClient, file))
+      }
 
-    override fun diagnosticsReceived(lspClient: LspClient, file: VirtualFile) {
-      trySend(LspClientManagerEvent.DiagnosticsReceived(lspClient, file))
+      override fun diagnosticsReceived(lspClient: LspClient, file: VirtualFile) {
+        events.trySend(LspClientManagerEvent.DiagnosticsReceived(lspClient, file))
+      }
+    }, disposable, sendEventsForExistingClients = true)
+    while (!predicate(events.receive())) {
+      // wait for the next event
     }
-  }, disposable, sendEventsForExistingClients)
-  awaitClose { Disposer.dispose(disposable) }
+  }
+  finally {
+    Disposer.dispose(disposable)
+  }
 }
