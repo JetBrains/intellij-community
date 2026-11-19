@@ -5,11 +5,9 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.facet.PythonFacetDefaults;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.internal.PySdkNamesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -17,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import java.util.List;
 
 @ApiStatus.Internal
 final class MinorPythonFacetType extends FacetType<MinorPythonFacet, PythonFacetConfiguration> {
@@ -34,10 +31,7 @@ final class MinorPythonFacetType extends FacetType<MinorPythonFacet, PythonFacet
   @Override
   public PythonFacetConfiguration createDefaultConfiguration() {
     PythonFacetConfiguration result = new PythonFacetConfiguration();
-    List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance());
-    if (!sdks.isEmpty()) {
-      result.setSdk(sdks.get(0));
-    }
+    result.setSdk(PythonFacetDefaults.defaultPythonFacetSdk());
     return result;
   }
 
