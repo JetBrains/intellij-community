@@ -1736,7 +1736,7 @@
                        key="notification.missing.plugin.update.source.title"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializationActivity"/>
     <registryKey key="update.source.initialization.enabled" defaultValue="true"
-                 description="Enable initialization of update plugin update sources once for an IDE" />
+                 description="Enable initialization of update plugin update sources on each IDE start" />
     <troubleInfoCollector implementation="com.intellij.ide.plugins.CustomPluginRepositoriesTroubleInfoCollector"/>
     <universalFileChooserContributor implementation="com.intellij.openapi.fileChooser.universal.LocalFileChooserContributor"/>
     <projectSettings service="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
