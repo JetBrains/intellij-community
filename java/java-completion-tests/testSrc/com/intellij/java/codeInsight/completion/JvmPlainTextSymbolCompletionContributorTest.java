@@ -7,34 +7,54 @@ import com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorE
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import one.util.streamex.StreamEx;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class JvmPlainTextSymbolCompletionContributorTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+@IndexingModeTemplate
+public class JvmPlainTextSymbolCompletionContributorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testBasics() {
-    PsiFile file = myFixture.configureByText("Test.java", """
-      class Foo {
-        void fooMethod() {}
-        int fooField = 0;
-        class FooClass {}
-      }
-      class Bar {
-        class Baz {
-          void quxMethod() {}
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiFile file = myFixture.configureByText("Test.java", """
+        class Foo {
+          void fooMethod() {}
+          int fooField = 0;
+          class FooClass {}
         }
-      }""");
-    checkCompletion(file, "", 0, "Foo", "Bar");
-    checkCompletion(file, "F", 1, "Foo", "fooMethod", "fooField", "FooClass");
-    checkCompletion(file, "Foo::", 0, "Foo::fooMethod");
-    checkCompletion(file, "Foo#", 0, "Foo#fooMethod", "Foo#fooField");
-    checkCompletion(file, "Foo.", 0, "Foo.fooMethod", "Foo.fooField", "Foo.FooClass");
-    checkCompletion(file, "B", 1, "Bar", "Baz");
-    checkCompletion(file, "Bar.", 1, "Bar.Baz");
-    checkCompletion(file, "Bar.Baz#", 1, "Bar.Baz#quxMethod");
+        class Bar {
+          class Baz {
+            void quxMethod() {}
+          }
+        }""");
+      checkCompletion(file, "", 0, "Foo", "Bar");
+      checkCompletion(file, "F", 1, "Foo", "fooMethod", "fooField", "FooClass");
+      checkCompletion(file, "Foo::", 0, "Foo::fooMethod");
+      checkCompletion(file, "Foo#", 0, "Foo#fooMethod", "Foo#fooField");
+      checkCompletion(file, "Foo.", 0, "Foo.fooMethod", "Foo.fooField", "Foo.FooClass");
+      checkCompletion(file, "B", 1, "Bar", "Baz");
+      checkCompletion(file, "Bar.", 1, "Bar.Baz");
+      checkCompletion(file, "Bar.Baz#", 1, "Bar.Baz#quxMethod");
+    });
   }
 
   private static void checkCompletion(PsiFile file, String prefix, int invocationCount, String... expected) {
