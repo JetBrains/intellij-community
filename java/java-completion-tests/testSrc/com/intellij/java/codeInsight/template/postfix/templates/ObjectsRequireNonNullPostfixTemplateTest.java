@@ -2,53 +2,69 @@
 package com.intellij.java.codeInsight.template.postfix.templates;
 
 import com.intellij.idea.IJIgnore;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class ObjectsRequireNonNullPostfixTemplateTest extends PostfixTemplateTestCase {
+import static com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateFixtureKt.postfixTemplateFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+@IndexingModeTemplate
+public class ObjectsRequireNonNullPostfixTemplateTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<PostfixTemplateFixture> postfix = postfixTemplateFixture(projectFixture, "reqnonnull");
+
   private LanguageLevel myDefaultLanguageLevel;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myDefaultLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), LanguageLevel.JDK_1_7);
+  @BeforeEach
+  void setUp() {
+    Project project = postfix.get().getFixture().getProject();
+    EdtTestUtil.runInEdtAndWait(() -> myDefaultLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7));
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), myDefaultLanguageLevel);
-      myDefaultLanguageLevel = null;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    Project project = postfix.get().getFixture().getProject();
+    EdtTestUtil.runInEdtAndWait(() -> IdeaTestUtil.setProjectLanguageLevel(project, myDefaultLanguageLevel));
+    myDefaultLanguageLevel = null;
   }
 
   @IJIgnore(issue = "AT-4013")
+  @Test
   public void testSimple() {
     doTest();
   }
 
+  @Test
   public void testPrimitive() {
     doTest();
   }
 
   @IJIgnore(issue = "AT-4013")
+  @Test
   public void testAssignment() {
     doTest();
   }
 
-  @NotNull
-  @Override
-  protected String getSuffix() {
-    return "reqnonnull";
+  private void doTest() {
+    EdtTestUtil.runInEdtAndWait(() -> postfix.get().doTest(useModCommandTemplates()));
   }
 
+  protected boolean useModCommandTemplates() {
+    return false;
+  }
+
+  @NeedsIndex.SmartMode(reason = "The JUnit 3 dumb completion suite did not run the ModCommand variants")
   public static class ModObjectsRequireNonNullPostfixTemplateTest extends ObjectsRequireNonNullPostfixTemplateTest {
     @Override
     protected boolean useModCommandTemplates() {

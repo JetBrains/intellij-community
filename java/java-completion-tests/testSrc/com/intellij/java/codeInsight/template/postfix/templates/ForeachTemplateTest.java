@@ -1,46 +1,70 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template.postfix.templates;
 
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ForeachTemplateTest extends PostfixTemplateTestCase {
-  @NotNull
-  @Override
-  protected String getSuffix() {
-    return "for";
-  }
+import static com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateFixtureKt.postfixTemplateFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
+@TestApplication
+@IndexingModeTemplate
+public class ForeachTemplateTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<PostfixTemplateFixture> postfix = postfixTemplateFixture(projectFixture, "for");
+
+  @Test
   public void testInts() {
     doTest();
   }
 
+  @Test
   public void testBeforeAssignment() {
     doTest();
   }
 
+  @Test
   public void testInAnonymousRunnable() {
     doTest();
   }
   
+  @Test
   public void testIterSameAsFor() {
     doTest();
   }
   
+  @Test
   public void testNoDoubleNotNull() {
     doTest();
   }
   
+  @Test
   public void testNoDoubleNotNullNested() {
     doTest();
   }
 
+  @Test
   public void testFinalLocals() {
-    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(postfix.get().getFixture().getProject());
     settings.GENERATE_FINAL_LOCALS = true;
     doTest();
   }
 
+  private void doTest() {
+    EdtTestUtil.runInEdtAndWait(() -> postfix.get().doTest(useModCommandTemplates()));
+  }
+
+  protected boolean useModCommandTemplates() {
+    return false;
+  }
+
+  @NeedsIndex.SmartMode(reason = "The JUnit 3 dumb completion suite did not run the ModCommand variants")
   public static class ModForeachTemplateTest extends ForeachTemplateTest {
     @Override
     protected boolean useModCommandTemplates() {

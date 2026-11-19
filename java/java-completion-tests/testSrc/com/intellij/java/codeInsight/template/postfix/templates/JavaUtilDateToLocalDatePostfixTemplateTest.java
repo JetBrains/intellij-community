@@ -1,30 +1,42 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template.postfix.templates;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaUtilDateToLocalDatePostfixTemplateTest extends PostfixTemplateTestCase {
+import static com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateFixtureKt.postfixTemplateFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
+@TestApplication
+@IndexingModeTemplate
+public class JavaUtilDateToLocalDatePostfixTemplateTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<PostfixTemplateFixture> postfix = postfixTemplateFixture(projectFixture, "toLocalDate");
 
-  @NotNull
-  @Override
-  protected String getSuffix() {
-    return "toLocalDate";
-  }
-
+  @Test
   public void testSimple() {
-    myFixture.addClass("""
-                         package java.time;
-                         public final class LocalDate { }
-                         """);
-    doTestCompletion("toLocalDate");
+    LightJavaCodeInsightTestFixture myFixture = postfix.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("""
+                           package java.time;
+                           public final class LocalDate { }
+                           """);
+    });
+    EdtTestUtil.runInEdtAndWait(() -> postfix.get().doTestCompletion("toLocalDate", useModCommandTemplates()));
   }
 
+  protected boolean useModCommandTemplates() {
+    return false;
+  }
+
+  @NeedsIndex.SmartMode(reason = "The JUnit 3 dumb completion suite did not run the ModCommand variants")
   public static class ModJavaUtilDateToLocalDatePostfixTemplateTest extends JavaUtilDateToLocalDatePostfixTemplateTest {
     @Override
     protected boolean useModCommandTemplates() {

@@ -46,7 +46,7 @@ public class JavaCompletionTestSuite extends TestSuite {
 
     List<Class<?>> classes = myTestCaseLoader.getClasses();
     for (Class<?> aClass : classes) {
-      if (!aClass.getSimpleName().contains("Completion") && !isJavaPostfixTest(aClass)) continue;
+      if (!aClass.getSimpleName().contains("Completion")) continue;
       // JavaCompletionFeaturesTest does not depend on indices
       if (JavaCompletionFeaturesTest.class.equals(aClass)) continue;
       // Exclude feature suggester tests
@@ -62,11 +62,5 @@ public class JavaCompletionTestSuite extends TestSuite {
       }
     }
     return TestFrameworkUtil.flattenSuite(suite);
-  }
-
-  private static boolean isJavaPostfixTest(Class<?> testClass) {
-    Class<?> superclass = testClass.getSuperclass();
-    return superclass != null &&
-           "com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateTestCase".equals(superclass.getName());
   }
 }
