@@ -13,6 +13,7 @@ def _community_build_target_impl(name, **kwargs):
     args["add_opens"] = INTELLIJ_ADD_OPENS + _or_empty(kwargs.get("add_opens"))
     args["data"] = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY] + _or_empty(kwargs.get("data"))
     args["jvm_flags"] = [
+        "-Xmx512m",
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
     ] + _or_empty(kwargs.get("jvm_flags"))
     java_binary(name = name, **args)
