@@ -486,6 +486,15 @@ public sealed interface ModCommand
   }
 
   /**
+   * Creates a command that displays conflicts, each at its place, see {@link #showConflicts(Map)}.
+   *
+   * @param places conflicts to show
+   */
+  static @NotNull ModCommand showConflicts(@NotNull List<ModShowConflicts.@NotNull Place> places) {
+    return places.isEmpty() ? nop() : new ModShowConflicts(places);
+  }
+
+  /**
    * Creates a command that displays a UI and allows the user to select the next action from the list.
    * Intention preview assumes that the first available action is selected by default.
    * In batch mode, the first option is also selected automatically.

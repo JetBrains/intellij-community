@@ -126,10 +126,23 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
     val shownConflicts = runReadActionBlocking { conflicts.toShowConflicts(file) }
 
     assertEquals(2, shownConflicts.size)
-    val shownFiles = shownConflicts.keys.map { it.containingFile }
+    val shownFiles = shownConflicts.map { it.element.containingFile }
     assertEquals(listOf(file, otherFile), shownFiles)
-    assertEquals(listOf("one", "two"), shownConflicts.values.first().messages)
-    assertEquals(listOf("three"), shownConflicts.values.last().messages)
+    assertEquals(listOf("one", "two"), shownConflicts.first().conflict.messages)
+    assertEquals(listOf("three"), shownConflicts.last().conflict.messages)
+    assertTrue(shownConflicts.all { it.rangeInElement == null })
+  }
+
+  fun `test toShowConflictsWithNonCodeUsages keeps the range of each non-code usage`() {
+    val file = addFile("a.txt", "some text here")
+    val conflicts = ModPlanConflicts.builder()
+      .nonCodeUsage(file, TextRange(5, 9), "nonCodeUsage").nonCodeUsage(file, TextRange(10, 14), "nonCodeUsage")
+      .build()
+
+    val shownConflicts = runReadActionBlocking { conflicts.toShowConflictsWithNonCodeUsages(file) }
+
+    assertEquals(listOf(file, file), shownConflicts.map { it.element })
+    assertEquals(listOf(TextRange(5, 9), TextRange(10, 14)), shownConflicts.map { it.rangeInElement })
   }
 
   fun `test toShowConflicts puts a conflict without an element on the anchor`() {
@@ -139,8 +152,8 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
 
     val shownConflicts = runReadActionBlocking { conflicts.toShowConflicts(anchor) }
 
-    assertEquals(listOf("everywhere"), shownConflicts[anchor]!!.messages)
-    assertEquals(listOf("there"), shownConflicts.entries.single { it.key != anchor }.value.messages)
+    assertEquals(listOf("everywhere"), shownConflicts.single { it.element == anchor }.conflict.messages)
+    assertEquals(listOf("there"), shownConflicts.single { it.element != anchor }.conflict.messages)
   }
 
   fun `test toShowConflicts puts a conflict of a place that is gone on the anchor`() {
@@ -153,7 +166,7 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
 
     val shownConflicts = runReadActionBlocking { goneConflicts.toShowConflicts(anchor) }
 
-    assertEquals(setOf(anchor), shownConflicts.keys)
+    assertEquals(listOf(anchor), shownConflicts.map { it.element })
   }
 
   fun `test findElement of a whole file is the file`() {

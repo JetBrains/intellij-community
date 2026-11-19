@@ -7633,6 +7633,7 @@ c:com.intellij.refactoring.ui.ConflictsDialog
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap,java.lang.Runnable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap,java.lang.Runnable,Z,Z):V
+- <init>(com.intellij.openapi.project.Project,java.util.List,java.lang.Runnable):V
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
 - p:createLeftSideActions():javax.swing.Action[]

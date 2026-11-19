@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LangBundle;
+import com.intellij.modcommand.ModShowConflicts;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -22,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -56,6 +58,7 @@ import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -87,6 +90,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -102,6 +106,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
 
   protected final String[] myConflictDescriptions;
   protected final MultiMap<PsiElement, String> myElementConflictDescription;
+  private final @NotNull List<ModShowConflicts.Place> myPlaces;
   private final Project myProject;
   private final Runnable myDoRefactoringRunnable;
   private final boolean myCanShowConflictsInView;
@@ -124,6 +129,22 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
                          @Nullable Runnable doRefactoringRunnable,
                          boolean alwaysShowOkButton,
                          boolean canShowConflictsInView) {
+    this(project, conflictDescriptions, placesOf(conflictDescriptions), doRefactoringRunnable, alwaysShowOkButton, canShowConflictsInView);
+  }
+
+  /**
+   * @param places the conflicts, each at its place, which the usages of the dialog open
+   */
+  public ConflictsDialog(@NotNull Project project, @NotNull List<ModShowConflicts.Place> places, @Nullable Runnable doRefactoringRunnable) {
+    this(project, elementConflictsOf(places), places, doRefactoringRunnable, true, true);
+  }
+
+  private ConflictsDialog(@NotNull Project project,
+                          @NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflictDescriptions,
+                          @NotNull List<ModShowConflicts.Place> places,
+                          @Nullable Runnable doRefactoringRunnable,
+                          boolean alwaysShowOkButton,
+                          boolean canShowConflictsInView) {
     super(project, true);
     myProject = project;
     myDoRefactoringRunnable = doRefactoringRunnable;
@@ -132,6 +153,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     LinkedHashSet<String> conflicts = new LinkedHashSet<>(conflictDescriptions.values());
     myConflictDescriptions = ArrayUtilRt.toStringArray(conflicts);
     myElementConflictDescription = conflictDescriptions;
+    myPlaces = places;
     myUpdatedDialog = Registry.is("refactorings.use.updated.conflicts.detected.dialog");
     setTitle(myUpdatedDialog
              ? RefactoringBundle.message("conflicts.detected.title")
@@ -343,13 +365,28 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     return presentation;
   }
 
+  private static @NotNull List<ModShowConflicts.Place> placesOf(@Nullable MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts) {
+    if (conflicts == null) return List.of();
+    return ContainerUtil.map(conflicts.entrySet(),
+                             entry -> new ModShowConflicts.Place(entry.getKey(), null, new ModShowConflicts.Conflict(List.copyOf(entry.getValue()))));
+  }
+
+  private static @NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> elementConflictsOf(@NotNull List<ModShowConflicts.Place> places) {
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>(new LinkedHashMap<>());
+    for (ModShowConflicts.Place place : places) {
+      conflicts.putValues(place.element(), place.conflict().messages());
+    }
+    return conflicts;
+  }
+
   private Usage @NotNull [] createUsages() {
     ArrayList<Usage> usages = new ArrayList<>(myElementConflictDescription.values().size());
-    for (PsiElement element : myElementConflictDescription.keySet()) {
-      assert element != null;
-      for (@NlsContexts.Tooltip String conflictDescription : myElementConflictDescription.get(element)) {
+    for (ModShowConflicts.Place place : myPlaces) {
+      PsiElement element = place.element();
+      TextRange range = place.rangeInElement();
+      for (@NlsContexts.Tooltip String conflictDescription : place.conflict().messages()) {
         UsagePresentation usagePresentation = new ConflictPresentation(conflictDescription);
-        UsageInfo usageInfo = new UsageInfo(element) {
+        UsageInfo usageInfo = new UsageInfo(element, range != null ? range.getStartOffset() : -1, range != null ? range.getEndOffset() : -1) {
           @Override
           public @NlsSafe String getTooltipText() {
             return myUpdatedDialog ? "<html><body style='width: 300px'>" + usagePresentation.getPlainText() + "</body></html>" : null;

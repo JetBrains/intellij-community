@@ -14,7 +14,6 @@ import com.intellij.usages.impl.UnknownUsagesInUnloadedModules
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Unmodifiable
-import java.util.Collections
 
 /**
  * Conflicts found by a ModPlan refactoring, with the places they are at: a client reads the file and the range of a
@@ -46,28 +45,36 @@ class ModPlanConflicts(conflicts: List<ModPlanConflict>) {
   /**
    * @param anchor the element for a conflict without a location, or with a location where no element is found, see
    *               [com.intellij.psi.findElement]
-   * @return the messages per element, without the non-code usages; the argument for [com.intellij.modcommand.ModCommand.showConflicts]
+   * @return the messages per place, without the non-code usages; the argument for [com.intellij.modcommand.ModCommand.showConflicts].
+   * A place keeps its range where no element has exactly it, such as a word in a comment.
    */
   @RequiresReadLock
-  fun toShowConflicts(anchor: PsiElement): @Unmodifiable Map<PsiElement, ModShowConflicts.Conflict> = toShowConflicts(anchor, false)
+  fun toShowConflicts(anchor: PsiElement): @Unmodifiable List<ModShowConflicts.Place> = toShowConflicts(anchor, false)
 
   /**
-   * @return the messages per element, with the non-code usages, so that a person sees them before the command writes, see
+   * @return the messages per place, with the non-code usages, so that a person sees them before the command writes, see
    * [toShowConflicts]
    */
   @RequiresReadLock
-  fun toShowConflictsWithNonCodeUsages(anchor: PsiElement): @Unmodifiable Map<PsiElement, ModShowConflicts.Conflict> {
+  fun toShowConflictsWithNonCodeUsages(anchor: PsiElement): @Unmodifiable List<ModShowConflicts.Place> {
     return toShowConflicts(anchor, true)
   }
 
-  private fun toShowConflicts(anchor: PsiElement, withNonCodeUsages: Boolean): @Unmodifiable Map<PsiElement, ModShowConflicts.Conflict> {
-    val resultConflicts = LinkedHashMap<PsiElement, ModShowConflicts.Conflict>()
+  private fun toShowConflicts(anchor: PsiElement, withNonCodeUsages: Boolean): @Unmodifiable List<ModShowConflicts.Place> {
+    val resultConflicts = LinkedHashMap<Pair<PsiElement, TextRange?>, ModShowConflicts.Conflict>()
     for (conflict in conflicts.sortedBy { it.location?.range?.startOffset ?: Int.MAX_VALUE }) {
       if (!withNonCodeUsages && conflict.kind == ModPlanConflictKind.NON_CODE_USAGE) continue
+      val range = conflict.location?.range?.let { TextRange.create(it) }
       val element = conflict.location?.findElement()
-      resultConflicts.merge(element ?: anchor, ModShowConflicts.Conflict(conflict.messages), ModShowConflicts.Conflict::merge)
+      val place = if (element == null || range == null) {
+        anchor to null
+      }
+      else {
+        element to range.takeIf { it != element.textRange }?.shiftLeft(element.textRange.startOffset)
+      }
+      resultConflicts.merge(place, ModShowConflicts.Conflict(conflict.messages), ModShowConflicts.Conflict::merge)
     }
-    return Collections.unmodifiableMap(resultConflicts)
+    return resultConflicts.map { [place, conflict] -> ModShowConflicts.Place(place.first, place.second, conflict) }
   }
 
   override fun equals(other: Any?): Boolean = this === other || other is ModPlanConflicts && conflicts == other.conflicts

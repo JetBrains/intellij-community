@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.hints.InlayHintsProvider
@@ -307,7 +307,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                 } else if (command is ModCompositeCommand && command.commands().first() is ModShowConflicts) {
                     val showConflictsCommand = command.commands().first() as ModShowConflicts
                     val actualFailString = showConflictsCommand
-                        .conflicts
+                        .conflicts()
                         .values
                         .flatMap { it.messages }
                         .joinToString(separator = ", ") {
