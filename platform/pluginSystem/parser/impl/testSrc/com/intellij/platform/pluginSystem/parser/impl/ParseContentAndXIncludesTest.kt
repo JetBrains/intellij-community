@@ -28,6 +28,25 @@ internal class ParseContentAndXIncludesTest {
   }
 
   @Test
+  fun `a workspace service is a registered service key`() {
+    val input = """
+      <idea-plugin>
+        <extensions defaultExtensionNs="com.intellij">
+          <workspaceService serviceImplementation="a.Service"/>
+        </extensions>
+        <workspaceListeners>
+          <listener class="a.Listener" topic="a.Topic"/>
+        </workspaceListeners>
+        <extensionPoints>
+          <extensionPoint qualifiedName="a.point" interface="a.Point" area="IDEA_WORKSPACE"/>
+        </extensionPoints>
+      </idea-plugin>
+    """.trimIndent()
+    val parseResult = parseContentAndXIncludes(input.toByteArray(), null)
+    assertThat(parseResult.registeredServiceKeys).containsExactly("a.Service")
+  }
+
+  @Test
   fun `parse empty`() {
     val input = "<idea-plugin/>"
     val parseResult = parseContentAndXIncludes(input.toByteArray(), null)

@@ -102,6 +102,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var isTechnologyNeutral: Boolean = false
 
   override val appContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
+  override val workspaceContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
   override val projectContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
   override val moduleContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
 
@@ -168,6 +169,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     technologies = technologies,
     isTechnologyNeutral = isTechnologyNeutral,
     appElementsContainer = appContainerBuilder.build(),
+    workspaceElementsContainer = workspaceContainerBuilder.build(),
     projectElementsContainer = projectContainerBuilder.build(),
     moduleElementsContainer = moduleContainerBuilder.build(),
     extensions = extensions,

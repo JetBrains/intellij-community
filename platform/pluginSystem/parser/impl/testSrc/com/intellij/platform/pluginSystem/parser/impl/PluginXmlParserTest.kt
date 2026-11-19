@@ -124,6 +124,39 @@ class PluginXmlParserTest {
     Assertions.assertThat(parse("<idea-plugin><technology id=\"rust\"/></idea-plugin>").isTechnologyNeutral).isFalse()
   }
 
+  @Test
+  fun `workspace elements go to the workspace container`() {
+    val xml = """
+      <idea-plugin>
+        <extensions defaultExtensionNs="com.intellij">
+          <workspaceService serviceImplementation="a.Service"/>
+        </extensions>
+        <workspaceListeners>
+          <listener class="a.Listener" topic="a.Topic"/>
+        </workspaceListeners>
+        <extensionPoints>
+          <extensionPoint qualifiedName="a.point" interface="a.Point" area="IDEA_WORKSPACE"/>
+        </extensionPoints>
+      </idea-plugin>
+    """.trimIndent()
+
+    val descriptor = parse(xml)
+
+    val workspace = descriptor.workspaceElementsContainer
+    Assertions.assertThat(workspace.services.map { it.serviceImplementation }).containsExactly("a.Service")
+    Assertions.assertThat(workspace.listeners.map { it.listenerClassName to it.topicClassName })
+      .containsExactly("a.Listener" to "a.Topic")
+    Assertions.assertThat(workspace.extensionPoints.map { it.qualifiedName }).containsExactly("a.point")
+    Assertions.assertThat(workspace.components).isEmpty()
+    Assertions.assertThat(descriptor.extensions).isEmpty()
+    for (container in listOf(descriptor.appElementsContainer, descriptor.projectElementsContainer, descriptor.moduleElementsContainer)) {
+      Assertions.assertThat(container.services).isEmpty()
+      Assertions.assertThat(container.listeners).isEmpty()
+      Assertions.assertThat(container.extensionPoints).isEmpty()
+      Assertions.assertThat(container.components).isEmpty()
+    }
+  }
+
   private fun parse(xml: String): RawPluginDescriptor {
     return parseBytes(xml.toByteArray())
   }

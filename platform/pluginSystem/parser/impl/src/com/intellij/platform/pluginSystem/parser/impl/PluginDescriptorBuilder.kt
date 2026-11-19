@@ -64,6 +64,7 @@ interface PluginDescriptorBuilder {
   var isTechnologyNeutral: Boolean
 
   val appContainerBuilder: ScopedElementsContainerBuilder
+  val workspaceContainerBuilder: ScopedElementsContainerBuilder
   val projectContainerBuilder: ScopedElementsContainerBuilder
   val moduleContainerBuilder: ScopedElementsContainerBuilder
 

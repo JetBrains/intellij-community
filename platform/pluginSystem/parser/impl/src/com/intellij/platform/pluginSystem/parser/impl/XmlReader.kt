@@ -225,6 +225,7 @@ private fun readRootElementChild(
     PluginXmlConst.PROJECT_COMPONENTS_ELEM -> readComponents(reader, builder.projectContainerBuilder)
     PluginXmlConst.MODULE_COMPONENTS_ELEM -> readComponents(reader, builder.moduleContainerBuilder)
     PluginXmlConst.APPLICATION_LISTENERS_ELEM -> readListeners(reader, builder.appContainerBuilder)
+    PluginXmlConst.WORKSPACE_LISTENERS_ELEM -> readListeners(reader, builder.workspaceContainerBuilder)
     PluginXmlConst.PROJECT_LISTENERS_ELEM -> readListeners(reader, builder.projectContainerBuilder)
     PluginXmlConst.EXTENSIONS_ELEM -> readExtensions(reader, builder, readContext.interner)
     PluginXmlConst.EXTENSION_POINTS_ELEM -> readExtensionPoints(
@@ -386,6 +387,7 @@ private fun readExtensions(reader: XMLStreamReader2, builder: PluginDescriptorBu
     val containerBuilder: ScopedElementsContainerBuilder
     when (qualifiedExtensionPointName) {
       PluginXmlConst.FQN_APPLICATION_SERVICE -> containerBuilder = builder.appContainerBuilder
+      PluginXmlConst.FQN_WORKSPACE_SERVICE -> containerBuilder = builder.workspaceContainerBuilder
       PluginXmlConst.FQN_PROJECT_SERVICE -> containerBuilder = builder.projectContainerBuilder
       PluginXmlConst.FQN_MODULE_SERVICE -> containerBuilder = builder.moduleContainerBuilder
       else -> {
@@ -452,6 +454,7 @@ private fun readExtensionPoints(
         LOG.warn("`include` is supported only on a root level (${reader.location})")
         // TODO: note, this function does not copy misc extensions (bug?)
         copyExtensionPoints(partial.getBuilder(), builder) { it.appContainerBuilder }
+        copyExtensionPoints(partial.getBuilder(), builder) { it.workspaceContainerBuilder }
         copyExtensionPoints(partial.getBuilder(), builder) { it.projectContainerBuilder }
         copyExtensionPoints(partial.getBuilder(), builder) { it.moduleContainerBuilder }
       }
@@ -499,6 +502,7 @@ private fun readExtensionPoints(
 
     val containerBuilder = when (area) {
       null -> builder.appContainerBuilder
+      PluginXmlConst.EXTENSION_POINT_AREA_IDEA_WORKSPACE_VALUE -> builder.workspaceContainerBuilder
       PluginXmlConst.EXTENSION_POINT_AREA_IDEA_PROJECT_VALUE -> builder.projectContainerBuilder
       PluginXmlConst.EXTENSION_POINT_AREA_IDEA_MODULE_VALUE -> builder.moduleContainerBuilder
       else -> {
@@ -1288,6 +1292,7 @@ private fun readRegisteredServiceKeys(
 
     when (qualifiedExtensionPointName) {
       PluginXmlConst.FQN_APPLICATION_SERVICE,
+      PluginXmlConst.FQN_WORKSPACE_SERVICE,
       PluginXmlConst.FQN_PROJECT_SERVICE,
       PluginXmlConst.FQN_MODULE_SERVICE,
         -> {

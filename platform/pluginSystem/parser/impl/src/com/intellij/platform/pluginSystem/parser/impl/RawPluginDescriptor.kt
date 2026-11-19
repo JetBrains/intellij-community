@@ -65,6 +65,7 @@ class RawPluginDescriptor(
   val isTechnologyNeutral: Boolean,
 
   val appElementsContainer: ScopedElementsContainer,
+  val workspaceElementsContainer: ScopedElementsContainer,
   val projectElementsContainer: ScopedElementsContainer,
   val moduleElementsContainer: ScopedElementsContainer,
   /**

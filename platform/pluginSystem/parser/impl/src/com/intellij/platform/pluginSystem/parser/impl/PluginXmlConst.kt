@@ -91,6 +91,7 @@ object PluginXmlConst {
   const val ADD_TO_GROUP_GROUP_ID_ATTR: String = "group-id"
 
   const val APPLICATION_LISTENERS_ELEM: String = "applicationListeners"
+  const val WORKSPACE_LISTENERS_ELEM: String = "workspaceListeners"
   const val PROJECT_LISTENERS_ELEM: String = "projectListeners"
 
   const val LISTENER_ELEM: String = "listener"
@@ -121,6 +122,7 @@ object PluginXmlConst {
   const val EXTENSION_POINT_INTERFACE_ATTR: String = "interface"
   const val EXTENSION_POINT_DYNAMIC_ATTR: String = "dynamic"
   const val EXTENSION_POINT_HAS_ATTRIBUTES_ATTR: String = "hasAttributes"
+  const val EXTENSION_POINT_AREA_IDEA_WORKSPACE_VALUE: String = "IDEA_WORKSPACE"
   const val EXTENSION_POINT_AREA_IDEA_PROJECT_VALUE: String = "IDEA_PROJECT"
   const val EXTENSION_POINT_AREA_IDEA_MODULE_VALUE: String = "IDEA_MODULE"
 
@@ -173,6 +175,7 @@ object PluginXmlConst {
   const val XINCLUDE_NAMESPACE_URI: String = "http://www.w3.org/2001/XInclude"
 
   const val FQN_APPLICATION_SERVICE: String = "com.intellij.applicationService"
+  const val FQN_WORKSPACE_SERVICE: String = "com.intellij.workspaceService"
   const val FQN_PROJECT_SERVICE: String = "com.intellij.projectService"
   const val FQN_MODULE_SERVICE: String = "com.intellij.moduleService"
   const val FQN_POST_STARTUP_ACTIVITY: String = "com.intellij.postStartupActivity"
