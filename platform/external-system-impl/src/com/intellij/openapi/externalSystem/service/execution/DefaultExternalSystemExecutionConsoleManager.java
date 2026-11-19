@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.build.BuildView;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -40,9 +41,10 @@ public class DefaultExternalSystemExecutionConsoleManager
   protected @NotNull ConsoleView createConsoleView(@NotNull Project project,
                                                    @NotNull ExternalSystemTask task,
                                                    @Nullable ExecutionEnvironment env) {
+    var isSingleBuildConsoleView = getExecutionConsoleSettings().isSingleBuildConsoleView();
+    var isShowInDashboard = BuildView.isShowInDashboard(project, env);
     return TextConsoleBuilderFactory.getInstance().createBuilder(project)
-      // the single flow console uses OutputBuildEvent as a source instead of ProcessHandler
-      .setAttachToProcessOutput(!getExecutionConsoleSettings().isSingleBuildConsoleView())
+      .setAttachToProcessOutput(!isSingleBuildConsoleView || isShowInDashboard)
       .getConsole();
   }
 

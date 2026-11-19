@@ -186,7 +186,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
         addViewAndShowIfNeeded(executionConsole, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault(), false);
         buildTree = false;
       }
-      else if (isShowInDashboard()) {
+      else if (isShowInDashboard(myProject, myBuildDescriptor.getExecutionEnvironment())) {
         ExecutionConsole consoleView =
           executionConsole instanceof ConsoleView ? wrapWithToolbar((ConsoleView)executionConsole) : executionConsole;
         addViewAndShowIfNeeded(consoleView, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault(), false);
@@ -490,11 +490,17 @@ public class BuildView extends CompositeView<ExecutionConsole>
     return getOccurenceNavigator().getPreviousOccurenceActionName();
   }
 
-  private boolean isShowInDashboard() {
-    ExecutionEnvironment environment = myBuildDescriptor.getExecutionEnvironment();
+  /**
+   * Checks whether {@link BuildView} of the delegated run configuration is shown in the Services tool window.
+   * <p>
+   * In this case, {@link BuildView} turns into a plain execution console:
+   * prints raw {@link ProcessHandler} output, ignores all build events.
+   */
+  @ApiStatus.Internal
+  public static boolean isShowInDashboard(@NotNull Project project, @Nullable ExecutionEnvironment environment) {
     RunProfile runProfile = environment != null ? environment.getRunProfile() : null;
     return runProfile instanceof RunConfiguration configuration &&
-           RunContentManagerExtension.isShownInServicesIfAvailable(myProject, configuration) &&
+           RunContentManagerExtension.isShownInServicesIfAvailable(project, configuration) &&
            ExecutionManagerImpl.getDelegatedRunProfile(configuration) instanceof RunConfiguration;
   }
 
