@@ -169,7 +169,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   static @NotNull HtmlChunk describeTarget(@NotNull PyTargetExpression target,
-                                           @NotNull PsiElement originalElement,
+                                           @Nullable PsiElement originalElement,
                                            @NotNull TypeEvalContext context) {
     final HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan(StringUtil.notNullize(target.getName()), DefaultLanguageHighlighterColors.IDENTIFIER));
@@ -234,12 +234,14 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   static @NotNull HtmlChunk describeTypeParameter(@NotNull PyTypeParameter typeParameter,
-                                                  @NotNull PsiElement originalElement,
+                                                  @Nullable PsiElement originalElement,
                                                   @NotNull TypeEvalContext context) {
-    return new PyTypeRenderer.RichDocumentation(context, originalElement).describeTypeParameter(typeParameter, originalElement,
-                                                                                                true, true,
-                                                                                                PythonDocumentationProvider::formatTypeWithLinks,
-                                                                                                context);
+    // Without an original element, the declaration itself is the element, as when the caret is on it.
+    PsiElement element = originalElement != null ? originalElement : typeParameter;
+    return new PyTypeRenderer.RichDocumentation(context, element).describeTypeParameter(typeParameter, element,
+                                                                                         true, true,
+                                                                                         PythonDocumentationProvider::formatTypeWithLinks,
+                                                                                         context);
   }
 
   static @NotNull HtmlChunk describeTypeAlias(@NotNull PyTypeAliasStatement typeAliasStatement,

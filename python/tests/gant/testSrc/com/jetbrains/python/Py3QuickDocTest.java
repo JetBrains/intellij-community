@@ -9,7 +9,9 @@ import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
@@ -21,6 +23,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 
@@ -995,6 +998,33 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     assertNotNull(doc);
     assertTrue("Should resolve to function documentation from .pyi", doc.contains("Key"));
     assertTrue("Should have 'Assigned to' section", doc.contains("Assigned to"));
+  }
+
+  @TestFor(issues = "PY-92948")
+  public void testTargetWithoutOriginalElement() {
+    PyFile file = (PyFile)myFixture.configureByText("a.py", "answer: int = 42\n");
+    PyTargetExpression target = file.findTopLevelAttribute("answer");
+    assertNotNull(target);
+
+    String doc = myProvider.generateDoc(target, null);
+    assertNotNull(doc);
+    assertEquals(myProvider.generateDoc(target, target.getNameIdentifier()), doc);
+  }
+
+  @TestFor(issues = "PY-92948")
+  public void testTypeParameterWithoutOriginalElement() {
+    // `T` is only returned, so its inferred variance is covariant, and the documentation shows it.
+    PsiFile file = myFixture.configureByText("a.py", """
+      class Box[T]:
+          def get(self) -> T: ...
+      """);
+    PyTypeParameter typeParameter = PsiTreeUtil.findChildOfType(file, PyTypeParameter.class);
+    assertNotNull(typeParameter);
+
+    String doc = myProvider.generateDoc(typeParameter, null);
+    assertNotNull(doc);
+    assertTrue(doc, doc.contains("out"));
+    assertEquals(myProvider.generateDoc(typeParameter, typeParameter.getNameIdentifier()), doc);
   }
 
 
