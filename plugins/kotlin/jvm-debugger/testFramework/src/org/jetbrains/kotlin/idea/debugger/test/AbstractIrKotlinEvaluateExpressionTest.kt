@@ -15,6 +15,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.memory.utils.InstanceJavaValue
 import com.intellij.debugger.memory.utils.InstanceValueDescriptor
+import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.io.FileUtil
@@ -73,6 +74,8 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
     override fun setUp() {
         super.setUp()
         allowEvaluationInJavaContext()
+        // A return value node would add a variable to the printed frame.
+        setSettingForTest({ DebuggerSettings.getInstance().WATCH_RETURN_VALUES }, { DebuggerSettings.getInstance().WATCH_RETURN_VALUES = it }, false)
         atDebuggerTearDown { exceptions.clear() }
         atDebuggerTearDown { restoreEvaluationInJavaContext() }
     }
