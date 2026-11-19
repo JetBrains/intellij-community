@@ -6,7 +6,8 @@ Merged: 2026-11-19
 ## Status
 
 Accepted ([IJPL-260062](https://youtrack.jetbrains.com/issue/IJPL-260062),
-[IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
+[IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)). Amended by
+[ADR 0179](./0179-one-context-factory-serves-every-product-mode-and-an-extension-point-gives-it-the-content-roots.md).
 
 ## Context
 

@@ -4,7 +4,8 @@ Date: 2026-11-19
 
 ## Status
 
-Accepted ([IJPL-262093](https://youtrack.jetbrains.com/issue/IJPL-262093)).
+Accepted ([IJPL-262093](https://youtrack.jetbrains.com/issue/IJPL-262093)). Amends
+[ADR 0166](./0166-the-light-compatible-backend-code-lives-in-the-backend-baseline-module.md).
 
 ## Context
 
@@ -31,6 +32,9 @@ project is the only root.**
 - The frontend registers an extension that holds the roots from the backend.
 - A light product mode registers nothing. The answer for it is plain code in the shared module.
 - The first extension always answers. No product mode loads two extensions, so there is no pass to a next one.
+- The context factory and the context dump action live in the shared module. The roots cache lives in the backend
+  module, because it reads the project model. The other project-scoped machinery stays in the backend baseline
+  module, as [ADR 0166](./0166-the-light-compatible-backend-code-lives-in-the-backend-baseline-module.md) says.
 - A file matches a root by path. A file of an archive file system, such as a file inside a jar, is under no root.
 
 ## Consequences
