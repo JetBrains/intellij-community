@@ -265,6 +265,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
+   * Uses the current preferred size during inlay batches within the operation.
+   */
+  @RequiresEdt
+  public void runWithCachedSizeDuringInlayBatch(@NotNull Runnable operation) {
+    mySizeManager.runWithCachedSizeDuringInlayBatch(operation);
+  }
+
+  /**
    * Returns preferred pixel width of the lines in range.
    * <p>
    * This method is currently used only with "idea.true.smooth.scrolling" experimental option.

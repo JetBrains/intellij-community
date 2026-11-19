@@ -45,8 +45,14 @@ internal class EditorFontChangeInlayTest {
       try {
         var width = 20
         var height = 30
+        val sizesDuringUpdate = ArrayList<Int>()
         val renderer = object : EditorCustomElementRenderer {
-          override fun calcWidthInPixels(inlay: Inlay<*>): Int = width
+          override fun calcWidthInPixels(inlay: Inlay<*>): Int {
+            if (inlay.editor.inlayModel.isInBatchMode) {
+              sizesDuringUpdate.add(inlay.editor.contentComponent.preferredSize.width)
+            }
+            return width
+          }
 
           override fun calcHeightInPixels(inlay: Inlay<*>): Int = height
         }
@@ -54,6 +60,7 @@ internal class EditorFontChangeInlayTest {
         val inline = model.addInlineElement(1, renderer)!!
         val block = model.addBlockElement(2, false, false, 0, renderer)
         assertThat(editor.offsetToXY(4).y).isEqualTo(2 * editor.lineHeight + height)
+        val previousWidth = editor.contentComponent.preferredSize.width
         val updated = ArrayList<Inlay<*>>()
         var batchesStarted = 0
         var batchesFinished = 0
@@ -71,7 +78,7 @@ internal class EditorFontChangeInlayTest {
             batchesFinished++
           }
         }, disposable)
-        width += 17
+        width += 1_000
         height += 13
 
         if (changeFontName) {
@@ -85,11 +92,13 @@ internal class EditorFontChangeInlayTest {
         assertThat(batchesStarted).isEqualTo(1)
         assertThat(batchesFinished).isEqualTo(1)
         assertThat(updated).containsExactlyInAnyOrder(inline, block)
+        assertThat(sizesDuringUpdate).containsExactly(previousWidth, previousWidth)
         assertThat(model.isInBatchMode).isFalse()
         assertThat(inline.widthInPixels).isEqualTo(width)
         assertThat(block.widthInPixels).isEqualTo(width)
         assertThat(block.heightInPixels).isEqualTo(height)
         assertThat(editor.offsetToXY(4).y).isEqualTo(2 * editor.lineHeight + height)
+        assertThat(editor.contentComponent.preferredSize.width).isGreaterThan(previousWidth).isGreaterThanOrEqualTo(width)
       }
       finally {
         factory.releaseEditor(editor)

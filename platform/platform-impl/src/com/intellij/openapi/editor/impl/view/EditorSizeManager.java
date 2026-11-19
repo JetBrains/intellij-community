@@ -72,6 +72,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
                                                                   // UNKNOWN_WIDTH(Integer.MAX_VALUE) means no value
   private boolean myWidthIsValid = true;
   private int myWidthInPixels;
+  private @Nullable Dimension myCachedSizeForInlayBatch;
   private int myWidthDefiningLineNumber;
   private int myStartInvalidLine = Integer.MAX_VALUE;
   private int myEndInvalidLine;
@@ -270,7 +271,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   @Override
   public void onBatchModeStart(@NotNull Editor editor) {
-    if (myDocument.isInBulkUpdate()) {
+    if (myDocument.isInBulkUpdate() || myCachedSizeForInlayBatch != null) {
       return;
     }
     getPreferredSize(); // make sure size is calculated (in case it will be required while batch mode is active)
@@ -321,6 +322,9 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   @NotNull
   Dimension getPreferredSize() {
+    if (myInlayModel.isInBatchMode() && myCachedSizeForInlayBatch != null) {
+      return new Dimension(myCachedSizeForInlayBatch);
+    }
     Insets insets = myView.getInsets();
     int widthWithoutCaret = getTextPreferredWidth() + insets.left;
     int width = widthWithoutCaret;
@@ -340,6 +344,20 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
       width += myEditor.getSettings().getAdditionalColumnsCount() * myView.getPlainSpaceWidth();
     }
     return new Dimension(width + insets.right, getPreferredHeight());
+  }
+
+  void runWithCachedSizeDuringInlayBatch(@NotNull Runnable operation) {
+    if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode() || myCachedSizeForInlayBatch != null) {
+      operation.run();
+      return;
+    }
+    myCachedSizeForInlayBatch = getPreferredSize();
+    try {
+      operation.run();
+    }
+    finally {
+      myCachedSizeForInlayBatch = null;
+    }
   }
 
   // Returns preferred width of the lines in range.

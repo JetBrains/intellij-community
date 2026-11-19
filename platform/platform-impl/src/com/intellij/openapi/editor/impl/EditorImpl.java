@@ -1403,7 +1403,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @RequiresEdt
   void reinitSettingsAfterFontChange(boolean reinitSettings) {
-    reinitSettings(true, reinitSettings, false, true);
+    myView.runWithCachedSizeDuringInlayBatch(() -> reinitSettings(true, reinitSettings, false, true));
   }
 
   @RequiresEdt
