@@ -5,9 +5,9 @@ style: plain-1
 targets:
   - ../shared/src/com/intellij/platform/settings/v2/impl/rpc/SettingsContentRootsApi.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/contentRoots.kt
+  - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsContextFactory.kt
   - ../../../../remote-dev/settings/v2/backend/split/src/com/intellij/platform/settings/v2/impl/rpc/BackendContentRootsApi.kt
   - ../../../../remote-dev/settings/v2/backend/split/src/com/intellij/platform/settings/v2/impl/rpc/SettingsRemoteApiProvider.kt
-  - ../../../../remote-dev/settings/v2/frontend/split/src/com/intellij/platform/settings/v2/impl/FrontendSettingsContextFactory.kt
   - ../../../../remote-dev/settings/v2/frontend/split/src/com/intellij/platform/settings/v2/impl/rpc/FrontendContentRootService.kt
   - ../../../../remote-dev/settings/v2/frontend/split/src/com/intellij/platform/settings/v2/impl/rpc/FrontendContentRootsActivity.kt
 ---
@@ -44,6 +44,10 @@ project identity. This is the first remote-dev part of settings v2.
 - The backend must not send two equal states in a row.
 - The frontend must start listening for the roots when the project opens, so the roots arrive as soon as possible.
   Until they arrive, a file gets the project context.
+- The frontend must supply the roots that it received as the content roots provider of the context factory. See
+  [ADR 0179](../adr/0179-one-context-factory-serves-every-product-mode-and-an-extension-point-gives-it-the-content-roots.md) and the
+  [Settings Contexts](settings-contexts.spec.md) spec.
+  [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/FrontendFileContextsTest.kt
 - A frontend file under a root must get a file context with the backend root url and the relative path.
   See [ADR 0107](../adr/0107-the-connection-carries-a-live-table-of-content-roots.md) and
   [ADR 0127](../adr/0127-a-file-context-anchors-on-the-backend-root-url-on-both-sides.md).
