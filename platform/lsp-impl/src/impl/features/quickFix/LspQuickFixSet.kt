@@ -1,9 +1,12 @@
 package com.intellij.platform.lsp.impl.features.quickFix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.lsp.api.LspClient
@@ -11,6 +14,7 @@ import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.features.intention.toCodeAction
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.application
 import org.eclipse.lsp4j.CodeAction
@@ -117,11 +121,26 @@ internal class LspQuickFixSet(
 
 /**
  * @see [LspQuickFixSet]
+ *
+ * One instance belongs to one [LspQuickFixSet], so the resolved [lspIntentionAction] holds the project only for
+ * the lifetime of the set. The wrapper delegates [getText], [isAvailable], [generatePreview] and [invoke] to it.
  */
 private class LspQuickFixWrapper(private val quickFixSet: LspQuickFixSet, index: Int) : LspIntentionActionWrapperBase(index) {
-  override var lspIntentionAction: LspIntentionAction? = null
+  var lspIntentionAction: LspIntentionAction? = null
     get() {
       quickFixSet.ensureInitialized()
       return field
     }
+
+  override fun getText(): String = lspIntentionAction?.text ?: ""
+
+  override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean =
+    lspIntentionAction?.isAvailable(project, editor, psiFile) == true
+
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo =
+    lspIntentionAction?.generatePreview(project, editor, psiFile) ?: IntentionPreviewInfo.EMPTY
+
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
+    lspIntentionAction?.invoke(project, editor, psiFile)
+  }
 }
