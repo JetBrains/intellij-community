@@ -10,22 +10,39 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Holds the urls of the roots a settings context anchors on: the topmost content roots of the project, with every
  * nested one dropped. See [topmostContentRoots].
  *
- * The urls are computed on first use and dropped when the project model changes.
+ * The urls are computed on first use and dropped when the project model changes. The cache is the only listener of
+ * that change in settings v2. `BackendContentRootsApi` in `intellij.platform.settings.v2.backend.split` follows
+ * [rootsChanged] instead of its own listener, because two listeners of one event run in no defined order.
  */
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class SettingsRootsCache(private val project: Project, scope: CoroutineScope) {
+class SettingsRootsCache(private val project: Project, scope: CoroutineScope) {
   @Volatile
   private var rootUrls: List<String>? = null
+
+  private val rootsChangedSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  /**
+   * Emits after the cache drops the urls on a change of the project roots. The signal is conflated and holds no
+   * roots: a collector reads [rootUrls] after it.
+   */
+  val rootsChanged: SharedFlow<Unit> = rootsChangedSignal.asSharedFlow()
 
   init {
     project.messageBus.connect(scope).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         rootUrls = null
+        rootsChangedSignal.tryEmit(Unit)
       }
     })
   }

@@ -92,7 +92,8 @@ pins the slot of a multidimensional setting without changing the context.
 - A root that only shares a name prefix with another root must survive.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsRootCollapsingTest.kt
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
-- The anchor roots must be computed again after the project roots change.
+- The anchor roots must be computed again after the project roots change. The roots cache must signal the change.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
 
 ### Identity
 

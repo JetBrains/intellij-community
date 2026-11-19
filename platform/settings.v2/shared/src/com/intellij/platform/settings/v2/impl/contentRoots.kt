@@ -15,8 +15,9 @@ import org.jetbrains.annotations.ApiStatus
  * Returns the topmost content roots of this project, sorted by url. It drops every root that lies under another
  * one. See [collapseNestedRoots].
  *
- * `SettingsRootsCache` in the backend module holds the urls of the result. `BackendContentRootsApi` in the remote-dev
- * backend split module sends the same result to the frontend, so both sides anchor on the same roots.
+ * `SettingsRootsCache` in `intellij.platform.settings.v2.backend` holds the urls of the result. `BackendContentRootsApi`
+ * in `intellij.platform.settings.v2.backend.split` sends the urls of that cache to the frontend, so both sides anchor
+ * on the same roots.
  */
 @ApiStatus.Internal
 @RequiresReadLock
@@ -28,8 +29,11 @@ fun Project.topmostContentRoots(): List<VirtualFile> {
 
 /**
  * Returns the urls of the roots that a file context of [project] anchors on. The first [SettingsContentRootsProvider]
- * answers. With no provider, as in a client light session, the base directory of the project is the only root. The
+ * answers. With no provider, as in a light session, the base directory of the project is the only root. The
  * fallback builds the url from the base path, with no VFS access.
+ *
+ * `ProjectModelContentRootsProvider` in `intellij.platform.settings.v2.backend` answers in the monolith and on the
+ * backend. `FrontendContentRootsProvider` in `intellij.platform.settings.v2.frontend.split` answers on the frontend.
  *
  * @param project the project whose roots to return
  * @return the root urls, or an empty list when the project has no roots
