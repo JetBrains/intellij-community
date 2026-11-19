@@ -12,8 +12,9 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Holds the settings keys that an integration test of the settings v2 writes and reads inside the IDE under test.
  * The keys belong to the plugin that loads this module. That is the lambda tests plugin, or the test keys plugin
- * `com.intellij.platform.settings.v2.testKeys.plugin` that a JetBrains Light test adds to the product. A test
- * reaches them over the lambda or the driver, so they live in the IDE and not in the test module.
+ * `com.intellij.platform.settings.v2.testKeys.plugin` that a JetBrains Light test and a client light session test add
+ * to the product. A test reaches them over the lambda or the driver, so they live in the IDE and not in the test
+ * module.
  */
 @ApiStatus.Internal
 object SettingsTestKeys {
