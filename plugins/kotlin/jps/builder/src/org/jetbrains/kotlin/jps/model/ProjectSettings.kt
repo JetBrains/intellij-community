@@ -61,21 +61,6 @@ class JpsKotlinCompilerSettings : JpsElementBase<JpsKotlinCompilerSettings>() {
         else -> commonCompilerArguments as T
     }
 
-    @Deprecated("Deprecated by IJ platform, don't use it")
-    override fun createCopy(): JpsKotlinCompilerSettings {
-        val copy = JpsKotlinCompilerSettings()
-        copy.commonCompilerArguments = this.commonCompilerArguments
-        copy.k2JvmCompilerArguments = this.k2JvmCompilerArguments
-        copy.compilerSettings = this.compilerSettings
-        copy.jpsPluginSettings = this.jpsPluginSettings
-        return copy
-    }
-
-    @Deprecated("Deprecated by IJ platform, don't use it")
-    override fun applyChanges(modified: JpsKotlinCompilerSettings) {
-        // do nothing
-    }
-
     companion object {
         internal val ROLE = JpsElementChildRoleBase.create<JpsKotlinCompilerSettings>("Kotlin Compiler Settings")
     }

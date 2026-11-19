@@ -21,7 +21,7 @@ class KotlinJpsBuilderTest : AbstractKotlinJpsBuilderTest() {
     assertTrue(File(output, "p/BKt.class").isFile)
     assertTrue(File(output, "META-INF/m.kotlin_module").isFile)
 
-    makeAll().assertUpToDate()
+    buildAllModules().assertUpToDate()
 
     change(getAbsolutePath("src/b.kt"), "package p\n\nfun b(): Int = a() + 2\n")
     buildAllModules().assertSuccessful()
@@ -29,7 +29,7 @@ class KotlinJpsBuilderTest : AbstractKotlinJpsBuilderTest() {
     assertTrue(File(output, "p/AKt.class").isFile)
     assertTrue(File(output, "META-INF/m.kotlin_module").isFile)
 
-    makeAll().assertUpToDate()
+    buildAllModules().assertUpToDate()
   }
 
   @Test

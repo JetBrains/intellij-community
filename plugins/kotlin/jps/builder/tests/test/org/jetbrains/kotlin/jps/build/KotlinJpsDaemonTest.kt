@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.jps.build
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.kotlin.cli.common.CompilerSystemProperties
 import org.jetbrains.kotlin.daemon.common.COMPILE_DAEMON_DEFAULT_SHUTDOWN_DELAY_MS
@@ -60,7 +60,7 @@ class KotlinJpsDaemonTest : AbstractKotlinJpsBuilderTest() {
         daemon.destroyForcibly()
       }
     }
-    FileUtil.delete(directory)
+    NioFiles.deleteRecursively(directory)
   }
 
   @Test

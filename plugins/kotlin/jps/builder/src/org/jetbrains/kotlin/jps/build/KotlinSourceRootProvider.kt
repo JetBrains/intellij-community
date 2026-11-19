@@ -15,7 +15,7 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.KotlinResourceRootType
 import org.jetbrains.kotlin.config.KotlinSourceRootType
@@ -58,45 +58,48 @@ class KotlinSourceRootProvider : AdditionalRootsProviderService<JavaSourceRootDe
             )
         }
 
-        // new multiplatform model support:
-        if (target.isTests == module.isTestModule) {
-            module.sourceSetModules.forEach { sourceSetModule ->
-                addModuleSourceRoots(result, sourceSetModule, target)
-            }
-        }
-
-        // legacy multiplatform model support:
-        module.expectedByModules.forEach { commonModule ->
-            addModuleSourceRoots(result, commonModule, target)
+        for (includedSourceRoot in moduleBuildTarget.includedModuleSourceRoots()) {
+            val javaSourceRootProperties = includedSourceRoot.properties as? JavaSourceRootProperties
+            result.add(
+                JavaSourceRootDescriptor.createJavaSourceRootDescriptor(
+                    includedSourceRoot.file,
+                    target,
+                    javaSourceRootProperties?.isForGeneratedSources ?: false,
+                    false,
+                    javaSourceRootProperties?.packagePrefix ?: "",
+                    setOf(),
+                    FileFilters.EVERYTHING,
+                )
+            )
         }
 
         return result
     }
+}
 
-    private fun addModuleSourceRoots(
-        result: MutableList<JavaSourceRootDescriptor>,
-        module: JpsModule,
-        target: ModuleBuildTarget
-    ) {
-        for (commonSourceRoot in module.sourceRoots) {
-            val isCommonTestsRootType = commonSourceRoot.rootType.isTestsRootType
-            if (isCommonTestsRootType != null && target.isTests == isCommonTestsRootType) {
-                val javaSourceRootProperties = commonSourceRoot.properties as? JavaSourceRootProperties
-
-                result.add(
-                    KotlinIncludedModuleSourceRoot(
-                        commonSourceRoot.file,
-                        target,
-                        javaSourceRootProperties?.isForGeneratedSources ?: false,
-                        false,
-                        javaSourceRootProperties?.packagePrefix ?: "",
-                        setOf()
-                    )
-                )
-            }
+/**
+ * Returns the source roots of the other modules that the Kotlin builder compiles as a part of this target.
+ * These are the roots of the source set modules and of the `expectedBy` modules.
+ */
+internal fun ModuleBuildTarget.includedModuleSourceRoots(): List<JpsModuleSourceRoot> {
+    val includedModules = buildList {
+        // new multiplatform model support:
+        if (isTests == module.isTestModule) {
+            addAll(module.sourceSetModules)
         }
+        // legacy multiplatform model support:
+        addAll(module.expectedByModules)
+    }
+    return includedModules.flatMap { includedModule ->
+        includedModule.sourceRoots.filter { it.rootType.isTestsRootType == isTests }
     }
 }
+
+/**
+ * Returns the root directories of [includedModuleSourceRoots]. The sources under these directories are cross compiled.
+ */
+internal fun ModuleBuildTarget.includedModuleSourceRootFiles(): Set<File> =
+    includedModuleSourceRoots().mapTo(HashSet()) { it.file }
 
 private val JpsModuleSourceRootType<*>.isTestsRootType
     get() = when (this) {
@@ -107,13 +110,3 @@ private val JpsModuleSourceRootType<*>.isTestsRootType
         is JavaResourceRootType -> this == JavaResourceRootType.TEST_RESOURCE
         else -> null
     }
-
-@Suppress("DEPRECATION") // KT-81463
-class KotlinIncludedModuleSourceRoot(
-    root: File,
-    target: ModuleBuildTarget,
-    isGenerated: Boolean,
-    isTemp: Boolean,
-    packagePrefix: String,
-    excludes: Set<File>
-) : JavaSourceRootDescriptor(root, target, isGenerated, isTemp, packagePrefix, excludes, FileFilters.EVERYTHING)

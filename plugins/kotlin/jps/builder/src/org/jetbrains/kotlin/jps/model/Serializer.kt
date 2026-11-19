@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.config.KotlinCommonJpsModelSerializerExtension
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.deserializeFacetSettings
-import org.jetbrains.kotlin.config.serializeFacetSettings
 
 class KotlinModelSerializerService : KotlinCommonJpsModelSerializerExtension() {
     override fun getProjectExtensionSerializers() = listOf(
@@ -46,15 +45,6 @@ object JpsKotlinFacetConfigurationSerializer : JpsFacetConfigurationSerializer<J
     ): JpsKotlinFacetModuleExtension {
         return JpsKotlinFacetModuleExtension(deserializeFacetSettings(facetConfigurationElement))
     }
-
-    @Deprecated("Deprecated by IJ platform, don't use it")
-    override fun saveExtension(
-        extension: JpsKotlinFacetModuleExtension?,
-        facetConfigurationTag: Element,
-        module: JpsModule
-    ) {
-        (extension as JpsKotlinFacetModuleExtension).settings.serializeFacetSettings(facetConfigurationTag)
-    }
 }
 
 abstract class BaseJpsCompilerSettingsSerializer<in T : Any>(
@@ -71,10 +61,6 @@ abstract class BaseJpsCompilerSettingsSerializer<in T : Any>(
         }
         XmlSerializer.deserializeInto(settings, componentTag)
         onLoad(project, settings)
-    }
-
-    @Deprecated("Deprecated by IJ platform, don't use it")
-    override fun saveExtension(project: JpsProject, componentTag: Element) {
     }
 }
 

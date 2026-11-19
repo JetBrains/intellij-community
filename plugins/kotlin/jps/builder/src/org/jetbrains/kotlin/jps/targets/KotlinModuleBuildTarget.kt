@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.jps.build.KotlinBuilder
 import org.jetbrains.kotlin.jps.build.KotlinChunk
 import org.jetbrains.kotlin.jps.build.KotlinCompileContext
 import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder
-import org.jetbrains.kotlin.jps.build.KotlinIncludedModuleSourceRoot
+import org.jetbrains.kotlin.jps.build.includedModuleSourceRootFiles
 import org.jetbrains.kotlin.jps.build.isKotlinSourceFile
 import org.jetbrains.kotlin.jps.build.productionBuildTarget
 import org.jetbrains.kotlin.jps.buildtools.JpsCompilerMessageSink
@@ -102,10 +102,11 @@ abstract class KotlinModuleBuildTarget internal constructor(
     val result = LinkedHashMap<File, Source>()
     val moduleExcludes = module.excludeRootsList.urls.mapTo(HashSet(), JpsPathUtil::urlToFile)
     val compilerExcludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.project).compilerExcludes
+    val includedRootFiles = jpsModuleBuildTarget.includedModuleSourceRootFiles()
 
     val roots = localContext.projectDescriptor.buildRootIndex.getTargetRoots(jpsModuleBuildTarget, localContext)
     for (rootDescriptor in roots) {
-      val isCrossCompiled = rootDescriptor is KotlinIncludedModuleSourceRoot
+      val isCrossCompiled = rootDescriptor.root in includedRootFiles
       rootDescriptor.root.walkTopDown()
         .onEnter { it !in moduleExcludes }
         .forEach { file ->

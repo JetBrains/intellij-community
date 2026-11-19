@@ -22,12 +22,13 @@ class KotlinDirtySourceFilesHolder(
 ) {
   class TargetFiles(val target: ModuleBuildTarget, val removed: Collection<File>) {
     private val mutableDirty = LinkedHashMap<File, KotlinModuleBuildTarget.Source>()
+    private val includedRootFiles by lazy { target.includedModuleSourceRootFiles() }
 
     val dirty: Map<File, KotlinModuleBuildTarget.Source>
       get() = mutableDirty
 
     internal fun markDirty(file: File, root: JavaSourceRootDescriptor) {
-      val isCrossCompiled = root is KotlinIncludedModuleSourceRoot
+      val isCrossCompiled = root.root in includedRootFiles
       val key = file.normalize().absoluteFile
       val old = mutableDirty.put(key, KotlinModuleBuildTarget.Source(file, isCrossCompiled))
       check(old == null || old.isCrossCompiled == isCrossCompiled) {

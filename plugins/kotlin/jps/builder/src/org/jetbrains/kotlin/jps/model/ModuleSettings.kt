@@ -48,7 +48,7 @@ private fun JpsModule.findDependencies(moduleNames: List<String>?): List<JpsModu
     val result = mutableSetOf<JpsModule>()
 
     JpsJavaExtensionService.dependencies(this)
-        .processModules {
+        .forEachModule {
             if (it.name in moduleNames) {
                 // Note, production sources should be added for both production and tests targets
                 result.add(it)
@@ -96,22 +96,11 @@ private inline fun <reified T : CommonCompilerArguments> JpsModule.getCompilerAr
     return facetSettings.mergedCompilerArguments as? T ?: projectSettingsCopy
 }
 
-class JpsKotlinFacetModuleExtension(settings: KotlinFacetSettings) : JpsElementBase<JpsKotlinFacetModuleExtension>() {
-    var settings = settings
-        private set
-
+class JpsKotlinFacetModuleExtension(val settings: KotlinFacetSettings) : JpsElementBase<JpsKotlinFacetModuleExtension>() {
     companion object {
         val KIND = JpsElementChildRoleBase.create<JpsKotlinFacetModuleExtension>("kotlin facet extension")
         // These must be changed in sync with KotlinFacetType.TYPE_ID and KotlinFacetType.NAME
         val FACET_TYPE_ID = "kotlin-language"
         val FACET_NAME = "Kotlin"
-    }
-
-    @Deprecated("Deprecated by IJ platform, don't use it")
-    override fun createCopy() = JpsKotlinFacetModuleExtension(settings)
-
-    @Deprecated("Deprecated by IJ platform, don't use it")
-    override fun applyChanges(modified: JpsKotlinFacetModuleExtension) {
-        this.settings = modified.settings
     }
 }
