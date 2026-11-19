@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ExactNameTempDirTestFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplateProvider
 import com.intellij.project.TestProjectManager
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
@@ -27,6 +28,7 @@ import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.fixtures.JavaIndexingModeCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
@@ -35,6 +37,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.nio.file.Path
 import java.util.function.Function
@@ -47,11 +50,13 @@ import kotlin.io.path.deleteRecursively
  * The project of a test that creates its own modules.
  * [module] is the module of [javaModulesCodeInsightFixture]. The test creates its files in [sourceRoot].
  */
+@TestOnly
 open class JavaModulesProject(val project: Project, val module: Module, val sourceRoot: Path)
 
 /**
  * The project that [multiModuleProjectFixture] creates from [descriptor].
  */
+@TestOnly
 class MultiModuleProject internal constructor(
   val descriptor: MultiModuleProjectDescriptor,
   project: Project,
@@ -70,6 +75,7 @@ class MultiModuleProject internal constructor(
  * [JavaModulesProject.module] is the main module of the descriptor, and [JavaModulesProject.sourceRoot] is its last source root.
  * After the test, the fixture closes the project and deletes [MultiModuleProjectDescriptor.getProjectPath].
  */
+@TestOnly
 fun multiModuleProjectFixture(
   descriptor: Function<String, MultiModuleProjectDescriptor>,
 ): TestFixture<MultiModuleProject> = testFixture("multiModuleProjectFixture") { context ->
@@ -118,6 +124,7 @@ fun multiModuleProjectFixture(
  * Creates the project of a [MultiModuleProjectDescriptor] for one test, as the other `multiModuleProjectFixture` does.
  * Use this form when the descriptor does not depend on the name of the test method.
  */
+@TestOnly
 fun multiModuleProjectFixture(
   descriptor: Supplier<MultiModuleProjectDescriptor>,
 ): TestFixture<MultiModuleProject> = multiModuleProjectFixture { _: String -> descriptor.get() }
@@ -125,6 +132,7 @@ fun multiModuleProjectFixture(
 /**
  * Registers [sdk] in the SDK table until [parentDisposable] is disposed, as a JUnit 3 light test does with the SDK of its descriptor.
  */
+@TestOnly
 suspend fun registerJavaModulesSdk(sdk: Sdk, parentDisposable: Disposable) {
   edtWriteAction {
     ProjectJdkTable.getInstance().addJdk(sdk, parentDisposable)
@@ -136,6 +144,7 @@ suspend fun registerJavaModulesSdk(sdk: Sdk, parentDisposable: Disposable) {
  * The module gets [sdk] and [languageLevel], and a content root and a source root for each entry of [sourceRoots].
  * The function creates the directory of each source root.
  */
+@TestOnly
 suspend fun createJavaModule(
   project: Project,
   moduleFile: Path,
@@ -170,12 +179,14 @@ suspend fun createJavaModule(
  *
  * The test creates its files in [JavaModulesProject.sourceRoot] with their exact names.
  * The fixture sets the project language level to [LanguageLevel.JDK_1_6], as `LightJavaCodeInsightFixtureTestCase.setUp` does.
+ * In a run of an `@IndexingModeTemplate` class, the fixture runs in the indexing mode of the run.
  * After the test, it deletes the files in [JavaModulesProject.sourceRoot], as the light temporary directory of a JUnit 3 test does.
  */
+@TestOnly
 fun javaModulesCodeInsightFixture(
   projectFixture: TestFixture<JavaModulesProject>,
   testDataPath: String,
-): TestFixture<JavaCodeInsightTestFixture> = testFixture("javaModulesCodeInsightFixture") {
+): TestFixture<JavaCodeInsightTestFixture> = testFixture("javaModulesCodeInsightFixture") { context ->
   val modulesProject = projectFixture.init()
   val project = modulesProject.project
   val ideaProjectFixture = object : IdeaProjectTestFixture {
@@ -200,8 +211,11 @@ fun javaModulesCodeInsightFixture(
       }
     }
   }
-  val codeInsightFixture = NonTrackingJavaModulesCodeInsightTestFixture(ideaProjectFixture,
-                                                                        ExactNameTempDirTestFixture(modulesProject.sourceRoot))
+  val indexingMode = IndexingModeTemplateProvider.getIndexingMode(context.extensionContext)
+  val codeInsightFixture = JavaIndexingModeCodeInsightTestFixture.wrapFixture(
+    NonTrackingJavaModulesCodeInsightTestFixture(ideaProjectFixture, ExactNameTempDirTestFixture(modulesProject.sourceRoot)),
+    indexingMode,
+  )
   codeInsightFixture.testDataPath = testDataPath
   codeInsightFixture.setUp()
   withContext(Dispatchers.EDT) {
@@ -220,6 +234,7 @@ fun javaModulesCodeInsightFixture(
 /**
  * Deletes the files and the directories in [directory] through the VFS.
  */
+@TestOnly
 suspend fun deleteChildren(project: Project, directory: Path) {
   val root = withContext(Dispatchers.IO) {
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(directory)
@@ -236,6 +251,7 @@ suspend fun deleteChildren(project: Project, directory: Path) {
 /**
  * Does not check the virtual file pointers in [tearDown]. The JUnit 5 leak check after the test checks them.
  */
+@TestOnly
 private class NonTrackingJavaModulesCodeInsightTestFixture(
   projectFixture: IdeaProjectTestFixture,
   tempDir: TempDirTestFixture,
