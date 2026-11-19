@@ -141,7 +141,7 @@ private fun collectOverriddenJavaDefaultMethods(
     javaDefaultMethods: Set<KaCallableSymbol>,
 ): Sequence<KaCallableSymbol> = callables.flatMap { callable ->
     callable.allOverriddenSymbols.filter(javaDefaultMethods::contains)
-}
+}.distinct()
 
 private fun KaCallableSymbol.isJavaDefaultMethod(): Boolean {
     val method = (psi as? PsiMethod)?.takeIf { it.isTrueJavaMethod() } ?: return false
