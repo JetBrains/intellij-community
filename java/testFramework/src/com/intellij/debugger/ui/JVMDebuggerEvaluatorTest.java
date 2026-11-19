@@ -11,6 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
+/**
+ * @deprecated Use {@code codeInsightFixture} in a JUnit 6 test, as {@code JavaDebuggerEvaluatorTest} does.
+ */
+@Deprecated
 public abstract class JVMDebuggerEvaluatorTest extends LightPlatformCodeInsightTestCase {
 
   protected static final class ExpectedExpression {
