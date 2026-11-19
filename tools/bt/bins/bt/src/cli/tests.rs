@@ -7,7 +7,7 @@ use std::path::Path;
 use bt_core::Refusal;
 use pretty_assertions::assert_eq;
 
-use super::{PROGRAM, report, run};
+use super::{Boundary, PROGRAM, report, run};
 use crate::execute::{JsonFailure, JsonPayload, Outcome};
 use bt_core::exit;
 use bt_core::result::RunStatus;
@@ -25,7 +25,11 @@ struct Answer {
 fn invoke(repo_root: Option<&Path>, argv: &[&str]) -> Answer {
     let mut stdout = Vec::new();
     let mut stderr = Vec::new();
-    let exit_code = run(argv, repo_root, false, &mut stdout, &mut stderr);
+    let boundary = Boundary {
+        repo_root,
+        ..Boundary::default()
+    };
+    let exit_code = run(argv, &boundary, &mut stdout, &mut stderr);
     Answer {
         exit_code,
         stdout: String::from_utf8_lossy(&stdout).into_owned(),

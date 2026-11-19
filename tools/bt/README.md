@@ -64,6 +64,11 @@ stopped, and that test is not a failure. The `--json` payload lists the shard in
 such a target in the run want more than two shards, bt raises its record in the plan, so the next run makes it a
 heavy target.
 
+The digest of a test run ends with a `time` line: the build of bt by `bt.cmd` (`BT_SELF_BUILD_MS`, from the build
+metrics of its `bazel build`), the two reads of the check record, and the bazel commands with the analysis phase that
+bazel reports. A narrow cached run is almost all of that, so the line shows where its time went without a profile. A
+part of 10 s or more gets a `note` line with its cause and what to do.
+
 ## Modules
 
 `--module <jps module>` runs the test target of a JPS module. `crates/bt-core/src/modules.rs` resolves it. A test
@@ -117,12 +122,15 @@ A green run records the tree of the checkout that it saw, for `brd lease pick` o
 bt is the only writer. `bins/bt/src/check.rs` holds the rules:
 
 1. Only a linked work tree records, such as a lease of Branch Deck: its `.git` is a file. The main checkout pays one
-   stat and records nothing, because no pick lands it.
+   stat and records nothing, because no pick lands it. A host slot of `brd-host` records nothing either: the agent
+   sets `BD_HOST_RUN` for its command, no pick lands the slot, and the client records the commit (rule 5).
 2. The tree is `HEAD^{tree}` of a clean work tree. With local changes, it is the tree that `git add -A` would give,
    which `Runtime::checkout_tree` writes from a copy of the index. The index of the work tree stays as it was. An
    untracked nested checkout is left out, and a directory replaced by a symbolic link gives a warning and no record.
 3. A local run reads the tree before its first bazel spawn and again after a green result. It records only when both
-   are the same tree. A red run, a dry run and a run during which the files changed record nothing.
+   are the same tree. A red run, a dry run and a run during which the files changed record nothing. Each read is one
+   `git status --untracked-files=all`. Git keeps its untracked cache only for the mode of `status.showUntrackedFiles`,
+   so in the monorepo a read takes about 1.5 s with `status.showUntrackedFiles=all` and 17-49 s without it.
 4. A record of a tree with local changes names those paths on the stderr. The pick finds the record only for a commit
    of the same files, so commit or delete scratch files before the last check.
 5. A `--host` run records the tree of the commit that the report of `brd-host` names as the one that ran.

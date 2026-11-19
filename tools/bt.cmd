@@ -83,6 +83,8 @@ polyglot_exec_override bt AIR_BT_BIN 6 "$@"
 # the two wrappers on one number.**
 polyglot_build_binary bt "$target" 6 bt
 
+# The digest of the run names the time of this build, so the wait of a narrow run is not a mystery.
+export BT_SELF_BUILD_MS="$built_wall_ms"
 exec "$resolved" "$@"
 
 :CMDSCRIPT

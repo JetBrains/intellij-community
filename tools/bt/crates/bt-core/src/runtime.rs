@@ -174,6 +174,12 @@ pub trait Runtime: Sync {
     /// Wall-clock milliseconds. Only differences are used, so a fake can start anywhere.
     fn now_ms(&self) -> u64;
 
+    /// How long the wrapper built this binary before it started it, in milliseconds, or `None` when the wrapper named
+    /// no time. `bt.cmd` names it in `BT_SELF_BUILD_MS`, from the build metrics of its `bazel build`.
+    fn self_build_ms(&self) -> Option<u64> {
+        None
+    }
+
     /// The digest's destination. [`Runtime::write_error`] takes progress and diagnostics; the split is the whole
     /// reason `--json` stdout stays machine-clean.
     fn write(&self, text: &str);

@@ -1131,7 +1131,8 @@ fn a_full_run_spawns_bazel_once_digests_the_result_and_deletes_the_bep_file() {
         spawned[0]
     );
     assert_eq!(outcome.exit_code, exit::GREEN);
-    assert_eq!(outcome.text, format!("PASS  2 tests  5.0s  {CORE_LABEL}"));
+    // The fake bazel takes 5 s; the fake wrapper names no build time, and the fake checkout is no linked work tree.
+    assert_eq!(outcome.text, format!("PASS  2 tests  5.0s  {CORE_LABEL}\ntime   bazel 5.0s"));
     // No payload without --json: stdout stays untouched for a caller that did not ask for one.
     assert_eq!(outcome.json, None);
     assert_eq!(fake.state().removed, [BEP_PATH]);

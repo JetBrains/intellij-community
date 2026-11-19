@@ -123,6 +123,8 @@ pub struct State {
     /// The questions that [`Runtime::confirm`] was asked, in order.
     pub questions: Vec<String>,
     pub clock: u64,
+    /// The answer of [`Runtime::self_build_ms`].
+    pub self_build_ms: Option<u64>,
     /// Makes every read fail loudly on top of being recorded. Both matter: the production helpers swallow a
     /// missing file, so a failure alone could be absorbed into an empty scan and read as success, while the
     /// recording alone would let a swallowed failure pass for laziness.
@@ -455,6 +457,10 @@ impl Runtime for FakeRuntime {
 
     fn now_ms(&self) -> u64 {
         self.state().clock
+    }
+
+    fn self_build_ms(&self) -> Option<u64> {
+        self.state().self_build_ms
     }
 
     fn write(&self, text: &str) {

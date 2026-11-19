@@ -55,6 +55,7 @@ pub struct OsRuntime {
     repo_root: PathBuf,
     spawner: Spawner,
     host_slot: bool,
+    self_build_ms: Option<u64>,
     write: Sink,
     write_error: Sink,
 }
@@ -64,6 +65,7 @@ pub struct OsRuntimeBuilder {
     repo_root: PathBuf,
     spawner: Spawner,
     host_slot: bool,
+    self_build_ms: Option<u64>,
     write: Option<Sink>,
     write_error: Option<Sink>,
 }
@@ -77,6 +79,7 @@ impl OsRuntime {
             repo_root: repo_root.into(),
             spawner: Spawner::Refuse,
             host_slot: false,
+            self_build_ms: None,
             write: None,
             write_error: None,
         }
@@ -115,6 +118,13 @@ impl OsRuntimeBuilder {
         self
     }
 
+    /// How long the wrapper built this binary, see [`Runtime::self_build_ms`]. The default is `None`.
+    #[must_use]
+    pub fn self_build_ms(mut self, self_build_ms: Option<u64>) -> Self {
+        self.self_build_ms = self_build_ms;
+        self
+    }
+
     /// The digest's destination. The default is the process's stdout, one line per call.
     #[must_use]
     pub fn write(mut self, sink: impl Fn(&str) + Send + Sync + 'static) -> Self {
@@ -135,6 +145,7 @@ impl OsRuntimeBuilder {
             repo_root: self.repo_root,
             spawner: self.spawner,
             host_slot: self.host_slot,
+            self_build_ms: self.self_build_ms,
             // A handle per call rather than a held lock: the heartbeat writes from its own thread while the run is
             // in progress.
             write: self.write.unwrap_or_else(|| Box::new(|text| write_line(&mut io::stdout(), text))),
@@ -889,6 +900,10 @@ impl Runtime for OsRuntime {
 
     fn now_ms(&self) -> u64 {
         SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, millis)
+    }
+
+    fn self_build_ms(&self) -> Option<u64> {
+        self.self_build_ms
     }
 
     fn write(&self, text: &str) {

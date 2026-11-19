@@ -821,3 +821,56 @@ fn a_no_tests_run_where_a_target_ran_tests_gives_no_filter_hint() {
     let digest = render_digest(&result, &hinted);
     assert!(!digest.contains("hint      H"), "{digest}");
 }
+
+/// The `time` line names each part of a narrow run that bt knows. A part without a time, such as the build of a binary
+/// that no wrapper started, is left out. A slow part gets a `note` with its cause and its fix.
+#[test]
+fn the_time_line_names_the_parts_of_the_run_and_a_note_for_each_slow_one() {
+    let quick = RunTime {
+        self_build_ms: Some(2_100),
+        check_record_ms: 1_500,
+        bazel_ms: 4_000,
+        analysis_ms: 1_100,
+    };
+    assert_eq!(
+        render_time(&quick),
+        ["time   bt build 2.1s · check record 1.5s · bazel 4.0s (analysis 1.1s)"]
+    );
+    let bare = RunTime {
+        bazel_ms: 4_000,
+        ..RunTime::default()
+    };
+    assert_eq!(render_time(&bare), ["time   bazel 4.0s"]);
+
+    let slow = render_time(&RunTime {
+        self_build_ms: Some(34_800),
+        check_record_ms: 48_300,
+        bazel_ms: 30_000,
+        analysis_ms: 20_000,
+    });
+    assert_eq!(slow[0], "time   bt build 34.8s · check record 48.3s · bazel 30.0s (analysis 20.0s)");
+    assert!(slow[1].starts_with("note   bt built itself for 34.8s: "), "{slow:?}");
+    assert!(
+        slow[2].starts_with("note   the check record scanned the untracked files of the checkout for 48.3s. ")
+            && slow[2].contains("`git config status.showUntrackedFiles all`"),
+        "{slow:?}"
+    );
+    assert!(slow[3].starts_with("note   bazel spent 20.0s of 30.0s in analysis: "), "{slow:?}");
+    assert_eq!(slow.len(), 4);
+}
+
+/// The digest of a run ends with its `time` line when the run measured one.
+#[test]
+fn the_digest_ends_with_the_time_line() {
+    let text = render_digest(
+        &digest_result(|_| {}),
+        &RenderOptions {
+            time: Some(RunTime {
+                bazel_ms: 3_300,
+                ..RunTime::default()
+            }),
+            ..RenderOptions::default()
+        },
+    );
+    assert_eq!(text.lines().last(), Some("time   bazel 3.3s"), "{text}");
+}

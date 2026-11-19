@@ -216,6 +216,18 @@ describe("the build step", () => {
     equal(result.stderr, "bazel noise\n")
   })
 
+  it("bt gets the wall time of its build from the build metrics, and an empty value without them", async () => {
+    const {tools} = await checkout("build-time", ["bt.cmd"])
+    const binary = await fakeBinary("build-time", "bt", 'printf "[%s]\\n" "$BT_SELF_BUILD_MS"')
+    const metrics = '{"id":{"buildMetrics":{}},"buildMetrics":{"timingMetrics":{"cpuTimeInMs":"700","wallTimeInMs":"2150"}}}'
+    const timed = bash([join(tools, "bt.cmd")], {env: {STUB_BAZEL_EVENTS: [namedSetOfFiles([binary]), metrics].join("\n")}})
+    equal(timed.status, 0, timed.stderr)
+    equal(timed.stdout, "[2150]\n")
+    const untimed = bash([join(tools, "bt.cmd")], {env: {STUB_BAZEL_EVENTS: namedSetOfFiles([binary])}})
+    equal(untimed.status, 0, untimed.stderr)
+    equal(untimed.stdout, "[]\n")
+  })
+
   it("bt exits 6 when the build fails, and 6 when the event file names no binary", async () => {
     const {tools} = await checkout("build-fails", ["bt.cmd"])
     const failed = bash([join(tools, "bt.cmd")], {env: {STUB_BAZEL_FAIL: "1", STUB_BAZEL_EVENTS: ""}})

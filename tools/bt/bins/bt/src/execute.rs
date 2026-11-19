@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use crate::build::execute_build;
 use crate::check::{Check, CheckCommand, record_green_run, tree_before_run};
 use crate::digest::{
-    DEFAULT_MAX_FRAMES, RenderOptions, failure_detail, failure_message, failure_type, format_duration, render_digest, rerun_selector,
-    tail_lines, trim_frames,
+    DEFAULT_MAX_FRAMES, RenderOptions, RunTime, failure_detail, failure_message, failure_type, format_duration, render_digest,
+    rerun_selector, tail_lines, trim_frames,
 };
 use crate::options::{Args, Invocation, parse_args};
 use crate::prepare::{Prepare, prepare_host};
@@ -353,7 +353,9 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     };
     // A green run records this tree only when the files are the same after it. bt reads it before the first bazel
     // command of the run, such as the query of the groups. A dry run records nothing.
+    let record_started = runtime.now_ms();
     let tree_before = if args.dry_run { None } else { tree_before_run(runtime) };
+    let mut check_record_ms = runtime.now_ms().saturating_sub(record_started);
     let groups = if !(planned && owns_bep_file) {
         Groups::default()
     } else if args.dry_run {
@@ -513,8 +515,16 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             patterns: &patterns,
             host: None,
         };
+        let record_started = runtime.now_ms();
         record_green_run(runtime, tree_before.as_ref(), &check);
+        check_record_ms += runtime.now_ms().saturating_sub(record_started);
     }
+    let time = RunTime {
+        self_build_ms: runtime.self_build_ms(),
+        check_record_ms,
+        bazel_ms: result.duration_ms,
+        analysis_ms: bep.analysis_ms,
+    };
 
     // The rerun selector rather than the test case id, and quoted rather than wrapped in bare single quotes: a
     // Kotlin backticked name holds apostrophes, and a display name is no selector at all.
@@ -536,6 +546,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             no_tests_hint,
             kept_run,
             class_time_budget_violations,
+            time: Some(time),
         },
     );
     Ok(Outcome {
