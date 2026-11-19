@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.getEnumValue
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.isCustomEnum
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.coroutineOrGeneratorElementType
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isFinalClass
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isInsideTypeHint
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GeneratorTypeDescriptor
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GeneratorTypeDescriptor.Companion.fromGeneratorOrProtocol
@@ -45,6 +46,7 @@ import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyComprehensionElement
 import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyDisjointBaseUtil.areDisjoint
 import com.jetbrains.python.psi.PyDoubleStarExpression
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression
@@ -89,6 +91,7 @@ import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.impl.ResolvedOperator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
+import com.jetbrains.python.psi.types.PyABCUtil.SUPPORTS_KEYS_AND_GET_ITEM
 import com.jetbrains.python.psi.types.PyABCUtil.isSubtype
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableArgument
@@ -127,6 +130,7 @@ import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeMap
+import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.getCallableItems
 import com.jetbrains.python.psi.types.PyTypeUtil.isReadOnlyAttribute
@@ -608,13 +612,13 @@ open class PyTypeCheckerInspection : PyInspection() {
     override fun visitPyDoubleStarExpression(node: PyDoubleStarExpression) {
       // Check that **expr in dict literals ({**a}) has a mapping type
       if (node.parent is PyDictLiteralExpression) {
-        checkUnpackMappingValue(node.expression)
+        checkUnpackMappingValue(node.expression, requiresStringKeys = false)
       }
     }
 
     override fun visitPyStarArgument(node: PyStarArgument) {
       if (node.isKeyword) {
-        checkUnpackMappingValue(node.expression)
+        checkUnpackMappingValue(node.expression, requiresStringKeys = true)
       }
       else {
         checkUnpackIterableValue(node.expression)
@@ -1758,19 +1762,59 @@ open class PyTypeCheckerInspection : PyInspection() {
       return false
     }
 
-    private fun checkUnpackMappingValue(mappingValue: PyExpression?) {
+    /**
+     * Checks the operand of `**`. CPython needs only `keys()` and `__getitem__` of the operand.
+     * A call needs `str` keys too, so [requiresStringKeys] is true for a `**` argument and false in a dict display.
+     */
+    private fun checkUnpackMappingValue(mappingValue: PyExpression?, requiresStringKeys: Boolean) {
       var value: PyExpression? = mappingValue ?: return
       if (value is PyDoubleStarExpression) value = value.expression
       if (value == null) return
       val type = myTypeEvalContext.getType(value)
-      if (type != null && !isUnknown(type, myTypeEvalContext) &&
-          // TODO: it's not Mapping, but a more wider type
-          !isSubtype(type, PyNames.MAPPING, myTypeEvalContext)) {
+      if (type == null || isUnknown(type, myTypeEvalContext)) return
+      if (!isSubtype(type, SUPPORTS_KEYS_AND_GET_ITEM, myTypeEvalContext)) {
         PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.NOT_MAPPING, value,
                                             PyPsiBundle.problemMessage("INSP.type.checker.unpack.expected.mapping",
                                                                        CodifiedParam.ofType(type, value, myTypeEvalContext)),
                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        return
       }
+      if (requiresStringKeys) checkKeywordUnpackingKeys(value, type)
+    }
+
+    /**
+     * Reports a `**` argument whose keys cannot be `str`, as CPython raises "keywords must be strings".
+     * A key type such as `object`, `str | int` or a user class can hold `str` keys, so it is not reported.
+     */
+    private fun checkKeywordUnpackingKeys(value: PyExpression, type: PyType) {
+      val strType = PyBuiltinCache.getInstance(value).strType ?: return
+      val members = type.asUnionSequence().filter { !it.isAnyOrUnknown }.toList()
+      if (members.isEmpty()) return
+      for (member in members) {
+        val keyType = mappingKeyType(member, value) ?: return
+        if (keyType.containsAny(context = myTypeEvalContext)) return
+        if (!keyType.asUnionSequence().all { isDisjointFromStr(it, strType) }) return
+      }
+      PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.BAD_ARGUMENT_TYPE, value,
+                                          PyPsiBundle.problemMessage("INSP.type.checker.unpack.expected.string.keys",
+                                                                     CodifiedParam.ofType(type, value, myTypeEvalContext)),
+                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+    }
+
+    /**
+     * True when no instance of [type] can be a `str`.
+     * That is a final class, or a class with a disjoint base (PEP 800) that conflicts with `str`, such as `int` or `bytes`.
+     */
+    private fun isDisjointFromStr(type: PyType?, strType: PyClassType): Boolean {
+      if (type !is PyClassType || type.isDefinition) return false
+      if (match(strType, type, myTypeEvalContext) || match(type, strType, myTypeEvalContext)) return false
+      return isFinalClass(type.pyClass, myTypeEvalContext) || areDisjoint(strType, type, myTypeEvalContext)
+    }
+
+    /** The key type of [type] as `_typeshed.SupportsKeysAndGetItem` sees it, or `null` when it does not match the protocol. */
+    private fun mappingKeyType(type: PyType?, anchor: PsiElement): PyType? {
+      val converted = type.convertToType(SUPPORTS_KEYS_AND_GET_ITEM_QNAME, anchor, myTypeEvalContext) as? PyClassType ?: return null
+      return converted.typeArguments.firstOrNull()
     }
 
     private fun targetOrResolvedHasExplicitType(target: PyTargetExpression): Boolean {
@@ -2349,5 +2393,7 @@ open class PyTypeCheckerInspection : PyInspection() {
     private val TIME_KEY = Key.create<Long>("PyTypeCheckerInspection.StartTime")
 
     private const val STRICT_UNION_COMBINATION_LIMIT: Int = 16
+
+    private const val SUPPORTS_KEYS_AND_GET_ITEM_QNAME: String = "_typeshed.$SUPPORTS_KEYS_AND_GET_ITEM"
   }
 }
