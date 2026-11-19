@@ -29,4 +29,8 @@
     <module name="intellij.kmm.wizard" loading="optional"/>
   </content>
 
+  <content>
+    <module name="intellij.marketplace.statisticsCompat" loading="optional"/>
+  </content>
+
 </idea-plugin>

@@ -38,6 +38,7 @@ dist_plugin_descriptor(
     refused_content_modules = [
         "intellij.libraries.kmp.wizard.shared",
         "intellij.kmm.wizard",
+        "intellij.marketplace.statisticsCompat",
     ],
 )
 

@@ -48,6 +48,7 @@ ij_plugin(
             # do not sort,
             "@@//CIDR-appcode/kmm-wizard/shared:shared_plugin_module",
             "@@//CIDR-appcode/kmm-wizard/core:kmm-wizard",
+            "@@//plugins/marketplace/statisticsCompat",
         ],
         "//conditions:default": [],
     }),
