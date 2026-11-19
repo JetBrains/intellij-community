@@ -8,8 +8,13 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.setToolTipText
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.impl.ApplicationInfoImpl.DEFAULT_PLUGINS_HOST
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ide.CopyPasteManager
@@ -1183,7 +1188,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       if (activeOccurrence != null) {
         val category = categoryGroupsByPluginId[activeOccurrence.pluginId]?.category
         if (category != null) {
-          categoryHeaderViews[category]?.let { result.add(it.actionLink) }
+          categoryHeaderViews[category]?.let { result.add(it.actionComponent) }
           categoryPromotionPanels[category]?.let { addFocusableDescendants(it, result) }
         }
         result.add(checkNotNull(activeRow).component)
@@ -1375,8 +1380,30 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       font = font.deriveFont(Font.BOLD)
       foreground = UIUtil.getContextHelpForeground()
     }
-    val actionLink = ActionLink().apply {
-      addActionListener { state?.let(onAction) }
+    private val categoryAction = object : DumbAwareAction() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+      override fun update(event: AnActionEvent) {
+        event.presentation.text = state?.let(::categoryActionText)
+      }
+
+      override fun actionPerformed(event: AnActionEvent) {
+        state?.let(onAction)
+      }
+    }
+    private val moreActionsGroup = DefaultActionGroup(categoryAction).apply {
+      isPopup = true
+      templatePresentation.text = IdeBundle.message("inline.actions.more.actions.text")
+      templatePresentation.icon = AllIcons.Actions.More
+      templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
+    }
+    val actionComponent: JComponent = ActionButton(
+      moreActionsGroup,
+      moreActionsGroup.templatePresentation.clone(),
+      CATEGORY_ACTIONS_PLACE,
+      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE,
+    ).apply {
+      isFocusable = true
     }
     val component: JComponent = JPanel(BorderLayout()).apply {
       isOpaque = false
@@ -1387,7 +1414,10 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         SECTION_HEADER_RIGHT_INSET,
       )
       add(titleLabel, BorderLayout.CENTER)
-      add(actionLink, BorderLayout.EAST)
+      add(JPanel(GridBagLayout()).apply {
+        isOpaque = false
+        add(actionComponent)
+      }, BorderLayout.EAST)
       val fixedHeight = JBUI.scale(SECTION_HEADER_HEIGHT)
       preferredSize = Dimension(0, fixedHeight)
       minimumSize = Dimension(0, fixedHeight)
@@ -1398,7 +1428,10 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       this.state = state
       titleLabel.text = state.category
       component.accessibleContext.accessibleName = state.category
-      actionLink.text = IdeBundle.message(
+    }
+
+    private fun categoryActionText(state: BundledPluginCategoryGroupState): @Nls String {
+      return IdeBundle.message(
         when (state.action) {
           BundledPluginCategoryAction.EnableAll -> "plugins.configurable.enable.all"
           BundledPluginCategoryAction.DisableAll -> "plugins.configurable.disable.all"
@@ -1554,6 +1587,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
 
     const val ACTIVATE_SECTION_BUTTON: String = "activate-section-button"
     const val DETAILS_MIN_WIDTH: Int = 220
+    const val CATEGORY_ACTIONS_PLACE: String = "UnifiedPluginsBundledCategory"
     const val ERROR_INSET: Int = 10
     const val ERROR_LEFT_INSET: Int = 16
     const val ERROR_RETRY_GAP: Int = 8

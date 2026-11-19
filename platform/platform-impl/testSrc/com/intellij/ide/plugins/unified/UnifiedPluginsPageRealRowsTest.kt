@@ -5,9 +5,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.ui.LafManager
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Splitter
+import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.components.ActionLink
@@ -243,12 +248,16 @@ internal class UnifiedPluginsPageRealRowsTest {
       assertThat(titleLabel.font.style).isEqualTo(Font.BOLD)
       assertThat(titleLabel.foreground).isEqualTo(UIUtil.getContextHelpForeground())
     }
-    assertThat(headers.map { componentsOfType(it, ActionLink::class.java).single().text })
+    assertThat(headers.map { updatedText(categoryAction(it)) })
       .containsOnly(IdeBundle.message("plugins.configurable.enable.all"))
     assertThat(headers).allSatisfy { header ->
-      val action = componentsOfType(header, ActionLink::class.java).single()
-      assertThat(action.isFocusable).isTrue()
-      assertThat(action.accessibleContext.accessibleName).isEqualTo(action.text)
+      val button = componentsOfType(header, ActionButton::class.java).single()
+      assertThat(button.icon).isSameAs(AllIcons.Actions.More)
+      assertThat(button.action.templatePresentation.getClientProperty(ActionUtil.HIDE_DROPDOWN_ICON)).isTrue()
+      assertThat(button.accessibleContext.accessibleName).isEqualTo(IdeBundle.message("inline.actions.more.actions.text"))
+      assertThat((button.action as ActionGroup).isPopup).isTrue()
+      assertThat(button.isVisible).isTrue()
+      assertThat(button.isFocusable).isTrue()
     }
 
     controller.setQuery(PluginsQueryState("language", "language", 1))
@@ -322,7 +331,8 @@ internal class UnifiedPluginsPageRealRowsTest {
 
       assertThat(factory.activeRows).hasSize(100)
       assertThat(categoryHeaders(view).map { it.accessibleContext.accessibleName }).containsExactly("Languages")
-      componentsOfType(categoryHeaders(view).single(), ActionLink::class.java).single().doClick()
+      val action = categoryAction(categoryHeaders(view).single())
+      action.actionPerformed(TestActionEvent.createTestEvent(action))
       assertThat(actions.single().pluginIds).containsExactlyElementsOf(languages.map(PluginItemState::pluginId))
 
       val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
@@ -507,7 +517,7 @@ internal class UnifiedPluginsPageRealRowsTest {
       .containsExactly(selectedRow.component)
     assertThat(order).contains(selectedRow.actionButton)
     assertThat(order.indexOf(selectedRow.actionButton)).isEqualTo(order.indexOf(selectedRow.component) + 1)
-    val categoryAction = componentsOfType(categoryHeaders(view).single(), ActionLink::class.java).single()
+    val categoryAction = componentsOfType(categoryHeaders(view).single(), ActionButton::class.java).single()
     assertThat(order).doesNotContain(categoryAction, promotionButton)
 
     controller.selectOccurrence(PluginOccurrenceId(PluginSectionId.Bundled, bundledItems.first().pluginId))
@@ -1062,6 +1072,17 @@ internal class UnifiedPluginsPageRealRowsTest {
     return componentsOfType(view.component, JPanel::class.java).filter { panel ->
       panel.accessibleContext.accessibleName == "Languages" || panel.accessibleContext.accessibleName == "Tools"
     }
+  }
+
+  private fun categoryAction(header: JComponent): AnAction {
+    val group = componentsOfType(header, ActionButton::class.java).single().action as ActionGroup
+    return group.getChildren(null).single()
+  }
+
+  private fun updatedText(action: AnAction): String? {
+    val event = TestActionEvent.createTestEvent(action)
+    action.update(event)
+    return event.presentation.text
   }
 
   private fun prepareForScrolling(view: UnifiedPluginsPageView) {
