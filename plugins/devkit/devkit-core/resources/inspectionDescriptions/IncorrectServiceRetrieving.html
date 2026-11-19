@@ -4,6 +4,9 @@ Reports the following problems when retrieving services:
 <ul>
   <li>Attempts to retrieve an unregistered service.</li>
   <li>Mismatch when retrieving a service: attempting to get a project-level service as an application-level service, or vice versa.</li>
+  <li>Mismatch when retrieving a workspace-level service: attempting to get it from an application or a project,
+    or attempting to get an application-level or a project-level service from a <code>com.intellij.openapi.workspace.ProjectWorkspace</code>.
+  </li>
 </ul>
 <p>Example (Kotlin):</p>
 <pre><code lang="kotlin">

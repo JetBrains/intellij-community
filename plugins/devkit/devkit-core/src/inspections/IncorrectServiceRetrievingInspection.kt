@@ -30,9 +30,15 @@ internal class IncorrectServiceRetrievingInspection : ServiceRetrievingInspectio
         }
         else if (!isServiceRetrievedCorrectly(serviceLevel, howServiceRetrieved)) {
           val message = when (howServiceRetrieved) {
-            Level.APP -> DevKitBundle.message("inspection.incorrect.service.retrieving.mismatch.for.project.level")
-            Level.PROJECT -> DevKitBundle.message("inspection.incorrect.service.retrieving.mismatch.for.app.level")
-            Level.WORKSPACE -> return true
+            Level.APP ->
+              if (serviceLevel == LevelType.WORKSPACE) DevKitBundle.message("inspection.incorrect.service.retrieving.mismatch.for.workspace.level.as.app")
+              else DevKitBundle.message("inspection.incorrect.service.retrieving.mismatch.for.project.level")
+            Level.PROJECT ->
+              if (serviceLevel == LevelType.WORKSPACE) DevKitBundle.message("inspection.incorrect.service.retrieving.mismatch.for.workspace.level.as.project")
+              else DevKitBundle.message("inspection.incorrect.service.retrieving.mismatch.for.app.level")
+            Level.WORKSPACE ->
+              if (serviceLevel.isProject() && !serviceLevel.isApp()) DevKitBundle.message("inspection.incorrect.service.retrieving.mismatch.for.project.level.as.workspace")
+              else DevKitBundle.message("inspection.incorrect.service.retrieving.mismatch.for.app.level.as.workspace")
           }
           holder.registerUProblem(node, message)
         }
@@ -46,7 +52,7 @@ internal class IncorrectServiceRetrievingInspection : ServiceRetrievingInspectio
            when (howServiceRetrieved) {
              Level.APP -> serviceLevel.isApp()
              Level.PROJECT -> serviceLevel.isProject()
-             Level.WORKSPACE -> true
+             Level.WORKSPACE -> serviceLevel == LevelType.WORKSPACE
            }
   }
 }

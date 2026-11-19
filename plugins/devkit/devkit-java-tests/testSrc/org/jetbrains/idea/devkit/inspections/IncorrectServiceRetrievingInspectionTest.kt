@@ -30,4 +30,14 @@ internal class IncorrectServiceRetrievingInspectionTest {
   fun testUnregisteredService() {
     serviceRetrieving.doTest(true)
   }
+
+  @Test
+  fun testWorkspaceLevelService() {
+    serviceRetrieving.doTest(true)
+  }
+
+  @Test
+  fun testServiceAsWorkspaceLevel() {
+    serviceRetrieving.doTest(true)
+  }
 }

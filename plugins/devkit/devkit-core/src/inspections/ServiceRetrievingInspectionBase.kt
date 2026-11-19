@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.workspace.ProjectWorkspace
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.util.InheritanceUtil
@@ -49,6 +50,7 @@ internal abstract class ServiceRetrievingInspectionBase(
     return when {
       InheritanceUtil.isInheritor(aClass, Application::class.java.canonicalName) -> Service.Level.APP
       InheritanceUtil.isInheritor(aClass, Project::class.java.canonicalName) -> Service.Level.PROJECT
+      InheritanceUtil.isInheritor(aClass, ProjectWorkspace::class.java.canonicalName) -> Service.Level.WORKSPACE
       else -> null
     }
   }

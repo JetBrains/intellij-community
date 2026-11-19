@@ -44,4 +44,14 @@ internal class KtIncorrectServiceRetrievingInspectionTest {
   fun testUnspecifiedLevelService() {
     serviceRetrieving.doTest(false)
   }
+
+  @Test
+  fun testRetrievingWorkspaceService() {
+    serviceRetrieving.doTest(true)
+  }
+
+  @Test
+  fun testRetrievingServiceAsWorkspaceLevel() {
+    serviceRetrieving.doTest(true)
+  }
 }
