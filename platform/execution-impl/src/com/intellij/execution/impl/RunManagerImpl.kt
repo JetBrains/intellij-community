@@ -382,12 +382,37 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
 
   override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> = allSettings.filter { it.type === type }
 
+  /**
+   * [isIncludeUnknown] adds the configurations of unknown types, except an unknown one with the name of a known one: a shared
+   * configuration of a type this IDE lacks must not show as a twin of the runnable configuration that stands for it.
+   */
   fun getConfigurationsGroupedByTypeAndFolder(isIncludeUnknown: Boolean): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
-    val result = LinkedHashMap<ConfigurationType, MutableMap<String?, MutableList<RunnerAndConfigurationSettings>>>()
+    return groupByTypeAndFolder(isIncludeUnknown = isIncludeUnknown, isIncludeUnknownTwins = false)
+  }
+
+  /** All configurations, the unknown twins of [getConfigurationsGroupedByTypeAndFolder] included: the Run Configurations dialog edits them. */
+  @ApiStatus.Internal
+  fun getAllConfigurationsGroupedByTypeAndFolder(): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
+    return groupByTypeAndFolder(isIncludeUnknown = true, isIncludeUnknownTwins = true)
+  }
+
+  private fun groupByTypeAndFolder(
+    isIncludeUnknown: Boolean,
+    isIncludeUnknownTwins: Boolean,
+  ): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
+    val unknownType = UnknownConfigurationType.getInstance()
     // use allSettings to return a sorted result
-    for (setting in allSettings) {
+    val settings = allSettings
+    val knownNames = if (isIncludeUnknown && !isIncludeUnknownTwins) {
+      settings.mapNotNullTo(HashSet()) { if (it.type === unknownType) null else it.name }
+    }
+    else {
+      emptySet()
+    }
+    val result = LinkedHashMap<ConfigurationType, MutableMap<String?, MutableList<RunnerAndConfigurationSettings>>>()
+    for (setting in settings) {
       val type = setting.type
-      if (!isIncludeUnknown && type === UnknownConfigurationType.getInstance()) {
+      if (type === unknownType && (!isIncludeUnknown || setting.name in knownNames)) {
         continue
       }
 

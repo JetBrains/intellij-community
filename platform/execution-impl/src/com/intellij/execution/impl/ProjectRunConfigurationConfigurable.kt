@@ -66,7 +66,7 @@ open class ProjectRunConfigurationConfigurable(project: Project) : RunConfigurab
   }
 
   override fun addRunConfigurationsToModel(model: DefaultMutableTreeNode) {
-    for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(true)) {
+    for ((type, folderMap) in runManager.getAllConfigurationsGroupedByTypeAndFolder()) {
       val typeNode = DefaultMutableTreeNode(type)
       model.add(typeNode)
       for ((folder, configurations) in folderMap.entries) {

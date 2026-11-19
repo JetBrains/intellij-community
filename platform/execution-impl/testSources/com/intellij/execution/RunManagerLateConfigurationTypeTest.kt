@@ -31,9 +31,10 @@ import org.junit.Test
 import javax.swing.Icon
 
 private const val TYPE_ID = "LateRunConfigurationTypeForTest"
+private const val KNOWN_TYPE_ID = "KnownRunConfigurationTypeForTest"
 
 /** A configuration in the form the IDE writes it, so the reload must not change the file. */
-private const val CONFIGURATION_TEXT = """<configuration name="late" type="$TYPE_ID" factoryName="$TYPE_ID">
+private fun configurationText(name: String = "late"): String = """<configuration name="$name" type="$TYPE_ID" factoryName="$TYPE_ID">
   <option name="value" value="42" />
   <method v="2" />
 </configuration>"""
@@ -91,7 +92,7 @@ class RunManagerLateConfigurationTypeTest {
         assertThat(runManager.findConfigurationByTypeAndName(type, "late")).isSameAs(settings)
         assertThat(runManager.getConfigurationSettingsList(type)).containsExactly(settings)
         assertThat(changedIds).containsExactly(unknownId)
-        assertThat(JDOMUtil.write((settings as RunnerAndConfigurationSettingsImpl).writeScheme())).isEqualTo(CONFIGURATION_TEXT)
+        assertThat(JDOMUtil.write((settings as RunnerAndConfigurationSettingsImpl).writeScheme())).isEqualTo(configurationText())
       }
     }
   }
@@ -117,32 +118,63 @@ class RunManagerLateConfigurationTypeTest {
     assertThat((settings.configuration as LateRunConfigurationForTest).value).isEqualTo("42")
   }
 
-  private fun registerType(): ConfigurationType {
-    val type = LateConfigurationTypeForTest()
+  /** A type missing in this IDE must not show a twin of the runnable configuration that stands for it; the dialog still edits it. */
+  @Test
+  fun `an unknown configuration with the name of a known one is hidden from run lists`() {
+    // registered before the project opens: a type registered later reloads the run manager state
+    val knownType = registerType(KNOWN_TYPE_ID)
+    runBlocking {
+      createOrLoadProject(tempDir, projectCreator = { dir ->
+        VfsTestUtil.createFile(dir, ".idea/runConfigurations/twin.xml", sharedFileText("twin"))
+        VfsTestUtil.createFile(dir, ".idea/runConfigurations/alone.xml", sharedFileText("alone"))
+        dir.toNioPath()
+      }) { project ->
+        val runManager = RunManagerImpl.getInstanceImpl(project)
+        val unknownTwin = runManager.allSettings.single { it.name == "twin" }
+        val unknownAlone = runManager.allSettings.single { it.name == "alone" }
+        val known = runManager.createConfiguration("twin", knownType.configurationFactories.single())
+        runManager.addConfiguration(known)
+        assertThat(listOf(unknownTwin, unknownAlone).map { it.type }).containsOnly(UnknownConfigurationType.getInstance())
+
+        assertThat(runManager.getConfigurationsGroupedByTypeAndFolder(true).flattenSettings()).containsExactlyInAnyOrder(known, unknownAlone)
+        assertThat(runManager.getConfigurationsGroupedByTypeAndFolder(false).flattenSettings()).containsExactly(known)
+        assertThat(runManager.getAllConfigurationsGroupedByTypeAndFolder().flattenSettings())
+          .containsExactlyInAnyOrder(known, unknownTwin, unknownAlone)
+        assertThat(runManager.allSettings).contains(unknownTwin)
+      }
+    }
+  }
+
+  private fun Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>>.flattenSettings(): List<RunnerAndConfigurationSettings> {
+    return values.flatMap { folders -> folders.values.flatten() }
+  }
+
+  private fun registerType(id: String = TYPE_ID): ConfigurationType {
+    val type = LateConfigurationTypeForTest(id)
     ConfigurationType.CONFIGURATION_TYPE_EP.point.registerExtension(type, projectModel.disposableRule.disposable)
     return type
   }
 
-  private fun sharedFileText(): String = """
+  private fun sharedFileText(name: String = "late"): String = """
     <component name="ProjectRunConfigurationManager">
-      $CONFIGURATION_TEXT
+      ${configurationText(name)}
     </component>""".trimIndent()
 }
 
-private class LateConfigurationTypeForTest : ConfigurationType {
+private class LateConfigurationTypeForTest(private val typeId: String) : ConfigurationType {
   private val factory = object : ConfigurationFactory(this) {
-    override fun getId(): String = TYPE_ID
+    override fun getId(): String = typeId
 
     override fun createTemplateConfiguration(project: Project): RunConfiguration = LateRunConfigurationForTest(project, this)
 
     override fun getOptionsClass(): Class<out BaseState> = LateOptionsForTest::class.java
   }
 
-  override fun getId(): String = TYPE_ID
+  override fun getId(): String = typeId
 
-  override fun getDisplayName(): String = TYPE_ID
+  override fun getDisplayName(): String = typeId
 
-  override fun getConfigurationTypeDescription(): String = TYPE_ID
+  override fun getConfigurationTypeDescription(): String = typeId
 
   override fun getIcon(): Icon? = null
 
