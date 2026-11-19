@@ -83,6 +83,7 @@ private fun checkActionsOnly(descriptor: RawPluginDescriptor, path: String) {
     if (descriptor.technologies.isNotEmpty()) add("technologies")
     if (descriptor.isTechnologyNeutral) add("a technology-neutral mark")
     addScopeOffenders("application", descriptor.appElementsContainer)
+    addScopeOffenders("workspace", descriptor.workspaceElementsContainer)
     addScopeOffenders("project", descriptor.projectElementsContainer)
     addScopeOffenders("module", descriptor.moduleElementsContainer)
   }

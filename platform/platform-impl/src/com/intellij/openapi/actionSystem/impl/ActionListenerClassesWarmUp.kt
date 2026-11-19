@@ -68,7 +68,10 @@ internal fun lazyListenerClassLoaders(topicClassName: String): Map<String, Class
   val classLoaders = LinkedHashMap<String, ClassLoader>()
   for (module in PluginManagerCore.getPluginSet().sequenceResolvedSortedDescriptorsForRegistration()) {
     val classLoader = module.pluginClassLoader ?: defaultClassLoader
-    for (listener in module.appContainerDescriptor.listeners + module.projectContainerDescriptor.listeners) {
+    for (listener in module.appContainerDescriptor.listeners
+                     + module.workspaceContainerDescriptor.listeners
+                     + module.projectContainerDescriptor.listeners
+    ) {
       if (listener.topicClassName == topicClassName &&
           isListenerApplicable(listener, isUnitTestMode = app.isUnitTestMode, isHeadless = app.isHeadlessEnvironment)) {
         classLoaders.putIfAbsent(listener.listenerClassName, classLoader)

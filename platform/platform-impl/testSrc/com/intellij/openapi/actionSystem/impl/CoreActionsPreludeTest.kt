@@ -150,6 +150,16 @@ internal class CoreActionsPreludeTest {
   }
 
   @Test
+  fun loadCoreActionElementsFailsHardOnAWorkspaceService() {
+    val xml = """<idea-plugin><extensions defaultExtensionNs="com.intellij"><workspaceService serviceImplementation="prelude.purity.Service"/></extensions></idea-plugin>"""
+
+    val error = assertThrows<IllegalStateException> {
+      loadCoreActionElements { xml.byteInputStream() }
+    }
+    assertTrue(error.message!!.contains("workspace services"), "expected the message to name 'workspace services', got: ${error.message}")
+  }
+
+  @Test
   fun preludeConstructionRequiresTheCoreDescriptor() {
     assertThrows<IllegalArgumentException> {
       CoreActionsPrelude(coreModule = module("prelude.noncore"), elements = emptyList())

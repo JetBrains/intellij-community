@@ -424,7 +424,12 @@ class PluginDependenciesValidator private constructor(
 
     val extensionPointDeclarations = HashMap<String, MutableList<IdeaPluginDescriptorImpl>>()
     for (descriptor in pluginSet.resolvedPluginSet.sortedResolvedDescriptors) {
-      for (container in listOf(descriptor.appContainerDescriptor, descriptor.projectContainerDescriptor, descriptor.moduleContainerDescriptor)) {
+      for (container in listOf(
+        descriptor.appContainerDescriptor,
+        descriptor.workspaceContainerDescriptor,
+        descriptor.projectContainerDescriptor,
+        descriptor.moduleContainerDescriptor,
+      )) {
         for (ep in container.extensionPoints) {
           extensionPointDeclarations.computeIfAbsent(ep.getQualifiedName(descriptor)) { SmartList() }.add(descriptor)
         }

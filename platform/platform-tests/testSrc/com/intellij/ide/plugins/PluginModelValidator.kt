@@ -250,6 +250,7 @@ internal class PluginModelValidator(
     if (!validationOptions.skipServicesOverridesCheck) {
       checkServicesOverrides(descriptorFileInfos, RawPluginDescriptor::projectElementsContainer)
       checkServicesOverrides(descriptorFileInfos, RawPluginDescriptor::appElementsContainer)
+      checkServicesOverrides(descriptorFileInfos, RawPluginDescriptor::workspaceElementsContainer)
     }
 
     val unknownExtensionPoints = validationOptions.extensionsToIgnore.keys - forbiddenWorkspaceFileIndexExtensionPoints.keys

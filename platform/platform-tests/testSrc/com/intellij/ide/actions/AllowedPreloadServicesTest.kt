@@ -23,6 +23,7 @@ open class AllowedPreloadServicesTest {
     val pluginModules = PluginManagerCore.getPluginSet().getEnabledModules()
     for (descriptor in pluginModules) {
       val services = descriptor.appContainerDescriptor.services +
+                     descriptor.workspaceContainerDescriptor.services +
                      descriptor.projectContainerDescriptor.services
 
       for (service in services) {
