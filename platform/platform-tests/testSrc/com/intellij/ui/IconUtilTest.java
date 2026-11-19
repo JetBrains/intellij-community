@@ -23,7 +23,6 @@ import com.intellij.ui.icons.IconWithOverlay;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +54,8 @@ public class IconUtilTest extends HeavyPlatformTestCase {
 
   public void testIconDeferrerDoesNotDeferIconsAdInfinitum() {
     VirtualFile file = getTempDir().createVirtualFile(".txt", "hkjh");
+    // the new temp dir starts a dumb mode, and its end changes the PSI modification count in the key of the icon cache
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     Icon icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_VISIBILITY, getProject());
     assertTrue(icon instanceof DeferredIcon);
@@ -62,8 +63,7 @@ public class IconUtilTest extends HeavyPlatformTestCase {
     Graphics g = IconTestUtil.createMockGraphics();
     // force to eval
     icon.paintIcon(new JLabel(), g, 0, 0);
-    // give chance to evaluate
-    TimeoutUtil.sleep(1000);
+    PlatformTestUtil.waitWithEventsDispatching("The deferred icon is not evaluated", ((DeferredIcon)icon)::isDone, 10);
 
     Icon icon2 = IconUtil.getIcon(file, Iconable.ICON_FLAG_VISIBILITY, getProject());
     assertThat(icon2).isNotInstanceOf(DeferredIcon.class);
