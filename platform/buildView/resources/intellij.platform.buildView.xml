@@ -58,5 +58,7 @@
     <remote.customDataContextSerializer implementation="com.intellij.platform.buildView.BuildIdDataContextSerializer"/>
     <remote.customDataContextSerializer implementation="com.intellij.platform.buildView.BuildViewIdDataContextSerializer"/>
     <uiDataRule implementation="com.intellij.platform.buildView.BuildViewDataRule"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <consoleActionsPostProcessor implementation="com.intellij.build.console.BuildConsoleActionsPostProcessor"/>
   </extensions>
 </idea-plugin>

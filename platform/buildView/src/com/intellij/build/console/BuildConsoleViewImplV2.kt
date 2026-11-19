@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.CheckReturnValue
@@ -86,6 +87,8 @@ internal class BuildConsoleViewImplV2(
   private var followListenersAttached = false
 
   init {
+    ClientProperty.put(consoleView, BUILD_CONSOLE_V2, true)
+
     consoleView.editor?.configureEditor()
     Disposer.register(this, delegate)
   }
