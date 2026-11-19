@@ -4,6 +4,7 @@
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.http.client"/>
+    <module name="intellij.libraries.jsoup"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.miglayout.swing"/>
     <module name="intellij.platform.analysis"/>

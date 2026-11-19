@@ -59,6 +59,7 @@ jvm_library(
         "//platform/dvcs-impl/shared",
         "//platform/vcs-impl/shared",
         "//platform/vcs-api/shared",
+        "//libraries/jsoup",
     ],
 )
 ### auto-generated section `build intellij.platform.collaborationTools.shared` end

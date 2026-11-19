@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui
 
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewHtmlSanitizer
 import com.intellij.collaboration.ui.codereview.issues.processIssueIdsMarkdown
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.markdown.utils.CodeFenceSyntaxHighlighterGeneratingProvider
@@ -73,6 +74,7 @@ class GitLabMarkdownToHtmlConverter(
     private const val UPLOADS_PATH = "/uploads/"
     internal const val OPEN_FILE_LINK_PREFIX = GitLabNoteLinks.OPEN_FILE_LINK_PREFIX
     internal const val OPEN_MR_LINK_PREFIX = GitLabNoteLinks.OPEN_MR_LINK_PREFIX
+    private val CUSTOM_LINK_SCHEMES = setOf(OPEN_FILE_LINK_PREFIX.removeSuffix(":"), OPEN_MR_LINK_PREFIX.removeSuffix(":"))
   }
 
   private val projectWebUrlBase: String = "$serverPath/-/project/$projectId"
@@ -91,7 +93,8 @@ class GitLabMarkdownToHtmlConverter(
     val flavourDescriptor = GitLabFlavourDescriptor(repositoryRoot, projectPath, CodeBlockHtmlSyntaxHighlighter(project),
                                                     projectWebUrlBase, projectApiUri)
 
-    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, serverPath.uri.ensureEndsWithSlash())
+    val html = MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, serverPath.uri.ensureEndsWithSlash())
+    return CodeReviewHtmlSanitizer.sanitize(html, CUSTOM_LINK_SCHEMES)
   }
 
   private fun String.ensureEndsWithSlash(): String = if (endsWith("/")) this else "$this/"

@@ -311,6 +311,10 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:GROUP_HORIZONTAL_GAP:I
 - sf:HORIZONTAL_GAP:I
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil$Title
+*f:com.intellij.collaboration.ui.codereview.comment.CodeReviewHtmlSanitizer
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.comment.CodeReviewHtmlSanitizer
+- f:sanitize(java.lang.String,java.util.Set):java.lang.String
+- bs:sanitize$default(com.intellij.collaboration.ui.codereview.comment.CodeReviewHtmlSanitizer,java.lang.String,java.util.Set,I,java.lang.Object):java.lang.String
 *:com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
 - a:getFocusRequests():kotlinx.coroutines.flow.Flow
 - a:getProject():com.intellij.openapi.project.Project

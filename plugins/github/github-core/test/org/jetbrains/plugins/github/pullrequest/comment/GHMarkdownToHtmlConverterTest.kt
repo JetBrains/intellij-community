@@ -28,6 +28,21 @@ class GHMarkdownToHtmlConverterTest {
       convertMarkdown)
   }
 
+  // https://youtrack.jetbrains.com/issue/IJPL-256021
+  @Test
+  fun testConvertMarkdownRemovesRawHtmlThatLoadsResource() {
+    val convertMarkdown = GHMarkdownToHtmlConverter(project).convertMarkdown(
+      """<div style="background-image:url(file:////10.0.0.1/S/a.png)">badge</div>"""
+    )
+    assertEquals("<body><div>badge</div>\n</body>", convertMarkdown)
+  }
+
+  @Test
+  fun testConvertMarkdownRemovesLinkToFile() {
+    val convertMarkdown = GHMarkdownToHtmlConverter(project).convertMarkdown("Open [the report](file:////10.0.0.1/S/a.exe) and #1")
+    assertEquals("""<body><p>Open the report and <a href="ghpullrequest:1">#1</a></p></body>""", convertMarkdown)
+  }
+
   @Test
   fun testConvertMarkdownWithPullRequestId() {
     val convertMarkdown = GHMarkdownToHtmlConverter(project).convertMarkdown(

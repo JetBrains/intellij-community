@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment
 
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewHtmlSanitizer
 import com.intellij.collaboration.ui.codereview.issues.processIssueIdsMarkdown
 import com.intellij.markdown.utils.CodeFenceSyntaxHighlighterGeneratingProvider
 import com.intellij.markdown.utils.MarkdownToHtmlConverter
@@ -31,6 +32,7 @@ import java.net.URI
 class GHMarkdownToHtmlConverter(private val project: Project?) {
   companion object {
     const val OPEN_PR_LINK_PREFIX = "ghpullrequest:"
+    private val CUSTOM_LINK_SCHEMES = setOf(OPEN_PR_LINK_PREFIX.removeSuffix(":"))
 
     private val CAPTURE_USER_ID_REGEX = """(?<=^|[\s\p{Punct}])(@[a-zA-Z0-9-]+)(?=[\s\p{Punct}]|$)""".toRegex(RegexOption.MULTILINE)
     private val CAPTURE_PR_ID_REGEX = """(?<=^|[\s\p{Punct}])(#\d+)(?=[\s\p{Punct}]|$)""".toRegex(RegexOption.MULTILINE)
@@ -43,7 +45,8 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
     val text = markdownText.replace("\r", "")
     val flavourDescriptor = GithubFlavourDescriptor(CodeBlockHtmlSyntaxHighlighter(project))
 
-    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, server?.toUrl())
+    val html = MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, server?.toUrl())
+    return CodeReviewHtmlSanitizer.sanitize(html, CUSTOM_LINK_SCHEMES)
   }
 
   fun convertMarkdownWithSuggestedChange(
@@ -56,7 +59,8 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
     val htmlSyntaxHighlighter = GHSuggestionHtmlSyntaxHighlighter(project, filePath, reviewContent)
     val flavourDescriptor = GithubFlavourDescriptor(htmlSyntaxHighlighter)
 
-    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, server?.toUrl())
+    val html = MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, server?.toUrl())
+    return CodeReviewHtmlSanitizer.sanitize(html, CUSTOM_LINK_SCHEMES)
   }
 
 
