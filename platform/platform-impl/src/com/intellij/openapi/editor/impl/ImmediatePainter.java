@@ -96,8 +96,7 @@ public final class ImmediatePainter {
       final int caretOffset = replacement.getBegin();
       final char c = replacement.getText().charAt(0);
       try {
-        paintImmediately((Graphics2D)g, caretOffset, c);
-        return true;
+        return paintImmediately((Graphics2D)g, caretOffset, c);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -143,8 +142,10 @@ public final class ImmediatePainter {
     });
   }
 
+  /// Paints the typed character and the caret. Gives false when it paints nothing.
+  ///
   /// @noinspection GraphicsSetClipInspection
-  private void paintImmediately(final Graphics2D g, final int offset, final char c2) {
+  private boolean paintImmediately(final Graphics2D g, final int offset, final char c2) {
     EditorImpl editor = myEditor;
     Document document = editor.getElfDocument();
     LexerEditorHighlighter highlighter = (LexerEditorHighlighter)myEditor.getHighlighter();
@@ -174,7 +175,7 @@ public final class ImmediatePainter {
     final TextAttributes attributes2 = attributes.get(1);
 
     if (!(canRender(attributes1) && canRender(attributes2))) {
-      return;
+      return false;
     }
 
     FontLayoutService fontLayoutService = FontLayoutService.getInstance();
@@ -239,7 +240,7 @@ public final class ImmediatePainter {
                                                  g, PaintUtil.RoundingMode.CEIL);
     if (clipEndX > editor.getContentComponent().getWidth()) {
       // we cannot paint beyond component bounds (this will go beyond dev clip in graphics anyway)
-      return;
+      return false;
     }
 
     g.setClip(new Rectangle2D.Float(clipStartX, p2y, clipEndX - clipStartX, lineHeight));
@@ -262,6 +263,7 @@ public final class ImmediatePainter {
     if (registry.isZeroLatencyDebugEnabled()) {
       pause();
     }
+    return true;
   }
 
   /**
