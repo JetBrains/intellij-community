@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.FORCE_INTERNAL_USER_FOR_TESTS_IN_PLUGIN_UPDATE_SOURCES
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
@@ -37,12 +38,12 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     originalCustomRepositoryHosts?.let { restoreCustomRepositoryHosts(it) }
     originalCustomRepositoryHosts = null
 
-    PluginUpdateSourceInitializer.allowInitializationHappenAgain()
+    PluginUpdateSourceInitializer.resetStartupAttemptForTests()
     eraseAllPluginUpdateSources()
   }
 
   @Test
-  fun `plugin update sources are initialized only for unambiguous plugins and only once for non-nightly servers`(): Unit =
+  fun `plugin update sources are initialized for unambiguous plugins on each IDE start with non-nightly servers`(): Unit =
     timeoutRunBlocking {
       val customServer = createTestServer()
       val anotherCustomServer = createTestServer()
@@ -94,11 +95,17 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
       for (pluginId in TESTED_PLUGIN_IDS) {
         assertNoPluginUpdateSource(pluginId)
       }
+
+      PluginUpdateSourceInitializer.resetStartupAttemptForTests()
+      executeInitializationActivity()
+      assertEquals(sourcesAfterFirstInitialization - ALREADY_INITIALIZED_PLUGIN,
+                   pluginUpdateSourcesByPluginId() - ALREADY_INITIALIZED_PLUGIN)
+      assertPluginUpdateSource(ALREADY_INITIALIZED_PLUGIN, customRepositoryUpdateSourceId)
     }
 
   @RegistryKey(key = "platform.disable.plugin.update.sources.ui.and.filtering.for.internal.users", value = "false")
   @Test
-  fun `plugin update sources are initialized only for unambiguous plugins and only once with nightly servers`(): Unit = timeoutRunBlocking {
+  fun `plugin update sources are initialized for unambiguous plugins on each IDE start with nightly servers`(): Unit = timeoutRunBlocking {
     val customServer = createTestServer()
     val firstNightlyServer = createTestServer()
     val secondNightlyServer = createTestServer()
@@ -149,7 +156,78 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
       for (pluginId in TESTED_PLUGIN_IDS) {
         assertNoPluginUpdateSource(pluginId)
       }
+
+      PluginUpdateSourceInitializer.resetStartupAttemptForTests()
+      executeInitializationActivity()
+      assertEquals(sourcesAfterFirstInitialization - ALREADY_INITIALIZED_PLUGIN,
+                   pluginUpdateSourcesByPluginId() - ALREADY_INITIALIZED_PLUGIN)
+      assertNoPluginUpdateSource(ALREADY_INITIALIZED_PLUGIN)
     }
+  }
+
+  @Test
+  fun `implicit Marketplace source is reinitialized from custom repository`(): Unit = timeoutRunBlocking {
+    val customServer = createTestServer()
+    val pluginIdString = BUNDLED_UPDATEABLE_JET_BRAINS_PLUGIN_CUSTOM_REPOSITORY_PLUGIN
+    setInstalledPluginMocks(installedPlugin(pluginIdString, isBundled = true, allowBundledUpdate = true, isJetBrainsPlugin = true))
+    setCustomRepositoryHosts(listOf(customServer.url))
+    setCustomRepositoryPlugins(customServer, listOf(CustomRepositoryPlugin(pluginIdString, "2.0")))
+
+    val service = PluginUpdateSourceService.getInstance()
+    assertEquals(service.createMarketplacePluginUpdateSourceId(), service.getPluginUpdateSourceId(pluginId(pluginIdString)))
+    assertNoPluginUpdateSource(pluginIdString)
+
+    executeInitializationActivity()
+
+    assertPluginUpdateSource(pluginIdString, service.createCustomRepositoryPluginUpdateSourceId(customServer.url))
+  }
+
+  @Test
+  fun `disabled plugin is initialized`(): Unit = timeoutRunBlocking {
+    val customServer = createTestServer()
+    val pluginIdString = NOT_FROM_LIST_SINGLE_CUSTOM_REPOSITORY_PLUGIN
+    setInstalledPluginMocks(installedPlugin(pluginIdString, enabled = false))
+    setCustomRepositoryHosts(listOf(customServer.url))
+    setCustomRepositoryPlugins(customServer, listOf(CustomRepositoryPlugin(pluginIdString, "2.0")))
+
+    executeInitializationActivity()
+
+    assertPluginUpdateSource(pluginIdString,
+                             PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(customServer.url))
+  }
+
+  @Test
+  fun `initialization is skipped when every updateable plugin has an explicit source`() {
+    val brokenServer = createTestServer()
+    brokenServer.httpServer.stop(0)
+    setCustomRepositoryHosts(listOf(brokenServer.url))
+    setInstalledPluginMocks(installedPlugin(UNKNOWN_PLUGIN))
+    val service = PluginUpdateSourceService.getInstance()
+    val marketplaceSource = service.createMarketplacePluginUpdateSourceId()
+    service.setPluginUpdateSourceId(pluginId(UNKNOWN_PLUGIN), marketplaceSource)
+
+    assertEquals(PluginUpdateSourceInitializer.Result.Success(0), PluginUpdateSourceInitializer.enforceInitialization())
+    assertPluginUpdateSource(UNKNOWN_PLUGIN, marketplaceSource)
+  }
+
+  @Test
+  fun `failed startup initialization retries on the next IDE start`(): Unit = timeoutRunBlocking {
+    val brokenServer = createTestServer()
+    brokenServer.httpServer.stop(0)
+    setCustomRepositoryHosts(listOf(brokenServer.url))
+    setInstalledPluginMocks(installedPlugin(FROM_LIST_NO_CUSTOM_REPOSITORY_PLUGIN))
+
+    executeInitializationActivity()
+    assertNoPluginUpdateSource(FROM_LIST_NO_CUSTOM_REPOSITORY_PLUGIN)
+
+    setCustomRepositoryHosts(emptyList())
+    executeInitializationActivity()
+    assertNoPluginUpdateSource(FROM_LIST_NO_CUSTOM_REPOSITORY_PLUGIN)
+
+    PluginUpdateSourceInitializer.resetStartupAttemptForTests()
+    executeInitializationActivity()
+    assertPluginUpdateSource(FROM_LIST_NO_CUSTOM_REPOSITORY_PLUGIN,
+                             PluginUpdateSourceService.getInstance().createMarketplacePluginUpdateSourceId())
   }
 
   @Test
@@ -191,6 +269,9 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
 
     val success = assertIs<PluginUpdateSourceInitializer.Result.Success>(result)
     assertTrue(success.loadedPluginsWithoutUpdateSource >= 1)
+    val service = PluginUpdateSourceService.getInstance()
+    assertEquals(PluginManagerCore.loadedPlugins.count { service.isMissingPluginUpdateSource(it) },
+                 success.loadedPluginsWithoutUpdateSource)
   }
 
   @Test
@@ -198,6 +279,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     val brokenServer = createTestServer()
     brokenServer.httpServer.stop(0)
     setCustomRepositoryHosts(listOf(brokenServer.url))
+    setInstalledPluginMocks(installedPlugin(UNKNOWN_PLUGIN))
 
     val result = PluginUpdateSourceInitializer.enforceInitialization()
 
@@ -350,12 +432,13 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
 
     private fun installedPlugin(
       pluginId: String,
+      enabled: Boolean = true,
       isBundled: Boolean = false,
       allowBundledUpdate: Boolean = false,
       isJetBrainsPlugin: Boolean = false,
     ): InstalledPluginMock {
       val vendor = if (isJetBrainsPlugin) "JetBrains" else "Some Company"
-      return InstalledPluginMock(pluginId, pluginId, vendor, "1.0", "1.0", "999.9999", true, vendor, isBundled, allowBundledUpdate)
+      return InstalledPluginMock(pluginId, pluginId, vendor, "1.0", "1.0", "999.9999", enabled, vendor, isBundled, allowBundledUpdate)
     }
   }
 }
