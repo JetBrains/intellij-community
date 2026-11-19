@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Contract;
@@ -32,6 +33,9 @@ public interface GenerateToStringClassFilter {
   static @Nullable PsiClass findTargetClass(@NotNull ActionContext context) {
     if (!(context.file() instanceof PsiJavaFile javaFile)) return null;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(context.findLeaf(), PsiClass.class, false);
+    while (psiClass instanceof PsiTypeParameter) {
+      psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
+    }
     if (psiClass == null) {
       PsiClass[] classes = javaFile.getClasses();
       if (classes.length != 1 || !(classes[0] instanceof PsiImplicitClass implicitClass) ||

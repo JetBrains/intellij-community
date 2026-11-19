@@ -117,6 +117,19 @@ public final class GenerateToStringModCommandActionTest {
   }
 
   @Test
+  public void caretInTypeParameter() {
+    LightJavaCodeInsightTestFixture fixture = configure("class Box<<caret>T> {}");
+    execute(fixture, () -> perform(fixture).applyOptions(Map.of("template", CONCAT_TEMPLATE, "insertOverride", true)));
+    fixture.checkResult("""
+      class Box<T> {
+          @Override
+          public String toString() {
+              return "Box{}";
+          }
+      }""");
+  }
+
+  @Test
   public void replaceExistingMethod() {
     LightJavaCodeInsightTestFixture fixture = configure("""
       class Point {
