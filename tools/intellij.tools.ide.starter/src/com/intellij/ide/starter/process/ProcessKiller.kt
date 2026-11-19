@@ -12,10 +12,12 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 /**
  * Termination helpers for child processes spawned by tests/ide from tests.
@@ -84,7 +86,7 @@ object ProcessKiller {
   /**
    * Kills [process] and optionally kills its descendants according to [cleanUpDescendants].
    *
-   * Returns true if confirmed dead.
+   * Returns true if the process and every descendant recorded before the graceful stop are confirmed dead.
    */
   suspend fun killProcess(
     process: Process,
@@ -128,13 +130,21 @@ object ProcessKiller {
       }
   }
 
-  private suspend fun forcefulKill(processHandle: ProcessHandle, forcefulTimeout: Duration, cleanUpDescendants: Boolean = true) {
-    // On Windows we deliberately don't iterate descendants — see the MRI-4085 note at the top of the file.
-    val descendantsSnapshot: List<ProcessHandle> =
-      if (cleanUpDescendants && OS.CURRENT.platform == Platform.UNIX) processHandle.descendants().toList()
-      else emptyList()
-
+  private suspend fun forcefulKill(
+    processHandle: ProcessHandle,
+    descendantsSnapshot: List<ProcessHandle>,
+    forcefulTimeout: Duration,
+    cleanUpDescendants: Boolean = true,
+  ) {
     runCatching {
+      // Orphans of an exited wrapper are no longer its descendants, so the tree kill below misses them.
+      descendantsSnapshot.filter { it.isAlive }.forEach {
+        logOutput("${processHandleToString(it)}: Killing forcibly")
+        it.destroyForcibly()
+      }
+
+      if (!processHandle.isAlive) return@runCatching true
+
       if (cleanUpDescendants) {
         logOutput("${processHandleToString(processHandle)}: Killing process tree")
         return@runCatching if (OS.CURRENT.platform == Platform.UNIX) OSProcessUtil.killProcessTree(processHandle.pid())
@@ -175,15 +185,24 @@ object ProcessKiller {
     gracefulTimeout: Duration = DEFAULT_GRACEFUL_TIMEOUT,
     forcefulTimeout: Duration = DEFAULT_FORCEFUL_TIMEOUT,
   ): Boolean = withContext(Dispatchers.IO) {
+    // Taken before SIGTERM: once the wrapper exits, its orphans are no longer its descendants.
+    val descendantsSnapshot: List<ProcessHandle> =
+      if (cleanUpDescendants && OS.CURRENT.platform == Platform.UNIX) processHandle.descendants().toList()
+      else emptyList()
 
     if (gracefullyAtFirst) {
+      val started = TimeSource.Monotonic.markNow()
       gracefulStop(processHandle, gracefulTimeout, cleanUpDescendants)
+      // A wrapper exits on SIGTERM at once; its descendants get the rest of the graceful budget.
+      withTimeoutOrNull(gracefulTimeout - started.elapsedNow()) {
+        descendantsSnapshot.forEach { it.onExit().await() }
+      }
     }
 
-    if (processHandle.isAlive) {
-      forcefulKill(processHandle, forcefulTimeout, cleanUpDescendants)
+    if (processHandle.isAlive || descendantsSnapshot.any { it.isAlive }) {
+      forcefulKill(processHandle, descendantsSnapshot, forcefulTimeout, cleanUpDescendants)
     }
 
-    return@withContext !processHandle.isAlive
+    return@withContext !processHandle.isAlive && descendantsSnapshot.none { it.isAlive }
   }
 }
