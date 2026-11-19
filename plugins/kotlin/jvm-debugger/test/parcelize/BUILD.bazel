@@ -9,7 +9,7 @@ jps_test(
     ] + all_test_dep_targets,
     sandbox = True,
     tags = [
-        "kotlin-jvm-debugger-tests",
+        "kotlin-debugger-tests",
     ],
     runtime_deps = [
         ":parcelize_test_lib",

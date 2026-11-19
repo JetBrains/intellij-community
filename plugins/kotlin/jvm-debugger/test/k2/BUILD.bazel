@@ -11,7 +11,7 @@ jps_test(
     ] + all_test_dep_targets,
     sandbox = True,
     tags = [
-        "kotlin-jvm-debugger-tests",
+        "kotlin-debugger-tests",
     ],
     runtime_deps = [
         ":kotlin-jvm-debugger-test_test_lib",

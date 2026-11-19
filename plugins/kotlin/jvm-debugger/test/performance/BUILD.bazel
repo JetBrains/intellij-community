@@ -1,5 +1,24 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "kotlin-jvm-debugger-performance-test_test",
+    data = [
+        "@community//plugins/kotlin/jvm-debugger/test:testData",
+    ] + all_test_dep_targets,
+    jvm_flags = [
+        "-Didea.performance.tests=true",
+    ],
+    tags = [
+        "performance-unit-test",
+    ],
+    runtime_deps = [
+        ":kotlin-jvm-debugger-performance-test_test_lib",
+        "//:main",
+    ],
+)
+### skip generation section `test intellij.kotlin.jvm.debugger.performance.test`
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.performance.test` start
 jvm_library(
@@ -62,13 +81,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.kotlin.jvm.debugger.performance.test` end
-
-### auto-generated section `test intellij.kotlin.jvm.debugger.performance.test` start
-jps_test(
-    name = "kotlin-jvm-debugger-performance-test_test",
-    runtime_deps = [
-        ":kotlin-jvm-debugger-performance-test_test_lib",
-        "//:main",
-    ],
-)
-### auto-generated section `test intellij.kotlin.jvm.debugger.performance.test` end
