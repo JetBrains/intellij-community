@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -87,7 +87,7 @@ public final class ExternalModuleStructureExtension extends ModuleStructureExten
   }
 
   @Override
-  public boolean addModuleNodeChildren(Module module, MasterDetailsComponent.MyNode moduleNode, Runnable treeNodeNameUpdater) {
+  public void addModuleNodeChildren(Module module, MasterDetailsComponent.MyNode moduleNode, Runnable treeNodeNameUpdater) {
     String systemIdString = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
     if (StringUtil.isNotEmpty(systemIdString)) {
       isExternalSystemsInvolved = true;
@@ -96,7 +96,6 @@ public final class ExternalModuleStructureExtension extends ModuleStructureExten
         myOrphanProjectsCandidates.put(rootProjectPath, new ProjectSystemId(systemIdString));
       }
     }
-    return false;
   }
 
   @Override
