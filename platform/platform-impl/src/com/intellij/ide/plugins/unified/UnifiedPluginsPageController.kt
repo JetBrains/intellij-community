@@ -289,8 +289,17 @@ internal class UnifiedPluginsPageController(
       .filter { section -> isVisibleForCurrentQuery(section, selectedRepositoryIds) }
       .map(::orderBundledItems)
       .map { section -> if (projected) stabilizeItemOrder(section) else section }
+      .map(::orderSessionInstalls)
       .sortedWith(compareBy({ section: PluginSectionState -> sectionRank(section.id) }, { sectionInsertionOrder.getValue(it.id) }))
       .toList()
+  }
+
+  private fun orderSessionInstalls(section: PluginSectionState): PluginSectionState {
+    if (section.id != PluginSectionId.Installed || section.recentInstallOrder.isEmpty() || query.normalizedQuery.isNotEmpty()) return section
+
+    val remaining = section.items.associateByTo(LinkedHashMap(), PluginItemState::pluginId)
+    val recent = section.recentInstallOrder.mapNotNull(remaining::remove)
+    return if (recent.isEmpty()) section else section.copy(items = recent + remaining.values)
   }
 
   private fun stabilizeItemOrder(section: PluginSectionState): PluginSectionState {

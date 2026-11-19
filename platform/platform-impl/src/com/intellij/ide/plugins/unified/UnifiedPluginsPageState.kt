@@ -136,6 +136,7 @@ internal data class PluginSectionState(
   val expanded: Boolean = false,
   val categoryGroups: List<BundledPluginCategoryGroupState> = emptyList(),
   val collapsedItemLimit: Int = COLLAPSED_ITEM_LIMIT,
+  val recentInstallOrder: List<PluginId> = emptyList(),
 ) {
   init {
     require(collapsedItemLimit > 0) { "The collapsed item limit must be positive" }

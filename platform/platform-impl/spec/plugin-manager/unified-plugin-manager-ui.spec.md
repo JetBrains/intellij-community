@@ -374,7 +374,11 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - With text terms, relevance must use match scores before enabled state within each error group.
 - Enabled plugins must win a match score tie.
 - Later results in the same query revision must retain the relative order of plugins that remain in a section.
-- A new plugin must append after existing plugins. A plugin that leaves and returns must resume its retained position.
+- In the default Installed list, new installs from this session must appear first, in reverse completion order.
+- Other new plugins must append. A plugin that leaves and returns must resume its retained position.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
+    `recent installs lead Installed and are selectable before Apply`
+  )
 - In Suggested, these rules apply separately to project suggestions, Staff Picks, and Marketplace results.
 - In expanded Bundled, a new plugin must append in its category. A new category must append after existing categories.
 - The first collapsed and expanded Bundled results may set separate orders to keep categories together.

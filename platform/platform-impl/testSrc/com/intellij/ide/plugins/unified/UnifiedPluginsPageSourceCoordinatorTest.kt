@@ -449,6 +449,61 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
+  fun `recent installs lead Installed and are selectable before Apply`() = runTest {
+    val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 2)
+    val existing = inventoryItem("existing", "Existing Plugin")
+    val first = plugin("first", "First Plugin")
+    val latest = plugin("latest", "Latest Plugin")
+    val coordinator = coordinator(
+      provider = FakeLocalDataProvider(UnifiedPluginInventory(listOf(existing), emptyList())),
+      hostEvents = events,
+    )
+    coordinator.start()
+    runCurrent()
+    val controller = UnifiedPluginsPageController()
+
+    fun installedSection(): PluginSectionState {
+      val state = coordinator.state.value
+      controller.replaceSourceState(
+        state.query, state.sections, state.mayEstablishSelection, projectedQueryRevision = state.projectedQueryRevision,
+      )
+      return controller.state.value.sections.single { it.id == PluginSectionId.Installed }
+    }
+
+    fun complete(
+      model: PluginUiModel,
+      kind: PluginOperationKind,
+      result: PluginOperationTerminalResult = PluginOperationTerminalResult.SUCCEEDED,
+      restartRequired: Boolean = false,
+    ) {
+      val id = UUID.randomUUID()
+      assertThat(events.tryEmit(PluginModelEvent.OperationStarted("session", id, model.pluginId, model, PluginSource.LOCAL, kind))).isTrue()
+      assertThat(events.tryEmit(PluginModelEvent.OperationFinished(
+        "session", id, model.pluginId, PluginSource.LOCAL, kind, result, restartRequired = restartRequired,
+      ))).isTrue()
+      runCurrent()
+    }
+
+    assertThat(installedSection().items.map(PluginItemState::pluginId)).containsExactly(existing.model.pluginId)
+    complete(first, PluginOperationKind.INSTALL)
+    complete(latest, PluginOperationKind.INSTALL, restartRequired = true)
+    complete(existing.model, PluginOperationKind.UPDATE)
+    complete(plugin("failed", "Failed Plugin"), PluginOperationKind.INSTALL, PluginOperationTerminalResult.FAILED)
+
+    val installed = installedSection()
+    assertThat(installed.items.map(PluginItemState::pluginId)).containsExactly(latest.pluginId, first.pluginId, existing.model.pluginId)
+    assertThat(installed.items.first().rowInput?.preparedUpdate).isEqualTo(PluginPreparedUpdateState(restartRequired = true))
+    val occurrence = installed.occurrenceId(latest.pluginId)
+    controller.selectOccurrence(occurrence)
+    assertThat(controller.state.value.selectedOccurrences).containsExactly(occurrence)
+
+    assertThat(events.tryEmit(PluginModelEvent.InventoryInvalidated(PluginInventoryChangeReason.RESET, emptySet()))).isTrue()
+    runCurrent()
+    assertThat(installedSection().items.map(PluginItemState::pluginId)).containsExactly(existing.model.pluginId)
+    coordinator.close()
+  }
+
+  @Test
   fun `query scope changes source intent without changing visible query`() = runTest {
     val provider = FakeLocalDataProvider(
       UnifiedPluginInventory(

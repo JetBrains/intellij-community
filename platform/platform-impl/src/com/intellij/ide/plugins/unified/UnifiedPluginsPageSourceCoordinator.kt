@@ -354,8 +354,9 @@ private fun projectUnifiedPluginsPageSourceState(
   cancellationCheck()
   val route = query.sourceRoute()
   val effectiveSort = UnifiedPluginsQuery.parse(query.rawQuery).effectiveSort
+  val preparedInstalls = localState.preparedSessionInstalls.takeIf { query.normalizedQuery.isEmpty() }.orEmpty()
   val localPluginIds = if (route.local.eligible) {
-    collectLocalPluginIds(localState.sections, cancellationCheck)
+    collectLocalPluginIds(localState.sections, cancellationCheck) + preparedInstalls.map(PluginItemState::pluginId)
   }
   else {
     emptySet()
@@ -381,9 +382,14 @@ private fun projectUnifiedPluginsPageSourceState(
     cancellationCheck()
     when (section.id) {
       PluginSectionId.Installed, PluginSectionId.Bundled -> if (route.local.eligible) {
+        val items = when {
+          showsImplementationDetails -> localState.implementationDetailItems[section.id].orEmpty()
+          section.id == PluginSectionId.Installed -> section.items + preparedInstalls
+          else -> section.items
+        }
         section.copy(
           items = filterPluginItems(
-            if (showsImplementationDetails) localState.implementationDetailItems[section.id].orEmpty() else section.items,
+            items,
             route.local.query,
             effectiveSort,
             categoryRelevance = section.id == PluginSectionId.Bundled,

@@ -257,6 +257,12 @@ Untested: No focused test verifies state isolation across two page sessions.
     `prepared Marketplace install stays installed after the query is repeated`
   )
 
+- A successful install must appear in the default Installed list before Apply.
+- The user must be able to select the prepared install. Reset must remove it when the inventory has no installed copy.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
+    `recent installs lead Installed and are selectable before Apply`
+  )
+
 - After progress ends, the row and details must replace their action controls with one prepared action.
 - The details pane must not show an executable action while it changes to a prepared operation.
 - A prepared operation without restart must show disabled Installed.
