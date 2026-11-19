@@ -11,7 +11,7 @@ targets:
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsContextFactory.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsContentRootsProvider.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/contentRoots.kt
-  - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/SettingsRootsCache.kt
+  - ../backend/src/com/intellij/platform/settings/v2/impl/SettingsRootsCache.kt
 ---
 
 # Settings Contexts

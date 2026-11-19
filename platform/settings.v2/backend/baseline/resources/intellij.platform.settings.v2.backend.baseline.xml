@@ -14,7 +14,6 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.settings.v2.impl.ProjectSettingsLoadActivity"/>
-    <settings.v2.contentRootsProvider implementation="com.intellij.platform.settings.v2.impl.ProjectModelContentRootsProvider"/>
     <search.topHitProvider implementation="com.intellij.platform.settings.v2.impl.ApplicationTeamEditingModeOptionProvider"/>
     <search.projectOptionsTopHitProvider implementation="com.intellij.platform.settings.v2.impl.ProjectTeamEditingModeOptionProvider"/>
   </extensions>
