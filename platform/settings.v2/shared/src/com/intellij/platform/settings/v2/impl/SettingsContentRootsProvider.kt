@@ -8,21 +8,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * Supplies the roots that a file context anchors on. Only the first extension answers. With no extension, the base
- * directory of the project is the only root. See [fileContextRootUrls].
- *
- * `ProjectModelContentRootsProvider` in `intellij.platform.settings.v2.backend.baseline` answers in the monolith and on
- * the backend. `FrontendContentRootsProvider` in `intellij.platform.settings.v2.frontend.split` answers on the frontend.
- */
+/** Supplies the content roots of a project. */
 @ApiStatus.Internal
 interface SettingsContentRootsProvider {
   /**
-   * Returns the urls of the topmost content roots of [project]. The roots do not overlap, so at most one of them holds
-   * a file.
+   * Returns the urls of the topmost content roots of [project]. No root lies under another.
    *
    * @param project the project whose roots to return
-   * @return the root urls, or an empty list when the project has no roots yet
+   * @return the root urls, or an empty list when the project has no roots
    */
   @RequiresReadLock
   fun rootUrls(project: Project): List<String>
