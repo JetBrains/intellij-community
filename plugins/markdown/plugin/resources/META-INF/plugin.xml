@@ -44,7 +44,8 @@
       <li>Assistance for editing tables and lists: automatic alignment and numbering.</li>
       <li>Drag and drop to insert images.</li>
       <li>Language injection in code blocks.</li>
-      <li>Pandoc Converter for HTML, Microsoft Word, and PDF formats.</li>
+      <li>Export to HTML and PDF formats.</li>
+      <li>Import from and export to Microsoft Word format with Pandoc. The plugin does not include Pandoc: <a href="https://pandoc.org/installing.html">install it separately</a>.</li>
       <li>Support for PlantUML diagram rendering (you can add support for Mermaid diagrams with a <a href="https://plugins.jetbrains.com/plugin/20146-mermaid">separate plugin</a>).</li>
     </ul>
   ]]></description>
