@@ -19,6 +19,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.reportSoftAssertFailure
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ref.DebugReflectionUtil
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
@@ -28,6 +29,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Field
+import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.concurrent.CancellationException
 import java.util.function.Predicate
@@ -143,6 +145,9 @@ private val IGNORED_FIELDS = setOf(
 
 private const val LEAKED_WSM = "leakedWorkspaceModel"
 
+// Access this set only on the EDT. Weak keys do not keep leaked storage alive.
+private val reportedStorages = Collections.newSetFromMap(CollectionFactory.createWeakIdentityMap<EntityStorage, Boolean>(16, 0.75f))
+
 /**
  * Can return duplicates
  */
@@ -194,8 +199,28 @@ private fun doTestWorkspaceModelLeak(unitTestProject: Project? = null, testClass
           IdentityHashMap(realStorages.associateWith { Unit }).keys
         }
 
-        LeakHunter.checkLeak(LeakHunter.allRoots(), EntityStorage::class.java, shouldExamineField) {
-          it !in expectedStorages
+        val newLeaks = mutableListOf<EntityStorage>()
+        var firstLeakDetails: String? = null
+        LeakHunter.processLeaks(
+          LeakHunter.allRoots(),
+          EntityStorage::class.java,
+          { it !in expectedStorages && it !in reportedStorages },
+          null,
+          shouldExamineField,
+        ) { storage, backLink ->
+          if (firstLeakDetails == null) {
+            firstLeakDetails = LeakHunter.getLeakedObjectDetails(storage, backLink, true)
+          }
+          newLeaks.add(storage)
+          true
+        }
+        firstLeakDetails?.let { details ->
+          reportedStorages.addAll(newLeaks)
+          val message = if (newLeaks.size == 1) details else "$details\nTotal new leaked storage instances: ${newLeaks.size}"
+          println(message)
+          println(";-----")
+          ThreadUtil.printThreadDump()
+          throw AssertionError(message)
         }
       }
       break
