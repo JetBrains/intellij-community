@@ -153,7 +153,8 @@ public final class GenerationUtil {
    * This is used to create the {@code toString} method body and it's javadoc.
    *
    * @param selectedMembers the selected members as both {@link PsiField} and {@link PsiMethod}.
-   * @param params          additional parameters stored with key/value in the map.
+   * @param params          additional parameters stored with key/value in the map. Note that it could be modified by template
+   *                        (autoImportPackages could be added there)
    * @param templateMacro   the velocity macro template
    * @param useAccessors    if true, accessor property for FieldElement bean would be assigned to field getter name append with ()
    * @return code (usually Java). Returns null if templateMacro is null.

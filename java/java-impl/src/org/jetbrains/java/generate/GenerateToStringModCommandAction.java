@@ -292,7 +292,7 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
       JVMElementFactory factory = JVMElementFactories.getFactory(psiClass.getLanguage(), psiClass.getProject());
       if (factory == null) return null;
 
-      PsiMethod prototype = createMethod(factory, evaluate(psiClass, List.of(), Map.of(), template, config), psiClass);
+      PsiMethod prototype = createMethod(factory, evaluate(psiClass, List.of(), new HashMap<>(), template, config), psiClass);
       if (prototype == null) return null;
       PsiMethod existingMethod = psiClass.findMethodBySignature(prototype, false);
       PsiDocComment existingDoc = existingMethod == null ? null : existingMethod.getDocComment();
