@@ -164,21 +164,21 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.configureByText("a.java", "class Foo {{ new SocketChanne<caret>x }}");
     myFixture.completeBasic();
-    LookupElementPresentation p = NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().get(0));
+    LookupElementPresentation p = NormalCompletionFixture.renderElement(myFixture.getLookup().getItems().get(0));
     assertEquals("SocketChannel", p.getItemText());
     assertEquals(JBColor.foreground(), p.getItemTextForeground());
 
-    p = NormalCompletionTestCase.renderElement(
+    p = NormalCompletionFixture.renderElement(
       ContainerUtil.find(myFixture.getLookup().getItems(), item -> item.getLookupString().equals("AsynchronousServerSocketChannel")));
     assertEquals(JBColor.RED, p.getItemTextForeground());
 
     myFixture.type("\n.s");
     myFixture.completeBasic();
-    p = NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().get(0));
+    p = NormalCompletionFixture.renderElement(myFixture.getLookup().getItems().get(0));
     assertEquals("shutdownInput", p.getItemText());
     assertEquals(JBColor.RED, p.getItemTextForeground());
 
-    p = NormalCompletionTestCase.renderElement(
+    p = NormalCompletionFixture.renderElement(
       ContainerUtil.find(myFixture.getLookup().getItems(), item -> item.getLookupString().equals("isConnected")));
     assertEquals(JBColor.foreground(), p.getItemTextForeground());
   }

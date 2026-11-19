@@ -3,89 +3,133 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class Normal11CompletionTest extends NormalCompletionTestCase {
+import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionProjectFixture;
+import static com.intellij.java.codeInsight.completion.NormalCompletionFixtureKt.normalCompletionFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+@TestApplication
+@IndexingModeTemplate
+public class Normal11CompletionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightCompletionProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11);
+  private final TestFixture<NormalCompletionFixture> completion = normalCompletionFixture(projectFixture);
+
+  @Test
   public void test_local_var() {
-    assertNotNull(completeVar("{ <caret> }"));
+    EdtTestUtil.runInEdtAndWait(() -> assertNotNull(completeVar("{ <caret> }")));
   }
 
+  @Test
   public void test_local_final_var() {
-    assertNotNull(completeVar("{ final <caret> }"));
+    EdtTestUtil.runInEdtAndWait(() -> assertNotNull(completeVar("{ final <caret> }")));
   }
 
+  @Test
   public void test_local_var_before_identifier() {
-    assertNotNull(completeVar("{ <caret>name }"));
+    EdtTestUtil.runInEdtAndWait(() -> assertNotNull(completeVar("{ <caret>name }")));
   }
 
+  @Test
   public void test_resource_var() {
-    assertNotNull(completeVar("{ try (<caret>) }"));
+    EdtTestUtil.runInEdtAndWait(() -> assertNotNull(completeVar("{ try (<caret>) }")));
   }
 
+  @Test
   public void test_empty_foreach_var() {
-    assertNotNull(completeVar("{ for (<caret>) }"));
+    EdtTestUtil.runInEdtAndWait(() -> assertNotNull(completeVar("{ for (<caret>) }")));
   }
 
+  @Test
   public void test_non_empty_foreach_var() {
-    assertNotNull(completeVar("{ for (<caret>x y: z) }"));
+    EdtTestUtil.runInEdtAndWait(() -> assertNotNull(completeVar("{ for (<caret>x y: z) }")));
   }
 
+  @Test
   public void test_lambda_parameter_var() {
-    assertNotNull(completeVar("I f = (v<caret>x) -> {})"));
+    EdtTestUtil.runInEdtAndWait(() -> assertNotNull(completeVar("I f = (v<caret>x) -> {})")));
   }
 
+  @Test
   public void test_no_var_in_lambda_parameter_name() {
-    assertNull(completeVar("I f = (String v<caret>x) -> {};"));
+    EdtTestUtil.runInEdtAndWait(() -> assertNull(completeVar("I f = (String v<caret>x) -> {};")));
   }
 
+  @Test
   public void test_no_var_in_method_parameters() {
-    assertNull(completeVar("void foo(<caret>) {}"));
+    EdtTestUtil.runInEdtAndWait(() -> assertNull(completeVar("void foo(<caret>) {}")));
   }
 
+  @Test
   public void test_no_var_in_catch() {
-    assertNull(completeVar("{ try {} catch(<caret>) {} }"));
+    EdtTestUtil.runInEdtAndWait(() -> assertNull(completeVar("{ try {} catch(<caret>) {} }")));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary(reason = "To display 'equals' suggestion")
   public void test_var_initializer_type() {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
     String source = "class X {boolean test() {var x = <caret>; return x;}}";
-    myFixture.configureByText("Test.java", source);
-    myFixture.complete(CompletionType.SMART);
-    assertEquals(myFixture.getLookupElementStrings(), Arrays.asList("equals", "false", "true", "test"));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.configureByText("Test.java", source);
+      myFixture.complete(CompletionType.SMART);
+      assertEquals(myFixture.getLookupElementStrings(), Arrays.asList("equals", "false", "true", "test"));
+    });
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary(reason = "To display 'equals' suggestion")
   public void test_var_initializer_type_3() {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
     String source = "class X {boolean test() {var x = <caret>;var y = x;var z = y; return z;}}";
-    myFixture.configureByText("Test.java", source);
-    myFixture.complete(CompletionType.SMART);
-    assertEquals(myFixture.getLookupElementStrings(), Arrays.asList("equals", "false", "true", "test"));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.configureByText("Test.java", source);
+      myFixture.complete(CompletionType.SMART);
+      assertEquals(myFixture.getLookupElementStrings(), Arrays.asList("equals", "false", "true", "test"));
+    });
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary(reason = "To display 'equals' suggestion")
   public void test_var_initializer_type_4() {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
     String source = "class X {boolean test() {var x = <caret>;var y = x;var z = y;var w = z;return w;}}";
-    myFixture.configureByText("Test.java", source);
-    myFixture.complete(CompletionType.SMART);
-    // too many hops to track `x` type
-    assertEquals(myFixture.getLookupElementStrings(), List.of());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.configureByText("Test.java", source);
+      myFixture.complete(CompletionType.SMART);
+      // too many hops to track `x` type
+      assertEquals(myFixture.getLookupElementStrings(), List.of());
+    });
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary(reason = "To display 'equals' suggestion")
   public void test_var_initializer_type_used_twice() {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
     String source = "class X {boolean test() {var x = <caret>;if (Math.random() > 0.5) return x;return x;}}";
-    myFixture.configureByText("Test.java", source);
-    myFixture.complete(CompletionType.SMART);
-    assertEquals(myFixture.getLookupElementStrings(),Arrays.asList("equals", "false", "true", "test"));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.configureByText("Test.java", source);
+      myFixture.complete(CompletionType.SMART);
+      assertEquals(myFixture.getLookupElementStrings(),Arrays.asList("equals", "false", "true", "test"));
+    });
   }
 
   private LookupElement completeVar(String text) {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
     String fullText = "class F { " + text + " }";
     myFixture.configureByText("a.java", fullText);
     LookupElement var = ContainerUtil.find(myFixture.completeBasic(), it -> it.getLookupString().equals("var"));
@@ -93,14 +137,13 @@ public class Normal11CompletionTest extends NormalCompletionTestCase {
     return var;
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testToUnmodifiable() {
-    configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "collect(Collectors.toUnmodifiableList())", "collect(Collectors.toUnmodifiableSet())");
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().configureByTestName();
+      myFixture.assertPreferredCompletionItems(0, "collect(Collectors.toUnmodifiableList())", "collect(Collectors.toUnmodifiableSet())");
+    });
   }
 }

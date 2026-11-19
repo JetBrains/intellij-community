@@ -5,709 +5,810 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class QualifierCompletionTest extends NormalCompletionTestCase {
+import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionProjectFixture;
+import static com.intellij.java.codeInsight.completion.NormalCompletionFixtureKt.normalCompletionFixture;
+import static org.assertj.core.api.Assertions.assertThat;
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
+@TestApplication
+@IndexingModeTemplate
+public class QualifierCompletionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightCompletionProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<NormalCompletionFixture> completion = normalCompletionFixture(projectFixture);
 
+  @Test
   @NeedsIndex.Full
   public void testSimple() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              "test".test3<caret>
-          }
+            void run() {
+                "test".test3<caret>
+            }
       
-          public static  <T extends String> void test3(T t, T t2) { }
-          public static  <T extends String> void test3(T t) { }
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 3);
-    myFixture.checkResult("""
-                            package org.test;
+            public static  <T extends String> void test3(T t, T t2) { }
+            public static  <T extends String> void test3(T t) { }
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 3);
+      myFixture.checkResult("""
+                              package org.test;
                             
-                            public abstract class Test {
+                              public abstract class Test {
                             
-                                void run() {
-                                    test3("test"<caret>);
-                                }
+                                  void run() {
+                                      test3("test"<caret>);
+                                  }
                             
-                                public static  <T extends String> void test3(T t, T t2) { }
-                                public static  <T extends String> void test3(T t) { }
-                            }
-                            """);
+                                  public static  <T extends String> void test3(T t, T t2) { }
+                                  public static  <T extends String> void test3(T t) { }
+                              }
+                              """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testSimpleDoubleInvocation() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              "test".test3<caret>
-          }
+            void run() {
+                "test".test3<caret>
+            }
       
-          public static  <T extends String> void test3(T t, T t2) { }
-          public static  <T extends String> void test3(T t) { }
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 2);
-    myFixture.checkResult("""
-                            package org.test;
+            public static  <T extends String> void test3(T t, T t2) { }
+            public static  <T extends String> void test3(T t) { }
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 2);
+      myFixture.checkResult("""
+                              package org.test;
                             
-                            public abstract class Test {
+                              public abstract class Test {
                             
-                                void run() {
-                                    test3("test"<caret>);
-                                }
+                                  void run() {
+                                      test3("test"<caret>);
+                                  }
                             
-                                public static  <T extends String> void test3(T t, T t2) { }
-                                public static  <T extends String> void test3(T t) { }
-                            }
-                            """);
+                                  public static  <T extends String> void test3(T t, T t2) { }
+                                  public static  <T extends String> void test3(T t) { }
+                              }
+                              """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testSeveralArguments() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              "test".test4<caret>
-          }
+            void run() {
+                "test".test4<caret>
+            }
       
-          public static  <T extends String> void test4(T t, T t2) { }
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-                            package org.test;
+            public static  <T extends String> void test4(T t, T t2) { }
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+                              package org.test;
                             
-                            public abstract class Test {
+                              public abstract class Test {
                             
-                                void run() {
-                                    test4("test", <caret>);
-                                }
+                                  void run() {
+                                      test4("test", <caret>);
+                                  }
                             
-                                public static  <T extends String> void test4(T t, T t2) { }
-                            }
-                            """);
+                                  public static  <T extends String> void test4(T t, T t2) { }
+                              }
+                              """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testAnotherFile() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.addClass( """
-      package org.test2;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.addClass( """
+        package org.test2;
       
-      public abstract class Test2 {
-            public static  <T extends String> void test6(T t, T t2) { }
-      }
-      """);
+        public abstract class Test2 {
+              public static  <T extends String> void test6(T t, T t2) { }
+        }
+        """);
 
-    myFixture.configureByText("Test.java", """
-      package org.test;
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              "test".test6<caret>
-          }
+            void run() {
+                "test".test6<caret>
+            }
       
-          public static  <T extends String> void test4(T t, T t2) { }
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-                            package org.test;
+            public static  <T extends String> void test4(T t, T t2) { }
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+                              package org.test;
                             
-                            import org.test2.Test2;
+                              import org.test2.Test2;
                             
-                            public abstract class Test {
+                              public abstract class Test {
                             
-                                void run() {
-                                    Test2.test6("test", );
-                                }
+                                  void run() {
+                                      Test2.test6("test", );
+                                  }
                             
-                                public static  <T extends String> void test4(T t, T t2) { }
-                            }
-                            """);
+                                  public static  <T extends String> void test4(T t, T t2) { }
+                              }
+                              """);
+    });
   }
+  @Test
   @NeedsIndex.Full
   public void testPrimitiveLong() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              1L.test4<caret>
-          }
+            void run() {
+                1L.test4<caret>
+            }
       
-          public static void test4(Long t) { }
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-      package org.test;
+            public static void test4(Long t) { }
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              test4(1L);
-          }
+            void run() {
+                test4(1L);
+            }
       
-          public static void test4(Long t) { }
-      }
-      """);
+            public static void test4(Long t) { }
+        }
+        """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testPrimitiveReferenceInt() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              int x = 1;
-              x.test4<caret>
-          }
+            void run() {
+                int x = 1;
+                x.test4<caret>
+            }
       
-          public static void test4(Integer t) { }
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-      package org.test;
+            public static void test4(Integer t) { }
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              int x = 1;
-              test4(x);
-          }
+            void run() {
+                int x = 1;
+                test4(x);
+            }
       
-          public static void test4(Integer t) { }
-      }
-      """);
+            public static void test4(Integer t) { }
+        }
+        """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testNull() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              null.test4<caret>
-          }
+            void run() {
+                null.test4<caret>
+            }
       
-          public static void test4(Integer t) { }
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-      package org.test;
+            public static void test4(Integer t) { }
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              test4(null);
-          }
+            void run() {
+                test4(null);
+            }
       
-          public static void test4(Integer t) { }
-      }
-      """);
+            public static void test4(Integer t) { }
+        }
+        """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testNullForNotNull() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
-      import org.jetbrains.annotations.NotNull;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
+        import org.jetbrains.annotations.NotNull;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              null.test4<caret>
-          }
+            void run() {
+                null.test4<caret>
+            }
       
-          public static void test4(@NotNull Integer t) { }
-      }
-      """);
-    LookupElement[] complete = myFixture.complete(CompletionType.BASIC, 3);
-    assertEmpty(complete);
+            public static void test4(@NotNull Integer t) { }
+        }
+        """);
+      LookupElement[] complete = myFixture.complete(CompletionType.BASIC, 3);
+      assertThat(complete).isNullOrEmpty();
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testIntersectionType() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              "ttt".test4<caret>
-          }
+            void run() {
+                "ttt".test4<caret>
+            }
       
-          public static <T extends CharSequence & Comparable<String>> void test4(T t) { }
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-      package org.test;
+            public static <T extends CharSequence & Comparable<String>> void test4(T t) { }
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              test4("ttt");
-          }
+            void run() {
+                test4("ttt");
+            }
       
-          public static <T extends CharSequence & Comparable<String>> void test4(T t) { }
-      }
-      """);
+            public static <T extends CharSequence & Comparable<String>> void test4(T t) { }
+        }
+        """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testIntersectionTypeNotFound() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              "ttt".test4<caret>
-          }
+            void run() {
+                "ttt".test4<caret>
+            }
       
-          public static <T extends CharSequence & Comparable<Integer>> void test4(T t) { }
-      }
-      """);
-    LookupElement[] completed = myFixture.complete(CompletionType.BASIC, 3);
-    assertEmpty(completed);
+            public static <T extends CharSequence & Comparable<Integer>> void test4(T t) { }
+        }
+        """);
+      LookupElement[] completed = myFixture.complete(CompletionType.BASIC, 3);
+      assertThat(completed).isNullOrEmpty();
+    });
   }
+  @Test
   @NeedsIndex.Full
   public void testCaptureType() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
-      import java.util.ArrayList;
-      import java.util.List;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
+        import java.util.ArrayList;
+        import java.util.List;
       
-      public abstract class Test {
+        public abstract class Test {
       
-        private static void test2(List<? extends CharSequence> l) {
-              l.get(0).testPrint<caret>
-          }
+          private static void test2(List<? extends CharSequence> l) {
+                l.get(0).testPrint<caret>
+            }
       
-        public static void testPrint(CharSequence charSequence) {}
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-      package org.test;
-      import java.util.ArrayList;
-      import java.util.List;
+          public static void testPrint(CharSequence charSequence) {}
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+        package org.test;
+        import java.util.ArrayList;
+        import java.util.List;
       
-      public abstract class Test {
+        public abstract class Test {
       
-        private static void test2(List<? extends CharSequence> l) {
-              testPrint(l.get(0));
-          }
+          private static void test2(List<? extends CharSequence> l) {
+                testPrint(l.get(0));
+            }
       
-        public static void testPrint(CharSequence charSequence) {}
-      }
-      """);
+          public static void testPrint(CharSequence charSequence) {}
+        }
+        """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testSimpleGeneric() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
-      import java.util.ArrayList;
-      import java.util.List;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
+        import java.util.ArrayList;
+        import java.util.List;
       
-      public abstract class Test {
+        public abstract class Test {
       
-        private static void test2(List<? extends CharSequence> l) {
-              List<String> t = new ArrayList<>();
-              t.testPrint<caret>
-          }
+          private static void test2(List<? extends CharSequence> l) {
+                List<String> t = new ArrayList<>();
+                t.testPrint<caret>
+            }
       
-        public static <T extends CharSequence> void testPrint(List<T> l) {}
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-      package org.test;
-      import java.util.ArrayList;
-      import java.util.List;
+          public static <T extends CharSequence> void testPrint(List<T> l) {}
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+        package org.test;
+        import java.util.ArrayList;
+        import java.util.List;
       
-      public abstract class Test {
+        public abstract class Test {
       
-        private static void test2(List<? extends CharSequence> l) {
-              List<String> t = new ArrayList<>();
-              testPrint(t);
-          }
+          private static void test2(List<? extends CharSequence> l) {
+                List<String> t = new ArrayList<>();
+                testPrint(t);
+            }
       
-        public static <T extends CharSequence> void testPrint(List<T> l) {}
-      }
-      """);
+          public static <T extends CharSequence> void testPrint(List<T> l) {}
+        }
+        """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testSimpleGenericNotFound() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
-      import java.util.ArrayList;
-      import java.util.List;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
+        import java.util.ArrayList;
+        import java.util.List;
       
-      public abstract class Test {
+        public abstract class Test {
       
-        private static void test2(List<? extends CharSequence> l) {
-              List<Integer> t = new ArrayList<>();
-              t.testPrint<caret>
-          }
+          private static void test2(List<? extends CharSequence> l) {
+                List<Integer> t = new ArrayList<>();
+                t.testPrint<caret>
+            }
       
-        public static <T extends CharSequence> void testPrint(List<T> l) {}
-      }
-      """);
-    LookupElement[] completed = myFixture.complete(CompletionType.BASIC, 3);
-    assertEmpty(completed);
+          public static <T extends CharSequence> void testPrint(List<T> l) {}
+        }
+        """);
+      LookupElement[] completed = myFixture.complete(CompletionType.BASIC, 3);
+      assertThat(completed).isNullOrEmpty();
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testAnotherFileWithStaticImport() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.addClass( """
-      package org.test2;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.addClass( """
+        package org.test2;
       
-      public abstract class Test2 {
-            public static  <T extends String> void test6(T t, T t2) { }
-      }
-      """);
+        public abstract class Test2 {
+              public static  <T extends String> void test6(T t, T t2) { }
+        }
+        """);
 
-    myFixture.configureByText("Test.java", """
-      package org.test;
-      import static org.test2.Test2.*;
+      myFixture.configureByText("Test.java", """
+        package org.test;
+        import static org.test2.Test2.*;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              "test".test6<caret>
-          }
+            void run() {
+                "test".test6<caret>
+            }
       
-          public static  <T extends String> void test4(T t, T t2) { }
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-      package org.test;
-      import static org.test2.Test2.*;
+            public static  <T extends String> void test4(T t, T t2) { }
+        }
+        """);
+      myFixture.complete(CompletionType.BASIC, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+        package org.test;
+        import static org.test2.Test2.*;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          void run() {
-              test6("test", );
-          }
+            void run() {
+                test6("test", );
+            }
       
-          public static  <T extends String> void test4(T t, T t2) { }
-      }
-      """);
+            public static  <T extends String> void test4(T t, T t2) { }
+        }
+        """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testSmartSimple() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          Integer run() {
-              return "test".test3<caret>
-          }
+            Integer run() {
+                return "test".test3<caret>
+            }
       
-          public static Integer test3(String t) { return 0; }
-      }
-      """);
-    myFixture.complete(CompletionType.SMART, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-                            package org.test;
+            public static Integer test3(String t) { return 0; }
+        }
+        """);
+      myFixture.complete(CompletionType.SMART, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+                              package org.test;
                             
-                            public abstract class Test {
+                              public abstract class Test {
                             
-                                Integer run() {
-                                    return test3("test")
-                                }
+                                  Integer run() {
+                                      return test3("test")
+                                  }
                             
-                                public static Integer test3(String t) { return 0; }
-                            }
-                            """);
+                                  public static Integer test3(String t) { return 0; }
+                              }
+                              """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testSmartSimpleNotFound() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          Integer run() {
-              return "test".test3<caret>
-          }
+            Integer run() {
+                return "test".test3<caret>
+            }
       
-          public static String test3(String t) { return 0; }
-      }
-      """);
-    LookupElement[] completed = myFixture.complete(CompletionType.SMART, 3);
-    assertEmpty(completed);
+            public static String test3(String t) { return 0; }
+        }
+        """);
+      LookupElement[] completed = myFixture.complete(CompletionType.SMART, 3);
+      assertThat(completed).isNullOrEmpty();
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testSmartGenericsSimple() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          String run() {
-              return "test".test3<caret>
-          }
+            String run() {
+                return "test".test3<caret>
+            }
       
-          public static <T> T test3(T t) { return null; }
-      }
-      """);
-    myFixture.complete(CompletionType.SMART, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-                            package org.test;
+            public static <T> T test3(T t) { return null; }
+        }
+        """);
+      myFixture.complete(CompletionType.SMART, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+                              package org.test;
                             
-                            public abstract class Test {
+                              public abstract class Test {
                             
-                                String run() {
-                                    return test3("test")
-                                }
+                                  String run() {
+                                      return test3("test")
+                                  }
                             
-                                public static <T> T test3(T t) { return null; }
-                            }
-                            """);
+                                  public static <T> T test3(T t) { return null; }
+                              }
+                              """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testSmartGenericsSimpleNotFound() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          Runnable run() {
-              return "test".test3<caret>
-          }
+            Runnable run() {
+                return "test".test3<caret>
+            }
       
-          public static <T> T test3(T t) { return null; }
-      }
-      """);
-    LookupElement[] completed = myFixture.complete(CompletionType.SMART, 3);
-    assertEmpty(completed);
+            public static <T> T test3(T t) { return null; }
+        }
+        """);
+      LookupElement[] completed = myFixture.complete(CompletionType.SMART, 3);
+      assertThat(completed).isNullOrEmpty();
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testSmartGenericsIndependent() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.configureByText("Test.java", """
-      package org.test;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public abstract class Test {
+        public abstract class Test {
       
-          Runnable run() {
-              return "test".test3<caret>
-          }
+            Runnable run() {
+                return "test".test3<caret>
+            }
       
-          public static <T, K extends Runnable> K test3(T t) { return null; }
-      }
-      """);
-    myFixture.complete(CompletionType.SMART, 3);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-                            package org.test;
+            public static <T, K extends Runnable> K test3(T t) { return null; }
+        }
+        """);
+      myFixture.complete(CompletionType.SMART, 3);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+                              package org.test;
                             
-                            public abstract class Test {
+                              public abstract class Test {
                             
-                                Runnable run() {
-                                    return test3("test")
-                                }
+                                  Runnable run() {
+                                      return test3("test")
+                                  }
                             
-                                public static <T, K extends Runnable> K test3(T t) { return null; }
-                            }
-                            """);
+                                  public static <T, K extends Runnable> K test3(T t) { return null; }
+                              }
+                              """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testStaticInClass() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.addClass("""
-          package org.test;
-          public class T {
-            static public void test(T t){
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.addClass("""
+            package org.test;
+            public class T {
+              static public void test(T t){
+              }
             }
-          }
 
-      """);
-    myFixture.configureByText("Test.java", """
-      package org.test;
+        """);
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public class Test {
-        public static void main(T t){
-          t.test<caret>
+        public class Test {
+          public static void main(T t){
+            t.test<caret>
+          }
         }
-      }
-      """);
-    myFixture.complete(CompletionType.BASIC, 2);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-      package org.test;
+        """);
+      myFixture.complete(CompletionType.BASIC, 2);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+        package org.test;
       
-      public class Test {
-        public static void main(T t){
-          T.test(t);
+        public class Test {
+          public static void main(T t){
+            T.test(t);
+          }
         }
-      }
-      """);
+        """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testSmartStaticInClass() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, getTestRootDisposable());
-    myFixture.addClass("""
-          package org.test;
-          public class T {
-            static public String test(T t){
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true, myFixture.getTestRootDisposable());
+      myFixture.addClass("""
+            package org.test;
+            public class T {
+              static public String test(T t){
+              }
             }
-          }
 
-      """);
-    myFixture.configureByText("Test.java", """
-      package org.test;
+        """);
+      myFixture.configureByText("Test.java", """
+        package org.test;
       
-      public class Test {
-        public static String main(T t){
-          return t.test<caret>
+        public class Test {
+          public static String main(T t){
+            return t.test<caret>
+          }
         }
-      }
-      """);
-    myFixture.complete(CompletionType.SMART, 2);
-    myFixture.type('\n');
-    myFixture.checkResult("""
-      package org.test;
+        """);
+      myFixture.complete(CompletionType.SMART, 2);
+      myFixture.type('\n');
+      myFixture.checkResult("""
+        package org.test;
       
-      public class Test {
-        public static String main(T t){
-          return T.test(t);
+        public class Test {
+          public static String main(T t){
+            return T.test(t);
+          }
         }
-      }
-      """);
+        """);
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testStaticWithImplicitImports() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true,
-                                                                      getTestRootDisposable());
-    IdeaTestUtil.withLevel(getModule(),
-                           JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
-        myFixture.addClass("""
-                             package java.io;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true,
+                                                                        myFixture.getTestRootDisposable());
+      IdeaTestUtil.withLevel(myFixture.getModule(),
+                             JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+          myFixture.addClass("""
+                               package java.io;
                              
-                              public final class IO {
-                                public static void println(Object obj) {}
-                              }
-                             """);
-        myFixture.configureByText("Test.java", """
-          public static void main(String[] args) {
-              "TEST".printl<caret>
-          }
-          """);
-        myFixture.complete(CompletionType.BASIC, 2);
-        myFixture.type('\n');
-        myFixture.checkResult("""
-                                public static void main(String[] args) {
-                                    println("TEST");
+                                public final class IO {
+                                  public static void println(Object obj) {}
                                 }
-                                """);
-      });
-  }
-  @NeedsIndex.Full
-  public void testStaticWithoutImplicitImports() {
-    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true,
-                                                                      getTestRootDisposable());
-    IdeaTestUtil.withLevel(getModule(),
-                           JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
-        myFixture.addClass("""
-                             package java.io;
-                             
-                             public final class IO {
-                                public static void println(Object obj) {}
-                             }
-                             """);
-        myFixture.configureByText("Test.java", """
-          public class Test{
+                               """);
+          myFixture.configureByText("Test.java", """
             public static void main(String[] args) {
                 "TEST".printl<caret>
             }
-          }
-          """);
-        myFixture.complete(CompletionType.BASIC, 2);
-        myFixture.type('\n');
-        myFixture.checkResult("""
-                                import java.io.IO;
-                                
-                                public class Test{
+            """);
+          myFixture.complete(CompletionType.BASIC, 2);
+          myFixture.type('\n');
+          myFixture.checkResult("""
                                   public static void main(String[] args) {
-                                      IO.println("TEST");
+                                      println("TEST");
                                   }
-                                }
-                                """);
-      });
+                                  """);
+        });
+    });
+  }
+  @Test
+  @NeedsIndex.Full
+  public void testStaticWithoutImplicitImports() {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true,
+                                                                        myFixture.getTestRootDisposable());
+      IdeaTestUtil.withLevel(myFixture.getModule(),
+                             JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
+          myFixture.addClass("""
+                               package java.io;
+                             
+                               public final class IO {
+                                  public static void println(Object obj) {}
+                               }
+                               """);
+          myFixture.configureByText("Test.java", """
+            public class Test{
+              public static void main(String[] args) {
+                  "TEST".printl<caret>
+              }
+            }
+            """);
+          myFixture.complete(CompletionType.BASIC, 2);
+          myFixture.type('\n');
+          myFixture.checkResult("""
+                                  import java.io.IO;
+                                
+                                  public class Test{
+                                    public static void main(String[] args) {
+                                        IO.println("TEST");
+                                    }
+                                  }
+                                  """);
+        });
+    });
   }
 }

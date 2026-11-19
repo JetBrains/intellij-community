@@ -83,7 +83,7 @@ public class GlobalMemberNameCompletionTest extends LightJavaCodeInsightFixtureT
                          """);
     myFixture.configureByText("a.java", "class Bar {{ abcf<caret> }}");
     LookupElement element = complete()[0];
-    LookupElementPresentation presentation = NormalCompletionTestCase.renderElement(element);
+    LookupElementPresentation presentation = NormalCompletionFixture.renderElement(element);
     assertEquals("Foo.abcfield", presentation.getItemText());
     assertEquals(" (foo)", presentation.getTailText());
     assertEquals("int", presentation.getTypeText());
@@ -192,7 +192,7 @@ public class GlobalMemberNameCompletionTest extends LightJavaCodeInsightFixtureT
     myFixture.configureByText("a.java", "class Bar {{ abcm<caret> }}");
     LookupElement element = complete()[0];
 
-    List<LookupElementPresentation.TextFragment> tail = NormalCompletionTestCase.renderElement(element).getTailFragments();
+    List<LookupElementPresentation.TextFragment> tail = NormalCompletionFixture.renderElement(element).getTailFragments();
     assertEquals("(...)", tail.get(0).text);
     assertFalse(tail.get(0).isGrayed());
     assertEquals(" (foo)", tail.get(1).text);
@@ -212,7 +212,7 @@ public class GlobalMemberNameCompletionTest extends LightJavaCodeInsightFixtureT
       }
       """);
     LookupElement element = complete()[0];
-    LookupElementPresentation presentation = NormalCompletionTestCase.renderElement(element);
+    LookupElementPresentation presentation = NormalCompletionFixture.renderElement(element);
     assert "foo".equals(presentation.getItemText());
     myFixture.type("\n");
     myFixture.checkResult(

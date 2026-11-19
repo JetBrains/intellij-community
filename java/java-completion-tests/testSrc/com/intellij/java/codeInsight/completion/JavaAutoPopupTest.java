@@ -1644,7 +1644,7 @@ public class JavaAutoPopupTest {
     assertEquals(Set.of(".new", ".lambda", "Util.bar", "Util.CONSTANT", "Util.foo"), Set.copyOf(myFixture.getLookupElementStrings()));
 
     LookupElement constant = ContainerUtil.find(myFixture.getLookupElements(), it -> it.getLookupString().equals("Util.CONSTANT"));
-    LookupElementPresentation p = NormalCompletionTestCase.renderElement(constant);
+    LookupElementPresentation p = NormalCompletionFixture.renderElement(constant);
     assertEquals("Util.CONSTANT", p.getItemText());
     assertEquals(" ( = 2) foo", p.getTailText());
     assertEquals("int", p.getTypeText());
@@ -1939,7 +1939,7 @@ public class JavaAutoPopupTest {
     type("tpl");
     myFixture.assertPreferredCompletionItems(0, "tpl", "tplMn");
 
-    LookupElementPresentation p = NormalCompletionTestCase.renderElement(myFixture.getLookupElements()[0]);
+    LookupElementPresentation p = NormalCompletionFixture.renderElement(myFixture.getLookupElements()[0]);
     assertEquals("tpl", p.getItemText());
     assertNull(p.getTailText());
     assertTrue(p.getTypeText().isEmpty());
@@ -1951,7 +1951,7 @@ public class JavaAutoPopupTest {
     myFixture.configureByText("a.java", "class Foo { { foo.<caret> } }");
     type("b");
     assertEquals(myFixture.getLookupElementStrings(), List.of("bar"));
-    assertEquals("bar.", NormalCompletionTestCase.renderElement(myFixture.getLookupElements()[0]).getItemText());
+    assertEquals("bar.", NormalCompletionFixture.renderElement(myFixture.getLookupElements()[0]).getItemText());
     myFixture.type("\n");
     assertTrue(myFixture.getEditor().getDocument().getText().contains("foo.bar. "));
     joinAutopopup();
@@ -2051,15 +2051,15 @@ public class JavaAutoPopupTest {
     myFixture.assertPreferredCompletionItems(0, ArrayUtil.toStringArray(Collections.nCopies(count, "MyClass")));
 
     runInEdtAndWait(() -> {
-      assertEquals(" p" + toSelect, NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().get(toSelect)).getTailText());
-      CompletionSortingTestCase.imitateItemSelection(myFixture.getLookup(), toSelect);
+      assertEquals(" p" + toSelect, NormalCompletionFixture.renderElement(myFixture.getLookup().getItems().get(toSelect)).getTailText());
+      CompletionSortingFixture.imitateItemSelection(myFixture.getLookup(), toSelect);
       myFixture.getLookup().hideLookup(true);
     });
 
     type("s");
     myFixture.assertPreferredCompletionItems(0, ArrayUtil.toStringArray(Collections.nCopies(count, "MyClass")));
     runInEdtAndWait(() -> {
-      assertEquals(" p" + toSelect, NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().getFirst()).getTailText());
+      assertEquals(" p" + toSelect, NormalCompletionFixture.renderElement(myFixture.getLookup().getItems().getFirst()).getTailText());
     });
   }
 

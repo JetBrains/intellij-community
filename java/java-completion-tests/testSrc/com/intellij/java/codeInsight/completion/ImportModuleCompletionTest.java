@@ -325,7 +325,7 @@ public class ImportModuleCompletionTest extends LightJava9ModulesCodeInsightFixt
 
     myFixture.getLookup();
 
-    Map<String, Color> items = Arrays.stream(myFixture.getLookupElements()).map(lookup -> NormalCompletionTestCase.renderElement(lookup))
+    Map<String, Color> items = Arrays.stream(myFixture.getLookupElements()).map(lookup -> NormalCompletionFixture.renderElement(lookup))
       .collect(Collectors.toMap(e -> e.getItemText(), e -> e.getItemTextForeground()));
 
     StringBuilder error = new StringBuilder();
