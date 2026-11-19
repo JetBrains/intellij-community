@@ -4,7 +4,6 @@ package com.intellij.python.sdk.backend
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,10 +19,8 @@ import com.intellij.python.sdk.backend.impl.recordedPythonInfo
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonInfo
-import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
@@ -143,18 +140,6 @@ suspend fun Iterable<Sdk>.pyInterpreterItems(): List<PyInterpreterItem> = mapNot
  * that the platform hands an [Sdk], such as the status bar or a run configuration.
  */
 suspend fun Sdk.interpreterItem(): PyInterpreterItem? = pythonInterpreterResultAsync().successOrNull?.asItem()
-
-/**
- * Whether this SDK's interpreter can be used, for a Java caller that cannot suspend.
- *
- * From Kotlin call [getPythonInfo] instead, which also says why it cannot be used.
- */
-@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-// Off until PY-93940.
-@RequiresReadLockAbsence(generateAssertion = false)
-@RequiresBlockingContext
-fun Sdk.isInterpreterUsable(): Boolean =
-  runBlockingMaybeCancellable { pythonInterpreterResultAsync().successOrNull?.getPythonInfo() } is Result.Success<*>
 
 /** The flavor this interpreter was set up with. */
 val PythonInterpreter.flavor: PythonSdkFlavor<*>

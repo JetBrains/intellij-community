@@ -5,7 +5,6 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -111,19 +110,6 @@ private fun PythonInterpreter.environmentRoot(): String = when (this) {
     if (detectedEnvironment is SystemPythonEnvironment) pythonBinary.pathString else pythonBinary.resolvePythonHome().pathString
   is TargetPythonInterpreter -> (PathHolder.Target(binaryPathString).resolvePythonHome() as PathHolder.Target).pathString
 }
-
-/**
- * What a row draws for an SDK that names no interpreter, see [com.intellij.python.sdk.backend.pythonInterpreterResult].
- * The row is `[invalid]`, and [reason] says why. The user can only remove or recreate such an SDK.
- */
-fun brokenSdkPresentation(sdk: Sdk, reason: @Nls String): PythonInterpreterPresentation = PythonInterpreterPresentation(
-  name = sdk.name,
-  suffix = null,
-  description = sdk.homePath.orEmpty(),
-  problem = invalidProblem(reason),
-  icon = wrapIconWithWarningDecorator(AllIcons.Nodes.Unknown).rpcId(),
-  isPathDerivedName = isNameDerivedFromHomePath(sdk.name, sdk.homePath),
-)
 
 /**
  * What a row draws for the interpreter that an interpreter library entry names while its environment is gone, see
