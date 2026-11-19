@@ -196,4 +196,7 @@ public interface IdeaPlugin extends DomElement {
    */
   @SubTagList("projectListeners")
   @NotNull List<? extends Listeners> getProjectListeners();
+
+  @SubTagList("workspaceListeners")
+  @NotNull List<? extends Listeners> getWorkspaceListeners();
 }

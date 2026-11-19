@@ -53,4 +53,9 @@
               activeInTestMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"/>
   </projectListeners>
 
+  <workspaceListeners>
+    <listener class="java.util.ArrayList" topic="java.util.Collection"
+              activeInHeadlessMode="true" activeInTestMode="true"/>
+  </workspaceListeners>
+
 </idea-plugin>

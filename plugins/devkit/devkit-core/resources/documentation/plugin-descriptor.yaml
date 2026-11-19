@@ -836,7 +836,8 @@ elements:
                             - `IDEA_APPLICATION` _(default)_
                             - `IDEA_PROJECT`
                             - `IDEA_MODULE` (**deprecated**)
-                          
+                            - `IDEA_WORKSPACE` (**experimental**)
+
                           **It is strongly recommended not to introduce new project- and module-level extension points.**
                           If an extension point needs to operate on a `Project` or `Module` instance, declare an application-level extension
                           point and pass the instance as a method parameter.
@@ -1692,9 +1693,10 @@ elements:
                     - |
                       [Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html)
                   description: |
-                    Defines a single application or project-level listener.
-                    A single [`<applicationListeners>`](#element:idea-plugin__applicationListeners) or
-                    [`<projectListeners>`](#element:idea-plugin__projectListeners) can contain multiple `<listener>` elements.
+                    Defines a single application, project or workspace-level listener.
+                    A single [`<applicationListeners>`](#element:idea-plugin__applicationListeners),
+                    [`<projectListeners>`](#element:idea-plugin__projectListeners) or
+                    [`<workspaceListeners>`](#element:idea-plugin__workspaceListeners) can contain multiple `<listener>` elements.
                   requirement:
                     required: no
                   attributes:
@@ -1756,6 +1758,15 @@ elements:
                 [Defining Project-Level Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html#defining-project-level-listeners)
             description: |
               Defines the project-level listeners.
+            requirement:
+              required: no
+            children:
+              - element: *listener
+        - element:
+            name: workspaceListeners
+            description: |
+              Defines the workspace-level listeners.
+              This element is experimental.
             requirement:
               required: no
             children:

@@ -74,6 +74,9 @@ fun collectRegisteredClasses(root: IdeaPlugin): Set<PsiClass> {
   root.projectListeners.flatMapTo(result) { listeners ->
     listeners.listeners.asSequence().mapNotNull { it.listenerClassName.value }
   }
+  root.workspaceListeners.flatMapTo(result) { listeners ->
+    listeners.listeners.asSequence().mapNotNull { it.listenerClassName.value }
+  }
   root.applicationComponents.flatMapTo(result) { components ->
     components.components.asSequence().mapNotNull { it.implementationClass.value }
   }

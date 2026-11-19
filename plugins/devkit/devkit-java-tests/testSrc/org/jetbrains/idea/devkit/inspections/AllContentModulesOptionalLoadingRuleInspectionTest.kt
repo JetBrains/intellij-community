@@ -218,6 +218,22 @@ internal class AllContentModulesOptionalLoadingRuleInspectionTest : JavaCodeInsi
     myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
   }
 
+  fun `test no warning when workspace listeners are registered directly`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <content>
+          <module name="module1"/>
+        </content>
+        <workspaceListeners>
+          <listener class="com.example.MyListener" topic="com.example.MyTopic"/>
+        </workspaceListeners>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
   fun `test no warning when actions are registered directly`() {
     addContentModules("module1")
     val pluginXml = addPluginXmlToProject("""

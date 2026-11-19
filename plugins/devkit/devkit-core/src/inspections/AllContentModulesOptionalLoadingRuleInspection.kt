@@ -44,6 +44,7 @@ internal class AllContentModulesOptionalLoadingRuleInspection : DevKitPluginXmlI
     if (plugin.extensions.any { it.xmlTag.subTags.isNotEmpty() }) return true
     if (plugin.applicationListeners.any { it.listeners.isNotEmpty() }) return true
     if (plugin.projectListeners.any { it.listeners.isNotEmpty() }) return true
+    if (plugin.workspaceListeners.any { it.listeners.isNotEmpty() }) return true
     if (plugin.actions.any { it.actions.isNotEmpty() || it.groups.isNotEmpty() || it.references.isNotEmpty() }) return true
     return hasClassesRegisteredInIncludedFiles(plugin, processedFiles)
   }

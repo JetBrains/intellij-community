@@ -11,5 +11,6 @@
     <extensionPoint name="name2" beanClass="java.lang.Runnable"/>
     <extensionPoint qualifiedName="qualifiedName1" interface="java.lang.Runnable"/>
     <extensionPoint qualifiedName="qualifiedName2" beanClass="java.lang.Runnable"/>
+    <extensionPoint name="name3" interface="java.lang.Runnable" area="IDEA_WORKSPACE"/>
   </extensionPoints>
 </idea-plugin>
