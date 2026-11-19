@@ -50,7 +50,7 @@ class KotlinPluginLayoutTest : UsefulTestCase() {
                       RemoteRepositoryDescription(
                           "intellij-dependencies",
                           "IntelliJ Dependencies",
-                          "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies"
+                          "https://cache-redirector.jetbrains.com/maven/ultimate-public"
                       )
                     )
                   )

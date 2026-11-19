@@ -101,7 +101,7 @@ class CodegenJarLoader(val project: Project) {
     private val INTELLIJ_DEPENDENCIES_DESCRIPTION = RemoteRepositoryDescription(
       "intellij-dependencies",
       "Intellij Dependencies",
-      "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies",
+      "https://cache-redirector.jetbrains.com/maven/ultimate-public",
     )
   }
 }
