@@ -110,7 +110,9 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressed
 import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.openapi.workspace.impl.ProjectWorkspaceComponentManager
 import com.intellij.openapi.workspace.impl.ProjectWorkspaceManagerImpl
+import com.intellij.openapi.workspace.workspace
 import com.intellij.platform.PROJECT_NEWLY_CREATED
 import com.intellij.platform.PROJECT_NEWLY_OPENED
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -1705,6 +1707,7 @@ private suspend fun initProject(
 
     if (preloadServices) {
       schedulePreloadServices(project)
+      scheduleWorkspacePreloadServices(project)
     }
 
     preInitJob?.join()
@@ -1801,6 +1804,23 @@ internal fun CoroutineScope.schedulePreloadServices(project: ProjectImpl) {
       syncScope = this,
       onlyIfAwait = project.isLight,
       asyncScope = project.asyncPreloadServiceScope,
+    )
+  }
+}
+
+/** Preloads workspace services during host project initialization. */
+internal fun CoroutineScope.scheduleWorkspacePreloadServices(project: ProjectImpl) {
+  val container = project.workspace.getComponentManagerImpl() as ProjectWorkspaceComponentManager
+  if (container.hostProject !== project) {
+    return
+  }
+  launch(CoroutineName("workspace service preloading (sync)")) {
+    container.preloadServices(
+      modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+      activityPrefix = "workspace ",
+      syncScope = this,
+      onlyIfAwait = project.isLight,
+      asyncScope = container.getCoroutineScope(),
     )
   }
 }
