@@ -287,6 +287,27 @@ class Py3StringFormatInspectionTest : PyInspectionTestCase() {
     f"{C()<warning descr="Format spec is not supported for 'C' ('object.__format__' only accepts empty string)">:foo</warning>}"
     """.trimIndent())
 
+  @TestFor(issues = ["PY-93156"])
+  fun `test numeric option with integer or percent type in str format`() = doTestByText("""
+    "#{:06X}".format(255)
+    "{:06d} {:+d} {: d} {:#x} {:#o} {:,d} {:08b}".format(1, 2, 3, 4, 5, 6, 7)
+    "{:+%} {:,.1%} {:05.1%}".format(0.5, 0.5, 0.5)
+    "{:06} {:+e} {:,.2f} {:+n}".format(1, 1.0, 2.0, 3)
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-93156"])
+  fun `test numeric option with str type in str format`() = doTestByText("""
+    <warning descr="The format options in chunk \"0\" are incompatible">"{:+s}"</warning>.format("a")
+    <warning descr="The format options in chunk \"0\" are incompatible">"{:,s}"</warning>.format("a")
+    <warning descr="The format options in chunk \"0\" are incompatible">"{:#s}"</warning>.format("a")
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-93156"])
+  fun `test numeric option with integer type and str argument in str format`() = doTestByText("""
+    def f(s: str):
+        "{:06d}".format(<warning descr="Unexpected type str">s</warning>)
+    """.trimIndent())
+
   override fun getInspectionClass() = PyStringFormatInspection::class.java
 
   override fun getTestCaseDirectory() = TEST_DIRECTORY
