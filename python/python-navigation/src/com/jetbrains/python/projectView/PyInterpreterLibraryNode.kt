@@ -8,12 +8,9 @@ import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode
 import com.intellij.openapi.project.Project
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.NativePythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
-import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.jetbrains.python.parser.icons.PythonParserIcons
-import javax.swing.Icon
 import kotlin.io.path.pathString
 
 /**
@@ -26,7 +23,7 @@ internal class PyInterpreterLibraryNode(project: Project, value: NamedLibraryEle
   override fun update(presentation: PresentationData) {
     super.update(presentation)
     val interpreter = value?.orderEntry?.ownerModule?.findEvoPyProjectIfReady()?.interpreter
-    presentation.setIcon(interpreter?.let(::toolIconOf) ?: PythonParserIcons.PythonFile)
+    presentation.setIcon(interpreter?.let { PyEvoEnvironmentProvider.iconOf(it.ref.manager) } ?: PythonParserIcons.PythonFile)
     if (interpreter == null) return
     val path = when (interpreter) {
       is NativePythonInterpreter -> interpreter.pythonBinary.pathString
@@ -40,7 +37,3 @@ internal class PyInterpreterLibraryNode(project: Project, value: NamedLibraryEle
     }
   }
 }
-
-/** The icon of the tool that manages [interpreter], see [PyInterpreterRef.manager], or `null` when no provider has it. */
-private fun toolIconOf(interpreter: PythonInterpreter): Icon? =
-  PyEvoEnvironmentProvider.EP_NAME.extensionList.firstOrNull { it.tool.fusId == interpreter.ref.manager }?.icon

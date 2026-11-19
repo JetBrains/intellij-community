@@ -13,6 +13,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.common.FusId
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.rpcId
@@ -405,6 +406,10 @@ interface PyEvoEnvironmentProvider {
   companion object {
     @ApiStatus.Internal
     val EP_NAME: ExtensionPointName<PyEvoEnvironmentProvider> = ExtensionPointName.create("Pythonid.evoEnvironmentProvider")
+
+    /** The icon of the tool [manager], see [PyInterpreterRef.manager], or `null` when no provider has the tool. */
+    @ApiStatus.Internal
+    fun iconOf(manager: FusId): Icon? = EP_NAME.extensionList.firstOrNull { it.tool.fusId == manager }?.icon
   }
 }
 
