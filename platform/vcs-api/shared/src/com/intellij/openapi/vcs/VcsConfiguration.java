@@ -44,7 +44,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public static final @NonNls String DIFF = "diff";
 
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT =
-    !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine() && !PlatformUtils.isCLion();
+    !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine() && !PlatformUtils.isCLion() && !PlatformUtils.isPhpStorm();
   public String CODE_SMELLS_PROFILE = null;
   public boolean CODE_SMELLS_PROFILE_LOCAL = false;
   public String CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE = null;
