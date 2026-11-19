@@ -1,10 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.visualizedtext.common
 
-class JsonTextVisualizerTest : FormattedTextVisualizerTestCase(JsonTextVisualizer()) {
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-  fun testSomeValidJson() {
-    checkPositive(
+@TestApplication
+class JsonTextVisualizerTest {
+  companion object {
+    private val projectFixture = projectFixture()
+  }
+
+  private val checker = TextVisualizerChecker(JsonTextVisualizer(), projectFixture)
+
+  @Test
+  fun testSomeValidJson(): Unit = timeoutRunBlocking {
+    checker.checkPositive(
       """ { "a": 37, "b": "foo" } """,
       """
         {
@@ -14,8 +26,9 @@ class JsonTextVisualizerTest : FormattedTextVisualizerTestCase(JsonTextVisualize
       """.trimIndent())
   }
 
-  fun testSomeJsonOnWindows() {
-    checkPositive(
+  @Test
+  fun testSomeJsonOnWindows(): Unit = timeoutRunBlocking {
+    checker.checkPositive(
       "{\r\n\"a\": 37,\r\n\"b\": \"foo\"\r\n}",
       """
         {
@@ -25,19 +38,23 @@ class JsonTextVisualizerTest : FormattedTextVisualizerTestCase(JsonTextVisualize
       """.trimIndent())
   }
 
+  @Test
   fun testNotJson() {
-    checkNegative("Hello, world!")
+    checker.checkNegative("Hello, world!")
   }
 
+  @Test
   fun testPrimitive() {
-    checkNegative("123")
+    checker.checkNegative("123")
   }
 
+  @Test
   fun testEmptyArray() {
-    checkNegative("[]")
+    checker.checkNegative("[]")
   }
 
+  @Test
   fun testEmptyObject() {
-    checkNegative("{}")
+    checker.checkNegative("{}")
   }
 }

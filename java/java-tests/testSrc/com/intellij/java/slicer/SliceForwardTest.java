@@ -27,40 +27,70 @@ import com.intellij.slicer.SliceAnalysisParams;
 import com.intellij.slicer.SliceHandler;
 import com.intellij.slicer.SliceTestUtil;
 import com.intellij.slicer.SliceUsage;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.Map;
 
-public class SliceForwardTest extends SliceTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/slice/forward/";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class SliceForwardTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_1_7_ANNOTATED);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/slice/forward/");
   }
 
   private void dotest() {
-    myFixture.configureByFile(getTestName(false)+".java");
-    Map<String, RangeMarker> sliceUsageName2Offset = SliceTestUtil.extractSliceOffsetsFromDocument(getEditor().getDocument());
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    PsiElement element = SliceHandler.create(false).getExpressionAtCaret(getEditor(), getFile());
-    assertNotNull(element);
-    SliceTestUtil.Node tree = SliceTestUtil.buildTree(element, sliceUsageName2Offset);
-    Collection<HighlightInfo> errors = myFixture.doHighlighting(HighlightSeverity.ERROR);
-    assertEmpty(errors);
-    SliceAnalysisParams params = new SliceAnalysisParams();
-    params.scope = new AnalysisScope(getProject());
-    params.dataFlowToThis = false;
-    SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
-    SliceTestUtil.checkUsages(usage, tree);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false)+".java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Map<String, RangeMarker> sliceUsageName2Offset = SliceTestUtil.extractSliceOffsetsFromDocument(myFixture.getEditor().getDocument());
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      PsiElement element = SliceHandler.create(false).getExpressionAtCaret(myFixture.getEditor(), myFixture.getFile());
+      assertNotNull(element);
+      SliceTestUtil.Node tree = SliceTestUtil.buildTree(element, sliceUsageName2Offset);
+      Collection<HighlightInfo> errors = myFixture.doHighlighting(HighlightSeverity.ERROR);
+      assertThat(errors).isNullOrEmpty();
+      SliceAnalysisParams params = new SliceAnalysisParams();
+      params.scope = new AnalysisScope(myFixture.getProject());
+      params.dataFlowToThis = false;
+      SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
+      SliceTestUtil.checkUsages(usage, tree);
+    });
   }
 
+  @Test
   public void testSimple() { dotest();}
+  @Test
   public void testInterMethod() { dotest();}
+  @Test
   public void testParameters() { dotest();}
+  @Test
   public void testRequireNonNull() { dotest();}
+  @Test
   public void testAppend() { dotest();}
+  @Test
   public void testOverloadedMember() { dotest();}
+  @Test
   public void testOverloadedMember2() { dotest();}
+  @Test
   public void testOverloadedMember3() { dotest();}
+  @Test
   public void testOneInterfaceTwoImplementations() { dotest();}
+  @Test
   public void testOneInterfaceTwoImplementations2() { dotest();}
 }

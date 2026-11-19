@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -64,14 +64,6 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     getSegments().removeAll();
   }
 
-  protected synchronized void unregisterLayer(@NotNull IElementType tokenType) {
-    LayerDescriptor layer = myTokensToLayer.remove(tokenType);
-    if (layer != null) {
-      getMappingSegments().myLayerBuffers.remove(layer);
-      getSegments().removeAll();
-    }
-  }
-
   private final class LightMapper {
     final Mapper mapper;
     final StringBuilder text = new StringBuilder();
@@ -80,11 +72,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     final Int2IntMap index2Global = new Int2IntOpenHashMap();
     private final String mySeparator;
     final int insertOffset;
+    int replaceEnd;
 
     LightMapper(@NotNull Mapper mapper, int insertOffset) {
       this.mapper = mapper;
       mySeparator = mapper.mySeparator;
       this.insertOffset = insertOffset;
+      replaceEnd = insertOffset;
     }
 
     void addToken(@NotNull CharSequence tokenText, @NotNull IElementType tokenType, int globalIndex) {
@@ -97,7 +91,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     void finish() {
       assert insertOffset >= 0;
       DocumentImpl document = mapper.doc;
-      document.insertString(insertOffset, text);
+      document.replaceString(insertOffset, replaceEnd, text);
       int start = insertOffset;
       for (int i = 0; i < tokenTypes.size(); i++) {
         IElementType type = tokenTypes.get(i);
@@ -116,7 +110,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         Document mainDocument = getDocument();
         VirtualFile file = mainDocument == null ? null : FileDocumentManager.getInstance().getFile(mainDocument);
         LOG.error("Expected null range on " + type + ", found " + range + "; highlighter=" + getSyntaxHighlighter(),
-                  new Attachment(file != null ? file.getName() : "editorText.txt", myText.toString()));
+                  new Attachment(file != null ? file.getName() : "editorText.txt", getLexedText().toString()));
       }
     }
   }
@@ -228,7 +222,74 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
     @Override
     public void replace(int startIndex, int endIndex, @NotNull SegmentArrayWithData newData) {
-      withFreezedHighlighters(() -> super.replace(startIndex, endIndex, newData));
+      withFreezedHighlighters(() -> replaceMappings(startIndex, endIndex, newData));
+    }
+
+    private void replaceMappings(int startIndex, int endIndex, @NotNull SegmentArrayWithData newData) {
+      int newStart = 0;
+      int newEnd = newData.getSegmentCount();
+      while (startIndex < endIndex && newStart < newEnd && canReuseMapping(startIndex, newData, newStart)) {
+        setElementLight(startIndex++, newData.getSegmentStart(newStart), newData.getSegmentEnd(newStart), newData.getSegmentData(newStart));
+        newStart++;
+      }
+      while (startIndex < endIndex && newStart < newEnd && canReuseMapping(endIndex - 1, newData, newEnd - 1)) {
+        endIndex--;
+        newEnd--;
+        setElementLight(endIndex, newData.getSegmentStart(newEnd), newData.getSegmentEnd(newEnd), newData.getSegmentData(newEnd));
+      }
+      if (startIndex == endIndex && newStart == newEnd) return;
+      if (newStart == 0 && newEnd == newData.getSegmentCount()) {
+        replaceMappingRange(startIndex, endIndex, newData);
+        return;
+      }
+      SegmentArrayWithData middle = new SegmentArrayWithData(newData.createStorage());
+      for (int i = newStart; i < newEnd; i++) {
+        middle.setElementAt(i - newStart, newData.getSegmentStart(i), newData.getSegmentEnd(i), newData.getSegmentData(i));
+      }
+      replaceMappingRange(startIndex, endIndex, middle);
+    }
+
+    private void replaceMappingRange(int startIndex, int endIndex, @NotNull SegmentArrayWithData newData) {
+      Map<Mapper, LightMapper> replacements = FactoryMap.create(mapper -> {
+        MappedRange predecessor = mapper.findPredecessor(startIndex, this);
+        return new LightMapper(mapper, predecessor != null ? predecessor.range.getEndOffset() : 0);
+      });
+      for (int i = startIndex; i < endIndex; i++) {
+        MappedRange range = myRanges[i];
+        if (range != null && range.range.isValid()) {
+          replacements.get(range.mapper).replaceEnd = range.range.getEndOffset();
+          range.range.dispose();
+        }
+      }
+      int newCount = newData.getSegmentCount();
+      for (int i = 0; i < newCount; i++) {
+        IElementType token = unpackTokenFromData(newData.getSegmentData(i));
+        Mapper mapper = getMappingDocument(token);
+        if (mapper != null) {
+          CharSequence text = getLexedText().subSequence(newData.getSegmentStart(i), newData.getSegmentEnd(i));
+          replacements.get(mapper).addToken(text, token, startIndex + i);
+        }
+      }
+      if (startIndex < endIndex) {
+        removeRange(myRanges, startIndex, endIndex);
+        super.remove(startIndex, endIndex);
+      }
+      if (newCount > 0) {
+        super.insert(newData, startIndex);
+        myRanges = insert(myRanges, new MappedRange[newCount], startIndex, newCount);
+      }
+      replacements.keySet().forEach(this::freezeHighlighter);
+      replacements.values().forEach(LightMapper::finish);
+    }
+
+    private boolean canReuseMapping(int oldIndex, @NotNull SegmentArrayWithData newData, int newIndex) {
+      IElementType token = unpackTokenFromData(newData.getSegmentData(newIndex));
+      Mapper mapper = getMappingDocument(token);
+      MappedRange oldMapping = myRanges[oldIndex];
+      if (oldMapping == null) return mapper == null;
+      if (oldMapping.mapper != mapper || oldMapping.outerToken != token || !oldMapping.range.isValid()) return false;
+      return Comparing.equal(mapper.doc.getCharsSequence().subSequence(oldMapping.range.getStartOffset(), oldMapping.range.getEndOffset()),
+                             getLexedText().subSequence(newData.getSegmentStart(newIndex), newData.getSegmentEnd(newIndex)));
     }
 
     @Override
@@ -319,7 +380,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
         int endIndex = startIndex + segmentArray.getSegmentCount();
 
-        TokenProcessor processor = createTokenProcessor(startIndex, getSegments(), myText);
+        TokenProcessor processor = createTokenProcessor(startIndex, getSegments(), getLexedText());
         for (int i = startIndex; i < endIndex; i++) {
           int data = getSegmentData(i);
           IElementType token = getSegments().unpackTokenFromData(data);
@@ -377,8 +438,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
             LOG.error(e.getMessage() +
                       "\nLayer highlighter: " + highlighter.getSyntaxHighlighter() +
                       "\nTop level highlighter: " + LayeredLexerEditorHighlighter.this.getSyntaxHighlighter(), e,
-                      new Attachment("layerTextAfterChange.txt", highlighter.myText.toString()),
-                      new Attachment("editorTextAfterChange.txt", myText.toString()));
+                      new Attachment("layerTextAfterChange.txt", highlighter.getLexedText().toString()),
+                      new Attachment("editorTextAfterChange.txt", getLexedText().toString()));
           }
         });
         myFreezedHighlighters = null;
@@ -498,7 +559,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     private @NotNull CharSequence getTokenText(int tokenIndex) {
-      return myText.subSequence(getSegments().getSegmentStart(tokenIndex), getSegments().getSegmentEnd(tokenIndex));
+      return getLexedText().subSequence(getSegments().getSegmentStart(tokenIndex), getSegments().getSegmentEnd(tokenIndex));
     }
 
     @Nullable
@@ -706,7 +767,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
       sortUpdates();
       mergeUpdates();
-      Document document = updates.get(0).document;
+      Document document = updates.getFirst().document;
       int documentSize = document.getTextLength();
       int processedOffset = -1;
       for (DocumentUpdate event : updates) {
@@ -735,7 +796,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     private static boolean mergeUpdate(@NotNull List<? extends DocumentUpdate> updates, int eventOffset, int eventOldLength, int eventNewLength) {
       if (updates.isEmpty()) return false;
       final int MERGE_MARGIN = 5;
-      DocumentUpdate a = updates.get(updates.size() - 1);
+      DocumentUpdate a = updates.getLast();
       if (eventOffset < a.offset) {
         // a not sorted update, ignore as it will be merged after sorting all updates
         return false;
@@ -765,7 +826,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
     private void mergeUpdates() {
       List<DocumentUpdate> result = new ArrayList<>(updates.size());
-      result.add(updates.get(0));
+      result.add(updates.getFirst());
       for (int i = 1; i < updates.size(); i++) {
         DocumentUpdate b = updates.get(i);
         if (!mergeUpdate(result, b.offset, b.oldLength, b.newLength)) {
@@ -825,6 +886,6 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
   @Override
   public @NonNls String toString() {
-    return getClass().getName() + ": '" + myText.toString() + "'";
+    return getClass().getName() + ": '" + getLexedText().toString() + "'";
   }
 }

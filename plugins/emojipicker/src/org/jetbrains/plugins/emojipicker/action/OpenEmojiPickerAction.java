@@ -32,7 +32,7 @@ final class OpenEmojiPickerAction extends DumbAwareAction implements ActionRemot
     if (editor != null) {
       if (editor.isViewer()) return null;
       if (findOnly) return Context.FOUND;
-      Consumer<String> input;
+      Consumer<? super @NotNull String> input;
       if (editor instanceof EditorImpl) {
         input = ((EditorImpl)editor)::type;
       }
@@ -106,14 +106,7 @@ final class OpenEmojiPickerAction extends DumbAwareAction implements ActionRemot
     }
   }
 
-  private static final class Context {
+  private record Context(Consumer<? super @NotNull String> myInputCallback, Consumer<? super JBPopup> myPopupShowCallback) {
     private static final Context FOUND = new Context(null, null);
-    private final Consumer<String> myInputCallback;
-    private final Consumer<JBPopup> myPopupShowCallback;
-
-    private Context(Consumer<String> inputCallback, Consumer<JBPopup> popupShowCallback) {
-      myInputCallback = inputCallback;
-      myPopupShowCallback = popupShowCallback;
-    }
   }
 }

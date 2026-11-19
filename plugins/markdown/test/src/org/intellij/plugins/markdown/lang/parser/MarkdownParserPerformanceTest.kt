@@ -3,15 +3,16 @@ package org.intellij.plugins.markdown.lang.parser
 
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.testFramework.PerformanceUnitTest
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.junit.jupiter.api.Test
 import java.io.File
 
-class MarkdownParserPerformanceTest : BasePlatformTestCase() {
-  override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/performance"
-
+@StressTestApplication
+class MarkdownParserPerformanceTest {
   @PerformanceUnitTest
+  @Test
   fun `test parsing a heavily edited large markdown file performance`() {
     val document = fragmentedDocument()
     var attempt = 0
@@ -27,7 +28,7 @@ class MarkdownParserPerformanceTest : BasePlatformTestCase() {
   }
 
   private fun fragmentedDocument(): DocumentImpl {
-    val part = File(testDataPath, SOURCE_FILE).readText()
+    val part = File(MarkdownTestingUtil.TEST_DATA_PATH + "/performance", SOURCE_FILE).readText()
     val text = buildString {
       repeat(COPY_COUNT) { append(part) }
     }

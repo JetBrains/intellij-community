@@ -2,148 +2,181 @@
 package com.intellij.codeInspection.tests.java.sourceToSink
 
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.sourceToSinkFlowInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.sourceToSinkFlowProjectFixture
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow"
 
 @TestDataPath("\$CONTENT_ROOT/testData$INSPECTION_PATH")
-class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() {
-  override fun getTestDataPath(): String {
-    return JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH
+@TestApplication
+class JavaSourceToSinkFlowInspectionTest {
+  companion object {
+    private val projectFixture = sourceToSinkFlowProjectFixture()
   }
 
+  private val myFixture by sourceToSinkFlowInspectionFixture(projectFixture, JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH)
+
+  @Test
   fun testSimple() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Simple.java")
   }
 
+  @Test
   fun testLocalInference() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("LocalInference.java")
   }
 
+  @Test
   fun testJsrSimple() {
-    prepareJsr()
+    myFixture.prepareJsr()
     myFixture.testHighlighting("JsrSimple.java")
   }
 
+  @Test
   fun testSink() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Sink.java")
   }
 
+  @Test
   fun testSinkJsr() {
-    prepareJsr()
+    myFixture.prepareJsr()
     myFixture.testHighlighting("SinkJsr.java")
   }
 
+  @Test
   fun testCall() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Call.java")
   }
 
+  @Test
   fun testLocalVariables() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("LocalVariable.java")
   }
 
+  @Test
   fun testEnumAnnotations() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("EnumAnnotations.java")
   }
 
+  @Test
   fun testEnumCallAnnotations() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("EnumCallAnnotations.java")
   }
 
+  @Test
   fun testFields() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Fields.java")
   }
 
+  @Test
   fun testStructure() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Structure.java")
   }
 
+  @Test
   fun testRecursive() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Recursive.java")
   }
 
+  @Test
   fun testMethodPropagation() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("MethodPropagation.java")
   }
 
+  @Test
   fun testDifferentExpression() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("DifferentExpression.java")
   }
 
+  @Test
   fun `test field with block initializers`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("BlockInitializerFields.java")
   }
 
+  @Test
   fun `test spoiled parameters`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("SpoiledParameters.java")
   }
 
+  @Test
   fun `test drop locality`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("DropLocality.java")
   }
 
+  @Test
   fun `test propagation static method`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("StaticPropagation.java")
   }
 
+  @Test
   fun `test forEachLoop`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("ForEachLoop.java")
   }
+  @Test
   fun `test if statements`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("IfStatement.java")
   }
 
+  @Test
   fun `test if statements with constants`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("IfStatementConstant.java")
   }
 
+  @Test
   fun `test if statements with non constants method`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("IfStatementNonConstantMethod.java")
   }
 
+  @Test
   fun `test if expressions`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("IfExpressions.java")
   }
 
+  @Test
   fun `test if expressions with constants`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("IfExpressionConstant.java")
   }
 
+  @Test
   fun `test if statements in method with constants`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("IfStatementConstantMethod.java")
   }
 
+  @Test
   fun `test lambdaWithForEachLoop`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("LambdaWithForEachLoop.java")
   }
 
+  @Test
   fun testLimits() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.addClass("""
          @SuppressWarnings({"FieldMayBeStatic", "StaticNonFinalField", "RedundantSuppression"}) 
         public class Limit2 {
@@ -167,43 +200,45 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
     myFixture.testHighlighting("Limits.java")
   }
 
+  @Test
   fun `test custom through tables`() {
-    inspection.untaintedParameterIndex.apply {
+    myFixture.inspection.untaintedParameterIndex.apply {
       this.clear()
       this.add("1")
     }
-    inspection.untaintedParameterMethodClass.apply {
+    myFixture.inspection.untaintedParameterMethodClass.apply {
       this.clear()
       this.add("FromMethod")
     }
-    inspection.untaintedParameterMethodName.apply {
+    myFixture.inspection.untaintedParameterMethodName.apply {
       this.clear()
       this.add("sink")
     }
 
-    inspection.taintedParameterIndex.apply {
+    myFixture.inspection.taintedParameterIndex.apply {
       this.clear()
       this.add("0")
     }
-    inspection.taintedParameterMethodClass.apply {
+    myFixture.inspection.taintedParameterMethodClass.apply {
       this.clear()
       this.add("FromMethod")
     }
-    inspection.taintedParameterMethodName.apply {
+    myFixture.inspection.taintedParameterMethodName.apply {
       this.clear()
       this.add("test")
     }
 
-    inspection.setTaintedMethod("java.lang.String", "toString")
-    inspection.setUntaintedMethod("java.lang.String", "trim")
+    myFixture.inspection.setTaintedMethod("java.lang.String", "toString")
+    myFixture.inspection.setUntaintedMethod("java.lang.String", "trim")
 
     myFixture.testHighlighting("FromMethod.java")
   }
 
+  @Test
   fun `test custom inheritance`() {
-    prepareCheckFramework()
-    inspection.setTaintedMethod("com.test.Random", "nextInt")
-    inspection.setUntaintedMethod("com.test.SecureRandom", "nextInt")
+    myFixture.prepareCheckFramework()
+    myFixture.inspection.setTaintedMethod("com.test.Random", "nextInt")
+    myFixture.inspection.setUntaintedMethod("com.test.SecureRandom", "nextInt")
 
     myFixture.testHighlighting("SecureCustomInheritance.java")
   }

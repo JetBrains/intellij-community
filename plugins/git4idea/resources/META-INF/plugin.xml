@@ -1,3 +1,5 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See MRI-4743. -->
 <idea-plugin allow-bundled-update="true">
   <name>Git</name>
   <id>Git4Idea</id>
@@ -36,6 +38,7 @@
 
     <module name="intellij.vcs.git.performanceTesting"/>
     <module name="intellij.vcs.git.rpc.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.vcs.git.rt"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -15,28 +15,43 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModStartTemplate;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Locale;
 
-public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
-  }
+import static com.intellij.java.codeInsight.template.LiveTemplateFixtureKt.liveTemplateFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class JavaLiveTemplateModCommandTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LiveTemplateFixture> liveTemplate =
+    liveTemplateFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/");
+
+  @Test
   public void testModCommandSout() {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("sout", "Java");
-    configureByJavaText("Test.java", """
+    myFixture.configureByText("Test.java", """
       class X {
           void test() {
               <caret>
           }
       }
       """);
-    runModCommand(template);
+    EdtTestUtil.runInEdtAndWait(() -> runModCommand(template));
     myFixture.checkResult("""
                             class X {
                                 void test() {
@@ -46,16 +61,18 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
                             """);
   }
 
+  @Test
   public void testModCommandSoutm() {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("soutm", "Java");
-    configureByJavaText("Test.java", """
+    myFixture.configureByText("Test.java", """
       class X {
           void test() {
               <caret>
           }
       }
       """);
-    runModCommand(template);
+    EdtTestUtil.runInEdtAndWait(() -> runModCommand(template));
     myFixture.checkResult("""
                             class X {
                                 void test() {
@@ -65,16 +82,18 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
                             """);
   }
 
+  @Test
   public void testModCommandSoutp() {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("soutp", "Java");
-    configureByJavaText("Test.java", """
+    myFixture.configureByText("Test.java", """
       class X {
           void test(String[] arr, int[][] arr2, int p) {
               <caret>
           }
       }
       """);
-    runModCommand(template);
+    EdtTestUtil.runInEdtAndWait(() -> runModCommand(template));
     myFixture.checkResult("""
       import java.util.Arrays;
 
@@ -86,14 +105,16 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
       """);
   }
 
+  @Test
   public void testModCommandMain() {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("main", "Java");
-    configureByJavaText("Test.java", """
+    myFixture.configureByText("Test.java", """
       class X {
           <caret>
       }
       """);
-    runModCommand(template);
+    EdtTestUtil.runInEdtAndWait(() -> runModCommand(template));
     myFixture.checkResult("""
                             class X {
                                 public static void main(String[] args) {
@@ -103,16 +124,18 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
                             """);
   }
 
+  @Test
   public void testModCommandFori() {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("fori", "Java");
-    configureByJavaText("Test.java", """
+    myFixture.configureByText("Test.java", """
       class X {
           void test() {
               <caret>
           }
       }
       """);
-    runModCommand(template);
+    EdtTestUtil.runInEdtAndWait(() -> runModCommand(template));
     myFixture.checkResult("""
                             class X {
                                 void test() {
@@ -124,16 +147,18 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
                             """);
   }
 
+  @Test
   public void testModCommandIter() {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("iter", "Java");
-    configureByJavaText("Test.java", """
+    myFixture.configureByText("Test.java", """
       final class X {
           static void main(String[] args) {
               <caret>
           }
       }
       """);
-    runModCommand(template);
+    EdtTestUtil.runInEdtAndWait(() -> runModCommand(template));
     myFixture.checkResult("""
                             final class X {
                                 static void main(String[] args) {
@@ -145,9 +170,11 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
                             """);
   }
 
+  @Test
   public void testModCommandIterElementTypeIsDependent() {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("iter", "Java");
-    configureByJavaText("Test.java", """
+    myFixture.configureByText("Test.java", """
       final class X {
           static void main(String[] args) {
               <caret>
@@ -155,8 +182,10 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
       }
       """);
 
-    ActionContext context = myFixture.getActionContext();
-    ModCommand cmd = ModCommand.psiUpdate(context, updater -> TemplateManagerImpl.updateTemplate(template, updater));
+    ModCommand cmd = ReadAction.computeBlocking(() -> {
+      ActionContext context = myFixture.getActionContext();
+      return ModCommand.psiUpdate(context, updater -> TemplateManagerImpl.updateTemplate(template, updater));
+    });
 
     List<ModStartTemplate.TemplateField> fields = cmd.unpack().stream()
       .filter(ModStartTemplate.class::isInstance)
@@ -183,9 +212,11 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
     assertFalse(elementTypeField.alwaysStopAt());
   }
 
+  @Test
   public void testModCommandItcoPreservesGenericType() {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("itco", "Java");
-    configureByJavaText("Test.java", """
+    myFixture.configureByText("Test.java", """
       import java.util.Collection;
       class X {
           void m(Collection<Integer> a2) {
@@ -193,15 +224,17 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
           }
       }
       """);
-    runModCommand(template);
+    EdtTestUtil.runInEdtAndWait(() -> runModCommand(template));
     String result = myFixture.getEditor().getDocument().getText();
-    assertTrue("Expected ITER_TYPE to preserve the generic argument (Iterator<Integer>). Actual:\n" + result,
-               result.contains("Iterator<Integer>"));
+    assertTrue(result.contains("Iterator<Integer>"),
+               "Expected ITER_TYPE to preserve the generic argument (Iterator<Integer>). Actual:\n" + result);
   }
 
+  @Test
   public void testModCommandItco() {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("itco", "Java");
-    configureByJavaText("Test.java", """
+    myFixture.configureByText("Test.java", """
       import java.util.ArrayList;
       import java.util.List;
       class X {
@@ -211,7 +244,7 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
           }
       }
       """);
-    runModCommand(template);
+    EdtTestUtil.runInEdtAndWait(() -> runModCommand(template));
     myFixture.checkResult("""
                             import java.util.ArrayList;
                             import java.util.Iterator;
@@ -228,9 +261,11 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
                             """);
   }
 
+  @Test
   public void testModCommandSoutv() {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("soutv", "Java");
-    configureByJavaText("Test.java", """
+    myFixture.configureByText("Test.java", """
       class X {
           void m() {
               int ar = 1;
@@ -238,7 +273,7 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
           }
       }
       """);
-    runModCommand(template);
+    EdtTestUtil.runInEdtAndWait(() -> runModCommand(template));
     myFixture.checkResult("""
                             class X {
                                 void m() {
@@ -249,8 +284,10 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
                             """);
   }
 
+  @Test
   public void testModCommandTransformingExprIsNotMirrored() {
-    configureByJavaText("Test.java", """
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
+    myFixture.configureByText("Test.java", """
       class X {
           void m() {
               <caret>
@@ -275,8 +312,10 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
     };
     template.addVariable("Y", upper, upper, false);
 
-    ActionContext context = myFixture.getActionContext();
-    ModCommand cmd = ModCommand.psiUpdate(context, updater -> TemplateManagerImpl.updateTemplate(template, updater));
+    ModCommand cmd = ReadAction.computeBlocking(() -> {
+      ActionContext context = myFixture.getActionContext();
+      return ModCommand.psiUpdate(context, updater -> TemplateManagerImpl.updateTemplate(template, updater));
+    });
 
     long mirrors = cmd.unpack().stream()
       .filter(ModStartTemplate.class::isInstance)
@@ -284,12 +323,13 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
       .flatMap(s -> s.fields().stream())
       .filter(ModStartTemplate.DependantVariableField.class::isInstance)
       .count();
-    assertEquals("Y must not be registered as a mirror because uppercase(sentinel) != sentinel",
-                 0L, mirrors);
+    assertEquals(0L, mirrors, "Y must not be registered as a mirror because uppercase(sentinel) != sentinel");
   }
 
+  @Test
   public void testModCommandRepeatedVariableAtSameOffset() {
-    configureByJavaText("Test.java", """
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
+    myFixture.configureByText("Test.java", """
       class X {
           void m() {
               <caret>
@@ -300,7 +340,7 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
     TemplateImpl template = new TemplateImpl("test", "($X$$X$)", "user");
     template.addVariable("X", new TextExpression("AB"), new TextExpression("AB"), true);
 
-    runModCommand(template);
+    EdtTestUtil.runInEdtAndWait(() -> runModCommand(template));
     myFixture.checkResult("""
                             class X {
                                 void m() {
@@ -311,16 +351,11 @@ public class JavaLiveTemplateModCommandTest extends LiveTemplateTestCase {
   }
 
   private void runModCommand(TemplateImpl template) {
+    LightJavaCodeInsightTestFixture myFixture = liveTemplate.get().getFixture();
     ActionContext context = myFixture.getActionContext();
     ModCommandExecutor.executeInteractively(
       context, "ModCommand", myFixture.getEditor(),
       () -> ModCommand.psiUpdate(context, (updater) -> TemplateManagerImpl.updateTemplate(template, updater)));
   }
 
-  @Override
-  public final String getTestDataPath() {
-    return basePath;
-  }
-
-  private final String basePath = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/";
 }

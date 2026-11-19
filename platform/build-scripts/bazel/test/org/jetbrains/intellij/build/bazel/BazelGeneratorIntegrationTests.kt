@@ -106,6 +106,23 @@ class BazelGeneratorIntegrationTests {
   @Test fun resourcesManifest() = doTest("resources-manifest")
 
   @Test fun compileExcludes() = doTest("compile-excludes")
+  @Test fun compilerPluginOptions() = doTest("compiler-plugin-options")
+
+  /** The compiler reads a `-P` option only for a plugin that it loads, so an option of a plugin that the facet does not list is an error. */
+  @Test
+  fun `an option of a compiler plugin that the facet does not load is rejected`() {
+    val projectDir = Files.createTempDirectory("compiler-plugin-options-not-loaded")
+    getTestDataPath("compiler-plugin-options").resolve("project").copyToRecursively(projectDir, followLinks = true, overwrite = false)
+    val moduleFile = projectDir.resolve("module/intellij.module.iml")
+    moduleFile.writeText(moduleFile.readText().replace($$"$KOTLIN_COMPOSE_COMPILER_PLUGIN$", $$"$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar"))
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      generateMetadataProject(projectDir)
+    }
+    softly.assertThat(exception.message)
+      .contains("intellij.module.iml")
+      .contains("androidx.compose.compiler.plugins.kotlin")
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
 
   /**
    * One library target per module. A test module depends on the `_test_lib` target of a test module and on the plain

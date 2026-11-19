@@ -31,9 +31,15 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,25 +47,40 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("removal")
-public class JavaLiveTemplateTest extends LiveTemplateTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
-  }
+import static com.intellij.java.codeInsight.template.LiveTemplateFixtureKt.liveTemplateFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressWarnings("removal")
+@TestApplication
+public class JavaLiveTemplateTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LiveTemplateFixture> lt =
+    liveTemplateFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/");
+
+  @Test
   public void testNotToGoToNextTabAfterInsertIfElementIsPsiPackage() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", "\n<caret>\n");
-    Template template = getTemplateManager().createTemplate("imp", "user", "import $MODIFIER$ java.$NAME$;");
+    Template template = lt.get().getTemplateManager().createTemplate("imp", "user", "import $MODIFIER$ java.$NAME$;");
     template.addVariable("NAME", new MacroCallNode(new CompleteMacro(true)), new EmptyNode(), true);
     template.addVariable("MODIFIER", new EmptyExpression(), true);
-    startTemplate(template);
-    myFixture.type("uti\n");
-    myFixture.checkResult("\nimport  java.util.<caret>;\n");
-    assertFalse(getState().isFinished());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      myFixture.type("uti\n");
+      myFixture.checkResult("\nimport  java.util.<caret>;\n");
+      assertFalse(lt.get().getState().isFinished());
+    });
   }
 
+  @Test
   public void testNotToGoToNextTabAfterInsertIfElementHasCallArguments() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java",
                               """
                                 import  java.util.*;
@@ -72,7 +93,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                 }
                                 """);
     Template template =
-      getTemplateManager().createTemplate("for", "user", """
+      lt.get().getTemplateManager().createTemplate("for", "user", """
         for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {
         $END$;
         }""");
@@ -80,25 +101,29 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     template.addVariable("VAR", new TextExpression("item"), true);
     template.addVariable("ELEMENT_TYPE", new TextExpression("String"), true);
     template.setToReformat(true);
-    startTemplate(template);
-    myFixture.type("get\n");
-    myFixture.checkResult(
-      """
-        import  java.util.*;
-        public class Main {
-            List<String> getStringList(int i){
-                List<String> ints = null;
-                for (String item : getStringList(<caret>)) {
-                    ;
-                }
-                return new ArrayList<>(i);
-            }
-        }
-        """);
-    assertFalse(getState().isFinished());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      myFixture.type("get\n");
+      myFixture.checkResult(
+        """
+          import  java.util.*;
+          public class Main {
+              List<String> getStringList(int i){
+                  List<String> ints = null;
+                  for (String item : getStringList(<caret>)) {
+                      ;
+                  }
+                  return new ArrayList<>(i);
+              }
+          }
+          """);
+      assertFalse(lt.get().getState().isFinished());
+    });
   }
 
+  @Test
   public void testGoToNextTabAfterInsertIfElementDoesNotHaveCallArguments() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java",
                               """
                                 import  java.util.*;
@@ -111,7 +136,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                 }
                                 """);
     Template template =
-      getTemplateManager().createTemplate("for", "user", """
+      lt.get().getTemplateManager().createTemplate("for", "user", """
         for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {
         $END$;
         }""");
@@ -119,26 +144,30 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     template.addVariable("VAR", new TextExpression("item"), true);
     template.addVariable("ELEMENT_TYPE", new TextExpression("String"), true);
     template.setToReformat(true);
-    startTemplate(template);
-    myFixture.type("in\n");
-    BaseCompleteMacro.waitForNextTab();
-    myFixture.checkResult(
-      """
-        import  java.util.*;
-        public class Main {
-            List<String> getStringList(int i){
-                List<String> ints = null;
-                for (String <selection>item</selection> : ints) {
-                    ;
-                }
-                return new ArrayList<>(i);
-            }
-        }
-        """);
-    assertFalse(getState().isFinished());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      myFixture.type("in\n");
+      BaseCompleteMacro.waitForNextTab();
+      myFixture.checkResult(
+        """
+          import  java.util.*;
+          public class Main {
+              List<String> getStringList(int i){
+                  List<String> ints = null;
+                  for (String <selection>item</selection> : ints) {
+                      ;
+                  }
+                  return new ArrayList<>(i);
+              }
+          }
+          """);
+      assertFalse(lt.get().getState().isFinished());
+    });
   }
 
+  @Test
   public void testVariableOfTypeSuggestsInnerStaticClasses() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.addClass("public interface MyCallback {}");
     myFixture.addClass("""
                          final class MyUtils {
@@ -156,139 +185,196 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                 }
                                 """);
 
-    Template template = getTemplateManager().createTemplate("myCbDo", "user", "MyUtils.doSomethingWithCallback($CB$)");
+    Template template = lt.get().getTemplateManager().createTemplate("myCbDo", "user", "MyUtils.doSomethingWithCallback($CB$)");
 
     MacroCallNode call = new MacroCallNode(new VariableOfTypeMacro());
     call.addParameter(new ConstantNode("MyCallback"));
     template.addVariable("CB", call, new EmptyNode(), false);
-    startTemplate(template);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
 
-    myFixture.checkResult(
-      """
-        class Outer {
-          static class Inner implements MyCallback {
-            void aMethod() {
-              MyUtils.doSomethingWithCallback(this)
+      myFixture.checkResult(
+        """
+          class Outer {
+            static class Inner implements MyCallback {
+              void aMethod() {
+                MyUtils.doSomethingWithCallback(this)
+              }
             }
           }
-        }
-        """);
+          """);
+    });
   }
 
+  @Test
   public void testToar() {
     configure();
-    startTemplate("toar", "Java");
-    getState().gotoEnd(false);
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("toar", "Java");
+      lt.get().getState().gotoEnd(false);
+      checkResult();
+    });
   }
 
+  @Test
   public void testElseIf() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     configure();
-    startTemplate("else-if", "Java");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getState().gotoEnd(false));
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("else-if", "Java");
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> lt.get().getState().gotoEnd(false));
+      checkResult();
+    });
   }
 
+  @Test
   public void testElseIf2() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     configure();
-    startTemplate("else-if", "Java");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getState().gotoEnd(false));
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("else-if", "Java");
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> lt.get().getState().gotoEnd(false));
+      checkResult();
+    });
   }
 
+  @Test
   public void testElseIf3() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     configure();
-    startTemplate("else-if", "Java");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getState().gotoEnd(false));
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("else-if", "Java");
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> lt.get().getState().gotoEnd(false));
+      checkResult();
+    });
   }
 
+  @Test
   public void testIter() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     configure();
-    startTemplate("iter", "Java");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getState().nextTab());
-    myFixture.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("iter", "Java");
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> lt.get().getState().nextTab());
+      myFixture.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);
+      checkResult();
+    });
   }
 
+  @Test
   public void testIter1() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     configure();
-    startTemplate("iter", "Java");
-    myFixture.performEditorAction("NextTemplateVariable");
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("iter", "Java");
+      myFixture.performEditorAction("NextTemplateVariable");
+      checkResult();
+    });
   }
 
+  @Test
   public void testIterParameterizedInner() {
     configure();
-    startTemplate("iter", "Java");
-    stripTrailingSpaces();
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("iter", "Java");
+      stripTrailingSpaces();
+      checkResult();
+    });
   }
 
+  @Test
   public void testIterParameterizedInnerInMethod() {
     configure();
-    startTemplate("iter", "Java");
-    stripTrailingSpaces();
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("iter", "Java");
+      stripTrailingSpaces();
+      checkResult();
+    });
   }
 
+  @Test
   public void testThrInSwitch() {
     configure();
-    startTemplate("thr", "Java");
-    stripTrailingSpaces();
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("thr", "Java");
+      stripTrailingSpaces();
+      checkResult();
+    });
   }
 
   private void stripTrailingSpaces() {
-    DocumentImpl document = (DocumentImpl)getEditor().getDocument();
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
+    DocumentImpl document = (DocumentImpl)myFixture.getEditor().getDocument();
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(myFixture.getProject());
     manager.commitDocument(document);
     document.setStripTrailingSpacesEnabled(true);
-    document.stripTrailingSpaces(getProject());
+    document.stripTrailingSpaces(myFixture.getProject());
     manager.commitAllDocuments();
   }
 
+  @Test
   public void testAsListToar() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     configure();
-    startTemplate("toar", "Java");
-    myFixture.type("\n\t");
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("toar", "Java");
+      myFixture.type("\n\t");
+      checkResult();
+    });
   }
 
+  @Test
   public void testVarargToar() {
     configure();
-    startTemplate("toar", "Java");
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("toar", "Java");
+      checkResult();
+    });
   }
 
+  @Test
   public void testSoutp() {
     configure();
-    startTemplate("soutp", "Java");
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("soutp", "Java");
+      checkResult();
+    });
   }
 
+  @Test
   public void testSoutpLambda() {
     configure();
-    startTemplate("soutp", "Java");
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("soutp", "Java");
+      checkResult();
+    });
   }
 
+  @Test
   public void testItm() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     configure();
-    startTemplate("itm", "Java");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getState().gotoEnd(false));
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("itm", "Java");
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> lt.get().getState().gotoEnd(false));
+      checkResult();
+    });
   }
 
+  @Test
   public void testInst() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     configure();
-    startTemplate("inst", "Java");
-    myFixture.type("\n");
-    myFixture.type("\n");
-    myFixture.type("\n");
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("inst", "Java");
+      myFixture.type("\n");
+      myFixture.type("\n");
+      myFixture.type("\n");
+      checkResult();
+    });
   }
 
+  @Test
   public void testSoutConsumerApplicability() {
     for (String name : new ArrayList<>(Arrays.asList("soutc", "serrc"))) {
       TemplateImpl template = TemplateSettings.getInstance().getTemplate(name, "Java");
@@ -298,33 +384,46 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     }
   }
 
+  @Test
   public void testSoutConsumer() {
     configure();
-    startTemplate("soutc", "Java");
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("soutc", "Java");
+      checkResult();
+    });
   }
 
+  @Test
   public void testSerrConsumerConflict() {
     configure();
-    startTemplate("serrc", "Java");
-    checkResult();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("serrc", "Java");
+      checkResult();
+    });
   }
 
   private boolean isApplicable(String text, TemplateImpl inst) {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", text);
-    return TemplateManagerImpl.isApplicable(myFixture.getFile(), getEditor().getCaretModel().getOffset(), inst);
+    return ReadAction.computeBlocking(
+      () -> TemplateManagerImpl.isApplicable(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), inst));
   }
 
+  @Test
   public void testGenericTypeArgumentIsDeclarationContext() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", "class Foo {{ List<Pair<X, <caret>Y>> l; }}");
-    Set<TemplateContextType> contextTypeSet = TemplateManagerImpl
-      .getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), myFixture.getEditor()));
-    List<Class<? extends TemplateContextType>> applicableContextTypesClasses = ContainerUtil.map(contextTypeSet, TemplateContextType::getClass);
-    List<Class<? extends JavaCodeContextType>> declarationTypes = Arrays.asList(JavaCodeContextType.Declaration.class);
+    ReadAction.runBlocking(() -> {
+      Set<TemplateContextType> contextTypeSet = TemplateManagerImpl
+        .getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), myFixture.getEditor()));
+      List<Class<? extends TemplateContextType>> applicableContextTypesClasses = ContainerUtil.map(contextTypeSet, TemplateContextType::getClass);
+      List<Class<? extends JavaCodeContextType>> declarationTypes = Arrays.asList(JavaCodeContextType.Declaration.class);
 
-    assertEquals(declarationTypes, applicableContextTypesClasses);
+      assertEquals(declarationTypes, applicableContextTypesClasses);
+    });
   }
 
+  @Test
   public void testJavaStatementContext() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("inst", "Java");
     assertFalse(isApplicable("class Foo {{ if (a inst<caret>) }}", template));
@@ -339,6 +438,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     assertTrue(isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template));
   }
 
+  @Test
   public void testJavaExpressionContext() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("toar", "Java");
     assertFalse(isApplicable("class Foo {{ if (a <caret>toar) }}", template));
@@ -351,8 +451,9 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     assertFalse(isApplicable("record R(int i, <caret>toar) {}", template));
   }
 
+  @Test
   public void testJavaStringContext() {
-    TemplateImpl template = (TemplateImpl)getTemplateManager().createTemplate("a", "b");
+    TemplateImpl template = (TemplateImpl)lt.get().getTemplateManager().createTemplate("a", "b");
     template.getTemplateContext().setEnabled(TemplateContextTypes.getByClass(JavaStringContextType.class), true);
     assertFalse(isApplicable("class Foo {{ <caret> }}", template));
     assertFalse(isApplicable("class Foo {{ <caret>1 }}", template));
@@ -360,9 +461,11 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     assertTrue(isApplicable("class Foo {{ \"\"\"<caret>\"\"\" }}", template));
   }
 
+  @Test
   public void testJavaNormalClassDeclarationContextWithInstanceMethod() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java//Instance 'main' methods for normal classes");
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
       assertTrue(isApplicable("class Foo { <caret>xxx }", template));
       assertTrue(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
       assertFalse(isApplicable("<caret>", template));
@@ -370,14 +473,16 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
       assertFalse(isApplicable("class Foo { void test(<caret>xxx) {} }", template));
       assertFalse(isApplicable("record Foo(<caret>xxx) {}", template));
     });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> {
       assertFalse(isApplicable("class Foo { <caret>xxx }", template));
     });
   }
 
+  @Test
   public void testJavaNormalClassDeclarationContextWithoutInstanceMethod() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> {
       assertTrue(isApplicable("class Foo { <caret>xxx }", template));
       assertTrue(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
       assertFalse(isApplicable("<caret>", template));
@@ -385,14 +490,16 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
       assertFalse(isApplicable("class Foo { void test(<caret>xxx) {} }", template));
       assertFalse(isApplicable("record Foo(<caret>xxx) {}", template));
     });
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
       assertFalse(isApplicable("class Foo { <caret>xxx }", template));
     });
   }
 
+  @Test
   public void testImplicitClassDeclarationContext() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java//Instance 'main' methods for implicitly declared classes");
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
       assertFalse(isApplicable("class Foo { <caret>xxx }", template));
       assertFalse(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
       assertTrue(isApplicable("<caret>xxx", template));
@@ -400,6 +507,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     });
   }
 
+  @Test
   public void testJavaDeclarationContext() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psf", "Java");
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));
@@ -428,7 +536,9 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     assertFalse(isApplicable("record R(int <caret>xxx)", template));
   }
 
+  @Test
   public void testInnerClassName() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java",
                               """
                                 class Outer {
@@ -438,11 +548,15 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                         }
                                     }
                                 }""");
-    myFixture.type("\t");
-    assertTrue(myFixture.getEditor().getDocument().getText().contains("\"Inner.foo"));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.type("\t");
+      assertTrue(myFixture.getEditor().getDocument().getText().contains("\"Inner.foo"));
+    });
   }
 
+  @Test
   public void testDoNotStripTypeArgumentContainingClass() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java",
                               """
                                 import java.util.*;
@@ -453,15 +567,19 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                 }
                                 """);
 
-    Template template = getTemplateManager().createTemplate("result", "user", "$T$ result;");
+    Template template = lt.get().getTemplateManager().createTemplate("result", "user", "$T$ result;");
     template.addVariable("T", new MacroCallNode(new MethodReturnTypeMacro()), new EmptyNode(), false);
     template.setToReformat(true);
 
-    startTemplate(template);
-    assertTrue(myFixture.getEditor().getDocument().getText().contains("List<Map.Entry<String, Integer>> result;"));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      assertTrue(myFixture.getEditor().getDocument().getText().contains("List<Map.Entry<String, Integer>> result;"));
+    });
   }
 
+  @Test
   public void testMethodNameInAnnotation() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class Foo {
         <caret>
@@ -469,15 +587,19 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
       }
       """);
 
-    Template template = getTemplateManager().createTemplate("result", "user", "@SuppressWarnings(\"$T$\")");
+    Template template = lt.get().getTemplateManager().createTemplate("result", "user", "@SuppressWarnings(\"$T$\")");
     template.addVariable("T", new MacroCallNode(new MethodNameMacro()), new EmptyNode(), false);
     template.setToReformat(true);
 
-    startTemplate(template);
-    assertTrue(myFixture.getEditor().getDocument().getText().contains("@SuppressWarnings(\"foo\")"));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      assertTrue(myFixture.getEditor().getDocument().getText().contains("@SuppressWarnings(\"foo\")"));
+    });
   }
 
+  @Test
   public void testNameShadowing() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java",
                               """
                                 class LiveTemplateVarSuggestion {
@@ -486,11 +608,15 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                       inn<caret>
                                     }
                                 }""");
-    myFixture.type("\t");
-    assertEquals(myFixture.getLookupElementStrings(), List.of("value", "value1"));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.type("\t");
+      assertEquals(myFixture.getLookupElementStrings(), List.of("value", "value1"));
+    });
   }
 
+  @Test
   public void testEscapeStringCharactersInSoutv() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class Foo {
         {
@@ -498,17 +624,21 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
         }
       }
       """);
-    myFixture.type("\t\"a\"");
-    myFixture.checkResult("""
-                            class Foo {
-                              {
-                                  System.out.println("\\"a\\" = " + "a"<caret>);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.type("\t\"a\"");
+      myFixture.checkResult("""
+                              class Foo {
+                                {
+                                    System.out.println("\\"a\\" = " + "a"<caret>);
+                                }
                               }
-                            }
-                            """);
+                              """);
+    });
   }
 
+  @Test
   public void testReuseStaticImport() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.addClass(
       """
         package foo;
@@ -525,22 +655,26 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
         }
       }
       """);
-    Template template = getTemplateManager().createTemplate("xxx", "user", "foo.Bar.someMethod($END$)");
+    Template template = lt.get().getTemplateManager().createTemplate("xxx", "user", "foo.Bar.someMethod($END$)");
     template.setValue(TemplateImpl.Property.USE_STATIC_IMPORT_IF_POSSIBLE, true);
 
-    startTemplate(template);
-    myFixture.checkResult("""
-                            import static foo.Bar.someMethod;
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      myFixture.checkResult("""
+                              import static foo.Bar.someMethod;
 
-                            class Foo {
-                              {
-                                someMethod(<caret>)
+                              class Foo {
+                                {
+                                  someMethod(<caret>)
+                                }
                               }
-                            }
-                            """);
+                              """);
+    });
   }
 
+  @Test
   public void testUseSingleMemberStaticImportFirst() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.addClass(
       """
         package foo;
@@ -555,22 +689,26 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
         }
       }
       """);
-    Template template = getTemplateManager().createTemplate("xxx", "user", "foo.Bar.someMethod($END$)");
+    Template template = lt.get().getTemplateManager().createTemplate("xxx", "user", "foo.Bar.someMethod($END$)");
     template.setValue(TemplateImpl.Property.USE_STATIC_IMPORT_IF_POSSIBLE, true);
 
-    startTemplate(template);
-    myFixture.checkResult("""
-                            import static foo.Bar.someMethod;
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      myFixture.checkResult("""
+                              import static foo.Bar.someMethod;
 
-                            class Foo {
-                              {
-                                someMethod(<caret>)
+                              class Foo {
+                                {
+                                  someMethod(<caret>)
+                                }
                               }
-                            }
-                            """);
+                              """);
+    });
   }
 
+  @Test
   public void testTwoStaticImports() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class Foo {
         {
@@ -578,38 +716,46 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
         }
       }
       """);
-    Template template = getTemplateManager().createTemplate("xxx", "user", "java.lang.Math.abs(java.lang.Math.PI);");
+    Template template = lt.get().getTemplateManager().createTemplate("xxx", "user", "java.lang.Math.abs(java.lang.Math.PI);");
     template.setValue(TemplateImpl.Property.USE_STATIC_IMPORT_IF_POSSIBLE, true);
 
-    startTemplate(template);
-    myFixture.checkResult(
-      """
-        import static java.lang.Math.PI;
-        import static java.lang.Math.abs;
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      myFixture.checkResult(
+        """
+          import static java.lang.Math.PI;
+          import static java.lang.Math.abs;
 
-        class Foo {
-          {
-            abs(PI);<caret>
+          class Foo {
+            {
+              abs(PI);<caret>
+            }
           }
-        }
-        """);
+          """);
+    });
   }
 
+  @Test
   public void testSoutTemplateInExpressionLambda() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class Foo {{
         strings.stream().forEach(o -> sout<caret>);
       }}
       """);
-    myFixture.type("\t");
-    myFixture.checkResult("""
-                            class Foo {{
-                              strings.stream().forEach(o -> System.out.println(<caret>));
-                            }}
-                            """);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.type("\t");
+      myFixture.checkResult("""
+                              class Foo {{
+                                strings.stream().forEach(o -> System.out.println(<caret>));
+                              }}
+                              """);
+    });
   }
 
+  @Test
   public void testItarTemplateInExpressionLambda() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class Foo {
         void test(int[] arr) {
@@ -617,66 +763,80 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
         }
       }
       """);
-    myFixture.type("\t");
-    myFixture.checkResult(
-      """
-        class Foo {
-          void test(int[] arr) {
-            Runnable r = () -> {
-                for (int i = 0; i < arr.length; i++) {
-                    int i1 = arr[i];
-                   \s
-                }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.type("\t");
+      myFixture.checkResult(
+        """
+          class Foo {
+            void test(int[] arr) {
+              Runnable r = () -> {
+                  for (int i = 0; i < arr.length; i++) {
+                      int i1 = arr[i];
+                     \s
+                  }
+              }
             }
           }
-        }
-        """);
+          """);
+    });
   }
 
+  @Test
   public void testIterateOverListWithWildcardComponentType() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class C {{
       java.util.List<? extends Integer> list;
       <caret>
       }}""");
-    myFixture.type("itli\t");
-    myFixture.checkResult(
-      """
-        class C {{
-        java.util.List<? extends Integer> list;
-            for (int i = 0; i < list.size(); i++) {
-                Integer integer =  list.get(i);
-               \s
-            }
-        }}""");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.type("itli\t");
+      myFixture.checkResult(
+        """
+          class C {{
+          java.util.List<? extends Integer> list;
+              for (int i = 0; i < list.size(); i++) {
+                  Integer integer =  list.get(i);
+                 \s
+              }
+          }}""");
+    });
   }
 
   private void configure() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
   }
 
   private void checkResult() {
-    myFixture.checkResultByFile(getTestName(false) + "-out.java");
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "-out.java");
   }
 
+  @Test
   public void testSuggestForeachParameterNameBasedOnTheCalledMethodName() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class A { Iterable<String> getCreatedTags() { }
       {
         iter<caret>
       }}""");
-    myFixture.type("\tgetCreatedTags()\n");
-    myFixture.checkResult(
-      """
-        class A { Iterable<String> getCreatedTags() { }
-        {
-            for (String createdTag : getCreatedTags()) {
-               \s
-            }
-        }}""");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.type("\tgetCreatedTags()\n");
+      myFixture.checkResult(
+        """
+          class A { Iterable<String> getCreatedTags() { }
+          {
+              for (String createdTag : getCreatedTags()) {
+                 \s
+              }
+          }}""");
+    });
   }
 
+  @Test
   public void testOvertypingSuggestionWithQuote() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(true);
 
     myFixture.configureByText("a.java", """
@@ -686,51 +846,63 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
           <caret>s.toString();
         }
       }""");
-    myFixture.doHighlighting();
-    myFixture.launchAction(myFixture.findSingleIntention("Initialize variable"));
-    myFixture.type("\"");
-    myFixture.checkResult("""
-                            class A {
-                              {
-                                String s = "";
-                                s.toString();
-                              }
-                            }""");
-    assertNull(myFixture.getLookup());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.doHighlighting();
+      myFixture.launchAction(myFixture.findSingleIntention("Initialize variable"));
+      myFixture.type("\"");
+      myFixture.checkResult("""
+                              class A {
+                                {
+                                  String s = "";
+                                  s.toString();
+                                }
+                              }""");
+      assertNull(myFixture.getLookup());
+    });
   }
 
+  @Test
   public void testSaveAsLiveTemplateForAnnotationValues() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.addClass("package foo; public @interface Anno { String value(); }");
     myFixture.configureByText("a.java", "import foo.*; <selection>@Anno(\"\")</selection> class T {}");
-    assert SaveAsTemplateAction.suggestTemplateText(myFixture.getEditor(), myFixture.getFile(), myFixture.getProject())
+    assert EdtTestUtil.runInEdtAndGet(
+      () -> SaveAsTemplateAction.suggestTemplateText(myFixture.getEditor(), myFixture.getFile(), myFixture.getProject()))
       .equals("@foo.Anno(\"\")");
 
     myFixture.configureByText("b.java", "import foo.*; <selection>@Anno(value=\"\")</selection> class T {}");
-    assert SaveAsTemplateAction.suggestTemplateText(myFixture.getEditor(), myFixture.getFile(), myFixture.getProject())
+    assert EdtTestUtil.runInEdtAndGet(
+      () -> SaveAsTemplateAction.suggestTemplateText(myFixture.getEditor(), myFixture.getFile(), myFixture.getProject()))
       .equals("@foo.Anno(value=\"\")");
   }
 
+  @Test
   public void testReformatWithVirtualSpace() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class C {
           public static void main(String ...args) {
               <caret>
           }
       }""");
-    getEditor().getSettings().setVirtualSpace(true);
-    myFixture.type("iter\t");
-    myFixture.checkResult(
-      """
-        class C {
-            public static void main(String ...args) {
-                for (String arg : args) {
-                   \s
-                }
-            }
-        }""");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.getEditor().getSettings().setVirtualSpace(true);
+      myFixture.type("iter\t");
+      myFixture.checkResult(
+        """
+          class C {
+              public static void main(String ...args) {
+                  for (String arg : args) {
+                     \s
+                  }
+              }
+          }""");
+    });
   }
 
+  @Test
   public void testSubtypesMacroWorksWithTextArgument() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java",
                               """
                                 class Foo {
@@ -742,20 +914,24 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                 class Bar1 extends Foo {}
                                 class Bar2 extends Foo {}
                                 """);
-    Template template = getTemplateManager().createTemplate("xxx", "user", "$T$ var = new $ST$();");
+    Template template = lt.get().getTemplateManager().createTemplate("xxx", "user", "$T$ var = new $ST$();");
     template.addVariable("T", new EmptyNode(), true);
     template.addVariable("ST", "subtypes(T)", "", true);
 
-    startTemplate(template);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
 
-    myFixture.type("Foo");
-    getState().nextTab();
+      myFixture.type("Foo");
+      lt.get().getState().nextTab();
 
-    assertTrue(myFixture.getEditor().getDocument().getText().contains("Foo var = new Foo();"));
-    assertSameElements(myFixture.getLookupElementStrings(), "Foo", "Bar1", "Bar2");
+      assertTrue(myFixture.getEditor().getDocument().getText().contains("Foo var = new Foo();"));
+      assertThat(myFixture.getLookupElementStrings()).containsExactlyInAnyOrder("Foo", "Bar1", "Bar2");
+    });
   }
 
+  @Test
   public void testMethodParameterTypes() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class X {
         void test(int a, String b, double[] c) {
@@ -763,22 +939,26 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
         }
       }
       """);
-    Template template = getTemplateManager().createTemplate("xxx", "user", "System.out.println(\"$TYPES$\");");
+    Template template = lt.get().getTemplateManager().createTemplate("xxx", "user", "System.out.println(\"$TYPES$\");");
     template.addVariable("TYPES", "methodParameterTypes()", "", true);
 
-    startTemplate(template);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
 
-    myFixture.checkResult(
-      """
-        class X {
-          void test(int a, String b, double[] c) {
-            System.out.println("[int, java.lang.String, double[]]");
+      myFixture.checkResult(
+        """
+          class X {
+            void test(int a, String b, double[] c) {
+              System.out.println("[int, java.lang.String, double[]]");
+            }
           }
-        }
-        """);
+          """);
+    });
   }
 
+  @Test
   public void testAtEqualsToken() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class X {
         void test() {
@@ -786,12 +966,16 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
         }
       }
       """);
-    TemplateActionContext templateActionContext = TemplateActionContext.surrounding(getFile(), getEditor());
-    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
-    assertEquals(templates, List.of());
+    ReadAction.runBlocking(() -> {
+      TemplateActionContext templateActionContext = TemplateActionContext.surrounding(myFixture.getFile(), myFixture.getEditor());
+      List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
+      assertEquals(templates, List.of());
+    });
   }
 
+  @Test
   public void testWholeLineSelected() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java", """
       class X {
         int test() {
@@ -799,16 +983,20 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
       </selection>  }
       }
       """);
-    TemplateActionContext templateActionContext = TemplateActionContext.surrounding(getFile(), getEditor());
-    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
-    String result = templates.stream()
-      .map(Object::toString)
-      .collect(Collectors.joining(", "));
+    ReadAction.runBlocking(() -> {
+      TemplateActionContext templateActionContext = TemplateActionContext.surrounding(myFixture.getFile(), myFixture.getEditor());
+      List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
+      String result = templates.stream()
+        .map(Object::toString)
+        .collect(Collectors.joining(", "));
 
-    assertEquals("Java/C, Java/RL, Java/WL, Java/I", result);
+      assertEquals("Java/C, Java/RL, Java/WL, Java/I", result);
+    });
   }
 
+  @Test
   public void testGenericArgumentsAreInserted() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     myFixture.configureByText("a.java",
                               """
                                 import java.util.*;
@@ -818,26 +1006,30 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                   }
                                 }
                                 """);
-    Template template = getTemplateManager().createTemplate("rlazy", "user", "return $VAR$ == null ? $VAR$ = new $TYPE$($END$) : $VAR$;");
+    Template template = lt.get().getTemplateManager().createTemplate("rlazy", "user", "return $VAR$ == null ? $VAR$ = new $TYPE$($END$) : $VAR$;");
     template.addVariable("VAR", "methodParameterTypes()", "", true);
     template.addVariable("TYPE", "subtypes(typeOfVariable(VAR))", "", true);
     template.setToReformat(true);
-    startTemplate(template);
-    myFixture.type("list\n\n");
-    myFixture.checkResult(
-      """
-        import java.util.*;
-        public class Main {
-          List<String> getList(ArrayList<String> list) {
-              return list == null ? list = new ArrayList<String>() : list;
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      myFixture.type("list\n\n");
+      myFixture.checkResult(
+        """
+          import java.util.*;
+          public class Main {
+            List<String> getList(ArrayList<String> list) {
+                return list == null ? list = new ArrayList<String>() : list;
+            }
           }
-        }
-        """);
+          """);
+    });
   }
 
+  @Test
   public void testPsvmWithString() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(),
+      myFixture.getModule(),
       JavaFeature.IMPLICIT_CLASSES.getStandardLevel(),
       () -> {
         myFixture.configureByText(
@@ -847,20 +1039,24 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
             """);
         final TemplateImpl template =
           TemplateSettings.getInstance().getTemplate("psvma", "Java//Instance 'main' methods for implicitly declared classes");
-        startTemplate(template);
-        myFixture.checkResult(
-            """
-            void main(String[] args) {
-                <caret>
-            }
-            """);
+        EdtTestUtil.runInEdtAndWait(() -> {
+          lt.get().startTemplate(template);
+          myFixture.checkResult(
+              """
+              void main(String[] args) {
+                  <caret>
+              }
+              """);
+        });
       }
     );
   }
 
+  @Test
   public void testPsvmWithoutString() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(),
+      myFixture.getModule(),
       JavaFeature.IMPLICIT_CLASSES.getStandardLevel(),
       () -> {
         myFixture.configureByText(
@@ -871,22 +1067,26 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
             }
             """);
         final TemplateImpl template = TemplateSettings.getInstance().getTemplate("main", "Java//Instance 'main' methods for normal classes");
-        startTemplate(template);
-        myFixture.checkResult(
-            """
-            class A{
-                static void main() {
-                    <caret>
-                }
-            }
-            """);
+        EdtTestUtil.runInEdtAndWait(() -> {
+          lt.get().startTemplate(template);
+          myFixture.checkResult(
+              """
+              class A{
+                  static void main() {
+                      <caret>
+                  }
+              }
+              """);
+        });
       }
     );
   }
 
+  @Test
   public void testIOP() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(),
+      myFixture.getModule(),
       JavaFeature.JAVA_LANG_IO.getStandardLevel(),
       () -> {
         myFixture.configureByText(
@@ -899,22 +1099,26 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
             }
             """);
         final TemplateImpl template = TemplateSettings.getInstance().getTemplate("iop", "Java");
-        startTemplate(template);
-        myFixture.checkResult(
-            """
-            class A{
-              public static void main(String[] args) {
-                  IO.println(<caret>);
+        EdtTestUtil.runInEdtAndWait(() -> {
+          lt.get().startTemplate(template);
+          myFixture.checkResult(
+              """
+              class A{
+                public static void main(String[] args) {
+                    IO.println(<caret>);
+                }
               }
-            }
-            """);
+              """);
+        });
       }
     );
   }
 
+  @Test
   public void testIOR() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(),
+      myFixture.getModule(),
       JavaFeature.JAVA_LANG_IO.getStandardLevel(),
       () -> {
         myFixture.configureByText(
@@ -926,54 +1130,63 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
               }
             }""");
         final TemplateImpl template = TemplateSettings.getInstance().getTemplate("ior", "Java");
-        startTemplate(template);
-        myFixture.checkResult(
-            """
-            class A{
-              public static void main(String[] args) {
-                  IO.readln(<caret>);
-              }
-            }""");
+        EdtTestUtil.runInEdtAndWait(() -> {
+          lt.get().startTemplate(template);
+          myFixture.checkResult(
+              """
+              class A{
+                public static void main(String[] args) {
+                    IO.readln(<caret>);
+                }
+              }""");
+        });
       }
     );
   }
 
+  @Test
   public void testSTSAvailable() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("sts", "Java");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_26_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_26_PREVIEW, () -> {
       assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_27_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_27_PREVIEW, () -> {
       assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_28, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_28, () -> {
       assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
 
   }
 
+  @Test
   public void testIOPAvailable() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     final TemplateImpl template =
       TemplateSettings.getInstance().getTemplate("iop", "Java");
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.JAVA_LANG_IO.getStandardLevel(), () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.JAVA_LANG_IO.getStandardLevel(), () -> {
       assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
       assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
   }
 
+  @Test
   public void testIORAvailable() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
     final TemplateImpl template =
       TemplateSettings.getInstance().getTemplate("ior", "Java");
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.JAVA_LANG_IO.getStandardLevel(), () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.JAVA_LANG_IO.getStandardLevel(), () -> {
       assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
       assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
   }
 
+  @Test
   public void testSoutNotAvailableAfterDot() {
     final TemplateImpl template =
       TemplateSettings.getInstance().getTemplate("sout", "Java");
@@ -985,10 +1198,4 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                  }""", template));
   }
 
-  @Override
-  public final String getTestDataPath() {
-    return basePath;
-  }
-
-  private final String basePath = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/";
 }

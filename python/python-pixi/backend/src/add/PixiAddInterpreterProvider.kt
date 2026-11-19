@@ -359,7 +359,7 @@ internal class PixiEnvironmentForm<P : PathHolder>(
     when (model.fileSystem.eelOrTarget) {
       is EelOrTarget.IsEel -> if (pyProject != null) {
         val ref = PyInterpreterRef.native(PixiPyTool.getInstance().fusId, PyEnvRef(selection.environment))
-        return PythonInterpreterRegistry.getInstance(moduleOrProject.project).newPythonInterpreter(pyProject, ref)
+        return PythonInterpreterRegistry.getInstance(moduleOrProject.project).build(pyProject, ref)
       }
       is EelOrTarget.IsTarget -> Unit
     }

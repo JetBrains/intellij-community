@@ -168,7 +168,7 @@ class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
                 if (declaration.containingClassOrObject == null) continue
                 member.isEffectivelyFinal = analyze(declaration) {
                     val symbol = declaration.symbol
-                    val propertySymbol = (symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: symbol
+                    val propertySymbol = (symbol as? KaValueParameterSymbol)?.primaryConstructorProperty ?: symbol
                     propertySymbol.modality == KaSymbolModality.FINAL
                 }
             }

@@ -21,7 +21,9 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbService
@@ -72,6 +74,7 @@ import java.awt.Component
 import java.awt.Graphics
 import java.awt.GridLayout
 import java.io.IOException
+import java.util.concurrent.CompletableFuture
 import javax.swing.BorderFactory
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -84,9 +87,9 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.DefaultTreeSelectionModel
 import javax.swing.tree.TreePath
 
-internal fun openPyProjectPreview(project: Project, settings: PyProjectModelSettings) {
+internal fun requestOpenPyProjectPreview(project: Project, settings: PyProjectModelSettings): CompletableFuture<FileEditorComposite> {
   val file = PyProjectPreviewVirtualFile(project, settings)
-  FileEditorManager.getInstance(project).openFile(file, true)
+  return FileEditorManager.getInstance(project).requestOpenFile(file, FileEditorOpenRequest.withFocus(true))
 }
 
 private fun nextUniqueName(baseName: String, nameCount: MutableMap<String, Int>): String {

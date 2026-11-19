@@ -156,14 +156,12 @@
       are read together. `after EvoPySdkStatusBarWidget` states that from this side; the interpreter widget states it
       from the other.
 
-      It no longer follows `pythonInterpreterWidget`. That is the classic widget, which disables itself whenever the Evo
-      one is on, and an anchor naming a widget that is not registered is dropped rather than honoured — which is how
-      this one ended up separated from the interpreter widget by the schema widget (PY-92487). `CodeStyleStatusBarWidget`
-      leads instead, as the one anchor present in every process and every project.
+      An anchor naming a widget that is not registered is dropped rather than honoured (PY-92487).
+      `CodeStyleStatusBarWidget` leads, as the one anchor present in every process and every project.
     -->
     <statusBarWidgetFactory id="pythonDependencyFileWidget"
                             implementation="com.jetbrains.python.requirements.widget.PyDependenciesFileStatusBarWidgetFactory"
-                            order="after CodeStyleStatusBarWidget, after EvoPySdkStatusBarWidget, after pythonInterpreterWidget, after git, after hg, after JSONSchemaSelector, before ReadOnlyAttribute"/>
+                            order="after CodeStyleStatusBarWidget, after EvoPySdkStatusBarWidget, after git, after hg, after JSONSchemaSelector, before ReadOnlyAttribute"/>
 
     <registryKey defaultValue="20" description="How often conda environments cache must be refreshed (seconds)"
                  key="python.conda.envs.refresh.seconds" restartRequired="true"/>
@@ -234,6 +232,28 @@
                          key="python.packaging.repository.configurable.name"
                          nonDefaultProject="true"/>
     <projectSettings service="com.jetbrains.python.sdk.PyVirtualEnvVcsSettings"/>
+
+    <!-- The interpreter settings of every IDE with the Python plugin (PY-89840). PyCharm moves the Workspace page to the
+      top level, see PyCharmProjectConfigurableStartupActivity. The ids keep their old names, so saved settings and
+      links still find the pages. -->
+    <projectConfigurable groupId="python.group.settings"
+                         id="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyAllInterpretersConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyAllInterpretersConfigurable.display.name"
+                         instance="com.jetbrains.python.configuration.interpreter.PyAllInterpretersConfigurable"
+                         groupWeight="199"/>
+    <projectConfigurable groupId="python.group.settings"
+                         id="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyWorkspaceStructureConfigurable.display.name"
+                         instance="com.jetbrains.python.configuration.interpreter.PyWorkspaceStructureConfigurable"
+                         groupWeight="200"
+                         nonDefaultProject="true"/>
+    <!-- "Auto-configure project workspace from pyproject.toml" checkbox + cleanup on the Workspace Structure page. -->
+    <registryKey defaultValue="true"
+                 description="Show the 'Auto-configure project workspace from pyproject.toml' checkbox on the Workspace Structure page. When off, the checkbox and the cleanup it triggers are hidden entirely."
+                 key="python.pyproject.toggle.in.settings"
+                 restartRequired="false"/>
   </extensions>
 
   <projectListeners>
@@ -611,8 +631,6 @@
     <registryKey key="python.detect.cross.module.dependencies" defaultValue="false"
                  description="Try to detect and automatically set-up module dependencies in a multi-module project"/>
 
-    <registryKey key="python.prebuilt.skeletons.minor.version.aware" defaultValue="false"
-                 description="When disabled stripes minor version to look for prebuilt skeletons"/>
     <registryKey key="python.activate.virtualenv.on.run" defaultValue="true"
                  description="Whether enabled activates virtualenv before script execution and passes environment to the process"/>
 
@@ -628,8 +646,6 @@
     <registryKey defaultValue="3" description="Timeout to guess the best suitable SDK when adding new interpreter (seconds)"
                  key="python.guess.sdk.timeout.seconds"/>
 
-    <statistics.counterUsagesCollector
-      implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
   </extensions>
 
   <extensionPoints>
@@ -682,9 +698,6 @@
     <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonDebugBackendRunner" interface="com.jetbrains.python.debugger.PyDebugBackendRunner"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
-                    interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.packageManagerProvider"
                     interface="com.jetbrains.python.packaging.PyPackageManagerProvider"
@@ -809,7 +822,6 @@
 
     <!-- Other -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
-    <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
 
     <pep8ProblemSuppressor implementation="com.jetbrains.python.validation.Pep8TypeParameterProblemSuppressor"/>
 
@@ -839,19 +851,6 @@
     <projectSdkConfigurationExtension
       implementation="com.jetbrains.python.venv.sdk.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
       id="requirementsTxtOrSetupPy" order="before uv"/>
-    <projectSdkConfigurationExtension
-      implementation="com.jetbrains.python.conda.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
-      id="environmentYml"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.pipenv.sdk.configuration.PyPipfileSdkConfiguration"
-                                      id="pipfile" order="before requirementsTxtOrSetupPy"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.uv.sdk.configuration.PyUvSdkConfiguration"
-                                      id="uv" order="before poetry"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.poetry.sdk.configuration.PyPoetrySdkConfiguration"
-                                      id="poetry"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.hatch.sdk.configuration.PyHatchSdkConfiguration"
-                                      id="hatch" order="after poetry"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.uv.sdk.configuration.PyUvBaseSdkConfiguration"
-                                      id="uvBase" order="before venv"/>
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.venv.sdk.configuration.PyVenvSdkConfiguration"
                                       id="venv" order="last"/>
 

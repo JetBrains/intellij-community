@@ -29,7 +29,7 @@ internal fun observeSdkConfigurationInProgress(
   onInProgressChanged: Consumer<Boolean>,
   onReleased: Runnable,
 ) {
-  uiComponent.launchOnShow("PyActiveSdkConfigurable.observeSdkConfigurationInProgress") {
+  uiComponent.launchOnShow("observeSdkConfigurationInProgress") {
     var wasInProgress = false
     project.isSdkConfigurationInProgress.collect { inProgress ->
       withContext(Dispatchers.EDT) {

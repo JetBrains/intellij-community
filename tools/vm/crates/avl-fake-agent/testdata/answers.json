@@ -1,0 +1,7 @@
+{
+  "answer": "{prefix} {prompt}",
+  "editedLine": "{prefix} edit {prompt}\n",
+  "loadedAnswer": "{prefix} loaded answer of {sessionId}",
+  "loadedPrompt": "{prefix} loaded prompt",
+  "sessionId": "acp-integration-session-{nonce}-{count}"
+}

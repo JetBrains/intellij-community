@@ -2,51 +2,59 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.internal.SerializableCtorInspectionFixtureKt.serializableCtorInspectionFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/serializableCtor")
-public class SerializableCtorInspectionTest extends SerializableCtorInspectionTestBase {
+@TestApplication
+public class SerializableCtorInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<SerializableCtorInspectionFixture> serializableCtor =
+    serializableCtorInspectionFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/serializableCtor");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/serializableCtor";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testCorrectAnnotatedConstructor() {
-    doTest(false);
+    serializableCtor.get().doTest(false);
   }
 
+  @Test
   public void testSerializableClassButPropertyMappingAnnotationNotAvailable() {
-    doTest(true);
+    serializableCtor.get().doTest(true);
   }
 
+  @Test
   public void testNotSerializableClass() {
-    doTest();
+    serializableCtor.get().doTest();
   }
 
+  @Test
   public void testSerializableClassButDoesNotContainSerialVersionUidField() {
-    doTest();
+    serializableCtor.get().doTest();
   }
 
+  @Test
   public void testClassContainingSerialVersionUidFieldButIsNotSerializable() {
-    doTest();
+    serializableCtor.get().doTest();
   }
 
+  @Test
   public void testNotAnnotatedConstructor() {
-    doTest();
+    serializableCtor.get().doTest();
   }
 
+  @Test
   public void testNotAnnotatedMultipleConstructors() {
-    doTest();
+    serializableCtor.get().doTest();
   }
 
+  @Test
   public void testNotAnnotatedAndAnnotatedConstructorsInSingleClass() {
-    doTest();
+    serializableCtor.get().doTest();
   }
 }

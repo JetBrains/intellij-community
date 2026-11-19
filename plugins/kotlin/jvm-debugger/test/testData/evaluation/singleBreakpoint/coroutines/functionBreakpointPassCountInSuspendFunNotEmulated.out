@@ -1,0 +1,8 @@
+FunctionBreakpoint created at functionBreakpointPassCountInSuspendFunNotEmulated.kt:22 passCount = 2
+Run Java
+Connected to the target VM
+functionBreakpointPassCountInSuspendFunNotEmulated.kt:22
+Compile bytecode for n
+Disconnected from the target VM
+
+Process finished with exit code 0

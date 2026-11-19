@@ -3,8 +3,7 @@ package com.intellij.python.junit5Tests.unit.showCase
 
 import com.intellij.python.junit5Tests.framework.env.pyMockInterpreterFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
-import com.intellij.python.sdk.backend.findPythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -17,13 +16,13 @@ class PyMockInterpreterFixtureShowCaseTest {
   private val pathFixture = tempPathFixture()
   private val projectFixture = projectFixture()
   // Every interpreter belongs to a Python project: here the main one, at the project root.
-  private val interpreterFixture = projectFixture.pyProjectFixture().pyMockInterpreterFixture(pathFixture)
+  private val pyProjectFixture = projectFixture.pyProjectFixture()
+  private val interpreterFixture = pyProjectFixture.pyMockInterpreterFixture(pathFixture)
 
   @Test
   fun testMockSdk(): Unit = timeoutRunBlocking {
     val interpreter = interpreterFixture.get()
-    @Suppress("DEPRECATION")
-    val found = projectFixture.get().findPythonInterpreter(interpreter.getSdkAPI())
-    Assertions.assertEquals(interpreter, found, "Interpreter creation failed")
+    val interpreters = PythonInterpreterRegistry.getInstance(projectFixture.get()).interpreters(pyProjectFixture.get())
+    Assertions.assertTrue(interpreter in interpreters, "Interpreter creation failed")
   }
 }

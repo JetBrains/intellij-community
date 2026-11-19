@@ -55,6 +55,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
 import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
@@ -176,7 +177,16 @@ public abstract class EditorPaintingTestCase {
   }
 
   protected void setUniformEditorHighlighter(@NotNull TextAttributes attributes) {
-    ((EditorEx)myFixture.getEditor()).setHighlighter(new UniformHighlighter(attributes));
+    setTokenEditorHighlighter(new int[]{0}, new TextAttributes[]{attributes});
+  }
+
+  /**
+   * Sets a highlighter that gives the token {@code i} the attributes {@code tokenAttributes[i]}.
+   * The token {@code i} starts at {@code tokenStarts[i]}. The first start is 0, and the starts grow.
+   * The last token ends at the end of the document.
+   */
+  protected void setTokenEditorHighlighter(int[] tokenStarts, TextAttributes[] tokenAttributes) {
+    ((EditorEx)myFixture.getEditor()).setHighlighter(new TokenHighlighter(tokenStarts, tokenAttributes));
   }
 
   protected RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
@@ -470,46 +480,66 @@ public abstract class EditorPaintingTestCase {
     }
   }
 
-  private static final class UniformHighlighter implements EditorHighlighter {
-    @NotNull
-    private final TextAttributes myAttributes;
-    private Document myDocument;
+  /**
+   * The highlighter of {@link #setTokenEditorHighlighter}.
+   */
+  private static final class TokenHighlighter implements EditorHighlighter {
+    private final int[] tokenStarts;
+    private final TextAttributes[] tokenAttributes;
+    private Document document;
 
-    private UniformHighlighter(@NotNull TextAttributes attributes) {
-      myAttributes = attributes;
+    private TokenHighlighter(int[] tokenStarts, TextAttributes[] tokenAttributes) {
+      checkTokens(tokenStarts, tokenAttributes);
+      this.tokenStarts = tokenStarts;
+      this.tokenAttributes = tokenAttributes;
     }
 
     @NotNull
     @Override
     public HighlighterIterator createIterator(int startOffset) {
-      return new UniformHighlighter.Iterator(startOffset);
+      int index = 0;
+      while (index + 1 < tokenStarts.length && tokenStarts[index + 1] <= startOffset) {
+        index++;
+      }
+      return new TokenHighlighter.Iterator(index);
     }
 
     @Override
     public void setEditor(@NotNull HighlighterClient editor) {
-      myDocument = editor.getDocument();
+      document = editor.getDocument();
+    }
+
+    private static void checkTokens(int[] tokenStarts, TextAttributes[] tokenAttributes) {
+      if (tokenStarts.length == 0 || tokenStarts.length != tokenAttributes.length || tokenStarts[0] != 0) {
+        throw new IllegalArgumentException("Each token needs a start and attributes, and the first start is 0");
+      }
+      for (int i = 1; i < tokenStarts.length; i++) {
+        if (tokenStarts[i] <= tokenStarts[i - 1]) {
+          throw new IllegalArgumentException("The token starts must grow: " + Arrays.toString(tokenStarts));
+        }
+      }
     }
 
     private class Iterator implements HighlighterIterator {
-      private int myOffset;
+      private int index;
 
-      Iterator(int startOffset) {
-        myOffset = startOffset;
+      Iterator(int index) {
+        this.index = index;
       }
 
       @Override
       public TextAttributes getTextAttributes() {
-        return myAttributes;
+        return tokenAttributes[index];
       }
 
       @Override
       public int getStart() {
-        return myOffset;
+        return tokenStarts[index];
       }
 
       @Override
       public int getEnd() {
-        return myDocument.getTextLength();
+        return index + 1 < tokenStarts.length ? tokenStarts[index + 1] : document.getTextLength();
       }
 
       @Override
@@ -519,23 +549,23 @@ public abstract class EditorPaintingTestCase {
 
       @Override
       public void advance() {
-        myOffset = myDocument.getTextLength();
+        index++;
       }
 
       @Override
       public void retreat() {
-        myOffset = 0;
+        index--;
       }
 
       @Override
       public boolean atEnd() {
-        return myOffset == myDocument.getTextLength();
+        return index < 0 || index >= tokenStarts.length || tokenStarts[index] >= document.getTextLength();
       }
 
       @NotNull
       @Override
       public Document getDocument() {
-        return myDocument;
+        return document;
       }
     }
   }

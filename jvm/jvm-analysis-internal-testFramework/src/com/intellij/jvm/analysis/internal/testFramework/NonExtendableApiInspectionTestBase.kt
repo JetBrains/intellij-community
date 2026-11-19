@@ -12,6 +12,11 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * @deprecated Use [nonExtendableApiProjectFixture] and [nonExtendableApiInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use nonExtendableApiProjectFixture and nonExtendableApiInspectionFixture in a JUnit 5 test")
 abstract class NonExtendableApiInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: InspectionProfileEntry = NonExtendableApiInspection()
 

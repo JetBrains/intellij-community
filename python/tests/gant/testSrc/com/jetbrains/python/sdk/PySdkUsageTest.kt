@@ -7,6 +7,7 @@ import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -41,7 +42,7 @@ internal class PySdkUsageTest {
       assertThat(EvoPyProjectModel.getInstance(project).snapshot().usesSdk(sdk)).isFalse()
     }
     finally {
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 
@@ -59,7 +60,7 @@ internal class PySdkUsageTest {
     }
     finally {
       pyProject.setPythonInterpreter(null)
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 
@@ -75,7 +76,7 @@ internal class PySdkUsageTest {
       assertThat(PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = true, background = true))).isFalse()
     }
     finally {
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 
@@ -92,7 +93,7 @@ internal class PySdkUsageTest {
     }
     finally {
       pyProject.setPythonInterpreter(null)
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 
@@ -114,8 +115,8 @@ internal class PySdkUsageTest {
     }
     finally {
       pyProject.setPythonInterpreter(null)
-      registry.removePythonInterpreter(pyProject, first)
-      registry.removePythonInterpreter(pyProject, second)
+      registry.remove(first)
+      registry.remove(second)
     }
   }
 }

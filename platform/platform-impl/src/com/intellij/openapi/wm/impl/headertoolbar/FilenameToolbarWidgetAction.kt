@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
@@ -170,7 +171,9 @@ class FilenameToolbarWidgetAction : ExpandableComboAction(), DumbAware, ActionRe
     override fun getTextFor(value: VirtualFile?): @NlsSafe String = value?.presentableName ?: ""
 
     override fun onChosen(selectedValue: VirtualFile?, finalChoice: Boolean): PopupStep<*>? {
-      if (selectedValue != null && finalChoice) FileEditorManager.getInstance(project).openFile(selectedValue, true)
+      if (selectedValue != null && finalChoice) {
+        FileEditorManager.getInstance(project).requestOpenFile(selectedValue, FileEditorOpenRequest.withFocus(true))
+      }
       return null
     }
   }

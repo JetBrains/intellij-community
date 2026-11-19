@@ -13,103 +13,145 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.JavaInspectionTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class DeprecationInspectionTest extends JavaInspectionTestCase {
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixtureWithProjectPerTest;
+import static org.assertj.core.api.Assertions.assertThat;
 
-  private final DefaultLightProjectDescriptor myProjectDescriptor = new DefaultLightProjectDescriptor() {
+@TestApplication
+public class DeprecationInspectionTest {
+  private static final String TEST_DATA_PATH = JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  private final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixtureWithProjectPerTest(
+    testName -> new ExternalAnnotationsDescriptor(PlatformTestUtil.lowercaseFirstLetter(testName, true)), TEST_DATA_PATH);
+
+  /**
+   * The mock JDK 11 and the external annotations in the test data directory of the test.
+   */
+  private static final class ExternalAnnotationsDescriptor extends DefaultLightProjectDescriptor {
+    private final String myTestName;
+
+    private ExternalAnnotationsDescriptor(String testName) {
+      myTestName = testName;
+    }
+
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
       model.getModuleExtension(JavaModuleExternalPaths.class)
-        .setExternalAnnotationUrls(new String[]{VfsUtilCore.pathToUrl(getTestDataPath() + "/deprecation/" + getTestName(true) + "/extAnnotations")});
+        .setExternalAnnotationUrls(new String[]{VfsUtilCore.pathToUrl(TEST_DATA_PATH + "/deprecation/" + myTestName + "/extAnnotations")});
     }
 
     @Override
     public Sdk getSdk() {
       return IdeaTestUtil.getMockJdk11();
     }
-  };
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+    @Override
+    public boolean equals(Object o) {
+      return o instanceof ExternalAnnotationsDescriptor descriptor && myTestName.equals(descriptor.myTestName);
+    }
+
+    @Override
+    public int hashCode() {
+      return myTestName.hashCode();
+    }
   }
 
   private void doTest() {
     DeprecationInspection tool = new DeprecationInspection();
     tool.IGNORE_IN_SAME_OUTERMOST_CLASS = false;
-    doTest("deprecation/" + getTestName(true), tool);
+    javaInspection.get().doTest("deprecation/" + javaInspection.get().getTestName(true), tool);
   }
 
+  @Test
   public void testDeprecatedMethod() {
     doTest();
   }
 
+  @Test
   public void testDeprecatedInImport() {
     doTest();
   }
 
+  @Test
   public void testDeprecatedInStaticImport() {
     doTest();
   }
 
+  @Test
   public void testDeprecatedInner() {
     doTest();
   }
 
+  @Test
   public void testDeprecatedField() {
     doTest();
   }
 
+  @Test
   public void testDeprecatedDefaultConstructorInSuper() {
     doTest();
   }
 
+  @Test
   public void testDeprecatedDefaultConstructorInSuperNotCalled() {
     doTest();
   }
 
+  @Test
   public void testDeprecatedDefaultConstructorTypeParameter() {
     doTest();
   }
 
+  @Test
   public void testDeprecationOnVariableWithAnonymousClass() {
     doTest();
   }
 
+  @Test
   public void testDeprecatedAnnotationProperty() {
     doTest();
   }
 
+  @Test
   public void testMethodsOfDeprecatedClass() {
     final DeprecationInspection tool = new DeprecationInspection();
     tool.IGNORE_METHODS_OF_DEPRECATED = false;
-    doTest("deprecation/" + getTestName(true), tool);
+    javaInspection.get().doTest("deprecation/" + javaInspection.get().getTestName(true), tool);
   }
 
+  @Test
   public void testIgnoreInSameOutermostClass() {
     final DeprecationInspection tool = new DeprecationInspection();
-    doTest("deprecation/" + getTestName(true), tool);
+    javaInspection.get().doTest("deprecation/" + javaInspection.get().getTestName(true), tool);
   }
   
+  @Test
   public void testLanguageLevel8() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest());
+    IdeaTestUtil.withLevel(javaInspection.get().getFixture().getModule(), LanguageLevel.JDK_1_8, () -> doTest());
   }
   
+  @Test
   public void testLanguageLevel9() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_9, () -> doTest());
+    IdeaTestUtil.withLevel(javaInspection.get().getFixture().getModule(), LanguageLevel.JDK_1_9, () -> doTest());
   }
 
+  @Test
   public void testDeprecatedUsageInJavadoc() {
     doTest();
   }
 
+  @Test
   public void testDeprecatedDefaultConstructor() {
+    JavaCodeInsightTestFixture myFixture = javaInspection.get().getFixture();
     myFixture.enableInspections(new DeprecationInspection());
     myFixture.configureByText("B.java", """
       class B extends A {
@@ -120,10 +162,12 @@ public class DeprecationInspectionTest extends JavaInspectionTestCase {
           @Deprecated A() {}
           A(int i) {}
       }""");
-    assertEmpty(myFixture.doHighlighting(HighlightSeverity.WARNING));
+    assertThat(myFixture.doHighlighting(HighlightSeverity.WARNING)).isEmpty();
   }
   
+  @Test
   public void testDeprecatedPackage() {
+    JavaCodeInsightTestFixture myFixture = javaInspection.get().getFixture();
     DeprecationInspection inspection = new DeprecationInspection();
     inspection.IGNORE_IMPORT_STATEMENTS = false;
     myFixture.enableInspections(inspection);
@@ -142,12 +186,7 @@ public class DeprecationInspectionTest extends JavaInspectionTestCase {
     myFixture.testHighlighting();
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return myProjectDescriptor;
-  }
-
+  @Test
   public void testExternallyDeprecatedDefaultConstructor() {
     doTest();
   }

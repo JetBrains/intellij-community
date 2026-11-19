@@ -16,8 +16,8 @@ import com.intellij.slicer.SliceLeafEquality
 import com.intellij.slicer.SliceTreeBuilder
 import com.intellij.slicer.SliceUsage
 import com.intellij.slicer.SliceUsageTransformer
-import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.expressions.returnType
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType

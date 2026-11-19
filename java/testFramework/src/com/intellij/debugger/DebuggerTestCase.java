@@ -94,6 +94,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * @deprecated Use {@link DebuggerTestFixtureKt#debuggerTestFixture} in a JUnit 6 test.
+ */
+@Deprecated
 public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCase {
   protected static final int DEFAULT_ADDRESS = 3456;
   protected static final String TEST_JDK_NAME = "JDK";

@@ -1,0 +1,7 @@
+class Foo {
+    companion object {
+        fun len(<caret>foo: Foo, x: Int) = foo.hashCode() + x
+    }
+}
+
+val unbound: (Foo, Int) -> Int = Foo::len

@@ -3,8 +3,13 @@ package com.intellij.debugger.streams.exec.breakpoint.streamex
 
 import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper
 import com.intellij.debugger.streams.exec.streamex.ConcatenateOperationsTest
+import com.intellij.debugger.streams.test.BreakpointBasedExecutionTestCaseHelper
+import com.intellij.debugger.streams.test.TraceExecutionFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.xdebugger.XDebugSession
 
+@TestApplication
 class BreakpointEngineConcatenateOperationsTest : ConcatenateOperationsTest() {
-  override fun getHelper(session: XDebugSession): TraceExecutionTestHelper = breakpointEngineHelper(session)
+  override fun getHelper(trace: TraceExecutionFixture, session: XDebugSession): TraceExecutionTestHelper =
+    BreakpointBasedExecutionTestCaseHelper(trace, session)
 }

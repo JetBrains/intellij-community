@@ -64,6 +64,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
 import static com.intellij.util.containers.CollectionFactory.createFilePathSet;
@@ -97,6 +98,10 @@ final class RefreshWorker {
   private final Set<NewVirtualFile> roots;
   private final Queue<NewVirtualFile> refreshQueue;
   private final Semaphore semaphore;
+  /** Receives each file this scan cleans: the file is 'actualizing' until the session applies its events */
+  private final InFlightScans.Batch scanned;
+  /** Tells, if a file must be scanned: a session decides that files it trusts (e.g. whether it trusts the 'actualizing' files) */
+  private final Predicate<NewVirtualFile> fileNeedsScan;
 
   private final PersistentFS persistentFS = PersistentFS.getInstance();
   private final FSRecordsImpl vfsPeer = ((PersistentFSImpl)persistentFS).peer();
@@ -120,7 +125,16 @@ final class RefreshWorker {
   private final AtomicLong ioTime = new AtomicLong();
 
   RefreshWorker(Collection<NewVirtualFile> refreshRoots, boolean isRecursive) {
+    this(refreshRoots, isRecursive, new InFlightScans().begin(), NewVirtualFile::isDirty);
+  }
+
+  RefreshWorker(Collection<NewVirtualFile> refreshRoots,
+                boolean isRecursive,
+                InFlightScans.Batch scanned,
+                Predicate<NewVirtualFile> fileNeedsScan) {
     this.isRecursive = isRecursive;
+    this.scanned = scanned;
+    this.fileNeedsScan = fileNeedsScan;
     parallel = isRecursive
                && (PARALLELISM > 1 && !ApplicationManager.getApplication().isWriteIntentLockAcquired());
     roots = new HashSet<>(refreshRoots);
@@ -263,30 +277,32 @@ final class RefreshWorker {
         continue;
       }
 
-      var fs = file.getFileSystem();
-
-      if (fs instanceof AsyncableFileSystem afs) {
-        //can't refresh file that has async ops still in flight => flush them:
-        try {
-          afs.fsync(file);
-        }
-        catch (IOException e) {
-          continue;
-        }
-      }
-
       try {
+        var fs = file.getFileSystem();
+
+        if (fs instanceof AsyncableFileSystem afs) {
+          //can't refresh file that has async ops still in flight => flush them:
+          try {
+            afs.fsync(file);
+          }
+          catch (IOException e) {
+            THROTTLED_LOG.info("refresh skipped, fsync failed: " + file + ": " + e.getMessage());
+            skipped.add(file);
+            continue;
+          }
+        }
+
         if (roots.contains(file)) {
           var attributes = computeAttributesForFile(fs, file);
           if (attributes == null) {
             scheduleDeletion(events, file);
-            file.markClean();
+            markScanned(file);
             continue;
           }
 
           checkAndScheduleChildRefresh(events, fs, file.getParent(), file, attributes, false);
 
-          if (!file.isDirty() || !file.isDirectory()) {
+          if (!fileNeedsScan.test(file) || !file.isDirectory()) {
             continue;
           }
         }
@@ -320,7 +336,7 @@ final class RefreshWorker {
         queryItemsProcessed.incrementAndGet();
 
         if (isRecursive) {
-          dir.markClean();
+          markScanned(dir);
         }
       }
       catch (FileStateUnknownException e) {
@@ -715,6 +731,12 @@ final class RefreshWorker {
     }
   }
 
+  /** The file is added to the batch first, so it doesn't look 'clean' while some its changes (events) are still in flight */
+  private void markScanned(NewVirtualFile file) {
+    scanned.add(file.getId());
+    file.markClean();
+  }
+
   private static void forceMarkDirty(NewVirtualFile file) {
     file.markClean();  // otherwise, consequent markDirty() won't have any effect
     file.markDirty();
@@ -766,14 +788,14 @@ final class RefreshWorker {
                                             NewVirtualFile child,
                                             FileAttributes childAttributes,
                                             boolean enqueue) {
-    boolean fileDirty = child.isDirty();
-    if (LOG.isTraceEnabled()) LOG.trace("file=" + child + " dirty=" + fileDirty);
-    if (!fileDirty) {
+    boolean fileNeedsScan = this.fileNeedsScan.test(child);
+    if (LOG.isTraceEnabled()) LOG.trace("file=" + child + " needsScan=" + fileNeedsScan);
+    if (!fileNeedsScan) {
       return;
     }
 
     if (checkAndScheduleFileTypeChange(events, fs, parent, child, childAttributes)) {
-      child.markClean();
+      markScanned(child);
       return;
     }
 
@@ -804,7 +826,7 @@ final class RefreshWorker {
                                                VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH, oldTimestamp, newTimestamp,
                                                oldLength, newLength));
       }
-      child.markClean();
+      markScanned(child);
     }
     else if (enqueue && isRecursive) {
       if (child instanceof VirtualDirectoryImpl) {

@@ -6,15 +6,21 @@ import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildId
 import com.intellij.build.events.FinishBuildEvent
+import com.intellij.build.events.OutputBuildEvent
+import com.intellij.build.events.OutputId
 import com.intellij.build.events.StartId
 import com.intellij.build.output.BuildOutputInstantReaderImpl.Companion.asLineParser
 import com.intellij.build.output.BuildOutputMulticaster
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.BuildOutputParserDispatcher
 import com.intellij.build.output.BuildOutputParserDispatcherImpl
+import com.intellij.build.output.BuildOutputText
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import java.util.function.Consumer
@@ -43,6 +49,31 @@ abstract class AbstractExternalSystemOutputMessageDispatcher(
 
   protected fun createParserDispatcher(parentEventId: StartId): BuildOutputParserDispatcher {
     return BuildOutputParserDispatcherImpl(parentEventId, lineParsers, multicaster)
+  }
+
+  abstract suspend fun notifyParserTextAvailable(text: BuildOutputText, outputType: ProcessOutputType)
+
+  override fun notifyTextAvailable(text: @NlsSafe String, outputType: ProcessOutputType) {
+    if (consoleSettings.isSingleBuildConsoleView) {
+      val outputId = OutputId()
+
+      notifyBuildEvent(buildId, OutputBuildEvent.builder(text)
+        .withId(outputId)
+        .withOutputType(outputType)
+        .build())
+
+      notifyParserTextAvailableImpl(BuildOutputText.createOutputText(outputId, text), outputType)
+    }
+    else {
+      notifyParserTextAvailableImpl(BuildOutputText.createOutputText(text), outputType)
+    }
+  }
+
+  private fun notifyParserTextAvailableImpl(text: BuildOutputText, outputType: ProcessOutputType) {
+    if (outputType == ProcessOutputType.SYSTEM) return
+    @Suppress("RAW_RUN_BLOCKING") runBlocking {
+      notifyParserTextAvailable(text, outputType)
+    }
   }
 
   override fun notifyBuildEvent(buildId: BuildId, event: BuildEvent) {

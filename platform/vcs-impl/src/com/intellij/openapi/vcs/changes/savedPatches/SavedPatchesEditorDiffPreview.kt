@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -11,6 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.lang.ref.WeakReference
+import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 class SavedPatchesEditorDiffPreview(
@@ -36,7 +38,7 @@ class SavedPatchesEditorDiffPreview(
            ?: VcsBundle.message("saved.patch.editor.diff.preview.empty.title")
   }
 
-  override fun openPreview(requestFocus: Boolean): Boolean {
+  override fun submitOpenRequest(requestFocus: Boolean): CompletableFuture<List<FileEditor>> {
     return CommitToolWindowUtil.openDiff(ChangesViewContentManager.SHELF, this, requestFocus)
   }
 

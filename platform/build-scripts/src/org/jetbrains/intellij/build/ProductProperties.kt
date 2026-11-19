@@ -367,6 +367,12 @@ abstract class ProductProperties {
   abstract fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer?
 
   /**
+   * @return an instance of the class containing properties specific for OHOS distribution,
+   * or `null` if the product doesn't have OHOS distribution.
+   */
+  open fun createOhosCustomizer(projectHome: Path): OhosDistributionCustomizer? = null
+
+  /**
    * If `true`, a .zip archive containing sources of modules included in the product will be produced.
    * See also [includeIntoSourcesArchiveFilter].
    */

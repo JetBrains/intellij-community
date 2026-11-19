@@ -6,6 +6,11 @@ import com.intellij.codeInspection.logging.LoggingStatementNotGuardedByLogCondit
 import com.intellij.codeInspection.logging.LoggingUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
 
+/**
+ * @deprecated Use [loggingStatementNotGuardedByLogConditionInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use loggingStatementNotGuardedByLogConditionInspectionFixture in a JUnit 5 test")
 abstract class LoggingStatementNotGuardedByLogConditionInspectionTestBase : LoggingInspectionTestBase() {
   override val inspection: LoggingStatementNotGuardedByLogConditionInspection = LoggingStatementNotGuardedByLogConditionInspection()
 

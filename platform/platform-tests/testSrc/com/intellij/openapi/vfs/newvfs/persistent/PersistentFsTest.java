@@ -66,6 +66,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Compressor;
+import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -97,6 +98,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -120,6 +122,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
@@ -680,6 +683,17 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertEquals("d1", vd1.getName());
     assertFalse(((VirtualDirectoryImpl)vd1).allChildrenLoaded());
     assertEquals(Collections.emptyList(), ((VirtualDirectoryImpl)vd1).getCachedChildren());
+  }
+
+  @Test
+  public void testCreateEventWithFileParentDoesNotStoreName() throws Exception {
+    VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.newFile("parent.txt"));
+    assertNotNull(parent);
+    var names = FSRecords.getInstance().connection().names();
+    String childName = "rejected-" + UUID.randomUUID() + ".txt";
+
+    assertThrows(IllegalArgumentException.class, () -> new VFileCreateEvent(this, parent, childName, false, null, null, null));
+    assertEquals(DataEnumerator.NULL_ID, names.tryEnumerate(childName));
   }
 
   @Test

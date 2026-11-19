@@ -16,6 +16,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.DependenciesElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.DependsElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ExtensionElement
+import com.intellij.platform.pluginSystem.parser.impl.elements.TechnologyElement
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
@@ -45,6 +46,9 @@ sealed class IdeaPluginDescriptorImpl(
     .let(::sortExtensions)
 
   val actions: List<ActionElement> = raw.actions
+
+  /** The technologies that this descriptor declares with `<technology>` elements. A content module has its own list. */
+  val technologies: List<TechnologyElement> = raw.technologies
 
   var isDeleted: Boolean = false
 
@@ -252,6 +256,7 @@ class DependsSubDescriptor(
       if (raw.isUseIdeaClassLoader) reporter(PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR)
       if (raw.dependencies.any { it is DependenciesElement.ModuleDependency }) reporter("<dependencies><module>")
       if (raw.dependencies.any { it is DependenciesElement.PluginDependency }) reporter("<dependencies><plugin>")
+      if (raw.technologies.isNotEmpty()) reporter(PluginXmlConst.TECHNOLOGY_ELEM)
     }
   }
 }

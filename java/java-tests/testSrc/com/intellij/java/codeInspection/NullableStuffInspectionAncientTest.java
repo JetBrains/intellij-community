@@ -19,42 +19,37 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.testFramework.JavaInspectionTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class NullableStuffInspectionAncientTest extends JavaInspectionTestCase {
-  private NullableStuffInspection myInspection = new NullableStuffInspection();
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
-  }
+@TestApplication
+public class NullableStuffInspectionAncientTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_1_4_ANNOTATED);
+  private final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection");
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  private final NullableStuffInspection myInspection = new NullableStuffInspection();
+
+  @BeforeEach
+  public void setUp() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myInspection = null;
-    super.tearDown();
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_4_ANNOTATED;
-  }
-
+  @Test
   public void testJdk14() {
-    doTest("nullableProblems/" + getTestName(true), new LocalInspectionToolWrapper(myInspection));
+    javaInspection.get().doTest("nullableProblems/" + javaInspection.get().getTestName(true), new LocalInspectionToolWrapper(myInspection));
   }
 
+  @Test
   public void testJdkAnnotationsWithoutJetBrainsAnnotations() {
-    doTest("nullableProblems/" + getTestName(true), new LocalInspectionToolWrapper(myInspection));
+    javaInspection.get().doTest("nullableProblems/" + javaInspection.get().getTestName(true), new LocalInspectionToolWrapper(myInspection));
   }
 
 }

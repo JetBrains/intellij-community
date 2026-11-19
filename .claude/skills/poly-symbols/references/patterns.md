@@ -24,7 +24,7 @@ interface PolySymbolWithPattern : PolySymbol { val pattern: PolySymbolPattern }
 
 Matching produces a `PolySymbolMatch` (a `CompositePolySymbol`) whose `nameSegments` is a list of
 `PolySymbolNameSegment`, each describing a name range that may itself reference other symbols and
-carry a `MatchProblem` (`UNKNOWN_SYMBOL`, `MISSING_REQUIRED_PART`, `DUPLICATED`). Programmatic
+carry a `MatchProblem` (`UNKNOWN_SYMBOL`, `MISSING_REQUIRED_PART`, `DUPLICATE`). Programmatic
 pattern creation is possible via the DSL below, but **Web Types JSON is the usual approach** for
 static vocabularies — see [web-types.md](web-types.md) for the JSON shape, which mirrors this DSL
 almost 1:1 (`template`/`items`/`delegate`/`repeat`/`required`).
@@ -63,7 +63,7 @@ Seven conceptual pattern kinds (per the docs, mirrored by the DSL builders above
    alternatives, can carry a `symbolsResolver`/`symbols { from(kind) { ... } }` block for nested
    `symbolReference()`s, `additionalScope(...)` to extend the resolve stack while matching its
    children, can be `optional { }` (absence isn't an error), `repeating { unique(...) }` (with
-   `MatchProblem.DUPLICATED` on repeats), and can `priority(...)`/`apiStatus(...)`/
+   `MatchProblem.DUPLICATE` on repeats), and can `priority(...)`/`apiStatus(...)`/
    `overrideMatchProperties { }` to override the resulting match's properties.
 6. **Completion auto-popup** — `completionPopup()`/`completionPopupWithPrefixKept()` — marks a
    completion-only stopping point; selecting an item reopens completion for the next segment.
@@ -114,9 +114,8 @@ event name, not a fixed list for the whole directive — nested `items`/`templat
 sub-pattern (`{"or": ["click", "dblclick", ...]}`) let a static Web Types file express that
 conditionality without any code.
 
-`@`/`:` shorthand forms (`v-on` → `@`, `v-bind` → `:`) reuse the exact same modifiers pattern via
-`"delegate": "/html/vue-directives/on"` — declare the pattern skeleton once, reuse it for every
-alias.
+`@`/`:` shorthand forms (`v-on` → `@`, `v-bind` → `:`) reuse the full directive's modifiers via
+`"delegate"`: `"/html/vue-directives/on"` for `@`, `"/html/vue-directives/bind"` for `:`.
 
 Angular's analogous microsyntax — extended key-event modifiers (`(keydown.control.shift.enter)`) —
 is also Web Types-declared, under the `js/ng-custom-events` kind
@@ -128,9 +127,9 @@ event"/duplicate-modifier detection) and completion for free from the core patte
 
 ## Hand-written DSL example
 
-Static Web Types can't express "match literally anything" — for wildcard/catch-all symbols, use the
-DSL directly. Vue's `VueAnySymbol`/`VueAnySlot`
-(`contrib/vuejs/vuejs-backend/src/org/jetbrains/vuejs/web/symbols/VueAnySymbol.kt`):
+Vue's `VueAnySymbol`/`VueAnySlot`
+(`contrib/vuejs/vuejs-backend/src/org/jetbrains/vuejs/web/symbols/VueAnySymbol.kt`) build a
+wildcard/catch-all symbol with the DSL directly:
 
 ```kotlin
 class VueAnySymbol(...) : PolySymbolWithPattern, VueSymbol {

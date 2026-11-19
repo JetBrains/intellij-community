@@ -39,34 +39,34 @@ public class GradleBuildScriptClasspathModelBuilderTest extends AbstractModelBui
     createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
       .withBuildScriptMavenCentral()
       .addBuildScriptClasspath("junit:junit:4.11")
-      .addPostfix(
-        "allprojects {\n" +
-        "  configurations.all {\n" +
-        "    // check for configuration which is not in unresolved state - https://youtrack.jetbrains.com/issue/IDEA-124839\n" +
-        "    exclude group: 'some-group'\n" +
-        "    // check for the usage of custom resolutionStrategy - https://youtrack.jetbrains.com/issue/IDEA-125592\n" +
-        "    resolutionStrategy.eachDependency { DependencyResolveDetails details ->\n" +
-        "      println details.target\n" +
-        "    }\n" +
-        "  }\n" +
-        "}"
+      .addPostfix("""
+          allprojects {
+            configurations.all {
+              // check for configuration which is not in unresolved state - https://youtrack.jetbrains.com/issue/IDEA-124839
+              exclude group: 'some-group'
+              // check for the usage of custom resolutionStrategy - https://youtrack.jetbrains.com/issue/IDEA-125592
+              resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+                println details.target
+              }
+            }
+          }"""
       )
       .generate()
     );
     createProjectFile("moduleWithoutAdditionalClasspath/build.gradle", "");
     createProjectFile("baseModule/moduleWithInheritedClasspath/build.gradle", "");
-    createProjectFile("moduleWithAdditionalClasspath/build.gradle",
-                      "buildscript {\n" +
-                      "  dependencies {\n" +
-                      "    classpath files(\"lib/someDep.jar\")\n" +
-                      "  }\n" +
-                      "}");
-    createProjectFile("baseModule/build.gradle",
-                      "buildscript {\n" +
-                      "  dependencies {\n" +
-                      "    classpath files(\"lib/inheritedDep.jar\")\n" +
-                      "  }\n" +
-                      "}");
+    createProjectFile("moduleWithAdditionalClasspath/build.gradle", """
+                        buildscript {
+                          dependencies {
+                            classpath files("lib/someDep.jar")
+                          }
+                        }""");
+    createProjectFile("baseModule/build.gradle", """
+                        buildscript {
+                          dependencies {
+                            classpath files("lib/inheritedDep.jar")
+                          }
+                        }""");
 
     GradleIdeaModelHolder models = runBuildAction(new GradleBuildScriptClasspathModelProvider());
 

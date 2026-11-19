@@ -19,10 +19,14 @@ import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager;
@@ -34,6 +38,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
@@ -42,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -107,12 +113,38 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
     }
 
     boolean isCompletion = id.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED);
+    String protocol = VirtualFileManager.extractProtocol(id);
+    int pathStart = protocol == null ? 0 : urlPathStart(id, protocol);
+    String rootPath = protocol == null
+                      ? null
+                      : StringUtil.trimStart(id.substring(protocol.length() + URLUtil.SCHEME_SEPARATOR.length(), pathStart), "/") + "/";
 
-    ContainerUtil.addAll(refs, new FileReferenceSet(id, element, 1, null, true,
+    ContainerUtil.addAll(refs, new FileReferenceSet(id.substring(pathStart), element, 1 + pathStart, null, true,
                                                     true, new JsonFileType[]{JsonFileType.INSTANCE}) {
       @Override
       public boolean isEmptyPathAllowed() {
         return true;
+      }
+
+      @Override
+      public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
+        if (rootPath == null) return super.computeDefaultContexts();
+        VirtualFileSystem fileSystem = VirtualFileManager.getInstance().getFileSystem(protocol);
+        VirtualFile root = fileSystem == null ? null : fileSystem.findFileByPath(rootPath);
+        return ContainerUtil.createMaybeSingletonList(root == null ? null : element.getManager().findDirectory(root));
+      }
+
+      @Override
+      protected String getNewAbsolutePath(PsiFileSystemItem root, String relativePath) {
+        if (rootPath == null) return super.getNewAbsolutePath(root, relativePath);
+        // shortcut: keeps the Windows drive of the URL, a move to another drive gives a wrong URL
+        String path = StringUtil.trimEnd(root.getVirtualFile().getPath(), "/") + "/" + relativePath;
+        return path.substring(rootPath.length() - 1);
+      }
+
+      @Override
+      protected boolean isUrlEncoded() {
+        return rootPath != null;
       }
 
       @Override
@@ -163,10 +195,21 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
     }.getAllReferences());
   }
 
+  /**
+   * Returns the offset of the path from the file system root in an absolute URL.
+   * For example, the path of {@code file:///C:/schema.json} and of {@code file:///schema.json} is {@code /schema.json}.
+   */
+  private static int urlPathStart(@NotNull String url, @NotNull String protocol) {
+    int start = protocol.length() + URLUtil.SCHEME_SEPARATOR.length();
+    int driveStart = url.startsWith("/", start) ? start + 1 : start;
+    return OSAgnosticPathUtil.startsWithWindowsDrive(url.substring(driveStart)) ? driveStart + 2 : start;
+  }
+
   static @Nullable PsiElement resolveForPath(PsiElement element, String text, boolean alwaysRoot) {
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(text);
     VirtualFile schemaFile = CompletionUtil.getOriginalOrSelf(element.getContainingFile()).getVirtualFile();
+    if (schemaFile == null) return null;
     if (splitter.isAbsolute()) {
       assert splitter.getSchemaId() != null;
       schemaFile = service.findSchemaFileByReference(splitter.getSchemaId(), schemaFile);

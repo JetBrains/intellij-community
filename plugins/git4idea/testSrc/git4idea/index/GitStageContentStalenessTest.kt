@@ -1,13 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vcs.Executor
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.vcs.test.refresh
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.index.vfs.GitIndexFileSystemRefresher
@@ -34,6 +37,9 @@ class GitStageContentStalenessTest {
   private val fixture = gitSingleRepoContextFixture()
   private val context: GitSingleRepoContext get() = fixture.get()
   private val refresher get() = context.project.service<GitIndexFileSystemRefresher>()
+
+  @TestDisposable
+  private lateinit var disposable: Disposable
 
   @Test
   fun `test staged document reloads when the index changes`(): Unit = with(context) {
@@ -65,9 +71,13 @@ class GitStageContentStalenessTest {
     Executor.overwrite("file.txt", "updated")
     git("add .")
 
+    // The content change on an unsaved document raises a memory-disk conflict. Without this, the test dialog throws.
+    FileDocumentManager.getInstance().overrideConflictResolution(FileDocumentManager.ConflictResolution.KEEP_MEMORY_CHANGES, disposable)
+
     refresher.refresh { it.filePath == filePath }
     // The metadata advances even when the reload is skipped, so this signals the refresh has been applied.
     waitForRefresh { indexFile.data?.hash.let { it != null && it != originalHash } }
+    invokeAndWaitIfNeeded { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
 
     assertThat(runReadActionBlocking { document.text }).isEqualTo("mine")
   }

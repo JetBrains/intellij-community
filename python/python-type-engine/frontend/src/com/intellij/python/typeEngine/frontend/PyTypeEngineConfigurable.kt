@@ -45,6 +45,13 @@ class PyTypeEngineConfigurable(
   init {
     val initialOption = previousTypeEngine
     selectedTypeEngine.set(initialOption)
+    publishOwnServerEngines()
+  }
+
+  /** Tells the External Tools page which engines run no tool, see [PyToolTypeEnginePreview.ownServerPackages]. */
+  private fun publishOwnServerEngines() {
+    val ownServer = PyTypeEngineFrontendState.getInstance(project).get().ownServer
+    PyToolTypeEnginePreview.getInstance(project).ownServerPackages.set(ownServer.mapTo(HashSet()) { it.packageName })
   }
 
   override fun getId(): String = ID
@@ -69,7 +76,8 @@ class PyTypeEngineConfigurable(
    * A user picked [newEngine] in the segmented button. Publish it to the shared bridge.
    *
    * When the user switches away from a tool-backed engine whose tool flag is on, offer to turn that tool off
-   * too. The tool may be used for other purposes. The choice is staged in [PyToolTypeEnginePreview.pendingDisable]
+   * too. The tool may be used for other purposes. An engine with a server of its own runs no tool, so it gets
+   * no offer. The choice is staged in [PyToolTypeEnginePreview.pendingDisable]
    * and committed at Apply, so it works whether or not the External Tools page is open.
    */
   private fun onEngineSelectedByUser(newEngine: PyTypeEngineId) {
@@ -83,6 +91,7 @@ class PyTypeEngineConfigurable(
     // Prompt only when the user leaves the persisted engine and turned its tool on. A tool that runs only as
     // the engine stops with the engine.
     if (oldType == PyTypeEngineId.PYCHARM || oldType == newEngine || oldType != previousTypeEngine) return
+    if (oldType.packageName in preview.ownServerPackages.get()) return
     if (!preview.isToolEnabled(oldType.packageName)) return
     val turnOff = MessageDialogBuilder.yesNo(
       TypeEngineFrontendBundle.message("type.engine.disable.tool.title"),
@@ -136,6 +145,7 @@ class PyTypeEngineConfigurable(
     }
 
     onReset {
+      publishOwnServerEngines()
       // Seed the bridge from the persisted engine only when nothing is staged yet, so a staged change
       // made on the External Tools page (deselecting the engine) survives when this page opens.
       if (stagedEngine.get() == null) {

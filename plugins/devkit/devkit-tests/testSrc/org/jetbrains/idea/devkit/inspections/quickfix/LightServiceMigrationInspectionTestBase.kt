@@ -5,6 +5,11 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.LightServiceMigrationCodeInspection
 import org.jetbrains.idea.devkit.inspections.LightServiceMigrationXMLInspection
 
+/**
+ * Use [lightServiceMigrationFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use lightServiceMigrationFixture in a JUnit 5 test")
 abstract class LightServiceMigrationInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   protected val convertToLightServiceAppLevel: String = DevKitBundle.message("inspection.light.service.migration.app.level.fix")

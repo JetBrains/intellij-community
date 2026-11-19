@@ -2,16 +2,22 @@
 package org.intellij.plugins.markdown.editor.tables.inspections
 
 import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.withTableStyle
 import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
-class MarkdownIncorrectTableFormattingInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class MarkdownIncorrectTableFormattingInspectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   private val description
     get() = MarkdownBundle.message("markdown.incorrect.table.formatting.inspection.description")
 
@@ -75,7 +81,7 @@ class MarkdownIncorrectTableFormattingInspectionTest: LightPlatformCodeInsightFi
 
   @Test
   fun `no inspection on correctly formatted compact table`() {
-    withTableStyle(project, TableStyle.COMPACT) {
+    withTableStyle(myFixture.project, TableStyle.COMPACT) {
       doTest(
         """
         | Character | Meaning |
@@ -89,7 +95,7 @@ class MarkdownIncorrectTableFormattingInspectionTest: LightPlatformCodeInsightFi
 
   @Test
   fun `no inspection on correctly formatted tight table`() {
-    withTableStyle(project, TableStyle.TIGHT) {
+    withTableStyle(myFixture.project, TableStyle.TIGHT) {
       doTest(
         """
         |Character|Meaning|
@@ -103,7 +109,7 @@ class MarkdownIncorrectTableFormattingInspectionTest: LightPlatformCodeInsightFi
 
   @Test
   fun `no inspection on correctly formatted tight table with spaces in content`() {
-    withTableStyle(project, TableStyle.TIGHT) {
+    withTableStyle(myFixture.project, TableStyle.TIGHT) {
       doTest(
         """
         |hello world|other value|

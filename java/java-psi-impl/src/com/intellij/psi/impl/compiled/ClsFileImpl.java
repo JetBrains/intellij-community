@@ -3,6 +3,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
+import com.intellij.codeInsight.multiverse.LightFileCodeInsightContexts;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.PluginManager;
@@ -339,7 +340,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
           if (isSharedSourceSupportEnabled(getProject())) {
             CodeInsightContextManagerImpl contextManager = CodeInsightContextManagerImpl.getInstanceImpl(getProject());
             CodeInsightContext context = contextManager.getCodeInsightContext(getViewProvider());
-            contextManager.setCodeInsightContext(mirror.getViewProvider(), context);
+            LightFileCodeInsightContexts.setCodeInsightContextOfLightFile(mirror, context);
           }
 
           mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);

@@ -16,10 +16,12 @@ import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.RenderingHints
+import java.awt.Shape
 import java.awt.geom.Path2D
 
 private val RENDERERS_BY_ATTRIBUTE_ID = MarkdownBackgroundRenderer.entries.associateBy { "IJ." + it.highlighterKey.externalName }
@@ -45,7 +47,7 @@ enum class MarkdownBackgroundRenderer(
   override fun getOrder(): CustomHighlighterOrder = CustomHighlighterOrder.BEFORE_BACKGROUND
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics) {
-    val color = colorKeys.firstNotNullOfOrNull { editor.colorsScheme.getAttributes(it)?.backgroundColor } ?: return
+    val color = getColor(editor) ?: return
     if (isHiddenByFold(editor, highlighter)) return
     graphics.color = color
     val startX = editor.offsetToXY(highlighter.startOffset).x
@@ -68,6 +70,19 @@ enum class MarkdownBackgroundRenderer(
       }
     }
   }
+
+  internal fun getColor(editor: Editor): Color? = colorKeys.firstNotNullOfOrNull { editor.colorsScheme.getAttributes(it)?.backgroundColor }
+}
+
+@ApiStatus.Internal
+fun paintBackground(editor: Editor, graphics: Graphics, left: Int, top: Int, bottom: Int): Shape? {
+  val shape = rowsShape(editor, listOf(Row(left, top, bottom)), getRightVisibleEdge(editor), roundLeft = true) ?: return null
+  val color = MarkdownBackgroundRenderer.CODE_FENCE.getColor(editor)
+  if (color != null) {
+    graphics.color = color
+    fill(graphics, shape)
+  }
+  return shape
 }
 
 private fun paintCodeFence(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics, startX: Int) {
@@ -154,7 +169,12 @@ private const val LANGUAGE_GAP = 8
  * A narrow shape gets a smaller radius, so the corners do not cross.
  */
 private fun fillRows(editor: Editor, graphics: Graphics, rows: List<Row>, right: Int, roundLeft: Boolean) {
-  if (rows.none { it.left < right }) return
+  val shape = rowsShape(editor, rows, right, roundLeft) ?: return
+  fill(graphics, shape)
+}
+
+private fun rowsShape(editor: Editor, rows: List<Row>, right: Int, roundLeft: Boolean): Path2D? {
+  if (rows.none { it.left < right }) return null
   fun left(row: Row): Double = minOf(row.left, right).toDouble()
   val first = rows.first()
   val last = rows.last()
@@ -163,7 +183,7 @@ private fun fillRows(editor: Editor, graphics: Graphics, rows: List<Row>, right:
   val bottom = last.bottom.toDouble()
   val radius = minOf(editor.lineHeight / 6.0, (end - left(first)) / 2.0, (end - left(last)) / 2.0, (bottom - top) / 2.0)
   val leftRadius = if (roundLeft) radius else 0.0
-  val path = Path2D.Double().apply {
+  return Path2D.Double().apply {
     moveTo(left(first), top + leftRadius)
     quadTo(left(first), top, left(first) + leftRadius, top)
     lineTo(end - radius, top)
@@ -180,6 +200,9 @@ private fun fillRows(editor: Editor, graphics: Graphics, rows: List<Row>, right:
     }
     closePath()
   }
+}
+
+private fun fill(graphics: Graphics, shape: Shape) {
   val graphics2D = graphics as Graphics2D
-  PaintUtil.paintWithAA(graphics2D, RenderingHints.VALUE_ANTIALIAS_ON) { graphics2D.fill(path) }
+  PaintUtil.paintWithAA(graphics2D, RenderingHints.VALUE_ANTIALIAS_ON) { graphics2D.fill(shape) }
 }

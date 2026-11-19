@@ -1,11 +1,13 @@
 package com.intellij.terminal.tests.reworked.frontend.completion
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionFixture.Companion.doWithCompletionFixture
 import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
@@ -17,6 +19,8 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.nio.file.Path
+import kotlin.io.path.createTempDirectory
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(JUnit4::class)
@@ -327,7 +331,7 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
       val fixtureScope = childScope("TerminalCompletionFixture")
       val startupOptions = TerminalStartupOptionsImpl(
         shellCommand = if (isPowerShell) listOf("powershell.exe") else listOf("/bin/zsh", "--login", "-i"),
-        workingDirectory = "fakeDir",
+        workingDirectory = createTempDir().toString(),
         envVariables = emptyMap(),
         processType = TerminalProcessType.SHELL,
         pid = null,
@@ -344,6 +348,12 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
 
         block(fixture)
       }
+    }
+  }
+
+  private fun createTempDir(): Path {
+    return createTempDirectory().also {
+      Disposer.register(testRootDisposable) { it.deleteRecursively() }
     }
   }
 }

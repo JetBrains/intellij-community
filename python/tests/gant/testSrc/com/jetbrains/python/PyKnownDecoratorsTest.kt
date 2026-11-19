@@ -4,9 +4,12 @@ package com.jetbrains.python
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.codeInsight.decorator.PyDecoratedFunctionTypeProvider
@@ -184,6 +187,37 @@ class PyKnownDecoratorsTest : PyCodeInsightTestCase() {
     expr = g()
     #└ TYPE str
     """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-83189"])
+  fun `known decorators follow a new import in the file`() {
+    configure("""
+      @fakefinal
+      def f(): ...
+      """)
+    runReadActionBlocking {
+      val candidates = PyKnownDecoratorUtil.knownDecoratorsOf(decoratorOfF(), stubOnlyContext())
+      assertTrue(candidates.contains(FAKE_FINAL_ABSTRACT), "Without an import, the short name matches both candidates")
+      assertTrue(candidates.contains(FAKE_FINAL_PLAIN))
+    }
+
+    runInEdtAndWait {
+      val document = myFixture.editor.document
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        document.insertString(0, "from faketyping.b import fakefinal\n\n")
+        PsiDocumentManager.getInstance(myFixture.project).commitDocument(document)
+      }
+    }
+
+    runReadActionBlocking {
+      val candidates = PyKnownDecoratorUtil.knownDecoratorsOf(decoratorOfF(), stubOnlyContext())
+      assertFalse(candidates.contains(FAKE_FINAL_ABSTRACT), "The import selects one candidate, so the cache must not keep the old answer")
+      assertTrue(candidates.contains(FAKE_FINAL_PLAIN))
+    }
+  }
+
+  private fun decoratorOfF(): PyDecorator =
+    (myFixture.file as PyFile).findTopLevelFunction("f")!!.decoratorList!!.decorators.first()
 
   private fun configure(text: String): PyFile {
     myFixture.configureByText("a.py", text.trimIndent())

@@ -30,8 +30,8 @@ import org.junit.Assert;
 import java.nio.file.Path;
 
 import static com.intellij.python.venv.VenvKt.createVenvAdditionalData;
-import static com.jetbrains.python.sdk.ModuleExKt.removeTestSdk;
-import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdkForTests;
+import static com.intellij.python.sdk.backend.PythonInterpreterTestSupportKt.removeTestSdk;
+import static com.intellij.python.sdk.backend.PythonInterpreterTestSupportKt.setPythonSdkForTests;
 
 
 /**

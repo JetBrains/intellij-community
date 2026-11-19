@@ -1,18 +1,36 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.backspace
+import org.intellij.plugins.markdown.editor.delete
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
+@TestApplication
 @Suppress("MarkdownIncorrectTableFormatting")
-class MarkdownTableColumnShrinkWithFullWidthTest: LightPlatformCodeInsightTestCase() {
-  @Before
+class MarkdownTableColumnShrinkWithFullWidthTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
+  @BeforeEach
   fun enableTableReformatting() {
-    setupTableReformatting(testRootDisposable)
+    setupTableReformatting(disposable)
+    setupTableCellsAlignedVisually(false, disposable)
   }
 
   @Test
@@ -63,7 +81,7 @@ class MarkdownTableColumnShrinkWithFullWidthTest: LightPlatformCodeInsightTestCa
       |--------|-------|
       | <caret>放账号 | 3 . * |
       """.trimIndent(),
-      action = { delete() }
+      action = { myFixture.delete() }
     )
   }
 
@@ -81,15 +99,17 @@ class MarkdownTableColumnShrinkWithFullWidthTest: LightPlatformCodeInsightTestCa
       |-----|-----|-------------------------|
       | dwd | dwd | dhwhhjhjhjhj<caret>jhjhjhb bjb |
       """.trimIndent(),
-      action = { delete() }
+      action = { myFixture.delete() }
     )
   }
 
-  private fun doTest(content: String, expected: String, count: Int = 1, action: () -> Unit = { backspace() }) {
-    configureFromFileText("some.md", content)
-    repeat(count) {
-      action()
+  private fun doTest(content: String, expected: String, count: Int = 1, action: () -> Unit = { myFixture.backspace() }): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      repeat(count) {
+        action()
+      }
+      myFixture.checkResult(expected)
     }
-    checkResultByText(expected)
   }
 }

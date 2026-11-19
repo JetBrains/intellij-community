@@ -1,12 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -75,6 +80,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
+import java.nio.file.Path
 import java.util.EnumSet
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
@@ -137,6 +143,29 @@ class DumbServiceImplTest {
   @After
   fun tearDown() {
     Disposer.dispose(testDisposable)
+  }
+
+  @Test
+  fun `test pluginsUnloaded disposes the dumb tasks of an unloading class loader`() {
+    UnloadingPluginDumbTaskEvents.reset()
+    val taskClass = TestPluginAwareClassLoader(PluginAwareClassLoader.UNLOAD_IN_PROGRESS).loadUnloadingPluginDumbTaskClass()
+    val runningTask = taskClass.getDeclaredConstructor().newInstance() as DumbModeTask
+    val queuedTask = taskClass.getDeclaredConstructor().newInstance() as DumbModeTask
+
+    runInEdtAndWait {
+      dumbService.queueTask(runningTask)
+      dumbService.queueTask(queuedTask)
+    }
+    UnloadingPluginDumbTaskEvents.started.awaitOrThrow(10, "The first task did not start")
+
+    // The unload fires the event on the application bus after it marks the class loader. The project bus delivers it to the dumb service.
+    runInEdtAndWait { project.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginsUnloaded() }
+
+    UnloadingPluginDumbTaskEvents.disposed.awaitOrThrow(10, "The tasks of the unloading class loader were not disposed")
+    assertTrue(Disposer.isDisposed(runningTask))
+    assertTrue(Disposer.isDisposed(queuedTask))
+    assertEquals("The queued task of the unloading class loader ran", 1, UnloadingPluginDumbTaskEvents.performed.get())
+    waitForSmartModeFiveSecondsOrThrow()
   }
 
   @Test
@@ -1106,5 +1135,72 @@ class DumbServiceImplTest {
     assertTrue("The dumb service should rethrow the listener failure on the EDT",
                uncaught.any { it.isCausedByListenerFailure() })
     return failures
+  }
+}
+
+/**
+ * The task class is loaded by [TestPluginAwareClassLoader], so it reports into this object, which the parent loader holds.
+ * The object is internal, because a private one is package-private in bytecode, and the task class is in another runtime package.
+ */
+internal object UnloadingPluginDumbTaskEvents {
+  @Volatile
+  var started = CountDownLatch(1)
+  @Volatile
+  var disposed = CountDownLatch(2)
+  val performed = AtomicInteger()
+
+  fun reset() {
+    started = CountDownLatch(1)
+    disposed = CountDownLatch(2)
+    performed.set(0)
+  }
+}
+
+internal class UnloadingPluginDumbTask : DumbModeTask() {
+  override fun performInDumbMode(indicator: ProgressIndicator) {
+    UnloadingPluginDumbTaskEvents.performed.incrementAndGet()
+    UnloadingPluginDumbTaskEvents.started.countDown()
+    while (!indicator.isCanceled) {
+      Thread.sleep(50)
+    }
+  }
+
+  override fun dispose() {
+    UnloadingPluginDumbTaskEvents.disposed.countDown()
+  }
+}
+
+private class TestPluginAwareClassLoader(private val classLoaderState: Int) :
+  ClassLoader(DumbServiceImplTest::class.java.classLoader), PluginAwareClassLoader {
+
+  private val pluginId = PluginId.getId("test.dumb.service.plugin")
+  private val descriptor = DefaultPluginDescriptor(pluginId, this)
+
+  @Suppress("RAW_SCOPE_CREATION")
+  private val coroutineScope = CoroutineScope(Job())
+
+  fun loadUnloadingPluginDumbTaskClass(): Class<*> {
+    return loadClassInsideSelf(UnloadingPluginDumbTask::class.java.name) ?: error("Cannot load ${UnloadingPluginDumbTask::class.java.name}")
+  }
+
+  override fun getPluginDescriptor(): PluginDescriptor = descriptor
+  override fun getPluginId(): PluginId = pluginId
+  override fun getModuleId(): String? = null
+  override fun getEdtTime(): Long = 0
+  override fun getBackgroundTime(): Long = 0
+  override fun getLoadedClassCount(): Long = 1
+  override fun getFiles(): Collection<Path> = emptyList()
+  override fun getState(): Int = classLoaderState
+  override fun getPackagePrefix(): String? = null
+  override fun getPluginCoroutineScope(): CoroutineScope = coroutineScope
+  override fun tryLoadingClass(name: String, forceLoadFromSubPluginClassloader: Boolean): Class<*>? = loadClassInsideSelf(name)
+
+  override fun loadClassInsideSelf(name: String): Class<*>? {
+    findLoadedClass(name)?.let { return it }
+    if (name != UnloadingPluginDumbTask::class.java.name) return null
+
+    val resourceName = name.replace('.', '/') + ".class"
+    val bytes = requireNotNull(parent.getResourceAsStream(resourceName)) { "Cannot find $resourceName" }.use { it.readBytes() }
+    return defineClass(name, bytes, 0, bytes.size)
   }
 }

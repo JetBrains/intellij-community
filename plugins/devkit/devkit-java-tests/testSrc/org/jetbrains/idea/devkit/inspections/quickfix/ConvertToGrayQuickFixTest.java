@@ -2,39 +2,45 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.quickfix.ConvertToGrayFixture.CONVERT_TO_GRAY_FIX_NAME_PATTERN;
+import static org.jetbrains.idea.devkit.inspections.quickfix.ConvertToGrayFixtureKt.convertToGrayFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/useGrayFix")
-public class ConvertToGrayQuickFixTest extends ConvertToGrayQuickFixTestBase {
+@TestApplication
+public class ConvertToGrayQuickFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<ConvertToGrayFixture> gray =
+    convertToGrayFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useGrayFix");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useGrayFix";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testUseGrayConstantFixInConstant() {
-    doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(125));
+    gray.get().doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(125));
   }
 
+  @Test
   public void testUseGrayConstantFixInLocalVariable() {
-    doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(25));
+    gray.get().doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(25));
   }
 
+  @Test
   public void testUseGrayConstantFixInMethodParam() {
-    doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(125));
+    gray.get().doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(125));
   }
 
+  @Test
   public void testUseGrayConstantFixInJBColorParam() {
-    doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(25));
+    gray.get().doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(25));
   }
 
+  @Test
   public void testUseGrayConstantFixWhenNumberConstantsReferenced() {
-    doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(125));
+    gray.get().doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(125));
   }
 }

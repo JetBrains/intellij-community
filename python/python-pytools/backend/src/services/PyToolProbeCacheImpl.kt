@@ -12,11 +12,10 @@ import com.intellij.python.pytools.backend.InstalledInfo
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolProbeCache
 import com.intellij.python.pytools.backend.Version
+import com.intellij.python.pytools.backend.getOrLoad
 import com.intellij.python.pytools.backend.validateCustomPath
 import com.jetbrains.python.getOrNull
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.future.future
 import java.nio.file.Path
 import java.util.Optional
 import java.util.concurrent.TimeUnit
@@ -44,14 +43,13 @@ internal class PyToolProbeCacheImpl(private val coroutineScope: CoroutineScope) 
   override suspend fun listing(eel: EelApi): Map<PyTool, InstalledInfo> {
     // No resolvable machine (shouldn't normally happen): list without caching.
     val machine = eel.descriptor.getResolvedEelMachine() ?: return list(eel)
-    return listingCache.get(machine.internalName) { _, _ -> coroutineScope.future { list(eel) } }.await()
+    return listingCache.getOrLoad(machine.internalName, coroutineScope) { list(eel) }
   }
 
   override suspend fun version(eelDescriptor: EelDescriptor, tool: PyTool, path: Path): Version? {
     val machine = eelDescriptor.getResolvedEelMachine() ?: return probe(tool, path)
     val key = VersionKey(machine.internalName, tool.fusId, path.toString())
-    return versionCache.get(key) { _, _ -> coroutineScope.future { Optional.ofNullable(probe(tool, path)) } }
-      .await().orElse(null)
+    return versionCache.getOrLoad(key, coroutineScope) { Optional.ofNullable(probe(tool, path)) }.orElse(null)
   }
 
   override fun invalidate(eelDescriptor: EelDescriptor) {

@@ -16,6 +16,7 @@ import com.intellij.modcommand.ModShowConflicts
 import com.intellij.modcommand.Presentation
 import com.intellij.model.SymbolPointer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
@@ -67,17 +68,37 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.ModPlanTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestModeFlags
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import com.intellij.usageView.UsageInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.util.concurrent.Callable
 
 /**
  * The analysis runs on a background thread, as the MCP tool runs it: a question to the user or a modal progress fails the test.
  */
-class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class HeadlessModPlanJavaSafeDeleteTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  fun testUnusedMethodIsDeleted() {
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun testUnusedMethodIsDeleted(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void unused() {}
@@ -85,13 +106,16 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Worker", "unused"))
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "unused"))
 
-    assertEmpty(findClass("Worker").findMethodsByName("unused", false))
-    assertSize(1, findClass("Worker").findMethodsByName("kept", false))
+      assertThat(findClass("Worker").findMethodsByName("unused", false)).isEmpty()
+      assertThat(findClass("Worker").findMethodsByName("kept", false)).hasSize(1)
+    }
   }
 
-  fun testUsedMethodIsRefusedWithConflict() {
+  @Test
+  fun testUsedMethodIsRefusedWithConflict(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void used() {}
@@ -99,13 +123,16 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    val readyPlan = ready(method("Worker", "used"))
+    withContext(Dispatchers.EDT) {
+      val readyPlan = ready(method("Worker", "used"))
 
-    assertTrue("a usage must be a conflict", readyPlan.conflicts.hasBroken())
-    assertSize(1, findClass("Worker").findMethodsByName("used", false))
+      assertTrue(readyPlan.conflicts.hasBroken(), "a usage must be a conflict")
+      assertThat(findClass("Worker").findMethodsByName("used", false)).hasSize(1)
+    }
   }
 
-  fun testAccessorsAreDeletedWithTheFieldByDefault() {
+  @Test
+  fun testAccessorsAreDeletedWithTheFieldByDefault(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Bean.java", """
       public class Bean {
         private String name;
@@ -114,13 +141,16 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(findClass("Bean").findFieldByName("name", false)!!)
+    withContext(Dispatchers.EDT) {
+      safeDelete(findClass("Bean").findFieldByName("name", false)!!)
 
-    assertEmpty(findClass("Bean").fields)
-    assertEmpty(findClass("Bean").methods)
+      assertThat(findClass("Bean").fields).isEmpty()
+      assertThat(findClass("Bean").methods).isEmpty()
+    }
   }
 
-  fun testAccessorsAreKeptWhenTheOptionSaysSo() {
+  @Test
+  fun testAccessorsAreKeptWhenTheOptionSaysSo(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Bean.java", """
       public class Bean {
         private String name;
@@ -128,32 +158,41 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    val readyPlan = ready(findClass("Bean").findFieldByName("name", false)!!, ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS, false))
+    withContext(Dispatchers.EDT) {
+      val readyPlan = ready(findClass("Bean").findFieldByName("name", false)!!, ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS, false))
 
-    assertTrue("the getter reads the field, so the deletion must be refused", readyPlan.conflicts.hasBroken())
+      assertTrue(readyPlan.conflicts.hasBroken(), "the getter reads the field, so the deletion must be refused")
+    }
   }
 
-  fun testOverridersAreDeletedByDefault() {
+  @Test
+  fun testOverridersAreDeletedByDefault(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
 
-    safeDelete(method("Base", "run"))
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Base", "run"))
 
-    assertEmpty(findClass("Base").findMethodsByName("run", false))
-    assertEmpty(findClass("Impl").findMethodsByName("run", false))
+      assertThat(findClass("Base").findMethodsByName("run", false)).isEmpty()
+      assertThat(findClass("Impl").findMethodsByName("run", false)).isEmpty()
+    }
   }
 
-  fun testOverridersAreKeptWhenTheOptionSaysSo() {
+  @Test
+  fun testOverridersAreKeptWhenTheOptionSaysSo(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
 
-    safeDelete(method("Base", "run"), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, false))
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Base", "run"), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, false))
 
-    assertEmpty(findClass("Base").findMethodsByName("run", false))
-    val keptMethod = method("Impl", "run")
-    assertNull(keptMethod.modifierList.findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE))
-    assertTrue("nothing outside Impl calls it", keptMethod.hasModifierProperty(PsiModifier.PRIVATE))
+      assertThat(findClass("Base").findMethodsByName("run", false)).isEmpty()
+      val keptMethod = method("Impl", "run")
+      assertNull(keptMethod.modifierList.findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE))
+      assertTrue(keptMethod.hasModifierProperty(PsiModifier.PRIVATE), "nothing outside Impl calls it")
+    }
   }
 
-  fun testUnusedCalleesAreKeptByDefault() {
+  @Test
+  fun testUnusedCalleesAreKeptByDefault(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void caller() { helper(); }
@@ -161,12 +200,15 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Worker", "caller"))
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "caller"))
 
-    assertSize(1, findClass("Worker").findMethodsByName("helper", false))
+      assertThat(findClass("Worker").findMethodsByName("helper", false)).hasSize(1)
+    }
   }
 
-  fun testUnusedCalleesAreDeletedWhenTheOptionSaysSo() {
+  @Test
+  fun testUnusedCalleesAreDeletedWhenTheOptionSaysSo(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void caller() { helper(); }
@@ -174,12 +216,15 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Worker", "caller"), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true))
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "caller"), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true))
 
-    assertEmpty(findClass("Worker").findMethodsByName("helper", false))
+      assertThat(findClass("Worker").findMethodsByName("helper", false)).isEmpty()
+    }
   }
 
-  fun testFieldWithAccessorsAsksToDeleteThem() {
+  @Test
+  fun testFieldWithAccessorsAsksToDeleteThem(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Bean.java", """
       public class Bean {
         private String name;
@@ -187,20 +232,26 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    val askedQuestions = questionsOf(findClass("Bean").findFieldByName("name", false)!!).filterIsInstance<ModPlanQuestion.Custom>()
+    withContext(Dispatchers.EDT) {
+      val askedQuestions = questionsOf(findClass("Bean").findFieldByName("name", false)!!).filterIsInstance<ModPlanQuestion.Custom>()
 
-    assertSize(1, askedQuestions.filter { ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS in it.options() })
+      assertThat(askedQuestions.filter { ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS in it.options() }).hasSize(1)
+    }
   }
 
-  fun testMethodWithOverridersAsksWhichToDelete() {
+  @Test
+  fun testMethodWithOverridersAsksWhichToDelete(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
 
-    val customQuestion = questionsOf(method("Base", "run")).filterIsInstance<ModPlanQuestion.Custom>().single()
+    withContext(Dispatchers.EDT) {
+      val customQuestion = questionsOf(method("Base", "run")).filterIsInstance<ModPlanQuestion.Custom>().single()
 
-    assertEquals(listOf(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE), customQuestion.options())
+      assertEquals(listOf(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE), customQuestion.options())
+    }
   }
 
-  fun testMethodWithUnusedCalleesAsksWhichToDelete() {
+  @Test
+  fun testMethodWithUnusedCalleesAsksWhichToDelete(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void caller() { helper(); }
@@ -208,25 +259,31 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    val customQuestion = questionsOf(method("Worker", "caller")).filterIsInstance<ModPlanQuestion.Custom>().single()
+    withContext(Dispatchers.EDT) {
+      val customQuestion = questionsOf(method("Worker", "caller")).filterIsInstance<ModPlanQuestion.Custom>().single()
 
-    assertEquals(listOf(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE), customQuestion.options())
+      assertEquals(listOf(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE), customQuestion.options())
+    }
   }
 
-  fun testOnlyTheChosenOverriderIsDeleted() {
+  @Test
+  fun testOnlyTheChosenOverriderIsDeleted(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Base.java", "public class Base { public void run() {} }")
     myFixture.addFileToProject("First.java", "public class First extends Base { public void run() {} }")
     myFixture.addFileToProject("Second.java", "public class Second extends Base { public void run() {} }")
-    val chosenName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("First", "run")) }!!
+    withContext(Dispatchers.EDT) {
+      val chosenName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("First", "run")) }!!
 
-    safeDelete(method("Base", "run"), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, chosenName))
+      safeDelete(method("Base", "run"), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, chosenName))
 
-    assertEmpty(findClass("Base").findMethodsByName("run", false))
-    assertEmpty(findClass("First").findMethodsByName("run", false))
-    assertSize(1, findClass("Second").findMethodsByName("run", false))
+      assertThat(findClass("Base").findMethodsByName("run", false)).isEmpty()
+      assertThat(findClass("First").findMethodsByName("run", false)).isEmpty()
+      assertThat(findClass("Second").findMethodsByName("run", false)).hasSize(1)
+    }
   }
 
-  fun testOnlyTheChosenCalleeIsDeleted() {
+  @Test
+  fun testOnlyTheChosenCalleeIsDeleted(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void caller() { first(); second(); }
@@ -234,35 +291,43 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
         private void second() {}
       }
       """.trimIndent())
-    val chosenName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("Worker", "first")) }!!
-    val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true).with(ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE, chosenName)
+    withContext(Dispatchers.EDT) {
+      val chosenName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("Worker", "first")) }!!
+      val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true).with(ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE, chosenName)
 
-    safeDelete(method("Worker", "caller"), optionValues)
+      safeDelete(method("Worker", "caller"), optionValues)
 
-    assertEmpty(findClass("Worker").findMethodsByName("first", false))
-    assertSize(1, findClass("Worker").findMethodsByName("second", false))
+      assertThat(findClass("Worker").findMethodsByName("first", false)).isEmpty()
+      assertThat(findClass("Worker").findMethodsByName("second", false)).hasSize(1)
+    }
   }
 
-  fun testNestedCalleeIsDeletedWhenTheChooserChecksIt() {
+  @Test
+  fun testNestedCalleeIsDeletedWhenTheChooserChecksIt(): Unit = timeoutRunBlocking {
     addCallerWithTwoLevelsOfCallees()
-    val chosenNames = runReadActionBlocking { listOf(method("Worker", "helper1"), method("Worker", "helper2")).joinToString("\n") { PsiFormatUtil.getExternalName(it)!! } }
-    val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true).with(ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE, chosenNames)
+    withContext(Dispatchers.EDT) {
+      val chosenNames = runReadActionBlocking { listOf(method("Worker", "helper1"), method("Worker", "helper2")).joinToString("\n") { PsiFormatUtil.getExternalName(it)!! } }
+      val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true).with(ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE, chosenNames)
 
-    safeDelete(method("Worker", "caller"), optionValues)
+      safeDelete(method("Worker", "caller"), optionValues)
 
-    assertEmpty(findClass("Worker").findMethodsByName("helper1", false))
-    assertEmpty(findClass("Worker").findMethodsByName("helper2", false))
+      assertThat(findClass("Worker").findMethodsByName("helper1", false)).isEmpty()
+      assertThat(findClass("Worker").findMethodsByName("helper2", false)).isEmpty()
+    }
   }
 
-  fun testNestedCalleeOfAnUncheckedCalleeIsKept() {
+  @Test
+  fun testNestedCalleeOfAnUncheckedCalleeIsKept(): Unit = timeoutRunBlocking {
     addCallerWithTwoLevelsOfCallees()
-    val chosenName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("Worker", "helper2")) }!!
-    val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true).with(ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE, chosenName)
+    withContext(Dispatchers.EDT) {
+      val chosenName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("Worker", "helper2")) }!!
+      val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true).with(ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE, chosenName)
 
-    safeDelete(method("Worker", "caller"), optionValues)
+      safeDelete(method("Worker", "caller"), optionValues)
 
-    assertSize(1, findClass("Worker").findMethodsByName("helper1", false))
-    assertSize(1, findClass("Worker").findMethodsByName("helper2", false))
+      assertThat(findClass("Worker").findMethodsByName("helper1", false)).hasSize(1)
+      assertThat(findClass("Worker").findMethodsByName("helper2", false)).hasSize(1)
+    }
   }
 
   private fun addCallerWithTwoLevelsOfCallees() {
@@ -276,7 +341,8 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
   }
 
   /** As the legacy optimize imports helper, the imports that the deletion leaves unused go too. */
-  fun testImportOfTheDeletedParameterTypeIsRemoved() {
+  @Test
+  fun testImportOfTheDeletedParameterTypeIsRemoved(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("p/Bar.java", "package p; public class Bar {}")
     val worker = myFixture.addFileToProject("Worker.java", """
       import p.Bar;
@@ -286,99 +352,118 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Worker", "run").parameterList.parameters[0])
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "run").parameterList.parameters[0])
 
-    assertFalse(worker.text, worker.text.contains("import p.Bar;"))
+      assertFalse(worker.text.contains("import p.Bar;"), worker.text)
+    }
   }
 
-  fun testCallersKeepTheParameterThatTheyPassOnByDefault() {
+  @Test
+  fun testCallersKeepTheParameterThatTheyPassOnByDefault(): Unit = timeoutRunBlocking {
     addCallersThatPassOnTheParameter()
 
-    safeDelete(method("Worker", "bar").parameterList.parameters[0])
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "bar").parameterList.parameters[0])
 
-    assertEquals(0, method("Worker", "bar").parameterList.parametersCount)
-    assertEquals(1, method("Worker", "foo").parameterList.parametersCount)
-    assertEquals(1, method("Worker", "baz").parameterList.parametersCount)
+      assertEquals(0, method("Worker", "bar").parameterList.parametersCount)
+      assertEquals(1, method("Worker", "foo").parameterList.parametersCount)
+      assertEquals(1, method("Worker", "baz").parameterList.parametersCount)
+    }
   }
 
   /** As the legacy chooser, the parameter of a caller goes with its arguments in the calls of the caller. */
-  fun testParameterIsDeletedInTheCallersWhenTheOptionSaysSo() {
+  @Test
+  fun testParameterIsDeletedInTheCallersWhenTheOptionSaysSo(): Unit = timeoutRunBlocking {
     addCallersThatPassOnTheParameter()
 
-    safeDelete(method("Worker", "bar").parameterList.parameters[0],
-               ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true))
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "bar").parameterList.parameters[0],
+                 ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true))
 
-    assertEquals(0, method("Worker", "foo").parameterList.parametersCount)
-    assertEquals(0, method("Worker", "baz").parameterList.parametersCount)
-    val text = findClass("Worker").containingFile.text
-    assertTrue(text, text.contains("void main() { foo(); baz(); }"))
+      assertEquals(0, method("Worker", "foo").parameterList.parametersCount)
+      assertEquals(0, method("Worker", "baz").parameterList.parametersCount)
+      val text = findClass("Worker").containingFile.text
+      assertTrue(text.contains("void main() { foo(); baz(); }"), text)
+    }
   }
 
-  fun testOnlyTheChosenCallerLosesTheParameter() {
+  @Test
+  fun testOnlyTheChosenCallerLosesTheParameter(): Unit = timeoutRunBlocking {
     addCallersThatPassOnTheParameter()
-    val chosenName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("Worker", "foo")) }!!
-    val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true)
-      .with(ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN, chosenName)
+    withContext(Dispatchers.EDT) {
+      val chosenName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("Worker", "foo")) }!!
+      val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true)
+        .with(ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN, chosenName)
 
-    safeDelete(method("Worker", "bar").parameterList.parameters[0], optionValues)
+      safeDelete(method("Worker", "bar").parameterList.parameters[0], optionValues)
 
-    assertEquals(0, method("Worker", "foo").parameterList.parametersCount)
-    assertEquals(1, method("Worker", "baz").parameterList.parametersCount)
+      assertEquals(0, method("Worker", "foo").parameterList.parametersCount)
+      assertEquals(1, method("Worker", "baz").parameterList.parametersCount)
+    }
   }
 
-  fun testParameterThatCallersPassOnAsksForTheCallers() {
+  @Test
+  fun testParameterThatCallersPassOnAsksForTheCallers(): Unit = timeoutRunBlocking {
     addCallersThatPassOnTheParameter()
 
-    val customQuestions = questionsOf(method("Worker", "bar").parameterList.parameters[0]).filterIsInstance<ModPlanQuestion.Custom>()
+    withContext(Dispatchers.EDT) {
+      val customQuestions = questionsOf(method("Worker", "bar").parameterList.parameters[0]).filterIsInstance<ModPlanQuestion.Custom>()
 
-    assertEquals(listOf(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN),
-                 customQuestions.single().options())
+      assertEquals(listOf(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN),
+                   customQuestions.single().options())
+    }
   }
 
   /** The fix of a parameter keeps the parameter in the callers that pass it on in batch execution, as the chooser starts unchecked. */
-  fun testFixOfAParameterKeepsItInTheCallersInBatchExecution() {
+  @Test
+  fun testFixOfAParameterKeepsItInTheCallersInBatchExecution(): Unit = timeoutRunBlocking {
     addCallersThatPassOnTheParameter()
-    TestModeFlags.set(ModPlanCommandInterpreter.ASKS_IN_TESTS, true, testRootDisposable)
-    val file = findClass("Worker").containingFile
+    TestModeFlags.set(ModPlanCommandInterpreter.ASKS_IN_TESTS, true, myFixture.testRootDisposable)
+    withContext(Dispatchers.EDT) {
+      val file = findClass("Worker").containingFile
 
-    executeInBatch(file, parameterFixCommand(file))
+      executeInBatch(file, parameterFixCommand(file))
 
-    assertEquals(0, method("Worker", "bar").parameterList.parametersCount)
-    assertEquals(1, method("Worker", "foo").parameterList.parametersCount)
-    assertEquals(1, method("Worker", "baz").parameterList.parametersCount)
+      assertEquals(0, method("Worker", "bar").parameterList.parametersCount)
+      assertEquals(1, method("Worker", "foo").parameterList.parametersCount)
+      assertEquals(1, method("Worker", "baz").parameterList.parametersCount)
+    }
   }
 
   /** The fix of a parameter asks about the callers that pass it on, and the answer deletes the parameter in them. */
-  fun testFixOfAParameterAsksAboutTheCallers() {
+  @Test
+  fun testFixOfAParameterAsksAboutTheCallers(): Unit = timeoutRunBlocking {
     addCallersThatPassOnTheParameter()
-    TestModeFlags.set(ModPlanCommandInterpreter.ASKS_IN_TESTS, true, testRootDisposable)
-    val file = findClass("Worker").containingFile
-    val callersCommand = assertInstanceOf(parameterFixCommand(file), ModEditOptions::class.java)
-    val container = callersCommand.containerSupplier().get() as OptionContainer
-    val question = container.optionController.getOption(ModPlanQuestion.Custom.QUESTION_BIND_ID) as ModPlanQuestion.Custom
-    val answers = container.optionController.getOption(ModPlanQuestion.Custom.ANSWERS_BIND_ID) as ModPlanOptionValues
-    val deleteInCallers = answers.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true)
+    TestModeFlags.set(ModPlanCommandInterpreter.ASKS_IN_TESTS, true, myFixture.testRootDisposable)
+    withContext(Dispatchers.EDT) {
+      val file = findClass("Worker").containingFile
+      val callersCommand = assertInstanceOf(ModEditOptions::class.java, parameterFixCommand(file))
+      val container = callersCommand.containerSupplier().get() as OptionContainer
+      val question = container.optionController.getOption(ModPlanQuestion.Custom.QUESTION_BIND_ID) as ModPlanQuestion.Custom
+      val answers = container.optionController.getOption(ModPlanQuestion.Custom.ANSWERS_BIND_ID) as ModPlanOptionValues
+      val deleteInCallers = answers.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true)
 
-    val nextCommand = inBackground { callersCommand.applyOptions(mapOf(ModPlanQuestion.Custom.ANSWERS_BIND_ID to deleteInCallers)) }
-    executeInBatch(file, nextCommand)
+      val nextCommand = inBackground { callersCommand.applyOptions(mapOf(ModPlanQuestion.Custom.ANSWERS_BIND_ID to deleteInCallers)) }
+      executeInBatch(file, nextCommand)
 
-    assertTrue(ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN in question.options())
-    assertEquals(0, method("Worker", "bar").parameterList.parametersCount)
-    assertEquals(0, method("Worker", "foo").parameterList.parametersCount)
-    assertEquals(0, method("Worker", "baz").parameterList.parametersCount)
+      assertTrue(ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN in question.options())
+      assertEquals(0, method("Worker", "bar").parameterList.parametersCount)
+      assertEquals(0, method("Worker", "foo").parameterList.parametersCount)
+      assertEquals(0, method("Worker", "baz").parameterList.parametersCount)
+    }
   }
 
   /** Runs [command] as batch execution does, such as Code Cleanup: in a command, with the defaults of its questions. */
   private fun executeInBatch(file: PsiFile, command: ModCommand) {
-    CommandProcessor.getInstance().executeCommand(project, {
+    CommandProcessor.getInstance().executeCommand(myFixture.project, {
       ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(null, file), command)
     }, null, null)
   }
 
   /** @return the command of the safe delete fix for the parameter of `Worker.bar` */
   private fun parameterFixCommand(file: PsiFile): ModCommand = inBackground {
-    QuickFixFactory.getInstance().createSafeDeleteFix(method("Worker", "bar").parameterList.parameters[0])
-      .asModCommandAction()!!.perform(ActionContext.from(null, file))
+    QuickFixFactory.getInstance().createSafeDeleteFix(method("Worker", "bar").parameterList.parameters[0]).perform(ActionContext.from(null, file))
   }
 
   private fun addCallersThatPassOnTheParameter() {
@@ -393,7 +478,8 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
   }
 
   /** As the legacy chooser, a chosen caller of a chosen caller loses the parameter too. */
-  fun testChosenCallerOfAChosenCallerLosesTheParameter() {
+  @Test
+  fun testChosenCallerOfAChosenCallerLosesTheParameter(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         void first(int i) {}
@@ -402,19 +488,22 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
         void main() { third(1); }
       }
       """.trimIndent())
-    val chosenNames = runReadActionBlocking { listOf(method("Worker", "second"), method("Worker", "third")).joinToString("\n") { PsiFormatUtil.getExternalName(it)!! } }
-    val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true)
-      .with(ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN, chosenNames)
+    withContext(Dispatchers.EDT) {
+      val chosenNames = runReadActionBlocking { listOf(method("Worker", "second"), method("Worker", "third")).joinToString("\n") { PsiFormatUtil.getExternalName(it)!! } }
+      val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true)
+        .with(ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN, chosenNames)
 
-    safeDelete(method("Worker", "first").parameterList.parameters[0], optionValues)
+      safeDelete(method("Worker", "first").parameterList.parameters[0], optionValues)
 
-    assertEquals(0, method("Worker", "second").parameterList.parametersCount)
-    assertEquals(0, method("Worker", "third").parameterList.parametersCount)
-    val text = findClass("Worker").containingFile.text
-    assertTrue(text, text.contains("void main() { third(); }"))
+      assertEquals(0, method("Worker", "second").parameterList.parametersCount)
+      assertEquals(0, method("Worker", "third").parameterList.parametersCount)
+      val text = findClass("Worker").containingFile.text
+      assertTrue(text.contains("void main() { third(); }"), text)
+    }
   }
 
-  fun testParamTagOfTheCallerGoesWithItsParameter() {
+  @Test
+  fun testParamTagOfTheCallerGoesWithItsParameter(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         /** @param i the value that goes on */
@@ -424,15 +513,18 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Worker", "bar").parameterList.parameters[0],
-               ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true))
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "bar").parameterList.parameters[0],
+                 ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true))
 
-    assertEquals(0, method("Worker", "foo").parameterList.parametersCount)
-    val text = findClass("Worker").containingFile.text
-    assertFalse(text, text.contains("@param i"))
+      assertEquals(0, method("Worker", "foo").parameterList.parametersCount)
+      val text = findClass("Worker").containingFile.text
+      assertFalse(text.contains("@param i"), text)
+    }
   }
 
-  fun testParamTagGoesWithTheParameter() {
+  @Test
+  fun testParamTagGoesWithTheParameter(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         /**
@@ -443,14 +535,17 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Worker", "run").parameterList.parameters[0])
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "run").parameterList.parameters[0])
 
-    val text = findClass("Worker").containingFile.text
-    assertFalse(text, text.contains("@param unused"))
-    assertTrue(text, text.contains("@param kept"))
+      val text = findClass("Worker").containingFile.text
+      assertFalse(text.contains("@param unused"), text)
+      assertTrue(text.contains("@param kept"), text)
+    }
   }
 
-  fun testVarargArgumentsGoWithTheParameter() {
+  @Test
+  fun testVarargArgumentsGoWithTheParameter(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         void run(int first, String... rest) {}
@@ -458,13 +553,16 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Worker", "run").parameterList.parameters[1])
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "run").parameterList.parameters[1])
 
-    val text = findClass("Worker").containingFile.text
-    assertTrue(text, text.contains("void caller() { run(1); }"))
+      val text = findClass("Worker").containingFile.text
+      assertTrue(text.contains("void caller() { run(1); }"), text)
+    }
   }
 
-  fun testFieldWithAnUnusedCalleeAsksWhichToDelete() {
+  @Test
+  fun testFieldWithAnUnusedCalleeAsksWhichToDelete(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         private int value = helper();
@@ -472,48 +570,59 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    val customQuestion = questionsOf(findClass("Worker").findFieldByName("value", false)!!).filterIsInstance<ModPlanQuestion.Custom>().single()
+    withContext(Dispatchers.EDT) {
+      val customQuestion = questionsOf(findClass("Worker").findFieldByName("value", false)!!).filterIsInstance<ModPlanQuestion.Custom>().single()
 
-    assertEquals(listOf(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE), customQuestion.options())
+      assertEquals(listOf(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE), customQuestion.options())
+    }
   }
 
-  fun testAnswersOfTwoSuperMethodQuestionsAddUp() {
+  @Test
+  fun testAnswersOfTwoSuperMethodQuestionsAddUp(): Unit = timeoutRunBlocking {
     addTwoMethodsWithBases()
-    fun questionOf(method: PsiMethod) = questionsOf(method).filterIsInstance<ModPlanQuestion.Custom>()
-      .single { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS) }
+    withContext(Dispatchers.EDT) {
+      fun questionOf(method: PsiMethod) = questionsOf(method).filterIsInstance<ModPlanQuestion.Custom>()
+        .single { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS) }
 
-    val firstAnswers = questionOf(method("Impl1", "a")).ask(project, ModPlanOptionValues.EMPTY)!!
-    val bothAnswers = questionOf(method("Impl2", "b")).ask(project, firstAnswers)!!
+      val firstAnswers = questionOf(method("Impl1", "a")).ask(myFixture.project, ModPlanOptionValues.EMPTY)!!
+      val bothAnswers = questionOf(method("Impl2", "b")).ask(myFixture.project, firstAnswers)!!
 
-    val expectedNames = runReadActionBlocking { setOf(PsiFormatUtil.getExternalName(method("Impl1", "a")), PsiFormatUtil.getExternalName(method("Impl2", "b"))) }
-    assertEquals(expectedNames, bothAnswers.chosenKeys(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
-    assertEquals(expectedNames, bothAnswers.answeredKeys(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
-    assertFalse("the dialog leaves the general answer to the request", bothAnswers.has(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS))
+      val expectedNames = runReadActionBlocking { setOf(PsiFormatUtil.getExternalName(method("Impl1", "a")), PsiFormatUtil.getExternalName(method("Impl2", "b"))) }
+      assertEquals(expectedNames, bothAnswers.chosenKeys(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
+      assertEquals(expectedNames, bothAnswers.answeredKeys(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
+      assertFalse(bothAnswers.has(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS), "the dialog leaves the general answer to the request")
+    }
   }
 
-  fun testBaseMethodIsDeletedOnlyForTheMethodsThatAreNamed() {
+  @Test
+  fun testBaseMethodIsDeletedOnlyForTheMethodsThatAreNamed(): Unit = timeoutRunBlocking {
     addTwoMethodsWithBases()
-    val namedMethodName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("Impl1", "a")) }!!
-    val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true).with(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF, namedMethodName)
+    withContext(Dispatchers.EDT) {
+      val namedMethodName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("Impl1", "a")) }!!
+      val optionValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true).with(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF, namedMethodName)
 
-    safeDelete(listOf(method("Impl1", "a"), method("Impl2", "b")), optionValues)
+      safeDelete(listOf(method("Impl1", "a"), method("Impl2", "b")), optionValues)
 
-    assertEmpty(findClass("Impl1").findMethodsByName("a", false))
-    assertEmpty(findClass("Base1").findMethodsByName("a", false))
-    assertEmpty(findClass("Impl2").findMethodsByName("b", false))
-    assertSize(1, findClass("Base2").findMethodsByName("b", false))
+      assertThat(findClass("Impl1").findMethodsByName("a", false)).isEmpty()
+      assertThat(findClass("Base1").findMethodsByName("a", false)).isEmpty()
+      assertThat(findClass("Impl2").findMethodsByName("b", false)).isEmpty()
+      assertThat(findClass("Base2").findMethodsByName("b", false)).hasSize(1)
+    }
   }
 
-  fun testOnlyTheOverridersThatAreNamedAreDeletedForSeveralMethods() {
+  @Test
+  fun testOnlyTheOverridersThatAreNamedAreDeletedForSeveralMethods(): Unit = timeoutRunBlocking {
     addTwoMethodsWithBases()
-    val namedMethodName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("Impl1", "a")) }!!
+    withContext(Dispatchers.EDT) {
+      val namedMethodName = runReadActionBlocking { PsiFormatUtil.getExternalName(method("Impl1", "a")) }!!
 
-    safeDelete(listOf(method("Base1", "a"), method("Base2", "b")), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, namedMethodName))
+      safeDelete(listOf(method("Base1", "a"), method("Base2", "b")), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, namedMethodName))
 
-    assertEmpty(findClass("Base1").findMethodsByName("a", false))
-    assertEmpty(findClass("Impl1").findMethodsByName("a", false))
-    assertEmpty(findClass("Base2").findMethodsByName("b", false))
-    assertSize(1, findClass("Impl2").findMethodsByName("b", false))
+      assertThat(findClass("Base1").findMethodsByName("a", false)).isEmpty()
+      assertThat(findClass("Impl1").findMethodsByName("a", false)).isEmpty()
+      assertThat(findClass("Base2").findMethodsByName("b", false)).isEmpty()
+      assertThat(findClass("Impl2").findMethodsByName("b", false)).hasSize(1)
+    }
   }
 
   private fun addTwoMethodsWithBases() {
@@ -523,25 +632,31 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
     myFixture.addFileToProject("Impl2.java", "public class Impl2 extends Base2 { @Override public void b() {} }")
   }
 
-  fun testBaseMethodDeletedWithTheOverrideIsNotAskedAbout() {
+  @Test
+  fun testBaseMethodDeletedWithTheOverrideIsNotAskedAbout(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
-    val targets = listOf(method("Impl", "run"), method("Base", "run"))
+    withContext(Dispatchers.EDT) {
+      val targets = listOf(method("Impl", "run"), method("Base", "run"))
 
-    val askedQuestions = questionsOf(targets).filterIsInstance<ModPlanQuestion.Custom>().filter { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS) }
-    safeDelete(targets)
+      val askedQuestions = questionsOf(targets).filterIsInstance<ModPlanQuestion.Custom>().filter { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS) }
+      safeDelete(targets)
 
-    assertEmpty(askedQuestions)
-    assertEmpty(findClass("Impl").findMethodsByName("run", false))
-    assertEmpty(findClass("Base").findMethodsByName("run", false))
+      assertThat(askedQuestions).isEmpty()
+      assertThat(findClass("Impl").findMethodsByName("run", false)).isEmpty()
+      assertThat(findClass("Base").findMethodsByName("run", false)).isEmpty()
+    }
   }
 
-  fun testBaseMethodDeletedWithTheOverrideGivesTheSameDeletionWithTheOption() {
+  @Test
+  fun testBaseMethodDeletedWithTheOverrideGivesTheSameDeletionWithTheOption(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
 
-    safeDelete(listOf(method("Impl", "run"), method("Base", "run")), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true))
+    withContext(Dispatchers.EDT) {
+      safeDelete(listOf(method("Impl", "run"), method("Base", "run")), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true))
 
-    assertEmpty(findClass("Impl").findMethodsByName("run", false))
-    assertEmpty(findClass("Base").findMethodsByName("run", false))
+      assertThat(findClass("Impl").findMethodsByName("run", false)).isEmpty()
+      assertThat(findClass("Base").findMethodsByName("run", false)).isEmpty()
+    }
   }
 
   private fun addBaseWithOverride() {
@@ -550,64 +665,83 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
   }
 
   /** An earlier usage may remove the method: the removal of its @Override then writes nothing, as before. */
-  fun testOverrideAnnotationOfAGoneMethodWritesNothing() {
+  @Test
+  fun testOverrideAnnotationOfAGoneMethodWritesNothing(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
-    val usage = runReadActionBlocking { SafeDeleteOverrideAnnotation(method("Impl", "run"), method("Base", "run")) }
+    withContext(Dispatchers.EDT) {
+      val usage = runReadActionBlocking { SafeDeleteOverrideAnnotation(method("Impl", "run"), method("Base", "run")) }
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      method("Impl", "run").delete()
-      usage.performRefactoring()
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        method("Impl", "run").delete()
+        usage.performRefactoring()
+      }
     }
   }
 
-  fun testParameterInAHierarchyAsksToDeleteTheHierarchy() {
+  @Test
+  fun testParameterInAHierarchyAsksToDeleteTheHierarchy(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Base.java", "public class Base { public void run(int unused) {} }")
     myFixture.addFileToProject("Impl.java", "public class Impl extends Base { @Override public void run(int unused) {} }")
 
-    val askedQuestions = questionsOf(method("Base", "run").parameterList.parameters[0]).filterIsInstance<ModPlanQuestion.Custom>()
+    withContext(Dispatchers.EDT) {
+      val askedQuestions = questionsOf(method("Base", "run").parameterList.parameters[0]).filterIsInstance<ModPlanQuestion.Custom>()
 
-    assertSize(1, askedQuestions.filter { ModPlanSafeDeleteOptions.DELETE_HIERARCHY in it.options() })
+      assertThat(askedQuestions.filter { ModPlanSafeDeleteOptions.DELETE_HIERARCHY in it.options() }).hasSize(1)
+    }
   }
 
-  fun testOverridingMethodDoesNotAskTheHierarchyQuestion() {
+  @Test
+  fun testOverridingMethodDoesNotAskTheHierarchyQuestion(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
 
-    val askedOptions = questionsOf(method("Impl", "run")).filterIsInstance<ModPlanQuestion.Form>().flatMap { it.options() }
+    withContext(Dispatchers.EDT) {
+      val askedOptions = questionsOf(method("Impl", "run")).filterIsInstance<ModPlanQuestion.Form>().flatMap { it.options() }
 
-    assertFalse(ModPlanSafeDeleteOptions.DELETE_HIERARCHY in askedOptions)
+      assertFalse(ModPlanSafeDeleteOptions.DELETE_HIERARCHY in askedOptions)
+    }
   }
 
-  fun testLocalVariableAsksOnlyThePlatformQuestions() {
+  @Test
+  fun testLocalVariableAsksOnlyThePlatformQuestions(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", "public class Worker { public void run() { int unused = 1; } }")
-    val variable = runReadActionBlocking { PsiTreeUtil.findChildOfType(method("Worker", "run"), PsiLocalVariable::class.java)!! }
+    withContext(Dispatchers.EDT) {
+      val variable = runReadActionBlocking { PsiTreeUtil.findChildOfType(method("Worker", "run"), PsiLocalVariable::class.java)!! }
 
-    assertEquals(
-      listOf(ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS, ModPlanSafeDeleteOptions.SEARCH_IN_NON_CODE),
-      questionsOf(variable).flatMap { (it as ModPlanQuestion.Form).options() },
-    )
+      assertEquals(
+        listOf(ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS, ModPlanSafeDeleteOptions.SEARCH_IN_NON_CODE),
+        questionsOf(variable).flatMap { (it as ModPlanQuestion.Form).options() },
+      )
+    }
   }
 
-  fun testFileOfTheLastClassIsPredictedDeleted() {
+  @Test
+  fun testFileOfTheLastClassIsPredictedDeleted(): Unit = timeoutRunBlocking {
     val file = myFixture.addFileToProject("Single.java", "public class Single {}")
     myFixture.addFileToProject("Pair.java", """
       public class Pair {}
       class Other {}
       """.trimIndent())
 
-    assertEquals(listOf(file.virtualFile), deletedFiles(ready(findClass("Single"))))
-    assertEmpty(deletedFiles(ready(findClass("Pair"))))
+    withContext(Dispatchers.EDT) {
+      assertEquals(listOf(file.virtualFile), deletedFiles(ready(findClass("Single"))))
+      assertThat(deletedFiles(ready(findClass("Pair")))).isEmpty()
+    }
   }
 
-  fun testJavaFileIsDeleted() {
+  @Test
+  fun testJavaFileIsDeleted(): Unit = timeoutRunBlocking {
     val file = myFixture.addFileToProject("Single.java", "public class Single {}")
-    val virtualFile = file.virtualFile
+    withContext(Dispatchers.EDT) {
+      val virtualFile = file.virtualFile
 
-    safeDelete(file)
+      safeDelete(file)
 
-    assertFalse(virtualFile.isValid)
+      assertFalse(virtualFile.isValid)
+    }
   }
 
-  fun testParameterIsDeletedInTheWholeHierarchyByDefault() {
+  @Test
+  fun testParameterIsDeletedInTheWholeHierarchyByDefault(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Base.java", """
       public class Base {
         public void run(int unused) {}
@@ -620,13 +754,16 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Base", "run").parameterList.parameters[0])
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Base", "run").parameterList.parameters[0])
 
-    assertEquals(0, method("Base", "run").parameterList.parametersCount)
-    assertEquals(0, method("Impl", "run").parameterList.parametersCount)
+      assertEquals(0, method("Base", "run").parameterList.parametersCount)
+      assertEquals(0, method("Impl", "run").parameterList.parametersCount)
+    }
   }
 
-  fun testParameterIsDeletedOnlyInTheSelectedMethodWhenTheOptionSaysSo() {
+  @Test
+  fun testParameterIsDeletedOnlyInTheSelectedMethodWhenTheOptionSaysSo(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Base.java", """
       public class Base {
         public void run(int unused) {}
@@ -638,13 +775,16 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Base", "run").parameterList.parameters[0], ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.DELETE_HIERARCHY, false))
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Base", "run").parameterList.parameters[0], ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.DELETE_HIERARCHY, false))
 
-    assertEquals(0, method("Base", "run").parameterList.parametersCount)
-    assertEquals(1, method("Impl", "run").parameterList.parametersCount)
+      assertEquals(0, method("Base", "run").parameterList.parametersCount)
+      assertEquals(1, method("Impl", "run").parameterList.parametersCount)
+    }
   }
 
-  fun testTypeParameterIsDeletedInTheWholeHierarchyByDefault() {
+  @Test
+  fun testTypeParameterIsDeletedInTheWholeHierarchyByDefault(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Base.java", """
       public class Base {
         public <T> void run() {}
@@ -657,13 +797,16 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Base", "run").typeParameters[0])
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Base", "run").typeParameters[0])
 
-    assertEmpty(method("Base", "run").typeParameters)
-    assertEmpty(method("Impl", "run").typeParameters)
+      assertThat(method("Base", "run").typeParameters).isEmpty()
+      assertThat(method("Impl", "run").typeParameters).isEmpty()
+    }
   }
 
-  fun testTypeParameterIsDeletedOnlyInTheSelectedMethodWhenTheOptionSaysSo() {
+  @Test
+  fun testTypeParameterIsDeletedOnlyInTheSelectedMethodWhenTheOptionSaysSo(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Base.java", """
       public class Base {
         public <T> void run() {}
@@ -675,75 +818,99 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Base", "run").typeParameters[0], ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.DELETE_HIERARCHY, false))
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Base", "run").typeParameters[0], ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.DELETE_HIERARCHY, false))
 
-    assertEmpty(method("Base", "run").typeParameters)
-    assertSize(1, method("Impl", "run").typeParameters)
+      assertThat(method("Base", "run").typeParameters).isEmpty()
+      assertThat(method("Impl", "run").typeParameters).hasSize(1)
+    }
   }
 
-  fun testRecordComponentIsDeleted() {
+  @Test
+  fun testRecordComponentIsDeleted(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Point.java", "public record Point(int x, int unused) {}")
 
-    safeDelete(findClass("Point").recordComponents[1])
+    withContext(Dispatchers.EDT) {
+      safeDelete(findClass("Point").recordComponents[1])
 
-    assertEquals(listOf("x"), findClass("Point").recordComponents.map { it.name })
+      assertEquals(listOf("x"), findClass("Point").recordComponents.map { it.name })
+    }
   }
 
-  fun testSuperclassWithOnlyPrivatesIsRemovedFromTheExtendsList() {
+  @Test
+  fun testSuperclassWithOnlyPrivatesIsRemovedFromTheExtendsList(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Base.java", "public class Base { private int hidden; }")
     myFixture.addFileToProject("Child.java", "public class Child extends Base {}")
 
-    safeDelete(findClass("Base"))
+    withContext(Dispatchers.EDT) {
+      safeDelete(findClass("Base"))
 
-    assertNull(JavaPsiFacade.getInstance(project).findClass("Base", GlobalSearchScope.allScope(project)))
-    assertEmpty(findClass("Child").extendsListTypes)
+      assertNull(JavaPsiFacade.getInstance(myFixture.project).findClass("Base", GlobalSearchScope.allScope(myFixture.project)))
+      assertThat(findClass("Child").extendsListTypes).isEmpty()
+    }
   }
 
-  fun testSealedSuperclassIsDeletedWithItsPermits() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_17) {
-    myFixture.addFileToProject("Base.java", "public sealed class Base permits Child {}")
-    myFixture.addFileToProject("Child.java", "public final class Child extends Base {}")
+  @Test
+  fun testSealedSuperclassIsDeletedWithItsPermits(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_17) {
+        myFixture.addFileToProject("Base.java", "public sealed class Base permits Child {}")
+        myFixture.addFileToProject("Child.java", "public final class Child extends Base {}")
 
-    safeDelete(findClass("Base"))
+        safeDelete(findClass("Base"))
 
-    assertNull(JavaPsiFacade.getInstance(project).findClass("Base", GlobalSearchScope.allScope(project)))
-    assertEmpty(findClass("Child").extendsListTypes)
+        assertNull(JavaPsiFacade.getInstance(myFixture.project).findClass("Base", GlobalSearchScope.allScope(myFixture.project)))
+        assertThat(findClass("Child").extendsListTypes).isEmpty()
+      }
+    }
   }
 
-  fun testSealedHierarchyIsPlannedAndWrittenAsInLegacy() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_17) {
-    val file = myFixture.addFileToProject("Hierarchy.java", """
-      sealed interface GrandParent1 permits Parent, A {}
+  @Test
+  fun testSealedHierarchyIsPlannedAndWrittenAsInLegacy(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_17) {
+        val file = myFixture.addFileToProject("Hierarchy.java", """
+          sealed interface GrandParent1 permits Parent, A {}
 
-      sealed class GrandParent2 permits Parent {}
+          sealed class GrandParent2 permits Parent {}
 
-      sealed class Parent extends GrandParent2 implements GrandParent1 permits A, B {}
+          sealed class Parent extends GrandParent2 implements GrandParent1 permits A, B {}
 
-      non-sealed class A extends Parent implements GrandParent1 {}
+          non-sealed class A extends Parent implements GrandParent1 {}
 
-      final class B extends Parent {}
-      """.trimIndent())
+          final class B extends Parent {}
+          """.trimIndent())
 
-    safeDelete(findClass("Parent"))
+        safeDelete(findClass("Parent"))
 
-    assertEquals("""
-      sealed interface GrandParent1 permits A, B {}
+        assertEquals("""
+          sealed interface GrandParent1 permits A, B {}
 
-      sealed class GrandParent2 permits A, B {}
+          sealed class GrandParent2 permits A, B {}
 
-      non-sealed class A extends GrandParent2 implements GrandParent1 {}
+          non-sealed class A extends GrandParent2 implements GrandParent1 {}
 
-      final class B extends GrandParent2 implements GrandParent1 {}
-      """.trimIndent(), file.text)
+          final class B extends GrandParent2 implements GrandParent1 {}
+          """.trimIndent(), file.text)
+      }
+    }
   }
 
-  fun testSealedParentOfTheDeletedClassPermitsTheHeir() {
-    checkSealedParentPermitsTheHeir("Shape", "Impl")
+  @Test
+  fun testSealedParentOfTheDeletedClassPermitsTheHeir(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      checkSealedParentPermitsTheHeir("Shape", "Impl")
+    }
   }
 
-  fun testSealedParentOfTheDeletedClassPermitsTheHeirWhenItsFileSortsAfter() {
-    checkSealedParentPermitsTheHeir("ZShape", "AImpl")
+  @Test
+  fun testSealedParentOfTheDeletedClassPermitsTheHeirWhenItsFileSortsAfter(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      checkSealedParentPermitsTheHeir("ZShape", "AImpl")
+    }
   }
 
-  private fun checkSealedParentPermitsTheHeir(shape: String, impl: String) = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_17) {
+  private fun checkSealedParentPermitsTheHeir(shape: String, impl: String) = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_17) {
     myFixture.addFileToProject("$shape.java", "public sealed interface $shape permits Mid {}")
     myFixture.addFileToProject("Mid.java", "public non-sealed class Mid implements $shape {}")
     myFixture.addFileToProject("$impl.java", "public final class $impl extends Mid {}")
@@ -751,49 +918,65 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
     safeDelete(findClass("Mid"))
 
     val sealedClass = findClass(shape)
-    assertTrue(sealedClass.text, sealedClass.hasModifierProperty(PsiModifier.SEALED))
+    assertTrue(sealedClass.hasModifierProperty(PsiModifier.SEALED), sealedClass.text)
     assertEquals(listOf(impl), sealedClass.permitsListTypes.map { it.className })
     assertEquals(listOf(shape), findClass(impl).implementsListTypes.map { it.className })
   }
 
-  fun testClassIsRemovedFromThePermitsOfAParentInTheSameFile() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_17) {
-    myFixture.addFileToProject("Shapes.java", """
-      public sealed interface Shape permits Circle, Square {}
-      final class Circle implements Shape {}
-      final class Square implements Shape {}
-      """.trimIndent())
+  @Test
+  fun testClassIsRemovedFromThePermitsOfAParentInTheSameFile(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_17) {
+        myFixture.addFileToProject("Shapes.java", """
+          public sealed interface Shape permits Circle, Square {}
+          final class Circle implements Shape {}
+          final class Square implements Shape {}
+          """.trimIndent())
 
-    safeDelete(findClass("Circle"))
+        safeDelete(findClass("Circle"))
 
-    val shape = findClass("Shape")
-    assertTrue(shape.text, shape.hasModifierProperty(PsiModifier.SEALED))
-    assertEquals(listOf("Square"), shape.permitsListTypes.map { it.className })
+        val shape = findClass("Shape")
+        assertTrue(shape.hasModifierProperty(PsiModifier.SEALED), shape.text)
+        assertEquals(listOf("Square"), shape.permitsListTypes.map { it.className })
+      }
+    }
   }
 
-  fun testClassIsRemovedFromThePermitsOfAParentInAnotherFile() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_17) {
-    myFixture.addFileToProject("Shape.java", "public sealed interface Shape permits Circle, Square {}")
-    myFixture.addFileToProject("Circle.java", "public final class Circle implements Shape {}")
-    myFixture.addFileToProject("Square.java", "public final class Square implements Shape {}")
+  @Test
+  fun testClassIsRemovedFromThePermitsOfAParentInAnotherFile(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_17) {
+        myFixture.addFileToProject("Shape.java", "public sealed interface Shape permits Circle, Square {}")
+        myFixture.addFileToProject("Circle.java", "public final class Circle implements Shape {}")
+        myFixture.addFileToProject("Square.java", "public final class Square implements Shape {}")
 
-    safeDelete(findClass("Circle"))
+        safeDelete(findClass("Circle"))
 
-    val shape = findClass("Shape")
-    assertTrue(shape.text, shape.hasModifierProperty(PsiModifier.SEALED))
-    assertEquals(listOf("Square"), shape.permitsListTypes.map { it.className })
+        val shape = findClass("Shape")
+        assertTrue(shape.hasModifierProperty(PsiModifier.SEALED), shape.text)
+        assertEquals(listOf("Square"), shape.permitsListTypes.map { it.className })
+      }
+    }
   }
 
-  fun testTheLastPermittedClassDropsSealed() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_17) {
-    myFixture.addFileToProject("Shape.java", "public sealed interface Shape permits Circle {}")
-    myFixture.addFileToProject("Circle.java", "public final class Circle implements Shape {}")
+  @Test
+  fun testTheLastPermittedClassDropsSealed(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_17) {
+        myFixture.addFileToProject("Shape.java", "public sealed interface Shape permits Circle {}")
+        myFixture.addFileToProject("Circle.java", "public final class Circle implements Shape {}")
 
-    safeDelete(findClass("Circle"))
+        safeDelete(findClass("Circle"))
 
-    val shape = findClass("Shape")
-    assertFalse(shape.text, shape.hasModifierProperty(PsiModifier.SEALED))
-    assertEmpty(shape.permitsListTypes)
+        val shape = findClass("Shape")
+        assertFalse(shape.hasModifierProperty(PsiModifier.SEALED), shape.text)
+        assertThat(shape.permitsListTypes).isEmpty()
+      }
+    }
   }
 
-  fun testJavadocSeeReferenceIsRebound() {
+  @Test
+  fun testJavadocSeeReferenceIsRebound(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         /** @see #run(int, String) */
@@ -802,26 +985,32 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    safeDelete(method("Worker", "run").parameterList.parameters[0])
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "run").parameterList.parameters[0])
 
-    val text = findClass("Worker").containingFile.text
-    assertTrue(text, text.contains("#run(String)"))
-    assertFalse(text, text.contains("#run(int"))
+      val text = findClass("Worker").containingFile.text
+      assertTrue(text.contains("#run(String)"), text)
+      assertFalse(text.contains("#run(int"), text)
+    }
   }
 
-  fun testJavadocLinkToAMethodOfAnotherClassKeepsTheClass() {
+  @Test
+  fun testJavadocLinkToAMethodOfAnotherClassKeepsTheClass(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", "public class Worker { void run(int unused, String keep) {} }")
     val caller = myFixture.addFileToProject("Caller.java", """
       /** {@link Worker#run(int, String)} */
       public class Caller {}
       """.trimIndent())
 
-    safeDelete(method("Worker", "run").parameterList.parameters[0])
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Worker", "run").parameterList.parameters[0])
 
-    assertTrue(caller.text, caller.text.contains("Worker#run(String)"))
+      assertTrue(caller.text.contains("Worker#run(String)"), caller.text)
+    }
   }
 
-  fun testMethodReferenceArgumentIsRemoved() {
+  @Test
+  fun testMethodReferenceArgumentIsRemoved(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         interface Handler { void handle(int first, String second); }
@@ -831,17 +1020,20 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    val readyPlan = ready(method("Worker", "run").parameterList.parameters[0])
-    assertEquals(1, readyPlan.conflicts.conflicts.size)
-    assertInstanceOf(ModPlanExecutor.execute(readyPlan.execution, true), ModPlanExecutionResult.Applied::class.java)
+    withContext(Dispatchers.EDT) {
+      val readyPlan = ready(method("Worker", "run").parameterList.parameters[0])
+      assertEquals(1, readyPlan.conflicts.conflicts.size)
+      assertInstanceOf(ModPlanExecutionResult.Applied::class.java, ModPlanExecutor.execute(readyPlan.execution, true))
 
-    val worker = findClass("Worker")
-    assertFalse(worker.containingFile.text, worker.containingFile.text.contains("this::run"))
-    val call = PsiTreeUtil.findChildrenOfType(worker, PsiMethodCallExpression::class.java).single { it.methodExpression.referenceName == "run" }
-    assertEquals(1, call.argumentList.expressionCount)
+      val worker = findClass("Worker")
+      assertFalse(worker.containingFile.text.contains("this::run"), worker.containingFile.text)
+      val call = PsiTreeUtil.findChildrenOfType(worker, PsiMethodCallExpression::class.java).single { it.methodExpression.referenceName == "run" }
+      assertEquals(1, call.argumentList.expressionCount)
+    }
   }
 
-  fun testExternalAnnotationsAreDeleted() {
+  @Test
+  fun testExternalAnnotationsAreDeleted(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void annotated() {}
@@ -854,27 +1046,32 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
         </item>
       </root>
       """.trimIndent())
-    project.replaceService(ExternalAnnotationsManager::class.java, FakeAnnotationsManager(project, annotations), testRootDisposable)
+    withContext(Dispatchers.EDT) {
+      myFixture.project.replaceService(ExternalAnnotationsManager::class.java, FakeAnnotationsManager(myFixture.project, annotations), myFixture.testRootDisposable)
 
-    safeDelete(method("Worker", "annotated"))
+      safeDelete(method("Worker", "annotated"))
 
-    assertEmpty(findClass("Worker").findMethodsByName("annotated", false))
-    assertFalse(annotations.text, annotations.text.contains("annotated"))
+      assertThat(findClass("Worker").findMethodsByName("annotated", false)).isEmpty()
+      assertFalse(annotations.text.contains("annotated"), annotations.text)
+    }
   }
 
   /** The annotations file of the package does not make a conflict for an element that it does not name. */
-  fun testElementThatNoAnnotationsFileNamesIsNoConflict() {
+  @Test
+  fun testElementThatNoAnnotationsFileNamesIsNoConflict(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void plain() {}
       }
       """.trimIndent())
     val annotations = myFixture.addFileToProject("annotations.xml", "<root/>")
-    project.replaceService(ExternalAnnotationsManager::class.java, FakeAnnotationsManager(project, annotations), testRootDisposable)
+    withContext(Dispatchers.EDT) {
+      myFixture.project.replaceService(ExternalAnnotationsManager::class.java, FakeAnnotationsManager(myFixture.project, annotations), myFixture.testRootDisposable)
 
-    safeDelete(method("Worker", "plain"))
+      safeDelete(method("Worker", "plain"))
 
-    assertEmpty(findClass("Worker").findMethodsByName("plain", false))
+      assertThat(findClass("Worker").findMethodsByName("plain", false)).isEmpty()
+    }
   }
 
   /**
@@ -885,7 +1082,8 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
     override fun findExternalAnnotationsFiles(listOwner: PsiModifierListOwner): List<PsiFile> = listOf(file)
   }
 
-  fun testNonCodeUsageInCommentIsANoteAndStays() {
+  @Test
+  fun testNonCodeUsageInCommentIsANoteAndStays(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void unused() {}
@@ -894,42 +1092,53 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    assertEmpty("the search in comments is off by default", ready(method("Worker", "unused")).conflicts.nonCodeUsages())
-    val readyPlan = ready(method("Worker", "unused"), ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS, true))
-    assertFalse("a non-code usage in a comment does not block the deletion", readyPlan.conflicts.needsConfirmation())
-    assertEquals(1, readyPlan.conflicts.nonCodeUsages().size)
-    apply(readyPlan)
-    assertEmpty(findClass("Worker").findMethodsByName("unused", false))
-    assertTrue("the comment stays", findClass("Worker").containingFile.text.contains("// unused is mentioned here"))
+    withContext(Dispatchers.EDT) {
+      assertThat(ready(method("Worker", "unused")).conflicts.nonCodeUsages()).describedAs("the search in comments is off by default").isEmpty()
+      val readyPlan = ready(method("Worker", "unused"), ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS, true))
+      assertFalse(readyPlan.conflicts.needsConfirmation(), "a non-code usage in a comment does not block the deletion")
+      assertEquals(1, readyPlan.conflicts.nonCodeUsages().size)
+      apply(readyPlan)
+      assertThat(findClass("Worker").findMethodsByName("unused", false)).isEmpty()
+      assertTrue(findClass("Worker").containingFile.text.contains("// unused is mentioned here"), "the comment stays")
+    }
   }
 
-  fun testNonCodeUsageInANonCodeFileIsANoteAndStays() {
+  @Test
+  fun testNonCodeUsageInANonCodeFileIsANoteAndStays(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("p/Worker.java", "package p; public class Worker {}")
     val notes = myFixture.addFileToProject("notes.txt", "p.Worker is mentioned here")
 
-    val readyPlan = ready(findClass("p.Worker"), ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.SEARCH_IN_NON_CODE, true))
+    withContext(Dispatchers.EDT) {
+      val readyPlan = ready(findClass("p.Worker"), ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.SEARCH_IN_NON_CODE, true))
 
-    assertFalse("a non-code usage in a non-code file does not block the deletion", readyPlan.conflicts.needsConfirmation())
-    assertEquals(notes.virtualFile, readyPlan.conflicts.nonCodeUsages().single().location!!.virtualFile)
-    apply(readyPlan)
-    assertNull(JavaPsiFacade.getInstance(project).findClass("p.Worker", GlobalSearchScope.allScope(project)))
-    assertEquals("p.Worker is mentioned here", notes.text)
+      assertFalse(readyPlan.conflicts.needsConfirmation(), "a non-code usage in a non-code file does not block the deletion")
+      assertEquals(notes.virtualFile, readyPlan.conflicts.nonCodeUsages().single().location!!.virtualFile)
+      apply(readyPlan)
+      assertNull(JavaPsiFacade.getInstance(myFixture.project).findClass("p.Worker", GlobalSearchScope.allScope(myFixture.project)))
+      assertEquals("p.Worker is mentioned here", notes.text)
+    }
   }
 
   /** As in the legacy flow, the export of the package that has no class left stays; the legacy flow only notifies about it. */
-  fun testExportOfTheEmptiedPackageIsANoteAndStays() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_9) {
-    val moduleInfo = myFixture.addFileToProject("module-info.java", "module M { exports pack1; }")
-    myFixture.addFileToProject("pack1/First.java", "package pack1; public class First {}")
+  @Test
+  fun testExportOfTheEmptiedPackageIsANoteAndStays(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_9) {
+        val moduleInfo = myFixture.addFileToProject("module-info.java", "module M { exports pack1; }")
+        myFixture.addFileToProject("pack1/First.java", "package pack1; public class First {}")
 
-    val readyPlan = ready(findClass("pack1.First"))
+        val readyPlan = ready(findClass("pack1.First"))
 
-    assertFalse("a non-code usage does not block the deletion", readyPlan.conflicts.needsConfirmation())
-    assertEquals(moduleInfo.virtualFile, readyPlan.conflicts.nonCodeUsages().single().location!!.virtualFile)
-    apply(readyPlan)
-    assertEquals("module M { exports pack1; }", moduleInfo.text)
+        assertFalse(readyPlan.conflicts.needsConfirmation(), "a non-code usage does not block the deletion")
+        assertEquals(moduleInfo.virtualFile, readyPlan.conflicts.nonCodeUsages().single().location!!.virtualFile)
+        apply(readyPlan)
+        assertEquals("module M { exports pack1; }", moduleInfo.text)
+      }
+    }
   }
 
-  fun testStaticImportOfTheFieldGoesWithIt() {
+  @Test
+  fun testStaticImportOfTheFieldGoesWithIt(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("p/Constants.java", """
       package p;
 
@@ -944,13 +1153,16 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       public class Worker {}
       """.trimIndent())
 
-    safeDelete(findClass("p.Constants").findFieldByName("LIMIT", false)!!)
+    withContext(Dispatchers.EDT) {
+      safeDelete(findClass("p.Constants").findFieldByName("LIMIT", false)!!)
 
-    assertNull(findClass("p.Constants").findFieldByName("LIMIT", false))
-    assertFalse(worker.text, worker.text.contains("import static"))
+      assertNull(findClass("p.Constants").findFieldByName("LIMIT", false))
+      assertFalse(worker.text.contains("import static"), worker.text)
+    }
   }
 
-  fun testFieldWriteWithASideEffectIsAConflict() {
+  @Test
+  fun testFieldWriteWithASideEffectIsAConflict(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         private int value;
@@ -959,13 +1171,16 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    val readyPlan = ready(findClass("Worker").findFieldByName("value", false)!!)
+    withContext(Dispatchers.EDT) {
+      val readyPlan = ready(findClass("Worker").findFieldByName("value", false)!!)
 
-    assertTrue("the assignment calls a method, so it is not deleted", readyPlan.conflicts.hasBroken())
-    assertNotNull(findClass("Worker").findFieldByName("value", false))
+      assertTrue(readyPlan.conflicts.hasBroken(), "the assignment calls a method, so it is not deleted")
+      assertNotNull(findClass("Worker").findFieldByName("value", false))
+    }
   }
 
-  fun testEditInAnotherFileKeepsThePlan() {
+  @Test
+  fun testEditInAnotherFileKeepsThePlan(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void unused() {}
@@ -973,104 +1188,127 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       """.trimIndent())
     val otherFile = myFixture.addFileToProject("Other.java", "public class Other {}")
 
-    val readyPlan = ready(method("Worker", "unused"))
-    appendEdit(otherFile)
-    apply(readyPlan)
+    withContext(Dispatchers.EDT) {
+      val readyPlan = ready(method("Worker", "unused"))
+      appendEdit(otherFile)
+      apply(readyPlan)
 
-    assertEmpty(findClass("Worker").findMethodsByName("unused", false))
+      assertThat(findClass("Worker").findMethodsByName("unused", false)).isEmpty()
+    }
   }
 
-  fun testEditInAFileOfThePlanMakesThePlanStale() {
+  @Test
+  fun testEditInAFileOfThePlanMakesThePlanStale(): Unit = timeoutRunBlocking {
     val worker = myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void unused() {}
       }
       """.trimIndent())
 
-    val readyPlan = ready(method("Worker", "unused"))
-    appendEdit(worker)
+    withContext(Dispatchers.EDT) {
+      val readyPlan = ready(method("Worker", "unused"))
+      appendEdit(worker)
 
-    assertInstanceOf(ModPlanExecutor.execute(readyPlan.execution, true), ModPlanExecutionResult.Stale::class.java)
-    assertSize(1, findClass("Worker").findMethodsByName("unused", false))
+      assertInstanceOf(ModPlanExecutionResult.Stale::class.java, ModPlanExecutor.execute(readyPlan.execution, true))
+      assertThat(findClass("Worker").findMethodsByName("unused", false)).hasSize(1)
+    }
   }
 
   /** An unsaved edit does not change the stamp of the file, only the stamp of its document. */
-  fun testUnsavedEditOfADeletedFileMakesThePlanStale() {
+  @Test
+  fun testUnsavedEditOfADeletedFileMakesThePlanStale(): Unit = timeoutRunBlocking {
     val file = myFixture.addFileToProject("Single.java", "public class Single {}")
 
-    val readyPlan = ready(findClass("Single"))
-    appendEdit(file)
+    withContext(Dispatchers.EDT) {
+      val readyPlan = ready(findClass("Single"))
+      appendEdit(file)
 
-    assertInstanceOf(ModPlanExecutor.execute(readyPlan.execution, true), ModPlanExecutionResult.Stale::class.java)
-    assertTrue(file.virtualFile.isValid)
+      assertInstanceOf(ModPlanExecutionResult.Stale::class.java, ModPlanExecutor.execute(readyPlan.execution, true))
+      assertTrue(file.virtualFile.isValid)
+    }
   }
 
   private fun appendEdit(file: PsiFile) {
-    WriteCommandAction.runWriteCommandAction(project) {
-      val document = PsiDocumentManager.getInstance(project).getDocument(file)!!
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
+      val document = PsiDocumentManager.getInstance(myFixture.project).getDocument(file)!!
       document.insertString(document.textLength, "\n// edited")
     }
   }
 
-  fun testRefactoringListenersAreNotified() {
+  @Test
+  fun testRefactoringListenersAreNotified(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void unused() {}
       }
       """.trimIndent())
-    val events = mutableListOf<String>()
-    // As SafeDeleteProcessor does, the events come inside the command and outside the write action.
-    fun state() = "command=${CommandProcessor.getInstance().currentCommand != null} write=${ApplicationManager.getApplication().isWriteAccessAllowed}"
-    project.messageBus.connect(testRootDisposable).subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, object : RefactoringEventListener {
-      override fun refactoringStarted(refactoringId: String, beforeData: RefactoringEventData?) {
-        events += "started $refactoringId ${state()}"
-      }
+    withContext(Dispatchers.EDT) {
+      val events = mutableListOf<String>()
+      // As SafeDeleteProcessor does, the events come inside the command and outside the write action.
+      fun state() = "command=${CommandProcessor.getInstance().currentCommand != null} write=${ApplicationManager.getApplication().isWriteAccessAllowed}"
+      myFixture.project.messageBus.connect(myFixture.testRootDisposable).subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, object : RefactoringEventListener {
+        override fun refactoringStarted(refactoringId: String, beforeData: RefactoringEventData?) {
+          events += "started $refactoringId ${state()}"
+        }
 
-      override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
-        events += "done $refactoringId ${state()}"
-      }
-    })
+        override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
+          events += "done $refactoringId ${state()}"
+        }
+      })
 
-    safeDelete(method("Worker", "unused"))
+      safeDelete(method("Worker", "unused"))
 
-    assertEquals(listOf("started refactoring.safeDelete command=true write=false", "done refactoring.safeDelete command=true write=false"),
-                 events)
+      assertEquals(listOf("started refactoring.safeDelete command=true write=false", "done refactoring.safeDelete command=true write=false"),
+                   events)
+    }
   }
 
-  fun testMethodThatOverridesAsksAboutItsBaseMethods() {
+  @Test
+  fun testMethodThatOverridesAsksAboutItsBaseMethods(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
 
-    fun asksAboutSuperMethods(method: PsiMethod) = questionsOf(method).any {
-      it is ModPlanQuestion.Custom && it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS)
+    withContext(Dispatchers.EDT) {
+      fun asksAboutSuperMethods(method: PsiMethod) = questionsOf(method).any {
+        it is ModPlanQuestion.Custom && it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS)
+      }
+
+      assertTrue(asksAboutSuperMethods(method("Impl", "run")))
+      assertFalse(asksAboutSuperMethods(method("Base", "run")))
     }
-
-    assertTrue(asksAboutSuperMethods(method("Impl", "run")))
-    assertFalse(asksAboutSuperMethods(method("Base", "run")))
   }
 
-  fun testOverridersInLocalAndAnonymousClassesAreAsked() {
+  @Test
+  fun testOverridersInLocalAndAnonymousClassesAreAsked(): Unit = timeoutRunBlocking {
     addHandlerWithLocalAndAnonymousOverriders()
 
-    val askedQuestions = questionsOf(abstractHandle()).filterIsInstance<ModPlanQuestion.Custom>()
-      .filter { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS) }
+    withContext(Dispatchers.EDT) {
+      val askedQuestions = questionsOf(abstractHandle()).filterIsInstance<ModPlanQuestion.Custom>()
+        .filter { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS) }
 
-    assertSize(1, askedQuestions)
+      assertThat(askedQuestions).hasSize(1)
+    }
   }
 
-  fun testOverridersInLocalAndAnonymousClassesAreDeletedByDefault() {
+  @Test
+  fun testOverridersInLocalAndAnonymousClassesAreDeletedByDefault(): Unit = timeoutRunBlocking {
     addHandlerWithLocalAndAnonymousOverriders()
 
-    safeDelete(abstractHandle())
+    withContext(Dispatchers.EDT) {
+      safeDelete(abstractHandle())
 
-    assertEquals(0, StringUtil.getOccurrenceCount(findClass("Anon").containingFile.text, "void handle()"))
+      assertEquals(0, StringUtil.getOccurrenceCount(findClass("Anon").containingFile.text, "void handle()"))
+    }
   }
 
-  fun testOverridersInLocalAndAnonymousClassesAreKeptWhenTheOptionSaysSo() {
+  @Test
+  fun testOverridersInLocalAndAnonymousClassesAreKeptWhenTheOptionSaysSo(): Unit = timeoutRunBlocking {
     addHandlerWithLocalAndAnonymousOverriders()
 
-    safeDelete(abstractHandle(), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, false))
+    withContext(Dispatchers.EDT) {
+      safeDelete(abstractHandle(), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, false))
 
-    assertEquals(2, StringUtil.getOccurrenceCount(findClass("Anon").containingFile.text, "void handle()"))
+      assertEquals(2, StringUtil.getOccurrenceCount(findClass("Anon").containingFile.text, "void handle()"))
+    }
   }
 
   private fun abstractHandle(): PsiMethod =
@@ -1097,109 +1335,133 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       """.trimIndent())
   }
 
-  fun testBaseMethodOfALibraryIsRefused() {
+  @Test
+  fun testBaseMethodOfALibraryIsRefused(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Named.java", """
       public class Named {
         @Override
         public String toString() { return "named"; }
       }
       """.trimIndent())
-    val toString = method("Named", "toString")
+    withContext(Dispatchers.EDT) {
+      val toString = method("Named", "toString")
 
-    val refusedPlan = plan(toString, ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true))
+      val refusedPlan = plan(toString, ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true))
 
-    assertEquals(ModPlanAnalysisResult.RefusedReason.NOT_APPLICABLE,
-                 assertInstanceOf(refusedPlan, ModPlan.RefusedPlan::class.java).reason)
-    assertInstanceOf(plan(toString, ModPlanOptionValues.EMPTY), ModPlan.AcceptedPlan::class.java)
+      assertEquals(ModPlanAnalysisResult.RefusedReason.NOT_APPLICABLE,
+                   assertInstanceOf(ModPlan.RefusedPlan::class.java, refusedPlan).reason)
+      assertInstanceOf(ModPlan.AcceptedPlan::class.java, plan(toString, ModPlanOptionValues.EMPTY))
+    }
   }
 
   /** The overriding methods of the base method are a question only after the base method is chosen, so the questions are asked again. */
-  fun testOverridersOfTheBaseMethodAreAskedOnceTheBaseMethodIsChosen() {
+  @Test
+  fun testOverridersOfTheBaseMethodAreAskedOnceTheBaseMethodIsChosen(): Unit = timeoutRunBlocking {
     addHandlerWithLocalAndAnonymousOverriders()
-    val localMethod = PsiTreeUtil.findChildrenOfType(method("Anon", "run"), PsiMethod::class.java).single { it.containingClass?.name == "LocalHandler" }
-    fun asksAboutOverriders(optionValues: ModPlanOptionValues) = questionsOf(localMethod, optionValues).any {
-      it is ModPlanQuestion.Custom && it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS)
-    }
+    withContext(Dispatchers.EDT) {
+      val localMethod = PsiTreeUtil.findChildrenOfType(method("Anon", "run"), PsiMethod::class.java).single { it.containingClass?.name == "LocalHandler" }
+      fun asksAboutOverriders(optionValues: ModPlanOptionValues) = questionsOf(localMethod, optionValues).any {
+        it is ModPlanQuestion.Custom && it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS)
+      }
 
-    assertFalse(asksAboutOverriders(ModPlanOptionValues.EMPTY))
-    assertTrue(asksAboutOverriders(ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true)))
+      assertFalse(asksAboutOverriders(ModPlanOptionValues.EMPTY))
+      assertTrue(asksAboutOverriders(ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true)))
+    }
   }
 
   /**
    * The question ends the refactoring at once for a base method of a library, before the questions are asked again and anything is
    * searched.
    */
-  fun testChoosingTheBaseMethodOfALibraryEndsTheQuestion() {
+  @Test
+  fun testChoosingTheBaseMethodOfALibraryEndsTheQuestion(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Named.java", """
       public class Named {
         @Override
         public String toString() { return "named"; }
       }
       """.trimIndent())
-    val question = questionsOf(method("Named", "toString")).filterIsInstance<ModPlanQuestion.Custom>()
-      .single { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS) }
+    withContext(Dispatchers.EDT) {
+      val question = questionsOf(method("Named", "toString")).filterIsInstance<ModPlanQuestion.Custom>()
+        .single { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS) }
 
-    val message = try {
-      question.ask(project, ModPlanOptionValues.EMPTY)
-      null
+      val message = try {
+        question.ask(myFixture.project, ModPlanOptionValues.EMPTY)
+        null
+      }
+      catch (e: RuntimeException) {
+        e.message
+      }
+
+      assertTrue(message != null && message.contains("read-only"), message)
     }
-    catch (e: RuntimeException) {
-      e.message
+  }
+
+  @Test
+  fun testChoosingTheBaseMethodOfTheProjectSetsTheOption(): Unit = timeoutRunBlocking {
+    addBaseWithOverride()
+    withContext(Dispatchers.EDT) {
+      val question = questionsOf(method("Impl", "run")).filterIsInstance<ModPlanQuestion.Custom>()
+        .single { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS) }
+
+      val answers = question.ask(myFixture.project, ModPlanOptionValues.EMPTY)!!
+
+      assertFalse(answers.has(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS), "the dialog leaves the general answer to the request")
+      assertEquals(runReadActionBlocking { PsiFormatUtil.getExternalName(method("Impl", "run")) }, answers.get(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
     }
-
-    assertTrue(message, message != null && message.contains("read-only"))
   }
 
-  fun testChoosingTheBaseMethodOfTheProjectSetsTheOption() {
+  @Test
+  fun testBaseMethodIsKeptByDefault(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
-    val question = questionsOf(method("Impl", "run")).filterIsInstance<ModPlanQuestion.Custom>()
-      .single { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS) }
 
-    val answers = question.ask(project, ModPlanOptionValues.EMPTY)!!
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Impl", "run"))
 
-    assertFalse("the dialog leaves the general answer to the request", answers.has(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS))
-    assertEquals(runReadActionBlocking { PsiFormatUtil.getExternalName(method("Impl", "run")) }, answers.get(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
+      assertThat(findClass("Impl").findMethodsByName("run", false)).isEmpty()
+      assertThat(findClass("Base").findMethodsByName("run", false)).hasSize(1)
+    }
   }
 
-  fun testBaseMethodIsKeptByDefault() {
+  @Test
+  fun testBaseMethodIsDeletedWithTheOverrideWhenTheOptionSaysSo(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
 
-    safeDelete(method("Impl", "run"))
+    withContext(Dispatchers.EDT) {
+      safeDelete(method("Impl", "run"), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true))
 
-    assertEmpty(findClass("Impl").findMethodsByName("run", false))
-    assertSize(1, findClass("Base").findMethodsByName("run", false))
-  }
-
-  fun testBaseMethodIsDeletedWithTheOverrideWhenTheOptionSaysSo() {
-    addBaseWithOverride()
-
-    safeDelete(method("Impl", "run"), ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true))
-
-    assertEmpty(findClass("Impl").findMethodsByName("run", false))
-    assertEmpty(findClass("Base").findMethodsByName("run", false))
+      assertThat(findClass("Impl").findMethodsByName("run", false)).isEmpty()
+      assertThat(findClass("Base").findMethodsByName("run", false)).isEmpty()
+    }
   }
 
   /**
    * Both interface methods are deleted in one request, and each one's usages are preprocessed on their own. The kept overrider `S.run`
    * is an overrider of both, so each deletion sees it, and `M.run` keeps `@Override`, as in the legacy flow over the usages of both.
    */
-  fun testOverrideStaysWhenTheOverriderOfTwoDeletedMethodsIsKept() {
+  @Test
+  fun testOverrideStaysWhenTheOverriderOfTwoDeletedMethodsIsKept(): Unit = timeoutRunBlocking {
     addOverriderOfTwoInterfaces()
 
-    safeDelete(listOf(method("I1", "run"), method("I2", "run")),
-               ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, false))
+    withContext(Dispatchers.EDT) {
+      safeDelete(listOf(method("I1", "run"), method("I2", "run")),
+                 ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, false))
 
-    assertSize(1, findClass("S").findMethodsByName("run", false))
-    assertTrue(method("M", "run").hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE))
+      assertThat(findClass("S").findMethodsByName("run", false)).hasSize(1)
+      assertTrue(method("M", "run").hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE))
+    }
   }
 
-  fun testOverrideIsDroppedWhenTheOverriderOfTwoDeletedMethodsIsDeleted() {
+  @Test
+  fun testOverrideIsDroppedWhenTheOverriderOfTwoDeletedMethodsIsDeleted(): Unit = timeoutRunBlocking {
     addOverriderOfTwoInterfaces()
 
-    safeDelete(listOf(method("I1", "run"), method("I2", "run")))
+    withContext(Dispatchers.EDT) {
+      safeDelete(listOf(method("I1", "run"), method("I2", "run")))
 
-    assertEmpty(findClass("S").findMethodsByName("run", false))
-    assertFalse(method("M", "run").hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE))
+      assertThat(findClass("S").findMethodsByName("run", false)).isEmpty()
+      assertFalse(method("M", "run").hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE))
+    }
   }
 
   /** `S.run` is unused and overrides both interface methods; `M.run` is used and overrides only `S.run`. */
@@ -1213,34 +1475,44 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       """.trimIndent())
   }
 
-  fun testPackageIsNotSupported() {
+  @Test
+  fun testPackageIsNotSupported(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("p/A.java", "package p; public class A {}")
-    val aPackage = JavaPsiFacade.getInstance(project).findPackage("p")!!
+    withContext(Dispatchers.EDT) {
+      val aPackage = JavaPsiFacade.getInstance(myFixture.project).findPackage("p")!!
 
-    assertEquals(ModPlanAnalysisResult.RefusedReason.NOT_SUPPORTED, refusalOf(aPackage).reason)
+      assertEquals(ModPlanAnalysisResult.RefusedReason.NOT_SUPPORTED, refusalOf(aPackage).reason)
+    }
   }
 
-  fun testDefaultConstructorDeletesItsClass() {
+  @Test
+  fun testDefaultConstructorDeletesItsClass(): Unit = timeoutRunBlocking {
     val aClass = myFixture.addClass("public class A {}")
 
-    safeDelete(LightDefaultConstructor.create(aClass)!!)
+    withContext(Dispatchers.EDT) {
+      safeDelete(LightDefaultConstructor.create(aClass)!!)
 
-    assertNull(JavaPsiFacade.getInstance(project).findClass("A", GlobalSearchScope.allScope(project)))
+      assertNull(JavaPsiFacade.getInstance(myFixture.project).findClass("A", GlobalSearchScope.allScope(myFixture.project)))
+    }
   }
 
   /** The usages of the class are searched, not only the calls of the constructor. */
-  fun testDefaultConstructorFindsTheUsagesOfItsClass() {
+  @Test
+  fun testDefaultConstructorFindsTheUsagesOfItsClass(): Unit = timeoutRunBlocking {
     val aClass = myFixture.addClass("public class A {}")
     myFixture.addClass("public class B { A a; }")
 
-    val readyPlan = ready(LightDefaultConstructor.create(aClass)!!)
+    withContext(Dispatchers.EDT) {
+      val readyPlan = ready(LightDefaultConstructor.create(aClass)!!)
 
-    assertTrue("the type reference must be a conflict", readyPlan.conflicts.hasBroken())
-    assertNotNull(JavaPsiFacade.getInstance(project).findClass("A", GlobalSearchScope.allScope(project)))
+      assertTrue(readyPlan.conflicts.hasBroken(), "the type reference must be a conflict")
+      assertNotNull(JavaPsiFacade.getInstance(myFixture.project).findClass("A", GlobalSearchScope.allScope(myFixture.project)))
+    }
   }
 
   /** A quick fix or an action of a language gets the safe delete as a command, with the options of the request as the answers. */
-  fun testCommandOfAnUnusedMethodIsRunByAModCommandAction() {
+  @Test
+  fun testCommandOfAnUnusedMethodIsRunByAModCommandAction(): Unit = timeoutRunBlocking {
     myFixture.configureByText("Worker.java", """
       public class Worker {
         public void <caret>unused() {}
@@ -1248,14 +1520,17 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    myFixture.launchAction(SafeDeleteMethodAtCaretAction().asIntention())
+    withContext(Dispatchers.EDT) {
+      myFixture.launchAction(SafeDeleteMethodAtCaretAction().asIntention())
 
-    val text = myFixture.file.text
-    assertFalse(text, text.contains("unused"))
-    assertTrue(text, text.contains("kept"))
+      val text = myFixture.file.text
+      assertFalse(text.contains("unused"), text)
+      assertTrue(text.contains("kept"), text)
+    }
   }
 
-  fun testCommandOfAUsedMethodStartsWithTheConflicts() {
+  @Test
+  fun testCommandOfAUsedMethodStartsWithTheConflicts(): Unit = timeoutRunBlocking {
     myFixture.configureByText("Worker.java", """
       public class Worker {
         public void <caret>used() {}
@@ -1263,26 +1538,31 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    val context = ActionContext.from(myFixture.editor, myFixture.file)
-    val command = inBackground { SafeDeleteMethodAtCaretAction().perform(context) }
+    withContext(Dispatchers.EDT) {
+      val context = ActionContext.from(myFixture.editor, myFixture.file)
+      val command = inBackground { SafeDeleteMethodAtCaretAction().perform(context) }
 
-    assertInstanceOf(command.unpack().first(), ModShowConflicts::class.java)
+      assertInstanceOf(ModShowConflicts::class.java, command.unpack().first())
+    }
   }
 
-  fun testCommandOfAPackageIsAnError() {
+  @Test
+  fun testCommandOfAPackageIsAnError(): Unit = timeoutRunBlocking {
     val psiFile = myFixture.addFileToProject("p/A.java", "package p; public class A {}")
-    val aPackage = JavaPsiFacade.getInstance(project).findPackage("p")!!
-    val request = requestOf(aPackage, ModPlanOptionValues.EMPTY)
+    withContext(Dispatchers.EDT) {
+      val aPackage = JavaPsiFacade.getInstance(myFixture.project).findPackage("p")!!
+      val request = requestOf(aPackage, ModPlanOptionValues.EMPTY)
 
-    val command = inBackground {
-      ModPlanCommandAction(ModPlanSafeDeleteRefactoring.getInstance(),
-                           request,
-                           aPackage,
-                           "",
-                           false).perform(ActionContext.from(editor, psiFile))
+      val command = inBackground {
+        ModPlanCommandAction(ModPlanSafeDeleteRefactoring.getInstance(),
+                             request,
+                             aPackage,
+                             "",
+                             false).perform(ActionContext.from(myFixture.editor, psiFile))
 
+      }
+      assertEquals(RefactoringBundle.message("cannot.perform.refactoring"), assertInstanceOf(ModDisplayMessage::class.java, command).messageText())
     }
-    assertEquals(RefactoringBundle.message("cannot.perform.refactoring"), assertInstanceOf(command, ModDisplayMessage::class.java).messageText())
   }
 
   private class SafeDeleteMethodAtCaretAction : ModCommandAction {
@@ -1301,22 +1581,26 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
     }
   }
 
-  fun testSuperMethodIsNotAskedWithoutRelated() {
+  @Test
+  fun testSuperMethodIsNotAskedWithoutRelated(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
-    val run = method("Impl", "run")
+    withContext(Dispatchers.EDT) {
+      val run = method("Impl", "run")
 
-    val askedQuestions = questionsOf(run, related = false).filterIsInstance<ModPlanQuestion.Custom>()
-      .filter { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS) }
-    val readyPlan = ready(run, related = false)
+      val askedQuestions = questionsOf(run, related = false).filterIsInstance<ModPlanQuestion.Custom>()
+        .filter { it.options().contains(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS) }
+      val readyPlan = ready(run, related = false)
 
-    assertEmpty(askedQuestions)
-    assertEmpty(deletedFiles(readyPlan))
-    apply(readyPlan)
-    assertEmpty(findClass("Impl").findMethodsByName("run", false))
-    assertSize(1, findClass("Base").findMethodsByName("run", false))
+      assertThat(askedQuestions).isEmpty()
+      assertThat(deletedFiles(readyPlan)).isEmpty()
+      apply(readyPlan)
+      assertThat(findClass("Impl").findMethodsByName("run", false)).isEmpty()
+      assertThat(findClass("Base").findMethodsByName("run", false)).hasSize(1)
+    }
   }
 
-  fun testAccessorsAreStillAskedWithoutRelated() {
+  @Test
+  fun testAccessorsAreStillAskedWithoutRelated(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Bean.java", """
       public class Bean {
         private String name;
@@ -1324,21 +1608,26 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       }
       """.trimIndent())
 
-    assertTrue(asksAbout(questionsOf(findClass("Bean").findFieldByName("name", false)!!, related = false),
-                         ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS))
+    withContext(Dispatchers.EDT) {
+      assertTrue(asksAbout(questionsOf(findClass("Bean").findFieldByName("name", false)!!, related = false),
+                           ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS))
+    }
   }
 
-  fun testEmptyElementsToSearchIsARefusal() {
+  @Test
+  fun testEmptyElementsToSearchIsARefusal(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", """
       public class Worker {
         public void refused() {}
       }
       """.trimIndent())
-    val delegate = EmptySearchDelegate()
-    SafeDeleteProcessorDelegate.EP_NAME.point.registerExtension(delegate, LoadingOrder.FIRST, testRootDisposable)
-    ModPlanSafeDeleteProvider.EP_NAME.point.registerExtension(ModPlanLegacySafeDeleteProvider(delegate), LoadingOrder.FIRST, testRootDisposable)
+    withContext(Dispatchers.EDT) {
+      val delegate = EmptySearchDelegate()
+      SafeDeleteProcessorDelegate.EP_NAME.point.registerExtension(delegate, LoadingOrder.FIRST, myFixture.testRootDisposable)
+      ModPlanSafeDeleteProvider.EP_NAME.point.registerExtension(ModPlanLegacySafeDeleteProvider(delegate), LoadingOrder.FIRST, myFixture.testRootDisposable)
 
-    assertEquals(ModPlanAnalysisResult.RefusedReason.NOT_APPLICABLE, refusalOf(method("Worker", "refused")).reason)
+      assertEquals(ModPlanAnalysisResult.RefusedReason.NOT_APPLICABLE, refusalOf(method("Worker", "refused")).reason)
+    }
   }
 
   /** Answers as Ruby FactoryBot answers for an unresolved model: with nothing to delete. */
@@ -1349,28 +1638,35 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       emptyList()
   }
 
-  fun testSuperMethodQuestionThatTheRequestAnswersIsNotAsked() {
+  @Test
+  fun testSuperMethodQuestionThatTheRequestAnswersIsNotAsked(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
-    val run = method("Impl", "run")
-    val answeredValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true)
-      .with(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF, externalNameOf(run))
+    withContext(Dispatchers.EDT) {
+      val run = method("Impl", "run")
+      val answeredValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true)
+        .with(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF, externalNameOf(run))
 
-    assertTrue(asksAbout(questionsOf(run), ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
-    assertFalse(asksAbout(questionsOf(run, answeredValues), ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
-    safeDelete(run, answeredValues)
-    assertEmpty(findClass("Base").findMethodsByName("run", false))
+      assertTrue(asksAbout(questionsOf(run), ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
+      assertFalse(asksAbout(questionsOf(run, answeredValues), ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
+      safeDelete(run, answeredValues)
+      assertThat(findClass("Base").findMethodsByName("run", false)).isEmpty()
+    }
   }
 
   /** The names of the answers add up, so a list of other methods does not answer the question of this one. */
-  fun testSuperMethodQuestionIsAskedWhenTheRequestNamesOnlyAnotherMethod() {
+  @Test
+  fun testSuperMethodQuestionIsAskedWhenTheRequestNamesOnlyAnotherMethod(): Unit = timeoutRunBlocking {
     addTwoMethodsWithBases()
-    val otherValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF, externalNameOf(method("Impl2", "b")))
+    withContext(Dispatchers.EDT) {
+      val otherValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF, externalNameOf(method("Impl2", "b")))
 
-    assertTrue(asksAbout(questionsOf(method("Impl1", "a"), otherValues), ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
+      assertTrue(asksAbout(questionsOf(method("Impl1", "a"), otherValues), ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
+    }
   }
 
   /** The answer about the accessors of one field does not answer the question of another field. */
-  fun testAccessorQuestionOfOneFieldLeavesTheOtherFieldAsked() {
+  @Test
+  fun testAccessorQuestionOfOneFieldLeavesTheOtherFieldAsked(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Bean.java", """
       public class Bean {
         private String a;
@@ -1379,213 +1675,272 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
         public String getB() { return b; }
       }
       """.trimIndent())
-    val a = findClass("Bean").findFieldByName("a", false)!!
-    val b = findClass("Bean").findFieldByName("b", false)!!
-    val askedValues = ModPlanOptionValues.EMPTY.withAnswers(ModPlanJavaSafeDeleteOptions.ACCESSORS_OF, listOf(externalNameOf(a)), emptyList())
+    withContext(Dispatchers.EDT) {
+      val a = findClass("Bean").findFieldByName("a", false)!!
+      val b = findClass("Bean").findFieldByName("b", false)!!
+      val askedValues = ModPlanOptionValues.EMPTY.withAnswers(ModPlanJavaSafeDeleteOptions.ACCESSORS_OF, listOf(externalNameOf(a)), emptyList())
 
-    assertTrue(asksAbout(questionsOf(b, askedValues), ModPlanJavaSafeDeleteOptions.ACCESSORS_OF))
-    assertFalse(asksAbout(questionsOf(a, askedValues), ModPlanJavaSafeDeleteOptions.ACCESSORS_OF))
+      assertTrue(asksAbout(questionsOf(b, askedValues), ModPlanJavaSafeDeleteOptions.ACCESSORS_OF))
+      assertFalse(asksAbout(questionsOf(a, askedValues), ModPlanJavaSafeDeleteOptions.ACCESSORS_OF))
+    }
   }
 
   /** The answer about the hierarchy of one parameter does not answer the question of the parameter of another method. */
-  fun testHierarchyQuestionOfOneParameterLeavesTheOtherParameterAsked() {
+  @Test
+  fun testHierarchyQuestionOfOneParameterLeavesTheOtherParameterAsked(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Base1.java", "public class Base1 { public void run(int p) {} }")
     myFixture.addFileToProject("Impl1.java", "public class Impl1 extends Base1 { @Override public void run(int p) {} }")
     myFixture.addFileToProject("Base2.java", "public class Base2 { public void run(int q) {} }")
     myFixture.addFileToProject("Impl2.java", "public class Impl2 extends Base2 { @Override public void run(int q) {} }")
-    val p = method("Base1", "run").parameterList.parameters[0]
-    val q = method("Base2", "run").parameterList.parameters[0]
-    val askedValues = ModPlanOptionValues.EMPTY.withAnswers(ModPlanSafeDeleteOptions.HIERARCHY_OF, listOf(externalNameOf(p)), emptyList())
+    withContext(Dispatchers.EDT) {
+      val p = method("Base1", "run").parameterList.parameters[0]
+      val q = method("Base2", "run").parameterList.parameters[0]
+      val askedValues = ModPlanOptionValues.EMPTY.withAnswers(ModPlanSafeDeleteOptions.HIERARCHY_OF, listOf(externalNameOf(p)), emptyList())
 
-    assertTrue(asksAbout(questionsOf(q, askedValues), ModPlanSafeDeleteOptions.HIERARCHY_OF))
-    assertFalse(asksAbout(questionsOf(p, askedValues), ModPlanSafeDeleteOptions.HIERARCHY_OF))
+      assertTrue(asksAbout(questionsOf(q, askedValues), ModPlanSafeDeleteOptions.HIERARCHY_OF))
+      assertFalse(asksAbout(questionsOf(p, askedValues), ModPlanSafeDeleteOptions.HIERARCHY_OF))
+    }
   }
 
   /** A type parameter has the key of its method and its name, so two type parameters of one method are asked about on their own. */
-  fun testHierarchyQuestionOfOneTypeParameterLeavesTheOtherTypeParameterAsked() {
+  @Test
+  fun testHierarchyQuestionOfOneTypeParameterLeavesTheOtherTypeParameterAsked(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Base.java", "public class Base { public <T, U> void run() {} }")
     myFixture.addFileToProject("Impl.java", "public class Impl extends Base { @Override public <T, U> void run() {} }")
-    val run = method("Base", "run")
-    val askedValues = ModPlanOptionValues.EMPTY.withAnswers(ModPlanSafeDeleteOptions.HIERARCHY_OF, listOf(externalNameOf(run) + " T"), emptyList())
+    withContext(Dispatchers.EDT) {
+      val run = method("Base", "run")
+      val askedValues = ModPlanOptionValues.EMPTY.withAnswers(ModPlanSafeDeleteOptions.HIERARCHY_OF, listOf(externalNameOf(run) + " T"), emptyList())
 
-    assertTrue(asksAbout(questionsOf(run.typeParameters[1], askedValues), ModPlanSafeDeleteOptions.HIERARCHY_OF))
-    assertFalse(asksAbout(questionsOf(run.typeParameters[0], askedValues), ModPlanSafeDeleteOptions.HIERARCHY_OF))
+      assertTrue(asksAbout(questionsOf(run.typeParameters[1], askedValues), ModPlanSafeDeleteOptions.HIERARCHY_OF))
+      assertFalse(asksAbout(questionsOf(run.typeParameters[0], askedValues), ModPlanSafeDeleteOptions.HIERARCHY_OF))
+    }
   }
 
   /**
    * The legacy flow passes the usages of every language to this delegate, also under a read lock: it must not open a modal progress
    * there.
    */
-  fun testPreprocessUsagesUnderAReadLock() {
+  @Test
+  fun testPreprocessUsagesUnderAReadLock(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", "public class Worker { int unused; void use() { unused++; } }")
-    val usages = runReadActionBlocking {
-      val field = findClass("Worker").findFieldByName("unused", false)!!
-      val reference = PsiTreeUtil.findChildOfType(method("Worker", "use"), PsiReferenceExpression::class.java)!!
-      arrayOf<UsageInfo>(SafeDeleteReferenceSimpleDeleteUsageInfo(reference, field, false))
+    withContext(Dispatchers.EDT) {
+      val usages = runReadActionBlocking {
+        val field = findClass("Worker").findFieldByName("unused", false)!!
+        val reference = PsiTreeUtil.findChildOfType(method("Worker", "use"), PsiReferenceExpression::class.java)!!
+        arrayOf<UsageInfo>(SafeDeleteReferenceSimpleDeleteUsageInfo(reference, field, false))
+      }
+
+      val processedUsages = runReadActionBlocking { JavaSafeDeleteProcessor().preprocessUsages(myFixture.project, usages) }
+
+      assertThat(processedUsages!!.toList()).hasSameSizeAs(usages.toList()).hasSameElementsAs(usages.toList())
     }
-
-    val processedUsages = runReadActionBlocking { JavaSafeDeleteProcessor().preprocessUsages(project, usages) }
-
-    assertSameElements(processedUsages!!.toList(), usages.toList())
   }
 
   /** The switch is the general answer of a request: it answers the question of every method. */
-  fun testSuperMethodsSwitchAloneAnswersTheQuestion() {
+  @Test
+  fun testSuperMethodsSwitchAloneAnswersTheQuestion(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
-    val keepValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, false)
+    withContext(Dispatchers.EDT) {
+      val keepValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, false)
 
-    assertFalse(asksAbout(questionsOf(method("Impl", "run"), keepValues), ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
-    safeDelete(method("Impl", "run"), keepValues)
-    assertSize(1, findClass("Base").findMethodsByName("run", false))
+      assertFalse(asksAbout(questionsOf(method("Impl", "run"), keepValues), ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
+      safeDelete(method("Impl", "run"), keepValues)
+      assertThat(findClass("Base").findMethodsByName("run", false)).hasSize(1)
+    }
   }
 
   /** A method that the dialog asked about with the answer no is not asked again, and keeps its base method. */
-  fun testAskedMethodThatIsNotChosenKeepsItsBaseMethod() {
+  @Test
+  fun testAskedMethodThatIsNotChosenKeepsItsBaseMethod(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
-    val askedValues = ModPlanOptionValues.EMPTY.withAnswers(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF, listOf(externalNameOf(method("Impl", "run"))), emptyList())
+    withContext(Dispatchers.EDT) {
+      val askedValues = ModPlanOptionValues.EMPTY.withAnswers(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF, listOf(externalNameOf(method("Impl", "run"))), emptyList())
 
-    assertFalse(asksAbout(questionsOf(method("Impl", "run"), askedValues), ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
-    safeDelete(method("Impl", "run"), askedValues)
-    assertSize(1, findClass("Base").findMethodsByName("run", false))
+      assertFalse(asksAbout(questionsOf(method("Impl", "run"), askedValues), ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF))
+      safeDelete(method("Impl", "run"), askedValues)
+      assertThat(findClass("Base").findMethodsByName("run", false)).hasSize(1)
+    }
   }
 
-  fun testHierarchyQuestionThatTheRequestAnswersIsNotAsked() {
+  @Test
+  fun testHierarchyQuestionThatTheRequestAnswersIsNotAsked(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Base.java", "public class Base { public void run(int unused) {} }")
     myFixture.addFileToProject("Impl.java", "public class Impl extends Base { @Override public void run(int unused) {} }")
-    val parameter = method("Base", "run").parameterList.parameters[0]
+    withContext(Dispatchers.EDT) {
+      val parameter = method("Base", "run").parameterList.parameters[0]
 
-    assertTrue(asksAbout(questionsOf(parameter), ModPlanSafeDeleteOptions.DELETE_HIERARCHY))
-    assertFalse(asksAbout(questionsOf(parameter, ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.DELETE_HIERARCHY, false)),
-                          ModPlanSafeDeleteOptions.DELETE_HIERARCHY))
+      assertTrue(asksAbout(questionsOf(parameter), ModPlanSafeDeleteOptions.DELETE_HIERARCHY))
+      assertFalse(asksAbout(questionsOf(parameter, ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.DELETE_HIERARCHY, false)),
+                            ModPlanSafeDeleteOptions.DELETE_HIERARCHY))
+    }
   }
 
-  fun testAccessorQuestionThatTheRequestAnswersIsNotAsked() {
+  @Test
+  fun testAccessorQuestionThatTheRequestAnswersIsNotAsked(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Bean.java", """
       public class Bean {
         private String name;
         public String getName() { return name; }
       }
       """.trimIndent())
-    val field = findClass("Bean").findFieldByName("name", false)!!
+    withContext(Dispatchers.EDT) {
+      val field = findClass("Bean").findFieldByName("name", false)!!
 
-    assertTrue(asksAbout(questionsOf(field), ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS))
-    assertFalse(asksAbout(questionsOf(field, ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS, true)),
-                          ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS))
+      assertTrue(asksAbout(questionsOf(field), ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS))
+      assertFalse(asksAbout(questionsOf(field, ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS, true)),
+                            ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS))
+    }
   }
 
-  fun testOverridersQuestionThatTheRequestAnswersIsNotAsked() {
+  @Test
+  fun testOverridersQuestionThatTheRequestAnswersIsNotAsked(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
-    val answeredValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, externalNameOf(method("Impl", "run")))
+    withContext(Dispatchers.EDT) {
+      val answeredValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, externalNameOf(method("Impl", "run")))
 
-    assertTrue(asksAbout(questionsOf(method("Base", "run")), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
-    assertFalse(asksAbout(questionsOf(method("Base", "run"), answeredValues), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
+      assertTrue(asksAbout(questionsOf(method("Base", "run")), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
+      assertFalse(asksAbout(questionsOf(method("Base", "run"), answeredValues), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
+    }
   }
 
-  fun testOverridersQuestionIsAskedWhenTheRequestNamesOnlyOtherMethods() {
+  @Test
+  fun testOverridersQuestionIsAskedWhenTheRequestNamesOnlyOtherMethods(): Unit = timeoutRunBlocking {
     addTwoMethodsWithBases()
-    val otherValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, externalNameOf(method("Impl2", "b")))
+    withContext(Dispatchers.EDT) {
+      val otherValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, externalNameOf(method("Impl2", "b")))
 
-    assertTrue(asksAbout(questionsOf(method("Base1", "a"), otherValues), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
+      assertTrue(asksAbout(questionsOf(method("Base1", "a"), otherValues), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
+    }
   }
 
-  fun testCallersQuestionThatTheRequestAnswersIsNotAsked() {
+  @Test
+  fun testCallersQuestionThatTheRequestAnswersIsNotAsked(): Unit = timeoutRunBlocking {
     addCallersThatPassOnTheParameter()
-    val parameter = method("Worker", "bar").parameterList.parameters[0]
-    val answeredValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true)
-      .with(ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN, externalNameOf(method("Worker", "foo")))
+    withContext(Dispatchers.EDT) {
+      val parameter = method("Worker", "bar").parameterList.parameters[0]
+      val answeredValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true)
+        .with(ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN, externalNameOf(method("Worker", "foo")))
 
-    assertTrue(asksAbout(questionsOf(parameter), ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN))
-    assertFalse(asksAbout(questionsOf(parameter, answeredValues), ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN))
+      assertTrue(asksAbout(questionsOf(parameter), ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN))
+      assertFalse(asksAbout(questionsOf(parameter, answeredValues), ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN))
+    }
   }
 
-  fun testCallersQuestionIsAskedWhenTheRequestNamesOnlyOtherMethods() {
+  @Test
+  fun testCallersQuestionIsAskedWhenTheRequestNamesOnlyOtherMethods(): Unit = timeoutRunBlocking {
     addCallersThatPassOnTheParameter()
-    val otherValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN, externalNameOf(method("Worker", "main")))
+    withContext(Dispatchers.EDT) {
+      val otherValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN, externalNameOf(method("Worker", "main")))
 
-    assertTrue(asksAbout(questionsOf(method("Worker", "bar").parameterList.parameters[0], otherValues),
-                         ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN))
+      assertTrue(asksAbout(questionsOf(method("Worker", "bar").parameterList.parameters[0], otherValues),
+                           ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN))
+    }
   }
 
-  fun testCalleesQuestionThatTheRequestAnswersIsNotAsked() {
+  @Test
+  fun testCalleesQuestionThatTheRequestAnswersIsNotAsked(): Unit = timeoutRunBlocking {
     addCallerWithTwoCallees()
-    val answeredValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true)
-      .with(ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE, externalNameOf(method("Worker", "first")))
+    withContext(Dispatchers.EDT) {
+      val answeredValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true)
+        .with(ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE, externalNameOf(method("Worker", "first")))
 
-    assertTrue(asksAbout(questionsOf(method("Worker", "caller")), ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE))
-    assertFalse(asksAbout(questionsOf(method("Worker", "caller"), answeredValues), ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE))
+      assertTrue(asksAbout(questionsOf(method("Worker", "caller")), ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE))
+      assertFalse(asksAbout(questionsOf(method("Worker", "caller"), answeredValues), ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE))
+    }
   }
 
-  fun testCalleesQuestionIsAskedWhenTheRequestNamesOnlyOtherMethods() {
+  @Test
+  fun testCalleesQuestionIsAskedWhenTheRequestNamesOnlyOtherMethods(): Unit = timeoutRunBlocking {
     addCallerWithTwoCallees()
-    val otherValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE, externalNameOf(method("Worker", "caller")))
+    withContext(Dispatchers.EDT) {
+      val otherValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE, externalNameOf(method("Worker", "caller")))
 
-    assertTrue(asksAbout(questionsOf(method("Worker", "caller"), otherValues), ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE))
+      assertTrue(asksAbout(questionsOf(method("Worker", "caller"), otherValues), ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE))
+    }
   }
 
   /** The switch is the general answer of a request: it answers the question, and its value decides for all the offered elements. */
-  fun testOverridersSwitchAloneAnswersTheQuestion() {
+  @Test
+  fun testOverridersSwitchAloneAnswersTheQuestion(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
-    val keepValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, false)
+    withContext(Dispatchers.EDT) {
+      val keepValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, false)
 
-    assertFalse(asksAbout(questionsOf(method("Base", "run"), keepValues), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
-    safeDelete(method("Base", "run"), keepValues)
-    assertSize(1, findClass("Impl").findMethodsByName("run", false))
+      assertFalse(asksAbout(questionsOf(method("Base", "run"), keepValues), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
+      safeDelete(method("Base", "run"), keepValues)
+      assertThat(findClass("Impl").findMethodsByName("run", false)).hasSize(1)
+    }
   }
 
-  fun testCalleesSwitchAloneAnswersTheQuestionAndDeletesThemAll() {
+  @Test
+  fun testCalleesSwitchAloneAnswersTheQuestionAndDeletesThemAll(): Unit = timeoutRunBlocking {
     addCallerWithTwoCallees()
-    val deleteValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true)
+    withContext(Dispatchers.EDT) {
+      val deleteValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true)
 
-    assertFalse(asksAbout(questionsOf(method("Worker", "caller"), deleteValues), ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE))
-    safeDelete(method("Worker", "caller"), deleteValues)
-    assertEmpty(findClass("Worker").findMethodsByName("first", false))
-    assertEmpty(findClass("Worker").findMethodsByName("second", false))
+      assertFalse(asksAbout(questionsOf(method("Worker", "caller"), deleteValues), ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE))
+      safeDelete(method("Worker", "caller"), deleteValues)
+      assertThat(findClass("Worker").findMethodsByName("first", false)).isEmpty()
+      assertThat(findClass("Worker").findMethodsByName("second", false)).isEmpty()
+    }
   }
 
-  fun testCallersSwitchAloneAnswersTheQuestionAndDeletesInThemAll() {
+  @Test
+  fun testCallersSwitchAloneAnswersTheQuestionAndDeletesInThemAll(): Unit = timeoutRunBlocking {
     addCallersThatPassOnTheParameter()
-    val parameter = method("Worker", "bar").parameterList.parameters[0]
-    val deleteValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true)
+    withContext(Dispatchers.EDT) {
+      val parameter = method("Worker", "bar").parameterList.parameters[0]
+      val deleteValues = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true)
 
-    assertFalse(asksAbout(questionsOf(parameter, deleteValues), ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN))
-    safeDelete(parameter, deleteValues)
-    assertEquals(0, method("Worker", "foo").parameterList.parametersCount)
-    assertEquals(0, method("Worker", "baz").parameterList.parametersCount)
+      assertFalse(asksAbout(questionsOf(parameter, deleteValues), ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN))
+      safeDelete(parameter, deleteValues)
+      assertEquals(0, method("Worker", "foo").parameterList.parametersCount)
+      assertEquals(0, method("Worker", "baz").parameterList.parametersCount)
+    }
   }
 
   /** A dialog that chose nothing names the offered overriding methods only: the question is answered, and they stay. */
-  fun testOfferedOverridersThatAreNotChosenStay() {
+  @Test
+  fun testOfferedOverridersThatAreNotChosenStay(): Unit = timeoutRunBlocking {
     addBaseWithOverride()
-    val offeredValues = ModPlanOptionValues.EMPTY.withAnswers(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, listOf(externalNameOf(method("Impl", "run"))), emptyList())
+    withContext(Dispatchers.EDT) {
+      val offeredValues = ModPlanOptionValues.EMPTY.withAnswers(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, listOf(externalNameOf(method("Impl", "run"))), emptyList())
 
-    assertFalse(asksAbout(questionsOf(method("Base", "run"), offeredValues), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
-    safeDelete(method("Base", "run"), offeredValues)
-    assertSize(1, findClass("Impl").findMethodsByName("run", false))
+      assertFalse(asksAbout(questionsOf(method("Base", "run"), offeredValues), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
+      safeDelete(method("Base", "run"), offeredValues)
+      assertThat(findClass("Impl").findMethodsByName("run", false)).hasSize(1)
+    }
   }
 
   /** The answer of the dialog of one method does not answer the dialog of another method, and does not choose its overriding methods. */
-  fun testAnswerAboutTheOverridersOfOneMethodLeavesTheOtherMethodAsked() {
+  @Test
+  fun testAnswerAboutTheOverridersOfOneMethodLeavesTheOtherMethodAsked(): Unit = timeoutRunBlocking {
     addTwoMethodsWithBases()
-    val firstName = externalNameOf(method("Impl1", "a"))
-    val firstAnswers = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, firstName)
+    withContext(Dispatchers.EDT) {
+      val firstName = externalNameOf(method("Impl1", "a"))
+      val firstAnswers = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, firstName)
 
-    assertTrue(asksAbout(questionsOf(method("Base2", "b"), firstAnswers), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
-    safeDelete(listOf(method("Base1", "a"), method("Base2", "b")), firstAnswers)
-    assertEmpty(findClass("Impl1").findMethodsByName("a", false))
-    assertSize(1, findClass("Impl2").findMethodsByName("b", false))
+      assertTrue(asksAbout(questionsOf(method("Base2", "b"), firstAnswers), ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
+      safeDelete(listOf(method("Base1", "a"), method("Base2", "b")), firstAnswers)
+      assertThat(findClass("Impl1").findMethodsByName("a", false)).isEmpty()
+      assertThat(findClass("Impl2").findMethodsByName("b", false)).hasSize(1)
+    }
   }
 
   /** An overriding method of two deleted methods does not answer the question of the second one, which offers one more. */
-  fun testSharedOverriderLeavesTheOtherMethodAsked() {
+  @Test
+  fun testSharedOverriderLeavesTheOtherMethodAsked(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("I.java", "public interface I { void foo(); }")
     myFixture.addFileToProject("J.java", "public interface J { void foo(); }")
     myFixture.addFileToProject("C.java", "public class C implements I, J { @Override public void foo() {} }")
     myFixture.addFileToProject("D.java", "public class D implements J { @Override public void foo() {} }")
-    val sharedName = externalNameOf(method("C", "foo"))
-    val firstAnswers = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, sharedName)
+    withContext(Dispatchers.EDT) {
+      val sharedName = externalNameOf(method("C", "foo"))
+      val firstAnswers = ModPlanOptionValues.EMPTY.with(ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE, sharedName)
 
-    assertTrue(asksAbout(questionsOf(listOf(method("I", "foo"), method("J", "foo")), firstAnswers),
-                         ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
+      assertTrue(asksAbout(questionsOf(listOf(method("I", "foo"), method("J", "foo")), firstAnswers),
+                           ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE))
+    }
   }
 
   private fun addCallerWithTwoCallees() {
@@ -1598,15 +1953,18 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
       """.trimIndent())
   }
 
-  fun testSearchFormIsNotAskedOnlyWhenTheRequestAnswersBothOptions() {
+  @Test
+  fun testSearchFormIsNotAskedOnlyWhenTheRequestAnswersBothOptions(): Unit = timeoutRunBlocking {
     myFixture.addFileToProject("Worker.java", "public class Worker { public void unused() {} }")
-    val unused = method("Worker", "unused")
-    val commentsOnly = ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS, true)
+    withContext(Dispatchers.EDT) {
+      val unused = method("Worker", "unused")
+      val commentsOnly = ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS, true)
 
-    assertTrue(asksAbout(questionsOf(unused), ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS))
-    assertTrue(asksAbout(questionsOf(unused, commentsOnly), ModPlanSafeDeleteOptions.SEARCH_IN_NON_CODE))
-    assertFalse(asksAbout(questionsOf(unused, commentsOnly.with(ModPlanSafeDeleteOptions.SEARCH_IN_NON_CODE, false)),
-                          ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS))
+      assertTrue(asksAbout(questionsOf(unused), ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS))
+      assertTrue(asksAbout(questionsOf(unused, commentsOnly), ModPlanSafeDeleteOptions.SEARCH_IN_NON_CODE))
+      assertFalse(asksAbout(questionsOf(unused, commentsOnly.with(ModPlanSafeDeleteOptions.SEARCH_IN_NON_CODE, false)),
+                            ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS))
+    }
   }
 
   private fun asksAbout(questions: List<ModPlanQuestion>, option: ModPlanOption<*>): Boolean = questions.any { question ->
@@ -1630,7 +1988,7 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
 
   private fun requestOf(elements: List<PsiElement>, optionValues: ModPlanOptionValues, related: Boolean = true): ModPlanRequest {
     val requestOptionValues = if (related) { optionValues } else { optionValues.with(ModPlanSafeDeleteOptions.SEARCH_RELATED, false) }
-    return ModPlanRequest(project, elements.map(SymbolPointer::of), requestOptionValues)
+    return ModPlanRequest(myFixture.project, elements.map(SymbolPointer::of), requestOptionValues)
   }
 
   private fun requestOf(element: PsiElement, optionValues: ModPlanOptionValues, related: Boolean = true): ModPlanRequest =
@@ -1641,13 +1999,13 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
     optionValues: ModPlanOptionValues = ModPlanOptionValues.EMPTY,
     related: Boolean = true,
   ): ModPlan.AcceptedPlan =
-    assertInstanceOf(plan(element, optionValues, related), ModPlan.AcceptedPlan::class.java)
+    assertInstanceOf(ModPlan.AcceptedPlan::class.java, plan(element, optionValues, related))
 
   private fun refusalOf(element: PsiElement): ModPlan.RefusedPlan =
-    assertInstanceOf(plan(element, ModPlanOptionValues.EMPTY), ModPlan.RefusedPlan::class.java)
+    assertInstanceOf(ModPlan.RefusedPlan::class.java, plan(element, ModPlanOptionValues.EMPTY))
 
   private fun safeDelete(elements: List<PsiElement>, optionValues: ModPlanOptionValues = ModPlanOptionValues.EMPTY) {
-    apply(assertInstanceOf(plan(elements, optionValues), ModPlan.AcceptedPlan::class.java))
+    apply(assertInstanceOf(ModPlan.AcceptedPlan::class.java, plan(elements, optionValues)))
   }
 
   private fun safeDelete(element: PsiElement, optionValues: ModPlanOptionValues = ModPlanOptionValues.EMPTY) {
@@ -1656,8 +2014,8 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
 
   private fun apply(acceptedPlan: ModPlan.AcceptedPlan) {
     val messages = acceptedPlan.conflicts.conflicts.map { it.messages }
-    assertFalse("unexpected conflicts: $messages", acceptedPlan.conflicts.hasBroken())
-    assertInstanceOf(ModPlanExecutor.execute(acceptedPlan.execution, true), ModPlanExecutionResult.Applied::class.java)
+    assertFalse(acceptedPlan.conflicts.hasBroken(), "unexpected conflicts: $messages")
+    assertInstanceOf(ModPlanExecutionResult.Applied::class.java, ModPlanExecutor.execute(acceptedPlan.execution, true))
   }
 
   private fun deletedFiles(acceptedPlan: ModPlan.AcceptedPlan): List<VirtualFile> =
@@ -1682,5 +2040,5 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
   private fun method(className: String, name: String) = findClass(className).findMethodsByName(name, false).single()
 
   private fun findClass(name: String): PsiClass =
-    JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project))!!
+    JavaPsiFacade.getInstance(myFixture.project).findClass(name, GlobalSearchScope.allScope(myFixture.project))!!
 }

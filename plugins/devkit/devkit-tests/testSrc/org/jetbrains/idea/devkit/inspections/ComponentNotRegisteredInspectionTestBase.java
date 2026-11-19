@@ -10,6 +10,10 @@ import org.jetbrains.idea.devkit.dom.AddToGroup;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.util.ActionData;
 
+/**
+ * @deprecated Use {@link ComponentNotRegisteredFixtureKt#componentNotRegisteredFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class ComponentNotRegisteredInspectionTestBase extends PluginModuleTestCase {
   @Override
   protected void setUp() throws Exception {

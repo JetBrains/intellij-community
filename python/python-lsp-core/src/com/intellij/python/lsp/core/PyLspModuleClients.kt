@@ -78,13 +78,17 @@ suspend fun pyLspServedProjects(project: Project): List<PyProject> =
  * and for a Python project no server may serve. The second case does not arrive through the type engine
  * or the tool, because both check the interpreter before they build a descriptor. It keeps the promise
  * for any other caller.
+ *
+ * Pass the [PyLspToolIntegrationProvider.followsToolPackage] of the provider as [followsToolPackage]. A server that
+ * runs a binary of its own does not run the copy of [pyTool] in an environment, so that version does not split the
+ * Python projects.
  */
 @ApiStatus.Internal
-fun pyLspProjectsToServeWith(pyProject: PyProject, pyTool: PyTool): List<PyProject> {
+fun pyLspProjectsToServeWith(pyProject: PyProject, pyTool: PyTool, followsToolPackage: Boolean = true): List<PyProject> {
   // It runs under the read lock of `fileOpened`, so it cannot wait. Before the first snapshot, nothing is known to be
   // served, and the Python project serves alone. The first snapshot regroups the servers, see PY_LSP_SERVE_KEYS_CHANGED.
   val served = EvoPyProjectModel.getInstance(pyProject.project).snapshotOrNull()?.let(::pyLspServedProjects) ?: emptyList()
-  val keys = pyLspServeKeys(pyProject.project, pyTool)
+  val keys = if (followsToolPackage) pyLspServeKeys(pyProject.project, pyTool) else emptyMap()
   return pyLspServeGroupOf(pyProject, served) { keys.getByModule(it) ?: pyLspServeKeyWithoutVersion(it) }
 }
 

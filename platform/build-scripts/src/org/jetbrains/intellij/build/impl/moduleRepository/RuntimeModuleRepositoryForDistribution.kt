@@ -21,7 +21,6 @@ import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
@@ -33,6 +32,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
+import org.jetbrains.intellij.build.impl.supportedAndRequestedDistributions
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
@@ -52,7 +52,8 @@ internal fun generateRuntimeModuleRepositoryForDistribution(
 ) {
   val additionalFrontendOnlyPlugins = context.getLayoutOfAdditionalFrontendOnlyPlugins(platformLayout)
 
-  val osSpecificDistPaths = SUPPORTED_DISTRIBUTIONS.associateWith {
+  val distributions = supportedAndRequestedDistributions(context)
+  val osSpecificDistPaths = distributions.associateWith {
     getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context)
   }
 
@@ -70,7 +71,7 @@ internal fun generateRuntimeModuleRepositoryForDistribution(
     )
   }
   else {
-    SUPPORTED_DISTRIBUTIONS
+    distributions
       .filter { context.shouldBuildDistributionForOS(it.os, it.arch) }
       .forEach { distribution ->
         val targetDirectory = osSpecificDistPaths.getValue(distribution)

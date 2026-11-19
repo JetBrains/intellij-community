@@ -29,7 +29,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
+import kotlin.concurrent.atomics.AtomicInt
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 
 /**
@@ -92,15 +94,23 @@ fun <T> resource(producer: suspend CoroutineScope.(consumer: Consumer<T>) -> Con
           // we need to control the cancellation manually to guarantee that [producer] is disposed only after [body] has finished
           withContext(NonCancellable) {
             val resourceScope = this@withContext
+            // The parent cancellation and the publication race on different threads: the first to flip the state wins.
+            // A dispose does not stop a handler that already runs, and its cancel could land after the publication,
+            // releasing the value under [body].
+            val publication = AtomicInt(STARTING)
             // cancel everything if parent is cancelled while the resource is initializing
             val completionHandler = canary.invokeOnCompletion { ex ->
-              if (ex != null) {
+              if (ex != null && publication.compareAndSet(STARTING, CANCELLED)) {
                 resourceScope.cancel("Propagating exception from parent", ex)
               }
             }
             producer { t ->
               // we are publishing the value, have to make sure [body] is completed before we dispose, so we are unsubscribing from parent
               completionHandler.dispose()
+              if (!publication.compareAndSet(STARTING, PUBLISHED)) {
+                check(publication.load() == CANCELLED) { "Double emission" }
+                throw CancellationException("The parent was cancelled before the resource was published")
+              }
               currentCoroutineContext().job.ensureActive()
               check(deferred.complete(t)) { "Double emission" }
               shutdown.join()
@@ -135,6 +145,11 @@ fun <T> resource(producer: suspend CoroutineScope.(consumer: Consumer<T>) -> Con
 sealed interface Consumed
 
 internal data object Proof : Consumed
+
+// The publication states of a [resource]: the parent cancellation and the publication each move it off [STARTING] once.
+private const val STARTING = 0
+private const val PUBLISHED = 1
+private const val CANCELLED = 2
 
 typealias Consumer<T> = suspend (T) -> Consumed
 

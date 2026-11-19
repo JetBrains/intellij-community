@@ -344,3 +344,18 @@ fn the_bep_of_a_second_invocation_merges_into_the_first() {
     assert!(!seen.saw_any_event, "an invocation without events degrades the run");
     assert_eq!(seen.overall_success, None);
 }
+
+/// The analysis time comes from the build metrics, quoted as proto3 writes an int64, and two invocations of a run add
+/// up. Build metrics without timing metrics, as bazel writes them when the analysis and the execution overlap, add
+/// nothing.
+#[test]
+fn the_analysis_time_of_the_build_metrics_adds_up_over_the_invocations() {
+    let metrics = |analysis: serde_json::Value| json!({"id": {"buildMetrics": {}}, "buildMetrics": {"timingMetrics": {"wallTimeInMs": "9000", "analysisPhaseTimeInMs": analysis}}});
+    let mut first = posix_bep(&[metrics(json!("1250"))]);
+    assert_eq!(first.analysis_ms, 1250);
+    first.merge(posix_bep(&[
+        metrics(json!(750)),
+        json!({"id": {"buildMetrics": {}}, "buildMetrics": {"actionSummary": {"actionsExecuted": "3"}}}),
+    ]));
+    assert_eq!(first.analysis_ms, 2000);
+}

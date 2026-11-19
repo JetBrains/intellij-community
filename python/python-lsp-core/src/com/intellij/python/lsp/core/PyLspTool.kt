@@ -74,11 +74,5 @@ abstract class PyLspTool<C : PyLspToolConfiguration<*>> : ProjectLevelPyTool<PyL
   }
 }
 
-/**
- * Returns true when the tool is enabled or selected as the project type engine.
- *
- * A type engine stays active while its separate enabled flag is false, so an LSP tool asks this rather than
- * [isEnabledOn] wherever it decides whether to serve.
- */
-fun PyLspTool<*>.isActiveOn(project: Project): Boolean =
-  isEnabledOn(project) || isSelectedAsTypeEngine(project)
+/** Returns true when the tool is enabled */
+fun PyLspTool<*>.isActiveOn(project: Project): Boolean = isEnabledOn(project)

@@ -7,6 +7,10 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link JavaCompletionAutoPopupFixtureKt#javaCompletionAutoPopupFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class JavaCompletionAutoPopupTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected CompletionAutoPopupTester myTester;
 

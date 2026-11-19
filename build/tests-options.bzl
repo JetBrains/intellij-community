@@ -24,6 +24,15 @@ JAVA_TEST_FLAGS = [
     "//conditions:default": ['-XX:ErrorFile="$${TEST_UNDECLARED_OUTPUTS_DIR}/hs_err_pid%p.log"'],
 })
 
+# This list mirrors MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS in IjentBuildScriptsConstants.kt.
+# Add it to jvm_flags of a jps_test target for JUnit 5 when the test uses Eel, IJent, @TestApplicationWithEel, or EelFixture.
+# Such a test needs MultiRoutingFileSystemProvider as the default NIO provider.
+# tests.cmd adds this flag to every JUnit 5 run automatically.
+# Omit this flag in tests that do not route NIO paths through Eel.
+MULTI_ROUTING_FILE_SYSTEM_JVM_FLAGS = [
+    "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
+]
+
 JAVA_TEST_ARGS = [
 ]
 

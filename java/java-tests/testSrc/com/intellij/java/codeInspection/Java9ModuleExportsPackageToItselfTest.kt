@@ -17,51 +17,69 @@ package com.intellij.java.codeInspection
 
 import com.intellij.codeInspection.java19modules.Java9ModuleExportsPackageToItselfInspection
 import com.intellij.java.analysis.JavaAnalysisBundle
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class Java9ModuleExportsPackageToItselfTest : LightJava9ModulesCodeInsightFixtureTestCase() {
+@TestApplication
+class Java9ModuleExportsPackageToItselfTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
+  }
+
+  private val java9 by lightJava9ModulesFixture(projectFixture)
+  private val myFixture get() = java9.fixture
+
   private val message = JavaAnalysisBundle.message("inspection.module.exports.package.to.itself")
   private val fix1 = JavaAnalysisBundle.message("exports.to.itself.delete.statement.fix")
   private val fix2 = JavaAnalysisBundle.message("exports.to.itself.delete.module.ref.fix", "M")
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(Java9ModuleExportsPackageToItselfInspection())
 
-    addFile("module-info.java", "module M2 { }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2)
-    addFile("module-info.java", "module M4 { }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4)
-    addFile("pkg/main/C.java", "package pkg.main; public class C {}")
+    java9.addFile("module-info.java", "module M2 { }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2)
+    java9.addFile("module-info.java", "module M4 { }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4)
+    java9.addFile("pkg/main/C.java", "package pkg.main; public class C {}")
   }
 
+  @Test
   fun testNoSelfModule() {
     highlight("module M {\n exports pkg.main to M2, M4;\n opens pkg.main to M2, M4;\n}")
   }
 
+  @Test
   fun testOnlySelfExport() {
     highlight("module M { exports pkg.main to <warning descr=\"$message\">M</warning>; }")
     fix("module M { exports pkg.main to <caret>M; }",
         "module M {\n}")
   }
 
+  @Test
   fun testOnlySelfOpen() {
     highlight("module M { opens pkg.main to <warning descr=\"$message\">M</warning>; }")
     fix("module M { opens pkg.main to <caret>M; }",
         "module M {\n}")
   }
 
+  @Test
   fun testOnlySelfModuleWithComments() {
     fix("module M { exports pkg.main to /*a*/ <caret>M /*b*/; }",
         "module M { /*a*/ /*b*/\n}")
   }
 
+  @Test
   fun testSelfModuleInList() {
     highlight("module M { exports pkg.main to M2, <warning descr=\"$message\">M</warning>, M4; }")
     fix("module M { exports pkg.main to M2, <caret>M , M4; }",
         "module M { exports pkg.main to M2, M4; }")
   }
 
+  @Test
   fun testSelfModuleInListWithComments() {
     fix("module M { exports pkg.main to M2, /*a*/ <caret>M /*b*/,/*c*/ M4; }",
         "module M { exports pkg.main to M2, /*a*/  /*b*//*c*/ M4; }")

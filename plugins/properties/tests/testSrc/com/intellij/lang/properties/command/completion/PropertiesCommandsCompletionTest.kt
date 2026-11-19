@@ -1,23 +1,40 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.command.completion
 
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.completion.lightCompletionFixture
+import com.intellij.codeInsight.completion.lightCompletionProjectFixture
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.properties.PropertiesFileType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @NeedsIndex.SmartMode(reason = "it requires highlighting")
-class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
-
-  override fun setUp() {
-    super.setUp()
-    Registry.get("ide.completion.command.enabled").setValue(false, getTestRootDisposable())
-    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+@TestApplication
+class PropertiesCommandsCompletionTest {
+  companion object {
+    private val projectFixture = lightCompletionProjectFixture()
   }
 
-  fun testRename() {
+  private val completion by lightCompletionFixture(projectFixture)
+  private val myFixture get() = completion.fixture
+
+  @BeforeEach
+  fun setUp() {
+    Registry.get("ide.completion.command.enabled").setValue(false, myFixture.testRootDisposable)
+    Registry.get("ide.completion.command.force.enabled").setValue(true, myFixture.testRootDisposable)
+  }
+
+  @Test
+  fun testRename(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c.<caret>=some.strange
       """.trimIndent())
@@ -25,7 +42,8 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Rename", ignoreCase = true) })
   }
 
-  fun testFindUsages() {
+  @Test
+  fun testFindUsages(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c.<caret>=some.strange
       """.trimIndent())
@@ -33,25 +51,27 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Go to declaration or usages", ignoreCase = true) })
   }
 
-  fun testReformat() {
+  @Test
+  fun testReformat(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c    =  some.strange .<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Reformat", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Reformat", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
         a.b.c=some.strange 
         """.trimIndent())
   }
 
-  fun testMovePropertyUp() {
+  @Test
+  fun testMovePropertyUp(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=first
       d.e.f=second.<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Move Statement Up", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Move Statement Up", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       d.e.f=second
@@ -60,14 +80,15 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testMovePropertyUpMultiline() {
+  @Test
+  fun testMovePropertyUpMultiline(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=first
       d.e.f=second \
         some.<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Move Statement Up", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Move Statement Up", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       d.e.f=second \
@@ -77,7 +98,8 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testMovePropertyDownMultiline() {
+  @Test
+  fun testMovePropertyDownMultiline(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=first
       d.e.f=second \
@@ -86,7 +108,7 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
                some3
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Move Statement Down", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Move Statement Down", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       a.b.c=first
@@ -98,13 +120,14 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testMovePropertyDown() {
+  @Test
+  fun testMovePropertyDown(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=first.<caret>
       d.e.f=second
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Move Statement Down", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Move Statement Down", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       d.e.f=second
@@ -113,14 +136,15 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testMovePropertyUpWithMultilineAbove() {
+  @Test
+  fun testMovePropertyUpWithMultilineAbove(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=first \
         continued
       d.e.f=second.<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Move Statement Up", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Move Statement Up", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       d.e.f=second
@@ -130,14 +154,15 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testMovePropertyDownWithMultilineBelow() {
+  @Test
+  fun testMovePropertyDownWithMultilineBelow(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=first.<caret>
       d.e.f=second \
         continued
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Move Statement Down", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Move Statement Down", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       d.e.f=second \
@@ -147,7 +172,8 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testMovePropertyUpWithMultilineBelow() {
+  @Test
+  fun testMovePropertyUpWithMultilineBelow(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=first
       d.e.f=second.<caret>
@@ -158,7 +184,8 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Move Statement Up", ignoreCase = true) })
   }
 
-  fun testMovePropertyDownWithMultilineAbove() {
+  @Test
+  fun testMovePropertyDownWithMultilineAbove(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=first \
         continued
@@ -169,7 +196,8 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Move Statement Down", ignoreCase = true) })
   }
 
-  fun testDoubleDot() {
+  @Test
+  fun testDoubleDot(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c.<caret>    =  some.strange 
       """.trimIndent())
@@ -177,14 +205,15 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.type('.')
     val l = LookupManager.getActiveLookup(myFixture.editor)!!
     val elements = l.items
-    selectItem(elements.first { element -> element.lookupString.contains("Reformat", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Reformat", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
         a.b.c=some.strange 
         """.trimIndent())
   }
 
-  fun testCommentProperty() {
+  @Test
+  fun testCommentProperty(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=some.value.<caret>
       """.trimIndent())
@@ -192,19 +221,21 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Comment", ignoreCase = true) })
   }
 
-  fun testCommentPropertyExecution() {
+  @Test
+  fun testCommentPropertyExecution(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=some.value.<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Comment", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Comment", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       #a.b.c=some.value
       """.trimIndent())
   }
 
-  fun testCommentNotAvailableForCommentedProperty() {
+  @Test
+  fun testCommentNotAvailableForCommentedProperty(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       #a.b.c=some.value.<caret>
       """.trimIndent())
@@ -212,7 +243,8 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNull(elements.firstOrNull { element -> element.lookupString.contains("Comment", ignoreCase = true) })
   }
 
-  fun testCommentMultilineProperty() {
+  @Test
+  fun testCommentMultilineProperty(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=line1 \
         line2 \
@@ -222,14 +254,15 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Comment", ignoreCase = true) })
   }
 
-  fun testCommentMultilinePropertyExecution() {
+  @Test
+  fun testCommentMultilinePropertyExecution(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.c=line1 \
         line2 \
         line3.<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Comment", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Comment", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       #a.b.c=line1 \
@@ -238,7 +271,8 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testCommentNotAvailableInMiddle() {
+  @Test
+  fun testCommentNotAvailableInMiddle(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       a.b.<caret>c=some.value
       """.trimIndent())
@@ -246,47 +280,51 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNull(elements?.firstOrNull { element -> element.lookupString.contains("Comment property", ignoreCase = true) })
   }
 
-  fun testUncommentPropertyWithDoubleDot() {
+  @Test
+  fun testUncommentPropertyWithDoubleDot(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       #a.b.c=some.value..<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    assertNotNull("Uncomment command should be available for explicit double-dot invocation at end of comment",
-      elements?.firstOrNull { element -> element.lookupString.contains("Uncomment", ignoreCase = true) })
+    assertNotNull(elements?.firstOrNull { element -> element.lookupString.contains("Uncomment", ignoreCase = true) },
+      "Uncomment command should be available for explicit double-dot invocation at end of comment")
   }
 
-  fun testUncommentPropertyWithDoubleDotExecution() {
+  @Test
+  fun testUncommentPropertyWithDoubleDotExecution(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       #a.b.c=some.value..<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Uncomment", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Uncomment", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       a.b.c=some.value
       """.trimIndent())
   }
 
-  fun testUncommentMultilineCommentWithDoubleDotExecution() {
+  @Test
+  fun testUncommentMultilineCommentWithDoubleDotExecution(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       ###a.b.c=some.value..<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Uncomment", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Uncomment", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       ##a.b.c=some.value
       """.trimIndent())
   }
 
-  fun testUncommentMultilinePropertyWithDoubleDotExecution() {
+  @Test
+  fun testUncommentMultilinePropertyWithDoubleDotExecution(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(PropertiesFileType.INSTANCE, """
       #a.b.c=line1 \
       #  line2 \
       #  line3..<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Uncomment", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Uncomment", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     //here only the line is uncommented, it is expected behavior
     myFixture.checkResult("""

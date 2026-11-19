@@ -13,6 +13,13 @@ dev_dist_plugin(
 )
 ### auto-generated section `dev intellij.vcs.hg` end
 
+jps_test(
+    name = "vcs-hg-tests_test",
+    tags = ["community-vcs-tests"],
+    runtime_deps = [":vcs-hg-tests_test_lib"],
+)
+### skip generation section `test intellij.vcs.hg.tests`
+
 ### auto-generated section `build intellij.vcs.hg` start
 jvm_library(
     name = "vcs-hg",
@@ -152,10 +159,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.vcs.hg.tests` end
-
-### auto-generated section `test intellij.vcs.hg.tests` start
-jps_test(
-    name = "vcs-hg-tests_test",
-    runtime_deps = [":vcs-hg-tests_test_lib"],
-)
-### auto-generated section `test intellij.vcs.hg.tests` end

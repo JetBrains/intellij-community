@@ -9,8 +9,10 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowBalloonShowOptions
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.toolWindow.ToolWindowEntry
@@ -35,7 +37,8 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class ToolWindowManagerNotifications(
   private val manager: ToolWindowManagerImpl,
 ) {
-  fun canShowNotification(toolWindowId: String): Boolean {
+  fun canShowNotification(requestedId: String): Boolean {
+    val toolWindowId = resolveNotificationTarget(requestedId)
     val readOnlyWindowInfo = manager.idToEntry[toolWindowId]?.readOnlyWindowInfo
     val anchor = readOnlyWindowInfo?.anchor ?: return false
     val isSplit = readOnlyWindowInfo.isSplit
@@ -44,7 +47,8 @@ internal class ToolWindowManagerNotifications(
     } != null
   }
 
-  fun notifyByBalloon(options: ToolWindowBalloonShowOptions) {
+  fun notifyByBalloon(requestedOptions: ToolWindowBalloonShowOptions) {
+    val options = requestedOptions.copy(toolWindowId = resolveNotificationTarget(requestedOptions.toolWindowId))
     if (manager.isNewUi) {
       notifySquareButtonByBalloon(options)
       return
@@ -117,7 +121,8 @@ internal class ToolWindowManagerNotifications(
     }
   }
 
-  fun getToolWindowButton(toolWindowId: String): JComponent? {
+  fun getToolWindowButton(requestedId: String): JComponent? {
+    val toolWindowId = resolveNotificationTarget(requestedId)
     val entry = manager.idToEntry[toolWindowId] ?: return null
     return findBallonAlignment(entry, toolWindowId).first
   }
@@ -128,7 +133,19 @@ internal class ToolWindowManagerNotifications(
     }
   }
 
-  fun getToolWindowBalloon(id: String): Balloon? = manager.idToEntry[id]?.balloon
+  fun getToolWindowBalloon(id: String): Balloon? = manager.idToEntry[resolveNotificationTarget(id)]?.balloon
+
+  /**
+   * Returns the tool window that shows the notifications for [toolWindowId].
+   * When `run.toolwindow.merge.debug` is on, the Debug tool window is not registered,
+   * and the Run tool window shows the debugger notifications.
+   */
+  private fun resolveNotificationTarget(toolWindowId: String): String {
+    if (toolWindowId == ToolWindowId.DEBUG && Registry.`is`("run.toolwindow.merge.debug", false)) {
+      return ToolWindowId.RUN
+    }
+    return toolWindowId
+  }
 
   private fun notifySquareButtonByBalloon(options: ToolWindowBalloonShowOptions) {
     val entry = manager.idToEntry[options.toolWindowId]!!

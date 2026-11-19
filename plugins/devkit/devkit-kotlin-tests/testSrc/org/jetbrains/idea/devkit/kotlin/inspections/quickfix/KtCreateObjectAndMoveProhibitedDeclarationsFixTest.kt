@@ -2,27 +2,32 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.LightJavaProject
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTestBase
+import org.jetbrains.idea.devkit.kotlin.inspections.ktCompanionObjectInExtensionFixture
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/createObjectAndMoveProhibitedDeclarationsFix")
-abstract class KtCreateObjectAndMoveProhibitedDeclarationsFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
+abstract class KtCreateObjectAndMoveProhibitedDeclarationsFixTest(projectFixture: TestFixture<LightJavaProject>) {
+  protected val companionObject by ktCompanionObjectInExtensionFixture(projectFixture,
+    DevkitKtTestsUtil.TESTDATA_PATH + "inspections/createObjectAndMoveProhibitedDeclarationsFix")
 
   private val fixName = "Create an object and move the prohibited declarations"
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/createObjectAndMoveProhibitedDeclarationsFix"
-
+  @Test
   fun testMoveProhibitedDeclarations() {
-    doTestFixWithReferences(fixName)
+    companionObject.doTestFixWithReferences(fixName)
   }
 
+  @Test
   fun testMoveConflicts() {
     val expectedConflicts = listOf(
       "Property logger uses property toInitLogger which will be inaccessible after move",
       "Variable a uses property g which will be inaccessible after move",
       "Function foobar() uses function quux() which will be inaccessible after move",
     )
-    doTestFixWithConflicts(fixName, expectedConflicts)
+    companionObject.doTestFixWithConflicts(fixName, expectedConflicts)
   }
 
 }

@@ -12,27 +12,42 @@ import com.intellij.python.lsp.core.pyLspProjectsToServeWith
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.jetbrains.python.project.PyProject
 
+/** Runs the External Tools Pyrefly, the `pyrefly` of the environment. */
 class PyreflyLspIntegrationProvider : PyLspToolIntegrationProvider() {
   override fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor = pyreflyDescriptor(pyProject)
 
   override fun pyTool(project: Project): PyLspTool<*> = PyreflyPyTool.getInstance()
 
   override val servesEveryModule: Boolean get() = true
-
-  override fun createWidgetItem(lspClient: LspClient, currentFile: VirtualFile?): LspClientWidgetItem? {
-    if ((lspClient.descriptor as? PyreflyLspClientDescriptor)?.runsBundledPyrefly == true) return null
-    return super.createWidgetItem(lspClient, currentFile)
-  }
 }
 
 /**
- * The descriptor to start pyrefly with for [pyProject].
+ * Runs the bundled Pyrefly, the binary of the plugin.
+ *
+ * Only the type engine selection starts and stops it, see [PyreflyPyTool.runsBundledPyrefly]. The `pyrefly`
+ * package of an environment does not change its binary, so a change of that package does not restart it.
+ */
+class BundledPyreflyLspIntegrationProvider : PyLspToolIntegrationProvider() {
+  override fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor = bundledPyreflyDescriptor(pyProject)
+
+  override fun pyTool(project: Project): PyLspTool<*> = PyreflyPyTool.getInstance()
+
+  override fun isActiveOn(project: Project): Boolean = PyreflyPyTool.getInstance().runsBundledPyrefly(project)
+
+  override val followsToolPackage: Boolean get() = false
+
+  override val servesEveryModule: Boolean get() = true
+
+  override fun createWidgetItem(lspClient: LspClient, currentFile: VirtualFile?): LspClientWidgetItem? = null
+}
+
+/**
+ * The descriptor to start the External Tools Pyrefly with for [pyProject].
  *
  * Pyrefly keeps one workspace for each folder, with its own interpreter, so one server answers for
- * every Python project of a multi-module project. This holds for the type engine and for the External
- * Tools tool: both start the server from this descriptor. A Python project whose environment pins
- * another pyrefly version gets a server of its own, because one server runs one binary. For a project
- * of one served Python project the server answers for [pyProject] alone.
+ * every Python project of a multi-module project. A Python project whose environment pins another
+ * pyrefly version gets a server of its own, because one server runs one binary. For a project of one
+ * served Python project the server answers for [pyProject] alone.
  */
 internal fun pyreflyDescriptor(pyProject: PyProject): PyreflyLspClientDescriptor {
   val servedProjects = pyLspProjectsToServeWith(pyProject, PyreflyPyTool.getInstance())
@@ -42,3 +57,19 @@ internal fun pyreflyDescriptor(pyProject: PyProject): PyreflyLspClientDescriptor
   pyLspAttachedDescriptor(descriptor, PyreflyLspIntegrationProvider::class.java)
   return descriptor
 }
+
+/**
+ * The descriptor to start the bundled Pyrefly with for [pyProject].
+ *
+ * One binary serves every Python project, so the version of `pyrefly` in an environment does not split them.
+ */
+internal fun bundledPyreflyDescriptor(pyProject: PyProject): PyreflyLspClientDescriptor {
+  val servedProjects = pyLspProjectsToServeWith(pyProject, PyreflyPyTool.getInstance(), followsToolPackage = false)
+  val descriptor = PyreflyLspClientDescriptor(servedProjects.first(), servedProjects, runsBundledPyrefly = true)
+  pyLspAttachedDescriptor(descriptor, BundledPyreflyLspIntegrationProvider::class.java)
+  return descriptor
+}
+
+/** The descriptor of the server that the type engine reads its types from, see [PyreflyPyTool.typeEngineProviderClass]. */
+internal fun pyreflyTypeEngineDescriptor(pyProject: PyProject): PyreflyLspClientDescriptor =
+  if (PyreflyPyTool.isBundledPyreflyEnabled()) bundledPyreflyDescriptor(pyProject) else pyreflyDescriptor(pyProject)

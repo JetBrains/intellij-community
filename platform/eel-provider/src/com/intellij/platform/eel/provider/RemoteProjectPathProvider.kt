@@ -29,7 +29,7 @@ private val REMOTE_PROJECT_IDENTITY_PATH_KEY: Key<String> = Key.create("com.inte
   "com.intellij.air.shared.core.AirAgentEnvironmentTest",
   "com.intellij.air.shared.core.AirProjectPathsTest",
   "com.intellij.ide.lightProducts.LightProjectOpeningKt",
-  "com.intellij.platform.unified.workspace.members.IjLightMemberProjects",
+  "com.intellij.platform.unified.workspace.backend.baseline.members.IjLightMemberProjectOpener",
   "com.jetbrains.thinclient.connection.ThinClientRdProjectViewSession",
 )
 fun Project.setRemoteProjectBaseNioPath(rawHostPath: String) {
@@ -59,6 +59,7 @@ fun Project.setRemoteProjectBaseNioPath(rawHostPath: String) {
   "com.intellij.code.findings.simplified.prompt.FindingsPromptSupport",
   "com.intellij.lsp.ui.frontend.ConfigurableLspClientDescriptor",
   "com.intellij.lsp.ui.frontend.settings.LspServerConfigurable",
+  "com.intellij.platform.unified.workspace.frontend.members.IjLightMemberTabsActivity",
   "org.jetbrains.plugins.terminal.LocalTerminalDirectRunner",
   "org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider",
   "org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer",

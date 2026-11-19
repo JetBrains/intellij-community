@@ -5,8 +5,7 @@ description: Convert LocalQuickFix or IntentionAction to the ModCommand API.
 
 # Migrating quick-fixes and intentions to the ModCommand API
 
-Two APIs coexist in this repo, and they are not two styles of the same thing — they have opposite
-execution models:
+The two APIs have opposite execution models:
 
 | | `LocalQuickFix` / `IntentionAction` | `ModCommandQuickFix` / `ModCommandAction` |
 |---|---|---|
@@ -16,19 +15,9 @@ execution models:
 | capability | anything (dialogs, project model, refactoring engines, `Editor`) | only what the `sealed` `ModCommand` hierarchy models |
 | intention preview | hand-written | derived from the returned command |
 
-So this is not a mechanical rename. A `ModCommandQuickFix` **cannot** show arbitrary UI, and it has no
-`Editor`. That constraint is the whole point: because the command is a declarative, serializable record,
-non-IDE clients can execute it.
-
-**Why bother:** no write action on EDT means no freeze/slow-op report from the action; preview comes for
-free; and it is a hard requirement for clients that only speak ModCommand — LSP code actions accept only
-`ModCommandQuickFix` (LSP-670), Next Edit Suggestions only `ModCommandAction` (SCL-21364), plus
-Qodana and Fleet.
-
 ## Step 1 — Triage before you touch anything
 
-**Not every fix can be converted. Decide this first.** Read the fix's `applyFix`/`invoke` body and
-everything it calls, and sort it into one of three buckets.
+Read the fix's `applyFix`/`invoke` body and everything it calls, and sort it into one of three buckets.
 
 ### Convert directly
 
@@ -46,8 +35,7 @@ Everything it does is PSI editing plus editor state that `ModPsiUpdater` models:
 
 ### Convert, but rewrite the UI
 
-The fix shows UI, but the UI is only *picking* something. These have declarative equivalents — and the
-result is usually shorter than the original, with a working preview:
+The fix shows UI, but the UI is only *picking* something. These have declarative equivalents:
 
 | Original UI | Replacement |
 |---|---|
@@ -61,7 +49,7 @@ recipe 7 in [references/recipes.md](references/recipes.md).
 
 ### Do not convert
 
-Leave these as `LocalQuickFix`. Trying to force them through the ModCommand API wastes a session:
+Leave these as `LocalQuickFix`:
 
 - **a custom dialog with input** — text fields, trees, checkbox matrices, its own preview pane. The
   standard Rename UI is the exception because `ModStartRename` models it explicitly
@@ -90,14 +78,13 @@ Optionally give such a fix a reduced ModCommand path for headless clients by imp
 | `IntentionAction`, `LocalQuickFixAndIntentionActionOnPsiElement` | needs the *physical* element, or builds the command itself | `PsiBasedModCommandAction<E>` → `perform(context, element)` |
 | anything else | | raw `ModCommandAction` |
 
-Only the *base class* choice depends on how the fix is anchored. **Nothing in this table restricts you to
-one file** — every `psiUpdate`-based base gets a `ModPsiUpdater`, so cross-file edits are available from
-all of them (recipe 5 in [references/recipes.md](references/recipes.md)).
+Nothing in this table restricts you to one file: every `psiUpdate`-based base gets a `ModPsiUpdater`, so
+cross-file edits are available from all of them (recipe 5 in [references/recipes.md](references/recipes.md)).
 
 Kotlin plugin has its own bases: `KotlinModCommandQuickFix<ELEMENT>`,
 `KotlinApplicableModCommandAction`, `KotlinPsiUpdateModCommandAction`.
 
-`PsiUpdateModCommandAction<E>` has two constructors, and picking the wrong one is a common mistake:
+`PsiUpdateModCommandAction<E>` has two constructors:
 
 - `super(element)` — bind to a concrete element (the equivalent of a fix that stored a pointer). The
   element is passed back to `getPresentation`/`invoke` already checked for validity and writability.
@@ -154,8 +141,7 @@ often:
   another file, and **get all writable copies before writing anything** — `getWritable` throws
   `IllegalStateException` once that file's copy has been modified.
 - **No write actions.** Delete `WriteCommandAction`, `CommandProcessor`, `preparePsiElementForWrite`.
-  The engine handles it. Note this does *not* extend to `PsiDocumentManager.commitDocument` — see the
-  document bullet below.
+  The engine handles it.
 - **Do not start your own progress.** `perform`/`invoke` already runs in a background read action under
   a progress, so a wrapper like `runWriteActionWithCancellableProgressInDispatchThread` around a long
   loop just goes away; keep the cancellation by calling `ProgressManager.checkCanceled()` in the loop.
@@ -175,22 +161,20 @@ often:
 
 ## Step 5 — Find more candidates
 
-Search with ijproxy (`search_text`, `search_symbol`) and fall back to `./community/tools/rg.cmd` when
-MCP is unavailable. Scope with `paths`, e.g. `paths: ["community/python/"]`:
+Search with `./community/tools/accio.cmd`. Scope with `--scope`, e.g. `--scope community/python/`:
 
-- candidates — `implements LocalQuickFix`, `extends LocalQuickFixOnPsiElement`,
-  `LocalQuickFixAndIntentionActionOnPsiElement`, `implements IntentionAction`
-- already migrated — `search_symbol` for `PsiUpdateModCommandQuickFix`, `ModCommandQuickFix`,
+- candidates — `implementations` of `LocalQuickFix`, `LocalQuickFixOnPsiElement`,
+  `LocalQuickFixAndIntentionActionOnPsiElement`, `IntentionAction`
+- already migrated — `implementations` of `PsiUpdateModCommandQuickFix`, `ModCommandQuickFix`,
   `PsiUpdateModCommandAction`
-- red flags that decide the triage — `@SafeFieldForPreview`, `generatePreview`,
+- red flags that decide the triage — `locate '<text>'` for `@SafeFieldForPreview`, `generatePreview`,
   `getFileModifierForPreview`, `WriteCommandAction`, `showAndGet`, `DialogWrapper`, `Editor editor`
 
 ## Testing
 
 A conversion is behaviour-preserving, so the inspection's existing tests are the real check. Run them
-**before** the change too, to tell a pre-existing failure from one you introduced:
-`./tests.cmd --module <module> --test <FQN>` (FQN required — simple class names do not match). Then
-`lint_files` the files you touched. See the [testing](../testing/SKILL.md) skill for discovery.
+**before** the change too, to tell a pre-existing failure from one you introduced. See the
+[testing](../testing/SKILL.md) skill for the command and for discovery.
 
 What breaks specifically because of a ModCommand conversion:
 

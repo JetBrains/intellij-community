@@ -16,8 +16,11 @@ import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointAdapter
 import com.intellij.openapi.extensions.ExtensionPointAndAreaListener
 import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointPriorityListener
 import com.intellij.openapi.extensions.ExtensionsArea
+import com.intellij.openapi.extensions.LazyExtension
+import com.intellij.openapi.extensions.LazyExtensionSequence
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -355,6 +358,11 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       }
       return adapters
     }
+
+  /**
+   * The extensions in the loading order, each created on demand, see [LazyExtension]; the same as [ExtensionPointName.filterableLazySequence].
+   */
+  fun filterableLazySequence(): Sequence<LazyExtension<T>> = LazyExtensionSequence(point = this, adapters = sortedAdapters)
 
   private fun createExtensionInstances(): List<T> {
     assertNotReadOnlyMode()

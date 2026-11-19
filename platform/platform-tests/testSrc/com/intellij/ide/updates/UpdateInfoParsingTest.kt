@@ -201,4 +201,14 @@ class UpdateInfoParsingTest {
     assertNull(parseDistribution(distribution, os = "win", arch = "x64"))
     assertNull(parseDistribution(distribution, os = "unix", arch = "x64"))
   }
+
+  @Test
+  fun distributionIsIgnoredWithKillSwitch() {
+    val distribution = JDOMUtil.load("""
+      <distribution product="JB" manifest="https://www.jetbrains.com/m.json">
+        <file os="mac" arch="aarch64" url="https://download.jetbrains.com/unified-ide-aarch64.dmg"/>
+      </distribution>""".trimIndent())
+    assertNull(parseDistribution(distribution, os = "mac", arch = "aarch64", isMigrationDisabled = true))
+    assertNotNull(parseDistribution(distribution, os = "mac", arch = "aarch64", isMigrationDisabled = false))
+  }
 }

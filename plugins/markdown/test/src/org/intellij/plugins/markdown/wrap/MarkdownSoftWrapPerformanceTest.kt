@@ -2,18 +2,32 @@
 package org.intellij.plugins.markdown.wrap
 
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PerformanceUnitTest
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.junit5.StressTestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
 @PerformanceUnitTest
-class MarkdownSoftWrapPerformanceTest : BasePlatformTestCase() {
+@StressTestApplication
+@RunInEdt(writeIntent = true)
+class MarkdownSoftWrapPerformanceTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   /**
    * Soft wrapping a multi-megabyte markdown document with long lines used to take minutes:
    * `MarkdownLineWrapPositionStrategy` lexed the whole document for every soft wrap position,
    * making the recalculation quadratic in document size.
    */
+  @Test
   fun `test soft wrap recalculation in a large document with long lines`() {
     myFixture.configureByText("large.md", generateLargeDocument())
     val editor = myFixture.editor
@@ -22,10 +36,11 @@ class MarkdownSoftWrapPerformanceTest : BasePlatformTestCase() {
     Benchmark.newBenchmark("full soft wrap recalculation in a large markdown document") {
       softWrapModel.applianceManager.reset()
       softWrapModel.applianceManager.recalculateIfNecessary("MarkdownSoftWrapPerformanceTest")
-      assertNotEmpty(softWrapModel.registeredSoftWraps)
+      assertThat(softWrapModel.registeredSoftWraps).isNotEmpty()
     }.runAsStressTest().start()
   }
 
+  @Test
   fun `test soft wrap recalculation in a large html block`() {
     myFixture.configureByText("htmlBlock.md", generateHtmlBlockDocument())
     val editor = myFixture.editor
@@ -34,7 +49,7 @@ class MarkdownSoftWrapPerformanceTest : BasePlatformTestCase() {
     Benchmark.newBenchmark("full soft wrap recalculation in a large html block") {
       softWrapModel.applianceManager.reset()
       softWrapModel.applianceManager.recalculateIfNecessary("MarkdownSoftWrapPerformanceTest")
-      assertNotEmpty(softWrapModel.registeredSoftWraps)
+      assertThat(softWrapModel.registeredSoftWraps).isNotEmpty()
     }.runAsStressTest().start()
   }
 

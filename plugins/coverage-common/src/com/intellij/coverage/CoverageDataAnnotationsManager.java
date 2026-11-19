@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.openapi.Disposable;
@@ -152,9 +152,11 @@ public final class CoverageDataAnnotationsManager implements Disposable {
       CoverageDataAnnotationsManager manager = project.getServiceIfCreated(CoverageDataAnnotationsManager.class);
       if (manager == null) return;
 
-      PsiFile psiFile = ReadAction.computeBlocking(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
-      if (psiFile == null || !psiFile.isPhysical()) return;
-      manager.runTask(editor, () -> manager.show(editor, psiFile));
+      manager.runTask(editor, () -> {
+        PsiFile psiFile = ReadAction.computeBlocking(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
+        if (editor.isDisposed() || psiFile == null || !psiFile.isPhysical()) return;
+        manager.show(editor, psiFile);
+      });
     }
 
     @Override

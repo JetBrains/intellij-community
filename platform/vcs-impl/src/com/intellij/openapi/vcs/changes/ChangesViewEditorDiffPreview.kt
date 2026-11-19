@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.actions.diff.WrapperCombinedBlockProducer
@@ -22,6 +23,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.CalledInAny
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 internal class ChangesViewEditorDiffPreview(
@@ -57,7 +59,7 @@ internal class ChangesViewEditorDiffPreview(
     ChangesViewContentManager.getToolWindowFor(project, ChangesViewContentManager.LOCAL_CHANGES)?.activate(null)
   }
 
-  override fun openPreview(requestFocus: Boolean): Boolean =
+  override fun submitOpenRequest(requestFocus: Boolean): CompletableFuture<List<FileEditor>> =
     CommitToolWindowUtil.openDiff(ChangesViewContentManager.LOCAL_CHANGES, this, requestFocus)
 
   override fun updateDiffAction(event: AnActionEvent) {
@@ -92,7 +94,7 @@ internal class ChangesViewEditorDiffPreview(
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      openPreview(true)
+      requestOpenPreview(true)
     }
   }
 }

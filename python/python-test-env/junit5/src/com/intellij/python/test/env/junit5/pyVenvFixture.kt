@@ -60,7 +60,7 @@ private suspend fun TestFixtureInitializer.R<PythonInterpreter>.initVenvInterpre
   return initialized(interpreter) {
     awaitPythonInterpreterUpdateBeforeRemoval(interpreter)
     pyProject.setPythonInterpreter(null).orThrow()
-    PythonInterpreterRegistry.getInstance(pyProject.project).removePythonInterpreter(pyProject, interpreter)
+    PythonInterpreterRegistry.getInstance(pyProject.project).remove(interpreter)
   }
 }
 

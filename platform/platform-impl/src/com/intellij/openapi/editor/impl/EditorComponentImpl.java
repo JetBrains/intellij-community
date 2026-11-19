@@ -159,7 +159,7 @@ public final class EditorComponentImpl extends JTextComponent
     }
     setOpaque(true);
 
-    putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, (Magnificator)this::magnify);
+    putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, (Magnificator)(scale, at) -> magnify(scale, at));
     putClientProperty(UndoRedoAction.IGNORE_SWING_UNDO_MANAGER, Boolean.TRUE);
 
     setupJTextComponentContext();
@@ -171,7 +171,7 @@ public final class EditorComponentImpl extends JTextComponent
     setupEditorSwingCaretUpdatesCourierIfRequired();
   }
 
-  private Point magnify(double scale, Point at) {
+  private @NotNull Point magnify(double scale, @NotNull Point at) {
     if (editor.isDisposed()) return at;
     VisualPosition magnificationPosition = editor.xyToVisualPosition(at);
     float currentSize = editor.getColorsScheme().getEditorFontSize2D();
@@ -245,13 +245,13 @@ public final class EditorComponentImpl extends JTextComponent
 
   @DirtyUI
   @Override
-  public Color getBackground() {
+  public @NotNull Color getBackground() {
     return editor.getBackgroundColor();
   }
 
   @DirtyUI
   @Override
-  public Dimension getPreferredSize() {
+  public @NotNull Dimension getPreferredSize() {
     return editor.getPreferredSize();
   }
 
@@ -302,7 +302,7 @@ public final class EditorComponentImpl extends JTextComponent
   }
 
   @Override
-  public ActionCallback type(String text) {
+  public @NotNull ActionCallback type(@NotNull String text) {
     ActionCallback result = new ActionCallback();
     EdtInvocationManager.invokeLaterIfNeeded(() -> WriteIntentReadAction.run(() -> editor.type(text).notify(result)));
     return result;
@@ -458,7 +458,7 @@ public final class EditorComponentImpl extends JTextComponent
   //   via JTextComponent.addCaretListener.
   // This is required for proper working of JBR-2460.
   // -----------------------------------------------------------------------------------------------
-  private EditorSwingCaretUpdatesCourier myEditorSwingCaretUpdatesCourier = null;
+  private EditorSwingCaretUpdatesCourier myEditorSwingCaretUpdatesCourier;
 
   @RequiresEdt
   private void setupEditorSwingCaretUpdatesCourierIfRequired() {
@@ -474,7 +474,7 @@ public final class EditorComponentImpl extends JTextComponent
   }
 
   @Override
-  public void addCaretListener(CaretListener listener) {
+  public void addCaretListener(@NotNull CaretListener listener) {
     super.addCaretListener(listener);
     setupEditorSwingCaretUpdatesCourierIfRequired();
   }

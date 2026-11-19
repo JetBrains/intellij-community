@@ -47,7 +47,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
-import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabReviewSettings
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestParsedChanges
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel.FileReviewState
@@ -139,10 +139,10 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     editor: EditorEx,
   ): Nothing {
     withContext(Dispatchers.Main) {
-      val preferences = project.serviceAsync<GitLabMergeRequestsPreferences>()
+      val settings = project.serviceAsync<GitLabReviewSettings>()
       val reviewHeadContent = fileVm.headContent.mapNotNull { it?.result?.getOrThrow() }.first()
 
-      val model = createReviewModel(this, preferences, fileVm, editor)
+      val model = createReviewModel(this, settings, fileVm, editor)
 
       launchNow {
         ReviewInEditorUtil.trackDocumentDiffSync(reviewHeadContent, editor.document, model::setPostReviewChanges)
@@ -182,11 +182,11 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
   @VisibleForTesting
   internal fun createReviewModel(
     cs: CoroutineScope,
-    preferences: GitLabMergeRequestsPreferences,
+    settings: GitLabReviewSettings,
     fileVm: GitLabMergeRequestEditorReviewFileViewModel,
     editor: Editor,
   ): GitLabMergeRequestEditorReviewUIModel =
-    GitLabMergeRequestEditorReviewUIModel(cs, project, preferences, fileVm, commentNavigator.forEditor(editor))
+    GitLabMergeRequestEditorReviewUIModel(cs, project, settings, fileVm, commentNavigator.forEditor(editor))
 
   private fun CoroutineScope.createRenderer(
     editor: Editor,

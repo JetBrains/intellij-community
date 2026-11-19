@@ -11,9 +11,10 @@ import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModEditOptions
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.project.DumbAware
+import com.intellij.profile.codeInspection.InspectionProfileManager.getToolCopy
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiFile
-import org.jdom.Element
+import com.intellij.psi.SmartPointerManager
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -43,11 +44,16 @@ class EditInspectionOptionsModCommandAction(private val toolId: String) : ModCom
     val file = context.file()
     val toolWrapper = findToolWrapper(file) ?: return ModCommand.nop()
     if (toolWrapper.tool.optionsPane == OptPane.EMPTY) return ModCommand.nop()
+    val filePointer = SmartPointerManager.createPointer(file)
     return ModEditOptions(
       InspectionsBundle.message("edit.inspection.options", toolWrapper.displayName),
-      { copyTool(file) },
+      {
+        val psiFile = checkNotNull(filePointer.element) { "File is invalid" }
+        val toolWrapper = checkNotNull(findToolWrapper(psiFile)) { "Tool not found: ${toolId}" }
+        getToolCopy(psiFile, toolWrapper.tool)
+      },
       false,
-    ) { edited -> updateOptions(file, edited) }
+    ) { edited -> updateOptions(filePointer.element, edited) }
   }
 
   private fun findToolWrapper(file: PsiFile): InspectionToolWrapper<*, *>? {
@@ -55,20 +61,8 @@ class EditInspectionOptionsModCommandAction(private val toolId: String) : ModCom
     return profile.getInspectionTool(toolId, file)
   }
 
-  /**
-   * Creates a copy of the inspection with the current options.
-   * [ModEditOptions] changes this copy, so the inspection in the profile stays the same until [updateOptions].
-   */
-  private fun copyTool(file: PsiFile): InspectionProfileEntry {
-    val toolWrapper = checkNotNull(findToolWrapper(file)) { "Tool not found: $toolId" }
-    val copy = toolWrapper.createCopy().tool
-    val settings = Element("copy")
-    toolWrapper.tool.writeSettings(settings)
-    copy.readSettings(settings)
-    return copy
-  }
-
-  private fun updateOptions(file: PsiFile, edited: InspectionProfileEntry): ModCommand {
+  private fun updateOptions(file: PsiFile?, edited: InspectionProfileEntry): ModCommand {
+    file ?: return ModCommand.nop()
     val inspection = findToolWrapper(file)?.tool ?: return ModCommand.nop()
     val editedController = edited.optionController
     return ModCommand.updateInspectionOption(file, inspection) { tool ->

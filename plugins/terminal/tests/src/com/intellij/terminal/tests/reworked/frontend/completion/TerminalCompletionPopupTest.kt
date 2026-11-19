@@ -409,7 +409,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     val fixtureScope = childScope("TerminalCompletionFixture")
     val startupOptions = TerminalStartupOptionsImpl(
       shellCommand = listOf("/bin/zsh", "--login", "-i"),
-      workingDirectory = "fakeDir",
+      workingDirectory = createTempDir().toString(),
       envVariables = emptyMap(),
       processType = TerminalProcessType.SHELL,
       pid = null,

@@ -1,0 +1,39 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:core.bzl", "kt_plugin_cfg")
+
+### auto-generated section `build intellij.module` start
+kt_plugin_cfg(
+    name = "compose_plugin_module",
+    data = ["compose-stability.conf"],
+    options = {
+        "generateFunctionKeyMetaAnnotations": ["true"],
+        "stabilityConfigurationPath": ["$(location compose-stability.conf)"],
+    },
+    plugin = "@lib//:compose-plugin",
+)
+
+jvm_library(
+    name = "module",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "intellij.module",
+    plugins = [":compose_plugin_module"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.module` end
+
+### auto-generated section `iml intellij.module` start
+exports_files(
+    [
+        "intellij.module.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.module` end

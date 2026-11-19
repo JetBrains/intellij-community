@@ -1,0 +1,20 @@
+{
+  "modules": {
+    "intellij.module": {
+      "productionTargets": [
+        "@community//module:module.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module/module.jar"
+      ],
+      "testTargets": [],
+      "testJars": [],
+      "moduleLibraries": {}
+    }
+  },
+  "imlTargets": [
+    "@community//module:intellij.module.iml"
+  ],
+  "projectLibraries": {},
+  "pluginDistributionTargets": {}
+}

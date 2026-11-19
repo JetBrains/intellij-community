@@ -17,12 +17,12 @@ import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtScript
 import java.nio.file.Paths
 
 abstract class AbstractK2KotlinInMarkdownAnalysisTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun runInDispatchThread(): Boolean = false
 
-    @OptIn(KaExperimentalApi::class)
     fun doTest(testdataPath: String) {
         val testDataFile = Paths.get(testdataPath).toFile()
         require(testDataFile.extension == "md") { "Only markdown files are supported" }
@@ -31,11 +31,11 @@ abstract class AbstractK2KotlinInMarkdownAnalysisTest : KotlinLightCodeInsightFi
         val rendered = runReadAction {
             InjectionTestFixture(myFixture).getAllInjections().mapNotNull { (host, injected) ->
                 if (injected !is KtFile) return@mapNotNull null
-                assertInstanceOf(injected, KtBlockCodeFragment::class.java)
+                assertInstanceOf(injected, KtFile::class.java)
                 buildString {
                     analyze(injected) {
                         appendLine("// INJECTED AT: ${host.textRange}")
-                        val block = (injected as KtBlockCodeFragment).children.single() as KtBlockExpression
+                        val block = injected.children.filterIsInstance<KtScript>().single().children.single()
                         block.childrenOfType<KtDeclaration>().forEach { declaration ->
                             val output = KaRenderingOutput.plainString(indentationUnit = "  ")
                             KaRenderer.withShortNames.render(declaration.symbol, output)

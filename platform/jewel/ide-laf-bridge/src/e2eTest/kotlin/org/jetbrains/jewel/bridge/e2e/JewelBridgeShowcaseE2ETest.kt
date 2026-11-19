@@ -52,7 +52,7 @@ class JewelBridgeShowcaseE2ETest {
         val projectDir = Files.createTempDirectory("jewel-bridge-e2e")
         projectDir.resolve(".idea").createDirectories()
 
-        val ideInfo = IdeInfo.IdeaCommunity.copy(platformPrefix = "community")
+        val ideInfo = IdeInfo.IdeaCommunity
         val context = Starter.newContext("jewel-bridge-e2e", TestCase(ideInfo, LocalProjectInfo(projectDir)))
         context.applyVMOptionsPatch {
             // The renderer under test. Without this Jewel uses Compose's own popups, which the standalone lane

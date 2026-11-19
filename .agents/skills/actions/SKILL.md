@@ -5,8 +5,6 @@ description: Implement or change IntelliJ `AnAction` actions and registrations.
 
 # Actions
 
-Guidelines for implementing IntelliJ actions (`AnAction`).
-
 ## Documentation
 
 - [Action System](../../../../docs/IntelliJ-Platform/4_man/Action-System.md) - Architecture and usage of the action system
@@ -14,7 +12,6 @@ Guidelines for implementing IntelliJ actions (`AnAction`).
 ## Best Practices
 
 - **NEVER instantiate Presentation in action constructors** - Use no-argument constructors
-- **Define text, description, and icon in plugin.xml** - Not in constructor parameters
 - **Use AnActionEvent#getCoroutineScope** for launching suspending computations -
     actionPerformed runs synchronously with event invocation and may freeze the IDE.
 - **Follow the convention:**
@@ -36,10 +33,4 @@ plugin.xml:
 <action id="My.Action.Id"
         class="my.package.MyAction"
         icon="my.package.MyIcons.ICON"/>
-```
-
-Bundle.properties:
-```properties
-action.My.Action.Id.text=My Action
-action.My.Action.Id.description=Description of my action
 ```

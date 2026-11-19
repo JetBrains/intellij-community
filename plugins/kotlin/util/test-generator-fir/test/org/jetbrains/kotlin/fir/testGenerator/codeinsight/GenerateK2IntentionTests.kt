@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractSharedK2IntentionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2GotoTestOrCodeActionTest
-import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionInInjectionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2MultiFileIntentionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2MultiModuleIntentionTest
@@ -184,7 +183,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/addParameterNameAtAllCallsites", pattern = pattern)
         }
 
-        testClass<AbstractK2IntentionInInjectionTest> {
+        testClass<AbstractK2IntentionTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.intentions.tests.K2IntentionInInjectionTestGenerated") {
             model("code-insight/intentions-k2/tests/testData/intentions/injected", pattern = pattern)
         }
 

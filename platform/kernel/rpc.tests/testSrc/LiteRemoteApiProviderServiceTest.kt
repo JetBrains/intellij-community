@@ -11,7 +11,6 @@ import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
 import com.intellij.platform.testFramework.plugins.extensions
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
@@ -26,7 +25,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import kotlin.time.Duration.Companion.seconds
 
-/** The lite service installs the provider that [RemoteApiProvider.EP_NAME] holds, at its construction or when the extension appears. */
+/**
+ * The lite service installs the provider that [RemoteApiProvider.EP_NAME] holds, at its construction or when the
+ * extension appears, and drops it when the extension goes away.
+ */
 @TestApplication
 // The synthetic plugin in this test does not contribute index extensions.
 @SystemProperty(propertyKey = "intellij.indexes.skip.reload.on.plugin.load.unload", propertyValue = "true")
@@ -71,7 +73,7 @@ internal class LiteRemoteApiProviderServiceTest {
       assertThat(service.tryResolve(remoteApiDescriptor<LazyTestApi>())).isNull()
       assertThat(request.isCompleted).isFalse()
 
-      disposeExpectingRepeatedInstalls(mask)
+      Disposer.dispose(mask)
 
       assertThat(service.isConnected()).isTrue()
       assertThat(request.await()).isInstanceOf(LazyTestApi::class.java)
@@ -85,21 +87,37 @@ internal class LiteRemoteApiProviderServiceTest {
   }
 
   /**
-   * The mask disposal notifies each change listener twice, once for the removal and once for the restore.
-   * The application service from other tests is also connected. Each repeated install logs an error, and the test expects it.
+   * The move of JetBrains Light back to the light mode: the module that contributes the provider unloads, and the
+   * extension goes with it. The mask hides the extension of `intellij.platform.rpc` the way the unload removes it,
+   * and the mask disposal brings it back the way a new upgrade does.
    */
-  private fun disposeExpectingRepeatedInstalls(mask: Disposable) {
-    val errors = mutableListOf<String>()
-    LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
-        if (!message.startsWith("Remote API provider is already installed.")) return super.processError(category, message, details, t)
-        errors.add(message)
-        return Action.NONE
+  @Test
+  fun `an extension that goes away disconnects the service, and its return reconnects`(): Unit = timeoutRunBlocking(30.seconds) {
+    val plugin = loadLazyTestApiPlugin()
+    try {
+      val service = LiteRemoteApiProviderService(this)
+      assertThat(service.isConnected()).isTrue()
+
+      val mask = Disposer.newDisposable("provider unloaded")
+      ExtensionTestUtil.maskExtensions(RemoteApiProvider.EP_NAME, emptyList(), mask)
+
+      assertThat(service.isConnected()).isFalse()
+      assertThat(service.tryResolve(remoteApiDescriptor<LazyTestApi>())).isNull()
+      val request = async(start = CoroutineStart.UNDISPATCHED) {
+        service.awaitConnectionAndResolve(remoteApiDescriptor<LazyTestApi>())
       }
-    }) {
+      assertThat(request.isCompleted).isFalse()
+
       Disposer.dispose(mask)
+
+      assertThat(service.isConnected()).isTrue()
+      assertThat(request.await()).isInstanceOf(LazyTestApi::class.java)
     }
-    assertThat(errors).isNotEmpty()
+    finally {
+      withContext(Dispatchers.EDT) {
+        Disposer.dispose(plugin)
+      }
+    }
   }
 
   /** A dynamic plugin load is a modal operation, so it runs on the EDT. */

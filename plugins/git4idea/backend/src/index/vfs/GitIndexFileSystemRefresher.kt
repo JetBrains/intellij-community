@@ -38,6 +38,7 @@ import com.intellij.util.LocalTimeCounter
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
@@ -164,11 +165,6 @@ internal class GitIndexFileSystemRefresher(private val project: Project) : Dispo
 
   /**
    * Reload the cached documents of refreshed files.
-   *
-   * [applyRefresh] publishes its content-change events on [VirtualFileManager.VFS_CHANGES], but [FileDocumentManager]
-   * reloads documents from an [com.intellij.openapi.vfs.AsyncFileListener] driven by `VFS_CHANGES_BG` — which our manual
-   * publish does not trigger. So the metadata ([GitIndexVirtualFile.data]) advances while the cached document keeps the
-   * previous index content. Reload it explicitly here. IJPL-249948
    */
   private fun reloadDocuments(fileDataList: List<IndexFileData>) {
     val fileDocumentManager = FileDocumentManager.getInstance()
@@ -206,26 +202,24 @@ internal class GitIndexFileSystemRefresher(private val project: Project) : Dispo
 
   private fun applyRefresh(fileDataList: List<IndexFileData>) {
     val events = fileDataList.map { it.event }
-    ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
-    fileDataList.forEach { it.apply() }
-    ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
+    VirtualFileManager.getInstance().fireEvents(events) {
+      fileDataList.forEach { it.apply() }
+    }
   }
 
   internal fun write(file: GitIndexVirtualFile, requestor: Any?, newContent: ByteArray, newModificationStamp: Long) {
     try {
       val newModStamp = if (newModificationStamp > 0) newModificationStamp else LocalTimeCounter.currentTime()
       val event = VFileContentChangeEvent(requestor, file, file.modificationStamp, newModStamp)
-      ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(listOf(event))
+      VirtualFileManager.getInstance().fireEvents(listOf(event)) {
+        val oldData = file.data
+        val oldModificationStamp = file.modificationStamp
 
-      val oldData = file.data
-      val oldModificationStamp = file.modificationStamp
-
-      val applyChangesHandler = computeUnderPotemkinProgressIfEdt(project, GitBundle.message("stage.vfs.write.process", file.name)) {
-        getApplyChangesHandler(file, oldData, oldModificationStamp, newContent, newModStamp)
+        val applyChangesHandler = computeUnderPotemkinProgressIfEdt(project, GitBundle.message("stage.vfs.write.process", file.name)) {
+          getApplyChangesHandler(file, oldData, oldModificationStamp, newContent, newModStamp)
+        }
+        applyChangesHandler.invoke()
       }
-      applyChangesHandler.invoke()
-
-      ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(listOf(event))
     }
     catch (e: Exception) {
       throw IOException(e)

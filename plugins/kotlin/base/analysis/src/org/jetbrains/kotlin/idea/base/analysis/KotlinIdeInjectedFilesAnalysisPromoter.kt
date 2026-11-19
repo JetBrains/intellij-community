@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPro
  * Typically, injected Kotlin files are ignored during the analysis since no configuration is provided for them.
  * If some plugin wants to support code insight, this interface should be implemented.
  */
+@Deprecated("Promoter was used for Kotlin Notebooks, should not be used anymore")
 @ApiStatus.Internal
 interface KotlinIdeInjectedFilesAnalysisPromoter {
     /**
@@ -37,6 +38,7 @@ interface KotlinIdeInjectedFilesAnalysisPromoter {
     }
 }
 
+@Deprecated("!InjectedLanguageManager.getInstance(project).isInjectedViewProvider(viewProvider) should be used instead")
 val PsiFile.isNotInjectedOrShouldBeAnalyzed: Boolean
     get(){
         val viewProvider = viewProvider
@@ -44,11 +46,12 @@ val PsiFile.isNotInjectedOrShouldBeAnalyzed: Boolean
                 viewProvider.isInjectedFileShouldBeAnalyzed
     }
 
-
+@Deprecated("Always return false since kotlin notebooks are not bundled anymore", ReplaceWith("false"))
 val FileViewProvider.isInjectedFileShouldBeAnalyzed: Boolean
     get() {
         return this is InjectedFileViewProvider && EP_NAME.extensionList.any { it.shouldRunAnalysisForInjectedFile(this) }
     }
 
+@Deprecated("Always return false since kotlin notebooks are not bundled anymore", ReplaceWith("false"))
 val PsiFile.injectionRequiresOnlyEssentialHighlighting: Boolean
     get() = viewProvider is InjectedFileViewProvider && EP_NAME.extensionList.any { it.shouldRunOnlyEssentialHighlightingForInjectedFile(this) }

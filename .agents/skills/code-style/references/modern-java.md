@@ -109,74 +109,6 @@ var _ = (int)handle.invokeExact(argument);
 ```
 
 Keep the named local on older targets.
-Do not replace the assignment with `handle.invokeExact(argument);`.
-That call expects a `void` return type instead of `int`.
-
-### Type test and cast
-
-Before:
-
-```text
-if (value instanceof String) {
-  String text = (String)value;
-  return text.length();
-}
-```
-
-Prefer:
-
-```java
-if (value instanceof String text) {
-  return text.length();
-}
-```
-
-### Value-returning switch
-
-Before:
-
-```text
-switch (exitCode) {
-  case 0: return Result.SUCCESS;
-  default: return Result.FAILURE;
-}
-```
-
-Prefer:
-
-```java
-return switch (exitCode) {
-  case 0 -> Result.SUCCESS;
-  default -> Result.FAILURE;
-};
-```
-
-### Value carrier
-
-For a new internal value type, avoid this class boilerplate:
-
-```text
-final class ExitCode {
-  private final int value;
-
-  ExitCode(int value) {
-    this.value = value;
-  }
-
-  int value() {
-    return value;
-  }
-}
-```
-
-Prefer:
-
-```java
-record ExitCode(int value) { }
-```
-
-The record also defines value equality, hashing, and a string representation.
-This is not an automatic replacement for an existing class with identity semantics.
 
 ### Multiline text
 
@@ -195,22 +127,6 @@ var payload = """
   }
   """;
 ```
-
-### Collection creation
-
-Before:
-
-```text
-List<String> names = Collections.unmodifiableList(Arrays.asList("alpha", "beta"));
-```
-
-Prefer on Java 10 or later:
-
-```java
-var names = List.of("alpha", "beta");
-```
-
-On Java 9, keep the explicit variable type and use `List.of`.
 
 ## Source and adaptations
 

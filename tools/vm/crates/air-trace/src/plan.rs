@@ -28,7 +28,7 @@ use avl_affected::{air_area, air_areas};
 use avl_base::sync::lock;
 use avl_trace_tools::discover::{Bundle, Root, RootState, Scanner, Summary};
 use bt_core::catalog::{SuiteDocument, SuiteProfile};
-use bt_core::{OsRuntime, ResolutionInputs};
+use bt_core::{OsRuntime, ResolutionInputs, Runtime};
 use catalog::{Catalog, lane_of, read_catalog};
 
 use crate::Refusal;
@@ -318,7 +318,7 @@ pub(crate) type ListFiles<'r> = Box<dyn Fn(&Path, &str) -> Result<Vec<String>, R
 pub(crate) struct Planner<'r> {
     repo_root: PathBuf,
     list_files: ListFiles<'r>,
-    runtime: &'r OsRuntime,
+    runtime: &'r dyn Runtime,
     selectors: &'r ResolutionInputs<'r>,
     bt_notes: BtNotes,
     loaded: Option<Result<Arc<Catalog>, Refusal>>,
@@ -332,6 +332,9 @@ pub(crate) struct Planner<'r> {
     class_lanes: HashMap<String, String>,
     /// Every repository path to join through `bt`, in the order given.
     paths: Vec<String>,
+    /// Every class to resolve through `bt`, as its name and the input that named it, in the order given. The plan
+    /// resolves them after the last input, with one `symbol` call of accio for all of them.
+    pending_classes: Vec<(String, String)>,
     /// The paths that reached a suite, and the classes they reached per lane: what one `run --changed` line covers.
     changed: Vec<String>,
     changed_classes: HashMap<String, BTreeSet<String>>,
@@ -341,7 +344,7 @@ pub(crate) struct Planner<'r> {
 impl<'r> Planner<'r> {
     pub(crate) fn new(
         repo_root: &Path,
-        runtime: &'r OsRuntime,
+        runtime: &'r dyn Runtime,
         selectors: &'r ResolutionInputs<'r>,
         bt_notes: BtNotes,
         list_files: ListFiles<'r>,
@@ -358,6 +361,7 @@ impl<'r> Planner<'r> {
             scenario_rank: HashMap::new(),
             class_lanes: HashMap::new(),
             paths: Vec::new(),
+            pending_classes: Vec::new(),
             changed: Vec::new(),
             changed_classes: HashMap::new(),
             changed_lanes: 0,
@@ -389,9 +393,22 @@ impl<'r> Planner<'r> {
                 self.read_text(&input.text)?;
             }
         }
+        self.resolve_pending_classes();
         self.join_paths()?;
         self.finish();
         Ok(self.result)
+    }
+
+    /// Resolves the queued classes in their order, after one prefetch of all their names, so a plan of many classes
+    /// costs one `symbol` call of accio. A failed prefetch is the refusal of each name, which [`Planner::resolve_class`]
+    /// plans as unmapped without a second call.
+    fn resolve_pending_classes(&mut self) {
+        let pending = std::mem::take(&mut self.pending_classes);
+        let names: Vec<&str> = pending.iter().map(|(class_name, _)| class_name.as_str()).collect();
+        self.selectors.prefetch_symbols(&names);
+        for (class_name, given) in &pending {
+            self.resolve_class(class_name, given);
+        }
     }
 
     // --- what the readers add ------------------------------------------------------------------------------

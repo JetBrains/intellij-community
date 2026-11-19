@@ -12,7 +12,7 @@ jps_test(
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
     ],
-    tags = ["community-aggregator"],
+    tags = ["community-vcs-tests"],
     runtime_deps = [":vcs-gitlab-yaml-tests_test_lib"],
 )
 ### skip generation section `test intellij.vcs.gitlab.yaml.tests`

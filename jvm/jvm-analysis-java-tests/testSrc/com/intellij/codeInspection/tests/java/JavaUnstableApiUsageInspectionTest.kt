@@ -1,11 +1,22 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.jvm.analysis.internal.testFramework.UnstableApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.jvmAnnotationsProjectFixture
+import com.intellij.jvm.analysis.internal.testFramework.unstableApiUsageInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() {
+@TestApplication
+class JavaUnstableApiUsageInspectionTest {
+  companion object {
+    private val projectFixture = jvmAnnotationsProjectFixture()
+  }
+
+  private val myFixture by unstableApiUsageInspectionFixture(projectFixture)
+
+  @Test
   fun `test java experimental api usages`() {
-    inspection.myIgnoreInsideImports = false
+    myFixture.inspection.myIgnoreInsideImports = false
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import experimental.pkg.<warning descr="'experimental.pkg.AnnotatedClass' is marked unstable with @ApiStatus.Experimental">AnnotatedClass</warning>;
       import experimental.pkg.<warning descr="'experimental.pkg.ClassWithExperimentalTypeInSignature' is unstable because its signature references unstable class 'experimental.pkg.AnnotatedClass' marked with @ApiStatus.Experimental">ClassWithExperimentalTypeInSignature</warning>;
@@ -132,8 +143,9 @@ class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() 
     """.trimIndent())
   }
 
+  @Test
   fun `test java do not report unstable api usages inside import statements`() {
-    inspection.myIgnoreInsideImports = true
+    myFixture.inspection.myIgnoreInsideImports = true
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import experimental.pkg.AnnotatedClass;
       import static experimental.pkg.AnnotatedClass.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS;
@@ -161,6 +173,7 @@ class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() 
     """.trimIndent())
   }
 
+  @Test
   fun `test java no warnings on access to members of the same file`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       package test;
@@ -199,8 +212,9 @@ class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() 
     """.trimIndent())
   }
 
+  @Test
   fun `test highlighting scheduled for removal`() {
-    inspection.myIgnoreInsideImports = false
+    myFixture.inspection.myIgnoreInsideImports = false
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
       import scheduledForRemoval.pkg.<error descr="'scheduledForRemoval.pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</error>;
@@ -316,8 +330,9 @@ class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() 
     """.trimIndent())
   }
 
+  @Test
   fun `test java internal api usages are reported as unstable`() {
-    inspection.myIgnoreInsideImports = false
+    myFixture.inspection.myIgnoreInsideImports = false
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import internal.pkg.<warning descr="'internal.pkg.AnnotatedClass' is marked unstable with @ApiStatus.Internal">AnnotatedClass</warning>;
       import internal.pkg.<warning descr="'internal.pkg.ClassWithInternalTypeInSignature' is unstable because its signature references unstable class 'internal.pkg.AnnotatedClass' marked with @ApiStatus.Internal">ClassWithInternalTypeInSignature</warning>;
@@ -344,9 +359,10 @@ class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() 
     """.trimIndent())
   }
 
+  @Test
   fun `test scheduled for removal fix`() {
-    inspection.myIgnoreInsideImports = false
-    inspection.myIgnoreApiDeclaredInThisProject = false
+    myFixture.inspection.myIgnoreInsideImports = false
+    myFixture.inspection.myIgnoreApiDeclaredInThisProject = false
     myFixture.testQuickFix(JvmLanguage.JAVA, before = """
       package org.jetbrains.annotations;
 

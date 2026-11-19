@@ -15,12 +15,36 @@
  */
 package org.jetbrains.idea.devkit.codeInsight;
 
-import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
+import com.intellij.codeInsight.completion.JavaCompletionAutoPopupFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class PluginXmlAutoPopupTest extends JavaCompletionAutoPopupTestCase {
+import static com.intellij.codeInsight.completion.JavaCompletionAutoPopupFixtureKt.javaCompletionAutoPopupFixture;
+import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+@TestApplication
+public class PluginXmlAutoPopupTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<JavaCompletionAutoPopupFixture> autoPopupFixture = javaCompletionAutoPopupFixture(projectFixture);
+  private LightJavaCodeInsightTestFixture myFixture;
+  private JavaCompletionAutoPopupFixture myAutoPopup;
+
+  @BeforeEach
+  void setUp() {
+    myAutoPopup = autoPopupFixture.get();
+    myFixture = myAutoPopup.getFixture();
+  }
+
+  @Test
   public void test_autopopup_for_class_references() {
     myFixture.addClass("public class FooFooFooFooFoo { }");
     myFixture.configureByText("plugin.xml", """
@@ -30,11 +54,12 @@ public class PluginXmlAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   </extensionPoints>
 </idea-plugin>
 """);
-    myTester.typeWithPauses("o");
+    myAutoPopup.getTester().typeWithPauses("o");
     assertNotNull(myFixture.getLookup());
     assertSameElements(myFixture.getLookupElementStrings(), List.of("FooFooFooFooFoo"));
   }
 
+  @Test
   public void test_no_autopopup_when_only_word_completion_is_available() {
     myFixture.configureByText("plugin.xml", """
 <idea-plugin>
@@ -43,7 +68,7 @@ public class PluginXmlAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   </extensionPoints>
 </idea-plugin>
 """);
-    myTester.typeWithPauses("e");
+    myAutoPopup.getTester().typeWithPauses("e");
     assertNull(myFixture.getLookup());
   }
 }

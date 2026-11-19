@@ -1,31 +1,26 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.jvm.analysis.internal.testFramework.test.TestCaseWithConstructorInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.testCaseWithConstructorInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.test.testCaseWithConstructorProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.PathUtil
+import org.junit.jupiter.api.Test
 import java.io.File
 
-abstract class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspectionTestBase() {
-  
-
+@TestApplication
+abstract class KotlinTestCaseWithConstructorInspectionTest {
   companion object {
-    private val descriptor = object : JUnitProjectDescriptor(LanguageLevel.HIGHEST) {
-      override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-        super.configureModule(module, model, contentEntry)
-        val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
-        PsiTestUtil.addLibrary(model, "kotlin-stdlib", jar.parent, jar.name)
-      }
+    private val projectFixture = testCaseWithConstructorProjectFixture {
+      val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
+      PsiTestUtil.addLibrary(this, "kotlin-stdlib", jar.parent, jar.name)
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
+  protected val myFixture by testCaseWithConstructorInspectionFixture(projectFixture)
 
+  @Test
   fun `test no highlighting parameterized test case`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.Test
@@ -47,6 +42,7 @@ abstract class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstru
     """.trimIndent(), "ParameterizedTest")
   }
 
+  @Test
   fun `test no highlighting trivial constructor`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
@@ -61,6 +57,7 @@ abstract class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstru
     """.trimIndent(), "TestCaseWithConstructorInspection2")
   }
 
+  @Test
   fun `test highlighting simple non-trivial constructor`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
@@ -73,6 +70,7 @@ abstract class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstru
     """.trimIndent(), "TestCaseWithConstructorInspection1")
   }
 
+  @Test
   fun `test highlighting Junit 4`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       public class JUnit4TestCaseWithConstructor {

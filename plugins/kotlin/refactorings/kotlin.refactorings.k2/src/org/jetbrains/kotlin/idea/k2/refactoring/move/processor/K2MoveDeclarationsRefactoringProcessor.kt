@@ -172,10 +172,13 @@ open class K2MoveDeclarationsRefactoringProcessor(
         containingDeclarations.mapNotNull { it.element }
             .filterIsInstance<KtObjectDeclaration>().filter { it.isCompanion() }
             .forEach { companionObject ->
-                if (companionObject.isEffectivelyEmpty() && !hasUsages(companionObject)) {
-                companionObject.deleteSingle()
+                val shouldDeleteCompanionObject = companionObject.isEffectivelyEmpty()
+                        && companionObject.superTypeListEntries.isEmpty()
+                        && !hasUsages(companionObject)
+                if (shouldDeleteCompanionObject) {
+                    companionObject.deleteSingle()
+                }
             }
-        }
     }
 
     private fun hasUsages(companionObject: KtObjectDeclaration): Boolean =

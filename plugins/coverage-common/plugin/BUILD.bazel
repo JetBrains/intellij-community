@@ -1,0 +1,46 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.coverage.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.coverage",
+        "intellij.platform.coverage.agent",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/intellij.platform.coverage.agent.jar": ["intellij.platform.coverage.agent"],
+        "lib/intellij-coverage-agent.jar": ["@lib//:platform-coverage-agent-intellij-coverage"],
+        "lib/platform-coverage-plugin.jar": ["intellij.platform.coverage.plugin"],
+    },
+    main_module = "intellij.platform.coverage.plugin",
+)
+### auto-generated section `dev intellij.platform.coverage.plugin` end
+
+### auto-generated section `build intellij.platform.coverage.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.coverage.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/execution"],
+)
+### auto-generated section `build intellij.platform.coverage.plugin` end
+
+### auto-generated section `iml intellij.platform.coverage.plugin` start
+exports_files(
+    [
+        "intellij.platform.coverage.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.coverage.plugin` end

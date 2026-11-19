@@ -6,6 +6,14 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 content_module_jar(module = ":impl")
 ### auto-generated section `dev intellij.platform.vcs.log.impl` end
 
+jps_test(
+    name = "vcs-log-impl-tests_test",
+    timeout = "moderate",
+    tags = ["community-vcs-tests"],
+    runtime_deps = [":vcs-log-impl-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.vcs.log.impl.tests`
+
 ### auto-generated section `build intellij.platform.vcs.log.impl` start
 jvm_library(
     name = "impl",
@@ -162,10 +170,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.vcs.log.impl.tests` end
-
-### auto-generated section `test intellij.platform.vcs.log.impl.tests` start
-jps_test(
-    name = "vcs-log-impl-tests_test",
-    runtime_deps = [":vcs-log-impl-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.vcs.log.impl.tests` end

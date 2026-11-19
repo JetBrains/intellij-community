@@ -33,6 +33,25 @@ a local value. `Sdk` is a legacy API, and it will be removed from PyCharm.
 The project inspection "Use PythonInterpreter instead of Sdk in PyCharm" (suppress ID `PySdkUsage`) finds each use
 of `Sdk`. Do not suppress it in new code.
 
+Before you plan, edit or review code that reads, sets, stores or tests a Python interpreter, read
+[`python-sdk/AGENTS.md`](../python-sdk/AGENTS.md). The guide explains the interpreter library flow: how a module
+names its interpreter, where the facts live, and which API to use.
+
+## Read a Caffeine `AsyncCache` with `getOrLoad`
+
+This rule is for all teams and all code in this directory.
+
+To get a value from a Caffeine `AsyncCache` in a coroutine, use
+`com.intellij.python.pytools.backend.getOrLoad`:
+
+```kotlin
+cache.getOrLoad(key, scope) { key -> load(key) }
+```
+
+Do not write `cache.get(key) { _, _ -> scope.future { ... } }.await()`. All callers of one key share one future.
+`CompletionStage.await()` cancels that future when its caller is cancelled, so one cancelled caller stops the load
+for all other callers. `getOrLoad` waits through `asDeferred()`, which does not cancel the future.
+
 ## Tests
 
 Every code change in this directory needs a test. Write it with the `py-junit5-tests`

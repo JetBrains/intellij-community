@@ -1,26 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin
 
-import com.intellij.junit.testFramework.JUnitProjectDescriptor
 import com.intellij.junit.testFramework.MavenTestLib
-import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 
-abstract class KotlinJUnitTestRunLineMarkerTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+abstract class KotlinJUnitTestRunLineMarkerTest {
   companion object {
-    val descriptor: JUnitProjectDescriptor = JUnitProjectDescriptor(HIGHEST, MavenTestLib.JUNIT5)
+    private val projectFixture = kotlinJUnitProjectFixture(MavenTestLib.JUNIT5)
   }
 
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
-  }
+  protected val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  override fun getProjectDescriptor() = descriptor
-
+  @Test
   fun testCustomAnnotation() {
     myFixture.configureByText("MySuperTest.kt", """
       @Retention(AnnotationRetention.RUNTIME)
@@ -38,7 +35,8 @@ abstract class KotlinJUnitTestRunLineMarkerTest : LightJavaCodeInsightFixtureTes
       }
       
       """.trimIndent())
-    val marks = myFixture.findGuttersAtCaret().filter { it.getTooltipText() == "Run Test" }
-    TestCase.assertEquals(1, marks.size)
+    val gutters = myFixture.findGuttersAtCaret()
+    val marks = runReadActionBlocking { gutters.filter { it.getTooltipText() == "Run Test" } }
+    assertEquals(1, marks.size)
   }
 }

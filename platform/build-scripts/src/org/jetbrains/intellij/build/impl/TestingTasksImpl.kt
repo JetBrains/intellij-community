@@ -1407,7 +1407,6 @@ private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
   "intellij.devkit.kotlin.tests",
   "intellij.devkit.themes.tests",
   "intellij.gradle.tests",
-  "intellij.kotlin.common.tests",
   "intellij.platform.jewel.markdown.testing",
   "intellij.platform.lang.testEntities",
   "intellij.platform.remoteServers.targetsIntegrationTests",
@@ -1418,6 +1417,4 @@ private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
   "intellij.python.test.env.junit4",
   "intellij.python.test.env.plain",
   "intellij.python.test.env.uv",
-  // no tests
-  "kotlin.jvm-debugger.testFramework",
 )

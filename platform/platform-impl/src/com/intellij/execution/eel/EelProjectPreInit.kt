@@ -11,6 +11,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.resolveEelMachine
 import com.intellij.platform.eel.provider.setEelMachine
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.job
 
 /**
  * Associates the project with its [com.intellij.platform.eel.EelMachine] very early during project initialization,
@@ -48,7 +49,7 @@ internal class EelProjectPreInit : InitProjectActivity {
     @OptIn(EelDelicateApi::class)
     project.setEelMachine(machine)
     (project as? ComponentManagerEx)?.getCoroutineScope()?.let { projectScope ->
-      EelMachineConnectionProvider.registry.acquireProjectLease(machine, projectScope)
+      EelMachineConnectionProvider.registry.acquireProjectLease(machine, projectScope.coroutineContext.job)
     }
   }
 

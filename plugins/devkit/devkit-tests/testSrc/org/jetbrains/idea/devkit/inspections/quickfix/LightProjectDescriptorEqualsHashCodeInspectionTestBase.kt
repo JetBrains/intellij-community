@@ -3,6 +3,11 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import org.jetbrains.idea.devkit.inspections.LightProjectDescriptorEqualsHashCodeInspection
 
+/**
+ * Use [lightProjectDescriptorEqualsHashCodeFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use lightProjectDescriptorEqualsHashCodeFixture in a JUnit 5 test")
 abstract class LightProjectDescriptorEqualsHashCodeInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun setUp() {

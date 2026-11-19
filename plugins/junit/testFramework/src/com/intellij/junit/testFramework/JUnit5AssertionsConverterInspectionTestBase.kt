@@ -10,6 +10,11 @@ import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
 
 private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT4, JUNIT5, HAMCREST)
 
+/**
+ * @deprecated Use [junitProjectFixture] and [junit5AssertionsConverterInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use junitProjectFixture and junit5AssertionsConverterInspectionFixture in a JUnit 5 test")
 abstract class JUnit5AssertionsConverterInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnit5AssertionsConverterInspection = JUnit5AssertionsConverterInspection()
   override fun getProjectDescriptor(): JUnitProjectDescriptor = descriptor

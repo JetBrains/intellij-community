@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.refactoring.RefactoringBundle
 
+@Suppress("DEPRECATION")
 abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFixtureTestCaseWithUtils() {
   protected abstract val fileType: LanguageFileType
 

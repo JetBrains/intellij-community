@@ -1,109 +1,150 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.exec;
 
-import com.intellij.debugger.streams.test.TraceExecutionTestCase;
+import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper;
+import com.intellij.debugger.streams.test.ExecutionTestCaseHelper;
+import com.intellij.debugger.streams.test.TraceExecutionFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.xdebugger.XDebugSession;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.debugger.streams.test.TraceExecutionFixtureKt.traceExecutionFixture;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class ResultMappingTest extends TraceExecutionTestCase {
+@TestApplication
+public class ResultMappingTest {
+  protected final TestFixture<TraceExecutionFixture> traceFixture = traceExecutionFixture(this::getHelper);
+
+  @Test
   public void testToArrayMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testPrimitiveToArrayMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testCollectorToListMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testToListMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testAnyMatchMappingTrue() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testAnyMatchMappingFalse() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testPrimitiveAnyMatchMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testAllMatchMappingTrue() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testAllMatchMappingFalse() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testPrimitiveAllMatchMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testNoneMatchMappingTrue() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testNoneMatchMappingFalse() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testPrimitiveNoneMatchMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testFindFirstMappingPresent() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testFindFirstMappingNone() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testPrimitiveFindFirstMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testFindAnyMappingPresent() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testFindAnyMappingNone() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testPrimitiveFindAnyMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testMaxMappingPresent() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testMaxMappingNone() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testPrimitiveMaxMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testMinMappingPresent() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testMinMappingNone() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testPrimitiveMinMapping() {
-    doTest(false);
+    traceFixture.get().doTest(false);
+  }
+
+  protected @NotNull TraceExecutionTestHelper getHelper(@NotNull TraceExecutionFixture trace, @NotNull XDebugSession session) {
+    return new ExecutionTestCaseHelper(trace, session);
   }
 }

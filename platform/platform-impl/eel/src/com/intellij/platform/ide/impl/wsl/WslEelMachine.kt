@@ -2,7 +2,6 @@
 package com.intellij.platform.ide.impl.wsl
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelConnectionError
@@ -12,7 +11,6 @@ import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.provider.EelMachineResolver
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.resolveEelMachine
 import com.intellij.platform.ijent.IjentMachine
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSession
@@ -25,24 +23,6 @@ import org.jetbrains.annotations.VisibleForTesting
 
 private suspend fun WSLDistribution.getIjent(descriptor: EelDescriptor): IjentPosixApi {
   return WslIjentManager.instanceAsync().getIjentApi(descriptor, this, null, false)
-}
-
-private fun findWslDistribution(distributionId: String): WSLDistribution {
-  return WslDistributionManager.getInstance().lastInstalledDistributions.orEmpty()
-    .firstOrNull { it.id.equals(distributionId, ignoreCase = true) || it.msId.equals(distributionId, ignoreCase = true) }
-    ?: WSLDistribution(distributionId)
-}
-
-internal class WslEelDescriptorProviderImpl : EelMachineResolver.Provider.WslEelDescriptorProvider {
-  override fun resolveWslEelDescriptor(distributionId: String): EelDescriptor {
-    return WslEelDescriptor(findWslDistribution(distributionId))
-  }
-}
-
-internal class WslEelMachineProviderImpl : EelMachineResolver.Provider.WslEelMachineProvider {
-  override suspend fun resolveWslEelMachine(distributionId: String): EelMachine {
-    return WslEelDescriptor(findWslDistribution(distributionId)).resolveEelMachine()
-  }
 }
 
 internal class WslEelMachineResolver : EelMachineResolver {
@@ -63,8 +43,11 @@ internal class WslEelMachineResolver : EelMachineResolver {
   }
 }
 
-@ApiStatus.Internal
-class WslEelMachine internal constructor(val distribution: WSLDistribution) : EelMachine, IjentMachine {
+@ApiStatus.Experimental
+class WslEelMachine(val distribution: WSLDistribution) : EelMachine, IjentMachine {
+  @Suppress("unused")  // This constructor is public API
+  constructor(distributionId: String) : this(WSLDistribution(distributionId))
+
   override val isConnected: Boolean
     get() = when (WslIjentManager.getInstance().getIjentSessionState(distribution, false).value) {
       is IjentSessionState.Deployed -> true
@@ -114,9 +97,11 @@ class WslEelMachine internal constructor(val distribution: WSLDistribution) : Ee
     return descriptor is WslEelDescriptor && descriptor.distribution == distribution
   }
 
+  @get:ApiStatus.Internal
   override val ijentSessionState: StateFlow<IjentSessionState>
     get() = WslIjentManager.getInstance().getIjentSessionState(distribution, rootUser = false)
 
+  @ApiStatus.Internal
   override suspend fun getIjentSession(sessionScope: ParentOfIjentScopes): IjentSession.Posix {
     return WslIjentManager.instanceAsync().getIjentSession(distribution, null, rootUser = false, sessionScope)
   }
@@ -124,6 +109,7 @@ class WslEelMachine internal constructor(val distribution: WSLDistribution) : Ee
   override fun toString(): String = "WslEelMachine(distribution=$distribution)"
 
   companion object {
+    @ApiStatus.Internal
     @VisibleForTesting
     fun createInTests(distribution: WSLDistribution): WslEelMachine =
       WslEelMachine(distribution)

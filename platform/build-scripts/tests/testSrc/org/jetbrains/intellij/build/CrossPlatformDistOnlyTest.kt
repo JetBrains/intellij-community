@@ -24,8 +24,8 @@ class CrossPlatformDistOnlyTest {
 
   @Test
   fun `getPluginLayoutsByJpsModuleNames excludes CROSS_PLATFORM_DIST_ONLY plugins`() {
-    val regularPlugin = PluginLayout.pluginAuto(listOf("regular.plugin"))
-    val crossPlatformOnlyPlugin = PluginLayout.pluginAuto(listOf("cross.platform.only")) {
+    val regularPlugin = PluginLayout.pluginAuto("regular.plugin") {}
+    val crossPlatformOnlyPlugin = PluginLayout.pluginAuto("cross.platform.only") {
       it.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
     }
 
@@ -52,13 +52,13 @@ class CrossPlatformDistOnlyTest {
 
   @Test
   fun `getCrossPlatformOnlyBundledPlugins returns only bundled CROSS_PLATFORM_DIST_ONLY plugins`() {
-    val bundledCrossPlatformPlugin = PluginLayout.pluginAuto(listOf("bundled.cross.platform")) {
+    val bundledCrossPlatformPlugin = PluginLayout.pluginAuto("bundled.cross.platform") {
       it.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
     }
-    val nonBundledCrossPlatformPlugin = PluginLayout.pluginAuto(listOf("non.bundled.cross.platform")) {
+    val nonBundledCrossPlatformPlugin = PluginLayout.pluginAuto("non.bundled.cross.platform") {
       it.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
     }
-    val regularBundledPlugin = PluginLayout.pluginAuto(listOf("regular.bundled"))
+    val regularBundledPlugin = PluginLayout.pluginAuto("regular.bundled") {}
 
     val productLayout = mock(ProductModulesLayout::class.java)
     `when`(productLayout.pluginLayouts).thenReturn(lazyOf(persistentListOf(

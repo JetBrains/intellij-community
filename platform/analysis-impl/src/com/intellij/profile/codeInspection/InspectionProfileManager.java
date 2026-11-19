@@ -2,14 +2,19 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,5 +74,37 @@ public interface InspectionProfileManager {
     ToolsImpl tools = getInstance(project).getCurrentProfile().getToolsOrNull(inspection.getShortName(), project);
     HighlightSeverity profileSeverity = tools == null ? null : tools.getLevel().getSeverity();
     return profileSeverity != null && minSeverity.compareTo(profileSeverity) > 0;
+  }
+
+  /**
+   * @param context context element
+   * @param inspection inspection profile entry instance
+   * @return a copy of inspection profile entry initialized with the same options as the specified inspection entry.
+   * It could be useful to temporarily modify options in a 'non-physical' copy without breaking an existing physical profile.
+   * @param <T> type of the entry
+   */
+  static @NotNull <T extends InspectionProfileEntry> InspectionProfileEntry getToolCopy(@NotNull PsiElement context, @NotNull T inspection) {
+    InspectionToolWrapper<?, ?> tool = getInstance(context.getProject())
+      .getCurrentProfile().getInspectionTool(inspection.getShortName(), context);
+    if (tool == null) {
+      throw new IllegalArgumentException("Tool not found: " + inspection.getShortName());
+    }
+    InspectionProfileEntry copiedTool = tool.createCopy().getTool();
+    if (copiedTool.getClass() != inspection.getClass()) {
+      if (copiedTool instanceof GlobalInspectionTool global) {
+        LocalInspectionTool local = global.getSharedLocalInspectionTool();
+        if (local != null) {
+          copiedTool = local;
+        }
+      }
+      if (copiedTool.getClass() != inspection.getClass()) {
+        throw new IllegalArgumentException(
+          "Invalid class: " + copiedTool.getClass() + "!=" + inspection.getClass() + " (id: " + inspection.getShortName() + ")");
+      }
+    }
+    final Element options = new Element("copy");
+    inspection.writeSettings(options);
+    copiedTool.readSettings(options);
+    return copiedTool;
   }
 }

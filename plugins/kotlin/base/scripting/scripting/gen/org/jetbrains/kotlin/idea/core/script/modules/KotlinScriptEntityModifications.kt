@@ -19,6 +19,8 @@ interface KotlinScriptEntityBuilder : WorkspaceEntityBuilder<KotlinScriptEntity>
     override var entitySource: EntitySource
     var virtualFileUrl: VirtualFileUrl
     var dependencies: MutableList<KotlinScriptLibraryEntityId>
+    var definitionId: String
+    var definitionFingerprint: Long
     var sdkId: SdkId?
     var configurationId: ScriptCompilationConfigurationId?
     var relatedModuleIds: MutableList<ModuleId>
@@ -31,12 +33,16 @@ internal object KotlinScriptEntityType : EntityType<KotlinScriptEntity, KotlinSc
     operator fun invoke(
         virtualFileUrl: VirtualFileUrl,
         dependencies: List<KotlinScriptLibraryEntityId>,
+        definitionId: String,
+        definitionFingerprint: Long,
         entitySource: EntitySource,
         init: (KotlinScriptEntityBuilder.() -> Unit)? = null,
     ): KotlinScriptEntityBuilder {
         val builder = builder()
         builder.virtualFileUrl = virtualFileUrl
         builder.dependencies = dependencies.toMutableWorkspaceList()
+        builder.definitionId = definitionId
+        builder.definitionFingerprint = definitionFingerprint
         builder.entitySource = entitySource
         init?.invoke(builder)
         return builder
@@ -53,6 +59,8 @@ fun MutableEntityStorage.modifyKotlinScriptEntity(
 fun KotlinScriptEntity(
     virtualFileUrl: VirtualFileUrl,
     dependencies: List<KotlinScriptLibraryEntityId>,
+    definitionId: String,
+    definitionFingerprint: Long,
     entitySource: EntitySource,
     init: (KotlinScriptEntityBuilder.() -> Unit)? = null,
-): KotlinScriptEntityBuilder = KotlinScriptEntityType(virtualFileUrl, dependencies, entitySource, init)
+): KotlinScriptEntityBuilder = KotlinScriptEntityType(virtualFileUrl, dependencies, definitionId, definitionFingerprint, entitySource, init)

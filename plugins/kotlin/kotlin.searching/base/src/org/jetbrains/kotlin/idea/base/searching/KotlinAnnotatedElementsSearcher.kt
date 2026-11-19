@@ -3,11 +3,9 @@ package org.jetbrains.kotlin.idea.base.searching
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadActionBlocking
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
@@ -15,8 +13,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
-import com.intellij.psi.stubs.StubRecoveryService
-import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -49,7 +45,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import kotlin.contracts.contract
 
 /**
  * Tests:
@@ -125,8 +120,6 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
     }
 
     companion object {
-        private val LOG = Logger.getInstance("#com.intellij.psi.impl.search.AnnotatedMembersSearcher")
-
         fun processAnnotatedMembers(
             annClass: PsiClass,
             useScope: SearchScope,
@@ -154,8 +147,7 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
 
                 val annotations = if (useScope is GlobalSearchScope) {
                     val scope = KotlinSourceFilterScope.everything(useScope, project)
-                    val entries = KotlinAnnotationsIndex[shortName, project, scope]
-                    entries.filterNot { notKtAnnotationEntry(it) }
+                    KotlinAnnotationsIndex[shortName, project, scope]
                 } else {
                     (useScope as LocalSearchScope).scope.flatMap { it.collectDescendantsOfType<KtAnnotationEntry>() }
                 }
@@ -205,23 +197,6 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                 }) {
                     return false
                 }
-            }
-
-            return true
-        }
-
-        @OptIn(kotlin.contracts.ExperimentalContracts::class)
-        private fun notKtAnnotationEntry(found: PsiElement): Boolean {
-            contract {
-                returns(false) implies (found is KtAnnotationEntry)
-            }
-
-            if (found is KtAnnotationEntry) return false
-
-            val faultyContainer = PsiUtilCore.getVirtualFile(found)
-            LOG.error("Non annotation in annotations list: $faultyContainer; element:$found")
-            if (faultyContainer != null) {
-                StubRecoveryService.getInstance().scheduleReindexing(found.project, faultyContainer)
             }
 
             return true

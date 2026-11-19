@@ -1,41 +1,61 @@
 package org.intellij.plugins.markdown.model
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readActionBlocking
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.util.startOffset
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.JUnitSoftAssertions
-import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.assertj.core.api.SoftAssertions
+import org.assertj.core.api.junit.jupiter.InjectSoftAssertions
+import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension
 import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
-@RunWith(JUnit4::class)
-class ProjectLevelHeaderFindUsagesTest: BasePlatformTestCase() {
-  @get:Rule
-  val softAssertions = JUnitSoftAssertions()
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/model/headers/usages/project")
+@ExtendWith(SoftAssertionsExtension::class)
+class ProjectLevelHeaderFindUsagesTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  private lateinit var testName: String
+
+  @InjectSoftAssertions
+  lateinit var softAssertions: SoftAssertions
+
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true).trimStart().replace(' ', '_')
     myFixture.copyDirectoryToProject("", "")
   }
 
   @Test
-  fun `test main`() = doTest()
+  fun `test main`(): Unit = doTest()
 
   @Test
-  fun `test other`() = doTest()
+  fun `test other`(): Unit = doTest()
 
   @Test
-  fun `test inner`() = doTest("subdirectory")
+  fun `test inner`(): Unit = doTest("subdirectory")
 
   private fun doTest(subdirectory: String? = null) {
-    val testName = getTestName(true)
     val contentFile = when (subdirectory) {
       null -> "$testName.md"
       else -> "$subdirectory/$testName.md"
@@ -43,19 +63,23 @@ class ProjectLevelHeaderFindUsagesTest: BasePlatformTestCase() {
     myFixture.configureByFile(contentFile)
     val headers = collectHeaders()
     assertThat(headers).isNotEmpty
-    for (header in headers) {
-      val offset = header.startOffset + 1
-      myFixture.editor.caretModel.primaryCaret.moveToOffset(offset)
-      val usages = myFixture.testFindUsagesUsingAction(contentFile).map { it.toString() }.sorted()
-      val text = usages.joinToString(separator = "\n", postfix = "\n")
-      val expectedUsagesFileName = "$testName-${header.anchorText!!}.txt".lowercase()
-      val expectedUsagesFilePath = Path("$testDataPath/$expectedUsagesFileName")
-      softAssertions.assertThat(expectedUsagesFilePath.exists())
-        .withFailMessage { "Expected file $expectedUsagesFileName does not exist. Expected full path: $expectedUsagesFilePath" }
-        .isTrue
-      if (expectedUsagesFilePath.exists()) {
-        val expectedText = expectedUsagesFilePath.readText()
-        softAssertions.assertThat(text).isEqualTo(expectedText)
+    timeoutRunBlocking {
+      for (header in headers) {
+        val (offset, anchorText) = readActionBlocking { header.startOffset + 1 to header.anchorText!! }
+        val usages = withContext(Dispatchers.EDT) {
+          myFixture.editor.caretModel.primaryCaret.moveToOffset(offset)
+          myFixture.testFindUsagesUsingAction(contentFile)
+        }.map { it.toString() }.sorted()
+        val text = usages.joinToString(separator = "\n", postfix = "\n")
+        val expectedUsagesFileName = "$testName-$anchorText.txt".lowercase()
+        val expectedUsagesFilePath = Path("${myFixture.testDataPath}/$expectedUsagesFileName")
+        softAssertions.assertThat(expectedUsagesFilePath.exists())
+          .withFailMessage { "Expected file $expectedUsagesFileName does not exist. Expected full path: $expectedUsagesFilePath" }
+          .isTrue
+        if (expectedUsagesFilePath.exists()) {
+          val expectedText = expectedUsagesFilePath.readText()
+          softAssertions.assertThat(text).isEqualTo(expectedText)
+        }
       }
     }
   }
@@ -68,16 +92,7 @@ class ProjectLevelHeaderFindUsagesTest: BasePlatformTestCase() {
         elements.add(header)
       }
     }
-    myFixture.file.accept(visitor)
+    timeoutRunBlocking { readActionBlocking { myFixture.file.accept(visitor) } }
     return elements
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
-  override fun getTestDataPath(): String {
-    return "${MarkdownTestingUtil.TEST_DATA_PATH}/model/headers/usages/project"
   }
 }

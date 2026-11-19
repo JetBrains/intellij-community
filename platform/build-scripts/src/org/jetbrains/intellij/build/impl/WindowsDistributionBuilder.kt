@@ -152,18 +152,10 @@ internal class WindowsDistributionBuilder(
       val zipWithJbrJob = if (customizer.buildZipArchiveWithBundledJre && !context.isStepSkipped(BuildOptions.WINDOWS_ZIP_STEP)) {
         val zipNameSuffix = suffix(arch) + customizer.zipArchiveWithBundledJreSuffix
         fork("build Windows ${zipNameSuffix}.zip distribution") {
-          val zipWithJbrPath = createBuildWinZipTask(
-            runtimeDir = runtimeDir,
-            zipNameSuffix = zipNameSuffix,
-            winDistPath = osAndArchSpecificDistPath,
-            arch = arch,
-            customizer = customizer,
-            context = context,
-          )
-          createChecksumAndGpgSignFiles(
-            context = context,
-            buildArtifact = { zipWithJbrPath }
-          )
+          val zipWithJbrPath = createBuildWinZipTask(runtimeDir, zipNameSuffix, osAndArchSpecificDistPath, arch, customizer, context)
+          createChecksumAndGpgSignFiles(context) {
+            zipWithJbrPath
+          }
           zipWithJbrPath
         }
       }
@@ -174,19 +166,9 @@ internal class WindowsDistributionBuilder(
       if (customizer.buildZipArchiveWithoutBundledJre && !context.isStepSkipped(BuildOptions.WINDOWS_ZIP_STEP)) {
         val zipNameSuffix = suffix(arch) + customizer.zipArchiveWithoutBundledJreSuffix
         fork("build Windows ${zipNameSuffix}.zip distribution") {
-          createChecksumAndGpgSignFiles(
-            context = context,
-            buildArtifact = {
-              createBuildWinZipTask(
-                runtimeDir = null,
-                zipNameSuffix = zipNameSuffix,
-                winDistPath = osAndArchSpecificDistPath,
-                arch = arch,
-                customizer = customizer,
-                context = context
-              )
-            }
-          )
+          createChecksumAndGpgSignFiles(context) {
+            createBuildWinZipTask(runtimeDir = null, zipNameSuffix, osAndArchSpecificDistPath, arch, customizer, context)
+          }
         }
       }
 
@@ -196,20 +178,10 @@ internal class WindowsDistributionBuilder(
         val installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
         validateProductJson(jsonText = productJsonFile.readText(), installationDirectories, installationArchives = emptyList(), context)
         fork("build Windows ${arch.dirName} installer") {
-          buildNsisInstaller(
-            winDistPath = osAndArchSpecificDistPath,
-            productInfoJsonFile = productJsonFile,
-            additionalDirectoryToInclude = productJsonDir,
-            suffix = suffix(arch),
-            customizer = customizer,
-            runtimeDir = runtimeDir,
-            context = context,
-            arch = arch,
-          )?.also {
-            createChecksumAndGpgSignFiles(
-              context = context,
-              buildArtifact = { it }
-            )
+          buildNsisInstaller(osAndArchSpecificDistPath, productJsonFile, productJsonDir, suffix(arch), customizer, runtimeDir, context, arch)?.also {
+            createChecksumAndGpgSignFiles(context) {
+              it
+            }
           }
         }
       }
@@ -226,14 +198,12 @@ internal class WindowsDistributionBuilder(
         Span.current().addEvent("comparing .zip and .exe is not supported on ${SystemInfoRt.OS_NAME}")
       }
       else {
-        checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath = zipWithJbrPath, exePath = exePath, arch = arch, tempDir = context.paths.tempDir, context = context)
+        checkThatExeInstallerAndZipWithJbrAreTheSame(zipWithJbrPath, exePath, arch, context.paths.tempDir, context)
       }
     }
   }
 
-  override fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path {
-    return writeProductJsonFile(targetDir = targetDir, arch = arch, withRuntime = true, context = context)
-  }
+  override fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path = writeProductJsonFile(targetDir, arch, withRuntime = true, context)
 
   override fun writeVmOptions(distBinDir: Path): Path = writeWindowsVmOptions(distBinDir, context)
 
@@ -412,7 +382,7 @@ internal class WindowsDistributionBuilder(
 
   private fun patchLauncher(exeIn: Path, exeOut: Path, properties: Map<String, String>, icoPath: String, context: BuildContext) {
     val launcherPropertiesPath = createTempFile(context.paths.tempDir, "launcher-", ".properties")
-      .writeLines(properties.map { (k, v) -> "${k}=${v}" })
+      .writeLines(properties.map { [k, v] -> "${k}=${v}" })
     val resourcePath = "${context.paths.communityHomeDir}/native/XPlatLauncher/resources/windows/resource.h"
     val jvmArgs = listOf("-Djava.awt.headless=true")
     val generatorModule = context.outputProvider.findRequiredModule("intellij.tools.launcherGenerator")

@@ -8,12 +8,11 @@ load(
 # The Kotlin compiler options of a target are the rules_kotlin provider; rules_jvm adds no JVM option of its own.
 KotlincOptions = _RKKotlincOptions
 
-# The options rules_jvm keeps next to KotlincOptions: the Kotlin/Wasm options the wasmjs rules read, and plugin_options
-# until kt_plugin_cfg replaces it. The rules_kotlin provider models neither.
+# The options rules_jvm keeps next to KotlincOptions: the Kotlin/Wasm options the wasmjs rules read. The rules_kotlin
+# provider does not model them.
 KotlincExtraOptionsInfo = provider(
     doc = "Kotlin compiler options rules_jvm carries next to the rules_kotlin KotlincOptions provider.",
     fields = {
-        "plugin_options": "Compiler plugin options, each `plugin:<id>:<key>=<value>`, passed as -P. To be replaced by kt_plugin_cfg.",
         "x_wasm_attach_js_exception": "Attach a JavaScript exception to a Wasm exception (-Xwasm-attach-js-exception).",
         "x_wasm_generate_closed_world_multimodule": "Generate closed-world multimodule Wasm (-Xwasm-generate-closed-world-multimodule).",
         "x_wasm_kclass_fqn": "Support KClass::qualifiedName in Wasm (-Xwasm-kclass-fqn).",
@@ -26,21 +25,15 @@ _WASM_OPTION_FLAGS = {
     "x_wasm_kclass_fqn": "-Xwasm-kclass-fqn",
 }
 
-_EXTRA_OPTION_FIELDS = ["plugin_options"] + list(_WASM_OPTION_FLAGS.keys())
+_EXTRA_OPTION_FIELDS = list(_WASM_OPTION_FLAGS.keys())
 
-_EXTRA_OPTION_ATTRS = dict(
-    {
-        name: attr.bool(
-            default = False,
-            doc = "Passes %s to the Kotlin/Wasm compiler." % flag,
-        )
-        for name, flag in _WASM_OPTION_FLAGS.items()
-    },
-    plugin_options = attr.string_list(
-        default = [],
-        doc = "Compiler plugin options, each `plugin:<id>:<key>=<value>`, passed to the compiler as -P.",
-    ),
-)
+_EXTRA_OPTION_ATTRS = {
+    name: attr.bool(
+        default = False,
+        doc = "Passes %s to the Kotlin/Wasm compiler." % flag,
+    )
+    for name, flag in _WASM_OPTION_FLAGS.items()
+}
 
 def _kt_kotlinc_options_with_extra_impl(ctx):
     return [
@@ -105,15 +98,11 @@ def kt_kotlinc_options(name, **kwargs):
 def _extra_options_to_flags(kotlinc_extra_options):
     if not kotlinc_extra_options:
         return []
-    flags = []
-    for option in getattr(kotlinc_extra_options, "plugin_options", []):
-        flags.extend(["-P", option])
-    flags.extend([
+    return [
         flag
         for name, flag in _WASM_OPTION_FLAGS.items()
         if getattr(kotlinc_extra_options, name, False)
-    ])
-    return flags
+    ]
 
 # Used by the Bazel plugin.
 def kotlinc_options_to_flags(kotlinc_options, kotlinc_extra_options = None):
@@ -178,17 +167,13 @@ def _kotlinc_worker_option_value(name, kotlinc_options):
         return ["%s:%s" % (diagnostic, level) for diagnostic, level in value.items()]
     return value
 
-def kotlinc_options_to_args(kotlinc_options, args, kotlinc_extra_options = None):
+def kotlinc_options_to_args(kotlinc_options, args):
     """Translate Kotlinc options to worker flags.
 
     Args:
         kotlinc_options: rules_kotlin KotlincOptions.
         args: The Args object of the worker action.
-        kotlinc_extra_options: Optional KotlincExtraOptionsInfo; the worker takes its plugin_options.
     """
-    plugin_options = getattr(kotlinc_extra_options, "plugin_options", []) if kotlinc_extra_options else []
-    if plugin_options:
-        args.add_all("--plugin_options", plugin_options)
     for name in _WORKER_OPTION_NAMES:
         value = _kotlinc_worker_option_value(name, kotlinc_options)
         if value == None or value == "" or value == [] or value == False:

@@ -7,7 +7,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommand
 
 internal class TerminalFilesCompletionContributor : TerminalCommandCompletionContributor {
   override suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult? {
-    if (context.isAutoPopup) {
+    if (context.isAutoPopup || !context.hasWorkingDirectory) {
       return null
     }
 

@@ -2,16 +2,24 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.pluginModuleProjectFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.KotlinObjectExtensionRegistrationInspection
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/registrationProblems/xml/extensions/")
-internal class KotlinObjectExtensionRegistrationInspectionTest : KotlinObjectExtensionRegistrationInspectionTestBase() {
+@TestApplication
+internal class KotlinObjectExtensionRegistrationInspectionTest {
+  companion object {
+    private val projectFixture = pluginModuleProjectFixture()
+  }
 
-  override val testedInspection = KotlinObjectExtensionRegistrationInspection()
+  private val pluginModule by kotlinObjectExtensionRegistrationFixture(projectFixture,
+    DevkitKtTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml/extensions") { KotlinObjectExtensionRegistrationInspection() }
+  private val myFixture get() = pluginModule.fixture
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml/extensions"
-
+  @Test
   fun testSingletonObjectExtensionsRegistered() {
     myFixture.testHighlighting("singletonObjectExtensions.xml",
                                "Configurables.kt",
@@ -20,6 +28,7 @@ internal class KotlinObjectExtensionRegistrationInspectionTest : KotlinObjectExt
                                "Services.kt")
   }
 
+  @Test
   fun testInnerObjectExtensionsRegistered() {
     myFixture.testHighlighting("innerObjectExtensions.xml",
                                "InnerConfigurables.kt",
@@ -28,6 +37,7 @@ internal class KotlinObjectExtensionRegistrationInspectionTest : KotlinObjectExt
                                "InnerServices.kt")
   }
 
+  @Test
   fun testCompanionObjectExtensionsRegistered() {
     myFixture.testHighlighting("companionObjectExtensions.xml",
                                "CompanionObjectConfigurables.kt",

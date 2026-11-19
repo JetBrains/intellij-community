@@ -163,6 +163,14 @@ jvm_library(
         "//platform/ide-core",
         "//platform/execution",
         "//platform/scratch/plugin",
+        "//libraries/assertj-core",
+        "//platform/testFramework",
+        "//platform/projectModel-impl",
+        "//platform/util:util-ui",
+        "//platform/execution-impl",
+        "//platform/testFramework/core",
+        "//platform/testFramework/common",
+        "//python/python-sdk/common",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl.tests` end

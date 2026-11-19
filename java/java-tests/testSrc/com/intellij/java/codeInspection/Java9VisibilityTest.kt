@@ -19,25 +19,41 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.codeInspection.visibility.VisibilityInspection
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class Java9VisibilityTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/java9Visibility/"
+@TestApplication
+class Java9VisibilityTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
+  }
 
-  fun testPublicClass() = doTestClass()
-  fun testPublicInnerClass() = doTestClass()
-  fun testProtectedNestedClass() = doTestClass()
+  private val java9 by lightJava9ModulesFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/java9Visibility/")
+  private val myFixture get() = java9.fixture
 
-  fun testInheritedService() = doTestService()
-  fun testProvidedService() = doTestService()
+  @Test
+  fun testPublicClass(): Unit = doTestClass()
+  @Test
+  fun testPublicInnerClass(): Unit = doTestClass()
+  @Test
+  fun testProtectedNestedClass(): Unit = doTestClass()
 
+  @Test
+  fun testInheritedService(): Unit = doTestService()
+  @Test
+  fun testProvidedService(): Unit = doTestService()
+
+  @Test
   fun testUsedService() {
-    moduleInfo("module foo.bar { exports foo.bar; uses foo.bar.Api; uses foo.bar.impl.Impl; }")
+    java9.moduleInfo("module foo.bar { exports foo.bar; uses foo.bar.Api; uses foo.bar.impl.Impl; }")
     doTest("foo.bar.Api", "foo.bar.impl.Impl", "foo.bar.impl.Other")
   }
 
+  @Test
   fun testReduceVisibilityInExportedPackages() {
-    moduleInfo("""module foo.bar {
+    java9.moduleInfo("""module foo.bar {
   exports foo.bar;
   provides foo.bar.ServiceApi with foo.bar.ServiceImpl;
   uses foo.bar.UsedService;
@@ -47,23 +63,23 @@ class Java9VisibilityTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   private fun doTestClass() {
-    moduleInfo("module foo.bar { exports foo.bar; }")
+    java9.moduleInfo("module foo.bar { exports foo.bar; }")
     doTest("foo.bar.Api", "foo.bar.impl.Impl")
   }
 
   private fun doTestService() {
-    moduleInfo("module foo.bar { exports foo.bar; provides foo.bar.Api with foo.bar.impl.Impl; }")
+    java9.moduleInfo("module foo.bar { exports foo.bar; provides foo.bar.Api with foo.bar.impl.Impl; }")
     doTest("foo.bar.Api", "foo.bar.impl.Impl", "foo.bar.impl.Other")
   }
 
   private fun doTest(vararg classNames: String, reduceVisibilityInExportedPackages: Boolean = false) {
-    val testPath = testDataPath + getTestName(true)
-    addJavaFiles(testPath, classNames)
+    val testPath = myFixture.testDataPath + myFixture.getTestName(true)
+    java9.addJavaFiles(testPath, classNames)
 
     val inspection = VisibilityInspection()
     inspection.setEntryPointEnabled(Java9ModuleEntryPoint.ID, reduceVisibilityInExportedPackages)
 
     val toolWrapper = GlobalInspectionToolWrapper(inspection)
-    doGlobalInspectionTest(testPath, toolWrapper)
+    java9.doGlobalInspectionTest(testPath, toolWrapper)
   }
 }

@@ -34,11 +34,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/util/base/multiplatform",
-        "//python/common",
-    ],
+    runtime_deps = ["//platform/util/base/multiplatform"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -46,6 +42,7 @@ jvm_library(
         "//python/python-poetry/common",
         "//python/openapi:community",
         "//python/python-pyproject:pyproject",
+        "//python/common",
         "//platform/util/jdom",
         "//python/python-sdk/backend",
         "//python/python-sdk/common",
@@ -63,6 +60,9 @@ jvm_library(
         "//python/python-exec-service/execService.python",
         "//libraries/semver",
         "//platform/util-ex",
+        "//python/services/system-python",
+        "//platform/progress/shared:ide-progress",
+        "//platform/util/progress",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl.poetry.backend` end

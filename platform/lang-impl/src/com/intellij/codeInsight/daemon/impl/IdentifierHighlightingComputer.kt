@@ -24,7 +24,6 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentListener
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -54,6 +53,11 @@ class IdentifierHighlightingComputer(
 ) {
   private val myEnabled: Boolean
 
+  /** Computing this editor also caches injected documents for the host token. */
+  private val myInjectedEditor: Editor by lazy(LazyThreadSafetyMode.NONE) {
+    InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myPsiFile, myCaretOffset)
+  }
+
   init {
     val model = myEditor.getCaretModel()
     val highlightSelectionOccurrences = myEditor.getSettings().isHighlightSelectionOccurrences()
@@ -67,9 +71,9 @@ class IdentifierHighlightingComputer(
     ThreadingAssertions.assertBackgroundThread()
     ThreadingAssertions.assertReadAccess()
     val inlinePromptShown = isInlinePromptShown(myEditor)
-    val uncommited = PsiDocumentManager.getInstance(myPsiFile.project).isUncommited(myEditor.document)
     if (myCaretOffset < 0 || !myEnabled || inlinePromptShown) {
       if (LOG.isDebugEnabled) {
+        val uncommited = PsiDocumentManager.getInstance(myPsiFile.project).isUncommited(myEditor.document)
         LOG.debug("IdentifierHighlightingComputer.computeRanges empty $myCaretOffset $myEnabled $inlinePromptShown $uncommited")
       }
       return EMPTY_RESULT
@@ -78,7 +82,7 @@ class IdentifierHighlightingComputer(
     val myTargets: MutableCollection<Segment> = LinkedHashSet()
 
     val highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler<PsiElement?>(myEditor, myPsiFile, myVisibleRange)
-    var runFindUsages = true
+    val runFindUsages: Boolean
     if (highlightUsagesHandler != null) {
       val targets = highlightUsagesHandler.getTargets()
       highlightUsagesHandler.computeUsages(targets)
@@ -100,13 +104,14 @@ class IdentifierHighlightingComputer(
       myInfos.addAll(writeUsages.map { u: TextRange ->
         IdentifierOccurrence(u, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE)
       })
-      if (!highlightUsagesHandler.highlightReferences()) {
-        runFindUsages = false
-      }
       val target: PsiElement? = findTarget(myEditor, myPsiFile, myCaretOffset)
-      if (target != null) {
+      if (target != null && isCacheableTarget(target)) {
         myTargets.add(target.getTextRange())
       }
+      runFindUsages = highlightUsagesHandler.highlightReferences()
+    }
+    else {
+      runFindUsages = true
     }
 
     if (runFindUsages) {
@@ -164,6 +169,8 @@ class IdentifierHighlightingComputer(
    *
    * it just checks that the symbols under all offsets in this identifier are the same
    *
+   * An element with an injection is never a target.
+   *
    * a whole-file element is never a target. A file with no fine-grained PSI has one leaf which spans the whole file,
    * and then the check costs one symbol resolution per character. [findTarget] applies the same rule.
    */
@@ -171,17 +178,22 @@ class IdentifierHighlightingComputer(
     if (contextElement.textRange == myPsiFile.textRange) {
       return false
     }
+    if (myInjectedEditor !== myEditor ||
+        InjectedLanguageManager.getInstance(myPsiFile.project)
+          .getCachedInjectedDocumentsInRange(myPsiFile, contextElement.textRange).any { it.isValid }) {
+      return false
+    }
     val textRange = contextElement.textRange
     var reference: PsiReference? = null
-    var objs: Collection<Any>? = null
+    var symbols: Collection<Any>? = null
 
     for (offset in textRange.startOffset..< textRange.endOffset) {
       ProgressManager.checkCanceled()
-      val other = targetSymbols(myPsiFile, offset).map { PsiSymbolService.getInstance().extractElementFromSymbol(it) ?: it }
-      if (objs != null && objs != other) {
+      val otherSymbols = targetSymbols(myPsiFile, offset).map { PsiSymbolService.getInstance().extractElementFromSymbol(it) ?: it }
+      if (symbols != null && symbols != otherSymbols) {
         return false
       }
-      objs = other
+      symbols = otherSymbols
       val ref = TargetElementUtil.findReference(myEditor, offset)
       if (reference != null && (ref == null || !referencesEqual(ref, reference))) {
         return false
@@ -273,8 +285,8 @@ class IdentifierHighlightingComputer(
     catch (e: IndexNotReadyException) {
       logIndexNotReadyException(e)
     }
-    val injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myPsiFile, myCaretOffset)
-    val injectedFile = EditorContextManager.getPsiFileForEditor(injectedEditor!!, myPsiFile.getProject())
+    val injectedEditor = myInjectedEditor
+    val injectedFile = EditorContextManager.getPsiFileForEditor(injectedEditor, myPsiFile.getProject())
     if (injectedFile == null || injectedFile === myPsiFile) {
       return listOf()
     }

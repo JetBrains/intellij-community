@@ -2,11 +2,14 @@
 package com.intellij.lang;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.TechnologyFilter;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import kotlinx.collections.immutable.PersistentList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +17,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,11 +25,12 @@ import java.util.List;
 import java.util.Set;
 
 import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
+import static kotlinx.collections.immutable.ExtensionsKt.toPersistentList;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private final T defaultImplementation;
   private final /* non static!!! */ Key<T> cacheKey;
-  private final /* non static!!! */ Key<PersistentList<T>> allCacheKey;
+  private final /* non static!!! */ Key<AllExtensions<T>> allCacheKey;
   private final /* non static!!! */ Key<PersistentList<T>> allCacheWithDefaultKey;
 
   public LanguageExtension(final @NotNull ExtensionPointName<? extends KeyedLazyInstance<T>> epName) {
@@ -122,19 +127,37 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
    *  @see #allForLanguageOrAny(Language)
    */
   public @NotNull @Unmodifiable List<T> allForLanguage(@NotNull Language language) {
-    List<T> cached = language.getUserData(allCacheKey);
+    return allExtensions(language).instances;
+  }
+
+  /**
+   * The extensions of {@link #allForLanguage(Language)} that apply to the project, see {@link TechnologyFilter}.
+   * The module of the bean decides if an extension applies. An explicit extension applies to every project.
+   * The instances are the same for every project. A project with fewer technologies does not create them again.
+   */
+  @ApiStatus.Experimental
+  public @NotNull @Unmodifiable List<T> allForLanguage(@NotNull Language language, @NotNull Project project) {
+    AllExtensions<T> all = allExtensions(language);
+    TechnologyFilter filter = TechnologyFilter.getInstance();
+    if (!all.hasModules || !filter.isRestricted(project)) {
+      return all.instances;
+    }
+    return ContainerUtil.mapNotNull(all.withModules, extension -> extension.isApplicable(filter, project) ? extension.getInstance() : null);
+  }
+
+  private @NotNull AllExtensions<T> allExtensions(@NotNull Language language) {
+    AllExtensions<T> cached = language.getUserData(allCacheKey);
     if (cached != null) {
       return cached;
     }
-
-    PersistentList<T> result = collectAllForLanguage(language);
-    return language.putUserDataIfAbsent(allCacheKey, result);
+    PersistentList<ExtensionWithModule<T>> result = collectAllForLanguage(language);
+    return language.putUserDataIfAbsent(allCacheKey, new AllExtensions<>(result));
   }
 
-  private @NotNull PersistentList<T> collectAllForLanguage(@NotNull Language language) {
-    PersistentList<T> result = persistentListOf();
+  private @NotNull PersistentList<ExtensionWithModule<T>> collectAllForLanguage(@NotNull Language language) {
+    PersistentList<ExtensionWithModule<T>> result = persistentListOf();
     for (Language l = language; l != null; l = l.getBaseLanguage()) {
-      result = result.addingAll(forKey(l));
+      result = result.addingAll(buildExtensionsWithModules(keyToString(l), l));
     }
     return result;
   }
@@ -152,7 +175,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
       return cached;
     }
 
-    PersistentList<T> result = collectAllForLanguage(language);
+    PersistentList<T> result = allExtensions(language).instances;
     if (!result.contains(defaultImplementation)) {
       result = result.adding(defaultImplementation);
     }
@@ -161,9 +184,22 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @Override
   protected @NotNull @Unmodifiable List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+    Set<String> allKeys = keysWithMetaLanguages(stringKey, key);
+    return allKeys == null ? super.buildExtensions(stringKey, key) : buildExtensions(allKeys);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  protected @NotNull @Unmodifiable List<ExtensionWithModule<T>> buildExtensionsWithModules(@NotNull String stringKey, @NotNull Language key) {
+    Set<String> allKeys = keysWithMetaLanguages(stringKey, key);
+    return allKeys == null ? super.buildExtensionsWithModules(stringKey, key) : buildExtensionsWithModules(allKeys);
+  }
+
+  /** The key with the keys of the meta-languages that match the language, or {@code null} when no meta-language does. */
+  private @Nullable Set<String> keysWithMetaLanguages(@NotNull String stringKey, @NotNull Language key) {
     List<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(key);
     if (metaLanguages.isEmpty()) {
-      return super.buildExtensions(stringKey, key);
+      return null;
     }
 
     Set<String> allKeys = new HashSet<>(metaLanguages.size() + 1);
@@ -171,7 +207,17 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     for (MetaLanguage language : metaLanguages) {
       allKeys.add(keyToString(language));
     }
-    return buildExtensions(allKeys);
+    return allKeys;
+  }
+
+  /** The extensions of {@link #allForLanguageOrAny(Language)} that apply to the project, see {@link #allForLanguage(Language, Project)}. */
+  @ApiStatus.Experimental
+  public @Unmodifiable @NotNull List<T> allForLanguageOrAny(@NotNull Language l, @NotNull Project project) {
+    List<T> forLanguage = allForLanguage(l, project);
+    if (l == Language.ANY) {
+      return forLanguage;
+    }
+    return ContainerUtil.concat(forLanguage, allForLanguage(Language.ANY, project));
   }
 
   public @Unmodifiable @NotNull List<T> allForLanguageOrAny(@NotNull Language l) {
@@ -201,5 +247,28 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   @Override
   protected void ensureValuesLoaded() {
     super.ensureValuesLoaded();
+  }
+
+  /**
+   * The cached value of {@link #allForLanguage(Language)}: the extensions with their modules,
+   * and the plain list of them for the callers that do not give a project.
+   */
+  private static final class AllExtensions<T> {
+    final @NotNull PersistentList<ExtensionWithModule<T>> withModules;
+    final @NotNull PersistentList<T> instances;
+    /** Whether an extension has a module. When none has one, {@link #instances} is the answer for every project. */
+    final boolean hasModules;
+
+    AllExtensions(@NotNull PersistentList<ExtensionWithModule<T>> withModules) {
+      this.withModules = withModules;
+      List<T> instances = new ArrayList<>(withModules.size());
+      boolean anyModule = false;
+      for (ExtensionWithModule<T> extension : withModules) {
+        instances.add(extension.getInstance());
+        anyModule |= extension.getModule() != null;
+      }
+      this.instances = instances.isEmpty() ? persistentListOf() : toPersistentList(instances);
+      this.hasModules = anyModule;
+    }
   }
 }

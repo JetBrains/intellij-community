@@ -82,6 +82,7 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.PyTypeEngineSelectableTool
 import com.intellij.python.pytools.backend.runtime.toolExecutableWithBaseArgs
 import com.intellij.python.pytools.backend.runtime.toolExecutableWithBaseArgsIfReady
 import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
@@ -126,11 +127,10 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     // Python project reads the interpreter and the installed packages of each one, see
     // [pyLspProjectsToServeWith], and this runs in a read action for every file the user opens. A
     // project that runs neither the tool nor its type engine must pay none of that.
-    val pyTool = pyTool(project)
-    if (!pyTool.isActiveOn(project))
+    if (!isActiveOn(project))
       return
     // Subscribe before the first snapshot too: its arrival starts the server of this file, see [watchInterpreters].
-    subscribe(project, pyTool)
+    subscribe(project, pyTool(project))
 
     // Only a Python project gets a server. This runs under a read lock, so it reads the snapshot and does not wait.
     val module = ModuleUtilCore.findModuleForFile(file, project) ?: return
@@ -224,6 +224,27 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   abstract fun pyTool(project: Project): PyLspTool<*>
 
   /**
+   * Whether this provider runs a server for [project].
+   *
+   * The default asks the tool, see [PyLspTool.isActiveOn], and also counts a type engine that runs the tool's
+   * own server, see [PyTypeEngineSelectableTool.runsForExternalTypeEngine]. A provider that runs only one of
+   * the two servers of a tool, the server of the External Tools tool or the server of the type engine, answers
+   * for that server alone.
+   */
+  open fun isActiveOn(project: Project): Boolean {
+    val tool = pyTool(project)
+    return tool.isActiveOn(project) || (tool as? PyTypeEngineSelectableTool)?.runsForExternalTypeEngine(project) == true
+  }
+
+  /**
+   * Whether the servers of this provider run the copy of the tool that the interpreters hold.
+   *
+   * Then a change of the tool package in an interpreter restarts them, and the modules split by the installed
+   * version of the tool, see [PyLspServeKey]. A provider that runs a binary of its own sets `false`.
+   */
+  open val followsToolPackage: Boolean get() = true
+
+  /**
    * Whether one server of this tool holds every served module.
    *
    * Only a tool whose server keeps one workspace for each folder may set this. The server must give
@@ -243,13 +264,15 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     val executableChanged = PyToolChangeDebouncer(cs) { pyTool.onExecutableChanged(project) }
     val interpreterChanged = PyToolChangeDebouncer(cs) { onInterpreterChanged(pyTool, project) }
     val connection = project.messageBus.connect(parentDisposable)
-    connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, LspPackageListener(pyTool, project, executableChanged))
+    if (followsToolPackage) {
+      connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, LspPackageListener(pyTool, project, executableChanged))
+    }
     connection.subscribe(ModuleRootListener.TOPIC, LspFolderSetListener(project))
     watchInterpreters(project, interpreterChanged, parentDisposable)
     // A refresh of the serve keys lands without a project event, so it triggers the checks itself. A
     // server that started before the refresh can hold the wrong group, and a module that just got the
     // tool can need a server that nothing started.
-    if (servesEveryModule) {
+    if (servesEveryModule && followsToolPackage) {
       val toolName = pyTool.packageName.name
       connection.subscribe(PY_LSP_SERVE_KEYS_CHANGED, PyLspServeKeysListener { changedTool ->
         if (changedTool != toolName) return@PyLspServeKeysListener
@@ -375,8 +398,9 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     }
     if (descriptors.isEmpty()) return false
     val pyTool = descriptors.first().pyTool
-    // Outside the read action, because it reads the interpreter of every served module.
-    val keys = pyLspRefreshServeKeys(project, pyTool)
+    // Outside the read action, because it reads the interpreter of every served module. Without the keys, every
+    // Python project states no version, see [pyLspServeKeyWithoutVersion].
+    val keys = if (followsToolPackage) pyLspRefreshServeKeys(project, pyTool) else emptyMap()
     val served = pyLspServedProjects(project)
     val (stale, servesNothing) = readAction {
       val keyOf = { pyProject: PyProject -> keys.getByModule(pyProject) ?: pyLspServeKeyWithoutVersion(pyProject) }
@@ -542,12 +566,16 @@ private val commandActionIdsLock = Any()
  * [PyLspToolIntegrationProvider.servesEveryModule] to `true`.
  *
  * [pyProject] is the primary Python project. It answers for a request that carries no workspace scope.
+ *
+ * [presentableName] is the tool name by default. A tool with two servers gives the second one another name, because
+ * the IDs of the command actions of a server start with it.
  */
 abstract class PyLspToolDescriptor(
   val pyProject: PyProject,
   val pyTool: PyLspTool<*>,
   val servedProjects: List<PyProject> = listOf(pyProject),
-) : LspClientDescriptor(pyProject.project, pyTool.lspServerName, *pyLspContentRootsOf(servedProjects)) {
+  presentableName: @NlsSafe String = pyTool.lspServerName,
+) : LspClientDescriptor(pyProject.project, presentableName, *pyLspContentRootsOf(servedProjects)) {
   /** The module of [pyProject], for the platform API that takes a module. */
   val module: Module get() = pyProject.residesOnModule
 
@@ -754,6 +782,9 @@ abstract class PyLspToolDescriptor(
 
   abstract val toolConfig: PyLspToolSettings
 
+  /** Whether the selected type engine reads its types from this server. */
+  open val servesTypeEngine: Boolean get() = (pyTool as? PyTypeEngineSelectableTool)?.runsForExternalTypeEngine(project) == true
+
   open val executableName: String get() = pyTool.packageName.name
 
   abstract fun lspArguments(): List<String>
@@ -902,7 +933,7 @@ abstract class PyLspToolDescriptor(
      * caches, and runs the daemon again.
      */
     private fun dropCachedTypeContexts() {
-      if (project.isDisposed || !pyTool.isSelectedAsTypeEngine(project)) return
+      if (project.isDisposed || !servesTypeEngine) return
       PyTypeEngineSettingsModificationTracker.getInstance(project).incModificationCount()
       // `dropPsiCaches` needs the EDT or a write action, and the server listener runs on a pooled thread.
       ApplicationManager.getApplication().invokeLater({
@@ -929,10 +960,20 @@ abstract class PyLspToolDescriptor(
   override val lspCustomization: PyLspToolCustomization = PyLspToolCustomization(toolConfig, pyTool, project)
 }
 
+/**
+ * The editor features of one server of [pyTool].
+ *
+ * [isActive] tells whether the server may serve now. The default asks the tool, see [PyLspTool.isActiveOn],
+ * and also counts a type engine that runs the tool's own server, see
+ * [PyTypeEngineSelectableTool.runsForExternalTypeEngine].
+ */
 open class PyLspToolCustomization(
   val toolConfig: PyLspToolSettings,
-  private val pyTool: PyLspTool<*>,
-  private val project: Project,
+  pyTool: PyLspTool<*>,
+  project: Project,
+  private val isActive: () -> Boolean = {
+    pyTool.isActiveOn(project) || (pyTool as? PyTypeEngineSelectableTool)?.runsForExternalTypeEngine(project) == true
+  },
 ) : LspCustomization() {
   val Diagnostic.presentableCode: String?
     get() = code?.get()?.toString()?.let { codeCustomizer(it) }
@@ -943,24 +984,24 @@ open class PyLspToolCustomization(
 
   override val completionCustomizer: LspCompletionCustomizer = object : LspCompletionSupport() {
     override fun shouldRunCodeCompletion(parameters: CompletionParameters): Boolean =
-      pyTool.isActiveOn(project) && toolConfig.completions == true
+      isActive() && toolConfig.completions == true
   }
 
   protected open val diagnosticsSupport: PyLspToolDiagnosticsSupport = PyLspToolDiagnosticsSupport()
 
   // instead of using `shouldAskServerForDiagnostics` we also want to avoid `publishDiagnostics`
   final override val diagnosticsCustomizer: LspDiagnosticsCustomizer
-    get() = if (pyTool.isActiveOn(project) && toolConfig.inspections) diagnosticsSupport else LspDiagnosticsDisabled
+    get() = if (isActive() && toolConfig.inspections) diagnosticsSupport else LspDiagnosticsDisabled
 
   override val optimizeImportsCustomizer: LspOptimizeImportsCustomizer = LspOptimizeImportsDisabled
 
   override val inlayHintCustomizer: LspInlayHintSupport = object : LspInlayHintSupport() {
     override fun shouldAskServerForInlayHints(file: VirtualFile): Boolean =
-      pyTool.isActiveOn(project) && toolConfig.inlayHints == true
+      isActive() && toolConfig.inlayHints == true
   }
 
   override val hoverCustomizer: LspHoverCustomizer
-    get() = if (pyTool.isActiveOn(project) && toolConfig.documentation == true) LspHoverSupport() else LspHoverDisabled
+    get() = if (isActive() && toolConfig.documentation == true) LspHoverSupport() else LspHoverDisabled
 
   override val codeLensCustomizer: LspCodeLensCustomizer = LspCodeLensDisabled
 

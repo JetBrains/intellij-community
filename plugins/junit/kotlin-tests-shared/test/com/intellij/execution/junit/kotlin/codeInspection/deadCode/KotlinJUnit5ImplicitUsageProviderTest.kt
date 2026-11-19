@@ -1,16 +1,26 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection.deadCode
 
-import com.intellij.junit.testFramework.JUnit5ImplicitUsageProviderTestBase
+import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
+import com.intellij.execution.junit.kotlin.kotlinJUnitProjectFixture
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import com.intellij.jvm.analysis.testFramework.jvmInspectionFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase() {
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
+@TestApplication
+abstract class KotlinJUnit5ImplicitUsageProviderTest(
+  inspection: () -> InspectionProfileEntry = { UnusedDeclarationInspection(true) },
+) {
+  companion object {
+    private val projectFixture = kotlinJUnitProjectFixture(JUNIT5)
   }
 
+  protected val myFixture by jvmInspectionFixture(projectFixture, inspection = inspection)
+
+  @Test
   fun `test implicit usage of enum source`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
@@ -27,6 +37,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of parameter in parameterized test`() {
     // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
     // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
@@ -38,6 +49,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
      """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of multiple parameters in parameterized test`() {
     // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
     // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
@@ -62,6 +74,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
    """.trimIndent())
   }
 
+  @Test
   fun `test unused parameter when not in display name`() {
     // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
     // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
@@ -75,6 +88,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
    """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of method source with implicit method name`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.util.stream.*
@@ -96,6 +110,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  @Test
   fun `test usage of method source with method name`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.util.stream.*
@@ -118,6 +133,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of method in parameterized test`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
     class MyTest {
@@ -141,6 +157,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of field in parameterized test`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
     class MyTest {
@@ -162,6 +179,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of field source with implicit field name`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.jupiter.params.ParameterizedTest
@@ -182,6 +200,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  @Test
   fun `test usage of field source with field name`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.jupiter.params.ParameterizedTest
@@ -204,6 +223,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of TempDir as direct annotation`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
@@ -219,6 +239,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of TempDir as meta annotation`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
@@ -239,6 +260,7 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  @Test
   fun `test malformed nested should be used highlighting`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """

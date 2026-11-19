@@ -2,6 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "exploratory_test",
+    timeout = "moderate",
+    tags = [
+        "community-exploratory-tests",
+    ],
+    runtime_deps = [":exploratory_test_lib"],
+)
+### skip generation section `test intellij.platform.workspace.storage.tests.exploratory`
+
 ### auto-generated section `build intellij.platform.workspace.storage.tests.exploratory` start
 create_kotlinc_options(
     name = "custom_exploratory",
@@ -56,10 +66,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.workspace.storage.tests.exploratory` end
-
-### auto-generated section `test intellij.platform.workspace.storage.tests.exploratory` start
-jps_test(
-    name = "exploratory_test",
-    runtime_deps = [":exploratory_test_lib"],
-)
-### auto-generated section `test intellij.platform.workspace.storage.tests.exploratory` end

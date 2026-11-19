@@ -46,6 +46,10 @@ internal fun PythonInterpreter.resolveSdk(): Sdk = getSdkAPI()
 /** [pythonSdkIfReady] for the module of this element. */
 internal fun PsiElement.pythonSdkIfReady(): Sdk? = ModuleUtilCore.findModuleForPsiElement(this)?.pythonSdkIfReady()
 
+/** [pythonInterpreterIfReady] for the module of this element. */
+internal fun PsiElement.pythonInterpreterIfReady(): PythonInterpreter? =
+  ModuleUtilCore.findModuleForPsiElement(this)?.pythonInterpreterIfReady()
+
 /** Whether the file of [element] is in the skeletons of the interpreter of its module, see [pythonSdkIfReady]. */
 internal fun isElementInSkeletons(element: PsiElement): Boolean {
   val virtualFile = element.containingFile?.virtualFile ?: return false

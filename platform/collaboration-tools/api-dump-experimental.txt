@@ -239,9 +239,6 @@
 - isRead(com.intellij.openapi.vcs.changes.RefComparisonChange):Z
 *f:com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModelKt
 - sf:setupCodeReviewProgressModel(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel,com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel):V
-*f:com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
-- sf:INSTANCE:com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
-- f:createTitleText(java.lang.String,java.lang.String,java.lang.String,java.lang.String):java.lang.String
 *f:com.intellij.collaboration.ui.codereview.ReturnToListComponent
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.ReturnToListComponent
 - f:createReturnToListSideComponent(java.lang.String,kotlin.jvm.functions.Function0):javax.swing.JComponent
@@ -619,10 +616,6 @@
 - com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter$None
 - sort(java.util.List):java.util.List
-*f:com.intellij.collaboration.ui.codereview.issues.IssueIdsProcessorKt
-- sf:markdownLink(java.lang.String,java.lang.String):java.lang.String
-- sf:processIssueIdsHtml(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
-- sf:processIssueIdsMarkdown(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.NamedCollection
 - *sf:Companion:com.intellij.collaboration.ui.codereview.list.NamedCollection$Companion
 - f:component1():java.lang.String
@@ -739,39 +732,6 @@
 - getFullName():java.lang.String
 - getUsername():java.lang.String
 - hashCode():I
-*f:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
-- sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
-- f:create(java.lang.Object,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment):javax.swing.JComponent
-- f:create(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter):javax.swing.JComponent
-- f:create(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment):javax.swing.JComponent
-- bs:create$default(com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory,java.lang.Object,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment,I,java.lang.Object):javax.swing.JComponent
-- bs:create$default(com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment,I,java.lang.Object):javax.swing.JComponent
-*e:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment
-- java.lang.Enum
-- sf:CENTER:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment
-- sf:LEFT:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment
-- s:getEntries():kotlin.enums.EnumEntries
-- f:getHtmlValue():java.lang.String
-- s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment
-- s:values():com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment[]
-*:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
-- *sf:Companion:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Companion
-- *sf:ERROR_ACTION_HREF:java.lang.String
-- a:getErrorAction(java.lang.Object):javax.swing.Action
-- a:getErrorTitle(java.lang.Object):java.lang.String
-*f:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Companion
-- sf:ERROR_ACTION_HREF:java.lang.String
-- f:simple(java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text
-- bs:simple$default(com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Companion,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text
-- f:simpleHTML(java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$HTML
-- bs:simpleHTML$default(com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Companion,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$HTML
-*:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$HTML
-- com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
-- a:getHTMLBody(java.lang.Object):java.lang.String
-*:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text
-- com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
-- a:getErrorDescription(java.lang.Object):java.lang.String
-- a:getErrorTitle(java.lang.Object):java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 - f:showAsyncChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation):java.lang.Object
@@ -895,37 +855,6 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 - s:values():com.intellij.collaboration.ui.codereview.list.search.ShowDirection[]
-*:com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitViewModel
-- a:cancel():V
-- a:getDraftCommentsCount():kotlinx.coroutines.flow.StateFlow
-- a:getError():kotlinx.coroutines.flow.StateFlow
-- a:getText():kotlinx.coroutines.flow.MutableStateFlow
-- a:isBusy():kotlinx.coroutines.flow.StateFlow
-*:com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel
-- a:getCollapsed():kotlinx.coroutines.flow.Flow
-- a:getCollapsible():kotlinx.coroutines.flow.Flow
-- a:setCollapsed(Z):V
-*f:com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
-- sf:INSTANCE:com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
-- f:create(javax.swing.JComponent,com.intellij.collaboration.ui.codereview.timeline.StatusMessageType):javax.swing.JComponent
-- bs:create$default(com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory,javax.swing.JComponent,com.intellij.collaboration.ui.codereview.timeline.StatusMessageType,I,java.lang.Object):javax.swing.JComponent
-*e:com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
-- java.lang.Enum
-- sf:ERROR:com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
-- sf:INFO:com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
-- sf:SECONDARY_INFO:com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
-- sf:SUCCESS:com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
-- sf:WARNING:com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
-- s:values():com.intellij.collaboration.ui.codereview.timeline.StatusMessageType[]
-*f:com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
-- sf:INSTANCE:com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
-- f:createDiffComponentIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,com.intellij.openapi.editor.EditorFactory,com.intellij.openapi.diff.impl.patch.PatchHunk,com.intellij.diff.util.LineRange):javax.swing.JComponent
-- f:createDiffComponentIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,com.intellij.openapi.editor.EditorFactory,com.intellij.openapi.diff.impl.patch.PatchHunk,kotlin.Pair,kotlin.Pair):javax.swing.JComponent
-- f:createDiffEditorIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,com.intellij.openapi.editor.EditorFactory,java.lang.CharSequence):com.intellij.openapi.editor.Editor
-- f:createDiffWithHeader(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel,java.lang.String,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):javax.swing.JComponent
-- f:createDiffWithHeader(kotlinx.coroutines.CoroutineScope,java.lang.String,kotlinx.coroutines.flow.Flow,javax.swing.JComponent):javax.swing.JComponent
 *f:com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder
 - *sf:Companion:com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder$Companion
 - sf:REVIEW_BRANCH_CHECKOUT_FAILED:java.lang.String
@@ -997,8 +926,6 @@
 - <init>(javax.swing.JList):V
 - mouseClicked(java.awt.event.MouseEvent):V
 - mouseMoved(java.awt.event.MouseEvent):V
-*f:com.intellij.collaboration.ui.util.ListSelectionUtilKt
-- sf:getSelectedItem(com.intellij.openapi.ListSelection):java.lang.Object
 *f:com.intellij.collaboration.ui.util.popup.CollaborationToolsPopupUtilKt
 - sf:showAndAwait(com.intellij.openapi.ui.popup.JBPopup,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
 - sf:showAndAwaitListSubmission(com.intellij.openapi.ui.popup.JBPopup,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object

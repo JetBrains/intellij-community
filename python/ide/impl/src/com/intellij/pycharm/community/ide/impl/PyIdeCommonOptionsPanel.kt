@@ -19,7 +19,7 @@ import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
+import com.jetbrains.python.configuration.interpreter.PY_WORKSPACE_CONFIGURABLE_ID
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm
 import com.jetbrains.python.run.PyCommonOptionsFormData
 import javax.swing.JCheckBox
@@ -94,7 +94,7 @@ internal class PyIdeCommonOptionsPanel(data: PyCommonOptionsFormData, showModule
           row {
             link(PyBundle.message("configuring.interpreters.link")) {
               val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(panel))
-              settings?.select(settings.find(PyActiveSdkModuleConfigurable::class.java.name))
+              settings?.select(settings.find(PY_WORKSPACE_CONFIGURABLE_ID))
             }
           }
         }

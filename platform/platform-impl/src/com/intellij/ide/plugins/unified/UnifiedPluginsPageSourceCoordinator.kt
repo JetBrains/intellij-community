@@ -367,6 +367,8 @@ private fun projectUnifiedPluginsPageSourceState(
                            ?: PluginSectionState(marketplaceFamilyId, status = initialMarketplaceSectionStatus(query))
   val visibleMarketplaceSection = marketplaceSection.withoutPlugins(localPluginIds, cancellationCheck)
   val cachedProjectionApplies = previousCache.query == query
+  val showsImplementationDetails = route.local.eligible &&
+                                   UnifiedPluginsQuery.parse(route.local.query).effectiveInstalledFilter == UnifiedPluginInstalledFilter.BuiltIn
   val localSections = previousCache.localSections.takeIf {
     cachedProjectionApplies && previousCache.localState === localState
   } ?: localState.sections.map { section ->
@@ -375,7 +377,7 @@ private fun projectUnifiedPluginsPageSourceState(
       PluginSectionId.Installed, PluginSectionId.Bundled -> if (route.local.eligible) {
         section.copy(
           items = filterPluginItems(
-            section.items,
+            if (showsImplementationDetails) localState.implementationDetailItems[section.id].orEmpty() else section.items,
             route.local.query,
             effectiveSort,
             categoryRelevance = section.id == PluginSectionId.Bundled,
@@ -564,6 +566,9 @@ internal fun composeUnifiedPluginsSearchControls(
         cancellationCheck()
         add(item)
       }
+    if (parsedQuery.effectiveInstalledFilter == UnifiedPluginInstalledFilter.BuiltIn) {
+      localState.implementationDetailItems.values.forEach(::addAll)
+    }
   }
   val facetItems = buildList {
     addAll(localFacetItems)

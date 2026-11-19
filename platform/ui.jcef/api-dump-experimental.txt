@@ -6,6 +6,15 @@
 - paint(java.awt.Graphics,java.util.function.Consumer):V
 - removeNotify():V
 - show():V
+f:com.intellij.ui.jcef.JBCefApp
+- *:createRequestContext():com.intellij.ui.jcef.JBCefRequestContext
+- *:disposeRequestContext(com.intellij.ui.jcef.JBCefRequestContext):V
+- *:getRequestContext(java.nio.file.Path):com.intellij.ui.jcef.JBCefRequestContext
+a:com.intellij.ui.jcef.JBCefBrowserBase
+- com.intellij.ui.jcef.JBCefDisposable
+- *f:getRequestContext():com.intellij.ui.jcef.JBCefRequestContext
+c:com.intellij.ui.jcef.JBCefBrowserBuilder
+- *:setRequestContext(com.intellij.ui.jcef.JBCefRequestContext):com.intellij.ui.jcef.JBCefBrowserBuilder
 *f:com.intellij.ui.jcef.JBCefHealthMonitor
 - <init>():V
 - s:getInstance():com.intellij.ui.jcef.JBCefHealthMonitor
@@ -24,3 +33,14 @@
 - sf:UNPRIVILEGED_USER_NS_DISABLED:com.intellij.ui.jcef.JBCefHealthMonitor$Status
 - s:valueOf(java.lang.String):com.intellij.ui.jcef.JBCefHealthMonitor$Status
 - s:values():com.intellij.ui.jcef.JBCefHealthMonitor$Status[]
+*f:com.intellij.ui.jcef.JBCefRequestContext
+- com.intellij.openapi.Disposable
+- clearCertificateExceptions():java.util.concurrent.CompletableFuture
+- clearHttpAuthCredentials():java.util.concurrent.CompletableFuture
+- clearHttpCache():java.util.concurrent.CompletableFuture
+- closeAllConnections():java.util.concurrent.CompletableFuture
+- dispose():V
+- getCachePath():java.lang.String
+- getCookieManager():com.intellij.ui.jcef.JBCefCookieManager
+- isDisposed():Z
+- isInMemory():Z

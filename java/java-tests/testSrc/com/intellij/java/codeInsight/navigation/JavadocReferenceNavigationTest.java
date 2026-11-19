@@ -1,12 +1,26 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
-import com.intellij.refactoring.suggested.LightJavaCodeInsightFixtureTestCaseWithUtils;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public final class JavadocReferenceNavigationTest extends LightJavaCodeInsightFixtureTestCaseWithUtils {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public final class JavadocReferenceNavigationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private static final String BASIC_FUNCTION = "void function();";
   private static final String BASIC_FUNCTION_ARGS = "void functionArgs(int beep, int boop);";
 
+  @Test
   public void testTags() {
     check("/// @see function<caret>", BASIC_FUNCTION);
     check("/// @see #functionArgs<caret>(int, int)", BASIC_FUNCTION_ARGS);
@@ -15,6 +29,7 @@ public final class JavadocReferenceNavigationTest extends LightJavaCodeInsightFi
     check("/// {@link functionArgs<caret>(int, int)}", BASIC_FUNCTION_ARGS);
   }
 
+  @Test
   public void testMarkdownReferences() {
     check("/// [function<caret>()]", BASIC_FUNCTION);
     check("/// [functionArgs<caret>(int,int)]", BASIC_FUNCTION_ARGS);
@@ -29,6 +44,7 @@ public final class JavadocReferenceNavigationTest extends LightJavaCodeInsightFi
   ///
   /// The caller is expected to bring a comment containing a `<caret>` tag
   private void check(String comment, String expectedLine) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("SeeTags.java", """
       %s
       interface SeeTags {
@@ -39,9 +55,12 @@ public final class JavadocReferenceNavigationTest extends LightJavaCodeInsightFi
   }
 
   private void navigateAndCheckLine(String expectedLine) {
-    myFixture.performEditorAction("GotoDeclaration");
-    final var selectionModel = myFixture.getEditor().getSelectionModel();
-    selectionModel.selectLineAtCaret();
-    assertEquals(expectedLine, selectionModel.getSelectedText().trim());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.performEditorAction("GotoDeclaration");
+      final var selectionModel = myFixture.getEditor().getSelectionModel();
+      selectionModel.selectLineAtCaret();
+      assertEquals(expectedLine, selectionModel.getSelectedText().trim());
+    });
   }
 }

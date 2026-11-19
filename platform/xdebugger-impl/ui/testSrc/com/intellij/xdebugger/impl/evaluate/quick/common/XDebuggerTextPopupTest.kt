@@ -5,8 +5,9 @@ import com.intellij.concurrency.ResultConsumer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -20,20 +21,17 @@ import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.awt.Point
 import java.util.concurrent.TimeUnit
 
+@TestApplication
 class XDebuggerTextPopupTest {
-  @get:Rule
-  val projectRule = ProjectRule()
-
   @Test
-  fun `loading text is replaced by the preview and full value`() = timeoutRunBlocking {
+  fun `loading text is replaced by the preview and full value`(): Unit = timeoutRunBlocking {
     withEvaluation(LOADING_TEXT) { value, callback ->
       withContext(Dispatchers.EDT) {
         value.present()
@@ -46,7 +44,7 @@ class XDebuggerTextPopupTest {
   }
 
   @Test
-  fun `preview cannot replace an earlier full value`() = timeoutRunBlocking {
+  fun `preview cannot replace an earlier full value`(): Unit = timeoutRunBlocking {
     withEvaluation { value, callback ->
       withContext(Dispatchers.EDT) {
         value.node.setFullValueEvaluator(ImmediateFullValueEvaluator(FULL_TEXT))
@@ -57,7 +55,7 @@ class XDebuggerTextPopupTest {
   }
 
   @Test
-  fun `loading text is replaced without a full value evaluator`() = timeoutRunBlocking {
+  fun `loading text is replaced without a full value evaluator`(): Unit = timeoutRunBlocking {
     withEvaluation(LOADING_TEXT) { value, callback ->
       withContext(Dispatchers.EDT) {
         value.present()
@@ -68,7 +66,7 @@ class XDebuggerTextPopupTest {
   }
 
   @Test
-  fun `obsolete popup ignores presentations and evaluators`() = timeoutRunBlocking {
+  fun `obsolete popup ignores presentations and evaluators`(): Unit = timeoutRunBlocking {
     withEvaluation { value, callback ->
       withContext(Dispatchers.EDT) {
         assertFalse(value.node.isObsolete)
@@ -86,7 +84,7 @@ class XDebuggerTextPopupTest {
   }
 
   @Test
-  fun `evaluator received in background starts on EDT`() = timeoutRunBlocking {
+  fun `evaluator received in background starts on EDT`(): Unit = timeoutRunBlocking {
     withEvaluation { value, callback ->
       val completed = CompletableDeferred<Boolean>()
       withContext(Dispatchers.Default) {
@@ -103,7 +101,7 @@ class XDebuggerTextPopupTest {
   }
 
   @Test
-  fun `full value errors reach the popup callback`() = timeoutRunBlocking {
+  fun `full value errors reach the popup callback`(): Unit = timeoutRunBlocking {
     withEvaluation { value, callback ->
       withContext(Dispatchers.EDT) {
         value.node.setFullValueEvaluator(object : XFullValueEvaluator() {
@@ -119,7 +117,7 @@ class XDebuggerTextPopupTest {
   }
 
   @Test
-  fun `superseded evaluation cannot replace a newer result`() = timeoutRunBlocking {
+  fun `superseded evaluation cannot replace a newer result`(): Unit = timeoutRunBlocking {
     withEvaluation { value, callback ->
       val evaluator = DeferredEvaluator()
       val oldCallback = withContext(Dispatchers.EDT) {
@@ -144,7 +142,7 @@ class XDebuggerTextPopupTest {
   }
 
   @Test
-  fun `queued results are ignored when evaluation is superseded`() = timeoutRunBlocking {
+  fun `queued results are ignored when evaluation is superseded`(): Unit = timeoutRunBlocking {
     withEvaluation { value, callback ->
       val evaluator = DeferredEvaluator()
       withContext(Dispatchers.EDT) {
@@ -162,7 +160,7 @@ class XDebuggerTextPopupTest {
   }
 
   @Test
-  fun `obsolete popup ignores results of a running evaluator`() = timeoutRunBlocking {
+  fun `obsolete popup ignores results of a running evaluator`(): Unit = timeoutRunBlocking {
     withEvaluation { value, callback ->
       val evaluator = DeferredEvaluator()
       withContext(Dispatchers.EDT) {
@@ -181,7 +179,7 @@ class XDebuggerTextPopupTest {
   }
 
   @Test
-  fun `background results and errors reach the popup on EDT`() = timeoutRunBlocking {
+  fun `background results and errors reach the popup on EDT`(): Unit = timeoutRunBlocking {
     withEvaluation { value, callback ->
       val evaluator = DeferredEvaluator()
       withContext(Dispatchers.EDT) {
@@ -207,7 +205,7 @@ class XDebuggerTextPopupTest {
     text: String = PREVIEW,
     action: suspend (TextValue, RecordingCallback) -> Unit,
   ) {
-    val project = projectRule.project
+    val project = projectFixture.get()
     val editorFactory = EditorFactory.getInstance()
     val editor = withContext(Dispatchers.EDT) {
       editorFactory.createEditor(editorFactory.createDocument(""), project)
@@ -288,6 +286,8 @@ class XDebuggerTextPopupTest {
   }
 
   companion object {
+    private val projectFixture = projectFixture()
+
     private const val LOADING_TEXT = "Collecting data..."
     private val FULL_TEXT = ".".repeat(1000) + "X".repeat(1000)
     private val PREVIEW = FULL_TEXT.take(1005)

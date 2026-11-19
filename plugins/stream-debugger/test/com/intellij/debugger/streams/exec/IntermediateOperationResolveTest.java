@@ -1,65 +1,95 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.exec;
 
-import com.intellij.debugger.streams.test.TraceExecutionTestCase;
+import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper;
+import com.intellij.debugger.streams.test.ExecutionTestCaseHelper;
+import com.intellij.debugger.streams.test.TraceExecutionFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.xdebugger.XDebugSession;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.debugger.streams.test.TraceExecutionFixtureKt.traceExecutionFixture;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class IntermediateOperationResolveTest extends TraceExecutionTestCase {
+@TestApplication
+public class IntermediateOperationResolveTest {
+  protected final TestFixture<TraceExecutionFixture> traceFixture = traceExecutionFixture(this::getHelper);
+
+  @Test
   public void testFilter() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testMap() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testFlatMap() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testMapMulti() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testMapMultiFilter() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testMapMultiEmpty() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testDistinctSame() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testDistinctEquals() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testDistinctHardCase() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testSorted() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testPeek() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testSkip() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testLimit() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testTakeWhile() {
-    doTest(false);
+    traceFixture.get().doTest(false);
+  }
+
+  protected @NotNull TraceExecutionTestHelper getHelper(@NotNull TraceExecutionFixture trace, @NotNull XDebugSession session) {
+    return new ExecutionTestCaseHelper(trace, session);
   }
 }

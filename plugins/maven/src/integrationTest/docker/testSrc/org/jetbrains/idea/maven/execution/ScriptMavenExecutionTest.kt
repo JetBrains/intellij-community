@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.debugger.engine.AsyncStacksUtils
@@ -20,6 +20,8 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.fs.EelFiles
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.ExtensionTestUtil.addExtensions
@@ -43,6 +45,7 @@ import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
@@ -521,8 +524,82 @@ class ScriptMavenExecutionTest(mavenVersion: String, modelVersion: String) {
   }
 
 
+  @Test
+  fun testShouldPassExactPropertyValuesToMaven() = runBlocking {
+    assertNull(System.getenv(MISSING_VARIABLE), "The test needs no $MISSING_VARIABLE variable")
+    val values = listOf(
+      "100% complete",
+      "100%",
+      "%PATH%",
+      "%$MISSING_VARIABLE%",
+      "caf\u00e9 100%",
+      "100% & complete",
+      "100% (complete)",
+      "100% !complete!",
+      "100% ^complete",
+      "100% complete=done",
+      "a%b%c",
+      "C:\\dir with space\\100%",
+      "plain value",
+      "caf\u00e9",
+    )
+    val names = values.indices.map { "probe.$it" } + listOf("probe.repeated", "probe.configurator")
+    importProjectWithName(names.joinToString("") { $$"[${$$it}]" })
+    addExtensions(MAVEN_EXECUTION_CONFIGURATOR, listOf(
+      object : MavenExecutionConfiguratorProvider {
+        override suspend fun createConfigurator(
+          environment: ExecutionEnvironment,
+          myConfiguration: MavenRunConfiguration,
+          context: MavenExecutionContext,
+        ): MavenExecutionConfigurator = PercentPropertyConfiguratorExtension()
+      }
+    ), maven.testRootDisposable)
+
+    val properties = values.mapIndexed { index, value -> "-Dprobe.$index=$value" } +
+                     listOf("-Dprobe.repeated=first 1%", "-Dprobe.repeated=last 2%")
+    val log = executeAndReadLog(properties)
+
+    val expectedName = (values + listOf("last 2%", "50% configurator")).joinToString("") { "[$it]" }
+    assertTrue(log.contains(expectedName), "Maven should receive the exact values $expectedName, but the log was: $log")
+  }
+
+  @Test
+  fun testShouldKeepEnvVariableWithGeneratedNameOnWindows() = runBlocking {
+    Assumptions.assumeTrue(maven.project.getEelDescriptor().osFamily == EelOsFamily.Windows, "Only Windows moves values to variables")
+    importProjectWithName($$"[${probe}][${env.IDEA_MVN_ARG_1}]")
+
+    val log = executeAndReadLog(listOf("-Dprobe=100% complete"), MavenRunnerSettings().also {
+      it.environmentProperties = mapOf("idea_mvn_arg_1" to "user value")
+    })
+
+    assertTrue(log.contains("[100% complete][user value]"), "Maven should receive the property and the variable, but the log was: $log")
+  }
+
+  private suspend fun importProjectWithName(name: String) {
+    maven.importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         <packaging>pom</packaging>
+         <name>$name</name>
+         """
+    )
+  }
+
+  /** Runs the `validate` phase with [properties] and returns the UTF-8 log of Maven. The log shows the project name. */
+  private fun executeAndReadLog(properties: List<String>, settings: MavenRunnerSettings = MavenRunnerSettings()): String {
+    val logFile = maven.dir.resolve("maven log.txt")
+    Files.deleteIfExists(logFile)
+    val goals = mutableListOf("validate", "-l", logFile.asEelPath().toString()) + properties
+    val executionInfo = maven.execute(MavenRunnerParameters(true, maven.projectPath.toCanonicalPath(), null as String?, goals, emptyList()),
+                                      settings = settings)
+    assertTrue(logFile.isRegularFile(), "Maven should write the log, but the execution was: $executionInfo")
+    return EelFiles.readString(logFile, StandardCharsets.UTF_8)
+  }
+
   companion object {
     const val mavenOutput = "MAVEN REPLACEMENT in Intellij tests"
+    const val MISSING_VARIABLE = "IDEA_MVN_MISSING_VARIABLE"
   }
 }
 
@@ -530,5 +607,11 @@ private class MyTestConfiguratorExtension : MavenExecutionConfigurator {
   override fun configureParameters(env: MutableMap<String, String>, parametersList: ParametersList) {
     env["MY_ADDED_TEST_ENV_NAME"] = "MY_ADDED_TEST_ENV_VALUE"
     parametersList.add("test-parameter")
+  }
+}
+
+private class PercentPropertyConfiguratorExtension : MavenExecutionConfigurator {
+  override fun configureParameters(env: MutableMap<String, String>, parametersList: ParametersList) {
+    parametersList.add("-Dprobe.configurator=50% configurator")
   }
 }

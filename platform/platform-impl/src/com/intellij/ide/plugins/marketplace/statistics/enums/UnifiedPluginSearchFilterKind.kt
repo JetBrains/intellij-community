@@ -15,4 +15,5 @@ internal enum class UnifiedPluginSearchFilterKind {
   BUNDLED,
   USER_INSTALLED,
   DOWNLOADED,
+  BUILT_IN,
 }

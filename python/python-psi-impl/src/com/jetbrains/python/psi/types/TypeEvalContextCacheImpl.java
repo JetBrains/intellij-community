@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -12,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
@@ -89,8 +91,31 @@ public final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
   }
 
   @Override
-  public @NotNull TypeEvalContext getLibraryContext(@NotNull TypeEvalContext standard) {
-    return retrieveFromStorage(standard, myLibrariesCachedMapStorage);
+  public @Nullable TypeEvalContext getCachedContext(@NotNull TypeEvalConstraints constraints) {
+    return myCachedMapStorage.getValue().get(constraints);
+  }
+
+  @Override
+  public @NotNull TypeEvalContext getLibraryContext(@NotNull TypeEvalConstraints constraints) {
+    // code completion will always have a new PsiFile, use the original file instead
+    final PsiFile origin = constraints.myOrigin == null ? null : constraints.myOrigin.getOriginalFile();
+    // A file that is not a copy is its own original, and then the constraints are already the key
+    final TypeEvalConstraints key = origin == constraints.myOrigin
+                                    ? constraints
+                                    : new TypeEvalConstraints(constraints.myAllowDataFlow,
+                                                              constraints.myAllowStubToAST,
+                                                              constraints.myAllowCallContext,
+                                                              constraints.myIsExternal,
+                                                              origin);
+    final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = myLibrariesCachedMapStorage.getValue();
+    final TypeEvalContext cachedContext = map.get(key);
+    if (cachedContext != null) {
+      return cachedContext;
+    }
+    PyCodeInsightCounters.inc(PyCodeInsightCounters.Counter.CONTEXT_LOOKUP_MISSES);
+    final TypeEvalContext fresh = new TypeEvalContextImpl.LibraryTypeEvalContext(key);
+    final TypeEvalContext oldValue = map.putIfAbsent(key, fresh);
+    return oldValue == null ? fresh : oldValue;
   }
 
   public void dispose() {

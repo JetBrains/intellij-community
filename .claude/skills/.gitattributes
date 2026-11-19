@@ -6,11 +6,11 @@
 /compare-python-typecheckers/** linguist-generated
 /compose-ui/** linguist-generated
 /conda-env-tests/** linguist-generated
+/content-module/** linguist-generated
 /debugging/** linguist-generated
 /driver-ui-tests/** linguist-generated
 /duplicate-and-dead-code/** linguist-generated
 /eel/** linguist-generated
-/extract-module/** linguist-generated
 /fix-project-leak-from-tc-report/** linguist-generated
 /icon-resources/** linguist-generated
 /icons/** linguist-generated

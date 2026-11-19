@@ -1,27 +1,40 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.siyeh.ig.visibility.ClassEscapesItsScopeInspection
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @Suppress("ProtectedMemberInFinalClass")
-class Java9NonAccessibleTypeExposedTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class Java9NonAccessibleTypeExposedTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
+  }
+
+  private val java9 by lightJava9ModulesFixture(projectFixture)
+  private val myFixture get() = java9.fixture
+
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(ClassEscapesItsScopeInspection())
 
-    addFile("module-info.java", "module MAIN { exports apiPkg; exports otherPkg; requires M2; }", MAIN)
-    addFile("module-info.java", "module M2 { exports m2Pkg; }", M2)
+    java9.addFile("module-info.java", "module MAIN { exports apiPkg; exports otherPkg; requires M2; }", MAIN)
+    java9.addFile("module-info.java", "module M2 { exports m2Pkg; }", M2)
     add("apiPkg", "PublicApi", "public class PublicApi {}")
     add("apiPkg", "PackageLocal", "class PackageLocal {}")
     add("otherPkg", "PublicOther", "public class PublicOther {}")
   }
 
+  @Test
   fun testPrimitives() {
     highlight("""package apiPkg;
 public class Highlighted {
@@ -37,8 +50,9 @@ public class Highlighted {
 }""")
   }
 
+  @Test
   fun testExported() {
-    addFile("m2Pkg/Exported.java", "package m2Pkg; public class Exported {}", M2)
+    java9.addFile("m2Pkg/Exported.java", "package m2Pkg; public class Exported {}", M2)
 
     highlight("""package apiPkg;
 import m2Pkg.Exported;
@@ -54,6 +68,7 @@ public class Highlighted {
 }""")
   }
 
+  @Test
   fun testPackageLocalExposed() {
     highlight("""package apiPkg;
 public class Highlighted {
@@ -69,6 +84,7 @@ public class Highlighted {
 """)
   }
 
+  @Test
   fun testPackageLocalEncapsulated() {
     highlight("""package apiPkg;
 public class Highlighted {
@@ -84,6 +100,7 @@ public class Highlighted {
 """)
   }
 
+  @Test
   fun testPackageLocalEncapsulated2() {
     highlight("""package apiPkg;
 public class Highlighted {
@@ -93,6 +110,7 @@ public class Highlighted {
 """)
   }
 
+@Test
 fun testPackageLocalEncapsulated3() {
     highlight("""package apiPkg;
 public class Highlighted {
@@ -103,6 +121,7 @@ public class Highlighted {
 """)
   }
 
+  @Test
   fun testPackageLocalEncapsulated4() {
     highlight("""package apiPkg;
 @SuppressWarnings("ProtectedMemberInFinalClass")      
@@ -114,6 +133,7 @@ public final class Highlighted {
 """)
   }
 
+  @Test
   fun testPackageLocalUsedLocally() {
     highlight("""package apiPkg;
 class Highlighted {
@@ -129,6 +149,7 @@ class Highlighted {
 """)
   }
 
+  @Test
   fun testPublicApi() {
     highlight("""package apiPkg;
 public class Highlighted {
@@ -144,6 +165,7 @@ public class Highlighted {
 """)
   }
 
+  @Test
   fun testPublicOther() {
     highlight("""package apiPkg;
 import otherPkg.PublicOther;
@@ -160,6 +182,7 @@ public class Highlighted {
 """)
   }
 
+  @Test
   fun testPublicNested() {
     highlight("""package apiPkg;
 public class Highlighted {
@@ -176,6 +199,7 @@ public class Highlighted {
 """)
   }
 
+  @Test
   fun testPackageLocalNested() {
     highlight("""package apiPkg;
 public class Highlighted {
@@ -192,6 +216,7 @@ public class Highlighted {
 """)
   }
 
+  @Test
   fun testPackageLocalInInterface() {
     highlight("""package apiPkg;
 public interface Highlighted {
@@ -202,6 +227,7 @@ public interface Highlighted {
 """)
   }
 
+  @Test
   fun testPublicInInterface() {
     highlight("""package apiPkg;
 public interface Highlighted {
@@ -212,6 +238,7 @@ public interface Highlighted {
 """)
   }
 
+  @Test
   fun testNotExportedPackage() {
     add("implPkg", "NotExported", "public class NotExported {}")
     highlight("""package apiPkg;
@@ -226,6 +253,7 @@ public class Highlighted {
 """)
   }
 
+  @Test
   fun testDoubleNested() {
     add("apiPkg", "PublicOuter", """public class PublicOuter {
   static class PackageLocal {
@@ -242,8 +270,9 @@ public class Highlighted {
 """)
   }
 
+  @Test
   fun testExportedArray() {
-    addFile("m2Pkg/Exported.java", "package m2Pkg; public class Exported {}", M2)
+    java9.addFile("m2Pkg/Exported.java", "package m2Pkg; public class Exported {}", M2)
     highlight("""package apiPkg;
 import m2Pkg.Exported;
 import java.util.*;
@@ -256,6 +285,7 @@ public class Highlighted {
 }""")
   }
 
+  @Test
   fun testNotExportedArray() {
     add("implPkg", "NotExported", "public class NotExported {}")
     highlight("""package apiPkg;
@@ -270,6 +300,7 @@ public class Highlighted {
 }""")
   }
 
+  @Test
   fun testThrows() {
     add("apiPkg", "PublicException", "public class PublicException extends Exception {}")
     add("apiPkg", "PackageLocalException", "class PackageLocalException extends Exception {}")
@@ -288,6 +319,7 @@ import implPkg.*;
 """)
   }
 
+  @Test
   fun testGenericPublic() {
     add("apiPkg", "MyInterface", "public interface MyInterface {}")
     add("apiPkg", "MyClass", "public class MyClass implements MyInterface {}")
@@ -314,6 +346,7 @@ public class Highlighted<T extends MyInterface> {
 """)
   }
 
+  @Test
   fun testGenericNotExported() {
     add("implPkg", "MyInterface", "public interface MyInterface {}")
     add("implPkg", "MyClass", "public class MyClass implements MyInterface {}")
@@ -343,12 +376,12 @@ public class Highlighted<T extends MyInterface> {
   }
 
   private fun highlight(@Language("JAVA") @NotNull @NonNls text: String) {
-    val file = addFile("apiPkg/Highlighted.java", text, MAIN)
+    val file = java9.addFile("apiPkg/Highlighted.java", text, MAIN)
     myFixture.configureFromExistingVirtualFile(file)
     myFixture.checkHighlighting()
   }
 
   private fun add(packageName: String, className: String, @Language("JAVA") @NotNull @NonNls text: String) {
-    addFile("$packageName/$className.java", "package $packageName; $text", MAIN)
+    java9.addFile("$packageName/$className.java", "package $packageName; $text", MAIN)
   }
 }

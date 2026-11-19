@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMemberInfo
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.createKtClassMember
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 internal class KtDelegateJavaDefaultMethodsQuickFix(
@@ -36,6 +37,10 @@ internal class KtDelegateJavaDefaultMethodsQuickFix(
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = when (bodyType) {
         is BodyType.Delegate, BodyType.Super -> true
         else -> false
+    }
+
+    override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+        invoke(project, editor, file, implementAll = isUnitTestMode() || members.size == 1)
     }
 
     override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> = members.map {

@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,8 @@ import org.jetbrains.annotations.TestOnly;
 
 public interface PydevConsoleRunner {
   Key<ConsoleCommunication> CONSOLE_COMMUNICATION_KEY = new Key<>("PYDEV_CONSOLE_COMMUNICATION_KEY");
-  Key<Sdk> CONSOLE_SDK = new Key<>("PYDEV_CONSOLE_SDK_KEY");
+  /** The interpreter of the console that a console file belongs to. */
+  Key<PythonInterpreter> CONSOLE_INTERPRETER = new Key<>("PYDEV_CONSOLE_INTERPRETER_KEY");
 
   interface ConsoleListener {
     void handleConsoleInitialized(@NotNull LanguageConsoleView consoleView);
@@ -44,7 +46,12 @@ public interface PydevConsoleRunner {
   default @Nullable AnAction createRerunAction() { return null; }
 
   @TestOnly
-  void setSdk(Sdk sdk);
+  @ApiStatus.Internal
+  void setPythonInterpreter(@Nullable PythonInterpreter interpreter);
+
+  /** The interpreter that this console runs. */
+  @ApiStatus.Internal
+  @Nullable PythonInterpreter getPythonInterpreter();
 
   @TestOnly
   @Nullable Sdk getSdk();

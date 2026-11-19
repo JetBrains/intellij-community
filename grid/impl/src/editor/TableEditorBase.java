@@ -8,9 +8,11 @@ import com.intellij.database.datagrid.GridRow;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +79,12 @@ public abstract class TableEditorBase extends UserDataHolderBase implements File
 
   @Override
   public void dispose() {
+  }
+
+  /** Whether the platform closes this editor to open it again, as a tab move does. Valid in {@link #dispose()}. */
+  protected final boolean isClosingToReopen() {
+    VirtualFile file = getFile();
+    return file != null && Boolean.TRUE.equals(file.getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN));
   }
 
   @Override

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -15,10 +16,17 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Runs the live template of a quick fix in an editor of its file.
+ * <p>
+ * During an intention preview, the runner does nothing. The preview runs in a read action, where no editor can open,
+ * and a fix can get a problem descriptor in the physical file.
+ */
 @ApiStatus.Internal
 public final class PythonTemplateRunner {
 
   public static void runTemplate(@NotNull PsiFile file, @NotNull TemplateBuilder builder) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return;
     final Editor editor = PythonUiService.getInstance().openTextEditor(file.getProject(), virtualFile);
@@ -31,6 +39,7 @@ public final class PythonTemplateRunner {
   }
 
   public static void runTemplateInSelectedEditor(@NotNull Project project, PsiElement anchor, @NotNull TemplateBuilder builder) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
     VirtualFile virtualFile = anchor.getContainingFile().getVirtualFile();
     if (virtualFile == null) return;
     final FileEditor editor = PythonUiService.getInstance().getSelectedEditor(project, virtualFile);
@@ -45,6 +54,7 @@ public final class PythonTemplateRunner {
   public static void runInlineTemplate(@NotNull Project project,
                                        PsiElement element,
                                        TemplateBuilderImpl builder, int offset) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
     final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
     if (virtualFile == null) {
       return;

@@ -220,6 +220,10 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
 
+  /**
+   * Marks {@code element} and all its children as generated, see {@link CodeEditUtil#isNodeGenerated}.
+   * {@code markAsCopy} of {@link PsiFileFactory#createFileFromText} does the same.
+   */
   public static void markGenerated(PsiElement element) {
     TreeElement node = (TreeElement)element.getNode();
     assert node != null;

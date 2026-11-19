@@ -10,7 +10,11 @@ import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.McpToolSchema
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
+import com.intellij.mcpserver.setRouterControls
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -22,14 +26,66 @@ class DisallowListBasedMcpToolFilterProviderTest {
   private val provider = DisallowListBasedMcpToolFilterProvider()
   private val settings = McpToolDisallowListSettings.getInstance()
 
+  private var routerControls: AutoCloseable? = null
+
   @BeforeEach
   fun setUp() {
     settings.toolStates = emptyMap()
+    routerControls = setRouterControls(true)
   }
 
   @AfterEach
   fun tearDown() {
     settings.toolStates = emptyMap()
+    routerControls?.close()
+  }
+
+  @Test
+  fun `effectiveToolStateFor uses the default router-only flag only while the router controls are off`() {
+    val tool = fakeTool(name = "read_file", fullName = "com.example.toolset.read_file")
+    settings.toolStates = mapOf(tool.descriptor.fullyQualifiedName to ToolState(enabled = true, routerOnly = false))
+
+    assertThat(settings.effectiveToolStateFor(tool)).isEqualTo(ToolState(enabled = true, routerOnly = false))
+
+    routerControls?.close()
+    routerControls = setRouterControls(false)
+
+    assertThat(settings.effectiveToolStateFor(tool)).isEqualTo(ToolState(enabled = true, routerOnly = true))
+  }
+
+  @Test
+  fun `applyFilters ignores the stored router-only flag while the router controls are off`() {
+    routerControls?.close()
+    routerControls = setRouterControls(false)
+    val tool = fakeTool(name = "read_file", fullName = "com.example.toolset.read_file")
+    val disabledTool = fakeTool(name = "off_tool", fullName = "com.example.toolset.off_tool")
+    val context = McpToolFilterContext(listOf(tool, disabledTool))
+    settings.toolStates = mapOf(
+      tool.descriptor.fullyQualifiedName to ToolState(enabled = true, routerOnly = false),
+      disabledTool.descriptor.fullyQualifiedName to ToolState(enabled = false, routerOnly = false),
+    )
+
+    provider.applyFilters(context, null, null, McpToolInvocationMode.DIRECT)
+
+    // The flag of `read_file` does not apply, so it keeps the default. The enabled flag still applies.
+    assertThat(context.routerOnlyTools).containsExactly(tool)
+    assertThat(context.onTools).isEmpty()
+  }
+
+  @Test
+  fun `getUpdates emits after a change of the router controls`(): Unit = timeoutRunBlocking {
+    val updates = Channel<Unit>(Channel.UNLIMITED)
+    val collector = launch {
+      provider.getUpdates(null, this, null, McpToolInvocationMode.DIRECT).collect { updates.send(Unit) }
+    }
+    // The first update arrives after the flow subscribes to the advanced setting.
+    updates.receive()
+
+    routerControls?.close()
+    routerControls = setRouterControls(false)
+
+    updates.receive()
+    collector.cancel()
   }
 
   @Test

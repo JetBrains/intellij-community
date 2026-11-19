@@ -1,28 +1,40 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections
 
-class InstanceIElementTypeFieldInspectionKotlinTest : InstanceIElementTypeFieldInspectionTestBase() {
-    
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-  override fun getFileExtension(): String = "kt"
+@TestApplication
+class InstanceIElementTypeFieldInspectionKotlinTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
+  private val devKit by instanceIElementTypeFieldFixture(projectFixture, "kt")
+
+  @Test
   fun testInstancePropertyWithIElementType() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testCompanionObjectNoWarning() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testObjectDeclarationNoWarning() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testQualifiedNameWithLanguage() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testEnumFieldsNoWarning() {
-    doTest()
+    devKit.doTest()
   }
 }

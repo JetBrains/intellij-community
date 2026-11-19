@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes
 
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleColoredText
 import com.intellij.ui.SimpleTextAttributes
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class XValuePresentationUtilTest : UsefulTestCase() {
+class XValuePresentationUtilTest {
+  @Test
   fun testRenderValues() {
     doTestValues("abc.\n\t\t\tcde", "abc.\\n\\t\\t\\tcde")
     doTestValues("abc\n\t\t\t.cde", "abc\\n\\t\\t\\t.cde")
@@ -15,6 +17,7 @@ class XValuePresentationUtilTest : UsefulTestCase() {
     doTestValues("abc;\ncde", "abc;\\ncde")
   }
 
+  @Test
   fun testRenderNames() {
     doTestNames("abcdef", "abcdef")
     doTestNames("abc.\n\t\t\tcde", "abc. cde")

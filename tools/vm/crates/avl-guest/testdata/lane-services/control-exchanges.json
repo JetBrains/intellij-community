@@ -30,7 +30,7 @@
       "service": "registry",
       "side": "ide",
       "method": "GET",
-      "target": "/packages/acp-scenario-agent-linux-x86_64.zip",
+      "target": "/packages/acp-fake-agent-linux-x86_64.zip",
       "body": "",
       "status": 404
     },
@@ -50,7 +50,7 @@
       "target": "/_lane/registry/events?since=0&prefix=",
       "body": "",
       "status": 200,
-      "answer": "{\"events\":[{\"fault\":\"none\",\"method\":\"GET\",\"path\":\"/nothing.txt\",\"receivedAtMs\":1760000000000,\"responseBytes\":0,\"sequence\":1,\"status\":404,\"truncated\":false},{\"fault\":\"package-http-error\",\"method\":\"GET\",\"path\":\"/packages/acp-scenario-agent-linux-x86_64.zip\",\"receivedAtMs\":1760000000000,\"responseBytes\":0,\"sequence\":2,\"status\":404,\"truncated\":false}],\"mark\":2}"
+      "answer": "{\"events\":[{\"fault\":\"none\",\"method\":\"GET\",\"path\":\"/nothing.txt\",\"receivedAtMs\":1760000000000,\"responseBytes\":0,\"sequence\":1,\"status\":404,\"truncated\":false},{\"fault\":\"package-http-error\",\"method\":\"GET\",\"path\":\"/packages/acp-fake-agent-linux-x86_64.zip\",\"receivedAtMs\":1760000000000,\"responseBytes\":0,\"sequence\":2,\"status\":404,\"truncated\":false}],\"mark\":2}"
     },
     {
       "service": "registry",
@@ -59,7 +59,7 @@
       "target": "/_lane/registry/events?since=1&prefix=%2Fpackages%2F",
       "body": "",
       "status": 200,
-      "answer": "{\"events\":[{\"fault\":\"package-http-error\",\"method\":\"GET\",\"path\":\"/packages/acp-scenario-agent-linux-x86_64.zip\",\"receivedAtMs\":1760000000000,\"responseBytes\":0,\"sequence\":2,\"status\":404,\"truncated\":false}],\"mark\":2}"
+      "answer": "{\"events\":[{\"fault\":\"package-http-error\",\"method\":\"GET\",\"path\":\"/packages/acp-fake-agent-linux-x86_64.zip\",\"receivedAtMs\":1760000000000,\"responseBytes\":0,\"sequence\":2,\"status\":404,\"truncated\":false}],\"mark\":2}"
     },
     {
       "service": "registry",

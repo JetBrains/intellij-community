@@ -5,6 +5,7 @@ import com.intellij.execution.target.ContributedConfigurationsList
 import com.intellij.execution.target.TargetBasedSdkAdditionalData
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.target.hasTargetConfiguration
 import com.intellij.execution.target.loadTargetConfiguration
 import com.intellij.execution.target.saveTargetBasedSdkAdditionalData
@@ -76,7 +77,21 @@ open class PyTargetAwareAdditionalData private constructor(
   override fun save(rootElement: Element) { // store "interpreter paths" (i.e. `PYTHONPATH` elements)
     super.save(rootElement) // store `INTERPRETER_PATH`, `HELPERS_PATH`, etc
     b.save(rootElement) // store target configuration
-    saveTargetBasedSdkAdditionalData(rootElement, targetState)
+    saveTargetBasedSdkAdditionalData(rootElement, savedTargetState())
+  }
+
+  /**
+   * The state of the target that [save] writes. It holds the id of the target: a commit of the SDK saves and loads its data,
+   * and a ref names its target by that id, see `PyInterpreterRef`. Without the id, [load] gives the target a new one. The
+   * Python runtime is not in it: [load] adds it. Without a [targetEnvironmentConfiguration], such as when the plugin of the
+   * target type is not loaded, it is the [targetState] that was loaded.
+   */
+  private fun savedTargetState(): ContributedConfigurationsList.ContributedStateBase? {
+    val configuration = targetEnvironmentConfiguration ?: return targetState
+    return TargetEnvironmentsManager.OneTargetState().apply {
+      loadFromConfiguration(configuration)
+      uuid = configuration.uuid
+    }
   }
 
   override fun load(element: Element?) { // load "interpeter paths" (i.e. `PYTHONPATH` elements)

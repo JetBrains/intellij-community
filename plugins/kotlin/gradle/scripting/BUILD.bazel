@@ -205,7 +205,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/groovy",
         "//plugins/kotlin/base/fir/project-structure",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework",
         "//plugins/kotlin/base/project-structure",
         "//java/openapi:java",
         "//platform/platform-impl:ide-impl",

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl
 
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
@@ -14,8 +15,12 @@ import com.intellij.platform.fileEditor.FileEntry
 internal class FileIdAdapterImpl : FileIdAdapter {
 
   override fun getFile(fileEntry: FileEntry, virtualFileManager: VirtualFileManager, project: Project): VirtualFile? {
-    return virtualFileManager.findFileByUrl(fileEntry.url)
-           ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
+    virtualFileManager.findFileByUrl(fileEntry.url)?.let { return it }
+    val activity = StartUpMeasurer.startActivity("editor file refresh")
+    val file = virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
+    activity.setDescription(fileEntry.url)
+    activity.end()
+    return file
   }
 
   override fun getId(file: VirtualFile): Int? = (file as? VirtualFileWithId)?.id

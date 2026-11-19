@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 public final class TextBlockTransferable implements Transferable, Sizeable {
   private final Collection<? extends TextBlockTransferableData> myExtraData;
@@ -52,6 +54,18 @@ public final class TextBlockTransferable implements Transferable, Sizeable {
     }
     dataFlavors.sort(Comparator.comparingInt(value -> -value.priority));
     myTransferDataFlavors = ContainerUtil.map2Array(dataFlavors, DataFlavor.class, value -> value.flavor);
+  }
+
+  /**
+   * Returns a copy without the extra data that matches {@code toDrop}, or this instance when no item matches.
+   * The text and the raw text stay.
+   */
+  @ApiStatus.Internal
+  public @NotNull TextBlockTransferable dropExtraData(@NotNull Predicate<? super TextBlockTransferableData> toDrop) {
+    if (!ContainerUtil.exists(myExtraData, toDrop::test)) {
+      return this;
+    }
+    return new TextBlockTransferable(myText, ContainerUtil.filter(myExtraData, data -> !toDrop.test(data)), myRawText);
   }
 
   @Override

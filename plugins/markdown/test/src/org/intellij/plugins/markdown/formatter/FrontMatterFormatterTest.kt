@@ -1,13 +1,23 @@
 package org.intellij.plugins.markdown.formatter
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.performReformatting
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
-class FrontMatterFormatterTest: LightPlatformCodeInsightTestCase() {
+@TestApplication
+class FrontMatterFormatterTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `test formatter does not affect frontmatter header content`() {
     // language=Markdown
@@ -48,11 +58,13 @@ class FrontMatterFormatterTest: LightPlatformCodeInsightTestCase() {
     doTest(content, expected)
   }
 
-  private fun doTest(content: String, expected: String) {
-    configureFromFileText("some.md", content)
-    performReformatting(project, file)
-    checkResultByText(expected)
-    performReformatting(project, file)
-    checkResultByText(expected)
+  private fun doTest(content: String, expected: String): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      performReformatting(myFixture.project, myFixture.file)
+      myFixture.checkResult(expected)
+      performReformatting(myFixture.project, myFixture.file)
+      myFixture.checkResult(expected)
+    }
   }
 }

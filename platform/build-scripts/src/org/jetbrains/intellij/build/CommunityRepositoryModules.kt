@@ -76,9 +76,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
     },
     CommunityKotlinPluginBuilder.kotlinPlugin(),
-    pluginAuto(listOf("intellij.vcs.git")) { spec ->
-      spec.withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
-    },
     // The relative paths below (`lib/maven3`, `lib/intellij.maven.server3`, ...) are a runtime contract, not an
     // internal packaging detail: the Maven plugin reads them back at runtime through
     // `MavenClasspathBuilder.addMavenServerLibraries` and `MavenDistributionsCache.resolveEmbeddedMavenHome`.
@@ -182,7 +179,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModule("intellij.libraries.groovy.ant", "groovy-ant.jar")
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    pluginAuto(listOf("intellij.gradle.java.plugin", "intellij.gradle.java")),
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },
@@ -202,7 +198,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
         }
       }
     },
-    pluginAuto(listOf("intellij.textmate.plugin")) { spec ->
+    pluginAuto("intellij.textmate.plugin") { spec ->
       spec.withResourceFromModule("intellij.textmate", "lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout { spec ->
@@ -210,16 +206,15 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withBundledPydevdNativeDeps()
     },
     androidDesignPlugin(),
-    pluginAuto(listOf("intellij.completionMlRankingModels")) { spec ->
+    pluginAuto("intellij.completionMlRankingModels") { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    pluginAuto(listOf("intellij.statsCollector")) { spec ->
+    pluginAuto("intellij.statsCollector") { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    pluginAuto(listOf("intellij.findUsagesMl")) { spec ->
+    pluginAuto("intellij.findUsagesMl") { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    pluginAuto(listOf("intellij.lombok.plugin")),
   ).addingAll(allJcefPlugins().toList())
 }
 
@@ -254,12 +249,6 @@ private fun androidDesignPlugin(mainModuleName: String = "intellij.android.desig
 }
 
 fun getContribRepositoryPlugins(): List<PluginLayout> = java.util.List.of(
-  pluginAuto("intellij.cucumber.java") { spec ->
-    spec.withModule("intellij.cucumber.jvmFormatter", "cucumber-jvmFormatter.jar")
-    spec.withModule("intellij.cucumber.jvmFormatter3", "cucumber-jvmFormatter3.jar")
-    spec.withModule("intellij.cucumber.jvmFormatter4", "cucumber-jvmFormatter4.jar")
-    spec.withModule("intellij.cucumber.jvmFormatter5", "cucumber-jvmFormatter5.jar")
-  },
   pluginAuto("intellij.serial.monitor") { spec ->
     // jSerialComm java JAR - Remember to update the binary dependency when updating to a new version!
     spec.withProjectLibrary("jetbrains.intellij.deps.jSerialComm", LibraryPackMode.STANDALONE_SEPARATE)
@@ -852,7 +841,7 @@ private fun jSerialCommLayoutAssetSpec(): LayoutAssetSpec {
  * cross-platform zip leaves it out and the mac signing pass covers it.
  */
 fun PlatformLayout.withRestarter() {
-  for (os in OsFamily.entries) {
+  for (os in OsFamily.ALL) {
     for (arch in JvmArchitecture.entries) {
       withOsSpecificFiles(os, arch, restarterLayoutAssetSpec(os, arch)) { distributionDir, context ->
         listOf(copyNativeBinFileToDir(NativeBinaryDownloader.getRestarter(context, os, arch), distributionDir.resolve("bin")))

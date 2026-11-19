@@ -39,7 +39,7 @@ internal suspend fun buildToolState(
       version = managed?.installedVersion,
       minimumSupportedVersion = executable.minimumSupportedVersion?.toCompactString(),
       support = executable.manager?.support(descriptor) ?: PyToolSupport.NONE,
-      selectedAsTypeEngine = (executable as? ProjectLevelPyTool<*>)?.isSelectedAsTypeEngine(project) == true,
+      selectedAsTypeEngine = (executable as? PyTypeEngineSelectableTool)?.runsForExternalTypeEngine(project) == true,
     )
     else -> PyToolDetails()
   }

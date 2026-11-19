@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.editorTabGrouping.impl
 
+import com.intellij.ide.setToolTipText
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.impl.EditorTabs
@@ -8,6 +9,8 @@ import com.intellij.openapi.fileEditor.impl.EditorTabsFactory
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.createEditorTabListOptions
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.IslandsState
@@ -83,7 +86,26 @@ internal open class GroupingJBEditorTabs(
   private fun rebuildSnapshot() {
     snapshot = TabGroupingSnapshot(tabs.filter { it !== dropInfo }, controller::group)
     invalidateLayoutCaches()
+    updateGroupTooltips()
     repaint()
+  }
+
+  /** Adds the group name and size above the base tooltip of each tab in a shown group. */
+  private fun updateGroupTooltips() {
+    val active = isGroupingActive()
+    for (info in tabs) {
+      if (info === dropInfo) continue
+      val label = info.tabLabel ?: continue
+      val group = if (active) snapshot.groups[info] else null
+      if (group == null || !isVisibleGroup(info.isPinned, group.key)) {
+        label.setToolTipText(info.tooltipHtmlText)
+        continue
+      }
+      val header = EditorTabGroupingBundle.message("tab.tooltip.group", group.name)
+      val builder = HtmlBuilder().append(HtmlChunk.text(header))
+      info.tooltipHtmlText?.let { builder.append(HtmlChunk.br()).append(it) }
+      label.setToolTipText(builder.toFragment())
+    }
   }
 
   internal fun logicalGroupSizes(): Map<Pair<Boolean, String>, Int> = snapshot.sizes
@@ -142,6 +164,7 @@ internal open class GroupingJBEditorTabs(
   override fun propertyChange(event: java.beans.PropertyChangeEvent) {
     super.propertyChange(event)
     if (event.propertyName == TabInfo.HIDDEN) rebuildSnapshot()
+    else if (event.propertyName == TabInfo.TEXT) updateGroupTooltips()
   }
 
   override fun tabsChanged() {

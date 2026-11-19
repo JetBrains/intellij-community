@@ -24,8 +24,13 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.ProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
   private static final String DOC_URL = "https://docs.oracle.com/javase/7/docs/api/";
@@ -48,12 +53,14 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
     }
   };
 
-  @NotNull
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(DESCRIPTOR);
+
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return DESCRIPTOR;
+  protected TestFixture<LightJavaProject> getProjectFixture() {
+    return projectFixture;
   }
 
+  @Test
   @Override
   public void testTypeParams() {
     doTestMethod("""
@@ -66,6 +73,7 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
     );
   }
 
+  @Test
   @Override
   public void testConstructor() {
     doTestMethod("""
@@ -75,6 +83,7 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
            "Test()", "<init>()", "Test--");
   }
 
+  @Test
   @Override
   public void testDocumentationPath() {
     doTestElement("""

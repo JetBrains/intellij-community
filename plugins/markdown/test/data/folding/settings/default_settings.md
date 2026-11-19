@@ -18,6 +18,8 @@ Simple code fence
 to be collapsed
 ```</fold>
 
+<fold text='▶ The summary' expand='false'><details><summary>The summary</summary>Content.</details></fold>
+
 <fold text='h1: # Some primary header' expand='true'># Some primary header
 
 <fold text='h2: ## Some secondary header' expand='true'>## Some secondary header

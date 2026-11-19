@@ -17,14 +17,13 @@ project-bound but not PSI-backed), a database column (defined by a data source, 
 not project-bound).
 
 **Before hand-wiring any of the mechanisms on this page, look at
-[poly-symbols](../poly-symbols/SKILL.md) first.** `PolySymbol : Symbol`, and the PolySymbols
-framework exists specifically to save you from writing this boilerplate by hand — its query
-executor, completion-provider base class, and default `searchTarget`/`renameTarget`/
-`getDocumentationTarget`/`getNavigationTargets` implementations give you declarations, references,
-completion, search, rename, and navigation with a fraction of the code this page documents.
-Treat PolySymbols as the **default, go-to way to implement a new language or framework's symbol
-support** — it is not limited to cross-language microsyntax sharing, that's simply the feature that
-falls out for free once the query/pattern machinery exists. Reach for the raw `Symbol`/
+[poly-symbols](../poly-symbols/SKILL.md) first.** `PolySymbol : Symbol`. The PolySymbols query
+executor, the completion-provider base class, and the `searchTarget`/`renameTarget`/
+`getDocumentationTarget`/`getNavigationTargets` members of `PolySymbol` give you declarations,
+references, completion, search, rename, and navigation.
+With them, you write a fraction of the code that this page documents.
+Treat PolySymbols as the default way to implement the symbol support of a new language
+or framework. It is not limited to cross-language microsyntax sharing. Reach for the raw `Symbol`/
 `PsiSymbolReference` API on this page directly only when a symbol genuinely doesn't fit PolySymbols'
 model: a single, self-contained resolve with no query/completion surface of its own (a
 format-string placeholder resolved from one call expression, a markdown link label), or something
@@ -47,7 +46,6 @@ public interface Symbol {
   action, but must not be referenced across read actions. Call `createPointer()` while still valid,
   store the `Pointer`, and call `Pointer.dereference()` in the next read action to get a fresh (or
   the same, if still valid) instance.
-- All of this applies unchanged to `PolySymbol`, which extends `Symbol`.
 
 ## Declarations
 
@@ -62,7 +60,7 @@ Two ways to supply declarations:
   `com.intellij.psi.declarationProvider`. The platform calls it for each `PsiElement` from the leaf
   at the caret up to the containing file, with `offsetInElement` as a hint (`-1` means "all
   declarations").
-- Implement `PsiSymbolDeclaration` directly on the `PsiElement`.
+- Override `PsiElement.getOwnDeclarations()` on the declaring `PsiElement`.
 
 ## References — three kinds
 
@@ -79,9 +77,8 @@ resolve, e.g. by comparing text first). For the common single-target case, exten
 | **External** | Reference is *not* recognized by the host language, contributed by another plugin (e.g. a filename string in `new File("users.txt")`) | Host implements `PsiExternalReferenceHost`; other plugins register a `PsiSymbolReferenceProvider` |
 | **Implicit** | Reference only supports resolving *to* a target (navigation, hover doc) — not find-usages/rename starting from the target (e.g. `var` in `var x = new Person()`) | `ImplicitReferenceProvider` |
 
-Language support should not assume external references are absent — they may be contributed by any
-plugin. Own vs. external is a modeling choice about who "owns" the reference semantics, not a
-technical distinction in `PsiSymbolReference` itself.
+Language support should not assume that external references are absent. Any plugin may contribute
+them.
 
 ### External references — `PsiSymbolReferenceProvider`
 
@@ -103,9 +100,9 @@ Worked examples in this repo:
 - `community/java/java-impl/src/com/siyeh/ig/format/StringFormatSymbolReferenceProvider.java` —
   resolves `%s`/`{0}`-style placeholders inside `String.format`/`printf`/`MessageFormat` call
   arguments back to the corresponding call argument, complete with its own `Symbol`
-  (`FormatArgumentSymbol`-style), `NavigatableSymbol`, and a `SearchTarget`/rename-capable design —
-  read this file end to end as the reference implementation for "symbol lives inside a string
-  literal, references live inside sibling call arguments."
+  (`JavaFormatArgumentSymbol`), `NavigatableSymbol`, and a `SearchTarget` design —
+  read this file end to end as the reference implementation for "references live inside a string
+  literal, symbols are the sibling call arguments."
 - `community/jvm/jvm-analysis-impl/src/com/intellij/analysis/logging/resolve/LoggingArgumentSymbolReferenceProvider.kt` —
   the same idea for JVM logging framework `{}`/`{0}` placeholders across Java/Kotlin.
 - Markdown link-label resolution (linked from the official docs as a third sample) follows the same
@@ -123,17 +120,14 @@ public interface ImplicitReferenceProvider {
 }
 ```
 
-Usually you only override `resolveAsReference` — the default `getImplicitReference` wraps a
-non-empty result in an `ImmediatePsiSymbolReference`. This enables navigation and hover-link
-highlighting on the target `Symbol`, but the platform will never find this "reference" via
-find-usages or rename-from-target, because it was never indexed as a searchable reference. Called
-for every element from the caret leaf up to the file — keep it cheap.
+Usually you only override `resolveAsReference`. The default `getImplicitReference` wraps a non-empty
+result in an `ImmediatePsiSymbolReference`. The platform calls the provider for every element from
+the caret leaf up to the file, so keep it cheap.
 
-PolySymbols' `PsiPolySymbolReferenceProvider` is built on top of exactly this external-reference
-mechanism, but replaces the manual `getReferences`/`getSearchRequests` plumbing with a single
-`getReferencedSymbol(element): PolySymbol?` you implement once — resolution, search, and rename all
-follow from the returned symbol. Prefer it over hand-writing `PsiSymbolReferenceProvider` unless you
-have a concrete reason not to — see the "References" section of
+For external references, PolySymbols' `PsiPolySymbolReferenceProvider` is built on
+`PsiSymbolReferenceProvider`. You implement one `getReferencedSymbol(element): PolySymbol?` in place
+of `getReferences`/`getSearchRequests`. Resolution, search and rename follow from the returned
+symbol. See the "References" section of
 [poly-symbols/references/query-model.md](../poly-symbols/references/query-model.md).
 
 ## Hooking a Symbol into platform features
@@ -146,20 +140,10 @@ these on your `Symbol`/`PolySymbol`:
 | Navigation | `NavigatableSymbol` (`community/platform/core-api/src/com/intellij/navigation/NavigatableSymbol.java`) | `getNavigationTargets(project)`; `SymbolNavigationService` helps build `NavigationTarget`s |
 | Find usages | `SearchTarget`/`SearchTargetSymbol` (`community/platform/lang-impl/src/com/intellij/find/usages/api/SearchTarget.kt`) | `presentation()`, `usageHandler`, `maximalSearchScope`, `textSearchRequests`; register a factory at `com.intellij.lang.symbolSearchTarget` if you don't want the `Symbol` itself to implement it |
 | Rename | `RenameableSymbol`/`RenameTarget` (`community/platform/lang-impl/src/com/intellij/refactoring/rename/symbol/RenameableSymbol.kt`) | or register a `SymbolRenameTargetFactory` at `com.intellij.rename.symbolRenameTargetFactory` |
-| Documentation | `DocumentationTarget` | via `PsiSymbolReferenceService`/language-specific hookup |
-
-`PolySymbol` (see [poly-symbols](../poly-symbols/SKILL.md)) already wires all four of these through
-`searchTarget`/`renameTarget`/`getDocumentationTarget`/`getNavigationTargets` properties with
-sensible defaults. This is the general pattern across this whole page: almost everything above is
-what `PolySymbol` implements *for* you. Implement `PolySymbol` and get all four; implementing raw
-`Symbol` means writing every row of the table above by hand for every symbol kind you add.
+| Documentation | `DocumentationSymbol`/`DocumentationTarget` (`community/platform/lang-impl/src/com/intellij/platform/backend/documentation/DocumentationSymbol.java`) | or register a `SymbolDocumentationTargetProvider` at `com.intellij.platform.backend.documentation.symbolTargetProvider` |
 
 ## Related
 
-- **[poly-symbols](../poly-symbols/SKILL.md)** — start here for new language/framework symbol
-  support. It's built on `Symbol` and is the intended default implementation path, not a
-  specialized add-on — reach for the mechanisms on this page directly only when a symbol falls
-  outside its model (see the decision note above).
-- **[poly-context](../poly-context/SKILL.md)** — general-purpose, performance-optimized context detection; PolySymbols is one consumer, not a dependency.
+- **[poly-context](../poly-context/SKILL.md)** — general-purpose, performance-optimized context detection; PolySymbols is one consumer.
 - Official docs: [Symbols](https://plugins.jetbrains.com/docs/intellij/symbols.html),
   [Declarations and References](https://plugins.jetbrains.com/docs/intellij/declarations-and-references.html).

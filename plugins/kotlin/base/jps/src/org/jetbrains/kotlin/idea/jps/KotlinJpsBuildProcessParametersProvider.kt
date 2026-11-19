@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.JpsVersionSupport
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinJpsPluginClasspathDownloader
@@ -34,12 +35,16 @@ private val LOG = logger<KotlinJpsBuildProcessParametersProvider>()
  * [KotlinJpsBuilderClasspath], and the Build Tools API implementation of the project's Kotlin version. Without the
  * key, it gets the legacy JPS plugin of the project's Kotlin version.
  *
- * The provider fails the build if it cannot download what the version needs. The download usually happens in
- * [SetupKotlinJpsPluginBeforeCompileTask], but before-compile tasks do not run for "Build Project Automatically".
+ * The provider checks the version before it downloads anything. It fails the build with the message of the check
+ * when the check rejects the version. The check covers "Build Project Automatically" too: before-compile tasks do
+ * not run for it, so [SetupKotlinJpsPluginBeforeCompileTask] cannot report there.
+ *
+ * The provider also fails the build when it cannot download what the version needs. The download usually happens in
+ * [SetupKotlinJpsPluginBeforeCompileTask].
  */
 class KotlinJpsBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
     override fun getClassPath(): List<String> {
-        val version = KotlinJpsPluginSettings.jpsVersion(project)
+        val version = supportedJpsVersionOrThrow()
 
         if (KotlinArtifactsDownloader.isBuildToolsApiEnabled(version)) {
             return KotlinJpsBuilderClasspath.get()
@@ -63,12 +68,12 @@ class KotlinJpsBuildProcessParametersProvider(private val project: Project) : Bu
     }
 
     override fun getPathParameters(): List<Pair<String, Path>> {
-        val version = KotlinJpsPluginSettings.jpsVersion(project)
+        val version = supportedJpsVersionOrThrow()
 
         // The `KOTLIN_BUNDLED` path macro of the project model points to the dist of the project version, as in the IDE.
         // The macro expands to the standard library and to the compiler plugins, which must match the compiler.
         @Suppress("IO_FILE_USAGE")
-        val kotlinDist = KotlinArtifactsDownloader.getUnpackedKotlinDistPath(project).toPath()
+        val kotlinDist = KotlinArtifactsDownloader.getUnpackedKotlinDistPath(version).toPath()
 
         if (!kotlinDist.isDirectory()) {
             // jps plugin dist of `version` is not yet downloaded
@@ -104,6 +109,15 @@ class KotlinJpsBuildProcessParametersProvider(private val project: Project) : Bu
             listOf("-Dkotlin.jps.instrument.bytecode=true")
         else
             emptyList()
+
+    /**
+     * The project's JPS version to build with, after the checks of [KotlinJpsPluginSettings.checkJpsVersion].
+     * Fails the build with the message of the check when the check rejects the version, before any download starts.
+     */
+    private fun supportedJpsVersionOrThrow(): String = when (val support = KotlinJpsPluginSettings.supportedJpsVersion(project)) {
+        is JpsVersionSupport.Supported -> support.version
+        is JpsVersionSupport.Unsupported -> error(support.message)
+    }
 
     private fun downloadOrThrow(version: String) {
         val future = CompletableFuture<Unit>()

@@ -19,6 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @deprecated Use {@link LightCompletionFixtureKt#lightCompletionFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class LightFixtureCompletionTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected LookupElement[] myItems;
 

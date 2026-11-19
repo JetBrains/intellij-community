@@ -364,6 +364,7 @@ java/java-structure-view
 java/java-syntax
 java/java-tests
 java/java-todo
+java/javadoc-tests
 java/jdkAnnotations
 java/jsp-base-openapi
 java/jsp-openapi
@@ -728,6 +729,7 @@ mps/build/intellij.mps.resources
 notebooks/notebook-ui
 notebooks/visualization
 notebooks/visualization/testFramework
+ohos/build
 platform/analysis-api
 platform/analysis-impl
 platform/backend
@@ -918,6 +920,8 @@ platform/libraries/cglib
 platform/locking-impl
 platform/lsp
 platform/lsp-impl
+platform/lsp-impl/integrationTests
+platform/lsp-impl/integrationTests/idePlugin
 platform/lsp-impl/structureView
 platform/lsp-impl/tests
 platform/lsp/testFramework
@@ -1285,6 +1289,7 @@ plugins/copyright/vcs
 plugins/coverage
 plugins/coverage-common
 plugins/coverage-common/intellij.platform.coverage.agent
+plugins/coverage-common/plugin
 plugins/coverage/coverage_rt
 plugins/coverage/junit
 plugins/coverage/testng
@@ -1369,6 +1374,7 @@ plugins/git4idea/rt
 plugins/git4idea/shared
 plugins/git4idea/terminal
 plugins/git4idea/testFramework
+plugins/git4idea/testFramework/plugin
 plugins/git4idea/tests/disabled
 plugins/github/github-core
 plugins/github/github-git
@@ -1816,6 +1822,7 @@ plugins/maven/src/integrationTest/docker
 plugins/maven/src/test
 plugins/maven/testFramework
 plugins/mcp-server
+plugins/mcp-server/mcpserver.configurables
 plugins/mcp-server/mcpserver.frontend
 plugins/mcp-server/mcpserver.plugin
 plugins/mcp-server/mcpserver.skills
@@ -2009,6 +2016,7 @@ python/openapi
 python/pipenv
 python/pipenv/common
 python/pipenv/frontend
+python/pipenv/tests
 python/pluginCore
 python/pluginCore/frontend
 python/pluginCore/impl
@@ -2036,6 +2044,7 @@ python/python-grazie
 python/python-hatch
 python/python-hatch/common
 python/python-hatch/frontend
+python/python-hatch/tests
 python/python-lsp-core
 python/python-lsp-core/common
 python/python-lsp-core/frontend
@@ -2055,6 +2064,7 @@ python/python-pixi/tests/junit5Env
 python/python-poetry/backend
 python/python-poetry/common
 python/python-poetry/frontend
+python/python-poetry/tests
 python/python-process-output/common
 python/python-process-output/frontend
 python/python-process-output/frontend/tests/junit5Env

@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+// Issue: KT-87036
+
+class Foo {
+    companion object {
+    }
+}
+
+val companionReference: (Int) -> Int = Foo::len
+companion fun Foo.len(x: Int) = x

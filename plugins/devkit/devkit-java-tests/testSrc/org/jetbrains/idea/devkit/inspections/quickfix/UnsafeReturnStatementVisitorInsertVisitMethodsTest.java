@@ -2,31 +2,37 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.quickfix.UnsafeReturnStatementVisitorFixture.INSERT_CLASS_VISIT_METHOD;
+import static org.jetbrains.idea.devkit.inspections.quickfix.UnsafeReturnStatementVisitorFixture.INSERT_LAMBDA_AND_CLASS_VISIT_METHODS;
+import static org.jetbrains.idea.devkit.inspections.quickfix.UnsafeReturnStatementVisitorFixture.INSERT_LAMBDA_VISIT_METHOD;
+import static org.jetbrains.idea.devkit.inspections.quickfix.UnsafeReturnStatementVisitorFixtureKt.unsafeReturnStatementVisitorFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/unsafeReturnStatementVisitorFix")
-public class UnsafeReturnStatementVisitorInsertVisitMethodsTest extends UnsafeReturnStatementVisitorInsertVisitMethodsTestBase {
+@TestApplication
+public class UnsafeReturnStatementVisitorInsertVisitMethodsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<UnsafeReturnStatementVisitorFixture> visitor =
+    unsafeReturnStatementVisitorFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/unsafeReturnStatementVisitorFix");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/unsafeReturnStatementVisitorFix";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testInsertVisitLambdaExpressionAndVisitClassMethods() {
-    doTest(INSERT_LAMBDA_AND_CLASS_VISIT_METHODS);
+    visitor.get().doTest(INSERT_LAMBDA_AND_CLASS_VISIT_METHODS);
   }
 
+  @Test
   public void testInsertVisitLambdaExpressionMethod() {
-    doTest(INSERT_LAMBDA_VISIT_METHOD);
+    visitor.get().doTest(INSERT_LAMBDA_VISIT_METHOD);
   }
 
+  @Test
   public void testInsertVisitClassMethod() {
-    doTest(INSERT_CLASS_VISIT_METHOD);
+    visitor.get().doTest(INSERT_CLASS_VISIT_METHOD);
   }
 }

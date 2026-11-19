@@ -2,30 +2,54 @@
 package org.intellij.plugins.markdown.editor.typing
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.application.EDT
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import org.intellij.plugins.markdown.MarkdownTestingUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.typeInEditor
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-class MarkdownTypingFencesTest : LightPlatformCodeInsightTestCase() {
-  override fun getTestDataPath(): String {
-    return MarkdownTestingUtil.TEST_DATA_PATH + "/editor/typing/fences/"
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/editor/typing/fences")
+class MarkdownTypingFencesTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
-  fun testFencePlain() = doTest()
-  fun testFenceInjected() = doTest()
+  private val myFixture by codeInsightModuleFixture(projectFixture)
 
-  fun testFenceInjectedFewLines() = doTest()
+  private lateinit var testName: String
 
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true)
+  }
 
-  fun testFenceInBlockQuote() = doTest()
-  fun testFenceInjectedInBlockQuote() = doTest()
+  @Test
+  fun testFencePlain(): Unit = doTest()
+  @Test
+  fun testFenceInjected(): Unit = doTest()
 
-  fun testFenceInNestedBlockQuote() = doTest()
+  @Test
+  fun testFenceInjectedFewLines(): Unit = doTest()
+
+  @Test
+  fun testFenceInBlockQuote(): Unit = doTest()
+  @Test
+  fun testFenceInjectedInBlockQuote(): Unit = doTest()
+
+  @Test
+  fun testFenceInNestedBlockQuote(): Unit = doTest()
 
   @TestApplication
   class AutopopupTest {
@@ -52,10 +76,11 @@ class MarkdownTypingFencesTest : LightPlatformCodeInsightTestCase() {
     }
   }
 
-  private fun doTest(text: String = "\n") {
-    val testName = getTestName(true)
-    configureByFile("$testName.before.md")
-    type("\n")
-    checkResultByFile("$testName.after.md")
+  private fun doTest(text: String = "\n"): Unit = timeoutRunBlocking {
+    myFixture.configureByFile("$testName.before.md")
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor("\n")
+      myFixture.checkResultByFile("$testName.after.md")
+    }
   }
 }

@@ -123,7 +123,14 @@ jvm_library(
         "//platform/platform-impl/rpc",
         "//platform/refactoring",
         "//platform/indexing-api:indexing",
+        "//platform/lang-impl/testEntities:testEntities_test_lib",
+        "//platform/projectModel-impl",
+        "//platform/backend/workspace",
+        "//platform/workspace/storage",
         "//platform/usageView",
+        "//libraries/junit4",
+        "//libraries/assertj-core",
+        "//libraries/junit6-params",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend.tests` end

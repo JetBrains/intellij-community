@@ -50,19 +50,19 @@ DATE_TIME= ({DATE} ([Tt ]{TIME})? | {TIME}) {OFFSET}?
 BARE_KEY=[0-9_\-a-zA-Z]+
 
 
-ESCAPE = \\[^]
 BASIC_STRING=\"
-  ([^\r\n\"] | {ESCAPE})*
+  ([^\r\n\"\\] | \\[^\r\n])* \\?
 (\")?
+MULTILINE_BASIC_CHAR=[^\"\\] | \\[^]
 MULTILINE_BASIC_STRING=(\"\"\")
-  ([^\"] | {ESCAPE} | \"[^\"] | \"\"[^\"])*
-(\"\"\")?
+  ({MULTILINE_BASIC_CHAR} | \"\"?{MULTILINE_BASIC_CHAR})* \\?
+(\"{3,5})?
 LITERAL_STRING=\'
-  ([^\r\n\'] | {ESCAPE})*
+  ([^\r\n\'])*
 (\')?
 MULTILINE_LITERAL_STRING=(\'\'\')
-  ([^\'] | {ESCAPE} | \'[^\'] | \'\'[^\'])*
-(\'\'\')?
+  ([^\'] | \'[^\'] | \'\'[^\'])*
+(\'{3,5})?
 
 
 %%

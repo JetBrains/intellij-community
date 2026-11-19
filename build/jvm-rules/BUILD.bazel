@@ -328,6 +328,30 @@ jvm_import(
 )
 
 jvm_import(
+    name = "kotlinx-rpc-compiler-plugin-cli_import",
+    jar = "@kotlinx-rpc-compiler-plugin-cli_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinx-rpc-compiler-plugin-k2_import",
+    jar = "@kotlinx-rpc-compiler-plugin-k2_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinx-rpc-compiler-plugin-common_import",
+    jar = "@kotlinx-rpc-compiler-plugin-common_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinx-rpc-compiler-plugin-backend_import",
+    jar = "@kotlinx-rpc-compiler-plugin-backend_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "kotlin-compose-compiler-plugin-embeddable_import",
     jar = "@kotlin-compose-compiler-plugin-embeddable_http//file",
     visibility = ["//visibility:public"],
@@ -363,7 +387,7 @@ jvm_import(
     source_jar = "@kotlin-stdlib-sources_http//file",
     # Version must match `kotlin_compiler_version` in MODULE.bazel — verified at
     # analysis time by `:kotlin-stdlib_import_coords_check`.
-    tags = ["maven_coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.5.0-Beta2"],
+    tags = ["maven_coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.5.0-RC"],
     visibility = ["//visibility:public"],
 )
 

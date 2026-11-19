@@ -1,0 +1,6 @@
+literal1 = ['bar\', 'x']
+literal2 = ['\\', 'x']
+multiline_literal = ['''bar\''', 'x']
+basic = ["bar\\", 'x']
+multiline_basic = ["""bar\\""", 'x']
+escaped_quote = ["a\"b", 'x']

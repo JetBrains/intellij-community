@@ -5,6 +5,11 @@ import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
+/**
+ * @deprecated Use [jvmAnnotationsProjectFixture] and [obsoleteApiUsageInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use jvmAnnotationsProjectFixture and obsoleteApiUsageInspectionFixture in a JUnit 5 test")
 abstract class ObsoleteApiUsageInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: ObsoleteApiUsageInspection = ObsoleteApiUsageInspection()
 

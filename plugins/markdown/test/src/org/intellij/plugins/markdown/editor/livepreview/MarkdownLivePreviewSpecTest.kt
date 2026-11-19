@@ -3,60 +3,85 @@ package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.TrustedProjectsTestUtil
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec.AlertType
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
+@TestApplication
+class MarkdownLivePreviewSpecTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
   fun testEmphasisMarkersAreConcealed() {
     val content = "Some **bold**, *italic* and ~~gone~~ text"
     assertEquals(listOf("**", "**", "*", "*", "~~", "~~"), concealed(content))
     assertEquals(listOf("**bold**", "*italic*", "~~gone~~"), revealRanges(content))
   }
 
+  @Test
   fun testHighlightMarkersAreConcealed() {
     val content = "Some ==marked== and **bold ==nested== text**"
     assertEquals(listOf("==", "==", "**", "**", "==", "=="), concealed(content))
     assertEquals(listOf("==marked==", "**bold ==nested== text**", "==nested=="), revealRanges(content))
   }
 
+  @Test
   fun testSingleAndTripleEqualsAreNotConcealed() {
-    assertEmpty(concealed("A =one= and ===three=== and ==open"))
+    assertThat(concealed("A =one= and ===three=== and ==open")).isEmpty()
   }
 
+  @Test
   fun testUnderscoreEmphasisIsConcealed() {
     assertEquals(listOf("__", "__", "_", "_"), concealed("__bold__ and _italic_"))
   }
 
+  @Test
   fun testCodeSpanAndInlineLinkAreConcealed() {
     val content = "Call `foo()` or read [docs](https://example.org)"
     assertEquals(listOf("`", "`", "[", "](https://example.org)"), concealed(content))
     assertEquals(listOf("`foo()`", "[docs](https://example.org)"), revealRanges(content))
   }
 
+  @Test
   fun testWrappedAutolinksAreConcealed() {
     assertEquals(listOf("<", ">"), concealed("Read <https://example.org>"))
     assertEquals(listOf("<", ">"), concealed("Mail <team@example.org>"))
   }
 
+  @Test
   fun testBareAutolinkIsNotConcealed() {
-    assertEmpty(concealed("Read https://example.org"))
+    assertThat(concealed("Read https://example.org")).isEmpty()
   }
 
+  @Test
   fun testEmphasisInsideCodeSpanIsNotConcealed() {
     assertEquals(listOf("`", "`"), concealed("`**not bold**`"))
   }
 
+  @Test
   fun testEmphasisInsideLinkTextIsConcealed() {
     val content = "[**bold** title](https://example.org)"
     assertEquals(listOf("[", "](https://example.org)", "**", "**"), concealed(content))
   }
 
+  @Test
   fun testStandaloneLocalImageConcealsItsCompleteLine() {
     val content = "  ![alt text](images/img.png)  "
     (val range, val destination, val placeholderText) = elements(content).single() as MarkdownLivePreviewSpec.Image
@@ -66,11 +91,13 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals("alt text", placeholderText)
   }
 
+  @Test
   fun testImagePlaceholderIsTheAltTextOnOneLine() {
     assertEquals("alt text", images("![alt text](image.png)").single().placeholderText)
     assertEquals("first second", images("![  first\n  second  ](image.png)").single().placeholderText)
   }
 
+  @Test
   fun testImageWithoutAltTextUsesTheGenericPlaceholder() {
     val placeholder = MarkdownBundle.message("markdown.live.preview.image.placeholder")
 
@@ -78,12 +105,13 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(placeholder, images("![   ](image.png)").single().placeholderText)
   }
 
+  @Test
   fun testOnlyAClosedMermaidFenceIsSpec() {
     val fence = "```mermaid\ngraph LR\n  A --> B\n```"
     val content = "Some `mermaid` code\n\n```\nval a = 1\n```\n\n$fence\n\n```mermaid\nopen\n"
     myFixture.configureByText("test.md", content)
 
-    (val range, val source) = computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements
+    (val range, val source) = timeoutRunBlocking { readAction { computeLivePreviewSpecs(myFixture.file, myFixture.editor) } }.elements
       .filterIsInstance<MarkdownLivePreviewSpec.CodeFence>()
       .single()
 
@@ -91,16 +119,19 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals("graph LR\n  A --> B", source)
   }
 
+  @Test
   fun testImagesBetweenHeadersAreBothSpecs() {
     val content = "# Markdown WYSIWYG Demo\n\n![logo](image.png)\n\n![logo](image.png)\n\n# Markdown WYSIWYG Demo"
 
     assertEquals(2, images(content).size)
   }
 
+  @Test
   fun testAdjacentImagesAreBothSpecs() {
     assertEquals(2, images("![logo](test.png)\n![logo](test.png)").size)
   }
 
+  @Test
   fun testInlineAndNestedImagesConcealTheirElement() {
     assertEquals(listOf("![alt](image.png)"), imageRanges("Text ![alt](image.png) here"))
     assertEquals(listOf("![alt](image.png)"), imageRanges("- ![alt](image.png)"))
@@ -108,10 +139,12 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("![alt](image.png)"), imageRanges("# ![alt](image.png)"))
   }
 
+  @Test
   fun testImageLineInsideParagraphConcealsItsCompleteLine() {
     assertEquals(listOf("  ![alt](image.png) "), imageRanges("before\n  ![alt](image.png) \nafter"))
   }
 
+  @Test
   fun testTwoImagesOnOneLineConcealTheirElements() {
     val content = "![one](one.png) ![two](two.png)"
     val images = images(content)
@@ -121,6 +154,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("![one](one.png)", "![two](two.png)"), imageRanges(content))
   }
 
+  @Test
   fun testReferenceImagesUseTheDestinationOfTheirDefinition() {
     val content = "![full][image] ![image]\n\n![missing][none]\n\n[image]: <image.png>"
     val images = images(content)
@@ -130,6 +164,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("![full][image]", "![image]"), imageRanges(content))
   }
 
+  @Test
   fun testRemoteAndDataImagesAreSpecsWithoutSource() {
     val logo = "https://upload.wikimedia.org/wikipedia/commons/4/4f/SVG_Logo.svg"
     val badge = "https://img.shields.io/badge/markdown-preview-blue.svg"
@@ -140,7 +175,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf(logo, badge, "HTTP://example.org/a.png", data), images.map { it.destination })
     assertEquals(listOf("svg image", "svg image", "dot", "dot"), images.map { it.placeholderText })
     assertTrue(images.all { it.isBrowserOwned })
-    assertTrue("The backend loads no browser-owned image", images.all { it.source == null })
+    assertTrue(images.all { it.source == null }, "The backend loads no browser-owned image")
     assertEquals(
       listOf("![svg image]($logo)", "![svg image]($badge)", "![dot](HTTP://example.org/a.png)", "![dot]($data)"),
       imageRanges(content),
@@ -149,19 +184,24 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("//example.org/a.png", "data:text/plain,text"), other.map { it.destination })
   }
 
-  fun testImagesAreNotRenderedInUntrustedProject() {
+  @Test
+  fun testImagesInUntrustedProjectHaveTheUntrustedFailure() {
     TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
-      TrustedProjects.setProjectTrusted(project, false)
+      TrustedProjects.setProjectTrusted(myFixture.project, false)
       try {
         myFixture.configureByText("test.md", "![local](image.png)\n\n![remote](https://example.org/image.png)")
-        assertEmpty(computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.filterIsInstance<MarkdownLivePreviewSpec.Image>())
+        val images = timeoutRunBlocking { readAction { computeLivePreviewSpecs(myFixture.file, myFixture.editor) } }.elements.filterIsInstance<MarkdownLivePreviewSpec.Image>()
+        assertEquals(listOf("image.png", "https://example.org/image.png"), images.map { it.destination })
+        assertEquals(listOf(MarkdownLivePreviewSpec.ImageFailure.UNTRUSTED), images.map { it.failure }.distinct())
+        assertTrue(images.all { it.source == null })
       }
       finally {
-        TrustedProjects.setProjectTrusted(project, true)
+        TrustedProjects.setProjectTrusted(myFixture.project, true)
       }
     }
   }
 
+  @Test
   fun testFileUriIsALocalImageDestination() {
     (val destination, val isBrowserOwned) = images("![alt](file:///project/image.png)").single()
 
@@ -169,6 +209,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertFalse(isBrowserOwned)
   }
 
+  @Test
   fun testReferenceLinksAreConcealed() {
     val content = """
       |[Markdown Guide][docs] [IntelliJ IDEA][] [GitHub]
@@ -182,6 +223,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("[Markdown Guide][docs]", "[IntelliJ IDEA][]", "[GitHub]"), revealRanges(content))
   }
 
+  @Test
   fun testCodeFenceConcealsOnlyItsMarkerLines() {
     val content = """
       |```markdown
@@ -196,18 +238,22 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("```java title=\"123\"", "```"), concealed("```java title=\"123\"\ncode\n```"))
   }
 
+  @Test
   fun testIndentedCodeBlockContentIsNotConcealed() {
-    assertEmpty(concealed("text\n\n    **bold**\n"))
+    assertThat(concealed("text\n\n    **bold**\n")).isEmpty()
   }
 
+  @Test
   fun testUnbalancedMarkersAreNotConcealed() {
-    assertEmpty(concealed("**not bold and `not code"))
+    assertThat(concealed("**not bold and `not code")).isEmpty()
   }
 
+  @Test
   fun testEmptyEmphasisIsNotConcealed() {
-    assertEmpty(concealed("**** and ``"))
+    assertThat(concealed("**** and ``")).isEmpty()
   }
 
+  @Test
   fun testNestedEmphasisRevealRangesAreNested() {
     val content = "**bold *and italic* here**"
     val elements = elements(content)
@@ -216,13 +262,15 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     val inner = elements[1]
     assertEquals("**bold *and italic* here**", content.substring(outer.range.startOffset, outer.range.endOffset))
     assertEquals("*and italic*", content.substring(inner.range.startOffset, inner.range.endOffset))
-    assertTrue("The inner element must be contained in the outer one", outer.range.contains(inner.range))
+    assertTrue(outer.range.contains(inner.range), "The inner element must be contained in the outer one")
   }
 
+  @Test
   fun testHeaderInlineMarkersAreConcealedInsideTheHeading() {
     assertEquals(listOf("### Deep *header*", "*", "*"), concealed("### Deep *header*"))
   }
 
+  @Test
   fun testTopLevelAtxHeadingsCoverTheirLines() {
     val content = "# One\n## Two\n### Three\n#### Four\n##### Five\n###### Six"
     val headings = headings(content)
@@ -232,6 +280,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(content.lines(), headings.map { content.substring(it.range.startOffset, it.range.endOffset) })
   }
 
+  @Test
   fun testHeadingHtmlHidesMarkersIndentAndLinkDestinations() {
     val content = "before\n  ### [visible](https://example.org) text ###  \n\nafter"
     val heading = headings(content).single()
@@ -241,6 +290,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals("https://example.org", heading.body().select("a").attr("href"))
   }
 
+  @Test
   fun testHeadingHtmlRendersInlineStyles() {
     val body = headings("# **bold** *em* `code` ~~gone~~ [link](https://example.org)").single().body()
 
@@ -252,34 +302,38 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals("bold em code gone link", body.text())
   }
 
+  @Test
   fun testHeadingHtmlMarksHighlightWithASpanClass() {
     val body = headings("# a ==marked== b").single().body()
 
     assertEquals("marked", body.select(".user-mark").text())
-    assertEmpty(body.select("mark"))
+    assertThat(body.select("mark")).isEmpty()
     assertEquals("a marked b", body.text())
   }
 
+  @Test
   fun testHeadingKeepsRawHtmlAndMathAsText() {
     val content = $$"# Use <kbd>Ctrl</kbd> if $a<b$"
     val body = headings(content).single().body()
 
-    assertEmpty(body.select("kbd"))
+    assertThat(body.select("kbd")).isEmpty()
     val tag = body.select("span[md-src-pos]").first { it.wholeText() == "<kbd>" }
     val [start, end] = tag.attr("md-src-pos").split("..").map(String::toInt)
     assertEquals("<kbd>", content.substring(start, end))
-    assertTrue(body.text(), body.text().startsWith("Use <kbd>Ctrl</kbd> if "))
-    assertTrue(body.text(), body.text().contains("a<b"))
+    assertTrue(body.text().startsWith("Use <kbd>Ctrl</kbd> if "), body.text())
+    assertTrue(body.text().contains("a<b"), body.text())
   }
 
+  @Test
   fun testHeadingDropsImagesAndKeepsTheImageSpec() {
     val content = "# ![logo](logo.png) Title"
 
     assertEquals("Title", headings(content).single().body().text())
-    assertEmpty(headings(content).single().body().select("img"))
+    assertThat(headings(content).single().body().select("img")).isEmpty()
     assertEquals(1, images(content).size)
   }
 
+  @Test
   fun testHeadingSpansCoverTheirSource() {
     val content = "before\n# Hello **big** (world): *yes* & \\*no\\*"
     val heading = headings(content).single()
@@ -289,14 +343,16 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals("Hello big (world): yes & *no*", spans.joinToString("") { it.wholeText() })
     for (span in spans.filter { it.wholeText().none { char -> char == '&' || char == '*' } }) {
       val [start, end] = span.attr("md-src-pos").split("..").map(String::toInt)
-      assertEquals(span.toString(), span.wholeText(), line.substring(start, end))
+      assertEquals(span.wholeText(), line.substring(start, end), span.toString())
     }
   }
 
+  @Test
   fun testHeadingHtmlDoesNotDependOnTheTextBeforeTheHeading() {
     assertEquals(headings("# Hello **big**").single().html, headings("some text\n\n# Hello **big**").single().html)
   }
 
+  @Test
   fun testSetextHeadingsCoverTheirContentLineAndRulesCoverTheirUnderlines() {
     val content = "One\n===\n\nTwo\n---\n\nThree *text*\n====="
     val headings = headings(content)
@@ -309,11 +365,13 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
   }
 
   /** The parser takes only one line before the underline. If it learns more, the heading spec must cover all those lines. */
+  @Test
   fun testMultiLineSetextContentIsNotAHeading() {
-    assertEmpty(headings("Multi\nline\n====="))
-    assertEmpty(headings("Multi\nline\n-----"))
+    assertThat(headings("Multi\nline\n=====")).isEmpty()
+    assertThat(headings("Multi\nline\n-----")).isEmpty()
   }
 
+  @Test
   fun testSetextHeadingSpansCoverTheirSource() {
     val content = "before\n\n  Hello **big** (world)\n---"
     val heading = headings(content).single()
@@ -324,10 +382,11 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals("Hello big (world)", spans.joinToString("") { it.wholeText() }.trim())
     for (span in spans) {
       val [start, end] = span.attr("md-src-pos").split("..").map(String::toInt)
-      assertEquals(span.toString(), span.wholeText(), lines.substring(start, end))
+      assertEquals(span.wholeText(), lines.substring(start, end), span.toString())
     }
   }
 
+  @Test
   fun testListAndUnsupportedHeadingsAreNotReported() {
     val content = """
       |- # list heading
@@ -353,6 +412,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals("# top-level heading", content.substring(range.startOffset, range.endOffset))
   }
 
+  @Test
   fun testQuotedAndAlertHeadingsCoverTheirLines() {
     val content = """
       |> # one
@@ -376,11 +436,12 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     for ([heading, line] in headings.zip(lines)) {
       for (span in heading.body().select("span[md-src-pos]")) {
         val [start, end] = span.attr("md-src-pos").split("..").map(String::toInt)
-        assertEquals(span.toString(), span.wholeText(), line.substring(start, end))
+        assertEquals(span.wholeText(), line.substring(start, end), span.toString())
       }
     }
   }
 
+  @Test
   fun testUnorderedListBulletsUseDepthPlaceholders() {
     val content = """
       |- one
@@ -394,6 +455,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("•", "◦", "▪", "•"), elements.filterIsInstance<MarkdownLivePreviewSpec.Bullet>().map { it.placeholderText })
   }
 
+  @Test
   fun testOrderedListParentsCountTowardsBulletDepth() {
     val content = "1. one\n   - two"
     val elements = elements(content)
@@ -401,33 +463,40 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("◦"), elements.filterIsInstance<MarkdownLivePreviewSpec.Bullet>().map { it.placeholderText })
   }
 
+  @Test
   fun testOrderedListMarkersAreNotConcealed() {
-    assertEmpty(elements("1. ordered"))
+    assertThat(elements("1. ordered")).isEmpty()
   }
 
+  @Test
   fun testNestedListLinesGetIndentSpecsWithTheirDepth() {
     assertEquals(listOf(1 to 2, 2 to 3, 3 to 2), listIndents("- one\n  * two\n    + three\n  * two again"))
   }
 
+  @Test
   fun testNestedItemContinuationLinesGetTheDepthOfTheirItem() {
     val content = "- one\n  - two\n    continuation\n\n    second paragraph\n  - three"
     assertEquals(listOf(1 to 2, 2 to 2, 4 to 2, 5 to 2), listIndents(content))
   }
 
+  @Test
   fun testOrderedNestedListsGetIndentSpecs() {
     assertEquals(listOf(1 to 2, 2 to 3), listIndents("1. one\n   1. two\n      - three"))
   }
 
+  @Test
   fun testTopLevelLazyAndQuoteMarkedLinesGetNoIndentSpec() {
-    assertEmpty(listIndents("- one\n  continuation\n\n- two"))
+    assertThat(listIndents("- one\n  continuation\n\n- two")).isEmpty()
     assertEquals(listOf(1 to 2), listIndents("- one\n  - two\nlazy"))
-    assertEmpty(listIndents("> - a\n>   - b"))
+    assertThat(listIndents("> - a\n>   - b")).isEmpty()
   }
 
+  @Test
   fun testLineThatStartsInAnOuterItemGetsTheDepthOfThatItem() {
     assertEquals(listOf(1 to 2, 2 to 2), listIndents("- a\n  - b\n    > - c"))
   }
 
+  @Test
   fun testTaskCheckboxesConcealAndRevealTheirMarkers() {
     val content = "- [ ] todo\n* [x] done\n+ [X] done too\n1. [ ] ordered"
     val tasks = elements(content).filterIsInstance<MarkdownLivePreviewSpec.TaskCheckbox>()
@@ -439,18 +508,21 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     })
   }
 
+  @Test
   fun testNestedTaskAndQuotedTaskPreserveTheirIndentationAndQuoteMarkers() {
     val content = "- [ ] parent\n  continuation\n  - [x] child\n\n> - [ ] quoted"
     assertEquals(listOf("- [ ]", "- [x]", ">", "- [ ]"), concealed(content))
     assertEquals(listOf("- [ ]", "- [x]", ">", "- [ ]"), revealRanges(content))
   }
 
+  @Test
   fun testBlockquotesConcealAndRevealEachMarker() {
     val content = "> first\n> second\n>\n> last"
     assertEquals(listOf(">", ">", ">", ">"), concealed(content))
     assertEquals(listOf(">", ">", ">", ">"), revealRanges(content))
   }
 
+  @Test
   fun testBlockquotePlaceholdersKeepEachLevelTwoSpacesWide() {
     assertEquals(listOf("  ", "  "), placeholders(">>text"))
     assertEquals(listOf(" ", " "), placeholders("> > text"))
@@ -458,6 +530,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf(" ", "  ", " "), placeholders("> first\n>\n>\ttab"))
   }
 
+  @Test
   fun testAdjacentBlockquoteMarkersOfALineRevealTogether() {
     val content = ">>text\n>>>>text\n> > > test"
     assertEquals(List(9) { ">" }, concealed(content))
@@ -467,91 +540,107 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     )
   }
 
+  @Test
   fun testListMarkerBetweenBlockquoteMarkersSplitsTheirRun() {
     val content = "> - > quoted item"
     assertEquals(listOf(">", "-", ">"), concealed(content))
     assertEquals(listOf(">", "-", ">"), revealRanges(content))
   }
 
+  @Test
   fun testBlockquoteRulesCoverTheLinesOfTheirMarkers() {
     val content = "> first\n> second\n>\n> last"
     assertEquals(listOf("> first\n", "> second\n", ">\n", "> last"), ruleSegments(content))
   }
 
+  @Test
   fun testNestedBlockquoteRulesCoverTheLinesOfTheirQuote() {
     val content = "> outer\n> > inner\n> outer"
     assertEquals(listOf("> outer\n", "> > inner\n", "> inner", "> outer"), ruleSegments(content))
   }
 
+  @Test
   fun testBlockquoteRuleCoversLazyContinuationLines() {
     val content = "> first\nlazy\n> third"
     assertEquals(listOf("> first", "> third"), ruleSegments(content))
   }
 
+  @Test
   fun testBlockquoteRulesInsideListItemsCoverTheirLines() {
     val content = "- > first\n  > second"
     assertEquals(listOf("> first\n", "> second"), ruleSegments(content))
   }
 
+  @Test
   fun testNestedBlockquotesHaveNestedRanges() {
     val content = "> outer\n> > inner\n> outer"
     assertEquals(listOf(">", ">", ">", ">"), concealed(content))
     assertEquals(listOf(">", "> >", "> >", ">"), revealRanges(content))
   }
 
+  @Test
   fun testBlockquoteMarkersCanChangeIndentation() {
     val content = "> first\n  > second\n> third"
     assertEquals(listOf(">", ">", ">"), concealed(content))
     assertEquals(listOf(">", ">", ">"), revealRanges(content))
   }
 
+  @Test
   fun testNestedBlockquoteRangeStopsAtTheOuterSibling() {
     val content = "> Bad example. More messages\n> > Another example\n> Test"
     assertEquals(listOf(">", ">", ">", ">"), concealed(content))
     assertEquals(listOf("> Bad example. More messages\n", "> > Another example\n", "> Another example", "> Test"), ruleSegments(content))
   }
 
+  @Test
   fun testBlockquoteContinuationMarkersAreConcealed() {
     val content = "> first\n> second\n> third"
     assertEquals(listOf(">", ">", ">"), concealed(content))
     assertEquals(listOf(">", ">", ">"), revealRanges(content))
   }
 
+  @Test
   fun testBlockquoteMarkersInsideListItemsAreConcealed() {
     val content = "- > first\n  > second\n  > third"
     assertEquals(listOf("-", ">", ">", ">"), concealed(content))
     assertEquals(listOf("-", ">", ">", ">"), revealRanges(content))
   }
 
+  @Test
   fun testBlockquoteMarkersAfterTaskCheckboxesAreConcealed() {
     val content = "- [ ] > first\n  > second"
     assertEquals(listOf("- [ ]", ">", ">"), concealed(content))
   }
 
+  @Test
   fun testBlockquoteMarkersInsidePlusListItemsAreConcealed() {
     val content = "+ > first\n  > second\n  > third"
     assertEquals(listOf("+", ">", ">", ">"), concealed(content))
     assertEquals(listOf("+", ">", ">", ">"), revealRanges(content))
   }
 
+  @Test
   fun testBlockquoteMarkersInsideAsteriskListItemsAreConcealed() {
     val content = "* > first\n  > second\n  > third"
     assertEquals(listOf("*", ">", ">", ">"), concealed(content))
     assertEquals(listOf("*", ">", ">", ">"), revealRanges(content))
   }
 
+  @Test
   fun testBlockquoteMarkersInsideOrderedListItemsAreConcealed() {
     val content = "1. > first\n   > second\n   > third"
     assertEquals(listOf(">", ">", ">"), concealed(content))
     assertEquals(listOf(">", ">", ">"), revealRanges(content))
   }
 
+  @Test
   fun testBlockquoteMarkersInsideParenthesizedListItemsAreConcealed() {
     val content = "12) > first\n    > second\n    > third"
     assertEquals(listOf(">", ">", ">"), concealed(content))
     assertEquals(listOf(">", ">", ">"), revealRanges(content))
   }
 
+  @Test
   fun testManySeparateBlockquotes() {
     val quotes = (1..200).map { "> quote $it" }
     val content = quotes.joinToString("\n\n")
@@ -560,6 +649,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(quotes, ruleSegments(content))
   }
 
+  @Test
   fun testDeepBlockquotesConcealEachMarkerOnce() {
     val prefix = "> ".repeat(64)
     val quote = "${prefix}first\n${prefix}second"
@@ -568,6 +658,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(List(128) { prefix.trimEnd() }, revealRanges(content))
   }
 
+  @Test
   fun testSiblingNestedBlockquotesKeepSeparateMarkers() {
     val content = "> > first\n>\n> > second"
     assertEquals(listOf(">", ">", ">", ">", ">"), concealed(content))
@@ -575,6 +666,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("> >", "> >", ">", "> >", "> >"), revealRanges(content))
   }
 
+  @Test
   fun testAlertsConcealTheirMarkersAndTitleBrackets() {
     val content = "> [!NOTE]\n> text"
     assertEquals(listOf(">", "[!", "]", ">"), concealed(content))
@@ -583,20 +675,24 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf(AlertType.NOTE, AlertType.NOTE), blockQuotes(content).map { it.alertType })
   }
 
+  @Test
   fun testQuoteInsideAnAlertHasNoAlertType() {
     val content = "> [!CAUTION]\n> > nested"
     assertEquals(listOf(AlertType.CAUTION, AlertType.CAUTION, null), blockQuotes(content).map { it.alertType })
   }
 
+  @Test
   fun testUnknownAlertTitleHasNoAlertType() {
     assertEquals(listOf(null), blockQuotes("> [!UNKNOWN]").map { it.alertType })
   }
 
+  @Test
   fun testTaskExamplesOutsideListsAreNotCheckboxes() {
     val content = "[ ] plain\n[x] plain\n\n```markdown\n- [ ] example\n```\n\n    - [x] code\n\n`- [ ] inline`"
-    assertEmpty(elements(content).filterIsInstance<MarkdownLivePreviewSpec.TaskCheckbox>())
+    assertThat(elements(content).filterIsInstance<MarkdownLivePreviewSpec.TaskCheckbox>()).isEmpty()
   }
 
+  @Test
   fun testThematicBreaksConcealTheirCompleteLines() {
     val content = "---\n***\n___\n  *  *  *  \ntail"
     val breaks = elements(content).filterIsInstance<MarkdownLivePreviewSpec.HorizontalRule>()
@@ -606,6 +702,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertTrue(breaks.all { it.range.length > 0 })
   }
 
+  @Test
   fun testFrontMatterDelimitersAndThematicBreaksAreConcealed() {
     val content = """
       |---
@@ -626,6 +723,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     )
   }
 
+  @Test
   fun testFrontMatterDelimitersWithTrailingWhitespaceAreConcealed() {
     val content = "---  \nname: valid-skill\n---\t\n"
     val breaks = elements(content).filterIsInstance<MarkdownLivePreviewSpec.HorizontalRule>()
@@ -633,6 +731,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("---  ", "---\t"), breaks.map { content.substring(it.range.startOffset, it.range.endOffset) })
   }
 
+  @Test
   fun testCodeFontCoversCodeButNotItsMarkupOrFootnoteContinuations() {
     val content = """
       |Call `foo()` here
@@ -696,6 +795,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     )
   }
 
+  @Test
   fun testCodeFontCoversTheIndentOfEveryLineOfAnIndentedFence() {
     val content = "\t```bash\n\tgit pull\n\t```"
     val codeRanges = elements(content).filterIsInstance<MarkdownLivePreviewSpec.CodeFont>().flatMap { it.codeRanges }
@@ -703,16 +803,18 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("\t```", "bash", "\tgit pull", "\t```"), codeRanges.map { [start, end] -> content.substring(start, end) })
   }
 
+  @Test
   fun testDocumentVersionUsesLocalStampWithoutPatchVersion() {
     myFixture.configureByText("test.md", "text")
     val document = myFixture.editor.document as DocumentEx
-    val version = MarkdownLivePreviewDocumentVersion.capture(document, project)
+    val version = MarkdownLivePreviewDocumentVersion.capture(document, myFixture.project)
 
-    assertTrue(version.matches(document, project))
+    assertTrue(version.matches(document, myFixture.project))
     document.setModificationStamp(document.modificationStamp + 1)
-    assertFalse(version.matches(document, project))
+    assertFalse(version.matches(document, myFixture.project))
   }
 
+  @Test
   fun testDocumentVersionUsesPatchVersionWhenPresent() {
     val patchVersion = DocumentPatchVersion(7, 11)
 
@@ -740,23 +842,23 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
   private fun elements(content: String): List<MarkdownLivePreviewSpec> {
     myFixture.configureByText("test.md", content)
-    val elements = computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements
+    val elements = timeoutRunBlocking { readAction { computeLivePreviewSpecs(myFixture.file, myFixture.editor) } }.elements
     for (element in elements) {
       val conceals = element.concealedRanges()
       if (element is MarkdownLivePreviewSpec.ListIndent) {
         val offset = element.range.startOffset
-        assertTrue("An indent must be empty and sit at a line start: $element", element.range.isEmpty && (offset == 0 || content[offset - 1] == '\n'))
+        assertTrue(element.range.isEmpty && (offset == 0 || content[offset - 1] == '\n'), "An indent must be empty and sit at a line start: $element")
       }
       else if (element !is MarkdownLivePreviewSpec.CodeFence && element !is MarkdownLivePreviewSpec.CodeFont) {
-        assertFalse("An element with nothing to conceal must not be reported: $element", conceals.isEmpty())
+        assertFalse(conceals.isEmpty(), "An element with nothing to conceal must not be reported: $element")
       }
-      assertTrue("An element must contain the markup it conceals: $element", conceals.all { element.range.contains(it) })
+      assertTrue(conceals.all { element.range.contains(it) }, "An element must contain the markup it conceals: $element")
       if (element is MarkdownLivePreviewSpec.BlockQuote) {
-        assertEquals("A rule must start at its marker: $element", element.markerRange.startOffset, element.ruleRange.startOffset)
+        assertEquals(element.markerRange.startOffset, element.ruleRange.startOffset, "A rule must start at its marker: $element")
       }
     }
     val ranges = elements.flatMap { it.concealedRanges() }
-    assertEquals("Each range must be concealed only once", ranges.distinct(), ranges)
+    assertEquals(ranges.distinct(), ranges, "Each range must be concealed only once")
     return elements
   }
 

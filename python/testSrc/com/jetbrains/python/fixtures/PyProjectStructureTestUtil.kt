@@ -17,6 +17,8 @@ import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
+import com.intellij.python.sdk.backend.describeForTests
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
@@ -30,13 +32,17 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.awaitPythonLanguageLevelsForTests
+import com.jetbrains.python.psi.impl.describePythonLanguageLevelsForTests
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.asPromise
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Blocking [EvoPyProjectModel.awaitCurrentInterpreters], then [awaitDerivedRoots], then the push of the language levels
@@ -44,16 +50,36 @@ import java.nio.file.Path
  */
 @TestOnly
 fun awaitPythonInterpreters(project: Project) {
+  // The report of a step that does not end. A completed job gives no value to its promise, so the report goes here.
+  val report = AtomicReference<String?>()
   val job = PyPackageCoroutine.getScope(project).launch {
-    withTimeout(DEFAULT_TEST_TIMEOUT) {
+    var step = "the snapshot of the current interpreters"
+    // Shorter than the wait below, so a step that does not end gives this report, not a bare timeout.
+    val done = withTimeoutOrNull(DEFAULT_TEST_TIMEOUT - 2.seconds) {
       EvoPyProjectModel.getInstance(project).awaitCurrentInterpreters()
+      step = "the derived roots"
       awaitDerivedRootsForTests(project)
+      step = "the push of the language levels"
       // A push of a new layout starts a dumb mode, so a test that starts before it can run in dumb mode.
       awaitPythonLanguageLevelsForTests(project)
     }
+    if (done == null) report.set(describeWait(project, step))
   }
   job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
+  report.get()?.let { throw AssertionError(it) }
   IndexingTestUtil.waitUntilIndexesAreReady(project)
+}
+
+/** The report of a wait of [awaitPythonInterpreters] that did not end in [step]: the states that each step waits for. */
+private fun describeWait(project: Project, step: String): String {
+  val snapshot = EvoPyProjectModel.getInstance(project).snapshotOrNull()
+  return listOf(
+    "awaitPythonInterpreters: $step did not end",
+    "snapshot: ${snapshot?.evoPyProjects?.map { "${it.pyProject.residesOnModule.name} -> ${it.interpreter?.let { i -> "${i.ref} in ${i.ownerDir}" }} (entry ${it.entryKey})" }?.toList()}",
+    PythonInterpreterRegistry.getInstance(project).describeForTests(),
+    PythonInterpreterRoots.getInstance(project).describePendingForTests(),
+    describePythonLanguageLevelsForTests(project),
+  ).joinToString("\n")
 }
 
 /**

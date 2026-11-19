@@ -529,10 +529,15 @@ Extracted from `JpsKotlinFacetModuleExtension`:
 
 - `api_version`, `language_version`
 - `opt_in` annotations
-- `plugin_options` for compiler plugins
 - Various `-X` flags
 
 Generates `kt_kotlinc_options` target when options are present.
+
+`-P plugin:<id>:<key>=<value>` options of the facet become one `kt_plugin_cfg` target (rules_kotlin) per compiler
+plugin, listed in the `plugins` attribute of the module's targets. A value that names a file next to the BUILD file is
+passed as `$(location <file>)` with the file in `data`, so the file is an input of the compilation.
+The facet must list the plugin in `pluginClasspaths`: the compiler reads a `-P` option only for a plugin that it loads.
+The generator rejects an option of a plugin that the facet does not list.
 
 ### Java Options
 

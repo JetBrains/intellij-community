@@ -10,38 +10,37 @@ import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.ui.evaluate.quick.common.ValueLookupManager
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RegistryKeyRule
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.settings.DataViewsConfigurableUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.junit.Assert.assertEquals
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.RuleChain
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.awt.Point
 import java.awt.event.MouseEvent
 
+@TestApplication
+@RegistryKey(key = DataViewsConfigurableUi.DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY, value = "true")
 class DebuggerUIUtilTest {
-  private val projectRule = ProjectRule()
-
-  @get:Rule
-  val rules: RuleChain = RuleChain.outerRule(projectRule)
-    .around(RegistryKeyRule(DataViewsConfigurableUi.DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY, true))
+  companion object {
+    private val projectFixture = projectFixture()
+  }
 
   @Test
-  fun `text viewer does not request value hints`() = checkValueLookupDisabled(isViewer = true)
+  fun `text viewer does not request value hints`(): Unit = checkValueLookupDisabled(isViewer = true)
 
   @Test
-  fun `text editor does not request value hints`() = checkValueLookupDisabled(isViewer = false)
+  fun `text editor does not request value hints`(): Unit = checkValueLookupDisabled(isViewer = false)
 
-  private fun checkValueLookupDisabled(isViewer: Boolean) = timeoutRunBlocking {
+  private fun checkValueLookupDisabled(isViewer: Boolean): Unit = timeoutRunBlocking {
     val requestCounts = withContext(Dispatchers.EDT) {
-      val project = projectRule.project
+      val project = projectFixture.get()
       val disposable = Disposer.newDisposable()
       try {
         val handler = RecordingHandler()
@@ -62,8 +61,8 @@ class DebuggerUIUtilTest {
         Disposer.dispose(disposable)
       }
     }
-    assertEquals("The popup editor must not request a value hint", 0, requestCounts.first)
-    assertEquals("The source editor must still request a value hint", 1, requestCounts.second)
+    assertEquals(0, requestCounts.first, "The popup editor must not request a value hint")
+    assertEquals(1, requestCounts.second, "The source editor must still request a value hint")
   }
 
   private fun moveMouse(manager: ValueLookupManager, editor: Editor) {

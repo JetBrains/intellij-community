@@ -236,7 +236,7 @@ internal fun createTerminalOutputFlow(
       workingDirectoryTrackingScope
     ) { directory ->
       textBuffer.withLock {
-        stateChangesTracker.updateState { it.copy(currentDirectory = directory.toString()) }
+        stateChangesTracker.updateState { it.copy(currentDirectory = directory?.toString()) }
       }
     }
   }

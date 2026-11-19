@@ -1,25 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import java.util.List;
@@ -36,6 +26,15 @@ public abstract class MarkdownHtmlPanelProvider {
     return createHtmlPanel();
   }
 
+  /**
+   * Does the slow work that the first {@link #createHtmlPanel(Project, VirtualFile)} call needs, such as the startup of a browser engine.
+   * The preview editor calls this method on a background thread before it creates a panel on the EDT.
+   */
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public void prepare() {
+  }
+
   public abstract @NotNull AvailabilityInfo isAvailable();
 
   public abstract @NotNull ProviderInfo getProviderInfo();
@@ -46,6 +45,16 @@ public abstract class MarkdownHtmlPanelProvider {
 
   public static  @NotNull List<MarkdownHtmlPanelProvider> getProviders() {
     return EP_NAME.getExtensionList();
+  }
+
+  public static @Nullable MarkdownHtmlPanelProvider getAvailable() {
+    return EP_NAME.findFirstSafe((e) -> e.isAvailable() == AvailabilityInfo.AVAILABLE);
+  }
+
+  public static @Nullable MarkdownHtmlPanelProvider firstProviderOrNull() {
+    List<MarkdownHtmlPanelProvider> list = EP_NAME.getExtensionList();
+    if (list.isEmpty()) return null;
+    return list.getFirst();
   }
 
   public static @NotNull MarkdownHtmlPanelProvider createFromInfo(@NotNull ProviderInfo providerInfo) {

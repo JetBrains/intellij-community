@@ -19,6 +19,7 @@ import com.intellij.terminal.frontend.view.TerminalTextSelectionListener
 import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.tests.reworked.util.ESC
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.setValueInTest
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
 import com.intellij.terminal.tests.reworked.util.TerminalViewFixture
 import com.intellij.terminal.tests.reworked.util.assertBlocksModelState
@@ -43,6 +44,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
@@ -60,6 +62,7 @@ import org.junit.jupiter.params.provider.EnumSource
 import java.awt.Color
 import java.awt.Font
 import java.awt.Point
+import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -1003,6 +1006,59 @@ internal class TerminalMouseEventsHandlingTest {
       }
 
     @Test
+    fun `click that brings the focus to the terminal does not move the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        fixture.activeEditor.dispatchFocusLost()
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 5, bringsFocus = true) }
+
+        assertThat(written).isEmpty()
+      }
+
+    @Test
+    fun `click after the click that brought the focus moves the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        fixture.activeEditor.dispatchFocusLost()
+
+        val written = fixture.awaitInputEventsHandled {
+          fixture.click(column = 5, bringsFocus = true)
+          fixture.click(column = 5)
+        }
+
+        assertThat(written.joinToString("")).isEqualTo(LEFT_ARROW.repeat(3))
+      }
+
+    @Test
+    fun `click in the block inlay below the last line does not move the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        val editor = fixture.activeEditor
+        // The bottom inset of the terminal is a block inlay right below the last line.
+        val point = Point(editor.pointAtCell(5).x, editor.visualLineToY(editor.lastVisualLine) + editor.lineHeight + 1)
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(point) }
+
+        assertThat(written).isEmpty()
+      }
+
+    @Test
+    fun `click below the block inlays after the last line does not move the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        // The editor maps this click to the text end, so the cursor must not stand there.
+        fixture.moveCursorToColumn(2)
+        val editor = fixture.activeEditor
+        // The y of a line after the text counts all the block inlays above it.
+        val point = Point(editor.pointAtCell(5).x, editor.visualLineToY(editor.lastVisualLine + 1) + editor.lineHeight / 2)
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(point) }
+
+        assertThat(written).isEmpty()
+      }
+
+    @Test
     fun `click without the shell integration does not move the cursor`(): Unit =
       doPromptClickTest { fixture ->
         fixture.connector.feed("${PROMPT}ls -la")
@@ -1015,6 +1071,23 @@ internal class TerminalMouseEventsHandlingTest {
         assertThat(written).isEmpty()
       }
 
+    @Test
+    fun `click does not move the cursor when the option is off`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        val disposable = Disposer.newDisposable()
+        try {
+          TerminalOptionsProvider.instance::moveCursorOnClick.setValueInTest(false, disposable)
+
+          val written = fixture.awaitInputEventsHandled { fixture.click(column = 5) }
+
+          assertThat(written).isEmpty()
+        }
+        finally {
+          Disposer.dispose(disposable)
+        }
+      }
+
     private fun doPromptClickTest(test: suspend (TerminalViewFixture) -> Unit): Unit =
       timeoutRunBlocking(30.seconds, context = Dispatchers.EDT) {
         TerminalViewFixture(project, emulatorType).use { fixture ->
@@ -1024,11 +1097,15 @@ internal class TerminalMouseEventsHandlingTest {
         }
       }
 
-    /** Prints [PROMPT] between the prompt marks of the shell integration, then [command], as a shell does. */
+    /**
+     * Prints [PROMPT] between the prompt marks of the shell integration, then [command], as a shell does.
+     * The terminal has the focus, as when the user types.
+     */
     private suspend fun TerminalViewFixture.typeCommand(command: String) {
       connector.feed(shellIntegrationInitializedOsc(WORKING_DIRECTORY) + promptStartedOsc() + PROMPT + promptFinishedOsc() + command)
       // The prompt click handling is installed in this job.
       view.shellIntegrationFeaturesInitJob.join()
+      activeEditor.dispatchFocusGained()
       val model = view.outputModels.regular
       // JediTerm keeps the printed text in the NFC form.
       val typedText = Normalizer.normalize(PROMPT + command, Normalizer.Form.NFC)
@@ -1047,9 +1124,22 @@ internal class TerminalMouseEventsHandlingTest {
       assertOutputModelState(view.outputModels.regular) { it.cursorOffset == it.startOffset + column.toLong() }
     }
 
-    private fun TerminalViewFixture.click(column: Int, xInCell: Float = 1f / 3f, modifiers: Int = 0, clickCount: Int = 1) {
-      val point = activeEditor.pointAtCell(column, xInCell = xInCell)
+    private fun TerminalViewFixture.click(
+      column: Int,
+      xInCell: Float = 1f / 3f,
+      modifiers: Int = 0,
+      clickCount: Int = 1,
+      bringsFocus: Boolean = false,
+    ) {
+      click(activeEditor.pointAtCell(column, xInCell = xInCell), modifiers, clickCount, bringsFocus)
+    }
+
+    /** If [bringsFocus] is true, the editor gets the focus after the press, as AWT does for the focus request of the editor. */
+    private fun TerminalViewFixture.click(point: Point, modifiers: Int = 0, clickCount: Int = 1, bringsFocus: Boolean = false) {
       activeEditor.dispatchMouseEvent(MouseEventKind.PRESSED, point, modifiers or InputEvent.BUTTON1_DOWN_MASK, clickCount)
+      if (bringsFocus) {
+        activeEditor.dispatchFocusGained()
+      }
       activeEditor.dispatchMouseEvent(MouseEventKind.RELEASED, point, modifiers, clickCount)
     }
 
@@ -1292,6 +1382,21 @@ private fun EditorImpl.dispatchMouseEvent(kind: MouseEventKind, point: Point, mo
     MouseEventKind.DRAGGED -> contentComponent.mouseMotionListeners.forEach { it.mouseDragged(event) }
   }
   return event
+}
+
+private val EditorImpl.lastVisualLine: Int
+  get() = offsetToVisualLine(document.textLength, false)
+
+/** Dispatches FOCUS_GAINED to the editor, as AWT does. */
+private fun EditorImpl.dispatchFocusGained() {
+  val event = FocusEvent(contentComponent, FocusEvent.FOCUS_GAINED)
+  contentComponent.focusListeners.forEach { it.focusGained(event) }
+}
+
+/** Dispatches FOCUS_LOST to the editor, as AWT does. */
+private fun EditorImpl.dispatchFocusLost() {
+  val event = FocusEvent(contentComponent, FocusEvent.FOCUS_LOST)
+  contentComponent.focusListeners.forEach { it.focusLost(event) }
 }
 
 @OptIn(LowLevelLocalMachineAccess::class)

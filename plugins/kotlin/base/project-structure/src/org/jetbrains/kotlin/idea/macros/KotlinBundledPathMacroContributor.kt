@@ -11,6 +11,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.SettingConstants
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -50,6 +51,7 @@ internal class KotlinBundledPathMacroContributor() : ProjectWidePathMacroContrib
             }
 
             KotlinJpsPluginSettings.readFromKotlincXmlOrIpr(iprOrKotlincXml)?.versionWithFallback
+                ?.takeIf { IdeKotlinVersion.opt(it) != null }
                 ?.let {
                     KotlinArtifactsDownloader.getUnpackedKotlinDist(it).toPathString()
                 } ?: KotlinPluginLayout.kotlincPath.toPathString()

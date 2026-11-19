@@ -10,15 +10,19 @@ import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.intellij.idea.TestFor;
 import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -37,6 +41,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
@@ -60,6 +65,7 @@ import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyTypeParameterListOwner;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -92,6 +98,8 @@ import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -232,6 +240,189 @@ public class PyStubsTest extends PyTestCase {
         element(PyFromImportStatementStub.class, versionAtMost("2.1"))
       )
       .test(file.getStub());
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testContainsVersionMatchesVersions() {
+    final PsiFileImpl file = (PsiFileImpl)getTestFile("StubStructureWithVersionChecks.py");
+    final List<Version> versions =
+      ContainerUtil.map(List.of("2.0", "2.1", "2.2", "2.5", "3.0", "3.11", "3.12", "3.13"), Version::parseVersion);
+    final List<StubElement<?>> stubs = new ArrayList<>();
+    collectStubs(file.getStub(), stubs);
+    int allVersions = 0;
+    int someVersions = 0;
+    for (StubElement<?> stub : stubs) {
+      if (!(stub instanceof PyVersionSpecificStub versionSpecific)) continue;
+      if (versionSpecific.getVersions().encloses(Range.all())) {
+        allVersions++;
+      }
+      else {
+        someVersions++;
+      }
+      for (Version version : versions) {
+        assertEquals(stub + " at " + version, versionSpecific.getVersions().contains(version), versionSpecific.containsVersion(version));
+      }
+    }
+    assertTrue(allVersions > 0);
+    assertTrue(someVersions > 0);
+  }
+
+  private static void collectStubs(@NotNull StubElement<?> stub, @NotNull List<StubElement<?>> result) {
+    result.add(stub);
+    for (StubElement<?> child : stub.getChildrenStubs()) {
+      collectStubs(child, result);
+    }
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testVersionSpecificMembersFollowLanguageLevel() {
+    final VirtualFile vFile = myFixture.copyFileToProject(getTestName(false) + ".py");
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> assertMembers(vFile, List.of("new", "common"), List.of("top_new")));
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> assertMembers(vFile, List.of("old", "common"), List.of("top_old")));
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> assertMembers(vFile, List.of("new", "common"), List.of("top_new")));
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testMembersFollowSpecifiedLanguageLevel() {
+    final VirtualFile vFile = myFixture.copyFileToProject("VersionSpecificMembersFollowLanguageLevel.py");
+    final PsiFile file = myFixture.getPsiManager().findFile(vFile);
+    try {
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(vFile, LanguageLevel.PYTHON312);
+      assertMembers(vFile, List.of("new", "common"), List.of("top_new"));
+      // A specified level reloads no PSI, so only the level stamp can drop the caches of the same file
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(vFile, LanguageLevel.PYTHON311);
+      assertSame(file, myFixture.getPsiManager().findFile(vFile));
+      assertMembers(vFile, List.of("old", "common"), List.of("top_old"));
+    }
+    finally {
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(vFile, null);
+    }
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testTopLevelAttributesIncludeATargetOfAnExceptClause() {
+    final VirtualFile vFile = myFixture.copyFileToProject("TopLevelAttributeInExceptClause.py");
+    final PyFile file = (PyFile)myFixture.getPsiManager().findFile(vFile);
+    assertNotNull(file);
+    // An except part is the only part of a compound statement with a stub of its own, so the stub of the file does not
+    // hold its children. Without the walk descending into it, the stub answers without `threading` and the AST with it.
+    assertSameElements(ContainerUtil.map(file.getTopLevelAttributes(), PyTargetExpression::getName),
+                       List.of("GUARDED", "threading"));
+    assertNotParsed(file);
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testTopLevelChildrenAgreeBetweenTheStubAndTheAst() throws IOException {
+    final VirtualFile vFile = myFixture.copyFileToProject("TopLevelChildrenStubAndAst.py");
+    final PyFile stubFile = (PyFile)myFixture.getPsiManager().findFile(vFile);
+    assertNotNull(stubFile);
+    // The same text with no stub at all: a file from text is not physical, so nothing stubs it. A parsed physical file
+    // keeps a green stub and answers from the stub path again, which would compare that path with itself.
+    final PyFile astFile = (PyFile)PsiFileFactory.getInstance(myFixture.getProject())
+      .createFileFromText("fromText.py", PythonFileType.INSTANCE, VfsUtilCore.loadText(vFile));
+
+    assertNotNull(((PyFileImpl)stubFile).getGreenStub());
+    assertNull(((PyFileImpl)astFile).getGreenStub());
+    assertNotParsed(stubFile);
+
+    // The file guards members by sys.version_info, so both files have to answer for one level
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      final List<String> fromStub = describeTopLevelChildren(stubFile);
+      // Reading the top-level children of a stub-based file must not load its AST
+      assertNotParsed(stubFile);
+      final List<String> fromAst = describeTopLevelChildren(astFile);
+      assertEquals("The AST and the stub report different top-level children", fromStub, fromAst);
+      // The walk stops at a class and at a function, so nothing nested is top level
+      assertFalse(fromAst.toString().contains("Nested"));
+      assertFalse(fromAst.toString().contains("LocalClass"));
+      assertFalse(fromAst.toString().contains("local_function"));
+      assertFalse(fromAst.toString().contains("inner_attr"));
+      // The level selects the branch, so the 3.12 members are there and the older ones are not
+      assertTrue(fromAst.toString().contains("NewClass"));
+      assertFalse(fromAst.toString().contains("OldClass"));
+    });
+  }
+
+  private static @NotNull List<String> describeTopLevelChildren(@NotNull PyFile file) {
+    return List.of(
+      "classes=" + ContainerUtil.map(file.getTopLevelClasses(), PyClass::getName),
+      "functions=" + ContainerUtil.map(file.getTopLevelFunctions(), PyFunction::getName),
+      "attributes=" + ContainerUtil.map(file.getTopLevelAttributes(), PyTargetExpression::getName),
+      "typeAliases=" + ContainerUtil.map(file.getTypeAliasStatements(), PyTypeAliasStatement::getName),
+      // Not getText: that forces the AST on a stub-based element, which this test must not do
+      "importTargets=" + ContainerUtil.map(file.getImportTargets(), one -> String.valueOf(one.getImportedQName())),
+      "fromImports=" + ContainerUtil.map(file.getFromImports(), one -> String.valueOf(one.getImportSourceQName())));
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testMembersFollowAMoveBetweenDirectoriesOfDifferentLevels() throws IOException {
+    final VirtualFile vFile = myFixture.copyFileToProject("VersionSpecificMembersFollowLanguageLevel.py", "old/a.py");
+    final VirtualFile oldDir = vFile.getParent();
+    final VirtualFile newDir = WriteAction.computeAndWait(() -> oldDir.getParent().createChildDirectory(this, "new"));
+    try {
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(oldDir, LanguageLevel.PYTHON311);
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(newDir, LanguageLevel.PYTHON312);
+      final PyFileImpl file = (PyFileImpl)myFixture.getPsiManager().findFile(vFile);
+      assertNotNull(file);
+      assertEquals(LanguageLevel.PYTHON311, file.getEffectiveLanguageLevel());
+      assertMembers(vFile, List.of("old", "common"), List.of("top_old"));
+      // The move specifies no level: each directory keeps the level it was given, so the level stamp does not change.
+      // The file takes the level of its new parent, and only the PSI change of the move reports it.
+      WriteAction.runAndWait(() -> vFile.move(this, newDir));
+      assertSame(file, myFixture.getPsiManager().findFile(vFile));
+      assertEquals(LanguageLevel.PYTHON312, file.getEffectiveLanguageLevel());
+      assertMembers(vFile, List.of("new", "common"), List.of("top_new"));
+    }
+    finally {
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(oldDir, null);
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(newDir, null);
+    }
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testMembersFollowFileChange() throws IOException {
+    final VirtualFile vFile = myFixture.copyFileToProject(getTestName(false) + ".py");
+    assertMembers(vFile, List.of("first"), List.of("f"));
+    WriteAction.runAndWait(() -> VfsUtil.saveText(vFile, """
+      class A:
+          def first(self): ...
+          def second(self): ...
+
+
+      def f(): ...
+      def g(): ...
+      """));
+    assertMembers(vFile, List.of("first", "second"), List.of("f", "g"));
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testMethodsFollowEditOfClass() {
+    myFixture.configureByText("a.py", """
+      class A:
+          def first(self): ...
+      """);
+    final PyClass cls = ((PyFile)myFixture.getFile()).findTopLevelClass("A");
+    assertNotNull(cls);
+    assertSameElements(ContainerUtil.map(cls.getMethods(), PyFunction::getName), "first");
+    final Document document = myFixture.getEditor().getDocument();
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      document.insertString(document.getTextLength(), "    def second(self): ...\n");
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitDocument(document);
+    });
+    // The same class object, so the methods come from its cache
+    assertTrue(cls.isValid());
+    assertSameElements(ContainerUtil.map(cls.getMethods(), PyFunction::getName), "first", "second");
+  }
+
+  /** Checks the methods of the class {@code A} and the top-level functions of the file, and that the stub answers both. */
+  private void assertMembers(@NotNull VirtualFile vFile, @NotNull List<String> methods, @NotNull List<String> functions) {
+    final PyFile file = (PyFile)myFixture.getPsiManager().findFile(vFile);
+    assertNotNull(file);
+    final PyClass cls = file.findTopLevelClass("A");
+    assertNotNull(cls);
+    assertSameElements(ContainerUtil.map(cls.getMethods(), PyFunction::getName), methods);
+    assertSameElements(ContainerUtil.map(file.getTopLevelFunctions(), PyFunction::getName), functions);
+    assertNotParsed(file);
   }
 
   public void testLoadingDeeperTreeRemainsKnownPsiElement() {

@@ -3,6 +3,7 @@ package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 
@@ -31,6 +32,8 @@ interface PythonEnvironmentProvider {
    * layout is mine and it is broken", which stops the search.
    */
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  // Off until PY-93940.
+  @RequiresReadLockAbsence(generateAssertion = false)
   fun detect(pythonBinary: PythonBinary): PyResult<PythonEnvironment>?
 
   companion object {

@@ -22,6 +22,8 @@ public enum CLFlags {
   PLUGIN_ID,
   PLUGIN_CLASSPATH,
   PLUGIN_OPTIONS,
+  // the files that plugin option values name
+  PLUGIN_DATA,
   X_COMPILER_PLUGIN_ORDER,
   PROGRESSIVE,
 

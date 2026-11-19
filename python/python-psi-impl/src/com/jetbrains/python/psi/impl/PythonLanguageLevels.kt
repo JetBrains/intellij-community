@@ -6,7 +6,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
+import com.intellij.python.sdk.backend.languageLevel
+import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +21,8 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -25,8 +31,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The language levels of a project: a [PythonLanguageLevelLayout] for each snapshot of [EvoPyProjectModel], and for each
- * change that keeps the interpreters of a snapshot, such as a new version or new class roots, see
- * [PythonInterpreterRoots.changes].
+ * change that keeps the interpreters of a snapshot: new class roots, see [PythonInterpreterRoots.changes], or a new
+ * version, see [PythonInterpreterDetails.changes].
  *
  * [PythonLanguageLevelPusher] reads [layout] for each file. A new layout becomes [layout] in the same step that pushes it
  * to the roots, so a file never reads a level that the roots do not have yet, see [start].
@@ -52,19 +58,28 @@ internal class PythonLanguageLevels(private val project: Project, private val co
     if (!started.compareAndSet(false, true)) return
     // No collector runs yet, so this thread is the only writer.
     val first = EvoPyProjectModel.getInstance(project).snapshotOrNull()?.let { PythonLanguageLevelLayout.of(project, it) }
-    if (first != null) PythonLanguageLevelPusher.push(project, first, layoutState.getAndUpdate { first })
+    if (first != null) {
+      PythonLanguageLevelPusher.levelsChanged()
+      PythonLanguageLevelPusher.push(project, first, layoutState.getAndUpdate { first })
+    }
     coroutineScope.launch {
       combine(
         EvoPyProjectModel.getInstance(project).snapshotFlow(),
         PythonInterpreterRoots.getInstance(project).changes,
-      ) { snapshot, _ -> PythonLanguageLevelLayout.of(project, snapshot) }
+        // A new version changes the level and can keep the roots, and a change that keeps the roots reports nothing on
+        // `changes`. The details report it as an event, so the flow starts with a value of its own.
+        PythonInterpreterDetails.getInstance(project).changes.map { }.onStart { emit(Unit) },
+      ) { snapshot, _, _ -> PythonLanguageLevelLayout.of(project, snapshot) }
         .distinctUntilChanged()
         // While the EDT is busy, for example under a modal dialog, only the newest layout is worth a push.
         .conflate()
         .collect { layout ->
           withContext(Dispatchers.EDT) {
             val previous = layoutState.getAndUpdate { layout }
-            if (layout != previous) PythonLanguageLevelPusher.push(project, layout, previous)
+            if (layout != previous) {
+              PythonLanguageLevelPusher.levelsChanged()
+              PythonLanguageLevelPusher.push(project, layout, previous)
+            }
           }
         }
     }
@@ -88,7 +103,24 @@ internal class PythonLanguageLevels(private val project: Project, private val co
     /** The current layout of [project]. */
     @JvmStatic
     fun layoutOf(project: Project): PythonLanguageLevelLayout = getInstance(project).layout.value
+
+    /**
+     * The level of [interpreter] in the current layout of [project]. When the layout does not have [interpreter] yet, the
+     * level comes from its version, see [languageLevel].
+     */
+    @JvmStatic
+    fun levelOf(project: Project, interpreter: PythonInterpreter): LanguageLevel =
+      layoutOf(project).interpreterLevels[interpreter] ?: interpreter.languageLevel(project)
   }
+}
+
+/** For tests: the layout that the pusher pushed last and the layout of the current snapshot, for the report of a wait that does not end. */
+@ApiStatus.Internal
+@TestOnly
+fun describePythonLanguageLevelsForTests(project: Project): String {
+  val levels = PythonLanguageLevels.getInstance(project)
+  val expected = EvoPyProjectModel.getInstance(project).snapshotOrNull()?.let { PythonLanguageLevelLayout.of(project, it) }
+  return "language levels: pushed ${levels.layout.value}, expected ${expected}"
 }
 
 /** For tests: [PythonLanguageLevels.awaitPushedForTests] of [project]. */

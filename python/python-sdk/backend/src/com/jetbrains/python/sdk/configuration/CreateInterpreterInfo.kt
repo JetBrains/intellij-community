@@ -1,6 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.configuration
 
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.eelDescriptor
+import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.python.sdk.backend.tool
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.PIP_MANAGER
+import com.intellij.python.pytools.backend.PyExecutableCache
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsSafe
@@ -122,4 +129,29 @@ suspend fun prepareSdkCreator(
 
 fun CreateInterpreterInfoWithInterpreterCreator.getInterpreterCreator(module: Module): InterpreterCreator =
   getInterpreterCreator(module.name)
+
+/**
+ * The suggestion to install the tool that manages the environment of [ref], when the machine of [pyProject] does not
+ * have it, or `null`. The tool is the one of the manager of [ref], see [PyInterpreterRef.manager]. The pip manager
+ * stands for an environment that no tool manages, so it gives `null`, and so does a manager whose plugin is not loaded.
+ * A ref on a target gives `null` too: this function looks only at the machine of [pyProject].
+ */
+@ApiStatus.Internal
+suspend fun suggestToolInstallationFor(pyProject: PyProject, ref: PyInterpreterRef): CreateInterpreterInfo.WillInstallTool? {
+  when (ref.mode) {
+    PyInterpreterRef.Mode.Native -> Unit
+    // The tool of a target interpreter runs on the target, so a tool on the machine of the project does not help.
+    is PyInterpreterRef.Mode.Target -> return null
+  }
+  if (ref.manager == PIP_MANAGER) return null
+  val tool = ref.manager.tool() ?: return null
+  val cache = PyExecutableCache.getInstance()
+  if (cache.get(pyProject.eelDescriptor, tool) != null) return null
+  return CreateInterpreterInfo.WillInstallTool(
+    toolToInstall = tool.packageName.name,
+    // The tool is installed now, so the detection must look again.
+    pathPersister = { cache.invalidate(pyProject.eelDescriptor, tool) },
+    intentionName = PySdkBundle.message("python.sdk.install.tool", tool.packageName.name),
+  )
+}
 

@@ -2,18 +2,30 @@
 package org.jetbrains.idea.devkit.k2.inspections.internal
 
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.inspections.internal.UndesirableClassUsageInspection
+import org.jetbrains.idea.devkit.inspections.pluginModuleFixture
+import org.jetbrains.idea.devkit.inspections.pluginModuleProjectFixture
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class KtUndesirableClassUsageInspectionTest : PluginModuleTestCase() {
+@TestApplication
+class KtUndesirableClassUsageInspectionTest {
+  companion object {
+    private val projectFixture = pluginModuleProjectFixture()
+  }
+
+  private val pluginModule by pluginModuleFixture(projectFixture)
+  private val myFixture get() = pluginModule.fixture
 
   @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
 
     myFixture.enableInspections(UndesirableClassUsageInspection())
   }
 
+  @Test
   fun testUsages() {
     doTest("javax.swing.JList", "com.intellij.ui.components.JBList")
     doTest("javax.swing.JTable", "com.intellij.ui.table.JBTable")
@@ -46,6 +58,5 @@ class KtUndesirableClassUsageInspectionTest : PluginModuleTestCase() {
        """.trimMargin())
     myFixture.testHighlighting()
   }
-
 
 }

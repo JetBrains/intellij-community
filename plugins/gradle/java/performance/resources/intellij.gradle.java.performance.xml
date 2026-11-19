@@ -32,4 +32,7 @@
   <extensions defaultExtensionNs="com.jetbrains">
     <performancePlugin.commandProvider implementation="com.intellij.gradle.java.performance.GradleCommandProvider"/>
   </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <executionHelperExtension implementation="com.intellij.gradle.java.performance.TestInitScriptExecutionHelperExtension"/>
+  </extensions>
 </idea-plugin>

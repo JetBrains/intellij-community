@@ -6,17 +6,13 @@ description: Implement PolyContext feature gating and environment detection.
 
 # PolyContext
 
-`PolyContext` answers "what coding environment am I in right now." It is a **standalone platform
-mechanism** — [poly-symbols](../poly-symbols/SKILL.md) is its biggest consumer (gating which
-`PolySymbolQueryScopeContributor`/`QueryConfigurator` registrations apply), but `PolyContext` itself
-has no dependency on PolySymbols or on web frameworks being involved at all. Its defining advantage
-is that it is **heavily optimized for performance** (cached, cheap, `RequiresReadLock`-only), which
-makes it the right tool for *any* "is feature X relevant here" check that would otherwise get
-reinvented per-feature as an ad-hoc cached provider — not just "which JS framework is active."
-Confirmed non-web examples already in this repo: `PolyContext.PKG_MANAGER_RUBY_GEMS`/
-`PKG_MANAGER_SYMFONY_BUNDLES` constants live right next to `PKG_MANAGER_NODE_PACKAGES` in
-`PolyContext.kt`, and `ruby/tests/.../gem/GemContextTest.kt` queries a `"timecop-context"` kind
-(is the `timecop` Ruby gem present?) with no PolySymbols query executor or web framework in sight.
+`PolyContext` answers "what coding environment am I in right now." It is a general-purpose platform
+mechanism. Use it for each "is feature X relevant here" check in place of an ad-hoc cached provider,
+not only for web framework detection. A call is cheap: the results are cached, and it needs only a
+read lock (`RequiresReadLock`). Non-web examples: `PolyContext.kt` holds the `PKG_MANAGER_RUBY_GEMS`
+and `PKG_MANAGER_SYMFONY_BUNDLES` constants next to `PKG_MANAGER_NODE_PACKAGES`.
+`ruby/tests/.../gem/GemContextTest.kt` queries the `"timecop-context"` kind (is the `timecop` Ruby
+gem present?).
 
 For any given context **`kind`** (e.g. `"framework"`), at most one **`name`** is active at a
 location, or `null` if none applies.
@@ -48,10 +44,9 @@ which `Language` to parse it as. Concrete chain in this repo:
 (Vue/Angular/plain) the file's `Language` is substituted to, entirely before a PSI tree is built.
 
 Canonical PolySymbols use case: web framework detection. Only one of Vue/Angular/React/Astro can be
-the active `framework` at a location, and each plugin's `PolySymbolQueryScopeContributor`/
-`QueryConfigurator` gates its registrations with `.inContext { it.framework == MyFramework.ID }`
-(see [poly-symbols/references/query-model.md](../poly-symbols/references/query-model.md)) — but
-this is one consumer among many, not the reason `PolyContext` exists.
+the active `framework` at a location, and each plugin's `PolySymbolQueryScopeContributor` gates its
+registrations with `.inContext { it.framework == MyFramework.ID }`
+(see [poly-symbols/references/query-model.md](../poly-symbols/references/query-model.md)).
 
 ## `PolyContextProvider` — direct/dynamic detection
 
@@ -62,9 +57,7 @@ Results are called very often — **cache them** (`CachedValuesManager`).
 PolyContext.get("stimulus-context", psiElement) == "true"
 ```
 
-**Blocking**: `isForbidden()` with name `"any"` suppresses an entire context kind — e.g. a Python
-templating (Blade-style) blocker disables the whole `framework` kind so it never conflicts with
-Vue/Angular detection.
+**Blocking**: `isForbidden()` with name `"any"` suppresses an entire context kind.
 
 Real examples in this repo/docs: `StimulusContextProvider` (checks for a JS import, caches the
 result), `PyTemplatesWebContextBlocker` (forbids `framework` when Python templating is detected).
@@ -88,7 +81,7 @@ Under a top-level `contexts-config` property in a Web Types JSON file (see
 `name` is top-level and `kind` a sibling property — don't use that shape for new files.)
 
 `enable-when` rule kinds: `file-extensions`, `file-name-patterns`, `ide-libraries`,
-`project-tool-executables`, `node-packages`, `ruby-gems`.
+`project-tool-executables`, `node-packages`, `ruby-gems`, `symfony-bundles`.
 `disable-when` is more limited: `file-extensions`, `file-name-patterns` only.
 
 **Proximity scoring** (lower = closer/stronger match; the winning `name` for a `kind` is whichever
@@ -101,9 +94,9 @@ rule has the lowest total):
   `optionalDependencies +0.4`, `devDependencies +0.5`, indirect (`node_modules`) `+0.6`.
 
 Web Types shipping a context rule are registered at EP `com.intellij.polySymbols.webTypes`
-(currently Node Package Manager only, requires the JS plugin) with two naming strategies: name the
-file after the real npm package if the rule should trigger on that package's presence, or use an
-arbitrary name + `enableByDefault="true"` if it should always apply.
+(currently Node Package Manager only, requires the JS plugin) with two naming strategies: set the
+`name` property of the file to the real npm package if the rule should trigger on that package's
+presence, or use an arbitrary name + `enableByDefault="true"` if it should always apply.
 
 ### Via code — `PolyContextRulesProvider`
 
@@ -132,8 +125,5 @@ a `Result` with `modificationTrackers` — keep the tracker count minimal since 
 
 ## Related
 
-- **[poly-symbols](../poly-symbols/SKILL.md)** — PolyContext's biggest consumer, not something it depends on.
-- **[poly-symbols/references/web-types.md](../poly-symbols/references/web-types.md)** — `contexts-config` file format.
+- **[poly-symbols](../poly-symbols/SKILL.md)** — PolyContext's biggest consumer.
 - Official docs: [Poly Symbols Context](https://plugins.jetbrains.com/docs/intellij/polysymbols-context.html)
-  (the only official doc page for this API — despite the URL/page name, treat it as documenting a
-  general-purpose context mechanism, not something PolySymbols-exclusive).

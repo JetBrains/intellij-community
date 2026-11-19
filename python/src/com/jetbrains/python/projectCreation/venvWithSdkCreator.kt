@@ -23,6 +23,7 @@ import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.community.services.systemPython.getSystemPython
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.community.services.systemPython.findMatchingPython
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -53,6 +54,7 @@ private val logger = fileLogger()
 
 /**
  * Create a venv in a [moduleOrProject] (or in [explicitPath]) and SDK out of it (existing venv will be used if valid).
+ * The venv is the `.venv` directory there, or [venvDir] when it is set.
  *
  *  If a project has no module -- one will be created.
  *
@@ -66,6 +68,7 @@ suspend fun createVenvAndSdk(
   moduleOrProject: ModuleOrProject,
   systemPythonRequirements: SystemPythonRequirements = SystemPythonRequirements.ByVersionSpecifier(),
   explicitPath: VirtualFile? = null,
+  venvDir: Path? = null,
 ): PyResult<PythonInterpreter> {
   val project = moduleOrProject.project
   val vfsPath = run {
@@ -81,7 +84,7 @@ suspend fun createVenvAndSdk(
     } ?: error("No path provided and can't guess path for $moduleOrProject")
   }
 
-  val venvDirPath = vfsPath.toNioPath().resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
+  val venvDirPath = venvDir ?: vfsPath.toNioPath().resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
 
   // Find venv in a project
   var venvPython: PythonBinary? = findExistingVenv(venvDirPath)
@@ -150,46 +153,6 @@ private suspend fun findExistingVenv(
     }
   }
 }
-
-internal suspend fun getSystemPython(
-  confirmInstallation: suspend () -> Boolean,
-  pythonService: SystemPythonService,
-  versionSpecifiers: PyVersionSpecifiers = PyVersionSpecifiers.ANY_SUPPORTED,
-  eelDescriptor: EelDescriptor,
-): Result<SystemPython, MessageError> {
-  val eel = eelDescriptor.toEelApi()
-  // First, find the latest python according to strategy
-  var systemPythonBinary = pythonService.findSystemPythons(eel, forceRefresh = true).findMatchingPython(versionSpecifiers)
-
-  // No python found?
-  if (systemPythonBinary == null) {
-    // Install it
-    val installer = pythonService.getInstaller(eel)
-                    ?: return PyResult.localizedError(PyBundle.message("project.error.install.not.supported"))
-    if (confirmInstallation()) {
-      // Install
-      when (val r = installer.installLatestPython(versionSpecifiers)) {
-        is Result.Failure -> {
-          val error = r.error
-          logger.warn("Python installation failed $error")
-          return PyResult.localizedError(PyBundle.message("project.error.install.python", error))
-        }
-        is Result.Success -> {
-          // Find the latest python again, after installation
-          systemPythonBinary = pythonService.findSystemPythons(eel, forceRefresh = true).findMatchingPython(versionSpecifiers)
-        }
-      }
-    }
-  }
-
-  return if (systemPythonBinary == null) {
-    PyResult.localizedError(PyBundle.message("project.error.all.pythons.bad"))
-  }
-  else {
-    Result.Success(systemPythonBinary)
-  }
-}
-
 
 private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit = edtWriteAction {
   with(module.rootManager.modifiableModel) {

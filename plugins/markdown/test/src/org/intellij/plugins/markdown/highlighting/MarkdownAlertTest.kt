@@ -3,53 +3,90 @@ package org.intellij.plugins.markdown.highlighting
 
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.icons.AllIcons
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.intellij.plugins.markdown.MarkdownTestingUtil
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-class MarkdownAlertTest : BasePlatformTestCase() {
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/html/alerts")
+class MarkdownAlertTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/html/alerts"
+  private val myFixture by codeInsightModuleFixture(projectFixture)
 
-  fun testNoteAlertTitleColorApplied() = doHighlightingTest("[!NOTE]", MarkdownHighlighterColors.ALERT_TITLE_NOTE)
-  fun testTipAlertTitleColorApplied() = doHighlightingTest("[!TIP]", MarkdownHighlighterColors.ALERT_TITLE_TIP)
-  fun testImportantAlertTitleColorApplied() = doHighlightingTest("[!IMPORTANT]", MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT)
-  fun testWarningAlertTitleColorApplied() = doHighlightingTest("[!WARNING]", MarkdownHighlighterColors.ALERT_TITLE_WARNING)
-  fun testCautionAlertTitleColorApplied() = doHighlightingTest("[!CAUTION]", MarkdownHighlighterColors.ALERT_TITLE_CAUTION)
+  private lateinit var testName: String
 
-  fun testNoteAlertGutterIconPresent() = doGutterIconTest("[!NOTE]", AllIcons.General.BalloonInformation)
-  fun testTipAlertGutterIconPresent() = doGutterIconTest("[!TIP]", AllIcons.Actions.IntentionBulb)
-  fun testImportantAlertGutterIconPresent() = doGutterIconTest("[!IMPORTANT]", AllIcons.General.Balloon)
-  fun testWarningAlertGutterIconPresent() = doGutterIconTest("[!WARNING]", AllIcons.General.BalloonWarning)
-  fun testCautionAlertGutterIconPresent() = doGutterIconTest("[!CAUTION]", AllIcons.General.BalloonError)
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true)
+  }
 
-  fun testNoteAlertRenderedInPreview() = doPreviewTest()
-  fun testWarningAlertRenderedInPreview() = doPreviewTest()
-  fun testMultipleAlertsRenderedInPreview() = doPreviewTest()
+  @Test
+  fun testNoteAlertTitleColorApplied(): Unit = doHighlightingTest("[!NOTE]", MarkdownHighlighterColors.ALERT_TITLE_NOTE)
+  @Test
+  fun testTipAlertTitleColorApplied(): Unit = doHighlightingTest("[!TIP]", MarkdownHighlighterColors.ALERT_TITLE_TIP)
+  @Test
+  fun testImportantAlertTitleColorApplied(): Unit = doHighlightingTest("[!IMPORTANT]", MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT)
+  @Test
+  fun testWarningAlertTitleColorApplied(): Unit = doHighlightingTest("[!WARNING]", MarkdownHighlighterColors.ALERT_TITLE_WARNING)
+  @Test
+  fun testCautionAlertTitleColorApplied(): Unit = doHighlightingTest("[!CAUTION]", MarkdownHighlighterColors.ALERT_TITLE_CAUTION)
+
+  @Test
+  fun testNoteAlertGutterIconPresent(): Unit = doGutterIconTest("[!NOTE]", AllIcons.General.BalloonInformation)
+  @Test
+  fun testTipAlertGutterIconPresent(): Unit = doGutterIconTest("[!TIP]", AllIcons.Actions.IntentionBulb)
+  @Test
+  fun testImportantAlertGutterIconPresent(): Unit = doGutterIconTest("[!IMPORTANT]", AllIcons.General.Balloon)
+  @Test
+  fun testWarningAlertGutterIconPresent(): Unit = doGutterIconTest("[!WARNING]", AllIcons.General.BalloonWarning)
+  @Test
+  fun testCautionAlertGutterIconPresent(): Unit = doGutterIconTest("[!CAUTION]", AllIcons.General.BalloonError)
+
+  @Test
+  fun testNoteAlertRenderedInPreview(): Unit = doPreviewTest()
+  @Test
+  fun testWarningAlertRenderedInPreview(): Unit = doPreviewTest()
+  @Test
+  fun testMultipleAlertsRenderedInPreview(): Unit = doPreviewTest()
 
   private fun doPreviewTest() {
-    val expectedHtml = myFixture.configureByFile("${getTestName(true)}.html").text
-    val mdFile = myFixture.configureByFile("${getTestName(true)}.md")
-    assertEquals(expectedHtml.trim(), MarkdownUtil.generateMarkdownHtml(mdFile.virtualFile, mdFile.text, project).trim())
+    val expectedFile = myFixture.configureByFile("$testName.html")
+    val expectedHtml = timeoutRunBlocking { readAction { expectedFile.text } }
+    val mdFile = myFixture.configureByFile("$testName.md")
+    val actualHtml = timeoutRunBlocking { readAction { MarkdownUtil.generateMarkdownHtml(mdFile.virtualFile, mdFile.text, myFixture.project) } }
+    assertEquals(expectedHtml.trim(), actualHtml.trim())
   }
 
   private fun doHighlightingTest(title: String, expectedKey: com.intellij.openapi.editor.colors.TextAttributesKey) {
     myFixture.configureByText("test.md", "> $title\n> Content")
     val highlights = myFixture.doHighlighting()
-    val offset = myFixture.file.text.indexOf(title)
+    val offset = timeoutRunBlocking { readAction { myFixture.file.text } }.indexOf(title)
     assertTrue(
-      "Expected $title to be highlighted with $expectedKey",
       highlights.any {
         it.hasTextAttributesKey(expectedKey) &&
         it.startOffset == offset && it.endOffset == offset + title.length
-      }
+      },
+      "Expected $title to be highlighted with $expectedKey"
     )
   }
 
   private fun doGutterIconTest(title: String, expectedIcon: javax.swing.Icon) {
     myFixture.configureByText("test.md", "> $title\n> Content")
     myFixture.doHighlighting()
-    val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
-    assertEquals("Expected exactly one gutter icon $expectedIcon for $title", 1, markers.count { it.icon == expectedIcon })
+    val markers = timeoutRunBlocking { readAction { getDisplayedLineMarkers(myFixture.editor.document, myFixture.project) } }
+    assertEquals(1, markers.count { it.icon == expectedIcon }, "Expected exactly one gutter icon $expectedIcon for $title")
   }
 }

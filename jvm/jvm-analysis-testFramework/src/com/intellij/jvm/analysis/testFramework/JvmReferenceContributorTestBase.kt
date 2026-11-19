@@ -7,6 +7,11 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.ResolveResult
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 
+/**
+ * @deprecated Use [jvmCodeInsightFixture] and [JvmCodeInsightFixture.assertResolvableReference] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use jvmCodeInsightFixture in a JUnit 5 test")
 abstract class JvmReferenceContributorTestBase : LightJvmCodeInsightFixtureTestCase() {
   protected fun JavaCodeInsightTestFixture.assertResolvableReference(
     lang: JvmLanguage,

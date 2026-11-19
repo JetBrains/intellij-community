@@ -1,10 +1,21 @@
 package com.intellij.codeInspection.tests.java.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingGuardedByConditionInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingGuardedByConditionInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionInspectionTestBase() {
+@TestApplication
+class JavaLoggingGuardedByConditionInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  private val myFixture by loggingGuardedByConditionInspectionFixture(projectFixture)
+
+  @Test
   fun `test slf4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
@@ -20,6 +31,7 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
     """.trimIndent())
   }
 
+  @Test
   fun `test log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -34,6 +46,7 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
     """.trimIndent())
   }
 
+  @Test
   fun `test several calls slf4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
@@ -50,6 +63,7 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
     """.trimIndent())
   }
 
+  @Test
   fun `test several different calls slf4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
@@ -66,6 +80,7 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
     """.trimIndent())
   }
 
+  @Test
   fun `test several calls with another call slf4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
@@ -82,6 +97,7 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
     """.trimIndent())
   }
 
+  @Test
   fun `test several calls with another call slf4j showOnlyIfFixPossible`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
@@ -98,6 +114,7 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
     """.trimIndent())
   }
 
+  @Test
   fun `test slf4j fix`() {
     myFixture.testQuickFix(
       testPreview = true,
@@ -128,6 +145,7 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
     )
   }
 
+  @Test
   fun `test slf4j without block fix`() {
     myFixture.testQuickFix(
       testPreview = true,
@@ -157,6 +175,7 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
     )
   }
 
+  @Test
   fun `test several calls slf4j fix`() {
     myFixture.testQuickFix(
       testPreview = true,
@@ -189,6 +208,7 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
     )
   }
 
+  @Test
   fun `test slf4j with comment fix`() {
     myFixture.testQuickFix(
       testPreview = true,

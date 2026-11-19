@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion {
+        fun len(<caret>foo: Foo, x: Int) = foo.hashCode() + x
+    }
+}
+
+val unbound: (Foo, Int) -> Int = Foo::len

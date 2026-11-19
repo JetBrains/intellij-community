@@ -4,13 +4,10 @@ package com.jetbrains.python.reflection
 import org.jetbrains.annotations.ApiStatus
 import java.beans.Introspector
 import java.beans.PropertyDescriptor
-import java.lang.reflect.Type
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.javaField
-import kotlin.reflect.jvm.javaGetter
 import kotlin.reflect.jvm.javaType
 
 /**
@@ -24,14 +21,14 @@ import kotlin.reflect.jvm.javaType
 @ApiStatus.Internal
 interface Property {
   fun getName(): String
-  fun getType(): Type
+  fun getType(): java.lang.reflect.Type
   fun get(): Any?
   fun set(value: Any?)
 }
 
 private class KotlinProperty(val property: KMutableProperty<*>, val instance: Any?) : Property {
   override fun getName() = property.name
-  override fun getType() = property.javaReturnType
+  override fun getType() = property.returnType.javaType
   override fun get() = property.getter.call(instance)
   override fun set(value: Any?) = property.setter.call(instance, value)
 }
@@ -83,14 +80,6 @@ class Properties(val properties: List<Property>, val instance: Any) {
 }
 
 
-/**
- * The Java type of the property value, from the getter or the field.
- * Kotlin reflection 2.5.0-Beta2 throws a [ClassCastException] in [javaType] for a mutable collection property that a Java class implements.
- * Remove the workaround when KT-90525 is fixed.
- */
-private val KProperty<*>.javaReturnType: Type
-  get() = javaGetter?.genericReturnType ?: javaField?.genericType ?: returnType.javaType
-
 private fun KProperty<*>.isAnnotated(annotation: KClass<*>): Boolean {
   return this.annotations.find { annotation.java.isAssignableFrom(it.javaClass) } != null
 }
@@ -109,7 +98,7 @@ private fun KClass<*>.memberPropertiesCached(): Collection<KProperty<*>> = membe
 fun preloadProperties(type: Class<*>) {
   for (property in membersCache.get(type)) {
     val _ = property.annotations
-    val _ = property.javaReturnType
+    property.returnType.javaType
   }
 }
 

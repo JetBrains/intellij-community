@@ -14,11 +14,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIdList;
+import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource;
 import com.intellij.psi.stubs.StubProcessingHelperBase;
 import com.intellij.psi.stubs.StubRecoveryExtraStep;
@@ -26,6 +31,7 @@ import com.intellij.psi.stubs.StubRecoveryService;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -122,6 +128,44 @@ class StubInconsistencyRecoveryTest {
 
     assertThat(exception).hasMessageContaining("PSI and index do not match");
     assertRecovery(file, StubRecoveryExtraStep.DROP_PSI_CACHES);
+  }
+
+  @Test
+  void indexLookupRejectsWrongPsiTypeAndSchedulesReindexing() {
+    var file = fileFixture.get();
+    IndexingTestUtil.waitUntilIndexesAreReady(file.getProject());
+    var errors = new ArrayList<String>();
+    var errorProcessor = new LoggedErrorProcessor() {
+      @Override
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message,
+                                               String @NotNull [] details, @Nullable Throwable t) {
+        errors.add(message);
+        return Action.NONE;
+      }
+    };
+
+    runReadActionBlocking(() -> {
+      var project = file.getProject();
+      var scope = GlobalSearchScope.fileScope(file);
+      assertThat(StubIndex.getElements(JavaStubIndexKeys.CLASS_FQN, "Test", project, scope, PsiClass.class)).hasSize(1);
+      assertThat(requests).isEmpty();
+
+      // Request a method from the class index to simulate an entry with the wrong PSI type.
+      @SuppressWarnings("unchecked")
+      var indexKey = (StubIndexKey<CharSequence, PsiMethod>)(StubIndexKey<?, ?>)JavaStubIndexKeys.CLASS_FQN;
+      LoggedErrorProcessor.executeWith(errorProcessor, () -> {
+        boolean completed = StubIndex.getInstance().processElements(
+          indexKey, "Test", project, scope, PsiMethod.class,
+          element -> { fail("The processor must not receive PSI of the wrong type: " + element); return false; });
+        assertThat(completed).isTrue();
+      });
+      return null;
+    });
+
+    assertThat(errors).singleElement().asString()
+      .contains("psiElement is not instance of requiredClass", "PSI and index do not match");
+    var expected = new Request(file.getProject(), file.getVirtualFile(), List.of(StubRecoveryExtraStep.DROP_PSI_CACHES));
+    assertThat(requests).isNotEmpty().allSatisfy(request -> assertThat(request).isEqualTo(expected));
   }
 
   @ParameterizedTest

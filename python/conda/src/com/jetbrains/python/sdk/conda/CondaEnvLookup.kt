@@ -19,7 +19,8 @@ internal fun isCondaPathEnvRef(envRef: PyEnvRef): Boolean = envRef.value.any { i
  * The identity of the conda env at [envRef]: an env created with `-p` for a path, else a named env. A path to the root
  * of a conda installation also works, because `conda run -p` accepts the base env.
  */
-internal fun condaIdentityOf(envRef: PyEnvRef): PyCondaEnvIdentity =
+@ApiStatus.Internal
+fun condaIdentityOf(envRef: PyEnvRef): PyCondaEnvIdentity =
   if (isCondaPathEnvRef(envRef)) PyCondaEnvIdentity.UnnamedEnv(envRef.value, isBase = false)
   else PyCondaEnvIdentity.NamedEnv(envRef.value)
 

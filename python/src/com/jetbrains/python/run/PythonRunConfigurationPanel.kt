@@ -19,7 +19,7 @@ import com.intellij.ui.layout.selected
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySymbolFieldWithBrowseButton
 import com.jetbrains.python.extensions.ModuleBasedContextAnchor
-import com.jetbrains.python.extensions.ProjectSdkContextAnchor
+import com.jetbrains.python.extensions.ProjectContextAnchor
 import com.jetbrains.python.isPythonModule
 import java.util.Objects
 import javax.swing.ButtonGroup
@@ -52,9 +52,8 @@ internal class PythonRunConfigurationPanel(configuration: PythonRunConfiguration
   init {
     val project = configuration.project
     val module = configuration.module
-    val sdk = configuration.sdk
 
-    val contentAnchor = if (module == null) ProjectSdkContextAnchor(project, sdk) else ModuleBasedContextAnchor(module)
+    val contentAnchor = if (module == null) ProjectContextAnchor(project, configuration.pythonInterpreter) else ModuleBasedContextAnchor(module)
     val workingDirectory = commonOptionsForm.workingDirectory
     val startFromDirectory: (() -> VirtualFile)? = if (StringUtil.isEmpty(workingDirectory)) {
       null

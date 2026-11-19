@@ -297,6 +297,9 @@ class PMarkerDirectRoot private constructor(
     if (fullTraversal) {
       result = editor.rebuild(root, transform)
     }
+    else if (patch.moveOffset() == start && !hasStartInRange(start, end)) {
+      result = editor.updateOutsideStarts(root, start, end, length - (end - start), transform)
+    }
     else {
       val [before, fromStart] = editor.split(root, start, false)
       val [middle, after] = editor.split(fromStart, end, true)
@@ -322,6 +325,21 @@ class PMarkerDirectRoot private constructor(
     }
     else null
     editor.finish(result, resolutionUpdate = resolutionUpdate)
+  }
+
+  private fun hasStartInRange(start: Int, end: Int): Boolean {
+    var node = root
+    var delta = 0
+    while (node != null) {
+      val nodeStart = node.entry.nodeStart + delta
+      delta += node.lazyDelta
+      node = when {
+        nodeStart < start -> node.right
+        nodeStart > end -> node.left
+        else -> return true
+      }
+    }
+    return false
   }
 
   override fun getPrefixAggregate(offset: Int): Int {
@@ -400,9 +418,14 @@ class PMarkerDirectRoot private constructor(
     }
   }
 
-  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean = processAll(root, 0) { entry, delta ->
-    cacheResolution(entry, delta)
-    processor.process(entry, delta)
+  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean {
+    if (cachedResolutions?.allMarkersCached == true) return processAll(root, 0, processor)
+    val completed = processAll(root, 0) { entry, delta ->
+      cacheResolution(entry, delta)
+      processor.process(entry, delta)
+    }
+    if (completed) cachedResolutions?.allMarkersCached = true
+    return completed
   }
 
   /**
@@ -458,6 +481,14 @@ class PMarkerDirectRoot private constructor(
 
   /** Stores the first resolution directly and allocates a map for other marker IDs. Metadata changes share this cache. */
   private class ResolutionCache(private val firstId: Long, private val firstResolution: Long) {
+    /**
+     * A full traversal sets this flag after it caches every valid marker's absolute offsets and completes normally.
+     * The volatile write publishes those offsets, so later traversals and lookups can skip cache writes.
+     * Metadata changes preserve this flag. Changes to marker offsets or membership use a new cache.
+     */
+    @Volatile
+    var allMarkersCached: Boolean = false
+
     @Volatile
     private var additionalResolutions: ConcurrentLongLongMap? = null
 
@@ -465,7 +496,7 @@ class PMarkerDirectRoot private constructor(
       if (id == firstId) firstResolution else additionalResolutions?.get(id) ?: PMarkerResolution.UNRESOLVED
 
     fun put(id: Long, resolution: Long) {
-      if (id == firstId) return
+      if (id == firstId || allMarkersCached) return
       var cache = additionalResolutions
       if (cache == null) {
         cache = Java11Shim.createConcurrentLongLongMap(PMarkerResolution.UNRESOLVED)
@@ -539,14 +570,19 @@ class PMarkerDirectRoot private constructor(
     var firstChangedEnd: Int = Int.MAX_VALUE
       private set
 
-    /** Creates a node in this editor's version. */
+    /** Reuses an unchanged node or creates a node in this editor's version. */
     fun make(
       entry: MarkerEntry,
       left: PMarkerNode? = null,
       right: PMarkerNode? = null,
       delta: Int = 0,
       source: PMarkerNode? = null,
-    ): PMarkerNode = PMarkerNode(version, entry, left, right, delta, source)
+    ): PMarkerNode {
+      if (source != null && entry === source.entry && left === source.left && right === source.right && delta == source.lazyDelta) {
+        return source
+      }
+      return PMarkerNode(version, entry, left, right, delta, source)
+    }
 
     /** Copies the subtree root with shifted offsets and defers the same shift to both children. */
     fun shift(node: PMarkerNode?, delta: Int): PMarkerNode? {
@@ -642,6 +678,8 @@ class PMarkerDirectRoot private constructor(
      */
     fun split(initial: PMarkerNode?, boundary: Int, equalGoesLeft: Boolean): Pair<PMarkerNode?, PMarkerNode?> {
       if (initial == null) return null to null
+      if (initial.maximumEnd < boundary || equalGoesLeft && initial.maximumEnd == boundary) return initial to null
+      if (initial.minimumStart > boundary || !equalGoesLeft && initial.minimumStart == boundary) return null to initial
       val node = push(initial)
       return if (node.entry.nodeStart < boundary || equalGoesLeft && node.entry.nodeStart == boundary) {
         val [middle, after] = split(node.right, boundary, equalGoesLeft)
@@ -688,20 +726,35 @@ class PMarkerDirectRoot private constructor(
       return make(left.entry, left.left, right, source = left)
     }
 
+    /** Transforms markers around an edit that has no marker starts in its range and preserves their order. */
+    fun updateOutsideStarts(
+      initial: PMarkerNode?,
+      start: Int,
+      end: Int,
+      delta: Int,
+      transform: MarkerTransformer,
+    ): PMarkerNode? {
+      if (initial == null || initial.maximumEnd < start) return initial
+      if (initial.minimumStart > end) return shift(initial, delta)
+      val node = push(initial)
+      val left = updateOutsideStarts(node.left, start, end, delta, transform)
+      val right = updateOutsideStarts(node.right, start, end, delta, transform)
+      val entry = if (node.entry.nodeStart > end) node.entry.shifted(delta)
+      else {
+        val result = transform.transform(node.entry)
+        if (!result.isValid) return join(left, right)
+        check(result.startOffset == node.entry.nodeStart) { "An edit changed a marker start before the edit" }
+        result.applyTo(node.entry)
+      }
+      return join(left, entry, right, node)
+    }
+
     /**
      * Transforms the prefix whose markers start before [start], skipping subtrees that end before the edit.
      * A valid result must preserve each marker's start offset.
      */
-    fun updateBefore(initial: PMarkerNode?, start: Int, transform: MarkerTransformer): PMarkerNode? {
-      if (initial == null || initial.maximumEnd < start) return initial
-      val node = push(initial)
-      val left = updateBefore(node.left, start, transform)
-      val right = updateBefore(node.right, start, transform)
-      val result = transform.transform(node.entry)
-      if (!result.isValid) return join(left, right)
-      check(result.startOffset == node.entry.nodeStart) { "An edit changed a marker start before the edit" }
-      return join(left, result.applyTo(node.entry), right, node)
-    }
+    fun updateBefore(initial: PMarkerNode?, start: Int, transform: MarkerTransformer): PMarkerNode? =
+      updateOutsideStarts(initial, start, Int.MAX_VALUE, 0, transform)
 
     /** Transforms a subtree and builds a balanced tree from valid results, sorting them when their order changes. */
     fun rebuild(node: PMarkerNode?, transform: MarkerTransformer): PMarkerNode? {
@@ -757,6 +810,7 @@ class PMarkerDirectRoot private constructor(
       node: PMarkerNode?,
       resolutionUpdate: PMarkerResolutionUpdate? = null,
     ): PMarkerDirectRoot {
+      if (node === root && invalidsBuilder == null && firstPendingHandle == null) return this@PMarkerDirectRoot
       val result = PMarkerDirectRoot(version, node, invalidsBuilder?.build() ?: invalids, resolutionUpdate = resolutionUpdate)
       firstPendingHandle?.states?.put(version, checkNotNull(firstPendingState))
       additionalPendingStates?.forEach { [handle, state] -> handle.states.put(version, state) }

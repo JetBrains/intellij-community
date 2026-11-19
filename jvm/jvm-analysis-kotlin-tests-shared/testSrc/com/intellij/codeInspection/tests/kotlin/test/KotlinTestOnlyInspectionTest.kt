@@ -1,11 +1,22 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.jvm.analysis.internal.testFramework.test.TestOnlyInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.testOnlyInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
+@TestApplication
+abstract class KotlinTestOnlyInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  protected val myFixture by testOnlyInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test @TestOnly on use-site targets`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       package test
@@ -32,6 +43,7 @@ abstract class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test @TestOnly in production code`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       package test
@@ -81,6 +93,7 @@ abstract class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test @VisibleForTesting in production code`() {
     myFixture.addFileToProject("VisibleForTestingTestApi.kt", """
       package testapi

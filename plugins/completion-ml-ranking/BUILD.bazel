@@ -135,6 +135,8 @@ jvm_library(
         "//platform/platform-impl/internal",
         "//platform/ml-api:ml",
         "//libraries/junit4",
+        "//libraries/junit6",
+        "//platform/testFramework/junit5",
         "//java/plugin",
         "//aether-dependency-resolver/plugin",
         "//platform/structure-view-impl/plugin",

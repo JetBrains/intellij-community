@@ -12,14 +12,14 @@ internal class GitLabShowMergeRequestAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val projectVm = e.getData(GitLabMergeRequestsActionKeys.CONNECTED_PROJECT_VM)
-    val selection: GitLabMergeRequestDetails? = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
+    val selection: GitLabMergeRequestDetails? = e.getData(GitLabMergeRequestDataKeys.SELECTED)
 
     e.presentation.isEnabledAndVisible = projectVm != null && selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val projectVm = e.getData(GitLabMergeRequestsActionKeys.CONNECTED_PROJECT_VM) ?: return
-    val selection = e.getData(GitLabMergeRequestsActionKeys.SELECTED) ?: return
+    val selection = e.getData(GitLabMergeRequestDataKeys.SELECTED) ?: return
 
     projectVm.openMergeRequestDetails(selection.iid, GitLabStatistics.ToolWindowOpenTabActionPlace.ACTION, false)
     projectVm.openMergeRequestTimeline(selection.iid, false)

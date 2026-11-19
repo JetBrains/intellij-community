@@ -11,7 +11,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.fileEditor.FileEditorComposite;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -20,6 +22,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CompletableFuture;
 import javax.swing.JComponent;
 
 final class ShowPluginManagerAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
@@ -28,7 +31,7 @@ final class ShowPluginManagerAction extends AnAction implements DumbAware, Actio
     PluginManagerOpenSourceEnum openSource = PluginManagerOpenSourceEnum.fromActionPlace(e.getPlace());
     Project project = e.getProject();
     if (project != null && Registry.is("ide.show.plugins.in.editor")) {
-      showPluginsInEditor(project, openSource);
+      requestShowPluginsInEditor(project, openSource);
       return;
     }
     PluginManagerConfigurable.showFromEntryPoint(ProjectUtil.currentOrDefaultProject(project), openSource);
@@ -39,9 +42,10 @@ final class ShowPluginManagerAction extends AnAction implements DumbAware, Actio
     return ActionUpdateThread.BGT;
   }
 
-  private static void showPluginsInEditor(@NotNull Project project, @NotNull PluginManagerOpenSourceEnum openSource) {
+  private static @NotNull CompletableFuture<FileEditorComposite> requestShowPluginsInEditor(@NotNull Project project,
+                                                                                         @NotNull PluginManagerOpenSourceEnum openSource) {
     var file = new PluginVirtualFile(openSource);
-    FileEditorManager.getInstance(project).openFile(file, true);
+    return FileEditorManager.getInstance(project).requestOpenFile(file, FileEditorOpenRequest.withFocus(true));
   }
 
   private static final class PluginVirtualFile extends UIComponentVirtualFile {

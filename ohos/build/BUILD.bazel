@@ -1,0 +1,43 @@
+load("@community//build:community_build_target.bzl", "community_build_target")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+# Run by ohos/build-idea.cmd
+community_build_target(
+    name = "intellij_community_ohos",
+    main_class = "IdeaCommunityOhosBuildTarget",
+    runtime_deps = [":build"],
+)
+
+### auto-generated section `build intellij.idea.community.ohos.build` start
+jvm_library(
+    name = "build",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.idea.community.ohos.build",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//build",
+        "//platform/build-scripts/downloader",
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//build/tasks",
+    ],
+)
+### auto-generated section `build intellij.idea.community.ohos.build` end
+
+### auto-generated section `iml intellij.idea.community.ohos.build` start
+exports_files(
+    [
+        "intellij.idea.community.ohos.build.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.idea.community.ohos.build` end

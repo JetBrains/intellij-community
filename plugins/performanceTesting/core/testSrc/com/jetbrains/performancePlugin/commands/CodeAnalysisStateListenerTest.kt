@@ -16,8 +16,11 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.performancePlugin.commands.CodeAnalysisStateListener.HighlightedEditor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -145,6 +148,15 @@ internal class CodeAnalysisStateListenerTest {
       withContext(Dispatchers.UiWithModelAccess) { Disposer.dispose(tracked) }
     }
     listener.waitAnalysisToFinish(timeout = 5.seconds, throws = true, logsError = false)
+  }
+
+  /** A closing project can create the service after it cancels the scope of the service. */
+  @Test
+  fun `a listener on a cancelled scope keeps no subscription to the editor release`(): Unit = timeoutRunBlocking {
+    val cancelledScope = this + Job(coroutineContext.job).apply { cancel() }
+    val listener = CodeAnalysisStateListener(projectFixture.get(), cancelledScope)
+    trackAndDispose { listener.registerOpenedEditors(listOf(it)) }
+    assertWaitGoesOn(listener)
   }
 
   private fun highlighted(editor: TextEditor): HighlightedEditor {

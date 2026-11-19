@@ -269,7 +269,7 @@ class GhosttyTerminalSession internal constructor(
    * Invoked by the working-directory tracker; the new value is reported by the next
    * projection tick.
    */
-  fun updateCurrentDirectory(directory: EelPath) {
+  fun updateCurrentDirectory(directory: EelPath?) {
     emulatorLock.withLock {
       currentDirectory = directory
       changedSinceLastProjection = true

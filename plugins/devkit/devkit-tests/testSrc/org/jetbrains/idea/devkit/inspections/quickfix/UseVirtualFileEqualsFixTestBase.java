@@ -3,6 +3,10 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection;
 
+/**
+ * @deprecated Use {@link UseVirtualFileEqualsFixtureKt#useVirtualFileEqualsFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class UseVirtualFileEqualsFixTestBase extends LightDevKitInspectionFixTestBase {
 
   @Override

@@ -257,13 +257,14 @@ fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
     );
     request.lane = Some("ui".to_owned());
     request.lane_inputs = Some(LaneInputs {
-        fake_agent_jar: "f".to_owned(),
+        fake_agent: "f".to_owned(),
+        genui_fixture_jar: "g".to_owned(),
         lane_documents: "d".to_owned(),
         suite_documents: "d".to_owned(),
     });
     let encoded = serde_json::to_string(&request).unwrap();
     assert!(
-        encoded.ends_with(r#""lane":"ui","laneInputs":{"fakeAgentJar":"f","laneDocuments":"d","suiteDocuments":"d"}}"#),
+        encoded.ends_with(r#""lane":"ui","laneInputs":{"fakeAgent":"f","genuiFixtureJar":"g","laneDocuments":"d","suiteDocuments":"d"}}"#),
         "{encoded}"
     );
     assert_eq!(serde_json::from_str::<RunRequest>(&encoded).unwrap(), request);

@@ -4,6 +4,10 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link UseGrayInspectionFixtureKt#useGrayInspectionFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class UseGrayInspectionTestBase extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

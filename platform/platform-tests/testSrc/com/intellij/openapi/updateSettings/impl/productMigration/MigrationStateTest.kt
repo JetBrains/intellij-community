@@ -8,6 +8,7 @@ import com.intellij.openapi.application.productMigration.migrationRedirectConten
 import com.intellij.openapi.application.productMigration.migrationStateFile
 import com.intellij.openapi.application.productMigration.readMigrationState
 import com.intellij.openapi.application.productMigration.writeMigrationState
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -22,6 +23,8 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readBytes
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 class MigrationStateTest {
@@ -169,6 +172,39 @@ class MigrationStateTest {
     assertEquals(MigrationStatus.INSTALLED, store.get()!!.status)
     assertTrue(file.exists())
     assertEquals(MigrationStatus.INSTALLED, MigrationStateStore(file).get()!!.status)
+  }
+
+  @Test
+  fun `store with kill switch ignores moved state and keeps files`() {
+    write(json(status = "\"moved\""))
+    val copy = migrationRedirectContentFile(file)
+    copy.writeText("{}")
+    val stateBytes = file.readBytes()
+    val store = MigrationStateStore(file, isMigrationDisabled = true)
+    assertNull(store.get())
+    store.set(MigrationState(MigrationStatus.INSTALLED, app, "JB"))
+    store.clear()
+    assertNull(store.get())
+    assertArrayEquals(stateBytes, file.readBytes())
+    assertEquals("{}", copy.readText())
+  }
+
+  @Test
+  fun `store with kill switch keeps installed state of missing app`() {
+    write(json(app = quoted(tempDir.root.toPath().resolve("Missing.app").toString())))
+    val stateBytes = file.readBytes()
+    assertNull(MigrationStateStore(file, isMigrationDisabled = true).get())
+    assertArrayEquals(stateBytes, file.readBytes())
+  }
+
+  @Test
+  fun `store without kill switch reads and validates the state`() {
+    write(json(status = "\"moved\""))
+    assertEquals(MigrationStatus.MOVED, MigrationStateStore(file, isMigrationDisabled = false).get()!!.status)
+
+    write(json(app = quoted(tempDir.root.toPath().resolve("Missing.app").toString())))
+    assertNull(MigrationStateStore(file, isMigrationDisabled = false).get())
+    assertFalse(file.exists())
   }
 
   private fun read(): MigrationState? = readMigrationState(file)

@@ -8,20 +8,32 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.removemiddleman.DelegationUtils;
 import com.intellij.refactoring.removemiddleman.RemoveMiddlemanProcessor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.common.BazelTestUtil;
-import junit.framework.TestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class RemoveMiddleManTest extends LightMultiFileTestCase {
-  @Override
-  protected String getTestDataPath() {
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class RemoveMiddleManTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightMultiFileFixture> multiFile = lightMultiFileFixture(projectFixture, testDataPath());
+
+  private static String testDataPath() {
     if (BazelTestUtil.isUnderBazelTest()) {
       var label = BazelLabel.Companion.fromString("@community//plugins/rareJavaRefactorings:testData");
       return BazelTestUtil.getFileFromBazelRuntime(label).toAbsolutePath() + "/removemiddleman/";
@@ -30,7 +42,8 @@ public class RemoveMiddleManTest extends LightMultiFileTestCase {
   }
 
   private void doTest(final String conflict) {
-    doTest(() -> {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    multiFile.get().doTest(() -> {
       PsiClass aClass = myFixture.findClass("Test");
 
       final PsiField field = aClass.findFieldByName("myField", false);
@@ -45,32 +58,36 @@ public class RemoveMiddleManTest extends LightMultiFileTestCase {
       try {
         RemoveMiddlemanProcessor processor = new RemoveMiddlemanProcessor(field, infos);
         processor.run();
-        if (conflict != null) TestCase.fail("Conflict expected");
+        if (conflict != null) fail("Conflict expected");
       }
       catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
         if (conflict == null) throw e;
-        TestCase.assertEquals(conflict, e.getMessage());
+        assertEquals(conflict, e.getMessage());
       }
     });
   }
 
+  @Test
   public void testNoGetter() {
-    doTest((String)null);
+    doTest(null);
   }
 
+  @Test
   public void testSiblings() {
     doTest("foo() will be deleted. Hierarchy will be broken");
   }
 
-  
+  @Test
   public void testInterface() {
     doTest("foo() will be deleted. Hierarchy will be broken");
   }
 
+  @Test
   public void testPresentGetter() {
     doTest("foo() will be deleted. Hierarchy will be broken");
   }
 
+  @Test
   public void testInterfaceDelegation() {
     doTest("foo() will be deleted. Hierarchy will be broken");
   }

@@ -41,6 +41,9 @@ class TomlLiteralOffsetsTest(type: IElementType, text: String) :
             arrayOf(MULTILINE_BASIC_STRING, "|\"\"\"|\\\"|\"\"\"|"),
             arrayOf(MULTILINE_BASIC_STRING, "|\"\"\"|bar||"),
             arrayOf(MULTILINE_BASIC_STRING, "|\"\"\"|bar\"\"||"),
+            arrayOf(MULTILINE_BASIC_STRING, "|\"\"\"|say \"hi\"|\"\"\"|"),
+            arrayOf(MULTILINE_BASIC_STRING, "|\"\"\"|\"\"|\"\"\"|"),
+            arrayOf(MULTILINE_BASIC_STRING, "|\"\"\"||\"\"\"|"),
 
             arrayOf(MULTILINE_LITERAL_STRING, """|'''|foo|'''|"""),
             arrayOf(MULTILINE_LITERAL_STRING, """|'''|\n
@@ -48,7 +51,10 @@ class TomlLiteralOffsetsTest(type: IElementType, text: String) :
             ),
             arrayOf(MULTILINE_LITERAL_STRING, """|'''|don't|'''|"""),
             arrayOf(MULTILINE_LITERAL_STRING, """|'''|bar||"""),
-            arrayOf(MULTILINE_LITERAL_STRING, """|'''|bar''||""")
+            arrayOf(MULTILINE_LITERAL_STRING, """|'''|bar''||"""),
+            arrayOf(MULTILINE_LITERAL_STRING, """|'''|say 'hi'|'''|"""),
+            arrayOf(MULTILINE_LITERAL_STRING, """|'''|''|'''|"""),
+            arrayOf(MULTILINE_LITERAL_STRING, """|'''||'''|""")
         )
     }
 }

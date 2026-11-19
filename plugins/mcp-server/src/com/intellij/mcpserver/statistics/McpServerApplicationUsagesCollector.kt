@@ -77,7 +77,7 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
     metrics.add(MCP_RUNNING.metric(mcpServerService.isRunning))
     metrics.add(MCP_BRAVE_MODE_ENABLED.metric(settings.enableBraveMode))
     metrics.add(MCP_CONSENT.metric(settings.consent))
-    metrics.add(MCP_ROUTER_MODE.metric(McpToolFilterSettings.getInstance().invocationMode))
+    metrics.add(MCP_ROUTER_MODE.metric(McpToolFilterSettings.getInstance().effectiveInvocationMode))
 
     McpClientDetector.detectGlobalMcpClients().forEach { client ->
       metrics.add(MCP_GLOBAL_CLIENTS.metric(client.mcpClientInfo.name, client.isConfigured() ?: false, !client.isConfigUpToDate()))
@@ -95,7 +95,7 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
     var descriptionBytes = 0
     val tools = mcpServerService.getAllMcpTools()
     for (tool in tools) {
-      val state = disallowListSettings.toolStateFor(tool)
+      val state = disallowListSettings.effectiveToolStateFor(tool)
       if (!state.enabled) continue
       enabled++
       if (state.routerOnly) routerOnly++
@@ -113,7 +113,7 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
   private fun collectToolStateMetrics(mcpServerService: McpServerServiceImpl): List<MetricEvent> {
     val disallowListSettings = McpToolDisallowListSettings.getInstance()
     return mcpServerService.getAllMcpTools().map { tool ->
-      val state = disallowListSettings.toolStateFor(tool)
+      val state = disallowListSettings.effectiveToolStateFor(tool)
       MCP_TOOL_STATE.metric(tool.descriptor.name, state.enabled, state.routerOnly)
     }
   }

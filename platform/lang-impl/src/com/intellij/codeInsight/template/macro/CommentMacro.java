@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.generation.CommenterWithLineSuffix;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
@@ -67,7 +68,10 @@ public abstract class CommentMacro extends MacroBase {
       super("commentEnd",
             commenter -> {
               String line = commenter.getLineCommentPrefix();
-              return StringUtil.isNotEmpty(line) ? "" : commenter.getBlockCommentSuffix();
+              if (StringUtil.isNotEmpty(line)) {
+                return commenter instanceof CommenterWithLineSuffix withLineSuffix ? withLineSuffix.getLineCommentSuffix() : "";
+              }
+              return commenter.getBlockCommentSuffix();
             });
     }
   }

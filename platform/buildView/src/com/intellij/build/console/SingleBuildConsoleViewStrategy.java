@@ -7,7 +7,7 @@ import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.Failure;
 import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.build.events.OutputReferenceEvent;
-import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
@@ -23,11 +23,8 @@ final class SingleBuildConsoleViewStrategy implements BuildConsoleViewStrategy {
   @Override
   public @NotNull ExecutionConsole createRootConsoleView(@NotNull Project project,
                                                          @NotNull ExecutionNode rootNode,
-                                                         @NotNull ExecutionConsole executionConsole) {
-    if (executionConsole instanceof ConsoleViewImpl consoleView) {
-      return new BuildConsoleViewImplV2(project, consoleView, rootNode);
-    }
-    return executionConsole;
+                                                         @NotNull ConsoleView consoleView) {
+    return new BuildConsoleViewImplV2(project, rootNode, consoleView);
   }
 
   @Override
@@ -62,7 +59,7 @@ final class SingleBuildConsoleViewStrategy implements BuildConsoleViewStrategy {
   private static @NotNull ExecutionConsole createExecutionConsole(@NotNull Project project,
                                                                   @NotNull BuildConsoleViewHandler handler,
                                                                   @NotNull ExecutionNode node) {
-    return new BuildConsoleViewImplV2(project, new BuildTextConsoleView(project, true, handler.getExecutionConsoleFilters()), node);
+    return new BuildConsoleViewImplV2(project, node, new BuildTextConsoleView(project, true, handler.getExecutionConsoleFilters()));
   }
 
   @Override

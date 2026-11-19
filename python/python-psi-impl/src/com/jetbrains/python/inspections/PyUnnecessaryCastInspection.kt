@@ -17,9 +17,15 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.isSameType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -42,9 +48,11 @@ class PyUnnecessaryCastInspection : PyInspection() {
         if (args.size != 2) return
         val targetTypeRef = PyTypingTypeProvider.getType(args[0], myTypeEvalContext)
         val targetType = Ref.deref(targetTypeRef)
-        val actualType: PyType? = myTypeEvalContext.getType(args[1])
+        val value = args[1]
+        val actualType: PyType? = myTypeEvalContext.getType(value)
 
-        if (!targetType.isSameType(actualType, myTypeEvalContext)) return
+        if (!targetType.isSameType(actualType, myTypeEvalContext) &&
+            !isSameAsWidenedLiteral(targetType, value, myTypeEvalContext)) return
         val toName = PythonDocumentationProvider.getTypeName(targetType, myTypeEvalContext)
         registerProblem(
           callExpression,
@@ -70,6 +78,17 @@ class PyUnnecessaryCastInspection : PyInspection() {
       }
     }
   }
+}
+
+/**
+ * Returns true when [value] is a literal expression and [targetType] is the class of its literal type, as in `cast(int, 1)`.
+ */
+private fun isSameAsWidenedLiteral(targetType: PyType?, value: PyExpression, context: TypeEvalContext): Boolean {
+  val literalExpression = PyPsiUtils.flattenParens(value) ?: return false
+  val literalType = PyLiteralType.getLiteralType(literalExpression, context) ?: return false
+  // A conditional expression with a branch that is not a literal gives `Unknown` for that branch.
+  if (literalType.asUnionSequence().any { it.isAnyOrUnknown }) return false
+  return targetType.isSameType(PyLiteralType.upcastLiteralToClass(literalType), context)
 }
 
 private class RemoveUnnecessaryCastQuickFix : PsiUpdateModCommandQuickFix() {

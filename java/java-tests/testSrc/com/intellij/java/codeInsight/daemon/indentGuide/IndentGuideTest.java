@@ -15,25 +15,32 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class IndentGuideTest extends BaseIndentGuideTest {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  @Override
-  protected boolean runInDispatchThread() {
-    return !getName().endsWith("_Async");
-  }
+@TestApplication
+public class IndentGuideTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testIndentGuidesWhichCrossCommentedCodeBetweenCommentMarkAndCommentText() {
     // IDEA-99572.
     doTest("""
@@ -51,6 +58,7 @@ public class IndentGuideTest extends BaseIndentGuideTest {
              """);
   }
 
+  @Test
   public void testNoIndentGuidesInCommentedRegions() {
     doTest("""
              class Test {
@@ -70,6 +78,7 @@ public class IndentGuideTest extends BaseIndentGuideTest {
              """);
   }
 
+  @Test
   public void testIndentGuideWhichStartsOnCommentLine() {
     doTest("""
              class Test {
@@ -84,6 +93,7 @@ public class IndentGuideTest extends BaseIndentGuideTest {
              """);
   }
 
+  @Test
   public void testNoIndentGuideForJavadoc() {
     doTest("""
              class Test {
@@ -95,6 +105,7 @@ public class IndentGuideTest extends BaseIndentGuideTest {
              """);
   }
 
+  @Test
   public void testNoUnnecessaryGuideForNonFirstLineComments() {
     doTest("""
              class Test {
@@ -107,6 +118,7 @@ public class IndentGuideTest extends BaseIndentGuideTest {
              """);
   }
 
+  @Test
   public void testBlockCommentAndInnerIndents() {
     doTest("""
              class Test {
@@ -122,6 +134,7 @@ public class IndentGuideTest extends BaseIndentGuideTest {
              """);
   }
 
+  @Test
   public void testEmptyCommentDoesNotBreakIndents() {
     doTest("""
              class Test {
@@ -135,6 +148,7 @@ public class IndentGuideTest extends BaseIndentGuideTest {
              """);
   }
 
+  @Test
   public void testTabsIndent() {
     doTest("""
              class Test {
@@ -146,8 +160,10 @@ public class IndentGuideTest extends BaseIndentGuideTest {
              """);
   }
 
+  @Test
   public void testCodeConstructStartLine() {
-    myFixture.configureByText(getTestName(false) + ".java", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText(myFixture.getTestName(false) + ".java", """
       class C {
         void m()\s
         {
@@ -155,63 +171,71 @@ public class IndentGuideTest extends BaseIndentGuideTest {
         }
       }
       """);
-    CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtilRt.EMPTY_INT_ARRAY, false);
-    IndentGuideDescriptor guide = myFixture.getEditor().getIndentsModel().getCaretIndentGuide();
-    assertNotNull(guide);
-    assert guide.toString().equals("2 (1-2-4)");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtilRt.EMPTY_INT_ARRAY, false);
+      IndentGuideDescriptor guide = myFixture.getEditor().getIndentsModel().getCaretIndentGuide();
+      assertNotNull(guide);
+      assert guide.toString().equals("2 (1-2-4)");
+    });
   }
 
+  @Test
   public void testIndentModel() {
-    myFixture.configureByText(getTestName(false) + ".java", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText(myFixture.getTestName(false) + ".java", """
       class C {
              }""");
 
-    IndentsModelImpl model = (IndentsModelImpl)myFixture.getEditor().getIndentsModel();
-    int nLines = myFixture.getEditor().getDocument().getLineCount();
-    int nCols = myFixture.getEditor().getDocument().getLineEndOffset(0);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      IndentsModelImpl model = (IndentsModelImpl)myFixture.getEditor().getIndentsModel();
+      int nLines = myFixture.getEditor().getDocument().getLineCount();
+      int nCols = myFixture.getEditor().getDocument().getLineEndOffset(0);
 
-    model.assumeIndents(new ArrayList<>());
-    for (int start = 0; start <= nLines; start++) {
-      for (int end = start + 1; end <= nLines; end++) {
-        final IndentGuideDescriptor descriptor = model.getDescriptor(start, end);
-        assertNull("Indent at lines " + start + "-" + end + " is present, but it shouldn't", descriptor);
-      }
-    }
-
-    for (int start = 0; start <= nLines; start++) {
-      for (int end = start + 1; end <= nLines; end++) {
-        for (int level = 0; level < nCols; level++) {
-          model.assumeIndents(List.of(new IndentGuideDescriptor(level, start, end)));
+      model.assumeIndents(new ArrayList<>());
+      for (int start = 0; start <= nLines; start++) {
+        for (int end = start + 1; end <= nLines; end++) {
           final IndentGuideDescriptor descriptor = model.getDescriptor(start, end);
-          assertNotNull("Indent at " + level + " for lines " + start + " - " + end + " is missing", descriptor);
-          final int actual = descriptor.indentLevel;
-          assertEquals("Expected indent at lines " + start + " - " + end + ", level: " + level + ", found at " + actual,
-                       level, actual);
+          assertNull(descriptor, "Indent at lines " + start + "-" + end + " is present, but it shouldn't");
         }
       }
-    }
 
-    model.assumeIndents(List.of(new IndentGuideDescriptor(0, 0, 1), new IndentGuideDescriptor(1, 1, 2)));
-    final IndentGuideDescriptor descriptor = model.getDescriptor(0, 1);
-    assertNotNull("Indent at 0 for lines 0 - 1 is missing", descriptor);
-    int actual = descriptor.indentLevel;
-    assertEquals("Expected indent at lines 0 - 1, level: 0, found at " + actual, 0, actual);
-    final IndentGuideDescriptor descriptor1 = model.getDescriptor(1, 2);
-    assertNotNull("Indent at 1 for lines 1 - 2 is missing", descriptor1);
-    actual = descriptor1.indentLevel;
-    assertEquals("Expected indent at lines 1 - 2, level: 1, found at " + actual, 1, actual);
-    for (int start = 0; start <= nLines; start++) {
-      for (int end = start + 1; end <= nLines; end++) {
-        final IndentGuideDescriptor descriptor2 = model.getDescriptor(start, end);
-        actual = (descriptor2 == null ? -1 : descriptor2.indentLevel);
-        if (start == 0 && end == 1 && actual == 0 || start == 1 && end == 2 && actual == 1) continue;
-        assertNull("Indent at lines " + start + "-" + end + " is present, but it shouldn't", descriptor2);
+      for (int start = 0; start <= nLines; start++) {
+        for (int end = start + 1; end <= nLines; end++) {
+          for (int level = 0; level < nCols; level++) {
+            model.assumeIndents(List.of(new IndentGuideDescriptor(level, start, end)));
+            final IndentGuideDescriptor descriptor = model.getDescriptor(start, end);
+            assertNotNull(descriptor, "Indent at " + level + " for lines " + start + " - " + end + " is missing");
+            final int actual = descriptor.indentLevel;
+            assertEquals(level, actual,
+                         "Expected indent at lines " + start + " - " + end + ", level: " + level + ", found at " + actual);
+          }
+        }
       }
-    }
+
+      model.assumeIndents(List.of(new IndentGuideDescriptor(0, 0, 1), new IndentGuideDescriptor(1, 1, 2)));
+      final IndentGuideDescriptor descriptor = model.getDescriptor(0, 1);
+      assertNotNull(descriptor, "Indent at 0 for lines 0 - 1 is missing");
+      int actual = descriptor.indentLevel;
+      assertEquals(0, actual, "Expected indent at lines 0 - 1, level: 0, found at " + actual);
+      final IndentGuideDescriptor descriptor1 = model.getDescriptor(1, 2);
+      assertNotNull(descriptor1, "Indent at 1 for lines 1 - 2 is missing");
+      actual = descriptor1.indentLevel;
+      assertEquals(1, actual, "Expected indent at lines 1 - 2, level: 1, found at " + actual);
+      for (int start = 0; start <= nLines; start++) {
+        for (int end = start + 1; end <= nLines; end++) {
+          final IndentGuideDescriptor descriptor2 = model.getDescriptor(start, end);
+          actual = (descriptor2 == null ? -1 : descriptor2.indentLevel);
+          if (start == 0 && end == 1 && actual == 0 || start == 1 && end == 2 && actual == 1) continue;
+          assertNull(descriptor2, "Indent at lines " + start + "-" + end + " is present, but it shouldn't");
+        }
+      }
+    });
   }
 
+  @Test
   public void testIndexNotReadyDuringCollectDoesNotThrowOnApply_Async() {
-    myFixture.configureByText(getTestName(false) + ".java", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText(myFixture.getTestName(false) + ".java", """
       class C {
         void m() {
           if (true) {
@@ -232,10 +256,10 @@ public class IndentGuideTest extends BaseIndentGuideTest {
       public boolean shouldShowIndentGuide(@NotNull Editor editor, @NotNull IndentGuideDescriptor descriptor) {
         throw IndexNotReadyException.create();
       }
-    }), getTestRootDisposable());
+    }), myFixture.getTestRootDisposable());
 
-    IndentGuidePass pass = ActionUtil.underModalProgress(getProject(), "", () ->
-      new IndentGuidePass(getProject(), myFixture.getEditor(), myFixture.getFile())
+    IndentGuidePass pass = ActionUtil.underModalProgress(myFixture.getProject(), "", () ->
+      new IndentGuidePass(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile())
     );
 
     boolean indexNotReadyThrown = false;
@@ -245,16 +269,16 @@ public class IndentGuideTest extends BaseIndentGuideTest {
     catch (IndexNotReadyException ignored) {
       indexNotReadyThrown = true;
     }
-    assertTrue("collect should fail with IndexNotReadyException to emulate daemon behavior", indexNotReadyThrown);
+    assertTrue(indexNotReadyThrown, "collect should fail with IndexNotReadyException to emulate daemon behavior");
 
     EdtTestUtil.runInEdtAndWait(() -> pass.doApplyInformationToEditor());
 
     IndentsModelImpl model = (IndentsModelImpl)myFixture.getEditor().getIndentsModel();
-    assertTrue("indents model should stay empty when collect fails with IndexNotReadyException", model.getIndents().isEmpty());
+    assertTrue(model.getIndents().isEmpty(), "indents model should stay empty when collect fails with IndexNotReadyException");
   }
 
   private void doTest(@NotNull String text) {
-    doTest(text, fixture -> IndentModelGuidesProvider.create(fixture));
+    IndentGuideTestUtil.doTest(codeInsightFixture.get(), text, fixture -> IndentModelGuidesProvider.create(fixture));
   }
 
   private static class IndentModelGuidesProvider implements IndentGuidesProvider {

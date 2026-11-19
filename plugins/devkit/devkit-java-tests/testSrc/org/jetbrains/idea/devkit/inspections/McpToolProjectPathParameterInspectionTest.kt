@@ -2,32 +2,41 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import org.jetbrains.idea.devkit.inspections.mcp.McpToolInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.mcp.mcpToolInspectionFixture
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/mcpToolProjectPathParameter")
-internal class McpToolProjectPathParameterInspectionTest : McpToolInspectionTestBase() {
+@TestApplication
+internal class McpToolProjectPathParameterInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val mcpTool by mcpToolInspectionFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/mcpToolProjectPathParameter/")
 
   private val removeParameterFixName = "Remove 'projectPath' parameter"
 
-  override fun setUp() {
-    super.setUp()
-    enableMcpInspection("McpToolProjectPathParameter")
+  @BeforeEach
+  fun setUp() {
+    mcpTool.enableMcpInspection("McpToolProjectPathParameter")
   }
 
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/mcpToolProjectPathParameter/"
-
-  override fun getFileExtension() = "java"
-
+  @Test
   fun testProjectPathParameter() {
-    doTest()
+    mcpTool.doTest()
   }
 
+  @Test
   fun testRemoveProjectPathParameter() {
-    doTest(removeParameterFixName)
+    mcpTool.doTest(removeParameterFixName)
   }
 
+  @Test
   fun testRemoveProjectPathMiddleParameter() {
-    doTest(removeParameterFixName)
+    mcpTool.doTest(removeParameterFixName)
   }
 }

@@ -6,20 +6,33 @@ import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.codeInsight.hints.InlayDumpUtil
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileTypes.LanguageFileType
-import com.intellij.openapi.util.Disposer
-import com.intellij.refactoring.suggested.BaseSuggestedRefactoringAvailabilityTest
+import com.intellij.refactoring.suggested.SuggestedRefactoringFixture
 import com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl
+import com.intellij.refactoring.suggested.suggestedRefactoringFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.codeVision.CodeVisionTestUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
-class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
+@TestApplication
+class JavaChangeSignatureInlayProviderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override val fileType: LanguageFileType
-    get() = JavaFileType.INSTANCE
+  private val suggested by suggestedRefactoringFixture(projectFixture)
 
+  @Test
   fun testCommaInParameterList() {
     doTest(
       """
@@ -37,6 +50,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testInconsistentState1() {
     doTest(
       """
@@ -55,6 +69,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testInconsistentState2() {
     doTest(
       """
@@ -75,6 +90,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testDuplicateParameter() {
     doTest(
       """
@@ -92,6 +108,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeParameterTypeOfStaticMethod() {
     doTest(
       """
@@ -112,6 +129,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeReturnTypePrivate() {
     doTest(
       """
@@ -132,6 +150,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testConvertMethodToField() {
     doTest(
       """
@@ -153,6 +172,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testMakeMethodPrivate() {
     doTest(
       """
@@ -173,6 +193,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testMakeMethodProtected() {
     doTest(
       """
@@ -193,6 +214,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeReturnType() {
     doTest(
       """
@@ -213,6 +235,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeReturnTypeOfPrivateMethod() {
     doTest(
       """
@@ -233,6 +256,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeReturnTypeOfStaticMethod() {
     doTest(
       """
@@ -253,6 +277,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeReturnTypeOfFinalMethod() {
     doTest(
       """
@@ -273,6 +298,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeReturnTypeOfMethodInFinalClass() {
     doTest(
       """
@@ -293,6 +319,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeReturnTypeNoOverride() {
     doTest(
       """
@@ -319,6 +346,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeReturnTypeWithOverride() {
     doTest(
       """
@@ -351,6 +379,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testSiblingInheritedMethod() {
     doTest(
       """
@@ -383,6 +412,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeParameterTypeAndName() {
     doTest(
       """
@@ -405,6 +435,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeParameterTypeAndNameInAbstractMethod() {
     doTest(
       """
@@ -425,6 +456,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeParameterTypeAndRenameAbstractMethod() {
     doTest(
       """
@@ -445,6 +477,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testRenameTwoParameters() {
     doTest(
       """
@@ -467,6 +500,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testRenameTwoParametersInAbstractMethod() {
     doTest(
       """
@@ -487,6 +521,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testRenameParameterAndAbstractMethod() {
     doTest(
       """
@@ -507,6 +542,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testChangeConstructorParameterType() {
     doTest(
       """
@@ -527,6 +563,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testSyntaxError() {
     doTest(
       """
@@ -544,6 +581,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testOverrideMethod() {
     doTest(
       """
@@ -569,6 +607,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
+  @Test
   fun testPrivateMethod() {
     doTest(
       """
@@ -589,35 +628,51 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
     }
   }
 
-  override fun setUp() {
-    super.setUp()
+  private val providerStates = mutableMapOf<String, Boolean>()
 
-    val settings = CodeVisionSettings.getInstance()
-    SuggestedRefactoringProviderImpl.getInstance(project)
-    val codeVisionHost = project.service<CodeVisionHost>()
-    codeVisionHost.providers.map { it.groupId }.toSet().forEach { groupId ->
-      val wasEnabled = settings.isProviderEnabled(groupId)
-      Disposer.register(testRootDisposable) { settings.setProviderEnabled(groupId, wasEnabled) }
-      settings.setProviderEnabled(groupId, groupId == "change.signature")
+  @BeforeEach
+  fun setUpCodeVision(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val project = suggested.project
+      val settings = CodeVisionSettings.getInstance()
+      SuggestedRefactoringProviderImpl.getInstance(project)
+      val codeVisionHost = project.service<CodeVisionHost>()
+      codeVisionHost.providers.map { it.groupId }.toSet().forEach { groupId ->
+        providerStates[groupId] = settings.isProviderEnabled(groupId)
+        settings.setProviderEnabled(groupId, groupId == "change.signature")
+      }
     }
   }
 
-  fun doTest(before: String, after: String, editingActions: () ->  Unit) {
-    myFixture.configureByText(fileType, before)
-
-    executeEditingActions(editingActions)
-    myFixture.availableIntentions
-
-    CodeVisionTestUtil.waitForCodeVisionSync(editor, project.service<CodeVisionHost>(), testRootDisposable)
-
-    val actualText = InlayDumpUtil.dumpInlays(
-      file.text,
-      editor,
-      { it.renderer is CodeVisionInlayRenderer },
-      { _, inlay -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } }
-    )
-
-    assertEquals(after, actualText)
+  @AfterEach
+  fun restoreCodeVision(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val settings = CodeVisionSettings.getInstance()
+      for (entry in providerStates) {
+        settings.setProviderEnabled(entry.key, entry.value)
+      }
+    }
   }
 
+  private fun doTest(before: String, after: String, editingActions: SuggestedRefactoringFixture.() -> Unit): Unit = timeoutRunBlocking(60.seconds) {
+    withContext(Dispatchers.EDT) {
+      with(suggested) {
+        fixture.configureByText(fileType, before)
+
+        executeEditingActions(editingActions)
+        fixture.availableIntentions
+
+        CodeVisionTestUtil.waitForCodeVisionSync(editor, project.service<CodeVisionHost>(), fixture.testRootDisposable)
+
+        val actualText = InlayDumpUtil.dumpInlays(
+          file.text,
+          editor,
+          { it.renderer is CodeVisionInlayRenderer },
+          { _, inlay -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } }
+        )
+
+        assertEquals(after, actualText)
+      }
+    }
+  }
 }

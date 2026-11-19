@@ -4,6 +4,8 @@ package com.intellij.openapi.vfs.ex.temp;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,7 +54,19 @@ public class TempFileSystem extends com.intellij.openapi.vfs.impl.local.LocalFil
 
   private static final Key<FSItem> FS_ITEM_KEY = Key.create("FS_ITEM_KEY");
 
+  /**
+   * The most links that one path lookup passes through. Same as Linux limit, see {@code MAXSYMLINKS} in
+   * {@code include/linux/namei.h} of the kernel.
+   */
+  private static final int MAX_SYMLINKS = 40;
+
+  /** The item of {@code file}, with each link resolved, also the item of {@code file} itself. Null for a missing or broken link. */
   private @Nullable FSItem convert(@NotNull VirtualFile file) {
+    return resolve(convertLink(file));
+  }
+
+  /** The item of {@code file}. A link in its parent path is resolved, but a link at {@code file} itself is not. */
+  private @Nullable FSItem convertLink(@NotNull VirtualFile file) {
     var parentFile = file.getParent();
     if (parentFile == null) {
       return myRoot;
@@ -69,12 +83,60 @@ public class TempFileSystem extends com.intellij.openapi.vfs.impl.local.LocalFil
     return item;
   }
 
+  /** The item that {@code item} points to, after each link. Null for a broken link or a loop of links. */
+  private @Nullable FSItem resolve(@Nullable FSItem item) {
+    if (!(item instanceof FSSymlink link)) return item;
+    var target = realItem(link.myTarget, 1);
+    return target == null ? null : target.item();
+  }
+
+  /** An item and its absolute path, which passes through no link. */
+  private record RealItem(@NotNull String path, @NotNull FSItem item) {
+  }
+
+  /**
+   * The item at the absolute {@code path}, after each link of the path, and the path of the item without links. Null if an
+   * item of the path is missing, or if the path passes through more than {@link #MAX_SYMLINKS} links. {@code linkCount}
+   * is the count of the links before {@code path}. A VFS path has no escape: {@code /} separates the names, and
+   * {@link #isValidName} rejects a name with it. A link target has no {@code .} or {@code ..} names, see {@link #createSymbolicLink}.
+   */
+  private @Nullable RealItem realItem(@NotNull String path, int linkCount) {
+    var realPath = new StringBuilder();
+    FSItem item = myRoot;
+    for (var name : StringUtil.split(path, "/")) {
+      if (!item.isDirectory()) return null;
+      var child = item.findChild(name);
+      if (child == null) return null;
+      if (child instanceof FSSymlink link) {
+        if (linkCount == MAX_SYMLINKS) return null;
+        var target = realItem(link.myTarget, linkCount + 1);
+        if (target == null) return null;
+        realPath.setLength(0);
+        realPath.append(target.path().equals("/") ? "" : target.path());
+        child = target.item();
+      }
+      else {
+        realPath.append('/').append(name);
+      }
+      item = child;
+    }
+    return new RealItem(realPath.isEmpty() ? "/" : realPath.toString(), item);
+  }
+
   private @NotNull FSDir convertDirectory(@NotNull VirtualFile dir) throws IOException {
     var fsItem = convertAndCheck(dir);
     if (!fsItem.isDirectory()) {
       throw new IOException("Not a directory: " + dir.getPath());
     }
     return (FSDir)fsItem;
+  }
+
+  private @NotNull FSItem convertLinkAndCheck(@NotNull VirtualFile file) {
+    var fsItem = convertLink(file);
+    if (fsItem == null) {
+      throw new IllegalStateException("Does not exist: " + file.getPath());
+    }
+    return fsItem;
   }
 
   private @NotNull FSItem convertAndCheck(@NotNull VirtualFile file) {
@@ -115,6 +177,19 @@ public class TempFileSystem extends com.intellij.openapi.vfs.impl.local.LocalFil
     return new FakeVirtualFile(parent, name);
   }
 
+  /**
+   * Creates the symbolic link {@code name} in {@code parent} to {@code target}, an absolute path or a path relative to
+   * {@code parent}. The target does not have to exist.
+   * Like a link of the local file system, the VFS sees the link after a refresh of {@code parent}.
+   */
+  @TestOnly
+  public void createSymbolicLink(@NotNull VirtualFile parent, @NotNull String name, @NotNull String target) throws IOException {
+    var fsDir = convertDirectory(parent);
+    if (fsDir.findChild(name) != null) throw new IOException("File " + name + " already exists in " + parent.getPath());
+    var absoluteTarget = target.startsWith("/") ? target : parent.getPath() + "/" + target;
+    fsDir.addChild(name, new FSSymlink(FileUtil.toCanonicalPath(absoluteTarget)));
+  }
+
   @TestOnly
   public void createIfNotExists(@NotNull VirtualFile parent, @NotNull String name) throws IOException {
     var fsDir = convertDirectory(parent);
@@ -144,7 +219,7 @@ public class TempFileSystem extends com.intellij.openapi.vfs.impl.local.LocalFil
 
   @Override
   public void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException {
-    var fsItem = convertAndCheck(file);
+    var fsItem = convertLinkAndCheck(file);
     var newParentItem = convertAndCheck(newParent);
     var oldParentItem = convertAndCheckParent(file);
     if (!newParentItem.isDirectory()) throw new IOException("Target is not a directory: " + file.getPath());
@@ -168,7 +243,7 @@ public class TempFileSystem extends com.intellij.openapi.vfs.impl.local.LocalFil
 
   @Override
   public boolean exists(@NotNull VirtualFile fileOrDirectory) {
-    return convert(fileOrDirectory) != null;
+    return convertLink(fileOrDirectory) != null;
   }
 
   @Override
@@ -302,9 +377,18 @@ public class TempFileSystem extends com.intellij.openapi.vfs.impl.local.LocalFil
     private byte[] myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
+  /** A symbolic link to the absolute path {@link #myTarget}. */
+  private static final class FSSymlink extends FSItem {
+    private final String myTarget;
+
+    private FSSymlink(@NotNull String target) {
+      myTarget = target;
+    }
+  }
+
   private void setName(@NotNull VirtualFile file, @NotNull String name) {
     var parent = convertAndCheckParent(file);
-    var fsItem = convertAndCheck(file);
+    var fsItem = convertLinkAndCheck(file);
     parent.myChildren.remove(file.getName());
     parent.myChildren.put(name, fsItem);
     clearFsItemCache(file.getParent());
@@ -317,11 +401,20 @@ public class TempFileSystem extends com.intellij.openapi.vfs.impl.local.LocalFil
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    var item = convert(file);
-    if (item == null) return null;
-    long length = item instanceof FSFile ? ((FSFile)item).myContent.length : 0;
+    var link = convertLink(file);
+    if (link == null) return null;
+    var item = resolve(link);
+    if (item == null) return FileAttributes.BROKEN_SYMLINK;
+    long length = item instanceof FSFile fsFile ? fsFile.myContent.length : 0;
     // let's make TempFileSystem case-sensitive
-    return new FileAttributes(item.isDirectory(), false, false, false, length, item.myTimestamp, item.myWritable, FileAttributes.CaseSensitivity.SENSITIVE);
+    return new FileAttributes(item.isDirectory(), false, link instanceof FSSymlink, false, length, item.myTimestamp, item.myWritable,
+                              FileAttributes.CaseSensitivity.SENSITIVE);
+  }
+
+  @Override
+  public @Nullable String resolveSymLink(@NotNull VirtualFile file) {
+    var target = realItem(file.getPath(), 0);
+    return target == null ? null : target.path();
   }
 
   @Override

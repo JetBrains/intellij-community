@@ -1,20 +1,27 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.exec.breakpoint.streamex
 
-import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper
-import com.intellij.debugger.streams.exec.streamex.FilteringOperationsTest
-import com.intellij.debugger.streams.exec.streamex.StreamExTestCase
-import com.intellij.xdebugger.XDebugSession
+import com.intellij.debugger.streams.exec.streamex.streamExFixture
+import com.intellij.debugger.streams.test.BreakpointBasedExecutionTestCaseHelper
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class BreakpointEngineRemoveOperationsTest : StreamExTestCase() {
-  override val packageName: String = "filtering"
+@TestApplication
+class BreakpointEngineRemoveOperationsTest {
+  private val streamEx by streamExFixture("filtering", ::BreakpointBasedExecutionTestCaseHelper)
 
-  override fun getHelper(session: XDebugSession): TraceExecutionTestHelper = breakpointEngineHelper(session)
+  @Test
+  fun testRemoveNoExtraCalls(): Unit = streamEx.doStreamExVoidTest()
 
-  fun testRemoveNoExtraCalls() = doStreamExVoidTest()
-  fun testRemoveByNoExtraCalls() = doStreamExVoidTest()
+  @Test
+  fun testRemoveByNoExtraCalls(): Unit = streamEx.doStreamExVoidTest()
 
-  fun testRemoveKeys() = doStreamExWithResultTest()
-  fun testRemoveValues() = doStreamExWithResultTest()
-  fun testRemoveKeyValue() = doStreamExWithResultTest()
+  @Test
+  fun testRemoveKeys(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testRemoveValues(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testRemoveKeyValue(): Unit = streamEx.doStreamExWithResultTest()
 }

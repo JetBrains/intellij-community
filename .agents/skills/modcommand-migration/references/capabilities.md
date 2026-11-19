@@ -3,10 +3,8 @@
 Source of truth: `ModCommand.java` (`community/platform/analysis-api/src/com/intellij/modcommand/ModCommand.java`)
 and its siblings in `community/platform/analysis-api/src/com/intellij/modcommand/`.
 
-`ModCommand` is a **sealed interface**, and every implementation is a **record**. That is what makes a
-command inspectable and serializable — it can be sent over the network or to another process, and a
-custom executor can extract exactly what will happen. It also means the capability set is closed: if no
-command models what your fix needs, the fix cannot be converted (see the triage in
+`ModCommand` is a **sealed interface**, and every implementation is a **record**. The capability set is
+closed: if no command models what your fix needs, the fix cannot be converted (see the triage in
 [../SKILL.md](../SKILL.md)).
 
 ## The commands
@@ -110,12 +108,6 @@ availability, search scope, or other semantics. Executors live behind
 - **On a file copy** (`executeForFileCopy`) — applies a single-file command to a non-physical copy,
   which is how one action can be composed into another.
 
-Two consequences worth designing around:
-
-1. **Order chooser options safest-first**, because batch and preview both pick the first one.
-2. Guard genuinely expensive conflict computation with `IntentionPreviewUtils.isIntentionPreviewActive()`
-   — preview ignores `ModShowConflicts` anyway, so computing it there is wasted work. See
-   `MakeClassFinalFix` (`community/java/java-impl/src/com/siyeh/ig/fixes/MakeClassFinalFix.java`).
-
-You do not need to special-case a chooser with a single option: it is executed directly without showing
-UI.
+Guard genuinely expensive conflict computation with `IntentionPreviewUtils.isIntentionPreviewActive()`
+— preview ignores `ModShowConflicts` anyway, so computing it there is wasted work. See
+`MakeClassFinalFix` (`community/java/java-impl/src/com/siyeh/ig/fixes/MakeClassFinalFix.java`).

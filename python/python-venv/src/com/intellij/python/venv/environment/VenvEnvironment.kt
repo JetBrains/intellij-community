@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.venv.environment
 
+import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelOsFamily
@@ -167,3 +168,8 @@ private fun resolveVenvLibRoot(home: Path): Path? {
     null
   }
 }
+
+/** Whether this binary is of a virtual environment that uv made: its `pyvenv.cfg` names uv. */
+@ApiStatus.Internal
+fun PythonBinary.isUvEnv(): Boolean =
+  detectPythonEnvironment().successOrNull?.let { it is VenvEnvironment && "uv" in it.config } == true

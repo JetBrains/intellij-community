@@ -47,74 +47,33 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       final String text = host.getText();
 
       final Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(text);
-      final String closingQuote = quotes == null ? text.substring(0, 1) : quotes.second;
+      final String closingQuote = quotes == null ? "" : quotes.second;
       final List<String> strings = StringUtil.split(text, "\n", false);
       final int maxPosition = text.length();
 
       final List<TextRange> codeBlockRanges = collectCodeBlockRanges(strings, maxPosition, closingQuote);
       codeBlockRanges.addAll(collectMarkdownCodeBlockRanges(text, quotes));
-      injectDoctestBlocks(strings, maxPosition, closingQuote, codeBlockRanges, injectionPlacesRegistrar);
+      final List<TextRange> nonRawRanges = ContainerUtil.mapNotNull(
+        ((PyStringLiteralExpression)host).getStringElements(), e -> e.isRaw() ? null : e.getTextRangeInParent());
+      injectDoctestBlocks(strings, nonRawRanges, maxPosition, closingQuote, codeBlockRanges, injectionPlacesRegistrar);
       injectCodeBlocks(codeBlockRanges, injectionPlacesRegistrar);
     }
   }
 
   private static void injectDoctestBlocks(@NotNull List<String> strings,
+                                          @NotNull List<TextRange> nonRawRanges,
                                           int maxPosition,
                                           @NotNull String closingQuote,
                                           @NotNull List<TextRange> codeBlockRanges,
                                           @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
-    boolean gotExample = false;
-    int start = 0;
-    int end = 0;
-    int currentPosition = 0;
-    boolean endsWithSlash = false;
-
-    for (String string : strings) {
-      final String trimmedString = string.trim();
-      if (!trimmedString.startsWith(">>>") && !trimmedString.startsWith("...") && gotExample && start < end) {
-        gotExample = false;
-        if (!endsWithSlash) {
-          injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
-        }
-      }
-
-      if (endsWithSlash && !trimmedString.endsWith("\\")) {
-        endsWithSlash = false;
-        injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(),
-                                          TextRange.create(start, getEndOffset(currentPosition, string, maxPosition, closingQuote)), null,
-                                          null);
-      }
-
-      int finalCurrentPosition = currentPosition;
-      final boolean insideCodeBlock = ContainerUtil.exists(codeBlockRanges, r -> r.containsOffset(finalCurrentPosition));
-      if (insideCodeBlock) {
-        currentPosition += string.length();
-        continue;
-      }
-
-      if (trimmedString.startsWith(">>>")) {
-        if (trimmedString.endsWith("\\")) {
-          endsWithSlash = true;
-        }
-
-        if (!gotExample) {
-          start = currentPosition;
-        }
-
-        gotExample = true;
-        end = getEndOffset(currentPosition, string, maxPosition, closingQuote);
-      }
-      else if (trimmedString.startsWith("...") && gotExample) {
-        if (trimmedString.endsWith("\\")) {
-          endsWithSlash = true;
-        }
-
-        end = getEndOffset(currentPosition, string, maxPosition, closingQuote);
-      }
-      currentPosition += string.length();
-    }
-    if (gotExample && start < end) {
-      injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
+    List<TextRange> exampleRanges = PyDoctestExamples.findRanges(
+      strings,
+      (lineStart, line) -> getEndOffset(lineStart, line, maxPosition, closingQuote),
+      lineStart -> ContainerUtil.exists(codeBlockRanges, r -> r.containsOffset(lineStart)),
+      offset -> ContainerUtil.exists(nonRawRanges, r -> r.containsOffset(offset))
+    );
+    for (TextRange range : exampleRanges) {
+      injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), range, null, null);
     }
   }
 
@@ -222,11 +181,8 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
   private static int getEndOffset(int start, String s, int maxPosition, String closingQuote) {
     int end;
     int length = s.length();
-    if (s.trim().endsWith(closingQuote)) {
-      length -= 3;
-    }
-    else if (start + length == maxPosition && (s.trim().endsWith("\"") || s.trim().endsWith("'"))) {
-      length -= 1;
+    if (start + length == maxPosition && s.endsWith(closingQuote)) {
+      length -= closingQuote.length();
     }
 
     end = start + length;

@@ -53,10 +53,13 @@ jvm_library(
         "//xml/xml-psi-api:psi",
         "//xml/xml-analysis-api:analysis",
         "//plugins/kotlin/base/testFramework",
-        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/kotlin/test-framework",
         "//plugins/kotlin/base/plugin",
         "//platform/execution",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.devkit.kotlin.tests` end

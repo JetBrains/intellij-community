@@ -112,6 +112,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IndexUpToDateCheckIn;
 import com.intellij.util.indexing.IndexingFlag;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.UpdatableIndex;
@@ -153,6 +154,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.testFramework.TestLoggerKt.assertNoErrorLogged;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SkipSlowTestLocally
@@ -1266,6 +1268,27 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(stamp != FileBasedIndex.getInstance().getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject()));
   }
 
+  public void test_loading_persistent_stub_after_dropping_unsaved_document() {
+    var diskText = "class Foo {}";
+    var vFile = myFixture.addFileToProject("Foo.java", diskText).getVirtualFile();
+    assertNotNull(findClass("Foo"));
+    var document = FileDocumentManager.getInstance().getDocument(vFile);
+    assertNotNull(document);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Bar {}\n"));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    assertNotNull(findClass("Bar"));
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText(diskText));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    WriteCommandAction.runWriteCommandAction(getProject(),
+                                             () -> ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).dropAllUnsavedDocuments());
+    var reloadedDocument = FileDocumentManager.getInstance().getDocument(vFile);
+    assertNotNull(reloadedDocument);
+    assertEquals(diskText, reloadedDocument.getText());
+    assertNotNull(IndexUpToDateCheckIn.disableUpToDateCheckIn(() -> StubTreeLoader.getInstance().readFromVFile(getProject(), vFile)));
+  }
+
   public void test_index_clear_increments_modification_stamp() throws IOException {
     StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), false);
     try {
@@ -1276,6 +1299,55 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     finally {
       index.dispose();
     }
+  }
+
+  public void test_loading_stub_after_clearing_index_with_unsaved_document() throws StorageException {
+    var vFile = myFixture.addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
+    assertNotNull(findClass("Foo"));
+    var document = FileDocumentManager.getInstance().getDocument(vFile);
+    assertNotNull(document);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Bar {}\n"));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    assertNotNull(findClass("Bar"));
+
+    var fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    var index = fileBasedIndex.getIndex(StubUpdatingIndex.INDEX_ID);
+    try {
+      index.clear();
+      fileBasedIndex.runUpdate(true, () -> {
+        assertNoErrorLogged(() -> {
+          assertNull(IndexUpToDateCheckIn.disableUpToDateCheckIn(() -> StubTreeLoader.getInstance().readFromVFile(getProject(), vFile)));
+        });
+        return true;
+      });
+    }
+    finally {
+      WriteAction.run(() -> fileBasedIndex.cleanupMemoryStorage(false));
+      fileBasedIndex.requestRebuild(StubUpdatingIndex.INDEX_ID);
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    }
+  }
+
+  public void test_unsaved_document_is_reindexed_after_index_rebuild() {
+    var vFile = myFixture.addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
+    assertNotNull(findClass("Foo"));
+    var fileDocumentManager = FileDocumentManager.getInstance();
+    var document = fileDocumentManager.getDocument(vFile);
+    assertNotNull(document);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Bar {}\n"));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    assertNotNull(findClass("Bar"));
+    assertTrue(fileDocumentManager.isDocumentUnsaved(document));
+
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+
+    assertTrue(fileDocumentManager.isDocumentUnsaved(document));
+    assertNotNull(findClass("Bar"));
+    assertNotNull(findClass("Foo"));
+    assertNotNull(StubTreeLoader.getInstance().readFromVFile(getProject(), vFile));
   }
 
   public void test_unsaved_document_is_still_indexed_on_dumb_mode_ignoring_access() {

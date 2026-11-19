@@ -17,6 +17,7 @@ class MarkdownCodeFoldingSettings: SimplePersistentStateComponent<MarkdownCodeFo
     var collapseTables: Boolean by property(false)
     var collapseCodeFences: Boolean by property(false)
     var collapseTableOfContents: Boolean by property(true)
+    var collapseDetails: Boolean by property(true)
   }
 
   fun reset() {

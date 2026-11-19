@@ -11,6 +11,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
+/**
+ * Use [suggestedRefactoringChangeCollectorFixture] in a JUnit 5 test. The abstract members of this class are its parameters.
+ */
+@Deprecated("Use suggestedRefactoringChangeCollectorFixture in a JUnit 5 test")
 abstract class BaseSuggestedRefactoringChangeCollectorTest<TDeclaration : PsiElement> : LightJavaCodeInsightFixtureTestCase() {
   private lateinit var collector: SuggestedRefactoringChangeCollector
 

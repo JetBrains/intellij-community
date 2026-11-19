@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.testFramework.common.BazelTestUtil
 
 class GradleExecutionSettingsUtilTest : GradleExecutionSettingsUtilTestCase() {
 
@@ -120,10 +121,11 @@ class GradleExecutionSettingsUtilTest : GradleExecutionSettingsUtilTestCase() {
   }
 
   fun `test filter generation for the Junit 4 parametrized tests`() {
-    val junitLibrary = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4")
-    for (classesUrl in junitLibrary.classesUrls) {
-      ModuleRootModificationUtil.addModuleLibrary(module, classesUrl)
-    }
+    addLibrary(
+      moduleName = "intellij.libraries.junit4",
+      libraryName = "JUnit4",
+      bazelLabel = "@lib//:junit/junit-4.13.2.jar"
+    )
     requireResolvedJavaClass("org.junit.Test")
     requireResolvedJavaClass("org.junit.runner.RunWith")
     requireResolvedJavaClass("org.junit.runners.Parameterized")
@@ -153,10 +155,11 @@ class GradleExecutionSettingsUtilTest : GradleExecutionSettingsUtilTestCase() {
   }
 
   fun `test filter generation for the Junit 5 parametrized tests`() {
-    val junitLibrary = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit6.params", "JUnit6Params")
-    for (classesUrl in junitLibrary.classesUrls) {
-      ModuleRootModificationUtil.addModuleLibrary(module, classesUrl)
-    }
+    addLibrary(
+      moduleName = "intellij.libraries.junit6.params",
+      libraryName = "JUnit6Params",
+      bazelLabel = "@lib//:org.junit.jupiter/junit-jupiter-params-6.1.3.jar"
+    )
     requireResolvedJavaClass("org.junit.jupiter.params.ParameterizedTest")
     requireResolvedJavaClass("org.junit.jupiter.params.provider.CsvSource")
 
@@ -181,5 +184,18 @@ class GradleExecutionSettingsUtilTest : GradleExecutionSettingsUtilTestCase() {
 
     assertTestFilter("--tests \"org.example.TestCase\"", testClassLocation, testClass, null)
     assertTestFilter("--tests \"org.example.TestCase.test\"", testMethodLocation, testClass, testMethod)
+  }
+
+  private fun addLibrary(moduleName: String, libraryName: String, bazelLabel: String) {
+    if (BazelTestUtil.isUnderBazelTest) {
+      val libraryJar = BazelTestUtil.getFileFromBazelRuntime(bazelLabel).toString()
+      ModuleRootModificationUtil.addModuleLibrary(module, "jar://$libraryJar!/")
+    }
+    else {
+      val library = IntelliJProjectConfiguration.getModuleLibrary(moduleName, libraryName)
+      for (classesUrl in library.classesUrls) {
+        ModuleRootModificationUtil.addModuleLibrary(module, classesUrl)
+      }
+    }
   }
 }

@@ -2,21 +2,28 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.quickfix.LightProjectDescriptorEqualsHashCodeInspectionTestBase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.quickfix.lightProjectDescriptorEqualsHashCodeFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/lightProjectDescriptorEqualsHashCode")
-class KtLightProjectDescriptorEqualsHashCodeInspectionTest : LightProjectDescriptorEqualsHashCodeInspectionTestBase() {
-
-  override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/lightProjectDescriptorEqualsHashCode"
-
-  override fun getFileExtension(): String = "kt"
-
-  fun testFlagged() {
-    doTest()
+@TestApplication
+class KtLightProjectDescriptorEqualsHashCodeInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
+  private val descriptorEquals by lightProjectDescriptorEqualsHashCodeFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/lightProjectDescriptorEqualsHashCode")
+
+  @Test
+  fun testFlagged() {
+    descriptorEquals.doTest()
+  }
+
+  @Test
   fun testNotFlagged() {
-    doTest()
+    descriptorEquals.doTest()
   }
 }

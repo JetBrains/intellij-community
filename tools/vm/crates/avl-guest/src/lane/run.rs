@@ -373,7 +373,8 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
     let daemon = channel::boot(&daemon_args, launch_inputs, variable)?;
     let runfile = |file: &RuntimeFile| runtime::runtime_file_path(&runfiles_root, file);
     let lane_inputs = LaneInputs {
-        fake_agent_jar: daemon.store_file(&runfile(&descriptor.ide.fake_agent_jar))?,
+        fake_agent: daemon.store_file(&runfile(&descriptor.ide.fake_agent))?,
+        genui_fixture_jar: daemon.store_file(&runfile(&descriptor.ide.genui_fixture_jar))?,
         lane_documents: daemon.store_file(&runfile(&descriptor.ide.lane_documents))?,
         suite_documents: daemon.store_file(&runfile(&descriptor.ide.suite_documents))?,
     };

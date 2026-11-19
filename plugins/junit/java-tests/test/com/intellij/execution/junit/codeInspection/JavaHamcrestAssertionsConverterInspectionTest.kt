@@ -1,10 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
-import com.intellij.junit.testFramework.HamcrestAssertionsConverterInspectionTestBase
+import com.intellij.junit.testFramework.MavenTestLib.HAMCREST
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.hamcrestAssertionsConverterInspectionFixture
+import com.intellij.junit.testFramework.junitProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverterInspectionTestBase() {
+@TestApplication
+class JavaHamcrestAssertionsConverterInspectionTest {
+  companion object {
+    private val projectFixture = junitProjectFixture(JUNIT4, HAMCREST)
+  }
+
+  private val myFixture by hamcrestAssertionsConverterInspectionFixture(projectFixture)
+
+  @Test
   fun `test highlighting`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.Assert;
@@ -49,6 +62,7 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
     """.trimIndent())
   }
 
+  @Test
   fun `test quickfix binary expression`() {
     myFixture.testAllQuickfixes(JvmLanguage.JAVA, """
       import org.junit.Assert;
@@ -96,6 +110,7 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
     """.trimIndent(), "Replace with 'assertThat()'")
   }
 
+  @Test
   fun `test quickfix string`() {
     myFixture.testAllQuickfixes(JvmLanguage.JAVA, """
       import org.junit.Assert;
@@ -125,6 +140,7 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
     """.trimIndent(), "Replace with 'assertThat()'")
   }
 
+  @Test
   fun `test quickfix collection`() {
     myFixture.testAllQuickfixes(JvmLanguage.JAVA, """
       import org.junit.Assert;
@@ -163,6 +179,7 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
     """.trimIndent(), "Replace with 'assertThat()'")
   }
 
+  @Test
   fun `test quickfix array`() {
     myFixture.testAllQuickfixes(JvmLanguage.JAVA, """
       import org.junit.Assert;

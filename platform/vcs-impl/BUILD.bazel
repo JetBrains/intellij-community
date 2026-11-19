@@ -5,7 +5,7 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 jps_test(
     name = "vcs-impl-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    tags = ["community-vcs-tests"],
     runtime_deps = [
         ":vcs-impl-tests_test_lib",
         "//platform/vcs/plugin",

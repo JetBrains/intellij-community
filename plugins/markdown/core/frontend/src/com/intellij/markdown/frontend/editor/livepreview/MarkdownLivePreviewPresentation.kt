@@ -106,7 +106,7 @@ internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: 
   private val elementRenderers: Map<Class<out MarkdownLivePreviewSpec>, MarkdownLivePreviewElementRenderer> = mapOf(
     MarkdownLivePreviewSpec.CodeFont::class.java to MarkdownLivePreviewCodeFontRenderer(editor),
     MarkdownLivePreviewSpec.Conceal::class.java to MarkdownLivePreviewConcealRenderer(editor),
-    MarkdownLivePreviewSpec.Bullet::class.java to MarkdownLivePreviewBulletRenderer(),
+    MarkdownLivePreviewSpec.Bullet::class.java to MarkdownLivePreviewBulletRenderer(editor),
     MarkdownLivePreviewSpec.ListIndent::class.java to MarkdownLivePreviewListIndentRenderer(editor),
     MarkdownLivePreviewSpec.BlockQuote::class.java to MarkdownLivePreviewBlockQuoteRenderer(editor),
     MarkdownLivePreviewSpec.HorizontalRule::class.java to MarkdownLivePreviewHorizontalRuleRenderer(editor),
@@ -117,7 +117,7 @@ internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: 
   )
 
   init {
-    elementRenderers.forEach { (_, renderer) -> Disposer.register(this, renderer) }
+    elementRenderers.forEach { [_, renderer] -> Disposer.register(this, renderer) }
   }
 
   fun create(specs: MarkdownLivePreviewSpecSet): MarkdownLivePreviewPresentation {

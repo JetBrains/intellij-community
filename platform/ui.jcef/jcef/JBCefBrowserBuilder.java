@@ -21,6 +21,7 @@ public class JBCefBrowserBuilder {
   @Nullable JBCefClient myClient;
   @Nullable String myUrl;
   @Nullable CefBrowser myCefBrowser;
+  @Nullable JBCefRequestContext myRequestContext;
   @Nullable Boolean myUseClipboardBridge;
   @Nullable JBCefOSRHandlerFactory myOSRHandlerFactory;
   boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled") || JBCefApp.getInstance()
@@ -119,6 +120,15 @@ public class JBCefBrowserBuilder {
    */
   public @NotNull JBCefBrowserBuilder setCefBrowser(@Nullable CefBrowser browser) {
     myCefBrowser = browser;
+    return this;
+  }
+
+  /**
+   * Sets the browser profile. The profile is ignored when this builder wraps an existing CEF browser.
+   */
+  @ApiStatus.Experimental
+  public @NotNull JBCefBrowserBuilder setRequestContext(@Nullable JBCefRequestContext requestContext) {
+    myRequestContext = requestContext;
     return this;
   }
 

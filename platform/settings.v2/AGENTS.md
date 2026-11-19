@@ -154,5 +154,5 @@ decision with its reason. A merge only reorganizes what the ADRs already say. It
    - An older ADR that names the merged ADR can read as if it came later. Write
      `the key identity rule ([ADR 0124](...))`, not `[ADR 0124](...) allowed`.
    - An ADR that named two ADRs of the chain now names the merged ADR twice. Keep one.
-6. Run `SettingsDocsTest`. Every check must pass. Commit one chain per commit. The subject names the decision and
+6. Run `./community/tools/bt.cmd --module intellij.platform.settings.v2.test --filter com.intellij.platform.settings.v2.docs.SettingsDocsTest`. Every check must pass. Commit one chain per commit. The subject names the decision and
    the merged number, and the message lists the folded numbers.

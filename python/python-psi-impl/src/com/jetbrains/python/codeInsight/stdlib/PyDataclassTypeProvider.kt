@@ -148,7 +148,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
   private fun getDataclassesReplaceType(resolvedCallee: PyCallable, call: PyCallExpression, context: TypeEvalContext): PyCallableType? {
     val qualifiedName = resolvedCallee.qualifiedName ?: return null
-    val instanceName = allRegisteredDataclassResolvers
+    val instanceName = allRegisteredDataclassResolvers()
                          .flatMap { it.copyFunctions() }
                          .firstOrNull { it.qualifiedName.toString() == qualifiedName }
                          ?.instanceParameterName ?: return null

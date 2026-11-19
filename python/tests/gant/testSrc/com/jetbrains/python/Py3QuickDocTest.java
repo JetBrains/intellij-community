@@ -327,20 +327,13 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
 
   // PY-22685
   public void testBuiltinLen() {
-    final LanguageLevel languageLevel = PyProjectStructureTestUtilKt.findLanguageLevelForTests(myFixture.getModule());
+    checkHTMLOnly();
+  }
 
-    runWithAdditionalFileInLibDir(
-      PyBuiltinCache.getBuiltinsFileName(languageLevel),
-      """
-        def len(p_object): # real signature unknown; restored from __doc__
-            ""\"
-            len(object) -> integer
-           \s
-            Return the number of items of a sequence or collection.
-            ""\"
-            return 0""",
-      (_) -> checkHTMLOnly()
-    );
+  @TestFor(issues = "PY-83660")
+  public void testDocstringOfImplementationBehindStub() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    checkHTMLOnly();
   }
 
   public void testArgumentList() {

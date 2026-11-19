@@ -260,7 +260,7 @@ internal class PluginDependenciesTest {
     assertThat(embeddedModuleClassLoader).isSameAs(mainClassLoader)
     assertThat((mainClassLoader as PluginClassLoader).files).containsExactly(
       samplePluginDir.resolve("lib/sample.plugin.jar"),
-      samplePluginDir.resolve("lib/modules/embedded.module.jar"),
+      samplePluginDir.resolve("lib/embedded.module.jar"),
     )
     val requiredModuleClassLoader = result.getEnabledModule("required.module").pluginClassLoader
     assertThat(requiredModuleClassLoader).isNotSameAs(mainClassLoader)

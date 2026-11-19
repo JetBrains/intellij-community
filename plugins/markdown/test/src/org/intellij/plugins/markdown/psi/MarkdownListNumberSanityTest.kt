@@ -1,46 +1,67 @@
 package org.intellij.plugins.markdown.psi
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.UsefulTestCase
-import junit.framework.TestCase
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListNumber
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Test
 
-class MarkdownListNumberSanityTest: LightPlatformCodeInsightTestCase() {
-  fun `test element is created`() {
-    // language=Markdown
-    val content = """
-    1<caret>. Some list item
-    2. Some other list item
-    """.trimIndent()
-    configureFromFileText("some.md", content)
-    val caret = editor.caretModel.currentCaret
-    val element = file.findElementAt(caret.offset)
-    checkNotNull(element)
-    UsefulTestCase.assertInstanceOf(element, MarkdownListNumber::class.java)
-    TestCase.assertEquals("1. ", element.text)
+@TestApplication
+class MarkdownListNumberSanityTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
-  fun `test delimiter is correct`() {
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
+  fun `test element is created`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     1<caret>. Some list item
     2. Some other list item
     """.trimIndent()
-    configureFromFileText("some.md", content)
-    val element = file.findElementAt(editor.caretModel.currentCaret.offset) as? MarkdownListNumber
-    checkNotNull(element)
-    TestCase.assertEquals('.', element.delimiter)
+    myFixture.configureByText("some.md", content)
+    readAction {
+      val caret = myFixture.editor.caretModel.currentCaret
+      val element = myFixture.file.findElementAt(caret.offset)
+      checkNotNull(element)
+      assertInstanceOf(MarkdownListNumber::class.java, element)
+      assertEquals("1. ", element.text)
+    }
   }
 
-  fun `test number is correct`() {
+  @Test
+  fun `test delimiter is correct`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     1<caret>. Some list item
     2. Some other list item
     """.trimIndent()
-    configureFromFileText("some.md", content)
-    val element = file.findElementAt(editor.caretModel.currentCaret.offset) as? MarkdownListNumber
-    checkNotNull(element)
-    TestCase.assertEquals(1, element.number)
+    myFixture.configureByText("some.md", content)
+    readAction {
+      val element = myFixture.file.findElementAt(myFixture.editor.caretModel.currentCaret.offset) as? MarkdownListNumber
+      checkNotNull(element)
+      assertEquals('.', element.delimiter)
+    }
+  }
+
+  @Test
+  fun `test number is correct`(): Unit = timeoutRunBlocking {
+    // language=Markdown
+    val content = """
+    1<caret>. Some list item
+    2. Some other list item
+    """.trimIndent()
+    myFixture.configureByText("some.md", content)
+    readAction {
+      val element = myFixture.file.findElementAt(myFixture.editor.caretModel.currentCaret.offset) as? MarkdownListNumber
+      checkNotNull(element)
+      assertEquals(1, element.number)
+    }
   }
 }

@@ -22,11 +22,11 @@ import com.intellij.internal.statistic.service.fus.collectors.UsageCollectorBean
 import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -37,9 +37,7 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.StringJoiner
 
 internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
@@ -143,9 +141,7 @@ private class StatisticsCollectorRunner(
     val fileType = FileTypeManager.getInstance().getStdFileType("JSON")
     val file = LightVirtualFile(item.groupId, fileType, result)
 
-    withContext(Dispatchers.EDT) {
-      FileEditorManager.getInstance(project).openFile(file, true)
-    }
+    FileEditorManager.getInstanceAsync(project).openFile(file, FileEditorOpenRequest.withFocus(true))
   }
 
   private fun makeExtendedPresentation(metrics: Set<MetricEvent>, collector: FeatureUsagesCollector): String {

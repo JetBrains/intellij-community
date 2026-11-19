@@ -792,10 +792,7 @@ class ModuleRedeclarator(object):
         out(0, "# module ", p_name, mod_name) # line 2
 
         origin_type = OriginType.FILE
-        import generator3.core
-        if generator3.core.is_pregeneration_mode():
-            origin = origin_type = OriginType.PREGENERATED
-        elif self.mod_filename:
+        if self.mod_filename:
             origin = self.mod_filename
         elif p_name in sys.builtin_module_names:
             origin = origin_type = OriginType.BUILTIN

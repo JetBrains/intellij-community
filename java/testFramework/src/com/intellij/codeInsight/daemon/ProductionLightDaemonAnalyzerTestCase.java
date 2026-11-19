@@ -2,14 +2,8 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +19,7 @@ import java.util.List;
 public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonAnalyzerTestCase {
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    runTestInProduction(isStressTest(), myDaemonCodeAnalyzer, () -> super.runTestRunnable(testRunnable));
+    ProductionDaemonTestUtil.runTestInProduction(isStressTest(), myDaemonCodeAnalyzer, () -> super.runTestRunnable(testRunnable));
   }
 
   @Override
@@ -50,34 +44,10 @@ public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonA
     super.tearDown();
   }
 
+  /**
+   * @see ProductionDaemonTestUtil#runTestInProduction
+   */
   public static void runTestInProduction(boolean isStressTest, @NotNull DaemonCodeAnalyzerImpl codeAnalyzer, @NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    boolean wasUpdateByTimerEnabled = codeAnalyzer.isUpdateByTimerEnabled();
-    Disposable disposable = Disposer.newDisposable();
-    try {
-      if (!wasUpdateByTimerEnabled) {
-        codeAnalyzer.setUpdateByTimerEnabled(true);
-      }
-      TestDaemonCodeAnalyzerImpl.runWithDaemonLoggerTraceLevel(isStressTest, ()->
-      ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(()-> {
-      DaemonProgressIndicator.runInDebugMode(() ->
-      CodeInsightTestFixtureImpl.disableInstantiateAndRunIn(() ->
-      TestDaemonCodeAnalyzerImpl.runWithReparseDelay(0, ()-> {
-        try {
-          testRunnable.run();
-        }
-        catch (Throwable e) {
-          LOG.info(e); // to make the exact moment visible in the test log
-          throw e;
-        }
-      })));
-      return null;
-      }));
-    }
-    finally {
-      if (!wasUpdateByTimerEnabled) {
-        codeAnalyzer.setUpdateByTimerEnabled(false);
-      }
-      Disposer.dispose(disposable);
-    }
+    ProductionDaemonTestUtil.runTestInProduction(isStressTest, codeAnalyzer, testRunnable);
   }
 }

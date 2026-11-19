@@ -6,9 +6,13 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory.Companion.EP_NAME
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
@@ -17,8 +21,10 @@ import java.util.function.Consumer
 class ExternalSystemEventDispatcher(
   taskId: ExternalSystemTaskId,
   progressListener: BuildProgressListener?,
-  consoleSettings: BuildViewSettingsProvider,
+  private val consoleSettings: BuildViewSettingsProvider,
 ) : BuildEventDispatcher {
+
+  private val disposable = Disposer.newDisposable("ExternalSystemEventDispatcher")
 
   private lateinit var outputMessageDispatcher: ExternalSystemOutputMessageDispatcher
 
@@ -60,5 +66,16 @@ class ExternalSystemEventDispatcher(
 
   override fun close() {
     outputMessageDispatcher.close()
+    Disposer.dispose(disposable)
+  }
+
+  fun attachToProcess(processHandler: ExternalSystemProcessHandler) {
+    if (consoleSettings.isSingleBuildConsoleView) {
+      processHandler.addProcessListener(object : ProcessListener {
+        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+          notifyTextAvailable(event.getText(), ProcessOutputType.fromKey(outputType))
+        }
+      }, disposable)
+    }
   }
 }

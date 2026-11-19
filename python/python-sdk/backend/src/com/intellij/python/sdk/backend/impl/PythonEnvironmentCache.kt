@@ -61,3 +61,11 @@ internal fun Sdk.enrichLocalPythonSdkWithHomeInfo(forceRefresh: Boolean = false)
  * Reads no file, so any thread can call it.
  */
 internal fun Sdk.cachedPythonEnvironmentResult(): PyResult<PythonEnvironment>? = getUserData(PYTHON_ENVIRONMENT_RESULT_KEY)
+
+/**
+ * Stores [result] as the detection of this SDK, see [enrichLocalPythonSdkWithHomeInfo], for an SDK whose environment its
+ * creator has just detected. The interpreter of the SDK then reads it and does not detect again.
+ */
+internal fun Sdk.cachePythonEnvironmentResult(result: PyResult<PythonEnvironment>) {
+  putUserData(PYTHON_ENVIRONMENT_RESULT_KEY, result)
+}

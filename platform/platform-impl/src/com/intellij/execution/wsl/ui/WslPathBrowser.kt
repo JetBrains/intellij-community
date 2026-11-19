@@ -34,24 +34,28 @@ fun browseWslPath(
   accessWindowsFs: Boolean = true,
   customFileDescriptor: FileChooserDescriptor? = null,
 ) {
-  val windowsPath = getBestWindowsPathFromLinuxPath(distro, linuxPathField.text)
-  if (windowsPath == null) {
-    JBPopupFactory.getInstance().createMessage(IdeBundle.message("wsl.no_path")).show(parent)
-  }
-
   val descriptor = customFileDescriptor ?: FileChooserDescriptorFactory.createAllButJarContentsDescriptor()
   val project = ProjectManager.getInstance().defaultProject
   val contributors = createWslContributors(distro, accessWindowsFs)
   val factory = UniversalFileChooserFactory.getInstanceOrNull()
-  val dialog = if (factory == null || contributors.isEmpty()) {
+  val linuxPathText = linuxPathField.text
+  val chosen = if (factory == null || contributors.isEmpty()) {
     // Fall back to default file chooser
-    FileChooserFactory.getInstance().createFileChooser(descriptor, project, parent)
+    val windowsPath = getBestWindowsPathFromLinuxPath(distro, linuxPathText)
+    if (windowsPath == null) {
+      JBPopupFactory.getInstance().createMessage(IdeBundle.message("wsl.no_path")).show(parent)
+    }
+    val dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project, parent)
+    val files = if (windowsPath != null) dialog.choose(null, windowsPath) else dialog.choose(null)
+    files.firstOrNull()?.toNioPath()
   }
   else {
-    factory.createFileChooser(project = project, parent = parent, descriptor = descriptor, contributors = contributors)
+    val dialog = factory.createNioFileChooser(project, parent, descriptor, contributors, preselectPath = {
+      findNearestExistingWindowsPath(distro, linuxPathText) ?: distro.getUNCRootPath()
+    })
+    dialog.choose().firstOrNull()
   }
-  val files = if (windowsPath != null) dialog.choose(null, windowsPath) else dialog.choose(null)
-  val linuxPath = files.firstOrNull()?.toNioPath()?.let { distro.getWslPath(it) } ?: return
+  val linuxPath = chosen?.let { distro.getWslPath(it) } ?: return
   linuxPathField.text = linuxPath
 }
 

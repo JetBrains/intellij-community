@@ -39,7 +39,7 @@ import java.util.Set;
  * @author gregsh
  */
 final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
-  private final EventLogGroup GROUP = new EventLogGroup("project.structure", 6);
+  private final EventLogGroup GROUP = new EventLogGroup("project.structure", 7);
 
   private final EventId1<Integer> MODULES_TOTAL = GROUP.registerEvent("modules.total", EventFields.Count);
   private final EventId1<Integer> MODULE_GROUPS_TOTAL = GROUP.registerEvent("module.groups.total", EventFields.Count);
@@ -47,6 +47,7 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
   private final EventId1<Integer> CONTENT_ROOTS_TOTAL = GROUP.registerEvent("content.roots.total", EventFields.Count);
   private final EventId1<Integer> SOURCE_ROOTS_TOTAL = GROUP.registerEvent("source.roots.total", EventFields.Count);
   private final EventId1<Integer> EXCLUDED_ROOTS_TOTAL = GROUP.registerEvent("excluded.roots.total", EventFields.Count);
+  private final EventId1<Integer> EXCLUDE_PATTERNS_TOTAL = GROUP.registerEvent("exclude.patterns.total", EventFields.Count);
   private final EventId2<Integer, String> SOURCE_ROOT = GROUP.registerEvent(
     "source.root", EventFields.Count,
     EventFields.String("type", Arrays.asList("cookbooks-root",
@@ -74,7 +75,7 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
       .filter(o -> PluginInfoDetectorKt.getPluginInfo(o.getClass()).isDevelopedByJetBrains())
       .flatMap(JpsModelSerializerExtension::getModuleSourceRootPropertiesSerializers)
       .toMap(JpsElementPropertiesSerializer::getType, JpsElementPropertiesSerializer::getTypeId);
-    int contentRoots = 0, sourceRoots = 0, excludedRoots = 0, packagePrefix = 0;
+    int contentRoots = 0, sourceRoots = 0, excludedRoots = 0, packagePrefix = 0, excludePatterns = 0;
     Object2IntMap<String> types = new Object2IntOpenHashMap<>();
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     Module[] modules = moduleManager.getModules();
@@ -95,6 +96,7 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
           }
           types.mergeInt(key, 1, Math::addExact);
         }
+        excludePatterns += entry.getExcludePatterns().size();
       }
       String[] groupPath = moduleManager.getModuleGroupPath(module);
       if (groupPath != null) {
@@ -109,6 +111,7 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
     result.add(CONTENT_ROOTS_TOTAL.metric(contentRoots));
     result.add(SOURCE_ROOTS_TOTAL.metric(sourceRoots));
     result.add(EXCLUDED_ROOTS_TOTAL.metric(excludedRoots));
+    result.add(EXCLUDE_PATTERNS_TOTAL.metric(excludePatterns));
     for (Object2IntMap.Entry<String> entry : types.object2IntEntrySet()) {
       result.add(SOURCE_ROOT.metric(entry.getIntValue(), entry.getKey()));
     }

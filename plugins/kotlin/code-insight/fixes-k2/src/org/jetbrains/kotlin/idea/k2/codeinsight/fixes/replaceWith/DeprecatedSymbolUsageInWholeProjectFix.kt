@@ -5,12 +5,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.fullyExpandCall
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.replaceUsagesInWholeProject
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -44,12 +45,12 @@ internal class DeprecatedSymbolUsageInWholeProjectFix(
         )
     }
 
-    private fun targetPsiElement(): KtDeclaration? = when (val referenceTarget = element?.mainReference?.resolve()) {
-        is KtNamedFunction -> referenceTarget
-        is KtProperty -> referenceTarget
-        is KtTypeAlias -> referenceTarget
-        is KtConstructor<*> -> referenceTarget.getContainingClassOrObject() //TODO: constructor can be deprecated itself
-        is KtClass -> referenceTarget
+    private fun targetPsiElement(): KtDeclaration? = when (val referenceTarget = targetPsiElement(element, forNavigation = false)) {
+        is KtConstructor<*> if (!KotlinPsiHeuristics.hasAnnotation(
+            referenceTarget,
+            StandardNames.FqNames.deprecated
+        )) -> referenceTarget.getContainingClassOrObject()
+        is KtNamedFunction, is KtProperty, is KtTypeAlias, is KtClass, is KtConstructor<*> -> referenceTarget
         else -> null
     }
 }

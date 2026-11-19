@@ -45,6 +45,7 @@
       <applicationService serviceImplementation="com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService" client="all"/>
       <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.PreviewCommandRunnability"
                           serviceImplementation="com.intellij.markdown.backend.commandRunner.LocalPreviewCommandRunnability"/>
+      <runAnything.executionProvider implementation="com.intellij.markdown.backend.commandRunner.AsdfRunAnythingProvider"/>
       <externalAnnotator language="Markdown"
                          implementationClass="com.intellij.markdown.backend.inspections.MarkdownNonExistentInternetResourcesAnnotator"/>
       <editor.injectedFileChangesHandlerProvider language="Markdown"
@@ -68,6 +69,13 @@
       <stubElementRegistryExtension implementation="com.intellij.markdown.backend.index.MarkdownStubRegistryExtension"/>
 
       <longLineInspectionPolicy implementation="org.intellij.plugins.markdown.editor.MarkdownLongLineInspectionPolicy"/>
+
+      <codeInsight.declarativeInlayProvider language="Markdown" group="OTHER_GROUP" isEnabledByDefault="true"
+                                            providerId="MarkdownHardLineBreak"
+                                            implementationClass="com.intellij.markdown.backend.editor.MarkdownHardLineBreakInlayHintsProvider"
+                                            bundle="messages.MarkdownBundle"
+                                            nameKey="markdown.hard.line.break.inlay.name"
+                                            descriptionKey="markdown.hard.line.break.inlay.description"/>
 
       <intentionAction>
         <language>Markdown</language>
@@ -240,5 +248,7 @@
     <applicationListeners>
       <listener topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
                 class="org.intellij.plugins.markdown.settings.MarkdownSettingsMigration"/>
+      <listener topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
+                class="org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewTrustListener"/>
     </applicationListeners>
 </idea-plugin>

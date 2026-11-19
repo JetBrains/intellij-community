@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -XXLanguage:-WrapContinuationForTailCallFunctions -progressive -Werror -Xwarning-level=DEPRECATION:warning" />
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -Werror -Xwarning-level=DEPRECATION:warning" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -58,6 +58,7 @@
     <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.conda" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pytools.common" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.community.impl.conda" />
 </module>

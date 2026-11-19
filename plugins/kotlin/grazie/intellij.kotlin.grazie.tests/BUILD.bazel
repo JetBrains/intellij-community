@@ -27,7 +27,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/analysis-api:analysis",
-        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/kotlin/test-framework",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5/codeInsight",
         "//libraries/junit6",

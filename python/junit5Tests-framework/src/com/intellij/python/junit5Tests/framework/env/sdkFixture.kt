@@ -6,6 +6,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.sdkFixture
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
+import com.intellij.python.sdk.backend.isFor
+import com.intellij.python.sdk.backend.putTestSdk
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -65,7 +68,7 @@ internal object PyMockSdkTypeId : SdkTypeId {
 /**
  * The interpreter that the registry of [project] holds for this SDK. In the interpreter library flow the registry holds
  * the SDK itself, see [PythonInterpreterRegistry.putTestSdk]. In the legacy flow the SDK is in the SDK table: an SDK that
- * is not there yet goes there until the project closes, see [PythonInterpreterRegistry.addMockPythonInterpreter]. A run configuration
+ * is not there yet goes there until the project closes, see [addMockPythonInterpreter]. A run configuration
  * names its interpreter, so a test gives it this, not the SDK. An SDK without an owner directory gets [project]'s base
  * directory, as a mock interpreter does, see `PythonInterpreterRegistry.addMockPythonInterpreter`. Waits until a
  * recompute of the registry sees the SDK as it is now.
@@ -90,11 +93,12 @@ suspend fun Sdk.pythonInterpreterForTests(project: Project): PythonInterpreter {
     // The legacy flow reads the SDK table. The registry adds the SDK there and removes it with the project.
     return registry.addMockPythonInterpreter(ownerDir, this)
   }
+  suspend fun find() = registry.allInterpreters().firstOrNull { it.isFor(this) }
   return withTimeout(DEFAULT_TEST_TIMEOUT) {
-    var interpreter = registry.interpreterOf(this@pythonInterpreterForTests)
+    var interpreter = find()
     while (interpreter == null) {
       delay(50.milliseconds)
-      interpreter = registry.interpreterOf(this@pythonInterpreterForTests)
+      interpreter = find()
     }
     interpreter
   }

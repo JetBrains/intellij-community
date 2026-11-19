@@ -42,10 +42,10 @@ internal class UnifiedPluginSearchStatisticsTest {
       val field = group.events.last { it.eventId == "unified.search" }.getFields()
         .filterIsInstance<StringListEventField>().single { it.name == "filter_kinds" }
 
-      assertEquals(if (recorder == "FUS") 14 else 18, group.version)
+      assertEquals(if (recorder == "FUS") 15 else 19, group.version)
       assertEquals(
         listOf("{enum:VENDOR|CATEGORY|TAG|REPOSITORY|UPDATE_SOURCE|OUTDATED|ENABLED|DISABLED|INVALID|UPDATED_BUNDLED|" +
-               "BUNDLED|USER_INSTALLED|DOWNLOADED}"),
+               "BUNDLED|USER_INSTALLED|DOWNLOADED|BUILT_IN}"),
         field.validationRule,
       )
     }
@@ -113,6 +113,7 @@ internal class UnifiedPluginSearchStatisticsTest {
       "/bundled" to UnifiedPluginSearchFilterKind.BUNDLED,
       "/userInstalled" to UnifiedPluginSearchFilterKind.USER_INSTALLED,
       "/downloaded" to UnifiedPluginSearchFilterKind.DOWNLOADED,
+      "/built-in" to UnifiedPluginSearchFilterKind.BUILT_IN,
     )
     for ((command, kind) in filters) {
       for (text in listOf("", "Private query ")) {

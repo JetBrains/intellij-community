@@ -63,6 +63,24 @@ pub fn keep_failed_evidence(runtime: &dyn Runtime, bep: &BepSummary) -> Option<S
     Some(run)
 }
 
+/// The name of the file of a run directory that keeps the output of bazel.
+pub const BAZEL_OUTPUT_FILE: &str = "bazel-output.log";
+
+/// Writes the output of bazel of a run whose build failed to [`BAZEL_OUTPUT_FILE`] in `kept_run`, or in a new run
+/// directory when the run kept nothing else. The digest names the file: the tail on the stderr ends with the summary of
+/// bazel, and the cause of the failure is often far above it.
+///
+/// Answers the repo-relative path of the file, or `None` when it cannot be written. The run already has its verdict.
+pub fn keep_bazel_output(runtime: &dyn Runtime, kept_run: Option<&str>, output: &str) -> Option<String> {
+    let run = kept_run.map_or_else(|| new_run_dir(runtime), str::to_owned);
+    let path = format!("{run}/{BAZEL_OUTPUT_FILE}");
+    runtime.write_text_file(&repo_file(runtime, &path), output).ok()?;
+    if kept_run.is_none() {
+        remove_old_runs(runtime);
+    }
+    Some(path)
+}
+
 /// A repo-relative run directory that no earlier run uses. The name starts with the wall clock in milliseconds,
 /// zero-padded, so the names sort in run order, which is what the retention removes by.
 fn new_run_dir(runtime: &dyn Runtime) -> String {

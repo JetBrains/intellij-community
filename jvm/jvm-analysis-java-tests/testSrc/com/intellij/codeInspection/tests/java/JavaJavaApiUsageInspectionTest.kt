@@ -1,15 +1,23 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.javaApiUsageInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.jvmSdkProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
+@TestApplication
+class JavaJavaApiUsageInspectionTest {
+  companion object {
+    private val projectFixture = jvmSdkProjectFixture(LanguageLevel.JDK_25)
+  }
 
-  override val sdkLevel: LanguageLevel
-    get() = LanguageLevel.JDK_25
+  private val myFixture by javaApiUsageInspectionFixture(projectFixture)
 
+  @Test
   fun `test constructor`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_4)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -21,6 +29,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test ignored`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.addClass("""
@@ -42,6 +51,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test qualified reference`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -56,6 +66,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -67,6 +78,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test override annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -81,6 +93,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test minimum since highlighting`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -94,6 +107,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test no highlighting in javadoc`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -108,6 +122,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test minimum since no highlighting`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -121,6 +136,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test default methods`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -169,6 +185,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test raw inherit from newly generified`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.addClass("""
@@ -185,6 +202,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test generified`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.addClass("""
@@ -204,6 +222,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test language level 14`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_14)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -219,6 +238,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test language level 15`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_15)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -231,6 +251,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test language level 16`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_16)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -243,6 +264,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test language level 17`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_17)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -258,6 +280,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test language level quick fix`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_17)
     myFixture.configureByText("Main.java", """
@@ -275,6 +298,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     assertEquals(LanguageLevel.JDK_19, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
 
+  @Test
   fun `test override with different since version`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -292,6 +316,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test method from new interface called`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -305,6 +330,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test import for static methods`() {
     myFixture.addClass("""
       package java.lang;
@@ -328,6 +354,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
   
+  @Test
   fun `test non preview level suggested`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_11)
     // Expect 15+, not 13+, as it was in preview in JDK 13
@@ -340,6 +367,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """)
   }
 
+  @Test
   fun `test language level 24 with JDK 25`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_24)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -357,6 +385,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
 
+  @Test
   fun `test language level 24 preview with JDK 25`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_24_PREVIEW)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -374,6 +403,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
 
+  @Test
   fun `test gatherer language level 22 with JDK 25`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_22)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -387,6 +417,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test gatherer language level 22 preview with JDK 25`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_22_PREVIEW)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -400,6 +431,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test method that will be overridden in a future Java version`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
     myFixture.testHighlighting(JvmLanguage.JAVA, """

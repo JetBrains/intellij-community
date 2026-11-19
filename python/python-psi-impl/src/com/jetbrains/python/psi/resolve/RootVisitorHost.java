@@ -74,7 +74,8 @@ public final class RootVisitorHost {
     }
     else {
       // A module names its interpreter by one carrier, and the platform loads the other too. See isIgnoredInterpreterEntry.
-      enumerator = enumerator.satisfying(entry -> !PyInterpreterLibraryKt.isIgnoredInterpreterEntry(entry));
+      enumerator = enumerator.satisfying(entry -> !PyInterpreterLibraryKt.isIgnoredInterpreterEntry(entry) &&
+                                                  !isInterpreterLibraryOfDependencyModule(entry, module));
     }
     enumerator.forEach(orderEntry -> {
       if (orderEntry instanceof ModuleSourceOrderEntry) {
@@ -82,6 +83,14 @@ public final class RootVisitorHost {
       }
       return visitOrderEntryRoots(visitor, orderEntry);
     });
+  }
+
+  /**
+   * Whether [entry] is the interpreter library of a module that [module] depends on. A module resolves in its own
+   * interpreter only. The platform skips the SDK of a dependency module, and it does not skip a library of that module.
+   */
+  private static boolean isInterpreterLibraryOfDependencyModule(@NotNull OrderEntry entry, @NotNull Module module) {
+    return PyInterpreterLibraryKt.isPyInterpreterLibrary(entry) && !module.equals(entry.getOwnerModule());
   }
 
   static void visitSdkRoots(PsiFile file, RootVisitor visitor) {

@@ -38,7 +38,7 @@ class PlatformResourceGeneratorRunTest {
 
   @Test
   fun `the classic dev build selects the ordinary generators by their spec`() {
-    val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
+    val layout = PluginLayout.pluginAuto("test.plugin") { spec ->
       spec.withGeneratedResources(LayoutAssetSpec.OMITTED) { _, _ -> }
       spec.withGeneratedResources(declared) { _, _ -> }
       spec.withGeneratedResources(LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { _, _ -> }
@@ -113,7 +113,7 @@ class PlatformResourceGeneratorRunTest {
 
   @Test
   fun `an omitted platform generator makes the layout platform-specific`() {
-    val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
+    val layout = PluginLayout.pluginAuto("test.plugin") { spec ->
       spec.withGeneratedPlatformResources(platform = distribution, layoutAssetSpec = LayoutAssetSpec.OMITTED) { _, _ -> }
     }
 
@@ -127,7 +127,7 @@ class PlatformResourceGeneratorRunTest {
     val plain: LayoutPatcher = { _, _, _ -> }
     val omitted = DeclaredPluginLayoutPatcher(LayoutAssetSpec.OMITTED) { _, _, _ -> }
     val omittedRun = DeclaredPluginLayoutPatcher(LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { _, _, _ -> }
-    val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { }
+    val layout = PluginLayout.pluginAuto("test.plugin") { }
     layout.withPatch(omitted)
     layout.withPatch(plain)
     layout.withPatch(omittedRun)
@@ -138,7 +138,7 @@ class PlatformResourceGeneratorRunTest {
 
   @Test
   fun `the classic dev build selects the custom assets by their spec`() {
-    val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
+    val layout = PluginLayout.pluginAuto("test.plugin") { spec ->
       spec.withCustomAsset(LayoutAssetSpec.OMITTED) { null }
       spec.withCustomAsset(declared) { null }
       spec.withCustomAsset(distribution, LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { null }
@@ -150,7 +150,7 @@ class PlatformResourceGeneratorRunTest {
   }
 
   private fun createPlatformLayout(invocations: MutableList<String>): PluginLayout {
-    return PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
+    return PluginLayout.pluginAuto("test.plugin") { spec ->
       spec.withGeneratedPlatformResources(distribution, LayoutAssetSpec.OMITTED) { _, _ -> invocations.add("omitted") }
       spec.withGeneratedPlatformResources(distribution, declared) { _, _ -> invocations.add("declared") }
       spec.withGeneratedPlatformResources(distribution, LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { _, _ ->

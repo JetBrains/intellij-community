@@ -70,7 +70,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements Int
     NewClassPlace place = NewClassPlace.choosePlaceInteractively(reference, getKind());
     if (place == null) return;
     ActionContext context = ActionContext.from(editor, psiFile);
-    ModCommandExecutor.executeInteractively(context, getText(), editor, () -> createCommand(context, newExpression, place));
+    ModCommandExecutor.executeInteractively(context, getText(), editor, () -> createCommand(newExpression, place));
   }
 
   @Override
@@ -85,20 +85,18 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements Int
     return CreateClassKind.CLASS;
   }
 
-  private @NotNull ModCommand createCommand(@NotNull ActionContext context,
-                                            @NotNull PsiNewExpression newExpression,
+  private @NotNull ModCommand createCommand(@NotNull PsiNewExpression newExpression,
                                             @NotNull NewClassPlace place) {
-    return ModCommand.psiUpdate(context, updater -> {
-      PsiJavaCodeReferenceElement reference = getReferenceElement(newExpression);
+    return ModCommand.psiUpdate(newExpression, (newCopy, updater) -> {
+      PsiJavaCodeReferenceElement reference = getReferenceElement(newCopy);
       if (reference == null) return;
-      PsiJavaCodeReferenceElement writableReference = updater.getWritable(reference);
       PsiClass aClass = CreateFromUsageUtils.createClass(updater, getKind(), place, reference, null);
       if (aClass == null) return;
       RecordingTemplateBuilder fields = new RecordingTemplateBuilder();
-      PsiElement endAfter = setupNewClass(aClass, newExpression, fields);
+      PsiElement endAfter = setupNewClass(aClass, newCopy, fields);
       SmartPsiElementPointer<PsiElement> endAfterPointer = endAfter == null ? null : SmartPointerManager.createPointer(endAfter);
-      writableReference.bindToElement(aClass);
-      aClass = (PsiClass)CodeStyleManager.getInstance(context.project()).reformat(aClass);
+      reference.bindToElement(aClass);
+      aClass = (PsiClass)CodeStyleManager.getInstance(updater.getProject()).reformat(aClass);
       fields.startTemplate(updater, aClass, endAfterPointer == null ? null : endAfterPointer.getElement());
     });
   }
@@ -368,7 +366,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements Int
       if (reference == null) return ModCommand.nop();
       NewClassPlace place = NewClassPlace.defaultPlaceFor(reference);
       if (place == null) return ModCommand.nop();
-      return createCommand(context, newExpression, place);
+      return createCommand(newExpression, place);
     }
   }
 }

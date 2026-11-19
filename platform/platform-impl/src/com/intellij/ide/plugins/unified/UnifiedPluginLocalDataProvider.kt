@@ -48,6 +48,8 @@ internal data class UnifiedPluginLocalSnapshot(
   val installedItems: List<PluginItemState>,
   val bundledItems: List<PluginItemState>,
   val listModelData: PluginListModelData,
+  /** Implementation-detail plugins by their Installed or Bundled section. Only the `/built-in` filter shows them. */
+  val implementationDetailItems: Map<PluginSectionId, List<PluginItemState>> = emptyMap(),
 )
 
 internal data class PluginListModelData(
@@ -79,8 +81,7 @@ internal class DefaultUnifiedPluginLocalDataProvider(
       return buildDegradedLocalSnapshot(inventory, updates, contentRevision)
     }
     return coroutineScope {
-      val plugins = inventory.installedPlugins + inventory.bundledPlugins
-      val models = plugins.map(UnifiedPluginInventoryItem::model)
+      val models = inventory.allPlugins.map(UnifiedPluginInventoryItem::model)
       val pluginIds = models.map(PluginUiModel::pluginId)
       val enabledStates = async { host.getPluginEnabledStates(models) }
       val problems = async { pluginManager.loadErrors(host.sessionId) }
@@ -113,7 +114,7 @@ internal fun buildDegradedLocalSnapshot(
   updates: PluginUpdatesEvent?,
   contentRevision: Long,
 ): UnifiedPluginLocalSnapshot {
-  val models = (inventory.installedPlugins + inventory.bundledPlugins).map(UnifiedPluginInventoryItem::model)
+  val models = inventory.allPlugins.map(UnifiedPluginInventoryItem::model)
   return buildLocalSnapshot(
     inventory = inventory,
     updates = updates,
@@ -139,7 +140,7 @@ internal fun buildLocalSnapshot(
   tags: Map<PluginId, List<String>> = emptyMap(),
   expectedExplanations: Map<PluginId, List<@Nls String>> = emptyMap(),
 ): UnifiedPluginLocalSnapshot {
-  val allPlugins = inventory.installedPlugins + inventory.bundledPlugins
+  val allPlugins = inventory.allPlugins
   val updatesById = updates?.all.orEmpty().associateBy(PluginUiModel::pluginId)
   val installedModels = allPlugins.associate { plugin -> plugin.model.pluginId to plugin.model }
   val effectiveStates = allPlugins.associate { plugin ->
@@ -180,6 +181,9 @@ internal fun buildLocalSnapshot(
   return UnifiedPluginLocalSnapshot(
     installedItems = itemsWithErrorsFirst(inventory.installedPlugins),
     bundledItems = itemsWithErrorsFirst(inventory.bundledPlugins),
+    implementationDetailItems = inventory.implementationDetailPlugins
+      .groupBy { plugin -> if (plugin.bundledOn == null) PluginSectionId.Installed else PluginSectionId.Bundled }
+      .mapValues { (_, plugins) -> itemsWithErrorsFirst(plugins) },
     listModelData = PluginListModelData(
       installedModels = installedModels,
       errors = errors.filterKeys(installedModels::containsKey),

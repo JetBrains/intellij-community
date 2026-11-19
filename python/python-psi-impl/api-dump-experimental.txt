@@ -2,7 +2,7 @@
 - <init>():V
 - createPydevDoc(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):java.lang.String
 - formatDocstring(com.intellij.openapi.module.Module,com.jetbrains.python.documentation.docstrings.DocStringFormat,java.lang.String,java.util.List):java.lang.String
-- getConsoleSdk(com.intellij.psi.PsiElement):com.intellij.openapi.projectRoots.Sdk
+- getConsoleInterpreter(com.intellij.psi.PsiElement):com.intellij.python.sdk.backend.PythonInterpreter
 - s:getInstance():com.jetbrains.python.PythonRuntimeService
 - getLanguageLevelForSdk(com.intellij.openapi.projectRoots.Sdk):com.jetbrains.python.psi.LanguageLevel
 - getPydevConsoleReference(com.jetbrains.python.psi.PyReferenceExpression,com.jetbrains.python.psi.resolve.PyResolveContext):com.intellij.psi.PsiPolyVariantReference
@@ -66,10 +66,9 @@ f:com.jetbrains.python.psi.impl.PyEvaluator$Companion
 - f:addConstraint(com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.PyVariance,com.jetbrains.python.psi.types.ConstraintPriority,Z):V
 - bs:addConstraint$default(com.jetbrains.python.psi.types.CspBuilder,com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.PyVariance,com.jetbrains.python.psi.types.ConstraintPriority,Z,I,java.lang.Object):V
 - f:addInferenceVariable(com.jetbrains.python.psi.types.PyTypeVarType,com.jetbrains.python.psi.types.SubstitutionsIdentifier):com.jetbrains.python.psi.types.PyInferenceVariable
-- f:getAllSubstitutions():java.util.Set
+- f:getAllSubstitutions():java.util.Map
 - f:getContext():com.jetbrains.python.psi.types.TypeEvalContext
 - f:getSolution():com.jetbrains.python.psi.types.PyCspSolution
-- f:putSubstitutions(com.jetbrains.python.psi.types.SubstitutionsIdentifier,com.jetbrains.python.psi.types.PyTypeChecker$GenericSubstitutions):V
 - f:solve():V
 *a:com.jetbrains.python.psi.types.PyCloningTypeVisitor
 - com.jetbrains.python.psi.types.PyTypeVisitorExt

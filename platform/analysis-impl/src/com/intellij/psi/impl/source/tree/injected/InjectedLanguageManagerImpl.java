@@ -58,7 +58,6 @@ import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlow
 import static com.intellij.openapi.project.DumbService.getDumbAwareExtensions;
 import static java.util.Collections.singletonList;
 
-@SuppressWarnings("deprecation")
 @ApiStatus.Internal
 public final class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(InjectedLanguageManagerImpl.class);
@@ -82,8 +81,8 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     myDumbService = DumbService.getInstance(myProject);
     myDocManager = PsiDocumentManager.getInstance(project);
 
-    MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.addChangeListener(project, this::clearInjectorCache, this);
-    LanguageInjector.EXTENSION_POINT_NAME.addChangeListener(this::clearInjectorCache, this);
+    MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.addChangeListener(project, () -> clearInjectorCache(), this);
+    LanguageInjector.EXTENSION_POINT_NAME.addChangeListener(() -> clearInjectorCache(), this);
 
     project.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
@@ -221,13 +220,17 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
       return;
     }
 
+    PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
-      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-      if (psiFile != null) {
-        for (DocumentWindow document : InjectedLanguageUtilBase.getCachedInjectedDocuments(psiFile)) {
-          InjectedEditorWindowTracker.getInstance().disposeEditorFor(document);
+      FileViewProvider provider = psiManager.findCachedViewProvider(file);
+      if (provider != null) {
+        InjectedEditorWindowTracker tracker = InjectedEditorWindowTracker.getInstance();
+        for (PsiFile psiFile : provider.getAllFiles()) {
+          for (DocumentWindow document : InjectedLanguageUtilBase.getCachedInjectedDocuments(psiFile)) {
+            tracker.disposeEditorFor(document);
+          }
+          dropFileCaches(psiFile);
         }
-        dropFileCaches(psiFile);
       }
     }
   }
@@ -275,8 +278,8 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   public int mapInjectedOffsetToUnescaped(@NotNull PsiFile injectedFile, int injectedOffset) {
     if (injectedOffset < 0) return injectedOffset;
     var visitor = new PsiRecursiveElementWalkingVisitor() {
-      int unescapedOffset = 0;
-      int escapedOffset = 0;
+      int unescapedOffset;
+      int escapedOffset;
 
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -300,8 +303,8 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   public int mapUnescapedOffsetToInjected(@NotNull PsiFile injectedFile, int offset) {
     if (offset < 0) return offset;
     var visitor = new PsiRecursiveElementWalkingVisitor() {
-      int unescapedOffset = 0;
-      int escapedOffset = 0;
+      int unescapedOffset;
+      int escapedOffset;
 
       @Override
       public void visitElement(@NotNull PsiElement element) {

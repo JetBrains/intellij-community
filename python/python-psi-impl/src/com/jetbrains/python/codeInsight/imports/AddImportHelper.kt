@@ -45,8 +45,8 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
-import com.jetbrains.python.psi.resolve.mainPythonSdk
-import com.jetbrains.python.psi.resolve.pythonSdkIfReady
+import com.jetbrains.python.psi.resolve.mainPythonInterpreter
+import com.jetbrains.python.psi.resolve.pythonInterpreterIfReady
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
@@ -390,9 +390,9 @@ object AddImportHelper {
       )
     }
     val module = ModuleUtilCore.findModuleForPsiElement(importLocation)
-    val pythonSdk = if (module != null) module.pythonSdkIfReady() else toImport.project.mainPythonSdk()
+    val interpreter = if (module != null) module.pythonInterpreterIfReady() else toImport.project.mainPythonInterpreter()
 
-    if (PySkeletonUtil.isStdLib(vFile, pythonSdk)) {
+    if (PySkeletonUtil.isStdLib(vFile, interpreter)) {
       return ImportPriorityChoice(
         ImportPriority.BUILTIN, vFile.toString() + " is either in lib but not under site-packages," +
                                 " or belongs to the root of skeletons," +
@@ -401,8 +401,8 @@ object AddImportHelper {
     }
     else {
       return ImportPriorityChoice(
-        ImportPriority.THIRD_PARTY, if (pythonSdk == null)
-          "SDK for $vFile isn't found"
+        ImportPriority.THIRD_PARTY, if (interpreter == null)
+          "Interpreter for $vFile isn't found"
         else
           "Fall back value for $vFile"
       )

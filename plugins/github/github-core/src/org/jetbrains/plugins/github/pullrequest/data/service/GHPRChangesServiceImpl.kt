@@ -11,10 +11,10 @@ import com.intellij.openapi.diff.impl.patch.BinaryFilePatch
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.GitBranchComparisonResultUtil
 import git4idea.changes.GitCommitShaWithPatches
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitCodeReviewUtils
@@ -41,7 +41,6 @@ private typealias DiffSpec = Pair<String?, String>
 internal const val MAX_CONCURRENT_COMMITS = 50
 
 class GHPRChangesServiceImpl(parentCs: CoroutineScope,
-                             private val project: Project,
                              private val requestExecutor: GithubApiRequestExecutor,
                              private val gitRemote: GitRemoteUrlCoordinates,
                              private val ghRepository: GHRepositoryCoordinates) : GHPRChangesService {
@@ -132,7 +131,7 @@ class GHPRChangesServiceImpl(parentCs: CoroutineScope,
         val prPatches = batchesFlow(requestExecutor, request).foldToList().mapNotNull(::toPatch)
         val commitsWithPatches = commitsWithPatchesReq.await()
 
-        GitBranchComparisonResult.create(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsWithPatches, prPatches)
+        GitBranchComparisonResultUtil.create(gitRemote.repository.root, baseRef, mergeBaseRef, commitsWithPatches, prPatches)
       }
     }.processErrorAndGet {
       LOG.info("Error occurred while building changes from commits", it)

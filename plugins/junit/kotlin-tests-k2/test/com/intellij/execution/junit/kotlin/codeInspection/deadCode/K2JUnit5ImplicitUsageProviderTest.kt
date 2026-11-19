@@ -1,13 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection.deadCode
 
-import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
+import org.junit.jupiter.api.Test
 
-class K2JUnit5ImplicitUsageProviderTest : KotlinJUnit5ImplicitUsageProviderTest() {
-  override val inspection: InspectionProfileEntry by lazy { UnusedSymbolInspection() }
-
+@TestApplication
+class K2JUnit5ImplicitUsageProviderTest : KotlinJUnit5ImplicitUsageProviderTest({ UnusedSymbolInspection() }) {
+  @Test
   fun `test usage of method source with property name`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.util.stream.*

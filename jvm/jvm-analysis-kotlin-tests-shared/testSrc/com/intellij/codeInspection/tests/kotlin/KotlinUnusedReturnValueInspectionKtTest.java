@@ -2,24 +2,30 @@ package com.intellij.codeInspection.tests.kotlin;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
-import com.intellij.testFramework.JavaInspectionTestCase;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
 
 
-public abstract class KotlinUnusedReturnValueInspectionKtTest extends JavaInspectionTestCase {
+@TestApplication
+public abstract class KotlinUnusedReturnValueInspectionKtTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  protected final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/jvm");
+
   private final UnusedReturnValue myGlobalTool = new UnusedReturnValue();
 
-  
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/jvm";
-  }
-
   private String getGlobalTestDir() {
-    return "unusedReturnValue/" + getTestName(true);
+    return "unusedReturnValue/" + javaInspection.get().getTestName(true);
   }
 
+  @Test
   public void testUsedPropertyBySimpleName() {
-    doTest(getGlobalTestDir(), myGlobalTool);
+    javaInspection.get().doTest(getGlobalTestDir(), myGlobalTool);
   }
 
 }

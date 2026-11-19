@@ -6,8 +6,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
@@ -18,28 +22,56 @@ import javax.swing.SwingUtilities
 /**
  * Moves the shell cursor to the clicked place in the command that the user types.
  * The shell gets the left or right arrow keys, as if the user pressed them.
+ * The [TerminalOptionsProvider.moveCursorOnClick] option turns it off.
  *
  * It handles the click, which the editor reports after its own handling of the release, for example, the removal of the selection.
  * The editor reports no click after a drag, or if a listener consumed the press or the release, for example, the mouse reporting.
  */
 internal fun installPromptClickHandling(
-  editor: Editor,
+  editor: EditorEx,
   outputModel: TerminalOutputModel,
   shellIntegration: TerminalShellIntegration,
   terminalInput: TerminalInput,
   parentDisposable: Disposable,
 ) {
+  var isFocused = editor.contentComponent.hasFocus()
+  var isFocusedOnPress = false
+
+  // Actually, `editor.contentComponent.hasFocus()` can be used instead of tracking `isFocused` state via listener.
+  // But it would complicate headless testing a lot, so we use this approach.
+  editor.addFocusListener(object : FocusChangeListener {
+    override fun focusGained(editor: Editor) {
+      isFocused = true
+    }
+
+    override fun focusLost(editor: Editor) {
+      isFocused = false
+    }
+  }, parentDisposable)
+
   editor.addEditorMouseListener(object : EditorMouseListener {
+    override fun mousePressed(event: EditorMouseEvent) {
+      // On the window activation, the editor gets the focus back before the press of the activating click.
+      // Only the IDE frame detects this click via some heuristic.
+      // In the case when the terminal is in a detached window, it won't be detected.
+      val frame = SwingUtilities.getWindowAncestor(editor.contentComponent) as? IdeFrameImpl
+      isFocusedOnPress = isFocused && frame?.wasJustActivatedByClick != true
+    }
+
     override fun mouseClicked(event: EditorMouseEvent) {
+      if (!TerminalOptionsProvider.instance.moveCursorOnClick) return
       val mouseEvent = event.mouseEvent
       if (event.area != EditorMouseEventArea.EDITING_AREA || !SwingUtilities.isLeftMouseButton(mouseEvent)) return
+      // The click brings the focus to the terminal, so the user does not aim to move the cursor.
+      if (!isFocusedOnPress) return
       // A click with a modifier is for the editor, for example, Shift+click extends the selection.
       if (mouseEvent.modifiersEx and CLICK_MODIFIERS_MASK != 0) return
       // The click selected text, for example, a double click selects a word.
       if (editor.selectionModel.hasSelection()) return
 
       val block = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return
-      val clickOffset = outputModel.startOffset + event.clickedCharacterOffset().toLong()
+      val characterOffset = event.clickedCharacterOffset() ?: return
+      val clickOffset = outputModel.startOffset + characterOffset.toLong()
       val move = calculateCursorMoveToClick(outputModel, block, clickOffset) ?: return
       when (move.direction) {
         TerminalCursorMove.Direction.LEFT -> terminalInput.sendLeft(times = move.keyCount)
@@ -53,8 +85,17 @@ internal fun installPromptClickHandling(
  * Returns the offset of the character under the pointer, as for a block cursor.
  * [EditorMouseEvent.getOffset] is the nearest character boundary, so it is after the character for a click on its right half.
  * The zero-width code points after a character, for example, a combining mark, belong to this character.
+ *
+ * Returns null if the pointer is not in the row of a text line.
+ * The editor maps a point in a block inlay or below the last line to the nearest line, for example, a point below the command.
  */
-private fun EditorMouseEvent.clickedCharacterOffset(): Int {
+private fun EditorMouseEvent.clickedCharacterOffset(): Int? {
+  val lineY = editor.visualLineToY(visualPosition.line)
+  // A block inlay above or below the line takes this space.
+  if (mouseEvent.y < lineY || mouseEvent.y >= lineY + editor.lineHeight) return null
+  // The pointer is below the last line.
+  if (editor.offsetToLogicalPosition(offset).line != logicalPosition.line) return null
+
   val text = editor.document.immutableCharSequence
   val isLeftOfBoundary = isOverText && visualPosition.column > 0 &&
                          mouseEvent.x < editor.visualPositionToPoint2D(visualPosition).x

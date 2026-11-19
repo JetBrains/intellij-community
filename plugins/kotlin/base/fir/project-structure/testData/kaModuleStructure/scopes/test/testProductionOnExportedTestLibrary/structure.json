@@ -1,0 +1,11 @@
+{
+    "is_disabled": true,
+    "is_disabled_reason": "KTIJ-41028",
+    "modules": [
+        { "name": "A", "content_roots": ["production", "tests"], "dependencies": ["B"] },
+        { "name": "B", "content_roots": ["production", "tests"], "dependencies": [ {"name": "L", "scope": "TEST", "exported": true} ] }
+    ],
+    "libraries": [
+        { "name": "L" }
+    ]
+}

@@ -63,7 +63,7 @@ public final class NonSerializableWithSerialVersionUIDFieldInspection extends Ba
     PsiField field = aClass.findFieldByName(HardcodedMethodConstants.SERIAL_VERSION_UID, false);
     if (field == null) return InspectionGadgetsFix.EMPTY_ARRAY;
     boolean onTheFly = (boolean)infos[1];
-    LocalQuickFix removeFieldFix = (LocalQuickFix)QuickFixFactory.getInstance().createSafeDeleteFix(field);
+    LocalQuickFix removeFieldFix = LocalQuickFix.from(QuickFixFactory.getInstance().createSafeDeleteFix(field));
     if (aClass.isAnnotationType() || aClass.isInterface() || aClass instanceof PsiAnonymousClass) {
       return onTheFly ? new LocalQuickFix[]{removeFieldFix} : InspectionGadgetsFix.EMPTY_ARRAY;
     }

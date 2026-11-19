@@ -4,133 +4,159 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class InheritanceToDelegationTest extends LightMultiFileTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/inheritanceToDelegation/";
-  }
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
-  }
+@TestApplication
+public class InheritanceToDelegationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/inheritanceToDelegation/");
 
+  @Test
   public void testSimpleInsertion() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+    multiFile.get().doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
+  @Test
   public void testSimpleGenerics() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+    multiFile.get().doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
+  @Test
   public void testSuperCalls() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+    multiFile.get().doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
+  @Test
   public void testGetter() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
+    multiFile.get().doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
   }
 
+  @Test
   public void testSubClass() {
-    doTest(
+    multiFile.get().doTest(
       createPerformAction("A", "myDelegate", "MyDelegatedBase", "DelegatedBase", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, true,
                           true));
   }
 
+  @Test
   public void testSubClassNoMethods() {
-    doTest(
+    multiFile.get().doTest(
       createPerformAction("A", "myDelegate", "MyDelegatedBase", "DelegatedBase", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
   }
 
+  @Test
   public void testInterfaces() {
-    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[]{0}, new String[]{"I"}, true, true));
+    multiFile.get().doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[]{0}, new String[]{"I"}, true, true));
   }
 
+  @Test
   public void testInnerClass() {
-    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+    multiFile.get().doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
+  @Test
   public void testAbstractBase() {
-    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+    multiFile.get().doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
+  @Test
   public void testAbstractBase1() {
-    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
+    multiFile.get().doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
+  @Test
   public void testHierarchy() {
-    doTest(createPerformAction("X", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
+    multiFile.get().doTest(createPerformAction("X", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
+  @Test
   public void testOverridenMethods() {
-    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
+    multiFile.get().doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
+  @Test
   public void testAnnotations() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+    multiFile.get().doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
+  @Test
   public void testInnerClassForInterface() {
-    doTest(createPerformAction("A", "myBaseInterface", "MyBaseInterface", "BaseInterface",
+    multiFile.get().doTest(createPerformAction("A", "myBaseInterface", "MyBaseInterface", "BaseInterface",
                                new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
+  @Test
   public void testInnerClassForInterfaceAbstract() {
-    doTest(createPerformAction("A", "myBaseInterface", "MyBaseInterface", "BaseInterface",
+    multiFile.get().doTest(createPerformAction("A", "myBaseInterface", "MyBaseInterface", "BaseInterface",
                                new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
+  @Test
   public void testSubinterface() {
-    doTest(createPerformAction("A", "myDelegate", "MyJ", "J", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
+    multiFile.get().doTest(createPerformAction("A", "myDelegate", "MyJ", "J", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
   }
 
+  @Test
   public void testInterfaceDelegation() {
-    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
+    multiFile.get().doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
   }
 
   // IDEADEV-19675
+  @Test
   public void testInterfaceImplicitImplementation() {
-    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
+    multiFile.get().doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
   }
 
   // IDEADEV-19699
+  @Test
   public void testMultipleInterfaceDelegation() {
-    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf2", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+    multiFile.get().doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf2", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
+  @Test
   public void testScr20557() {
-    doTest(createPerformAction2("xxx.SCR20557", "myResultSet", "MyResultSet", "java.sql.ResultSet",
+    multiFile.get().doTest(createPerformAction2("xxx.SCR20557", "myResultSet", "MyResultSet", "java.sql.ResultSet",
                                 new String[]{"getDate"}, ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
+  @Test
   public void testTypeParametersSubstitution() {
-     doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+     multiFile.get().doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
+  @Test
   public void testSealedParent() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+    multiFile.get().doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   private ThrowableRunnable<Exception> createPerformAction(
     final String className, final String fieldName, final String innerClassName,
     final String baseClassName, final int[] methodIndices, final String[] delegatedInterfaceNames,
     final boolean delegateOtherMembers, final boolean generateGetter) {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     return () -> {
       PsiClass aClass = myFixture.findClass(className);
-      assertNotNull("Class " + className + " not found", aClass);
+      assertNotNull(aClass, "Class " + className + " not found");
       PsiClass baseClass = myFixture.findClass(baseClassName);
-      assertNotNull("Base class " + baseClassName + " not found", baseClass);
+      assertNotNull(baseClass, "Base class " + baseClassName + " not found");
       final PsiMethod[] methods = baseClass.getMethods();
       final PsiMethod[] delegatedMethods = new PsiMethod[methodIndices.length];
       for (int i = 0; i < methodIndices.length; i++) {
@@ -144,7 +170,7 @@ public class InheritanceToDelegationTest extends LightMultiFileTestCase {
         delegatedInterfaces[i] = anInterface;
       }
       new InheritanceToDelegationProcessor(
-        getProject(),
+        myFixture.getProject(),
         aClass, baseClass, fieldName, innerClassName, delegatedInterfaces, delegatedMethods, delegateOtherMembers,
         generateGetter).run();
     };
@@ -154,11 +180,12 @@ public class InheritanceToDelegationTest extends LightMultiFileTestCase {
     final String className, final String fieldName, final String innerClassName,
     final String baseClassName, final String[] methodNames, final String[] delegatedInterfaceNames,
     final boolean delegateOtherMembers, final boolean generateGetter) {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     return () -> {
       PsiClass aClass = myFixture.findClass(className);
-      assertNotNull("Class " + className + " not found", aClass);
+      assertNotNull(aClass, "Class " + className + " not found");
       PsiClass baseClass = myFixture.findClass(baseClassName);
-      assertNotNull("Base class " + baseClassName + " not found", baseClass);
+      assertNotNull(baseClass, "Base class " + baseClassName + " not found");
       final PsiMethod[] delegatedMethods;
       final List<PsiMethod> methodsList = new ArrayList<>();
       for (String name : methodNames) {
@@ -175,7 +202,7 @@ public class InheritanceToDelegationTest extends LightMultiFileTestCase {
         delegatedInterfaces[i] = anInterface;
       }
       new InheritanceToDelegationProcessor(
-        getProject(),
+        myFixture.getProject(),
         aClass, baseClass, fieldName, innerClassName, delegatedInterfaces, delegatedMethods, delegateOtherMembers,
         generateGetter).run();
       //FileDocumentManager.getInstance().saveAllDocuments();

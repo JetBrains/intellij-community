@@ -57,8 +57,8 @@ import kotlin.time.Duration.Companion.seconds
  *
  * After [body] completes, waits for the children in a [NonCancellable] context for up to [finalizeTimeout].
  * Children that do not stop within this timeout can outlive this function.
- * If the timeout expires, throws [kotlinx.coroutines.TimeoutCancellationException]
- * unless a body failure or a collected uncaught failure takes precedence.
+ * If the timeout expires, it throws an [Exception] with [TimeoutCancellationException] as its cause.
+ * A body failure or a collected uncaught failure takes precedence.
  *
  * Returns the result of [body] if cleanup completes without a timeout or a failure.
  * Otherwise, throws a body failure, a collected uncaught failure, or the timeout exception, in that order of precedence.

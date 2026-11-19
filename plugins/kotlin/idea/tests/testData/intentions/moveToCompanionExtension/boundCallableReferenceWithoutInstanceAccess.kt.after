@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+class Foo {
+}
+
+fun boundParam(foo: Foo): (Int) -> Int = Foo::len
+companion fun Foo.len(x: Int) = x

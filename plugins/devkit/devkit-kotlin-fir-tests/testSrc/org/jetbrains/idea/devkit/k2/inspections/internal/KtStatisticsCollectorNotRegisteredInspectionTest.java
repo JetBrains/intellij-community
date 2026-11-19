@@ -2,25 +2,45 @@
 package org.jetbrains.idea.devkit.k2.inspections.internal;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.idea.devkit.inspections.StatisticsCollectorNotRegisteredInspectionTestBase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.idea.devkit.inspections.StatisticsCollectorNotRegisteredFixture;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
+import org.junit.jupiter.api.Test;
 
+import static org.jetbrains.idea.devkit.inspections.PluginModuleFixtureKt.pluginModuleProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.StatisticsCollectorNotRegisteredFixtureKt.statisticsCollectorNotRegisteredFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/statisticsCollectorNotRegistered")
-public class KtStatisticsCollectorNotRegisteredInspectionTest extends StatisticsCollectorNotRegisteredInspectionTestBase {
+@TestApplication
+public class KtStatisticsCollectorNotRegisteredInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = pluginModuleProjectFixture();
+  private final TestFixture<StatisticsCollectorNotRegisteredFixture> collectorNotRegistered =
+    statisticsCollectorNotRegisteredFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/statisticsCollectorNotRegistered");
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @Test
+  public void testRegisteredStatisticsCollector() {
+    collectorNotRegistered.get().doTestRegisteredStatisticsCollector();
   }
 
-  @Override
-  protected String getSourceFileExtension() {
-    return "kt";
+  @Test
+  public void testRegisteredNestedStatisticsCollector() {
+    collectorNotRegistered.get().doTestRegisteredNestedStatisticsCollector();
   }
 
-  @Override
-  protected String getBasePath() {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/statisticsCollectorNotRegistered";
+  @Test
+  public void testUnregisteredCounterCollector() {
+    collectorNotRegistered.get().doTestUnregisteredCounterCollector();
+  }
+
+  @Test
+  public void testUnregisteredProjectCollector() {
+    collectorNotRegistered.get().doTestUnregisteredProjectCollector();
+  }
+
+  @Test
+  public void testUnregisteredNestedCountCollector() {
+    collectorNotRegistered.get().doTestUnregisteredNestedCountCollector();
   }
 }

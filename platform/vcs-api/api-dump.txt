@@ -307,7 +307,6 @@ a:com.intellij.openapi.vcs.ProjectLevelVcsManager
 - bf:getAllVersionedRootsDoNotUse():com.intellij.openapi.vfs.VirtualFile[]
 - a:getAnnotationLocalChangesListener():com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener
 - a:getCompositeCheckoutListener():com.intellij.openapi.vcs.CheckoutProvider$Listener
-- a:getConsolidatedVcsName():java.lang.String
 - a:getContentRevisionCache():com.intellij.openapi.vcs.impl.ContentRevisionCache
 - a:getDirectoryMappingFor(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.VcsDirectoryMapping
 - a:getDirectoryMappings():java.util.List

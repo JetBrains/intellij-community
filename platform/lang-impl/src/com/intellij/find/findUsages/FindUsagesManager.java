@@ -4,6 +4,9 @@ package com.intellij.find.findUsages;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindUsagesSettings;
@@ -39,7 +42,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -73,6 +79,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -83,6 +90,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.JComponent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -430,7 +439,7 @@ public final class FindUsagesManager {
         optionsClone.searchScope = new LocalSearchScope(scopeFile);
       }
       ClusteringSearchSession clusteringSearchSession = ClusteringSearchSession.createClusteringSessionIfEnabled();
-      Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<>(usageInfo -> {
+      Processor<UsageInfo> uniqueUsageInfoProcessor = new CommonProcessors.UniqueProcessor<>(usageInfo -> {
         if (FindUsagesHelper.isHiddenTextOccurrence(usageInfo, optionsClone)) return true;
         Usage usage = ReadAction.computeBlocking(
           () -> clusteringSearchSession != null
@@ -439,6 +448,9 @@ public final class FindUsagesManager {
         );
         return processor.process(usage);
       });
+      Processor<UsageInfo> usageInfoProcessor = CodeInsightContexts.isSharedSourceSupportEnabled(project)
+                                                ? skipUsagesOfOtherContexts(uniqueUsageInfoProcessor)
+                                                : uniqueUsageInfoProcessor;
       PsiElement[] elements = ArrayUtil.mergeArrays(primaryElements, secondaryElements, PsiElement.ARRAY_FACTORY);
 
       optionsClone.fastTrack = new SearchRequestCollector(new SearchSession(elements));
@@ -484,6 +496,22 @@ public final class FindUsagesManager {
       finally {
         optionsClone.fastTrack = null;
       }
+    };
+  }
+
+  /**
+   * Skips a usage when another code insight context of the same virtual file already gave a usage at the same range.
+   * A file with several code insight contexts has a PSI file for each context, so the search finds its usage once per context.
+   */
+  private static @NotNull Processor<UsageInfo> skipUsagesOfOtherContexts(@NotNull Processor<? super UsageInfo> delegate) {
+    Map<UsageLocation, CodeInsightContext> firstContextByLocation = new ConcurrentHashMap<>();
+    return usageInfo -> {
+      Pair<UsageLocation, CodeInsightContext> location = ReadAction.computeBlocking(() -> UsageLocation.of(usageInfo));
+      if (location != null) {
+        CodeInsightContext firstContext = firstContextByLocation.putIfAbsent(location.first, location.second);
+        if (firstContext != null && !firstContext.equals(location.second)) return true;
+      }
+      return delegate.process(usageInfo);
     };
   }
 
@@ -760,5 +788,22 @@ public final class FindUsagesManager {
   public static void waitForAsyncTaskCompletion(@NotNull Project project) {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     project.getService(ScopeService.class).waitForAsyncTaskCompletion();
+  }
+
+  private record UsageLocation(
+    @NotNull VirtualFile file,
+    int startOffset,
+    int endOffset,
+    boolean isNonCodeUsage
+  ) {
+    @RequiresReadLock
+    static @Nullable Pair<UsageLocation, CodeInsightContext> of(@NotNull UsageInfo usageInfo) {
+      VirtualFile file = usageInfo.getVirtualFile();
+      PsiFile psiFile = usageInfo.getFile();
+      Segment segment = usageInfo.getSegment();
+      if (file == null || psiFile == null || segment == null) return null;
+      UsageLocation location = new UsageLocation(file, segment.getStartOffset(), segment.getEndOffset(), usageInfo.isNonCodeUsage);
+      return Pair.create(location, CodeInsightContextUtil.getCodeInsightContext(psiFile));
+    }
   }
 }

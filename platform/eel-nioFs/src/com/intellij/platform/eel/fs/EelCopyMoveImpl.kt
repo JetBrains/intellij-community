@@ -10,8 +10,6 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.EelPathTransfer.IncrementalWalkingTransferAbsoluteSymlinkHandler
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -53,7 +51,7 @@ object EelCopyMoveImpl {
     var replaceExisting = false
     var copyAttributes = isMove
     var atomicMove = false
-    val cancellableJobs = ArrayList<Job>()
+    var cancellable = false
     val progressFlows = ArrayList<MutableSharedFlow<ProgressEvent>>()
 
     for (option in options) {
@@ -67,8 +65,8 @@ object EelCopyMoveImpl {
             EelCopyOption.ContinueOnError -> {
               continueOnError = true
             }
-            is EelCopyOption.Cancellable -> {
-              cancellableJobs.add(option.job)
+            EelCopyOption.Cancellable -> {
+              cancellable = true
             }
             is EelCopyOption.Progress -> {
               progressFlows.add(option.flow)
@@ -89,7 +87,10 @@ object EelCopyMoveImpl {
         }
         LinkOption.NOFOLLOW_LINKS -> Unit
         else -> {
-          if (!(option.javaClass.name == "com.sun.nio.file.ExtendedCopyOption" && option.toString() == "INTERRUPTIBLE")) {
+          if (option.javaClass.name == "com.sun.nio.file.ExtendedCopyOption" && option.toString() == "INTERRUPTIBLE") {
+            cancellable = true
+          }
+          else {
             throw UnsupportedOperationException("Unsupported copy option: $option")
           }
         }
@@ -97,8 +98,8 @@ object EelCopyMoveImpl {
     }
 
     if (atomicMove) {
-      for (job in cancellableJobs) {
-        job.ensureActive()
+      if (cancellable && Thread.interrupted()) {
+        throw InterruptedException()
       }
       if (source.fileSystem != target.fileSystem || source.getEelDescriptor() != target.getEelDescriptor()) {
         throw AtomicMoveNotSupportedException(
@@ -157,7 +158,7 @@ object EelCopyMoveImpl {
       recursive = recursive,
       replaceExisting = replaceExisting,
       continueOnError = continueOnError,
-      cancellableJobs = cancellableJobs,
+      cancellable = cancellable,
       progressFlows = progressFlows,
     )
     return target

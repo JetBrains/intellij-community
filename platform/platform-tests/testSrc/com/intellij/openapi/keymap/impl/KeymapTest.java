@@ -27,11 +27,18 @@ public class KeymapTest extends LightPlatformTestCase {
   private static final String ACTION_1 = "ACTION_1";
   private static final String ACTION_2 = "ACTION_2";
   private static final String ACTION_NON_EXISTENT = "NON_EXISTENT";
+  // IJPL-61225: unregistered ids sort alphabetically, so pure registration order puts A_* first
+  private static final String A_BUNDLED = "A_BUNDLED";
+  private static final String A_OTHER = "A_OTHER";
+  private static final String Z_BUNDLED = "Z_BUNDLED";
+  private static final String Z_USER = "Z_USER";
 
   KeyboardShortcut shortcut1 = new KeyboardShortcut(KeyStroke.getKeyStroke('1'), null);
   KeyboardShortcut shortcut2 = new KeyboardShortcut(KeyStroke.getKeyStroke('2'), null);
   KeyboardShortcut shortcutA = new KeyboardShortcut(KeyStroke.getKeyStroke('a'), null);
   KeyboardShortcut shortcutB = new KeyboardShortcut(KeyStroke.getKeyStroke('b'), null);
+  KeyboardShortcut shortcutJ = new KeyboardShortcut(KeyStroke.getKeyStroke('j'), null);
+  KeyboardShortcut shortcutK = new KeyboardShortcut(KeyStroke.getKeyStroke('k'), null);
 
   private KeymapImpl parent;
   private KeymapImpl child;
@@ -929,6 +936,67 @@ public class KeymapTest extends LightPlatformTestCase {
     finally {
       ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
     }
+  }
+
+  public void testUserAddedShortcutGoesBeforeBundled() {
+    parent.addShortcut(A_BUNDLED, shortcutK);
+    KeymapImpl user = parent.deriveKeymap("User");
+    assertThat(user.canModify()).isTrue();
+    user.addShortcut(Z_USER, shortcutK);
+
+    assertThat(user.getActionIdList(shortcutK)).containsExactly(Z_USER, A_BUNDLED);
+  }
+
+  public void testUserOwnedActionWithInheritedShortcutIsNotPromoted() {
+    parent.addShortcut(A_OTHER, shortcutK);
+    parent.addShortcut(Z_BUNDLED, shortcutK);
+    KeymapImpl user = parent.deriveKeymap("User");
+    // the user owns Z_BUNDLED now, but K is still the inherited shortcut
+    user.addShortcut(Z_BUNDLED, shortcutJ);
+
+    assertThat(user.getActionIdList(shortcutK)).containsExactly(A_OTHER, Z_BUNDLED);
+    assertThat(user.getActionIdList(shortcutJ)).containsExactly(Z_BUNDLED);
+  }
+
+  public void testBundledDerivedKeymapKeepsRegistrationOrder() {
+    parent.addShortcut(A_BUNDLED, shortcutK);
+    KeymapImpl bundled = parent.deriveKeymap("Bundled");
+    bundled.setCanModify(false);
+    bundled.addShortcut(Z_USER, shortcutK);
+
+    assertThat(bundled.getActionIdList(shortcutK)).containsExactly(A_BUNDLED, Z_USER);
+  }
+
+  public void testUserAddedMouseShortcutGoesBeforeBundled() {
+    MouseShortcut mouseShortcut = new MouseShortcut(MouseEvent.BUTTON1, InputEvent.ALT_DOWN_MASK, 2);
+    parent.addShortcut(A_BUNDLED, mouseShortcut);
+    KeymapImpl user = parent.deriveKeymap("User");
+    user.addShortcut(Z_USER, mouseShortcut);
+
+    assertThat(user.getActionIdList(mouseShortcut)).containsExactly(Z_USER, A_BUNDLED);
+  }
+
+  public void testUserAddedGestureShortcutGoesBeforeBundled() {
+    Shortcut gesture = KeyboardModifierGestureShortcut.newInstance(KeyboardGestureAction.ModifierType.dblClick,
+                                                                   KeyStroke.getKeyStroke("control CONTROL"));
+    parent.addShortcut(A_BUNDLED, gesture);
+    KeymapImpl user = parent.deriveKeymap("User");
+    user.addShortcut(Z_USER, gesture);
+
+    assertThat(user.getActionIdList(gesture)).containsExactly(Z_USER, A_BUNDLED);
+  }
+
+  public void testUserAddedTwoStrokeShortcutWithSharedFirstStrokeGoesBeforeBundled() {
+    KeyboardShortcut kc = new KeyboardShortcut(KeyStroke.getKeyStroke('k'), KeyStroke.getKeyStroke('c'));
+    KeyboardShortcut kd = new KeyboardShortcut(KeyStroke.getKeyStroke('k'), KeyStroke.getKeyStroke('d'));
+    parent.addShortcut(A_BUNDLED, kc);
+    parent.addShortcut(Z_USER, kd);
+    KeymapImpl user = parent.deriveKeymap("User");
+    // Z_USER also inherits (K, D), so the first-stroke lookup for K does not promote it
+    user.addShortcut(Z_USER, kc);
+
+    assertThat(user.getActionIdList(kc)).containsExactly(Z_USER, A_BUNDLED);
+    assertThat(user.getActionIdList(kd)).containsExactly(Z_USER);
   }
 
   public void testParallelGetShortcuts() {

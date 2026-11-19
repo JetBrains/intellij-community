@@ -12,6 +12,11 @@ import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
+/**
+ * @deprecated Use [missingDeprecatedAnnotationOnScheduledForRemovalApiProjectFixture] and [missingDeprecatedAnnotationOnScheduledForRemovalApiInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use missingDeprecatedAnnotationOnScheduledForRemovalApiProjectFixture and missingDeprecatedAnnotationOnScheduledForRemovalApiInspectionFixture in a JUnit 5 test")
 abstract class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection = MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection()
 

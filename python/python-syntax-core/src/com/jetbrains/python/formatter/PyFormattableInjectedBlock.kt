@@ -3,6 +3,7 @@ package com.jetbrains.python.formatter
 import com.intellij.formatting.Alignment
 import com.intellij.formatting.Block
 import com.intellij.formatting.BlockEx
+import com.intellij.formatting.ChildAttributes
 import com.intellij.formatting.Indent
 import com.intellij.formatting.Spacing
 import com.intellij.formatting.Wrap
@@ -29,6 +30,10 @@ class PyFormattableInjectedBlock(parent: PyBlock,
     val result = ArrayList<Block?>()
     myBlockBuilder.addInjectedBlocks(result, node, wrap, alignment, indent)
     return result
+  }
+
+  override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
+    return ChildAttributes(Indent.getNoneIndent(), null)
   }
 
   override fun getSpacing(child1: Block?, child2: Block): Spacing? {

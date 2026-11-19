@@ -5,6 +5,8 @@ import com.intellij.codeowners.monorepo.resolver.TestOwnerResolver
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter
 import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Element
+import org.xml.sax.SAXException
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.xml.XMLConstants
@@ -20,40 +22,28 @@ object BazelJUnitXmlTestMetadataReporter {
   private const val TEST_XML_FILE_NAME = "test.xml"
   private const val TEST_LOG_FILE_NAME = "test.log"
 
-  enum class TestNameFormat(private val optionName: String) {
-    NAME("name") {
-      override fun format(testCase: JUnitXmlTestCase): String = testCase.name
-    },
-    /**
-     * The name of the test on TeamCity. TeamCity names a test case `<classname>.<name>`, or `<name>` when the name
-     * starts with the classname. It puts the suite before it, `<suite>: <test name>`, but not when the test name
-     * starts with the suite and a dot.
-     */
-    CLASSNAME_AND_NAME("classname.name") {
-      override fun format(testCase: JUnitXmlTestCase): String {
-        val className = testCase.className
-        val testName = if (className == null || testCase.name.startsWith(className)) testCase.name else "$className.${testCase.name}"
-        val suiteName = testCase.suiteName
-        return if (suiteName == null || testName == suiteName || testName.startsWith("$suiteName.")) testName else "$suiteName: $testName"
-      }
-    };
-
-    abstract fun format(testCase: JUnitXmlTestCase): String
-
-    override fun toString(): String = optionName
-
-    companion object {
-      fun parse(value: String): TestNameFormat =
-        entries.firstOrNull { it.optionName == value }
-        ?: error("Unsupported test name format '$value'. Supported values: ${entries.joinToString()}")
-    }
-  }
-
+  /**
+   * One `testcase` of a JUnit XML report. [suiteName] is the `name` of its parent `testsuite`.
+   * [isFailed] is true when the test case has a `failure` or an `error` child.
+   */
   data class JUnitXmlTestCase(
     val name: String,
     val className: String?,
     val suiteName: String? = null,
+    val isFailed: Boolean = false,
   )
+
+  /**
+   * The name of [testCase] on TeamCity. A `testMetadata` message finds a test only by this name.
+   * TeamCity names a test case `<classname>.<name>`, or `<name>` when the name starts with the classname.
+   * It puts the suite before it, `<suite>: <test name>`, but not when the test name starts with the suite and a dot.
+   */
+  fun teamCityTestName(testCase: JUnitXmlTestCase): String {
+    val className = testCase.className
+    val testName = if (className == null || testCase.name.startsWith(className)) testCase.name else "$className.${testCase.name}"
+    val suiteName = testCase.suiteName
+    return if (suiteName == null || testName == suiteName || testName.startsWith("$suiteName.")) testName else "$suiteName: $testName"
+  }
 
   data class JUnitXmlReport(val path: Path, val testCases: List<JUnitXmlTestCase>)
   data class BazelTestReports(val testLogsPath: Path, val junitXmlReports: List<JUnitXmlReport>)
@@ -63,19 +53,18 @@ object BazelJUnitXmlTestMetadataReporter {
   }
 
   /**
-   * Creates a workflow attaching a [metadataName] artifact link to the sibling `test.log` of every test case's
-   * JUnit XML report, reported under [reportedPathBase].
+   * Creates a workflow that attaches a [metadataName] link to the sibling `test.log` for each failed test case.
+   * Reports the artifact path under [reportedPathBase].
    */
   fun createBazelTestLogMetadataWorkflow(
     reportedPathBase: String,
     metadataName: String = DEFAULT_METADATA_NAME,
-    testNameFormat: TestNameFormat = TestNameFormat.CLASSNAME_AND_NAME,
   ): BazelTestReportsWorkflow = BazelTestReportsWorkflow { testReports ->
     for (report in testReports.junitXmlReports) {
       val reportedTestLogPath = reportedArtifactPath(report.path.resolveSibling(TEST_LOG_FILE_NAME), reportedPathBase)
-      for (testCase in report.testCases) {
+      for (testCase in report.testCases.filter { it.isFailed }) {
         TeamCityReporter.reportTestMetadata(
-          testName = testNameFormat.format(testCase),
+          testName = teamCityTestName(testCase),
           value = reportedTestLogPath,
           name = metadataName,
           type = TeamCityReporter.MetadataType.ARTIFACT,
@@ -94,10 +83,7 @@ object BazelJUnitXmlTestMetadataReporter {
    * When the file is missing or unreadable, emits a TeamCity warning and reports nothing: the codeowners artifact
    * is delivered by an optional artifact dependency, so its absence must not fail the build.
    */
-  fun createBazelTestOwnersMetadataWorkflow(
-    testClassOwners: Path,
-    testNameFormat: TestNameFormat = TestNameFormat.CLASSNAME_AND_NAME,
-  ): BazelTestReportsWorkflow {
+  fun createBazelTestOwnersMetadataWorkflow(testClassOwners: Path): BazelTestReportsWorkflow {
     val testOwnerResolver = TestOwnerResolver.create(testClassOwners)
     if (testOwnerResolver == null) {
       println(TeamCityReporter.serviceMessage("message", mapOf(
@@ -110,7 +96,7 @@ object BazelJUnitXmlTestMetadataReporter {
       for (report in testReports.junitXmlReports) {
         for (testCase in report.testCases) {
           val owner = getOwner(testCase, testOwnerResolver) ?: continue
-          TeamCityReporter.reportTestOwnerMetadata(testName = testNameFormat.format(testCase), owner = owner)
+          TeamCityReporter.reportTestOwnerMetadata(testName = teamCityTestName(testCase), owner = owner)
         }
       }
     }
@@ -192,8 +178,31 @@ object BazelJUnitXmlTestMetadataReporter {
   fun readBazelTestReports(bazelTestLogsPath: Path): BazelTestReports =
     BazelTestReports(testLogsPath = bazelTestLogsPath, junitXmlReports = readJUnitXmlReports(bazelTestLogsPath))
 
+  /**
+   * Reads every JUnit XML report under [bazelTestLogsPath]. A report that cannot be read or parsed gets a TeamCity
+   * warning and is skipped, so that one truncated `test.xml` does not drop the metadata of all other reports.
+   */
   fun readJUnitXmlReports(bazelTestLogsPath: Path): List<JUnitXmlReport> =
-    findJUnitXmlReports(bazelTestLogsPath).map { readJUnitXmlReport(it) }
+    findJUnitXmlReports(bazelTestLogsPath).mapNotNull { junitXmlPath ->
+      try {
+        readJUnitXmlReport(junitXmlPath)
+      }
+      catch (e: SAXException) {
+        reportUnreadableReport(junitXmlPath, e)
+        null
+      }
+      catch (e: IOException) {
+        reportUnreadableReport(junitXmlPath, e)
+        null
+      }
+    }
+
+  private fun reportUnreadableReport(junitXmlPath: Path, e: Exception) {
+    println(TeamCityReporter.serviceMessage("message", mapOf(
+      "text" to "Cannot read JUnit XML report '$junitXmlPath', skipping its test metadata: ${e.message ?: e.javaClass.name}",
+      "status" to "WARNING",
+    )))
+  }
 
   fun reportedArtifactPath(artifactPath: Path, reportedPathBase: String): String =
     "$reportedPathBase/${artifactPathInsideArchive(artifactPath).toPortablePath()}"
@@ -222,7 +231,8 @@ object BazelJUnitXmlTestMetadataReporter {
 
   private fun artifactPathInsideArchive(artifactPath: Path): Path {
     val normalizedPath = artifactPath.toAbsolutePath().normalize()
-    val execrootIndex = (0 until normalizedPath.nameCount).firstOrNull { normalizedPath.getName(it).toString() == "execroot" }
+    // the last `execroot`: a Bazel test of this tool runs inside another execroot
+    val execrootIndex = (normalizedPath.nameCount - 1 downTo 0).firstOrNull { normalizedPath.getName(it).toString() == "execroot" }
     if (execrootIndex != null && execrootIndex > 0) {
       return normalizedPath.subpath(execrootIndex - 1, normalizedPath.nameCount)
     }
@@ -233,7 +243,9 @@ object BazelJUnitXmlTestMetadataReporter {
     joinToString("/") { it.toString() }
 
   fun readJUnitXmlReport(junitXmlPath: Path): JUnitXmlReport {
-    val document = Files.newInputStream(junitXmlPath).use { documentBuilderFactory().newDocumentBuilder().parse(it) }
+    val documentBuilder = documentBuilderFactory().newDocumentBuilder()
+    documentBuilder.setErrorHandler(null)
+    val document = Files.newInputStream(junitXmlPath).use { documentBuilder.parse(it) }
     return JUnitXmlReport(path = junitXmlPath, testCases = readTestCases(document.documentElement))
   }
 
@@ -249,7 +261,8 @@ object BazelJUnitXmlTestMetadataReporter {
         for (testCase in suiteElement.childElements("testcase")) {
           val name = testCase.nonBlankAttribute("name") ?: continue
           val className = testCase.nonBlankAttribute("classname")
-          add(JUnitXmlTestCase(name = name, className = className, suiteName = suiteName))
+          val isFailed = testCase.childElements("failure").any() || testCase.childElements("error").any()
+          add(JUnitXmlTestCase(name = name, className = className, suiteName = suiteName, isFailed = isFailed))
         }
       }
     }
@@ -277,20 +290,13 @@ object BazelJUnitXmlTestMetadataReporter {
     BAZEL_TEST_LOG_METADATA("bazel-test-log-metadata") {
       override fun createWorkflow(options: Options): BazelTestReportsWorkflow {
         val reportedPathBase = options.reportedPathBase ?: error("Missing required argument for workflow '$this': --logs-base")
-        return createBazelTestLogMetadataWorkflow(
-          reportedPathBase = reportedPathBase,
-          metadataName = options.metadataName,
-          testNameFormat = options.testNameFormat,
-        )
+        return createBazelTestLogMetadataWorkflow(reportedPathBase = reportedPathBase, metadataName = options.metadataName)
       }
     },
     BAZEL_TEST_OWNERS_METADATA("bazel-test-owners-metadata") {
       override fun createWorkflow(options: Options): BazelTestReportsWorkflow {
         val testClassOwners = options.testClassOwners ?: error("Missing required argument for workflow '$this': --test-class-owners")
-        return createBazelTestOwnersMetadataWorkflow(
-          testClassOwners = testClassOwners,
-          testNameFormat = options.testNameFormat,
-        )
+        return createBazelTestOwnersMetadataWorkflow(testClassOwners = testClassOwners)
       }
     };
 
@@ -309,7 +315,6 @@ object BazelJUnitXmlTestMetadataReporter {
     val workflows: List<CommandLineWorkflow>,
     val reportedPathBase: String?,
     val metadataName: String,
-    val testNameFormat: TestNameFormat,
     val testClassOwners: Path?,
   )
 
@@ -322,7 +327,6 @@ object BazelJUnitXmlTestMetadataReporter {
     var reportedPathBase: String? = null
     val workflows = mutableListOf<CommandLineWorkflow>()
     var metadataName = DEFAULT_METADATA_NAME
-    var testNameFormat = TestNameFormat.CLASSNAME_AND_NAME
     var testClassOwners: Path? = null
 
     var i = 0
@@ -337,7 +341,6 @@ object BazelJUnitXmlTestMetadataReporter {
         "--workflow" -> workflows.add(CommandLineWorkflow.parse(readValue()))
         "--logs-base" -> reportedPathBase = readValue()
         "--metadata-name" -> metadataName = readValue()
-        "--test-name-format" -> testNameFormat = TestNameFormat.parse(readValue())
         "--test-class-owners" -> testClassOwners = workspacePath(readValue())
         else -> error("Unknown argument: $option")
       }
@@ -352,7 +355,6 @@ object BazelJUnitXmlTestMetadataReporter {
       workflows = workflows.distinct(),
       reportedPathBase = reportedPathBase,
       metadataName = metadataName,
-      testNameFormat = testNameFormat,
       testClassOwners = testClassOwners,
     )
   }
@@ -375,7 +377,6 @@ object BazelJUnitXmlTestMetadataReporter {
                                          Supported values: ${CommandLineWorkflow.entries.joinToString()}
         --logs-base <artifact>           Required for bazel-test-log-metadata. Artifact path base for reported test.log links
         --metadata-name <name>           Metadata label shown by TeamCity. Default: Logs
-        --test-name-format <format>      name, or classname.name for the name of the test on TeamCity. Default: classname.name
         --test-class-owners <path>       Required for bazel-test-owners-metadata. Path to the test-class-owners.ndjson
                                          FQN-to-owner map; a relative path is resolved against BUILD_WORKSPACE_DIRECTORY
       """.trimIndent()

@@ -9,6 +9,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.InterfaceType;
 import com.sun.jdi.Location;
@@ -35,6 +36,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public final class MethodBytecodeUtil {
@@ -361,5 +363,143 @@ public final class MethodBytecodeUtil {
     }
 
     return locations;
+  }
+
+  private static abstract class BytecodeVisitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
+    protected int bytecodeOffset = -1;
+
+    BytecodeVisitor() {
+      super(Opcodes.API_VERSION);
+    }
+
+    @Override
+    public void readBytecodeInstructionOffset(int offset) {
+      bytecodeOffset = offset;
+    }
+  }
+
+  public static @NotNull Location getMethodEntryLocation(@NotNull Method method) {
+    // We assume that all VMs start code indexes from zero.
+    return new LocationCodeIndexOnly(method, 0);
+  }
+
+  public static @NotNull Collection<Location> getMethodExitLocations(@NotNull Method method) {
+    var locations = new ArrayList<Location>();
+    visit(method, new BytecodeVisitor() {
+      @Override
+      public void visitInsn(int opcode) {
+        if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
+          assert bytecodeOffset >= 0;
+          var location = new LocationCodeIndexOnly(method, bytecodeOffset);
+          locations.add(location);
+        }
+      }
+    }, false);
+
+    return locations;
+  }
+
+  /**
+   * Optimized {@link Location} which should be used only to create breakpoint
+   * at known valid code index.
+   * <p/>
+   * The key difference with {@link com.jetbrains.jdi.ConcreteMethodImpl#locationOfCodeIndex(long)}
+   * is an absence of index validity checks, which normally would require to load line number information.
+   */
+  public static class LocationCodeIndexOnly implements Location {
+    private final Method method;
+    private final long codeIndex;
+
+    LocationCodeIndexOnly(Method method, long codeIndex) {
+      assert !method.isNative() && !method.isAbstract();
+      assert codeIndex >= 0;
+
+      this.method = method;
+      this.codeIndex = codeIndex;
+    }
+
+    @Override
+    public VirtualMachine virtualMachine() {
+      return method.virtualMachine();
+    }
+
+    @Override
+    public ReferenceType declaringType() {
+      return method.declaringType();
+    }
+
+    @Override
+    public Method method() {
+      return method;
+    }
+
+    @Override
+    public long codeIndex() {
+      return codeIndex;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (this == other) return true;
+      if (other == null || getClass() != other.getClass()) return false;
+      LocationCodeIndexOnly that = (LocationCodeIndexOnly)other;
+      return this.codeIndex == that.codeIndex &&
+             this.method.equals(that.method);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(method, codeIndex);
+    }
+
+    @Override
+    public int compareTo(@NotNull Location that) {
+      // Same as in LocationImpl
+      int res = this.method().compareTo(that.method());
+      if (res != 0) {
+        return res;
+      }
+      return Long.compare(codeIndex(), that.codeIndex());
+    }
+
+    // region Absent information about source code
+    @Override
+    public int lineNumber() {
+      return -1;
+    }
+
+    @Override
+    public int lineNumber(String stratum) {
+      return -1;
+    }
+
+    @Override
+    public String sourceName() throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+
+    @Override
+    public String sourceName(String stratum) throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+
+    @Override
+    public String sourcePath() throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+
+    @Override
+    public String sourcePath(String stratum) throws AbsentInformationException {
+      throw new AbsentInformationException();
+    }
+
+    @Override
+    public String toString() {
+      return "LocationCodeIndexOnly{" +
+             "method=" + method +
+             ", codeIndex=" + codeIndex +
+             '}';
+    }
+    // endregion
   }
 }

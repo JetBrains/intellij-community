@@ -29,6 +29,7 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.remote.core"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.annotations"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
@@ -107,6 +108,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector
+      implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.python.sdk.backend.PySitePackagesExcludeWorkspaceFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.python.sdk.backend.PyTestEnvExcludeProjectRootContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.python.sdk.backend.PyTestEnvExcludeContentRootContributor"/>
@@ -115,7 +118,7 @@
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationSettings service="com.jetbrains.python.sdk.PySdkSettings"/>
     <registryKey key="python.interpreter.library.entries"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="true"
                  description="A module names its Python interpreter by an interpreter library entry, and the IDE reads only that entry. When it is off, a module names its interpreter by its Python SDK, as older builds do."/>
     <registryKey key="python.activate.env.reader.timeout.ms"

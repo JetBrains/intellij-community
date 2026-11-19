@@ -52,6 +52,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JVMElementFactories;
 import com.intellij.psi.JVMElementFactory;
@@ -431,7 +432,7 @@ public final class CreateFromUsageUtils {
    * @deprecated use {@link #createClassInDirectory(CreateClassKind, PsiDirectory, String, PsiElement, String)}
    * or {@link #createClassInParent(CreateClassKind, PsiFile, String, PsiElement, String)}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static PsiClass createClass(CreateClassKind classKind,
                                      PsiDirectory directory,
                                      String name,
@@ -464,7 +465,7 @@ public final class CreateFromUsageUtils {
    * inside a ModCommand. If called on a physical directory, must be called inside a write action.
    *
    * @param classKind class kind
-   * @param directory directory where class will be created
+   * @param directory directory where class will be created, could be a non-physical copy
    * @param name class name
    * @param contextElement context element (reference)
    * @param superClassName super class name, fully-qualified, can be null
@@ -482,7 +483,7 @@ public final class CreateFromUsageUtils {
       PsiUtil.setModifierProperty(targetClass, PsiModifier.PUBLIC, true);
     }
 
-    setupClass(classKind, contextElement, superClassName, targetClass);
+    setupClass(targetClass, classKind, superClassName, contextElement);
     return targetClass;
   }
 
@@ -492,7 +493,7 @@ public final class CreateFromUsageUtils {
    * inside a ModCommand. If called on a physical file, must be called inside a write action.
    *
    * @param classKind      class kind
-   * @param parent         parent element (could be {@link PsiFile} or another {@link PsiClass})
+   * @param parent         parent element (could be {@link PsiFile} or another {@link PsiClass}), could be a non-physical copy
    * @param name           class name
    * @param contextElement context element (reference)
    * @param superClassName super class name, fully-qualified, can be null
@@ -507,18 +508,16 @@ public final class CreateFromUsageUtils {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     PsiClass aClass = classKind.create(facade.getElementFactory(), name);
     PsiClass targetClass = (PsiClass)parent.add(aClass);
-    if (ScratchUtil.isScratch(parent.getContainingFile().getVirtualFile())) {
+    if (ScratchUtil.isScratch(parent.getContainingFile().getOriginalFile().getVirtualFile())) {
       PsiUtil.setModifierProperty(targetClass, PsiModifier.PACKAGE_LOCAL, true);
     }
 
-    setupClass(classKind, contextElement, superClassName, targetClass);
+    setupClass(targetClass, classKind, superClassName, contextElement);
     return targetClass;
   }
 
-  private static void setupClass(@NotNull CreateClassKind classKind,
-                                 @NotNull PsiElement contextElement,
-                                 @Nullable String superClassName,
-                                 PsiClass targetClass) {
+  private static void setupClass(@NotNull PsiClass targetClass, @NotNull CreateClassKind classKind,
+                                 @Nullable String superClassName, @NotNull PsiElement contextElement) {
     if (StringUtil.isNotEmpty(superClassName) &&
         (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
         (classKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
@@ -1328,7 +1327,7 @@ public final class CreateFromUsageUtils {
     }
   }
 
-  static void setupGenericParameters(PsiClass targetClass, @NotNull PsiJavaCodeReferenceElement ref) {
+  static void setupGenericParameters(@NotNull PsiClass targetClass, @NotNull PsiJavaCodeReferenceElement ref) {
     int numParams = ref.getTypeParameters().length;
     if (numParams == 0) return;
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
@@ -1408,12 +1407,12 @@ public final class CreateFromUsageUtils {
      * @return default place for the new class referenced by this unresolved reference. Null if the default place cannot be determined.
      */
     static @Nullable NewClassPlace defaultPlaceFor(@NotNull PsiJavaCodeReferenceElement reference) {
-      if (addsClassToExistingFile(reference)) return new OriginalFile();
+      if (shouldAddClassToExistingFile(reference)) return new OriginalFile();
       if (reference.getQualifier() != null) return null;
       String name = reference.getReferenceName();
       if (name == null) return null;
       PsiDirectory directory = findClassDirectory(reference.getContainingFile(), name);
-      return directory == null ? null : new Directory(directory);
+      return directory == null || !BaseIntentionAction.canModify(directory) ? null : new Directory(directory);
     }
 
     /**
@@ -1424,7 +1423,7 @@ public final class CreateFromUsageUtils {
      */
     static @Nullable NewClassPlace choosePlaceInteractively(@NotNull PsiJavaCodeReferenceElement reference,
                                                             @NotNull CreateClassKind kind) {
-      if (addsClassToExistingFile(reference)) {
+      if (shouldAddClassToExistingFile(reference)) {
         return new OriginalFile();
       }
       PsiDirectory directory = chooseClassDirectory(reference, kind);
@@ -1437,7 +1436,7 @@ public final class CreateFromUsageUtils {
    * @return true when the new class goes into an existing file: into the class of the qualifier, or into the scratch file which
    * holds the reference
    */
-  private static boolean addsClassToExistingFile(@NotNull PsiJavaCodeReferenceElement reference) {
+  private static boolean shouldAddClassToExistingFile(@NotNull PsiJavaCodeReferenceElement reference) {
     return getQualifierClass(reference) != null || ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(reference));
   }
 

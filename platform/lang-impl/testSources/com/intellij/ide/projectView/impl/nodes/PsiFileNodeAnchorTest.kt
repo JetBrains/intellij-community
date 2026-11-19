@@ -4,9 +4,11 @@ package com.intellij.ide.projectView.impl.nodes
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
+import com.intellij.mock.MockPsiFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,6 +21,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -123,6 +126,17 @@ internal class PsiFileNodeAnchorTest {
 
     assertThat(node.equalityObject).isInstanceOf(SmartPsiElementPointer::class.java)
     assertThat(node.equalityObject).isNotInstanceOf(PsiFileSystemItemAnchor::class.java)
+  }
+
+  @Test
+  fun `a file without a containing file keeps the smart pointer`() {
+    val file = MockPsiFile(LightVirtualFile("noContainingFile.txt"), PsiManager.getInstance(project))
+
+    val node = runReadActionBlocking { PsiFileNode(project, file, ViewSettings.DEFAULT) }
+
+    assertThat(node.equalityObject).isInstanceOf(SmartPsiElementPointer::class.java)
+    assertThat(node.equalityObject).isNotInstanceOf(PsiFileSystemItemAnchor::class.java)
+    assertThat(runReadActionBlocking { node.value }).isSameAs(file)
   }
 
   @Test

@@ -2,6 +2,7 @@
 @file:OptIn(LowLevelLocalMachineAccess::class)
 package com.intellij.platform.ide.bootstrap
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.BootstrapBundle
@@ -246,6 +247,10 @@ internal fun scheduleUpdateFrameClassAndWindowIcon(
   scope.launch {
     initAwtToolkitJob.join()
 
+    launch(CoroutineName("SVG classes preloading")) {
+      preloadSvgClasses()
+    }
+
     if (StartupUiUtil.isXToolkit()) {
       launch(CoroutineName("frame class updating")) {
         appInfoDeferred.join()
@@ -273,10 +278,6 @@ internal fun scheduleUpdateFrameClassAndWindowIcon(
       launch {
         initUiScale.join()
         appInfoDeferred.join()
-        // the parsing touches no Java2D surface, so it runs off the EDT and leaves only the rasterization to the EDT
-        span("window icon preloading") {
-          AppUIUtil.preloadAppWindowIcon()
-        }
         // the EDT initializes the LaF first: the application loading waits for it, and no window needs the icon before the first frame
         initLafJob.join()
         // the rendering keeps its place after the LaF initialization; it draws into plain images, so the EDT only sets them
@@ -293,5 +294,24 @@ internal fun scheduleUpdateFrameClassAndWindowIcon(
     launch(RawSwingDispatcher) {
       WeakFocusStackManager.getInstance()
     }
+  }
+}
+
+/**
+ * Loads the SVG parser and renderer classes off the EDT on every OS, so the EDT does not load them with the first icon.
+ * The preloading renders nothing and touches no Java2D class, so it may run while the EDT creates the splash.
+ */
+private suspend fun preloadSvgClasses() {
+  try {
+    val classLoader = span("SVG parser classes preloading") {
+      preloadSvgParserClasses()
+    }
+    span("SVG renderer classes preloading") {
+      preloadSvgRendererClasses(classLoader)
+    }
+  }
+  catch (e: Throwable) {
+    rethrowControlFlowException(e)
+    logger<AppStarter>().warn("Cannot preload the SVG classes", e)
   }
 }

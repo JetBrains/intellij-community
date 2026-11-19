@@ -1,10 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
-import com.intellij.junit.testFramework.TestCaseWithMultipleRunnersInspectionTestBase
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.junitProjectFixture
+import com.intellij.junit.testFramework.testCaseWithMultipleRunnersInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMultipleRunnersInspectionTestBase() {
+@TestApplication
+class JavaTestCaseWithMultipleRunnersInspectionTest {
+  companion object {
+    private val projectFixture = junitProjectFixture(JUNIT4)
+  }
+
+  private val myFixture by testCaseWithMultipleRunnersInspectionFixture(projectFixture)
+
+  @Test
   fun `test parent annotation`() {
     myFixture.addClass("""
       @org.junit.runner.RunWith(org.junit.runners.Suite.class)
@@ -22,6 +34,7 @@ class JavaTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMultipleRunner
     """.trimIndent())
   }
 
+  @Test
   fun `test interface annotation`() {
     myFixture.addClass("""
       @org.junit.runner.RunWith(org.junit.runners.Suite.class)
@@ -39,6 +52,7 @@ class JavaTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMultipleRunner
     """.trimIndent())
   }
 
+  @Test
   fun `test inherited annotation1`() {
     myFixture.addClass("""
       @org.junit.runner.RunWith(org.junit.runners.Suite.class)
@@ -67,6 +81,7 @@ class JavaTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMultipleRunner
     """.trimIndent())
   }
 
+  @Test
   fun `test inherited annotation2`() {
     myFixture.addClass("""
       @org.junit.runner.RunWith(org.junit.runners.Suite.class)
@@ -89,6 +104,7 @@ class JavaTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMultipleRunner
     """.trimIndent())
   }
 
+  @Test
   fun `test not inherited annotation`() {
     myFixture.addClass("""
       class ParentTestBase {

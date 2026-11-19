@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.codeInsight.actions;
 import com.intellij.gradle.java.groovy.codeInsight.actions.AddGradleDslPluginAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 
@@ -49,6 +50,9 @@ public class AddGradleDslPluginActionTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      return BazelTestUtil.getFileFromBazelRuntime("@community//plugins/gradle:testData").toAbsolutePath().toString();
+    }
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + getBasePath();
   }
 }

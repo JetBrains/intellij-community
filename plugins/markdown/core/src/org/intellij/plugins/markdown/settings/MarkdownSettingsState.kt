@@ -4,33 +4,34 @@ package org.intellij.plugins.markdown.settings
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.util.xmlb.annotations.XMap
+import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class MarkdownSettingsState: BaseState() {
   var alignTableCellsVisually: Boolean by property(true)
-  var areInjectionsEnabled by property(true)
-  var showProblemsInCodeBlocks by property(false)
+  var areInjectionsEnabled: Boolean by property(true)
+  var showProblemsInCodeBlocks: Boolean by property(false)
   var isStripTrailingSpacesOnSave: Boolean by property(false)
 
   @get:XMap
-  var enabledExtensions by map<String, Boolean>()
+  var enabledExtensions: MutableMap<String, Boolean> by map()
 
-  var splitLayout by enum(TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW)
-  var previewPanelProviderInfo by property(MarkdownSettings.defaultProviderInfo) { it == MarkdownSettings.defaultProviderInfo }
-  var isVerticalSplit by property(true)
+  var splitLayout: TextEditorWithPreview.Layout by enum(TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW)
+  var previewPanelProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo? by property(null) { it == null }
+  var isVerticalSplit: Boolean by property(true)
   var previewMode: MarkdownPreviewMode by enum(MarkdownPreviewMode.EDITOR)
-  var isAutoScrollEnabled by property(true)
-  var isRunnerEnabled by property(true)
+  var isAutoScrollEnabled: Boolean by property(true)
+  var isRunnerEnabled: Boolean by property(true)
   var useFileDirectoryForCommands: Boolean? by property(null) { it == null }
-  var isFileGroupingEnabled by property(false)
+  var isFileGroupingEnabled: Boolean by property(false)
 
-  var useCustomStylesheetPath by property(false)
-  var customStylesheetPath by string()
+  var useCustomStylesheetPath: Boolean by property(false)
+  var customStylesheetPath: String? by string()
 
-  var useCustomStylesheetText by property(false)
-  var customStylesheetText by string()
+  var useCustomStylesheetText: Boolean by property(false)
+  var customStylesheetText: String? by string()
 
-  var fontSize by property(MarkdownSettings.defaultFontSize)
-  var fontFamily by string(MarkdownSettings.defaultFontFamily)
+  var fontSize: Int by property(MarkdownSettings.defaultFontSize)
+  var fontFamily: String? by string(MarkdownSettings.defaultFontFamily)
 }

@@ -5,17 +5,24 @@ import com.intellij.execution.JUnitBundle
 import com.intellij.junit.testFramework.JUnitProjectDescriptor
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
-import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmInspectionFixture
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
 private val descriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4, JUNIT5)
 
-class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionTestBase() {
-  override val inspection = ParameterizedParametersStaticCollectionInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
+@TestApplication
+class JavaParameterizedParametersStaticCollectionInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(descriptor)
+  }
 
+  private val myFixture by jvmInspectionFixture(projectFixture) { ParameterizedParametersStaticCollectionInspection() }
+
+  @Test
   fun testCreateMethod() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -23,6 +30,7 @@ class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun testCreateMethodFix() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -40,6 +48,7 @@ class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionT
     """.trimIndent(), JUnitBundle.message("fix.data.provider.create.method.fix.name"))
   }
 
+  @Test
   fun testWrongSignature() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -52,6 +61,7 @@ class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun testWrongSignatureFix() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -72,6 +82,7 @@ class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionT
     """.trimIndent(), JUnitBundle.message("fix.data.provider.signature.fix.name", "public static Collection regExValues()"))
   }
 
+  @Test
   fun testWrongSignature1() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -84,6 +95,7 @@ class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun testWrongSignature2() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -96,6 +108,7 @@ class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun testWrongSignature3() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -108,6 +121,7 @@ class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun testCorrectSignature() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -120,6 +134,7 @@ class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun testCorrectSignature2() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -132,6 +147,7 @@ class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionT
     """.trimIndent())
   }
 
+  @Test
   fun testMultipleMethods() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)

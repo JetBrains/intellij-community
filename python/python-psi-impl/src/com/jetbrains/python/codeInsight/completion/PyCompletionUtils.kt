@@ -12,7 +12,6 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.codeInsight.lookup.TailTypeDecorator
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -20,6 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.QualifiedName
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.PyClass
@@ -28,7 +28,7 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
-import com.jetbrains.python.psi.resolve.pythonSdkIfReady
+import com.jetbrains.python.psi.resolve.pythonInterpreterIfReady
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import one.util.streamex.StreamEx
@@ -160,15 +160,15 @@ fun computeCompletionWeight(
   if (nameOnly) return weight
 
   var vFile: VirtualFile? = null
-  var sdk: Sdk? = null
+  var interpreter: PythonInterpreter? = null
   val containingFile = element.containingFile
   if (element is PsiDirectory) {
     vFile = element.virtualFile
-    sdk = element.pythonSdkIfReady()
+    interpreter = element.pythonInterpreterIfReady()
   }
   else if (containingFile != null) {
     vFile = containingFile.virtualFile
-    sdk = containingFile.pythonSdkIfReady()
+    interpreter = containingFile.pythonInterpreterIfReady()
   }
 
   val importPath = path ?: QualifiedNameFinder.findShortestImportableQName(element.containingFile) ?: return FALLBACK_WEIGHT
@@ -181,7 +181,7 @@ fun computeCompletionWeight(
 
   if (vFile != null) {
     weight -= when {
-      PySkeletonUtil.isStdLib(vFile, sdk) -> LOCATION
+      PySkeletonUtil.isStdLib(vFile, interpreter) -> LOCATION
       ModuleUtilCore.findModuleForFile(vFile, element.project) == null -> LOCATION * 2
       else -> 0
     }

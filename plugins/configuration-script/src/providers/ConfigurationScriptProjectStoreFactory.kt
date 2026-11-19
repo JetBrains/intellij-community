@@ -27,12 +27,17 @@ internal class ConfigurationScriptProjectStoreFactory : ProjectStoreFactoryBase(
   override fun createStore(project: Project): IProjectStore = MyProjectStore(project)
 }
 
-private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(project) {
-  @JvmField
-  val isConfigurationFileListenerAdded: AtomicBoolean = AtomicBoolean()
+internal class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(project) {
+  private val isConfigurationFileListenerAdded = AtomicBoolean()
   private val storages = ConcurrentHashMap<Class<Any>, ReadOnlyStorage>()
 
-  fun configurationFileChanged() {
+  fun addConfigurationFileListener(configurationFileManager: ConfigurationFileManager) {
+    if (isConfigurationFileListenerAdded.compareAndSet(false, true)) {
+      configurationFileManager.registerClearableLazyValue { configurationFileChanged() }
+    }
+  }
+
+  private fun configurationFileChanged() {
     if (storages.isNotEmpty()) {
       StoreReloadManager.getInstance(project).storageFilesChanged(store = project.stateStore, storages = storages.values.toList())
     }
@@ -143,7 +148,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
   }
 }
 
-private class ReadOnlyStorage(
+internal class ReadOnlyStorage(
   @JvmField val configurationSchemaKey: String,
   @JvmField val componentClass: Class<Any>,
   private val store: MyProjectStore,
@@ -159,11 +164,7 @@ private class ReadOnlyStorage(
     val state = ReflectionUtil.newInstance(stateClass, false) as BaseState
 
     val configurationFileManager = ConfigurationFileManager.getInstance(store.project)
-    if (store.isConfigurationFileListenerAdded.compareAndSet(false, true)) {
-      configurationFileManager.registerClearableLazyValue {
-        store.configurationFileChanged()
-      }
-    }
+    store.addConfigurationFileListener(configurationFileManager)
 
     val node = configurationFileManager.findValueNode(configurationSchemaKey)
     if (node != null) {

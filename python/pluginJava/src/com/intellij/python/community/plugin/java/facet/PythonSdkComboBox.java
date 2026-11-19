@@ -9,7 +9,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
@@ -20,11 +19,15 @@ import javax.swing.DefaultComboBoxModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 final class PythonSdkComboBox extends ComboboxWithBrowseButton {
   private Project myProject;
+  /** The SDK of each row, by the ref of its item. */
+  private final Map<PyInterpreterRef, Sdk> mySdkByRef = new HashMap<>();
 
   PythonSdkComboBox() {
     getComboBox().setRenderer(new PySdkListCellRenderer());
@@ -54,6 +57,11 @@ final class PythonSdkComboBox extends ComboboxWithBrowseButton {
     }
     // The combo holds items, not SDKs: a row states whether its interpreter can be used, which takes running it.
     final List<PyInterpreterItem> items = new ArrayList<>(PySdkRenderingKt.interpreterItemsUnderProgress(sdkList, this));
+    mySdkByRef.clear();
+    for (Sdk sdk : sdkList) {
+      PyInterpreterRef ref = PyInterpreterRefsKt.interpreterRefOf(sdk);
+      if (ref != null) mySdkByRef.putIfAbsent(ref, sdk);
+    }
     final PyInterpreterItem toSelect = itemFor(items, sdkToSelect);
     items.addFirst(null);
     getComboBox().setModel(new DefaultComboBoxModel(items.toArray(new PyInterpreterItem[0])));
@@ -65,7 +73,7 @@ final class PythonSdkComboBox extends ComboboxWithBrowseButton {
   }
 
   public Sdk getSelectedSdk() {
-    return getComboBox().getSelectedItem() instanceof PyInterpreterItem item ? PythonInterpreterExtKt.findSdk(item) : null;
+    return getComboBox().getSelectedItem() instanceof PyInterpreterItem item ? mySdkByRef.get(item.getRef()) : null;
   }
 
   /** The row that stands for {@code sdk}, or null when the list holds none for it. */

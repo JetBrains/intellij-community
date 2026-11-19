@@ -2,31 +2,55 @@
 package org.intellij.plugins.markdown.html
 
 import com.intellij.lang.html.HTMLLanguage
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.impl.DebugUtil
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import junit.framework.TestCase
-import org.intellij.plugins.markdown.MarkdownTestingUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-class MarkdownEmbeddedHtmlTest : BasePlatformTestCase() {
-  override fun getTestDataPath(): String {
-    return MarkdownTestingUtil.TEST_DATA_PATH + "/html/embedded/"
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/html/embedded")
+class MarkdownEmbeddedHtmlTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
-  fun testHtml1() = doTest()
+  private val myFixture by codeInsightModuleFixture(projectFixture)
 
-  fun testHtml2() = doTest()
+  private lateinit var testName: String
 
-  fun testHtml3() = doTest()
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true)
+  }
 
-  fun testTrailingComment() = doTest()
+  @Test
+  fun testHtml1(): Unit = doTest()
+
+  @Test
+  fun testHtml2(): Unit = doTest()
+
+  @Test
+  fun testHtml3(): Unit = doTest()
+
+  @Test
+  fun testTrailingComment(): Unit = doTest()
 
   fun doTest() {
-    val name = getTestName(true)
+    val name = testName
     val file = myFixture.configureByFile("$name.md")
 
-    val psi = DebugUtil.psiToString(file.viewProvider.getPsi(HTMLLanguage.INSTANCE)!!, true, false)
-    val tree = myFixture.configureByFile("$name.txt").text
+    val psi = timeoutRunBlocking { readAction { DebugUtil.psiToString(file.viewProvider.getPsi(HTMLLanguage.INSTANCE)!!, true, false) } }
+    val treeFile = myFixture.configureByFile("$name.txt")
+    val tree = timeoutRunBlocking { readAction { treeFile.text } }
 
-    TestCase.assertEquals(psi, tree)
+    assertEquals(psi, tree)
   }
 }

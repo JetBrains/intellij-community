@@ -15,7 +15,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author maxim
+ * @deprecated Use {@link ReparseFixtureKt#reparseFixture} in a JUnit 5 test.
  */
+@Deprecated
 public abstract class AbstractReparseTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected FileType myFileType;
   protected PsiFile myDummyFile;

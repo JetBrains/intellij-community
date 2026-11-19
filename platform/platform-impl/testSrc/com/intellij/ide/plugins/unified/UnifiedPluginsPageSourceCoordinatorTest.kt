@@ -611,6 +611,49 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
+  fun `built-in filter shows only implementation detail plugins`() {
+    val regular = plugin("regular.plugin", "Regular").apply { isBundled = true }
+    val bundledDetail = plugin("bundled.detail", "Bundled Detail").apply {
+      isBundled = true
+      isImplementationDetail = true
+    }
+    val installedDetail = plugin("installed.detail", "Installed Detail").apply { isImplementationDetail = true }
+    val local = UnifiedPluginLocalSourceState(
+      sections = listOf(
+        PluginSectionState(PluginSectionId.Installed),
+        PluginSectionState(PluginSectionId.Bundled, items = listOf(localItem(regular, enabled = true))),
+      ),
+      listModelData = PluginListModelData.EMPTY,
+      mayEstablishSelection = true,
+      implementationDetailItems = mapOf(
+        PluginSectionId.Installed to listOf(localItem(installedDetail, enabled = true)),
+        PluginSectionId.Bundled to listOf(localItem(bundledDetail, enabled = false)),
+      ),
+    )
+
+    fun result(query: String, scope: PluginsQueryScope = PluginsQueryScope.Installed): Map<PluginSectionId, List<String>> {
+      return composeUnifiedPluginsPageSourceState(PluginsQueryState(query, query, scope = scope), local).sections
+        .filter { it.id == PluginSectionId.Installed || it.id == PluginSectionId.Bundled }
+        .associate { section -> section.id to section.items.map { it.pluginId.idString } }
+    }
+
+    val hidden = mapOf(PluginSectionId.Installed to emptyList<String>(), PluginSectionId.Bundled to listOf("regular.plugin"))
+    assertThat(result("")).isEqualTo(hidden)
+    assertThat(result("", PluginsQueryScope.Unified)).isEqualTo(hidden)
+    assertThat(result("Detail")).isEqualTo(mapOf(PluginSectionId.Installed to emptyList<String>(), PluginSectionId.Bundled to emptyList()))
+    assertThat(result("/built-in")).isEqualTo(
+      mapOf(PluginSectionId.Installed to listOf("installed.detail"), PluginSectionId.Bundled to listOf("bundled.detail"))
+    )
+    assertThat(result("/built-in", PluginsQueryScope.Unified)).isEqualTo(
+      mapOf(PluginSectionId.Installed to listOf("installed.detail"), PluginSectionId.Bundled to listOf("bundled.detail"))
+    )
+    assertThat(result("/built-in Bundled")).isEqualTo(
+      mapOf(PluginSectionId.Installed to emptyList<String>(), PluginSectionId.Bundled to listOf("bundled.detail"))
+    )
+    assertThat(result("/built-in /enabled")).isEqualTo(hidden)
+  }
+
+  @Test
   fun `installed state filters use applied state across session changes`() {
     val appliedEnabled = plugin("applied.enabled", "Enabled")
     val appliedDisabled = plugin("applied.disabled", "Disabled").apply { isEnabled = false }

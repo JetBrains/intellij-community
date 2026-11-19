@@ -57,11 +57,11 @@ interface PyEnvironment : AutoCloseable {
 
   /**
    * The interpreter of this environment for [pyProject], by its `pip` ref. It is not registered yet: set it with
-   * `PyProject.setPythonInterpreter`. Remove it with [PythonInterpreterRegistry.removePythonInterpreter].
+   * `PyProject.setPythonInterpreter`. Remove it with [PythonInterpreterRegistry.remove].
    */
   suspend fun prepareSdk(pyProject: PyProject): PythonInterpreter =
     PythonInterpreterRegistry.getInstance(pyProject.project)
-      .newPythonInterpreter(pyProject, PyInterpreterRef.native(PIP_MANAGER, pathEnvRef(PathHolder.Eel(pythonPath), pyProject.baseDir)))
+      .build(pyProject, PyInterpreterRef.native(PIP_MANAGER, pathEnvRef(PathHolder.Eel(pythonPath), pyProject.baseDir)))
       .orThrow()
 
   /**

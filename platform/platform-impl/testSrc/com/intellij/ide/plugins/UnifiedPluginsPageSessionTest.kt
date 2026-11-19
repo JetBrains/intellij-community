@@ -225,7 +225,7 @@ internal class UnifiedPluginsPageSessionTest {
         ).single()
         val filterButton = componentsOfType(searchComponent, ActionButton::class.java).last()
         val filterGroup = filterButton.action as ActionGroup
-        val disabledAction = filterGroup.getChildren(TestActionEvent.createTestEvent()).takeLast(5)[2]
+        val disabledAction = filterGroup.getChildren(TestActionEvent.createTestEvent()).takeLast(6)[2]
 
         disabledAction.actionPerformed(TestActionEvent.createTestEvent(disabledAction))
         staleClear.run()
@@ -371,7 +371,7 @@ internal class UnifiedPluginsPageSessionTest {
       )
       try {
         waitForSearchCount(searches, 1)
-        val disabled = filterActions(session).takeLast(5)[2]
+        val disabled = filterActions(session).takeLast(6)[2]
 
         disabled.actionPerformed(TestActionEvent.createTestEvent(disabled))
         waitForSearchCount(searches, 2)
@@ -416,6 +416,7 @@ internal class UnifiedPluginsPageSessionTest {
         UnifiedPluginSearchFilterKind.DISABLED,
         UnifiedPluginSearchFilterKind.INVALID,
         UnifiedPluginSearchFilterKind.UPDATED_BUNDLED,
+        UnifiedPluginSearchFilterKind.BUILT_IN,
       )
       for (text in listOf("", "Plugin")) {
         val searches = mutableListOf<Pair<UnifiedPluginSearchStatistics, Int>>()
@@ -456,7 +457,7 @@ internal class UnifiedPluginsPageSessionTest {
         unifiedSearchLogger = { statistics, searchIndex -> searches.add(statistics to searchIndex) },
       )
       try {
-        val installedActions = filterActions(session).takeLast(5)
+        val installedActions = filterActions(session).takeLast(6)
         val disabled = installedActions[2]
         val enabled = installedActions[1]
 

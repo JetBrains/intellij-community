@@ -56,7 +56,7 @@ jvm_library(
         "//platform/testFramework/junit5",
         "//platform/core-ui",
         "//platform/core-impl",
-        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/kotlin/test-framework",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//platform/lang-core",
         "//platform/lang-api:lang",

@@ -131,6 +131,7 @@ class PluginClassLoader(
   @ApiStatus.Internal
   fun setState(state: Int) {
     if (state == PluginAwareClassLoader.UNLOAD_IN_PROGRESS) {
+      logState?.log?.resolveStacks()
       // job.isActive returns `false` after this call
       scope.coroutineContext.job.cancel(null)
       return

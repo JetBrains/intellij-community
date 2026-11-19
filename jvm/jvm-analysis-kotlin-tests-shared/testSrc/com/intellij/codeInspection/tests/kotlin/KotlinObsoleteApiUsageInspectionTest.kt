@@ -1,11 +1,22 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.jvm.analysis.internal.testFramework.ObsoleteApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.jvmAnnotationsProjectFixture
+import com.intellij.jvm.analysis.internal.testFramework.obsoleteApiUsageInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspectionTestBase() {
+@TestApplication
+abstract class KotlinObsoleteApiUsageInspectionTest {
+  companion object {
+    private val projectFixture = jvmAnnotationsProjectFixture()
+  }
+
+  protected val myFixture by obsoleteApiUsageInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test direct usage`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class B {
@@ -16,6 +27,7 @@ abstract class KotlinObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspection
     """.trimIndent())
   }
 
+  @Test
   fun `test override`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class C : A() {
@@ -29,6 +41,7 @@ abstract class KotlinObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspection
     """.trimIndent())
   }
 
+  @Test
   fun `test generic reference`() {
     myFixture.addClass("@org.jetbrains.annotations.ApiStatus.Obsolete public interface I<T> {}")
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

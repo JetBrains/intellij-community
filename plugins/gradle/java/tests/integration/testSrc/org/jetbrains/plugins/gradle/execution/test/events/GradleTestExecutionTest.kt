@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
@@ -38,15 +39,25 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.time.Duration.Companion.minutes
 
-class GradleTestExecutionTest : GradleTestExecutionTestCase() {
+@ParameterizedClass
+@ValueSource(booleans = [false, true])
+class GradleTestExecutionTest(private val singleConsole: Boolean) : GradleTestExecutionTestCase() {
 
   @TestDisposable
   private lateinit var testDisposable: Disposable
+
+  @BeforeEach
+  fun setUpSingleConsole() {
+    Registry.get("gradle.build.toolwindow.single.console").setValue(singleConsole, testDisposable)
+  }
 
   @ParameterizedTest
   @TargetVersions(JUNIT_5_SUPPORTED_VERSIONS)
@@ -147,10 +158,15 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
         }
       }
       assertBuildViewNode(buildView, "successful") {
-        assertThat(it.consoleText).contains("buildscript \noutput\n\ntext")
+        assertThat(it.consoleText).contains("buildscript \n" + "output\n" + "\n" + "text\n")
         assertThat(it.consoleText).contains("script output text without eol")
+        assertThat(it.consoleText).contains(": Executing")
+        assertThat(it.consoleText).contains(": Execution finished")
       }
+      assertTestConsoleDoesNotContain("buildscript \n" + "output\n" + "\n" + "text\n")
       assertTestConsoleDoesNotContain("script output text without eol")
+      assertTestConsoleDoesNotContain(": Executing")
+      assertTestConsoleDoesNotContain(": Execution finished")
       assertTestConsoleContains("test \n" + "output\n" + "\n" + "text\n")
     }
   }
@@ -640,12 +656,11 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-
       assertBuildViewNode(buildView, "successful") {
         assertThat(it.consoleText).contains("Green light to resolve configuration")
         assertThat(it.consoleText).contains("Attempt to resolve configuration")
+        assertThat(it.consoleText).doesNotContain("Attempt to resolve configuration too early")
       }
-
       assertTestConsoleDoesNotContain("Green light to resolve configuration")
       assertTestConsoleDoesNotContain("Attempt to resolve configuration")
       assertTestConsoleDoesNotContain("Attempt to resolve configuration too early")

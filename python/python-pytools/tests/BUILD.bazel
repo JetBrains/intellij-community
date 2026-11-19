@@ -39,6 +39,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//libraries/caffeine",
         "//libraries/jetbrains/annotations",
         "//libraries/junit6",
         "//libraries/kotlinx/coroutines/core",

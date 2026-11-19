@@ -87,7 +87,7 @@ internal class PyVirtualEnvTerminalCustomizerEelTest {
     }
     finally {
       pyProject.setPythonInterpreter(null).orThrow()
-      PythonInterpreterRegistry.getInstance(projectFixture.get()).removePythonInterpreter(pyProject, interpreter)
+      PythonInterpreterRegistry.getInstance(projectFixture.get()).remove(interpreter)
     }
   }
 }

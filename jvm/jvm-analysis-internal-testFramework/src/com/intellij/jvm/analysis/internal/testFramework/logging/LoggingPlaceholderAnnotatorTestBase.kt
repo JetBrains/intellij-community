@@ -5,6 +5,11 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import junit.framework.TestCase
 
+/**
+ * @deprecated Use [loggingPlaceholderAnnotatorFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use loggingPlaceholderAnnotatorFixture in a JUnit 5 test")
 abstract class LoggingPlaceholderAnnotatorTestBase : LightJvmCodeInsightFixtureTestCase() {
   protected abstract val fileName: String
 

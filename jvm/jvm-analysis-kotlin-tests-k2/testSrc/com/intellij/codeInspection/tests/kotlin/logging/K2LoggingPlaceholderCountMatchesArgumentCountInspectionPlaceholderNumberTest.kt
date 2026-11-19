@@ -1,9 +1,9 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
-import com.intellij.idea.IgnoreJUnit3
-import org.junit.Ignore
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Disabled
 
-@Ignore
-@IgnoreJUnit3
+@Disabled
+@TestApplication
 class K2LoggingPlaceholderCountMatchesArgumentCountInspectionPlaceholderNumberTest : KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceholderNumberTest() {
 }

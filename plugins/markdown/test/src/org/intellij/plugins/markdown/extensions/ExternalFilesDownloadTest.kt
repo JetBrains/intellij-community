@@ -1,32 +1,38 @@
 package org.intellij.plugins.markdown.extensions
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.rules.TempDirectory
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.RuleChain
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 
-@RunWith(JUnit4::class)
-class ExternalFilesDownloadTest: BasePlatformTestCase() {
-  private val disposableRule = DisposableRule()
-  private val tempDirectory = TempDirectory()
+@TestApplication
+class ExternalFilesDownloadTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  @Rule
-  @JvmField
-  val rules = RuleChain.outerRule(disposableRule).around(tempDirectory)
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
+  @TempDir
+  lateinit var tempDirectory: Path
 
   @Test
   fun `test extensions downloadable files can be downloaded`() {
-    ExtensionTestingUtil.mockPathManager(tempDirectory.newDirectoryPath(), disposableRule.disposable)
+    ExtensionTestingUtil.mockPathManager(tempDirectory, disposable)
     val extensions = MarkdownExtensionsUtil.collectExtensionsWithExternalFiles().filterIsInstance<MarkdownExtensionWithDownloadableFiles>()
     var hadFails = false
     for (extension in extensions) {
       try {
-        ExtensionTestingUtil.downloadExtension(extension, project)
+        ExtensionTestingUtil.downloadExtension(extension, myFixture.project)
         logger<ExternalFilesDownloadTest>().debug("Successfully downloaded downloadable files for extension: ${extension.id}")
       } catch (exception: Throwable) {
         logger<ExternalFilesDownloadTest>().error(exception)

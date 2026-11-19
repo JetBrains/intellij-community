@@ -9,11 +9,10 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -22,7 +21,7 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ObjectTree;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
@@ -33,23 +32,24 @@ import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.PersistentEnumeratorCache;
 import com.intellij.util.ref.DebugReflectionUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.IgnoredTraverseEntry;
-import com.jetbrains.JBR;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.SwingUtilities;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Field;
+import java.lang.invoke.MethodHandles;
 import java.lang.ref.SoftReference;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -313,9 +313,8 @@ public final class LeakHunter {
       result.put(IdeEventQueue.getInstance(), "IdeEventQueue.getInstance()");
       result.put(LaterInvocator.getLaterInvocatorEdtQueue(), "LaterInvocator.getLaterInvocatorEdtQueue()");
       result.put(ThreadLeakTracker.getThreads().values(), "all live threads");
-      ClassLoader classLoader = LeakHunter.class.getClassLoader();
       // inspect static fields of all loaded classes
-      Collection<?> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
+      Collection<?> allLoadedClasses = getLoadedClasses(LeakHunter.class.getClassLoader());
       if (allLoadedClasses != null) {
         result.put(allLoadedClasses, "all loaded classes statics");
       }
@@ -323,10 +322,23 @@ public final class LeakHunter {
     };
   }
 
+  private static @Nullable Collection<?> getLoadedClasses(@NotNull ClassLoader classLoader) {
+    for (Class<?> type : List.of(Vector.class, ArrayList.class)) {
+      try {
+        var lookup = MethodHandles.privateLookupIn(ClassLoader.class, MethodHandles.lookup());
+        return (Collection<?>)lookup.findVarHandle(ClassLoader.class, "classes", type).get(classLoader);
+      }
+      catch (NoSuchFieldException | IllegalAccessException ignored) {
+      }
+    }
+    LOG.warn("Cannot read the loaded classes of " + classLoader + ". The leak check does not examine static fields.");
+    return null;
+  }
+
   // perform as many magic tricks as possible to clear the memory of stale objects:
   // index update queues, caches, references to dangling threads/coroutines/invokeLaters, etc
   @TestOnly
-  private static void tryClearingNonReachableObjects() {
+  public static void tryClearingNonReachableObjects() {
     // avoid walking heap during indexes rebuilding because they allocate huge queues with a lot of short-lived transient UpdateOp objects during the process,
     // which then are stored in the leak-hunter own queue even though they are no longer reachable
     waitForIndicesToUpdate();

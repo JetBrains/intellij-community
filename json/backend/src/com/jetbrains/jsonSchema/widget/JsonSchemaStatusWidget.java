@@ -266,16 +266,16 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
 
     VirtualFile schemaFile = schemaFiles.iterator().next();
-    return stateForSingleSchemaFile(schemaFile, isJsonFile);
+    return stateForSingleSchemaFile(file, schemaFile, isJsonFile);
   }
 
-  private @NotNull WidgetState stateForSingleSchemaFile(@NotNull VirtualFile schemaFile, boolean isJsonFile) {
+  private @NotNull WidgetState stateForSingleSchemaFile(@NotNull VirtualFile file, @NotNull VirtualFile schemaFile, boolean isJsonFile) {
     String tooltip =
       isJsonFile ? JsonBundle.message("schema.widget.tooltip.json.files") : JsonBundle.message("schema.widget.tooltip.other.files");
     String bar =
       isJsonFile ? JsonBundle.message("schema.widget.prefix.json.files") : JsonBundle.message("schema.widget.prefix.other.files");
 
-    if (!isValidSchemaFile(schemaFile)) {
+    if (!isValidSchemaFile(file, schemaFile)) {
       MyWidgetState state =
         new MyWidgetState(JsonBundle.message("schema.widget.error.not.a.schema"), JsonBundle.message("schema.widget.error.label"), true);
       state.setWarning(true);
@@ -306,11 +306,13 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
                              true);
   }
 
-  @NotNull WidgetState getPendingOrNoSchemaState(@NotNull VirtualFile file, boolean isJsonFile) {
+  private @Nullable String getSchemaUrlFromFile(@NotNull VirtualFile file) {
     String url = JsonCachedValues.getSchemaUrlFromSchemaProperty(file, getProject());
-    if (url == null) {
-      url = JsonSchemaByCommentProvider.getCommentSchema(file, getProject());
-    }
+    return url != null ? url : JsonSchemaByCommentProvider.getCommentSchema(file, getProject());
+  }
+
+  @NotNull WidgetState getPendingOrNoSchemaState(@NotNull VirtualFile file, boolean isJsonFile) {
+    String url = getSchemaUrlFromFile(file);
     if (url == null) {
       JsonSchemaService service = getService();
       if (service instanceof JsonSchemaServiceImpl) {
@@ -331,7 +333,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
     VirtualFile peeked = remoteContentService.peekCachedFile(url);
     if (peeked != null) {
-      return stateForSingleSchemaFile(peeked, isJsonFile);
+      return stateForSingleSchemaFile(file, peeked, isJsonFile);
     }
     if (remoteContentService.hasInFlight(url)) {
       return new MyWidgetState(JsonBundle.message("schema.widget.download.in.progress.tooltip"),
@@ -416,12 +418,24 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
                                                    : JsonBundle.message("schema.widget.prefix.other.files"));
   }
 
-  private boolean isValidSchemaFile(@Nullable VirtualFile schemaFile) {
+  private boolean isValidSchemaFile(@NotNull VirtualFile file, @Nullable VirtualFile schemaFile) {
     // to avoid widget blinking we consider currently loaded schema as valid one
     if (schemaFile == null) return false;
     if (schemaFile.getUserData(SchemaOrigin.URL_KEY) != null) return true;
     JsonSchemaService service = getService();
-    return service != null && service.isSchemaFile(schemaFile) && service.isApplicableToFile(schemaFile);
+    if (service == null || !service.isApplicableToFile(schemaFile)) return false;
+    return service.isSchemaFile(schemaFile) || isSchemaNamedInFile(file, schemaFile);
+  }
+
+  /**
+   * Checks that the {@code $schema} property or the schema comment of {@code file} refers to {@code schemaFile}.
+   */
+  private boolean isSchemaNamedInFile(@NotNull VirtualFile file, @NotNull VirtualFile schemaFile) {
+    String url = getSchemaUrlFromFile(file);
+    if (url == null) return false;
+    JsonSchemaService service = getService();
+    if(service == null) return false;
+    return schemaFile.equals(service.findSchemaFileByReference(url, file));
   }
 
   private static @Nullable @NlsSafe String extractNpmPackageName(@Nullable String path) {

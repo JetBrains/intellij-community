@@ -16,7 +16,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -24,105 +24,139 @@ import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameJavaImplicitClassProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
+
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-public class RenameClassTest extends LightMultiFileTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/renameClass/";
-  }
+@TestApplication
+public class RenameClassTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_23);
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/renameClass/");
 
+  @Test
   public void testNonJava() {
     doTest("pack1.Class1", "Class1New");
   }
 
+  @Test
   public void testCollision() {
     doTest("pack1.MyList", "List");
   }
 
+  @Test
   public void testCollisionOnCurrentPackage() {
     doTest("pack1.MyList", "List2");
   }
 
+  @Test
   public void testCollisionOnJavaLang() {
     doTest("pack1.String2", "String");
   }
 
+  @Test
   public void testCollisionWithModuleImport() {
     doTest("pack1.MyList", "List");
   }
 
+  @Test
   public void testCollisionWithImplicitClass() {
     doTest("pack1.MyList", "List");
   }
 
+  @Test
   public void testPackageClassConflict() {
     doTest("Fabric.AFabric", "MetaFabric");
   }
 
+  @Test
   public void testInnerClass() {
     doTest("pack1.OuterClass.InnerClass", "NewInnerClass");
   }
   
+  @Test
   public void testInnerClassConflicting() {
     doTest("pack1.OuterClass.InnerClass", "NewInnerClass");
   }
 
+  @Test
   public void testImport() {
     //noinspection SpellCheckingInspection
     doTest("a.Blubfoo", "BlubFoo");
   }
 
+  @Test
   public void testInSameFile() {
     doTest("Two", "Object");
   }
 
+  @Test
   public void testConstructorJavadoc() {
     doTest("Test", "Test1");
   }
 
+  @Test
   public void testCollision1() {
     doTest("Loader", "Reader");
   }
   
+  @Test
   public void testCollision2() {
     doTest("Loader", "List");
   }
 
+  @Test
   public void testImplicitReferenceToDefaultCtr() {
     doTest("pack1.Parent", "ParentXXX");
   }
 
+  @Test
   public void testImplicitlyImported() {
     doTest("pack1.A", "Object");
   }
 
+  @Test
   public void testAutomaticRenameVars() {
     doRenameClass("XX", "Y");
   }
 
+  @Test
   public void testAutomaticRenameLambdaParams() {
     doRenameClass("Bar", "Baz");
   }
 
+  @Test
   public void testAnnotatedReference() {
     doRenameClass("test.MyList", "MyList123");
   }
 
+  @Test
   public void testParameterizedQualifier() {
     doRenameClass("foo.Outer.Inner", "Inner1");
   }
 
+  @Test
   public void testUndoRedoRenameRefactoringListener(){
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     MessageBusConnection connection = myFixture.getProject().getMessageBus().connect();
     Disposer.register(myFixture.getTestRootDisposable(), connection);
 
@@ -136,8 +170,10 @@ public class RenameClassTest extends LightMultiFileTestCase {
     verify(listener).redoRefactoring(any(String.class));
   }
 
+  @Test
   public void testImplicitClassAsFile() {
-    doTest(() -> {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    multiFile.get().doTest(() -> {
       VirtualFile fileInTempDir = myFixture.findFileInTempDir("pack1/ImplicitClass.java");
       Document document = FileDocumentManager.getInstance().getDocument(fileInTempDir);
       PsiFile psiFile = PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document);
@@ -145,9 +181,9 @@ public class RenameClassTest extends LightMultiFileTestCase {
       assertTrue(psiFile instanceof PsiJavaFile);
 
       RenameJavaImplicitClassProcessor processor = new RenameJavaImplicitClassProcessor();
-      RenameDialog dialog = processor.createRenameDialog(getProject(), psiFile, null, null);
+      RenameDialog dialog = processor.createRenameDialog(myFixture.getProject(), psiFile, null, null);
       String[] names = dialog.getSuggestedNames();
-      assertOrderedEquals(names, "ImplicitClass");
+      assertArrayEquals(new String[]{"ImplicitClass"}, names);
 
       UiInterceptors.register(new UiInterceptors.UiInterceptor<>
         (RenameJavaImplicitClassProcessor.RenameJavaImplicitClassRenameDialog.class) {
@@ -160,7 +196,6 @@ public class RenameClassTest extends LightMultiFileTestCase {
         }
       });
 
-
       dialog.show();
 
       String name = dialog.getNewName();
@@ -171,10 +206,11 @@ public class RenameClassTest extends LightMultiFileTestCase {
   }
 
   private void rename(String className, String newName) {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     PsiClass aClass = myFixture.findClass(className);
-    assertNotNull("Class XX not found", aClass);
+    assertNotNull(aClass, "Class XX not found");
 
-    final RenameProcessor processor = new RenameProcessor(getProject(), aClass, newName, true, true);
+    final RenameProcessor processor = new RenameProcessor(myFixture.getProject(), aClass, newName, true, true);
     for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
       processor.addRenamerFactory(factory);
     }
@@ -182,13 +218,14 @@ public class RenameClassTest extends LightMultiFileTestCase {
   }
 
   private void doRenameClass(String className, String newName) {
-    doTest(() -> {
+    multiFile.get().doTest(() -> {
       rename(className, newName);
     });
   }
 
   private void doUndoRedoRenameClass(String className, String newName) {
-    doTest(() -> {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    multiFile.get().doTest(() -> {
       rename(className, newName);
       TestDialogManager.setTestDialog(message -> Messages.YES);
       FileEditor editor = FileEditorManager.getInstance(myFixture.getProject()).getSelectedEditor();
@@ -198,31 +235,30 @@ public class RenameClassTest extends LightMultiFileTestCase {
     });
   }
 
+  @Test
   public void testAutomaticRenameInheritors() {
     doRenameClass("MyClass", "MyClass1");
   }
 
+  @Test
   public void testAvoidWeirdInheritorRename() {
     doRenameClass("ConnectionView", "JdbcConnection");
   }
 
+  @Test
   public void testAutomaticRenameVarsCollision() {
     doTest("XX", "Y");
   }
 
   private void doTest(@NonNls String qClassName, @NonNls String newName) {
-    doTest(() -> this.performAction(qClassName, newName));
+    multiFile.get().doTest(() -> this.performAction(qClassName, newName));
   }
 
   private void performAction(String qClassName, String newName) {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     PsiClass aClass = myFixture.findClass(qClassName);
-    assertNotNull("Class " + qClassName + " not found", aClass);
+    assertNotNull(aClass, "Class " + qClassName + " not found");
 
-    new RenameProcessor(getProject(), aClass, newName, true, true).run();
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_23;
+    new RenameProcessor(myFixture.getProject(), aClass, newName, true, true).run();
   }
 }

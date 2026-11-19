@@ -2,14 +2,23 @@
 package org.intellij.plugins.markdown.model
 
 import com.intellij.model.psi.impl.targetSymbols
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
-class LinkLabelRenameTest: BasePlatformTestCase() {
+@TestApplication
+class LinkLabelRenameTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `test renaming original element updates markdown reference`() {
     doRename(
@@ -128,9 +137,11 @@ class LinkLabelRenameTest: BasePlatformTestCase() {
     myFixture.checkResult(after.trimIndent())
   }
 
-  private fun findRenameTargetAtCaret(): RenameTarget =
-    targetSymbols(myFixture.file, myFixture.caretOffset)
-      .filterIsInstance<RenameTarget>()
-      .firstOrNull()
-    ?: error("Failed to find rename target at caret")
+  private fun findRenameTargetAtCaret(): RenameTarget = timeoutRunBlocking {
+    readAction {
+      targetSymbols(myFixture.file, myFixture.caretOffset)
+        .filterIsInstance<RenameTarget>()
+        .firstOrNull()
+    }
+  } ?: error("Failed to find rename target at caret")
 }

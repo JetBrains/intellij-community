@@ -50,7 +50,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * and at the end of the test, it can be validated against prerecorded output files, as described in {@link OutputChecker}.
  * This validation needs to be triggered explicitly using {@link #getChecker()} and {@link OutputChecker#checkValid(Sdk)};
  * by default, the output is discarded.
+ *
+ * @deprecated Use {@link ExecutionTestFixtureKt#executionTestFixture} in a JUnit 6 test.
  */
+@Deprecated
 public abstract class ExecutionTestCase extends JavaProjectTestCase {
   private OutputChecker myChecker;
   private int myTimeoutMillis = 300_000;

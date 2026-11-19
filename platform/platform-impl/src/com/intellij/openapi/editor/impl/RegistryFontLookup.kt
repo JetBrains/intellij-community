@@ -33,6 +33,10 @@ internal class RegistryFontLookup(preferences: FontPreferences) : FontLookup {
     return ComplementaryFontsRegistry.getFontAbleToDisplay(text, start, end, style, preferences, context)
   }
 
+  override fun printableAsciiFont(style: Int, context: FontRenderContext?): FontInfo? {
+    return null
+  }
+
   /**
    * Returns a font that can display [codePoint] in [style]. The returned font measures with [context].
    */

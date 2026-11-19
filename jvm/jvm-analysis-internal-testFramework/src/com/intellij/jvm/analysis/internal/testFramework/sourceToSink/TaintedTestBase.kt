@@ -2,6 +2,11 @@ package com.intellij.jvm.analysis.internal.testFramework.sourceToSink
 
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 
+/**
+ * @deprecated Use [taintedFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use taintedFixture in a JUnit 5 test")
 abstract class TaintedTestBase : JvmInspectionTestBase() {
   fun prepareCheckFramework() {
     myFixture.addClass("""

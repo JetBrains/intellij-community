@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -XXLanguage:-WrapContinuationForTailCallFunctions -progressive" />
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -49,6 +49,7 @@
     <orderEntry type="module" module-name="intellij.mcpserver.testFramework" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.vcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.mcpserver.configurables" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />

@@ -3,6 +3,11 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndNonPublicInspection
 
+/**
+ * Use [extensionClassShouldBeFinalAndNonPublicFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use extensionClassShouldBeFinalAndNonPublicFixture in a JUnit 5 test")
 abstract class ExtensionClassShouldBeFinalAndNonPublicInspectionTestBase : LightDevKitInspectionFixTestBase() {
   override fun setUp() {
     super.setUp()

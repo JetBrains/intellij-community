@@ -53,8 +53,7 @@ object HttpClient {
    * Downloading file from [url] to [outPath] with [retries].
    *
    * @return `true` if the file was downloaded, `false` if every attempt failed.
-   * @throws HttpNotFound if the server answered 404, or 403 for a `cache-redirector.jetbrains.com` url
-   * (those are expected to be public, so a 403 there means "not found") - not retried.
+   * @throws HttpNotFound if the server answered 404, or 403 for a url where [DownloadMirror.isMissingOn403] is true - not retried.
    * @throws HttpForbidden if the server answered 403 for any other url - not retried.
    * @throws kotlinx.coroutines.TimeoutCancellationException if [timeout] expires. Note that it can only be
    * observed between attempts: the underlying request is blocking and is not interrupted by the timeout.
@@ -115,10 +114,8 @@ object HttpClient {
       throw HttpNotFound("Server returned 404 Not Found: $encodeUrl")
     }
 
-    if (statusCode == 403 && originalUrl.startsWith("https://cache-redirector.jetbrains.com/")) {
-      // all downloads from https://cache-redirector.jetbrains.com should be public, but some endpoints return 403 instead of 404
-      // due to blocking of files listing on S3 bucket
-      throw HttpNotFound("Server returned 403 which we interpret as not found for cache-redirector urls: $originalUrl")
+    if (statusCode == 403 && DownloadMirror.instance.isMissingOn403(originalUrl)) {
+      throw HttpNotFound("Server returned 403, which the download mirror reports as not found: $originalUrl")
     }
 
     if (statusCode == 403) throw HttpForbidden("Server returned 403 Forbidden: $encodeUrl")

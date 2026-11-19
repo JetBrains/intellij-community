@@ -2,12 +2,9 @@
 package org.intellij.plugins.markdown.extensions
 
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
-import org.junit.Assert.assertEquals
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
 class TrimPromptTest {
 
   private fun strip(line: String, infoString: String = ""): String = CommandRunnerExtension.trimPrompt(line, infoString)

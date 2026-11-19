@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -90,8 +89,8 @@ internal class KtCompilerSupertypesHintProvider : AbstractKtCompilerPluginDeclar
     private fun KaType.isImplicitSuperType(owner: KaClassSymbol): Boolean {
         if (this !is KaClassType) return false
         return when (owner.classKind) {
-            KaClassKind.ENUM_CLASS -> isClassType(StandardClassIds.Enum)
-            KaClassKind.ANNOTATION_CLASS -> isClassType(StandardClassIds.Annotation)
+            KaClassKind.ENUM_CLASS -> classId == StandardClassIds.Enum
+            KaClassKind.ANNOTATION_CLASS -> classId == StandardClassIds.Annotation
             else -> classId == KaStandardTypeClassIds.ANY
         }
     }

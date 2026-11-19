@@ -20,7 +20,7 @@ class ProductModulesLayoutTest {
   @Test
   fun `assignment defers initialization and caches the list`() {
     val productLayout = ProductModulesLayout()
-    val layouts = persistentListOf(PluginLayout.pluginAuto(listOf("test.plugin")))
+    val layouts = persistentListOf(PluginLayout.pluginAuto("test.plugin") {})
     var initializations = 0
     productLayout.pluginLayouts = lazy {
       initializations++
@@ -42,13 +42,13 @@ class ProductModulesLayoutTest {
     var previousInitializations = 0
     productLayout.pluginLayouts = lazy {
       previousInitializations++
-      persistentListOf(PluginLayout.pluginAuto(listOf("previous.plugin")))
+      persistentListOf(PluginLayout.pluginAuto("previous.plugin") {})
     }
     val previousProducer = productLayout.pluginLayouts
     if (initializePrevious) {
       previousProducer.value
     }
-    val replacement = persistentListOf(PluginLayout.pluginAuto(listOf("replacement.plugin")))
+    val replacement = persistentListOf(PluginLayout.pluginAuto("replacement.plugin") {})
     productLayout.pluginLayouts = lazyOf(replacement)
 
     assertThat(productLayout.pluginLayouts.isInitialized()).isFalse()
@@ -60,9 +60,9 @@ class ProductModulesLayoutTest {
   @Test
   fun `composed producers remain lazy and preserve order`() {
     val productLayout = ProductModulesLayout()
-    val firstPlugin = PluginLayout.pluginAuto(listOf("first.plugin"))
-    val secondPlugin = PluginLayout.pluginAuto(listOf("second.plugin"))
-    val thirdPlugin = PluginLayout.pluginAuto(listOf("third.plugin"))
+    val firstPlugin = PluginLayout.pluginAuto("first.plugin") {}
+    val secondPlugin = PluginLayout.pluginAuto("second.plugin") {}
+    val thirdPlugin = PluginLayout.pluginAuto("third.plugin") {}
     productLayout.pluginLayouts = lazy { persistentListOf(firstPlugin, secondPlugin) }
     val originalProducer = productLayout.pluginLayouts
     productLayout.pluginLayouts = lazy { originalProducer.value.adding(thirdPlugin) }
@@ -124,7 +124,7 @@ class ProductModulesLayoutTest {
   fun `concurrent first reads initialize once`() {
     val productLayout = ProductModulesLayout()
     val initializations = AtomicInteger()
-    val layouts = persistentListOf(PluginLayout.pluginAuto(listOf("test.plugin")))
+    val layouts = persistentListOf(PluginLayout.pluginAuto("test.plugin") {})
     productLayout.pluginLayouts = lazy {
       initializations.incrementAndGet()
       layouts
@@ -156,7 +156,7 @@ class ProductModulesLayoutTest {
   }
 
   private fun plugin(restricted: Boolean): PluginLayout {
-    return PluginLayout.pluginAuto(listOf("test.plugin")) {
+    return PluginLayout.pluginAuto("test.plugin") {
       if (restricted) {
         it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
       }

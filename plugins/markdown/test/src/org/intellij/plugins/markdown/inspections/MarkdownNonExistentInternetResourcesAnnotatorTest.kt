@@ -2,13 +2,26 @@
 package org.intellij.plugins.markdown.inspections
 
 import com.intellij.markdown.backend.inspections.MarkdownNonExistentInternetResourceInspection
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.sun.net.httpserver.HttpServer
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
-class MarkdownNonExistentInternetResourcesAnnotatorTest : BasePlatformTestCase() {
+@TestApplication
+class MarkdownNonExistentInternetResourcesAnnotatorTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
   fun testWebLinks() {
     TestHttpServer().use { server ->
       myFixture.enableInspections(MarkdownNonExistentInternetResourceInspection())
@@ -24,7 +37,7 @@ class MarkdownNonExistentInternetResourcesAnnotatorTest : BasePlatformTestCase()
 
       myFixture.checkHighlighting()
       assertEquals(6, server.requestCount.get())
-      assertTrue(server.userAgents.toString(), server.userAgents.none { it.isEmpty() || it.startsWith("Java/") })
+      assertTrue(server.userAgents.none { it.isEmpty() || it.startsWith("Java/") }, server.userAgents.toString())
     }
   }
 

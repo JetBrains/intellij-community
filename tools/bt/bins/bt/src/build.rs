@@ -37,7 +37,7 @@ pub(crate) fn execute_build(args: &BuildArgs, runtime: &dyn Runtime) -> Result<O
     });
     let bazel_args = build_bazel_args(&bep_path, &patterns, &args.passthrough);
     let command = bazel_command(runtime.repo_root(), runtime.platform(), &bazel_args);
-    if args.dry_run {
+    if args.shared.dry_run {
         return Ok(Outcome {
             exit_code: exit::GREEN,
             text: format!("argv    {}", command_line(&command)),
@@ -59,7 +59,7 @@ pub(crate) fn execute_build(args: &BuildArgs, runtime: &dyn Runtime) -> Result<O
         ..collected
     };
 
-    if args.verbose {
+    if args.shared.verbose {
         runtime.write_error(&spawned.output);
     } else if exit_code != exit::GREEN {
         // A failed build has the words of bazel as its evidence, beside the compile errors the digest names.
@@ -76,7 +76,7 @@ pub(crate) fn execute_build(args: &BuildArgs, runtime: &dyn Runtime) -> Result<O
     Ok(Outcome {
         exit_code,
         text: render_build(&result, &patterns, &ignored),
-        json: args.json.then(|| to_json(&result)),
+        json: args.shared.json.then(|| to_json(&result)),
     })
 }
 

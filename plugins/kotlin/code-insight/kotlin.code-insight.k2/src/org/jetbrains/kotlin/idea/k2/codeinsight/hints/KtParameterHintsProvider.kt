@@ -170,7 +170,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                  * However, [valueParameters] include all the parameters required for the invocation, including all the receivers.
                  * That's why we have to calculate the number of receiver parameters we should skip from [valueParameters] to properly map them to names from [KaFunctionType.parameters].
                  */
-                val receiverNumber = expressionType.contextReceivers.size + if (expressionType.hasReceiver) 1 else 0
+                val receiverNumber = expressionType.contextParameterTypes.size + if (expressionType.hasReceiver) 1 else 0
                 expressionType.parameters.mapIndexed { index, parameter ->
                     val name = parameter.name
                     val parameterSymbol = valueParameters[receiverNumber + index]

@@ -33,6 +33,7 @@ jvm_library(
     runtime_deps = ["//platform/platform-util-io:ide-util-io"],
     deps = [
         # do not sort,
+        "//libraries/semver",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//platform/util",

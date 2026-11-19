@@ -16,7 +16,7 @@ data class RepositoryId private constructor(
   /**
    * Normalized, system-independent path to the repository root uniquely identifying this repository in the project.
    */
-  private val rootPath: @SystemIndependent String,
+  val rootPath: @SystemIndependent String,
 ) {
   companion object {
     fun from(projectId: ProjectId, rootPath: FilePath): RepositoryId = RepositoryId(

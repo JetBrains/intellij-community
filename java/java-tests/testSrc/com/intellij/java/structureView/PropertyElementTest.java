@@ -12,13 +12,18 @@ import com.intellij.ide.util.treeView.smartTree.GroupWrapper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.StructureViewComponentTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import javax.swing.JTree;
 import javax.swing.tree.TreeModel;
-import java.util.List;
 
 import static com.intellij.ide.structureView.impl.java.PropertyGroup.PROPERTY_READ_ICON;
 import static com.intellij.ide.structureView.impl.java.PropertyGroup.PROPERTY_READ_STATIC_ICON;
@@ -28,9 +33,14 @@ import static com.intellij.ide.structureView.impl.java.PropertyGroup.PROPERTY_WR
 import static com.intellij.ide.structureView.impl.java.PropertyGroup.PROPERTY_WRITE_STATIC_ICON;
 import static com.intellij.psi.util.PsiUtil.ACCESS_LEVEL_PROTECTED;
 import static com.intellij.psi.util.PsiUtil.ACCESS_LEVEL_PUBLIC;
-import static org.junit.Assert.assertArrayEquals;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
+@TestApplication
+public class PropertyElementTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
   @Language("JAVA")
   public static final String INTERFACE = """
     interface Interface {
@@ -83,7 +93,9 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
   }
 
 
+  @Test
   public void testPropertyElement() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     init();
 
     StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
@@ -131,7 +143,9 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void testStaticProperties() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     init();
 
     StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
@@ -169,7 +183,9 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void test14827() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Derived.java", "class Base {int x;}\n" +
                                               "class Derived extends Base {int getX() {return 0;}}");
     StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
@@ -185,7 +201,9 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void testNotStaticAccessors() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("A.java", NOT_STATIC_GETTERS);
 
     StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
@@ -208,8 +226,8 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
-  @Override
-  public void init() {
+  private void init() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(INTERFACE);
     myFixture.addClass(BASE);
     myFixture.configureByText("Sample.java", SAMPLE);

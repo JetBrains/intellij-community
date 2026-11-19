@@ -2,37 +2,48 @@
 package org.jetbrains.idea.devkit.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/simplifiableServiceRetrieving")
-internal class SimplifiableServiceRetrievingInspectionTest : SimplifiableServiceRetrievingInspectionTestBase() {
+@TestApplication
+internal class SimplifiableServiceRetrievingInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/simplifiableServiceRetrieving/"
+  private val simplifiable by simplifiableServiceRetrievingFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/simplifiableServiceRetrieving/")
 
-  override fun getFileExtension() = "java"
-
+  @Test
   fun testReplaceWithGetInstanceApplicationLevel() {
-    doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyService", "getInstance"))
+    simplifiable.doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyService", "getInstance"))
   }
 
+  @Test
   fun testReplaceWithGetInstanceProjectLevel() {
-    doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyService", "getInstance"))
+    simplifiable.doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyService", "getInstance"))
   }
 
+  @Test
   fun testTooGenericGetInstanceReturnType() {
-    doTest()
+    simplifiable.doTest()
   }
 
+  @Test
   fun testNullableGetInstanceMethod() {
-    doTest()
+    simplifiable.doTest()
   }
 
+  @Test
   fun testReturnExpressionOfNullableMethod() {
-    doTest()
+    simplifiable.doTest()
   }
 
+  @Test
   fun testNullableVariable() {
-    doTest()
+    simplifiable.doTest()
   }
 }

@@ -11,6 +11,10 @@ import java.nio.file.Path
 
 interface ManagedCacheFactory {
 
+  /**
+   * Creates a cache that closes when [coroutineScope] is cancelled.
+   * [coroutineScope] must end by cancellation only, because the cache keeps it from completing normally.
+   */
   fun <K, V> createCache(
     project: Project,
     basePath: Path,

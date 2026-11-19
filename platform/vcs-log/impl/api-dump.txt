@@ -737,7 +737,8 @@ a:com.intellij.vcs.log.ui.editor.VcsLogFile
 f:com.intellij.vcs.log.ui.filter.BranchFilterModel
 - com.intellij.vcs.log.ui.filter.FilterModel$MultipleFilterModel
 - sf:Companion:com.intellij.vcs.log.ui.filter.BranchFilterModel$Companion
-- f:createFilterFromPresentation(java.util.List):com.intellij.vcs.log.VcsLogFilterCollection
+- f:createFilterFromPresentation(java.util.List,Z):com.intellij.vcs.log.VcsLogFilterCollection
+- bs:createFilterFromPresentation$default(com.intellij.vcs.log.ui.filter.BranchFilterModel,java.util.List,Z,I,java.lang.Object):com.intellij.vcs.log.VcsLogFilterCollection
 - f:getBranchFilter():com.intellij.vcs.log.VcsLogBranchFilter
 - f:getDataPack():com.intellij.vcs.log.VcsLogDataPack
 - sf:getFilterPresentation(com.intellij.vcs.log.VcsLogFilterCollection):java.util.List

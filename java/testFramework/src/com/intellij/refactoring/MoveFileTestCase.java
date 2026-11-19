@@ -7,6 +7,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 
+/**
+ * @deprecated Use {@link LightMultiFileFixture#doMoveFileTest} of {@link LightMultiFileFixtureKt#lightMultiFileFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class MoveFileTestCase extends LightMultiFileTestCase {
   protected void doTest(String targetDirName, String fileToMove) {
     doTest(() -> {

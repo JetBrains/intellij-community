@@ -1,18 +1,26 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.intellij.plugins.intelliLang.AbstractLanguageInjectionTestCase;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.fixtures.InjectionTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
+@TestApplication
+public class JavaFormatInjectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testInstanceFormattedWithComputableArgument() {
     doTest("""
              import org.intellij.lang.annotations.Language;
@@ -25,6 +33,7 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
            "a(B)c");
   }
 
+  @Test
   public void testUserExampleWithNonComputableArgument() {
     doTest("""
              import org.intellij.lang.annotations.Language;
@@ -36,6 +45,7 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
            "select count(*) from (missingValue) as cnt");
   }
 
+  @Test
   public void testStaticStringFormat() {
     doTest("""
              import org.intellij.lang.annotations.Language;
@@ -48,6 +58,7 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
            "aXb");
   }
 
+  @Test
   public void testMultipleSpecifiers() {
     doTest("""
              import org.intellij.lang.annotations.Language;
@@ -61,6 +72,7 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
            "p and q");
   }
 
+  @Test
   public void testBrokenSpecifiers() {
     doTest("""
              import org.intellij.lang.annotations.Language;
@@ -75,6 +87,7 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
            "p and paaa$s");
   }
 
+  @Test
   public void testErrorIsHighlightedInFormattedInjection() {
     highlightTest("""
                     import org.intellij.lang.annotations.Language;
@@ -86,6 +99,7 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
                     }""");
   }
 
+  @Test
   public void testMalformedPositionalSpecifierSuppressesHighlighting() {
     // %99999999999$s overflows the positional index. No highlighting
     highlightTest("""
@@ -98,6 +112,7 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
                     }""");
   }
 
+  @Test
   public void testEscapedPercentWithoutArguments() {
     doTest("""
              import org.intellij.lang.annotations.Language;
@@ -109,6 +124,7 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
            "100%done");
   }
 
+  @Test
   public void testNoSpecifierKeepsWholeString() {
     doTest("""
              import org.intellij.lang.annotations.Language;
@@ -126,8 +142,9 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
     try {
       // OFF disables variable-following so only the format-string injection is asserted; constants are still evaluated.
       configuration.setDfaOption(Configuration.DfaOption.OFF);
+      LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
       myFixture.configureByText("X.java", text);
-      getInjectionTestFixture().assertInjectedContent(expectedInjectedContent);
+      ReadAction.runBlocking(() -> new InjectionTestFixture(myFixture).assertInjectedContent(expectedInjectedContent));
     }
     finally {
       configuration.setDfaOption(oldOption);
@@ -139,6 +156,7 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
     Configuration.DfaOption oldOption = configuration.getDfaOption();
     try {
       configuration.setDfaOption(Configuration.DfaOption.OFF);
+      LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
       myFixture.configureByText("X.java", text);
       myFixture.testHighlighting(false, false, false);
     }

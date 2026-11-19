@@ -2,27 +2,29 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.quickfix.UsePsiPrimitiveTypeEqualsFixtureKt.usePsiPrimitiveTypeEqualsFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/useEqualsFix/psiPrimitiveType")
-public class UsePsiPrimitiveTypeEqualsFixTest extends UsePsiPrimitiveTypeEqualsFixTestBase {
+@TestApplication
+public class UsePsiPrimitiveTypeEqualsFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightDevKitInspectionFixture> primitiveTypeEquals =
+    usePsiPrimitiveTypeEqualsFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useEqualsFix/psiPrimitiveType");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useEqualsFix/psiPrimitiveType";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testUsePsiPrimitiveTypeEquals() {
-    doTest("Replace '==' with 'equals()'");
+    primitiveTypeEquals.get().doTest("Replace '==' with 'equals()'");
   }
 
+  @Test
   public void testUsePsiPrimitiveTypeNotEquals() {
-    doTest("Replace '!=' with '!equals()'");
+    primitiveTypeEquals.get().doTest("Replace '!=' with '!equals()'");
   }
 }

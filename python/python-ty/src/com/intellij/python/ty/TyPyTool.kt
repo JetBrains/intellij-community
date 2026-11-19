@@ -9,6 +9,7 @@ import com.intellij.python.lsp.core.isActiveOn
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.PyTypeEngineSelectableTool
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -18,7 +19,7 @@ import javax.swing.Icon
  * written in Rust by Astral (currently in preview).
  */
 @ApiStatus.Internal
-class TyPyTool : PyLspTool<TyConfiguration>() {
+class TyPyTool : PyLspTool<TyConfiguration>(), PyTypeEngineSelectableTool {
   override val lspServerName: String = "ty"
   override val icon: Icon = TyUtil.getDefaultTyIcon()
   override val packageName: PyPackageName = PyPackageName.from("ty")
@@ -30,7 +31,7 @@ class TyPyTool : PyLspTool<TyConfiguration>() {
       PyTypeEngineProjectSettings.getInstance(project).typeEngine = PyTypeEngineType.PYCHARM
     }
     val manager = LspClientManager.getInstance(project)
-    if (isActiveOn(project)) manager.startClientsIfNeeded(TyLspIntegrationProvider::class.java)
+    if (isActiveOn(project) || runsForExternalTypeEngine(project)) manager.startClientsIfNeeded(TyLspIntegrationProvider::class.java)
     else manager.stopClients(TyLspIntegrationProvider::class.java)
   }
 

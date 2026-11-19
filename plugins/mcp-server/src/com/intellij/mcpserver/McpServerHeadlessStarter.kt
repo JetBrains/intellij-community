@@ -86,7 +86,7 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
     )
 
     val invocationMode = parseInvocationMode(actualArgs) ?: McpSessionInvocationMode.VIA_ROUTER
-    McpToolFilterSettings.getInstance().invocationMode = invocationMode
+    McpToolFilterSettings.getInstance().overrideInvocationModeForProcess(invocationMode)
     System.err.println("MCP session invocation mode: $invocationMode")
 
     val allowedTools = parseAllowedTools(actualArgs)

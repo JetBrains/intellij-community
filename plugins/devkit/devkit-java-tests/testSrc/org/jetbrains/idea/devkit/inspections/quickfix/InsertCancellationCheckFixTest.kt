@@ -2,123 +2,153 @@
 package org.jetbrains.idea.devkit.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import org.jetbrains.idea.devkit.inspections.CancellationCheckInLoopsInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.cancellationCheckInLoopsFixture
+import org.jetbrains.idea.devkit.inspections.cancellationCheckInLoopsProjectFixture
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/insertCancellationCheckFix")
-class InsertCancellationCheckFixTest : CancellationCheckInLoopsInspectionTestBase() {
+@TestApplication
+class InsertCancellationCheckFixTest {
+  companion object {
+    private val projectFixture = cancellationCheckInLoopsProjectFixture()
+  }
 
-  override fun getFileExtension(): String = "java"
-
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/insertCancellationCheckFix"
+  private val cancellationCheck by cancellationCheckInLoopsFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/insertCancellationCheckFix")
 
   private val fixName = DevKitBundle.message("inspection.insert.cancellation.check.fix.message")
 
   // loops:
 
+  @Test
   fun testBlockDoWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testBlockForEachLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testBlockForLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testBlockWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testEmptyDoWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testEmptyForEachLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testEmptyForLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testEmptyWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSingleLineDoWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSingleLineForEachLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSingleLineForLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSingleLineWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testNoBodyForEachLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testNoBodyForLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testNoBodyWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
   // loop methods:
 
+  @Test
   fun testBlockIterableForEachMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testBlockIteratorForEachRemainingMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testBlockStreamForEachMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testBlockStreamForEachOrderedMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testBlockMapForEachMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testEmptyIterableForEachMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSingleStreamForEachMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testBlockContainerUtilProcessMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testNestedLoopMethods() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
   // Kotlin methods:
 
+  @Test
   fun testBlockArraysKtForEachMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
 }

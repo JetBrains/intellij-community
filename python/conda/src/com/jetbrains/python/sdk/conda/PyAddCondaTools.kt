@@ -120,5 +120,6 @@ private fun NewCondaEnvRequest.toIdentity(): PyCondaEnvIdentity =
   when (this) {
     is NewCondaEnvRequest.EmptyNamedEnv, is NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile -> PyCondaEnvIdentity.NamedEnv(envName)
     is NewCondaEnvRequest.EmptyUnnamedEnv -> PyCondaEnvIdentity.UnnamedEnv(envPath = envName, isBase = false)
+    is NewCondaEnvRequest.LocalEnvByLocalEnvironmentFileAt -> identity
   }
 

@@ -189,12 +189,10 @@ fn strip_working_directory_ns_prefix() -> Result<()> {
 
     if let Ok(cwd) = cwd_res {
         let orig_len = cwd.as_os_str().len();
-        if let Ok(stripped) = cwd.strip_ns_prefix() {
-            if stripped.as_os_str().len() < orig_len {
-                debug!("  ... to {stripped:?}");
-                env::set_current_dir(&stripped)
-                    .with_context(|| format!("Cannot set current directory to '{}'", stripped.display()))?;
-            }
+        if let Ok(stripped) = cwd.strip_ns_prefix() && stripped.as_os_str().len() < orig_len {
+            debug!("  ... to {stripped:?}");
+            env::set_current_dir(&stripped)
+                .with_context(|| format!("Cannot set current directory to '{}'", stripped.display()))?;
         }
     }
 
@@ -386,7 +384,7 @@ pub trait LaunchConfiguration {
 
 fn get_configuration(is_remote_dev: bool, exe_path: &Path, started_via_remote_dev_launcher: bool) -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
-    debug!("Args: {:?}", &cmd_args);
+    debug!("Args: {:?}", cmd_args);
 
     if is_remote_dev {
         RemoteDevLaunchConfiguration::new(exe_path, cmd_args, started_via_remote_dev_launcher)

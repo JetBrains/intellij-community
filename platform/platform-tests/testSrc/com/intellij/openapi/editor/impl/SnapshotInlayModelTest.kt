@@ -280,10 +280,13 @@ class SnapshotInlayModelTest {
   }
 
   @Test
-  fun `released editor storage is not retained by document marker stores`(): Unit = timeoutRunBlocking {
+  fun `released editor storage is not retained by document marker stores`() {
     val document = DocumentImpl("abc", true)
+    val watcher = timeoutRunBlocking {
+      createReleasedEditorStorage(document)
+    }
 
-    createReleasedEditorStorage(document).ensureCollectedWithinTimeout(15_000)
+    watcher.ensureCollectedWithinTimeout(15_000)
 
     assertThat(document.text).isEqualTo("abc") // to keep document alive
   }

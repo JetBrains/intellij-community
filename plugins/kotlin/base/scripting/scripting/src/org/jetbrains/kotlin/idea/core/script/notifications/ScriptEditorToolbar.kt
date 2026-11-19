@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.core.script.definition.SCRIPT_EDITOR_TOOLBAR_GR
 import org.jetbrains.kotlin.idea.core.script.definition.ScriptEditorToolbarProvider
 import org.jetbrains.kotlin.idea.core.script.definition.editorToolbar
 import org.jetbrains.kotlin.idea.core.script.definition.kotlinScriptTemplate
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettingsConfigurable
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -52,7 +53,9 @@ internal class ScriptEditorToolbarNotificationProvider : EditorNotificationProvi
         if (file.isNonScript()) return null
         val ktFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
         if (!ktFile.isScript()) return null
-        val provider = ktFile.findScriptDefinition()?.compilationConfiguration?.get(ScriptCompilationConfiguration.ide.editorToolbar)
+        // Before the first load of the definitions, a script would show the toolbar of the bundled definition.
+        val provider = if (!ScriptDefinitionProviderImpl.getInstance(project).isLoaded) null
+        else ktFile.findScriptDefinition()?.compilationConfiguration?.get(ScriptCompilationConfiguration.ide.editorToolbar)
 
         return Function { fileEditor -> if (fileEditor is TextEditor) fileEditor.showToolbar(provider) else null }
     }

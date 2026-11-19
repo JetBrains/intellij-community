@@ -26,8 +26,8 @@ f:com.jetbrains.python.packaging.PyCustomPackageManagers
 - f:getSystemPython():com.intellij.python.community.services.systemPython.SystemPython
 - hashCode():I
 *f:com.jetbrains.python.projectCreation.VenvWithSdkCreatorKt
-- sf:createVenvAndSdk(com.jetbrains.python.sdk.ModuleOrProject,com.jetbrains.python.projectCreation.SystemPythonRequirements,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
-- bs:createVenvAndSdk$default(com.jetbrains.python.sdk.ModuleOrProject,com.jetbrains.python.projectCreation.SystemPythonRequirements,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:createVenvAndSdk(com.jetbrains.python.sdk.ModuleOrProject,com.jetbrains.python.projectCreation.SystemPythonRequirements,com.intellij.openapi.vfs.VirtualFile,java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
+- bs:createVenvAndSdk$default(com.jetbrains.python.sdk.ModuleOrProject,com.jetbrains.python.projectCreation.SystemPythonRequirements,com.intellij.openapi.vfs.VirtualFile,java.nio.file.Path,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *a:com.jetbrains.python.run.PythonExecution
 - *sf:Companion:com.jetbrains.python.run.PythonExecution$Companion
 - sf:SKIP_ARGUMENT:java.lang.String

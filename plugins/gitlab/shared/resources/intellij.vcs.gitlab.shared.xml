@@ -1,4 +1,5 @@
 <idea-plugin>
+  <resource-bundle>messages.GitLabBundle</resource-bundle>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.jackson3"/>
@@ -10,21 +11,50 @@
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.collaborationTools.shared"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vfs.impl"/>
     <module name="intellij.vcs.git.shared"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij.statistics">
     <counterUsagesCollector implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
+    <notificationIdsHolder implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="GitLab Notifications" displayType="STICKY_BALLOON"
+                       bundle="messages.GitLabBundle" key="notification.group.gitlab"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.api.GitLabApiManager"
                         serviceImplementation="org.jetbrains.plugins.gitlab.api.GitLabApiManagerImpl"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.GitLabServersManager"
                         serviceImplementation="org.jetbrains.plugins.gitlab.CachingGitLabServersManager"/>
+    <registryKey defaultValue="1000" description="Request polling interval in milliseconds" key="gitlab.request.polling.interval.millis"/>
+    <registryKey defaultValue="5" description="Request polling attempts" key="gitlab.request.polling.attempts"/>
+    <registryKey key="gitlab.merge.requests.load.project.with.rest" defaultValue="true"
+                 description="Load the project details purely with REST API"/>
+    <registryKey defaultValue="true" description="Enable file uploading action for review notes"
+                 key="gitlab.merge.requests.file.upload.enabled"/>
+    <registryKey defaultValue="false" description="Disable loading emojis for notes in merge requests"
+                 key="gitlab.merge.requests.disable.emojis.fetching"/>
   </extensions>
+
+  <actions>
+    <action id="GitLab.Merge.Request.Refresh"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshAction"
+            use-shortcut-of="Refresh"
+            icon="AllIcons.Actions.Refresh"/>
+    <action id="GitLab.Merge.Request.Open.Link"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestOpenURLAction"
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
+    <action id="GitLab.Merge.Request.Copy.Link"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCopyURLAction"
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
+  </actions>
 </idea-plugin>

@@ -1,6 +1,6 @@
 # Annotated New UI Icon Examples
 
-Each example below is copied verbatim from `community/platform/icons/src/expui/`, paired with the dark variant and a short note on the pattern it represents. Use these as templates when generating new icons.
+Each example below comes from `community/platform/icons/src/expui/`. Some examples are excerpts.
 
 ---
 
@@ -17,8 +17,6 @@ Each example below is copied verbatim from `community/platform/icons/src/expui/`
 ```
 
 **Dark:** swap `#6C707E` → `#CED0D6`.
-
-Why it works: one filled path, primary gray. Drop in any glyph and you have a complete action icon.
 
 ---
 
@@ -37,7 +35,7 @@ Why it works: one filled path, primary gray. Drop in any glyph and you have a co
 
 **Dark:** `#3574F0` → `#548AF7`, `#6C707E` → `#CED0D6`.
 
-Pattern: stick the small modifier glyph in the bottom-right of the canvas (`(9..15, 9..15)` for 16×16) and let the base glyph occupy the top-left two-thirds.
+Pattern: stick the small modifier glyph in the bottom-right of the canvas (`(9..16, 9..16)` for 16×16) and let the base glyph occupy the top-left two-thirds.
 
 ---
 
@@ -55,10 +53,6 @@ Pattern: stick the small modifier glyph in the bottom-right of the canvas (`(9..
 <path d="M11.5 8.49982L13.5 6.5L15.5 8.49982" stroke="#6C707E" stroke-linecap="round"/>
 </svg>
 ```
-
-`stroke-width` defaults to `1`. `stroke-linecap="round"` softens path ends; pair it with `stroke-linejoin="round"` whenever paths bend.
-
-For secondary glyphs (chevrons in popups, dropdown arrows) use `#818594` light / `#6F737A` dark instead of the primary gray.
 
 ---
 
@@ -84,8 +78,6 @@ For secondary glyphs (chevrons in popups, dropdown arrows) use `#818594` light /
 **Method (red) follows the same template** with `#FFF7F7`/`#DB3B4B` (light) → `#402929`/`#DB5C5C` (dark).
 
 Rules:
-- Circle is always `cx="8" cy="8" r="6.5"` (so the 1-px stroke is centered between pixels 1 and 15).
-- Fill = soft background pair, stroke = accent.
 - Glyph inside uses the same accent color filled — never stroked.
 
 ---
@@ -101,7 +93,7 @@ Rules:
 </svg>
 ```
 
-`expui/status/warning.svg` is the same idea but with a rounded triangle filled `#FFAF0F` (light) / `#F2C55C` (dark). In the dark theme, the glyph inside the warning triangle uses `#5E4D33` instead of `white` (white on warm yellow is unreadable).
+`expui/status/warning.svg` is the same idea but with a rounded triangle filled `#FFAF0F` (light) / `#F2C55C` (dark).
 
 `expui/status/success.svg` uses a 2-px stroked checkmark inside a `#55A76A` (light) / `#57965C` (dark) circle — `stroke="white"` and `stroke-width="2"`.
 
@@ -117,26 +109,11 @@ Rules:
 ```
 
 Notes:
-- 20×20 canvas with **at least 2 px** breathing room on each edge (geometry lives in `2..18`).
-- Re-balance vs. a 16×16 sibling — do not just paste a 16×16 path into a 20×20 viewBox.
 - For the 16×16 stripe (legacy / compact mode), keep a sibling `build.svg`; New UI uses the `@20x20` variant by default.
 
 ---
 
-## 7. Main toolbar action (20×20) — same template as tool window
-
-`expui/general/add@20x20.svg`:
-```svg
-<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M9.75586 17.25C9.34165 17.25 9.00586 16.9142 9.00586 16.5V10.5059H3C…" fill="#6C707E"/>
-</svg>
-```
-
-Main-toolbar icons reuse the 20×20 conventions of tool window stripes — the canvas size and stroke weights are identical, only the visual semantics differ.
-
----
-
-## 8. Gutter icon (14×14) — thin stroke, no padding
+## 7. Gutter icon (14×14) — thin stroke, no padding
 
 `expui/gutter/javadocEdit.svg`:
 ```svg
@@ -147,12 +124,11 @@ Main-toolbar icons reuse the 20×20 conventions of tool window stripes — the c
 
 Gutter icons:
 - Canvas is 14×14 (not 16×16). Glyph extends to the edge — there is *no* outer padding margin in the gutter.
-- Prefer `stroke-miterlimit="10"` for hard-pointed glyphs (pencil tip), `stroke-linecap="round"` for chevrons / arrows.
 - Compound gutter glyphs (e.g. implemented + override marker) layer two badges; keep each badge ≤ 9 px so the composition stays legible.
 
 ---
 
-## 9. Breakpoint mark (14×14) — solid filled circle
+## 8. Breakpoint mark (14×14) — solid filled circle
 
 `expui/breakpoints/breakpoint.svg`:
 ```svg
@@ -161,20 +137,4 @@ Gutter icons:
 </svg>
 ```
 
-Breakpoint marks read at a glance — a single solid fill in the status-error red. Variants (disabled, conditional, log) layer a small overlay in the bottom-right corner.
-
----
-
-## 10. Dark-variant gotcha — white-on-warm vs. muted-dark
-
-`expui/status/warning_dark.svg` shows the only common case where a literal find-and-replace from the light SVG would produce a broken icon:
-
-```svg
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M1.27603 10.8634L6.3028 1.98903C7.04977 0.670323 8.94893 0.670326 9.69589 1.98903L14.7227 10.8634C15.516 12.2639 14.5047 14 12.8956 14H3.10308C1.494 14 0.482737 12.2639 1.27603 10.8634Z" fill="#F2C55C"/>
-<path d="…" fill="#5E4D33"/>
-<path d="…" fill="#5E4D33"/>
-</svg>
-```
-
-`white` → `#5E4D33` inside the warning triangle. Apply the same swap whenever a light icon paints a glyph as `white` over a warm fill (`#FFAF0F`, `#E66D17`, etc.). For cool fills (`#3574F0`, `#208A3C`, `#DB3B4B`), the dark-theme glyph stays `white` because contrast is still sufficient.
+A breakpoint mark is a single solid fill in the status-error red. For a conditional breakpoint, `XBreakpointUIUtil` layers `questionBadge.svg` over the bottom-right of the mark. A non-suspending breakpoint uses `breakpointUnsuspendent.svg`, a plain `#FFAF0F` fill. `breakpointDisabled.svg` is an outline only.

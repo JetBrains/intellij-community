@@ -112,7 +112,7 @@ private fun hostPlatformsOfVariant(variant: String): List<String> = when {
  * `osId` reaches the macro through a regeneration.
  */
 private val MARKETPLACE_NAMES: Map<String, String> = buildMap {
-  for (os in OsFamily.entries) {
+  for (os in OsFamily.ALL) {
     put(hostPlatformOs(os), os.osId)
   }
   for (arch in JvmArchitecture.entries) {
@@ -1210,7 +1210,7 @@ private fun collectEmbeddedProductDescriptor(
     ),
     libraryDescriptors = labels.libraryDescriptors,
     separateJar = separateJarContentModules(
-      layout = PluginLayout.pluginAuto(listOf(support.descriptorModule)),
+      layout = PluginLayout.pluginAuto(support.descriptorModule) {},
       closure = closure,
       outputProvider = outputProvider,
       frontendModuleFilter = frontendModuleFilter,

@@ -26,7 +26,7 @@ mod tests;
 
 /// The version of the descriptor this controller reads. Unrelated to [`crate::daemon::PROTOCOL_VERSION`]: one
 /// describes a build artifact, the other a running process. Bump it with `_SCHEMA_VERSION` in the `.bzl`.
-pub const SCHEMA_VERSION: u32 = 10;
+pub const SCHEMA_VERSION: u32 = 11;
 
 /// What the descriptor must declare itself to be.
 ///
@@ -137,9 +137,10 @@ pub const JBR_SECTION_FIELDS: [&str; 1] = ["platform"];
 
 /// The keys of the `ide` section, as the descriptor spells them. The descriptor writer test of the Air lanes holds the
 /// Starlark rule to them.
-pub const IDE_SECTION_FIELDS: [&str; 7] = [
-    "fakeAgentJar",
+pub const IDE_SECTION_FIELDS: [&str; 8] = [
+    "fakeAgent",
     "flagsFile",
+    "genuiFixtureJar",
     "laneDocuments",
     "plugins",
     "projectArchive",
@@ -156,15 +157,18 @@ pub const IDE_SECTION_FIELDS: [&str; 7] = [
 /// files that the daemon installs into the plugin directory of the IDE context. They travel by the jar push and not
 /// by a share, so neither the product identity nor the mount identity reads them.
 ///
-/// The lane inputs are [`Self::lane_inputs`]: the fake agent jar and the two jars of the documents. They travel by
+/// The lane inputs are [`Self::lane_inputs`]: the fake agent binary of the guest, the jar of the GenUI fixture app server,
+/// and the two jars of the documents. They travel by
 /// the jar push only, so no identity of the daemon or of the IDE reads them.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdeSection {
-    /// The deploy jar of the fake ACP agent. The lane runs it with `-jar`, and the fake registry packs it into its
-    /// agent archives.
-    pub fake_agent_jar: RuntimeFile,
+    /// The fake ACP agent binary of the guest platform. The lane runs it for each local agent, and the fake registry
+    /// packs it into its agent archives.
+    pub fake_agent: RuntimeFile,
     pub flags_file: RuntimeFile,
+    /// The deploy jar of the GenUI fixture app server, which a GenUI scenario runs on the JBR of the distribution.
+    pub genui_fixture_jar: RuntimeFile,
     /// The jar that holds the lane documents below `lanes/`, and the flow vocabulary file at its root.
     pub lane_documents: RuntimeFile,
     pub plugins: Vec<IdePluginFile>,
@@ -178,9 +182,10 @@ pub struct IdeSection {
 impl IdeSection {
     /// The lane inputs with the key of each in the `ide` section, in key order. The two jars of the documents can be
     /// one file.
-    pub const fn lane_inputs(&self) -> [(&'static str, &RuntimeFile); 3] {
+    pub const fn lane_inputs(&self) -> [(&'static str, &RuntimeFile); 4] {
         [
-            ("fakeAgentJar", &self.fake_agent_jar),
+            ("fakeAgent", &self.fake_agent),
+            ("genuiFixtureJar", &self.genui_fixture_jar),
             ("laneDocuments", &self.lane_documents),
             ("suiteDocuments", &self.suite_documents),
         ]

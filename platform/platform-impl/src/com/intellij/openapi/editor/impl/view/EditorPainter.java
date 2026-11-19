@@ -522,10 +522,9 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private float visualLineEnd(int visualLine) {
-      return myCorrector.startX(visualLine) + myView.getSizeManager().getVisualLineWidth(
-        new VisualLinesIterator(myView, visualLine),
-        false
-      );
+      VisualLinesIterator iterator = new VisualLinesIterator(myDocument, myView, visualLine);
+      int widthAtVisualLine = myView.getSizeManager().getVisualLineWidth(iterator, false);
+      return myCorrector.startX(visualLine) + widthAtVisualLine;
     }
 
     private float selectionExtensionWidth() {
@@ -545,7 +544,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private void paintBackground() {
       SelectionInlayQueries selectionInlayQueries = new SelectionInlayQueries(myEditor);
 
-      int lineCount = myView.getVisibleLineCount();
+      int lineCount = myView.getVisibleLineCount(myDocument);
       boolean calculateMarginWidths = myRegistry.isRightMarginAdjusted() && isMarginShown() && myStartVisualLine < lineCount;
       myMarginPositions = calculateMarginWidths ? new MarginPositions(Math.min(myEndVisualLine, lineCount - 1) - myStartVisualLine + 2)
                                                 : null;
@@ -580,7 +579,7 @@ public final class EditorPainter implements TextDrawingCallback {
       int endX = myFillEndX;
       int prevY = Math.max(myInsets.top, myClip.y) + myYShift;
       int firstVisualLine = myDryRunRows ? Math.max(0, myStartVisualLine - 1) : myStartVisualLine;
-      VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, firstVisualLine);
+      VisualLinesIterator visLinesIterator = new VisualLinesIterator(myDocument, myView, firstVisualLine);
       while (!visLinesIterator.atEnd()) {
         int visualLine = visLinesIterator.getVisualLine();
         if (visualLine > myEndVisualLine + 1) {
@@ -730,7 +729,7 @@ public final class EditorPainter implements TextDrawingCallback {
             }
             paintLayeredBackground(layers, x, y, endX - x);
             int offset = it.getEndOffset();
-            SoftWrapEx softWrap = mySoftWrapModel.getSoftWrapEx(offset);
+            SoftWrapEx softWrap = visLinesIterator.getEndSoftWrap();
             if (softWrap == null) {
               if (dryRun) {
                 paintHuggingBlockPastLineEnd(it, x, y);
@@ -1691,13 +1690,17 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintBlockInlays() {
-      if (!myInlayModel.hasBlockElements()) return;
+      if (!myInlayModel.hasBlockElements()) {
+        return;
+      }
       int startX = myInsets.left;
-      int lineCount = myView.getVisibleLineCount();
-      VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, myStartVisualLine);
+      int lineCount = myView.getVisibleLineCount(myDocument);
+      VisualLinesIterator visLinesIterator = new VisualLinesIterator(myDocument, myView, myStartVisualLine);
       while (!visLinesIterator.atEnd()) {
         int visualLine = visLinesIterator.getVisualLine();
-        if (visualLine > myEndVisualLine || visualLine >= lineCount) break;
+        if (visualLine > myEndVisualLine || visualLine >= lineCount) {
+          break;
+        }
         int y = visLinesIterator.getY() + myYShift;
 
         int curY = y;
@@ -1823,7 +1826,7 @@ public final class EditorPainter implements TextDrawingCallback {
         x = fragment.getStartX();
         if (firstFragment) {
           firstFragment = false;
-          SoftWrapEx softWrap = mySoftWrapModel.getSoftWrapEx(offset);
+          SoftWrapEx softWrap = visLineIterator.getStartSoftWrap();
           if (softWrap != null || myEditor.isRightAligned()) {
             prevEndOffset = offset;
             it = new IterationState(myEditor, offset == 0 ? 0 : DocumentTextUtil.getPreviousCodePointOffset(myDocument, offset),

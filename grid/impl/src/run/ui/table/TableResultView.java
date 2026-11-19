@@ -85,6 +85,7 @@ import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import kotlin.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -606,10 +607,12 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   /** The main table, which shows the unpinned columns. */
   @TestOnly
-  @NotNull GridTable getPrimaryTable() { return myMainTable; }
+  @ApiStatus.Internal
+  public @NotNull GridTable getPrimaryTable() { return myMainTable; }
 
   @TestOnly
-  GridTable getPinnedTable() { return myTables.getPinned(); }
+  @ApiStatus.Internal
+  public GridTable getPinnedTable() { return myTables.getPinned(); }
 
   @Override
   public void setShowHorizontalLines(boolean show) {

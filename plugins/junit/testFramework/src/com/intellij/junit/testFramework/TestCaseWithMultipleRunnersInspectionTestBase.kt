@@ -9,6 +9,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT4)
 
+/**
+ * @deprecated Use [junitProjectFixture] and [testCaseWithMultipleRunnersInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use junitProjectFixture and testCaseWithMultipleRunnersInspectionFixture in a JUnit 5 test")
 abstract class TestCaseWithMultipleRunnersInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: TestCaseWithMultipleRunnersInspection = TestCaseWithMultipleRunnersInspection()
   override fun getProjectDescriptor(): LightProjectDescriptor = descriptor

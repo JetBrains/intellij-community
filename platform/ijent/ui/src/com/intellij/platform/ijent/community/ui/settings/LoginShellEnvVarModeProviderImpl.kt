@@ -26,10 +26,6 @@ internal class LoginShellEnvVarModeProviderImpl : LoginShellEnvVarModeProvider {
    * by its binary name.
    */
   @Suppress("unused") // Referenced by FQN from intellij.platform.ijent.community.ui.xml
-  @VisibleToClasses(
-      "com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable",
-      "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeSettings",
-  )
   enum class EnvVarShellMode {
     LOGIN_INTERACTIVE {
       override fun toString(): String =
@@ -77,10 +73,6 @@ internal class LoginShellEnvVarModeSettings : PerMachineSettingsBase<LoginShellE
     return TargetSettings(envVarShellMode = AdvancedSettings.getEnum("container.environments.env.var.shell.mode", LoginShellEnvVarModeProviderImpl.EnvVarShellMode::class.java))
   }
   companion object {
-    @VisibleToClasses(
-      "com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable",
-      "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl",
-    )
     fun getInstance(): LoginShellEnvVarModeSettings = service()
   }
 }

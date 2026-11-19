@@ -10,16 +10,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
@@ -28,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -55,7 +52,6 @@ public final class PySkeletonRefresher {
   private final @NotNull Sdk mySdk;
   private Path mySkeletonsPath;
   private List<String> myExtraSyspath;
-  private int myGeneratorVersion = -1;
   private final PySkeletonGenerator mySkeletonsGenerator;
 
   public static synchronized boolean isGeneratingSkeletons() {
@@ -76,22 +72,6 @@ public final class PySkeletonRefresher {
       throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", mySdk.getHomePath()), e);
     }
 
-    myGeneratorVersion = readGeneratorVersion();
-
-    final PyPregeneratedSkeletons preGeneratedSkeletons =
-      PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
-
-    final String builtinsFileName = PySkeletonUtil.getBuiltinsFileName(mySdk);
-    final var builtinsFilePath = skeletonsPath.resolve(builtinsFileName);
-
-    final PySkeletonHeader oldHeader = PySkeletonHeader.readSkeletonHeader(builtinsFilePath);
-    final boolean oldOrNonExisting = oldHeader == null || oldHeader.getVersion() == 0;
-
-    if (preGeneratedSkeletons != null && oldOrNonExisting) {
-      indicate(PyBundle.message("sdk.gen.unpacking.prebuilt"));
-      preGeneratedSkeletons.unpackPreGeneratedSkeletons(getSkeletonsPath());
-    }
-
     indicate(PyBundle.message("sdk.gen.launching.generator"));
     final List<PySkeletonGenerator.GenerationResult> results = updateOrCreateSkeletons();
     final List<String> failedModules = ContainerUtil.mapNotNull(results, result -> {
@@ -100,8 +80,6 @@ public final class PySkeletonRefresher {
       }
       return null;
     });
-    final boolean builtinsUpdated = ContainerUtil.exists(results,
-                                                         result -> result.getModuleOrigin().equals(PySkeletonHeader.BUILTIN_NAME));
 
     indicate(PyBundle.message("sdk.gen.reloading"));
     mySkeletonsGenerator.refreshGeneratedSkeletons();
@@ -109,7 +87,7 @@ public final class PySkeletonRefresher {
     indicate(PyBundle.message("sdk.gen.cleaning.up"));
     cleanUpSkeletons(skeletonsPath);
 
-    if ((builtinsUpdated || PythonSdkUtil.isRemote(mySdk)) && myProject != null) {
+    if (myProject != null) {
       ApplicationManager.getApplication()
         .invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(this), myProject.getDisposed());
     }
@@ -154,16 +132,6 @@ public final class PySkeletonRefresher {
     return Objects.requireNonNull(mySkeletonsPath);
   }
 
-  private static int readGeneratorVersion() {
-    Path versionFile = PythonHelpersLocator.findPathInHelpers("generator3/version.txt");
-    try (Reader reader = Files.newBufferedReader(versionFile, StandardCharsets.UTF_8)) {
-      return PySkeletonHeader.fromVersionString(StreamUtil.readText(reader).trim());
-    }
-    catch (IOException e) {
-      throw new AssertionError("Failed to read generator version from " + versionFile);
-    }
-  }
-
   private void indicate(@ProgressText String msg) {
     LOG.debug("Progress message: " + msg);
     if (myIndicator != null) {
@@ -204,10 +172,14 @@ public final class PySkeletonRefresher {
   @RequiresBackgroundThread(generateAssertion = false)
   private @NotNull List<PySkeletonGenerator.GenerationResult> updateOrCreateSkeletons() throws InvalidSdkException, ExecutionException {
     final long startTime = System.currentTimeMillis();
-    final List<PySkeletonGenerator.GenerationResult> result = mySkeletonsGenerator
+    final PySkeletonGenerator.Builder builder = mySkeletonsGenerator
       .commandBuilder()
-      .extraSysPath(getExtraSyspath())
-      .runGeneration(myIndicator);
+      .extraSysPath(getExtraSyspath());
+    final List<String> stdlibStubs = PyTypeShed.INSTANCE.findStdlibModuleNames(PythonSdkType.getLanguageLevelForSdk(mySdk));
+    if (!stdlibStubs.isEmpty()) {
+      builder.extraArgs("--stdlib-stubs", String.join(",", stdlibStubs));
+    }
+    final List<PySkeletonGenerator.GenerationResult> result = builder.runGeneration(myIndicator);
     LOG.info("Rebuilding skeletons for binaries took " + (System.currentTimeMillis() - startTime) + " ms");
     return result;
   }
@@ -290,8 +262,7 @@ public final class PySkeletonRefresher {
         boolean canLive = header != null;
         if (canLive) {
           binaryFile = header.getBinaryFile();
-          canLive = PySkeletonHeader.PREGENERATED.equals(binaryFile) ||
-                    PySkeletonHeader.BUILTIN_NAME.equals(binaryFile) ||
+          canLive = PySkeletonHeader.BUILTIN_NAME.equals(binaryFile) ||
                     mySkeletonsGenerator.exists(binaryFile);
         }
         if (!canLive) {
@@ -339,13 +310,6 @@ public final class PySkeletonRefresher {
       myExtraSyspath = calculateExtraSysPath(mySdk, mySkeletonsPath);
     }
     return myExtraSyspath;
-  }
-
-  public int getGeneratorVersion() {
-    if (myGeneratorVersion == -1) {
-      myGeneratorVersion = readGeneratorVersion();
-    }
-    return myGeneratorVersion;
   }
 
   public @NotNull PySkeletonGenerator getGenerator() {

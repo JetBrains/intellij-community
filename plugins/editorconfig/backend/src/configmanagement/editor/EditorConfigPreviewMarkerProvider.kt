@@ -14,7 +14,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -25,6 +27,7 @@ import org.ec4j.core.model.Ec4jPath
 import org.ec4j.core.model.Glob
 import org.editorconfig.Utils
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CompletableFuture
 
 class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor(), DumbAware {
   override fun getName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
@@ -67,7 +70,7 @@ class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor(), DumbAw
         val previewFile = Handler.choosePreviewFile(myHeader.project, Handler.getRootDir(myHeader), Handler.getPattern(myHeader.text))
         if (previewFile != null) {
           val editorConfigFile = myHeader.containingFile.virtualFile
-          Handler.openPreview(myHeader.project, editorConfigFile, previewFile)
+          Handler.requestOpenPreview(myHeader.project, editorConfigFile, previewFile)
         }
       }
     }
@@ -105,10 +108,10 @@ class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor(), DumbAw
       return psiFile.virtualFile.parent
     }
 
-    fun openPreview(project: Project, editorConfigFile: VirtualFile, previewFile: VirtualFile) {
+    fun requestOpenPreview(project: Project, editorConfigFile: VirtualFile, previewFile: VirtualFile): CompletableFuture<FileEditorComposite> {
       FileEditorManager.getInstance(project).closeFile(editorConfigFile)
       EditorConfigPreviewManager.getInstance(project).associateWithPreviewFile(editorConfigFile, previewFile)
-      FileEditorManager.getInstance(project).openFile(editorConfigFile, true)
+      return FileEditorManager.getInstance(project).requestOpenFile(editorConfigFile, FileEditorOpenRequest.withFocus(true))
     }
   }
 }

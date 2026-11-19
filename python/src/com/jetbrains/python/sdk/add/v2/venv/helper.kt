@@ -18,8 +18,9 @@ import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterWrapper
-import com.jetbrains.python.sdk.add.v2.installBaseSdk
+import com.jetbrains.python.sdk.add.v2.installBasePython
 import com.jetbrains.python.sdk.add.v2.setupSdk
+import kotlin.io.path.pathString
 
 /**
  * A venv base interpreter must be Python 3.8+ (see createVenv and the bundled `virtualenv-py3.pyz`).
@@ -50,9 +51,9 @@ internal suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.
   moduleOrProject: ModuleOrProject,
 ): PyResult<PythonInterpreter> {
   val baseSdkPath = when (val baseSdk = state.baseInterpreter.get()!!) {
-    is InstallableSelectableInterpreter -> installBaseSdk(baseSdk.installableSdk)
+    is InstallableSelectableInterpreter -> installBasePython(baseSdk)
       .getOrElse { return PyResult.localizedError(message("python.sdk.installation.balloon.error.message")) }
-      .let { fileSystem.wrapSdk(it) }.homePath
+      .let { fileSystem.parsePath(it.pathString) }.getOr { return it }
     is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter, is ExistingSelectableInterpreter -> baseSdk.homePath
   }
 

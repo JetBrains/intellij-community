@@ -1,19 +1,27 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.exec.breakpoint.streamex
 
-import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper
-import com.intellij.debugger.streams.exec.streamex.SortedOperationsTest
-import com.intellij.debugger.streams.exec.streamex.StreamExTestCase
-import com.intellij.xdebugger.XDebugSession
+import com.intellij.debugger.streams.exec.streamex.streamExFixture
+import com.intellij.debugger.streams.test.BreakpointBasedExecutionTestCaseHelper
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class BreakpointEngineSortedOperationsTest : StreamExTestCase() {
-  override val packageName: String = "sorted"
+@TestApplication
+class BreakpointEngineSortedOperationsTest {
+  private val streamEx by streamExFixture("sorted", ::BreakpointBasedExecutionTestCaseHelper)
 
-  override fun getHelper(session: XDebugSession): TraceExecutionTestHelper = breakpointEngineHelper(session)
+  @Test
+  fun testSortedByNoExtraCalls(): Unit = streamEx.doStreamExVoidTest()
 
-  fun testSortedByNoExtraCalls() = doStreamExVoidTest()
-  fun testSortedByIntNoExtraCalls() = doStreamExVoidTest()
-  fun testSortedByLongNoExtraCalls() = doStreamExVoidTest()
-  fun testSortedByDoubleNoExtraCalls() = doStreamExVoidTest()
-  fun testReverseSortedNoExtraCalls() = doStreamExVoidTest()
+  @Test
+  fun testSortedByIntNoExtraCalls(): Unit = streamEx.doStreamExVoidTest()
+
+  @Test
+  fun testSortedByLongNoExtraCalls(): Unit = streamEx.doStreamExVoidTest()
+
+  @Test
+  fun testSortedByDoubleNoExtraCalls(): Unit = streamEx.doStreamExVoidTest()
+
+  @Test
+  fun testReverseSortedNoExtraCalls(): Unit = streamEx.doStreamExVoidTest()
 }

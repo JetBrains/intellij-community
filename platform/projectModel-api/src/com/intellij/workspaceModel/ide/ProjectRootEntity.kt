@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -59,7 +60,9 @@ fun unregisterProjectRootBlocking(project: Project, projectDir: VirtualFileUrl) 
 @Internal
 fun unregisterProjectRootBlocking(project: Project, projectDir: Path) {
   val workspaceModel = WorkspaceModel.getInstance(project)
-  unregisterProjectRootBlocking(project, projectDir.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager()))
+  val projectRoot = workspaceModel.getVirtualFileUrlManager().get(VfsUtilCore.pathToUrl(projectDir.toAbsolutePath().toString()))
+    ?: return
+  unregisterProjectRootBlocking(project, projectRoot)
 }
 
 /**

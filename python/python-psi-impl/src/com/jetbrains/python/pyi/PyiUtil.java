@@ -64,7 +64,10 @@ public final class PyiUtil {
     if (!(file instanceof PyiFile)) return null;
 
     // PY-38169 special case definitions in typing.pyi as stubs for definitions in `_collections_abc`/`_collections`
-    final var pyClass = (element instanceof PyClass elementClass ? elementClass : PsiTreeUtil.getParentOfType(element, PyClass.class));
+    // Not getParentOfType: it walks the PSI parents and loads the AST of the .pyi file
+    final var pyClass = (element instanceof PyClass elementClass
+                         ? elementClass
+                         : PsiTreeUtil.getStubOrPsiParentOfType(element, PyClass.class));
     if (pyClass != null) {
       final var typingRedirection = PyTypeShed.INSTANCE.getTypingRedirections().get(pyClass.getQualifiedName());
 
@@ -117,7 +120,10 @@ public final class PyiUtil {
     return original == null || isInSkeleton(original) ? target : original;
   }
 
-  private static boolean isInSkeleton(@NotNull PsiElement element) {
+  /**
+   * Checks if {@code element} is in a skeleton that the IDE generated for a binary module of the interpreter.
+   */
+  public static boolean isInSkeleton(@NotNull PsiElement element) {
     if (!(element.getContainingFile() instanceof PyFile file) || file instanceof PyiFile) return false;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
+import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -156,6 +157,16 @@ value class PyInterpreterOwnerDir private constructor(private val value: String)
     }
   }
 }
+
+/**
+ * The directory that this project resolves the owner of an interpreter against, see [PyInterpreterOwnerDir]: its own
+ * directory. Only the default project has none, and it owns no interpreter.
+ *
+ * Every side that stores an owner, the `.iml` of a module and the record of the interpreter, resolves it against this
+ * one directory, so the two name one owner.
+ */
+@get:ApiStatus.Internal
+val Project.interpreterOwnerProjectDir: Path? get() = basePath?.let { Path.of(it) }
 
 /**
  * Replaces the interpreter entry of these dependencies with [name], or removes it for a `null` [name]. Any other

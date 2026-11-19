@@ -121,7 +121,7 @@ public final class CustomDictionariesPanel extends JPanel {
                                  ? myManager.getAppDictionaryPath()
                                  : myManager.getProjectDictionaryPath();
           }
-          manager.openDictionaryInEditor(selectedDictionary);
+          manager.requestOpenDictionaryInEditor(selectedDictionary);
         }
       })
 

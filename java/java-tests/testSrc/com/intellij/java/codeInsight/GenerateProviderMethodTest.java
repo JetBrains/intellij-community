@@ -2,61 +2,68 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.generation.GenerateProviderMethodHandler;
+import com.intellij.java.testFramework.fixtures.MultiModuleProject;
 import com.intellij.java.testFramework.fixtures.MultiModuleProjectDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
 
+import static com.intellij.java.testFramework.fixtures.JavaModulesFixturesKt.javaModulesCodeInsightFixture;
+import static com.intellij.java.testFramework.fixtures.JavaModulesFixturesKt.multiModuleProjectFixture;
+
 @NeedsIndex.SmartMode(reason = "Provider method completion is not supported in the dumb mode")
-public class GenerateProviderMethodTest extends LightFixtureCompletionTestCase {
+@TestApplication
+public class GenerateProviderMethodTest {
+  private static final String TEST_DATA_PATH = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/generateProviderMethod";
 
-  private MultiModuleProjectDescriptor myDescriptor;
+  private final TestFixture<MultiModuleProject> projectFixture =
+    multiModuleProjectFixture(() -> new MultiModuleProjectDescriptor(Paths.get(TEST_DATA_PATH), "providers", null));
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModulesCodeInsightFixture(projectFixture, TEST_DATA_PATH);
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return myDescriptor == null
-           ? myDescriptor =
-             new MultiModuleProjectDescriptor(Paths.get(getTestDataPath()), "providers", null)
-           : myDescriptor;
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/generateProviderMethod";
-  }
-
+  @Test
   public void testNonModuleClass() {
     doTest("src/org/jetbrains/providers/SimpleClass.java");
   }
 
+  @Test
   public void testSimpleProvider() {
     doTest("src/org/jetbrains/providers/MyProviderImpl.java");
   }
 
+  @Test
   public void testWithProvider() {
     doTest("src/org/jetbrains/providers/WithProvider.java");
   }
 
+  @Test
   public void testSubClass() {
     doTest("src/org/jetbrains/providers/MySuperClass.java");
   }
 
+  @Test
   public void testWrongPlace() {
     doTest("src/org/jetbrains/providers/WrongPlace.java");
   }
 
   private void doTest(@NotNull String path) {
-    VirtualFile file = getModule().getModuleFile().getParent().findFileByRelativePath(path);
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    VirtualFile file = projectFixture.get().getModule().getModuleFile().getParent().findFileByRelativePath(path);
     myFixture.configureFromExistingVirtualFile(file);
 
-    new GenerateProviderMethodHandler().invoke(getProject(), getEditor(), PsiManager.getInstance(getProject()).findFile(file));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      new GenerateProviderMethodHandler().invoke(myFixture.getProject(), myFixture.getEditor(),
+                                                 PsiManager.getInstance(myFixture.getProject()).findFile(file));
 
-    checkResultByFile("after/" + path);
+      myFixture.checkResultByFile("after/" + path);
+    });
   }
 }

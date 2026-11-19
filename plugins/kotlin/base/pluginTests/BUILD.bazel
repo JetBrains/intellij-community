@@ -39,6 +39,8 @@ jvm_library(
         "//platform/util:util-ui",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/compiler-configuration",
+        "//plugins/kotlin/base/jps",
+        "//java/compiler/impl",
         "//aether-dependency-resolver",
         "//java/openapi:java",
         "//platform/util/jdom",

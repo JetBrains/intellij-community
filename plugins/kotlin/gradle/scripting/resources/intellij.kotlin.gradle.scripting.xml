@@ -105,6 +105,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <kotlinScriptFilter implementation="org.jetbrains.kotlin.gradle.scripting.GradleKotlinScriptProcessingFilter"/>
+    <scriptEntityProvider implementation="org.jetbrains.kotlin.gradle.scripting.GradleKotlinScriptEntityProvider"/>
     <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.gradle.scripting.definition.GradleScriptDefinitionsProvider"/>
   </extensions>
 

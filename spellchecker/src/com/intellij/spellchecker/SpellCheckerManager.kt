@@ -16,7 +16,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
@@ -66,6 +68,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
+import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -361,15 +364,15 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   override fun dispose() {
   }
 
-  fun openDictionaryInEditor(dictPath: String) {
+  fun requestOpenDictionaryInEditor(dictPath: String): CompletableFuture<FileEditorComposite>? {
     val file = if (dictPath.isEmpty()) null else StandardFileSystems.local().refreshAndFindFileByPath(dictPath)
     if (file == null) {
       val title = SpellCheckerBundle.message("dictionary.not.found.title")
       val message = SpellCheckerBundle.message("dictionary.not.found", dictPath)
       Messages.showMessageDialog(project, message, title, Messages.getWarningIcon())
-      return
+      return null
     }
-    FileEditorManager.getInstance(project)?.openFile(file, true)
+    return FileEditorManager.getInstance(project)?.requestOpenFile(file, FileEditorOpenRequest.withFocus(true))
   }
 
   @Suppress("unused") // used in Rider

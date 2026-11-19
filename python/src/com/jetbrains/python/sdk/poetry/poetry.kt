@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -21,10 +19,8 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.regex.Pattern
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.pathString
 
 
-internal fun suggestedSdkName(basePath: Path): @NlsSafe String = "Poetry (${PathUtil.getFileName(basePath.pathString)})"
 
 
 internal suspend fun createNewPoetrySdk(

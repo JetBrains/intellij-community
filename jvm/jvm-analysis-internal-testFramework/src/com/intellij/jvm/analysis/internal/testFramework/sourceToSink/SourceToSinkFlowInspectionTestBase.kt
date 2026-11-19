@@ -3,6 +3,11 @@ package com.intellij.jvm.analysis.internal.testFramework.sourceToSink
 import com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection
 import com.intellij.testFramework.LightProjectDescriptor
 
+/**
+ * @deprecated Use [sourceToSinkFlowProjectFixture] and [sourceToSinkFlowInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use sourceToSinkFlowProjectFixture and sourceToSinkFlowInspectionFixture in a JUnit 5 test")
 abstract class SourceToSinkFlowInspectionTestBase : TaintedTestBase() {
   override val inspection: SourceToSinkFlowInspection = SourceToSinkFlowInspection().also {
       it.warnIfComplex = true

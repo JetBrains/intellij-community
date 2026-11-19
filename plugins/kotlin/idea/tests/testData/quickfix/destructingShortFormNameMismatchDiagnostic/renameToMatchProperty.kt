@@ -5,7 +5,7 @@
 data class User(val name: String, val age: Int)
 
 fun test(user: User) {
-    val (<caret>n, age) = user
+    val (<caret>n, _) = user
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.DestructuringRenameFactory$RenameDestructuringEntriesToMatchPropertiesFix

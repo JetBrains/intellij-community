@@ -90,7 +90,9 @@ The spike also found these facts, and the decision follows them:
    repository. The alias `air_container_darwin_arm64` in `BUILD.bazel` is `manual`, and no `data` or `deps` names
    it, for the reason of ADR 0158. `CONTAINER_BIN` names an installed CLI instead, as `DOCKER_BIN` does. The
    controller runs the real path of either, because the install root follows from it. A CLI that cannot be resolved
-   is `container_missing`, exit 69.
+   is `container_missing`, exit 69. Amended 2026-11-18: a pin on another volume than the runtime root runs from a
+   copy under the runtime root
+   ([the pinned Apple container runs from the volume of the runtime root](2026-11-18-the-pinned-container-runs-from-the-volume-of-the-runtime-root.md)).
 3. **The server is the one of the login session, on the default data root.** The controller never passes
    `--app-root` and never runs `system stop`. A server that is down, after a reboot, is started with `system start
    --enable-kernel-install` under the pool-wide image lock, with its log in `<runtime root>/container-system.log` and a

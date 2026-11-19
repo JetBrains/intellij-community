@@ -1043,3 +1043,90 @@ fn the_cli_lists_the_bundles_already_on_disk_for_its_scenarios() {
         "a root without the scenario's bundles answered {stdout}"
     );
 }
+
+/// A checkout that the fake accio answers: one generated suite, so the catalog reads, and the authored class
+/// `AirFlowSmokeTest` in the module of the jcp lane.
+fn accio_runtime() -> bt_core::fake::FakeRuntime {
+    let catalog = air_area().catalog().expect("the Air lane table names a catalog");
+    let fake = bt_core::fake::FakeRuntime::new([(
+        format!("{}/rename-session.json", catalog.flow_profile_dir).as_str(),
+        bt_core::fake::suite_document_text("rename-session", "UI", "AirRenameSessionGeneratedFlowUiTest", "flow-rename-session").as_str(),
+    )]);
+    let root = "plugins/air/tests/integration/jcp";
+    fake.add_class(
+        "plugins/air/tests/integration/jcp/testSrc/flow/AirFlowSmokeTest.kt",
+        "com.intellij.air.integration.flow.AirFlowSmokeTest",
+    );
+    fake.add_module(bt_core::fake::module_entry_json(
+        root,
+        Some(&bt_core::fake::jps_json("intellij.air.jcp", root, &[("testSrc", true)], None)),
+        &[],
+        Some(&[
+            bt_core::fake::target_json(root, "jvm_library", "jcp_test_lib", Some("intellij.air.jcp"), &[], &[]),
+            bt_core::fake::target_json(root, "jps_test", "jcp_test", None, &[], &["jcp_test_lib"]),
+        ]),
+    ));
+    fake
+}
+
+/// Plans `inputs` through the fake accio of `fake`.
+fn plan_through(fake: &bt_core::fake::FakeRuntime, inputs: Vec<Input>) -> PlanResult {
+    let selectors = ResolutionInputs::new(fake, air_areas());
+    Planner::new(
+        Path::new(bt_core::fake::REPO_ROOT),
+        fake,
+        &selectors,
+        BtNotes::default(),
+        Box::new(|_: &Path, _: &str| Ok::<_, Refusal>(Vec::new())),
+    )
+    .plan(inputs)
+    .unwrap_or_else(|error| panic!("the planner refused: {error:#}"))
+}
+
+/// The unmapped entries of a plan, each as its path and its reason.
+fn unmapped_reasons(result: &PlanResult) -> Vec<(&str, &str)> {
+    result
+        .unmapped
+        .iter()
+        .map(|entry| (entry.path.as_str(), entry.reason.as_str()))
+        .collect()
+}
+
+/// The classes of a plan are resolved after the last input, with one `symbol` call of accio for all of them. A class
+/// of a UI lane plans its lane, and a class that accio does not know is unmapped.
+#[test]
+fn the_classes_of_a_plan_cost_one_symbol_call() {
+    let fake = accio_runtime();
+    let result = plan_through(&fake, vec![text("AirFlowSmokeTest NoSuchUiTest")]);
+    assert_eq!(result.classes, ["AirFlowSmokeTest"]);
+    assert_eq!(result.lanes, ["jcp"]);
+    assert_eq!(unmapped_reasons(&result), [("NoSuchUiTest", reason::UNKNOWN_NAME)]);
+    let symbol_calls: Vec<String> = fake.accio_calls().into_iter().filter(|call| call.starts_with("symbol")).collect();
+    assert_eq!(symbol_calls, ["symbol AirFlowSmokeTest NoSuchUiTest --kind class --limit 200"]);
+}
+
+/// A failed prefetch is the refusal of each name: each class is unmapped with the words of accio, the plan goes on,
+/// and accio gets no second call.
+#[test]
+fn a_failed_prefetch_unmaps_each_class_without_a_second_call() {
+    let fake = accio_runtime();
+    fake.answer_accio(
+        "symbol AirFlowSmokeTest NoSuchUiTest --kind class --limit 200",
+        Err(bt_core::accio::accio_failed("accio exited with 1:\nno index")),
+    );
+    let result = plan_through(&fake, vec![text("AirFlowSmokeTest NoSuchUiTest")]);
+    assert_eq!(result.classes, Vec::<String>::new());
+    assert_eq!(
+        unmapped_reasons(&result),
+        [("AirFlowSmokeTest", reason::UNKNOWN_NAME), ("NoSuchUiTest", reason::UNKNOWN_NAME)]
+    );
+    assert!(
+        result.unmapped[0].detail.as_deref().unwrap_or_default().contains("no index"),
+        "{:?}",
+        result.unmapped[0]
+    );
+    assert_eq!(
+        fake.accio_calls(),
+        ["symbol AirFlowSmokeTest NoSuchUiTest --kind class --limit 200"]
+    );
+}

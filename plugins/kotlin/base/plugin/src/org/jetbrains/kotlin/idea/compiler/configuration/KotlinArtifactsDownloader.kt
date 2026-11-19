@@ -142,8 +142,6 @@ object KotlinArtifactsDownloader {
         if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) KotlinPluginLayout.kotlincPath
         else KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve(version)
 
-    fun getUnpackedKotlinDistPath(project: Project) = getUnpackedKotlinDistPath(KotlinJpsPluginSettings.jpsVersion(project))
-
     /**
      * @see lazyDownloadAndUnpackKotlincDist
      */

@@ -5,6 +5,11 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.logging.LoggingGuardedByConditionInspection
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
 
+/**
+ * @deprecated Use [loggingGuardedByConditionInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use loggingGuardedByConditionInspectionFixture in a JUnit 5 test")
 abstract class LoggingGuardedByConditionInspectionTestBase : LoggingInspectionTestBase() {
   override val inspection: LoggingGuardedByConditionInspection = LoggingGuardedByConditionInspection()
 

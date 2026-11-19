@@ -6,9 +6,7 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.markdown.frontend.preview.accessor.MarkdownLinkOpenerUtil
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -42,6 +40,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 import org.intellij.plugins.markdown.util.MarkdownDisposable
 import org.intellij.plugins.markdown.util.MarkdownLinkFragmentUtil
+import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 
 internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : MarkdownLinkOpener {
@@ -75,23 +74,24 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       }
       val project = currentProject ?: data.projectId?.findProject() ?: return@launch
       val fileToOpen = data.virtualFileId?.virtualFile() ?: return@launch
-      val anchor = uri.fragment
-      if (!fileToOpen.fileType.isMarkdownType()) {
-        withContext(Dispatchers.EDT) {
-          openNonMarkdownFile(project, fileToOpen, anchor)
-        }
-        return@launch
-      }
-      if (anchor == null) {
-        withContext(Dispatchers.EDT) {
-          runReadAction {
-            OpenFileAction.Companion.openFile(fileToOpen, project)
-          }
-        }
-        return@launch
-      }
-      processHeaders(anchor, project, data.headers)
+      openResolvedFile(project, fileToOpen, uri.fragment, data.headers)
     }
+  }
+
+  /**
+   * Opens the file of a resolved link
+   */
+  @VisibleForTesting
+  internal suspend fun openResolvedFile(project: Project, fileToOpen: VirtualFile, anchor: String?, headers: List<MarkdownHeaderInfo>?) {
+    if (!fileToOpen.fileType.isMarkdownType()) {
+      openNonMarkdownFile(project, fileToOpen, anchor)
+      return
+    }
+    if (anchor == null) {
+      OpenFileAction.openFileAsync(fileToOpen, project)
+      return
+    }
+    processHeaders(anchor, project, headers)
   }
 
   private suspend fun processHeaders(anchor: String, project: Project, headers: List<MarkdownHeaderInfo>?){
@@ -103,11 +103,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       return
     }
     if (headers.size == 1) {
-      withContext(Dispatchers.EDT) {
-        runReadAction {
-          MarkdownLinkOpenerUtil.navigateToHeader(project, headers.first())
-        }
-      }
+      MarkdownLinkOpenerUtil.navigateToHeaderAsync(project, headers.first())
       return
     }
     withContext(Dispatchers.EDT) {
@@ -118,7 +114,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       }
       when {
         headers.isEmpty() -> showCannotNavigateNotification(project, anchor, point)
-        headers.size > 1 ->  showHeadersPopup(project, headers, point)
+        headers.size > 1 ->  coroutineScope.showHeadersPopup(project, headers, point, )
       }
     }
   }
@@ -194,13 +190,20 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     }
   }
 
-  private fun openNonMarkdownFile(project: Project, fileToOpen: VirtualFile, fragment: String?) {
-    val lineRange = fragment?.let(MarkdownLinkFragmentUtil::parseGitHubLineRange)
-    if (lineRange != null && !fileToOpen.isDirectory) {
-      OpenFileDescriptor(project, fileToOpen, lineRange.first, 0).navigate(true)
+  private suspend fun openNonMarkdownFile(project: Project, fileToOpen: VirtualFile, fragment: String?) {
+    if (fileToOpen.isDirectory) {
+      // a directory opens no editor, no EDT wait
+      withContext(Dispatchers.EDT) {
+        OpenFileAction.openFile(fileToOpen, project)
+      }
       return
     }
-    OpenFileAction.openFile(fileToOpen, project)
+    val lineRange = fragment?.let(MarkdownLinkFragmentUtil::parseGitHubLineRange)
+    if (lineRange != null) {
+      MarkdownLinkOpenerUtil.navigateToLine(project, fileToOpen, lineRange.first)
+      return
+    }
+    OpenFileAction.openFileAsync(fileToOpen, project)
   }
 
   companion object {
@@ -250,13 +253,14 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       balloon.show(point, Balloon.Position.below)
     }
 
-    private fun showHeadersPopup(project: Project, headers: Collection<MarkdownHeaderInfo>, point: RelativePoint) {
-      JBPopupFactory.getInstance().createListPopup(HeadersPopup(project, headers.toList())).show(point)
+    private fun CoroutineScope.showHeadersPopup(project: Project, headers: Collection<MarkdownHeaderInfo>, point: RelativePoint) {
+      JBPopupFactory.getInstance().createListPopup(HeadersPopup(project, headers.toList(), this)).show(point)
     }
 
     private class HeadersPopup(
       private val project: Project,
-      headers: List<MarkdownHeaderInfo>
+      headers: List<MarkdownHeaderInfo>,
+      private val coroutineScope: CoroutineScope,
     ): BaseListPopupStep<MarkdownHeaderInfo>(MarkdownBundle.message("markdown.navigate.to.header"), headers) {
       override fun getTextFor(value: MarkdownHeaderInfo): String {
         return "${value.headerText} (${value.fileName}:${value.lineNumber})"
@@ -264,7 +268,9 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
 
       override fun onChosen(selectedValue: MarkdownHeaderInfo, finalChoice: Boolean): PopupStep<*> {
         return doFinalStep {
-          MarkdownLinkOpenerUtil.navigateToHeader(project, selectedValue)
+          coroutineScope.launch {
+            MarkdownLinkOpenerUtil.navigateToHeaderAsync(project, selectedValue)
+          }
         }
       }
     }

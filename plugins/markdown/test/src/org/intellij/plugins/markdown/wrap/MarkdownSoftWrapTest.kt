@@ -1,48 +1,70 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.wrap
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.impl.view.FontLayoutService
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.SlowOperations
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.plugins.markdown.editor.tables.ui.MarkdownInlayUpdateOnSoftWrapListener
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 
-class MarkdownSoftWrapTest : BasePlatformTestCase() {
+@TestApplication
+class MarkdownSoftWrapTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   /**
    * The long token hides the previous space from the ten-character fast path.
    * This forces the Markdown strategy to reject dots inside the address.
    */
-  fun `test soft wrap does not break an IPv4 address`() {
+  @Test
+  fun `test soft wrap does not break an IPv4 address`(): Unit = timeoutRunBlocking {
     val address = "192.168.0.1"
     val text = "word ".repeat(10) + "unbreakable".repeat(2) + "$address more words after the address"
     myFixture.configureByText("softWrapIpv4.md", text)
-    assertTrue(EditorTestUtil.configureSoftWraps(myFixture.editor, 80))
+    withContext(Dispatchers.EDT) {
+      assertTrue(EditorTestUtil.configureSoftWraps(myFixture.editor, 80))
 
-    val addressStart = text.indexOf(address)
-    val wrapOffsets = myFixture.editor.softWrapModel.getSoftWrapsForRange(0, text.length).map { it.start }
-    assertNotEmpty(wrapOffsets)
-    assertEmpty("soft wrap must not appear inside the IPv4 address: $wrapOffsets",
-                wrapOffsets.filter { it in (addressStart + 1) until (addressStart + address.length) })
+      val addressStart = text.indexOf(address)
+      val wrapOffsets = myFixture.editor.softWrapModel.getSoftWrapsForRange(0, text.length).map { it.start }
+      assertThat(wrapOffsets).isNotEmpty()
+      assertThat(wrapOffsets.filter { it in (addressStart + 1) until (addressStart + address.length) }).describedAs("soft wrap must not appear inside the IPv4 address: $wrapOffsets").isEmpty()
+    }
   }
 
-  fun `test listener does not throw or report slow operations on EDT`() {
+  @Test
+  fun `test listener does not throw or report slow operations on EDT`(): Unit = timeoutRunBlocking {
     myFixture.configureByText("test.md", "")
     val listener = MarkdownInlayUpdateOnSoftWrapListener()
 
-    SlowOperations.reportKnownIssues()
-    PlatformTestUtil.withSystemProperty<Nothing>(SlowOperations.FORBID_SLOW_OPS_PROPERTY, "true") {
-      assertDoesNotThrow {
-        SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
-          listener.editorCreated(EditorFactoryEvent(EditorFactory.getInstance(), myFixture.editor))
+    withContext(Dispatchers.EDT) {
+      SlowOperations.reportKnownIssues()
+      PlatformTestUtil.withSystemProperty<Nothing>(SlowOperations.FORBID_SLOW_OPS_PROPERTY, "true") {
+        assertDoesNotThrow {
+          SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
+            listener.editorCreated(EditorFactoryEvent(EditorFactory.getInstance(), myFixture.editor))
+          }
         }
       }
+      assertTrue(SlowOperations.reportKnownIssues().isEmpty())
     }
-    assertTrue(SlowOperations.reportKnownIssues().isEmpty())
   }
 
   /**
@@ -51,26 +73,29 @@ class MarkdownSoftWrapTest : BasePlatformTestCase() {
    * that [org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy] resolves offsets correctly when
    * the line under test does not start at the beginning of the document.
    */
-  fun `test soft wrap does not break a link located after the first block`() {
+  @Test
+  fun `test soft wrap does not break a link located after the first block`(): Unit = timeoutRunBlocking {
     val filler = "Introductory paragraph that occupies space before the block under test.\n\n".repeat(3)
     val prefix = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu"
     val line = "$prefix [anchor](https://example.com/long/path/kept/intact) when the paragraph continues with several ordinary words"
     val text = filler + line + "\n"
     myFixture.configureByText("softWrapLink.md", text)
-    assertTrue(EditorTestUtil.configureSoftWraps(myFixture.editor, 80))
+    withContext(Dispatchers.EDT) {
+      assertTrue(EditorTestUtil.configureSoftWraps(myFixture.editor, 80))
 
-    val lineStart = filler.length
-    val linkStart = text.indexOf("[anchor]")
-    val linkEnd = text.indexOf(')', linkStart) + 1
-    val wrapOffsets = myFixture.editor.softWrapModel.getSoftWrapsForRange(0, text.length).map { it.start }
-    assertNotEmpty(wrapOffsets)
-    assertEmpty("soft wraps must not appear inside the inline link at [$linkStart, $linkEnd): $wrapOffsets",
-                wrapOffsets.filter { it in (linkStart + 1) until linkEnd })
-    assertTrue("expected the first visual row to wrap at or before the link start $linkStart: $wrapOffsets",
-               wrapOffsets.any { it in (lineStart + 1)..linkStart })
+      val lineStart = filler.length
+      val linkStart = text.indexOf("[anchor]")
+      val linkEnd = text.indexOf(')', linkStart) + 1
+      val wrapOffsets = myFixture.editor.softWrapModel.getSoftWrapsForRange(0, text.length).map { it.start }
+      assertThat(wrapOffsets).isNotEmpty()
+      assertThat(wrapOffsets.filter { it in (linkStart + 1) until linkEnd }).describedAs("soft wraps must not appear inside the inline link at [$linkStart, $linkEnd): $wrapOffsets").isEmpty()
+      assertTrue(wrapOffsets.any { it in (lineStart + 1)..linkStart },
+                 "expected the first visual row to wrap at or before the link start $linkStart: $wrapOffsets")
+    }
   }
 
-  fun `test soft wrap goes in front of a bare URL`() {
+  @Test
+  fun `test soft wrap goes in front of a bare URL`(): Unit = timeoutRunBlocking {
     assertSoftWraps(
       "- `[#q-1]` — Since we changed direction to ⏎https://git.example.com/group/project/-/merge_requests/1234",
       "- [ ] [#bl-1] see the notes in the tracker before you start, then ⏎https://git.example.com/group/project/-/issues/42",
@@ -82,7 +107,8 @@ class MarkdownSoftWrapTest : BasePlatformTestCase() {
     )
   }
 
-  fun `test soft wrap goes in front of a link token`() {
+  @Test
+  fun `test soft wrap goes in front of a link token`(): Unit = timeoutRunBlocking {
     assertSoftWraps(
       "- See [the notes in the tracker]( ⏎https://git.example.com/group/project/-/issues/42 )",
       "- [#id] Run the smoke test of the build as described in the runbook ⏎(procedure-for-the-nightly-build), install (a)",
@@ -92,7 +118,8 @@ class MarkdownSoftWrapTest : BasePlatformTestCase() {
     )
   }
 
-  fun `test soft wrap goes inside link text, titles and definitions`() {
+  @Test
+  fun `test soft wrap goes inside link text, titles and definitions`(): Unit = timeoutRunBlocking {
     assertSoftWraps(
       "See the notes in the tracker before you start, [then read ⏎the-notes-about-the-migration](#notes)",
       "See [the notes](#notes \"the notes about ⏎the-migration-of-the-tracker-to-the-new-host\") before you start",
@@ -105,25 +132,27 @@ class MarkdownSoftWrapTest : BasePlatformTestCase() {
    * Puts each line in its own block and checks its soft wraps at 80 columns.
    * The mock font gives each character the width that [EditorTestUtil.configureSoftWraps] expects.
    */
-  private fun assertSoftWraps(vararg markedLines: String) {
+  private suspend fun assertSoftWraps(vararg markedLines: String) {
     try {
       FontLayoutService.setInstance(MockFontLayoutService(10, 10, 2))
       myFixture.configureByText("softWrap.md", markedLines.joinToString("\n\n") { line -> line.filterNot { it == WRAP } })
-      assertTrue(EditorTestUtil.configureSoftWraps(myFixture.editor, 80))
+      withContext(Dispatchers.EDT) {
+        assertTrue(EditorTestUtil.configureSoftWraps(myFixture.editor, 80))
 
-      val document = myFixture.editor.document
-      val actual = markedLines.indices.map { index ->
-        val line = index * 2
-        val lineStart = document.getLineStartOffset(line)
-        val wraps = myFixture.editor.softWrapModel.getSoftWrapsForLine(line).map { it.start - lineStart }
-        buildString {
-          document.charsSequence.subSequence(lineStart, document.getLineEndOffset(line)).forEachIndexed { offset, char ->
-            if (offset in wraps) append(WRAP)
-            append(char)
+        val document = myFixture.editor.document
+        val actual = markedLines.indices.map { index ->
+          val line = index * 2
+          val lineStart = document.getLineStartOffset(line)
+          val wraps = myFixture.editor.softWrapModel.getSoftWrapsForLine(line).map { it.start - lineStart }
+          buildString {
+            document.charsSequence.subSequence(lineStart, document.getLineEndOffset(line)).forEachIndexed { offset, char ->
+              if (offset in wraps) append(WRAP)
+              append(char)
+            }
           }
         }
+        assertEquals(markedLines.joinToString("\n"), actual.joinToString("\n"))
       }
-      assertEquals(markedLines.joinToString("\n"), actual.joinToString("\n"))
     }
     finally {
       FontLayoutService.setInstance(null)

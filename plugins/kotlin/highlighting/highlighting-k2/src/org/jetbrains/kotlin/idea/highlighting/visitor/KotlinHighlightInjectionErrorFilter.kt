@@ -14,11 +14,6 @@ internal class KotlinHighlightInjectionErrorFilter: HighlightErrorFilter() {
         if (injectionHost is KDocElement) {
             return false
         }
-
-        val shouldBeIgnored = element.language == KotlinLanguage.INSTANCE &&
-            element.errorDescription == "Package directive and imports are forbidden in code fragments" &&
-            injectedLanguageManager.isInjectedFragment(element.containingFile)
-
-        return !shouldBeIgnored
+        return true
     }
 }

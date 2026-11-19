@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+class Foo {
+}
+
+val b8Unbound: (Foo, Int) -> Int = Foo::len
+companion fun Foo.len(<caret>foo: Foo, x: Int) = foo.hashCode() + x

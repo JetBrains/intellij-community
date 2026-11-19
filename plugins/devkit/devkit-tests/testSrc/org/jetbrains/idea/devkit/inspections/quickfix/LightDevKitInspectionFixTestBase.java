@@ -6,7 +6,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Use {@link DevKitInspectionFixTestBase} if light test is not possible.
+ *
+ * @deprecated Use {@link LightDevKitInspectionFixtureKt#lightDevKitInspectionFixture} in a JUnit 5 test.
  */
+@Deprecated
 public abstract class LightDevKitInspectionFixTestBase extends LightJavaCodeInsightFixtureTestCase {
 
   @NotNull

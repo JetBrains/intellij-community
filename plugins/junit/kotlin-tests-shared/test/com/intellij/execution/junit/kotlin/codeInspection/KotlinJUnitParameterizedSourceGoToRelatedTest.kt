@@ -1,27 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
-import com.intellij.junit.testFramework.JUnitParameterizedSourceGoToRelatedTestBase
-import com.intellij.junit.testFramework.JUnitProjectDescriptor
+import com.intellij.execution.junit.kotlin.kotlinJUnitProjectFixture
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
+import com.intellij.jvm.analysis.testFramework.jvmCodeInsightFixture
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT5)
-
-abstract class KotlinJUnitParameterizedSourceGoToRelatedTest : JUnitParameterizedSourceGoToRelatedTestBase() {
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(module)
+@TestApplication
+abstract class KotlinJUnitParameterizedSourceGoToRelatedTest {
+  companion object {
+    private val projectFixture = kotlinJUnitProjectFixture(JUNIT5)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
+  protected val myFixture by jvmCodeInsightFixture(projectFixture)
 
+  @Test
   fun `test go to method source with explicit name`() {
     myFixture.testGoToRelatedAction(
       JvmLanguage.KOTLIN, """
@@ -43,6 +44,7 @@ abstract class KotlinJUnitParameterizedSourceGoToRelatedTest : JUnitParameterize
     }
   }
 
+  @Test
   fun `test go to method source without explicit name`() {
     myFixture.testGoToRelatedAction(
       JvmLanguage.KOTLIN, """
@@ -64,6 +66,7 @@ abstract class KotlinJUnitParameterizedSourceGoToRelatedTest : JUnitParameterize
     }
   }
 
+  @Test
   fun `test go to field source with explicit name`() {
     myFixture.testGoToRelatedAction(
       JvmLanguage.KOTLIN, """
@@ -88,6 +91,7 @@ abstract class KotlinJUnitParameterizedSourceGoToRelatedTest : JUnitParameterize
     }
   }
 
+  @Test
   fun `test go to field source without explicit name`() {
     myFixture.testGoToRelatedAction(
       JvmLanguage.KOTLIN, """

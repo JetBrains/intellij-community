@@ -7,7 +7,7 @@ description: Update markdown-jvm and regenerate Bazel/Fleet metadata.
 
 Use this skill when the user gives a Markdown version in `A.B.C` or `A.B.C.x` form. Treat it as `MARKDOWN_VERSION`. Never guess the version.
 
-Use the 0.7.15 to 0.7.16 update commit (`783603fe95b8`) as the model. This is normally a metadata-only update.
+Use the 0.7.15 to 0.7.16 update commit (`783603fe95b8`) as the model.
 
 ## Files
 
@@ -23,13 +23,9 @@ These files are generated. Do not edit them by hand:
 - `fleet/kmp.MODULE.bazel`
 - `MODULE.bazel.lock`
 
-`fleet/build/gradle/jps.versions.toml` normally does not change. Do not add a Markdown entry when the generator omits it.
-
 ## 1. Verify the artifacts
 
 Before editing, verify all required artifacts. Use cache-redirector for three-part versions. Use the IntelliJ Dependencies repository for four-part versions.
-
-Do not run the cache-redirector availability check for an `A.B.C.x` version. Verify the artifacts at the IntelliJ Dependencies repository instead.
 
 ```bash
 set -euo pipefail
@@ -80,10 +76,6 @@ For an `A.B.C.x` version, report an unavailable package artifact and do not cont
 
 Use the downloaded main-JAR SHA-256 in the `.iml`. Never invent or reuse a checksum.
 
-For an `A.B.C.x` version, the KMP module must be available at
-`https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/markdown/A.B.C.x/`.
-The JVM and Wasm artifacts use the matching `markdown-jvm` and `markdown-wasm-js` paths.
-
 ## 2. Update the source descriptor
 
 Check the current `jetbrains.markdown` coordinate in the `.iml`. Stop if the descriptor is inconsistent.
@@ -95,8 +87,6 @@ Update only these values:
 - the `CLASSES` JAR URL
 - the `SOURCES` JAR URL
 
-Keep the exclusions, XML format, and no-trailing-line-break format unchanged.
-
 Keep `$MAVEN_REPOSITORY$` in the `.iml` URLs. For an `A.B.C.x` version, the generators select the IntelliJ Dependencies repository from `.idea/jarRepositories.xml`.
 
 Register the edited module, then regenerate JVM metadata:
@@ -106,7 +96,7 @@ bun build/jps-module.mjs register community/libraries/markdown/intellij.librarie
 ./build/jpsModelToBazel.cmd
 ```
 
-Check that the Markdown entries in `community/lib/BUILD.bazel` and `community/lib/MODULE.bazel` use the new version, filenames, repository URLs, and generated checksums. Do not edit these files by hand.
+Check that the Markdown entries in `community/lib/BUILD.bazel` and `community/lib/MODULE.bazel` use the new version, filenames, repository URLs, and generated checksums.
 
 For an `A.B.C` version, the generated URLs use the Maven Central cache-redirector path.
 For an `A.B.C.x` version, the generated URLs use the cache-redirector path for IntelliJ Dependencies.
@@ -120,17 +110,14 @@ Run:
 ```
 
 Check that every `jetbrains.markdown` row in `fleet/build/jps-library-mappings.tsv` and the `org.jetbrains:markdown` coordinate in `fleet/kmp.MODULE.bazel` use the new version.
-For an `A.B.C.x` version, check that the Wasm URLs use the IntelliJ Dependencies path in `MODULE.bazel.lock`.
 
-Do not hand-edit generated Fleet files.
-
-Refresh the lockfile and wait for Bazel to finish:
+Refresh the lockfile:
 
 ```bash
 ./bazel.cmd mod deps --lockfile_mode=update
 ```
 
-Do not stop the command or report success while it is running. Check `MODULE.bazel.lock` for the new `markdown-wasm-js` filenames, cache-redirector URLs, and integrity values. Do not hand-edit the lockfile.
+Do not stop the command or report success while it is running. Check `MODULE.bazel.lock` for the new `markdown-wasm-js` filenames, cache-redirector URLs, and integrity values. For an `A.B.C.x` version, check that the Wasm URLs use the IntelliJ Dependencies path.
 
 ## 4. Verify
 
@@ -148,12 +135,6 @@ Build the local Ultimate application:
 
 If the update causes a real compilation failure, make the smallest compatible source change, then rerun the failing build and affected tests. Do not weaken tests or edit generated metadata to hide a failure.
 
-Because the update changes Bazel files, run:
-
-```bash
-./bazel.cmd run //:format.check
-```
-
-If the check reports a diff, run `./bazel.cmd run //:format`, inspect the changes, and run the check again. Run `lint_files` on changed files when IDE MCP is available. Finish with `git diff --check` and inspect the complete diff.
+Finish with `git diff --check` and inspect the complete diff.
 
 The normal metadata-only diff contains the source `.iml`, the two community library files, the two Fleet files, and `MODULE.bazel.lock`. Additional source changes need a verified compatibility failure.

@@ -2,14 +2,20 @@
 package org.intellij.plugins.markdown.preview
 
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.HttpRequests
 import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.jetbrains.ide.BuiltInServerManager
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class MarkdownPreviewStaticServerTest: LightPlatformTestCase() {
+@TestApplication
+class MarkdownPreviewStaticServerTest {
   private class TestResourceProvider: ResourceProvider {
     override fun canProvide(resourceName: String): Boolean {
       return resourceName == TestResourceProvider.resourceName
@@ -39,12 +45,14 @@ class MarkdownPreviewStaticServerTest: LightPlatformTestCase() {
     }
   }
 
+  @Test
   fun `test preview server returns some path without exceptions`() {
     val provider = TestResourceProvider()
     val path = PreviewStaticServer.getStaticUrl(provider, TestResourceProvider.resourceName)
     assertTrue(path.contains(TestResourceProvider.resourceName))
   }
 
+  @Test
   fun `test preview server serves resource without exceptions`() {
     val provider = TestResourceProvider()
     withServedResource(provider, TestResourceProvider.resourceName) { url ->
@@ -54,6 +62,7 @@ class MarkdownPreviewStaticServerTest: LightPlatformTestCase() {
   }
 
   /** An SVG from a document is served here; opening its URL used to run its scripts (IJPL-247809). */
+  @Test
   fun `test served resource is not usable as a document and leaks no referrer`() {
     val provider = TestResourceProvider()
     withServedResource(provider, TestResourceProvider.resourceName) { url ->
@@ -63,6 +72,7 @@ class MarkdownPreviewStaticServerTest: LightPlatformTestCase() {
   }
 
   /** A document declares its own policy in markup; a second one in a header would be enforced separately. */
+  @Test
   fun `test document resource is served without a policy header`() {
     val provider = PageResourceProvider()
     withServedResource(provider, PageResourceProvider.RESOURCE_NAME) { url ->
@@ -70,6 +80,7 @@ class MarkdownPreviewStaticServerTest: LightPlatformTestCase() {
     }
   }
 
+  @Test
   fun `test an image URL keeps the stamp before the fragment`() {
     val provider = TestResourceProvider()
     assertFalse(MarkdownImageResourceProvider.imageUrl(provider, "img/a.png", null).contains("?v="))

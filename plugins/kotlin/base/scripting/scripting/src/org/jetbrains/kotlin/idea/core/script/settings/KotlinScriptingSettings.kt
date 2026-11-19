@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
@@ -24,6 +25,9 @@ internal class KotlinScriptingSettings(val project: Project) :
         val after = updateState(updateFunction)
         if (before != after) {
             ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        }
+        if (!project.isDefault && (before.parsedClassNames != after.parsedClassNames || before.parsedClasspath != after.parsedClasspath)) {
+            ScriptDefinitionProviderImpl.getInstance(project).scheduleLoading()
         }
     }
 

@@ -4,11 +4,11 @@ package com.jetbrains.python.psi.resolve
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.CachedValue
 import com.intellij.python.sdk.backend.PythonInterpreter
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentMap
 
 /**
  * Specification for checking package availability in a Python environment.
@@ -43,14 +43,16 @@ class PackageAvailabilitySpec(
   @ApiStatus.Internal
   val cacheKey: Key<CachedValue<Boolean>> = Key.create("$PREFIX$packageName:${fqns.joinToString(",")}")
 
+  /** The key of the project-level cache that holds the answer for each interpreter. */
+  @ApiStatus.Internal
+  val interpreterCacheKey: Key<CachedValue<ConcurrentMap<PythonInterpreter, Boolean>>> =
+    Key.create("$PREFIX$packageName:${fqns.joinToString(",")}:interpreters")
+
   internal companion object {
     @ApiStatus.Internal
     const val PREFIX = "isPackageAvailable:"
   }
 }
-
-@ApiStatus.Internal
-fun Key<*>.isPackageAvailableKey(): Boolean = this.toString().startsWith(PackageAvailabilitySpec.PREFIX)
 
 /**
  * Checks if a package is available in the module's Python environment.
@@ -68,7 +70,7 @@ fun isPackageAvailable(module: Module, spec: PackageAvailabilitySpec): Boolean {
 }
 
 /**
- * Checks if a package is available in the SDK's Python environment.
+ * Checks if a package is available in the environment of [interpreter].
  *
  * Uses a combined strategy:
  * 1. First checks package manager cache (fast)
@@ -78,8 +80,8 @@ fun isPackageAvailable(module: Module, spec: PackageAvailabilitySpec): Boolean {
  * @return true if the package is available, false otherwise
  */
 @ApiStatus.Internal
-fun isPackageAvailable(project: Project, sdk: Sdk, spec: PackageAvailabilitySpec): Boolean {
-  return PackageAvailabilityService.getInstance().isPackageAvailable(project, sdk, spec)
+fun isPackageAvailable(project: Project, interpreter: PythonInterpreter, spec: PackageAvailabilitySpec): Boolean {
+  return PackageAvailabilityService.getInstance().isPackageAvailable(project, interpreter, spec)
 }
 
 /**
@@ -100,9 +102,9 @@ interface PackageAvailabilityService {
   fun isPackageAvailable(module: Module, spec: PackageAvailabilitySpec): Boolean
 
   /**
-   * Checks if a package is available in the SDK's Python environment.
+   * Checks if a package is available in the environment of [interpreter].
    */
-  fun isPackageAvailable(project: Project, sdk: Sdk, spec: PackageAvailabilitySpec): Boolean
+  fun isPackageAvailable(project: Project, interpreter: PythonInterpreter, spec: PackageAvailabilitySpec): Boolean
 
   /**
    * The version of the package [packageName] that the package manager lists as installed in [interpreter], or `null`

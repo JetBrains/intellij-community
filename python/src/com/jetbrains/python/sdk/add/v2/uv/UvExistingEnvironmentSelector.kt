@@ -23,7 +23,7 @@ import com.jetbrains.python.sdk.add.v2.pathHolder
 import com.jetbrains.python.sdk.uv.initUvProjectIfNeeded
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.uv.sdk.configuration.isUvEnv
+import com.intellij.python.venv.environment.isUvEnv
 import java.nio.file.Path
 
 

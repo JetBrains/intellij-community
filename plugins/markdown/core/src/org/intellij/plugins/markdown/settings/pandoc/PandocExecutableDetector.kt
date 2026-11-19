@@ -3,7 +3,7 @@ package org.intellij.plugins.markdown.settings.pandoc
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.execution.util.ExecUtil
+import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -45,7 +45,9 @@ internal object PandocExecutableDetector {
     override fun compute(indicator: ProgressIndicator): String? {
       val command = GeneralCommandLine(executableName, "-v")
       try {
-        val output = ExecUtil.execAndGetOutput(command).takeIf { it.stderr.isEmpty() }
+        val output = CapturingProcessHandler(command)
+          .runProcessWithProgressIndicator(indicator)
+          .takeIf { !it.isCancelled && it.stderr.isEmpty() }
         return output?.stdoutLines?.let(::extractVersion)
       }
       catch (_: Throwable) {

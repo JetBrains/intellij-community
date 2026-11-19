@@ -44,6 +44,9 @@ internal interface LspInlayItem {
 
   /** Builds the presentation; called on the EDT inside [com.intellij.openapi.editor.InlayModel.execute]. */
   fun buildPresentation(editor: Editor, factory: PresentationFactory): InlayPresentation
+
+  /** Updates the data used by existing presentations. Called on the EDT for a matching [identity]. */
+  fun updateFrom(newItem: LspInlayItem) {}
 }
 
 /**
@@ -134,16 +137,20 @@ internal class LspInlayApplier(private val project: Project, coroutineScope: Cor
     // additionally require our MANAGED key — the diff/disposal below must never touch an inlay we don't own.
     val existingByKey = HashMap<InlayMatchKey, ArrayDeque<Inlay<*>>>()
     for (inlay in existing) {
-      val identity = inlay.getUserData(MANAGED) ?: continue // not ours
-      existingByKey.getOrPut(InlayMatchKey(inlay.offset, identity)) { ArrayDeque() }.addLast(inlay)
+      val item = inlay.getUserData(MANAGED) ?: continue // not ours
+      existingByKey.getOrPut(InlayMatchKey(inlay.offset, item.identity)) { ArrayDeque() }.addLast(inlay)
     }
 
-    // Match each incoming item against an existing inlay; a match is left untouched (no recreate => no flicker).
+    // Keep matching inlays and update the data used by their presentations.
     val toAdd = ArrayList<LspInlayItem>()
     for (item in items) {
       val key = InlayMatchKey(item.offset, item.identity)
-      if (existingByKey[key]?.removeFirstOrNull() == null) {
+      val existingInlay = existingByKey[key]?.removeFirstOrNull()
+      if (existingInlay == null) {
         toAdd.add(item)
+      }
+      else {
+        existingInlay.getUserData(MANAGED)?.updateFrom(item)
       }
     }
 
@@ -162,7 +169,7 @@ internal class LspInlayApplier(private val project: Project, coroutineScope: Cor
         val presentation = item.buildPresentation(editor, factory)
         val inlay = inlayModel.addInlineElement(item.offset, false, PresentationRenderer(presentation)) ?: continue
         presentation.addListener(InlayContentListener(inlay))
-        inlay.putUserData(MANAGED, item.identity)
+        inlay.putUserData(MANAGED, item)
       }
     }
   }
@@ -172,8 +179,8 @@ internal class LspInlayApplier(private val project: Project, coroutineScope: Cor
   companion object {
     private const val BULK_THRESHOLD = 100
 
-    /** Marks an inline inlay as owned by us, and stores its [LspInlayItem.identity] for the next diff. */
-    private val MANAGED: Key<Any> = Key.create("lsp.inlay.managed")
+    /** Marks an inline inlay as owned by us and stores the item that its presentation uses. */
+    private val MANAGED: Key<LspInlayItem> = Key.create("lsp.inlay.managed")
 
     fun getInstance(project: Project): LspInlayApplier = project.service()
   }

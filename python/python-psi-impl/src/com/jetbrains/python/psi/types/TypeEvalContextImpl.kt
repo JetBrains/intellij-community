@@ -264,17 +264,7 @@ open class TypeEvalContextImpl internal constructor(
   }
 
   private fun getLibraryContext(project: Project): TypeEvalContext {
-    // code completion will always have a new PsiFile, use the original file instead
-    val origin = constraints.myOrigin?.originalFile
-    val constraints = TypeEvalConstraints(
-      constraints.myAllowDataFlow,
-      constraints.myAllowStubToAST,
-      constraints.myAllowCallContext,
-      constraints.myIsExternal,
-      origin,
-    )
-    return project.service<TypeEvalContextCache>()
-      .getLibraryContext(LibraryTypeEvalContext(constraints))
+    return project.service<TypeEvalContextCache>().getLibraryContext(constraints)
   }
 
   /**
@@ -543,7 +533,7 @@ open class TypeEvalContextImpl internal constructor(
     }
   }
 
-  private class LibraryTypeEvalContext(constraints: TypeEvalConstraints) : TypeEvalContextImpl(constraints) {
+  internal class LibraryTypeEvalContext(constraints: TypeEvalConstraints) : TypeEvalContextImpl(constraints) {
     override fun canDelegateToLibraryContext(element: PyTypedElement): Boolean {
       // It's already the library-context.
       return false

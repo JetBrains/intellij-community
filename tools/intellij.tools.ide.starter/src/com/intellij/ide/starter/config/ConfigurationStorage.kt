@@ -47,11 +47,14 @@ class ConfigurationStorage(di: DirectDI, val defaults: Map<String, String> = emp
   }
 
   /**
-   * Reset to default values, that will be performed after each test
+   * Reset to default values, that will be performed after each test.
+   *
+   * Other threads may read the storage meanwhile (e.g. the thread dump collector), so a default key is never absent:
+   * defaults are written first, then the other keys are removed.
    */
   fun resetToDefault() {
-    _map.clear()
     _map.putAll(defaults)
+    _map.keys.retainAll(defaults.keys)
   }
 
   init {

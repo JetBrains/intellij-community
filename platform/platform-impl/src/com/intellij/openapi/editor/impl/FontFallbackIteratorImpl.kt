@@ -11,6 +11,8 @@ import java.text.BreakIterator
 import java.text.CharacterIterator
 
 private const val COMPLEX_CHAR_START: Char = '\u0300' // start of Combining Diacritical Marks block
+private const val FIRST_PRINTABLE_ASCII: Char = ' '
+private const val LAST_PRINTABLE_ASCII: Char = '~'
 
 internal class FontFallbackIteratorImpl private constructor(
   private val fontLookup: FontLookup,
@@ -75,25 +77,37 @@ internal class FontFallbackIteratorImpl private constructor(
   fun start(text: CharSequence, rangeStart: Int, rangeEnd: Int) {
     assertRange(text.length, rangeStart, rangeEnd)
     var characterIterator: CharacterIterator? = null
+    var printableAscii = true
     for (i in rangeStart until rangeEnd) {
-      if (text[i] >= COMPLEX_CHAR_START) {
+      val c = text[i]
+      if (c >= COMPLEX_CHAR_START) {
         characterIterator = CharSequenceIterator(text, rangeStart, rangeEnd)
+        printableAscii = false
         break
       }
+      if (c < FIRST_PRINTABLE_ASCII || c > LAST_PRINTABLE_ASCII) {
+        printableAscii = false
+      }
     }
-    doStart(text, null, characterIterator, rangeStart, rangeEnd)
+    doStart(text, null, characterIterator, printableAscii, rangeStart, rangeEnd)
   }
 
   fun start(text: CharArray, rangeStart: Int, rangeEnd: Int) {
     assertRange(text.size, rangeStart, rangeEnd)
     var characterIterator: CharacterIterator? = null
+    var printableAscii = true
     for (i in rangeStart until rangeEnd) {
-      if (text[i] >= COMPLEX_CHAR_START) {
+      val c = text[i]
+      if (c >= COMPLEX_CHAR_START) {
         characterIterator = CharArrayIterator(text, rangeStart, rangeEnd)
+        printableAscii = false
         break
       }
+      if (c < FIRST_PRINTABLE_ASCII || c > LAST_PRINTABLE_ASCII) {
+        printableAscii = false
+      }
     }
-    doStart(null, text, characterIterator, rangeStart, rangeEnd)
+    doStart(null, text, characterIterator, printableAscii, rangeStart, rangeEnd)
   }
 
   fun atEnd(): Boolean {
@@ -175,11 +189,19 @@ internal class FontFallbackIteratorImpl private constructor(
     textAsCharSequence: CharSequence?,
     textAsArray: CharArray?,
     characterIterator: CharacterIterator?,
+    printableAscii: Boolean,
     rangeStart: Int,
     rangeEnd: Int,
   ) {
     this.textAsCharSequence = textAsCharSequence
     this.textAsArray = textAsArray
+    if (printableAscii && rangeStart < rangeEnd) {
+      val font = fontLookup.printableAsciiFont(fontStyle, fontRenderContext)
+      if (font != null) {
+        startOneRange(rangeStart, rangeEnd, font)
+        return
+      }
+    }
     if (characterIterator == null) {
       trivialBreaker.setRange(rangeStart, rangeEnd)
       breakIterator = trivialBreaker
@@ -194,6 +216,18 @@ internal class FontFallbackIteratorImpl private constructor(
     fontInfo = null
     nextFontInfo = null
     advance()
+  }
+
+  /**
+   * Makes the range from [rangeStart] to [rangeEnd] the current range with [font]. The next [advance] ends the iteration.
+   */
+  private fun startOneRange(rangeStart: Int, rangeEnd: Int, font: FontInfo) {
+    trivialBreaker.setRange(rangeEnd, rangeEnd)
+    breakIterator = trivialBreaker
+    start = rangeStart
+    end = trivialBreaker.first()
+    fontInfo = font
+    nextFontInfo = font
   }
 
   /**

@@ -183,8 +183,8 @@ private fun dropEmptyTempDir(runDir: Path) {
 }
 
 internal fun parseOs(value: String): OsFamily {
-  return OsFamily.entries.firstOrNull { it.name.equals(value, ignoreCase = true) || it.osId.equals(value, ignoreCase = true) || it.dirName.equals(value, ignoreCase = true) }
-         ?: error("Unknown --os value '$value', expected one of ${OsFamily.entries.joinToString { it.osId }}")
+  return OsFamily.ALL.firstOrNull { it.name.equals(value, ignoreCase = true) || it.osId.equals(value, ignoreCase = true) || it.dirName.equals(value, ignoreCase = true) }
+         ?: error("Unknown --os value '$value', expected one of ${OsFamily.ALL.joinToString { it.osId }}")
 }
 
 internal fun parseArch(value: String): JvmArchitecture {

@@ -2,42 +2,54 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.ListenerImplementationMustNotBeDisposableInspectionTestBase
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.listenerImplementationMustNotBeDisposableFixture
+import org.jetbrains.idea.devkit.inspections.pluginModuleProjectFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/listenerImplementationMustNotBeDisposable")
-class KtListenerImplementationMustNotBeDisposableInspectionTest : ListenerImplementationMustNotBeDisposableInspectionTestBase() {
+@TestApplication
+class KtListenerImplementationMustNotBeDisposableInspectionTest {
+  companion object {
+    private val projectFixture = pluginModuleProjectFixture()
+  }
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/listenerImplementationMustNotBeDisposable"
+  private val listener by listenerImplementationMustNotBeDisposableFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/listenerImplementationMustNotBeDisposable")
 
-  override fun getFileExtension(): String = "kt"
-
+  @Test
   fun testDisposableApplicationListener() {
-    doTest()
+    listener.doTest()
   }
 
+  @Test
   fun testDisposableProjectListener() {
-    doTest()
+    listener.doTest()
   }
 
+  @Test
   fun testDisposableListenerDeepInheritance() {
-    doTest()
+    listener.doTest()
   }
 
+  @Test
   fun testDisposableUnregisteredListener() {
-    doTest()
+    listener.doTest()
   }
 
+  @Test
   fun testDisposableLocalListener() {
-    doTest()
+    listener.doTest()
   }
 
+  @Test
   fun testNonDisposableApplicationListener() {
-    doTest()
+    listener.doTest()
   }
 
+  @Test
   fun testNonDisposableProjectListener() {
-    doTest()
+    listener.doTest()
   }
 
 }

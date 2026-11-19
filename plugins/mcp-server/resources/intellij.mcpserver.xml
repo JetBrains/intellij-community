@@ -128,6 +128,8 @@
                  key="ide.mcp.wsl.forward.enabled"
                  restartRequired="true"/>
 
+    <advancedSetting id="mcp.server.router.controls" default="false" groupKey="advanced.setting.group.mcp.server" bundle="messages.McpServerBundle"/>
+
     <applicationSettings service="com.intellij.mcpserver.settings.McpServerSettingsImpl"/>
     <applicationSettings service="com.intellij.mcpserver.settings.McpToolDisallowListSettingsImpl"/>
     <applicationSettings service="com.intellij.mcpserver.settings.McpToolFilterSettingsImpl"/>

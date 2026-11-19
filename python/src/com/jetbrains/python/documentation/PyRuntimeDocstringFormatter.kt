@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
@@ -14,7 +13,10 @@ import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getPythonInfo
-import com.intellij.python.sdk.backend.pythonInterpreterResult
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.community.execService.asBinToExec
+import com.intellij.python.community.execService.python.executeHelper
+import com.jetbrains.python.errorProcessing.PyResult
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -22,7 +24,7 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.findLocalHelperPython
 import com.jetbrains.python.sdk.executeHelper
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
@@ -31,39 +33,55 @@ internal object PyRuntimeDocstringFormatter {
 
   private val helper = PyHelper("docstring_formatter.py")
 
-  internal sealed interface ModuleOrSdk {
-    data class TheSdk(val sdk: Sdk) : ModuleOrSdk
-    data class TheModule(val module: Module) : ModuleOrSdk
+  /**
+   * What runs the formatter: the interpreter that the caller gives, or the local helper Python for a module, see
+   * [findLocalHelperPython].
+   */
+  internal sealed interface ModuleOrInterpreter {
+    data class TheInterpreter(val interpreter: PythonInterpreter) : ModuleOrInterpreter
+    data class TheModule(val module: Module) : ModuleOrInterpreter
   }
 
+  /** A Python that runs the formatter. [cacheKey] names it in [PyDocstringFormatterCache]. */
+  private class FormatterPython(
+    val cacheKey: String,
+    val languageLevel: LanguageLevel,
+    val execute: suspend (Args, StdInProvider) -> PyResult<String>,
+  )
+
   @RequiresBackgroundThread
-  fun runExternalTool(moduleOrSdk: ModuleOrSdk, format: DocStringFormat, input: String, formatterFlags: List<String>): String? {
-    val sdk = when (moduleOrSdk) {
-      is ModuleOrSdk.TheSdk -> moduleOrSdk.sdk
-      is ModuleOrSdk.TheModule -> {
-        PythonSdkType.findLocalCPython(moduleOrSdk.module) ?: return logSdkNotFound(format)
+  fun runExternalTool(target: ModuleOrInterpreter, format: DocStringFormat, input: String, formatterFlags: List<String>): String? {
+    val python = when (target) {
+      is ModuleOrInterpreter.TheInterpreter -> {
+        val interpreter = target.interpreter
+        val languageLevel = interpreter.getPythonInfo().getOr {
+          LOG.debug { "$interpreter is broken ${it.error}" }
+          return null
+        }.languageLevel
+        FormatterPython(interpreter.binaryPathString, languageLevel) { args, stdIn ->
+          ExecService().executeHelper(interpreter = interpreter, helper = helper, helperArgs = args, stdInProvider = stdIn)
+        }
+      }
+      is ModuleOrInterpreter.TheModule -> {
+        val module = target.module
+        val local = runBlockingMaybeCancellable { findLocalHelperPython(module.project, module) } ?: return logSdkNotFound(format)
+        FormatterPython(local.binary.toString(), local.languageLevel) { args, stdIn ->
+          ExecService().executeHelper(python = local.binary.asBinToExec(), helper = helper, helperArgs = args, stdInProvider = stdIn)
+        }
       }
     }
-    val interpreter = sdk.pythonInterpreterResult().getOr {
-      LOG.debug { "Sdk $sdk is broken ${it.error}" }
-      return null
-    }
-    val languageLevel = interpreter.getPythonInfo().getOr {
-      LOG.debug { "Sdk $sdk is broken ${it.error}" }
-      return null
-    }.languageLevel
-    return if (languageLevel.isPython2) {
+    return if (python.languageLevel.isPython2) {
       logPy2NotSupported()
     }
     else {
-      formatCached(sdk.homePath!!, languageLevel, format, formatterFlags, input) {
-        runProcess(interpreter, format, formatterFlags, input)
+      formatCached(python.cacheKey, python.languageLevel, format, formatterFlags, input) {
+        runProcess(python, format, formatterFlags, input)
       }
     }
   }
 
   @RequiresBackgroundThread
-  private fun runProcess(interpreter: PythonInterpreter, format: DocStringFormat, formatterFlags: List<String>, input: String): String? {
+  private fun runProcess(python: FormatterPython, format: DocStringFormat, formatterFlags: List<String>, input: String): String? {
     val encodedInput = DEFAULT_CHARSET.encode(input)
     val data = ByteArray(encodedInput.limit()).also { encodedInput.get(it) }
     val arguments = formatterFlags.toMutableList().apply {
@@ -75,14 +93,7 @@ internal object PyRuntimeDocstringFormatter {
       // If script started, but closed its input, it is 100% helper problem
       LOG.error("Failed to write to helper input", it)
     }
-    val result = runBlockingMaybeCancellable {
-      ExecService().executeHelper(
-        interpreter = interpreter,
-        helper = helper,
-        helperArgs = Args(*arguments.toTypedArray()),
-        stdInProvider = stdInProvider
-      )
-    }
+    val result = runBlockingMaybeCancellable { python.execute(Args(*arguments.toTypedArray()), stdInProvider) }
 
     return when (result) {
       is Result.Success -> result.result

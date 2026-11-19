@@ -64,6 +64,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingTextTrimmer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UpdateScaleHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,7 +144,8 @@ import static com.intellij.util.ui.UIUtil.getFontWithFallback;
  *
  * @author gregsh
  */
-class GridTable extends JBTableWithResizableCells
+@ApiStatus.Internal
+public class GridTable extends JBTableWithResizableCells
   implements Disposable, CacheComponent, EditorColorsListener, UISettingsListener, UiDataProvider {
 
   /** The grid's data with the user's unsubmitted changes, which this table shows. */

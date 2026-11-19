@@ -140,6 +140,19 @@ public final class InjectorUtils {
                                        @NotNull List<InjectionInfo> list,
                                        @NotNull MultiHostRegistrar registrar,
                                        @Nullable Consumer<MultiHostRegistrar> customizeInjection) {
+    registerInjection(language, containingFile, list, registrar, null, customizeInjection);
+  }
+
+  /**
+   * @param fileExtension extension of the injected file, which some languages use to choose how the fragment is parsed.
+   *                      When {@code null}, the injected file keeps the host file name.
+   */
+  public static void registerInjection(@Nullable Language language,
+                                       @NotNull PsiFile containingFile,
+                                       @NotNull List<InjectionInfo> list,
+                                       @NotNull MultiHostRegistrar registrar,
+                                       @Nullable String fileExtension,
+                                       @Nullable Consumer<MultiHostRegistrar> customizeInjection) {
     // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
     // Maybe IDEA core is caching a bit too aggressively here?
     if (language == null/* && (pair.second.getLength() > 0*/) {
@@ -167,8 +180,11 @@ public final class InjectorUtils {
       InjectedLanguage injectedLanguage = t.language();
 
       if (!injectionStarted) {
+        if (fileExtension != null) {
+          registrar.startInjecting(language, fileExtension);
+        }
         // TextMate language requires file extension
-        if (!StringUtil.equalsIgnoreCase(language.getID(), t.language().getID())) {
+        else if (!StringUtil.equalsIgnoreCase(language.getID(), t.language().getID())) {
           registrar.startInjecting(language, StringUtil.toLowerCase(t.language().getID()));
         }
         else {

@@ -273,6 +273,76 @@ pub(crate) struct RenderOptions {
     pub(crate) kept_run: Option<String>,
     /// Full-lane classes over their time limit and outside the baseline.
     pub(crate) class_time_budget_violations: Vec<String>,
+    /// Where the time of the run went: the `time` line, and a `note` for a part that is slow for a known reason.
+    pub(crate) time: Option<RunTime>,
+    /// The repo-relative file that keeps the output of bazel of a run whose build failed.
+    pub(crate) bazel_log: Option<String>,
+}
+
+/// How many targets that did not build the digest names one by one.
+const MAX_UNBUILT_TARGETS: usize = 6;
+
+/// Where the time of a run went, beside the tests: the build of bt, the check record and the bazel commands. A narrow
+/// run of one cached class is all of that and almost no test, so the line shows an agent what to fix without a
+/// profile.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct RunTime {
+    /// The build of bt by its wrapper, when the wrapper named its time.
+    pub(crate) self_build_ms: Option<u64>,
+    /// The two scans of the checkout for the check record: before the run and after a green result.
+    pub(crate) check_record_ms: u64,
+    /// The bazel commands of the run, from the first spawn to the end of the last one.
+    pub(crate) bazel_ms: u64,
+    /// The analysis phase that bazel reported, a part of [`RunTime::bazel_ms`].
+    pub(crate) analysis_ms: u64,
+}
+
+/// A part of a run that takes at least this long gets a `note` with its cause and its fix.
+const SLOW_PART_MS: u64 = 10_000;
+
+/// The `time` line of a run, and a `note` for each part that is slow for a known reason.
+fn render_time(time: &RunTime) -> Vec<String> {
+    let mut parts = Vec::new();
+    if let Some(build) = time.self_build_ms {
+        parts.push(format!("bt build {}", format_duration(build)));
+    }
+    if time.check_record_ms > 0 {
+        parts.push(format!("check record {}", format_duration(time.check_record_ms)));
+    }
+    if time.analysis_ms > 0 {
+        parts.push(format!(
+            "bazel {} (analysis {})",
+            format_duration(time.bazel_ms),
+            format_duration(time.analysis_ms)
+        ));
+    } else {
+        parts.push(format!("bazel {}", format_duration(time.bazel_ms)));
+    }
+    let mut lines = vec![format!("time   {}", parts.join(" · "))];
+    if let Some(build) = time.self_build_ms.filter(|build| *build >= SLOW_PART_MS) {
+        lines.push(format!(
+            "note   bt built itself for {}: its sources changed, or the Bazel server of this checkout started cold. \
+             The next run reuses the build",
+            format_duration(build)
+        ));
+    }
+    if time.check_record_ms >= SLOW_PART_MS {
+        lines.push(format!(
+            "note   the check record scanned the untracked files of the checkout for {}. \
+             `git config status.showUntrackedFiles all` in this repository lets git keep its untracked cache for that \
+             scan, so the next scans take seconds",
+            format_duration(time.check_record_ms)
+        ));
+    }
+    if time.analysis_ms >= SLOW_PART_MS && time.analysis_ms * 2 >= time.bazel_ms {
+        lines.push(format!(
+            "note   bazel spent {} of {} in analysis: a cold server or other flags analyze the graph again. \
+             The next run of this checkout with the same flags reuses the analysis",
+            format_duration(time.analysis_ms),
+            format_duration(time.bazel_ms)
+        ));
+    }
+    lines
 }
 
 impl Default for RenderOptions {
@@ -284,6 +354,8 @@ impl Default for RenderOptions {
             no_tests_hint: None,
             kept_run: None,
             class_time_budget_violations: Vec::new(),
+            time: None,
+            bazel_log: None,
         }
     }
 }
@@ -413,14 +485,38 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
             }
         }
         RunStatus::BuildFailed => {
-            out.push(format!("BUILD FAILED  0 tests ran{single}"));
+            // A target that failed to build reported no shard, see `collect_results`. The other invocations of a lane
+            // still ran their tests, and the count says so.
+            let unbuilt: Vec<&str> = result
+                .targets
+                .iter()
+                .filter(|target| target.shards == 0)
+                .map(|target| target.label.as_str())
+                .collect();
+            let unbuilt_count = if unbuilt.is_empty() {
+                String::new()
+            } else {
+                format!(", {} did not build", plural(unbuilt.len() as u64, "target"))
+            };
+            out.push(format!("BUILD FAILED  {} ran{unbuilt_count}{single}", plural(sum.tests, "test")));
             out.push(String::new());
             out.extend(result.build_errors.iter().take(6).cloned());
             if result.build_errors.len() > 6 {
                 out.push(format!("+ {} more errors", result.build_errors.len() - 6));
             }
+            if result.targets.len() > 1 {
+                for label in unbuilt.iter().take(MAX_UNBUILT_TARGETS) {
+                    out.push(format!("did not build  {label}"));
+                }
+                if unbuilt.len() > MAX_UNBUILT_TARGETS {
+                    out.push(format!("+ {} more targets that did not build", unbuilt.len() - MAX_UNBUILT_TARGETS));
+                }
+            }
             if result.build_errors.is_empty() {
-                out.push("cause  bt recognised no build error; the tail of the bazel output is above".to_owned());
+                out.push(match &options.bazel_log {
+                    Some(log) => format!("cause  bt recognised no build error; the output of bazel is in {log}"),
+                    None => "cause  bt recognised no build error; the tail of the bazel output is above".to_owned(),
+                });
             }
         }
         RunStatus::NoTests => {
@@ -497,6 +593,11 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
             out.push(format!("       (+{} more target logs)", logs.len() - 1));
         }
     }
+    if let Some(log) = &options.bazel_log
+        && result.status == RunStatus::BuildFailed
+    {
+        out.push(format!("bazel  {log}  (the output of bazel, where the build failed)"));
+    }
     if let Some(kept) = &options.kept_run
         && result.status != RunStatus::Pass
     {
@@ -511,6 +612,9 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
     }
     if let Some(cost) = render_cost(&result.targets) {
         out.push(cost);
+    }
+    if let Some(time) = &options.time {
+        out.extend(render_time(time));
     }
     if result.degraded {
         out.push("note   result details were incomplete; the digest may be partial".to_owned());

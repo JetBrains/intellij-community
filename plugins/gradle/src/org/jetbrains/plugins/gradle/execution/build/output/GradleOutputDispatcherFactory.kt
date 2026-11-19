@@ -6,7 +6,6 @@ import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildId
 import com.intellij.build.events.OutputBuildEvent
-import com.intellij.build.events.OutputId
 import com.intellij.build.events.OutputReferenceEvent
 import com.intellij.build.events.StartEvent
 import com.intellij.build.events.StartId
@@ -178,22 +177,9 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       }
     }
 
-    override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
-      val outputId = OutputId()
-
-      notifyBuildEvent(
-        buildId,
-        OutputBuildEvent.builder(text) //NON-NLS
-          .withId(outputId)
-          .withOutputType(outputType)
-          .build()
-      )
-
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking {
-        lineProcessors.getOrPut(outputType) { GradleOutputLineProcessor(outputType) }
-          .notifyTextAvailable(BuildOutputText.createOutputText(outputId, text))
-      }
+    override suspend fun notifyParserTextAvailable(text: BuildOutputText, outputType: ProcessOutputType) {
+      lineProcessors.getOrPut(outputType) { GradleOutputLineProcessor(outputType) }
+        .notifyTextAvailable(text)
     }
 
     private fun removeLoggerPrefix(line: BuildOutputText): BuildOutputText {

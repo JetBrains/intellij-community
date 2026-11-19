@@ -28,6 +28,7 @@ private data class ImageInlay(
   val offset: Int,
   val destination: String,
   val source: MarkdownLivePreviewSpec.ImageSource?, // null for a browser-owned image
+  val failure: MarkdownLivePreviewSpec.ImageFailure?,
   val ordinal: Int, // orders images from one line
 )
 
@@ -50,13 +51,9 @@ internal class MarkdownLivePreviewImageRenderer(
   }
 
   override fun presentation(spec: MarkdownLivePreviewSpec): List<MarkdownLivePreviewFold> {
-    if (!TrustedProjects.isProjectTrusted(project)) return emptyList()
-    return presentation(spec as MarkdownLivePreviewSpec.Image)
-  }
-
-  private fun presentation(spec: MarkdownLivePreviewSpec.Image): List<MarkdownLivePreviewFold> {
-    if (spec.source == null && !spec.isBrowserOwned) return emptyList()
-    return listOf(MarkdownLivePreviewTextFold(spec.range.toTextRange(), spec.placeholderText))
+    val image = spec as MarkdownLivePreviewSpec.Image
+    if (image.isPending()) return emptyList()
+    return listOf(MarkdownLivePreviewTextFold(image.range.toTextRange(), image.placeholderText))
   }
 
   /** Updates image resources independently of source concealment. */
@@ -70,27 +67,29 @@ internal class MarkdownLivePreviewImageRenderer(
   }
 
   private fun reconcileImages(images: List<MarkdownLivePreviewSpec.Image>) {
-    if (!TrustedProjects.isProjectTrusted(project)) {
-      reconcileInlays(emptyList())
-      return
-    }
     val document = editor.document
     val desired = ArrayList<ImageInlay>()
     var previousOffset = -1
     var ordinal = 0
-    for ((range, destination, _, isBrowserOwned, source) in images) {
-      if (source == null && !isBrowserOwned) {
-        requestImage(destination)
+    for (image in images) {
+      if (image.isPending()) {
+        requestImage(image.destination)
         continue
       }
-      val endOffset = range.endOffset.coerceIn(0, document.textLength)
+      val endOffset = image.range.endOffset.coerceIn(0, document.textLength)
       val offset = document.getLineEndOffset(document.getLineNumber(endOffset))
       ordinal = if (offset == previousOffset) ordinal + 1 else 0
       previousOffset = offset
-      desired += ImageInlay(offset, destination, source, ordinal)
+      desired += ImageInlay(offset, image.destination, image.source, failureOf(image), ordinal)
     }
     reconcileInlays(desired)
   }
+
+  private fun failureOf(image: MarkdownLivePreviewSpec.Image): MarkdownLivePreviewSpec.ImageFailure? {
+    return if (TrustedProjects.isProjectTrusted(project)) image.failure else MarkdownLivePreviewSpec.ImageFailure.UNTRUSTED
+  }
+
+  private fun MarkdownLivePreviewSpec.Image.isPending(): Boolean = failureOf(this) == null && source == null && !isBrowserOwned
 
   /** Asks the backend to resolve [destination] once per document state. */
   private fun requestImage(destination: String) {
@@ -110,7 +109,7 @@ internal class MarkdownLivePreviewImageRenderer(
   }
 
   /**
-   * Brings the owned inlays in line with [desired]. An inlay survives while its line, image, order, and stamp
+   * Brings the owned inlays in line with [desired]. An inlay survives while its line, image, order, stamp, and failure
    * stay the same. A new stamp replaces the inlay with one that holds a new renderer and a new image URL.
    */
   private fun reconcileInlays(desired: List<ImageInlay>) {
@@ -127,7 +126,7 @@ internal class MarkdownLivePreviewImageRenderer(
     val missing = ArrayList<ImageInlay>()
     for (wanted in desired) {
       val inlay = owned.remove(InlayKey(document.getLineNumber(wanted.offset), wanted.destination, wanted.ordinal))
-      if (inlay != null && inlay.renderer.source?.stamp == wanted.source?.stamp) {
+      if (inlay != null && inlay.renderer.source?.stamp == wanted.source?.stamp && inlay.renderer.failure == wanted.failure) {
         retained += inlay
         continue
       }
@@ -142,11 +141,15 @@ internal class MarkdownLivePreviewImageRenderer(
 
     EditorScrollingPositionKeeper.perform(editor, false) {
       obsolete.forEach(Disposer::dispose)
-      for ((offset, destination, source, ordinal) in missing) {
+      for ((offset, destination, source, failure, ordinal) in missing) {
         // A higher priority sits closer to the line, so the first image of a line gets the highest one.
         val properties = InlayProperties().showAbove(false).relatesToPrecedingText(true).priority(-ordinal)
-        val origin = if (source == null) getImageOrigin(destination) else AdaptiveImageOrigin.Url(imageUrl(destination, source.stamp))
-        val renderer = MarkdownLivePreviewImageInlayRenderer(editor, destination, source, origin)
+        val origin = when {
+          failure != null -> null
+          source == null -> getImageOrigin(destination)
+          else -> AdaptiveImageOrigin.Url(imageUrl(destination, source.stamp))
+        }
+        val renderer = MarkdownLivePreviewImageInlayRenderer(editor, destination, source, origin, failure)
         editor.inlayModel.addBlockElement(offset, properties, renderer)?.let { inlays += it }
       }
     }
@@ -158,7 +161,7 @@ internal class MarkdownLivePreviewImageRenderer(
 
   /**
    * The image engine loads a browser-owned image itself, as the browser of the preview does.
-   * The engine gets only an `http:` or `https:` URL or a `data:` URI. The inlay of another source draws nothing.
+   * The engine gets only an `http:` or `https:` URL or a `data:` URI. The inlay of another source shows a placeholder.
    */
   private fun getImageOrigin(destination: String): AdaptiveImageOrigin? {
     if (destination.startsWith("http://", ignoreCase = true) || destination.startsWith("https://", ignoreCase = true)) {

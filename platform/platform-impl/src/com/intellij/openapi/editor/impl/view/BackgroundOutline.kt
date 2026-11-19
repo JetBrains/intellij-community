@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view
 
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -8,6 +9,7 @@ import java.awt.geom.Path2D
 import java.awt.geom.Point2D
 import java.util.Arrays
 import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.min
 
 /**
@@ -27,12 +29,25 @@ object BackgroundOutline {
    */
   @JvmStatic
   fun build(rows: BackgroundRows, styleId: Int, radius: Double): Path2D {
-    val grid = OutlineGrid(rows, styleId)
+    val grid = OutlineGrid(rows, styleId, null)
     val path = Path2D.Double(Path2D.WIND_NON_ZERO)
     for (cycle in grid.trace()) {
       grid.appendCycle(path, cycle, radius)
     }
     return path
+  }
+
+  /**
+   * Gives the background of [styleId] as rectangles to fill at the device pixels and corner pieces to fill with
+   * antialiasing.
+   *
+   * The coordinates are aligned to the pixels of [device]. Together the pieces cover the shape of [build] for the aligned
+   * rows, with the same corners. An edge too short for two corner squares of whole device pixels can change a pixel in
+   * part.
+   */
+  @JvmStatic
+  fun split(rows: BackgroundRows, styleId: Int, radius: Double, device: DeviceGrid): BackgroundPieces {
+    return OutlineGrid(rows, styleId, device).split(radius, device)
   }
 
   /**
@@ -45,10 +60,27 @@ object BackgroundOutline {
   @JvmStatic
   @TestOnly
   fun cycles(rows: BackgroundRows, styleId: Int): List<List<Point2D.Double>> {
-    val grid = OutlineGrid(rows, styleId)
-    return grid.trace().map { cycle -> cycle.map { corner -> grid.point(corner) } }
+    val grid = OutlineGrid(rows, styleId, null)
+    return grid.trace().map { cycle: IntArray ->
+      cycle.map { corner: Int ->
+        grid.point(corner)
+      }
+    }
   }
 }
+
+/**
+ * The background of one style in two parts.
+ *
+ * [rectangles] holds four values for each rectangle: the left, top, right and bottom side. A paint fills them at the
+ * device pixels. A paint fills each path of [corners] with antialiasing. Two paths keep at least one device pixel apart
+ * along y, so that separate fills give the edges of one fill.
+ */
+@ApiStatus.Internal
+class BackgroundPieces(
+  val rectangles: DoubleArray,
+  val corners: List<Path2D>,
+)
 
 /**
  * The rectangles of one style on the grid of their own coordinates.
@@ -57,12 +89,16 @@ object BackgroundOutline {
  * A band is covered where a rectangle covers it, so the grid holds the union of the rectangles.
  * A corner is one point of the grid, and the code keeps it as the index pair `yIndex * xs.size + xIndex`.
  */
-private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
+private class OutlineGrid(rows: BackgroundRows, styleId: Int, private val device: DeviceGrid?) {
   private val xs: DoubleArray
   private val ys: DoubleArray
   private val cellCount: Int
   private val bandCount: Int
   private val covered: BooleanArray
+  private val runSquares = ArrayList<CornerPiece>()
+  private var cuts = DoubleArray(18)
+  private var holeStarts = DoubleArray(8)
+  private var holeEnds = DoubleArray(8)
 
   init {
     var intervals = 0
@@ -78,10 +114,10 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
       if (rows.styleId(index) != styleId) {
         continue
       }
-      xValues[next] = rows.start(index)
-      xValues[next + 1] = rows.end(index)
-      yValues[next] = rows.top(index)
-      yValues[next + 1] = rows.bottom(index)
+      xValues[next] = alignedX(rows.start(index))
+      xValues[next + 1] = alignedX(rows.end(index))
+      yValues[next] = alignedY(rows.top(index))
+      yValues[next + 1] = alignedY(rows.bottom(index))
       next += 2
     }
     xs = canonicalValues(xValues)
@@ -287,11 +323,232 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
     }
   }
 
+  /**
+   * Splits the shape into rectangles at the device pixels of [device] and antialiased corner pieces.
+   * A convex corner leaves a square of whole device pixels out of the rectangles, at most one half of each of its edges.
+   * A concave corner adds its fillet outside the rectangles.
+   */
+  fun split(radius: Double, device: DeviceGrid): BackgroundPieces {
+    val pieces = ArrayList<CornerPiece>()
+    for (cycle in trace()) {
+      if (cycle.size < 3) {
+        continue
+      }
+      for (index in cycle.indices) {
+        val piece = cornerPiece(cycle, index, radius, device)
+        if (piece != null) {
+          pieces.add(piece)
+        }
+      }
+    }
+    return BackgroundPieces(rectanglesWithout(pieces), cornerPaths(pieces, device))
+  }
+
+  /**
+   * Gives the piece of the corner [index] of [cycle], or null when the corner gets no radius.
+   */
+  private fun cornerPiece(cycle: IntArray, index: Int, radius: Double, device: DeviceGrid): CornerPiece? {
+    val cornerRadius = cornerRadius(cycle, index, radius)
+    if (cornerRadius <= 0) {
+      return null
+    }
+    val previous = cycle[(index + cycle.size - 1) % cycle.size]
+    val corner = cycle[index]
+    val next = cycle[(index + 1) % cycle.size]
+    val incoming = directionOf(previous, corner)
+    val outgoing = directionOf(corner, next)
+    var back = 0.0
+    var forth = 0.0
+    if ((outgoing - incoming + 4) % 4 == RIGHT_TURN) {
+      back = min(wholePixels(device, incoming, cornerRadius), edgeLength(previous, corner) / 2)
+      forth = min(wholePixels(device, outgoing, cornerRadius), edgeLength(corner, next) / 2)
+    }
+    return CornerPiece(xOf(corner), yOf(corner), cornerRadius, incoming, outgoing, back, forth)
+  }
+
+  private fun wholePixels(device: DeviceGrid, direction: Int, length: Double): Double {
+    if (direction == LEFT || direction == RIGHT) {
+      return device.wholePixelsX(length)
+    }
+    return device.wholePixelsY(length)
+  }
+
+  /**
+   * Puts the [pieces] into paths. Two paths keep at least one device pixel apart along y.
+   */
+  private fun cornerPaths(pieces: List<CornerPiece>, device: DeviceGrid): List<Path2D> {
+    val paths = ArrayList<Path2D>()
+    var path: Path2D.Double? = null
+    var pathBottom = 0.0
+    for (piece in pieces.sortedBy { it.top }) {
+      if (path == null || piece.top > pathBottom + device.pixelHeight) {
+        path = Path2D.Double(Path2D.WIND_NON_ZERO)
+        paths.add(path)
+        pathBottom = piece.bottom
+      } else {
+        pathBottom = max(pathBottom, piece.bottom)
+      }
+      piece.appendTo(path)
+    }
+    return paths
+  }
+
+  /**
+   * Gives the covered cells as rectangles, one run of cells for each band, without the squares of the [pieces].
+   */
+  private fun rectanglesWithout(pieces: List<CornerPiece>): DoubleArray {
+    val squaresByBand = arrayOfNulls<ArrayList<CornerPiece>>(bandCount)
+    for (piece in pieces) {
+      if (!piece.hasSquare) {
+        continue
+      }
+      var band = bandAt(piece.squareTop)
+      while (band < bandCount && ys[band] < piece.squareBottom - EPSILON) {
+        if (ys[band + 1] > piece.squareTop + EPSILON) {
+          val squares = squaresByBand[band] ?: ArrayList<CornerPiece>().also { squaresByBand[band] = it }
+          squares.add(piece)
+        }
+        band++
+      }
+    }
+    val result = DoubleArrayList()
+    for (band in 0 until bandCount) {
+      var cell = 0
+      while (cell < cellCount) {
+        if (!isCovered(band, cell)) {
+          cell++
+          continue
+        }
+        var end = cell + 1
+        while (end < cellCount && isCovered(band, end)) {
+          end++
+        }
+        addRunWithout(result, xs[cell], xs[end], ys[band], ys[band + 1], squaresByBand[band])
+        cell = end
+      }
+    }
+    return result.toDoubleArray()
+  }
+
+  /**
+   * Adds the run from [left] to [right] and from [top] to [bottom] without the squares of [candidates].
+   */
+  private fun addRunWithout(
+    result: DoubleArrayList,
+    left: Double,
+    right: Double,
+    top: Double,
+    bottom: Double,
+    candidates: List<CornerPiece>?,
+  ) {
+    runSquares.clear()
+    if (candidates != null) {
+      for (piece in candidates) {
+        if (piece.squareLeft < right - EPSILON && piece.squareRight > left + EPSILON) {
+          runSquares.add(piece)
+        }
+      }
+    }
+    if (runSquares.isEmpty()) {
+      addRectangle(result, left, top, right, bottom)
+      return
+    }
+    if (cuts.size < 2 + runSquares.size * 2) {
+      cuts = DoubleArray(2 + runSquares.size * 2)
+    }
+    var cutCount = 0
+    cuts[cutCount++] = top
+    cuts[cutCount++] = bottom
+    for (piece in runSquares) {
+      cuts[cutCount++] = piece.squareTop.coerceIn(top, bottom)
+      cuts[cutCount++] = piece.squareBottom.coerceIn(top, bottom)
+    }
+    Arrays.sort(cuts, 0, cutCount)
+    var sliceTop = cuts[0]
+    for (cut in 1 until cutCount) {
+      val sliceBottom = cuts[cut]
+      if (sliceBottom <= sliceTop + EPSILON) {
+        continue
+      }
+      addSliceWithout(result, left, right, sliceTop, sliceBottom)
+      sliceTop = sliceBottom
+    }
+  }
+
+  /**
+   * Adds one slice of a run without the squares of [runSquares] that cover the whole slice.
+   */
+  private fun addSliceWithout(
+    result: DoubleArrayList,
+    left: Double,
+    right: Double,
+    sliceTop: Double,
+    sliceBottom: Double,
+  ) {
+    if (holeStarts.size < runSquares.size) {
+      holeStarts = DoubleArray(runSquares.size)
+      holeEnds = DoubleArray(runSquares.size)
+    }
+    var holes = 0
+    for (piece in runSquares) {
+      if (piece.squareTop > sliceTop + EPSILON || piece.squareBottom < sliceBottom - EPSILON) {
+        continue
+      }
+      val start = max(left, piece.squareLeft)
+      val end = min(right, piece.squareRight)
+      var position = holes
+      while (position > 0 && holeStarts[position - 1] > start) {
+        holeStarts[position] = holeStarts[position - 1]
+        holeEnds[position] = holeEnds[position - 1]
+        position--
+      }
+      holeStarts[position] = start
+      holeEnds[position] = end
+      holes++
+    }
+    var x = left
+    for (index in 0 until holes) {
+      if (holeStarts[index] > x + EPSILON) {
+        addRectangle(result, x, sliceTop, holeStarts[index], sliceBottom)
+      }
+      x = max(x, holeEnds[index])
+    }
+    if (right > x + EPSILON) {
+      addRectangle(result, x, sliceTop, right, sliceBottom)
+    }
+  }
+
+  private fun addRectangle(result: DoubleArrayList, left: Double, top: Double, right: Double, bottom: Double) {
+    result.add(left)
+    result.add(top)
+    result.add(right)
+    result.add(bottom)
+  }
+
+  /**
+   * Gives the band that holds [y], or the first band for a [y] above the grid.
+   */
+  private fun bandAt(y: Double): Int {
+    val found = Arrays.binarySearch(ys, y)
+    if (found >= 0) {
+      return found
+    }
+    return max(0, -found - 2)
+  }
+
+  private fun alignedX(x: Double): Double {
+    return device?.alignX(x) ?: x
+  }
+
+  private fun alignedY(y: Double): Double {
+    return device?.alignY(y) ?: y
+  }
+
   private fun cover(rows: BackgroundRows, index: Int) {
-    val firstCell = gridIndexOf(xs, rows.start(index))
-    val lastCell = gridIndexOf(xs, rows.end(index))
-    val firstBand = gridIndexOf(ys, rows.top(index))
-    val lastBand = gridIndexOf(ys, rows.bottom(index))
+    val firstCell = gridIndexOf(xs, alignedX(rows.start(index)))
+    val lastCell = gridIndexOf(xs, alignedX(rows.end(index)))
+    val firstBand = gridIndexOf(ys, alignedY(rows.top(index)))
+    val lastBand = gridIndexOf(ys, alignedY(rows.bottom(index)))
     for (band in firstBand until lastBand) {
       for (cell in firstCell until lastCell) {
         covered[band * cellCount + cell] = true
@@ -372,26 +629,6 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
     return (tail.toLong() shl 32) or head.toLong()
   }
 
-  private fun dx(direction: Int): Double {
-    if (direction == RIGHT) {
-      return 1.0
-    }
-    if (direction == LEFT) {
-      return -1.0
-    }
-    return 0.0
-  }
-
-  private fun dy(direction: Int): Double {
-    if (direction == DOWN) {
-      return 1.0
-    }
-    if (direction == UP) {
-      return -1.0
-    }
-    return 0.0
-  }
-
   /**
    * Gives the sorted values, with the values that differ by less than [EPSILON] as one value.
    */
@@ -411,11 +648,58 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
     return sorted.copyOf(count)
   }
 
+  /**
+   * One antialiased corner of [split].
+   *
+   * The curve runs from [radius] before the corner along the incoming edge to [radius] after it along the outgoing edge.
+   * A convex corner covers the part of its square inside the curve, and the rectangles of [split] leave the square out.
+   * The square reaches [back] along the incoming edge and [forth] along the outgoing edge.
+   * A concave corner has no square. It covers its fillet between the corner and the curve.
+   */
+  private class CornerPiece(
+    private val x: Double,
+    private val y: Double,
+    private val radius: Double,
+    private val incoming: Int,
+    private val outgoing: Int,
+    private val back: Double,
+    private val forth: Double,
+  ) {
+    private val innerX = x - back * dx(incoming) + forth * dx(outgoing)
+    private val innerY = y - back * dy(incoming) + forth * dy(outgoing)
+    private val startX = x - radius * dx(incoming)
+    private val startY = y - radius * dy(incoming)
+    private val endX = x + radius * dx(outgoing)
+    private val endY = y + radius * dy(outgoing)
+
+    val hasSquare: Boolean get() = back > 0 && forth > 0
+    val squareLeft: Double get() = min(x, innerX)
+    val squareRight: Double get() = max(x, innerX)
+    val squareTop: Double get() = min(y, innerY)
+    val squareBottom: Double get() = max(y, innerY)
+    val top: Double = min(min(y, innerY), min(startY, endY))
+    val bottom: Double = max(max(y, innerY), max(startY, endY))
+
+    fun appendTo(path: Path2D.Double) {
+      path.moveTo(x - back * dx(incoming), y - back * dy(incoming))
+      path.lineTo(startX, startY)
+      path.quadTo(x, y, endX, endY)
+      path.lineTo(x + forth * dx(outgoing), y + forth * dy(outgoing))
+      path.lineTo(innerX, innerY)
+      path.closePath()
+    }
+  }
+
   companion object {
     /**
      * Two coordinates that differ by less than this are one coordinate of the grid.
      */
     private const val EPSILON: Double = 1e-2
+
+    /**
+     * The direction difference of a right turn. With the interior on the right, a right turn is a convex corner.
+     */
+    private const val RIGHT_TURN: Int = 1
 
     /**
      * The four directions of an edge, in the clockwise order of the screen.
@@ -429,5 +713,25 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
      * The rank of a turn by the direction difference: the right turn wins, then straight, then the left turn, then back.
      */
     private val TURN_RANK: IntArray = intArrayOf(1, 0, 3, 2)
+
+    private fun dx(direction: Int): Double {
+      if (direction == RIGHT) {
+        return 1.0
+      }
+      if (direction == LEFT) {
+        return -1.0
+      }
+      return 0.0
+    }
+
+    private fun dy(direction: Int): Double {
+      if (direction == DOWN) {
+        return 1.0
+      }
+      if (direction == UP) {
+        return -1.0
+      }
+      return 0.0
+    }
   }
 }

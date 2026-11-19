@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -254,7 +255,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private boolean execIPythonEditor(String path) {
     final VirtualFile file = StringUtil.isEmpty(path) ? null : StandardFileSystems.local().findFileByPath(path);
     if (file != null) {
-      ApplicationManager.getApplication().invokeLater(() -> FileEditorManager.getInstance(myProject).openFile(file, true));
+      if (!myProject.isDisposed()) {
+        FileEditorManager.getInstance(myProject).requestOpenFile(file, FileEditorOpenRequest.withFocus(true));
+      }
 
       return true;
     }

@@ -196,7 +196,7 @@ private suspend fun trackOutputModelChanges(
   launch {
     var currentDirectory: String? = initialDirectory
     sessionModel.terminalState.collect { state ->
-      val newDirectory = state.currentDirectory ?: return@collect
+      val newDirectory = state.currentDirectory
       if (newDirectory != currentDirectory) {
         currentDirectory = newDirectory
         sink.send(TerminalHyperlinksInputEvent.WorkingDirectoryChanged(newDirectory))

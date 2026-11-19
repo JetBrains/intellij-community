@@ -299,14 +299,11 @@ private fun PyDataclassResolver.isAssignedOmittedDefault(
  * The field's custom stub, framework-agnostic: field stubs are built context-free by the
  * [com.jetbrains.python.codeInsight.PyDataclassParametersProvider] extensions.
  */
-private fun retrieveFieldStub(field: PyTargetExpression): PyDataclassFieldStub? =
-  if (field.stub != null) {
-    // Reuse the already-built PSI stub when the field is stubbed; otherwise build the field stub from AST.
-    field.stub.getCustomStub(PyDataclassFieldStub::class.java)
-  }
-  else {
-    PyDataclassFieldStubImpl.create(field)
-  }
+private fun retrieveFieldStub(field: PyTargetExpression): PyDataclassFieldStub? {
+  // Read the stub once. The file can switch from the stub to the AST between two reads.
+  val stub = field.stub
+  return if (stub != null) stub.getCustomStub(PyDataclassFieldStub::class.java) else PyDataclassFieldStubImpl.create(field)
+}
 
 @ApiStatus.Internal
 fun isKwOnlyMarkerField(parameter: PyCallableParameter, context: TypeEvalContext): Boolean {
@@ -386,8 +383,9 @@ internal fun collectDataclassInitFields(
   return acc
 }
 
-/** All per-framework resolvers, built-in plus extension-point-contributed. Used by lookups that don't have parsed
- *  parameters yet (e.g. resolving a `dataclasses.replace` call whose target class is not known in advance). The generic
- *  third-party fallback is omitted because its copy functions duplicate the stdlib ones. */
-internal val allRegisteredDataclassResolvers: List<PyDataclassResolver> =
+/**
+ * The resolvers of all registered [PyDataclassParametersProvider] extensions. Used by lookups that do not have parsed
+ * parameters yet, such as a `dataclasses.replace` call whose target class is not known in advance.
+ */
+internal fun allRegisteredDataclassResolvers(): List<PyDataclassResolver> =
   PyDataclassParametersProvider.EP_NAME.extensionList.mapNotNull { it.getType().resolver }

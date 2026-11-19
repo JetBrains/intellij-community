@@ -1,0 +1,59 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.lsp.impl.integrationTests` start
+jvm_library(
+    name = "integrationTests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.lsp.impl.integrationTests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/performanceTesting/remote-driver"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/remote-driver/test-sdk:driver-sdk",
+        "//platform/remote-driver/client",
+        "//platform/remote-driver/model",
+        "//tools/intellij.tools.ide.starter:ide-starter",
+        "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5",
+        "//tools/intellij.tools.ide.starter.driver:ide-starter-driver",
+        "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server",
+        "//tools/intellij.tools.ide.starter.product.idea.community:ide-starter-product-idea-community",
+        "//tools/intellij.tools.ide.util.common:ide-util-common",
+        "//platform/util",
+        "//libraries/lsp4j",
+        "//libraries/lsp4j/jsonrpc",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/junit6",
+        "//libraries/assertj-core",
+    ],
+)
+### auto-generated section `build intellij.platform.lsp.impl.integrationTests` end
+
+### auto-generated section `iml intellij.platform.lsp.impl.integrationTests` start
+exports_files(
+    [
+        "intellij.platform.lsp.impl.integrationTests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.lsp.impl.integrationTests` end
+
+### auto-generated section `test intellij.platform.lsp.impl.integrationTests` start
+jps_test(
+    name = "integrationTests_test",
+    runtime_deps = [":integrationTests_test_lib"],
+)
+### auto-generated section `test intellij.platform.lsp.impl.integrationTests` end

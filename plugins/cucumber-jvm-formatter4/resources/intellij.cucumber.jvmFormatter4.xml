@@ -1,0 +1,8 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.cucumber.jvmFormatter"/>
+    <module name="intellij.cucumber.jvmFormatter3"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

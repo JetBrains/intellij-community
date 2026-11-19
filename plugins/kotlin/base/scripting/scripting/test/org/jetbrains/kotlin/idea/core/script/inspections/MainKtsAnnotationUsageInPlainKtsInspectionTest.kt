@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.core.script.inspections
 
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.registerExtension
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -64,6 +65,6 @@ class MainKtsAnnotationUsageInPlainKtsInspectionTest : KotlinLightCodeInsightFix
             testRootDisposable,
         )
 
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        runBlocking { ScriptDefinitionProviderImpl.getInstance(project).awaitLoading() }
     }
 }

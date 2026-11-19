@@ -2,34 +2,43 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.LightJavaProject
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/companionObjectInExtension")
-abstract class KtCompanionObjectInExtensionInspectionTest : KtCompanionObjectInExtensionInspectionTestBase() {
+abstract class KtCompanionObjectInExtensionInspectionTest(projectFixture: TestFixture<LightJavaProject>) {
+  protected val companionObject by ktCompanionObjectInExtensionFixture(projectFixture,
+    DevkitKtTestsUtil.TESTDATA_PATH + "inspections/companionObjectInExtension")
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/companionObjectInExtension"
-
+  @Test
   fun testNoHighlighting() {
-    doTest()
+    companionObject.doTest()
   }
 
+  @Test
   fun testEmptyBlockCompanionObject() {
-    doTest()
+    companionObject.doTest()
   }
 
+  @Test
   fun testEmptyCompanionObject() {
-    doTest()
+    companionObject.doTest()
   }
 
+  @Test
   fun testExtensionWithCompanionObject() {
-    doTest()
+    companionObject.doTest()
   }
 
+  @Test
   fun testExtensionWithLoggerAndConstVal() {
-    doTest()
+    companionObject.doTest()
   }
 
+  @Test
   fun testExtensionWithInitBlocks() {
-    doTest()
+    companionObject.doTest()
   }
 }

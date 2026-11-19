@@ -1936,7 +1936,8 @@ open class JBTabsImpl internal constructor(
   }
 
   private fun updateText(tabInfo: TabInfo) {
-    val label = tabInfo.tabLabel!!
+    // a removed tab has no label, and its text can still change
+    val label = tabInfo.tabLabel ?: return
     label.setText(tabInfo.coloredText)
     label.setToolTipText(tabInfo.tooltipHtmlText)
   }

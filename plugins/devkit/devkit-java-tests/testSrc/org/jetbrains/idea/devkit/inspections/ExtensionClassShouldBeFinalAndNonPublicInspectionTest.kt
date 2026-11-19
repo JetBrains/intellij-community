@@ -2,50 +2,66 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import org.jetbrains.idea.devkit.inspections.quickfix.ExtensionClassShouldBeFinalAndNonPublicInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.quickfix.extensionClassShouldBeFinalAndNonPublicFixture
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/extensionClassShouldBeFinalAndNonPublic")
-internal class ExtensionClassShouldBeFinalAndNonPublicInspectionTest : ExtensionClassShouldBeFinalAndNonPublicInspectionTestBase() {
+@TestApplication
+internal class ExtensionClassShouldBeFinalAndNonPublicInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/extensionClassShouldBeFinalAndNonPublic/"
-  override fun getFileExtension() = "java"
+  private val extensionClass by extensionClassShouldBeFinalAndNonPublicFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/extensionClassShouldBeFinalAndNonPublic/")
+  private val myFixture get() = extensionClass.fixture
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.configureByFile("plugin.xml")
   }
 
+  @Test
   fun testMakeFinal() {
-    doTest("Make 'MyInspection' final")
+    extensionClass.doTest("Make 'MyInspection' final")
   }
 
+  @Test
   fun testMakeNotPublic() {
-    doTest("Make 'MakeNotPublic' not public")
+    extensionClass.doTest("Make 'MakeNotPublic' not public")
   }
 
+  @Test
   fun testMakeNotPublicService() {
-    addServiceDescriptorClass()
-    doTest("Make 'MakeNotPublicService' not public")
+    extensionClass.addServiceDescriptorClass()
+    extensionClass.doTest("Make 'MakeNotPublicService' not public")
   }
 
+  @Test
   fun testFinalPackagePrivateExtensionClass() {
-    doTest()
+    extensionClass.doTest()
   }
 
+  @Test
   fun testHasInheritor() {
-    doTest()
+    extensionClass.doTest()
   }
 
+  @Test
   fun testVisibleForTestingAnnotation() {
-    doTest()
+    extensionClass.doTest()
   }
 
+  @Test
   fun testProtectedMembers() {
-    doTest("Make 'MyInspection' final")
+    extensionClass.doTest("Make 'MyInspection' final")
   }
 
+  @Test
   fun testFinalMethod() {
-    doTest("Make 'MyInspection' final")
+    extensionClass.doTest("Make 'MyInspection' final")
   }
 }

@@ -160,11 +160,19 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - Installed must contain plugins that have no bundled origin on any available side.
 - Bundled must contain plugins that have a bundled origin on at least one available side.
 - A staged descriptor must replace runtime presentation without losing the bundled origin.
-- The inventory must hide a plugin when any side marks it as an implementation detail.
+- The inventory must keep a plugin apart when any side marks it as an implementation detail.
+- Installed and Bundled must show an implementation-detail plugin only when `/built-in` is the effective installed filter.
+- `/built-in` must show only implementation-detail plugins, in the section that matches their bundled origin.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInventoryTest.kt (
     `custom plugin stays in installed section with its side facts`;
     `staged descriptor supersedes runtime presentation and keeps bundled origin`;
-    `implementation detail plugin is excluded when either side marks it hidden`
+    `implementation detail plugin is kept apart when either side marks it hidden`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProviderTest.kt (
+    `implementation detail plugins get items by their section`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
+    `built-in filter shows only implementation detail plugins`
   )
 
 - Several physical entries with one plugin ID must produce one inventory item.
@@ -252,7 +260,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - Repository choices must appear only when repository values exist.
 - Tag, Vendor, Category, and Repository filters must allow multiple selections.
 - Installed-status filters must allow one optional selection.
-- Installed-status choices must include Update available, Enabled, Disabled, Invalid, and Updated bundled.
+- Installed-status choices must include Update available, Enabled, Disabled, Invalid, Updated bundled, and Built-in.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsSearchActionsTest.kt (
     `filter actions reflect snapshot and emit semantic intents`;
     `repository filter is hidden without repository values`;

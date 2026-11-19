@@ -7,25 +7,18 @@ import com.intellij.debugger.engine.DebugProcessListener
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.SuspendContext
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
-import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver
 import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.trace.impl.TraceResultInterpreterImpl
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedLibrarySupport
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointBasedStreamTracer
-import com.intellij.execution.ExecutionTestCase
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.xdebugger.XDebugSession
 
 internal open class BreakpointBasedExecutionTestCaseHelper(
-  testCase: ExecutionTestCase,
+  trace: TraceExecutionFixture,
   session: XDebugSession,
-  librarySupportProvider: LibrarySupportProvider,
-  debuggerPositionResolver: DebuggerPositionResolver,
-  logger: Logger,
-) : ExecutionTestCaseHelper(testCase, session, librarySupportProvider, debuggerPositionResolver, logger) {
+) : ExecutionTestCaseHelper(trace, session) {
 
   override fun createTracer(chain: StreamChain, commandLauncher: DebuggerCommandLauncher): StreamTracer {
     val javaDebugProcess = session.debugProcess as? JavaDebugProcess

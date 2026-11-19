@@ -2,43 +2,57 @@
 package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.intellij.plugins.markdown.MarkdownTestingUtil
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-class MarkdownImageTagCompletionTest: BasePlatformTestCase() {
-  fun `test in empty file`() = doTest()
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/editor/images/completion")
+class MarkdownImageTagCompletionTest {
+  private val myFixture by codeInsightModuleFixture(projectFixture)
 
-  fun `test in paragraph`() = doTest()
+  private lateinit var testName: String
 
-  fun `test after link`() = doTest()
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, false).trimStart().replace(' ', '_')
+  }
+
+  @Test
+  fun `test in empty file`(): Unit = doTest()
+
+  @Test
+  fun `test in paragraph`(): Unit = doTest()
+
+  @Test
+  fun `test after link`(): Unit = doTest()
 
   private fun doTest() {
     myFixture.configureByFile(getTestFileName())
     myFixture.type("<")
     val elements = myFixture.complete(CompletionType.BASIC)
-    assertContainsElements(elements.map { it.lookupString }, completionLookupString)
+    assertThat(elements.map { it.lookupString }).contains(completionLookupString)
     myFixture.type("i\t")
     myFixture.checkResultByFile(getTestFileNameAfter())
   }
 
   private fun getTestFileName(): String {
-    return "${getTestName(false)}.md"
+    return "$testName.md"
   }
 
   private fun getTestFileNameAfter(): String {
-    return "${getTestName(false)}.after.md"
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
-  override fun getTestDataPath(): String {
-    return "${MarkdownTestingUtil.TEST_DATA_PATH}/editor/images/completion/"
+    return "$testName.after.md"
   }
 
   companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+
     private const val completionLookupString = "img src=\"\">"
   }
 }

@@ -2,7 +2,7 @@
 
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Duration;
 
 use serde_json::Value;
@@ -13,17 +13,25 @@ use crate::lane::package::Packages;
 /// The lane-service token of every test.
 pub(crate) const TOKEN: &str = "lane-service-test-token";
 
-/// The `java` of the distribution's JBR that the fixture packages name.
+/// The `java` of the distribution's JBR that the fixture contexts name for the GenUI fixture app server.
 pub(crate) const FIXTURE_JAVA: &str = "/home/admin/air-lane/jbr/bin/java";
 
-/// The fixture agent jar of `testdata/lane-services`.
-pub(crate) fn fixture_jar() -> PathBuf {
-    avl_testkit::crate_path!("testdata/lane-services/fake-agent.jar")
+/// The fixture jar of the GenUI fixture app server of `testdata/lane-services`.
+pub(crate) fn fixture_genui_jar() -> PathBuf {
+    avl_testkit::crate_path!("testdata/lane-services/genui-fixture-app.jar")
 }
 
-/// The packages of the fixture jar for [FIXTURE_JAVA].
+/// The fixture fake agent of `testdata/lane-services`: a few bytes that stand in for the binary.
+pub(crate) fn fixture_agent() -> PathBuf {
+    avl_testkit::crate_path!("testdata/lane-services/acp-fake-agent")
+}
+
+/// The platform of the fixture package, whatever the platform of the test.
+pub(crate) const FIXTURE_PLATFORM: &str = "linux-x86_64";
+
+/// The package of the fixture fake agent.
 pub(crate) fn fixture_packages() -> Packages {
-    Packages::assemble(&fixture_jar(), Path::new(FIXTURE_JAVA)).expect("the fixture packages")
+    Packages::assemble(&fixture_agent(), FIXTURE_PLATFORM).expect("the fixture packages")
 }
 
 /// The absolute path of the golden `name` of `testdata/lane-services`, because `expect_file!` reads a relative path from

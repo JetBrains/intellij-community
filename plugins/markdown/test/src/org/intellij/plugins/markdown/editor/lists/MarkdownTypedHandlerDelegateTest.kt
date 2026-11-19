@@ -1,32 +1,50 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.lists
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.editor.MarkdownCodeInsightSettingsRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.markdownCodeInsightSettingsFixture
+import org.intellij.plugins.markdown.editor.typeInEditor
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-@RunWith(JUnit4::class)
-class MarkdownTypedHandlerDelegateTest: LightPlatformCodeInsightTestCase() {
-  @Rule
-  @JvmField
-  val rule = MarkdownCodeInsightSettingsRule { it.renumberListsOnType = true }
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/editor/lists/typing")
+class MarkdownTypedHandlerDelegateTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/editor/lists/typing/"
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  private val settings = markdownCodeInsightSettingsFixture { it.renumberListsOnType = true }
+
+  private lateinit var testName: String
+
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true)
+  }
 
   @Test
-  fun testRenumberOnItemCreation() = doTest()
+  fun testRenumberOnItemCreation(): Unit = doTest()
 
   @Test
-  fun testRenumberOnItemCreationInBlockQuote() = doTest()
+  fun testRenumberOnItemCreationInBlockQuote(): Unit = doTest()
 
-  private fun doTest() {
-    val testName = getTestName(true)
-    configureByFile("$testName.md")
-    type(' ')
-    checkResultByFile("$testName-after.md")
+  private fun doTest(): Unit = timeoutRunBlocking {
+    myFixture.configureByFile("$testName.md")
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor(' ')
+      myFixture.checkResultByFile("$testName-after.md")
+    }
   }
 }

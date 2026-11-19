@@ -6,7 +6,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
+ *
+ * @deprecated Use {@link UnspecifiedActionsPlaceInspectionFixtureKt#unspecifiedActionsPlaceInspectionFixture} in a JUnit 5 test.
  */
+@Deprecated
 abstract public class UnspecifiedActionsPlaceInspectionTestBase extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

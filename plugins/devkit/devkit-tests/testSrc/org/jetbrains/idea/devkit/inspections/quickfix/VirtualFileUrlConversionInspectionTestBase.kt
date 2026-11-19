@@ -4,6 +4,11 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 import org.jetbrains.idea.devkit.inspections.UseVirtualFileToVirtualFileUrlConversionInspection
 import org.jetbrains.idea.devkit.inspections.UseVirtualFileUrlToVirtualFileConversionInspection
 
+/**
+ * Use [virtualFileUrlConversionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use virtualFileUrlConversionFixture in a JUnit 5 test")
 abstract class VirtualFileUrlConversionInspectionTestBase : LightDevKitInspectionFixTestBase() {
   @Throws(Exception::class)
   override fun setUp() {

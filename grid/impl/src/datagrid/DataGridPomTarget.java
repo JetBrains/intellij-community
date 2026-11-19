@@ -4,6 +4,7 @@ import com.intellij.database.DataGridBundle;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.GridScrollPositionManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -77,15 +78,22 @@ public abstract class DataGridPomTarget implements PomRenameableTarget<DataGridP
     return true;
   }
 
+  private void focusGrid() {
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(dataGrid.getPreferredFocusedComponent(), true));
+  }
+
   @Override
   public void navigate(boolean requestFocus) {
     GridScrollPositionManager.get(dataGrid.getResultView(), dataGrid).scrollSelectionToVisible();
     if (requestFocus) {
       VirtualFile file = GridHelper.get(dataGrid).getVirtualFile(dataGrid);
       if (file != null) {
-        FileEditorManager.getInstance(dataGrid.getProject()).openFile(file, true);
+        FileEditorManager.getInstance(dataGrid.getProject()).requestOpenFile(file, FileEditorOpenRequest.withFocus(true))
+          .thenRun(this::focusGrid);
       }
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(dataGrid.getPreferredFocusedComponent(), true));
+      else {
+        focusGrid();
+      }
     }
   }
 

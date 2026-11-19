@@ -31,6 +31,44 @@ class WhatsNewVisionContentProviderTest {
   }
 
   @Test
+  fun testTabAndAnchorIds(@TempDir dir: Path) {
+    val json = dir.resolve("vision.json")
+    json.writeText("""
+      {"entities": [{"id": 1, "actions": [], "html": "", "languages": [], "publicVars": [],
+        "multipageIds": ["Key-updates"],
+        "tabIds": [{"id": "generaltabs", "values": ["dotnet", "ai"]}],
+        "anchorIds": ["net-11-support"]}]}
+    """.trimIndent())
+    val oldValue = System.setProperty("intellij.whats.new.vision.json", json.toString())
+    try {
+      val provider = WhatsNewInVisionContentProvider()
+      val page = runBlocking { provider.getContent() }.entities.single()
+      Assertions.assertEquals(listOf(WhatsNewInVisionContentProvider.TabGroup("generaltabs", listOf("dotnet", "ai"))), page.tabIds)
+      Assertions.assertEquals(listOf("net-11-support"), page.anchorIds)
+      Assertions.assertEquals(setOf("generaltabs", "dotnet", "ai", "net-11-support"), provider.pageElementIds)
+    }
+    finally {
+      if (oldValue == null) System.clearProperty("intellij.whats.new.vision.json") else System.setProperty("intellij.whats.new.vision.json", oldValue)
+    }
+  }
+
+  @Test
+  fun testLegacyPageWithoutTabAndAnchorIds(@TempDir dir: Path) {
+    val json = dir.resolve("vision.json")
+    json.writeText("""{"entities": [{"id": 1, "actions": [], "html": "", "languages": [], "publicVars": []}]}""")
+    val oldValue = System.setProperty("intellij.whats.new.vision.json", json.toString())
+    try {
+      val provider = WhatsNewInVisionContentProvider()
+      val page = runBlocking { provider.getContent() }.entities.single()
+      Assertions.assertEquals(emptyList<WhatsNewInVisionContentProvider.TabGroup>(), page.tabIds)
+      Assertions.assertEquals(emptySet<String>(), provider.pageElementIds)
+    }
+    finally {
+      if (oldValue == null) System.clearProperty("intellij.whats.new.vision.json") else System.setProperty("intellij.whats.new.vision.json", oldValue)
+    }
+  }
+
+  @Test
   fun testMediaNextToTestJson(@TempDir dir: Path) {
     val json = dir.resolve("vision.json").createFile()
     dir.resolve("static/image.png").createParentDirectories().writeText("png")

@@ -263,6 +263,7 @@ public class OutputChecker {
       // Since Java 18, these options are added automatically to avoid garbled text in the console
       // See JdkCommandLineSetup::appendEncoding and IDEA-291006
       result = result.replace("-Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 ", "");
+      result = result.replace("-Dstdin.encoding=UTF-8 ", "");
       result = result.replace("-Dkotlinx.coroutines.debug.enable.creation.stack.trace=false ", "");
       result = result.replace("-Ddebugger.agent.enable.coroutines=true ", "");
       result = result.replace("-Dkotlinx.coroutines.debug.enable.flows.stack.trace=true ", "");

@@ -5,7 +5,9 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.idea.TestFor
 import com.intellij.openapi.util.TextRange
 import com.intellij.python.zuban.zubanQuickFixes
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.PyBundle
@@ -100,6 +102,27 @@ class PyLspUnresolvedReferenceQuickFixesTest : PyCodeInsightTestCase() {
         pyLspUnresolvedReferenceQuickFixes(file, diagnostic, range, codes)
       }
       assertThat(texts).contains(RENAME_REFERENCE)
+    }
+
+    @Test
+    @TestFor(issues = ["PY-92898"])
+    fun `an unknown name with an import candidate gets the import fix`() {
+      runInEdtAndWait { myFixture.addFileToProject("m.py", "def helper():\n    pass\n") }
+      val texts = fixTexts("helper()", "helper", "unknown-name") { file, diagnostic, range ->
+        pyLspUnresolvedReferenceQuickFixes(file, diagnostic, range, codes)
+      }
+      assertThat(texts).contains(PyPsiBundle.message("QFIX.auto.import.import.name", "m.helper"), RENAME_REFERENCE)
+    }
+
+    @Test
+    @TestFor(issues = ["PY-92898"])
+    fun `an unknown name during indexing gets the fixes that need no index`() {
+      val texts = DumbModeTestUtils.computeInDumbModeSynchronously(myFixture.project) {
+        fixTexts("def f():\n    print(undefined_var)", "undefined_var", "unknown-name") { file, diagnostic, range ->
+          pyLspUnresolvedReferenceQuickFixes(file, diagnostic, range, codes)
+        }
+      }
+      assertThat(texts).containsExactly(PyPsiBundle.message("QFIX.unresolved.reference.add.param", "undefined_var"), RENAME_REFERENCE)
     }
   }
 

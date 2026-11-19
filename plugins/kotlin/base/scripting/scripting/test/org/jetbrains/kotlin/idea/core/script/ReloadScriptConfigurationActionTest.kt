@@ -3,9 +3,10 @@ package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.registerExtension
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.core.script.definition.ScriptEditorToolbarProvider
 import org.jetbrains.kotlin.idea.core.script.definition.editorToolbar
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.fileExtension
@@ -73,6 +74,6 @@ class ReloadScriptConfigurationActionTest : KotlinLightCodeInsightFixtureTestCas
             testRootDisposable,
         )
 
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        runBlocking { ScriptDefinitionProviderImpl.getInstance(project).awaitLoading() }
     }
 }

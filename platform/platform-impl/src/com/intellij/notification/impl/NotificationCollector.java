@@ -211,10 +211,12 @@ public final class NotificationCollector {
       }
 
       NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup(data);
-      if (group != null && getPluginInfoById(group.getPluginId()).isDevelopedByJetBrains()) {
-        return ValidationResultType.ACCEPTED;
+      if (group == null) {
+        return ValidationResultType.REJECTED;
       }
-      return ValidationResultType.REJECTED;
+      return getPluginInfoById(group.getPluginId()).isSafeToReport()
+             ? ValidationResultType.ACCEPTED
+             : ValidationResultType.THIRD_PARTY;
     }
   }
 

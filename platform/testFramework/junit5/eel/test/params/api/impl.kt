@@ -32,6 +32,7 @@ internal class EelHolderImpl<T : Annotation>(val eelTestProvider: EelIjentTestPr
     return when (type) {
       EelType.Wsl -> filter.isWslEnabled
       EelType.Docker -> filter.isDockerEnabled
+      EelType.Ssh -> filter.isSshEnabled
       EelType.Local -> {
         logger<EelInterceptor>().warn("This code should not be reached")
         false

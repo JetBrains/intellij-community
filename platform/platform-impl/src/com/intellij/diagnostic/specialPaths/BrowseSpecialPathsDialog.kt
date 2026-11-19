@@ -12,7 +12,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -36,6 +38,7 @@ import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
@@ -181,8 +184,8 @@ internal class BrowseSpecialPathsDialog(val project: Project?) : DialogWrapper(p
     }
   }
 
-  private fun SpecialPathEntry.openInEditor(project: Project) {
-    val notNullPath = path ?: return
+  private fun SpecialPathEntry.requestOpenInEditor(project: Project): CompletableFuture<FileEditorComposite>? {
+    val notNullPath = path ?: return null
     if (kind == Kind.Folder) {
       throw Exception("It's impossible to open folder in editor")
     }
@@ -197,17 +200,16 @@ internal class BrowseSpecialPathsDialog(val project: Project?) : DialogWrapper(p
           NotificationType.ERROR
         ), project
       )
+      return null
     }
-    else {
-      FileEditorManager.getInstance(project).openFile(file, true, true)
-    }
+    return FileEditorManager.getInstance(project).requestOpenFile(file, FileEditorOpenRequest.withFocus(true).withReuseOpen(true))
   }
 
   private fun SpecialPathEntry.open(project: Project?) {
     when (kind) {
       Kind.Folder -> openDirectory()
       Kind.File -> if (project != null) {
-        openInEditor(project)
+        requestOpenInEditor(project)
       }
       else {
         openDirectory()
@@ -233,7 +235,7 @@ internal class BrowseSpecialPathsDialog(val project: Project?) : DialogWrapper(p
                                 DiagnosticBundle.messagePointer("action.open.in.editor.description", path),
               { null }) {
             override fun actionPerformed(e: AnActionEvent) {
-              openInEditor(project)
+              requestOpenInEditor(project)
               closeAction()
             }
           })

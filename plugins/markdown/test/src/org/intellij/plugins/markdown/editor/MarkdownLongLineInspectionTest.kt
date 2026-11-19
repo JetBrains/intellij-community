@@ -4,11 +4,20 @@ package org.intellij.plugins.markdown.editor
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInspection.longLine.LongLineInspection
 import com.intellij.lang.LangBundle
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
-class MarkdownLongLineInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class MarkdownLongLineInspectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `tables and long URLs are ignored while wrappable content is reported`() {
     val rightMargin = 20
@@ -27,7 +36,7 @@ class MarkdownLongLineInspectionTest: LightPlatformCodeInsightFixture4TestCase()
       abcdefghijklmnopqrst<warning descr="$description">uvwxyz</warning>
     """.trimIndent()
 
-    CodeStyle.doWithTemporarySettings(project, CodeStyle.getSettings(project)) { settings ->
+    CodeStyle.doWithTemporarySettings(myFixture.project, CodeStyle.getSettings(myFixture.project)) { settings ->
       settings.setRightMargin(MarkdownLanguage.INSTANCE, rightMargin)
       myFixture.enableInspections(LongLineInspection())
       myFixture.configureByText("test.md", content)

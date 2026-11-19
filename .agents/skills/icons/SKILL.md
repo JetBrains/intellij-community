@@ -5,14 +5,10 @@ description: Create or review IntelliJ New UI SVG icons and theme variants.
 
 # IntelliJ Platform New UI Icons
 
-Guidance for authoring SVG icons for the New UI.
-
-Background: the IDE maintains Classic UI and New UI in parallel. Code branches with `ExperimentalUI.isNewUI()`; icons follow the same split. Old icons stay in their original resource folders for Classic-UI compatibility. New-UI icons live under `expui/` folders and are substituted for the old ones at runtime by icon mappers.
-
 ## Golden rules
 
 1. **Always ship two SVGs** — one for the light theme (e.g. `addFile.svg`) and one for the dark theme with the `_dark` suffix (`addFile_dark.svg`). Geometry must be identical between them; only the palette swaps.
-   - **Tool-window icons ship as a quartet, not a pair.** When a tool window has both a 16×16 base (`name.svg` / `name_dark.svg`) and a 20×20 New-UI stripe variant (`name@20x20.svg` / `name@20x20_dark.svg`), they must share the same metaphor. The stripe is only one surface — the 16×16 base also appears in **Search Everywhere**, **Find Action**, context menus, the Services tool window, recent locations, and the View ▸ Tool Windows menu. Changing only the @20x20 leaves users seeing two different icons for the same tool window depending on where they encounter it. Always update all four files together (and the same applies to plugin-local icons like `toolWindowChat.svg` + `toolWindowChat@20x20.svg`).
+   - **Tool-window icons ship as a quartet.** When a tool window has both a 16×16 base (`name.svg` / `name_dark.svg`) and a 20×20 New-UI stripe variant (`name@20x20.svg` / `name@20x20_dark.svg`), they must share the same metaphor. Always update all four files together. The same applies to plugin-local icons like `toolWindowChat.svg` + `toolWindowChat@20x20.svg`. The 16×16 base also appears in Search Everywhere, Find Action, context menus, the Services tool window, recent locations, and the View ▸ Tool Windows menu.
 2. **Only use colors from the canonical palette.** See [palette.md](./palette.md). Picking a one-off color breaks theming and contrast.
 3. **One canvas size per icon role.** See [Icon roles](#icon-roles). Do not invent new sizes or pad with empty space — IntelliJ scales the canvas as a single unit.
 4. **No raster, no gradients, no filters, no embedded fonts.** Path geometry only (`<path>`, `<rect>`, `<circle>`, `<line>`, `<polyline>`, `<polygon>`). Text must be converted to outlines.
@@ -33,7 +29,7 @@ Background: the IDE maintains Classic UI and New UI in parallel. Code branches w
 | Main toolbar (New UI)                   | **20×20** | `name@20x20.svg` + `name@20x20_dark.svg` | `expui/general/`, `expui/run/`, `expui/toolbar/` |
 | Editor gutter icons                     | **14×14** (small marks **12×12**, **9×9**) | `name.svg` + `name_dark.svg`           | `expui/gutter/`                                 |
 | Status bar / inline status              | **16×16** | `name.svg` + `name_dark.svg`           | `expui/status/`, `expui/inline/`                |
-| Breakpoint marks                        | **14×14** (12×12 for sub-marks)             | `name.svg` + `name_dark.svg`           | `expui/breakpoints/`                            |
+| Breakpoint marks                        | **14×14**                                   | `name.svg` + `name_dark.svg`           | `expui/breakpoints/`                            |
 | Run-config tags & disclosure chevrons   | **16×16** (`chevron*.svg` may be 9×9 to 16×16) | `name.svg` + `name_dark.svg`           | `expui/run/`, `expui/general/`                  |
 | Welcome/onboarding & logos (system)     | **16, 20, 28, 48** (per surface)            | `name.svg` + `name_dark.svg`           | `expui/ide/`, `expui/welcome/`                  |
 
@@ -41,7 +37,7 @@ When in doubt, find a sibling icon in the same folder and copy its `width` / `he
 
 ## Where the SVGs live
 
-Two placements exist and both are valid — pick based on whether a Classic-UI icon already exists:
+Pick the placement by whether a Classic-UI icon already exists:
 
 - **Only New UI needed** → put the SVG (and its `_dark` sibling) under an `expui/<role>/` resource root. Callers reference it directly through the plugin's generated `<Plugin>Icons` class.
 - **Replacing an existing Classic-UI icon** → keep the Classic file at its old path, put the New UI SVG under the matching `expui/<role>/` path, and add a mapping entry to the nearest `*IconMappings.json`. At runtime, when `ExperimentalUI.isNewUI()` is true, the mapper substitutes the New UI file for the Classic one so no caller has to change its icon reference.
@@ -70,8 +66,6 @@ Key = path relative to the `expui/` root (the New UI file). Value = the Classic 
 </svg>
 ```
 
-The dark variant is the same file with light-palette colors swapped for their dark-theme partner — see [palette.md](./palette.md). Never change geometry between the two.
-
 ## Composition rules
 
 - **One semantic meaning per icon.** A status badge, an accent dot, or a "+" overlay is fine; two unrelated glyphs in one icon is not.
@@ -83,36 +77,9 @@ The dark variant is the same file with light-palette colors swapped for their da
 - **Stroke-only icons** (chevrons, refresh, edit pencil): a single-color path using the neutral stroke (`#6C707E` light / `#CED0D6` dark) at `stroke-width="1"`. Use `#818594` (light) / `#6F737A` (dark) for "secondary" stroke glyphs like dropdown chevrons.
 - **Status badges** (error/warning/success/info) follow this template:
   - Light: filled circle/triangle in the *accent* color, glyph painted in `white`.
-  - Dark: filled circle/triangle in the *dark accent* color, glyph painted in the matching *muted dark fill* (e.g. `#5E4D33` inside `#F2C55C` warning) — never plain white.
+  - Dark: filled circle/triangle in the *dark accent* color. The glyph stays `white` on error, success and info badges. On a warm (orange or yellow) fill, the glyph uses the matching *muted dark fill* (e.g. `#5E4D33` inside `#F2C55C` warning).
 - **Two-tone action icons** (e.g. `actions/addFile.svg`): the base glyph uses the neutral gray, and the small "modifier" (`+`, ✕, ↻, gear) uses the primary blue accent. Light gray + blue accent → dark gray + blue accent in the dark variant.
-- **Disabled / stroke-only variants** (e.g. `*_stroke.svg`): outline-only, same neutral stroke color, no fills.
-
-## Palette quick reference
-
-The full lookup is in [palette.md](./palette.md). Most icons only need:
-
-| Role                  | Light       | Dark        |
-|-----------------------|-------------|-------------|
-| Primary stroke / fill | `#6C707E`   | `#CED0D6`   |
-| Secondary stroke      | `#818594`   | `#6F737A`   |
-| Disabled / faint fill | `#EBECF0`   | `#43454A`   |
-| Accent — Blue         | `#3574F0`   | `#548AF7`   |
-| Accent — Blue (bg)    | `#EDF3FF` / `#E7EFFD` | `#25324D` |
-| Accent — Red          | `#DB3B4B`   | `#DB5C5C`   |
-| Accent — Red (bg)     | `#FFF7F7`   | `#402929`   |
-| Status — Error fill   | `#E55765`   | `#DB5C5C`   |
-| Status — Warning fill | `#FFAF0F`   | `#F2C55C`   |
-| Status — Success fill | `#55A76A`   | `#57965C`   |
-| Accent — Green        | `#208A3C`   | `#57965C`   |
-| Accent — Green (bg)   | `#F2FCF3`   | `#253627`   |
-| Accent — Orange       | `#E66D17`   | `#C77D55`   |
-| Accent — Orange (bg)  | `#FFF4EB`   | `#45322B`   |
-| Accent — Yellow/Gold  | `#FFAF0F` / `#C27D04` | `#F2C55C` / `#D6AE58` |
-| Accent — Purple       | `#834DF0`   | `#B589EC`   |
-| Accent — Purple (bg)  | `#FAF5FF`   | `#2F2936`   |
-| White on dark badge   | `white`     | matching muted-dark fill (e.g. `#5E4D33`) |
-
-Do not use plain `#000000` or off-the-palette grays.
+- **Stroke variants** (e.g. `*_stroke.svg`): an outline of the same glyph, drawn in `white` only, with no `_dark` partner.
 
 ## Generation workflow
 
@@ -121,24 +88,15 @@ Do not use plain `#000000` or off-the-palette grays.
 3. **Apply the canonical light palette** from [palette.md](./palette.md). Never invent colors.
 4. **Save the light SVG** with the Apache 2.0 header, `width`/`height`/`viewBox` matching the role, and `fill="none"` on `<svg>`.
 5. **Duplicate to the `_dark` filename** and swap each color for its dark-theme partner from the palette mapping. Keep paths byte-identical otherwise.
-6. **Place and wire the file**:
-   - **Fresh New UI icon** → drop into the matching `expui/<role>/` resource folder; reference it from the plugin's `<Plugin>Icons` class.
-   - **Replacement for a Classic icon** → keep the Classic file untouched, add the New UI file under `expui/<role>/`, add a mapping entry to the nearest `*IconMappings.json`. Callers keep referencing the old path.
-7. **Verify visually** in both themes via the image preview in the IDE, or run the IDE and toggle *View ▸ Appearance ▸ New UI* to compare. Check selection states for stripe icons.
+6. **Place and wire the file** as [Where the SVGs live](#where-the-svgs-live) says.
+7. **Verify visually** in both themes in the IDE image preview, or run the IDE with and without the Classic UI plugin (`com.intellij.classic.ui`) to compare. Check selection states for stripe icons.
 
 ## Common mistakes
 
-- Off-palette colors (e.g. importing from Figma without remapping). They will not theme correctly and reviewers will reject the PR.
-- Different geometry between light and dark variants — selection animations and HiDPI overlays will glitch.
-- A 16-px glyph saved into a 20×20 canvas without re-balancing. Tool-window/main-toolbar icons need geometry tuned for 20×20, not a 16×16 reused with extra whitespace.
-- Using `currentColor`, CSS, or `<style>` blocks. The IntelliJ icon loader requires explicit colors on every shape so it can do palette-based recoloring.
-- Forgetting the `_dark` variant. The icon will look fine in Light theme then turn invisible in Dark.
-- Pure-black (`#000`) or pure-white (`#FFF`) fills outside the status-badge glyph pattern. They break under accent recoloring.
+- Off-palette colors from a Figma import without remapping.
 - Adding a New UI SVG without a `*IconMappings.json` entry when replacing a Classic icon — the Classic icon will keep showing in New UI mode.
 
 ## References
 
-- [palette.md](./palette.md) — full color palette with light↔dark mapping.
-- [examples.md](./examples.md) — annotated SVG snippets for each icon role, copied from the live icon set.
+- [examples.md](./examples.md) — annotated SVG snippets for the common icon roles, copied from the live icon set.
 - Canonical example tree: `community/platform/icons/src/expui/` — when reviewing, diff your new icon against a sibling there.
-- Repo-level `Icons guidelines.svg` is a design sheet (visual reference only; not machine-readable). When it disagrees with the folder, trust the folder.

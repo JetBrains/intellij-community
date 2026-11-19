@@ -4,6 +4,7 @@ import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.internal.getModuleSdkStateImpl
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -32,6 +33,7 @@ suspend fun <T : Any> PyProject.configureSdkIfNeeded(onNoSdk: suspend SdkForModu
       InterpreterConfigurationResult.Configured(s.interpreter)
     }
     is ModuleSdkState.NoSdk -> s.sdkConfigInstruction?.onNoSdk()
+    is ModuleSdkState.Unavailable -> s.sdkConfigInstruction?.onNoSdk()
   }
 
 /**
@@ -67,7 +69,7 @@ suspend fun PyProject.getModuleSdkState(
 ): ModuleSdkState = getModuleSdkStateImpl(configuratorsByTool, fresh)
 
 /**
- * Result for [getModuleSdkState]: either an interpreter or a suggestion to configure one
+ * Result for [getModuleSdkState]: an interpreter, an interpreter that is unavailable, or a suggestion to configure one
  */
 sealed interface ModuleSdkState {
   /**
@@ -79,4 +81,14 @@ sealed interface ModuleSdkState {
    * The project has no interpreter, and it either has [sdkConfigInstruction] or `null` if no suggestion could be made.
    */
   class NoSdk internal constructor(val sdkConfigInstruction: SdkForModuleConfigInstruction?) : ModuleSdkState
+
+  /**
+   * The project names the interpreter of [key] by its interpreter library entry, but the interpreter is unavailable: its
+   * environment is gone. No configurator chooses another interpreter for it. [sdkConfigInstruction] installs the tool
+   * of the manager of the ref of [key], or makes the environment again, or it is `null` when neither is possible.
+   */
+  class Unavailable internal constructor(
+    val key: PythonInterpreterKey,
+    val sdkConfigInstruction: SdkForModuleConfigInstruction?,
+  ) : ModuleSdkState
 }

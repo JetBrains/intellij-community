@@ -5,37 +5,41 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ExtractMethodNewJspecifyMultiFileTest extends LightMultiFileTestCase {
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class ExtractMethodNewJspecifyMultiFileTest {
   private static final LightProjectDescriptor PROJECT_DESCRIPTOR =
     new DefaultLightProjectDescriptor(() -> IdeaTestUtil.getMockJdk11()).withRepositoryLibrary("org.jspecify:jspecify:1.0.0");
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR);
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/extractMethodNewJspecifyMultiFile/");
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/extractMethodNewJspecifyMultiFile/";
-  }
-
+  @Test
   public void testNullMarkedPackage() {
     doTest();
   }
 
+  @Test
   public void testNullMarkedModule() {
     doTest();
   }
 
   private void doTest() {
-    doTest(() -> {
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    multiFile.get().doTest(() -> {
+      CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> {
         PsiFile file = PsiTreeUtil.getParentOfType(myFixture.findClass("packag.Test"), PsiFile.class);
         myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
         ExtractMethodNewTest.performExtractMethod(true, false, myFixture.getEditor(), file, myFixture.getProject());

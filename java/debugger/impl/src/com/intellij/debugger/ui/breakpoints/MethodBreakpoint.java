@@ -49,7 +49,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
-import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -72,8 +71,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
-import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import javax.swing.Icon;
 import java.util.ArrayList;
@@ -252,34 +249,15 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
 
       if (breakpoint.isWatchEntry()) {
-        // We assume that all VMs start code indexes from zero.
-        Location location = new LocationCodeIndexOnly(method, 0);
-        createLocationBreakpointRequest(breakpoint, location, debugProcess, true);
+        var entryLocation = MethodBytecodeUtil.getMethodEntryLocation(method);
+        createLocationBreakpointRequest(breakpoint, entryLocation, debugProcess, true);
       }
 
       if (breakpoint.isWatchExit()) {
-        class BytecodeVisitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
-          private int bytecodeOffset = -1;
-
-          BytecodeVisitor() {
-            super(Opcodes.API_VERSION);
-          }
-
-          @Override
-          public void readBytecodeInstructionOffset(int offset) {
-            bytecodeOffset = offset;
-          }
-
-          @Override
-          public void visitInsn(int opcode) {
-            if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
-              assert bytecodeOffset >= 0;
-              Location location = new LocationCodeIndexOnly(method, bytecodeOffset);
-              createLocationBreakpointRequest(breakpoint, location, debugProcess, false);
-            }
-          }
+        var exitLocations = MethodBytecodeUtil.getMethodExitLocations(method);
+        for (var exitLocation : exitLocations) {
+          createLocationBreakpointRequest(breakpoint, exitLocation, debugProcess, false);
         }
-        MethodBytecodeUtil.visit(method, new BytecodeVisitor(), false);
       }
     }
     if (base && scanSubClasses) {
@@ -674,109 +652,5 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   @Override
   public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
     return MethodBreakpointBase.processWithReturnValueCapture(this, action, event, LOG, () -> super.processLocatableEvent(action, event));
-  }
-
-  /**
-   * Optimized {@link Location} which should be used only to create breakpoint
-   * at known valid code index.
-   * <p/>
-   * The key difference with {@link com.jetbrains.jdi.ConcreteMethodImpl#locationOfCodeIndex(long)}
-   * is an absence of index validity checks, which normally would require to load line number information.
-   */
-  private static class LocationCodeIndexOnly implements Location {
-    private final Method method;
-    private final long codeIndex;
-
-    LocationCodeIndexOnly(Method method, long codeIndex) {
-      assert !method.isNative() && !method.isAbstract();
-      assert codeIndex >= 0;
-
-      this.method = method;
-      this.codeIndex = codeIndex;
-    }
-
-    @Override
-    public VirtualMachine virtualMachine() {
-      return method.virtualMachine();
-    }
-
-    @Override
-    public ReferenceType declaringType() {
-      return method.declaringType();
-    }
-
-    @Override
-    public Method method() {
-      return method;
-    }
-
-    @Override
-    public long codeIndex() {
-      return codeIndex;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (this == other) return true;
-      if (other == null || getClass() != other.getClass()) return false;
-      LocationCodeIndexOnly that = (LocationCodeIndexOnly)other;
-      return this.codeIndex == that.codeIndex &&
-             this.method.equals(that.method);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(method, codeIndex);
-    }
-
-    @Override
-    public int compareTo(@NotNull Location that) {
-      // Same as in LocationImpl
-      int res = this.method().compareTo(that.method());
-      if (res != 0) {
-        return res;
-      }
-      return Long.compare(codeIndex(), that.codeIndex());
-    }
-
-    // region Absent information about source code
-    @Override
-    public int lineNumber() {
-      return -1;
-    }
-
-    @Override
-    public int lineNumber(String stratum) {
-      return -1;
-    }
-
-    @Override
-    public String sourceName() throws AbsentInformationException {
-      throw new AbsentInformationException();
-    }
-
-    @Override
-    public String sourceName(String stratum) throws AbsentInformationException {
-      throw new AbsentInformationException();
-    }
-
-    @Override
-    public String sourcePath() throws AbsentInformationException {
-      throw new AbsentInformationException();
-    }
-
-    @Override
-    public String sourcePath(String stratum) throws AbsentInformationException {
-      throw new AbsentInformationException();
-    }
-
-    @Override
-    public String toString() {
-      return "LocationCodeIndexOnly{" +
-             "method=" + method +
-             ", codeIndex=" + codeIndex +
-             '}';
-    }
-    // endregion
   }
 }

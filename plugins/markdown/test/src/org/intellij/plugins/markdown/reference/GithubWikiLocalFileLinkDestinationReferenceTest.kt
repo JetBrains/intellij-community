@@ -2,24 +2,43 @@
 package org.intellij.plugins.markdown.reference
 
 import com.intellij.markdown.backend.inspections.MarkdownUnresolvedFileReferenceInspection
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.paths.WebReference
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceUtil.unwrapMultiReference
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.TempDirTestFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalFileReference
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
-class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationReferenceTestCase() {
-  override fun createTempDirTestFixture(): TempDirTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
+@TestApplication
+class GithubWikiLocalFileLinkDestinationReferenceTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  override fun setUp() {
-    super.setUp()
-    PsiTestUtil.addContentRoot(module, myFixture.tempDirFixture.getFile("")!!)
-    myFixture.addFileToProject(".git/config", """
+  private val links by linkDestinationReferenceFixture(
+    projectFixture,
+    Path.of(MarkdownTestingUtil.TEST_DATA_PATH, "reference", "linkDestination", "githubwiki").toString(),
+    Path.of("topDir", "links.md").toString(),
+  )
+
+  @BeforeEach
+  fun setUp() {
+    links.fixture.addFileToProject(".git/config", """
       [remote "origin"]
         url = https://github.com/any_username/any_repository.git
       [remote "repository"]
@@ -33,67 +52,92 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     """.trimIndent())
   }
 
-  override fun getTestDataPath() = Path.of(MarkdownTestingUtil.TEST_DATA_PATH, "reference", "linkDestination", "githubwiki").toString()
+  @Test
+  fun testInRoot(): Unit = links.testIsReferenceToFile("stub_in_root.md")
 
-  override fun getLinksFilePath(): String = Path.of("topDir", "links.md").toString()
+  @Test
+  fun testInDir(): Unit = links.testIsReferenceToFile("topDir", "stub_in_top_dir.md")
 
-  fun testInRoot() = testIsReferenceToFile("stub_in_root.md")
+  @Test
+  fun testDirAtTheEnd(): Unit = links.testIsReferenceToFile("topDir")
 
-  fun testInDir() = testIsReferenceToFile("topDir", "stub_in_top_dir.md")
+  @Test
+  fun testDirInTheMiddle(): Unit = links.testIsReferenceToFile("topDir", "innerDir")
 
-  fun testDirAtTheEnd() = testIsReferenceToFile("topDir")
+  @Test
+  fun testDirInTheMiddleRegardlessTheRest(): Unit = links.testIsReferenceToFile("topDir")
 
-  fun testDirInTheMiddle() = testIsReferenceToFile("topDir", "innerDir")
+  @Test
+  fun testWithHeader(): Unit = links.testIsReferenceToFile("stub_in_root.md")
 
-  fun testDirInTheMiddleRegardlessTheRest() = testIsReferenceToFile("topDir")
+  @Test
+  fun testWithNonexistentHeader(): Unit = links.testIsReferenceToFile("stub_in_root.md")
 
-  fun testWithHeader() = testIsReferenceToFile("stub_in_root.md")
+  @Test
+  fun testHeader(): Unit = links.testIsReferenceToHeader(Path.of("stub_in_root.md"), "header")
 
-  fun testWithNonexistentHeader() = testIsReferenceToFile("stub_in_root.md")
+  @Test
+  fun testInRootWithMissingExtension(): Unit = links.testIsReferenceToFile("stub_in_root.md")
 
-  fun testHeader() = testIsReferenceToHeader(Path.of("stub_in_root.md"), "header")
+  @Test
+  fun testInDirWithMissingExtension(): Unit = links.testIsReferenceToFile("topDir", "stub_in_top_dir.md")
 
-  fun testInRootWithMissingExtension() = testIsReferenceToFile("stub_in_root.md")
+  @Test
+  fun testRepeatedExtensionWithMissingExtension(): Unit = links.testIsReferenceToFile("topDir", "stub_with_repeated_extension.md.md")
 
-  fun testInDirWithMissingExtension() = testIsReferenceToFile("topDir", "stub_in_top_dir.md")
+  @Test
+  fun testWithHeaderWithMissingExtension(): Unit = links.testIsReferenceToFile("stub_in_root.md")
 
-  fun testRepeatedExtensionWithMissingExtension() = testIsReferenceToFile("topDir", "stub_with_repeated_extension.md.md")
+  @Test
+  fun testWithNonexistentHeaderWithMissingExtension(): Unit = links.testIsReferenceToFile("stub_in_root.md")
 
-  fun testWithHeaderWithMissingExtension() = testIsReferenceToFile("stub_in_root.md")
+  @Test
+  fun testHeaderWithMissingExtension(): Unit = links.testIsReferenceToHeader(Path.of("stub_in_root.md"), "header")
 
-  fun testWithNonexistentHeaderWithMissingExtension() = testIsReferenceToFile("stub_in_root.md")
+  @Test
+  fun testIsNotReferenceBecauseOfWrongPathPrefix(): Unit = links.testIsNotReferenceToFile("stub_in_root.md")
 
-  fun testHeaderWithMissingExtension() = testIsReferenceToHeader(Path.of("stub_in_root.md"), "header")
+  @Test
+  fun testIsNotReferenceBecauseOfFullMatchWithOtherFile(): Unit = links.testIsNotReferenceToFile("topDir", "stub_in_top_dir.md.md")
 
-  fun testIsNotReferenceBecauseOfWrongPathPrefix() = testIsNotReferenceToFile("stub_in_root.md")
+  @Test
+  fun testIsNotReferenceToFileBecauseCaretIsAtHeader(): Unit = links.testIsNotReferenceToFile("stub_in_root.md")
 
-  fun testIsNotReferenceBecauseOfFullMatchWithOtherFile() = testIsNotReferenceToFile("topDir", "stub_in_top_dir.md.md")
+  @Test
+  fun testIsNotReferenceToFileBecauseCaretIsAtNonexistentHeader(): Unit = links.testIsNotReferenceToFile("stub_in_root.md")
 
-  fun testIsNotReferenceToFileBecauseCaretIsAtHeader() = testIsNotReferenceToFile("stub_in_root.md")
+  @Test
+  fun testIsNotReferenceBecauseOfWrongPathPrefixWithMissingExtension(): Unit = links.testIsNotReferenceToFile("stub_in_root.md")
 
-  fun testIsNotReferenceToFileBecauseCaretIsAtNonexistentHeader() = testIsNotReferenceToFile("stub_in_root.md")
+  @Test
+  fun testIsNotReferenceToFileBecauseCaretIsAtHeaderWithMissingExtension(): Unit = links.testIsNotReferenceToFile("stub_in_root.md")
 
-  fun testIsNotReferenceBecauseOfWrongPathPrefixWithMissingExtension() = testIsNotReferenceToFile("stub_in_root.md")
+  @Test
+  fun testIsNotReferenceToFileBecauseCaretIsAtNonexistentHeaderWithMissingExtension(): Unit = links.testIsNotReferenceToFile("stub_in_root.md")
 
-  fun testIsNotReferenceToFileBecauseCaretIsAtHeaderWithMissingExtension() = testIsNotReferenceToFile("stub_in_root.md")
+  @Test
+  fun testRenameWithMissingExtension(): Unit = links.testRenameFile(Path.of("stub_in_root.md"), "renamed.md")
 
-  fun testIsNotReferenceToFileBecauseCaretIsAtNonexistentHeaderWithMissingExtension() = testIsNotReferenceToFile("stub_in_root.md")
+  @Test
+  fun testRenameWithExtension(): Unit = links.testRenameFile(Path.of("stub_in_root.md"), "renamed.md")
 
-  fun testRenameWithMissingExtension() = testRenameFile(Path.of("stub_in_root.md"), "renamed.md")
+  @Test
+  fun testRenameDirectory(): Unit = links.testRenameFile(Path.of("topDir", "innerDir"), "renamed")
 
-  fun testRenameWithExtension() = testRenameFile(Path.of("stub_in_root.md"), "renamed.md")
+  @Test
+  fun testRenameNotRenamedBecauseOfFullMatchWithOtherFile(): Unit = links.testRenameFile(Path.of("topDir", "stub_in_top_dir.md.md"), "renamed")
 
-  fun testRenameDirectory() = testRenameFile(Path.of("topDir", "innerDir"), "renamed")
-
-  fun testRenameNotRenamedBecauseOfFullMatchWithOtherFile() = testRenameFile(Path.of("topDir", "stub_in_top_dir.md.md"), "renamed")
-
-  fun testRenameRepeatedExtensionWithMissingExtension() = testRenameFile(Path.of("topDir", "stub_with_repeated_extension.md.md"),
+  @Test
+  fun testRenameRepeatedExtensionWithMissingExtension(): Unit = links.testRenameFile(Path.of("topDir", "stub_with_repeated_extension.md.md"),
                                                                          "renamed.md.md")
 
-  fun testRenameExtensionRemovalWithMissingExtension() = testRenameFile(Path.of("stub_in_root.md"), "renamed")
+  @Test
+  fun testRenameExtensionRemovalWithMissingExtension(): Unit = links.testRenameFile(Path.of("stub_in_root.md"), "renamed")
 
-  fun testRenameExtensionIntroduction() = testRenameFile(Path.of("stub_without_extension"), "renamed.md")
+  @Test
+  fun testRenameExtensionIntroduction(): Unit = links.testRenameFile(Path.of("stub_without_extension"), "renamed.md")
 
+  @Test
   fun testFullUrlResolvesInSourceRepository() {
     createRepositoryStructure()
     val link = "https://github.com/username/repository/wiki/Main"
@@ -103,6 +147,7 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     assertLocalTarget(wikiReferences, "wiki/Main.md")
   }
 
+  @Test
   fun testFullUrlWithExtensionResolvesInSourceRepository() {
     createRepositoryStructure()
     val link = "https://github.com/username/repository/wiki/Main.md"
@@ -112,6 +157,7 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     assertLocalTarget(wikiReferences, "wiki/Main.md")
   }
 
+  @Test
   fun testEnterpriseUrlResolvesInSourceRepository() {
     createRepositoryStructure()
     val link = "https://jetbrains.github.com/username/enterprise-repository/wiki/Main"
@@ -121,6 +167,7 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     assertLocalTarget(wikiReferences, "wiki/Main.md")
   }
 
+  @Test
   fun testScpLikeRemotesResolveInSourceRepository() {
     createRepositoryStructure()
     val link = "https://github.com/username/scp-repository/wiki/Main"
@@ -130,6 +177,7 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     assertLocalTarget(wikiReferences, "wiki/Main.md")
   }
 
+  @Test
   fun testSshRemotesResolveInSourceRepository() {
     createRepositoryStructure()
     val link = "https://github.com/username/ssh-repository/wiki/Main"
@@ -139,6 +187,7 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     assertLocalTarget(wikiReferences, "wiki/Main.md")
   }
 
+  @Test
   fun testEncodedPageNameResolvesInSourceRepository() {
     createRepositoryStructure()
     val link = "https://github.com/username/repository/wiki/test%20data"
@@ -148,9 +197,10 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     assertLocalTarget(wikiReferences, "wiki/test data.md")
   }
 
+  @Test
   fun testDomainLessUrlResolvesInSourceRepository() {
     createRepositoryStructure()
-    myFixture.enableInspections(MarkdownUnresolvedFileReferenceInspection::class.java)
+    links.fixture.enableInspections(MarkdownUnresolvedFileReferenceInspection::class.java)
     val link = "/username/repository/wiki/Main"
     val mainReferences = configureLink("Links.md", link)
     assertLocalTargetWithoutHighlighting(mainReferences, "Main.md")
@@ -158,6 +208,7 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     assertLocalTargetWithoutHighlighting(wikiReferences, "wiki/Main.md")
   }
 
+  @Test
   fun testMarkdownFileWinsDirectoryConflict() {
     createRepositoryStructure()
     val link = "https://github.com/username/repository/wiki/dir"
@@ -167,6 +218,7 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     assertLocalTarget(wikiReferences, "wiki/dir.md")
   }
 
+  @Test
   fun testMarkdownDirectoryDoesNotResolveAsFile() {
     createRepositoryStructure()
     val link = "https://github.com/username/repository/wiki/Page"
@@ -176,6 +228,7 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     }
   }
 
+  @Test
   fun testMissingWikiPageUsesWebReference() {
     createRepositoryStructure()
     val link = "https://github.com/username/repository/wiki/Missing"
@@ -185,6 +238,7 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     }
   }
 
+  @Test
   fun testAnotherRepositoryUsesWebReference() {
     createRepositoryStructure()
     val link = "https://github.com/AnotherOwner/AnotherProject/wiki/Main"
@@ -194,6 +248,7 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     }
   }
 
+  @Test
   fun testSameRepositoryOnAnotherHostUsesWebReference() {
     createRepositoryStructure()
     val link = "https://another.github.com/username/repository/wiki/Main"
@@ -203,53 +258,63 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     }
   }
 
+  @Test
   fun testMissingLocalFileRemainsUnresolved() {
     createRepositoryStructure()
-    myFixture.enableInspections(MarkdownUnresolvedFileReferenceInspection::class.java)
+    links.fixture.enableInspections(MarkdownUnresolvedFileReferenceInspection::class.java)
     configureMissingLocalFileLink("Links.md")
     assertUnresolvedLocalFile()
     configureMissingLocalFileLink("wiki/Links.md")
     assertUnresolvedLocalFile()
   }
 
-  private fun assertLocalTarget(references: List<PsiReference>, expectedTarget: String) {
-    val targets = references.filterIsInstance<GithubWikiLocalFileReference>().mapNotNull { it.resolve() }
-    val referenceDetails = references.joinToString { "${it.javaClass.simpleName}: ${it.resolve()}" }
-    assertEquals("The link must have one local target. References: $referenceDetails", 1, targets.size)
-    val targetFile = assertInstanceOf(targets.single(), PsiFileSystemItem::class.java).virtualFile
-    assertEquals(myFixture.findFileInTempDir(expectedTarget), targetFile)
+  private fun assertLocalTarget(references: List<PsiReference>, expectedTarget: String): Unit = timeoutRunBlocking {
+    readAction {
+      val targets = references.filterIsInstance<GithubWikiLocalFileReference>().mapNotNull { it.resolve() }
+      val referenceDetails = references.joinToString { "${it.javaClass.simpleName}: ${it.resolve()}" }
+      assertEquals(1, targets.size, "The link must have one local target. References: $referenceDetails")
+      val targetFile = assertInstanceOf(PsiFileSystemItem::class.java, targets.single()).virtualFile
+      assertEquals(links.fixture.findFileInTempDir(expectedTarget), targetFile)
+    }
   }
 
   private fun assertLocalTargetWithoutHighlighting(references: List<PsiReference>, expectedTarget: String) {
     assertLocalTarget(references, expectedTarget)
-    val descriptions = myFixture.doHighlighting().mapNotNull { it.description }
-    assertFalse("The resolved link must not have an unresolved path warning: $descriptions",
-                descriptions.any { it.startsWith("Cannot resolve ") })
+    val descriptions = links.fixture.doHighlighting().mapNotNull { it.description }
+    assertFalse(descriptions.any { it.startsWith("Cannot resolve ") },
+                "The resolved link must not have an unresolved path warning: $descriptions")
   }
 
-  private fun assertWebReference(references: List<PsiReference>) {
-    assertTrue("The link must keep a web reference", references.any { it is WebReference })
-    assertFalse("The link must not have a local target", references.filterIsInstance<GithubWikiLocalFileReference>().any { it.resolve() != null })
+  private fun assertWebReference(references: List<PsiReference>): Unit = timeoutRunBlocking {
+    readAction {
+      assertTrue(references.any { it is WebReference }, "The link must keep a web reference")
+      assertFalse(references.filterIsInstance<GithubWikiLocalFileReference>().any { it.resolve() != null }, "The link must not have a local target")
+    }
   }
 
-  private fun configureLink(source: String, link: String) = with(myFixture) {
+  private fun configureLink(source: String, link: String) = with(links.fixture) {
     val sourceFile = addFileToProject(source, "[Link]($link)")
     configureFromExistingVirtualFile(sourceFile.virtualFile)
-    editor.caretModel.moveToOffset(file.text.indexOf(link) + link.lastIndex)
-    unwrapMultiReference(file.findReferenceAt(editor.caretModel.offset)!!)
+    timeoutRunBlocking {
+      val offset = readAction { file.text.indexOf(link) + link.lastIndex }
+      withContext(Dispatchers.EDT) {
+        editor.caretModel.moveToOffset(offset)
+      }
+      readAction { unwrapMultiReference(file.findReferenceAt(offset)!!) }
+    }
   }
 
   private fun configureMissingLocalFileLink(source: String) {
-    val sourceFile = myFixture.addFileToProject(source, "[Missing](Missing.md)")
-    myFixture.configureFromExistingVirtualFile(sourceFile.virtualFile)
+    val sourceFile = links.fixture.addFileToProject(source, "[Missing](Missing.md)")
+    links.fixture.configureFromExistingVirtualFile(sourceFile.virtualFile)
   }
 
   private fun assertUnresolvedLocalFile() {
-    val descriptions = myFixture.doHighlighting().mapNotNull { it.description }
-    assertContainsElements(descriptions, "Cannot resolve file 'Missing.md'")
+    val descriptions = links.fixture.doHighlighting().mapNotNull { it.description }
+    assertThat(descriptions).contains("Cannot resolve file 'Missing.md'")
   }
 
-  private fun createRepositoryStructure() = with(myFixture) {
+  private fun createRepositoryStructure() = with(links.fixture) {
     addFileToProject(".git/modules/wiki/config", """
       [remote "origin"]
         url = https://github.com/username/repository.wiki.git
@@ -273,5 +338,6 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
     addFileToProject("wiki/Page.md/placeholder.txt", "Markdown directory")
   }
 
-  fun testRenameWithSpaceAndMissingExtension() = testRenameFile(Path.of("test data.md"), "test data2.md")
+  @Test
+  fun testRenameWithSpaceAndMissingExtension(): Unit = links.testRenameFile(Path.of("test data.md"), "test data2.md")
 }

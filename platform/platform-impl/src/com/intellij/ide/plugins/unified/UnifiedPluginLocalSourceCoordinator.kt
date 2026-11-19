@@ -39,6 +39,8 @@ internal data class UnifiedPluginLocalSourceState(
   val mayEstablishSelection: Boolean,
   val facetsLoading: Boolean = false,
   val manualUpdates: Map<PluginId, UnifiedPluginManualUpdateState> = emptyMap(),
+  /** Implementation-detail plugins by their Installed or Bundled section. Only the `/built-in` filter shows them. */
+  val implementationDetailItems: Map<PluginSectionId, List<PluginItemState>> = emptyMap(),
 )
 
 /**
@@ -363,6 +365,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
       mayEstablishSelection = mayEstablishSelection,
       facetsLoading = status is PluginSectionStatus.Loading,
       manualUpdates = manualUpdates.toMap(),
+      implementationDetailItems = currentSnapshot?.implementationDetailItems.orEmpty(),
     )
   }
 
@@ -430,8 +433,16 @@ private fun UnifiedPluginLocalSnapshot.withEnabledStates(
 
   val installedItems = update(installedItems)
   val bundledItems = update(bundledItems)
-  return if (installedItems === this.installedItems && bundledItems === this.bundledItems) this
-  else copy(installedItems = installedItems, bundledItems = bundledItems)
+  val implementationDetailItems = implementationDetailItems.mapValues { (_, items) -> update(items) }
+  val implementationDetailItemsChanged = implementationDetailItems.any { (sectionId, items) ->
+    items !== this.implementationDetailItems.getValue(sectionId)
+  }
+  return if (installedItems === this.installedItems && bundledItems === this.bundledItems && !implementationDetailItemsChanged) this
+  else copy(
+    installedItems = installedItems,
+    bundledItems = bundledItems,
+    implementationDetailItems = if (implementationDetailItemsChanged) implementationDetailItems else this.implementationDetailItems,
+  )
 }
 
 internal fun updateAllInstallingItem(

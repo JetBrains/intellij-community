@@ -51,11 +51,11 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   public static final UUID PREDEFINED_CHROME_ID = UUID.fromString("98CA6316-2F89-46D9-A9E5-FA9E2B0625B3");
   @ApiStatus.Internal
   public static final UUID PREDEFINED_FIREFOX_ID = UUID.fromString("A7BB68E0-33C0-4D6F-A81A-AAC1FDB870C8");
-  private static final UUID PREDEFINED_SAFARI_ID = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186");
-  private static final UUID PREDEFINED_OPERA_ID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776");
+  static final UUID PREDEFINED_SAFARI_ID = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186");
+  static final UUID PREDEFINED_OPERA_ID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776");
   private static final UUID PREDEFINED_OLD_EDGE_ID = UUID.fromString("B2A9DCA7-9D0B-4E1E-98A8-AFB19C1328D2");
   private static final UUID PREDEFINED_OLD_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
-  private static final UUID PREDEFINED_EDGE_ID = UUID.fromString("37cae5b9-e8b2-4949-9172-aafa37fbc09c");
+  static final UUID PREDEFINED_EDGE_ID = UUID.fromString("37cae5b9-e8b2-4949-9172-aafa37fbc09c");
 
   @ApiStatus.Internal
   public static final UUID IDE_BROWSER_ID = UUID.fromString("8e2f6a41-7c3d-4b95-a0e8-1d6f4c2b9a73");
@@ -100,7 +100,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     }
   }
 
-  private static List<ConfigurableWebBrowser> getPredefinedBrowsers() {
+  static List<ConfigurableWebBrowser> getPredefinedBrowsers() {
     return List.of(
       new ConfigurableWebBrowser(PREDEFINED_CHROME_ID, BrowserFamily.CHROME),
       new ConfigurableWebBrowser(PREDEFINED_FIREFOX_ID, BrowserFamily.FIREFOX),

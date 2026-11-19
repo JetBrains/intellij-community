@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.definitions
 
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ProjectManager
@@ -14,13 +13,11 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestMetadata
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.pathString
 
 private const val IN_JAR: String = "testData/script/templatesFromDependencies/inJar/"
@@ -58,11 +55,12 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
     fun testReRunReturnsConsistentTemplates() {
         runTest("testData/script/templatesFromDependencies/inJar/")
 
-        val provider = DefinitionFromDependenciesProvider(project)
+        val provider = DefinitionFromDependenciesProvider.getInstance(project)
         val firstFqns = provider.definitionClasses()
-        val firstClasspath = provider.getTemplateClasspath()
+        val firstClasspath = provider.templateClasspath()
+        reloadDefinitions()
         val secondFqns = provider.definitionClasses()
-        val secondClasspath = provider.getTemplateClasspath()
+        val secondClasspath = provider.templateClasspath()
 
         assertEquals("Repeated discovery on unchanged project state must return equal FQNs", firstFqns, secondFqns)
         assertEquals("Repeated discovery on unchanged project state must return equal classpath", firstClasspath, secondClasspath)
@@ -72,7 +70,7 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
     fun testMarkerOriginIsRecordedForEachDiscoveredFqn() {
         runTest(IN_JAR)
 
-        val provider = DefinitionFromDependenciesProvider(project)
+        val provider = DefinitionFromDependenciesProvider.getInstance(project)
 
         assertEquals("A marker-only FQN must be discovered", listOf("MyTemplate1"), provider.definitionClasses())
         assertEquals("A marker origin must name the root that holds it", "templates.jar", provider.markerOriginFor("MyTemplate1")?.rootName)
@@ -82,7 +80,7 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         runTest(IN_JAR)
         KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClassNames = "com.example.Explicit") }
 
-        val provider = DefinitionFromDependenciesProvider(project)
+        val provider = DefinitionFromDependenciesProvider.getInstance(project)
 
         assertTrue("An explicit FQN must be included", provider.definitionClasses().contains("com.example.Explicit"))
         assertNull("An explicit FQN with no marker must report no marker file", provider.markerOriginFor("com.example.Explicit"))
@@ -92,7 +90,7 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         runTest(IN_JAR)
         KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClassNames = "MyTemplate1") }
 
-        val provider = DefinitionFromDependenciesProvider(project)
+        val provider = DefinitionFromDependenciesProvider.getInstance(project)
 
         assertEquals("An FQN in both sources must appear once", listOf("MyTemplate1"), provider.definitionClasses())
         assertNotNull(
@@ -104,11 +102,11 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
     fun testExplicitAndDiscoveredClasspathsAreDeduplicated() {
         runTest(IN_JAR)
 
-        val discovered = DefinitionFromDependenciesProvider(project).getTemplateClasspath().map { it.pathString }
+        val discovered = DefinitionFromDependenciesProvider.getInstance(project).templateClasspath().map { it.pathString }
         assertFalse("Discovery must find at least one classpath entry", discovered.isEmpty())
 
         KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClasspath = discovered.joinToString("\n")) }
-        val merged = DefinitionFromDependenciesProvider(project).getTemplateClasspath().map { it.pathString }
+        val merged = DefinitionFromDependenciesProvider.getInstance(project).templateClasspath().map { it.pathString }
 
         assertEquals("An entry present in both sources must appear once", merged.distinct(), merged)
         assertEquals(discovered.toSet(), merged.toSet())
@@ -120,6 +118,7 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
 
         val before = tracker.modificationCount
         settings.update { it.copy(explicitTemplateClassNames = "com.example.Foo") }
+        awaitDefinitions()
         val afterChange = tracker.modificationCount
         assertTrue(
             "ScriptDefinitionsModificationTracker must advance when settings state changes (was $before, now $afterChange)",
@@ -138,7 +137,7 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
     fun testBuildInvalidatesDiscovery() {
         runTest(IN_PRODUCTION_RESOURCES)
 
-        val provider = DefinitionFromDependenciesProvider(project)
+        val provider = DefinitionFromDependenciesProvider.getInstance(project)
         assertEmpty(provider.definitionClasses())
         val definitionsTracker = ScriptDefinitionsModificationTracker.getInstance(project)
         val definitionsCount = definitionsTracker.modificationCount
@@ -147,21 +146,10 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         runWriteAction {
             templatesDirectory.createChildData(this, "MyTemplate.classname")
         }
-        refreshDefinitionsAfterBuild()
+        reloadDefinitions()
 
         assertTrue("A build that adds a marker file must reload script definitions", definitionsTracker.modificationCount > definitionsCount)
         assertEquals(listOf("MyTemplate"), provider.definitionClasses())
-    }
-
-    fun testBuildWithoutMarkerChangeKeepsDefinitions() {
-        runTest(IN_JAR)
-
-        val definitionsTracker = ScriptDefinitionsModificationTracker.getInstance(project)
-        val definitionsCount = definitionsTracker.modificationCount
-
-        refreshDefinitionsAfterBuild()
-
-        assertEquals("A build that changes no marker file must not reload script definitions", definitionsCount, definitionsTracker.modificationCount)
     }
 
     fun testMarkerInTestScopeLibraryIsDiscovered() {
@@ -171,10 +159,11 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         ModuleRootModificationUtil.updateModel(module) { model ->
             model.orderEntries.filterIsInstance<LibraryOrderEntry>().forEach { it.scope = DependencyScope.TEST }
         }
+        awaitDefinitions()
 
-        val provider = DefinitionFromDependenciesProvider(project)
+        val provider = DefinitionFromDependenciesProvider.getInstance(project)
         assertEquals(listOf("MyTemplate1"), provider.definitionClasses())
-        assertTrue("The marker root must stay on the classpath", provider.getTemplateClasspath().any { it.pathString.endsWith("templates.jar") })
+        assertTrue("The marker root must stay on the classpath", provider.templateClasspath().any { it.pathString.endsWith("templates.jar") })
     }
 
     fun testTestOutputIsNotOnDefinitionClasspath() {
@@ -190,8 +179,9 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         runWriteAction {
             moduleDirectory.findFileByRelativePath("classes/$SCRIPT_TEMPLATE_MARKER_DIR")!!.createChildData(this, "MyTemplate.classname")
         }
+        reloadDefinitions()
 
-        val classpath = DefinitionFromDependenciesProvider(project).getTemplateClasspath().map { it.pathString }
+        val classpath = DefinitionFromDependenciesProvider.getInstance(project).templateClasspath().map { it.pathString }
         assertTrue("The production output must be on the classpath", classpath.any { it.endsWith("module/classes") })
         assertFalse("The test output must not be on the classpath", classpath.any { it.endsWith("test-classes") })
     }
@@ -199,13 +189,15 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
     fun testClasspathGuessInDumbModeReloadsDefinitionsInSmartMode() {
         runTest(IN_JAR)
         KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClassNames = "com.example.Explicit") }
+        awaitDefinitions()
 
         val definitionsTracker = ScriptDefinitionsModificationTracker.getInstance(project)
         val definitionsCount = definitionsTracker.modificationCount
         DumbModeTestUtils.runInDumbModeSynchronously(project) {
-            DefinitionFromDependenciesProvider(project).getTemplateClasspath()
+            DefinitionFromDependenciesProvider.getInstance(project).templateClasspath()
         }
         runInEdtAndWait { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() }
+        awaitDefinitions()
 
         assertTrue("The end of the dumb mode must reload script definitions", definitionsTracker.modificationCount > definitionsCount)
     }
@@ -231,7 +223,7 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
             }) {
                 val provider = DefinitionFromDependenciesProvider(defaultProject)
                 assertEquals(listOf("com.example.Explicit"), provider.definitionClasses())
-                assertEmpty(provider.getTemplateClasspath())
+                assertEmpty(provider.templateClasspath())
             }
         }
         finally {
@@ -244,10 +236,10 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
 
     fun testInvalidExplicitClasspathEntryIsSkipped() {
         runTest(IN_JAR)
-        val discovered = DefinitionFromDependenciesProvider(project).getTemplateClasspath()
+        val discovered = DefinitionFromDependenciesProvider.getInstance(project).templateClasspath()
         KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClasspath = "bad\u0000path") }
 
-        assertEquals(discovered, DefinitionFromDependenciesProvider(project).getTemplateClasspath())
+        assertEquals(discovered, DefinitionFromDependenciesProvider.getInstance(project).templateClasspath())
     }
 
     fun testOutputDirectoryCreatedAfterDiscoveryIsScanned() {
@@ -256,28 +248,20 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         val module = ModuleManager.getInstance(project).modules.single { it.name.endsWith("_module") }
         val projectDirectory = getOrCreateProjectBaseDir()
         PsiTestUtil.setCompilerOutputPath(module, "${projectDirectory.url}/module/out", false)
-        val provider = DefinitionFromDependenciesProvider(project)
+        awaitDefinitions()
+        val provider = DefinitionFromDependenciesProvider.getInstance(project)
         assertEmpty(provider.definitionClasses())
 
         runWriteAction {
             VfsUtil.createDirectoryIfMissing(projectDirectory, "module/out/$SCRIPT_TEMPLATE_MARKER_DIR")!!.createChildData(this, "MyTemplate.classname")
         }
-        refreshDefinitionsAfterBuild()
+        reloadDefinitions()
 
         assertEquals(listOf("MyTemplate"), provider.definitionClasses())
     }
 
-    fun testDiscoveryRunsInsideReadActionAndOnEdt() {
-        runTest(IN_JAR)
-
-        val definitionsTracker = ScriptDefinitionsModificationTracker.getInstance(project)
-        definitionsTracker.incModificationCount()
-        assertEquals(listOf("MyTemplate1"), runReadActionBlocking { DefinitionFromDependenciesProvider(project).definitionClasses() })
-        definitionsTracker.incModificationCount()
-        assertEquals(listOf("MyTemplate1"), runInEdtAndGet { DefinitionFromDependenciesProvider(project).definitionClasses() })
-    }
-
-    private fun refreshDefinitionsAfterBuild() {
-        ScriptDefinitionsBuildListener(project).refreshDefinitions().blockingGet(1, TimeUnit.MINUTES)
+    private fun reloadDefinitions() {
+        ScriptDefinitionProviderImpl.getInstance(project).scheduleLoading()
+        awaitDefinitions()
     }
 }

@@ -76,6 +76,14 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
 
   private val myRefreshIndicator = RefreshProgress.create()
   private val mySessions: MutableSet<RefreshSessionImpl> = Collections.synchronizedSet(HashSet())
+
+  /**
+   * Files in 'actualizing' state: they were scanned, and changes against VFS were detected -- but the changes are not yet applied to
+   * VFS state
+   */
+  @VisibleForTesting
+  val inFlightScans: InFlightScans = InFlightScans { Registry.`is`("vfs.refresh.sync.rescans.in.flight.files", true) }
+
   private val myEventCounter = FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN)
   private var myActivityCounter = 0
   private val parallelizationCache = ConcurrentHashMap<ModalityState, Pair<Semaphore, Int>>()
@@ -216,7 +224,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     try {
       readAndBackgroundWriteAction {
         myRefreshIndicator.checkCanceled()
-        val (events, changeAppliers) = collectChangeAppliersInReadAction(session, events, evQueuedAt, evTimeInQueue, evRetries, evListenerTime)
+        val [events, changeAppliers] = collectChangeAppliersInReadAction(session, events, evQueuedAt, evTimeInQueue, evRetries, evListenerTime)
         if (events.isEmpty() && session.myFinishRunnable == null) {
           // someone may be waiting for this refresh synchronously on session's semaphore
           // at the same time, we'd like to avoid issuing a write action if nothing was changed,
@@ -286,6 +294,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     VfsUsageCollector.logEventProcessing(evTimeInQueue.toLong(), TimeUnit.NANOSECONDS.toMillis(evListenerTime.toLong()), evRetries.toInt(), t, events.size)
   }
 
+  @Suppress("ForbiddenInSuspectContextMethod")
   private fun processEvents(session: RefreshSessionImpl, modality: ModalityState, events: Collection<VFileEvent>) {
     if (Registry.`is`("vfs.async.event.processing", true) && !events.isEmpty()) {
       val evQueuedAt = System.nanoTime()
@@ -299,8 +308,8 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
         }
         .expireWith(this)
         .wrapProgress(myRefreshIndicator)
-        .finishOnUiThread(modality) { data ->
-          doFireEvents(session, evTimeInQueue, evListenerTime, evRetries, data.first, data.second, false)
+        .finishOnUiThread(modality) { [val events, val changeAppliers] ->
+          doFireEvents(session, evTimeInQueue, evListenerTime, evRetries, events, changeAppliers, false)
         }
         .submit {
           eventProcessingScope.launch {
@@ -342,6 +351,11 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
       mySessions.add(session)
       return session.scan(timeInQueue)
     }
+    catch (e: Throwable) {
+      // The events of a failed scan are never applied, so its files must not stay in flight
+      session.releaseScannedFiles()
+      throw e
+    }
     finally {
       mySessions.remove(session)
     }
@@ -362,6 +376,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     }
     eventScanningScope.children().forEach { it.cancel() }
     eventProcessingScope.children().forEach { it.cancel() }
+    inFlightScans.releaseAll()
   }
 
   companion object {
@@ -411,6 +426,18 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     fun setTestListener(testListener: Consumer<in VirtualFile?>?) {
       assert(ApplicationManager.getApplication().isUnitTestMode())
       RefreshWorker.ourTestListener = testListener
+    }
+
+    @TestOnly
+    @JvmStatic
+    fun scanForTest(session: RefreshSession): Collection<VFileEvent> =
+      (session as RefreshSessionImpl).scan(-1)
+
+    /** Ends the 'actualizing' state of the files that [scanForTest] has scanned, as if their events were applied */
+    @TestOnly
+    @JvmStatic
+    fun releaseScannedFilesForTest(session: RefreshSession) {
+      (session as RefreshSessionImpl).releaseScannedFiles()
     }
 
     /**

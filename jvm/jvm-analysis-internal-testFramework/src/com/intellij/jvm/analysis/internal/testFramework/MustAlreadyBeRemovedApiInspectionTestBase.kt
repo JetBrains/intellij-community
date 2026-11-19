@@ -5,6 +5,11 @@ import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
+/**
+ * @deprecated Use [jvmAnnotationsProjectFixture] and [mustAlreadyBeRemovedApiInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use jvmAnnotationsProjectFixture and mustAlreadyBeRemovedApiInspectionFixture in a JUnit 5 test")
 abstract class MustAlreadyBeRemovedApiInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: MustAlreadyBeRemovedApiInspection = MustAlreadyBeRemovedApiInspection()
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.application.productMigration.writeMigrationState
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.runInEdtAndGet
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -36,6 +37,7 @@ import javax.swing.Icon
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
+import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
 
 class MigrationRedirectTest {
@@ -309,6 +311,44 @@ class MigrationRedirectTest {
     var isStarted = false
     assertNull(launch(MigrationRedirect(state, waits = true, content = null, launcher), listOf("--wait", "/a")) { isStarted = true })
     assertFalse(isStarted)
+  }
+
+  @Test
+  fun `kill switch gives the usual start for each kind of start`() {
+    writeState(MigrationStatus.MOVED)
+    writeContent()
+    val stateBytes = stateFile.readBytes()
+    val contentBytes = contentFile.readBytes()
+    for (start in MigrationRedirectStart.entries) {
+      assertNull(start.name, loadMigrationRedirect(start, stateFile, isMigrationDisabled = true))
+    }
+    assertArrayEquals(stateBytes, stateFile.readBytes())
+    assertArrayEquals(contentBytes, contentFile.readBytes())
+  }
+
+  @Test
+  fun `kill switch keeps the state of a missing app`() {
+    writeState(MigrationStatus.MOVED, app = tempDir.root.toPath().resolve("Missing.app"))
+    writeContent()
+    val stateBytes = stateFile.readBytes()
+    for (start in MigrationRedirectStart.entries) {
+      assertNull(start.name, loadMigrationRedirect(start, stateFile, isMigrationDisabled = true))
+    }
+    assertArrayEquals(stateBytes, stateFile.readBytes())
+    assertTrue(contentFile.exists())
+  }
+
+  @Test
+  fun `without kill switch each kind of start is redirected`() {
+    writeState(MigrationStatus.MOVED)
+    writeContent()
+    for (start in MigrationRedirectStart.entries) {
+      assertNotNull(start.name, loadMigrationRedirect(start, stateFile, isMigrationDisabled = false))
+    }
+
+    writeState(MigrationStatus.MOVED, app = tempDir.root.toPath().resolve("Missing.app"))
+    assertNull(loadMigrationRedirect(MigrationRedirectStart.OPEN, stateFile, isMigrationDisabled = false))
+    assertFalse(stateFile.exists())
   }
 
   private fun load(start: MigrationRedirectStart?): MigrationRedirect? = loadMigrationRedirect(start, stateFile)

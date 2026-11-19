@@ -316,13 +316,11 @@ c:com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter
 - registerLayer(com.intellij.psi.tree.IElementType,com.intellij.openapi.editor.ex.util.LayerDescriptor):V
 - setColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - setText(java.lang.CharSequence):V
-- p:unregisterLayer(com.intellij.psi.tree.IElementType):V
 - p:updateLayers():Z
 - p:updateLayers(com.intellij.openapi.editor.event.DocumentEvent):Z
 c:com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 - com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 - com.intellij.openapi.editor.highlighter.EditorHighlighter
-- p:myText:java.lang.CharSequence
 - <init>(com.intellij.openapi.fileTypes.SyntaxHighlighter,com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - f:checkContentIsEqualTo(java.lang.CharSequence):Z
 - createIterator(I):com.intellij.openapi.editor.highlighter.HighlighterIterator
@@ -333,6 +331,7 @@ c:com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 - getAttributesForPreviousAndTypedChars(com.intellij.openapi.editor.Document,I,C):java.util.List
 - getClient():com.intellij.openapi.editor.highlighter.HighlighterClient
 - pf:getDocument():com.intellij.openapi.editor.Document
+- pf:getLexedText():java.lang.CharSequence
 - p:getLexer():com.intellij.lexer.Lexer
 - getPriority():I
 - getScheme():com.intellij.openapi.editor.colors.EditorColorsScheme

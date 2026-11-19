@@ -81,6 +81,10 @@ com.intellij.ide.plugins.DynamicPluginListener
 - f:fromModuleId(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginOsRequirement
 - f:fromOs(com.intellij.util.system.OS):com.intellij.ide.plugins.IdeaPluginOsRequirement
 - f:getHostOsModuleIds():java.util.List
+c:com.intellij.lang.LanguageExtension
+- com.intellij.openapi.util.KeyedExtensionCollector
+- *:allForLanguage(com.intellij.lang.Language,com.intellij.openapi.project.Project):java.util.List
+- *:allForLanguageOrAny(com.intellij.lang.Language,com.intellij.openapi.project.Project):java.util.List
 *a:com.intellij.lang.LanguageMatcher
 - s:match(com.intellij.lang.Language):com.intellij.lang.LanguageMatcher
 - s:matchWithDialects(com.intellij.lang.Language):com.intellij.lang.LanguageMatcher
@@ -234,6 +238,28 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 c:com.intellij.openapi.editor.markup.UnmodifiableTextAttributes
 - com.intellij.openapi.editor.markup.TextAttributes
 - *:setFontFamilies(com.intellij.openapi.editor.markup.FontFamilies):V
+*f:com.intellij.openapi.extensions.TechnologyAwareExtensionPointName
+- com.intellij.openapi.extensions.TechnologyAwareExtensions
+- <init>(com.intellij.openapi.extensions.ExtensionPointName):V
+- <init>(java.lang.String):V
+- f:addChangeListener(com.intellij.openapi.Disposable,com.intellij.openapi.extensions.TechnologyAwareExtensions$ApplicableExtensionsListener):V
+- f:addChangeListener(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.extensions.TechnologyAwareExtensions$ApplicableExtensionsListener):V
+*a:com.intellij.openapi.extensions.TechnologyAwareExtensions
+- f:pointName:com.intellij.openapi.extensions.BaseExtensionPointName
+- f:computeSafeIfAny(com.intellij.openapi.project.Project,java.util.function.Function):java.lang.Object
+- f:extensionList(com.intellij.openapi.project.Project):java.util.List
+- f:findFirstSafe(com.intellij.openapi.project.Project,java.util.function.Predicate):java.lang.Object
+- f:forEachExtensionSafe(com.intellij.openapi.project.Project,java.util.function.Consumer):V
+- f:getName():java.lang.String
+- f:lazySequence(com.intellij.openapi.project.Project):kotlin.sequences.Sequence
+*:com.intellij.openapi.extensions.TechnologyAwareExtensions$ApplicableExtensionsListener
+- a:applicableExtensionsChanged(com.intellij.openapi.project.Project):V
+*f:com.intellij.openapi.extensions.TechnologyAwareProjectExtensionPointName
+- com.intellij.openapi.extensions.TechnologyAwareExtensions
+- <init>(com.intellij.openapi.extensions.ProjectExtensionPointName):V
+- <init>(java.lang.String):V
+- f:addChangeListener(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.openapi.extensions.TechnologyAwareExtensions$ApplicableExtensionsListener):V
+- f:addChangeListener(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,com.intellij.openapi.extensions.TechnologyAwareExtensions$ApplicableExtensionsListener):V
 a:com.intellij.openapi.fileEditor.FileDocumentManager
 - com.intellij.openapi.vfs.SavingRequestor
 - *:overrideConflictResolution(com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution,com.intellij.openapi.Disposable):V
@@ -324,6 +350,9 @@ a:com.intellij.openapi.project.DumbService
 - a:processFileEx(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.containers.TreeNodeProcessingResult
 a:com.intellij.openapi.roots.FileIndexFacade
 - *a:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
+c:com.intellij.openapi.util.KeyedExtensionCollector
+- com.intellij.openapi.util.ModificationTracker
+- *f:forKey(java.lang.Object,com.intellij.openapi.project.Project):java.util.List
 com.intellij.openapi.util.registry.RegistryManager
 - *a:is(java.lang.String,Z):Z
 - *a:stringValue(java.lang.String,java.lang.String):java.lang.String
@@ -499,6 +528,8 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - f:forkTimeline():com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion
 - f:freezePsiVersion(kotlin.jvm.functions.Function0):java.lang.Object
 *:com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion
+f:com.intellij.testFramework.LightVirtualFile$Builder
+- *:skipEventSystem(Z):com.intellij.testFramework.LightVirtualFile$Builder
 f:com.intellij.util.CoroutinesKt
 - *sf:awaitCancellationAndInvoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):V
 - *bs:awaitCancellationAndInvoke$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):V

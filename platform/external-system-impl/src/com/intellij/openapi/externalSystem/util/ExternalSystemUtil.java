@@ -404,22 +404,22 @@ public final class ExternalSystemUtil {
     var executionName = ExternalSystemBundle.message("external.system.sync.execution.name", task.getProjectName());
     var processHandler = new ExternalSystemProcessHandler(task, executionName);
 
-    var executionConsoleManager = getConsoleManagerFor(task);
-    var executionConsole = executionConsoleManager.attachExecutionConsole(project, task, null, processHandler);
-    var consoleSettings = executionConsole instanceof BuildViewSettingsProvider
-                          ? new BuildViewSettingsProviderAdapter((BuildViewSettingsProvider)executionConsole)
-                          : executionConsoleManager.getExecutionConsoleSettings();
+    var consoleManager = getConsoleManagerFor(task);
+    var consoleView = consoleManager.attachExecutionConsole(project, task, null, processHandler);
+    var consoleSettings = getExecutionConsoleSettings(consoleManager, consoleView);
 
-    attachExecutionConsole(project, executionConsole, processHandler);
+    attachExecutionConsole(project, consoleView, processHandler);
 
-    var buildDescriptor = createBuildDescriptor(importSpec, task, processHandler, executionConsole, executionConsoleManager);
+    var buildDescriptor = createBuildDescriptor(importSpec, task, processHandler, consoleManager, consoleView);
 
     var progressListener = project.getService(SyncViewManager.class);
 
     try (var eventDispatcher = new ExternalSystemEventDispatcher(taskId, progressListener, consoleSettings)) {
+      eventDispatcher.attachToProcess(processHandler);
+
       var syncListener = new ExternalSystemSyncEventDispatcher(
         importSpec, task, processHandler, eventDispatcher, buildDescriptor,
-        BuildConsoleUtils.getDataContext(taskId, progressListener, executionConsole),
+        BuildConsoleUtils.getDataContext(taskId, progressListener, consoleView),
         consoleSettings
       );
       LOG.info("External project [" + externalProjectPath + "] sync started");
@@ -455,8 +455,8 @@ public final class ExternalSystemUtil {
     @NotNull ImportSpec importSpec,
     @NotNull ExternalSystemResolveProjectTask task,
     @NotNull ExternalSystemProcessHandler processHandler,
-    @Nullable ExecutionConsole executionConsole,
-    @NotNull ExternalSystemExecutionConsoleManager<?, ?> executionConsoleManager
+    @NotNull ExternalSystemExecutionConsoleManager<?, ?> consoleManager,
+    @Nullable ExecutionConsole consoleView
   ) {
     var project = importSpec.getProject();
     var taskId = task.getId();
@@ -466,9 +466,9 @@ public final class ExternalSystemUtil {
       .withProcessHandler(processHandler, null)
       .withRestartAction(new SyncRerunAction(externalProjectPath, importSpec, processHandler))
       .withContentDescriptor(() -> {
-        if (executionConsole == null) return null;
+        if (consoleView == null) return null;
         BuildContentDescriptor contentDescriptor = new BuildContentDescriptor(
-          executionConsole, processHandler, executionConsole.getComponent(),
+          consoleView, processHandler, consoleView.getComponent(),
           ExternalSystemBundle.message("build.event.title.sync")
         );
         contentDescriptor.setActivateToolWindowWhenAdded(importSpec.isActivateBuildToolWindowOnStart());
@@ -477,9 +477,9 @@ public final class ExternalSystemUtil {
         contentDescriptor.setAutoFocusContent(importSpec.isActivateBuildToolWindowOnFailure());
         return contentDescriptor;
       })
-      .withActions(executionConsoleManager.getCustomActions(project, task, null))
-      .withContextActions(executionConsoleManager.getCustomContextActions(project, task, null))
-      .withExecutionFilters(executionConsoleManager.getCustomExecutionFilters(project, task, null));
+      .withActions(consoleManager.getCustomActions(project, task, null))
+      .withContextActions(consoleManager.getCustomContextActions(project, task, null))
+      .withExecutionFilters(consoleManager.getCustomExecutionFilters(project, task, null));
   }
 
   private static void handleSyncResult(
@@ -1035,6 +1035,25 @@ public final class ExternalSystemUtil {
     return ObjectUtils.notNull(patchedConsoleManager, () -> new DefaultExternalSystemExecutionConsoleManager());
   }
 
+  /**
+   * Resolves the build view settings for the execution console.
+   * The build view settings belong to the console manager, see {@link ExternalSystemExecutionConsoleManager#getExecutionConsoleSettings()}.
+   * An execution console that implements {@link BuildViewSettingsProvider} still takes precedence for compatibility, but it is reported:
+   * a decorated console loses its settings, because the decorator doesn't implement {@link BuildViewSettingsProvider}.
+   */
+  @ApiStatus.Internal
+  public static @NotNull BuildViewSettingsProvider getExecutionConsoleSettings(
+    @NotNull ExternalSystemExecutionConsoleManager<?, ?> consoleManager,
+    @Nullable ExecutionConsole executionConsole
+  ) {
+    if (executionConsole instanceof BuildViewSettingsProvider settings) {
+      LOG.warn("The execution console " + executionConsole.getClass().getName() + " provides the build view settings. " +
+               "Return them from " + consoleManager.getClass().getName() + ".getExecutionConsoleSettings() instead.");
+      return new BuildViewSettingsProviderAdapter(settings);
+    }
+    return consoleManager.getExecutionConsoleSettings();
+  }
+
   @ApiStatus.Internal
   public static void attachExecutionConsole(
     @NotNull Project project,
@@ -1203,7 +1222,7 @@ public final class ExternalSystemUtil {
     private final @NotNull BuildEventDispatcher eventDispatcher;
     private final @NotNull BuildDescriptor buildDescriptor;
     private final @NotNull DataContext dataContext;
-    private final @Nullable BuildViewSettingsProvider viewSettingsProvider;
+    private final @NotNull BuildViewSettingsProvider viewSettingsProvider;
 
     private final @NotNull Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier = new Ref<>();
 
@@ -1236,7 +1255,10 @@ public final class ExternalSystemUtil {
 
     @Override
     public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {
-      eventDispatcher.notifyTextAvailable(text, outputType);
+      processHandler.notifyTextAvailable(text, outputType);
+      if (!viewSettingsProvider.isSingleBuildConsoleView()) {
+        eventDispatcher.notifyTextAvailable(text, outputType);
+      }
     }
 
     @Override

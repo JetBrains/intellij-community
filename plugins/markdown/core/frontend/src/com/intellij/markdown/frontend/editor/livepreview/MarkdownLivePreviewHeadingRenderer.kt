@@ -8,10 +8,12 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.CustomFoldRegionRenderer
 import com.intellij.openapi.editor.Editor
@@ -20,6 +22,8 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
+import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -91,6 +95,7 @@ private const val SOURCE_RANGE_ATTRIBUTE = "md-src-pos"
  */
 internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) : MarkdownLivePreviewElementRenderer {
   private var revealedHeadings = emptyList<RevealedHeading>()
+  private val styleSheets = ConcurrentHashMap<String, StyleSheet>()
 
   init {
     editor.addEditorMouseListener(object : EditorMouseListener {
@@ -200,7 +205,7 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
       val look = look()
       val width = wrapWidth(editor)
       return Supplier<Runnable> {
-        val headingPainter = HeadingPainter(editor, look, width)
+        val headingPainter = HeadingPainter(editor, look, width, styleSheets)
         Runnable { painter = headingPainter }
       }
     }
@@ -208,7 +213,7 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
     /** The painter for the current look. A reveal and a refold in one presentation reuse it. */
     fun painter(): HeadingPainter {
       val look = look()
-      return painter?.takeIf { it.look == look } ?: HeadingPainter(editor, look, wrapWidth(editor)).also { painter = it }
+      return painter?.takeIf { it.look == look } ?: HeadingPainter(editor, look, wrapWidth(editor), styleSheets).also { painter = it }
     }
 
     /** The look of the JCEF preview: bold, the default foreground, and the info foreground for h6. */
@@ -277,7 +282,12 @@ private data class HeadingLook(
  * Paints one heading with its own [JBHtmlPane]. The layout is cached for the current wrap width.
  * The constructor lays out the pane at [width]. It needs no EDT, so a background thread can create the painter.
  */
-private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook, width: Int?) : CustomFoldRegionRenderer, CustomHighlighterRenderer {
+private class HeadingPainter(
+  private val editor: EditorEx,
+  val look: HeadingLook,
+  width: Int?,
+  private val styleSheets: ConcurrentHashMap<String, StyleSheet>,
+) : CustomFoldRegionRenderer, CustomHighlighterRenderer {
   private val pane = createPane()
   private var layoutWidth: Int? = null
   private var isWrapped = false
@@ -390,7 +400,7 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
       },
       JBHtmlPaneConfiguration.builder()
         .fontResolver(EditorCssFontResolver.getInstance(editor))
-        .customStyleSheetProvider { headingStyleSheet(css) }
+        .customStyleSheetProvider { styleSheets.computeIfAbsent(css) { StyleSheetUtil.loadStyleSheet(it) } }
         .build(),
     ).apply {
       border = JBUI.Borders.empty()
@@ -404,10 +414,6 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
     }
   }
 }
-
-private val headingStyleSheets = ConcurrentHashMap<String, StyleSheet>()
-
-private fun headingStyleSheet(css: String): StyleSheet = headingStyleSheets.computeIfAbsent(css) { StyleSheetUtil.loadStyleSheet(it) }
 
 /** The width that soft wraps use, or null when the editor does not soft-wrap. */
 private fun wrapWidth(editor: EditorEx): Int? {
@@ -450,4 +456,14 @@ private fun AttributeSet.sourceRange(): IntRange? {
 private class HeadingSpacer(val height: Int) : EditorCustomElementRenderer {
   override fun calcWidthInPixels(inlay: Inlay<*>): Int = 0
   override fun calcHeightInPixels(inlay: Inlay<*>): Int = height
+}
+
+internal class MarkdownLivePreviewHeadingBackspaceHandler(private val original: EditorActionHandler) : EditorWriteActionHandler.ForEachCaret() {
+  override fun executeWriteAction(editor: Editor, caret: Caret, dataContext: DataContext?) {
+    original.execute(editor, caret, dataContext)
+    val offset = caret.offset
+    val region = editor.foldingModel.getCollapsedRegionAtOffset(offset - 1) as? CustomFoldRegion ?: return
+    if (region.endOffset != offset || region.renderer !is HeadingPainter) return
+    editor.foldingModel.runBatchFoldingOperation({ editor.foldingModel.removeFoldRegion(region) }, false, false)
+  }
 }

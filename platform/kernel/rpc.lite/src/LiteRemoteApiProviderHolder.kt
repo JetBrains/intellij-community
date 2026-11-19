@@ -4,40 +4,47 @@ package com.intellij.platform.rpc.lite
 import com.intellij.openapi.diagnostic.thisLogger
 import fleet.rpc.RemoteApi
 import fleet.rpc.RemoteApiDescriptor
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Holds the [RemoteApiProvider] of the process once it is installed. The first installed provider stays;
+ * Holds the [RemoteApiProvider] of the process while one is installed. The first installed provider stays;
  * a caller that awaits before the installation resumes with it.
+ * An [uninstall] drops it, and a caller that awaits then waits for the next [install].
  */
 @ApiStatus.Internal
 class LiteRemoteApiProviderHolder {
-  private val provider: CompletableDeferred<RemoteApiProvider> = CompletableDeferred()
+  private val provider = MutableStateFlow<RemoteApiProvider?>(null)
 
   fun install(remoteApiProvider: RemoteApiProvider) {
-    if (provider.isCompleted) {
-      thisLogger().error(
-        "Remote API provider is already installed. " +
-        "Tried to setup ${remoteApiProvider::class.java.simpleName}, " +
-        "but ${provider.getCompleted().javaClass.simpleName} is installed"
-      )
+    while (!provider.compareAndSet(null, remoteApiProvider)) {
+      val current = provider.value ?: continue
+      if (current !== remoteApiProvider) {
+        thisLogger().error(
+          "Remote API provider is already installed. " +
+          "Tried to setup ${remoteApiProvider::class.java.simpleName}, " +
+          "but ${current.javaClass.simpleName} is installed"
+        )
+      }
+      return
     }
-    provider.complete(remoteApiProvider)
+  }
+
+  fun uninstall() {
+    provider.value = null
   }
 
   fun isConnected(): Boolean {
-    return provider.isCompleted
+    return provider.value != null
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   fun <T : RemoteApi<Unit>> tryResolve(descriptor: RemoteApiDescriptor<T>): T? {
-    if (!provider.isCompleted) return null
-    return provider.getCompleted().tryResolve(descriptor)
+    return provider.value?.tryResolve(descriptor)
   }
 
   suspend fun <T : RemoteApi<Unit>> awaitConnectionAndResolve(descriptor: RemoteApiDescriptor<T>): T {
-    return provider.await().resolve(descriptor)
+    return provider.filterNotNull().first().resolve(descriptor)
   }
 }

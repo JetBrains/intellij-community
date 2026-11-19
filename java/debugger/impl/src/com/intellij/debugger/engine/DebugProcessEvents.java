@@ -12,9 +12,12 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.engine.requests.EmulatedReturnValueWatcher;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
-import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
+import com.intellij.debugger.engine.requests.NativeReturnValueWatcher;
+import com.intellij.debugger.engine.requests.OverheadReportingWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.engine.requests.ReturnValueWatcher;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -215,11 +218,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
               protected void action() {
                 int processed = 0;
                 for (Event event : eventSet) {
-                  if (myReturnValueWatcher != null && myReturnValueWatcher.isTrackingEnabled()) {
-                    if (myReturnValueWatcher.processEvent(event)) {
-                      processed++;
-                      continue;
-                    }
+                  if (myReturnValueWatcher != null && myReturnValueWatcher.processEvent(event)) {
+                    processed++;
+                    continue;
                   }
                   Consumer<? super Event> handler = getEventRequestHandler(event);
                   if (handler != null) {
@@ -259,7 +260,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 ReferenceType lastPreparedClass = null;
 
                 for (Event event : eventSet) {
-                  if (getEventRequestHandler(event) != null) { // handled before
+                  if (getEventRequestHandler(event) != null || ReturnValueWatcher.isWatcherEvent(event)) { // handled before
                     getSuspendManager().voteResume(suspendContext);
                     continue;
                   }
@@ -434,7 +435,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final EventRequestManager requestManager = machineProxy.eventRequestManager();
 
         if (machineProxy.canGetMethodReturnValues()) {
-          myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
+          // The emulated watcher reads JVM bytecode. An Android VM has DEX bytecode.
+          boolean emulated = Registry.is("debugger.show.return.values.emulated") &&
+                             machineProxy.canGetBytecodes() && machineProxy.canGetConstantPool() &&
+                             !DebuggerUtils.isAndroidVM(machineProxy.getVirtualMachine());
+          ReturnValueWatcher watcher = emulated
+                                       ? new EmulatedReturnValueWatcher(requestManager)
+                                       : new NativeReturnValueWatcher(requestManager);
+          myReturnValueWatcher = new OverheadReportingWatcher(watcher, this);
         }
 
         enableNonSuspendingRequest(platformThreadsOnly(requestManager.createThreadStartRequest()),

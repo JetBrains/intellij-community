@@ -2,47 +2,57 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.jetbrains.idea.devkit.inspections.internal.UseJBColorFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.internal.UseJBColorFixture.CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME;
+import static org.jetbrains.idea.devkit.inspections.internal.UseJBColorFixture.CONVERT_TO_JB_COLOR_FIX_NAME;
+import static org.jetbrains.idea.devkit.inspections.internal.UseJBColorFixtureKt.useJBColorFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/useJBColorFix")
-public class UseJBColorFixTest extends UseJBColorFixTestBase {
+@TestApplication
+public class UseJBColorFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<UseJBColorFixture> jbColor =
+    useJBColorFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useJBColorFix");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useJBColorFix";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testUseJBColorConstructorInConstant() {
-    doTest(CONVERT_TO_JB_COLOR_FIX_NAME);
+    jbColor.get().doTest(CONVERT_TO_JB_COLOR_FIX_NAME);
   }
 
+  @Test
   public void testUseJBColorConstructorInMethodParam() {
-    doTest(CONVERT_TO_JB_COLOR_FIX_NAME);
+    jbColor.get().doTest(CONVERT_TO_JB_COLOR_FIX_NAME);
   }
 
+  @Test
   public void testUseJBColorConstructorInVariable() {
-    doTest(CONVERT_TO_JB_COLOR_FIX_NAME);
+    jbColor.get().doTest(CONVERT_TO_JB_COLOR_FIX_NAME);
   }
 
+  @Test
   public void testUseJBColorConstantInConstant() {
-    doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
+    jbColor.get().doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
   }
 
+  @Test
   public void testUseJBColorConstantInMethodParam() {
-    doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
+    jbColor.get().doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
   }
 
+  @Test
   public void testUseJBColorConstantInVariable() {
-    doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
+    jbColor.get().doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
   }
 
+  @Test
   public void testUseJBColorConstantStaticImportInVariable() {
-    doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
+    jbColor.get().doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
   }
 }

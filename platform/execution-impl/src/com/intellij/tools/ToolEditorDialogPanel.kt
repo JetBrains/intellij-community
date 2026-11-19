@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
+import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.JTextField
 
@@ -66,7 +67,7 @@ internal class ToolEditorDialogPanel {
     }.bottomGap(BottomGap.NONE)
 
     row {
-      additionalOptionsPanel = cell(JPanel())
+      additionalOptionsPanel = cell(JPanel(BorderLayout()))
         .align(AlignX.FILL)
         .component
     }

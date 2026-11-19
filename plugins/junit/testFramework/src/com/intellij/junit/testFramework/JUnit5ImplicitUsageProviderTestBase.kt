@@ -8,6 +8,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT5)
 
+/**
+ * @deprecated Use [junitProjectFixture] and [com.intellij.jvm.analysis.testFramework.jvmImplicitUsageProviderFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use junitProjectFixture and jvmImplicitUsageProviderFixture in a JUnit 5 test")
 abstract class JUnit5ImplicitUsageProviderTestBase : JvmImplicitUsageProviderTestBase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 }

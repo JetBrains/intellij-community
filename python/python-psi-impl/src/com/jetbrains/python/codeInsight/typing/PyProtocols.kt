@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyPossibleClassMember
 import com.jetbrains.python.psi.PyPsiFacade
 import com.jetbrains.python.psi.PyTypeParameter
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -24,6 +25,7 @@ import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.Collections
 
 
 fun PyClassLikeType.isProtocol(context: TypeEvalContext): Boolean = containsProtocol(getSuperClassTypes(context))
@@ -44,8 +46,20 @@ fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: Typ
 
 typealias ProtocolAndSubclassElements = Pair<PyTypeMember, List<PyTypeMember>>
 
+/** The question that [inspectProtocolSubclass] answers for a protocol, and the key of its answer. */
+private data class SubclassQuestion(val context: TypeEvalContext, val protocol: PyClassType, val subclass: PyClassType)
+
 @ApiStatus.Internal
-fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, context: TypeEvalContext): List<ProtocolAndSubclassElements> {
+fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, context: TypeEvalContext): List<ProtocolAndSubclassElements> =
+  PyUtil.getParameterizedCachedValueOutsideRecursion(protocol.pyClass, SubclassQuestion(context, protocol, subclass)) {
+    computeProtocolSubclass(it.protocol, it.subclass, it.context)
+  }
+
+private fun computeProtocolSubclass(
+  protocol: PyClassType,
+  subclass: PyClassType,
+  context: TypeEvalContext,
+): List<ProtocolAndSubclassElements> {
   val resolveContext = PyResolveContext.defaultContext(context)
   val result = mutableListOf<Pair<PyTypeMember, List<PyTypeMember>>>()
 
@@ -84,7 +98,8 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
     }
   }
 
-  return result
+  // The list is cached and shared by all callers
+  return Collections.unmodifiableList(result)
 }
 
 private fun PyClassType.findProtocolMember(name: String, context: TypeEvalContext): List<PyTypeMember> {

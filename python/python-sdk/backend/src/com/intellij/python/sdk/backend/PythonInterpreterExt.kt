@@ -15,9 +15,11 @@ import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.backend.impl.VERSION_NUMBER_RE
 import com.intellij.python.sdk.backend.impl.associationProblem
 import com.intellij.python.sdk.backend.impl.buildItem
+import com.intellij.python.sdk.backend.impl.buildUnavailableItem
 import com.intellij.python.sdk.backend.impl.recordedPythonInfo
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonInfo
@@ -57,6 +59,9 @@ private fun EelOsFamily.executableName(binaryName: String): String = when (this)
  * The receiver is the interpreter because that is what determines where to look: the answer is a property of this
  * environment, not of the tool. Only a native interpreter is supported: `null` for a target.
  */
+@RequiresBackgroundThread
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 fun PythonInterpreter.findToolExecutable(tool: PyTool, executableName: String = tool.packageName.name): Path? =
   when (this) {
     is NativePythonInterpreter -> {
@@ -119,6 +124,13 @@ fun PythonInterpreter.getPythonInfo(): PyResult<PythonInfo> {
 fun PythonInterpreter.asItem(): PyInterpreterItem = buildItem()
 
 /**
+ * The row of the interpreter of this key, which an interpreter library entry names while its environment is gone. It is
+ * `[invalid]`, and its reason names the environment and its manager. It reads no file and runs nothing.
+ */
+@Internal
+fun PythonInterpreterKey.asUnavailableItem(): PyInterpreterItem = buildUnavailableItem()
+
+/**
  * Every SDK as a UI list holds it, resolved off the EDT, in order.
  *
  * This is how a list of interpreters is built. The work is detecting each environment, which is local file reads that
@@ -138,18 +150,11 @@ suspend fun Sdk.interpreterItem(): PyInterpreterItem? = pythonInterpreterResultA
  * From Kotlin call [getPythonInfo] instead, which also says why it cannot be used.
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 @RequiresBlockingContext
 fun Sdk.isInterpreterUsable(): Boolean =
   runBlockingMaybeCancellable { pythonInterpreterResultAsync().successOrNull?.getPythonInfo() } is Result.Success<*>
-
-/**
- * The SDK this item names, or `null` when no SDK has its key any more.
- *
- * A list is built once and applied later, so the interpreter it named can be removed in between. `null` is that case,
- * and the caller decides what to tell the user. It does not wait: it reads the SDK table, because a Java combo box
- * calls it on the EDT.
- */
-fun PyInterpreterItem.findSdk(): Sdk? = PythonSdkUtil.getAllSdks().firstOrNull { interpreterRefOf(it) == ref }
 
 /** The flavor this interpreter was set up with. */
 val PythonInterpreter.flavor: PythonSdkFlavor<*>
@@ -217,6 +222,8 @@ fun PythonInterpreter.sitePackagesDirectory(project: Project): VirtualFile? = li
  * of its own then finds its standard library in the roots of the SDK.
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+// External plugins reach this through `PythonSdkUtil.getSitePackagesDirectory`, and their threads are unknown.
+@RequiresReadLockAbsence(generateAssertion = false)
 fun Sdk.sitePackagesDirectory(): VirtualFile? {
   val interpreter = pythonInterpreterResult().successOrNull
   val libDirectory = if (interpreter?.venvLibRoot() != null) interpreter.venvLibDirectory() else stdlibLibDirectory()
@@ -287,6 +294,7 @@ val PythonInterpreter.skeletonsPath: Path?
  */
 @Internal
 @RequiresBackgroundThread(generateAssertion = false)
+@RequiresReadLockAbsence
 fun PythonInterpreter.ensureSkeletonsRoot() {
   val path = skeletonsPath ?: return
   if (path.exists()) return

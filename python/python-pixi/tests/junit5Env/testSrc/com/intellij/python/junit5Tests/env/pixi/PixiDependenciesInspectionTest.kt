@@ -98,7 +98,7 @@ internal class PixiDependenciesInspectionTest {
     tool.setCustomExecutablePath(localEel.descriptor, environment.pixiExecutable)
     val pyProject = pyProjectFixture.get()
     val registry = PythonInterpreterRegistry.getInstance(projectFixture.get())
-    val interpreter = registry.newPythonInterpreter(pyProject, PyInterpreterRef.native(tool.fusId, PyEnvRef("default"))).getOrThrow()
+    val interpreter = registry.build(pyProject, PyInterpreterRef.native(tool.fusId, PyEnvRef("default"))).getOrThrow()
     try {
       pyProject.setPythonInterpreter(interpreter).getOrThrow()
       val manager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), interpreter)
@@ -141,7 +141,7 @@ internal class PixiDependenciesInspectionTest {
     finally {
       edtWriteAction { FileEditorManagerEx.getInstanceEx(projectFixture.get()).closeAllFiles() }
       pyProject.setPythonInterpreter(null).getOrThrow()
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
       tool.setCustomExecutablePath(localEel.descriptor, previous)
     }
   }
@@ -180,7 +180,7 @@ internal class PixiDependenciesInspectionTest {
     tool.setCustomExecutablePath(localEel.descriptor, environment.pixiExecutable)
     val pyProject = pyProjectFixture.get()
     val registry = PythonInterpreterRegistry.getInstance(projectFixture.get())
-    val interpreter = registry.newPythonInterpreter(pyProject, PyInterpreterRef.native(tool.fusId, PyEnvRef("docs"))).getOrThrow()
+    val interpreter = registry.build(pyProject, PyInterpreterRef.native(tool.fusId, PyEnvRef("docs"))).getOrThrow()
     try {
       pyProject.setPythonInterpreter(interpreter).getOrThrow()
       val manager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), interpreter)
@@ -224,7 +224,7 @@ internal class PixiDependenciesInspectionTest {
     finally {
       edtWriteAction { FileEditorManagerEx.getInstanceEx(projectFixture.get()).closeAllFiles() }
       pyProject.setPythonInterpreter(null).getOrThrow()
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
       tool.setCustomExecutablePath(localEel.descriptor, previous)
     }
   }

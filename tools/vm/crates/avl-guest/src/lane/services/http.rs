@@ -10,7 +10,7 @@
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::TcpStream;
 
-use super::websocket;
+use avl_control::websocket;
 
 #[cfg(test)]
 mod tests;

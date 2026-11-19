@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDirectory
@@ -18,7 +17,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyClass
@@ -91,18 +90,18 @@ object PyCompletionFeatures {
   fun getElementModuleCompletionFeatures(element: LookupElement): ElementModuleCompletionFeatures? {
     val psiElement = element.psiElement ?: return null
     var vFile: VirtualFile? = null
-    var sdk: Sdk? = null
+    var interpreter: PythonInterpreter? = null
     val containingFile = psiElement.containingFile
     if (psiElement is PsiDirectory) {
       vFile = psiElement.virtualFile
-      sdk = findModuleSdk(ModuleUtilCore.findModuleForPsiElement(psiElement))
+      interpreter = findModuleInterpreter(ModuleUtilCore.findModuleForPsiElement(psiElement))
     }
     else if (containingFile != null) {
       vFile = containingFile.virtualFile
-      sdk = findModuleSdk(ModuleUtilCore.findModuleForPsiElement(containingFile))
+      interpreter = findModuleInterpreter(ModuleUtilCore.findModuleForPsiElement(containingFile))
     }
     if (vFile != null) {
-      val isFromStdLib = PySkeletonUtil.isStdLib(vFile, sdk)
+      val isFromStdLib = PySkeletonUtil.isStdLib(vFile, interpreter)
       val canFindModule = ModuleUtilCore.findModuleForFile(vFile, psiElement.project) != null
       return ElementModuleCompletionFeatures(isFromStdLib, canFindModule)
     }
@@ -232,9 +231,6 @@ object PyCompletionFeatures {
   private fun isOriginalElementsTheSame(a: PsiElement, b: PsiElement) =
     CompletionUtil.getOriginalElement(a) == CompletionUtil.getOriginalElement(b)
 
-  /** The SDK of the interpreter of the Python project on [module], read from the snapshot. */
-  private fun findModuleSdk(module: Module?): Sdk? {
-    @Suppress("DEPRECATION") // The features still take an SDK.
-    return module?.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
-  }
+  /** The interpreter of the Python project on [module], read from the snapshot. */
+  private fun findModuleInterpreter(module: Module?): PythonInterpreter? = module?.findEvoPyProjectIfReady()?.interpreter
 }

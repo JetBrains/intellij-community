@@ -31,6 +31,7 @@ import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.OhosDistributionCustomizer
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.ProductProperties
@@ -151,6 +152,7 @@ fun createBuildContext(
     windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome),
     linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHome),
     macDistributionCustomizer = productProperties.createMacCustomizer(projectHome),
+    ohosDistributionCustomizer = productProperties.createOhosCustomizer(projectHome),
     proprietaryBuildTools = proprietaryBuildTools,
     applicationInfo = ApplicationInfoPropertiesImpl(
       project = normalizedCompilationContext.project,
@@ -168,6 +170,7 @@ class BuildContextImpl internal constructor(
   override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
   override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
   override val macDistributionCustomizer: MacDistributionCustomizer?,
+  override val ohosDistributionCustomizer: OhosDistributionCustomizer? = null,
   override val proprietaryBuildTools: ProprietaryBuildTools,
   override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(
     project = compilationContext.project,
@@ -412,6 +415,7 @@ class BuildContextImpl internal constructor(
       windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizers),
       linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizers),
       macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizers),
+      ohosDistributionCustomizer = productProperties.createOhosCustomizer(projectHomeForCustomizers),
       proprietaryBuildTools = proprietaryBuildTools,
       applicationInfo = newAppInfo,
       jarCacheManager = jarCacheManager,

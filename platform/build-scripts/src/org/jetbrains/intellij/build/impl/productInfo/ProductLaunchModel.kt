@@ -571,6 +571,7 @@ internal fun vmOptionsFilePath(os: OsFamily, baseFileName: String, languageServe
     OsFamily.MACOS -> "${if (hostLanguageServer) "" else "../"}bin/$baseFileName.vmoptions"
     OsFamily.LINUX -> "bin/${add64IfNeeded(baseFileName, languageServer)}.vmoptions"
     OsFamily.WINDOWS -> "bin/${add64IfNeeded(baseFileName, languageServer)}.exe.vmoptions"
+    OsFamily.OHOS -> "bin/${add64IfNeeded(baseFileName, languageServer)}.vmoptions"
   }
 }
 
@@ -607,6 +608,7 @@ internal fun vmOptionsFileName(os: OsFamily, baseFileName: String, languageServe
     OsFamily.MACOS -> "$baseFileName.vmoptions"
     OsFamily.LINUX -> "${add64IfNeeded(baseFileName, languageServer)}.vmoptions"
     OsFamily.WINDOWS -> "${add64IfNeeded(baseFileName, languageServer)}.exe.vmoptions"
+    OsFamily.OHOS -> "${add64IfNeeded(baseFileName, languageServer)}.vmoptions"
   }
 }
 

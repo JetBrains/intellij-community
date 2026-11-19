@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -29,20 +29,13 @@ import static com.intellij.openapi.options.advanced.AdvancedSettings.getInt;
 public class PyAttachToProcessDebugRunner extends PyDebugRunner {
   private final Project myProject;
   private final int myPid;
-  private final String mySdkPath;
-  private final Sdk mySdk;
+  private final @Nullable PythonInterpreter myInterpreter;
 
 
-  public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, @Nullable Sdk sdk) {
+  public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, @Nullable PythonInterpreter interpreter) {
     myProject = project;
     myPid = pid;
-    mySdk = sdk;
-    if (mySdk != null) {
-      mySdkPath = sdk.getHomePath();
-    }
-    else {
-      mySdkPath = null;
-    }
+    myInterpreter = interpreter;
   }
 
   public XDebugSession launch() throws ExecutionException {
@@ -62,7 +55,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
     }
 
 
-    PyAttachToProcessCommandLineState state = PyAttachToProcessCommandLineState.create(myProject, mySdk, serverSocket.getLocalPort(), myPid);
+    PyAttachToProcessCommandLineState state = PyAttachToProcessCommandLineState.create(myProject, myInterpreter, serverSocket.getLocalPort(), myPid);
 
     final ExecutionResult result = state.execute(state.getEnvironment().getExecutor(), new CommandLinePatcher[0]);
 

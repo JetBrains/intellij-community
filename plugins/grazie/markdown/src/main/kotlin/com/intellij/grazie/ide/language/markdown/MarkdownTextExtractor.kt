@@ -20,7 +20,7 @@ class MarkdownTextExtractor : TextExtractor() {
 
   public override fun buildTextContents(root: PsiElement, allowedDomains: Set<TextContent.TextDomain>): List<TextContent> {
     if (allowedDomains.contains(TextContent.TextDomain.PLAIN_TEXT) &&
-        (MarkdownPsiUtils.isHeaderContent(root) || MarkdownPsiUtils.isParagraph(root))) {
+        (MarkdownPsiUtils.isHeaderContent(root) || MarkdownPsiUtils.isParagraph(root) || MarkdownPsiUtils.isTableCell(root))) {
       val content = TextContentBuilder.FromPsi
         .withUnknown {
           it.node.isMarkdownCodeType() || it.node.isTestLink() ||
@@ -30,7 +30,7 @@ class MarkdownTextExtractor : TextExtractor() {
           e.elementType in markup ||
           e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e) && !isShortRefLinkLabel(e)
         }
-        .excluding { it.elementType == MarkdownElementTypes.IMAGE }
+        .excluding { it.elementType == MarkdownElementTypes.IMAGE || it.elementType == MarkdownTokenTypes.BLOCK_QUOTE }
         .removingIndents(" \t").removingLineSuffixes(" \t")
         .build(root, TextContent.TextDomain.PLAIN_TEXT)
       return excludeHtml(content)

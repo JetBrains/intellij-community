@@ -12,9 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPathRoot
 import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectEntitiesAttacher
 import com.intellij.projectImport.ProjectOpenedCallback
@@ -102,10 +102,11 @@ class WorkspaceModelCacheAttachProcessor : ProjectAttachProcessor() {
       it.applyChangesFrom(toMigrate)
     }
     val snapshot = project.workspaceModel.currentSnapshot
-    val projectDirUrl = projectDir.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+    val projectDirUrl = project.workspaceModel.getVirtualFileUrlManager()
+      .get(VfsUtilCore.pathToUrl(projectDir.toAbsolutePath().toString()))
     return snapshot.entities(ModuleEntity::class.java)
       .filter { it.name in attachedModuleNames }
-      .sortedByDescending { module -> module.contentRoots.any { it.url == projectDirUrl } }
+      .sortedByDescending { module -> projectDirUrl != null && module.contentRoots.any { it.url == projectDirUrl } }
       .mapNotNull { it.findModule(snapshot) }
       .toList()
   }

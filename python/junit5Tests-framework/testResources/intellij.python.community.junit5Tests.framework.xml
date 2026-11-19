@@ -35,11 +35,14 @@
     <module name="intellij.platform.testFramework.junit5.projectStructure"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.community.impl.poetry.common"/>
     <module name="intellij.python.community.testFramework"/>
     <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.sdk.common"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

@@ -51,7 +51,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
-import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabThrowableUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabEditableComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
@@ -271,7 +271,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
       .append(HtmlChunk.p().addText(GitLabBundle.message("merge.request.timeline.discussion.cant.load.diff")))
       .apply {
         if (error != null) {
-          append(HtmlChunk.p().addText(error.localizedMessageOrClassName()))
+          append(HtmlChunk.p().addText(GitLabThrowableUtil.localizedMessageOrClassName(error)))
         }
       }
 

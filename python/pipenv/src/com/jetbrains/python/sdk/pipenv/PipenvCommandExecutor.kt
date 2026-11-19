@@ -144,7 +144,8 @@ suspend fun <P : PathHolder> setupPipEnvSdkWithProgressReport(
 }
 
 /**
- * Sets up the pipenv environment for the specified project path.
+ * Sets up the pipenv environment for the specified project path. [baseEnv] goes to each pipenv command, such as
+ * `PIPENV_VENV_IN_PROJECT`, which places the environment in the project.
  *
  * @return the path to the pipenv environment.
  */
@@ -153,6 +154,7 @@ suspend fun setupPipEnv(
   projectPath: Path,
   basePythonBinaryPath: PythonBinary?,
   installPackages: Boolean,
+  baseEnv: List<EnvVar> = emptyList(),
 ): PyResult<Path> =
   setupPipEnv(
     projectPath = projectPath,
@@ -160,6 +162,7 @@ suspend fun setupPipEnv(
     pipenvExecutable = null,
     basePythonBinaryPath = basePythonBinaryPath?.let(PathHolder::Eel),
     installPackages = installPackages,
+    baseEnv = baseEnv,
   ).mapSuccess { it.path }
 
 @Internal
@@ -169,6 +172,7 @@ suspend fun <P : PathHolder> setupPipEnv(
   pipenvExecutable: P?,
   basePythonBinaryPath: P?,
   installPackages: Boolean,
+  baseEnv: List<EnvVar> = emptyList(),
 ): PyResult<P> {
   val pipfile = projectPath.resolve(PIP_FILE)
 
@@ -187,6 +191,7 @@ suspend fun <P : PathHolder> setupPipEnv(
         dirPath = projectPath,
         args = pipenvSetupCommandWithPythonPath(projectPath, basePythonBinaryPath?.toStringOnRemoteMachine()).toTypedArray(),
         pipenvExecutable = pipenvExecutable,
+        baseEnv = baseEnv,
         downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG,
       ).getOr { return it }
     }
@@ -196,6 +201,7 @@ suspend fun <P : PathHolder> setupPipEnv(
         dirPath = projectPath,
         "--python", basePythonBinaryPath.toStringOnRemoteMachine(),
         pipenvExecutable = pipenvExecutable,
+        baseEnv = baseEnv,
         downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG,
       ).getOr { return it }
     else ->
@@ -204,6 +210,7 @@ suspend fun <P : PathHolder> setupPipEnv(
         dirPath = projectPath,
         "run", "python", "-V",
         pipenvExecutable = pipenvExecutable,
+        baseEnv = baseEnv,
       ).getOr { return it }
   }
   val pythonHomePath = runPipEnv(
@@ -211,6 +218,7 @@ suspend fun <P : PathHolder> setupPipEnv(
     dirPath = projectPath,
     "--venv",
     pipenvExecutable = pipenvExecutable,
+    baseEnv = baseEnv,
   ).getOr { return it }
   return fileSystem.parsePath(pythonHomePath.trim())
 }

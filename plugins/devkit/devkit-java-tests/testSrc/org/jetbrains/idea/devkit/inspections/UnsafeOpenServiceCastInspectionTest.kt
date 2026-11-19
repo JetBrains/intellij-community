@@ -2,28 +2,37 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/unsafeOpenServiceCast")
-internal class UnsafeOpenServiceCastInspectionTest : UnsafeOpenServiceCastInspectionTestBase() {
+@TestApplication
+internal class UnsafeOpenServiceCastInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun getBasePath(): String = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/unsafeOpenServiceCast/"
+  private val openServiceCast by unsafeOpenServiceCastFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/unsafeOpenServiceCast/")
 
-  override fun getFileExtension(): String = "java"
-
+  @Test
   fun testUnsafeCastOfOpenService() {
-    doTest("UnsafeCastOfOpenService.java", "openService.xml")
+    openServiceCast.doTest("UnsafeCastOfOpenService.java", "openService.xml")
   }
 
+  @Test
   fun testSafeCastOfNonOpenService() {
-    doTest("SafeCastOfNonOpenService.java", "nonOpenService.xml")
+    openServiceCast.doTest("SafeCastOfNonOpenService.java", "nonOpenService.xml")
   }
 
+  @Test
   fun testServiceRetrievalPatterns() {
-    doTest("ServiceRetrievalPatterns.java", "openService.xml")
+    openServiceCast.doTest("ServiceRetrievalPatterns.java", "openService.xml")
   }
 
+  @Test
   fun testNonOpenServiceRetrievalPatterns() {
-    doTest("NonOpenServiceRetrievalPatterns.java", "nonOpenService.xml")
+    openServiceCast.doTest("NonOpenServiceRetrievalPatterns.java", "nonOpenService.xml")
   }
 }

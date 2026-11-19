@@ -119,6 +119,21 @@ abstract class FoldRegionsCache {
         updateCachedAndSortOffsets(data.visibleRegions, false);
       }
     }
+    else {
+      clearCachedValues();
+    }
+  }
+
+  void updateCachedHeights() {
+    CachedData data = myCachedData;
+    if (data == null) {
+      rebuild();
+    }
+    else {
+      myCachedData = new CachedData(data.visibleRegions, data.topLevelRegions, data.topStartOffsets, data.topEndOffsets,
+                                    data.topFoldedLines, data.topStartVisualLines, computeTopCustomYAdjustment(data.topLevelRegions),
+                                    CachedData.NOT_YET_COMPUTED);
+    }
   }
 
   private @NotNull CachedData updateCachedAndSortOffsets(@NotNull FoldRegion @NotNull [] visibleRegions, boolean fromRebuild) {
@@ -158,9 +173,7 @@ abstract class FoldRegionsCache {
       startVisualLines[i] = startLine - foldedLinesSum;
       foldedLinesSum += document.getLineNumber(range.getEndOffset()) - startLine;
       foldedLines[i] = foldedLinesSum;
-      if (region instanceof CustomFoldRegion customFoldRegion) {
-        currentCustomYAdjustment += customFoldRegion.getHeightInPixels() - lineHeight;
-      }
+      currentCustomYAdjustment += getCustomYAdjustment(region, lineHeight);
       customYAdjustment[i] = currentCustomYAdjustment;
     }
 
@@ -168,6 +181,21 @@ abstract class FoldRegionsCache {
                                      customYAdjustment, computeTopFoldedInlaysHeight(topLevelSorted, startOffsets, endOffsets));
     myCachedData = data;
     return data;
+  }
+
+  private int @NotNull [] computeTopCustomYAdjustment(@NotNull FoldRegion @NotNull [] topLevelRegions) {
+    int[] customYAdjustment = ArrayUtil.newIntArray(topLevelRegions.length);
+    int currentCustomYAdjustment = 0;
+    int lineHeight = getLineHeight();
+    for (int i = 0; i < topLevelRegions.length; i++) {
+      currentCustomYAdjustment += getCustomYAdjustment(topLevelRegions[i], lineHeight);
+      customYAdjustment[i] = currentCustomYAdjustment;
+    }
+    return customYAdjustment;
+  }
+
+  private static int getCustomYAdjustment(@NotNull FoldRegion region, int lineHeight) {
+    return region instanceof CustomFoldRegion customFoldRegion ? customFoldRegion.getHeightInPixels() - lineHeight : 0;
   }
 
   boolean checkIfValidToCreate(int start, int end, boolean custom, FoldRegion toIgnore) {

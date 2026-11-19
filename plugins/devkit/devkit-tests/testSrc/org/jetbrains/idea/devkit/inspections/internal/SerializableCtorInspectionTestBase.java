@@ -4,6 +4,10 @@ package org.jetbrains.idea.devkit.inspections.internal;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link SerializableCtorInspectionFixtureKt#serializableCtorInspectionFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class SerializableCtorInspectionTestBase extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

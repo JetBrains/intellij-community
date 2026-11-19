@@ -122,7 +122,8 @@ class TraverseState private constructor(
   }
 
   private fun isExcludedByUnscoped(file: VirtualFile, fileSetsAt: WorkspaceFileSets): Boolean {
-    return (excludes.asSequence() + fileSetsAt.excludes).any { exclude -> exclude.isUnscoped() && exclude.excludedKinds(file) != 0 }
+    return activeExcludes.any { it.rule.isUnscoped() && it.rule.excludedKinds(file) != 0 } ||
+           fileSetsAt.excludes.any { it.isUnscoped() && it.excludedKinds(file) != 0 }
   }
 
   /** update exclude kinds for excludes */

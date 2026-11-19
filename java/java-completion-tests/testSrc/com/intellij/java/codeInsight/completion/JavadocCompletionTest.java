@@ -147,6 +147,50 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue(getLookupElementStrings().containsAll(Arrays.asList("my-id1", "my-id2", "my-id3", "my-id4")));
   }
 
+  public void testFragmentCompletion() {
+    myFixture.configureByText("Test.java", """
+      /**
+       * <h1>Class Heading</h1>
+       * <p id="class-id"></p>
+       * {@systemProperty class.property}
+       * {@index "index entry" description}
+       * @see ##<caret>
+       */
+      class Test {
+        /** <p id="field-id"></p> */
+        int field;
+
+        /// # Method Heading
+        void method() {}
+      }
+      """);
+    myFixture.completeBasic();
+    assertTrue(getLookupElementStrings().containsAll(Arrays.asList(
+      "class-heading-heading", "class-id", "class.property", "indexentry", "field-id", "method-heading-heading")));
+  }
+
+  @NeedsIndex.Full
+  public void testPackageFragmentCompletion() {
+    myFixture.addFileToProject("p/package-info.java", """
+      /**
+       * <h1>Package Heading</h1>
+       * <p id="package-id"></p>
+       * {@systemProperty package.property}
+       * {@index "package entry" description}
+       */
+      package p;
+      """);
+    myFixture.configureByText("Test.java", """
+      /**
+       * {@link p##<caret>}
+       */
+      class Test {}
+      """);
+    myFixture.completeBasic();
+    assertTrue(getLookupElementStrings().containsAll(Arrays.asList(
+      "package-heading-heading", "package-id", "package.property", "packageentry")));
+  }
+
   @NeedsIndex.ForStandardLibrary
   public void testIDEADEV10620() {
     configureByFile("IDEADEV10620.java");

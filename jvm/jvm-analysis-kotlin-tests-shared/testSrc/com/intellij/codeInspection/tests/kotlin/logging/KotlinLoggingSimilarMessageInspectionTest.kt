@@ -1,11 +1,22 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingSimilarMessageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingSimilarMessageInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionTestBase() {
+@TestApplication
+abstract class KotlinLoggingSimilarMessageInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  protected val myFixture by loggingSimilarMessageInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test equals log4j2`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.apache.logging.log4j.LogManager

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.impl.run;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -13,8 +12,11 @@ import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
+import com.jetbrains.python.project.PyProject;
+import com.jetbrains.python.project.PyProjectKt;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkRenderingKt;
@@ -90,10 +92,6 @@ final class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     return content.panel;
   }
 
-  @Override
-  public void subscribe(@NotNull Disposable parentDisposable) {
-  }
-
   private void addInterpreterComboBoxActionListener(ActionListener listener) {
     content.interpreterComboBox.addActionListener(listener);
   }
@@ -132,7 +130,13 @@ final class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void setPythonInterpreter(@Nullable PythonInterpreter interpreter) {
-    List<PythonInterpreter> interpreters = new ArrayList<>(PySdkRenderingKt.pyProjectInterpretersUnderProgress(myProject, getModule()));
+    Module module = getModule();
+    PyProject pyProject = module == null ? null : ContainerUtil.find(PyProjectKt.getPyProjectsWithoutJpsSync(myProject),
+                                                                     candidate -> module.equals(candidate.getResidesOnModule()));
+    // A module that is not a PyProject has no interpreters of its own.
+    List<PythonInterpreter> interpreters = module != null && pyProject == null
+                                           ? new ArrayList<>()
+                                           : new ArrayList<>(PySdkRenderingKt.pyProjectInterpretersUnderProgress(myProject, pyProject));
     // An interpreter of another owner is still offered, so the configuration keeps naming what it was given.
     if (interpreter != null && !interpreters.contains(interpreter)) {
       interpreters.add(interpreter);

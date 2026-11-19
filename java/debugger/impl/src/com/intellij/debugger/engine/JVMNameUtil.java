@@ -62,8 +62,13 @@ public final class JVMNameUtil {
     if (name.equals(kind.getName() + "Value")) {
       return signature.equals("()" + primitiveDescriptor);
     }
-    String wrapperDescriptor = "L" + owner.replace('.', '/') + ";";
-    return name.equals("valueOf") && signature.equals("(" + primitiveDescriptor + ")" + wrapperDescriptor);
+    else if (name.equals("valueOf")) {
+      String wrapperDescriptor = "L" + owner.replace('.', '/') + ";";
+      return signature.equals("(" + primitiveDescriptor + ")" + wrapperDescriptor);
+    }
+    else {
+      return false;
+    }
   }
 
   private static void appendJVMSignature(JVMNameBuffer buffer, PsiType type) {

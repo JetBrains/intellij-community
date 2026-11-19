@@ -1,15 +1,22 @@
 package org.intellij.plugins.markdown.psi
 
-import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.ElementManipulators
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
-class MarkdownFrontMatterManipulatorSanityTest: LightPlatformCodeInsightTestCase() {
+@TestApplication
+class MarkdownFrontMatterManipulatorSanityTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `test replace`() {
     // language=Markdown
@@ -32,15 +39,15 @@ class MarkdownFrontMatterManipulatorSanityTest: LightPlatformCodeInsightTestCase
       - some other tag
     ---
     """.trimIndent()
-    configureFromFileText("some.md", content)
-    val element = file.firstChild!!
-    val manipulator = ElementManipulators.getNotNullManipulator(element)
-    runWriteActionAndWait {
+    myFixture.configureByText("some.md", content)
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
+      val element = myFixture.file.firstChild!!
+      val manipulator = ElementManipulators.getNotNullManipulator(element)
       manipulator.handleContentChange(element, TextRange(93, 100), "https://")
-      commitAllDocuments()
+      PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
       manipulator.handleContentChange(element, TextRange(32, 39), "https://")
-      commitAllDocuments()
+      PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
     }
-    checkResultByText(expected)
+    myFixture.checkResult(expected)
   }
 }

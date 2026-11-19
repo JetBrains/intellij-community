@@ -1924,6 +1924,7 @@
   <applicationListeners>
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+    <listener class="com.intellij.codeInsight.hints.InlayHintsSettingsPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.codeInsight.daemon.impl.EssentialHighlightingModeListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"

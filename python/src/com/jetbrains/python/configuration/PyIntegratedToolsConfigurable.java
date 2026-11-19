@@ -16,6 +16,8 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.jetbrains.python.errorProcessing.ErrorSinkKt;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -346,13 +348,13 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
       @Override
       public @NotNull ValidationResult check() {
-        final Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(myModule);
-        if (sdk != null) {
+        final PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(myModule);
+        if (interpreter != null) {
           var factory = myModel.getSelected();
-          if (factory != null && !factory.isFrameworkInstalled(myProject, sdk)) {
+          if (factory != null && !factory.isFrameworkInstalled(myProject, interpreter)) {
             return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", factory.getName()),
                                         // isFrameworkInstalled() == false => getPackageSpec() != null
-                                        createQuickFix(sdk, facetErrorPanel,
+                                        createQuickFix(interpreter, facetErrorPanel,
                                                        Objects.requireNonNull(factory.getPackageSpec()).getPackageName()));
           }
         }
@@ -363,11 +365,11 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     facetErrorPanel.getValidatorsManager().validate();
   }
 
-  private FacetConfigurationQuickFix createQuickFix(final Sdk sdk, final FacetErrorPanel facetErrorPanel, final String name) {
+  private FacetConfigurationQuickFix createQuickFix(final PythonInterpreter interpreter, final FacetErrorPanel facetErrorPanel, final String name) {
     return new FacetConfigurationQuickFix() {
       @Override
       public void run(JComponent place) {
-        PythonPackageManagerUI.installPackagesWithModalProgressBlocking(myProject, sdk, name);
+        PythonPackageManagerUI.Companion.forPythonInterpreter(myProject, interpreter, ErrorSinkKt.ErrorSink()).installPackagesWithModalProgressBlocking(name);
         facetErrorPanel.getValidatorsManager().validate();
       }
     };
@@ -390,7 +392,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
     if (myModule != null) {
       Project project = myModule.getProject();
-      myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PyModuleInterpreterReader.findModuleSdkIfReady(myModule), project));
+      myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PyModuleInterpreterReader.findModuleInterpreterIfReady(myModule), project));
     }
 
     for (@NotNull DialogPanel panel : myCustomizePanels) {

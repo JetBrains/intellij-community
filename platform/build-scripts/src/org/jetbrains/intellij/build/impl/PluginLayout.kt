@@ -292,9 +292,12 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       return layout
     }
 
+    /**
+     * Defines layout for a plugin where additional customization are applied
+     */
     @Deprecated("Use `pluginAuto` instead")
     @Suppress("DEPRECATION")
-    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+    fun pluginWithCustomLayout(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       return plugin(mainModuleName = mainModuleName, auto = true, body = body)
     }
 
@@ -310,6 +313,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     fun pluginAuto(moduleName: String, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout = pluginAuto(listOf(moduleName), body)
 
+    @Deprecated("Use pluginAuto(moduleName, body) and register additional modules as content modules")
     fun pluginAuto(moduleNames: List<String>, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
       layout.withModules(moduleNames)
@@ -330,6 +334,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * Direct main module dependencies in the same module group are included automatically.
      * Project-level libraries are not - see the note in [plugin].
      */
+    @Deprecated("Use pluginAuto(moduleName) and register additional modules as content modules")
     fun pluginAuto(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
       layout.withModules(moduleNames)
@@ -546,7 +551,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
        * (with stripped `intellij` prefix and `plugin` suffix, and dots replaced by dashes).
        * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
        */
-      @Deprecated("Plugins shouldn't specify custom directory names to simplify build scripts and migration to Bazel")
       set(value) {
         field = value
         directoryNameSetExplicitly = true

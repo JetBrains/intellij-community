@@ -1,25 +1,30 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections
 
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.quickfix.lightDevKitInspectionFixture
 import org.jetbrains.idea.devkit.kotlin.inspections.KotlinApplicableInspectionBaseSimpleCallExpressionInspection
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class KotlinApplicableInspectionBaseSimpleCallExpressionInspectionTest : LightDevKitInspectionFixTestBase() {
-
-  override fun getFileExtension(): String = "kt"
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+@TestApplication
+class KotlinApplicableInspectionBaseSimpleCallExpressionInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance())
   }
 
-  override fun setUp() {
-    super.setUp()
+  private val devKit by lightDevKitInspectionFixture(projectFixture, "kt")
+  private val myFixture get() = devKit.fixture
+
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(KotlinApplicableInspectionBaseSimpleCallExpressionInspection())
     addKotlinApplicableInspectionBaseStubs()
   }
 
+  @Test
   fun testHighlightsSimpleCallExpressionInspectionWithoutRangeOverride() {
     myFixture.configureByText("Test.kt", """
       package test
@@ -33,6 +38,7 @@ class KotlinApplicableInspectionBaseSimpleCallExpressionInspectionTest : LightDe
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testDoesNotHighlightWhenRangeOverrideExists() {
     myFixture.configureByText("Test.kt", """
       package test
@@ -51,6 +57,7 @@ class KotlinApplicableInspectionBaseSimpleCallExpressionInspectionTest : LightDe
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testDoesNotHighlightOtherSimpleSpecialization() {
     myFixture.configureByText("Test.kt", """
       package test
@@ -64,6 +71,7 @@ class KotlinApplicableInspectionBaseSimpleCallExpressionInspectionTest : LightDe
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testQuickFixAddsRangeOverride() {
     myFixture.configureByText("Test.kt", """
       package test

@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpSessionInvocationMode
+import com.intellij.mcpserver.setRouterControls
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import com.intellij.openapi.Disposable
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test
 
 class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
   private var oldInvocationMode = McpSessionInvocationMode.DIRECT
+  private var routerControls: AutoCloseable? = null
   private val json = Json { ignoreUnknownKeys = true }
 
   @Serializable
@@ -51,11 +53,13 @@ class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
     val settings = McpToolFilterSettings.getInstance()
     oldInvocationMode = settings.invocationMode
     settings.invocationMode = McpSessionInvocationMode.VIA_ROUTER
+    routerControls = setRouterControls(true)
   }
 
   @AfterEach
   fun restoreInvocationMode() {
     McpToolFilterSettings.getInstance().invocationMode = oldInvocationMode
+    routerControls?.close()
   }
 
   /**

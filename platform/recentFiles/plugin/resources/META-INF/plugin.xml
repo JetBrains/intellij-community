@@ -3,7 +3,7 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress PluginXmlPluginLogo -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>com.intellij.recentFiles</id>
   <name>Recent Files</name>
   <description>Provides Recent Files platform modules for the IDE.</description>

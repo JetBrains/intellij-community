@@ -102,6 +102,55 @@ internal class SnapshotRangeMarkerImplTest {
   }
 
   @Test
+  fun `repeated full traversals preserve ranges across root changes`() {
+    val document = DocumentImpl("x".repeat(100), true)
+    val markers = List(12) { index -> document.createRangeMarker(index * 4 + 1, index * 4 + 3) as SnapshotRangeMarkerImpl }
+    val original = markers.first().currentRootReference().get()
+    val before = document.core.snapshot().text()
+    val patch = DocumentPatch.simple(20, 20, "xx", newModStamp = 1, clearLineFlags = false)
+    val shifted = original.applyPatch(patch, before, before.replace(20, 20, "xx"))
+    val ranges = markers.mapIndexed { index, marker ->
+      val delta = if (index >= 5) 2 else 0
+      marker.markerHandle to TextRangeScalarUtil.toScalarRange(index * 4 + 1 + delta, index * 4 + 3 + delta)
+    }
+
+    fun assertRanges(root: PMarkerRoot, expected: List<Pair<SnapshotMarkerReference<*>, Long>>) {
+      repeat(2) {
+        val actual = ArrayList<Pair<SnapshotMarkerReference<*>, Long>>()
+        assertTrue(root.processAllRangeMarkers { entry, delta ->
+          val range = TextRangeScalarUtil.toScalarRange(entry.nodeStart + delta, entry.nodeEnd + delta)
+          actual.add(entry.handle to range)
+          assertEquals(range, root.resolve(entry.handle))
+          true
+        })
+        assertEquals(expected, actual)
+      }
+    }
+
+    var visited = 0
+    assertFalse(shifted.processAllRangeMarkers { _, _ -> ++visited < 3 })
+    assertEquals(3, visited)
+    assertThrows(IllegalStateException::class.java) {
+      shifted.processAllRangeMarkers { entry, _ ->
+        check(entry.handle !== markers[5].markerHandle)
+        true
+      }
+    }
+    assertRanges(shifted, ranges)
+    val flavored = shifted.updateFlavor(markers[4].markerHandle, 2)
+    assertRanges(flavored, ranges)
+    val removed = flavored.remove(markers[1].markerHandle)
+    assertRanges(removed, ranges.filter { it.first !== markers[1].markerHandle })
+    val added = document.createRangeMarker(80, 82) as SnapshotRangeMarkerImpl
+    val inserted = removed.insert(added.markerHandle, 80, 82, MarkerSpec.create(false, false), flavorFlags = 0)
+    assertRanges(inserted, ranges.filter { it.first !== markers[1].markerHandle } +
+                           (added.markerHandle to TextRangeScalarUtil.toScalarRange(80, 82)))
+    assertRanges(original, markers.mapIndexed { index, marker ->
+      marker.markerHandle to TextRangeScalarUtil.toScalarRange(index * 4 + 1, index * 4 + 3)
+    })
+  }
+
+  @Test
   fun `marker getters follow the snapshot during publication`() {
     val core = DocumentImpl("abcdefgh", true).core
     var current = core.snapshot()

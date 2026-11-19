@@ -410,4 +410,21 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
     str(<weak_warning descr="Type 'B' doesn't define '__str__' or '__repr__', so the result might not be useful">B()</weak_warning>)
     str(<weak_warning descr="Type 'C' doesn't define '__str__' or '__repr__', so the result might not be useful">C()</weak_warning>)
     """.trimIndent())
+
+  @TestFor(issues = ["PY-92962"])
+  fun `test native stdlib types without skeletons`() = doTestByText("""
+    import datetime
+    import io
+    import itertools
+
+    class Tz(datetime.tzinfo):
+        pass
+
+    str(<weak_warning descr="Type 'BytesIO' doesn't define '__str__' or '__repr__', so the result might not be useful">io.BytesIO()</weak_warning>)
+    str(<weak_warning descr="Type 'chain[Unknown]' doesn't define '__str__' or '__repr__', so the result might not be useful">itertools.chain()</weak_warning>)
+    str(<weak_warning descr="Type 'Tz' doesn't define '__str__' or '__repr__', so the result might not be useful">Tz()</weak_warning>)
+    str(open("f.txt"))
+    str(datetime.date.today())
+    str(io.StringIO().getvalue())
+    """.trimIndent())
 }

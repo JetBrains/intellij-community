@@ -7,12 +7,7 @@ f:com.intellij.platform.eel.EelNioFsKt
 - java.nio.file.CopyOption
 *f:com.intellij.platform.eel.fs.EelCopyOption$Cancellable
 - com.intellij.platform.eel.fs.EelCopyOption
-- <init>(kotlin.coroutines.CoroutineContext):V
-- <init>(kotlinx.coroutines.CoroutineScope):V
-- <init>(kotlinx.coroutines.Job):V
-- equals(java.lang.Object):Z
-- f:getJob():kotlinx.coroutines.Job
-- hashCode():I
+- sf:INSTANCE:com.intellij.platform.eel.fs.EelCopyOption$Cancellable
 *f:com.intellij.platform.eel.fs.EelCopyOption$ContinueOnError
 - com.intellij.platform.eel.fs.EelCopyOption
 - sf:INSTANCE:com.intellij.platform.eel.fs.EelCopyOption$ContinueOnError

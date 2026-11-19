@@ -14,6 +14,7 @@ import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.ZeroCodeVersionStringTransformer
 import com.intellij.python.community.execService.python.executeHelper
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
@@ -39,6 +40,8 @@ object PythonInterpreterProbe {
    */
   @JvmStatic
   @RequiresBackgroundThread
+  // The platform calls `PythonSdkType.setupSdkPaths`, and it is unknown whether a background caller holds a read lock.
+  @RequiresReadLockAbsence(generateAssertion = false)
   fun probeLegacySdkBlocking(sdk: Sdk): PyResult<Unit> = runBlockingMaybeCancellable {
     val binary = sdk.asBinToExecuteImpl().getOr { return@runBlockingMaybeCancellable PyResult.failure(it.error) }
     val facts = read(binary, sdk).getOr { return@runBlockingMaybeCancellable it }

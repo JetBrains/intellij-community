@@ -2,83 +2,108 @@ package com.intellij.codeInspection.tests.kotlin.sourceToSink
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
-import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.sourceToSinkFlowInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.sourceToSinkFlowProjectFixture
+import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Test
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow"
 
 @TestDataPath("\$CONTENT_ROOT/testData$INSPECTION_PATH")
-abstract class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() {
-  
+@TestApplication
+abstract class KotlinSourceToSinkFlowInspectionTest {
+  companion object {
+    private val projectFixture = sourceToSinkFlowProjectFixture()
+  }
 
-  override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + INSPECTION_PATH
+  protected val myFixture by sourceToSinkFlowInspectionFixture(projectFixture, KotlinJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH)
 
+  @Test
   fun testSimple() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Simple.kt")
   }
 
+  @Test
   fun testLocalInference() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("LocalInference.kt")
   }
 
+  @Test
   fun testSink() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Sink.kt")
   }
 
+  @Test
   fun testSinkJsr() {
-    prepareJsr()
+    myFixture.prepareJsr()
     myFixture.testHighlighting("SinkJsr.kt")
   }
 
+  @Test
   fun testCall() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Call.kt")
   }
 
+  @Test
   fun testLocalVariable() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("LocalVariables.kt")
   }
 
+  @Test
   fun testParameters() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Parameters.kt")
   }
 
+  @Test
   fun testEnumAnnotations() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("EnumAnnotations.kt")
   }
 
+  @Test
   fun testFields() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Fields.kt")
   }
 
+  @Test
   fun testStructure() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("Structure.kt")
   }
 
+  @Test
   fun testMethodPropagation() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("MethodPropagation.kt")
   }
 
-  fun testKotlinPropertyPropagateFix() {
-    prepareCheckFramework()
-    myFixture.configureByFile("Property.kt")
-    val propagateAction = myFixture.getAvailableIntention(
-      JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.text"))!!
-    myFixture.launchAction(propagateAction)
-    myFixture.checkResultByFile("Property.after.kt")
+  @Test
+  fun testKotlinPropertyPropagateFix(): Unit = timeoutRunBlocking {
+    myFixture.prepareCheckFramework()
+    withContext(Dispatchers.EDT) {
+      myFixture.configureByFile("Property.kt")
+      val propagateAction = myFixture.getAvailableIntention(
+        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.text"))!!
+      myFixture.launchAction(propagateAction)
+      myFixture.checkResultByFile("Property.after.kt")
+    }
   }
 
+  @Test
   fun testLimits() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.addClass("""
          @SuppressWarnings({"FieldMayBeStatic", "StaticNonFinalField", "RedundantSuppression"}) 
         public class Limit2 {
@@ -102,8 +127,9 @@ abstract class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspection
     myFixture.testHighlighting("Limits.kt")
   }
 
+  @Test
   fun testMethodsAsFields() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.addClass("""
         public class MethodAsFields {
             private static final String t = "1";
@@ -116,70 +142,78 @@ abstract class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspection
     myFixture.testHighlighting("MethodsAsFields.kt")
   }
 
+  @Test
   fun testDifferentExpressions() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("DifferentExpressions.kt")
   }
 
+  @Test
   fun testKotlinConstructorArguments() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("KotlinConstructorArguments.kt")
   }
 
+  @Test
   fun testKotlinParameters() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("KotlinParameters.kt")
   }
 
+  @Test
   fun testDropLocality() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("DropLocality.kt")
   }
 
+  @Test
   fun `test forEachLoop`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("ForEachLoop.kt")
   }
 
+  @Test
   fun `test lambdaWithForEachLoop`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("LambdaWithForEachLoop.kt")
   }
 
+  @Test
   fun `test if`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testHighlighting("ifStatement.kt")
   }
 
+  @Test
   fun `test custom through tables`() {
-    inspection.untaintedParameterIndex.apply {
+    myFixture.inspection.untaintedParameterIndex.apply {
       this.clear()
       this.add("1")
     }
-    inspection.untaintedParameterMethodClass.apply {
+    myFixture.inspection.untaintedParameterMethodClass.apply {
       this.clear()
       this.add("FromMethod")
     }
-    inspection.untaintedParameterMethodName.apply {
+    myFixture.inspection.untaintedParameterMethodName.apply {
       this.clear()
       this.add("sink")
     }
 
-    inspection.taintedParameterIndex.apply {
+    myFixture.inspection.taintedParameterIndex.apply {
       this.clear()
       this.add("0")
     }
-    inspection.taintedParameterMethodClass.apply {
+    myFixture.inspection.taintedParameterMethodClass.apply {
       this.clear()
       this.add("FromMethod")
     }
-    inspection.taintedParameterMethodName.apply {
+    myFixture.inspection.taintedParameterMethodName.apply {
       this.clear()
       this.add("test")
     }
 
-    inspection.setTaintedMethod("java.lang.String", "toString")
-    inspection.setUntaintedMethod("java.lang.String", "trim")
+    myFixture.inspection.setTaintedMethod("java.lang.String", "toString")
+    myFixture.inspection.setUntaintedMethod("java.lang.String", "trim")
 
     myFixture.testHighlighting("FromMethod.kt")
   }

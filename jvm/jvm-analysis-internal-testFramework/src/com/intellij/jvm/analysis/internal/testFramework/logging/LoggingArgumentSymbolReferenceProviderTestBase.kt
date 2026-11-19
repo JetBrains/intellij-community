@@ -12,6 +12,11 @@ import junit.framework.TestCase
 import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.UPolyadicExpression
 
+/**
+ * @deprecated Use [loggingArgumentSymbolReferenceProviderProjectFixture] and [loggingArgumentSymbolReferenceProviderFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use loggingArgumentSymbolReferenceProviderProjectFixture and loggingArgumentSymbolReferenceProviderFixture in a JUnit 5 test")
 abstract class LoggingArgumentSymbolReferenceProviderTestBase : LightJvmCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_LATEST_WITH_LATEST_JDK
 

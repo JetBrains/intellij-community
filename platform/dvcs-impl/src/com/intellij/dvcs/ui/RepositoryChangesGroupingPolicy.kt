@@ -27,7 +27,7 @@ internal class RepositoryChangesGroupingPolicy(val project: Project, model: Defa
   }
 
   override fun createGroupRootNode(value: Repository): ChangesBrowserNode<*> {
-    val repoNode = RepositoryChangesBrowserNode(value, colorManager)
+    val repoNode = RepositoryChangesBrowserNode(value)
     repoNode.markAsHelperNode()
     return repoNode
   }

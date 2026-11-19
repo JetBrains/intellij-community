@@ -2,18 +2,25 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.CancellationCheckInLoopsInspectionTestBase
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.cancellationCheckInLoopsFixture
+import org.jetbrains.idea.devkit.inspections.cancellationCheckInLoopsProjectFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/cancellationCheckInLoops")
-class KtCancellationCheckInLoopsInspectionTest : CancellationCheckInLoopsInspectionTestBase() {
+@TestApplication
+class KtCancellationCheckInLoopsInspectionTest {
+  companion object {
+    private val projectFixture = cancellationCheckInLoopsProjectFixture()
+  }
 
-  override fun getFileExtension(): String = "kt"
+  private val cancellationCheck by cancellationCheckInLoopsFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/cancellationCheckInLoops")
+  private val myFixture get() = cancellationCheck.fixture
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/cancellationCheckInLoops"
-
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.addFileToProject(
       "Coroutines.kt",
       //language=kotlin
@@ -24,48 +31,59 @@ class KtCancellationCheckInLoopsInspectionTest : CancellationCheckInLoopsInspect
       """.trimIndent())
   }
 
+  @Test
   fun testRunCondition() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testRunConditionOnSuperMethod() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testSuspendingContext() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testPresentCancellationCheck() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testCancellationCheckPresentNotInFirstLine() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testForEachLoops() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testWhileLoops() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testDoWhileLoops() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testNestedLoops() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testLoopMethods() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testNestedLoopMethods() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
 }

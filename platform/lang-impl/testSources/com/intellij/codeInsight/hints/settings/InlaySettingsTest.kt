@@ -97,6 +97,25 @@ class InlaySettingsTest : LightPlatformTestCase() {
     TestCase.assertEquals(10, settingsRepeated)
   }
 
+  fun testForgetCachedSettings() {
+    val settings = InlayHintsSettings()
+    val language = object : Language("foobar2") {}
+    data class ToPersist(var x: String, var y: Int) {
+      @Suppress("unused")
+      constructor() : this("", 0)
+    }
+    val key = SettingsKey<ToPersist>("foo")
+    val saved = ToPersist("test", 42)
+    settings.storeSettings(key, language, saved)
+    assertSame(saved, settings.findSettings(key, language) { ToPersist("asdasd", 23) })
+
+    settings.forgetCachedSettings()
+
+    val restored = settings.findSettings(key, language) { ToPersist("asdasd", 23) }
+    assertNotSame(saved, restored)
+    assertEquals(saved, restored)
+  }
+
   fun testDisabledByDefault() {
     val hintsSettings = InlayHintsSettings()
     val key = SettingsKey<Int>("foo")

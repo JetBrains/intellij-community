@@ -25,7 +25,6 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.usageView.UsageInfo
@@ -70,8 +69,7 @@ class FindInProjectPipelineTest {
   private val baseDir get() = projectModel.baseProjectDir
   private val project get() = projectModel.project
 
-  @TestDisposable
-  private lateinit var disposable: Disposable
+  private val disposable: Disposable get() = projectModel.disposableRule.disposable
 
   private lateinit var searcherFiles: List<VirtualFile>
   private lateinit var walkFiles: List<VirtualFile>

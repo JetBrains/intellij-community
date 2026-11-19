@@ -2,12 +2,9 @@
 package com.jetbrains.python.testing
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.ThreeState
-import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
 
 internal class PyModuleTestRunnerQueryImpl : PyModuleTestRunnerQuery {
@@ -17,9 +14,8 @@ internal class PyModuleTestRunnerQueryImpl : PyModuleTestRunnerQuery {
     if (factory.id == PyTestFactory.id) return true
 
     // Called from code insight, which cannot suspend, so it peeks at the snapshot.
-    @Suppress("DEPRECATION") // The factory takes an SDK.
-    val sdk = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI() ?: return false
-    val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(sdk, module.project) else factory).id
+    val interpreter = module.findEvoPyProjectIfReady()?.interpreter ?: return false
+    val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(interpreter, module.project) else factory).id
     return factoryId == PyTestFactory.id
   }
 
@@ -27,9 +23,11 @@ internal class PyModuleTestRunnerQueryImpl : PyModuleTestRunnerQuery {
     if (explicit != ThreeState.UNSURE) {
       return explicit.toBoolean()
     }
-    val module = ModuleUtilCore.findModuleForPsiElement(anchor) ?: return true
-    val sdk = findModuleSdkIfReady(module) ?: return true
-    val factory = TestRunnerService.getInstance(module).selectedFactory
-    return factory.onlyClassesAreSupported(module.project, sdk)
+    // Called from code insight, which cannot suspend, so it peeks at the snapshot.
+    val evoPyProject = anchor.findEvoPyProjectIfReady(mainForOrphans = false) ?: return true
+    val interpreter = evoPyProject.interpreter ?: return true
+    // The test runner is a setting of the module that the Python project resides on.
+    val factory = TestRunnerService.getInstance(evoPyProject.pyProject.residesOnModule).selectedFactory
+    return factory.onlyClassesAreSupported(anchor.project, interpreter)
   }
 }

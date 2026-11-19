@@ -9,21 +9,38 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.formatting.Block
 import com.intellij.formatting.DependantSpacingImpl
 import com.intellij.formatting.FormattingContext
+import com.intellij.ide.DataManager
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageFormatting
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser.guessLanguageForInjection
+import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.executeAction
+import org.intellij.plugins.markdown.editor.typeInEditor
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser.guessLanguageForInjection
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes.MARKDOWN_TEMPLATE_DATA
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
@@ -31,9 +48,24 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeBlock
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 
-class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
+@TestApplication
+class MarkdownInjectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
   fun `test fence with injection empty`() {
     doTest(
       """
@@ -42,6 +74,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent(), false)
   }
 
+  @Test
   fun `test fence without end token has no injection`() {
     //Incorrect behavior of parser, it will treat end fence as content
     //still let's fix this behavior
@@ -52,6 +85,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent(), false)
   }
 
+  @Test
   fun `test fence without lang`() {
     doTest(
       """
@@ -64,6 +98,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent(), false)
   }
 
+  @Test
   fun `test fence with lang`() {
     doTest(
       """
@@ -76,7 +111,8 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent(), true)
   }
 
-  fun `test indented fence with lang`() {
+  @Test
+  fun `test indented fence with lang`(): Unit = timeoutRunBlocking {
     val text = """
       World
 
@@ -86,118 +122,142 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
           }
           ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
-    assertNotNull(codeFence)
-    assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
-    assertNotNull(injectedElement)
-    assertEquals("class C {\n    void test() {}\n}", injectedElement!!.containingFile.text)
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
+      assertNotNull(codeFence)
+      assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C"))
+      assertNotNull(injectedElement)
+      assertEquals("class C {\n    void test() {}\n}", injectedElement!!.containingFile.text)
+    }
   }
 
-  fun `test indented fence with blank content does not throw`() {
+  @Test
+  fun `test indented fence with blank content does not throw`(): Unit = timeoutRunBlocking {
     val text = "    ```java\n    \n    ```"
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
-    assertNotNull(codeFence)
-    val injectedFiles = assertDoesNotThrow {
-      InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(codeFence!!)
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
+      assertNotNull(codeFence)
+      val injectedFiles = assertDoesNotThrow {
+        InjectedLanguageManager.getInstance(myFixture.project).getInjectedPsiFiles(codeFence!!)
+      }
+      assertNotNull(injectedFiles)
     }
-    assertNotNull(injectedFiles)
   }
 
-  fun `test indented fence groups line separators with content`() {
+  @Test
+  fun `test indented fence groups line separators with content`(): Unit = timeoutRunBlocking {
     val text = "    ```java\n    class C {}\n    class D {}\n    ```"
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
-    assertNotNull(codeFence)
-    val injectedFiles = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(codeFence!!)
-    assertNotNull(injectedFiles)
-    val injectedDocument = PsiDocumentManager.getInstance(project)
-      .getDocument(injectedFiles!!.first().first.containingFile) as DocumentWindow
-    assertEquals(2, injectedDocument.hostRanges.size)
-  }
-
-  fun `test blank line with an extra indent keeps the extra spaces in the injected code`() {
-    val text = "    ```python\n    a\n        \n    b\n    ```"
-    configureFromFileText("test.md", text)
-
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
-    assertNotNull(codeFence)
-    val injectedFiles = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(codeFence!!)
-    assertNotNull(injectedFiles)
-    val injectedFile = injectedFiles!!.first().first.containingFile
-    // The four spaces of the fence stay out. The four spaces above them belong to the code.
-    assertEquals("a\n    \nb", injectedFile.text)
-
-    val injectedDocument = PsiDocumentManager.getInstance(project).getDocument(injectedFile) as DocumentWindow
-    val document = editor.document
-    for (range in injectedDocument.hostRanges) {
-      val lineStart = document.getLineStartOffset(document.getLineNumber(range.startOffset))
-      assertTrue(
-        "A range must not hold the indent of the fence",
-        range.startOffset - lineStart >= 4,
-      )
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
+      assertNotNull(codeFence)
+      val injectedFiles = InjectedLanguageManager.getInstance(myFixture.project).getInjectedPsiFiles(codeFence!!)
+      assertNotNull(injectedFiles)
+      val injectedDocument = PsiDocumentManager.getInstance(myFixture.project)
+        .getDocument(injectedFiles!!.first().first.containingFile) as DocumentWindow
+      assertEquals(2, injectedDocument.hostRanges.size)
     }
   }
 
-  fun `test tab-indented fence with lang`() {
-    val text = listOf("\t```java", "\tclass C {}", "\t```").joinToString("\n")
-    configureFromFileText("test.md", text)
+  @Test
+  fun `test blank line with an extra indent keeps the extra spaces in the injected code`(): Unit = timeoutRunBlocking {
+    val text = "    ```python\n    a\n        \n    b\n    ```"
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
-    assertNotNull(codeFence)
-    assertEquals("\t", MarkdownCodeFenceUtils.getIndent(codeFence!!))
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
-    assertNotNull(injectedElement)
-    assertEquals("class C {}", injectedElement!!.containingFile.text)
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
+      assertNotNull(codeFence)
+      val injectedFiles = InjectedLanguageManager.getInstance(myFixture.project).getInjectedPsiFiles(codeFence!!)
+      assertNotNull(injectedFiles)
+      val injectedFile = injectedFiles!!.first().first.containingFile
+      // The four spaces of the fence stay out. The four spaces above them belong to the code.
+      assertEquals("a\n    \nb", injectedFile.text)
+
+      val injectedDocument = PsiDocumentManager.getInstance(myFixture.project).getDocument(injectedFile) as DocumentWindow
+      val document = myFixture.editor.document
+      for (range in injectedDocument.hostRanges) {
+        val lineStart = document.getLineStartOffset(document.getLineNumber(range.startOffset))
+        assertTrue(
+          range.startOffset - lineStart >= 4,
+          "A range must not hold the indent of the fence",
+        )
+      }
+    }
   }
 
-  fun `test indented tilde fence without language is a code fence`() {
+  @Test
+  fun `test tab-indented fence with lang`(): Unit = timeoutRunBlocking {
+    val text = listOf("\t```java", "\tclass C {}", "\t```").joinToString("\n")
+    myFixture.configureByText("test.md", text)
+
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
+      assertNotNull(codeFence)
+      assertEquals("\t", MarkdownCodeFenceUtils.getIndent(codeFence!!))
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C"))
+      assertNotNull(injectedElement)
+      assertEquals("class C {}", injectedElement!!.containingFile.text)
+    }
+  }
+
+  @Test
+  fun `test indented tilde fence without language is a code fence`(): Unit = timeoutRunBlocking {
     val text = """
           ~~~
           class C {}
           ~~~
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
-    assertNotNull(codeFence)
-    assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
-    assertNull(InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C")))
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
+      assertNotNull(codeFence)
+      assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
+      assertNull(InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C")))
+    }
   }
 
-  fun `test incomplete indented fence stays a code block`() {
+  @Test
+  fun `test incomplete indented fence stays a code block`(): Unit = timeoutRunBlocking {
     val text = """
       World
 
           ```java
           class C {}
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    assertNotNull(PsiTreeUtil.findChildOfType(file, MarkdownCodeBlock::class.java))
-    assertNull(PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java))
-    assertNull(InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C")))
+    readAction {
+      assertNotNull(PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeBlock::class.java))
+      assertNull(PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java))
+      assertNull(InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C")))
+    }
   }
 
-  fun `test incomplete indented fence does not consume following paragraph`() {
+  @Test
+  fun `test incomplete indented fence does not consume following paragraph`(): Unit = timeoutRunBlocking {
     val text = """
           ```java
           class C {}
       paragraph
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    assertNotNull(PsiTreeUtil.findChildOfType(file, MarkdownCodeBlock::class.java))
-    assertNotNull(PsiTreeUtil.findChildOfType(file, MarkdownParagraph::class.java))
-    assertNull(PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java))
+    readAction {
+      assertNotNull(PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeBlock::class.java))
+      assertNotNull(PsiTreeUtil.findChildOfType(myFixture.file, MarkdownParagraph::class.java))
+      assertNull(PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java))
+    }
   }
 
-  fun `test indented fence in blockquote`() {
+  @Test
+  fun `test indented fence in blockquote`(): Unit = timeoutRunBlocking {
     val text = """
       >
       >     ```java
@@ -206,17 +266,20 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       >     }
       >     ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
-    assertNotNull(codeFence)
-    assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
-    assertNotNull(injectedElement)
-    assertEquals("class C {\nvoid test() {}\n}", injectedElement!!.containingFile.text)
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
+      assertNotNull(codeFence)
+      assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C"))
+      assertNotNull(injectedElement)
+      assertEquals("class C {\nvoid test() {}\n}", injectedElement!!.containingFile.text)
+    }
   }
 
-  fun `test indented fence in blockquote preserves nested indentation`() {
+  @Test
+  fun `test indented fence in blockquote preserves nested indentation`(): Unit = timeoutRunBlocking {
     val text = """
       >     ```java
       >     class C {
@@ -224,20 +287,23 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       >     }
       >     ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
-    assertNotNull(injectedElement)
-    assertEquals("class C {\n    void test() {}\n}", injectedElement!!.containingFile.text)
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C"))
+      assertNotNull(injectedElement)
+      assertEquals("class C {\n    void test() {}\n}", injectedElement!!.containingFile.text)
 
-    val escaper = codeFence.createLiteralTextEscaper()
-    val decoded = StringBuilder()
-    assertTrue(escaper.decode(escaper.relevantTextRange, decoded))
-    assertEquals("class C {\n    void test() {}\n}", decoded.toString())
+      val escaper = codeFence.createLiteralTextEscaper()
+      val decoded = StringBuilder()
+      assertTrue(escaper.decode(escaper.relevantTextRange, decoded))
+      assertEquals("class C {\n    void test() {}\n}", decoded.toString())
+    }
   }
 
-  fun `test indented fence in list preserves nested indentation`() {
+  @Test
+  fun `test indented fence in list preserves nested indentation`(): Unit = timeoutRunBlocking {
     val text = """
       - item
 
@@ -247,35 +313,41 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
             }
             ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
-    assertNotNull(injectedElement)
-    assertEquals("class C {\n    void test() {}\n}", injectedElement!!.containingFile.text)
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C"))
+      assertNotNull(injectedElement)
+      assertEquals("class C {\n    void test() {}\n}", injectedElement!!.containingFile.text)
 
-    val escaper = codeFence.createLiteralTextEscaper()
-    val decoded = StringBuilder()
-    assertTrue(escaper.decode(escaper.relevantTextRange, decoded))
-    assertEquals("class C {\n    void test() {}\n}", decoded.toString())
+      val escaper = codeFence.createLiteralTextEscaper()
+      val decoded = StringBuilder()
+      assertTrue(escaper.decode(escaper.relevantTextRange, decoded))
+      assertEquals("class C {\n    void test() {}\n}", decoded.toString())
+    }
   }
 
-  fun `test fence with one extra space in list strips indentation`() {
+  @Test
+  fun `test fence with one extra space in list strips indentation`(): Unit = timeoutRunBlocking {
     val text = "1. item\n\n    ```java\n    class C {}\n    ```"
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
-    assertNotNull(injectedElement)
-    assertEquals("class C {}", injectedElement!!.containingFile.text)
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C"))
+      assertNotNull(injectedElement)
+      assertEquals("class C {}", injectedElement!!.containingFile.text)
 
-    val escaper = codeFence.createLiteralTextEscaper()
-    val decoded = StringBuilder()
-    assertTrue(escaper.decode(escaper.relevantTextRange, decoded))
-    assertEquals("class C {}", decoded.toString())
+      val escaper = codeFence.createLiteralTextEscaper()
+      val decoded = StringBuilder()
+      assertTrue(escaper.decode(escaper.relevantTextRange, decoded))
+      assertEquals("class C {}", decoded.toString())
+    }
   }
 
-  fun `test indented fence in nested containers`() {
+  @Test
+  fun `test indented fence in nested containers`(): Unit = timeoutRunBlocking {
     val text = """
       > - item
       >
@@ -283,17 +355,20 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       >       class C {}
       >       ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
-    assertNotNull(codeFence)
-    assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
-    assertNotNull(injectedElement)
-    assertEquals("class C {}", injectedElement!!.containingFile.text)
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
+      assertNotNull(codeFence)
+      assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C"))
+      assertNotNull(injectedElement)
+      assertEquals("class C {}", injectedElement!!.containingFile.text)
+    }
   }
 
-  fun `test updating indented fence in blockquote preserves prefixes`() {
+  @Test
+  fun `test updating indented fence in blockquote preserves prefixes`(): Unit = timeoutRunBlocking {
     val text = """
       >
       >     ```java
@@ -302,64 +377,76 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       >     }
       >     ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    WriteCommandAction.runWriteCommandAction(project) {
-      codeFence.updateText("class C {\n    void test() {}\n}")
+    withContext(Dispatchers.EDT) {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        codeFence.updateText("class C {\n    void test() {}\n}")
+      }
+
+      assertEquals(
+        """
+          >
+          >     ```java
+          >     class C {
+          >         void test() {}
+          >     }
+          >     ```
+        """.trimIndent(),
+        myFixture.file.text,
+      )
     }
-
-    assertEquals(
-      """
-        >
-        >     ```java
-        >     class C {
-        >         void test() {}
-        >     }
-        >     ```
-      """.trimIndent(),
-      file.text,
-    )
   }
 
-  fun `test updating blockquoted fence with opening indentation preserves prefixes`() {
+  @Test
+  fun `test updating blockquoted fence with opening indentation preserves prefixes`(): Unit = timeoutRunBlocking {
     val text = ">   ```java\n>   class C {}\n>   ```"
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    WriteCommandAction.runWriteCommandAction(project) {
-      codeFence.updateText("class C {\n  }\n}")
+    withContext(Dispatchers.EDT) {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        codeFence.updateText("class C {\n  }\n}")
+      }
+
+      assertEquals(">   ```java\n>   class C {\n>     }\n>   }\n>   ```", myFixture.file.text)
     }
-
-    assertEquals(">   ```java\n>   class C {\n>     }\n>   }\n>   ```", file.text)
   }
 
-  fun `test updating indented fence in list preserves prefixes`() {
+  @Test
+  fun `test updating indented fence in list preserves prefixes`(): Unit = timeoutRunBlocking {
     val text = "- item\n\n      ```java\n      class C {}\n      ```"
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    WriteCommandAction.runWriteCommandAction(project) {
-      codeFence.updateText("class D {\n}")
+    withContext(Dispatchers.EDT) {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        codeFence.updateText("class D {\n}")
+      }
+
+      assertEquals("- item\n\n      ```java\n      class D {\n      }\n      ```", myFixture.file.text)
     }
-
-    assertEquals("- item\n\n      ```java\n      class D {\n      }\n      ```", file.text)
   }
 
-  fun `test updating top-level indented fence preserves indentation`() {
+  @Test
+  fun `test updating top-level indented fence preserves indentation`(): Unit = timeoutRunBlocking {
     val text = "    ```java\n    class C {}\n    ```"
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    assertEquals("    ", MarkdownCodeFenceUtils.getIndent(codeFence))
-    WriteCommandAction.runWriteCommandAction(project) {
-      codeFence.updateText("class D {\n}")
+    withContext(Dispatchers.EDT) {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      assertEquals("    ", MarkdownCodeFenceUtils.getIndent(codeFence))
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        codeFence.updateText("class D {\n}")
+      }
+
+      assertEquals("    ```java\n    class D {\n    }\n    ```", myFixture.file.text)
     }
-
-    assertEquals("    ```java\n    class D {\n    }\n    ```", file.text)
   }
 
-  fun `test indented fence uses injected formatter`() {
+  @Test
+  fun `test indented fence uses injected formatter`(): Unit = timeoutRunBlocking {
     val text = """
           ```java
           class C {
@@ -369,28 +456,31 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
           }
           ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))!!
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformatText(injectedElement.containingFile, listOf(injectedElement.containingFile.textRange))
+    withContext(Dispatchers.EDT) {
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C"))!!
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        CodeStyleManager.getInstance(myFixture.project).reformatText(injectedElement.containingFile, listOf(injectedElement.containingFile.textRange))
+      }
+
+      assertEquals(
+        """
+              ```java
+              class C {
+                  void test() {
+                      int value = 1;
+                  }
+              }
+              ```
+        """.trimIndent(),
+        myFixture.file.text,
+      )
     }
-
-    assertEquals(
-      """
-            ```java
-            class C {
-                void test() {
-                    int value = 1;
-                }
-            }
-            ```
-      """.trimIndent(),
-      file.text,
-    )
   }
 
-  fun `test nested fence uses injected formatter`() {
+  @Test
+  fun `test nested fence uses injected formatter`(): Unit = timeoutRunBlocking {
     val text = """
       - item
 
@@ -402,29 +492,32 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
             }
             ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+    withContext(Dispatchers.EDT) {
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        CodeStyleManager.getInstance(myFixture.project).reformatText(myFixture.file, listOf(myFixture.file.textRange))
+      }
+
+      assertEquals(
+        """
+          - item
+
+                ```java
+                class C {
+                    void test() {
+                        int value = 1;
+                    }
+                }
+                ```
+        """.trimIndent(),
+        myFixture.file.text,
+      )
     }
-
-    assertEquals(
-      """
-        - item
-
-              ```java
-              class C {
-                  void test() {
-                      int value = 1;
-                  }
-              }
-              ```
-      """.trimIndent(),
-      file.text,
-    )
   }
 
-  fun `test dependent spacing in nested fence uses host ranges`() {
+  @Test
+  fun `test dependent spacing in nested fence uses host ranges`(): Unit = timeoutRunBlocking {
     val text = """
       - item
 
@@ -434,38 +527,41 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
             }
             ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))!!
-    val injectedFile = injectedElement.containingFile
-    CodeStyle.doWithTemporarySettings(project, CodeStyle.getSettings(project)) { settings ->
-      val javaSettings = settings.getCommonSettings(Language.findLanguageByID("JAVA")!!)
-      javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
-      javaSettings.KEEP_LINE_BREAKS = true
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("class C"))!!
+      val injectedFile = injectedElement.containingFile
+      CodeStyle.doWithTemporarySettings(myFixture.project, CodeStyle.getSettings(myFixture.project)) { settings ->
+        val javaSettings = settings.getCommonSettings(Language.findLanguageByID("JAVA")!!)
+        javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+        javaSettings.KEEP_LINE_BREAKS = true
 
-      val injectedModel = LanguageFormatting.INSTANCE.forContext(injectedFile)
-        ?.createModel(FormattingContext.create(injectedFile, settings))
-        ?: error("Java formatter is not available")
-      val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
-      val expectedHostRanges = injectedModel.rootBlock.getDependentSpacings()
-        .flatMap { it.dependentRegionRanges }
-        .map { injectedLanguageManager.injectedToHost(injectedFile, it) }
-        .toSet()
-      assertTrue(expectedHostRanges.isNotEmpty())
+        val injectedModel = LanguageFormatting.INSTANCE.forContext(injectedFile)
+          ?.createModel(FormattingContext.create(injectedFile, settings))
+          ?: error("Java formatter is not available")
+        val injectedLanguageManager = InjectedLanguageManager.getInstance(myFixture.project)
+        val expectedHostRanges = injectedModel.rootBlock.getDependentSpacings()
+          .flatMap { it.dependentRegionRanges }
+          .map { injectedLanguageManager.injectedToHost(injectedFile, it) }
+          .toSet()
+        assertTrue(expectedHostRanges.isNotEmpty())
 
-      val model = LanguageFormatting.INSTANCE.forContext(file)
-        ?.createModel(FormattingContext.create(file, settings))
-        ?: error("Markdown formatter is not available")
-      val actualHostRanges = model.rootBlock.getDependentSpacings()
-        .flatMap { it.dependentRegionRanges }
-        .toSet()
-      assertEquals(expectedHostRanges, actualHostRanges)
-      assertTrue(actualHostRanges.all { codeFence.textRange.contains(it) })
+        val model = LanguageFormatting.INSTANCE.forContext(myFixture.file)
+          ?.createModel(FormattingContext.create(myFixture.file, settings))
+          ?: error("Markdown formatter is not available")
+        val actualHostRanges = model.rootBlock.getDependentSpacings()
+          .flatMap { it.dependentRegionRanges }
+          .toSet()
+        assertEquals(expectedHostRanges, actualHostRanges)
+        assertTrue(actualHostRanges.all { codeFence.textRange.contains(it) })
+      }
     }
   }
 
-  fun `test nested fence in blockquote partially formats content`() {
+  @Test
+  fun `test nested fence in blockquote partially formats content`(): Unit = timeoutRunBlocking {
     val text = """
       > ```java
       > class C {
@@ -476,28 +572,31 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       > }
       > ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+    withContext(Dispatchers.EDT) {
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        CodeStyleManager.getInstance(myFixture.project).reformatText(myFixture.file, listOf(myFixture.file.textRange))
+      }
+
+      assertEquals(
+        """
+          > ```java
+          > class C {
+          >
+          > void test() {
+          > int value = 1;
+          > }
+          > }
+          > ```
+        """.trimIndent(),
+        myFixture.file.text,
+      )
     }
-
-    assertEquals(
-      """
-        > ```java
-        > class C {
-        >
-        > void test() {
-        > int value = 1;
-        > }
-        > }
-        > ```
-      """.trimIndent(),
-      file.text,
-    )
   }
 
-  fun `test top-level indented fence with blank line formats content with multiple fragments`() {
+  @Test
+  fun `test top-level indented fence with blank line formats content with multiple fragments`(): Unit = timeoutRunBlocking {
     val text = """
       |    ```java
       |    class C {
@@ -508,36 +607,39 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       |    }
       |    ```
     """.trimMargin()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    assertSame(file, codeFence.parent)
-    val injectedFiles = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(codeFence)
-    assertNotNull(injectedFiles)
-    val injectedFile = injectedFiles!!.first().first.containingFile
-    val injectedDocument = PsiDocumentManager.getInstance(project).getDocument(injectedFile) as DocumentWindow
-    assertTrue(injectedDocument.hostRanges.size > 1)
+    withContext(Dispatchers.EDT) {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      assertSame(myFixture.file, codeFence.parent)
+      val injectedFiles = InjectedLanguageManager.getInstance(myFixture.project).getInjectedPsiFiles(codeFence)
+      assertNotNull(injectedFiles)
+      val injectedFile = injectedFiles!!.first().first.containingFile
+      val injectedDocument = PsiDocumentManager.getInstance(myFixture.project).getDocument(injectedFile) as DocumentWindow
+      assertTrue(injectedDocument.hostRanges.size > 1)
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        CodeStyleManager.getInstance(myFixture.project).reformatText(myFixture.file, listOf(myFixture.file.textRange))
+      }
+
+      assertEquals(
+        """
+          |    ```java
+          |    class C {
+          |
+          |        void test() {
+          |            int value = 1;
+          |        }
+          |    }
+          |    ```
+        """.trimMargin(),
+        myFixture.file.text,
+      )
     }
-
-    assertEquals(
-      """
-        |    ```java
-        |    class C {
-        |
-        |        void test() {
-        |            int value = 1;
-        |        }
-        |    }
-        |    ```
-      """.trimMargin(),
-      file.text,
-    )
   }
 
-  fun `test nested fence without injection remains unformatted`() {
+  @Test
+  fun `test nested fence without injection remains unformatted`(): Unit = timeoutRunBlocking {
     val text = """
       - item
 
@@ -546,19 +648,22 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
             }
             ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    assertNull(InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(codeFence))
+    withContext(Dispatchers.EDT) {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      assertNull(InjectedLanguageManager.getInstance(myFixture.project).getInjectedPsiFiles(codeFence))
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        CodeStyleManager.getInstance(myFixture.project).reformatText(myFixture.file, listOf(myFixture.file.textRange))
+      }
+
+      assertEquals(text, myFixture.file.text)
     }
-
-    assertEquals(text, file.text)
   }
 
-  fun `test well formatted code remains as is`() {
+  @Test
+  fun `test well formatted code remains as is`(): Unit = timeoutRunBlocking {
     val text = """
       ```java
       if (policy == null) {
@@ -566,15 +671,18 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       }
       ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+    withContext(Dispatchers.EDT) {
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        CodeStyleManager.getInstance(myFixture.project).reformatText(myFixture.file, listOf(myFixture.file.textRange))
+      }
+
+      assertEquals(text, myFixture.file.text)
     }
-
-    assertEquals(text, file.text)
   }
 
+  @Test
   fun `test fence does not ignore line separators`() {
     val content =
       """
@@ -602,9 +710,12 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
 
     doTest(text, true)
 
-    assertEquals(content, file.findElementAt(editor.caretModel.offset)!!.containingFile.text)
+    runReadActionBlocking {
+      assertEquals(content, myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!!.containingFile.text)
+    }
   }
 
+  @Test
   fun `test fence in quotes`() {
     val content =
       """
@@ -629,9 +740,12 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       > ```
     """.trimIndent()
     doTest(text, true)
-    assertEquals(content, file.findElementAt(editor.caretModel.offset)!!.containingFile.text)
+    runReadActionBlocking {
+      assertEquals(content, myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!!.containingFile.text)
+    }
   }
 
+  @Test
   fun `test fence in list`() {
     val content =
       """
@@ -656,9 +770,12 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
         ```
       """.trimIndent()
     doTest(text, true)
-    assertEquals(content, file.findElementAt(editor.caretModel.offset)!!.containingFile.text)
+    runReadActionBlocking {
+      assertEquals(content, myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!!.containingFile.text)
+    }
   }
 
+  @Test
   fun `test fence with lang with disabled auto injection`() {
     val markdownSettings = MarkdownSettings.getInstance()
     val oldValue = markdownSettings.areInjectionsEnabled
@@ -679,11 +796,13 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     }
   }
 
+  @Test
   fun `test fence with xml`() {
     assertNotNull(guessLanguageForInjection("xml"))
   }
 
-  fun `test injected markdown html root uses markdown template data`() {
+  @Test
+  fun `test injected markdown html root uses markdown template data`(): Unit = timeoutRunBlocking {
     val text = """
       ```markdown
       ## Goals
@@ -697,20 +816,22 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       </table>
       ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("- Primary"))
-    assertNotNull(injectedElement)
+    readAction {
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, text.indexOf("- Primary"))
+      assertNotNull(injectedElement)
 
-    val htmlFile = injectedElement!!.containingFile.viewProvider.getPsi(HTMLLanguage.INSTANCE)
-    assertNotNull(htmlFile)
-    val htmlPsiFile = htmlFile as PsiFileImpl
-    assertEquals(MARKDOWN_TEMPLATE_DATA, htmlPsiFile.contentElementType)
+      val htmlFile = injectedElement!!.containingFile.viewProvider.getPsi(HTMLLanguage.INSTANCE)
+      assertNotNull(htmlFile)
+      val htmlPsiFile = htmlFile as PsiFileImpl
+      assertEquals(MARKDOWN_TEMPLATE_DATA, htmlPsiFile.contentElementType)
 
-    val htmlTree = DebugUtil.psiToString(htmlPsiFile, true, false)
-    assertTrue(htmlTree, htmlTree.contains("MARKDOWN_OUTER_BLOCK"))
-    assertFalse(htmlTree, htmlTree.contains("HtmlTag:b"))
-    assertTrue(htmlTree, htmlTree.contains("HtmlTag:table"))
+      val htmlTree = DebugUtil.psiToString(htmlPsiFile, true, false)
+      assertTrue(htmlTree.contains("MARKDOWN_OUTER_BLOCK"), htmlTree)
+      assertFalse(htmlTree.contains("HtmlTag:b"), htmlTree)
+      assertTrue(htmlTree.contains("HtmlTag:table"), htmlTree)
+    }
   }
 
   /**
@@ -718,79 +839,96 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
    * It checks that in case of now elements in code fence still InjectionHost
    * will return TextRange that is located inside of injection valid range
    */
-  fun `test no exceptions on reusing completion copy with emptied original injection with lang`() {
-    val ilm = InjectedLanguageManager.getInstance(project)
+  @Test
+  fun `test no exceptions on reusing completion copy with emptied original injection with lang`(): Unit = timeoutRunBlocking {
+    val ilm = InjectedLanguageManager.getInstance(myFixture.project)
 
     doTest("```xml\n<caret><\n```", true)
 
-    caretRight()
+    withContext(Dispatchers.EDT) {
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
 
-    CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor, 1)
-    LookupManager.getActiveLookup(editor)!!.hideLookup(true)
+      CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(myFixture.project, myFixture.editor, 1)
+      LookupManager.getActiveLookup(myFixture.editor)!!.hideLookup(true)
 
-    bringRealEditorBack()
+      PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
+      var editor = InjectedLanguageEditorUtil.getTopLevelEditor(myFixture.editor)
+      val file = ilm.getTopLevelFile(myFixture.file)
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      backspace()
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      ilm.findInjectedElementAt(file, editor.caretModel.offset)
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        CommandProcessor.getInstance().executeCommand(myFixture.project, {
+          EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_BACKSPACE, true)
+        }, "", null, editor.document)
+        PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
+        ilm.findInjectedElementAt(file, editor.caretModel.offset)
 
-      type('<')
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      assertNotNull(ilm.findInjectedElementAt(file, editor.caretModel.offset))
+        TypedAction.getInstance().actionPerformed(editor, '<', DataManager.getInstance().dataContext)
+        PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
+        assertNotNull(ilm.findInjectedElementAt(file, editor.caretModel.offset))
+      }
+
+      editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file)
+      CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(myFixture.project, editor, 1)
+      assertNotNull(LookupManager.getActiveLookup(editor)) // and no exceptions!
     }
-
-    setupEditorForInjectedLanguage()
-    CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor, 1)
-    assertNotNull(LookupManager.getActiveLookup(editor)) // and no exceptions!
   }
 
-  fun `test code fence escaper accepts injected range starting at opening line break`() {
+  @Test
+  fun `test code fence escaper accepts injected range starting at opening line break`(): Unit = timeoutRunBlocking {
     val text = "```java\n    String s = \"<h1>test</h1>\";\n```"
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    val relevantRange = codeFence.createLiteralTextEscaper().relevantTextRange.shiftRight(codeFence.textRange.startOffset)
-    val injectedRange = TextRange.create(
-      codeFence.textRange.startOffset + codeFence.text.indexOf('\n'),
-      codeFence.textRange.startOffset + codeFence.text.lastIndexOf('\n')
-    )
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      val relevantRange = codeFence.createLiteralTextEscaper().relevantTextRange.shiftRight(codeFence.textRange.startOffset)
+      val injectedRange = TextRange.create(
+        codeFence.textRange.startOffset + codeFence.text.indexOf('\n'),
+        codeFence.textRange.startOffset + codeFence.text.lastIndexOf('\n')
+      )
 
-    assertTrue(
-      "$injectedRange should be contained in relevant range $relevantRange",
-      relevantRange.contains(injectedRange)
-    )
-  }
-
-  fun `test code fence escaper filters fence syntax`() {
-    val text = "> ```java\n> class C {}\n> ```"
-    configureFromFileText("test.md", text)
-
-    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
-    val escaper = codeFence.createLiteralTextEscaper()
-    val range = escaper.relevantTextRange
-    val decoded = StringBuilder()
-
-    assertTrue(escaper.decode(range, decoded))
-    assertEquals("class C {}", decoded.toString())
-
-    val contentStart = codeFence.text.indexOf("class")
-    assertEquals(contentStart, escaper.getOffsetInHost(0, range))
-    assertEquals(contentStart + decoded.length, escaper.getOffsetInHost(decoded.length, range))
-    assertEquals(-1, escaper.getOffsetInHost(decoded.length + 1, range))
-  }
-
-  fun `test typing after replacing code fence opening line break with enter does not corrupt injected psi`() {
-    configureFromFileText("test.md", "```java<selection>\n<caret></selection>String s = \"<h1>test</h1>\";\n```")
-
-    assertDoesNotThrow {
-      type('\n')
-      type("class C {}")
+      assertTrue(
+        relevantRange.contains(injectedRange),
+        "$injectedRange should be contained in relevant range $relevantRange"
+      )
     }
   }
 
-  fun testEnterBetweenBracesPreservesIndentedCodeFence() {
-    configureFromFileText(
+  @Test
+  fun `test code fence escaper filters fence syntax`(): Unit = timeoutRunBlocking {
+    val text = "> ```java\n> class C {}\n> ```"
+    myFixture.configureByText("test.md", text)
+
+    readAction {
+      val codeFence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)!!
+      val escaper = codeFence.createLiteralTextEscaper()
+      val range = escaper.relevantTextRange
+      val decoded = StringBuilder()
+
+      assertTrue(escaper.decode(range, decoded))
+      assertEquals("class C {}", decoded.toString())
+
+      val contentStart = codeFence.text.indexOf("class")
+      assertEquals(contentStart, escaper.getOffsetInHost(0, range))
+      assertEquals(contentStart + decoded.length, escaper.getOffsetInHost(decoded.length, range))
+      assertEquals(-1, escaper.getOffsetInHost(decoded.length + 1, range))
+    }
+  }
+
+  @Test
+  fun `test typing after replacing code fence opening line break with enter does not corrupt injected psi`(): Unit = timeoutRunBlocking {
+    myFixture.configureByText("test.md", "```java<selection>\n<caret></selection>String s = \"<h1>test</h1>\";\n```")
+
+    withContext(Dispatchers.EDT) {
+      assertDoesNotThrow {
+        myFixture.typeInEditor('\n')
+        myFixture.typeInEditor("class C {}")
+      }
+    }
+  }
+
+  @Test
+  fun testEnterBetweenBracesPreservesIndentedCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Item 1
@@ -802,53 +940,59 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Item 1
-        - Item 2 with code:
-
-          ```json
-          {
-            <caret>
-          }
-          ```
-      """.trimIndent()
-    )
-  }
-
-  fun testEnterBetweenParenthesesPreservesConfiguredContinuationIndent() {
-    CodeStyle.doWithTemporarySettings(project, CodeStyle.getSettings(project)) { settings ->
-      configureFromFileText(
-        "test.md",
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
         """
-          ```java
-          foo(<caret>)
-          ```
-        """.trimIndent()
-      )
+          - Item 1
+          - Item 2 with code:
 
-      val javaLanguage = requireNotNull(Language.findLanguageByID("JAVA"))
-      val indentOptions = requireNotNull(settings.getCommonSettings(javaLanguage).indentOptions)
-      indentOptions.USE_TAB_CHARACTER = false
-      indentOptions.INDENT_SIZE = 4
-      indentOptions.CONTINUATION_INDENT_SIZE = 2
-
-      type('\n')
-      checkResultByText(
-        """
-          ```java
-          foo(
-            <caret>
-          )
-          ```
+            ```json
+            {
+              <caret>
+            }
+            ```
         """.trimIndent()
       )
     }
   }
 
-  fun testEnterAfterNestedOpeningBraceDoesNotReindentOuterClosingBrace() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenParenthesesPreservesConfiguredContinuationIndent(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      CodeStyle.doWithTemporarySettings(myFixture.project, CodeStyle.getSettings(myFixture.project)) { settings ->
+        myFixture.configureByText(
+          "test.md",
+          """
+            ```java
+            foo(<caret>)
+            ```
+          """.trimIndent()
+        )
+
+        val javaLanguage = requireNotNull(Language.findLanguageByID("JAVA"))
+        val indentOptions = requireNotNull(settings.getCommonSettings(javaLanguage).indentOptions)
+        indentOptions.USE_TAB_CHARACTER = false
+        indentOptions.INDENT_SIZE = 4
+        indentOptions.CONTINUATION_INDENT_SIZE = 2
+
+        myFixture.typeInEditor('\n')
+        myFixture.checkResult(
+          """
+            ```java
+            foo(
+              <caret>
+            )
+            ```
+          """.trimIndent()
+        )
+      }
+    }
+  }
+
+  @Test
+  fun testEnterAfterNestedOpeningBraceDoesNotReindentOuterClosingBrace(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - item
@@ -861,24 +1005,27 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - item
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - item
 
-          ```json
-          {
-            "a": {
-              <caret>
+            ```json
+            {
+              "a": {
+                <caret>
+              }
             }
-          }
-          ```
-      """.trimIndent()
-    )
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesInTopLevelCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesInTopLevelCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         ```json
@@ -887,20 +1034,23 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        ```json
-        {
-          <caret>
-        }
-        ```
-      """.trimIndent()
-    )
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          ```json
+          {
+            <caret>
+          }
+          ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenNestedBracesPreservesCodeIndentation() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenNestedBracesPreservesCodeIndentation(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Item with code:
@@ -913,24 +1063,27 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - Item with code:
 
-          ```json
-          {
-            "a": {
-              <caret>
+            ```json
+            {
+              "a": {
+                <caret>
+              }
             }
-          }
-          ```
-      """.trimIndent()
-    )
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracketsPreservesIndentedCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracketsPreservesIndentedCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Item with code:
@@ -941,22 +1094,25 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - Item with code:
 
-          ```json
-          [
-            <caret>
-          ]
-          ```
-      """.trimIndent()
-    )
+            ```json
+            [
+              <caret>
+            ]
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenParenthesesPreservesCodeIndentation() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenParenthesesPreservesCodeIndentation(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         ```java
@@ -965,58 +1121,64 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        ```java
-        foo(
-                <caret>
-        )
-        ```
-      """.trimIndent()
-    )
-  }
-
-  fun testEnterBetweenParenthesesPreservesConfiguredContinuationIndentInIndentedCodeFence() {
-    CodeStyle.doWithTemporarySettings(project, CodeStyle.getSettings(project)) { settings ->
-      val javaLanguage = requireNotNull(Language.findLanguageByID("JAVA"))
-      val indentOptions = requireNotNull(settings.getCommonSettings(javaLanguage).indentOptions)
-      indentOptions.USE_TAB_CHARACTER = false
-      indentOptions.INDENT_SIZE = 4
-      indentOptions.CONTINUATION_INDENT_SIZE = 2
-
-      configureFromFileText(
-        "test.md",
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
         """
-          - Item 1
-          - Item 2
-          - Item 3 with code:
-
-            ```java
-            foo(<caret>)
-            ```
-        """.trimIndent()
-      )
-
-      type('\n')
-      checkResultByText(
-        """
-          - Item 1
-          - Item 2
-          - Item 3 with code:
-
-            ```java
-            foo(
-              <caret>
-            )
-            ```
+          ```java
+          foo(
+                  <caret>
+          )
+          ```
         """.trimIndent()
       )
     }
   }
 
-  fun testEnterBetweenBracesInJavaBlockCommentDoesNotAddCodeIndent() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenParenthesesPreservesConfiguredContinuationIndentInIndentedCodeFence(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      CodeStyle.doWithTemporarySettings(myFixture.project, CodeStyle.getSettings(myFixture.project)) { settings ->
+        val javaLanguage = requireNotNull(Language.findLanguageByID("JAVA"))
+        val indentOptions = requireNotNull(settings.getCommonSettings(javaLanguage).indentOptions)
+        indentOptions.USE_TAB_CHARACTER = false
+        indentOptions.INDENT_SIZE = 4
+        indentOptions.CONTINUATION_INDENT_SIZE = 2
+
+        myFixture.configureByText(
+          "test.md",
+          """
+            - Item 1
+            - Item 2
+            - Item 3 with code:
+
+              ```java
+              foo(<caret>)
+              ```
+          """.trimIndent()
+        )
+
+        myFixture.typeInEditor('\n')
+        myFixture.checkResult(
+          """
+            - Item 1
+            - Item 2
+            - Item 3 with code:
+
+              ```java
+              foo(
+                <caret>
+              )
+              ```
+          """.trimIndent()
+        )
+      }
+    }
+  }
+
+  @Test
+  fun testEnterBetweenBracesInJavaBlockCommentDoesNotAddCodeIndent(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Item with code:
@@ -1027,21 +1189,24 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - Item with code:
 
-          ```java
-          /* {
-          <caret>} */
-          ```
-      """.trimIndent()
-    )
+            ```java
+            /* {
+            <caret>} */
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesInBlockQuoteCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesInBlockQuoteCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         > ```json
@@ -1050,20 +1215,23 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        > ```json
-        > {
-        >   <caret>
-        > }
-        > ```
-      """.trimIndent()
-    )
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          > ```json
+          > {
+          >   <caret>
+          > }
+          > ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenNestedBracesInBlockQuoteCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenNestedBracesInBlockQuoteCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         > ```json
@@ -1074,22 +1242,25 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        > ```json
-        > {
-        >   "a": {
-        >     <caret>
-        >   }
-        > }
-        > ```
-      """.trimIndent()
-    )
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          > ```json
+          > {
+          >   "a": {
+          >     <caret>
+          >   }
+          > }
+          > ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterDoesNotIndentCodeFenceTerminator() {
-    configureFromFileText(
+  @Test
+  fun testEnterDoesNotIndentCodeFenceTerminator(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         ```json
@@ -1099,20 +1270,23 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        ```json
-        {
-          "deeply": "indented"
-          <caret>
-        ```
-      """.trimIndent()
-    )
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          ```json
+          {
+            "deeply": "indented"
+            <caret>
+          ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracketsInBlockQuoteCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracketsInBlockQuoteCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         > ```json
@@ -1121,20 +1295,23 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        > ```json
-        > [
-        >   <caret>
-        > ]
-        > ```
-      """.trimIndent()
-    )
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          > ```json
+          > [
+          >   <caret>
+          > ]
+          > ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesInOrderedListCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesInOrderedListCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         1. Item with code:
@@ -1145,22 +1322,25 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        1. Item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          1. Item with code:
 
-           ```json
-           {
-             <caret>
-           }
-           ```
-      """.trimIndent()
-    )
+             ```json
+             {
+               <caret>
+             }
+             ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesInNestedListCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesInNestedListCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Outer item
@@ -1172,23 +1352,26 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Outer item
-          - Inner item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - Outer item
+            - Inner item with code:
 
-            ```json
-            {
-              <caret>
-            }
-            ```
-      """.trimIndent()
-    )
+              ```json
+              {
+                <caret>
+              }
+              ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesInNestedBlockQuoteCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesInNestedBlockQuoteCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         > > ```json
@@ -1197,20 +1380,23 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        > > ```json
-        > > {
-        > >   <caret>
-        > > }
-        > > ```
-      """.trimIndent()
-    )
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          > > ```json
+          > > {
+          > >   <caret>
+          > > }
+          > > ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesInListInsideBlockQuoteCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesInListInsideBlockQuoteCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         > - Item with code:
@@ -1221,22 +1407,25 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        > - Item with code:
-        >
-        >   ```json
-        >   {
-        >     <caret>
-        >   }
-        >   ```
-      """.trimIndent()
-    )
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          > - Item with code:
+          >
+          >   ```json
+          >   {
+          >     <caret>
+          >   }
+          >   ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesInIndentedTopLevelCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesInIndentedTopLevelCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         Some text:
@@ -1247,22 +1436,25 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        Some text:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          Some text:
 
-           ```json
-           {
-             <caret>
-           }
-           ```
-      """.trimIndent()
-    )
+             ```json
+             {
+               <caret>
+             }
+             ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesSurroundedByWhitespaceInIndentedCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesSurroundedByWhitespaceInIndentedCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Item with code:
@@ -1273,22 +1465,25 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - Item with code:
 
-          ```json
-          {
-            <caret>
-          }
-          ```
-      """.trimIndent()
-    )
+            ```json
+            {
+              <caret>
+            }
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesInIndentedJavaCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesInIndentedJavaCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Item with code:
@@ -1299,22 +1494,25 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - Item with code:
 
-          ```java
-          class A {
-              <caret>
-          }
-          ```
-      """.trimIndent()
-    )
+            ```java
+            class A {
+                <caret>
+            }
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenParenthesesInIndentedJavaCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenParenthesesInIndentedJavaCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Item with code:
@@ -1325,18 +1523,20 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - Item with code:
 
-          ```java
-          foo(
-                  <caret>
-          )
-          ```
-      """.trimIndent()
-    )
+            ```java
+            foo(
+                    <caret>
+            )
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
   /**
@@ -1344,8 +1544,9 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
    * The new line still gets the Java continuation indent: only `EnterBetweenBracesFinalHandler` skips formatting inside a
    * code fence, the regular Enter indentation keeps using the injected language.
    */
-  fun testEnterBetweenBracketsInJavaCodeFenceIsNotABracePair() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracketsInJavaCodeFenceIsNotABracePair(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Item with code:
@@ -1356,21 +1557,24 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - Item with code:
 
-          ```java
-          int[] a = new int[
-                  <caret>];
-          ```
-      """.trimIndent()
-    )
+            ```java
+            int[] a = new int[
+                    <caret>];
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesInIndentedYamlCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesInIndentedYamlCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Item with code:
@@ -1381,26 +1585,29 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - Item with code:
 
-          ```yaml
-          key: {
-                 <caret>
-          }
-          ```
-      """.trimIndent()
-    )
+            ```yaml
+            key: {
+                   <caret>
+            }
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun testEnterBetweenBracesWithDisabledSmartIndent() {
+  @Test
+  fun testEnterBetweenBracesWithDisabledSmartIndent(): Unit = timeoutRunBlocking {
     val codeInsightSettings = CodeInsightSettings.getInstance()
     val smartIndentOnEnter = codeInsightSettings.SMART_INDENT_ON_ENTER
     codeInsightSettings.SMART_INDENT_ON_ENTER = false
     try {
-      configureFromFileText(
+      myFixture.configureByText(
         "test.md",
         """
           - Item with code:
@@ -1411,17 +1618,19 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
         """.trimIndent()
       )
 
-      type('\n')
-      checkResultByText(
-        """
-          - Item with code:
+      withContext(Dispatchers.EDT) {
+        myFixture.typeInEditor('\n')
+        myFixture.checkResult(
+          """
+            - Item with code:
 
-            ```json
-            {
-            <caret>}
-            ```
-        """.trimIndent()
-      )
+              ```json
+              {
+              <caret>}
+              ```
+          """.trimIndent()
+        )
+      }
     }
     finally {
       codeInsightSettings.SMART_INDENT_ON_ENTER = smartIndentOnEnter
@@ -1432,8 +1641,9 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
    * `EnterAfterUnmatchedBraceHandler` inserts the missing brace.
    * A top-level fence does not need host indentation restoration.
    */
-  fun testEnterAfterUnmatchedBraceInTopLevelCodeFence() {
-    configureFromFileText(
+  @Test
+  fun testEnterAfterUnmatchedBraceInTopLevelCodeFence(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         ```json
@@ -1444,84 +1654,92 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        ```json
-        {
-          "a": {
-            <caret>
-          }
-        }
-        ```
-      """.trimIndent()
-    )
-  }
-
-  fun testEnterBetweenBracesWithFourSpaceIndentInIndentedCodeFence() {
-    CodeStyle.doWithTemporarySettings(project, CodeStyle.getSettings(project)) { settings ->
-      val jsonLanguage = requireNotNull(Language.findLanguageByID("JSON"))
-      val indentOptions = requireNotNull(settings.getCommonSettings(jsonLanguage).indentOptions)
-      indentOptions.INDENT_SIZE = 4
-
-      configureFromFileText(
-        "test.md",
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
         """
-          - Item with code:
-
-            ```json
-            {<caret>}
-            ```
-        """.trimIndent()
-      )
-
-      type('\n')
-      checkResultByText(
-        """
-          - Item with code:
-
-            ```json
-            {
-                <caret>
+          ```json
+          {
+            "a": {
+              <caret>
             }
-            ```
+          }
+          ```
         """.trimIndent()
       )
     }
   }
 
-  fun testEnterBetweenBracesWithTabIndentInIndentedCodeFence() {
-    CodeStyle.doWithTemporarySettings(project, CodeStyle.getSettings(project)) { settings ->
-      val jsonLanguage = requireNotNull(Language.findLanguageByID("JSON"))
-      val indentOptions = requireNotNull(settings.getCommonSettings(jsonLanguage).indentOptions)
-      indentOptions.USE_TAB_CHARACTER = true
-      indentOptions.TAB_SIZE = 2
-      indentOptions.INDENT_SIZE = 2
-      indentOptions.CONTINUATION_INDENT_SIZE = 2
+  @Test
+  fun testEnterBetweenBracesWithFourSpaceIndentInIndentedCodeFence(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      CodeStyle.doWithTemporarySettings(myFixture.project, CodeStyle.getSettings(myFixture.project)) { settings ->
+        val jsonLanguage = requireNotNull(Language.findLanguageByID("JSON"))
+        val indentOptions = requireNotNull(settings.getCommonSettings(jsonLanguage).indentOptions)
+        indentOptions.INDENT_SIZE = 4
 
-      configureFromFileText(
-        "test.md",
-        """
-          - Item with code:
+        myFixture.configureByText(
+          "test.md",
+          """
+            - Item with code:
 
-            ```json
-            {<caret>}
-            ```
-        """.trimIndent()
-      )
+              ```json
+              {<caret>}
+              ```
+          """.trimIndent()
+        )
 
-      type('\n')
-      checkResultByText(
-        """
-          - Item with code:
+        myFixture.typeInEditor('\n')
+        myFixture.checkResult(
+          """
+            - Item with code:
 
-            ```json
-            {
-            ${'\t'}<caret>
-            }
-            ```
-        """.trimIndent()
-      )
+              ```json
+              {
+                  <caret>
+              }
+              ```
+          """.trimIndent()
+        )
+      }
+    }
+  }
+
+  @Test
+  fun testEnterBetweenBracesWithTabIndentInIndentedCodeFence(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      CodeStyle.doWithTemporarySettings(myFixture.project, CodeStyle.getSettings(myFixture.project)) { settings ->
+        val jsonLanguage = requireNotNull(Language.findLanguageByID("JSON"))
+        val indentOptions = requireNotNull(settings.getCommonSettings(jsonLanguage).indentOptions)
+        indentOptions.USE_TAB_CHARACTER = true
+        indentOptions.TAB_SIZE = 2
+        indentOptions.INDENT_SIZE = 2
+        indentOptions.CONTINUATION_INDENT_SIZE = 2
+
+        myFixture.configureByText(
+          "test.md",
+          """
+            - Item with code:
+
+              ```json
+              {<caret>}
+              ```
+          """.trimIndent()
+        )
+
+        myFixture.typeInEditor('\n')
+        myFixture.checkResult(
+          """
+            - Item with code:
+
+              ```json
+              {
+              ${'\t'}<caret>
+              }
+              ```
+          """.trimIndent()
+        )
+      }
     }
   }
 
@@ -1529,8 +1747,9 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
    * No language is injected, so the braces stay inside a single Markdown token and are not split.
    * The new line gets the Markdown indent (4) on top of the code fence indent, since there is no injected language to ask.
    */
-  fun testEnterBetweenBracesInCodeFenceWithoutInjection() {
-    configureFromFileText(
+  @Test
+  fun testEnterBetweenBracesInCodeFenceWithoutInjection(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "test.md",
       """
         - Item with code:
@@ -1541,20 +1760,23 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        - Item with code:
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          - Item with code:
 
-          ```foobar
-          {
-              <caret>}
-          ```
-      """.trimIndent()
-    )
+            ```foobar
+            {
+                <caret>}
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
-  fun `test blank line in quoted fence is not a separate injection range`() {
+  @Test
+  fun `test blank line in quoted fence is not a separate injection range`(): Unit = timeoutRunBlocking {
     val text = """
       > ```shell
       > pwd
@@ -1562,30 +1784,34 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       > echo done
       > ```
     """.trimIndent()
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    val contentStart = text.indexOf("pwd")
-    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, contentStart)
-    assertNotNull(injectedElement)
-    val injectedDocument = PsiDocumentManager.getInstance(project).getDocument(injectedElement!!.containingFile) as DocumentWindow
+    readAction {
+      val contentStart = text.indexOf("pwd")
+      val injectedElement = InjectedLanguageManager.getInstance(myFixture.project).findInjectedElementAt(myFixture.file, contentStart)
+      assertNotNull(injectedElement)
+      val injectedDocument = PsiDocumentManager.getInstance(myFixture.project).getDocument(injectedElement!!.containingFile) as DocumentWindow
 
-    assertTrue(injectedDocument.hostRanges.all { editor.document.getText(TextRange.create(it)).isNotBlank() })
-    assertEquals(
-      """
-        pwd
+      assertTrue(injectedDocument.hostRanges.all { myFixture.editor.document.getText(TextRange.create(it)).isNotBlank() })
+      assertEquals(
+        """
+          pwd
 
-        echo done
-      """.trimIndent(),
-      injectedElement.containingFile.text
-    )
+          echo done
+        """.trimIndent(),
+        injectedElement.containingFile.text
+      )
+    }
   }
 
   private fun doTest(text: String, shouldHaveInjection: Boolean) {
-    configureFromFileText("test.md", text)
+    myFixture.configureByText("test.md", text)
 
-    assertEquals(
-      shouldHaveInjection, !file.findElementAt(editor.caretModel.offset)!!.language.isKindOf(MarkdownLanguage.INSTANCE)
-    )
+    runReadActionBlocking {
+      assertEquals(
+        shouldHaveInjection, !myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!!.language.isKindOf(MarkdownLanguage.INSTANCE)
+      )
+    }
   }
 
   private fun Block.getDependentSpacings(): List<DependantSpacingImpl> {

@@ -9,6 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -177,8 +178,8 @@ abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationPro
   }
 
   private suspend fun focusOnFile(project: Project, virtualFile: VirtualFile) {
+    FileEditorManager.getInstanceAsync(project).openFile(virtualFile, FileEditorOpenRequest.withFocus(true))
     withContext(Dispatchers.EDT) {
-      FileEditorManager.getInstance(project).openFile(virtualFile, true)
       ProjectView.getInstance(project).select(null, virtualFile, true)
     }
   }

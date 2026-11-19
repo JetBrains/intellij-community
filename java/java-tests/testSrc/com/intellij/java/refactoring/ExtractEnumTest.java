@@ -10,54 +10,72 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import junit.framework.Assert;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TreeSet;
 
-public class ExtractEnumTest extends LightMultiFileTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/extractEnum/";
-  }
-  
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class ExtractEnumTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/extractEnum/");
+
+  @Test
   public void testOneConstant() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
   }
 
+  @Test
   public void testDependantConstants() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
   
+  @Test
   public void testConstructorCall() {
     doTest(new RefactoringTestUtil.MemberDescriptor("STATE_STARTED", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("STATE_STOPPED", PsiField.class, true));
   }
  
+  @Test
   public void testCondition() {
     doTest(new RefactoringTestUtil.MemberDescriptor("STATE_STARTED", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("STATE_STOPPED", PsiField.class, true));
   }
 
+  @Test
   public void testReferencesOnEnumConstantInEnum() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
+  @Test
   public void testReferencesOnEnumConstantInOriginal() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
   }
 
+  @Test
   public void testUsageInVariableInitializer() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
   }
 
+  @Test
   public void testNestedClass() {
     doTest(null, true,
            new RefactoringTestUtil.MemberDescriptor("ONE", PsiField.class, true),
@@ -65,72 +83,85 @@ public class ExtractEnumTest extends LightMultiFileTestCase {
            new RefactoringTestUtil.MemberDescriptor("THREE", PsiField.class, true));
   }
 
+  @Test
   public void testForwardReferenceConflict() {
     doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, false),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  @Test
   public void testValueNameConflict() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("value", PsiField.class, false));
   }
 
+  @Test
   public void testChangeMethodParameter() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  @Test
   public void testCantChangeMethodParameter() {
     doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  @Test
   public void testDontChangeOtherConstants() {
     doTest("Unable to migrate statement to enum constant. Node.WARNING can not be replaced with enum", false,
            new RefactoringTestUtil.MemberDescriptor("OK", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("ERROR", PsiField.class, true));
   }
 
+  @Test
   public void testCantChangeMethodParameter1() {
     doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  @Test
   public void testChangeReturnType() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  @Test
   public void testCantChangeReturnType() {
     doTest("Unable to migrate statement to enum constant. Field <b><code>length</code></b> is out of project", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  @Test
   public void testCantChangeReturnType1() {
     doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  @Test
   public void testChangeMethodParameterAndReplaceOtherUsages() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  @Test
   public void testReferencesOnEnumConstantElsewhere() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  @Test
   public void testNormalize() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  @Test
   public void testUnknownSwitchLabel() {
     doTest("Unable to migrate statement to enum constant. 8 can not be replaced with enum", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
@@ -144,9 +175,10 @@ public class ExtractEnumTest extends LightMultiFileTestCase {
   private void doTest(String conflicts,
                       boolean extractInnerClass,
                       RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
-    doTest(() -> {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    multiFile.get().doTest(() -> {
       final PsiClass aClass = myFixture.findClass("Test");
-      assertNotNull("Class Test not found", aClass);
+      assertNotNull(aClass, "Class Test not found");
 
       final ArrayList<PsiField> fields = new ArrayList<>();
       final ArrayList<PsiMethod> methods = new ArrayList<>();
@@ -179,7 +211,7 @@ public class ExtractEnumTest extends LightMultiFileTestCase {
         if (conflicts != null) {
           TreeSet<String> expectedConflictsSet = new TreeSet<>(Arrays.asList(conflicts.split("\n")));
           TreeSet<String> actualConflictsSet = new TreeSet<>(Arrays.asList(e.getMessage().split("\n")));
-          Assert.assertEquals(expectedConflictsSet, actualConflictsSet);
+          assertEquals(expectedConflictsSet, actualConflictsSet);
           return;
         }
         else {

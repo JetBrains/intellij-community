@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -157,7 +158,7 @@ final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
 
     VirtualFile xsdVFile = StandardFileSystems.local().refreshAndFindFileByPath(xsd.getAbsolutePath());
     if (xsdVFile != null) {
-      FileEditorManager.getInstance(project).openFile(xsdVFile, true);
+      FileEditorManager.getInstance(project).requestOpenFile(xsdVFile, FileEditorOpenRequest.withFocus(true));
     } else {
       Messages.showErrorDialog(project, XmlBeansBundle.message("xml2xsd.generator.error.message"), XmlBeansBundle.message("xml2xsd.generator.error"));
     }

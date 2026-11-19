@@ -568,10 +568,6 @@ public class JavaDebugProcess extends XDebugProcess {
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean watch) {
       DebuggerSettings.getInstance().WATCH_RETURN_VALUES = watch;
-      DebugProcessImpl process = getCurrentDebugProcess(e);
-      if (process != null) {
-        process.setWatchMethodReturnValuesEnabled(watch);
-      }
     }
   }
 

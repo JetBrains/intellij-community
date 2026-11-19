@@ -19,7 +19,7 @@ A tool has one of two audiences. The audience picks the error model and the comm
 | Examples | the packer, the collector, the composer, the descriptor writer | `bt`, `vm` |
 | Error model | `anyhow`, `ERROR: {e:#}`, a nonzero exit | a typed `Refusal` with a stable code and exit |
 | Command line | the `cli` crate, `--key=value` | clap derive |
-| Crate closure | pinned in `closure.txt` | not pinned |
+| Crate closure | pinned in `closure.txt` | not pinned, except in the Air UI-lane tooling |
 
 Bazel reads only "nonzero" from an action tool. A person or an agent branches on the exit code and on the refusal code.
 
@@ -48,8 +48,8 @@ that converts a refusal of another tool maps the exit by its meaning, never by i
 
 ## 2. Two command line grammars
 
-Bazel writes the argv of an action tool, so the tool reads it with the `cli` crate. The crate has no dependency, and
-it refuses every other form with one text. `community/build/dev-dist-tools/crates/cli/API.md` lists the refusals.
+Bazel writes the argv of an action tool, so the tool reads it with the `cli` crate. The crate depends only on `anyhow`,
+and it refuses every other form with one text. `community/build/dev-dist-tools/crates/cli/API.md` lists the refusals.
 
 ```rust
 let mut options = cli::parse(args)?;

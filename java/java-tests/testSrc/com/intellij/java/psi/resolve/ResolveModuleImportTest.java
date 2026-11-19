@@ -1,11 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve;
 
+
 import com.intellij.JavaTestUtil;
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesFixture;
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.DependencyScope;
@@ -28,38 +31,47 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.java.testFramework.fixtures.LightJava9ModulesFixtureKt.lightJava9ModulesFixture;
+import static com.intellij.java.testFramework.fixtures.LightJava9ModulesFixtureKt.lightJava9ModulesProjectFixture;
 import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2;
 import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M3;
 import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4;
 import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixtureTestCase {
+@TestApplication
+public class ResolveModuleImportTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJava9ModulesProjectFixture();
+  private static final Logger LOG = Logger.getInstance(ResolveModuleImportTest.class);
+  private final TestFixture<LightJava9ModulesFixture> java9 =
+    lightJava9ModulesFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/importModule/resolve");
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/importModule/resolve";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ModuleRootModificationUtil.addModuleLibrary(getModule(), "moduleA", getJarRootUrls("lib/moduleA-1.0.jar"),
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    ModuleRootModificationUtil.addModuleLibrary(myFixture.getModule(), "moduleA", getJarRootUrls("lib/moduleA-1.0.jar"),
                                                 getJarRootUrls("lib/moduleA-1.0-sources.jar"));
-    ModuleRootModificationUtil.addModuleLibrary(getModule(), "moduleB", getJarRootUrls("lib/moduleB-1.0.jar"),
+    ModuleRootModificationUtil.addModuleLibrary(myFixture.getModule(), "moduleB", getJarRootUrls("lib/moduleB-1.0.jar"),
                                                 getJarRootUrls("lib/moduleB-1.0-sources.jar"));
 
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     boolean deleteUnusedModuleImports = javaSettings.isDeleteUnusedModuleImports();
-    Disposer.register(getTestRootDisposable(), new Disposable() {
+    Disposer.register(myFixture.getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         javaSettings.setDeleteUnusedModuleImports(deleteUnusedModuleImports);
@@ -69,10 +81,11 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   private List<String> getJarRootUrls(String path) {
-    return List.of(VfsUtil.getUrlForLibraryRoot(new File(getTestDataPath(), path)));
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    return List.of(VfsUtil.getUrlForLibraryRoot(new File(myFixture.getTestDataPath(), path)));
   }
 
-
+  @Test
   public void testResolveModuleLibrary() {
     addCode("Test.java", """
       import module my.test.moduleA;
@@ -86,6 +99,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertEquals("my.test.moduleA.ModuleA", psiClass.getQualifiedName());
   }
 
+  @Test
   public void testResolveModuleLibraryInternalPackage() {
     addCode("Test.java", """
       import module my.test.moduleA;
@@ -97,6 +111,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertNull(getPsiClass());
   }
 
+  @Test
   public void testResolveAutoModule() {
     addCode("Test.java", """
       import module my.test.moduleB;
@@ -110,6 +125,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertEquals("my.test.moduleB.ModuleB", psiClass.getQualifiedName());
   }
 
+  @Test
   public void testResolveAutoModuleExternalPackage() {
     addCode("Test.java", """
       import module my.test.moduleB;
@@ -123,6 +139,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertEquals("my.test.moduleB.external.ModuleBExternal", psiClass.getQualifiedName());
   }
 
+  @Test
   public void testResolveSourceModule() {
     addCode("module-info.java", """
       module my.source.moduleB {
@@ -144,9 +161,11 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertEquals("my.source.moduleB.SourceTestB", psiClass.getQualifiedName());
   }
 
+  @Test
   public void testResolveTransitiveDependency() {
-    Module m2 = ModuleManager.getInstance(getProject()).findModuleByName(M2.moduleName);
-    Module m3 = ModuleManager.getInstance(getProject()).findModuleByName(M3.moduleName);
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    Module m2 = ModuleManager.getInstance(myFixture.getProject()).findModuleByName(M2.moduleName);
+    Module m3 = ModuleManager.getInstance(myFixture.getProject()).findModuleByName(M3.moduleName);
     ModuleRootModificationUtil.addDependency(m2, m3, DependencyScope.COMPILE, true);
     addCode("module-info.java", """
       module my.source.moduleB {
@@ -173,6 +192,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertEquals("my.source.moduleC.SourceTestC", psiClass.getQualifiedName());
   }
 
+  @Test
   public void testMultiResolve() {
     addCode("module-info.java", """
       module my.source.moduleB {
@@ -209,6 +229,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
                         ((PsiClass)resolveResults[1].getElement()).getQualifiedName()));
   }
 
+  @Test
   public void testResolveToModuleAccessed() {
     addCode("module-info.java", """
       module my.source.moduleB {
@@ -237,6 +258,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertEquals("my.source.moduleB.SourceTestB", psiClass.getQualifiedName());
   }
 
+  @Test
   public void testResolveToModuleNotAccessed() {
     addCode("module-info.java", """
       module my.source.moduleB {
@@ -264,6 +286,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertNull(psiClass);
   }
 
+  @Test
   public void testResolveToModuleAccessedViaManifest() {
     addCode("module-info.java", """
       module my.source.moduleB {
@@ -275,7 +298,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
       class SourceTestB {}
       """, M2);
 
-    addResourceFile("META-INF/MANIFEST.MF", """
+    java9.get().addResourceFile("META-INF/MANIFEST.MF", """
       Manifest-Version: 1.0
       Automatic-Module-Name: my.source.moduleA
       """, MAIN);
@@ -291,9 +314,11 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertEquals("my.source.moduleB.SourceTestB", psiClass.getQualifiedName());
   }
 
+  @Test
   public void testResolveTransitiveRecursion() {
-    Module m2 = ModuleManager.getInstance(getProject()).findModuleByName(M2.moduleName);
-    Module m3 = ModuleManager.getInstance(getProject()).findModuleByName(M3.moduleName);
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    Module m2 = ModuleManager.getInstance(myFixture.getProject()).findModuleByName(M2.moduleName);
+    Module m3 = ModuleManager.getInstance(myFixture.getProject()).findModuleByName(M3.moduleName);
     ModuleRootModificationUtil.addDependency(m2, m3, DependencyScope.COMPILE, true);
     addCode("module-info.java", """
       module my.source.moduleB {
@@ -327,18 +352,22 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertEquals("my.source.moduleC.SourceTestC", psiClass.getQualifiedName());
   }
 
+  @Test
   public void testAmbiguousModuleImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
       prepareAmbiguousModuleTests();
-      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.configureByFile(myFixture.getTestName(false) + ".java");
       myFixture.checkHighlighting();
     });
   }
 
+  @Test
   public void testModuleImportWithPackageImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
       prepareAmbiguousModuleTests();
-      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.configureByFile(myFixture.getTestName(false) + ".java");
       myFixture.checkHighlighting();
       PsiClass psiClass = getPsiClass();
       assertNotNull(psiClass);
@@ -346,17 +375,19 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     });
   }
 
+  @Test
   public void testOptimizeImportWithModuleConflict() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
       prepareAmbiguousModuleTests();
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        String fileName = getTestName(false) + ".java";
+      String fileName = myFixture.getTestName(false) + ".java";
+      PsiFile file = myFixture.configureByFile(fileName);
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
         try {
-          PsiFile file = myFixture.configureByFile(fileName);
-          JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
-          PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-          myFixture.checkResultByFile(getTestName(false) + "_after" + ".java");
+          JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(file);
+          PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+          PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+          myFixture.checkResultByFile(myFixture.getTestName(false) + "_after" + ".java");
           PsiTestUtil.checkFileStructure(file);
         }
         catch (Exception e) {
@@ -366,8 +397,10 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     });
   }
 
+  @Test
   public void testModuleImportWithDefaultPackageImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
       addCode("module-info.java", """
       module my.source.moduleB {
         exports my.source.moduleB;
@@ -377,7 +410,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
       package my.source.moduleB;
       public class String {}
       """, M2);
-      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.configureByFile(myFixture.getTestName(false) + ".java");
       myFixture.checkHighlighting();
       PsiClass psiClass = getPsiClass();
       assertNotNull(psiClass);
@@ -385,18 +418,22 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     });
   }
 
+  @Test
   public void testAmbiguousModuleImportWithPackageImport() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23_PREVIEW, ()->{
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_23_PREVIEW, ()->{
       prepareAmbiguousModuleTests();
-      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.configureByFile(myFixture.getTestName(false) + ".java");
       myFixture.checkHighlighting();
     });
   }
 
+    @Test
     public void testModuleImportWithSingleImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
+      LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
       prepareAmbiguousModuleTests();
-      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.configureByFile(myFixture.getTestName(false) + ".java");
       myFixture.checkHighlighting();
       PsiClass psiClass = getPsiClass();
       assertNotNull(psiClass);
@@ -404,7 +441,9 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     });
   }
 
+  @Test
   public void testOptimizeImportWithSimilarNames() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     addCode("module-info.java", """
     module my.source.moduleB {
       exports my.source.moduleB;
@@ -424,15 +463,14 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     public class Imported2 {}
     """, M4);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      String fileName = getTestName(false) + ".java";
+    String fileName = myFixture.getTestName(false) + ".java";
+    PsiFile file = myFixture.configureByFile(fileName);
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
       try {
-        PsiFile file = myFixture.configureByFile(fileName);
-
-        JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
-        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        myFixture.checkResultByFile(getTestName(false) + "_after" + ".java");
+        JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(file);
+        PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+        PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+        myFixture.checkResultByFile(myFixture.getTestName(false) + "_after" + ".java");
         PsiTestUtil.checkFileStructure(file);
       }
       catch (Exception e) {
@@ -474,21 +512,28 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
 
   @Nullable
   private PsiClass getPsiClass() {
-    PsiField field = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiField.class);
-    assertNotNull(field);
-    return PsiUtil.resolveClassInClassTypeOnly(field.getType());
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    return ReadAction.computeBlocking(() -> {
+      PsiField field = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiField.class);
+      assertNotNull(field);
+      return PsiUtil.resolveClassInClassTypeOnly(field.getType());
+    });
   }
 
   private ResolveResult[] getResolveResults() {
-    PsiReference reference = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
-    return ((PsiPolyVariantReference)reference).multiResolve(false);
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    return ReadAction.computeBlocking(() -> {
+      PsiReference reference = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+      return ((PsiPolyVariantReference)reference).multiResolve(false);
+    });
   }
 
   private void addCode(@NotNull String name, @NotNull @Language("JAVA") String text, @NotNull ModuleDescriptor descriptor) {
-    addFile(name, text, descriptor);
+    java9.get().addFile(name, text, descriptor);
   }
 
   private void addCode(@NotNull String name, @NotNull @Language("JAVA") String text) {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     myFixture.configureByText(name, text);
   }
 }

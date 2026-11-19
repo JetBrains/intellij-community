@@ -15,7 +15,8 @@ import kotlinx.serialization.Serializable
 @Service(Service.Level.PROJECT)
 @State(name = "GitLabMergeRequestsSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 internal class GitLabMergeRequestsPreferences
-  : CollectableSerializablePersistentStateComponent<GitLabMergeRequestsPreferences.SettingsState>(SettingsState()) {
+  : CollectableSerializablePersistentStateComponent<GitLabMergeRequestsPreferences.SettingsState>(SettingsState()),
+    GitLabReviewSettings {
 
   @Serializable
   data class SettingsState(
@@ -36,7 +37,7 @@ internal class GitLabMergeRequestsPreferences
       }
     }
 
-  var showEventsInTimeline: Boolean
+  override var showEventsInTimeline: Boolean
     get() = state.showEventsInTimeline
     set(value) {
       updateStateAndEmit {
@@ -44,25 +45,25 @@ internal class GitLabMergeRequestsPreferences
       }
     }
 
-  var highlightDiffLinesInEditor: Boolean
+  override var highlightDiffLinesInEditor: Boolean
     get() = state.highlightDiffLinesInEditor
     set(value) {
       updateStateAndEmit {
         it.copy(highlightDiffLinesInEditor = value)
       }
     }
-  val highlightDiffLinesInEditorState: StateFlow<Boolean> = stateFlow.mapState { it.highlightDiffLinesInEditor }
+  override val highlightDiffLinesInEditorState: StateFlow<Boolean> = stateFlow.mapState { it.highlightDiffLinesInEditor }
 
-  var usedAsDraftSubmitActionLast: Boolean
+  override var usedAsDraftSubmitActionLast: Boolean
     get() = state.usedAsDraftSubmitActionLast
     set(value) {
       updateStateAndEmit {
         it.copy(usedAsDraftSubmitActionLast = value)
       }
     }
-  val usedAsDraftSubmitActionLastState: StateFlow<Boolean> = stateFlow.mapState { it.usedAsDraftSubmitActionLast }
+  override val usedAsDraftSubmitActionLastState: StateFlow<Boolean> = stateFlow.mapState { it.usedAsDraftSubmitActionLast }
 
-  var editorReviewEnabled: Boolean
+  override var editorReviewEnabled: Boolean
     get() = state.editorReviewEnabled
     set(value) {
       updateStateAndEmit {

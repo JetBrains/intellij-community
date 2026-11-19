@@ -9,7 +9,9 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
 import kotlinx.coroutines.CoroutineScope;
@@ -20,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -31,10 +34,15 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * Consider using {@link VirtualFileManager#VFS_CHANGES_BG} to run your listener on background.
+   * <p>
+   * Publish events through {@code RefreshQueue} or {@link #fireEvents}, not directly to this topic.
    */
   @Topic.AppLevel
   public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
+  /**
+   * Publish events through {@code RefreshQueue} or {@link #fireEvents}, not directly to this topic.
+   */
   @Topic.AppLevel
   public static final Topic<BulkFileListenerBackgroundable> VFS_CHANGES_BG =
     new Topic<>(BulkFileListenerBackgroundable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
@@ -267,6 +275,16 @@ public abstract class VirtualFileManager implements ModificationTracker {
     Object oldValue,
     Object newValue
   );
+
+  /**
+   * Publishes {@code events} to {@link #VFS_CHANGES} and {@link #VFS_CHANGES_BG} listeners
+   * and runs {@code applyAction} between {@link BulkFileListener#before(List)} and {@link BulkFileListener#after(List)}.
+   * <p>
+   * This method does not mutate the persistent VFS cache. To validate and apply events to {@code ManagingFS},
+   * use {@code RefreshQueue.getInstance().processEvents(false, events)}.
+   */
+  @RequiresWriteLock
+  public abstract void fireEvents(@NotNull List<? extends @NotNull VFileEvent> events, @NotNull Runnable applyAction);
 
   /**
    * @return a number that's incremented every time something changes in the VFS, i.e., file hierarchy, names, flags, attributes, contents.

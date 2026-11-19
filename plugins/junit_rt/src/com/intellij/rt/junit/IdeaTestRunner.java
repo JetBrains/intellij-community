@@ -3,10 +3,14 @@
 package com.intellij.rt.junit;
 
 import com.intellij.rt.execution.TestListenerProtocol;
+import com.intellij.rt.execution.junit.MapSerializerUtil;
 import com.intellij.rt.execution.junit.TestsRepeater;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public interface IdeaTestRunner<T> {
   void createListeners(ArrayList<String> listeners, int count);
@@ -41,11 +45,13 @@ public interface IdeaTestRunner<T> {
                                           boolean sendTree) {
       testRunner.createListeners(listeners, count);
       try {
-        String rootId = testRunner.isIdBasedTestTree() ? TestListenerProtocol.ROOT_NODE_ID : null;
-        return TestsRepeater.repeat(count, sendTree, rootId, new TestsRepeater.TestRun() {
+        if (testRunner.isIdBasedTestTree()) {
+          return repeatUnderSuites(testRunner, args, name, count, sendTree);
+        }
+        return TestsRepeater.repeat(count, sendTree, new TestsRepeater.TestRun() {
           @Override
-          public int execute(String parentId, boolean sendTree) {
-            return testRunner.startRunnerWithArgs(args, name, count, parentId, sendTree);
+          public int execute(boolean sendTree) {
+            return testRunner.startRunnerWithArgs(args, name, count, null, sendTree);
           }
         });
       }
@@ -53,6 +59,52 @@ public interface IdeaTestRunner<T> {
         e.printStackTrace(System.err);
         return -2;
       }
+    }
+
+    /**
+     * Repeats the run as {@link TestsRepeater} does, and reports a suite for each repetition. The run gets the id of the suite as
+     * the parent. This loop is here and not in {@link TestsRepeater}: the classes of this module come from the installed IDE,
+     * and {@link TestsRepeater} comes from the class path of the project, so the two can have different versions.
+     */
+    private static int repeatUnderSuites(IdeaTestRunner<?> testRunner, String[] args, String name, int count, boolean sendTree) {
+      if (count == 1) {
+        return testRunner.startRunnerWithArgs(args, name, count, TestListenerProtocol.ROOT_NODE_ID, sendTree);
+      }
+      PrintStream out = System.out;
+      // A forked process sends no tree. Its sibling processes report the same repetitions, so the id of a repetition needs the process.
+      String processId = sendTree ? "" : String.valueOf(System.currentTimeMillis());
+      boolean success = true;
+      for (int repetition = 1; count < 0 || repetition <= count; repetition++) {
+        String suiteName = "[" + repetition + "]";
+        String suiteId = suiteName + processId;
+        Map<String, String> suite = new LinkedHashMap<>();
+        suite.put("id", suiteId);
+        suite.put("name", suiteName);
+        suite.put("nodeId", suiteId);
+        suite.put("parentNodeId", TestListenerProtocol.ROOT_NODE_ID);
+        Map<String, String> startedSuite = new LinkedHashMap<>(suite);
+        // The suite of a repetition is no node of the test framework.
+        startedSuite.put("origId", "");
+        out.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_SUITE_STARTED, startedSuite));
+        int result;
+        try {
+          result = testRunner.startRunnerWithArgs(args, name, count, suiteId, sendTree);
+        }
+        finally {
+          out.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_SUITE_FINISHED, suite));
+        }
+        if (result == -2) {
+          return count > 0 ? -2 : -1;
+        }
+        success &= result == 0;
+        if (count == -2 && !success) {
+          return -1;
+        }
+        if (count == -3 && result == 0) {
+          return 0;
+        }
+      }
+      return success ? 0 : -1;
     }
   }
 }

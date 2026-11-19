@@ -48,6 +48,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
@@ -545,8 +546,10 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
     return outputType;
   }
 
-  public void setSdk(Sdk sdk) {
-    getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_SDK, sdk);
+  /** Stores {@code interpreter} on the console file, see {@link PydevConsoleRunner#CONSOLE_INTERPRETER}. */
+  @ApiStatus.Internal
+  public void setPythonInterpreter(@Nullable PythonInterpreter interpreter) {
+    getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_INTERPRETER, interpreter);
   }
 
   public void showVariables(PydevConsoleCommunication consoleCommunication) {

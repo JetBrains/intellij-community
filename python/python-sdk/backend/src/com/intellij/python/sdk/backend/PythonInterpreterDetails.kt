@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -31,7 +32,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -61,10 +61,19 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
   private val changeEvents = MutableSharedFlow<PythonInterpreterKey?>(extraBufferCapacity = Int.MAX_VALUE)
 
   init {
+    // Only the source of the flow of this session, which a restart changes: the interpreter library flow ignores the SDK
+    // table, which also holds other SDKs, such as a Java one.
+    val source = if (isInterpreterLibraryFlowEnabled()) {
+      // The version of the store now, read before the collector starts. A change between this read and the start of the
+      // collector is newer, so the collector still reports it.
+      val records = PythonInterpreterRecords.getInstance(project)
+      val seen = records.versions.value
+      records.versions.filter { it > seen }.map { }
+    }
+    else {
+      sdkTableChanges()
+    }
     scope.launch {
-      // Only the source of the flow of this session, which a restart changes: the interpreter library flow ignores the SDK
-      // table, which also holds other SDKs, such as a Java one.
-      val source = if (isInterpreterLibraryFlowEnabled()) PythonInterpreterRecords.getInstance(project).changes.drop(1) else sdkTableChanges()
       source.collect { changeEvents.emit(null) }
     }
   }
@@ -317,9 +326,9 @@ private fun PythonInterpreterRecords.StoredInterpreter.sameAsRecord(other: Pytho
   version == other.version && sysPath == other.sysPath &&
   addedPaths == other.addedPaths && excludedPaths.toSet() == other.excludedPaths.toSet()
 
-private fun PythonSdkAdditionalData?.addedPaths(): List<Path> = this?.addedPathFiles.orEmpty().mapNotNull { it.toNioPathOrNull() }
+private fun PythonSdkAdditionalData?.addedPaths(): List<Path> = this?.addedPathFiles.orEmpty().mapNotNull(::nioPathOf)
 
-private fun PythonSdkAdditionalData?.excludedPaths(): Set<Path> = this?.excludedPathFiles.orEmpty().mapNotNullTo(HashSet()) { it.toNioPathOrNull() }
+private fun PythonSdkAdditionalData?.excludedPaths(): Set<Path> = this?.excludedPathFiles.orEmpty().mapNotNullTo(HashSet(), ::nioPathOf)
 
 /** Whether the SDK data of [sdk] holds the user paths of [facts] already, see [commitUserPaths]. */
 internal fun hasUserPaths(sdk: Sdk, facts: PythonInterpreterFacts): Boolean =
@@ -349,7 +358,31 @@ private fun pathToUrl(path: Path): String = VfsUtilCore.pathToUrl(FileUtil.toSys
 private fun urlToPathOrNull(url: String): Path? = toPathOrNull(VfsUtilCore.urlToPath(url))
 
 /** [path] as the file system names it, or [path] itself when no file is there. */
-internal fun canonicalPath(path: Path): Path = LocalFileSystem.getInstance().findFileByNioFile(path)?.toNioPathOrNull() ?: path
+internal fun canonicalPath(path: Path): Path = LocalFileSystem.getInstance().findFileByNioFile(path)?.let(::nioPathOf) ?: path
+
+/**
+ * The NIO path of [file], as [VirtualFile.toNioPathOrNull] gives it, or `null` for a file outside of [LocalFileSystem] or
+ * for a path that [Path.of] cannot parse.
+ * [LocalFileSystem] holds the files of every eel, such as WSL and Docker, and [Path.of] routes their paths to the eel.
+ *
+ * [VirtualFile.toNioPathOrNull] waits for all pending writes of the local file system, in
+ * `com.intellij.openapi.vfs.impl.local.AsyncableLocalFileSystemImpl.getNioPath`. Resolve derives the roots under a read
+ * action, and a write action can wait for that read action. So this function makes the path from the VFS path of the
+ * file, and waits for no write.
+ *
+ * The platform has no API that gives the path without the wait. So this function is a copy of
+ * `com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.getNioPath` and `LocalFileSystemBase.toIoPath`. Keep it the
+ * same as them. The copy differs in two points: it has no OS check of the drive root, see the comment in the function,
+ * and it gives `null` where [Path.of] throws.
+ */
+internal fun nioPathOf(file: VirtualFile): Path? {
+  if (file.fileSystem != LocalFileSystem.getInstance()) return null
+  val path = file.path
+  // On Windows, `C:` names the current directory of the drive, so a drive root needs the slash. No OS check is necessary:
+  // a VFS path on Unix starts with `/`, so `startsWithWindowsDrive` rejects it.
+  val drive = path.length == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path)
+  return toPathOrNull(if (drive) "$path/" else path)
+}
 
 /** The root at [path]: the directory itself, or the archive of a `.zip` or `.egg` file. `null` when no file is there. */
 internal fun toRoot(path: Path): VirtualFile? {

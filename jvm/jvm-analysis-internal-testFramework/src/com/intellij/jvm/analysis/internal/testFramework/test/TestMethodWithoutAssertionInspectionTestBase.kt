@@ -8,6 +8,11 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
+/**
+ * @deprecated Use [testMethodWithoutAssertionProjectFixture] and [testMethodWithoutAssertionInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use testMethodWithoutAssertionProjectFixture and testMethodWithoutAssertionInspectionFixture in a JUnit 5 test")
 abstract class TestMethodWithoutAssertionInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: TestMethodWithoutAssertionInspection = TestMethodWithoutAssertionInspection().apply {
     assertKeywordIsAssertion = true

@@ -5,7 +5,7 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 jps_test(
     name = "vcs-github-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    tags = ["community-vcs-tests"],
     runtime_deps = [":vcs-github-tests_test_lib"],
 )
 ### skip generation section `test intellij.vcs.github.tests`
@@ -148,6 +148,7 @@ jvm_library(
         "//plugins/github/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
+        "//plugins/git4idea/testFramework/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -191,7 +192,7 @@ jvm_library(
         "//platform/ide-core",
         "//platform/testFramework/junit5",
         "//platform/lang-api:lang",
-        "//plugins/git4idea/testFramework:testFramework_test_lib",
+        "//plugins/git4idea/testFramework",
         "//platform/collaboration-tools:collaborationTools-tests_test_lib",
         "//platform/testFramework/junit5/codeInsight",
         "@lib//:app-cash-turbine-jvm",

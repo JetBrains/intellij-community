@@ -13,6 +13,7 @@ import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonEnvironmentWatchers
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -150,7 +151,7 @@ internal class PythonPackageManagerUnusedSdkTest {
 
     val watcherGone = AtomicBoolean()
     Disposer.register(service.impl().interpreterPathsWatcher(interpreter)!!, Disposable { watcherGone.set(true) })
-    PythonInterpreterRegistry.getInstance(project).removePythonInterpreter(pyProjectFixture.get(), interpreter)
+    PythonInterpreterRegistry.getInstance(project).remove(interpreter)
 
     assertThat(watcherGone.get()).describedAs("The watcher outlived the interpreter it watches").isTrue()
   }

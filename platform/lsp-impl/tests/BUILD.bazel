@@ -73,7 +73,6 @@ jvm_library(
         "//platform/util-ex",
         "//platform/util/coroutines",
         "//xml/xml-psi-impl:psi-impl",
-        "//libraries/junit4",
         "//libraries/junit6",
         "//platform/testFramework/structureView",
         "//platform/structure-view-impl:structureView",

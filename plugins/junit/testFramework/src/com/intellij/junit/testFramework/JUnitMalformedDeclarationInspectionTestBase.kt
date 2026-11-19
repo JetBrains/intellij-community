@@ -18,6 +18,11 @@ import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * @deprecated Use [junitProjectFixture] and [junitMalformedDeclarationInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use junitProjectFixture and junitMalformedDeclarationInspectionFixture in a JUnit 5 test")
 abstract class JUnitMalformedDeclarationInspectionTestBase(protected vararg val versions: MavenTestLib) : JvmInspectionTestBase() {
   override val inspection: InspectionProfileEntry = JUnitMalformedDeclarationInspection()
 

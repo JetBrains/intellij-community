@@ -226,6 +226,10 @@ final class SettingsHelper {
       }
     }
 
+    if (SystemInfoRt.isLinux) {
+      args = ArrayUtil.mergeArrays(args, "--change-stack-guard-on-fork=disable");
+    }
+
     return args;
   }
 

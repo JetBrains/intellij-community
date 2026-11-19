@@ -15,18 +15,25 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolsSupplier;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesFixture;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -34,6 +41,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+
+import static com.intellij.java.testFramework.fixtures.LightJava9ModulesFixtureKt.lightJava9ModulesFixture;
+import static com.intellij.java.testFramework.fixtures.LightJava9ModulesFixtureKt.lightJava9ModulesProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * A batch run is configured with its own profile via {@link GlobalInspectionContextImpl#setExternalProfile}, which is
@@ -43,34 +55,34 @@ import java.util.function.Function;
  * run was configured with. This test pins the profile down for both kinds of tools: regular local inspections, which run
  * inside {@code inspectFile()}, and {@link ExternalAnnotatorBatchInspection}s, which run in a separate step.
  */
-public class BatchInspectionProfileVisibilityTest extends LightJava9ModulesCodeInsightFixtureTestCase {
+@TestApplication
+public class BatchInspectionProfileVisibilityTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJava9ModulesProjectFixture();
+  private final TestFixture<LightJava9ModulesFixture> java9 = lightJava9ModulesFixture(projectFixture);
+
+  @TempDir
+  Path tempDir;
+
   private static final AtomicReference<InspectionProfile> LOCAL_OBSERVED = new AtomicReference<>();
   private static final AtomicReference<InspectionProfile> ANNOTATOR_OBSERVED = new AtomicReference<>();
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     LOCAL_OBSERVED.set(null);
     ANNOTATOR_OBSERVED.set(null);
   }
 
-  @Override
-  public void tearDown() {
-    try {
-      InspectionProfileImpl.INIT_INSPECTIONS = false;
-      LOCAL_OBSERVED.set(null);
-      ANNOTATOR_OBSERVED.set(null);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    InspectionProfileImpl.INIT_INSPECTIONS = false;
+    LOCAL_OBSERVED.set(null);
+    ANNOTATOR_OBSERVED.set(null);
   }
 
+  @Test
   public void testRunProfileIsVisibleToLocalInspectionsAndExternalAnnotators() throws Exception {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     myFixture.addFileToProject("Foo.java", """
       class Foo {
           void m() {
@@ -80,30 +92,31 @@ public class BatchInspectionProfileVisibilityTest extends LightJava9ModulesCodeI
 
     InspectionProfileImpl runProfile = runOfflineAnalysis();
 
-    InspectionProfile projectProfile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
-    assertNotSame("the run profile must differ from the project profile, otherwise the test proves nothing",
-                  projectProfile, runProfile);
+    InspectionProfile projectProfile = InspectionProjectProfileManager.getInstance(myFixture.getProject()).getCurrentProfile();
+    assertNotSame(projectProfile,
+                  runProfile, "the run profile must differ from the project profile, otherwise the test proves nothing");
 
-    assertSame("a local inspection must see the profile the run was configured with", runProfile, LOCAL_OBSERVED.get());
-    assertSame("an external annotator batch inspection must see the profile the run was configured with",
-               runProfile, ANNOTATOR_OBSERVED.get());
+    assertSame(runProfile, LOCAL_OBSERVED.get(), "a local inspection must see the profile the run was configured with");
+    assertSame(runProfile,
+               ANNOTATOR_OBSERVED.get(), "an external annotator batch inspection must see the profile the run was configured with");
   }
 
   private @NotNull InspectionProfileImpl runOfflineAnalysis() throws Exception {
-    InspectionManager im = InspectionManager.getInstance(getProject());
-    AnalysisScope scope = new AnalysisScope(getProject());
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    InspectionManager im = InspectionManager.getInstance(myFixture.getProject());
+    AnalysisScope scope = new AnalysisScope(myFixture.getProject());
     List<Path> resultFiles = new ArrayList<>();
-    Path outputPath = FileUtil.createTempDirectory("inspection", "results").toPath();
+    Path outputPath = tempDir;
 
     GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
 
     List<InspectionToolWrapper<?, ?>> tools = getTools();
     InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(tools);
-    Disposer.register(getTestRootDisposable(), toolSupplier);
+    Disposer.register(myFixture.getTestRootDisposable(), toolSupplier);
     InspectionProfileImpl runProfile =
       new InspectionProfileImpl("runProfile", toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
     for (InspectionToolWrapper<?, ?> tool : tools) {
-      runProfile.enableTool(tool.getShortName(), getProject());
+      runProfile.enableTool(tool.getShortName(), myFixture.getProject());
     }
 
     context.setExternalProfile(runProfile);

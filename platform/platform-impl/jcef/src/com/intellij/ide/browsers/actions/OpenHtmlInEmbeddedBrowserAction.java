@@ -9,6 +9,9 @@ import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -35,20 +38,28 @@ import java.util.List;
 
 import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrowserRequest;
 
-/**
- * @author Konstantin Bulenkov
- */
-public final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
-  public OpenHtmlInEmbeddedBrowserAction() {
-    super(IdeBundle.messagePointer("action.open.web.preview.text"), null, new SynchronizedClearableLazy<>(() -> AppUIUtil.loadSmallApplicationIcon(ScaleContext.create(), 16, true)));
+final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
+  @SuppressWarnings("ActionPresentationInstantiatedInCtor")
+  OpenHtmlInEmbeddedBrowserAction() {
+    super(ActionsBundle.messagePointer("action.OpenHtmlInEmbeddedBrowser.text"), null,
+          new SynchronizedClearableLazy<>(() -> AppUIUtil.loadSmallApplicationIcon(ScaleContext.create(), 16, true)));
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
+
     PsiFile psiFile = event.getData(CommonDataKeys.PSI_FILE);
     if (psiFile == null) return;
+
+    if (!JBCefApp.isSupported()) {
+      NotificationGroupManager.getInstance().getNotificationGroup("System Messages")
+        .createNotification(IdeBundle.message("browser.embedded.not.supported"), NotificationType.WARNING)
+        .notify(project);
+      return;
+    }
+
     VirtualFile virtualFile = psiFile.getVirtualFile();
     boolean preferLocalFileUrl = BitUtil.isSet(event.getModifiers(), ActionEvent.SHIFT_MASK);
 
@@ -84,15 +95,19 @@ public final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
 
     OpenInBrowserRequest request = BaseOpenInBrowserAction.Handler.doUpdate(e);
     PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-    boolean enabled = JBCefApp.isSupported() && psiFile != null && request != null && psiFile.getVirtualFile() != null;
+    boolean enabled = psiFile != null
+                      && request != null
+                      && psiFile.getVirtualFile() != null
+                      && WebBrowserXmlService.getInstance().isHtmlFile(request.getFile());
     e.getPresentation().setEnabledAndVisible(enabled);
     if (!enabled) return;
 
-    if (WebBrowserXmlService.getInstance().isHtmlFile(request.getFile())
-        && ActionPlaces.CONTEXT_TOOLBAR.equals(e.getPlace())) {
+    if (ActionPlaces.CONTEXT_TOOLBAR.equals(e.getPlace())) {
       String text = getTemplateText();
       text += " (" + IdeBundle.message("browser.shortcut") + ")";
       e.getPresentation().setText(text);
+      // in toolbar show as disabled immediately, otherwise recheck on actionPerformed
+      e.getPresentation().setEnabledAndVisible(JBCefApp.isSupported());
     }
   }
 

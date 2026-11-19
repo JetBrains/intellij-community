@@ -74,6 +74,7 @@
     <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.vcs.log.graph.impl"/>
     <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.vcs.git.rt"/>
     <module name="intellij.vcs.git.shared"/>
   </dependencies>
   <!-- endregion -->

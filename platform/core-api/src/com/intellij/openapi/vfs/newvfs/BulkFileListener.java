@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.List;
  * To iterate over all the created files use {@link com.intellij.openapi.roots.FileIndex#iterateContentUnderDirectory} and provide the file from the {@link VFileCreateEvent}.
  * Otherwise, excluded files might be added to the VFS which may lead to performance problems.</p>
  */
+@ApiStatus.OverrideOnly
 public interface BulkFileListener {
   @RequiresWriteLock
   // depending on its registration, can be executed either only on EDT or on any thread

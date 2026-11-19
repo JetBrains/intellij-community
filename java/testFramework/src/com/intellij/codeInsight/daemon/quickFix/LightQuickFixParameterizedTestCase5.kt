@@ -11,13 +11,19 @@ import com.intellij.testFramework.FileBasedArgumentProvider
 import com.intellij.testFramework.FileBasedTestCaseHelperEx
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
+/**
+ * @deprecated Use [LightQuickFixFileBasedTest] with [com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture] in a JUnit 5 test.
+ */
+@Deprecated("Use LightQuickFixFileBasedTest with lightJavaCodeInsightFixture")
 abstract class LightQuickFixParameterizedTestCase5(projectDescriptor: LightProjectDescriptor? = null)
   : LightJavaCodeInsightFixtureTestCase5(projectDescriptor), FileBasedTestCaseHelperEx {
   abstract override fun getTestDataPath(): String
@@ -40,31 +46,41 @@ abstract class LightQuickFixParameterizedTestCase5(projectDescriptor: LightProje
   @ArgumentsSource(FileBasedArgumentProvider::class)
   @Throws(Throwable::class)
   fun parameterized(fileName: String) {
-    val filePath = LightQuickFixTestCase.BEFORE_PREFIX + fileName
-    val file = fixture.configureByFile(filePath)
-    val (hint, context) = runReadAction { ActionHint.parse(file, file.text) to fixture.actionContext }
-    val action = hint.findAndCheck(fixture.availableIntentions, context) {
-      """
-             Test: ${getTestDataPath()}/$filePath
-             Language level: ${PsiUtil.getLanguageLevel(fixture.project)}
-             SDK: ${ModuleRootManager.getInstance(ModuleUtilCore.findModuleForFile(fixture.file)!!).sdk}
-             Infos: ${LightQuickFixTestCase.getCurrentHighlightingInfo(fixture.doHighlighting())}
-             """.trimIndent()
-    }
-    if (action != null) {
-      val text = action.text
-      val element = runReadAction { PsiUtilBase.getElementAtCaret(fixture.editor) }
-      fixture.launchAction(action)
-
-      runInEdtAndWait { UIUtil.dispatchAllInvocationEvents() }
-
-      val intentions = fixture.availableIntentions
-      val afterAction = CodeInsightTestUtil.findIntentionByText(intentions, text)
-      if (afterAction != null && Comparing.equal(element, runReadAction { PsiUtilBase.getElementAtCaret(fixture.editor) })) {
-        fail("Action '$text' is still available after its invocation in test $filePath")
-      }
-      fixture.checkResultByFile(LightQuickFixTestCase.AFTER_PREFIX + fileName)
-    }
+    doLightQuickFixFileTest(fixture, getTestDataPath(), fileName)
   }
 
+}
+
+/**
+ * Checks one test of a [LightQuickFixFileBasedTest]: the `before` file [fileName] of [testDataPath] with the action hint in it.
+ * The function finds the action of the hint, launches it, and compares the result with the `after` file.
+ * It runs off the EDT.
+ */
+@TestOnly
+fun doLightQuickFixFileTest(fixture: JavaCodeInsightTestFixture, testDataPath: String, fileName: String) {
+  val filePath = LightQuickFixTestCase.BEFORE_PREFIX + fileName
+  val file = fixture.configureByFile(filePath)
+  val (hint, context) = runReadAction { ActionHint.parse(file, file.text) to fixture.actionContext }
+  val action = hint.findAndCheck(fixture.availableIntentions, context) {
+    """
+           Test: $testDataPath/$filePath
+           Language level: ${PsiUtil.getLanguageLevel(fixture.project)}
+           SDK: ${ModuleRootManager.getInstance(ModuleUtilCore.findModuleForFile(fixture.file)!!).sdk}
+           Infos: ${LightQuickFixTestCase.getCurrentHighlightingInfo(fixture.doHighlighting())}
+           """.trimIndent()
+  }
+  if (action != null) {
+    val text = action.text
+    val element = runReadAction { PsiUtilBase.getElementAtCaret(fixture.editor) }
+    fixture.launchAction(action)
+
+    runInEdtAndWait { UIUtil.dispatchAllInvocationEvents() }
+
+    val intentions = fixture.availableIntentions
+    val afterAction = CodeInsightTestUtil.findIntentionByText(intentions, text)
+    if (afterAction != null && Comparing.equal(element, runReadAction { PsiUtilBase.getElementAtCaret(fixture.editor) })) {
+      fail("Action '$text' is still available after its invocation in test $filePath")
+    }
+    fixture.checkResultByFile(LightQuickFixTestCase.AFTER_PREFIX + fileName)
+  }
 }

@@ -336,7 +336,7 @@ fun checkDeclarationNewNameConflicts(
     fun getPotentialConflictCandidates(declaration: KtNamedDeclaration, newName: Name): Sequence<KaDeclarationSymbol> {
         val declarationSymbol = declaration.symbol
         val symbol = declarationSymbol.let {
-            (it as? KaValueParameterSymbol?)?.generatedPrimaryConstructorProperty ?: it
+            (it as? KaValueParameterSymbol?)?.primaryConstructorProperty ?: it
         }
 
         var potentialCandidates = getPotentialConflictCandidates(symbol, declaration, newName)

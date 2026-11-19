@@ -1,151 +1,184 @@
 package com.intellij.codeInspection.tests.kotlin;
 
-import com.intellij.java.codeInspection.AbstractUnusedDeclarationTest;
+import com.intellij.java.codeInspection.UnusedDeclarationFixture;
 import com.intellij.java.codeInspection.UnusedDeclarationInspectionTest;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.java.codeInspection.UnusedDeclarationFixtureKt.unusedDeclarationFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
 
-public abstract class KotlinUnusedDeclarationTest extends AbstractUnusedDeclarationTest {
-  
-  @Override
-  protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath(UnusedDeclarationInspectionTest.class) + "/inspection/jvm";
-  }
+@TestApplication
+public abstract class KotlinUnusedDeclarationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  protected final TestFixture<UnusedDeclarationFixture> unusedDeclaration =
+    unusedDeclarationFixture(projectFixture, PathManagerEx.getTestDataPath(UnusedDeclarationInspectionTest.class) + "/inspection/jvm");
 
+  @Test
   public void testSingleton() {
-    myTool.ADD_NONJAVA_TO_ENTRIES = false;
-    doTest();
+    unusedDeclaration.get().getTool().ADD_NONJAVA_TO_ENTRIES = false;
+    unusedDeclaration.get().doTest();
   }
 
   //TODO
+  @Test
   public void testDefaultConstructor() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReferenceFromSuperTypeList() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testImplementedInterface() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReachableFromMain() {
-    myTool.ADD_MAINS_TO_ENTRIES = true;
-    doTest();
+    unusedDeclaration.get().getTool().ADD_MAINS_TO_ENTRIES = true;
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testMutableCalls() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testOverridingProperty() {
-    myTool.getSharedLocalInspectionTool().PARAMETER = true;
-    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().PARAMETER = true;
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    unusedDeclaration.get().doTest("deadCode/" + unusedDeclaration.get().getTestName(true), unusedDeclaration.get().getToolWrapper());
   }
 
+  @Test
   public void testPrimaryConstructor() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testPrimaryConstructor2() {
-    myTool.getSharedLocalInspectionTool().PARAMETER = true;
-    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().PARAMETER = true;
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    unusedDeclaration.get().doTest("deadCode/" + unusedDeclaration.get().getTestName(true), unusedDeclaration.get().getToolWrapper());
   }
   
+  @Test
   public void testReceiverParameter() {
-    myTool.getSharedLocalInspectionTool().PARAMETER = true;
-    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().PARAMETER = true;
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    unusedDeclaration.get().doTest("deadCode/" + unusedDeclaration.get().getTestName(true), unusedDeclaration.get().getToolWrapper());
   }
 
+  @Test
   public void testOperatorInWhen() {
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
+    unusedDeclaration.get().doTest("deadCode/" + unusedDeclaration.get().getTestName(true), unusedDeclaration.get().getToolWrapper());
   }
 
+  @Test
   public void testCallableParameter() {
-    myTool.getSharedLocalInspectionTool().PARAMETER = true;
-    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().PARAMETER = true;
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    unusedDeclaration.get().doTest("deadCode/" + unusedDeclaration.get().getTestName(true), unusedDeclaration.get().getToolWrapper());
   }
 
+  @Test
   public void testCallableProperty() {
-    myTool.getSharedLocalInspectionTool().FIELD = true;
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().FIELD = true;
+    unusedDeclaration.get().doTest("deadCode/" + unusedDeclaration.get().getTestName(true), unusedDeclaration.get().getToolWrapper());
   }
 
+  @Test
   public void testUsagesInCallableReceiver() {
-    myTool.getSharedLocalInspectionTool().PARAMETER = true;
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().PARAMETER = true;
+    unusedDeclaration.get().doTest("deadCode/" + unusedDeclaration.get().getTestName(true), unusedDeclaration.get().getToolWrapper());
   }
 
+  @Test
   public void testUsagesInClassLiteral() {
-    myTool.getSharedLocalInspectionTool().PARAMETER = true;
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().PARAMETER = true;
+    unusedDeclaration.get().doTest("deadCode/" + unusedDeclaration.get().getTestName(true), unusedDeclaration.get().getToolWrapper());
   }
 
+  @Test
   public void testMainParameter() {
-    myTool.getSharedLocalInspectionTool().PARAMETER = true;
-    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().PARAMETER = true;
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    unusedDeclaration.get().doTest("deadCode/" + unusedDeclaration.get().getTestName(true), unusedDeclaration.get().getToolWrapper());
   }
 
+  @Test
   public void testStaticMethods() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testChainOfCalls() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReachableFromFieldInitializer() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReachableFromFieldArrayInitializer() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testJunitEntryPoint() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testConstructorCalls() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testPropertyReference() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReferenceInLambda() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testNonJvmReferences() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
   //TODO uast kotlin enum support
   public void _testEnumInstantiation() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
   public void _testEnumValues() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testUsagesInAnonymous() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testClassLiteralRef() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testTopLevelFunction() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 }

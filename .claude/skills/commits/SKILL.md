@@ -6,8 +6,6 @@ description: "Read before each commit, amend or reword: the subject SafePush acc
 
 # Commits
 
-SafePush rejects a malformed subject, and each rejection costs a CI round trip.
-
 ## Scope
 
 - One commit does one thing. Do not mix a cleanup or a refactoring into a behavioral change. When unsure, split.
@@ -62,18 +60,6 @@ git commit -m "IDEA-12345 concise subject" -m "Why the change was made and what 
 Do not write the message to a file outside the workspace, such as `/tmp`: that asks for a filesystem approval and leaves a plaintext draft behind. If you need a file, give it a name unique to your session under the gitignored `out/`, such as `out/commit-message-<session>.txt`. Several sessions share one working copy, and a peer can overwrite a shared file name between your write and your commit.
 
 ## Examples
-
-```text
-MRI-3589 bound the fan-out of the plugin content extraction
-
-`extractPlugins` started one coroutine per plugin target, and `extractContentModules` started one per new
-xi:include path. Both awaited all of them. An unresolved path reads the output archive of every module
-of the project, so the fan-out put far more blocking work on the dispatcher than it has threads. On a
-CI agent with two processors that starved a read of an archived module output past its timeout.
-
-`mapConcurrent` caps the count at `BUILD_CONCURRENCY` and keeps the order of the input. It leaves
-`workerDispatcher` null, because the archive read now enters `Dispatchers.IO` on its own.
-```
 
 ```text
 IJAI-3334 the published-surface wait of the editor service test names its step and dumps the state

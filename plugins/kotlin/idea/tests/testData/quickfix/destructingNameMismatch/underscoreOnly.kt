@@ -1,4 +1,4 @@
-// "Convert to positional destructuring syntax with square brackets" "false"
+// "Rename variable to 'firstName'" "false"
 // COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
 
 data class Person(val firstName: String, val lastName: String)

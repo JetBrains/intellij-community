@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.gradle.scripting.definition.GradleScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.asEntity
 import org.jetbrains.kotlin.idea.core.script.configurations.sdkId
 import org.jetbrains.kotlin.idea.core.script.configurations.toVirtualFileUrl
+import org.jetbrains.kotlin.idea.core.script.definitions.templateFingerprint
 import org.jetbrains.kotlin.idea.core.script.getOrCreateScriptConfigurationId
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptLibraryEntity
@@ -107,7 +108,7 @@ internal suspend fun addScripts(
         val configurationWrapper = result.valueOrNull() ?: continue
 
         val dependencies = libraries.register(scriptUrl, configurationWrapper.dependenciesClassPath, configurationWrapper.dependenciesSources)
-        storage addEntity KotlinScriptEntity(scriptUrl, dependencies, entitySource) {
+        storage addEntity KotlinScriptEntity(scriptUrl, dependencies, definition.definitionId, definition.templateFingerprint, entitySource) {
             this.configurationId = configurationWrapper.configuration?.getOrCreateScriptConfigurationId(storage, entitySource)
             this.reports = result.reports.map(ScriptDiagnostic::map).toMutableList()
             this.sdkId = configurationWrapper.configuration?.sdkId

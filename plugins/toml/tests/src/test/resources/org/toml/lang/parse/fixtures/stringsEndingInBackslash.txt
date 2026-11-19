@@ -1,0 +1,102 @@
+TOML File
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('literal1')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      TomlLiteral
+        PsiElement(LITERAL_STRING)(''bar\'')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(LITERAL_STRING)(''x'')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('literal2')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      TomlLiteral
+        PsiElement(LITERAL_STRING)(''\\'')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(LITERAL_STRING)(''x'')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('multiline_literal')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      TomlLiteral
+        PsiElement(MULTILINE_LITERAL_STRING)(''''bar\'''')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(LITERAL_STRING)(''x'')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('basic')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      TomlLiteral
+        PsiElement(BASIC_STRING)('"bar\\"')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(LITERAL_STRING)(''x'')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('multiline_basic')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      TomlLiteral
+        PsiElement(MULTILINE_BASIC_STRING)('"""bar\\"""')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(LITERAL_STRING)(''x'')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('escaped_quote')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlArray
+      PsiElement([)('[')
+      TomlLiteral
+        PsiElement(BASIC_STRING)('"a\"b"')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(LITERAL_STRING)(''x'')
+      PsiElement(])(']')

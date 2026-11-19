@@ -2,9 +2,22 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+filegroup(
+    name = "testData_files",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `dev intellij.gradle` start
 content_module_jar(module = ":gradle")
 ### auto-generated section `dev intellij.gradle` end
+
+jps_test(
+    name = "gradle-tests_test",
+    tags = ["gradle-tests"],
+    runtime_deps = [":gradle-tests_test_lib"],
+)
+### skip generation section `test intellij.gradle.tests`
 
 ### auto-generated section `build intellij.gradle` start
 resourcegroup(
@@ -280,13 +293,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.gradle.tests` end
-
-### auto-generated section `test intellij.gradle.tests` start
-jps_test(
-    name = "gradle-tests_test",
-    runtime_deps = [":gradle-tests_test_lib"],
-)
-### auto-generated section `test intellij.gradle.tests` end
 
 ### auto-generated section `build intellij.gradle.tests.main` start
 jvm_library(

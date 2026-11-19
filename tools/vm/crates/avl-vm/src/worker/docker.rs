@@ -441,7 +441,7 @@ impl Docker {
     /// every argv that names it has it ([`AppleContainer::resolve_nameserver`]).
     async fn resolve_executable(&self, ctx: &Ctx) -> Result<&Path, Refusal> {
         if let Some(apple) = &self.apple {
-            let program = self.resolve_apple_executable(ctx).await?;
+            let program = self.resolve_apple_executable(ctx, apple).await?;
             apple.resolve_nameserver(ctx).await?;
             return Ok(program);
         }
@@ -464,25 +464,35 @@ impl Docker {
             .map(PathBuf::as_path)
     }
 
-    async fn resolve_apple_executable(&self, ctx: &Ctx) -> Result<&Path, Refusal> {
+    /// The real path of the CLI that `CONTAINER_BIN` names, run as it is, or the CLI of the pin, which runs from a copy
+    /// under the runtime root when the pin is on another volume ([`AppleContainer::runnable_pinned_cli`]).
+    async fn resolve_apple_executable(&self, ctx: &Ctx, apple: &AppleContainer) -> Result<&Path, Refusal> {
         self.executable
             .get_or_try_init(|| async {
-                let resolved = match &self.settings.container {
-                    Some(named) => named.clone(),
-                    None => self.pinned.path(ctx, PinnedTool::Container).await?.ok_or_else(|| {
-                        container_missing(format!(
-                            "CONTAINER_BIN names no Apple container CLI and this command has no Bazel to resolve \
-                             {CONTAINER_LABEL}"
-                        ))
-                    })?,
+                let (resolved, pinned) = match &self.settings.container {
+                    Some(named) => (named.clone(), false),
+                    None => (
+                        self.pinned.path(ctx, PinnedTool::Container).await?.ok_or_else(|| {
+                            container_missing(format!(
+                                "CONTAINER_BIN names no Apple container CLI and this command has no Bazel to resolve \
+                                 {CONTAINER_LABEL}"
+                            ))
+                        })?,
+                        true,
+                    ),
                 };
-                real_path(&resolved).map_err(|error| {
+                let real = real_path(&resolved).map_err(|error| {
                     container_missing(format!(
                         "the Apple container CLI is not on disk at {}: {error}; {}",
                         resolved.display(),
                         crate::worker::container::install_remedy(&self.settings)
                     ))
-                })
+                })?;
+                if pinned {
+                    apple.runnable_pinned_cli(ctx, &real).await
+                } else {
+                    Ok(real)
+                }
             })
             .await
             .map(PathBuf::as_path)

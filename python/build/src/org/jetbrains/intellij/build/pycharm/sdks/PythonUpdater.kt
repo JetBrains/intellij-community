@@ -197,6 +197,7 @@ class PythonUpdater {
       LanguageLevel.PYTHON312 to PythonReleaseManagers("thomas@python.org", "https://accounts.google.com"),
       LanguageLevel.PYTHON313 to PythonReleaseManagers("thomas@python.org", "https://accounts.google.com"),
       LanguageLevel.PYTHON314 to PythonReleaseManagers("hugo@python.org", "https://github.com/login/oauth"),
+      LanguageLevel.PYTHON315 to PythonReleaseManagers("hugo@python.org", "https://github.com/login/oauth"),
     )
   }
 }

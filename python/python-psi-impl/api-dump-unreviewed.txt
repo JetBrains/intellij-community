@@ -558,6 +558,7 @@ f:com.jetbrains.python.codeInsight.typing.PyStubPackages
 f:com.jetbrains.python.codeInsight.typing.PyTypeShed
 - sf:INSTANCE:com.jetbrains.python.codeInsight.typing.PyTypeShed
 - f:findAllRootsForLanguageLevel(com.jetbrains.python.psi.LanguageLevel):java.util.List
+- f:findStdlibModuleNames(com.jetbrains.python.psi.LanguageLevel):java.util.List
 - f:findStdlibRootsForLanguageLevel(com.jetbrains.python.psi.LanguageLevel):java.util.List
 - f:findStdlibRootsForSdk(com.intellij.openapi.projectRoots.Sdk):java.util.List
 - f:getDirectory():com.intellij.openapi.vfs.VirtualFile
@@ -2792,6 +2793,7 @@ f:com.jetbrains.python.pyi.PyiUtil
 - s:getOriginalElementOrLeaveAsIs(com.jetbrains.python.psi.PyElement,java.lang.Class):com.jetbrains.python.psi.PyElement
 - s:getOverloads(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
 - s:getPythonStub(com.jetbrains.python.psi.PyElement):com.intellij.psi.PsiElement
+- s:isInSkeleton(com.intellij.psi.PsiElement):Z
 - s:isInsideStub(com.intellij.psi.PsiElement):Z
 - s:isOverload(com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.TypeEvalContext):Z
 - s:isPyiFileOfPackage(com.intellij.psi.PsiElement):Z

@@ -157,6 +157,9 @@ c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 c:com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter
 - com.intellij.openapi.editor.highlighter.EditorHighlighter
 - *:getTextAttributesFontFamilies():java.util.Set
+*:com.intellij.openapi.fileChooser.NioFileChooserDialog
+- a:choose(java.nio.file.Path[],Z):java.util.List
+- bs:choose$default(com.intellij.openapi.fileChooser.NioFileChooserDialog,java.nio.file.Path[],Z,I,java.lang.Object):java.util.List
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware

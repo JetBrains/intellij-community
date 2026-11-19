@@ -6,26 +6,38 @@ import com.intellij.openapi.application.productMigration.deleteMigrationState
 import com.intellij.openapi.application.productMigration.migrationStateFile
 import com.intellij.openapi.application.productMigration.readMigrationState
 import com.intellij.openapi.application.productMigration.writeMigrationState
+import com.intellij.openapi.updateSettings.impl.MigrationKillSwitch
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
 
-/** Keeps the state of [file] in memory. The first [get] reads the file. */
+/**
+ * Keeps the state of [file] in memory. The first [get] reads the file.
+ * When [isMigrationDisabled] is true, the store has no state, and it does not read, write or delete a file.
+ */
 @ApiStatus.Internal
-class MigrationStateStore(private val file: Path) {
+class MigrationStateStore(private val file: Path, private val isMigrationDisabled: Boolean = MigrationKillSwitch.isActive()) {
   private val lock = Any()
   private var isLoaded = false
   private var state: MigrationState? = null
 
-  fun get(): MigrationState? = synchronized(lock) {
-    if (!isLoaded) {
-      load()
+  fun get(): MigrationState? {
+    if (isMigrationDisabled) {
+      return null
     }
-    state
+    return synchronized(lock) {
+      if (!isLoaded) {
+        load()
+      }
+      state
+    }
   }
 
   /** Deletes the file and the content copy, for example when the Unified IDE is removed while the IDE runs. */
   fun clear() {
+    if (isMigrationDisabled) {
+      return
+    }
     synchronized(lock) {
       state = null
       isLoaded = true
@@ -36,6 +48,9 @@ class MigrationStateStore(private val file: Path) {
   /** Keeps [newState] in memory also when the write fails, so that the session works with it. */
   @Throws(IOException::class)
   fun set(newState: MigrationState) {
+    if (isMigrationDisabled) {
+      return
+    }
     synchronized(lock) {
       state = newState
       isLoaded = true

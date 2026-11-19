@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.OhosLibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
@@ -543,6 +544,7 @@ internal class DevDistBuildSections private constructor(
         OsFamily.MACOS -> distribution.libcImpl is MacLibcImpl
         OsFamily.WINDOWS -> distribution.libcImpl is WindowsLibcImpl
         OsFamily.LINUX -> distribution.libcImpl is LinuxLibcImpl
+        OsFamily.OHOS -> distribution.libcImpl is OhosLibcImpl
       }
       require(supportedLibc) { "Plugin variant '${variant.id}' requires a built-in libc implementation for ${distribution.os}" }
     }

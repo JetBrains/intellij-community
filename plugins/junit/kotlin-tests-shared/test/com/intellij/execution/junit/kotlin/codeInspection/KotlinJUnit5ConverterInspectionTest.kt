@@ -1,16 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
-import com.intellij.junit.testFramework.JUnit5ConverterInspectionTestBase
+import com.intellij.execution.junit.kotlin.kotlinJUnitProjectFixture
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
+import com.intellij.junit.testFramework.junit5ConverterInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(module)
+@TestApplication
+abstract class KotlinJUnit5ConverterInspectionTest {
+  companion object {
+    private val projectFixture = kotlinJUnitProjectFixture(JUNIT4, JUNIT5)
   }
 
+  protected val myFixture by junit5ConverterInspectionFixture(projectFixture)
+
+  @Test
   fun `test qualified conversion`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
@@ -58,6 +65,7 @@ abstract class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTe
     """.trimIndent(), "Migrate to JUnit 5")
   }
 
+  @Test
   fun `test unqualified conversion`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
@@ -130,6 +138,7 @@ abstract class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTe
     """.trimIndent(), "Migrate to JUnit 5")
   }
 
+  @Test
   fun `test expected on test annotation`() {
     myFixture.testQuickFixUnavailable(
       JvmLanguage.KOTLIN, """

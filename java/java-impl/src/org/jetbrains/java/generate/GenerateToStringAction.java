@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class GenerateToStringAction extends BaseGenerateAction implements DumbAware {
 
   public GenerateToStringAction() {
-    super(new GenerateToStringActionHandlerImpl());
+    super(new JavaGenerateToStringActionHandler());
   }
 
   @Override

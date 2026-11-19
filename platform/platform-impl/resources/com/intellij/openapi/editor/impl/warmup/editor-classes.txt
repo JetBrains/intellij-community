@@ -13,6 +13,7 @@ com.intellij.openapi.editor.impl.EditorAccessibilityCaret
 com.intellij.openapi.editor.impl.EditorAccessibilityDocument
 com.intellij.openapi.editor.impl.view.EditorView
 com.intellij.openapi.editor.impl.view.IterationState
+com.intellij.openapi.command.impl.CommandIdentity
 # Load only
 # The static initializers of these classes can access the toolkit, UI listeners or Swing state.
 com.intellij.openapi.editor.impl.EditorImpl
@@ -454,7 +455,8 @@ com.intellij.openapi.fileEditor.impl.SpinnerTabIconHolder
 com.intellij.openapi.fileEditor.impl.StartupEditorCompositeProvider
 com.intellij.openapi.fileEditor.impl.TabMouseListener
 com.intellij.openapi.fileEditor.impl.TabToOpenOnStartup
-com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton
+com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNew
+com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNewKt
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonCanvas$RemovedArea
 com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 com.intellij.openapi.fileEditor.impl.tabActions.CloseTabKt

@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -159,7 +160,7 @@ final class ShowAsJsonAction extends DumbAwareAction {
     DocumentUtil.writeInRunUndoTransparentAction(() -> CodeStyleManager.getInstance(project).reformat(file, true));
 
     virtualFile.setWritable(false);
-    FileEditorManager.getInstance(project).openFile(virtualFile, true);
+    FileEditorManager.getInstance(project).requestOpenFile(virtualFile, FileEditorOpenRequest.withFocus(true));
   }
 
   private static boolean selectOpened(Editor editor, JsonLineExtractor jsonLineExtractor, FileEditorManager fileEditorManager) {
@@ -171,7 +172,7 @@ final class ShowAsJsonAction extends DumbAwareAction {
           if (line != null && line == jsonLineExtractor.getLine()) {
             WeakReference<Editor> editorReference = EDITOR_REF_KEY.get(file);
             if (SoftReference.dereference(editorReference) == editor) {
-              fileEditorManager.openFile(file, true, true);
+              fileEditorManager.requestOpenFile(file, FileEditorOpenRequest.withFocus(true).withReuseOpen(true));
               return true;
             }
           }

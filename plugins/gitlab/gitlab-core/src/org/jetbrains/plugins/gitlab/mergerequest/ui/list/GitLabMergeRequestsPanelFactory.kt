@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestDataKeys
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabFiltersPanelFactory
@@ -40,7 +41,7 @@ object GitLabMergeRequestsPanelFactory {
     val progressStripe = CollaborationToolsUIUtil.wrapWithProgressStripe(scope, listVm.loading, listWrapper).also { panel ->
       DataManager.registerDataProvider(panel) { dataId ->
         when {
-          GitLabMergeRequestsActionKeys.SELECTED.`is`(dataId) -> list.takeIf { it.isShowing }?.selectedValue
+          GitLabMergeRequestDataKeys.SELECTED.`is`(dataId) -> list.takeIf { it.isShowing }?.selectedValue
           GitLabMergeRequestsActionKeys.REVIEW_LIST_VM.`is`(dataId) -> listVm
           else -> null
         }

@@ -18,7 +18,7 @@ fn the_areas_are_read_from_bt_json() {
     let files = area_files();
     let fake = FakeRuntime::new(files.iter().map(|(path, text)| (path.as_str(), text.as_str())));
     let areas = Areas::load(&fake).expect("the areas load");
-    assert_eq!(areas.dirs(), [AREA_DIR]);
+    assert_eq!(areas.iter().map(Area::dir).collect::<Vec<_>>(), [AREA_DIR]);
     let area = areas.iter().next().expect("one area");
     assert_eq!(area.lanes_file(), LANES_FILE);
     assert!(area.lanes().get("fast").is_some());

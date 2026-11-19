@@ -7,18 +7,19 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
@@ -29,6 +30,9 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFuncti
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -52,8 +56,8 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         UselessFilterConversion(topLevelCallableId("kotlin.collections", "filterIsInstance")),
         UselessFilterConversion(topLevelCallableId("kotlin.sequences", "filterIsInstance")),
 
-        UselessFilterOfBooleanConstantConversion(topLevelCallableId("kotlin.collections", "filter")),
-        UselessFilterOfBooleanConstantConversion(topLevelCallableId("kotlin.sequences", "filter")),
+        UselessFilterOfBooleanConstantConversion(topLevelCallableId("kotlin.collections", "filter"), isSequenceVariant = false),
+        UselessFilterOfBooleanConstantConversion(topLevelCallableId("kotlin.sequences", "filter"), isSequenceVariant = true),
 
         UselessMapNotNullConversion(topLevelCallableId("kotlin.collections", "mapNotNull"), replacementName = "map"),
         UselessMapNotNullConversion(topLevelCallableId("kotlin.sequences", "mapNotNull"), replacementName = "map"),
@@ -112,6 +116,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
 
     protected inner class UselessFilterOfBooleanConstantConversion(
         override val targetCallableId: CallableId,
+        val isSequenceVariant: Boolean,
     ) : QualifiedFunctionCallConversion {
         private fun KtExpression.constantBoolean(): Boolean? = when {
             KtPsiUtil.isTrueConstant(this) -> true
@@ -151,17 +156,28 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
                 expression.endOffset - expression.startOffset,
             )
 
-            return when (constantValue) {
-                true -> manager.createProblemDescriptor(
+            return if (constantValue) {
+                val fix = if (isSequenceVariant) {
+                    RemoveUselessCallFix()
+                } else {
+                    val receiver = expression.receiverExpression
+                    if (receiver.isTemporaryListExpression() && receiver.expressionType?.classId == StandardClassIds.List) {
+                        RemoveUselessCallFix()
+                    } else {
+                        ReplaceSelectorOfQualifiedExpressionFix("toList()")
+                    }
+                }
+
+                manager.createProblemDescriptor(
                     expression,
                     range,
                     KotlinBundle.message("redundant.call.on.collection.type"),
                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     isOnTheFly,
-                    RemoveUselessCallFix()
+                    fix
                 )
-
-                false -> manager.createProblemDescriptor(
+            } else {
+                manager.createProblemDescriptor(
                     expression,
                     range,
                     KotlinBundle.message("filter.of.false.will.return.an.empty.collection"),
@@ -251,5 +267,30 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     }
 
     context(_: KaSession)
-    private fun KaType.isList() = this.fullyExpandedType.isClassType(StandardClassIds.List)
+    private fun KaType.isList() = this.fullyExpandedType.classId == StandardClassIds.List
+
+    context(_: KaSession)
+    private fun KtExpression.isTemporaryListExpression(): Boolean = when (this) {
+        is KtCallExpression, is KtDotQualifiedExpression -> {
+            val result = resolveSuccessfulSymbol() as? KaCallableSymbol ?: return false
+
+            result.callableId in KNOWN_TEMPORARY_LIST_METHODS
+        }
+
+        is KtCollectionLiteralExpression -> true
+
+        else -> false
+    }
+
+    /**
+     * Known (receiver: List<T> / Iterable<T> / ...) .(args: ...) -> List<T> functions that return new lists.
+     */
+    private val KNOWN_TEMPORARY_LIST_METHODS: Set<CallableId> = setOf(
+        topLevelCallableId("kotlin.collections", "listOf"),
+        topLevelCallableId("kotlin.collections", "toList"),
+        topLevelCallableId("kotlin.collections", "filter"),
+        topLevelCallableId("kotlin.collections", "map"),
+        topLevelCallableId("kotlin.collections", "mapNotNull"),
+        topLevelCallableId("kotlin.collections", "flatMap"),
+    )
 }

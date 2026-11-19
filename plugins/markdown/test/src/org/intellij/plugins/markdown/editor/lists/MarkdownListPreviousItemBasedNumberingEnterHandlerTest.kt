@@ -1,13 +1,24 @@
 package org.intellij.plugins.markdown.editor.lists
 
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.executeAction
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
-class MarkdownListPreviousItemBasedNumberingEnterHandlerTest: LightPlatformCodeInsightTestCase() {
+@TestApplication
+class MarkdownListPreviousItemBasedNumberingEnterHandlerTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `test simple list`() {
     // language=Markdown
@@ -78,9 +89,11 @@ class MarkdownListPreviousItemBasedNumberingEnterHandlerTest: LightPlatformCodeI
     doTest(content, expected)
   }
 
-  private fun doTest(content: String, expected: String) {
-    configureFromFileText("some.md", content)
-    executeAction(IdeActions.ACTION_EDITOR_ENTER)
-    checkResultByText(expected)
+  private fun doTest(content: String, expected: String): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_ENTER)
+      myFixture.checkResult(expected)
+    }
   }
 }

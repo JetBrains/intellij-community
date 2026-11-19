@@ -8,6 +8,11 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
+/**
+ * @deprecated Use [testCaseWithoutTestsProjectFixture] and [testCaseWithoutTestsInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use testCaseWithoutTestsProjectFixture and testCaseWithoutTestsInspectionFixture in a JUnit 5 test")
 abstract class TestCaseWithoutTestsInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: TestCaseWithoutTestsInspection = TestCaseWithoutTestsInspection()
 

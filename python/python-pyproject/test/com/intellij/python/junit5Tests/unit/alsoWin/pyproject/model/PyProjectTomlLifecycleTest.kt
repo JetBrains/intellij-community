@@ -24,12 +24,10 @@ import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
-import com.intellij.platform.workspace.jps.entities.sdkId
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
@@ -37,6 +35,13 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
 import com.intellij.python.pyproject.model.internal.platformBridge.toRebuildRequest
+import com.intellij.python.sdk.backend.PIP_MANAGER
+import com.intellij.python.sdk.backend.PyInterpreterLibraryName
+import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.sdk.backend.pyInterpreterDependency
+import com.intellij.python.sdk.backend.setPyInterpreterDependency
+import com.intellij.python.sdk.common.PyEnvRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -337,12 +342,15 @@ internal class PyProjectTomlLifecycleTest {
       ExpectedModule("root", contentRoot = "."),
     )
 
-    // Simulate user configuring an SDK on module A
-    val fakeSdkId = SdkId("Python 3.12", "Python SDK")
-    f.project.workspaceModel.update("set SDK") { storage ->
+    // Simulate user configuring an interpreter on module A: the interpreter library entry names it
+    val interpreterName = PyInterpreterLibraryName.of(
+      f.root.toNioPath(),
+      PythonInterpreterKey(aDir.toNioPath(), PyInterpreterRef(PyInterpreterRef.Mode.Native, PIP_MANAGER, PyEnvRef(".venv"))),
+    )
+    f.project.workspaceModel.update("set the interpreter") { storage ->
       val moduleA = storage.resolve(ModuleId("A"))!!
       storage.modifyModuleEntity(moduleA) {
-        sdkId = fakeSdkId
+        dependencies.setPyInterpreterDependency(interpreterName)
       }
     }
 
@@ -359,10 +367,11 @@ internal class PyProjectTomlLifecycleTest {
       ExpectedModule("root", contentRoot = "."),
     )
 
-    // Verify SDK is preserved on module A
+    // Verify the interpreter is preserved on module A
     val moduleA2 = f.project.workspaceModel.currentSnapshot.resolve(ModuleId("A"))!!
-    assertThat(moduleA2.sdkId).describedAs("SDK should be preserved across dependency update")
-      .isEqualTo(fakeSdkId)
+    assertThat(moduleA2.dependencies.pyInterpreterDependency?.library?.name)
+      .describedAs("the interpreter library entry should be preserved across dependency update")
+      .isEqualTo(interpreterName.toString())
   }
 
   /**

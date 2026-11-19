@@ -12,10 +12,10 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
+import com.intellij.python.sdk.backend.setPythonSdkForTests
 import com.intellij.testFramework.PlatformTestUtil
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
-import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import com.jetbrains.python.venvReader.VirtualEnvReader

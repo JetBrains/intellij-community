@@ -25,6 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @deprecated Use {@link DescriptorTestHelper} on a {@link com.intellij.debugger.DebuggerTestFixtureKt#debuggerTestFixture} in a JUnit 6 test.
+ */
+@Deprecated
 public abstract class DescriptorTestCase extends DebuggerTestCase {
   private final Map<Object, NodeDescriptorText> myDescriptorLog = new LinkedHashMap<>();
 

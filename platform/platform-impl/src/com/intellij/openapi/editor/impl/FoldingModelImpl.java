@@ -446,7 +446,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return endOffset;
   }
 
-  void refreshSettings() {
+  void refreshSettings(boolean fontOnly) {
     updateTextAttributes();
 
     runBatchFoldingOperation(() ->
@@ -456,6 +456,14 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
         return true;
       }));
+    if (!myDocument.isInBulkUpdate()) {
+      if (fontOnly) {
+        myFoldsCache.updateCachedHeights();
+      }
+      else {
+        myFoldsCache.rebuild();
+      }
+    }
   }
 
   void onPlaceholderTextChanged(@NotNull FoldRegionMarker region) {
@@ -740,7 +748,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   private void update(boolean widthChanged, boolean heightChanged, boolean gutterMarkChanged, boolean repaintRequested) {
     if (heightChanged) {
-      updateCachedOffsets();
+      myFoldsCache.updateCachedHeights();
       myEditor.getCaretModel().updateVisualPosition();
     }
     if (widthChanged || heightChanged) {

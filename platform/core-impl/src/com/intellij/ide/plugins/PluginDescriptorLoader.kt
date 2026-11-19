@@ -228,10 +228,12 @@ fun loadPluginSubDescriptors(
   pluginDir: Path,
   pool: ZipEntryResolverPool,
 ) {
-  val moduleDir = pluginDir.resolve("lib/modules").takeIf { Files.isDirectory(it) }
+  val libDir = pluginDir.resolve("lib").takeIf { Files.isDirectory(it) }
+  val modulesDir = libDir?.resolve("modules")?.takeIf { Files.isDirectory(it) }
   for (module in descriptor.content.modules) {
     val subDescriptorFile = module.configFile ?: "${module.moduleId.name}.xml"
     if (module.descriptorContent == null) {
+      val moduleDir = if (module.defaultLoadingRule == ModuleLoadingRule.EMBEDDED) libDir else modulesDir
       val jarFile = moduleDir?.resolve("${module.moduleId.name}.jar")
       if (jarFile != null && Files.exists(jarFile)) {
         val subRaw = loadModuleFromSeparateJar(pool = pool, jarFile = jarFile, subDescriptorFile = subDescriptorFile,pathResolver = pathResolver,

@@ -3,12 +3,12 @@ package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getCurrentBranch
 import com.intellij.openapi.vcs.changes.ui.RepositoryChangesBrowserNodeBase
-import com.intellij.util.ui.CheckboxIcon
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation.getPresentableText
 import com.intellij.vcs.branch.BranchPresentation.getSingleTooltip
@@ -19,14 +19,13 @@ import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
 import com.intellij.vcsUtil.VcsUtil
 import javax.swing.Icon
 
-open class RepositoryChangesBrowserNode(
-  repository: Repository,
-  private val colorManager: VcsLogColorManager = getColorManager(repository.project)
-) : RepositoryChangesBrowserNodeBase<Repository, BranchData>(repository) {
+open class RepositoryChangesBrowserNode(repository: Repository) : RepositoryChangesBrowserNodeBase<Repository, BranchData>(repository) {
+  private val iconsProvider = VcsRepositoryIconsProvider.getInstance(repository.project)
 
-  override fun getIcon(): Icon =
-    RepositoryNodeIconProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getIcon(getUserObject()) }
-    ?: CheckboxIcon.createAndScale(colorManager.getRootColor(getUserObject().root))
+  @Deprecated("The node takes its color from VcsRepositoryIconsProvider", ReplaceWith("RepositoryChangesBrowserNode(repository)"))
+  constructor(repository: Repository, @Suppress("unused") colorManager: VcsLogColorManager) : this(repository)
+
+  override fun getIcon(): Icon = iconsProvider.getIcon(getUserObject().repositoryId())
 
   final override fun getCurrentBranch(repository: Repository): BranchData? = getCurrentBranch(repository.project, repository.root)
 

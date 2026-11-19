@@ -1,16 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
@@ -18,6 +22,9 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
+import com.jetbrains.python.psi.impl.awaitPythonLanguageLevelsForTests
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.tools.sdkTools.PythonMockSdkKeys
@@ -36,7 +43,7 @@ import java.nio.file.Path
 @Subsystems.Interpreters
 @Layers.Functional
 internal class PythonInterpreterDetailsTest {
-  private val projectFixture = projectFixture()
+  private val projectFixture = projectFixture(openAfterCreation = true)
   private val pyProjectFixture = projectFixture.pyProjectFixture()
   private val tempDir = tempPathFixture()
 
@@ -113,6 +120,27 @@ internal class PythonInterpreterDetailsTest {
     }
   }
 
+  @Test
+  fun `a new version that keeps the roots reaches the language level of the module`(): Unit = timeoutRunBlocking {
+    withMockInterpreter { interpreter ->
+      val project = projectFixture.get()
+      pyProjectFixture.get().setPythonInterpreter(interpreter).orThrow()
+      val baseDir = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pyProjectFixture.get().baseDir))
+      val file = edtWriteAction { baseDir.createChildData(this, "a.py") }
+      val version = if (details.version(interpreter)?.startsWith("Python 3.8") == true) "Python 3.9.0" else "Python 3.8.0"
+
+      assertThat(details.writeVersion(interpreter, version)).isTrue()
+      awaitRoots()
+
+      // The pusher pushes the layout of the new version, though the roots stay the same and report no change.
+      awaitPythonLanguageLevelsForTests(project)
+      // The push of a new level runs in a dumb mode.
+      IndexingTestUtil.suspendUntilIndexesAreReady(project)
+      val expected = LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(version)
+      assertThat(readAction { PythonLanguageLevelPusher.getEffectiveLanguageLevel(project, file) }).isEqualTo(expected)
+    }
+  }
+
   /** Waits until the roots follow the facts. A writer does not wait for them, see [PythonInterpreterRoots.requestDerive]. */
   private suspend fun awaitRoots() = PythonInterpreterRoots.getInstance(projectFixture.get()).awaitCommittedForTests()
 
@@ -127,7 +155,7 @@ internal class PythonInterpreterDetailsTest {
       body(interpreter)
     }
     finally {
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 

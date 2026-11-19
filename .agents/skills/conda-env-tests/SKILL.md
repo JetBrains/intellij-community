@@ -1,12 +1,9 @@
 ---
 name: conda-env-tests
-description: Bump the pinned Miniconda version for the Python conda env tests.
+description: Bump the Miniconda version of the Python conda env tests.
 ---
 
 # Conda env tests
-
-The Python env tests download and install Miniconda. They pin an exact installer version. This
-skill tells you how to move a pin.
 
 ## Where the pin lives
 
@@ -14,18 +11,16 @@ One file holds every conda pin:
 
 `community/python/python-test-env/common/src/com/intellij/python/test/env/common/PredefinedPyEnvironments.kt`
 
-| Entry | Role |
-| --- | --- |
-| `CONDA` | The default. `@PyEnvTestCaseWithConda` and `LocalCondaRule` use it. Keep it on the newest build. |
-| `CONDA_24` | An old pin. It covers the `conda.core.index.get_index` branch of the helper script. |
-| `CONDA_25` | An old pin. It covers the `conda.core.subdir_data.SubdirData` branch. |
+`CONDA` is the default. `@PyEnvTestCaseWithConda` and `LocalCondaRule` use it. A bump moves `CONDA`
+only. No test uses `CONDA_24` or `CONDA_25`.
 
-There is no second place. The provider builds the download URL from the pin, and it verifies no
-checksum:
+The provider builds the download URL from the pin. It verifies no checksum, and it accepts the
+terms of service of the Anaconda channels:
 
 `community/python/python-test-env/conda/src/com/intellij/python/test/env/conda/CondaPyEnvironmentProvider.kt`
 
-To find every consumer of a pin, search the repository for `PredefinedPyEnvironments.CONDA`.
+`ShortenPathTest` holds the literal `Miniconda3-py312_24.9.2-0-MacOSX-arm64` as sample text. Do not
+change it.
 
 ## The version token
 
@@ -35,40 +30,19 @@ A pin is the installer version token, not a plain conda version. The shape is
 The provider expands the token into one of these names:
 
 - `Miniconda3-<token>-Windows-x86_64.exe`
+- `Miniconda3-<token>-Windows-arm64.exe`
 - `Miniconda3-<token>-Linux-x86_64.sh`
 - `Miniconda3-<token>-Linux-aarch64.sh`
 - `Miniconda3-<token>-MacOSX-arm64.sh`
 
 ## How to pick a new pin
 
-1. Open `https://repo.anaconda.com/miniconda/`. The page lists every installer with its date and
-   its sha256.
+1. Open `https://repo.anaconda.com/miniconda/`.
 2. Take the highest version. Do not use `Miniconda3-latest-*`. The cache key holds the token, so a
    floating name breaks reproducibility.
-3. Check that all four names above exist for that token. Anaconda drops a platform from time to
-   time. It stopped the `MacOSX-x86_64` builds after `py313_25.7.0-2`.
-4. Keep the `py312` prefix unless you have a reason to change it. The prefix only sets the Python
-   of the base install. Each test environment gets its own Python from the spec.
-
-## When to add an entry instead of moving one
-
-`CondaPackagingToolHelperTest` runs against `CONDA_24`, `CONDA_25`, and `CONDA`. It protects the
-version branches in `community/python/helpers/conda_packaging_tool.py`.
-
-- Move `CONDA` for a normal bump.
-- Add a new entry when conda ships a major release that changes an API the helper script uses.
-  Add the tag row to `ENVIRONMENTS_TO_TAGS` in the same file, and add the entry to the
-  `@RunOnEnvironments` list of that test.
-- Drop an old entry when `CONDA` reaches the same major. Two entries on one major waste a
-  download.
-
-A move of `CONDA` can remove coverage without a test failure. `CONDA` supplies the newest major to
-`CondaPackagingToolHelperTest`. A move from conda 26 to conda 27 therefore leaves conda 26
-untested, and every test stays green. Before you move `CONDA` across a major, add a constant for
-the major you leave behind, and add it to `@RunOnEnvironments`.
-
-`ShortenPathTest` holds the literal `Miniconda3-py312_24.9.2-0-MacOSX-arm64`. It is sample text for
-a path-shortening assertion, and no code reads the version. Leave it alone.
+3. Check that each name above exists for that token. Anaconda drops a platform from time to time.
+4. Keep the `py<python>` prefix of the entry unless you have a reason to change it. The prefix only
+   sets the Python of the base install. Each test environment gets its own Python from the spec.
 
 ## The download cache
 
@@ -77,30 +51,20 @@ The tests cache in `~/.cache/intellij-python-test-env/`:
 - `downloads/` holds the installer.
 - `conda/Miniconda3-<token>-<os>-<arch>/` holds the install.
 
-The token is part of the directory name. A bump therefore downloads about 150 MB again, and it
-leaves the old directory on disk. Delete an old directory by hand when you need the space.
-
-## Terms of service
-
-Conda 25 added a terms-of-service gate on the default Anaconda channels. The provider runs
-`conda tos accept` for `pkgs/main` and `pkgs/r` before it creates an environment, and it ignores a
-failure. An older conda has no `tos` subcommand. You need no new work here for a bump.
+A bump downloads the installer again. It leaves the old installer and the old directory on disk.
+Delete them by hand when you need the space.
 
 ## Tests to run
 
-Every command below needs the network, and each conda environment downloads about 150 MB. Run the
-commands from the monorepo root. In a community checkout, drop the `community/` prefix, and skip
-the `intellij.python.junit5Tests` commands. That module is ultimate only.
+The tests need the network.
 
-```bash
-./community/tests.cmd --module intellij.python.test.env.junit5 --test com.intellij.python.test.env.junit5.conda.showcase.PyEnvWithCondaShowCaseTest
-./tests.cmd --module intellij.python.junit5Tests --test com.intellij.python.junit5Tests.env.tests.conda.CondaSdkCreatorTest
-./tests.cmd --module intellij.python.junit5Tests --test com.intellij.python.junit5Tests.env.tests.packaging.CondaPackagingToolHelperTest
-```
+| Module | Class |
+| --- | --- |
+| `intellij.python.test.env.junit5` | `com.intellij.python.test.env.junit5.conda.showcase.PyEnvWithCondaShowCaseTest` |
+| `intellij.python.community.impl.conda.tests` | `com.intellij.python.junit5Tests.env.tests.conda.CondaSdkCreatorTest` |
 
 ## Not this skill
 
 `community/python/python-sdk/backend/resources/sdks.json` lists the Miniconda builds that the
-product offers to a user. It needs a sha256 for every artifact, and
-`community/python/build/src/org/jetbrains/intellij/build/pycharm/sdks/CondaUpdater.kt` generates
-it. That file is separate from the env tests.
+product offers to a user. The run configuration `PyCharm Update Sdks` generates it. The provider
+does not read it.

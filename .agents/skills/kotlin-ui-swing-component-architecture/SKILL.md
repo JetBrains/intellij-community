@@ -5,11 +5,11 @@ description: Design IntelliJ Swing UI components, state flow, and EDT work.
 
 # Swing feature component architecture
 
-Design Swing UI as isolated feature components with unidirectional data flow, explicit state, and clear EDT and lifecycle ownership. Introduce the smallest architecture that cleanly separates responsibilities; do not enforce MVC, MVP, MVVM, or MVI by name.
+Do not enforce MVC, MVP, MVVM, or MVI by name.
 
 ## Workflow
 
-1. Read the local module instructions and inspect the whole feature boundary, including callers, services, listeners, asynchronous work, and disposal.
+1. Inspect the whole feature boundary, including callers, services, listeners, asynchronous work, and disposal.
 2. Map ownership of rendering, user intent, UI state, application logic, asynchronous work, navigation, and lifecycle.
 3. Choose the lowest architecture level that makes those responsibilities clear.
 4. Keep Swing in the View, coordinate behavior in the Controller when one is needed, and keep application services independent of Swing.
@@ -25,8 +25,6 @@ Design Swing UI as isolated feature components with unidirectional data flow, ex
 7. Apply the [UI accessibility skill](../ui-accessibility/SKILL.md) when creating, changing, or reviewing the UI itself.
 
 ## Choose the architecture level
-
-Treat line counts as prompts to inspect complexity, not hard thresholds.
 
 - **Level 1 — one View or component class:** Start here for a small feature, roughly under 200 LOC, containing only layout and local presentation behavior. Extract a Controller if it invokes services, owns workflows, or becomes hard to test or reason about.
 - **Level 2 — View + Controller:** Start here around 200-600 LOC when validation, services, navigation, or non-trivial interactions are present. Add immutable State when several visual modes or concurrent operations make implicit state ambiguous.
@@ -64,7 +62,7 @@ internal class SearchComponent {
 }
 ```
 
-If an API must be public, keep UI construction behind an internal integration point and expose domain-oriented operations. Do not expose buttons, lists, trees, text fields, models, or other internal widgets for outside manipulation.
+If an API must be public, keep UI construction behind an internal integration point and expose domain-oriented operations.
 
 Use the component or a nearby composition root to construct the View, Controller, services, and navigator. Prefer constructor injection. Restrict `ApplicationManager.getApplication().getService(...)` and similar lookups to composition roots or established platform integration points, never arbitrary View code.
 
@@ -117,13 +115,7 @@ Use a sealed state hierarchy instead of combinations of booleans when modes are 
 
 Make `render(state)` deterministic, idempotent, and complete for the modeled state. Keep listener installation, service calls, navigation, and other effects out of rendering. Prefer one render operation over a sequence such as `showSpinner()`, `hideRetry()`, `setItems()`, and `enableButton()` that can leave the UI partially updated.
 
-Never use widget properties as application state:
-
-```kotlin
-// Wrong: application decisions depend on the current rendering.
-if (progressBar.isVisible) return
-if (statusLabel.text == "Loading") return
-```
+Never use widget properties as application state, for example `if (progressBar.isVisible) return`.
 
 Keep a single source of truth. Update it through one controller path, then render it:
 
@@ -159,15 +151,15 @@ Inspect every listener and callback for blocking operations, including:
 - Database queries
 - Expensive parsing or computation
 
-Capture required input on the EDT, run expensive work away from it, then return to the EDT before updating state or rendering. Follow the surrounding module's platform coroutine, modality, read/write-action, and dispatcher conventions. Prefer a coroutine scope tied to the feature lifecycle; never use `GlobalScope`. If using `SwingUtilities.invokeLater`, verify that platform modality and disposal semantics do not require an IntelliJ scheduling API instead.
+Capture required input on the EDT, run expensive work away from it, then return to the EDT before updating state or rendering. Follow the surrounding module's platform coroutine, modality, read/write-action, and dispatcher conventions. If using `SwingUtilities.invokeLater`, verify that platform modality and disposal semantics do not require an IntelliJ scheduling API instead.
 
 Modality rides in the coroutine context and defers on the EDT: capture a `ModalityState` per operation on the submitting thread (`ModalityState.defaultModalityState()`) and pass it to the work — `launch(modality.asContextElement())` or `invokeLater(runnable, modality)` — rather than freezing one modality onto a long-lived scope. Work submitted with a modality lower than the currently open modal dialog is deferred until that dialog closes, which reads as a hang; completing with the modality captured at submit time dispatches it inside the originating modal state. `ModalityState.any()` is the opposite trap — it never defers, so a non-trivial callback can run inside an unrelated modal dialog while your model is mid-transition (reentrancy / inconsistent state); reserve `any()` for trivial, state-independent bookkeeping.
 
-For concurrent requests, cancel obsolete work or tag requests and ignore stale completion. Preserve coroutine cancellation rather than converting it into a user-visible failure. Re-check lifecycle before applying results.
+For concurrent requests, cancel obsolete work or tag requests and ignore stale completion. Re-check lifecycle before applying results.
 
 ## Own lifecycle
 
-Prefer a `CoroutineScope` tied to the feature lifetime as the primary lifecycle mechanism: take a child scope of the enclosing project or service scope, or the scope the platform hands in, rather than constructing a standalone one. Launch asynchronous work, flow subscriptions, and retries in that scope so cancelling it tears everything down in one place.
+Prefer a `CoroutineScope` tied to the feature lifetime as the primary lifecycle mechanism. Launch asynchronous work, flow subscriptions, and retries in that scope so cancelling it tears everything down in one place. Apply the [platform-coroutines-structured-concurrency skill](../platform-coroutines-structured-concurrency/SKILL.md) for the rules of coroutine scope ownership and cancellation.
 
 For event, message-bus, RPC, or `Flow` subscriptions, use the shortest lifecycle that consumes the updates. Prefer a caller/client scope owned by the UI content, dialog, popup, tool-window panel, or explicit operation over an application- or project-level service scope. Use an app/project service scope only when the collected state is intentionally app/project-owned for that full lifecycle and retaining everything reachable from the stream for that lifetime is acceptable.
 
@@ -189,8 +181,6 @@ Register child lifetimes with the IntelliJ `Disposer` where appropriate. Make re
 - Prefer Kotlin UI DSL's `listCellRenderer` or `textListCellRenderer` over renderers based on `SimpleColoredComponent` when the DSL supports the required presentation.
 - Do not rewrite working Swing into Kotlin UI DSL unless requested or the migration materially improves the change.
 - Use the Action System for IDE actions and MessageBus for appropriate platform-wide communication, not for private button-to-controller events.
-- Use localized message bundles for user-visible text.
-- Follow platform coroutine, threading, and lifecycle conventions already established in the owning module.
 
 ## Refactor incrementally
 
@@ -214,52 +204,6 @@ Do not perform a large architectural rewrite when a small extraction resolves th
 - Prefer observable behavior over tests that reach into private widgets.
 - Do not introduce a View interface solely to satisfy a mocking framework; add a narrow test seam only when it has a concrete design benefit.
 
-## Classify architecture findings
-
-Treat these as severity defaults and adjust for actual impact.
-
-- **Critical:** Blocking the EDT; accessing Swing from background threads; network, filesystem, database, or domain mutations in the View; domain layers depending on Swing.
-- **Major:** Exposed internal widgets or unnecessary Swing types in public APIs; avoidable Swing inheritance; unnecessary custom widgets or painting; a reusable custom widget without a proper `ComponentUI`; application state inferred from widgets; Controller-built layouts; uncancelled or stale async results; missing lifecycle cleanup; a god panel mixing UI, services, and workflows.
-- **Minor:** Large anonymous listeners; unnecessary widget getters or interfaces; mixed construction and behavior that remains understandable; small duplication in imperative rendering.
-
-A panel over roughly 500 lines is a review signal, not an automatic defect. Judge responsibility count, coupling, asynchronous behavior, and change risk.
-
 ## Produce architecture reviews
 
-When reviewing code, use these exact headings. Cite concrete symbols or file locations, distinguish observed facts from recommendations, and write `None` when a section has no findings.
-
-### Architecture Assessment
-
-State the feature boundary, current complexity, selected architecture level, and whether a refactor is justified.
-
-### Current Responsibilities
-
-Map rendering, intents, state, application logic, asynchronous work, navigation, and lifecycle to their current owners.
-
-### Architecture Problems
-
-List Critical, Major, and Minor findings with evidence and impact.
-
-### Critical Issues
-
-Call out EDT violations, blocking, domain/Swing dependency inversion, unsafe late results, or other correctness risks that require priority.
-
-### Suggested Component Structure
-
-Show the smallest useful target structure and its public boundary.
-
-### Minimal Refactoring Plan
-
-Give ordered, behavior-preserving steps. Separate necessary work from optional cleanup.
-
-### Example Code
-
-Provide a focused example or patch shape for the highest-value change; do not rewrite the whole feature unless requested.
-
-### Trade-offs
-
-Explain added types or state, rejected heavier patterns, testing impact, migration risk, and any manual verification still needed.
-
-## Guiding principle
-
-Make Views know how the UI looks, Controllers know what the user wants, services know how the application works, and state describe what should be visible. Never let Swing widgets become the application's state or business layer.
+When reviewing code, classify the findings and use the exact headings of [references/review.md](references/review.md).

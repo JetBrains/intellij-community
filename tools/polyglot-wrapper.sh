@@ -88,7 +88,8 @@ polyglot_built_file() {
 }
 
 # Builds `$2`, the Bazel target of the wrapper `$1`, and sets `resolved` to the executable it made, whose base name is
-# `$4`. A failed build or a missing executable prints its message and exits with `$3`, the infrastructure code of the
+# `$4`. It sets `built_wall_ms` to the wall time of the build in milliseconds, as the build event file names it in
+# `buildMetrics`, or to the empty string when the file names none. A failed build or a missing executable prints its message and exits with `$3`, the infrastructure code of the
 # wrapper. `$5` says where the build output goes: `stderr` (the default) sends it to stderr as it comes, and `log`
 # keeps it in a file while stderr is a pipe and shows it only when the build fails. Note 6 of vm.cmd says why.
 #
@@ -119,6 +120,12 @@ polyglot_build_binary() {
     exit "$code"
   fi
   resolved="$(polyglot_built_file "$events" "$basename")"
+  built_wall_ms="$(awk 'match($0, /"wallTimeInMs":"?[0-9]+/) {
+    millis = substr($0, RSTART, RLENGTH)
+    gsub(/[^0-9]/, "", millis)
+    print millis
+    exit
+  }' "$events")"
   rm -f "$events"
   resolved="$(polyglot_real_path "$resolved")"
   if [ ! -x "$resolved" ]; then

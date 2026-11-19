@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion {
+        <caret>val size: Int = 1
+    }
+}
+
+fun fooBound(foo: Foo): () -> Int = Foo::size

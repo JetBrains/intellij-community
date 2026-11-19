@@ -266,7 +266,7 @@ internal class DependenciesPsiProviderTest {
       }
       finally {
         pyProject.setPythonInterpreter(null).orThrow()
-        PythonInterpreterRegistry.getInstance(project).removePythonInterpreter(pyProject, interpreter)
+        PythonInterpreterRegistry.getInstance(project).remove(interpreter)
       }
     }
   }

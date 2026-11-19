@@ -10,6 +10,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT4, HAMCREST)
 
+/**
+ * @deprecated Use [junitProjectFixture] and [hamcrestAssertionsConverterInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use junitProjectFixture and hamcrestAssertionsConverterInspectionFixture in a JUnit 5 test")
 abstract class HamcrestAssertionsConverterInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: HamcrestAssertionsConverterInspection = HamcrestAssertionsConverterInspection()
   override fun getProjectDescriptor(): LightProjectDescriptor = descriptor

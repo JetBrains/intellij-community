@@ -2,71 +2,91 @@
 package org.jetbrains.idea.devkit.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/lightServiceMigration")
-internal class LightServiceMigrationInspectionTest : LightServiceMigrationInspectionTestBase() {
+@TestApplication
+internal class LightServiceMigrationInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val migration by lightServiceMigrationFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/lightServiceMigration")
+  private val myFixture get() = migration.fixture
 
   private val CANNOT_BE_LIGHT_SERVICE_XML = "cannotBeLightService.xml"
   private val MY_SERVICE_JAVA = "MyService.java"
 
-  override fun getBasePath(): String = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/lightServiceMigration"
-  override fun getFileExtension(): String = "java"
-
+  @Test
   fun testAddAppServiceAnnotation() {
-    myFixture.copyFileToProject(getXmlFilePath())
-    doTest(convertToLightServiceAppLevel, fileExtension, getTestName(false))
+    myFixture.copyFileToProject(migration.getXmlFilePath())
+    migration.doTest(migration.convertToLightServiceAppLevel, migration.fileExtension, myFixture.getTestName(false))
   }
 
+  @Test
   fun testAddProjectServiceAnnotation() {
-    myFixture.copyFileToProject(getXmlFilePath())
-    doTest(convertToLightServiceProjectLevel, fileExtension, getTestName(false))
+    myFixture.copyFileToProject(migration.getXmlFilePath())
+    migration.doTest(migration.convertToLightServiceProjectLevel, migration.fileExtension, myFixture.getTestName(false))
   }
 
+  @Test
   fun testRemoveAppServiceRegistration() {
     myFixture.copyFileToProject(MY_SERVICE_JAVA)
-    doTest(convertToLightServiceAppLevel, xmlExtension, getTestName(true))
+    migration.doTest(migration.convertToLightServiceAppLevel, migration.xmlExtension, myFixture.getTestName(true))
   }
 
+  @Test
   fun testRemoveProjectServiceRegistration() {
     myFixture.copyFileToProject(MY_SERVICE_JAVA)
-    doTest(convertToLightServiceProjectLevel, xmlExtension, getTestName(true))
+    migration.doTest(migration.convertToLightServiceProjectLevel, migration.xmlExtension, myFixture.getTestName(true))
   }
 
+  @Test
   fun testNonFinalClass() {
-    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
+    migration.doTest(migration.getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 
+  @Test
   fun testServiceInterface() {
-    doTest(MY_SERVICE_JAVA, getXmlFilePath())
+    migration.doTest(MY_SERVICE_JAVA, migration.getXmlFilePath())
   }
 
+  @Test
   fun testPersistentStateComponent() {
-    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
+    migration.doTest(migration.getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 
+  @Test
   fun testPreload() {
-    doTest(MY_SERVICE_JAVA, getXmlFilePath())
+    migration.doTest(MY_SERVICE_JAVA, migration.getXmlFilePath())
   }
 
+  @Test
   fun testConfigurationSchemaKey() {
-    doTest(MY_SERVICE_JAVA, getXmlFilePath())
+    migration.doTest(MY_SERVICE_JAVA, migration.getXmlFilePath())
   }
 
+  @Test
   fun testLightService() {
-    myFixture.copyFileToProject(getCodeFilePath())
-    doTest("Remove <applicationService> element", xmlExtension, getTestName(true))
+    myFixture.copyFileToProject(migration.getCodeFilePath())
+    migration.doTest("Remove <applicationService> element", migration.xmlExtension, myFixture.getTestName(true))
   }
 
+  @Test
   fun testLibraryClass() {
-    myFixture.testHighlighting(getTestName(true) + "." + xmlExtension)
+    myFixture.testHighlighting(myFixture.getTestName(true) + "." + migration.xmlExtension)
   }
 
+  @Test
   fun testUnitTestMode() {
-    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
+    migration.doTest(migration.getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 
+  @Test
   fun testHeadlessEnvironment() {
-    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
+    migration.doTest(migration.getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 }

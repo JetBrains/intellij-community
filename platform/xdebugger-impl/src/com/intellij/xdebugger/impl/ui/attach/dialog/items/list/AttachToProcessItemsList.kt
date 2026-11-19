@@ -79,6 +79,7 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachDialogElementNode>
 
   override fun updateFilter(searchFilterValue: String) {
     filters.updatePattern(searchFilterValue)
+    getTableModel().moveExecutableMatchesUp(filters)
     refilterSaveSelection()
   }
 
@@ -102,6 +103,8 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachDialogElementNode>
 
   private fun getFilteringModel(): FilteringTableModel<*> = model as FilteringTableModel<*>
 
+  private fun getTableModel(): AttachToProcessTableModel = getFilteringModel().originalModel as AttachToProcessTableModel
+
   private fun refilterSaveSelection() {
     refilterSaveSelection(filters) {
       getFilteringModel().refilter()
@@ -116,7 +119,20 @@ class AttachToProcessListColumnModel(columnsLayout: AttachDialogColumnsLayout) :
   }
 }
 
-internal class AttachToProcessTableModel(private val itemNodes: List<AttachDialogElementNode>, private val columnsCount: Int) : AbstractTableModel() {
+internal class AttachToProcessTableModel(private val originalNodes: List<AttachDialogElementNode>, private val columnsCount: Int) : AbstractTableModel() {
+
+  private var itemNodes: List<AttachDialogElementNode> = originalNodes
+
+  /**
+   * Moves the process nodes whose executable matches the search pattern of [filters] to the start of their group.
+   * With an empty pattern, the original order comes back.
+   * The method sends no model event, so the caller must refilter the [FilteringTableModel] after it.
+   */
+  fun moveExecutableMatchesUp(filters: AttachToProcessElementsFilters) {
+    itemNodes = moveToGroupStart(originalNodes, isGroup = { it is AttachDialogGroupNode }) { node ->
+      node is AttachDialogProcessNode && filters.matchesExecutable(node.item)
+    }
+  }
 
   override fun getRowCount(): Int = itemNodes.size
 
@@ -128,6 +144,37 @@ internal class AttachToProcessTableModel(private val itemNodes: List<AttachDialo
 
     return value.getValueAtColumn(columnIndex)
   }
+}
+
+/**
+ * Returns [nodes] where the nodes that [isPreferred] accepts come first in each group.
+ * A group starts at each node that [isGroup] accepts, and the group nodes keep their positions.
+ * Inside each group, the preferred nodes and the other nodes keep their relative order.
+ */
+internal fun <T> moveToGroupStart(nodes: List<T>, isGroup: (T) -> Boolean, isPreferred: (T) -> Boolean): List<T> {
+  val result = ArrayList<T>(nodes.size)
+  val preferred = ArrayList<T>()
+  val others = ArrayList<T>()
+
+  fun flushGroup() {
+    result.addAll(preferred)
+    result.addAll(others)
+    preferred.clear()
+    others.clear()
+  }
+
+  for (node in nodes) {
+    when {
+      isGroup(node) -> {
+        flushGroup()
+        result.add(node)
+      }
+      isPreferred(node) -> preferred.add(node)
+      else -> others.add(node)
+    }
+  }
+  flushGroup()
+  return result
 }
 
 internal suspend fun buildList(itemsInfo: AttachItemsInfo, dialogState: AttachDialogState, columnsLayout: AttachDialogColumnsLayout): AttachToProcessItemsList {

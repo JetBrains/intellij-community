@@ -36,7 +36,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabReviewSettings
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
@@ -46,7 +46,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private val cs: CoroutineScope,
   private val project: Project,
-  private val preferences: GitLabMergeRequestsPreferences,
+  private val settings: GitLabReviewSettings,
   private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
   private val commentNavigation: CodeReviewCommentNavigation,
   private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
@@ -60,9 +60,9 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private val postReviewRanges = MutableStateFlow<List<Range>?>(null)
 
   override var shouldHighlightDiffRanges: Boolean
-    get() = preferences.highlightDiffLinesInEditor
+    get() = settings.highlightDiffLinesInEditor
     set(value) {
-      preferences.highlightDiffLinesInEditor = value
+      settings.highlightDiffLinesInEditor = value
     }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -147,7 +147,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
   override fun addDiffHighlightListener(disposable: Disposable, listener: () -> Unit) {
     cs.launchNow {
-      preferences.highlightDiffLinesInEditorState.collect {
+      settings.highlightDiffLinesInEditorState.collect {
         listener()
       }
     }.cancelOnDispose(disposable)

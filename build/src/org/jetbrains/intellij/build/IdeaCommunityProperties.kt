@@ -153,6 +153,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
 
   override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = ideaCommunityMacCustomizer(communityHomeDir)
 
+  override fun createOhosCustomizer(projectHome: Path): OhosDistributionCustomizer = ideaOhosCustomizer()
+
   override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
     return "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
   }
@@ -211,8 +213,6 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
 
   include(CommunityProductFragments.javaIdeBaseFragment())
 
-  module("intellij.platform.coverage")
-  module("intellij.platform.coverage.agent")
   module("intellij.xml.xmlbeans")
   module("intellij.libraries.log4j.to.slf4j")
   module("intellij.libraries.xmlbeans")
@@ -288,4 +288,11 @@ inline fun ideaCommunityLinuxCustomizer(
   rootDirectoryName { _, _ -> "idea-oss" }
 
   configure()
+}
+
+fun ideaOhosCustomizer(): OhosDistributionCustomizer = object : OhosDistributionCustomizer() {
+  init {
+    // Not supported
+    additionalVmOptions = persistentListOf("-Didea.suppressed.plugins.id=org.intellij.plugins.markdown,com.intellij.mermaid,com.intellij.compose")
+  }
 }

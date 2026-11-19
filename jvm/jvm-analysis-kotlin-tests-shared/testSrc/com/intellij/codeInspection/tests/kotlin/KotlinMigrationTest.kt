@@ -1,14 +1,25 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.jvm.analysis.internal.testFramework.MigrationTestBase
+import com.intellij.jvm.analysis.internal.testFramework.migrationFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.refactoring.migration.MigrationMapEntry
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinMigrationTest : MigrationTestBase() {
+@TestApplication
+abstract class KotlinMigrationTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  protected val migration by migrationFixture(projectFixture)
   
 
-  fun `test package`() {
-    migrationTest(JvmLanguage.KOTLIN, before = """
+  @Test
+  fun `test package`(): Unit = timeoutRunBlocking {
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
 
       import qqq.AAA
@@ -26,7 +37,7 @@ abstract class KotlinMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq", "jetbrains.test", MigrationMapEntry.PACKAGE, true)
     )
-    migrationTest(JvmLanguage.KOTLIN, before = """
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
       
       import qqq.*
@@ -46,8 +57,9 @@ abstract class KotlinMigrationTest : MigrationTestBase() {
     )
   }
 
-  fun `test package migration with non existing package`() {
-    migrationTest(JvmLanguage.KOTLIN, before = """
+  @Test
+  fun `test package migration with non existing package`(): Unit = timeoutRunBlocking {
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
       
       import qqq.AAA
@@ -65,7 +77,7 @@ abstract class KotlinMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq", "zzz.bbb", MigrationMapEntry.PACKAGE, true)
     )
-    migrationTest(JvmLanguage.KOTLIN, before = """
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
       
       import qqq.*
@@ -85,8 +97,9 @@ abstract class KotlinMigrationTest : MigrationTestBase() {
     )
   }
 
-  fun `test two classes`() {
-    migrationTest(JvmLanguage.KOTLIN, before = """
+  @Test
+  fun `test two classes`(): Unit = timeoutRunBlocking {
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       class A {}
       class A1 {}
       
@@ -114,8 +127,9 @@ abstract class KotlinMigrationTest : MigrationTestBase() {
     )
   }
 
-  fun `test two non existent classes`() {
-    migrationTest(JvmLanguage.KOTLIN, before = """
+  @Test
+  fun `test two non existent classes`(): Unit = timeoutRunBlocking {
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
 
       import qqq.aaa.XXX
@@ -133,7 +147,7 @@ abstract class KotlinMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq.aaa.XXX", "zzz.bbb.QQQ", MigrationMapEntry.CLASS, false)
     )
-    migrationTest(JvmLanguage.KOTLIN, before = """
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
       
       import qqq.aaa.*
@@ -154,8 +168,9 @@ abstract class KotlinMigrationTest : MigrationTestBase() {
     )
   }
 
-  fun `test non existing class and non existing package`() {
-    migrationTest(JvmLanguage.KOTLIN, before = """
+  @Test
+  fun `test non existing class and non existing package`(): Unit = timeoutRunBlocking {
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
 
       import qqq.aaa.XXX
@@ -173,7 +188,7 @@ abstract class KotlinMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq.aaa.XXX", "java.lang.String", MigrationMapEntry.CLASS, false)
     )
-    migrationTest(JvmLanguage.KOTLIN, before = """
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
       
       import qqq.aaa.*
@@ -193,8 +208,9 @@ abstract class KotlinMigrationTest : MigrationTestBase() {
     )
   }
 
-  fun `test same short name class`() {
-    migrationTest(JvmLanguage.KOTLIN, before = """
+  @Test
+  fun `test same short name class`(): Unit = timeoutRunBlocking {
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       import aaa.*
       
       public class C {
@@ -217,7 +233,7 @@ abstract class KotlinMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("aaa.Test", "bbb.Test", MigrationMapEntry.CLASS, false)
     )
-    migrationTest(JvmLanguage.KOTLIN, before = """
+    migration.migrationTest(JvmLanguage.KOTLIN, before = """
       import aaa.Test
       
       public class C1 {

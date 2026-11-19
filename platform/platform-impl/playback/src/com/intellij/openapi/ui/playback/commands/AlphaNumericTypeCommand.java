@@ -28,7 +28,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
     return type(context, getText());
   }
 
-  protected Promise<Object> type(final PlaybackContext context, final String text) {
+  protected @NotNull Promise<Object> type(@NotNull PlaybackContext context, @NotNull String text) {
     final ActionCallback result = new ActionCallback();
 
     inWriteSafeContext(() -> {
@@ -78,7 +78,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
     return result;
   }
 
-  public static @Nullable TypingTarget findTarget(PlaybackContext context) {
+  public static @Nullable TypingTarget findTarget(@NotNull PlaybackContext context) {
     if (!context.isUseTypingTargets()) {
       return null;
     }

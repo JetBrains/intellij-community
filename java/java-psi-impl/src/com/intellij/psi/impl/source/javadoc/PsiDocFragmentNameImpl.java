@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.source.Constants;
@@ -20,7 +19,7 @@ public class PsiDocFragmentNameImpl extends CompositePsiElement implements PsiDo
   }
 
   @Override
-  public @Nullable PsiClass getScope() {
+  public @Nullable PsiElement getScope() {
     final PsiElement parent = getParent();
     return parent instanceof PsiDocFragmentRefImpl ? ((PsiDocFragmentRefImpl)parent).getScope() : null;
   }

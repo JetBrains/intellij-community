@@ -26,12 +26,14 @@ import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.asNio
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.PsiManager
 import com.intellij.util.application
@@ -45,7 +47,10 @@ import kotlinx.coroutines.ensureActive
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerPluginsScriptConfigurationListener
+import org.jetbrains.kotlin.idea.core.script.definitions.DefinitionFromDependenciesProvider
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
+import org.jetbrains.kotlin.idea.core.script.definitions.templateFingerprint
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptArtifactResolutionService
 import org.jetbrains.kotlin.idea.core.script.dependencies.toRequest
 import org.jetbrains.kotlin.idea.core.script.getOrCreateScriptConfigurationId
@@ -59,6 +64,7 @@ import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.definition.javaHomePath
 import org.jetbrains.kotlin.idea.core.script.definition.jdkSupplier
 import org.jetbrains.kotlin.idea.core.script.definition.moduleSupplier
+import org.jetbrains.kotlin.idea.core.script.RELOAD_NEEDED
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.awaitExternalSystemInitialization
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
@@ -128,35 +134,56 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
     }
 
     /**
-     * Resolves the script and updates its workspace model entity.
+     * Resolves the script and updates its workspace model entity. An entity with an outdated definition loads again.
      * Skips files rejected by [KotlinScriptProcessingFilter].
+     * Waits for the pending loads of the script definitions first, so that the entity gets the current definition.
      */
     suspend fun load(virtualFile: VirtualFile) {
         if (virtualFile is VirtualFileWithoutContent) return
         if (!KotlinScriptProcessingFilter.shouldProcessScript(project, virtualFile)) return
         assert(!application.isWriteAccessAllowed)
+        ScriptDefinitionProviderImpl.getInstance(project).awaitLoading()
+        if (hasOutdatedDefinition(virtualFile)) invalidate(virtualFile)
         update(virtualFile, virtualFile.findScriptDefinition())
     }
 
+    /** Waits for the pending loads of the script definitions first, so that the script keeps its entity during them. */
     suspend fun reload(virtualFile: VirtualFile) {
+        ScriptDefinitionProviderImpl.getInstance(project).awaitLoading()
         invalidate(virtualFile)
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
         load(virtualFile)
     }
 
-    /**
-     * Drops all entities contributed under [KotlinScriptEntitySource], then rebuilds only the currently open `.kts` files.
-     * Precise owner-specific entities survive because they use a different entity source.
-     * Closed generic scripts are restored lazily on the next editor-driven load.
-     *
-     * The returned job waits, but does not rethrow a failure.
-     */
-    fun scheduleReloadOpenScripts(): Job = coroutineScope.launchTracked {
-        invalidateAll()
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+    /** Loads the open scripts that have no entity, for example after their owner removed the entities, and the outdated ones. */
+    fun scheduleLoadOpenScripts(): Job = coroutineScope.launchTracked {
         for (openFile in collectOpenScriptFiles(project)) {
             load(openFile)
         }
+    }
+
+    /**
+     * Reloads the open scripts with an outdated definition, after the pending loads of the script definitions.
+     * A closed script reloads when it opens.
+     *
+     * The returned job waits, but does not rethrow a failure.
+     */
+    fun scheduleReloadOutdatedOpenScripts(): Job = coroutineScope.launchTracked {
+        ScriptDefinitionProviderImpl.getInstance(project).awaitLoading()
+        for (script in collectOpenScriptFiles(project)) {
+            if (hasOutdatedDefinition(script)) reload(script)
+        }
+    }
+
+    /**
+     * True when this service loaded the configuration of the script from another definition than the current one,
+     * or from the same definition before a build rewrote its template.
+     * A script of another owner, such as a Gradle sync, is never outdated here, because its owner updates it.
+     */
+    internal fun hasOutdatedDefinition(virtualFile: VirtualFile): Boolean {
+        val entity = KotlinScriptEntityProvider.findKotlinScriptEntity(project, virtualFile)
+            ?.takeIf { it.entitySource == KotlinScriptEntitySource } ?: return false
+        val definition = ScriptDefinitionProviderImpl.getInstance(project).findMatchingDefinition(VirtualFileScriptSource(virtualFile))
+        return entity.definitionId != definition.definitionId || entity.definitionFingerprint != definition.templateFingerprint
     }
 
     private class CircularScriptException(override val message: String) : Throwable(message)
@@ -227,7 +254,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             listOfNotNull(definition.compilationConfiguration[ScriptCompilationConfiguration.ide.moduleSupplier]?.invoke(project, virtualFile))
         }
 
-        project.workspaceModel.update("updating kotlin script entities [$KotlinScriptEntitySource]") { storage ->
+        val entitySource = KotlinScriptEntityProvider.entitySource(project, virtualFile) ?: KotlinScriptEntitySource
+        project.workspaceModel.update("updating kotlin script entities [$entitySource]") { storage ->
             if (!storage.containsScriptEntity(scriptUrl)) {
                 val libraries = generateScriptLibraryEntities(project, configuration, definition).toList()
                 val libraryIds = mutableListOf<KotlinScriptLibraryEntityId>()
@@ -241,7 +269,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
                             scope,
                             classes,
                             setOf(scriptUrl),
-                            KotlinScriptEntitySource
+                            entitySource
                         ) {
                             this.sources += sources
                         }
@@ -252,8 +280,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
                         }
                     }
                 }
-                storage addEntity KotlinScriptEntity(scriptUrl, libraryIds, KotlinScriptEntitySource) {
-                    this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, KotlinScriptEntitySource)
+                storage addEntity KotlinScriptEntity(scriptUrl, libraryIds, definition.definitionId, definition.templateFingerprint, entitySource) {
+                    this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, entitySource)
                     this.sdkId = configuration.sdkId
                     this.relatedModuleIds = relatedModuleIds.toMutableList()
                 }
@@ -371,12 +399,6 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         project.workspaceModel.update("removing .kts modules") { it.removeEntity(entity) }
     }
 
-    private suspend fun invalidateAll() {
-        project.workspaceModel.update("removing all .kts entities") { storage ->
-            storage.replaceBySource({ it == KotlinScriptEntitySource }, ImmutableEntityStorage.empty())
-        }
-    }
-
     private fun VirtualFile.findScriptDefinition(): ScriptDefinition {
         val definition = findScriptDefinition(project, VirtualFileScriptSource(this))
         scriptingDebugLog {
@@ -394,6 +416,14 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             if (configurationChanges.any()) {
                 dropKotlinScriptCaches(project)
             }
+            // A removed or replaced configuration loads again from the current definition.
+            configurationChanges.forEach { it.oldEntity?.virtualFileUrl?.virtualFile?.putUserData(RELOAD_NEEDED, null) }
+        }
+
+        override fun changed(event: VersionedStorageChange) {
+            if (event.getChanges(LibraryEntity::class.java).any() || event.getChanges(ModuleEntity::class.java).any()) {
+                DefinitionFromDependenciesProvider.getInstance(project).refresh()
+            }
         }
     }
 
@@ -401,12 +431,13 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         @JvmStatic
         fun getInstance(project: Project): KotlinScriptService = project.service()
 
-        private fun dropKotlinScriptCaches(project: Project) {
+        internal fun dropKotlinScriptCaches(project: Project) {
             ThreadingAssertions.assertWriteAccess()
             ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
             HighlightingSettingsPerFile.getInstance(project).incModificationCount()
             project.publishGlobalModuleStateModificationEvent()
             project.publishGlobalScriptModuleStateModificationEvent()
+            project.messageBus.syncPublisher(KotlinCompilerPluginsScriptConfigurationListener.TOPIC).scriptConfigurationsChanged()
         }
 
         private suspend fun collectOpenScriptFiles(project: Project): List<VirtualFile> {

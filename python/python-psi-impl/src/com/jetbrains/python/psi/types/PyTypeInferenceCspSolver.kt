@@ -9,6 +9,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyCallable
@@ -32,17 +34,24 @@ import java.util.TreeMap
 
 @ApiStatus.Experimental
 class CspBuilder(val context: TypeEvalContext) {
-  private val allSubstitutions = HashMap<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions>()
+  private val nestedCsps = HashMap<SubstitutionsIdentifier, NestedCsp>()
   private val initialConstraints = LinkedHashSet<TypeConstraint>()
   private val inferenceVars = InferenceVariablePool()
   private lateinit var cp: ConstraintProblem
 
-  fun putSubstitutions(si: SubstitutionsIdentifier, substitutions: PyTypeChecker.GenericSubstitutions) {
-    allSubstitutions[si] = substitutions
+  /**
+   * Builds the nested CSP identified by [si] and caches its result.
+   * Returns the return type of the nested CSP.
+   */
+  internal fun cacheNestedCsp(si: SubstitutionsIdentifier, build: () -> NestedCsp): PyType? {
+    nestedCsps[si]?.let { return it.returnType }
+    val result = build()
+    nestedCsps[si] = result
+    return result.returnType
   }
 
-  fun getAllSubstitutions() : Set<MutableMap.MutableEntry<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions>> {
-    return allSubstitutions.entries
+  fun getAllSubstitutions(): Map<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions> {
+    return nestedCsps.mapValues { it.value.substitutions }
   }
 
   fun addConstraint(left: PyType?, right: PyType?, variance: PyVariance, priority: ConstraintPriority, isBinding: Boolean = true) {
@@ -124,6 +133,7 @@ class CspBuilder(val context: TypeEvalContext) {
    */
   fun addInferenceVariable(typeVariable: PyTypeVarType, si: SubstitutionsIdentifier) : PyInferenceVariable {
     if (typeVariable.isDefinition) throw NotSupportedException()
+    PyCodeInsightCounters.inc(Counter.CSP_INFERENCE_VARIABLES)
     return inferenceVars.add(typeVariable, si)
   }
 
@@ -213,6 +223,13 @@ class CspBuilder(val context: TypeEvalContext) {
     return PyCspSolution(cp.failed, complete, typeVars2TypeRefs)
   }
 }
+
+
+/**
+ * The result of a nested CSP build: the [substitutions] of its anchor and its [returnType].
+ */
+internal data class NestedCsp(val substitutions: PyTypeChecker.GenericSubstitutions, val returnType: PyType?)
+
 
 enum class ConstraintPriority {
   HIGH,

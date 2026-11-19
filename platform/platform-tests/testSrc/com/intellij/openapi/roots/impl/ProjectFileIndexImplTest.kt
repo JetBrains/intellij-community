@@ -5,8 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.storeAndGet
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.rules.TempDirectoryExtension
@@ -17,7 +18,6 @@ import com.intellij.util.indexing.testEntities.NonRecursiveFileSetContributor
 import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -48,7 +48,7 @@ internal class ProjectFileIndexImplTest {
    * the project directory, a non-recursive `CONTENT` root on an ancestor. The whole project used to disappear.
    */
   @Test
-  fun `iterateContent visits a recursive root nested under a non-recursive content root`(): Unit = runBlocking {
+  fun `iterateContent visits a recursive root nested under a non-recursive content root`(): Unit = timeoutRunBlocking {
     val outerDir = tempDir.newVirtualDirectory("outer")
     val projectDir = tempDir.newVirtualDirectory("outer/project")
     val assetsDir = tempDir.newVirtualDirectory("outer/project/Assets")
@@ -63,13 +63,13 @@ internal class ProjectFileIndexImplTest {
 
   private suspend fun registerNonRecursiveContentRoot(root: VirtualFile) {
     workspaceModel.update { storage ->
-      storage.addEntity(NonRecursiveTestEntity(root.toVirtualFileUrl(virtualFileUrlManager), NonPersistentEntitySource))
+      storage.addEntity(NonRecursiveTestEntity(virtualFileUrlManager.storeAndGet(root), NonPersistentEntitySource))
     }
   }
 
   private suspend fun registerRecursiveNonIndexableContentRoot(root: VirtualFile) {
     workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(root.toVirtualFileUrl(virtualFileUrlManager), NonPersistentEntitySource))
+      storage.addEntity(NonIndexableTestEntity(virtualFileUrlManager.storeAndGet(root), NonPersistentEntitySource))
     }
   }
 

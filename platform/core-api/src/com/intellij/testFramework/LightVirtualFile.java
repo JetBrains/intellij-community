@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
   private CharSequence myContent;
   private Language myLanguage;
   private long myCachedLength = Long.MIN_VALUE;
+  private boolean mySkipEventSystem;
 
   public LightVirtualFile() {
     this("");
@@ -186,13 +188,12 @@ public class LightVirtualFile extends LightVirtualFileBase {
   }
 
   /**
-   * @return true if this virtual file is considered a non-physical,
-   * and changes in the file should not produce events and
-   * can be performed outside of write action.
+   * Whether the PSI of this file is non-physical, see {@link com.intellij.psi.FileViewProvider#supportsSendingPsiEvents()}.
+   * It can be changed outside a write action. {@link Builder#skipEventSystem} sets it.
    */
   public boolean shouldSkipEventSystem() {
-    return false;
-  } 
+    return mySkipEventSystem;
+  }
 
   @Override
   public String toString() {
@@ -222,6 +223,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     private @Nullable Charset charset;
     private long modificationStamp = LocalTimeCounter.currentTime();
     private @Nullable Object creationTrace = DEFAULT_CREATION_TRACE;
+    private boolean skipEventSystem;
 
     private Builder() { }
 
@@ -261,6 +263,15 @@ public class LightVirtualFile extends LightVirtualFileBase {
     }
 
     /**
+     * Makes the file non-physical, see {@link LightVirtualFile#shouldSkipEventSystem()}.
+     */
+    @ApiStatus.Experimental
+    public @NotNull Builder skipEventSystem(boolean skipEventSystem) {
+      this.skipEventSystem = skipEventSystem;
+      return this;
+    }
+
+    /**
      * Create the {@link LightVirtualFile} based on the configured attributes.
      */
     public @NotNull LightVirtualFile build() {
@@ -270,6 +281,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
       if (language != null) {
         file.setLanguage(language);
       }
+      file.mySkipEventSystem = skipEventSystem;
 
       return file;
     }

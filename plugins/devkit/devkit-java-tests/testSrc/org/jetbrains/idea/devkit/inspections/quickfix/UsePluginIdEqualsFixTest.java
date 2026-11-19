@@ -2,27 +2,29 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.quickfix.UsePluginIdEqualsFixtureKt.usePluginIdEqualsFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/useEqualsFix/pluginId")
-public class UsePluginIdEqualsFixTest extends UsePluginIdEqualsFixTestBase {
+@TestApplication
+public class UsePluginIdEqualsFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightDevKitInspectionFixture> pluginIdEquals =
+    usePluginIdEqualsFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useEqualsFix/pluginId");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useEqualsFix/pluginId";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testUsePluginIdEquals() {
-    doTest("Replace '==' with 'equals()'");
+    pluginIdEquals.get().doTest("Replace '==' with 'equals()'");
   }
 
+  @Test
   public void testUsePluginIdNotEquals() {
-    doTest("Replace '!=' with '!equals()'");
+    pluginIdEquals.get().doTest("Replace '!=' with '!equals()'");
   }
 }

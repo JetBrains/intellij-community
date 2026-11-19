@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.DistributionInfo
 import com.intellij.openapi.updateSettings.impl.IdeUpdateWidgetState
+import com.intellij.openapi.updateSettings.impl.MigrationKillSwitch
 import com.intellij.openapi.updateSettings.impl.PlatformUpdateDialog
 import com.intellij.openapi.updateSettings.impl.PlatformUpdates
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
@@ -159,10 +160,13 @@ private var isMigrationInstallRunning = false
 /**
  * The action of the primary button of the migration dialog.
  * It installs the distribution in the background, then shows "Restart to Update".
- * It does nothing while the install runs, or when a valid migration state exists.
+ * It does nothing while the install runs, when a valid migration state exists, or when the [MigrationKillSwitch] is active.
  */
 @RequiresEdt
 internal fun startMigrationUpdate(project: Project?, content: MigrationOfferContent) {
+  if (MigrationKillSwitch.isActive()) {
+    return
+  }
   val state = migrationStateStore().get()
   if (state != null) {
     LOG.info("the migration distribution is already installed: ${state.app}, ${state.status.id}")
@@ -330,15 +334,46 @@ private fun loadSvg(url: String, indicator: ProgressIndicator?): ByteArray {
   return data
 }
 
-internal fun download(url: String, indicator: ProgressIndicator?): ByteArray {
+internal fun download(
+  url: String,
+  indicator: ProgressIndicator?,
+  isAllowedUrl: (String) -> Boolean = { isAllowedContentUrl(it) },
+  isAllowedFinalUrl: (String) -> Boolean = { isAllowedFinalContentUrl(it) },
+): ByteArray {
   indicator?.checkCanceled()
-  val data = HttpRequests.request(url)
-    .productNameAsUserAgent()
-    .connect { it.inputStream.readNBytes(MAX_CONTENT_SIZE + 1) }
+  val data = connectToAllowedUrl(url, isAllowedUrl, isAllowedFinalUrl) { it.inputStream.readNBytes(MAX_CONTENT_SIZE + 1) }
   if (data.size > MAX_CONTENT_SIZE) {
     throw InvalidContentException("${url} is larger than ${MAX_CONTENT_SIZE} bytes")
   }
   return data
+}
+
+/** A URL, or the final URL after the redirects, that the rule of the migration rejects. */
+internal class MigrationUrlNotAllowedException(message: String) : IOException(message)
+
+/**
+ * Connects to [url] and gives the request to [action]. [isAllowedUrl] must accept [url].
+ * [isAllowedFinalUrl] must accept the final URL after the redirects.
+ * A rejected URL throws [MigrationUrlNotAllowedException] before [action] runs, so no byte of the body is read.
+ */
+internal fun <T> connectToAllowedUrl(
+  url: String,
+  isAllowedUrl: (String) -> Boolean,
+  isAllowedFinalUrl: (String) -> Boolean,
+  action: (HttpRequests.Request) -> T,
+): T {
+  if (!isAllowedUrl(url)) {
+    throw MigrationUrlNotAllowedException("the URL is not allowed: ${url}")
+  }
+  return HttpRequests.request(url).productNameAsUserAgent().connect { request ->
+    // the connection follows all redirects and reads only the headers
+    request.connection
+    val finalUrl = request.url
+    if (!isAllowedFinalUrl(finalUrl)) {
+      throw MigrationUrlNotAllowedException("${url} redirects to ${finalUrl}, which is not allowed")
+    }
+    action(request)
+  }
 }
 
 private class InvalidContentException(message: String) : Exception(message)

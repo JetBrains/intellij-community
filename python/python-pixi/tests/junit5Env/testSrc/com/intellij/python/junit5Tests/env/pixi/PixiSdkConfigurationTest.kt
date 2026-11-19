@@ -203,7 +203,7 @@ internal class PixiSdkConfigurationTest {
         }
         finally {
           for (pyProject in listOf(child, parent)) {
-            for (interpreter in registry.interpreters(pyProject)) registry.removePythonInterpreter(pyProject, interpreter)
+            for (interpreter in registry.interpreters(pyProject)) registry.remove(interpreter)
           }
         }
       }
@@ -245,7 +245,7 @@ internal class PixiSdkConfigurationTest {
         }
         finally {
           for (pyProject in listOf(childProjectFixture.get(), parent)) {
-            for (interpreter in registry.interpreters(pyProject)) registry.removePythonInterpreter(pyProject, interpreter)
+            for (interpreter in registry.interpreters(pyProject)) registry.remove(interpreter)
           }
         }
       }
@@ -294,7 +294,7 @@ internal class PixiSdkConfigurationTest {
       }
       finally {
         for (pyProject in listOf(child, parent)) {
-          for (interpreter in registry.interpreters(pyProject)) registry.removePythonInterpreter(pyProject, interpreter)
+          for (interpreter in registry.interpreters(pyProject)) registry.remove(interpreter)
         }
       }
     }

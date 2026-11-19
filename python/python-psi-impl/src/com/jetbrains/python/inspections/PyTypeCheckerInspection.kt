@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.childOfType
+import com.intellij.psi.util.parents
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
@@ -34,6 +35,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix
 import com.jetbrains.python.psi.PyAnnotationOwner
+import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
@@ -50,6 +52,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyForStatement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyLambdaExpression
 import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameterList
@@ -61,6 +64,7 @@ import com.jetbrains.python.psi.PyReferenceOwner
 import com.jetbrains.python.psi.PyReturnStatement
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PyStarArgument
+import com.jetbrains.python.psi.PyStatement
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
@@ -77,6 +81,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.analyzeArguments
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyPsiUtils.flattenParens
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
@@ -289,8 +294,25 @@ open class PyTypeCheckerInspection : PyInspection() {
       if (operandType is PyTypedDictType) return
       // Don't type check __class_getitem__ calls inside type hints. Normally these are not type hinted as a construct
       // special-cased by type checkers
-      if (isInsideTypeHint(node, myTypeEvalContext)) return
+      if (isInsideTypeHint(node, myTypeEvalContext) || isInTypePositionOfSuperClassList(node)) return
       checkCallSite(node)
+    }
+
+    /**
+     * Returns `true` when [node] is in a type position of the base class list of a class statement,
+     * such as `C1[T]` in `class C2[T](C1[T])`.
+     * A keyword argument, a star argument, a call and a lambda in the base class list are runtime expressions,
+     * such as `metaclass=Meta[str]` or `make_base(C1[str])`.
+     * A quoted base class, such as `list["C1[T]"]`, gets the position of its string literal.
+     */
+    private fun isInTypePositionOfSuperClassList(node: PySubscriptionExpression): Boolean {
+      for (ancestor in PyPsiUtils.getRealContext(node).parents(false)) {
+        when (ancestor) {
+          is PyArgumentList -> return ancestor.parent is PyClass
+          is PyKeywordArgument, is PyStarArgument, is PyCallExpression, is PyLambdaExpression, is PyStatement -> return false
+        }
+      }
+      return false
     }
 
     override fun visitPyForStatement(node: PyForStatement) {

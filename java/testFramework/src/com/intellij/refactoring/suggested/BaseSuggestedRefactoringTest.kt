@@ -9,6 +9,11 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.RefactoringBundle
 import org.junit.Assert.assertNotEquals
 
+/**
+ * Use [suggestedRefactoringFixture] in a JUnit 5 test. Its members replace the helpers of this class.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use suggestedRefactoringFixture in a JUnit 5 test")
 abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCaseWithUtils() {
   protected abstract val fileType: LanguageFileType
 

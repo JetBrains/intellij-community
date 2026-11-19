@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi
 
+import com.intellij.util.ResourceUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.types.PyClassType
@@ -18,15 +19,17 @@ object PyStringDunderUtil {
    * Y029 removes a `__str__` or a `__repr__` that only overrides the `object` one. This set gives the answer for the
    * types above, and lets an inspection report them when no runtime module and no skeleton is available.
    */
-  val TYPES_WITHOUT_USEFUL_STRING_CONVERSION: Set<String> = setOf(
-    "builtins.zip",
-    "builtins.map",
-    "builtins.filter",
-    "builtins.enumerate",
-    "builtins.reversed",
-    PyTypingTypeProvider.GENERATOR,
-    PyTypingTypeProvider.ASYNC_GENERATOR,
-  )
+  val TYPES_WITHOUT_USEFUL_STRING_CONVERSION: Set<String> by lazy {
+    setOf(
+      "builtins.zip",
+      "builtins.map",
+      "builtins.filter",
+      "builtins.enumerate",
+      "builtins.reversed",
+      PyTypingTypeProvider.GENERATOR,
+      PyTypingTypeProvider.ASYNC_GENERATOR,
+    ) + loadNativeTypesWithoutStringConversion()
+  }
 
   val KNOWN_INT_TYPES: Set<String> = setOf(PyNames.FQN.INT, "numpy.int8", "numpy.int16", "numpy.int32", "numpy.int64")
   val KNOWN_DECIMAL_TYPES: Set<String> = KNOWN_INT_TYPES + setOf(
@@ -44,4 +47,18 @@ object PyStringDunderUtil {
     val actualQNames = this.pyClass.getAncestorTypes(context).mapTo(mutableSetOf()) { it?.classQName } + this.classQName
     return allowedQNames.any { it in actualQNames }
   }
+}
+
+private const val NATIVE_TYPES_RESOURCE = "tools/native_types_without_string_conversion.txt"
+
+/**
+ * The stdlib classes without Python source that define no `__str__`, `__repr__` or `__format__` in any supported Python
+ * version. `community/python/tools/typeshed-docstrings/list_types_without_string_conversion.py` writes the resource. The
+ * typeshed update bot runs it on Linux, Windows and macOS.
+ */
+private fun loadNativeTypesWithoutStringConversion(): Set<String> {
+  val stream = requireNotNull(PyStringDunderUtil::class.java.classLoader.getResourceAsStream(NATIVE_TYPES_RESOURCE)) {
+    "$NATIVE_TYPES_RESOURCE is missing in the distribution"
+  }
+  return stream.use { ResourceUtil.loadText(it) }.lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.toSet()
 }

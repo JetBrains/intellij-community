@@ -25,23 +25,30 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolsSupplier;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesFixture;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,6 +59,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static com.intellij.java.testFramework.fixtures.LightJava9ModulesFixtureKt.lightJava9ModulesFixture;
+import static com.intellij.java.testFramework.fixtures.LightJava9ModulesFixtureKt.lightJava9ModulesProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Test for {@link AggregateResultsInspection} functionality.
  * <p>
@@ -59,21 +73,27 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * problem descriptors are exported under the inspection ID specified in their problem group,
  * rather than under the aggregator inspection's own ID.
  */
-public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsightFixtureTestCase {
-  
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class AggregateResultsInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJava9ModulesProjectFixture();
+  private final TestFixture<LightJava9ModulesFixture> java9 = lightJava9ModulesFixture(projectFixture);
+
+  @TempDir
+  Path tempDir;
+
+  @BeforeEach
+  void setUp() {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
   }
 
-  @Override
-  public void tearDown() {
+  @AfterEach
+  void tearDown() {
     InspectionProfileImpl.INIT_INSPECTIONS = false;
-    super.tearDown();
   }
 
+  @Test
   public void testAggregateResultsExport() throws Exception {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     myFixture.addFileToProject("Foo.java", """
       class Foo {
           void m() {
@@ -82,21 +102,21 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
           }
       }""");
 
-    InspectionManager im = InspectionManager.getInstance(getProject());
-    AnalysisScope scope = new AnalysisScope(getProject());
+    InspectionManager im = InspectionManager.getInstance(myFixture.getProject());
+    AnalysisScope scope = new AnalysisScope(myFixture.getProject());
     List<Path> resultFiles = new ArrayList<>();
-    Path outputPath = FileUtil.createTempDirectory("inspection", "results").toPath();
+    Path outputPath = tempDir;
 
     GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
 
     InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(getTools());
-    Disposer.register(getTestRootDisposable(), toolSupplier);
+    Disposer.register(myFixture.getTestRootDisposable(), toolSupplier);
     InspectionProfileImpl profile = new InspectionProfileImpl("test", toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
     
     for (InspectionToolWrapper<?, ?> t : getTools()) {
-      profile.enableTool(t.getShortName(), getProject());
+      profile.enableTool(t.getShortName(), myFixture.getProject());
     }
-    profile.setErrorLevel(HighlightDisplayKey.find("MockInspection"), HighlightDisplayLevel.ERROR, getProject());
+    profile.setErrorLevel(HighlightDisplayKey.find("MockInspection"), HighlightDisplayLevel.ERROR, myFixture.getProject());
 
     context.setExternalProfile(profile);
 
@@ -104,7 +124,7 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
       context.launchInspectionsOffline(scope, outputPath, false, resultFiles);
       return null;
     });
-    assertSize(1, resultFiles);
+    assertThat(resultFiles).hasSize(1);
 
     Path resultFile = resultFiles.getFirst();
     assertEquals("TestAggregator.xml", resultFile.getFileName().toString());
@@ -217,14 +237,16 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
 
   private record FinishedEvent(String toolId, int problemsCount, InspectListener.InspectionKind kind) {}
 
+  @Test
   public void testAggregateResultsExternalAnnotatorBatchInspectionEvents() throws Exception {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     PsiFile file = myFixture.addFileToProject("Bar.java", """
       class Bar {
           void m() {}
       }""");
 
     List<FinishedEvent> events = new CopyOnWriteArrayList<>();
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(
+    myFixture.getProject().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(
       GlobalInspectionContextEx.INSPECT_TOPIC,
       new InspectListener() {
         @Override
@@ -234,10 +256,10 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
       }
     );
 
-    InspectionManager im = InspectionManager.getInstance(getProject());
+    InspectionManager im = InspectionManager.getInstance(myFixture.getProject());
     AnalysisScope scope = new AnalysisScope(file);
     List<Path> resultFiles = new ArrayList<>();
-    Path outputPath = FileUtil.createTempDirectory("inspection", "results").toPath();
+    Path outputPath = tempDir;
 
     GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
     List<InspectionToolWrapper<?, ?>> tools = List.of(
@@ -245,10 +267,10 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
       new LocalInspectionToolWrapper(new MockInspection())
     );
     InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(tools);
-    Disposer.register(getTestRootDisposable(), toolSupplier);
+    Disposer.register(myFixture.getTestRootDisposable(), toolSupplier);
     InspectionProfileImpl profile = new InspectionProfileImpl("testBatch", toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
     for (InspectionToolWrapper<?, ?> t : tools) {
-      profile.enableTool(t.getShortName(), getProject());
+      profile.enableTool(t.getShortName(), myFixture.getProject());
     }
     context.setExternalProfile(profile);
 
@@ -257,22 +279,24 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
       return null;
     });
 
-    assertTrue("Aggregator inspection finished event expected",
-      events.stream().anyMatch(e -> e.toolId().equals("TestBatchAggregator") && e.problemsCount() == 3 && e.kind() == InspectListener.InspectionKind.LOCAL));
-    assertTrue("Child rule inspection finished event expected",
-      events.stream().anyMatch(e -> e.toolId().equals("MockInspection") && e.problemsCount() == 1 && e.kind() == InspectListener.InspectionKind.LOCAL));
-    assertFalse("Unknown child rule should not be reported",
-      events.stream().anyMatch(e -> e.toolId().equals("UnknownInspection")));
+    assertTrue(events.stream().anyMatch(e -> e.toolId().equals("TestBatchAggregator") && e.problemsCount() == 3 && e.kind() == InspectListener.InspectionKind.LOCAL),
+      "Aggregator inspection finished event expected");
+    assertTrue(events.stream().anyMatch(e -> e.toolId().equals("MockInspection") && e.problemsCount() == 1 && e.kind() == InspectListener.InspectionKind.LOCAL),
+      "Child rule inspection finished event expected");
+    assertFalse(events.stream().anyMatch(e -> e.toolId().equals("UnknownInspection")),
+      "Unknown child rule should not be reported");
   }
 
+  @Test
   public void testAggregateResultsGlobalInspectionEvents() throws Exception {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     PsiFile file = myFixture.addFileToProject("Baz.java", """
       class Baz {
           void m() {}
       }""");
 
     List<FinishedEvent> events = new CopyOnWriteArrayList<>();
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(
+    myFixture.getProject().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(
       GlobalInspectionContextEx.INSPECT_TOPIC,
       new InspectListener() {
         @Override
@@ -282,10 +306,10 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
       }
     );
 
-    InspectionManager im = InspectionManager.getInstance(getProject());
+    InspectionManager im = InspectionManager.getInstance(myFixture.getProject());
     AnalysisScope scope = new AnalysisScope(file);
     List<Path> resultFiles = new ArrayList<>();
-    Path outputPath = FileUtil.createTempDirectory("inspection", "results").toPath();
+    Path outputPath = tempDir;
 
     GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
     List<InspectionToolWrapper<?, ?>> tools = List.of(
@@ -293,10 +317,10 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
       new LocalInspectionToolWrapper(new MockInspection())
     );
     InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(tools);
-    Disposer.register(getTestRootDisposable(), toolSupplier);
+    Disposer.register(myFixture.getTestRootDisposable(), toolSupplier);
     InspectionProfileImpl profile = new InspectionProfileImpl("testGlobal", toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
     for (InspectionToolWrapper<?, ?> t : tools) {
-      profile.enableTool(t.getShortName(), getProject());
+      profile.enableTool(t.getShortName(), myFixture.getProject());
     }
     context.setExternalProfile(profile);
 
@@ -305,12 +329,12 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
       return null;
     });
 
-    assertTrue("Global aggregator inspection finished event expected",
-      events.stream().anyMatch(e -> e.toolId().equals("TestGlobalAggregator") && e.problemsCount() == 3 && e.kind() == InspectListener.InspectionKind.GLOBAL));
-    assertTrue("Child rule inspection finished event expected",
-      events.stream().anyMatch(e -> e.toolId().equals("MockInspection") && e.problemsCount() == 1 && e.kind() == InspectListener.InspectionKind.GLOBAL));
-    assertFalse("Unknown child rule should not be reported",
-      events.stream().anyMatch(e -> e.toolId().equals("UnknownInspection")));
+    assertTrue(events.stream().anyMatch(e -> e.toolId().equals("TestGlobalAggregator") && e.problemsCount() == 3 && e.kind() == InspectListener.InspectionKind.GLOBAL),
+      "Global aggregator inspection finished event expected");
+    assertTrue(events.stream().anyMatch(e -> e.toolId().equals("MockInspection") && e.problemsCount() == 1 && e.kind() == InspectListener.InspectionKind.GLOBAL),
+      "Child rule inspection finished event expected");
+    assertFalse(events.stream().anyMatch(e -> e.toolId().equals("UnknownInspection")),
+      "Unknown child rule should not be reported");
   }
 
   private static class TestBatchAggregatorInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection, AggregateResultsInspection {

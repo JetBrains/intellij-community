@@ -3,14 +3,14 @@ package com.intellij.xdebugger;
 
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.xdebugger.ui.DebuggerColors;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class XDebuggerColorsTest {
   @Test
   public void testBreakPointLineHighlighterMustNotOverwriteAdditionalSyntaxOnTheCurrentLine() {
     //noinspection ConstantValue
-    assertTrue("Debugger current line highlighter must not cover additional syntax", DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER < HighlighterLayer.ADDITIONAL_SYNTAX);
+    assertTrue(DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER < HighlighterLayer.ADDITIONAL_SYNTAX, "Debugger current line highlighter must not cover additional syntax");
   }
 }

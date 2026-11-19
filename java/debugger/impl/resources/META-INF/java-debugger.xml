@@ -196,6 +196,8 @@
 
     <registryKey key="debugger.evaluate.method.helper" defaultValue="[off|auto*|always]"
                  description="Use helper to invoke methods avoiding the immediate return value collection"/>
+    <registryKey key="debugger.show.return.values.emulated" defaultValue="true"
+                 description="Use the emulated watcher of method return values instead of the native JDI watcher"/>
     <registryKey key="debugger.jdwp.include.virtual.threads" defaultValue="false"
                  description="JDWP setting to include virtual threads in the list of all threads (might lead to problems in case of a huge number of virtual threads)"/>
     <registryKey key="debugger.thread.dump.extended" defaultValue="true"

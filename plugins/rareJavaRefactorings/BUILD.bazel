@@ -139,8 +139,9 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//jps/model-api:model",
         "//plugins/rareJavaRefactorings:java-rareRefactorings",
-        "//libraries/junit4",
         "//platform/bazel-runfiles",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.java.rareRefactorings.tests` end

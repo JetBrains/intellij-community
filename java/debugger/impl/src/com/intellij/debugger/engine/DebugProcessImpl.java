@@ -21,8 +21,10 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
+import com.intellij.debugger.engine.requests.CaptureScope;
+import com.intellij.debugger.engine.requests.MethodReturnValue;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.engine.requests.ReturnValueWatcher;
 import com.intellij.debugger.engine.requests.StepRequestor;
 import com.intellij.debugger.impl.DebugUtilsKt;
 import com.intellij.debugger.impl.DebuggerCompletableFuture;
@@ -84,7 +86,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -250,7 +251,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
   private final AtomicBoolean myRootProcessClosed = new AtomicBoolean(false);
   protected volatile DebuggerSession mySession;
-  protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
+  protected @Nullable ReturnValueWatcher myReturnValueWatcher;
   private final CoroutineScope myCoroutineScope;
   private final CompletableJob myWorkJob = SupervisorKt.SupervisorJob(null);
   private final ShowStatusManager myShowStatusManager;
@@ -346,22 +347,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     });
   }
 
-  public @Nullable Pair<Method, Value> getLastExecutedMethod() {
-    final MethodReturnValueWatcher watcher = myReturnValueWatcher;
-    if (watcher == null) {
-      return null;
-    }
-    final Method method = watcher.getLastExecutedMethod();
-    if (method == null) {
-      return null;
-    }
-    return Pair.create(method, watcher.getLastMethodReturnValue());
-  }
-
-  public void setWatchMethodReturnValuesEnabled(boolean enabled) {
-    if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.setEnabled(enabled);
-    }
+  public @Nullable MethodReturnValue getLastMethodReturnValue() {
+    final ReturnValueWatcher watcher = myReturnValueWatcher;
+    return watcher != null ? watcher.getLastMethodReturnValue() : null;
   }
 
   public boolean canGetMethodReturnValue() {
@@ -2126,7 +2114,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final ThreadReferenceProxyImpl thread = getContextThread();
       RequestHint hint = getHint(suspendContext, thread, null);
       applyThreadFilter(getThreadFilterFromContext(suspendContext));
-      startWatchingMethodReturn(thread);
+      startWatchingMethodReturn(thread, CaptureScope.BASE_FRAME);
       step(suspendContext, thread, hint, createCommandToken());
       super.contextAction(suspendContext);
     }
@@ -2175,6 +2163,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(getThreadFilterFromContext(suspendContext));
+      startWatchingMethodReturn(stepThread, CaptureScope.WITH_CALLS);
       if (myBreakpoint != null) {
         prepareAndSetSteppingBreakpoint(suspendContext, myBreakpoint, hint, false);
       }
@@ -2256,7 +2245,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       applyThreadFilter(getThreadFilterFromContext(suspendContext));
 
-      startWatchingMethodReturn(stepThread);
+      startWatchingMethodReturn(stepThread, CaptureScope.WITH_CALLS);
 
       step(suspendContext, stepThread, hint, createCommandToken());
     }
@@ -2448,6 +2437,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       showStatusText(JavaDebuggerBundle.message("status.process.resumed"));
+      if (myReturnValueWatcher != null) {
+        myReturnValueWatcher.clear();
+      }
       if (!(this instanceof StepCommand)) {
         forEachSafe(SteppingListener.getExtensions(), listener -> listener.beforeResume(suspendContext));
       }
@@ -3048,9 +3040,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         breakpointManager.removeThreadFilter(DebugProcessImpl.this); // clear the filter on resume
-        if (myReturnValueWatcher != null) {
-          myReturnValueWatcher.clear();
-        }
         super.contextAction(suspendContext);
       }
 
@@ -3188,9 +3177,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return mySuspendManager.hasPausedContext(suspendContext);
   }
 
-  public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
-    if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.enable(thread.getThreadReference());
+  public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread, CaptureScope scope) {
+    if (myReturnValueWatcher != null && DebuggerSettings.getInstance().WATCH_RETURN_VALUES) {
+      myReturnValueWatcher.startCapture(thread.getThreadReference(), scope);
     }
   }
 
@@ -3211,7 +3200,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   void stopWatchingMethodReturn() {
     if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.disable();
+      myReturnValueWatcher.stopCapture();
     }
   }
 

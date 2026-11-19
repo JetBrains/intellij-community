@@ -74,6 +74,10 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.gitlab.GitLabProjectsManager"
                     serviceImplementation="org.jetbrains.plugins.gitlab.GitLabProjectsManagerImpl"/>
+    <projectService serviceInterface="org.jetbrains.plugins.gitlab.mergerequest.GitLabReviewSettings"
+                    serviceImplementation="org.jetbrains.plugins.gitlab.mergerequest.BackendGitLabReviewSettings"/>
+    <projectService serviceInterface="org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinkHandler"
+                    serviceImplementation="org.jetbrains.plugins.gitlab.mergerequest.util.GitLabBackendNoteLinkHandler"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModelFactory"
                     serviceImplementation="org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModelFactoryImpl"/>
@@ -118,16 +122,8 @@
     <registryKey key="vcs.gitlab.connect.silently"
                  description="Connect to GitLab repository without an explicit user action"
                  defaultValue="true"/>
-    <registryKey defaultValue="1000" description="Request polling interval in milliseconds" key="gitlab.request.polling.interval.millis"/>
-    <registryKey defaultValue="5" description="Request polling attempts" key="gitlab.request.polling.attempts"/>
     <registryKey defaultValue="62" description="Days until an entry in the viewed/not viewed state store is considered stale"
                  key="gitlab.viewed.state.stale.timeout"/>
-    <registryKey key="gitlab.merge.requests.load.project.with.rest" defaultValue="true"
-                 description="Load the project details purely with REST API"/>
-    <registryKey defaultValue="true" description="Enable file uploading action for review notes"
-                 key="gitlab.merge.requests.file.upload.enabled"/>
-    <registryKey defaultValue="false" description="Disable loading emojis for notes in merge requests"
-                 key="gitlab.merge.requests.disable.emojis.fetching"/>
     <applicationSettings service="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
     <projectSettings service="org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory"/>
     <projectSettings service="org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences"/>
@@ -141,7 +137,6 @@
   <extensions defaultExtensionNs="com.intellij.statistics">
     <applicationUsagesCollector implementation="org.jetbrains.plugins.gitlab.util.GitLabStateStatistics$GitLabAccountsStatisticsCollector"/>
     <projectUsagesCollector implementation="org.jetbrains.plugins.gitlab.util.GitLabStateStatistics$GitLabProjectMetricsCollector"/>
-    <notificationIdsHolder implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
     <actionCustomPlaceAllowlist id="GitLabActionCustomPlaceAllowlist"
                                 places="GitLabMergeRequestListPopup;GitLabMergeRequestChangesTreePopup;GitLabMergeRequestDetailsPopup"/>
     <counterUsagesCollector implementationClass="org.jetbrains.plugins.gitlab.authentication.GitLabLoginCollector"/>
@@ -173,22 +168,12 @@
             icon="AllIcons.Actions.Refresh">
       <override-text place="GoToAction"/>
     </action>
-    <action id="GitLab.Merge.Request.Refresh"
-            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshAction"
-            use-shortcut-of="Refresh"
-            icon="AllIcons.Actions.Refresh"/>
     <action id="GitLab.Merge.Request.Show"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
     <action id="GitLab.Merge.Request.CheckoutBranch"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCheckoutBranchAction"/>
     <action id="GitLab.Merge.Request.OpenInWorktree"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestOpenInWorktreeAction"/>
-    <action id="GitLab.Merge.Request.Open.Link"
-            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestOpenURLAction"
-            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
-    <action id="GitLab.Merge.Request.Copy.Link"
-            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCopyURLAction"
-            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
     <action id="GitLab.Merge.Request.Create"
             class="org.jetbrains.plugins.gitlab.mergerequest.ui.create.action.GitLabMergeRequestOpenCreateTabAction"
             icon="AllIcons.General.Add">

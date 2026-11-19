@@ -3,7 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.ide.ui.search.SearchableOptionContributor;
 import com.intellij.ide.ui.search.SearchableOptionProcessor;
-import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable;
+import com.jetbrains.python.configuration.interpreter.PyWorkspaceStructureConfigurableKt;
 import org.jetbrains.annotations.NotNull;
 
 final class PySearchableOptionContributor extends SearchableOptionContributor {
@@ -20,7 +20,7 @@ final class PySearchableOptionContributor extends SearchableOptionContributor {
   }
 
   private static void processProjectSettings(SearchableOptionProcessor processor) {
-    String id = PyActiveSdkModuleConfigurable.CONFIGURABLE_ID;
+    String id = PyWorkspaceStructureConfigurableKt.PY_WORKSPACE_CONFIGURABLE_ID;
     processor.addOptions("Python interpreter", "Project interpreter", "Python interpreter",
                          id, "Project interpreter", true);
 

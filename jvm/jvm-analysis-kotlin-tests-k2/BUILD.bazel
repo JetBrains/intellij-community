@@ -30,8 +30,10 @@ jvm_library(
         "//jvm/jvm-analysis-testFramework:analysis-testFramework",
         "//plugins/kotlin/base/testFramework",
         "//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared_test_lib",
+        "//jvm/jvm-analysis-impl:analysis-impl",
         "//java/java-syntax:syntax",
         "//libraries/junit4",
+        "//libraries/junit6",
         "//platform/scratch/plugin",
     ],
 )

@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -268,7 +268,7 @@ private fun findExpressionInEnclosingContextBlock(
                 if (!contextArgType.isSubtypeOf(expectedType)) continue
 
                 if (contextArgExpr is KtSimpleNameExpression) {
-                    val referencedPsi = contextArgExpr.resolveSymbol()?.psi
+                    val referencedPsi = contextArgExpr.resolveSuccessfulSymbol()?.psi
                     if (referencedPsi == null || !callExpression.resolvesToSameSymbol(contextArgExpr.text, referencedPsi)) continue
                 }
 
@@ -287,7 +287,7 @@ private fun KtCallExpression.resolvesToSameSymbol(
     val fragment = KtPsiFactory(project).createExpressionCodeFragment(identifier.quoteIfNeeded(), this)
     val expr = fragment.getContentElement() as? KtSimpleNameExpression ?: return false
     return analyze(expr) {
-        expr.resolveSymbol()?.psi == expectedPsi
+        expr.resolveSuccessfulSymbol()?.psi == expectedPsi
     }
 }
 

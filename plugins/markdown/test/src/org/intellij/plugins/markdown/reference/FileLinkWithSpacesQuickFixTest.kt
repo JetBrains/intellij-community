@@ -1,11 +1,21 @@
 package org.intellij.plugins.markdown.reference
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
-import org.intellij.plugins.markdown.MarkdownBundle
 import com.intellij.markdown.backend.inspections.MarkdownLinkDestinationWithSpacesInspection
-import org.junit.Test
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.intellij.plugins.markdown.MarkdownBundle
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 
-class FileLinkWithSpacesQuickFixTest: LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class FileLinkWithSpacesQuickFixTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `test file link with spaces`() {
     val content = "[](some file.md)"

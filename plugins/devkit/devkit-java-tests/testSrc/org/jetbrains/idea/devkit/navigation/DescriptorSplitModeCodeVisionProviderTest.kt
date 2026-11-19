@@ -381,7 +381,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
       "Backend dependency: " +
       "test.module (current) " +
       "↓ depends on " +
-      "intellij.platform.vcs (predefined)",
+      "intellij.codeWithMe.abstract.main (predefined)",
       toPlainText(computeReasonHtml().html),
     )
   }
@@ -458,16 +458,16 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
   }
 
   /**
-   * Creates `test.module` with a dependency on the predefined backend module `intellij.platform.vcs` and opens its descriptor.
+   * Creates `test.module` with a dependency on the predefined backend module `intellij.codeWithMe.abstract.main` and opens its descriptor.
    * Only the predefined module kinds make `test.module` a backend module.
    */
   private fun createDependencyOnPredefinedBackendModule() {
     createDeclaringModule()
-    createPredefinedModule("intellij.platform.vcs", "<idea-plugin/>")
+    createPredefinedModule("intellij.codeWithMe.abstract.main", "<idea-plugin/>")
     createModuleWithModuleDescriptor("test.module", "test.module.xml", """
       <idea-plugin>
         <dependencies>
-          <module name="intellij.platform.vcs"/>
+          <module name="intellij.codeWithMe.abstract.main"/>
         </dependencies>
       </idea-plugin>
       """.trimIndent()

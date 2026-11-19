@@ -34,6 +34,7 @@ import java.io.IOException
  * The tool does not support the JSON log of `--execution_log_json_file`.
  *
  * The report counts the actions by their source: the remote cache, the disk cache, or a local run.
+ * It counts the actions run locally again for each action kind, such as `JvmCompile` or `Rustc`, with the sum of their wall time.
  * It counts the test actions again in a separate section, and lists each of them. It ends with the largest blobs.
  * `--largest-blobs-count` limits the list of largest blobs. See [Summary].
  * `--html-report-path` also writes the report as an HTML page, e.g., for a TeamCity report tab. See [BazelExecutionHtmlReport].
@@ -149,12 +150,24 @@ object BazelExecutionReport {
    * The log holds no entry for an action that starts no spawn, such as a symlink or a runfiles tree.
    *
    * A blob that two action kinds share counts in both rows of [uploadsByMnemonic]. [uploads] counts it once.
-   * [largestBlobsCount] limits [largestBlobs] only. [uploadsByMnemonic] holds every action kind, and [tests] every test action.
+   * [largestBlobsCount] limits [largestBlobs] only. [uploadsByMnemonic] and [localActionsByMnemonic] hold every action kind, and [tests] every test action.
    */
   internal class Summary(spawns: List<Spawn>, largestBlobsCount: Int, blobs: List<Blob>) {
     /** The number of actions for each source. */
     @JvmField
     val actions: Map<Source, Int> = spawns.groupingBy { it.source() }.eachCount()
+
+    /** The actions run locally for each action kind, the largest count first. */
+    @JvmField
+    val localActionsByMnemonic: List<LocalActions> = spawns.asSequence()
+      .filter { it.source() == Source.LOCAL }
+      .groupBy { it.mnemonic }
+      .map { [mnemonic, group] -> LocalActions(mnemonic, group.size, group.sumOf { it.wallTimeNanos }) }
+      .sortedWith(compareByDescending<LocalActions> { it.count }.thenBy { it.mnemonic })
+
+    /** The sum of the wall time of the actions run locally. */
+    @JvmField
+    val localWallTimeNanos: Long = localActionsByMnemonic.sumOf { it.wallTimeNanos }
 
     /** The number of test actions for each source. */
     @JvmField
@@ -191,7 +204,7 @@ object BazelExecutionReport {
       val uploadSpawns = spawns.filter { it.isUpload() }
       uploads = distinctBlobs(uploadSpawns)
       uploadsByMnemonic = uploadSpawns.groupBy { it.mnemonic }
-        .map { (mnemonic, group) -> mnemonic to distinctBlobs(group) }
+        .map { [mnemonic, group] -> mnemonic to distinctBlobs(group) }
         .sortedWith(compareByDescending<Pair<String, Map<String, Long>>> { it.second.values.sum() }.thenBy { it.first })
       blobCount = blobs.size
       blobSizeBytes = blobs.sumOf { it.sizeBytes }
@@ -219,6 +232,13 @@ object BazelExecutionReport {
       else -> "none, failed"
     }
   }
+
+  /**
+   * The actions run locally of one action kind: their number and the sum of their wall time.
+   *
+   * Bazel runs actions in parallel, so the sum can exceed the wall time of the build.
+   */
+  internal class LocalActions(@JvmField val mnemonic: String, @JvmField val count: Int, @JvmField val wallTimeNanos: Long)
 
   /**
    * Returns the size of each distinct blob of the spawns, by hash.
@@ -260,6 +280,11 @@ object BazelExecutionReport {
     @JvmField val exitCode: Int,
     @JvmField val cacheHit: Boolean,
     @JvmField val remoteCacheable: Boolean,
+    /**
+     * The wall time of the spawn: `SpawnMetrics.execution_wall_time`, or `SpawnMetrics.total_time` when the log has no execution wall time.
+     * It is zero when the log has no metrics for the spawn. It is not CPU time.
+     */
+    @JvmField val wallTimeNanos: Long = 0,
   ) {
     /**
      * The output blobs. [BazelCompactExecutionLog] sets them after its second pass, and only for the spawns that the caller selects.

@@ -15,8 +15,10 @@ import org.jetbrains.annotations.VisibleForTesting
  *
  * The provider comes from [RemoteApiProvider.EP_NAME]. The extension is present at the start of a process that owns
  * an RPC backend. It appears when such a module loads without a restart, which is how the JetBrains Light moves to
- * the monolith mode and to the frontend mode. A process with no extension is not connected: [tryResolve] returns
- * `null` and [awaitConnectionAndResolve] waits for the extension. `awaitWithLocalFallback` is the way around that.
+ * the monolith mode and to the frontend mode. The extension goes away when that module unloads, which is how
+ * JetBrains Light moves back to the light mode. The service is then not connected again. A process with no
+ * extension is not connected: [tryResolve] returns `null` and [awaitConnectionAndResolve] waits for the extension.
+ * `awaitWithLocalFallback` is the way around that.
  */
 @Service
 @ApiStatus.Experimental
@@ -24,12 +26,13 @@ class LiteRemoteApiProviderService @ApiStatus.Internal @VisibleForTesting constr
   private val holder = LiteRemoteApiProviderHolder()
 
   init {
-    RemoteApiProvider.EP_NAME.addChangeListener(coroutineScope) { installFirstExtension() }
-    installFirstExtension()
+    RemoteApiProvider.EP_NAME.addChangeListener(coroutineScope) { syncProvider() }
+    syncProvider()
   }
 
-  private fun installFirstExtension() {
-    RemoteApiProvider.EP_NAME.extensionList.firstOrNull()?.let(holder::install)
+  private fun syncProvider() {
+    val extension = RemoteApiProvider.EP_NAME.extensionList.firstOrNull()
+    if (extension == null) holder.uninstall() else holder.install(extension)
   }
 
   fun isConnected(): Boolean {

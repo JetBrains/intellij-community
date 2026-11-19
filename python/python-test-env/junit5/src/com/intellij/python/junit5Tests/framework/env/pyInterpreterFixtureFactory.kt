@@ -71,7 +71,7 @@ private suspend fun TestFixtureInitializer.R<PyInterpreterFixture<PyEnvironment>
   val interpreter = pyProject.setPythonInterpreter(env.prepareSdk(pyProject)).orThrow()!!
   return initialized(PyInterpreterFixture(interpreter, env, pyProject.project)) {
     pyProject.setPythonInterpreter(null).orThrow()
-    PythonInterpreterRegistry.getInstance(pyProject.project).removePythonInterpreter(pyProject, interpreter)
+    PythonInterpreterRegistry.getInstance(pyProject.project).remove(interpreter)
     env.close()
   }
 }

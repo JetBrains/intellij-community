@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -113,6 +113,39 @@ public class SegmentArray {
     return segmentNotFound(offset, start);
   }
 
+  /**
+   * Returns the same index as {@link #findSegmentIndex(int)}, and throws the same exceptions.
+   * The search is faster when the index is {@code hint} or a little greater.
+   */
+  @ApiStatus.Internal
+  public final int findSegmentIndex(int offset, int hint) {
+    int count = mySegmentCount;
+    if (hint < 0 || hint >= count || offset < myStarts[hint] || offset >= getLastValidOffset()) {
+      return findSegmentIndex(offset);
+    }
+    int[] ends = myEnds;
+    int low = hint;
+    int high = hint;
+    int step = 1;
+    while (ends[high] <= offset) {
+      low = high + 1;
+      high = Math.min(high + step, count - 1);
+      step <<= 1;
+    }
+    while (low < high) {
+      int middle = (low + high) >>> 1;
+      if (ends[middle] <= offset) {
+        low = middle + 1;
+      } else {
+        high = middle;
+      }
+    }
+    if (offset < myStarts[low]) {
+      return findSegmentIndex(offset);
+    }
+    return low;
+  }
+
   protected int segmentNotFound(int offset, int start) {
     // This means that there is a gap at given offset
     if (offset < myStarts[start] || offset >= myEnds[start]) {
@@ -125,13 +158,22 @@ public class SegmentArray {
     return mySegmentCount == 0 ? 0 : myEnds[mySegmentCount - 1];
   }
 
+  /**
+   * Adds {@code shift} to the start and the end of each segment from {@code startIndex}.
+   * Logs one error when a shifted segment starts before offset 0.
+   */
   public final void shiftSegments(int startIndex, int shift) {
-    for (int i = startIndex; i < mySegmentCount; i++) {
-      myStarts[i] += shift;
-      myEnds[i] += shift;
-      if (myStarts[i] < 0 || myEnds[i] < 0) {
-        LOG.error("Error shifting segments: myStarts[" + i + "] = " + myStarts[i] + ", myEnds[" + i + "] = " + myEnds[i]);
-      }
+    int[] starts = myStarts;
+    int[] ends = myEnds;
+    int count = mySegmentCount;
+    for (int i = startIndex; i < count; i++) {
+      starts[i] += shift;
+      ends[i] += shift;
+    }
+    // the segments are sorted, so the first shifted start is the smallest shifted offset
+    if (startIndex < count && starts[startIndex] < 0) {
+      LOG.error("Error shifting segments: myStarts[" + startIndex + "] = " + starts[startIndex] +
+                ", myEnds[" + startIndex + "] = " + ends[startIndex]);
     }
   }
 

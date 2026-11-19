@@ -17,12 +17,12 @@ sealed interface EelHolder {
   val eel: EelApi
 
   /**
-   * For those rare cases when you need to test something WSL or Docker-specific. Do not use unless absolutely necessary.
+   * For those rare cases when you need to test something WSL-, Docker- or SSH-specific. Do not use unless absolutely necessary.
    * More-or-less legal usage is
    * ```kotlin
    * when (type) {
    *   EelType.Docker -> throw TestAbortedException("skip test for docker")
-   *   EelType.Wsl, EelType.Local -> Unit
+   *   EelType.Wsl, EelType.Ssh, EelType.Local -> Unit
    * }
    * ```
    */

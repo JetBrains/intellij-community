@@ -1,6 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+/**
+ * Use [staticInitializationInExtensionsFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use staticInitializationInExtensionsFixture in a JUnit 5 test")
 abstract class StaticInitializationInExtensionsInspectionTestBase : PluginModuleTestCase() {
 
   protected abstract fun getFileExtension(): String

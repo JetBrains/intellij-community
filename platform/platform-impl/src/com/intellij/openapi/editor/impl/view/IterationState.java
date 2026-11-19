@@ -146,6 +146,23 @@ public final class IterationState {
    */
   private boolean myBreakComputed;
   private boolean myBreakComputedBeforeBreak;
+  /**
+   * Says that {@link #myHasSoftWrap} holds the answer of {@link #hasSoftWrap()} for the current step. {@link #advance()} clears it.
+   */
+  private boolean mySoftWrapComputed;
+  private boolean myHasSoftWrap;
+  /**
+   * The start of the syntax run that holds the current step, see {@link #getHighlighterEnd(int)}.
+   */
+  private int mySyntaxRunStart;
+  /**
+   * The end of the syntax run that holds the current step.
+   */
+  private int mySyntaxRunEnd;
+  /**
+   * The lexer attributes of the syntax run that holds the current step, or null when the step has no lexer attributes.
+   */
+  private @Nullable TextAttributes mySyntaxRunAttributes;
 
   @ApiStatus.Internal
   public IterationState(
@@ -211,6 +228,7 @@ public final class IterationState {
       while (myHighlighterIterator.getStart() > offset) {
         myHighlighterIterator.retreat();
       }
+      mySyntaxRunAttributes = null;
     }
     myCurrentHighlighters.clear();
     myDocumentHighlighters.retreat(offset);
@@ -239,6 +257,7 @@ public final class IterationState {
   public void advance() {
     myNextIsFoldRegion = false;
     myBreakComputed = false;
+    mySoftWrapComputed = false;
     myStartOffset = myEndOffset;
     advanceSegmentHighlighters();
     advanceCurrentSelectionIndex();
@@ -436,23 +455,87 @@ public final class IterationState {
     }
   }
 
+  /**
+   * Gives the offset after the start where the lexer attributes can change, and keeps the attributes of the step.
+   * A syntax run is one lexer token, or adjacent lexer tokens whose attributes add nothing to a step.
+   * Only the ends of the syntax runs limit the steps.
+   */
   private int getHighlighterEnd(int start) {
-    if (myHighlighterIterator == null) {
+    HighlighterIterator iterator = myHighlighterIterator;
+    if (iterator == null) {
       return myEnd;
     }
-    while (!myHighlighterIterator.atEnd()) {
-      int end = alignOffset(myReverseIteration ? myHighlighterIterator.getStart() : myHighlighterIterator.getEnd());
-      if (myReverseIteration ? end < start : end > start) {
-        return end;
+    if (mySyntaxRunAttributes != null && isAhead(mySyntaxRunEnd, start)) {
+      return mySyntaxRunEnd;
+    }
+    mySyntaxRunAttributes = null;
+    while (!iterator.atEnd()) {
+      int end = alignOffset(tokenEnd(iterator));
+      if (isAhead(end, start)) {
+        mySyntaxRunStart = tokenStart(iterator);
+        mySyntaxRunAttributes = iterator.getTextAttributes();
+        mySyntaxRunEnd = addsNothing(mySyntaxRunAttributes) ? extendSyntaxRun(iterator, end) : end;
+        return mySyntaxRunEnd;
       }
-      if (myReverseIteration) {
-        myHighlighterIterator.retreat();
-      }
-      else {
-        myHighlighterIterator.advance();
-      }
+      step(iterator);
     }
     return myEnd;
+  }
+
+  /**
+   * Moves the iterator over the next lexer tokens whose attributes add nothing to a step, and gives the end of the last of them.
+   * The given end is the end of the current token. The scan stops at the first token that reaches the end of the iteration.
+   * The result is not inside a surrogate pair.
+   */
+  private int extendSyntaxRun(@NotNull HighlighterIterator iterator, int end) {
+    int runEnd = end;
+    while (isAhead(myEnd, runEnd)) {
+      step(iterator);
+      if (iterator.atEnd() || !addsNothing(iterator.getTextAttributes())) {
+        break;
+      }
+      runEnd = tokenEnd(iterator);
+    }
+    return alignOffset(runEnd);
+  }
+
+  /**
+   * Says whether the attributes add nothing to a merge: no color, no effect, the plain font, and no font families.
+   */
+  private static boolean addsNothing(@Nullable TextAttributes attributes) {
+    return attributes != null && attributes.isEmpty() && !attributes.hasEffects();
+  }
+
+  /**
+   * Gives the offset where the current lexer token starts in the direction of the iteration.
+   */
+  private int tokenStart(@NotNull HighlighterIterator iterator) {
+    return myReverseIteration ? iterator.getEnd() : iterator.getStart();
+  }
+
+  /**
+   * Gives the offset where the current lexer token ends in the direction of the iteration.
+   */
+  private int tokenEnd(@NotNull HighlighterIterator iterator) {
+    return myReverseIteration ? iterator.getStart() : iterator.getEnd();
+  }
+
+  /**
+   * Moves the iterator to the next lexer token in the direction of the iteration.
+   */
+  private void step(@NotNull HighlighterIterator iterator) {
+    if (myReverseIteration) {
+      iterator.retreat();
+    } else {
+      iterator.advance();
+    }
+  }
+
+  /**
+   * Says whether the offset comes after the other offset in the direction of the iteration.
+   */
+  private boolean isAhead(int offset, int other) {
+    return myReverseIteration ? offset < other : offset > other;
   }
 
   private int getCaretEnd(int start) {
@@ -752,7 +835,7 @@ public final class IterationState {
       mySyntaxLayer = createLayer(
         syntax.getBackgroundColor(),
         HighlighterLayer.SYNTAX,
-        false,
+        myRoundedHighlighting,
         false,
         false,
         Integer.MAX_VALUE
@@ -788,11 +871,7 @@ public final class IterationState {
     );
     boolean isInGuardedBlock = isInDocumentGuardedBlock(atBreak, beforeBreak);
 
-    TextAttributes syntax = myHighlighterIterator == null || myHighlighterIterator.atEnd()
-                            ? null
-                            : (atBreak && myStartOffset == (myReverseIteration ? myHighlighterIterator.getEnd() : myHighlighterIterator.getStart()))
-                              ? null
-                              : myHighlighterIterator.getTextAttributes();
+    TextAttributes syntax = atBreak && myStartOffset == mySyntaxRunStart ? null : mySyntaxRunAttributes;
     TextAttributes selection = getSelectionAttributes(isInSelection);
     TextAttributes caret = getCaretRowAttributes(isInCaretRow);
     TextAttributes fold = myCurrentFold != null ? myFoldTextAttributes : null;
@@ -931,7 +1010,11 @@ public final class IterationState {
   }
 
   private boolean hasSoftWrap() {
-    return mySoftWrapModel.getSoftWrap(myStartOffset) != null;
+    if (!mySoftWrapComputed) {
+      myHasSoftWrap = mySoftWrapModel.getSoftWrap(myStartOffset) != null;
+      mySoftWrapComputed = true;
+    }
+    return myHasSoftWrap;
   }
 
   private int alignOffset(int offset) {
@@ -1029,7 +1112,8 @@ public final class IterationState {
     }
 
     private void retreat(int offset) {
-      for (int j = i - 2; j >= 0; j--) {
+      int lastUsed = myNextHighlighter == null ? i - 1 : i - 2;
+      for (int j = lastUsed; j >= 0; j--) {
         RangeHighlighterEx highlighter = highlighters[j];
         if (skipHighlighter(highlighter)) continue;
         if (getAlignedStartOffset(highlighter) > offset) {

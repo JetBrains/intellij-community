@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -10,13 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.python.sdk.backend.PythonInterpreterRegistry;
 import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
+import com.jetbrains.python.project.PyProject;
+import com.jetbrains.python.project.PyProjectKt;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
@@ -42,6 +42,8 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   private JComponent labelAnchor;
   private final Project myProject;
+  /** The interpreters of the last snapshot, see {@link #setSnapshot}. */
+  private List<PythonInterpreter> mySnapshotInterpreters;
   /** The interpreters of the combo, in the order of {@link #myInterpreterItems}. */
   private List<PythonInterpreter> myInterpreters;
   /** The combo's interpreter rows. The combo shows them after a leading null row for "project default". */
@@ -55,7 +57,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   public PyIdeCommonOptionsForm(PyCommonOptionsFormData data) {
     myProject = data.getProject();
-    setInterpreters(PySdkRenderingKt.pyProjectInterpretersUnderProgress(myProject, null));
+    setSnapshot(snapshotInterpreters(null));
     List<PyInterpreterItem> rows = new ArrayList<>(myInterpreterItems);
     rows.addFirst(null);
     Module[] modules = ModuleManager.getInstance(data.getProject()).getModules();
@@ -100,14 +102,6 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public void subscribe(@NotNull Disposable parentDisposable) {
-    // Refresh the interpreter combo whenever an interpreter is added or removed. The listener is tied to
-    // `parentDisposable`, so it does not outlive the owning UI.
-    PythonInterpreterRegistry.Companion.getInstance(myProject).addTableChangeListener(parentDisposable, () -> updateSdkList(true));
-    updateSdkList(true);
-  }
-
-  @Override
   public JComponent getAnchor() {
     return labelAnchor;
   }
@@ -145,6 +139,16 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void setPythonInterpreter(@Nullable PythonInterpreter interpreter) {
     mySelectedInterpreter = interpreter;
+    // The snapshot can lack the interpreter, for example before the first snapshot. It then gets a row of its own, so
+    // that the form does not save "project default" in its place.
+    List<PythonInterpreter> interpreters = interpreter == null || mySnapshotInterpreters.contains(interpreter)
+                                           ? mySnapshotInterpreters
+                                           : ContainerUtil.append(mySnapshotInterpreters, interpreter);
+    if (!interpreters.equals(myInterpreters)) {
+      PyInterpreterItem selection = content.interpreterComboBox.getSelectedItem() instanceof PyInterpreterItem item ? item : null;
+      setInterpreters(interpreters);
+      showRows(selection);
+    }
   }
 
   @Override
@@ -186,6 +190,9 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void setModule(Module module) {
     content.moduleCombo.setSelectedModule(module);
+    // The module combo reads a new snapshot, which can drop the row of the saved interpreter. A reset sets the module
+    // after the interpreter, so the row comes back here.
+    setPythonInterpreter(mySelectedInterpreter);
     updateDefaultInterpreter(module);
   }
 
@@ -200,15 +207,15 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   public void updateSdkList(boolean preserveSelection) {
-    setInterpreters(PySdkRenderingKt.pyProjectInterpretersUnderProgress(myProject, getModule()));
-    PyInterpreterItem selection =
-      preserveSelection && content.interpreterComboBox.getSelectedItem() instanceof PyInterpreterItem item ? item : null;
-    if (!myInterpreterItems.contains(selection)) {
-      selection = null;
-    }
+    setSnapshot(snapshotInterpreters(getModule()));
+    showRows(preserveSelection && content.interpreterComboBox.getSelectedItem() instanceof PyInterpreterItem item ? item : null);
+  }
+
+  /** Makes {@link #myInterpreterItems} the rows of the combo, and selects {@code selection} if the rows hold it. */
+  private void showRows(@Nullable PyInterpreterItem selection) {
     List<PyInterpreterItem> rows = new ArrayList<>(myInterpreterItems);
     rows.addFirst(null);
-    content.interpreterComboBox.setModel(new CollectionComboBoxModel<>(rows, selection));
+    content.interpreterComboBox.setModel(new CollectionComboBoxModel<>(rows, myInterpreterItems.contains(selection) ? selection : null));
   }
 
   @Override
@@ -219,6 +226,26 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void setUseModuleSdk(boolean useModuleSdk) {
     content.interpreterComboBox.setSelectedItem(useModuleSdk ? null : itemFor(mySelectedInterpreter));
+  }
+
+  /**
+   * The interpreters that the registry holds for the {@link PyProject} of {@code module}, or the interpreters of every
+   * {@link PyProject} of the snapshot when {@code module} is null. A module that is not a {@link PyProject} has none.
+   */
+  private @NotNull List<PythonInterpreter> snapshotInterpreters(@Nullable Module module) {
+    if (module == null) return PySdkRenderingKt.pyProjectInterpretersIfReady(myProject, null);
+    PyProject pyProject = ContainerUtil.find(PyProjectKt.getPyProjectsWithoutJpsSync(myProject),
+                                             candidate -> module.equals(candidate.getResidesOnModule()));
+    return pyProject != null ? PySdkRenderingKt.pyProjectInterpretersIfReady(myProject, pyProject) : List.of();
+  }
+
+  /**
+   * Makes the interpreters of a snapshot the rows of the combo. A row that {@link #setPythonInterpreter} added for an
+   * interpreter that an older snapshot lacked goes away.
+   */
+  private void setSnapshot(@NotNull List<PythonInterpreter> interpreters) {
+    mySnapshotInterpreters = interpreters;
+    setInterpreters(interpreters);
   }
 
   /** Makes {@code interpreters} the rows of the combo, see {@link #myInterpreters}. */

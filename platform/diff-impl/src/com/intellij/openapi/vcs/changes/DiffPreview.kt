@@ -9,7 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 interface DiffPreview {
-  fun openPreview(requestFocus: Boolean): Boolean
+  /**
+   * Can be called from any context, an implementation switches to the EDT for its UI work.
+   * False means that the preview is not shown.
+   */
+  suspend fun openPreview(requestFocus: Boolean): Boolean
   fun closePreview()
 
   /**
@@ -20,20 +24,11 @@ interface DiffPreview {
   /**
    * Allows overriding 'Show Diff' action behavior.
    * For example, by using External Diff Tools when applicable.
+   * The call does not wait for the preview to show.
    */
-  fun performDiffAction(): Boolean = openPreview(true)
+  fun performDiffAction(): Boolean
 
   companion object {
-    @JvmStatic
-    fun setPreviewVisible(preview: DiffPreview, value: Boolean) {
-      if (value) {
-        preview.openPreview(false)
-      }
-      else {
-        preview.closePreview()
-      }
-    }
-
     /**
      * Close all file editors, including not from active splitters, associated with particular [previewFile]
      */

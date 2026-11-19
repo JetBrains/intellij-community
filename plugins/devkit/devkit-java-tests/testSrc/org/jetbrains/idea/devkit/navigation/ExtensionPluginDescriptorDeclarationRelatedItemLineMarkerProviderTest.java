@@ -2,35 +2,45 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.navigation.ExtensionPluginDescriptorDeclarationFixtureKt.extensionPluginDescriptorDeclarationFixture;
 
 @SuppressWarnings("NewClassNamingConvention")
 @TestDataPath("$CONTENT_ROOT/testData/navigation/extensionDeclaration")
-public class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTest
-  extends ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTestBase {
+@TestApplication
+public class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<ExtensionPluginDescriptorDeclarationFixture> extensionDeclaration =
+    extensionPluginDescriptorDeclarationFixture(projectFixture, DevkitJavaTestsUtil.TESTDATA_PATH + "navigation/extensionDeclaration");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "navigation/extensionDeclaration";
-  }
-
+  @Test
   public void testInvalidExtension() {
-    doTestInvalidExtension("MyInvalidExtension.java");
+    extensionDeclaration.get().doTestInvalidExtension("MyInvalidExtension.java");
   }
 
+  @Test
   public void testExtensionNoParameters() {
-    doTestExtension("MyExtensionNoParameters.java", "<myEp implementation=\"MyExtensionNoParameters\"/>");
+    extensionDeclaration.get().doTestExtension("MyExtensionNoParameters.java", "<myEp implementation=\"MyExtensionNoParameters\"/>");
   }
 
+  @Test
   public void testExtensionSingleParameter() {
-    doTestExtension("MyExtensionSingleParameter.java", "<myEp implementation=\"MyExtensionSingleParameter\"/>");
+    extensionDeclaration.get().doTestExtension("MyExtensionSingleParameter.java", "<myEp implementation=\"MyExtensionSingleParameter\"/>");
   }
 
+  @Test
   public void testExtensionTwoParameters() {
-    doTestExtension("MyExtensionTwoParameters.java", "<myEp implementation=\"MyExtensionTwoParameters\"/>");
+    extensionDeclaration.get().doTestExtension("MyExtensionTwoParameters.java", "<myEp implementation=\"MyExtensionTwoParameters\"/>");
   }
 
+  @Test
   public void testNestedClassExtension() {
-    doTestExtension("MyNestedClassExtension.java", "<myEp implementation=\"MyNestedClassExtension$Nested\"/>");
+    extensionDeclaration.get().doTestExtension("MyNestedClassExtension.java", "<myEp implementation=\"MyNestedClassExtension$Nested\"/>");
   }
 }

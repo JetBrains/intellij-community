@@ -1,0 +1,17 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+
+    fun implicitThis(): (Int) -> Int = ::len
+
+    companion {
+        fun len(x: Int) = x
+    }
+}
+
+val Foo.boundThis: (Int) -> Int
+    get() = Foo::len
+
+fun boundParam(foo: Foo): (Int) -> Int {
+    return Foo::len
+}

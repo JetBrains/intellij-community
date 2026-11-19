@@ -29,6 +29,8 @@ public class MenuItemPresentationFactory extends PresentationFactory {
       presentation.setIcon(null);
       presentation.setDisabledIcon(null);
       presentation.setHoveredIcon(null);
+      presentation.setIconDescriptor(null);
+      presentation.setHoveredIconDescriptor(null);
       presentation.putClientProperty(HIDE_ICON, Boolean.TRUE);
     }
   }
@@ -40,6 +42,8 @@ public class MenuItemPresentationFactory extends PresentationFactory {
       presentation.setIcon(null);
       presentation.setDisabledIcon(null);
       presentation.setHoveredIcon(null);
+      presentation.setIconDescriptor(null);
+      presentation.setHoveredIconDescriptor(null);
       presentation.putClientProperty(HIDE_ICON, Boolean.TRUE);
     }
   }

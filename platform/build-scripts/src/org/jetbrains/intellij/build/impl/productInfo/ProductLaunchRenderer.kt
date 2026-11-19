@@ -30,10 +30,12 @@ fun renderAdditionalJvmArguments(
   fun String.quoteIfNeeded(): String = if (isScript) "\"$this\"" else this
 
   val result = ArrayList<String>()
+
   val macroName = when (os) {
     OsFamily.WINDOWS -> "%IDE_HOME%"
     OsFamily.MACOS -> $$"$APP_PACKAGE$${if (isPortableDist) "" else "/Contents"}"
     OsFamily.LINUX -> $$"$IDE_HOME"
+    OsFamily.OHOS -> $$"$IDE_HOME"
   }
 
   val bootClassPathJarNames = jvm.xBootClassPathJarNames + if (!isQodana && jvm.multiRoutingFileSystem) listOf(PLATFORM_CORE_NIO_FS) else emptyList()
@@ -57,16 +59,18 @@ fun renderAdditionalJvmArguments(
   result.add("-Didea.vendor.name=$vendorName")
   result.add("-Didea.paths.selector=$pathsSelector")
 
-  jvm.jnaNativeDir?.let {
+  // JNA and pty4j have no OHOS natives, so the OHOS distribution has no JNA and pty4j native trees
+  jvm.jnaNativeDir?.takeIf { os != OsFamily.OHOS }?.let {
     result.add("-Djna.boot.library.path=$macroName/$it/${arch.dirName}".quoteIfNeeded())
     result.add("-Djna.nosys=true")
     result.add("-Djna.noclasspath=true")
   }
-  jvm.pty4jNativeDir?.let {
+  jvm.pty4jNativeDir?.takeIf { os != OsFamily.OHOS }?.let {
     result.add("-Dpty4j.preferred.native.folder=$macroName/$it".quoteIfNeeded())
   }
   result.add("-Dio.netty.allocator.type=pooled")
-  jvm.skikoNativeDir?.let {
+  // Skiko has no OHOS natives, so the OHOS distribution has no Skiko native tree
+  jvm.skikoNativeDir?.takeIf { os != OsFamily.OHOS }?.let {
     result.add("-Dskiko.library.path=$macroName/$it".quoteIfNeeded())
   }
 
@@ -97,6 +101,9 @@ fun renderAdditionalJvmArguments(
     result.add("--enable-native-access=ALL-UNNAMED")
   }
 
+  result.add("-XX:-UseBASE64Intrinsics")
+
   result.addAll(openedPackages)
+
   return result
 }

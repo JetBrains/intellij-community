@@ -49,18 +49,18 @@ class DevDistUnplannablePluginsTest {
   private val linuxX64 = PluginSymbolicVariant(id = "linux_x64", distribution = SUPPORTED_DISTRIBUTIONS.single { it.os == OsFamily.LINUX && it.arch == JvmArchitecture.x64 })
   private val macAarch64 = PluginSymbolicVariant(id = "mac_aarch64", distribution = SUPPORTED_DISTRIBUTIONS.single { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 })
 
-  private fun layoutWithVersionAsCode(): PluginLayout = PluginLayout.pluginAutoWithCustomDirName("intellij.x") { it.withCustomVersion(versionAsCode) }
+  private fun layoutWithVersionAsCode(): PluginLayout = PluginLayout.pluginWithCustomLayout("intellij.x") { it.withCustomVersion(versionAsCode) }
 
   /** A layout with a resource of a module that the Bazel target index does not place, so no binding can state it. */
   private fun layoutWithUnplacedResource(mainModule: String = "intellij.unplaced"): PluginLayout {
-    return PluginLayout.pluginAutoWithCustomDirName(mainModule) { it.withResource("missing", "missing") }
+    return PluginLayout.pluginWithCustomLayout(mainModule) { it.withResource("missing", "missing") }
   }
 
-  private fun plainLayout(mainModule: String): PluginLayout = PluginLayout.pluginAutoWithCustomDirName(mainModule) { }
+  private fun plainLayout(mainModule: String): PluginLayout = PluginLayout.pluginWithCustomLayout(mainModule) { }
 
   /** A layout that excludes a directory from its module jar. The dev distribution has no module filter, so no binding states it. */
   private fun layoutWithModuleExcludes(mainModule: String = "intellij.filtered"): PluginLayout {
-    return PluginLayout.pluginAutoWithCustomDirName(mainModule) { it.excludeFromModule(mainModule, "server/**") }
+    return PluginLayout.pluginWithCustomLayout(mainModule) { it.excludeFromModule(mainModule, "server/**") }
   }
 
   private fun request(layout: PluginLayout, tier: DevDistPluginTier, variant: PluginSymbolicVariant = linuxX64): DevDistPluginRequest {
@@ -99,7 +99,7 @@ class DevDistUnplannablePluginsTest {
 
   @Test
   fun `a version suffix as data is stated`() {
-    val layout = PluginLayout.pluginAutoWithCustomDirName("intellij.x") { it.withCustomVersion(SuffixedPluginVersion("-suffix")) }
+    val layout = PluginLayout.pluginWithCustomLayout("intellij.x") { it.withCustomVersion(SuffixedPluginVersion("-suffix")) }
 
     val facts = statedDescriptorFacts(layout.mainModule, "", layout, null, null)
 
@@ -146,10 +146,10 @@ class DevDistUnplannablePluginsTest {
 
   @Test
   fun `a run-configuration module without a layout or a platform variant fails like a hand extra without a layout`() {
-    val crossPlatformOnly = PluginLayout.pluginAutoWithCustomDirName("intellij.cross") {
+    val crossPlatformOnly = PluginLayout.pluginWithCustomLayout("intellij.cross") {
       it.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
     }
-    val macOnly = PluginLayout.pluginAutoWithCustomDirName("intellij.mac") {
+    val macOnly = PluginLayout.pluginWithCustomLayout("intellij.mac") {
       it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     }
     val properties = SyntheticProductProperties(persistentListOf(crossPlatformOnly, macOnly, plainLayout("intellij.plain")))
@@ -262,10 +262,10 @@ class DevDistUnplannablePluginsTest {
 
   @Test
   fun `several refused update modules are named in one failure, and a hold-out is not`() {
-    val crossPlatformOnly = PluginLayout.pluginAutoWithCustomDirName("intellij.cross") {
+    val crossPlatformOnly = PluginLayout.pluginWithCustomLayout("intellij.cross") {
       it.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
     }
-    val macOnly = PluginLayout.pluginAutoWithCustomDirName("intellij.mac") {
+    val macOnly = PluginLayout.pluginWithCustomLayout("intellij.mac") {
       it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     }
     val properties = SyntheticProductProperties(persistentListOf(crossPlatformOnly, macOnly, plainLayout("intellij.plain")))
@@ -313,7 +313,7 @@ class DevDistUnplannablePluginsTest {
 
   @Test
   fun `a refused update module that a run configuration names stops the run`() {
-    val crossPlatformOnly = PluginLayout.pluginAutoWithCustomDirName("intellij.cross") {
+    val crossPlatformOnly = PluginLayout.pluginWithCustomLayout("intellij.cross") {
       it.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
     }
     val properties = SyntheticProductProperties(persistentListOf(crossPlatformOnly))

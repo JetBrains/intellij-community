@@ -81,6 +81,7 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
 
   init {
     if (!project.isDefault) {
+      val disposable = scope.asDisposable()
       val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
       EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
         override fun editorCreated(event: EditorFactoryEvent) {
@@ -90,17 +91,17 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
         override fun editorReleased(event: EditorFactoryEvent) {
           breakpointManager.inlineBreakpointsCache.editorReleased(event.editor)
         }
-      }, project)
+      }, disposable)
 
       for (key in listOf(XDebuggerUtil.INLINE_BREAKPOINTS_KEY, "debugger.show.breakpoints.inline.even.trivial")) {
         Registry.get(key).addListener(object : RegistryValueListener {
           override fun afterValueChanged(value: RegistryValue) {
             reinitializeAll()
           }
-        }, project)
+        }, disposable)
       }
 
-      breakpointManager.subscribeOnBreakpointsChanges(scope.asDisposable()) {
+      breakpointManager.subscribeOnBreakpointsChanges(disposable) {
         breakpointModificationStamp.incrementAndGet()
       }
     }

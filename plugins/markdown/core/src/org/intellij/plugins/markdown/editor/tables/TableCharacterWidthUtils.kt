@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.openapi.editor.Document
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import java.text.BreakIterator
 import java.util.Locale
 
@@ -15,6 +16,7 @@ internal object TableCharacterWidthUtils {
 
   fun calculateDisplayWidth(text: String, startColumn: Int = 0, tabSize: Int = 4): Int {
     if (text.isEmpty()) return 0
+    val alignVisually = MarkdownSettings.getInstance().alignTableCellsVisually
     // Iterate over grapheme clusters so that emoji sequences (ZWJ joins like 👨‍👩‍👧,
     // skin-tone modifiers like 👍🏿, regional indicator flag pairs like 🇺🇸) collapse
     // to a single visual cell-pair rather than being counted as multiple double-width units.
@@ -30,6 +32,9 @@ internal object TableCharacterWidthUtils {
       width += if (codePoint == '\t'.code) {
         val size = tabSize.coerceAtLeast(1)
         size - (startColumn + width) % size
+      }
+      else if (alignVisually && codePoint >= 0x20) {
+        text.codePointCount(start, end)
       }
       else {
         getCharacterWidth(codePoint)

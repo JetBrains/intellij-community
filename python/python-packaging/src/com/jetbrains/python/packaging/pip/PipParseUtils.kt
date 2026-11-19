@@ -12,11 +12,24 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import io.github.z4kn4fein.semver.Version
 
 @ApiStatus.Internal
 object PipParseUtils {
   private val log = thisLogger()
   private val json = Json { ignoreUnknownKeys = true }
+
+  fun parsePythonListResult(jsonContent: String): Set<Version> {
+    val parsed = json.decodeFromStringLogError<List<PythonListEntry>>(jsonContent)
+    return parsed
+      .map { (versionParts) ->
+        Version.parse(
+          "${versionParts.major}.${versionParts.minor}",
+          strict = false
+        )
+      }
+      .toSet()
+  }
 
   @JvmStatic
   fun parseListResult(jsonContent: String): List<PythonPackage> {
@@ -70,4 +83,15 @@ object PipParseUtils {
     val isEditable: Boolean = editableProjectLocation.isNotEmpty()
   }
 
+  @Serializable
+  private data class PythonListEntry(
+    @SerialName("version_parts")
+    val versionParts: PythonVersionParts,
+  )
+
+  @Serializable
+  private data class PythonVersionParts(
+    val major: Int,
+    val minor: Int,
+  )
 }

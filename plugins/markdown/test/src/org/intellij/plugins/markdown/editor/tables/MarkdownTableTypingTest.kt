@@ -3,24 +3,42 @@ package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.backspace
+import org.intellij.plugins.markdown.editor.executeAction
+import org.intellij.plugins.markdown.editor.typeInEditor
 import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.awt.datatransfer.StringSelection
 
-@RunWith(JUnit4::class)
+@TestApplication
 @Suppress("MarkdownIncorrectTableFormatting")
-class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
-  @Before
+class MarkdownTableTypingTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
+  @BeforeEach
   fun enableTableReformatting() {
-    setupTableReformatting(testRootDisposable)
+    setupTableReformatting(disposable)
   }
 
   @Test
@@ -61,7 +79,7 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
 
   @Test
   fun `test typing in compact table`() {
-    withTableStyle(project, TableStyle.COMPACT) {
+    withTableStyle(myFixture.project, TableStyle.COMPACT) {
       doTest(
         """
         | a |malformed| c |
@@ -79,30 +97,32 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
   }
 
   @Test
-  fun `test backspacing last content in compact empty cell`() {
-    withTableStyle(project, TableStyle.COMPACT) {
-      configureFromFileText(
-        "some.md",
-        """
-        | a |
-        | --- |
-        | x<caret> |
-        """.trimIndent()
-      )
-      backspace()
-      checkResultByText(
-        """
-        | a |
-        | --- |
-        | <caret>|
-        """.trimIndent()
-      )
+  fun `test backspacing last content in compact empty cell`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      withTableStyle(myFixture.project, TableStyle.COMPACT) {
+        myFixture.configureByText(
+          "some.md",
+          """
+          | a |
+          | --- |
+          | x<caret> |
+          """.trimIndent()
+        )
+        myFixture.backspace()
+        myFixture.checkResult(
+          """
+          | a |
+          | --- |
+          | <caret>|
+          """.trimIndent()
+        )
+      }
     }
   }
 
   @Test
   fun `test typing in tight table`() {
-    withTableStyle(project, TableStyle.TIGHT) {
+    withTableStyle(myFixture.project, TableStyle.TIGHT) {
       doTest(
         """
         | a |malformed| c |
@@ -358,7 +378,7 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
   }
 
   @Test
-  fun `test no column expand`() {
+  fun `test no column expand`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     | some |
@@ -371,15 +391,17 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |------|
     | some<caret>     |
     """.trimIndent()
-    configureFromFileText("some.md", content)
-    runWithDisabledFormatting(file) {
-      type("some")
-      checkResultByText(expected)
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      runWithDisabledFormatting(myFixture.file) {
+        myFixture.typeInEditor("some")
+        myFixture.checkResult(expected)
+      }
     }
   }
 
   @Test
-  fun `test no column shrink`() {
+  fun `test no column shrink`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     | some         |
@@ -392,15 +414,17 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |--------------|
     | some tex<caret>    |
     """.trimIndent()
-    configureFromFileText("some.md", content)
-    runWithDisabledFormatting(file) {
-      backspace()
-      checkResultByText(expected)
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      runWithDisabledFormatting(myFixture.file) {
+        myFixture.backspace()
+        myFixture.checkResult(expected)
+      }
     }
   }
 
   @Test
-  fun `test no alignment correction`() {
+  fun `test no alignment correction`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     | some content |
@@ -413,15 +437,17 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |:------------:|
     | some<caret>             |
     """.trimIndent()
-    configureFromFileText("some.md", content)
-    runWithDisabledFormatting(file) {
-      type("some")
-      checkResultByText(expected)
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      runWithDisabledFormatting(myFixture.file) {
+        myFixture.typeInEditor("some")
+        myFixture.checkResult(expected)
+      }
     }
   }
 
   @Test
-  fun `test no column expand when reformat on type is disabled`() {
+  fun `test no column expand when reformat on type is disabled`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     | some |
@@ -434,15 +460,17 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |------|
     | some<caret>     |
     """.trimIndent()
-    configureFromFileText("some.md", content)
-    runWithReformatOnTypeDisabled {
-      type("some")
-      checkResultByText(expected)
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      runWithReformatOnTypeDisabled {
+        myFixture.typeInEditor("some")
+        myFixture.checkResult(expected)
+      }
     }
   }
 
   @Test
-  fun `test no column shrink when reformat on type is disabled`() {
+  fun `test no column shrink when reformat on type is disabled`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     | some         |
@@ -455,15 +483,17 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |--------------|
     | some tex<caret>    |
     """.trimIndent()
-    configureFromFileText("some.md", content)
-    runWithReformatOnTypeDisabled {
-      backspace()
-      checkResultByText(expected)
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      runWithReformatOnTypeDisabled {
+        myFixture.backspace()
+        myFixture.checkResult(expected)
+      }
     }
   }
 
   @Test
-  fun `test no alignment correction when reformat on type is disabled`() {
+  fun `test no alignment correction when reformat on type is disabled`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     | some content |
@@ -476,15 +506,17 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |:------------:|
     | some<caret>             |
     """.trimIndent()
-    configureFromFileText("some.md", content)
-    runWithReformatOnTypeDisabled {
-      type("some")
-      checkResultByText(expected)
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      runWithReformatOnTypeDisabled {
+        myFixture.typeInEditor("some")
+        myFixture.checkResult(expected)
+      }
     }
   }
 
   @Test
-  fun `test pasting reformats the table`() {
+  fun `test pasting reformats the table`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val before = """
     | a | b |
@@ -497,14 +529,16 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |--------|---|
     | onexyz | 2 |
     """.trimIndent()
-    configureFromFileText("some.md", before)
-    CopyPasteManager.getInstance().setContents(StringSelection("xyz"))
-    executeAction(IdeActions.ACTION_EDITOR_PASTE)
-    checkResultByText(after)
+    myFixture.configureByText("some.md", before)
+    withContext(Dispatchers.EDT) {
+      CopyPasteManager.getInstance().setContents(StringSelection("xyz"))
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_PASTE)
+      myFixture.checkResult(after)
+    }
   }
 
   @Test
-  fun `test cutting reformats the table`() {
+  fun `test cutting reformats the table`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val before = """
     | a           | b |
@@ -517,13 +551,15 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |-------------|---|
     | kept        | 2 |
     """.trimIndent()
-    configureFromFileText("some.md", before)
-    executeAction(IdeActions.ACTION_EDITOR_CUT)
-    checkResultByText(after)
+    myFixture.configureByText("some.md", before)
+    withContext(Dispatchers.EDT) {
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_CUT)
+      myFixture.checkResult(after)
+    }
   }
 
   @Test
-  fun `test duplicating reformats the table`() {
+  fun `test duplicating reformats the table`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val before = """
     | a | b |
@@ -536,13 +572,15 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |--------|---|
     | oneone | 2 |
     """.trimIndent()
-    configureFromFileText("some.md", before)
-    executeAction(IdeActions.ACTION_EDITOR_DUPLICATE)
-    checkResultByText(after)
+    myFixture.configureByText("some.md", before)
+    withContext(Dispatchers.EDT) {
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_DUPLICATE)
+      myFixture.checkResult(after)
+    }
   }
 
   @Test
-  fun `test deleting to word start reformats the table`() {
+  fun `test deleting to word start reformats the table`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val before = """
     | a            | b |
@@ -555,13 +593,15 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |--------------|---|
     | kept         | 2 |
     """.trimIndent()
-    configureFromFileText("some.md", before)
-    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START)
-    checkResultByText(after)
+    myFixture.configureByText("some.md", before)
+    withContext(Dispatchers.EDT) {
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START)
+      myFixture.checkResult(after)
+    }
   }
 
   @Test
-  fun `test no reformat on pasting when reformat on type is disabled`() {
+  fun `test no reformat on pasting when reformat on type is disabled`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     | a | b |
@@ -574,20 +614,24 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     |---|---|
     | onexyz | 2 |
     """.trimIndent()
-    configureFromFileText("some.md", content)
-    CopyPasteManager.getInstance().setContents(StringSelection("xyz"))
-    runWithReformatOnTypeDisabled {
-      executeAction(IdeActions.ACTION_EDITOR_PASTE)
-      checkResultByText(expected)
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      CopyPasteManager.getInstance().setContents(StringSelection("xyz"))
+      runWithReformatOnTypeDisabled {
+        myFixture.executeAction(IdeActions.ACTION_EDITOR_PASTE)
+        myFixture.checkResult(expected)
+      }
     }
   }
 
   @Test
-  fun `test pasting outside of a table keeps the text`() {
-    configureFromFileText("some.md", "Some text<caret>")
-    CopyPasteManager.getInstance().setContents(StringSelection("xyz"))
-    executeAction(IdeActions.ACTION_EDITOR_PASTE)
-    checkResultByText("Some textxyz")
+  fun `test pasting outside of a table keeps the text`(): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", "Some text<caret>")
+    withContext(Dispatchers.EDT) {
+      CopyPasteManager.getInstance().setContents(StringSelection("xyz"))
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_PASTE)
+      myFixture.checkResult("Some textxyz")
+    }
   }
 
   private fun runWithReformatOnTypeDisabled(block: () -> Unit) {
@@ -617,9 +661,11 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     }
   }
 
-  private fun doTest(content: String, expected: String, count: Int = 1, string: String = " ") {
-    configureFromFileText("some.md", content)
-    type(string.repeat(count))
-    checkResultByText(expected)
+  private fun doTest(content: String, expected: String, count: Int = 1, string: String = " "): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor(string.repeat(count))
+      myFixture.checkResult(expected)
+    }
   }
 }

@@ -1,14 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.links
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
-class ConvertToReferenceLinkIntentionTest: LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class ConvertToReferenceLinkIntentionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `single link becomes a reference link`() {
     // language=Markdown
@@ -471,19 +485,25 @@ class ConvertToReferenceLinkIntentionTest: LightPlatformCodeInsightFixture4TestC
   private fun doTest(content: String, after: String) {
     myFixture.configureByText("some.md", content)
     val fix = myFixture.findSingleIntention(intentionText)
-    myFixture.checkPreviewAndLaunchAction(fix)
-    myFixture.checkResult(after)
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.checkPreviewAndLaunchAction(fix)
+        myFixture.checkResult(after)
+      }
+    }
   }
 
   private fun doUnavailableTest(content: String) {
     myFixture.configureByText("some.md", content)
     val intentions = myFixture.filterAvailableIntentions(intentionText)
-    Assert.assertTrue("Intention should not be available", intentions.isEmpty())
+    Assertions.assertTrue(intentions.isEmpty(), "Intention should not be available")
   }
 
   private fun assertSingleDefinition() {
-    val definitions = PsiTreeUtil.findChildrenOfType(myFixture.file, MarkdownLinkDefinition::class.java)
-    Assert.assertEquals("The appended definition should parse as a link definition", 1, definitions.size)
+    val count = timeoutRunBlocking {
+      readAction { PsiTreeUtil.findChildrenOfType(myFixture.file, MarkdownLinkDefinition::class.java).size }
+    }
+    Assertions.assertEquals(1, count, "The appended definition should parse as a link definition")
   }
 
   private val intentionText

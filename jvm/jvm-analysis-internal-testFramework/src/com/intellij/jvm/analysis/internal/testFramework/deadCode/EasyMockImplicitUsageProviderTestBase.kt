@@ -9,6 +9,11 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
+/**
+ * @deprecated Use [easyMockImplicitUsageProjectFixture] and [com.intellij.jvm.analysis.testFramework.jvmImplicitUsageProviderFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use easyMockImplicitUsageProjectFixture and jvmImplicitUsageProviderFixture in a JUnit 5 test")
 abstract class EasyMockImplicitUsageProviderTestBase : JvmImplicitUsageProviderTestBase() {
   protected open class EasyMockProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

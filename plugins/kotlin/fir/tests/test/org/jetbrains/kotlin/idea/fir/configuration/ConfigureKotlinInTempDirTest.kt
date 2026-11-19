@@ -6,6 +6,7 @@ import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
@@ -33,6 +34,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
@@ -293,6 +295,11 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         KotlinCommonCompilerArgumentsHolder.getInstance(myProject)
         val settings = myProject.languageVersionSettings
         Assert.assertEquals(ApiVersion.KOTLIN_1_1, settings.apiVersion)
+    }
+
+    fun testUnparsableJpsVersion() {
+        val kotlinBundled = PathMacroManager.getInstance(project).expandPathNonNull($$"$KOTLIN_BUNDLED$")
+        Assert.assertEquals(KotlinPluginLayout.kotlincPath.toRealPath(), Path.of(kotlinBundled).toRealPath())
     }
 
     fun testNoKotlincExistsNoSettingsLatestRuntimeNullizeEmptyStrings() {

@@ -8,7 +8,11 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 
 /**
  * A base test class that allows setting language level and mock SDK.
+ *
+ * @deprecated Use [jvmSdkProjectFixture] and [JvmSdkInspectionFixture] in a JUnit 5 test.
  */
+@Suppress("DEPRECATION")
+@Deprecated("Use jvmSdkProjectFixture and JvmSdkInspectionFixture in a JUnit 5 test")
 abstract class JvmSdkInspectionTestBase : JvmInspectionTestBase() {
   /**
    * The mock JDK to use.

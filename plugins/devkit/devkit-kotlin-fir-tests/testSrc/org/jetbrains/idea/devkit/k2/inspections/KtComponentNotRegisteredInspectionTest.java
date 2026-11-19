@@ -2,25 +2,75 @@
 package org.jetbrains.idea.devkit.k2.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspectionTestBase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredFixture;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
+import org.junit.jupiter.api.Test;
 
+import static org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredFixtureKt.componentNotRegisteredFixture;
+import static org.jetbrains.idea.devkit.inspections.PluginModuleFixtureKt.pluginModuleProjectFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/componentNotRegistered")
-public class KtComponentNotRegisteredInspectionTest extends ComponentNotRegisteredInspectionTestBase {
+@TestApplication
+public class KtComponentNotRegisteredInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = pluginModuleProjectFixture();
+  private final TestFixture<ComponentNotRegisteredFixture> componentNotRegistered =
+    componentNotRegisteredFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/componentNotRegistered");
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @Test
+  public void testRegisteredAction() {
+    componentNotRegistered.get().doTestRegisteredAction();
   }
 
-  @Override
-  protected String getSourceFileExtension() {
-    return "kt";
+  @Test
+  public void testRegisteredActionInIDEAProject() {
+    componentNotRegistered.get().doTestRegisteredActionInIDEAProject();
   }
 
-  @Override
-  protected String getBasePath() {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/componentNotRegistered";
+  @Test
+  public void testRegisteredActionInOptionalPluginDescriptor() {
+    componentNotRegistered.get().doTestRegisteredActionInOptionalPluginDescriptor();
+  }
+
+  @Test
+  public void testRegisteredInIncludedFileAction() {
+    componentNotRegistered.get().doTestRegisteredInIncludedFileAction();
+  }
+
+  @Test
+  public void testUnregisteredAction() {
+    componentNotRegistered.get().doTestUnregisteredAction();
+  }
+
+  @Test
+  public void testUnregisteredActionDeprecated() {
+    componentNotRegistered.get().doTestUnregisteredActionDeprecated();
+  }
+
+  @Test
+  public void testUnregisteredActionUsedViaConstructor() {
+    componentNotRegistered.get().doTestUnregisteredActionUsedViaConstructor();
+  }
+
+  @Test
+  public void testRegisteredApplicationComponent() {
+    componentNotRegistered.get().doTestRegisteredApplicationComponent();
+  }
+
+  @Test
+  public void testUnregisteredAbstractApplicationComponent() {
+    componentNotRegistered.get().doTestUnregisteredAbstractApplicationComponent();
+  }
+
+  @Test
+  public void testUnregisteredApplicationComponentWithoutPluginXml() {
+    componentNotRegistered.get().doTestUnregisteredApplicationComponentWithoutPluginXml();
+  }
+
+  @Test
+  public void testUnregisteredApplicationComponentWithRegisterFix() {
+    componentNotRegistered.get().doTestUnregisteredApplicationComponentWithRegisterFix();
   }
 }

@@ -6,11 +6,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.FileSaverDialog
+import com.intellij.openapi.fileChooser.NioFileChooserDialog
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.nio.file.Path
 
 /**
  * Creates the dialogs of the universal file chooser.
@@ -34,14 +36,43 @@ interface UniversalFileChooserFactory {
   fun createPathChooser(project: Project?, parent: Component?, descriptor: FileChooserDescriptor): PathChooserDialog
 
   /**
+   * Creates a file chooser that returns the chosen files as [Path] values.
+   *
+   * When [project] is `null`, the chooser uses the default project.
+   */
+  @ApiStatus.Experimental
+  fun createNioFileChooser(project: Project?, parent: Component?, descriptor: FileChooserDescriptor): NioFileChooserDialog
+
+  /**
    * Creates a file chooser that shows only the roots of [contributors].
+   *
+   * [FileChooserDialog.choose] without a file to select navigates to the path from [preselectPath].
+   * The chooser calls [preselectPath] on a background thread.
+   * When [preselectPath] is null or gives null, the chooser navigates to the default path.
    */
   fun createFileChooser(
     project: Project,
     parent: Component?,
     descriptor: FileChooserDescriptor,
     contributors: Collection<UniversalFileChooserContributor>,
+    preselectPath: (suspend () -> Path?)? = null,
   ): FileChooserDialog
+
+  /**
+   * Creates a file chooser that shows only the roots of [contributors] and returns the chosen files as [Path] values.
+   *
+   * [NioFileChooserDialog.choose] without a path to select navigates to the path from [preselectPath].
+   * The chooser calls [preselectPath] on a background thread.
+   * When [preselectPath] is null or gives null, the chooser navigates to the default path.
+   */
+  @ApiStatus.Experimental
+  fun createNioFileChooser(
+    project: Project,
+    parent: Component?,
+    descriptor: FileChooserDescriptor,
+    contributors: Collection<UniversalFileChooserContributor>,
+    preselectPath: (suspend () -> Path?)? = null,
+  ): NioFileChooserDialog
 
   fun createFileSaver(project: Project?, parent: Component?, descriptor: FileSaverDescriptor): FileSaverDialog
 }

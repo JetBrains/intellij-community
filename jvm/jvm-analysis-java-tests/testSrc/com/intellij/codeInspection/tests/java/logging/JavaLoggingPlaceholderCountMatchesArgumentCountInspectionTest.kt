@@ -1,11 +1,21 @@
 package com.intellij.codeInspection.tests.java.logging
 
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingPlaceholderCountMatchesArgumentCountInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase() {
+@TestApplication
+class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
 
+  private val myFixture by loggingPlaceholderCountMatchesArgumentCountInspectionFixture(projectFixture)
+
+  @Test
   fun `test log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -20,6 +30,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
     """.trimIndent())
   }
 
+  @Test
   fun `test log4j2LogBuilder`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.apache.logging.log4j.*;
@@ -34,6 +45,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
     """.trimIndent())
   }
 
+  @Test
   fun `test 1 exception and 1 placeholder`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -46,6 +58,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         """.trimIndent())
   }
 
+  @Test
   fun `test 1 exception and 2 placeholder`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -58,6 +71,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         """.trimIndent())
   }
 
+  @Test
   fun `test 1 exception and 3 placeholder`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -70,6 +84,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         """.trimIndent())
   }
 
+  @Test
   fun `test no warn`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -82,6 +97,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         """.trimIndent())
   }
 
+  @Test
   fun `test more placeholders`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -94,6 +110,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         """.trimIndent())
   }
 
+  @Test
   fun `test fewer placeholders`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -106,6 +123,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         """.trimIndent())
   }
 
+  @Test
   fun `test throwable`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -118,6 +136,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         """.trimIndent())
   }
 
+  @Test
   fun `test multi catch`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
      import org.slf4j.*;
@@ -137,6 +156,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         """.trimIndent())
   }
 
+  @Test
   fun `test no slf4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class FalsePositiveSLF4J {
@@ -150,6 +170,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
          """.trimIndent())
   }
 
+  @Test
   fun `test array argument`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -162,6 +183,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
          """.trimIndent())
   }
 
+  @Test
   fun `test uncountable array`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -174,6 +196,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
          """.trimIndent())
   }
 
+  @Test
   fun `test constant`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -186,6 +209,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       }
       """.trimIndent())
   }
+  @Test
   fun `test non constant string`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -199,6 +223,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test escaping 1`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -211,8 +236,9 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test escaping 2`() {
-    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
+    myFixture.inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
       class X {
@@ -224,6 +250,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test null argument`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -237,6 +264,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test log4j2 with text variables`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -258,6 +286,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test log4j2 builder`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -275,8 +304,9 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       }
       """.trimIndent())
   }
+  @Test
   fun `test slf4j disable slf4jToLog4J2Type`() {
-    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
+    myFixture.inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
 
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -292,6 +322,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test variable`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -317,8 +348,9 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       }
       """.trimIndent())
   }
+  @Test
   fun `test slf4j auto slf4jToLog4J2Type`() {
-    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.AUTO
+    myFixture.inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.AUTO
 
     myFixture.addClass("""
       package org.apache.logging.slf4j;
@@ -339,6 +371,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       }
       """.trimIndent())
   }
+  @Test
   fun `test slf4j builder`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -381,6 +414,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test formatted log4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -402,6 +436,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test Log4j2 with exception in suppliers`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -430,6 +465,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test slf4j with partial known strings`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -473,6 +509,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test log4j builder with partial known strings`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -512,6 +549,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test formatted log4j with partial known strings`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -532,6 +570,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test log4j with partial known strings`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -548,6 +587,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test many variables`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
@@ -581,6 +621,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test akka`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import akka.event.LoggingAdapter;
@@ -602,6 +643,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test without arguments`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -614,6 +656,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test lazy init`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.LogBuilder;
@@ -699,8 +742,9 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  @Test
   fun `test slf4j structured logging`() {
-    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
+    myFixture.inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
@@ -741,6 +785,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
     """.trimIndent())
   }
 
+  @Test
   fun `test field from different class`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.LogManager;
@@ -760,6 +805,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           public static final String PLACEHOLDER = "say {} hello {}";
       }""".trimIndent())
   }
+  @Test
   fun `test field from different file`() {
     myFixture.addClass("""
       class SimpleClass {

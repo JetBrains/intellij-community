@@ -19,8 +19,11 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.typeEngine.common.PyTypeEngineApi
 import com.intellij.python.typeEngine.common.PyTypeEngineEvent
 import com.intellij.python.typeEngine.common.PyTypeEngineEventRequest
+import com.intellij.python.typeEngine.common.PyTypeEngineFeaturesDto
 import com.intellij.python.typeEngine.common.PyTypeEngineId
+import com.intellij.python.typeEngine.common.PyTypeEngineRequest
 import com.intellij.python.typeEngine.common.PyTypeEngineSelectionRequest
+import com.intellij.python.typeEngine.common.PyTypeEngineSetFeaturesRequest
 import com.intellij.python.typeEngine.common.PyTypeEngineStateDto
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -81,6 +84,20 @@ private object PyTypeEngineApiImpl : PyTypeEngineApi {
     return currentState(project)
   }
 
+  override suspend fun getFeatures(request: PyTypeEngineRequest): PyTypeEngineFeaturesDto? {
+    val project = request.projectId.findProject()
+    val settings = PyTypeEngineProvider.forType(request.typeEngineId.toBackendType())?.featureSettings(project) ?: return null
+    return PyTypeEngineFeaturesDto(inlayHints = settings.inlayHints, documentation = settings.documentation)
+  }
+
+  override suspend fun setFeatures(request: PyTypeEngineSetFeaturesRequest) {
+    val project = request.engine.projectId.findProject()
+    val settings = PyTypeEngineProvider.forType(request.engine.typeEngineId.toBackendType())?.featureSettings(project) ?: return
+    val features = request.features
+    if (settings.inlayHints != null && features.inlayHints != null) settings.inlayHints = features.inlayHints
+    if (settings.documentation != null && features.documentation != null) settings.documentation = features.documentation
+  }
+
   override suspend fun logEvent(request: PyTypeEngineEventRequest) {
     val project = request.projectId.findProject()
     when (request.event) {
@@ -132,10 +149,14 @@ private fun state(project: Project, snapshot: EvoPyProjectModel.Snapshot): PyTyp
       }
     }
   }
+  val ownServer = PyTypeEngineType.entries
+    .filter { PyTypeEngineProvider.forType(it)?.runsOwnServer(project) == true }
+    .mapTo(mutableSetOf()) { it.toFrontendId() }
   return PyTypeEngineStateDto(
     selected = PyTypeEngineProjectSettings.getInstance(project).typeEngine.toFrontendId(),
     supported = supported,
     installed = installed,
+    ownServer = ownServer,
   )
 }
 

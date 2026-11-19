@@ -33,6 +33,7 @@ jvm_library(
         "//platform/execution.serviceView",
         "//platform/execution.serviceView/backend",
         "//platform/testRunner/plugin",
+        "//plugins/coverage-common/plugin",
         "//platform/execution.serviceView/frontend",
         "//platform/recentFiles/shared:recentFiles",
         "//platform/recentFiles/backend",

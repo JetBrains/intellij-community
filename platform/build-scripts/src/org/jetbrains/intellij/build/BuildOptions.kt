@@ -162,6 +162,7 @@ data class BuildOptions(
     const val OS_LINUX: String = "linux"
     const val OS_WINDOWS: String = "windows"
     const val OS_MAC: String = "mac"
+    const val OS_OHOS: String = "ohos"
     const val OS_ALL: String = "all"
     const val OS_CURRENT: String = "current"
 
@@ -222,6 +223,12 @@ data class BuildOptions(
 
     /** Sign *.exe files in Windows distribution. */
     const val WIN_SIGN_STEP: String = "windows_sign"
+
+    /** Build OHOS artifacts: the app directory from which a host application runs the IDE. */
+    const val OHOS_ARTIFACTS_STEP: String = "ohos_artifacts"
+
+    /** Build the .tar.gz archive of the OHOS app directory. */
+    const val OHOS_TAR_GZ_STEP: String = "ohos_tar_gz"
 
     /**
      * Sign checksum files with GPG.
@@ -594,6 +601,7 @@ data class BuildOptions(
       targetOsId == OsFamily.MACOS.osId -> persistentListOf(OsFamily.MACOS)
       targetOsId == OsFamily.WINDOWS.osId -> persistentListOf(OsFamily.WINDOWS)
       targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
+      targetOsId == OsFamily.OHOS.osId -> persistentListOf(OsFamily.OHOS)
       else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
 

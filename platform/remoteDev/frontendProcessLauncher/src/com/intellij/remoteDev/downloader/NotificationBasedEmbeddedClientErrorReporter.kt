@@ -6,6 +6,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.testFramework.LightVirtualFile
@@ -23,7 +24,8 @@ internal class NotificationBasedEmbeddedClientErrorReporter(private val project:
     if (project != null) {
       notification.addAction(
         NotificationAction.createSimple(RemoteDevUtilBundle.message("action.notification.view.output")) {
-          FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", outputString), true)
+          FileEditorManager.getInstance(project)
+            .requestOpenFile(LightVirtualFile("output.txt", outputString), FileEditorOpenRequest.withFocus(true))
         }
       )
     }

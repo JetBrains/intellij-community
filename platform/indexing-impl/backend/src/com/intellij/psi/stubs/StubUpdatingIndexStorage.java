@@ -11,6 +11,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.FileIndexingStateWithExplanation;
 import com.intellij.util.indexing.IndexedFile;
 import com.intellij.util.indexing.StaleIndexesChecker;
@@ -100,10 +101,12 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
                                                                         @Nullable FileContent content,
                                                                         @NotNull StorageUpdate indexUpdate) {
     IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
+    // an unsaved document is indexed into the transient storage, so its stamp must not reach the persistent storage
+    boolean transientContent = content instanceof FileContentImpl fileContent && fileContent.isTransientContent();
     return () -> {
       boolean updateSuccessful = indexUpdate.update();
       if (updateSuccessful && !StaleIndexesChecker.isStaleIdDeletion()) {
-        ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
+        ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId, transientContent);
         if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
           LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
         }
@@ -114,6 +117,18 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
       }
       return updateSuccessful;
     };
+  }
+
+  @Override
+  public void removeTransientDataForFile(int inputId) {
+    super.removeTransientDataForFile(inputId);
+    ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).removeTransientStampInfo(inputId);
+  }
+
+  @Override
+  public void cleanupMemoryStorage() {
+    super.cleanupMemoryStorage();
+    ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).clearTransientStampInfos();
   }
 
   @Override
@@ -152,6 +167,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
       stubIndex.clearAllIndices();
     }
     super.doClear();
+    ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).clearTransientStampInfos();
   }
 
   @Override
