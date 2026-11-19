@@ -150,6 +150,18 @@ class MarkdownCommandRunnerLineMarkersTest {
   }
 
   @Test
+  fun `line run marker recognizes asdf command`(): Unit = timeoutRunBlocking {
+    val file = myFixture.addFileToProject("foo/asdf.md", "Run `asdf install nodejs 18.16.0`")
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(file.virtualFile)
+      myFixture.doHighlighting()
+
+      val markers = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
+      assertNotNull(markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run })
+    }
+  }
+
+  @Test
   fun `run context shortcut executes a shell code fence`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     withContext(Dispatchers.EDT) {

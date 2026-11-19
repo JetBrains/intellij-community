@@ -45,6 +45,7 @@
       <applicationService serviceImplementation="com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService" client="all"/>
       <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.PreviewCommandRunnability"
                           serviceImplementation="com.intellij.markdown.backend.commandRunner.LocalPreviewCommandRunnability"/>
+      <runAnything.executionProvider implementation="com.intellij.markdown.backend.commandRunner.AsdfRunAnythingProvider"/>
       <externalAnnotator language="Markdown"
                          implementationClass="com.intellij.markdown.backend.inspections.MarkdownNonExistentInternetResourcesAnnotator"/>
       <editor.injectedFileChangesHandlerProvider language="Markdown"
