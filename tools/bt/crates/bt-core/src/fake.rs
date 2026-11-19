@@ -91,7 +91,7 @@ pub fn area_files() -> [(String, String); 2] {
     ]
 }
 
-/// The fake's state. Behind a mutex because the tree scan fans out over worker threads.
+/// The fake's state. Behind a mutex because a directory walk fans out over worker threads.
 #[derive(Default)]
 pub struct State {
     pub files: BTreeMap<String, String>,

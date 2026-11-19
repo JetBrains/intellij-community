@@ -11,7 +11,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 
 | Crate | Content | Bazel test target |
 |---|---|---|
-| `crates/bt-core` | The areas of `bt.json` and their lane tables, selector resolution, the suite catalog, the bazel command line, the shard plan, BEP and `test.xml` reading, and the exit codes of `bt`. `fake` is the in-memory runtime the tests share. | `@community//tools/bt/crates/bt-core:bt-core_test` |
+| `crates/bt-core` | The areas of `bt.json` and their lane tables, selector resolution through accio, the suite catalog, the bazel command line, the shard plan, BEP and `test.xml` reading, and the exit codes of `bt`. `fake` is the in-memory runtime the tests share. | `@community//tools/bt/crates/bt-core:bt-core_test` |
 | `crates/bt-junit` | The JUnit XML reader: a scanner that keeps the cases of a truncated `test.xml`, and the simple-name class pattern. | `@community//tools/bt/crates/bt-junit:bt-junit_test` |
 | `crates/refusal` | The refusal of a person- or agent-facing CLI: a stable code, a message, the exit code, and the details as JSON text. It has no dependency, and each tool keeps its own exit codes. | `@community//tools/bt/crates/refusal:refusal_test` |
 | `bins/bt` | The binary: the command line and the help, one invocation end to end, the text digest, the `--json` payload, and the process boundary. | `@community//tools/bt/bins/bt:bt_test` |
@@ -33,10 +33,33 @@ the Air UI-lane workspace. The spec of a Rust tool workspace is `community/build
 
 ## Areas
 
-`bt.json` at the checkout root names each area: a repo-relative directory that resolution scans, and the lane table
-of that directory. `crates/bt-core/src/areas.rs` and `crates/bt-core/src/lanes.rs` give the two shapes. A checkout
-without `bt.json` has no area: a label and a pattern resolve, and a name, a package, a flow or a suite selector
-refuses. The ultimate checkout names `plugins/air`, with its lane table `plugins/air/tests/integration/lanes.json`.
+`bt.json` at the checkout root names each area: a repo-relative directory, and the lane table of that directory.
+`crates/bt-core/src/areas.rs` and `crates/bt-core/src/lanes.rs` give the two shapes. `--lane` reads the lane tables, a
+flow or a suite selector reads the suite catalog of one area, and a module inside an area runs without the migrated
+list. A checkout without `bt.json` has no area: a label, a pattern, a directory, a class and a module resolve, and a
+flow or a suite selector refuses. The ultimate checkout names `plugins/air`, with its lane table
+`plugins/air/tests/integration/lanes.json`.
+
+## Classes
+
+A class name or an FQN resolves in the whole repository, through the pinned accio of the checkout:
+`community/tools/accio.cmd`, or `tools/accio.cmd` in a community checkout. bt never runs an accio of the PATH.
+`crates/bt-core/src/selector.rs` resolves it, and `crates/bt-core/src/accio.rs` reads the answers.
+
+1. The committed suite documents give the classes of the UI lanes. Such a class runs in the lane of its document.
+2. `accio symbol <name> --kind class --limit 200` gives the other classes. A name with more classes than the limit is
+   refused: pass the FQN.
+3. `accio modules --paths <file>...` gives the module root of each class. The JPS module whose test source root holds
+   the file owns the class. A class outside every test source root is no test class.
+4. The test target and the module rule are the ones of `--module`, below, for the owner.
+5. Two classes of one simple name are refused with both FQNs and their labels.
+
+The filter is `<FQN>[#method]`. The runner finds an `@Nested` class only through its outer class, so a nested class
+without a method runs through its outer class, and a `note` line says so. bt passes no `--no-build`, so accio builds
+or refreshes its index by itself. A failed call of accio is exit 6 with the code `accio_failed`.
+
+A package is no selector, and neither is a JPS module name: both are dotted lower-case words. Run a package with
+`--module <module> --filter <package>`.
 
 ## Shards
 
@@ -78,13 +101,14 @@ the BUILD file, the kind of the action and its target, the exit code, and the fi
 
 `--module <jps module>` runs the test target of a JPS module. `crates/bt-core/src/modules.rs` resolves it. A test
 target is a `jps_test`, or a `starter_test` of `//build:starter_test.bzl`, the macro that wraps `jps_test` for an IDE
-Starter test. bt reads the rule kind from the text of the `BUILD.bazel`, not from `bazel query`.
+Starter test. accio reads the rule kind from the text of the `BUILD.bazel`, not from `bazel query`.
 
 1. `.idea/modules.xml` at the checkout root gives the directory of the module's `.iml`.
-2. The `BUILD.bazel` of that directory gives the test target whose `runtime_deps` name a library of the module or its
-   `_test_lib`. A library belongs to the module when its `module_name` is the module, or when it sits in the
-   `build <module>` section that the BUILD generator writes. One directory can hold several modules, so each module
-   gets its own target, or none.
+2. `accio modules --paths <dir>` gives the targets of the `BUILD.bazel` of that directory. The test target is the one
+   whose `runtime_deps` name a library of the module or its `_test_lib`. A library belongs to the module when accio
+   gives it the module: its `module_name`, or the `build <module>` section that the BUILD generator writes. One
+   directory can hold several modules, so each module gets its own target, or none. A target that pins
+   `JB_TEST_JUNIT5_FILTERS` runs only when the module has no unfiltered target.
 3. The label is `//<dir>:<name>`. In an ultimate root, a directory under `community/` gives
    `@community//<rest>:<name>`.
 

@@ -22,11 +22,10 @@ A green run in a linked work tree, such as a lease, records the tree that it saw
 changed records nothing. A raw ./bazel.cmd run records nothing either.
 
 Selectors (at most one):
-  ClassName                  bare simple name; resolves the label and the FQN
+  ClassName                  bare simple name, in the whole repository; the pinned accio
+                             (community/tools/accio.cmd) gives the label and the FQN
   ClassName#method           bare simple name plus a single test method
-  a.b.c.ClassName[#method]   fully-qualified name; resolves the label only
-  a.b.c                      dotted package, each segment starts with a lower-case letter;
-                             runs the whole package
+  a.b.c.ClassName[#method]   fully-qualified name, for a simple name of several classes
   plugins/air/backend/vcs    directory; every test target under it, as //<dir>/..., or as
                              @community//<rest>/... for community/<rest> in the ultimate root
   //pkg:target               explicit label, no resolution (works outside every area); in the
@@ -36,9 +35,11 @@ Selectors (at most one):
   flow-rename-session        flow id; every generated suite that tells or walks the flow, as its lane
                              narrowed to those classes (launches a real IDE on this machine)
   rename-session             generated suite id; that one suite, the same way
-  --module <jps module>      the module's jps_test target, from .idea/modules.xml and its BUILD.bazel;
+  --module <jps module>      the module's jps_test target, from .idea/modules.xml and accio;
                              refused when the module is neither in
-                             community/build/bazel-migrated-test-modules.txt nor inside an area
+                             community/build/bazel-migrated-test-modules.txt nor inside an area;
+                             a class runs under the same rule
+  A package is no selector: pass --module <jps module> --filter <package>.
 
 To validate a change, run --lane fast rather than a directory: a subtree misses the modules that
 depend on the one you changed, while the lane reports everything your change does not reach as
@@ -80,7 +81,7 @@ Options:
 Examples:
   bt AgentThreadCliTest
   bt 'AgentThreadIdentityTest#buildsAndParsesValidIdentity'
-  bt com.intellij.air.shared.core
+  bt FileUtilLightTest
   bt plugins/air/shared/core
   bt flow-new-session --lane ui
   bt --lane fast
