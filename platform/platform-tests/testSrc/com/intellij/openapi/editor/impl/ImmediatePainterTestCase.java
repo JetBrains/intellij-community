@@ -62,6 +62,7 @@ public abstract class ImmediatePainterTestCase {
   private AntialiasingType myDefaultAntiAliasing;
   private boolean myDefaultSmoothCaretBlinking;
   private boolean myDefaultSmoothCaretMovement;
+  private Boolean myDefaultRoundedHighlighting;
 
   @BeforeEach
   void setUpImmediatePainterTestCase(TestInfo testInfo) {
@@ -80,6 +81,7 @@ public abstract class ImmediatePainterTestCase {
       var settings = EditorSettingsExternalizable.getInstance();
       myDefaultSmoothCaretBlinking = settings.isSmoothBlinkCaret();
       myDefaultSmoothCaretMovement = settings.isSmoothCaretMovement();
+      myDefaultRoundedHighlighting = settings.getRoundedHighlightingOption();
 
       FontLayoutService.setInstance(null);
 
@@ -110,6 +112,7 @@ public abstract class ImmediatePainterTestCase {
         com.intellij.openapi.editor.ex.EditorSettingsExternalizable.getInstance();
       settings.setSmoothBlinkCaret(myDefaultSmoothCaretBlinking);
       settings.setSmoothCaretMovement(myDefaultSmoothCaretMovement);
+      settings.setRoundedHighlightingOption(myDefaultRoundedHighlighting);
     });
   }
 
@@ -263,6 +266,10 @@ public abstract class ImmediatePainterTestCase {
 
   protected static void setZeroLatencyRenderingEnabled(boolean enabled) {
     Registry.get("editor.zero.latency.rendering").setValue(enabled);
+  }
+
+  protected static void enableRoundedHighlighting() {
+    EditorSettingsExternalizable.getInstance().setRoundedHighlightingOption(true);
   }
 
   protected static void setDoubleBufferingEnabled(boolean enabled) {

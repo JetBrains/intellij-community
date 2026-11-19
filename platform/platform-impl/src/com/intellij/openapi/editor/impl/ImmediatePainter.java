@@ -177,6 +177,9 @@ public final class ImmediatePainter {
     if (!(canRender(attributes1) && canRender(attributes2))) {
       return false;
     }
+    if (!canRenderBackgrounds(editor, attributes1, attributes2, backgroundAfterLineEnd)) {
+      return false;
+    }
 
     FontLayoutService fontLayoutService = FontLayoutService.getInstance();
     final float width1 = fontLayoutService.charWidth2D(editor.getFontMetrics(attributes1.getFontType()), c1);
@@ -272,6 +275,24 @@ public final class ImmediatePainter {
   private static boolean canRender(final TextAttributes attributes) {
     return (attributes.getEffectType() != EffectType.BOXED || attributes.getEffectColor() == null) &&
            attributes.getFontFamilies() == null;
+  }
+
+  /**
+   * Whether this painter can draw these backgrounds of the previous character, the typed character and the area after the
+   * line end. It fills straight rectangles, so it skips a change of the background color while the editor rounds the
+   * highlighting.
+   */
+  private static boolean canRenderBackgrounds(
+    EditorImpl editor,
+    TextAttributes previous,
+    TextAttributes typed,
+    Color afterLineEnd
+  ) {
+    if (!editor.isRoundedHighlighting()) {
+      return true;
+    }
+    Color background = typed.getBackgroundColor();
+    return background.equals(previous.getBackgroundColor()) && background.equals(afterLineEnd);
   }
 
   private void paintWithDoubleBuffering(final Graphics2D graphics, final Consumer<? super Graphics2D> painter) {
