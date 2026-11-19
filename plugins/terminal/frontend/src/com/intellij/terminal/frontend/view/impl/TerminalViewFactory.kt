@@ -4,6 +4,9 @@ package com.intellij.terminal.frontend.view.impl
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.session.TerminalSessionsManager
@@ -24,6 +27,15 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
 import org.jetbrains.plugins.terminal.session.toTermSize
+
+/**
+ * Waits until the editor class warm-up has loaded the classes of the first editor.
+ * Call it before the EDT creates a terminal editor.
+ */
+internal suspend fun awaitEditorClassesForTerminal() {
+  val factory = serviceAsync<EditorFactory>() as? EditorFactoryImpl ?: return
+  factory.prepareEditorClasses()
+}
 
 /**
  * Creates the [TerminalView], starts the terminal process according to [options],

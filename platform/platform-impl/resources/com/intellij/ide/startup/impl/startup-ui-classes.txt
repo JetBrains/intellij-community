@@ -621,9 +621,6 @@ com.intellij.openapi.editor.impl.InlayModelImpl$AfterLineEndElementTree
 com.intellij.openapi.editor.Inlay$Placement
 com.intellij.openapi.editor.SoftWrap
 com.intellij.openapi.editor.TextChange
-com.intellij.openapi.editor.impl.softwrap.SoftWrapRecalculationManager
-com.intellij.openapi.editor.impl.softwrap.SoftWrappingEnabledRecalculationManager
-com.intellij.openapi.editor.impl.softwrap.CustomWrapOnlyRecalculationManager
 com.intellij.openapi.editor.impl.softwrap.SoftWrapChangeNotifier
 com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListener
 com.intellij.pom.PomManager
@@ -5741,7 +5738,6 @@ java.security.cert.CertStoreSpi
 sun.security.provider.certpath.CollectionCertStore
 java.security.InvalidAlgorithmParameterException
 javax.swing.text.html.CSS$LengthUnit
-com.intellij.openapi.editor.impl.softwrap.CompositeSoftWrapPainter
 java.security.cert.CertPathBuilder
 java.security.cert.CertPathBuilderSpi
 javax.swing.plaf.basic.BasicListUI

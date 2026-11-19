@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import java.util.concurrent.CompletableFuture
 
 /**
  * Builder for creating a new [TerminalToolWindowTab].
@@ -139,4 +140,16 @@ interface TerminalToolWindowTabBuilder {
    */
   @RequiresEdt
   fun createTab(): TerminalToolWindowTab
+
+  /**
+   * Requests a tab and returns a future that completes when the tab is ready.
+   * Use a separate builder for each request.
+   */
+  fun requestCreateTab(): CompletableFuture<TerminalToolWindowTab>
+
+  /**
+   * Suspend variant of [createTab].
+   * Prepares the editor classes on BG, tab creation goes on EDT.
+   */
+  suspend fun createTabAsync(): TerminalToolWindowTab
 }

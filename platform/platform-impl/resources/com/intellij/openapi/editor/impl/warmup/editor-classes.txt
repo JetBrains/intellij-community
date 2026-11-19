@@ -319,6 +319,10 @@ com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper
 com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper$RangeRecalculationAction
 com.intellij.openapi.editor.impl.softwrap.SoftWrapNotifier
 com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage
+com.intellij.openapi.editor.impl.softwrap.SoftWrapRecalculationManager
+com.intellij.openapi.editor.impl.softwrap.SoftWrappingEnabledRecalculationManager
+com.intellij.openapi.editor.impl.softwrap.CustomWrapOnlyRecalculationManager
+com.intellij.openapi.editor.impl.softwrap.CompositeSoftWrapPainter
 com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper
 com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent
 com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager

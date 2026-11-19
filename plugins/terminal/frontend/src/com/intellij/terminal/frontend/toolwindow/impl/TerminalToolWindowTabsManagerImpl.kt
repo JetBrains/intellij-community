@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.toolwindow.impl
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -32,6 +34,7 @@ import com.intellij.terminal.frontend.toolwindow.impl.dnd.TerminalToolWindowDrop
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalViewBuilderOptions
+import com.intellij.terminal.frontend.view.impl.awaitEditorClassesForTerminal
 import com.intellij.terminal.frontend.view.impl.createTerminalView
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
@@ -42,8 +45,12 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
@@ -61,6 +68,7 @@ import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareFullTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.createDefaultTabName
+import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 class TerminalToolWindowTabsManagerImpl(
@@ -80,8 +88,17 @@ class TerminalToolWindowTabsManagerImpl(
   init {
     project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun toolWindowShown(toolWindow: ToolWindow) {
-        if (toolWindow.id == TerminalToolWindowFactory.TOOL_WINDOW_ID) {
-          onToolWindowShown(toolWindow)
+        if (toolWindow.id != TerminalToolWindowFactory.TOOL_WINDOW_ID) {
+          return
+        }
+        val modalityState = ModalityState.current()
+        coroutineScope.launch(Dispatchers.Default) {
+          awaitEditorClassesForTerminal()
+          withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+            if (!project.isDisposed) {
+              onToolWindowShown(toolWindow)
+            }
+          }
         }
       }
     })
@@ -143,7 +160,14 @@ class TerminalToolWindowTabsManagerImpl(
     }
 
     if (toolWindow.isVisible && toolWindow.contentManager.isEmpty) {
-      createTerminalTab(project, startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_TOOLWINDOW))
+      if (shouldUseReworkedTerminal()) {
+        createTabBuilder()
+          .startupFusInfo(TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_TOOLWINDOW))
+          .createTab()
+      }
+      else {
+        createTerminalTab(project, startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_TOOLWINDOW))
+      }
     }
   }
 
@@ -499,6 +523,21 @@ class TerminalToolWindowTabsManagerImpl(
 
     override fun createTab(): TerminalToolWindowTab {
       return createTab(this)
+    }
+
+    override fun requestCreateTab(): CompletableFuture<TerminalToolWindowTab> {
+      val context = ClientId.current.asContextElement() + ModalityState.defaultModalityState().asContextElement()
+      return coroutineScope.async(context) {
+        createTabAsync()
+      }.asCompletableFuture()
+    }
+
+    override suspend fun createTabAsync(): TerminalToolWindowTab {
+      awaitEditorClassesForTerminal()
+      return withContext(Dispatchers.EDT) {
+        coroutineScope.ensureActive()
+        createTab(this@TerminalToolWindowTabBuilderImpl)
+      }
     }
 
     fun getRequestedProcessOptions(): TerminalRequestedProcessOptions {

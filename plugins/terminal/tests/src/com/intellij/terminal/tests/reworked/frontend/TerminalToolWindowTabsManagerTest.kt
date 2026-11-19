@@ -3,6 +3,9 @@ package com.intellij.terminal.tests.reworked.frontend
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.RegisterToolWindowTask
@@ -21,8 +24,10 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
@@ -59,6 +64,39 @@ internal class TerminalToolWindowTabsManagerTest {
       assertThat(listener.viewsCreated).containsExactly(tab.view)
       assertThat(listener.tabsAdded).containsExactly(tab)
       assertThat(listener.tabsDetached).isEmpty()
+    }
+  }
+
+  @Test
+  fun `createTabAsync adds the tab after editor class preparation`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    withTerminalToolWindow { toolWindow, manager, listener ->
+      val tab = manager.createTabBuilder()
+        .tabName("Async tab")
+        .requestFocus(false)
+        .deferSessionStartUntilUiShown(true)
+        .createTabAsync()
+
+      assertThat(manager.tabs).containsExactly(tab)
+      assertThat(toolWindow.contentManager.contents.toList()).containsExactly(tab.content)
+      assertThat(listener.viewsCreated).containsExactly(tab.view)
+      assertThat(listener.tabsAdded).containsExactly(tab)
+    }
+  }
+
+  @Test
+  fun `requestCreateTab completes in the modality of the request`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    withTerminalToolWindow { _, manager, listener ->
+      val modalEntity = Any()
+      LaterInvocator.enterModal(modalEntity)
+      try {
+        withContext(ModalityState.current().asContextElement()) {
+          val tab = manager.createTabBuilder().requestFocus(false).requestCreateTab().await()
+          assertThat(listener.tabsAdded).containsExactly(tab)
+        }
+      }
+      finally {
+        LaterInvocator.leaveModal(modalEntity)
+      }
     }
   }
 
@@ -218,7 +256,7 @@ internal class TerminalToolWindowTabsManagerTest {
    * Registers a fresh Terminal tool window, subscribes a [RecordingListener] and runs [body].
    */
   private suspend fun withTerminalToolWindow(
-    body: (toolWindow: ToolWindow, manager: TerminalToolWindowTabsManager, listener: RecordingListener) -> Unit,
+    body: suspend (toolWindow: ToolWindow, manager: TerminalToolWindowTabsManager, listener: RecordingListener) -> Unit,
   ) {
     val toolWindow = ToolWindowManager.getInstance(project)
       .registerToolWindow(RegisterToolWindowTask(id = TerminalToolWindowFactory.TOOL_WINDOW_ID))
