@@ -9,10 +9,9 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 internal class KotlinDslGradleSyncListener : GradleSyncListener {
     override fun onSyncPhaseCompleted(context: ProjectResolverContext, phase: GradleSyncPhase) {
         if (phase == GradleSyncPhase.BASE_SCRIPT_MODEL_PHASE || phase == GradleSyncPhase.SCRIPT_MODEL_PHASE) {
-            // Reload after BASE_SCRIPT_MODEL_PHASE so open scripts are reprocessed against fresh fallback definitions.
-            // Reload again after SCRIPT_MODEL_PHASE to upgrade open scripts to precise Gradle-owned entities.
+            // Each phase replaces the Gradle-owned script entities, so the open scripts that lost theirs load again.
             // Closed files recover lazily when opened later via `KotlinScriptEditorListener`.
-            KotlinScriptService.getInstance(context.project).scheduleReloadOpenScripts()
+            KotlinScriptService.getInstance(context.project).scheduleLoadOpenScripts()
         }
     }
 }

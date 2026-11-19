@@ -34,7 +34,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.PsiManager
 import com.intellij.util.application
@@ -155,17 +154,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         load(virtualFile)
     }
 
-    /**
-     * Drops all entities contributed under [KotlinScriptEntitySource], then rebuilds only the currently open `.kts` files.
-     * Precise owner-specific entities survive because they use a different entity source.
-     * Closed generic scripts are restored lazily on the next editor-driven load.
-     * The open scripts load after the pending loads of the script definitions.
-     *
-     * The returned job waits, but does not rethrow a failure.
-     */
-    fun scheduleReloadOpenScripts(): Job = coroutineScope.launchTracked {
-        ScriptDefinitionProviderImpl.getInstance(project).awaitLoading()
-        invalidateAll()
+    /** Loads the open scripts that have no entity, for example after their owner removed the entities, and the outdated ones. */
+    fun scheduleLoadOpenScripts(): Job = coroutineScope.launchTracked {
         for (openFile in collectOpenScriptFiles(project)) {
             load(openFile)
         }
@@ -264,7 +254,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             listOfNotNull(definition.compilationConfiguration[ScriptCompilationConfiguration.ide.moduleSupplier]?.invoke(project, virtualFile))
         }
 
-        project.workspaceModel.update("updating kotlin script entities [$KotlinScriptEntitySource]") { storage ->
+        val entitySource = KotlinScriptEntityProvider.entitySource(project, virtualFile) ?: KotlinScriptEntitySource
+        project.workspaceModel.update("updating kotlin script entities [$entitySource]") { storage ->
             if (!storage.containsScriptEntity(scriptUrl)) {
                 val libraries = generateScriptLibraryEntities(project, configuration, definition).toList()
                 val libraryIds = mutableListOf<KotlinScriptLibraryEntityId>()
@@ -278,7 +269,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
                             scope,
                             classes,
                             setOf(scriptUrl),
-                            KotlinScriptEntitySource
+                            entitySource
                         ) {
                             this.sources += sources
                         }
@@ -289,8 +280,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
                         }
                     }
                 }
-                storage addEntity KotlinScriptEntity(scriptUrl, libraryIds, definition.definitionId, definition.templateFingerprint, KotlinScriptEntitySource) {
-                    this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, KotlinScriptEntitySource)
+                storage addEntity KotlinScriptEntity(scriptUrl, libraryIds, definition.definitionId, definition.templateFingerprint, entitySource) {
+                    this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, entitySource)
                     this.sdkId = configuration.sdkId
                     this.relatedModuleIds = relatedModuleIds.toMutableList()
                 }
@@ -406,12 +397,6 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             .getVirtualFileUrlIndex().findEntitiesByVirtualFile(virtualFile, project.workspaceModel.getVirtualFileUrlManager())
             .filterIsInstance<KotlinScriptEntity>().singleOrNull() ?: return
         project.workspaceModel.update("removing .kts modules") { it.removeEntity(entity) }
-    }
-
-    private suspend fun invalidateAll() {
-        project.workspaceModel.update("removing all .kts entities") { storage ->
-            storage.replaceBySource({ it == KotlinScriptEntitySource }, ImmutableEntityStorage.empty())
-        }
     }
 
     private fun VirtualFile.findScriptDefinition(): ScriptDefinition {
