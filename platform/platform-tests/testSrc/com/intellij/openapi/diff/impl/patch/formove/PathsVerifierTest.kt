@@ -73,7 +73,6 @@ import kotlin.io.path.writeText
  * A patch must not create, change or move a file outside them.
  */
 @TestApplication
-@Suppress("SuspiciousPackagePrivateAccess")
 internal class PathsVerifierTest {
   private val rootFixture = tempPathFixture()
   private val projectDirFixture = rootFixture.childDirFixture("project")
@@ -189,7 +188,7 @@ internal class PathsVerifierTest {
       val file = writeFile(outsideDir.resolve("A.txt"))
       val patch = modified("../outside/A.txt")
 
-      val outcome = runVerifier(patch) { it.setIgnoreContentRootsCheck(true) }
+      val outcome = runVerifier(patch) { it.ignoreContentRootsCheck = true }
 
       assertTrue(outcome.isAccepted(patch))
       assertEquals(listOf(file), outcome.verifier.writableFiles)
