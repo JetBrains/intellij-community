@@ -3,7 +3,7 @@ import unittest
 
 import six
 
-from tcunittest import TeamcityTestResult
+from tcunittest import TeamcityTestResult, class_level_error_suite, strclass
 from testing import HelpersTestCase
 from testing import python3_only
 
@@ -39,6 +39,38 @@ def _sample_cases():
             self.fail("boom")
 
     return SubTests, ExpectedFailureTests, PassingTests, OutputTests
+
+
+def _class_level_error_tests():
+    """The classes are local, so that the test discovery does not run them."""
+
+    class SetUpClassErrorTests(unittest.TestCase):
+        @classmethod
+        def setUpClass(cls):
+            raise ValueError("broken test data")
+
+        def test_one(self):
+            pass
+
+    class TearDownClassErrorTests(unittest.TestCase):
+        @classmethod
+        def tearDownClass(cls):
+            raise ValueError("broken cleanup")
+
+        def test_one(self):
+            pass
+
+    # unittest names a class by its qualified name, and the helpers by its name. A module-level class has equal names.
+    for test_class in (SetUpClassErrorTests, TearDownClassErrorTests):
+        test_class.__qualname__ = test_class.__name__
+    return SetUpClassErrorTests, TearDownClassErrorTests
+
+
+class _DjangoLikeTestResult(TeamcityTestResult):
+    """Gives the suite of a class-level error as ``DjangoTeamcityTestResult`` does. The helper tests have no Django."""
+
+    def _getSuite(self, test):
+        return class_level_error_suite(test, "django_testid://") or super(_DjangoLikeTestResult, self)._getSuite(test)
 
 
 # PY-93717
@@ -121,3 +153,57 @@ class TeamcityTestResultTest(HelpersTestCase):
         self.assertIn("Stdout:|ncaptured output", output)
         self.assertNotIn("captured output", stdout.getvalue())
         self.assertNotIn("captured output", stderr.getvalue())
+
+
+# PY-93718
+class ClassLevelErrorTest(HelpersTestCase):
+    def setUp(self):
+        super(ClassLevelErrorTest, self).setUp()
+        self.SetUpClassErrorTests, self.TearDownClassErrorTests = _class_level_error_tests()
+
+    @staticmethod
+    def run_tests(tests):
+        output = six.StringIO()
+        result = _DjangoLikeTestResult(output)
+        unittest.TestSuite(tests)(result)
+        result.endLastSuite()
+        return result, output.getvalue()
+
+    def test_set_up_class_error_is_reported_under_the_suite_of_its_class(self):
+        result, output = self.run_tests([self.SetUpClassErrorTests("test_one")])
+        class_id = strclass(self.SetUpClassErrorTests)
+
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("##teamcity[testSuiteStarted name='{0}' locationHint='django_testid://{0}'".format(class_id), output)
+        self.assertIn("##teamcity[testStarted name='setUpClass' locationHint='django_testid://{0}'".format(class_id), output)
+        self.assertIn("##teamcity[testFailed name='setUpClass'", output)
+        self.assertNotIn("_ErrorHolder", output)
+
+    def test_tear_down_class_error_stays_in_the_suite_of_its_class(self):
+        result, output = self.run_tests([self.TearDownClassErrorTests("test_one")])
+        class_id = strclass(self.TearDownClassErrorTests)
+
+        self.assertEqual(len(result.errors), 1)
+        self.assertEqual(output.count("##teamcity[testSuiteStarted "), 1)
+        self.assertIn("##teamcity[testSuiteStarted name='{0}'".format(class_id), output)
+        self.assertIn("##teamcity[testFinished name='test_one'", output)
+        self.assertIn("##teamcity[testStarted name='tearDownClass' locationHint='django_testid://{0}'".format(class_id), output)
+        self.assertIn("##teamcity[testFailed name='tearDownClass'", output)
+
+    def test_set_up_module_error_has_the_module_as_suite_and_location(self):
+        holder = unittest.suite._ErrorHolder("setUpModule (app.tests)")
+
+        self.assertEqual(class_level_error_suite(holder, "django_testid://"),
+                         ("app.tests", "django_testid://app.tests", "django_testid://app.tests"))
+
+    def test_test_method_is_not_a_class_level_error(self):
+        self.assertIsNone(class_level_error_suite(self.SetUpClassErrorTests("test_one"), "django_testid://"))
+
+    def test_test_name_without_space_is_the_whole_name(self):
+        class NamedTest(object):
+            def __str__(self):
+                return "doctest_name"
+
+        result = TeamcityTestResult(six.StringIO())
+
+        self.assertEqual(result.getTestName(NamedTest()), "doctest_name")
