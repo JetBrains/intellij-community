@@ -1,23 +1,33 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
-public class JavadocMethodResolveTest extends LightJavaCodeInsightFixtureTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_25;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
+@TestApplication
+public class JavadocMethodResolveTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_25);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testVerifiedJavadocParameterTypes() {
     checkJavadocParameterTypes("String", "java.lang.String");
     checkJavadocParameterTypes("java.util.List", "java.util.List<java.lang.String>");
@@ -28,6 +38,7 @@ public class JavadocMethodResolveTest extends LightJavaCodeInsightFixtureTestCas
     checkJavadocParameterTypes("String[][]"); // No method with [][] args in the snippet, expected
   }
 
+  @Test
   public void testPartlyUnverifiedJavadocParameterTypes() {
     checkJavadocParameterTypes("String, diuuibbuibui", "java.lang.String, java.util.List<java.lang.String>");
     checkJavadocParameterTypes("diuuibbuibui, java.util.List<String>", "java.lang.String, java.util.List<java.lang.String>");
@@ -36,7 +47,9 @@ public class JavadocMethodResolveTest extends LightJavaCodeInsightFixtureTestCas
     checkJavadocParameterTypes("diuuibbuibui, diuuibbuibui, diuuibbuibui");
   }
 
+  @Test
   public void testPrimitiveJavadocParameterTypes() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     for (var type : List.of( "boolean", "byte", "short", "int", "long", "char", "float", "double", "int[]", "float[]", "int...", "float...")) {
       myFixture.configureByText("Test.java", """
         class Test {
@@ -54,15 +67,18 @@ public class JavadocMethodResolveTest extends LightJavaCodeInsightFixtureTestCas
           void foo(float[] value) {}
         }
         """.formatted(type));
-      var reference = assertInstanceOf(myFixture.getReferenceAtCaretPosition(), PsiJavaReference.class);
-      var results = reference.multiResolve(false);
-      assertSize(1, results);
-      var method = assertInstanceOf(results[0].getElement(), PsiMethod.class);
-      assertEquals(type.replace("...", "[]"), method.getParameterList().getParameters()[0].getType().getCanonicalText());
+      ReadAction.runBlocking(() -> {
+        var reference = assertInstanceOf(PsiJavaReference.class, myFixture.getReferenceAtCaretPosition());
+        var results = reference.multiResolve(false);
+        assertEquals(1, results.length, () -> Arrays.toString(results));
+        var method = assertInstanceOf(PsiMethod.class, results[0].getElement());
+        assertEquals(type.replace("...", "[]"), method.getParameterList().getParameters()[0].getType().getCanonicalText());
+      });
     }
   }
 
   private void checkJavadocParameterTypes(String parameterTypes, String... expectedParameters) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       class Test {
         /** @see #foo<caret>(%s) */
@@ -75,14 +91,17 @@ public class JavadocMethodResolveTest extends LightJavaCodeInsightFixtureTestCas
         void other(String value) {}
       }
       """.formatted(parameterTypes));
-    var reference = assertInstanceOf(myFixture.getReferenceAtCaretPosition(), PsiJavaReference.class);
-    var resolvedParameters = Arrays.stream(reference.multiResolve(false))
-      .map(result -> {
-        var method = assertInstanceOf(result.getElement(), PsiMethod.class);
-        assertEquals("foo", method.getName());
-        return StringUtil.join(method.getParameterList().getParameters(), parameter -> parameter.getType().getCanonicalText(), ", ");
-      })
-      .toList();
-    assertSameElements(resolvedParameters, expectedParameters);
+    var resolvedParameters = ReadAction.computeBlocking(() -> {
+      var reference = assertInstanceOf(PsiJavaReference.class, myFixture.getReferenceAtCaretPosition());
+      return Arrays.stream(reference.multiResolve(false))
+        .map(result -> {
+          var method = assertInstanceOf(PsiMethod.class, result.getElement());
+          assertEquals("foo", method.getName());
+          return StringUtil.join(method.getParameterList().getParameters(), parameter -> parameter.getType().getCanonicalText(), ", ");
+        })
+        .toList();
+    });
+    assertThat(resolvedParameters).hasSize(expectedParameters.length);
+    assertThat(new HashSet<>(resolvedParameters)).isEqualTo(new HashSet<>(Arrays.asList(expectedParameters)));
   }
 }
