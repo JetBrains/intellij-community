@@ -51,3 +51,12 @@ internal class SettingsRootsCache(private val project: Project, scope: Coroutine
     fun getInstance(project: Project): SettingsRootsCache = project.service()
   }
 }
+
+/**
+ * Supplies the roots of [SettingsRootsCache] to a file context in the monolith and on the backend. Its frontend twin
+ * is `FrontendContentRootsProvider` in `intellij.platform.settings.v2.frontend.split`.
+ */
+internal class ProjectModelContentRootsProvider : SettingsContentRootsProvider {
+  @RequiresReadLock
+  override fun rootUrls(project: Project): List<String> = SettingsRootsCache.getInstance(project).roots().map { it.url }
+}
