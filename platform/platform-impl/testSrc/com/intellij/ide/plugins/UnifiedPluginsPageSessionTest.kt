@@ -118,6 +118,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -547,7 +548,7 @@ internal class UnifiedPluginsPageSessionTest {
         val updateAllButton = updateAllButton(header)
         updateAllButton.isVisible = true
         updateAllButton.text = "Update All"
-        val settingsToolbar = header.components.single { it !== searchComponent && it !is JButton }
+        val settingsToolbar = header.components.single { it !== searchComponent && it !is JButton && it !is JLabel }
         val layout = header.layout as GridBagLayout
         val searchConstraints = layout.getConstraints(searchComponent)
         val updateAllConstraints = layout.getConstraints(updateAllButton)
@@ -573,6 +574,33 @@ internal class UnifiedPluginsPageSessionTest {
         Disposer.dispose(session)
       }
     }
+
+  @Test
+  fun `operation status uses only free header space`(): Unit = uiTest {
+    val session = createSession(null)
+    try {
+      val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+      val search = componentsOfType(header, SearchFieldWithExtension::class.java).single()
+      val status = header.components.filterIsInstance<JLabel>().single()
+      val preferredSize = header.preferredSize
+      val minimumSize = header.minimumSize
+
+      status.text = "Installing a plugin with a long name"
+      status.isVisible = true
+      assertThat(header.preferredSize).isEqualTo(preferredSize)
+      assertThat(header.minimumSize).isEqualTo(minimumSize)
+
+      header.setSize(preferredSize.width + JBUI.scale(40), preferredSize.height)
+      header.doLayout()
+      assertThat(search.width).isEqualTo(search.preferredSize.width)
+      assertThat(status.width).isPositive().isLessThan(status.preferredSize.width)
+      assertThat(status.x + status.width).isLessThanOrEqualTo(header.width)
+      assertThat(status.getToolTipText(null)).isEqualTo(status.text)
+    }
+    finally {
+      Disposer.dispose(session)
+    }
+  }
 
   @Test
   fun `search keeps its maximum with internal controls and shrinks for header actions`(): Unit =
@@ -631,6 +659,7 @@ internal class UnifiedPluginsPageSessionTest {
       try {
         val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
         val button = updateAllButton(header)
+        val status = header.components.filterIsInstance<JLabel>().single()
         assertThat(button.isVisible).isFalse()
 
         updates.emit(PluginUpdatesEvent(listOf(first, second), listOf(disabled), listOf(pluginNod)))
@@ -638,6 +667,11 @@ internal class UnifiedPluginsPageSessionTest {
         assertThat(button.icon).isNull()
         button.doClick()
         waitForButton(button, "Updating 0/2...", enabled = false)
+        waitUntilAssertSucceeds {
+          assertThat(status.isVisible).isTrue()
+          assertThat(status.text).isEqualTo(IdeBundle.message("plugins.configurable.operation.updating.plugins", 0, 2))
+          assertThat(componentsOfType(session.getComponent(), ListPluginComponent::class.java)).hasSize(3)
+        }
         assertThat(button.icon).isSameAs(AnimatedIcon.Default.INSTANCE)
         assertThat(executor.requests.single().updates).containsExactly(first, second)
 
@@ -646,8 +680,12 @@ internal class UnifiedPluginsPageSessionTest {
         assertThat(button.text).isEqualTo("Updating 0/2...")
         executor.callbacks.single().prepared(first.pluginId, restartRequired = false)
         waitForButton(button, "Updating 1/2...", enabled = false)
+        waitUntilAssertSucceeds {
+          assertThat(status.text).isEqualTo(IdeBundle.message("plugins.configurable.operation.updating.plugins", 1, 2))
+        }
         executor.callbacks.single().prepared(second.pluginId, restartRequired = false)
         waitForButton(button, "Updated", enabled = false)
+        waitUntilAssertSucceeds { assertThat(status.isVisible).isFalse() }
       }
       finally {
         Disposer.dispose(session)
@@ -1598,7 +1636,7 @@ internal class UnifiedPluginsPageSessionTest {
 
   private fun assertAdaptiveSearchWidth(header: JComponent, searchComponent: JComponent) {
     val updateAllButton = updateAllButton(header).apply { isVisible = true }
-    val settingsToolbar = header.components.single { it !== searchComponent && it !is JButton }
+    val settingsToolbar = header.components.single { it !== searchComponent && it !is JButton && it !is JLabel }
     val layout = header.layout as GridBagLayout
     val searchConstraints = layout.getConstraints(searchComponent)
     val updateAllConstraints = layout.getConstraints(updateAllButton)

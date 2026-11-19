@@ -121,6 +121,18 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     }
   }
   private val stickyHeaderHost = StickyHeaderHost()
+  private val operationProgressPluginIds = HashSet<PluginId>()
+  val operationStatusComponent: JBLabel = object : JBLabel(AnimatedIcon.Default()) {
+    override fun getPreferredSize(): Dimension =
+      super.getPreferredSize().apply { width = width.coerceAtMost(JBUI.scale(OPERATION_STATUS_MAX_WIDTH)) }
+
+    override fun getToolTipText(event: MouseEvent?): String? =
+      text.takeIf { width < super.getPreferredSize().width }
+  }.apply {
+    isVisible = false
+    foreground = UIUtil.getContextHelpForeground()
+    iconTextGap = JBUI.scale(6)
+  }
   private val scrollContainer = JBLayeredPane()
   private val sectionViews = LinkedHashMap<PluginSectionId, SectionView>()
   private val rowReconciler = rowFactory?.createReconciler { occurrenceId, row ->
@@ -342,6 +354,34 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     restoreFooterFocus?.invoke()
     sectionsPanel.repaint()
     scheduleResultsAnnouncement()
+  }
+
+  @RequiresEdt
+  fun renderOperationStatus(items: List<PluginItemState>) {
+    val activeItems = items.filter { it.rowInput?.operationInProgress == true }
+    if (activeItems.isEmpty()) {
+      operationProgressPluginIds.clear()
+      operationStatusComponent.isVisible = false
+      return
+    }
+
+    activeItems.mapTo(operationProgressPluginIds, PluginItemState::pluginId)
+    val allUpdates = activeItems.all { it.rowInput?.installedPlugin != null || it.rowInput?.updateDescriptor != null }
+    val total = operationProgressPluginIds.size
+    val status = when {
+      allUpdates && total > 1 -> IdeBundle.message("plugins.configurable.operation.updating.plugins", total - activeItems.size, total)
+      activeItems.size == 1 -> IdeBundle.message(
+        if (allUpdates) "plugins.configurable.operation.updating.plugin" else "plugins.configurable.operation.installing.plugin",
+        activeItems.single().let { it.name ?: it.pluginId.idString },
+      )
+      else -> IdeBundle.message("plugins.configurable.operation.installing.plugins", activeItems.size)
+    }
+    operationStatusComponent.apply {
+      text = status
+      toolTipText = status
+      accessibleContext.accessibleName = status
+      isVisible = true
+    }
   }
 
   @RequiresEdt
@@ -1742,6 +1782,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
 
     const val ACTIVATE_SECTION_BUTTON: String = "activate-section-button"
     const val DETAILS_MIN_WIDTH: Int = 220
+    const val OPERATION_STATUS_MAX_WIDTH: Int = 260
     const val CATEGORY_ACTIONS_PLACE: String = "UnifiedPluginsBundledCategory"
     const val ERROR_INSET: Int = 10
     const val ERROR_LEFT_INSET: Int = 16

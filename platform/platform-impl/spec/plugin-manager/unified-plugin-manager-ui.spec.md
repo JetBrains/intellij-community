@@ -136,7 +136,7 @@ This specification covers the page structure, section model, search, source load
 
 Untested: Product welcome buttons on a remote backend keep the Settings route because the standalone dialog does not forward to the frontend.
 
-- Visible sections must use this order: Installing, Installed, Bundled, Suggested or Marketplace, Internal, then custom repositories.
+- Visible sections must show Installed, Bundled, Suggested or Marketplace, Internal, and custom repositories in that order.
 - A ready section with no items must not leave a placeholder.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
     `sections use semantic order and preserve custom repository order`;
@@ -538,13 +538,6 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `large section count shows the display limit`
   )
 
-- Installing must expand once when accepted operations first exceed the collapsed limit.
-- A later manual Installing collapse must remain effective during source updates.
-  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
-    `Installing auto-expands when it first becomes expandable`;
-    `manual Installing collapse survives later source replacements`
-  )
-
 - Suggested and Marketplace must start expanded.
 - A manual collapse of either section must remain effective during later source updates.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
@@ -553,7 +546,7 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
 
 - A query that targets only local sections must expand Installed and Bundled.
 - A Repository filter must expand each selected custom repository section.
-- Automatic expansion must not expand Installing or change the selection.
+- Automatic expansion must preserve the selection.
 - A manual collapse must remain effective while text, facets, or sorting change in the same automatic expansion context.
 - A navigation scope change must preserve that collapse while an explicit local filter stays active.
 - A changed local filter or update source must start a new automatic expansion context.
@@ -669,7 +662,7 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `toggle selection modifier follows platform conventions`
   )
 
-- Multi-selection may span Installing, Installed, and Bundled.
+- Multi-selection may span Installed and Bundled.
 - It may separately span Internal, Suggested, Marketplace, and custom repositories.
 - Selecting a plugin from the other group must replace the incompatible selection.
 - The details panel must receive all compatible selected plugins.

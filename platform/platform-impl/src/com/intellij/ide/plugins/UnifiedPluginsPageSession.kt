@@ -583,7 +583,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     val installCallback = Consumer<PluginInstallCallbackData> { callbackData ->
       onPluginInstalledFromDisk(callbackData, PluginSource.REMOTE)
     }
-    return object : JPanel(AdaptivePluginsHeaderLayout()), UiDataProvider {
+    return object : JPanel(AdaptivePluginsHeaderLayout(view.operationStatusComponent)), UiDataProvider {
       init {
         isOpaque = false
         add(view.searchComponent, GridBagConstraints().apply {
@@ -614,6 +614,15 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
             gridy = 0
             weightx = 1.0
             anchor = GridBagConstraints.WEST
+          },
+        )
+        add(
+          view.operationStatusComponent,
+          GridBagConstraints().apply {
+            gridx = 3
+            gridy = 0
+            anchor = GridBagConstraints.WEST
+            insets = JBUI.insetsLeft(8)
           },
         )
       }
@@ -782,9 +791,10 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     }
     val data = state.listModelData
     listModel.replaceAll(data.installedModels, data.errors, data.installationStates, data.updateSources, data.expectedExplanations)
+    view.renderOperationStatus(state.sections.firstOrNull { it.id == PluginSectionId.Installing }?.items.orEmpty())
     controller.replaceSourceState(
       query = state.query,
-      updatedSections = state.sections,
+      updatedSections = state.sections.filterNot { it.id == PluginSectionId.Installing },
       mayEstablishSelection = state.mayEstablishSelection,
       updatedSearchControls = state.searchControls,
       projectedQueryRevision = state.projectedQueryRevision,
@@ -873,7 +883,8 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
   }
 }
 
-private class AdaptivePluginsHeaderLayout : GridBagLayout() {
+/** Gives [trailingStatus] the space available after the search field and header actions. */
+private class AdaptivePluginsHeaderLayout(private val trailingStatus: Component) : GridBagLayout() {
   override fun preferredLayoutSize(parent: Container): Dimension = calculateSize(parent, includeSearchWidth = true)
 
   override fun minimumLayoutSize(parent: Container): Dimension = calculateSize(parent, includeSearchWidth = false)
@@ -885,19 +896,32 @@ private class AdaptivePluginsHeaderLayout : GridBagLayout() {
     val parentInsets = parent.insets
     val availableWidth = (parent.width - parentInsets.left - parentInsets.right).coerceAtLeast(0)
     val searchComponent = visibleComponents.first()
-    val fixedWidth = visibleComponents.sumOf { component ->
+    val sizedComponents = visibleComponents.filter { it !== trailingStatus }
+    val fixedWidth = sizedComponents.sumOf { component ->
       val componentInsets = getConstraints(component).insets
       componentInsets.left + componentInsets.right +
       if (component === searchComponent) 0 else component.preferredSize.width
     }
     val searchWidth = (availableWidth - fixedWidth).coerceIn(0, searchComponent.preferredSize.width)
+    val statusInsets = if (trailingStatus.isVisible) getConstraints(trailingStatus).insets else null
+    val statusWidth = if (statusInsets == null) {
+      0
+    }
+    else {
+      val freeWidth = availableWidth - fixedWidth - searchWidth - statusInsets.left - statusInsets.right
+      freeWidth.coerceIn(0, trailingStatus.preferredSize.width)
+    }
 
     var x = parentInsets.left
     for (component in visibleComponents) {
       val constraints = getConstraints(component)
       val componentInsets = constraints.insets
       val preferredSize = component.preferredSize
-      val width = if (component === searchComponent) searchWidth else preferredSize.width
+      val width = when {
+        component === searchComponent -> searchWidth
+        component === trailingStatus -> statusWidth
+        else -> preferredSize.width
+      }
       val availableHeight = (parent.height - parentInsets.top - parentInsets.bottom -
                              componentInsets.top - componentInsets.bottom).coerceAtLeast(0)
       val height = preferredSize.height.coerceAtMost(availableHeight)
@@ -909,7 +933,7 @@ private class AdaptivePluginsHeaderLayout : GridBagLayout() {
   }
 
   private fun calculateSize(parent: Container, includeSearchWidth: Boolean): Dimension {
-    val visibleComponents = parent.components.filter { it.isVisible }
+    val visibleComponents = parent.components.filter { it.isVisible && it !== trailingStatus }
     val parentInsets = parent.insets
     var width = parentInsets.left + parentInsets.right
     var height = 0

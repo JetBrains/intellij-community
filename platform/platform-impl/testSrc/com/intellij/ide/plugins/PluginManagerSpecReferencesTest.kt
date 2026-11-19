@@ -45,7 +45,7 @@ class PluginManagerSpecReferencesTest {
           "Purpose",
           "Scope",
           "Operation Lifecycle",
-          "Installing Section",
+          "Operation Tracking",
           "Settings Session",
           "Install and Update",
           "Management Actions",

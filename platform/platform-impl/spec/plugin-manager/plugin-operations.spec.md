@@ -96,12 +96,11 @@ Untested: No focused page test covers the complete action set.
     `logical operation publishes the combined restart result`
   )
 
-## Installing Section
+## Operation Tracking
 
-- An active install or update must appear in Installing before its destination inventory settles.
-- An accepted dependency must appear in Installing while its operation is active.
+- The session must track active installs, updates, and accepted dependencies before the inventory settles.
 - Each scheduled or installed dependency must appear once in its logical operation.
-- Operation state must stay consistent across Installing, source rows, and plugin details.
+- Operation state must stay consistent across the header status, source rows, and plugin details.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInstallingLedgerTest.kt (
     `scheduled dependencies are active before operation completion`;
     `section projection combines operation model with current list facts`
@@ -112,8 +111,8 @@ Untested: No focused page test covers the complete action set.
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt
 
-- Installing must retain each accepted attempt and its terminal result for the current page session.
-- A retry must update the retained plugin occurrence without adding a duplicate.
+- The session must retain each accepted attempt and its terminal result.
+- A retry must update the retained entry for the plugin.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInstallingLedgerTest.kt (
     `all terminal results are retained`;
     `retry updates the retained occurrence without duplicating it`
@@ -328,8 +327,14 @@ Untested: No focused test covers every management edit and refresh path.
 
 ## Operation Presentation
 
-- Installing must appear before all source sections when it has visible occurrences.
-- Installing must not change in response to the search query.
+- Active installs and updates must show a spinner and status beside the settings gear.
+- The status must use spare header space and show a tooltip for truncated text.
+- The status must follow operations across query changes and hide when the last operation finishes.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `operation status uses only free header space`;
+    `Update All button counts prepared executor targets`
+  )
+
 - Update All must stay visible and disabled while its request runs.
 - Update All must show prepared and total counts while its request runs.
 - Active operation progress must appear in each matching row and in the selected plugin details.
