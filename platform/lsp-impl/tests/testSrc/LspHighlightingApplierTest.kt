@@ -37,6 +37,7 @@ import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -104,10 +105,14 @@ internal class LspHighlightingApplierTest {
             session.document.insertString(0, "x")
           }
         }
+        // The highlighters follow the edits, so the offsets are right even before the refresh. Wait for the refresh itself.
+        waitUntilAssertSucceeds(message = "the coalesced refresh must collect") {
+          assertTrue(collectCount.get() >= 1)
+        }
         waitUntilAssertSucceeds(message = "the coalesced refresh must apply the final offsets") {
           assertEquals(listOf(TextRange(3, 8)), semanticTokenRanges(session.document))
         }
-        delay(500.milliseconds) // one full extra debounce window of grace
+        delay(500.milliseconds) // a second refresh would come within one more debounce window
         assertEquals(1, collectCount.get(), "the edit burst must coalesce into exactly one collect")
       }
       finally {
