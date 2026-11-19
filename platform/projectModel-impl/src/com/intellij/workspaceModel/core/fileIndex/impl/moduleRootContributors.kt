@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
@@ -116,10 +116,12 @@ interface JvmPackageRootDataInternal: WorkspaceFileSetData {
     get() = true
 }
 
-internal data class ModuleContentRootData(override val module: Module, override val customContentRoot: VirtualFile?) :
+@ApiStatus.Internal
+data class ModuleContentRootData(override val module: Module, override val customContentRoot: VirtualFile?) :
   ModuleContentOrSourceRootData, SkipAddingToWatchedRootsData
 
-internal data class ModuleSourceRootData(
+@ApiStatus.Internal
+data class ModuleSourceRootData(
   override val module: Module,
   override val customContentRoot: VirtualFile?,
   val rootTypeId: SourceRootTypeId,

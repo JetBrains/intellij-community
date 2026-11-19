@@ -262,7 +262,7 @@ internal class NonIncrementalContributors(private val project: Project) {
     private val overrideMap = ConcurrentHashMap<String, Boolean>()
 
     internal fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {
-      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer is NonIncrementalMarker
+      return fileSet.asSafely<SingleWorkspaceFileSet>()?.entityPointer is NonIncrementalMarker
     }
 
     fun isPlaceholderReference(entityPointer: EntityPointer<WorkspaceEntity>): Boolean = entityPointer is NonIncrementalMarker

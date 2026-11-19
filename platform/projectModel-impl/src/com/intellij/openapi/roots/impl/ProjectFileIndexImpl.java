@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -23,9 +23,9 @@ import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRoot
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleOrLibrarySourceRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.SingleWorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.impl.UnloadedModuleContentRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
@@ -65,7 +65,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
         ProgressManager.checkCanceled();
         if (fileSet.getKind().isContent()) {
           VirtualFile root = fileSet.getRoot();
-          if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
+          if (fileSet instanceof SingleWorkspaceFileSet fileSetWithData && !fileSetWithData.getRecursive()) {
             allNonRecursiveRoots.add(root);
           }
           else {

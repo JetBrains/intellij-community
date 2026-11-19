@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.Disposable
@@ -41,7 +41,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetImpl
+import com.intellij.workspaceModel.core.fileIndex.impl.SingleWorkspaceFileSet
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -222,7 +222,7 @@ class SdkBridgeImpl(
 
     /** @return a [Sdk] which contains [set] or null otherwise */
     fun ImmutableEntityStorage.findSdk(set: WorkspaceFileSet): Sdk? {
-      val setImpl = set as? WorkspaceFileSetImpl ?: return null
+      val setImpl = set as? SingleWorkspaceFileSet ?: return null
       val sdkEntity = setImpl.entityPointer.resolve(this) as? SdkEntity ?: return null
       return findSdk(sdkEntity)
     }

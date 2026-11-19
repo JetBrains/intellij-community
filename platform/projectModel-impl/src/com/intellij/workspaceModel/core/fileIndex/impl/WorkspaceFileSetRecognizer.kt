@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -21,14 +21,14 @@ object WorkspaceFileSetRecognizer {
   }
 
   fun getEntityPointer(fileSet: WorkspaceFileSet): EntityPointer<*>? {
-    val entityReference = fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer
+    val entityReference = fileSet.asSafely<SingleWorkspaceFileSet>()?.entityPointer
     if (entityReference == null) return null
     if (NonIncrementalContributors.isPlaceholderReference(entityReference)) return null
     return entityReference
   }
 
   fun getLibraryId(fileSet: WorkspaceFileSet, storage: EntityStorage): LibraryId? {
-    val fileSetImpl = fileSet as? WorkspaceFileSetImpl
+    val fileSetImpl = fileSet as? SingleWorkspaceFileSet
     if (fileSetImpl == null) return null
 
     val libraryRootFileSetData = fileSetImpl.data as? LibraryRootFileSetData
@@ -47,7 +47,7 @@ object WorkspaceFileSetRecognizer {
   }
 
   fun getSdkId(fileSet: WorkspaceFileSet): SdkId? {
-    return fileSet.asSafely<WorkspaceFileSetImpl>()?.data?.asSafely<SdkRootFileSetData>()?.sdkId
+    return fileSet.asSafely<SingleWorkspaceFileSet>()?.data?.asSafely<SdkRootFileSetData>()?.sdkId
   }
 
   fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {
@@ -55,6 +55,6 @@ object WorkspaceFileSetRecognizer {
   }
 
   fun isSourceRoot(fileSet: WorkspaceFileSet): Boolean {
-    return (fileSet as? WorkspaceFileSetImpl)?.data is ModuleSourceRootData
+    return (fileSet as? SingleWorkspaceFileSet)?.data is ModuleSourceRootData
   }
 }

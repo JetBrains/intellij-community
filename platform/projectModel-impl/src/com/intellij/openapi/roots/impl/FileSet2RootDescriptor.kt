@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.DummyWorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleOrLibrarySourceRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.MultipleWorkspaceFileSets
+import com.intellij.workspaceModel.core.fileIndex.impl.SingleWorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdk
@@ -34,14 +35,14 @@ import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 internal fun findModuleSourceOrLibraryClassesRootDescriptors(info: WorkspaceFileInternalInfo, project: Project): Collection<RootDescriptor> =
   when (info) {
     is WorkspaceFileInternalInfo.NonWorkspace -> emptyList()
-    is WorkspaceFileSetImpl ->
+    is SingleWorkspaceFileSet ->
       if (info.isModuleSourceOrLibraryClassesRoot) listOfNotNull(findFileSetDescriptor(info, project))
       else emptyList()
     is MultipleWorkspaceFileSets -> findDescriptors(info, project)
   }
 
 /** The kind check of the singular `getModuleSourceOrLibraryClassesRoot`; the two must stay in sync. */
-private val WorkspaceFileSetImpl.isModuleSourceOrLibraryClassesRoot: Boolean
+private val SingleWorkspaceFileSet.isModuleSourceOrLibraryClassesRoot: Boolean
   get() = kind.isContent && data is ModuleOrLibrarySourceRootData || kind == WorkspaceFileKind.EXTERNAL
 
 /** Distinct descriptors in file-set order; the single-descriptor result avoids the set. */
@@ -49,7 +50,7 @@ private fun findDescriptors(info: MultipleWorkspaceFileSets, project: Project): 
   var single: RootDescriptor? = null
   var multiple: LinkedHashSet<RootDescriptor>? = null
   for (fileSet in info.fileSets) {
-    if (fileSet !is WorkspaceFileSetImpl || !fileSet.isModuleSourceOrLibraryClassesRoot) continue
+    if (fileSet !is SingleWorkspaceFileSet || !fileSet.isModuleSourceOrLibraryClassesRoot) continue
     val descriptor = findFileSetDescriptor(fileSet, project) ?: continue
     when {
       single == null -> single = descriptor
@@ -69,7 +70,7 @@ private fun findDescriptors(info: MultipleWorkspaceFileSets, project: Project): 
  * resolution (say, a library whose bridge is not registered yet) is not cached, so it is retried on the next call,
  * which is what the uncached code did too.
  */
-internal fun findFileSetDescriptor(set: WorkspaceFileSetImpl, project: Project): RootDescriptor? {
+internal fun findFileSetDescriptor(set: SingleWorkspaceFileSet, project: Project): RootDescriptor? {
   set.cachedRootDescriptor?.let { return it }
   val descriptor = computeFileSetDescriptor(set, WorkspaceModel.getInstance(project).currentSnapshot) ?: return null
   set.cachedRootDescriptor = descriptor
@@ -77,7 +78,7 @@ internal fun findFileSetDescriptor(set: WorkspaceFileSetImpl, project: Project):
 }
 
 private fun computeFileSetDescriptor(
-  set: WorkspaceFileSetImpl,
+  set: SingleWorkspaceFileSet,
   snapshot: ImmutableEntityStorage,
 ): RootDescriptor? {
   val data = set.data

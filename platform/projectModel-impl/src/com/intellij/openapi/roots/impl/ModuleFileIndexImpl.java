@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -25,9 +25,9 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.SingleWorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetImpl;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetVisitor;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
@@ -104,13 +104,13 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
         if (visitedCount % 100 == 0) {
           ProgressManager.checkCanceled();
         }
-        if (!(fileSet instanceof WorkspaceFileSetWithCustomData<?>) ||
-            !isInContent((WorkspaceFileSetWithCustomData<?>)fileSet) ||
+        if (!(fileSet instanceof SingleWorkspaceFileSet fileSetWithData) ||
+            !isInContent(fileSetWithData) ||
             (!includeNonIndexable && !fileSet.getKind().isIndexable())) {
           return;
         }
         VirtualFile root = fileSet.getRoot();
-        if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
+        if (!fileSetWithData.getRecursive()) {
           if (fileSet.getKind().isIndexable()) {
             nonRecursiveRoots.add(fileSet.getRoot());
           }
