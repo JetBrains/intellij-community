@@ -78,6 +78,14 @@ pub(crate) const ENVIRONMENT_ALLOWLIST: [&str; 11] = [
     "DBUS_SESSION_BUS_ADDRESS",
 ];
 
+/// The session bus that the IDE of a context gets on Linux when the supervisor has none: no bus.
+///
+/// Without a session bus, GLib in the IDE starts one with `dbus-launch --autolaunch`, and the bus can start
+/// `xdg-document-portal`. Without `XDG_RUNTIME_DIR`, the portal mounts its FUSE file system on `.cache/doc` of the home
+/// of the context. The run stops the process group of the IDE, the portal ends, and the mount stays without a server.
+/// Every later walk of the directory then fails, such as the symlink forest of the next Bazel command.
+pub(crate) const CONTEXT_NO_SESSION_BUS: &str = "disabled:";
+
 /// The locale that a child of the [`EnvironmentPolicy::Context`] policy gets as `LC_ALL` when the supervisor has no UTF-8 one.
 ///
 /// The JVM encodes a file name in the character set of the locale. Under the POSIX locale it cannot represent a
@@ -125,6 +133,7 @@ fn inherited_environment(host: LaunchHost, inherited: impl IntoIterator<Item = (
 /// `HOME` on the home of the context, and the `bin` directory of the context first in the PATH of the guest OS.
 ///
 /// An inherited UTF-8 locale stays as it is. Any other locale, or none, gets `LC_ALL` set to [`CONTEXT_UTF8_LOCALE`].
+/// On Linux, an inherited session bus stays as it is, and none gets [`CONTEXT_NO_SESSION_BUS`].
 fn context_environment(
     host: LaunchHost,
     inherited: impl IntoIterator<Item = (OsString, OsString)>,
@@ -141,6 +150,11 @@ fn context_environment(
     environment.insert("PATH".into(), path);
     if !has_utf8_locale(&environment) {
         environment.insert("LC_ALL".into(), CONTEXT_UTF8_LOCALE.into());
+    }
+    if host == LaunchHost::Linux {
+        environment
+            .entry("DBUS_SESSION_BUS_ADDRESS".into())
+            .or_insert_with(|| CONTEXT_NO_SESSION_BUS.into());
     }
     environment
 }
