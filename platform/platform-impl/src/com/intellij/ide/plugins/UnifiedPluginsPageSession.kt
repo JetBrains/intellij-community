@@ -370,6 +370,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     controller.showProgressIndicator(false)
     controller.showResetAction(false)
     controller.setCenterComponentGap(JBUI.scale(if (isStandaloneConfigurable) 13 else -2))
+    if (isStandaloneConfigurable) headerComponent.border = JBUI.Borders.emptyBottom(6)
     host.setTopController(controller)
     return headerComponent
   }
