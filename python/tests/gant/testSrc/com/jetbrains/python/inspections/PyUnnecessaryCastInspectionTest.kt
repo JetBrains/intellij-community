@@ -1,100 +1,124 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.idea.TestFor
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import org.junit.jupiter.api.Test
 
-import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.fixtures.PyInspectionTestCase
-
+@TestFor(classes = [PyUnnecessaryCastInspection::class])
 @Subsystems.Inspections
 @Layers.Functional
-class PyUnnecessaryCastInspectionTest : PyInspectionTestCase() {
-  override fun getInspectionClass(): Class<out PyInspection> = PyUnnecessaryCastInspection::class.java
+class PyUnnecessaryCastInspectionTest : PyCodeInsightTestCase() {
+  override val defaultInspections: Set<Class<out LocalInspectionTool>> = setOf(PyUnnecessaryCastInspection::class.java)
 
-  fun `test basic`() {
-    doTestByText(
-      """
-        from typing import cast
+  @Test
+  fun `cast of a variable to its type`() = test("""
+    from typing import cast
 
-        def f(a: int):
-            <weak_warning descr="Unnecessary cast; type is already 'int'">cast(int,</weak_warning>a)
-      """.trimIndent()
-    )
-  }
+    def f(a: int):
+        cast(int, a)
+    #   ^^^^^^^^^ WEAK_WARNING Unnecessary cast; type is already 'int'
+    """.trimIndent())
 
-  fun `test literal`() {
-    doTestByText(
-      """
-        from typing import cast, Literal
-  
-        one: Literal[1] = 1
-        cast(int, one)
-        <weak_warning descr="Unnecessary cast; type is already 'Literal[1]'">cast(Literal[1],</weak_warning> one)
-      """.trimIndent()
-    )
-  }
+  @Test
+  fun `cast of a variable declared with a literal type`() = test("""
+    from typing import cast, Literal
 
-  fun `test union`() {
-    doTestByText(
-      """
-from typing import cast
+    one: Literal[1] = 1
+    cast(int, one)
+    cast(Literal[1], one)  # WEAK_WARNING Unnecessary cast; type is already 'Literal[1]'
+    """.trimIndent())
 
+  @Test
+  @TestFor(issues = ["PY-93811"])
+  fun `cast of a literal expression to its class`() = test("""
+    from typing import cast
 
-      """.trimIndent()
-    )
-  }
+    cast(int, 1)  # WEAK_WARNING Unnecessary cast; type is already 'int'
+    cast("int", 1)  # WEAK_WARNING Unnecessary cast; type is already 'int'
+    cast(int, -1)  # WEAK_WARNING Unnecessary cast; type is already 'int'
+    cast(str, "s")  # WEAK_WARNING Unnecessary cast; type is already 'str'
+    cast(bool, True)  # WEAK_WARNING Unnecessary cast; type is already 'bool'
+    cast(bytes, b"s")  # WEAK_WARNING Unnecessary cast; type is already 'bytes'
+    cast(int, (1))  # WEAK_WARNING Unnecessary cast; type is already 'int'
+    cast(int, 1 if bool() else 2)  # WEAK_WARNING Unnecessary cast; type is already 'int'
+    """.trimIndent())
 
-  fun `test okay`(){
-    doTestByText(
-      """
-        from typing import cast
-  
-        class B: ...
-        class C(B): ...
-  
-        cast(B, C())  # ok
-        
-        a: int | str
-        b = cast(str, a)  # ok
-      """.trimIndent()
-    )
-  }
+  @Test
+  @TestFor(issues = ["PY-93811"])
+  fun `cast of an enum member to its class`() = test("""
+    from enum import Enum
+    from typing import cast
 
-  // FIXME: a cast of Any narrows the type, so it is necessary and must not be reported
-  @TestFor(classes = [PyUnnecessaryCastInspection::class])
-  fun `test cast of Any`() {
-    doTestByText(
-      """
-        from typing import Any, cast
+    class Color(Enum):
+        RED = 1
 
-        def func(val: Any) -> int:
-            return <weak_warning descr="Unnecessary cast; type is already 'int'">cast(int,</weak_warning> val)
-      """.trimIndent()
-    )
-  }
+    cast(Color, Color.RED)  # WEAK_WARNING Unnecessary cast; type is already 'Color'
+    """.trimIndent())
 
-  fun `test quickfix remove`() {
-    val text = """
-        from typing import cast
+  @Test
+  @TestFor(issues = ["PY-93811"])
+  fun `cast of a literal expression to its literal type`() = test("""
+    from typing import cast, Literal
 
-        def f(a: int):
-            <weak_warning descr="Unnecessary cast; type is already 'int'"><caret>cast(int,</weak_warning> a)
-      """.trimIndent()
-    myFixture.configureByText(PythonFileType.INSTANCE, text)
-    configureInspection()
-    val hint = PyPsiBundle.message("QFIX.remove.cast.call")
-    val action = myFixture.findSingleIntention(hint)
-    myFixture.launchAction(action)
-    myFixture.checkResult(
-      """
-        from typing import cast
+    cast(Literal[1], 1)  # WEAK_WARNING Unnecessary cast; type is already 'Literal[1]'
+    """.trimIndent())
 
-        def f(a: int):
-            a
-      """.trimIndent()
-    )
-  }
+  @Test
+  @TestFor(issues = ["PY-93811"])
+  fun `cast of a literal expression to another type`() = test("""
+    from typing import cast, Literal
+
+    cast(float, 1)
+    cast(object, 1)
+    cast(Literal[2], 1)
+    cast(str, 1)
+
+    def f(one: Literal[1]):
+        cast(int, one if bool() else 1)
+    """.trimIndent())
+
+  @Test
+  fun `cast to another type`() = test("""
+    from typing import cast
+
+    class B: ...
+    class C(B): ...
+
+    cast(B, C())  # ok
+
+    a: int | str
+    b = cast(str, a)  # ok
+    """.trimIndent())
+
+  @Test
+  fun `cast of Any`() = test("""
+    from typing import Any, cast
+
+    def func(val: Any) -> int:
+        return cast(int, val)  # WEAK_WARNING Unnecessary cast; type is already 'int' FIXME # a cast of Any narrows the type
+    """.trimIndent())
+
+  @Test
+  fun `quick fix removes the cast`() = testQuickFix(
+    """
+    from typing import cast
+
+    def f(a: int):
+        cast(int, a)
+    """.trimIndent(),
+    PyPsiBundle.message("QFIX.remove.cast.call"),
+    """
+    from typing import cast
+
+    def f(a: int):
+        a
+    """.trimIndent(),
+    // The inspection registers the weak warning and an information highlight over the whole call, both with the fix.
+    expectedMatchCount = 2,
+  )
 }
