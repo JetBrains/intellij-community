@@ -32,7 +32,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/core-impl",
-        "//libraries/junit4",
         "//libraries/junit6",
         "//platform/scratch/plugin",
     ],
