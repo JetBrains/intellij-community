@@ -132,6 +132,139 @@ pub struct State {
     pub checkout_trees: VecDeque<CheckoutTree>,
     /// The tree of each commit, for [`Runtime::commit_tree`].
     pub commit_trees: BTreeMap<String, String>,
+    /// The model that [`Runtime::accio`] answers from.
+    pub accio: FakeAccio,
+    /// Each [`Runtime::accio`] call, as its arguments joined by spaces, in order.
+    pub accio_calls: Vec<String>,
+}
+
+/// The accio of the fake: a model of the class index and of the module roots. A test states the classes and the roots
+/// once, and every call shape answers from them, a batch `symbol` call included.
+///
+/// The model takes JSON text, not values: the Air UI-lane workspace links this crate with another build of
+/// `serde_json`.
+#[derive(Clone, Debug, Default)]
+pub struct FakeAccio {
+    /// The classes of the index, each as its file and its FQN in the binary form of the runner.
+    pub classes: Vec<(String, String)>,
+    /// The module roots, each as the JSON text of one entry of the `modules` answer.
+    pub modules: Vec<String>,
+    /// The scripted answers by the arguments of a call joined by spaces. The model answers only a call without one.
+    pub answers: BTreeMap<String, Result<String, Refusal>>,
+    /// The names whose `symbol` answer the limit cuts: `complete` is `false`.
+    pub incomplete: BTreeSet<String>,
+}
+
+impl FakeAccio {
+    /// The answer of one call, as accio prints it with `--format json`.
+    ///
+    /// # Panics
+    ///
+    /// On a command that the model does not know: a test must script it.
+    pub fn answer(&self, args: &[&str]) -> Result<String, Refusal> {
+        if let Some(answer) = self.answers.get(&args.join(" ")) {
+            return answer.clone();
+        }
+        let operands: Vec<&str> = args.iter().skip(1).copied().take_while(|arg| !arg.starts_with("--")).collect();
+        match args.first().copied() {
+            Some("symbol") => Ok(serde_json::Value::Array(operands.iter().map(|name| self.symbol(name)).collect()).to_string()),
+            Some("modules") => {
+                let paths: Vec<&str> = args
+                    .iter()
+                    .skip_while(|arg| **arg != "--paths")
+                    .skip(1)
+                    .copied()
+                    .take_while(|arg| !arg.starts_with("--"))
+                    .collect();
+                Ok(self.modules_of(&paths).to_string())
+            }
+            _ => panic!("the fake accio has no model of `accio {}`", args.join(" ")),
+        }
+    }
+
+    fn symbol(&self, query: &str) -> serde_json::Value {
+        let hits: Vec<serde_json::Value> = self
+            .classes
+            .iter()
+            .filter(|(_, fqn)| {
+                if query.contains('.') {
+                    fqn.replace('$', ".") == query
+                } else {
+                    simple_name_of(fqn) == query
+                }
+            })
+            .map(|(file, fqn)| class_hit(file, fqn))
+            .collect();
+        let mut answer = serde_json::json!({
+            "complete": !self.incomplete.contains(query),
+            "total": hits.len(),
+            "match": if hits.is_empty() { "none" } else { "exact" },
+            "quality": "exact",
+            "hits": hits,
+        });
+        if answer["hits"].as_array().is_some_and(Vec::is_empty) {
+            answer["note"] = serde_json::Value::from(format!("no declaration named {query}"));
+        }
+        answer
+    }
+
+    fn modules_of(&self, paths: &[&str]) -> serde_json::Value {
+        let entries: Vec<serde_json::Value> = self
+            .modules
+            .iter()
+            .map(|text| serde_json::from_str(text).expect("a fixture module entry is JSON"))
+            .collect();
+        let root_of = |entry: &serde_json::Value| entry["root"].as_str().unwrap_or_default().to_owned();
+        let mut matched: Vec<serde_json::Value> = Vec::new();
+        let mut named = Vec::new();
+        for path in paths {
+            let found = entries
+                .iter()
+                .filter(|entry| {
+                    let root = root_of(entry);
+                    root.is_empty() || *path == root || path.strip_prefix(&root).is_some_and(|rest| rest.starts_with('/'))
+                })
+                .max_by_key(|entry| root_of(entry).len());
+            let root = found.map_or_else(String::new, root_of);
+            named.push(serde_json::json!({ "path": path, "root": root }));
+            if let Some(found) = found
+                && !matched.contains(found)
+            {
+                matched.push(found.clone());
+            }
+        }
+        serde_json::json!({
+            "total": matched.len(),
+            "complete": true,
+            "quality": "exact",
+            "modules": matched,
+            "paths": named,
+        })
+    }
+}
+
+/// The simple name of an FQN in the binary form: the part after the last `.` and the last `$`.
+fn simple_name_of(fqn: &str) -> &str {
+    let tail = fqn.rsplit('.').next().unwrap_or(fqn);
+    tail.rsplit('$').next().unwrap_or(tail)
+}
+
+/// One `symbol` hit of a class, with `top_level` for a nested class.
+fn class_hit(file: &str, fqn: &str) -> serde_json::Value {
+    let language = if file.ends_with(".java") { "java" } else { "kotlin" };
+    let mut hit = serde_json::json!({
+        "file": file,
+        "line": 1,
+        "kind": "class",
+        "group": "class",
+        "language": language,
+        "name": simple_name_of(fqn),
+        "fqn": fqn,
+    });
+    if let Some((top_level, _)) = fqn.split_once('$') {
+        hit["top_level"] = serde_json::Value::from(top_level);
+    }
+    hit
 }
 
 pub struct FakeRuntime {
@@ -224,6 +357,26 @@ impl FakeRuntime {
     pub fn set_upstream_base(&self, revision: &str) {
         self.add_revision(revision);
         self.state().upstream_base = Some(revision.to_owned());
+    }
+
+    /// Adds a class to the index of the fake accio: its repo-relative file and its FQN in the binary form.
+    pub fn add_class(&self, file: &str, fqn: &str) {
+        self.state().accio.classes.push((file.to_owned(), fqn.to_owned()));
+    }
+
+    /// Adds a module root to the fake accio, as the JSON text of one entry of the `modules` answer.
+    pub fn add_module(&self, entry: impl Into<String>) {
+        self.state().accio.modules.push(entry.into());
+    }
+
+    /// Scripts the answer of one accio call, by its arguments joined by spaces.
+    pub fn answer_accio(&self, args: &str, answer: Result<String, Refusal>) {
+        self.state().accio.answers.insert(args.to_owned(), answer);
+    }
+
+    /// Every accio call so far, as its arguments joined by spaces.
+    pub fn accio_calls(&self) -> Vec<String> {
+        self.state().accio_calls.clone()
     }
 
     pub fn spawned(&self) -> Vec<Vec<String>> {
@@ -390,6 +543,16 @@ impl Runtime for FakeRuntime {
     /// Records the argv and answers the scripted result, whose output stands for the stdout of the child.
     fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult {
         self.scripted_spawn(command)
+    }
+
+    /// Records the call and answers it from [`State::accio`].
+    fn accio(&self, args: &[&str]) -> Result<String, Refusal> {
+        let accio = {
+            let mut state = self.state();
+            state.accio_calls.push(args.join(" "));
+            state.accio.clone()
+        };
+        accio.answer(args)
     }
 
     fn temp_file(&self, prefix: &str) -> PathBuf {
@@ -770,6 +933,99 @@ pub fn flow_catalog_tree() -> BTreeMap<String, String> {
         tree.insert(document_path(suite), fixture.text());
     }
     tree
+}
+
+// --- the module roots of the fake accio ------------------------------------------------------------------------
+
+/// A JPS module of a `modules` entry, as JSON text. Each root is a path relative to `dir` and whether it is a test
+/// source root. `test` is the JSON text of the test module that the module names, if any.
+pub fn jps_json(name: &str, dir: &str, roots: &[(&str, bool)], test: Option<&str>) -> String {
+    let roots: Vec<serde_json::Value> = roots
+        .iter()
+        .map(|(path, test)| {
+            let mut root = serde_json::json!({ "path": format!("{dir}/{path}") });
+            if *test {
+                root["test"] = serde_json::Value::Bool(true);
+            }
+            root
+        })
+        .collect();
+    let mut module = serde_json::json!({
+        "name": name,
+        "manifest": format!("{dir}/{name}.iml"),
+        "roots": roots,
+    });
+    if let Some(test) = test {
+        module["test"] = serde_json::from_str(test).expect("a fixture test module is JSON");
+    }
+    module.to_string()
+}
+
+/// One rule of a `BUILD.bazel` in `root`, as JSON text. Each runtime dependency is a target name in the same root.
+pub fn target_json(root: &str, kind: &str, name: &str, module_name: Option<&str>, env_keys: &[&str], runtime_deps: &[&str]) -> String {
+    let deps: Vec<serde_json::Value> = runtime_deps
+        .iter()
+        .map(|dep| {
+            serde_json::json!({
+                "label": format!(":{dep}"),
+                "attr": "runtime_deps",
+                "scope": "test",
+                "targets": [{ "root": root, "name": dep }],
+            })
+        })
+        .collect();
+    let mut target = serde_json::json!({
+        "name": name,
+        "kind": kind,
+        "line": 1,
+        "test": kind != "jvm_library" || name.ends_with("_test_lib"),
+        "deps": deps,
+    });
+    if let Some(module_name) = module_name {
+        target["module_name"] = serde_json::Value::from(module_name);
+    }
+    if !env_keys.is_empty() {
+        target["env_keys"] = serde_json::json!(env_keys);
+    }
+    target.to_string()
+}
+
+/// One entry of the `modules` answer, as JSON text: the root, its JPS modules, and the targets of its `BUILD.bazel`.
+/// `targets` is `None` for a root without a `BUILD.bazel`.
+pub fn module_entry_json(root: &str, jps: Option<&str>, jps_more: &[&str], targets: Option<&[String]>) -> String {
+    let parse = |text: &str| -> serde_json::Value { serde_json::from_str(text).expect("a fixture part is JSON") };
+    let mut entry = serde_json::json!({ "root": root });
+    if let Some(jps) = jps {
+        entry["jps"] = parse(jps);
+    }
+    if !jps_more.is_empty() {
+        entry["jps_more"] = jps_more.iter().map(|text| parse(text)).collect();
+    }
+    if let Some(targets) = targets {
+        entry["bazel"] = serde_json::json!({
+            "build": format!("{root}/BUILD.bazel"),
+            "targets": targets.iter().map(|text| parse(text)).collect::<Vec<_>>(),
+        });
+    }
+    entry.to_string()
+}
+
+/// The usual module root, as JSON text: the main module with `src`, its test module with `testSrc`, the library of the
+/// main module, the `_test_lib` of the test module, and the `jps_test` that runs the `_test_lib`.
+pub fn tests_module_json(root: &str, main_module: &str, tests_module: &str, test_target: &str) -> String {
+    let test_library = format!("{}_test_lib", test_target.strip_suffix("_test").unwrap_or(test_target));
+    let main_library = main_module.rsplit('.').next().unwrap_or(main_module);
+    let tests = jps_json(tests_module, root, &[("testSrc", true)], None);
+    module_entry_json(
+        root,
+        Some(&jps_json(main_module, root, &[("src", false)], Some(&tests))),
+        &[],
+        Some(&[
+            target_json(root, "jps_test", test_target, None, &[], &[&test_library]),
+            target_json(root, "jvm_library", main_library, Some(main_module), &[], &[]),
+            target_json(root, "jvm_library", &test_library, Some(tests_module), &[], &[]),
+        ]),
+    )
 }
 
 // --- test.xml and BEP builders ---------------------------------------------------------------------------------

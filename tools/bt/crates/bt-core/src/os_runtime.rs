@@ -1,9 +1,10 @@
 //! [`Runtime`] over the real operating system, and the only production implementation of that seam.
 //!
 //! Three behaviours differ between the consumers, and those are injected rather than branched on: the spawn,
-//! because the lane controller resolves a selector from inside a held lease and must not start a subprocess while
-//! `bt`'s whole job is to run one; and the two output sinks, because the controller routes them into its own
-//! worker-tagged reporter while `bt` writes to the process's descriptors.
+//! because the lane controller resolves a selector from inside a held lease and must not start bazel while `bt`'s
+//! whole job is to run one; and the two output sinks, because the controller routes them into its own
+//! worker-tagged reporter while `bt` writes to the process's descriptors. The pinned accio is no injected spawn:
+//! the resolution of each consumer runs it ([`Runtime::accio`]).
 //!
 //! Portable on purpose, with no unix-only call anywhere below, because `bt.cmd` runs on Windows.
 
@@ -16,6 +17,9 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+use refusal::Refusal;
+
+use crate::accio::accio_failed;
 use crate::runtime::{CheckoutTree, DirEntry, Heartbeat, Platform, Runtime, SpawnResult};
 
 /// How much of a child's output is kept.
@@ -88,8 +92,9 @@ impl OsRuntime {
     /// The runtime a caller resolves selectors and suites through without running anything: the controller and the
     /// trace planner.
     ///
-    /// It cannot spawn ([`Spawner::Refuse`]), because such a caller resolves from the checkout alone, and a
-    /// resolution that reached for bazel would start it from inside a held lease or a server request. Its digest
+    /// It spawns nothing but the pinned accio ([`Spawner::Refuse`]), because such a caller resolves from the checkout
+    /// and its accio index, and a resolution that reached for bazel would start it from inside a held lease or a
+    /// server request. Its digest
     /// goes nowhere, since a runtime that refuses to spawn bazel has no test run to digest, and its diagnostics go
     /// to `notes`, the caller's own reporter rather than the process's stderr.
     pub fn resolver(repo_root: impl Into<PathBuf>, notes: impl Fn(&str) + Send + Sync + 'static) -> Self {
@@ -186,10 +191,52 @@ pub(crate) fn write_line(out: &mut dyn Write, text: &str) {
     let _ = writeln!(out, "{text}");
 }
 
+/// The accio wrappers that [`Runtime::accio`] looks for, relative to the checkout root: the one of an ultimate checkout,
+/// then the one of a community checkout.
+pub const ACCIO_WRAPPERS: [&str; 2] = ["community/tools/accio.cmd", "tools/accio.cmd"];
+
+/// The command line of one accio call through the wrapper `wrapper`, a path relative to the checkout root, as
+/// [`crate::lanes::checkout_script_command`] runs it. The project and the format come after `args`.
+pub fn accio_command(repo_root: &Path, platform: Platform, wrapper: &str, args: &[&str]) -> Vec<OsString> {
+    let mut command = crate::lanes::checkout_script_command(repo_root, platform, wrapper);
+    command.extend(args.iter().map(OsString::from));
+    command.extend([OsString::from("--project"), repo_root.as_os_str().to_owned()]);
+    command.extend(["--format", "json"].map(OsString::from));
+    command
+}
+
+/// Runs one accio command line in the checkout root, and answers its stdout.
+///
+/// A command that cannot start, and a command that exits with another code than 0, is a refusal that names the tail
+/// of its stderr. accio builds or refreshes its index by itself, so the call has no retry.
+fn run_accio(repo_root: &Path, command: &[OsString]) -> Result<String, Refusal> {
+    const STDERR_LINES: usize = 20;
+    let Some((program, args)) = command.split_first() else {
+        return Err(accio_failed("nothing to run: the accio command line is empty"));
+    };
+    let ran = Command::new(program)
+        .args(args)
+        .current_dir(repo_root)
+        .stdin(Stdio::null())
+        .output()
+        .map_err(|error| accio_failed(format!("cannot start {}: {error}", command_line(command))))?;
+    if !ran.status.success() {
+        let stderr = String::from_utf8_lossy(&ran.stderr);
+        let lines: Vec<&str> = stderr.lines().collect();
+        let tail = lines[lines.len().saturating_sub(STDERR_LINES)..].join("\n");
+        return Err(accio_failed(format!(
+            "{} exited with {}:\n{tail}",
+            command_line(command),
+            ran.status.code().map_or_else(|| "a signal".to_owned(), |code| code.to_string())
+        )));
+    }
+    Ok(String::from_utf8_lossy(&ran.stdout).into_owned())
+}
+
 /// The controller's spawn: exit 127 with the argv it was asked to run.
 ///
-/// A selector is resolved from the checkout alone, and a resolution that reached for bazel would start it from
-/// inside a held lease. [`Runtime::spawn`] cannot fail by contract, so the refusal arrives as the 127 the classifier
+/// A selector is resolved from the checkout and the pinned accio, and a resolution that reached for bazel would start
+/// it from inside a held lease. [`Runtime::spawn`] cannot fail by contract, so the refusal arrives as the 127 the classifier
 /// reads as infrastructure. A panic would be worse: the controller holds a lease and a worker lock.
 pub fn refuse_spawn(command: &[OsString]) -> SpawnResult {
     SpawnResult {
@@ -698,6 +745,18 @@ impl Runtime for OsRuntime {
             Spawner::Child => spawn_streaming_child(None, command, &error_line),
             Spawner::ChildIn(dir) => spawn_streaming_child(Some(dir), command, &error_line),
         }
+    }
+
+    /// Runs the first wrapper of [`ACCIO_WRAPPERS`] that the checkout holds, through [`accio_command`].
+    fn accio(&self, args: &[&str]) -> Result<String, Refusal> {
+        let Some(wrapper) = ACCIO_WRAPPERS.iter().find(|wrapper| self.repo_root.join(wrapper).is_file()) else {
+            return Err(accio_failed(format!(
+                "the checkout {} has no accio wrapper: {}",
+                self.repo_root.display(),
+                ACCIO_WRAPPERS.join(" or ")
+            )));
+        };
+        run_accio(&self.repo_root, &accio_command(&self.repo_root, Platform::current(), wrapper, args))
     }
 
     /// A fresh file in the system temporary directory, created so no second process can pick the same name.

@@ -558,3 +558,104 @@ fn a_kept_copy_is_writable_and_its_run_directory_is_removable() {
     assert!(!run.exists());
     runtime.remove_dir_all(&run).expect("a missing directory is no error");
 }
+
+/// The accio command line has the shape of the bazel one: the wrapper of the checkout through the shell of the
+/// platform, with the separator of the platform, then the project and the format.
+#[test]
+fn the_accio_command_runs_the_wrapper_of_the_checkout() {
+    let text = |command: Vec<OsString>| command.iter().map(|part| part.to_string_lossy().into_owned()).collect::<Vec<_>>();
+    assert_eq!(
+        text(accio_command(
+            Path::new("/repo"),
+            Platform::Darwin,
+            ACCIO_WRAPPERS[0],
+            &["symbol", "FooTest", "--kind", "class"]
+        )),
+        [
+            "/bin/sh",
+            "/repo/community/tools/accio.cmd",
+            "symbol",
+            "FooTest",
+            "--kind",
+            "class",
+            "--project",
+            "/repo",
+            "--format",
+            "json"
+        ]
+    );
+    assert_eq!(
+        text(accio_command(
+            Path::new(r"C:\repo\"),
+            Platform::Windows,
+            ACCIO_WRAPPERS[1],
+            &["modules"]
+        )),
+        [
+            "cmd.exe",
+            "/c",
+            r"C:\repo\tools\accio.cmd",
+            "modules",
+            "--project",
+            r"C:\repo\",
+            "--format",
+            "json"
+        ]
+    );
+}
+
+/// A checkout without the wrapper is refused, and no accio of the PATH stands in for it.
+#[test]
+fn a_checkout_without_an_accio_wrapper_is_refused() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let runtime = OsRuntime::resolver(dir.path(), |_| {});
+    let refused = runtime.accio(&["symbol", "FooTest"]).expect_err("a refusal");
+    assert_eq!(
+        (refused.code.as_ref(), refused.exit),
+        (crate::accio::ACCIO_FAILED, crate::exit::INFRA)
+    );
+    assert!(
+        refused
+            .message
+            .ends_with("has no accio wrapper: community/tools/accio.cmd or tools/accio.cmd"),
+        "{}",
+        refused.message
+    );
+}
+
+/// The resolver runtime refuses every spawn, and it still runs accio: in the checkout root, with its stdout as the
+/// answer and the tail of its stderr in the refusal of a failed call.
+#[cfg(unix)]
+#[test]
+fn the_resolver_runtime_runs_the_accio_wrapper_in_the_checkout_root() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let wrapper = dir.path().join("tools/accio.cmd");
+    std::fs::create_dir_all(wrapper.parent().expect("a parent")).expect("the tools directory");
+    std::fs::write(
+        &wrapper,
+        "if [ \"$1\" = fail ]; then echo 'no index' >&2; exit 3; fi\npwd -P\nprintf '%s\\n' \"$@\"\n",
+    )
+    .expect("the wrapper");
+    let runtime = OsRuntime::resolver(dir.path(), |_| {});
+    let answered = runtime.accio(&["symbol", "FooTest"]).expect("an answer");
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "the wrapper prints the real path of its working directory, which is under /private on macOS"
+    )]
+    let real_root = std::fs::canonicalize(dir.path()).expect("the real path");
+    let project = dir.path().to_string_lossy().into_owned();
+    assert_eq!(
+        answered.lines().collect::<Vec<_>>(),
+        [
+            &*real_root.to_string_lossy(),
+            "symbol",
+            "FooTest",
+            "--project",
+            &project,
+            "--format",
+            "json"
+        ]
+    );
+    let refused = runtime.accio(&["fail"]).expect_err("a refusal");
+    assert!(refused.message.ends_with("exited with 3:\nno index"), "{}", refused.message);
+}

@@ -18,9 +18,10 @@
 //! The `bt` binary is one consumer. The Air UI-lane controller and its trace planner resolve a lane or a selector
 //! through the same [`Lanes`], [`Selector`], [`ResolutionInputs`] and [`resolve_selector`], so the lane table and
 //! selector resolution are spelled once. For the same reason the production [`Runtime`] is injected by each
-//! consumer: `bt` runs bazel, and the controller's selector resolution must never start a subprocess from inside a
-//! held lease.
+//! consumer: `bt` runs bazel, and the controller's selector resolution starts nothing but the pinned accio from
+//! inside a held lease.
 
+pub mod accio;
 pub mod areas;
 pub mod bep;
 pub mod catalog;

@@ -9,6 +9,8 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::thread;
 
+use refusal::Refusal;
+
 /// The platform whose conventions a path or a command line follows.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Platform {
@@ -133,6 +135,16 @@ pub trait Runtime: Sync {
     /// child sees the end of its stdin only when this process is gone. `bt --host` relies on it: ssh passes the end
     /// to the host, and the host stops the run.
     fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult;
+
+    /// The stdout of one call of the pinned accio of the checkout, as `--format json` prints it. `args` are the
+    /// command and its arguments, such as `["symbol", "FooTest", "--kind", "class"]`. The runtime adds the project
+    /// and the format.
+    ///
+    /// The production runtime runs the wrapper `community/tools/accio.cmd`, or `tools/accio.cmd` in a community
+    /// checkout, never an accio of the PATH. It does not go through [`Runtime::spawn`], so a runtime that refuses to
+    /// spawn still answers it. A call that cannot start or that exits with another code than 0 is a refusal with
+    /// exit 6.
+    fn accio(&self, args: &[&str]) -> Result<String, Refusal>;
 
     /// A fresh path for a temporary file. The caller owns it and removes it with [`Runtime::remove`], from a guard
     /// that runs even when the run blows up: a leaked BEP file is tens of MB for a lane run.

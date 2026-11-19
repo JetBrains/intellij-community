@@ -1325,6 +1325,9 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         fn home_dir(&self) -> Option<PathBuf> {
             self.0.home_dir()
         }
+        fn accio(&self, args: &[&str]) -> Result<String, Refusal> {
+            self.0.accio(args)
+        }
         fn temp_file(&self, prefix: &str) -> PathBuf {
             self.0.temp_file(prefix)
         }
