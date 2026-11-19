@@ -122,7 +122,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
   protected @NotNull VirtualMachineProxyImpl commitVM(final VirtualMachine vm) {
     VirtualMachineProxyImpl proxy = super.commitVM(vm);
     if (vm != null) {
-      if (!vmAttached(proxy)) {
+      boolean attached;
+      try {
+        attached = vmAttached(proxy);
+      }
+      catch (Throwable e) {
+        // A stop can cancel vmAttached after it switched the process to ATTACHED. The stop then disposes the VM
+        // and waits for its disconnect event, which only the event thread delivers.
+        if (isAttached() && !myEventThreads.containsKey(vm)) {
+          LOG.debug("VM attach failed after the process was attached, starting the event thread", e);
+          try {
+            startEventThread(vm);
+          }
+          catch (Throwable t) {
+            e.addSuppressed(t);
+          }
+        }
+        throw e;
+      }
+      if (!attached) {
         // A stop that overlapped this attach has detached already, maybe before the proxy was set, so nobody else
         // disposes this VM, and an event thread would wait on its event queue forever.
         LOG.debug("VM attached after the process was stopped, disposing it");
@@ -136,14 +154,18 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
         return proxy;
       }
-      if (vm.canBeModified()) {
-        DebuggerManagerThreadImpl managerThread = DebuggerManagerThreadImpl.getCurrentThread();
-        DebuggerEventThread eventThread = myEventThreads.computeIfAbsent(vm, _ -> new DebuggerEventThread(managerThread));
-        ApplicationManager.getApplication().executeOnPooledThread(
-          ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", eventThread));
-      }
+      startEventThread(vm);
     }
     return proxy;
+  }
+
+  private void startEventThread(@NotNull VirtualMachine vm) {
+    if (vm.canBeModified()) {
+      DebuggerManagerThreadImpl managerThread = DebuggerManagerThreadImpl.getCurrentThread();
+      DebuggerEventThread eventThread = myEventThreads.computeIfAbsent(vm, _ -> new DebuggerEventThread(managerThread));
+      ApplicationManager.getApplication().executeOnPooledThread(
+        ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", eventThread));
+    }
   }
 
   @Override
