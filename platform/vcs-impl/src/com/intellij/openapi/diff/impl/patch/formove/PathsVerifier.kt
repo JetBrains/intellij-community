@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
-import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.vcsUtil.VcsUtil
@@ -195,6 +194,9 @@ class PathsVerifier(
 
   private inner class CheckAdded(patch: FilePatch) : CheckPath(patch) {
     override fun precheck(beforeFile: VirtualFile?, afterFile: VirtualFile?, context: DelayedPrecheckContext): Boolean {
+      if (checkTargetValid(afterName) == null) {
+        return false
+      }
       if (afterFile != null) {
         context.addOverrideExisting(patch, VcsUtil.getFilePath(afterFile))
       }
@@ -202,9 +204,9 @@ class PathsVerifier(
     }
 
     override fun check(): Boolean {
-      val pieces = RelativePathCalculator.split(afterName!!)
+      val target = checkTargetValid(afterName) ?: return false
       val parent = try {
-        makeSureParentPathExists(pieces)
+        makeSureParentPathExists(target)
       }
       catch (e: IOException) {
         errorMessage = cantCreateFileMessage(afterName, e)
@@ -214,7 +216,7 @@ class PathsVerifier(
         errorMessage = fileNotFoundMessage(afterName)
         return false
       }
-      val name = pieces.last()
+      val name = target.name
       val existingFile = parent.findChild(name)
       val afterFilePath = VcsUtil.getFilePath(parent, name, existingFile?.isDirectory ?: false)
       val file = try {
@@ -251,13 +253,14 @@ class PathsVerifier(
         errorMessage = fileAlreadyExists(afterFile.path)
         return false
       }
-      return true
+      return checkTargetValid(afterName) != null
     }
 
     override fun check(): Boolean {
-      val pieces = RelativePathCalculator.split(afterName!!)
+      val beforeFile = checkExistsAndValid(getMappedFile(beforeName), beforeName) ?: return false
+      val target = checkTargetValid(afterName) ?: return false
       val afterFileParent = try {
-        makeSureParentPathExists(pieces)
+        makeSureParentPathExists(target)
       }
       catch (e: IOException) {
         errorMessage = cantCreateFileMessage(afterName, e)
@@ -267,8 +270,7 @@ class PathsVerifier(
         errorMessage = fileNotFoundMessage(afterName)
         return false
       }
-      val beforeFile = checkExistsAndValid(getMappedFile(beforeName), beforeName) ?: return false
-      movedFiles[beforeFile] = MovedFileData(afterFileParent, beforeFile, patch.afterFileName!!)
+      movedFiles[beforeFile] = MovedFileData(afterFileParent, beforeFile, target.name)
       addPatch(patch, beforeFile)
       return true
     }
@@ -300,9 +302,35 @@ class PathsVerifier(
     }
 
     protected fun checkModificationValid(file: VirtualFile, name: String?): Boolean {
-      if (ApplicationManager.getApplication().isUnitTestMode && ignoreContentRootsCheck) return true
       // security check to avoid overwriting system files with a patch
-      if (!vcsManager.isFileInContent(file) && vcsManager.getVcsRootFor(file) == null) {
+      return checkTrusted(name) { vcsManager.isFileInContent(file) || vcsManager.getVcsRootFor(file) != null }
+    }
+
+    /**
+     * Checks the target of [path] before the patch changes the disk.
+     * The target can be a file that does not exist yet.
+     * The content check needs an existing file, so it uses the nearest existing file of the target.
+     * The check of the ignored names and of the VCS root uses the target path.
+     *
+     * @return the target with resolved `..` segments, or null when the check fails
+     */
+    protected fun checkTargetValid(path: String?): FilePath? {
+      val target = path?.let { getMappedFilePath(it) }
+      val existingFile = target?.let { findNearestExistingFile(it, ArrayList()) }
+      if (target == null || existingFile == null) {
+        errorMessage = fileNotFoundMessage(path)
+        return null
+      }
+      val trusted = checkTrusted(path) {
+        val inContent = vcsManager.isFileInContent(existingFile) && !vcsManager.isIgnored(target)
+        inContent || vcsManager.getVcsRootFor(target) != null
+      }
+      return if (trusted) target else null
+    }
+
+    private fun checkTrusted(name: String?, isTrusted: () -> Boolean): Boolean {
+      if (ApplicationManager.getApplication().isUnitTestMode && ignoreContentRootsCheck) return true
+      if (!isTrusted()) {
         errorMessage = VcsBundle.message("patch.apply.outside.content.root.message", name)
         return false
       }
@@ -324,23 +352,17 @@ class PathsVerifier(
     writableFiles.add(file)
   }
 
+  /**
+   * Returns the parent directory of [target], and creates the missing directories of it.
+   * The target must have resolved `..` segments, so the new directories are in the target path only.
+   */
   @Throws(IOException::class)
-  private fun makeSureParentPathExists(pieces: Array<String>): VirtualFile? {
-    var child: VirtualFile? = baseDirectory
-    for (piece in pieces.dropLast(1)) {
-      if (StringUtil.isEmptyOrSpaces(piece)) {
-        continue
-      }
-      if (".." == piece) {
-        child = child!!.parent
-        continue
-      }
-      var nextChild = child!!.findChild(piece)
-      if (nextChild == null) {
-        nextChild = child.createChildDirectory(PatchApplier::class.java, piece)
-        createdDirectories.add(nextChild)
-      }
-      child = nextChild
+  private fun makeSureParentPathExists(target: FilePath): VirtualFile? {
+    val parentPath = target.parentPath ?: return null
+    val missingNames = ArrayList<String>()
+    var child = findNearestExistingFile(parentPath, missingNames) ?: return null
+    for (name in missingNames) {
+      child = child.findChild(name) ?: child.createChildDirectory(PatchApplier::class.java, name).also { createdDirectories.add(it) }
     }
     return child
   }
@@ -439,7 +461,7 @@ class PathsVerifier(
   class PatchAndFile(val file: VirtualFile, val applyPatch: ApplyFilePatchBase<*>)
 
   private companion object {
-    private fun cantCreateFileMessage(path: String, e: IOException): @DialogMessage String {
+    private fun cantCreateFileMessage(path: String?, e: IOException): @DialogMessage String {
       return VcsBundle.message("cannot.create.directory.for.patch", path, e.message)
     }
 
@@ -454,6 +476,18 @@ class PathsVerifier(
     @Throws(IOException::class)
     private fun createFile(parent: VirtualFile, name: String): VirtualFile {
       return parent.createChildData(PatchApplier::class.java, name)
+    }
+
+    /**
+     * Returns the file of [path], or of the nearest parent of it that exists.
+     * Adds the names of the missing parts of the path to [missingNames], from the top down.
+     */
+    private fun findNearestExistingFile(path: FilePath, missingNames: MutableList<in String>): VirtualFile? {
+      for (current in generateSequence(path) { it.parentPath }) {
+        current.virtualFile?.let { return it }
+        missingNames.add(0, current.name)
+      }
+      return null
     }
   }
 }

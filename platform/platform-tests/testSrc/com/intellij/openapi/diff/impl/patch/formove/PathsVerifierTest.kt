@@ -9,6 +9,7 @@ import com.intellij.openapi.diff.impl.patch.BinaryFilePatch
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
@@ -104,6 +105,7 @@ internal class PathsVerifierTest {
     every { overwritePrompt(vcsHelper) } answers { firstArg() }
     project.registerOrReplaceServiceInstance(AbstractVcsHelper::class.java, vcsHelper, disposable)
 
+    assertTrue(FileTypeManager.getInstance().isFileIgnored(IGNORED_DIR_NAME))
     val root = findFile(rootFixture.get())
     VfsUtil.markDirtyAndRefresh(false, true, true, root)
     baseDir = findFile(projectDir)
@@ -252,6 +254,18 @@ internal class PathsVerifierTest {
     }
 
     @Test
+    fun `an added file with a path that goes through outside the project creates nothing outside`(): Unit = timeoutRunBlocking {
+      projectDir.resolve("src").createDirectories()
+      val patch = added("../outside/new/../../${projectDir.fileName}/src/New.txt")
+
+      val outcome = runVerifier(patch)
+
+      assertTrue(outcome.isAccepted(patch))
+      assertTrue(projectDir.resolve("src/New.txt").isRegularFile())
+      assertFalse(outsideDir.resolve("new").exists(), "The verifier must not create a directory outside the project")
+    }
+
+    @Test
     fun `an added file outside the project is rejected and creates nothing outside`(): Unit = timeoutRunBlocking {
       val patch = added("../outside/new/New.txt")
 
@@ -274,6 +288,18 @@ internal class PathsVerifierTest {
       verify { vcsHelper wasNot Called }
       assertTrue(outcome.verifier.textPatches.isEmpty())
       assertEquals("old", outsideDir.resolve("Existing.txt").readText())
+    }
+
+    @Test
+    fun `an added file in a new directory with an ignored name is rejected`(): Unit = timeoutRunBlocking {
+      projectDir.resolve("src").createDirectories()
+      val patch = added("src/$IGNORED_DIR_NAME/config")
+
+      val outcome = runVerifier(patch)
+
+      assertTrue(outcome.isRejected(patch))
+      assertFalse(projectDir.resolve("src/$IGNORED_DIR_NAME").exists())
+      assertTrue(outcome.verifier.toBeAdded.isEmpty())
     }
 
     @Test
@@ -429,6 +455,19 @@ internal class PathsVerifierTest {
     }
 
     @Test
+    fun `a move to a new directory with an ignored name is rejected and the file stays`(): Unit = timeoutRunBlocking {
+      writeFile(projectDir.resolve("src/A.txt"))
+      val patch = moved("src/A.txt", "src/$IGNORED_DIR_NAME/A.txt")
+
+      val outcome = runVerifier(patch)
+      applyMoves(outcome)
+
+      assertTrue(outcome.isRejected(patch))
+      assertTrue(projectDir.resolve("src/A.txt").isRegularFile())
+      assertFalse(projectDir.resolve("src/$IGNORED_DIR_NAME").exists())
+    }
+
+    @Test
     fun `a move with more dot-dot segments than the path depth is rejected and the file stays`(): Unit = timeoutRunBlocking {
       writeFile(projectDir.resolve("src/A.txt"))
       val patch = moved("src/A.txt", climbAboveFileSystemRoot() + "$DEEP_DIR_NAME/A.txt")
@@ -538,6 +577,9 @@ internal class PathsVerifierTest {
 }
 
 private const val DEEP_DIR_NAME = "paths-verifier-test-above-root"
+
+/** A name from the default list of ignored files of [FileTypeManager]. */
+private const val IGNORED_DIR_NAME = ".git"
 
 /**
  * Calls the overwrite prompt of [helper] that [PathsVerifier] uses, in an `every` or a `verify` block.
