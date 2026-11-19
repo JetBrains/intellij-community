@@ -765,6 +765,25 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
   @Nested
   inner class StrictUnionOperators {
     @Test
+    @TestFor(issues = ["PY-93097"])
+    fun `subscription of union with member that does not take it`() = test("""
+      def f(x: list[int] | int, cls: type[list[int]] | None, classes: type[int] | type[str]):
+          x[0]
+      #    └ WEAK_WARNING Member 'int' of 'list[int] | int' does not have attribute '__getitem__'
+          cls[0]
+      #      └ WEAK_WARNING Member 'None' of 'type[list[int]] | None' does not have attribute '__getitem__'
+          classes[0]
+      #          └ WEAK_WARNING Member 'type[int]' of 'type[int | str]' does not have attribute '__getitem__'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93097"])
+    fun `subscription of union of generic class objects`() = test("""
+      def f(cls: type[list] | type[set]):
+          cls[int]
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-90532"])
     fun `binary operator member rejects the operand`() = test("""
       class LeftOperand:
