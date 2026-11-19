@@ -4114,10 +4114,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     Tree = Node["Forest[T]"] | list["Forest[T]"]
     Forest = Tree[T] | Node[Tree[T]]
-    #            │              └ WEAK_WARNING Member 'type[Node[Unknown]]' of 'UnionType | type[Node[Unknown]] | type[list[Unknown]]' does not have attribute '__getitem__' FIXME
-    #            └ WEAK_WARNING Member 'type[Node[Unknown]]' of 'UnionType | type[Node[Unknown]] | type[list[Unknown]]' does not have attribute '__getitem__' FIXME
     forest: Forest[int]
-    #             └ WEAK_WARNING Member 'type[Node[Unknown]]' of 'UnionType | type[Node[Unknown]]' does not have attribute '__getitem__' FIXME
     forest
     #└ TYPE Unknown FIXME # recursive generic aliases are not inferred
 

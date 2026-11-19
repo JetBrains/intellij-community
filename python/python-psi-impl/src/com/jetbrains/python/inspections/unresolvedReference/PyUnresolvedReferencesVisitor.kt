@@ -53,6 +53,7 @@ import com.jetbrains.python.psi.PyQualifiedElement
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyReferenceOwner
+import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTryExceptStatement
 import com.jetbrains.python.psi.PyTryPart
@@ -573,10 +574,27 @@ class PyUnresolvedReferencesVisitor(
     // Only the last one owns the attribute `mod` directly, and the first needs a location to inspect imports
     // of this module in the file the original reference belongs to.
     val location = ref.element as? PyExpression
+    val subscription = if (name == PyNames.GETITEM) location as? PySubscriptionExpression else null
     return type.members.firstOrNull { t ->
       t != null && !ignoreUnresolvedMemberForType(t, ref, name) &&
-      t.resolveMember(name, location, AccessDirection.READ, resolveContext).isNullOrEmpty()
+      t.resolveMember(name, location, AccessDirection.READ, resolveContext).isNullOrEmpty() &&
+      !(subscription != null && t is PyClassLikeType && t.isDefinition && classObjectTakesSubscription(t, type, subscription))
     }
+  }
+
+  /**
+   * Checks that the class object [classType], a member of [union], takes the subscription [subscription] at run time.
+   * The value of `X | Y` is a `types.UnionType`, and it takes the subscription of the union, as in `Alias[T]`.
+   * Then the class objects in the union only show the members of `X | Y`.
+   * A generic class takes the subscription with `__class_getitem__`.
+   */
+  private fun classObjectTakesSubscription(
+    classType: PyClassLikeType,
+    union: PyUnionType,
+    subscription: PySubscriptionExpression,
+  ): Boolean {
+    if (union.members.any { it is PyClassType && !it.isDefinition && it.classQName == UNION_TYPE }) return true
+    return !classType.resolveMember(PyNames.CLASS_GETITEM, subscription, AccessDirection.READ, resolveContext).isNullOrEmpty()
   }
 
   private fun isDecoratedAsDynamic(cls: PyClass): Boolean {
@@ -699,3 +717,5 @@ class PyUnresolvedReferencesVisitor(
     }
   }
 }
+
+private const val UNION_TYPE = "types.UnionType"
