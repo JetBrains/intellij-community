@@ -523,14 +523,6 @@ class MarkdownLivePreviewSpecTest {
   }
 
   @Test
-  fun testBlockquotePlaceholdersKeepEachLevelTwoSpacesWide() {
-    assertEquals(listOf("  ", "  "), placeholders(">>text"))
-    assertEquals(listOf(" ", " "), placeholders("> > text"))
-    assertEquals(listOf(" ", "  "), placeholders("> >text"))
-    assertEquals(listOf(" ", "  ", " "), placeholders("> first\n>\n>\ttab"))
-  }
-
-  @Test
   fun testAdjacentBlockquoteMarkersOfALineRevealTogether() {
     val content = ">>text\n>>>>text\n> > > test"
     assertEquals(List(9) { ">" }, concealed(content))
@@ -878,8 +870,6 @@ class MarkdownLivePreviewSpecTest {
 
   private fun ruleSegments(content: String): List<String> =
     blockQuotes(content).map { content.substring(it.ruleRange.startOffset, it.ruleRange.endOffset) }
-
-  private fun placeholders(content: String): List<String> = blockQuotes(content).map { it.placeholderText }
 
   private fun blockQuotes(content: String): List<MarkdownLivePreviewSpec.BlockQuote> =
     elements(content).filterIsInstance<MarkdownLivePreviewSpec.BlockQuote>()

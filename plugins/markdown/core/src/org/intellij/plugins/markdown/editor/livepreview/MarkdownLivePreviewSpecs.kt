@@ -188,12 +188,10 @@ private class LineIndex(private val source: CharSequence, private val document: 
       val ruleEnd =
         if (next != null) document.getLineStartOffset(document.getLineNumber(next.startOffset))
         else document.getLineEndOffset(document.getLineNumber(marker.startOffset))
-      val placeholder = if (source.getOrNull(marker.endOffset)?.let { it in " \t" } == true) " " else "  "
       MarkdownLivePreviewSpec.BlockQuote(
         range = markerRuns.getValue(marker.startOffset),
         markerRange = marker,
         ruleRange = MarkdownLivePreviewRange(marker.startOffset, ruleEnd),
-        placeholderText = placeholder,
         alertType = alertType,
       )
     }

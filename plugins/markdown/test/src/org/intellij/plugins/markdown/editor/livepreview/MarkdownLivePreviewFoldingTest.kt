@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
@@ -1695,15 +1696,20 @@ class MarkdownLivePreviewFoldingTest {
   }
 
   @Test
-  fun testEachQuoteLevelHasTheSameWidthWithOrWithoutASpace(): Unit = timeoutRunBlocking {
+  fun testRevealingAQuoteMarkerKeepsTheTextInPlace(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
-      val textStarts = listOf(">>text", "> >text", ">> text", "> > text").map { line ->
-        val content = "$line\n\ntail"
-        configure("$content<caret>")
-        assertEquals(listOf(">", ">"), concealed())
-        myFixture.editor.offsetToXY(line.indexOf("text")).x
+      for (line in listOf("> text", ">text", "> > text", ">>text")) {
+        configure("$line\n\ntail<caret>")
+        val editor = myFixture.editor
+        editor.colorsScheme.editorFontName = Font.SANS_SERIF
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+        assertEquals(List(line.count { it == '>' }) { ">" }, concealed())
+        val concealedX = editor.offsetToXY(line.indexOf("text")).x
+
+        moveCaretTo(0)
+        assertThat(concealed()).isEmpty()
+        assertEquals(concealedX, editor.offsetToXY(line.indexOf("text")).x, "Revealing '$line' must keep the text in place")
       }
-      assertTrue(textStarts.max() - textStarts.min() <= 1, "Every quote level must have the same width: $textStarts")
     }
   }
 
@@ -1791,18 +1797,17 @@ class MarkdownLivePreviewFoldingTest {
       // The background of the quote ends at the right edge of the visible area.
       EditorTestUtil.setEditorVisibleSize(editor, 80, 12)
       editor.colorsScheme.setAttributes(MarkdownHighlighterColors.BLOCK_QUOTE, TextAttributes(null, Color.RED, null, null, Font.PLAIN))
-      val [listBullet, marker, quotedBullet] = concealedLivePreviewRegions(editor)
+      val [listBullet, quotedBullet] = concealedLivePreviewRegions(editor)
 
       var image = MarkdownTestingUtil.paintEditor(editor)
       assertFalse(Color.RED.rgb == placeholderBackground(image, listBullet), "A bullet before the quote must keep the editor background")
-      assertEquals(Color.RED.rgb, placeholderBackground(image, marker))
       assertEquals(Color.RED.rgb, placeholderBackground(image, quotedBullet))
 
       // A diff change paints its lines above the quote background.
       val change = TextAttributes(null, Color.GREEN, null, null, Font.PLAIN)
       editor.markupModel.addRangeHighlighter(0, 1, HighlighterLayer.SELECTION - 1, change, HighlighterTargetArea.LINES_IN_RANGE)
       image = MarkdownTestingUtil.paintEditor(editor)
-      for (region in listOf(listBullet, marker, quotedBullet)) {
+      for (region in listOf(listBullet, quotedBullet)) {
         assertEquals(Color.GREEN.rgb, placeholderBackground(image, region), "The placeholder at ${region.startOffset} must show the change")
       }
     }
@@ -2877,10 +2882,10 @@ class MarkdownLivePreviewFoldingTest {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
-  /** The concealed markup, in document order. */
+  /** The concealed markup, in document order. A blockquote marker counts as concealed while its glyph is hidden. */
   private fun concealed(editor: Editor = myFixture.editor): List<String> {
     val text = editor.document.charsSequence
-    return concealedLivePreviewRegions(editor).map { text.subSequence(it.startOffset, it.endOffset).toString() }
+    return concealedRanges(editor).map { [range, _] -> text.subSequence(range.startOffset, range.endOffset).toString() }
   }
 
   private fun concealedWithPlaceholders(editor: Editor = myFixture.editor): List<Pair<String, String>> {
@@ -2896,17 +2901,16 @@ class MarkdownLivePreviewFoldingTest {
   private fun FoldRegion.bulletInlay(editor: Editor): Inlay<out MarkdownLivePreviewBulletInlayRenderer>? =
     editor.inlayModel.getInlineElementsInRange(endOffset, endOffset, MarkdownLivePreviewBulletInlayRenderer::class.java).firstOrNull()
 
-  /** Returns the logical text with markup removed. Blank quote placeholders only reserve visual space. */
+  /** Returns the logical text with markup removed. Blank placeholders and hidden quote markers only reserve visual space. */
   private fun visibleText(): String {
     val editor = myFixture.editor
     val text = editor.document.charsSequence
     val result = StringBuilder()
     var offset = 0
-    for (region in concealedLivePreviewRegions(editor)) {
-      if (region.startOffset > offset) result.append(text, offset, region.startOffset)
-      val shown = region.shownText(editor)
-      if (shown.any { !it.isWhitespace() }) result.append(shown)
-      offset = maxOf(offset, region.endOffset)
+    for ([range, placeholder] in concealedRanges(editor)) {
+      if (range.startOffset > offset) result.append(text, offset, range.startOffset)
+      if (placeholder.any { !it.isWhitespace() }) result.append(placeholder)
+      offset = maxOf(offset, range.endOffset)
     }
     result.append(text, offset, text.length)
     return result.toString()
@@ -2922,6 +2926,16 @@ class MarkdownLivePreviewFoldingTest {
   private fun concealedLivePreviewRegions(editor: Editor): List<FoldRegion> =
     editor.foldingModel.allFoldRegions
       .filter { it.isValid && it.shouldNeverExpand() }
+      .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
+
+  /** The fold ranges with their placeholders and the hidden quote markers with no placeholder, in document order. */
+  private fun concealedRanges(editor: Editor): List<Pair<TextRange, String>> =
+    (concealedLivePreviewRegions(editor).map { it.textRange to it.shownText(editor) } + hiddenQuoteMarkers(editor).map { it.textRange to "" })
+      .sortedWith(compareBy({ it.first.startOffset }, { it.first.endOffset }))
+
+  private fun hiddenQuoteMarkers(editor: Editor = myFixture.editor): List<RangeHighlighter> =
+    editor.markupModel.allHighlighters
+      .filter { it.isValid && it.getTextAttributes(null)?.foregroundColor?.alpha == 0 }
       .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
 
   private fun blockQuoteRules(): List<RangeHighlighter> =
