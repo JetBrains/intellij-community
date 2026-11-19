@@ -593,6 +593,13 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `arrows move between Suggested rows the Marketplace link and the next section`
   )
 
+- Typing a printable character in the plugin list must focus the search field and append the character to the query.
+- Space, Enter, and shortcuts with Ctrl or Meta must stay with the focused control.
+- Text fields in the list must receive their own input.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
+    `typing in the list appends to the search while the page is attached`
+  )
+
 - The settings gear must be a Tab stop.
 - Tab must visit one plugin row before it leaves the list for details.
 - The last selected row must be the list's row stop. Without a selection, the first rendered row must be that stop.

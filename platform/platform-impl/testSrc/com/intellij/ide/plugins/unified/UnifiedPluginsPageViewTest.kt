@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.ShowingContainer
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -59,6 +60,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 import java.awt.event.FocusEvent
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
@@ -70,6 +72,7 @@ import javax.swing.JPanel
 import javax.swing.RepaintManager
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
+import javax.swing.JTextField
 import javax.swing.JToggleButton
 import javax.swing.KeyStroke
 
@@ -1339,6 +1342,65 @@ internal class UnifiedPluginsPageViewTest {
 
     searchField.text = "java"
     assertThat(queries.last()).isEqualTo("java")
+  }
+
+  @Test
+  fun `typing in the list appends to the search while the page is attached`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val originalFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    val focusManager = object : DefaultKeyboardFocusManager() {
+      private var source: Component? = null
+
+      override fun getFocusOwner(): Component? = source
+
+      fun type(component: Component, char: Char, modifiers: Int = 0): Boolean {
+        source = component
+        val event = KeyEvent(component, KeyEvent.KEY_TYPED, 0, modifiers, KeyEvent.VK_UNDEFINED, char)
+        return getKeyEventDispatchers().orEmpty().any { it.dispatchKeyEvent(event) }
+      }
+    }
+    val host = ShowingContainer()
+    KeyboardFocusManager.setCurrentKeyboardFocusManager(focusManager)
+    try {
+      host.addNotify()
+      val queries = ArrayList<String>()
+      val installedTitle = IdeBundle.message("plugin.manager.tab.installed")
+      val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 5)))
+      val list = createView(onSearchChanged = queries::add).use { view ->
+        host.add(view.component)
+        view.render(controller.state.value)
+        view.setSearchQuery("Jet")
+
+        assertThat(view.component.isShowing).isTrue()
+        val list = sectionList(view, installedTitle)
+        val header = componentsOfType(sectionHeader(view, installedTitle), JToggleButton::class.java).single()
+        val footer = componentsOfType(view.component, JToggleButton::class.java)
+          .single { it.accessibleContext.accessibleName == IdeBundle.message("plugins.configurable.show.hidden.row", 2) }
+        assertThat(focusManager.type(list, 'B', InputEvent.SHIFT_DOWN_MASK)).isTrue()
+        assertThat(focusManager.type(header, 'r')).isTrue()
+        assertThat(focusManager.type(footer, 'a')).isTrue()
+        assertThat(queries).containsExactly("JetB", "JetBr", "JetBra")
+
+        assertThat(focusManager.type(list, ' ')).isFalse()
+        assertThat(focusManager.type(header, '\n')).isFalse()
+        assertThat(focusManager.type(list, 'c', InputEvent.CTRL_DOWN_MASK)).isFalse()
+        assertThat(focusManager.type(list, 'c', InputEvent.META_DOWN_MASK)).isFalse()
+        val textField = JTextField().also(list::add)
+        assertThat(focusManager.type(textField, 'x')).isFalse()
+        assertThat(focusManager.type(JButton(), 'x')).isFalse()
+
+        host.remove(view.component)
+        assertThat(focusManager.type(list, 'x')).isFalse()
+        host.add(view.component)
+        assertThat(focusManager.type(list, 'i')).isTrue()
+        assertThat(queries).containsExactly("JetB", "JetBr", "JetBra", "JetBrai")
+        list
+      }
+      assertThat(focusManager.type(list, 'x')).isFalse()
+    }
+    finally {
+      host.removeNotify()
+      KeyboardFocusManager.setCurrentKeyboardFocusManager(originalFocusManager)
+    }
   }
 
   @Test

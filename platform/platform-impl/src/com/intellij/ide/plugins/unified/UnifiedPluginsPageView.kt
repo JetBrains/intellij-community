@@ -58,6 +58,7 @@ import java.awt.Font
 import java.awt.GradientPaint
 import java.awt.Graphics
 import java.awt.GridBagLayout
+import java.awt.KeyEventDispatcher
 import java.awt.KeyboardFocusManager
 import java.awt.LayoutManager
 import java.awt.Point
@@ -91,6 +92,7 @@ import javax.swing.Timer
 import javax.swing.JToggleButton
 import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
+import javax.swing.text.JTextComponent
 import org.jetbrains.annotations.Nls
 
 internal class UnifiedPluginsPageView @RequiresEdt constructor(
@@ -147,6 +149,11 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     maximumSize = Dimension(maximumWidth, maximumSize.height)
   }
 
+  private var typingFocusManager: KeyboardFocusManager? = null
+  private val typingForwarder = KeyEventDispatcher { event ->
+    event.id == KeyEvent.KEY_TYPED && !event.isConsumed && forwardTypedCharacterToSearch(event)
+  }
+
   init {
     require(detailsPresenter == null || rowFactory != null) { "Plugin details require real plugin rows" }
     configureSearchField()
@@ -200,6 +207,20 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     }
 
     component = object : OnePixelSplitter(false, SPLIT_STORAGE_DEFAULT_PROPORTION) {
+      override fun addNotify() {
+        super.addNotify()
+        if (typingFocusManager == null) {
+          typingFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager().also {
+            it.addKeyEventDispatcher(typingForwarder)
+          }
+        }
+      }
+
+      override fun removeNotify() {
+        removeTypingForwarder()
+        super.removeNotify()
+      }
+
       // JBSplitter saves each proportion change. Preserve this flag through nested layouts so only user changes reach storage.
       private var updatingDefaultProportion = false
 
@@ -352,6 +373,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
 
   @RequiresEdt
   override fun close() {
+    removeTypingForwarder()
     resultsAnnouncementTimer.stop()
     setStickySection(null)
     detailsPresenter?.close()
@@ -360,6 +382,11 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     sectionViews.values.forEach { it.setRealRows(emptyList()) }
     renderedState = null
     pendingSelectionRevealRevision = null
+  }
+
+  private fun removeTypingForwarder() {
+    typingFocusManager?.removeKeyEventDispatcher(typingForwarder)
+    typingFocusManager = null
   }
 
   private fun reconcileRealRows(state: UnifiedPluginsPageState) {
@@ -622,6 +649,22 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         SectionAnnouncementSignature(section.id, section.count, section.status)
       },
     )
+  }
+
+  private fun forwardTypedCharacterToSearch(event: KeyEvent): Boolean {
+    val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner ?: return false
+    if (owner is JTextComponent || !component.isShowing) return false
+    if (!SwingUtilities.isDescendingFrom(owner, scrollPane) && !SwingUtilities.isDescendingFrom(owner, stickyHeaderHost)) return false
+    if (event.isControlDown || event.isMetaDown) return false
+    val typed = event.keyChar
+    if (typed == KeyEvent.CHAR_UNDEFINED || typed <= ' ' || Character.isISOControl(typed)) return false
+
+    val editor = searchField.textEditor
+    editor.requestFocusInWindow()
+    editor.caretPosition = editor.document.length
+    editor.replaceSelection(typed.toString())
+    event.consume()
+    return true
   }
 
   private fun configureSearchField() {
