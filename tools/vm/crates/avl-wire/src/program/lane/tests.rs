@@ -232,10 +232,12 @@ fn a_performance_series_that_would_collide_or_leave_its_directory_is_refused() {
     let mut broken = document();
     let mut nameless = series("AirLongSessionUiTest", "nameless", "air-nameless");
     nameless["project"] = json!("");
+    let mut large = series("AirLongSessionUiTest", "large", "air-long-session/LARGE");
+    large["project"] = json!("air/long-session/LARGE-other");
     broken["performanceSeries"] = json!([
         series("AirLongSessionUiTest", "small", "air-long-session/SMALL"),
         series("AirLongSessionUiTest", "small", "air-long-session/LARGE"),
-        series("AirLongSessionUiTest", "large", "air-long-session/LARGE"),
+        large,
         series("AirLongSessionUiTest", "escape", "../outside"),
         series("AirLongSessionUiTest", "rooted", "/rooted"),
         nameless,
@@ -250,4 +252,14 @@ fn a_performance_series_that_would_collide_or_leave_its_directory_is_refused() {
             "the performance series of AirLongSessionUiTest#nameless names no project or no method",
         ]
     );
+}
+
+#[test]
+fn the_passes_of_one_scenario_share_the_artifact_path_of_their_series() {
+    let mut passes = document();
+    passes["performanceSeries"] = json!([
+        series("AirLongSessionUiTest", "size M", "air-long-session/M"),
+        series("AirLongSessionUiTest", "size M, pass 2 of 2", "air-long-session/M"),
+    ]);
+    assert_eq!(parse(&passes).unwrap().performance_series.len(), 2);
 }

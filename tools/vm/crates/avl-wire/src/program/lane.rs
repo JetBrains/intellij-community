@@ -308,13 +308,15 @@ impl LaneDocument {
             }
         }
         let mut scenarios = BTreeSet::new();
-        let mut artifact_paths = BTreeSet::new();
+        // The passes of one scenario name one series each, all with the same project, method and artifact path.
+        let mut artifact_paths = BTreeMap::new();
         for series in &self.performance_series {
             let scenario = format!("{}#{}", series.test_class_name, series.scenario);
             if !scenarios.insert(scenario.clone()) {
                 refusals.push(format!("the scenario {scenario} has two performance series"));
             }
-            if !artifact_paths.insert(series.artifact_path.as_str()) {
+            let owner = (series.project.as_str(), series.method.as_str());
+            if *artifact_paths.entry(series.artifact_path.as_str()).or_insert(owner) != owner {
                 refusals.push(format!(
                     "the artifact path '{}' is the path of two performance series",
                     series.artifact_path

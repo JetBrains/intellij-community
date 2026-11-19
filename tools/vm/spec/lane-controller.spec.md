@@ -941,6 +941,15 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-junit/src/teamcity/tests.rs (`a_file_is_published_into_its_directory_with_its_path_escaped`)
   [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_teamcity_build_step_writes_and_publishes_the_ij_perf_file_of_each_planned_scenario`)
 
+- A scenario can run in passes, and each pass is a case of its own. The lane document then names one series for each
+  pass, all with the same artifact path. The file of the series holds the median of each metric over the passes.
+  A rerun counts with its last attempt. Only the passes that passed count, and when no pass passed, every pass counts.
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`the_passes_of_a_scenario_write_one_file_with_their_median`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`the_median_of_the_passes_keeps_one_noisy_pass_out`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`a_failed_pass_does_not_count_while_another_pass_passed`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`the_last_attempt_of_a_rerun_counts`)
+  [@test] ../crates/avl-wire/src/program/lane/tests.rs (`the_passes_of_one_scenario_share_the_artifact_path_of_their_series`)
+
 - A metric whose name ends with `Ms` is a duration. A metric whose name starts with `growth.` is the counter
   `<name>.x100` of its value times 100. Every other metric is a counter. The file keeps whole numbers, so each value
   is rounded, and a half goes up.
