@@ -111,8 +111,9 @@ pub trait Runtime: Sync {
     /// Answers for a directory as well as a file: every test source root this crate probes is a directory.
     fn exists(&self, path: &Path) -> bool;
 
-    /// The content of the checkout now, or `None` when the checkout root is not a linked work tree of git. Only a
-    /// linked work tree, such as a lease of Branch Deck, is landed by `brd lease pick`, so only it needs the tree.
+    /// The content of the checkout now, or `None` when the checkout root is not a linked work tree of git or is a host
+    /// slot of `brd-host`. Only a linked work tree, such as a lease of Branch Deck, is landed by `brd lease pick`, so only
+    /// it needs the tree. No pick lands a host slot.
     ///
     /// It changes neither the index nor the work tree of the checkout. It writes the blobs and the trees of the local
     /// changes into the object database, so a later reader can compare two trees.

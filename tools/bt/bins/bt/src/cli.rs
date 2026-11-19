@@ -33,13 +33,14 @@ pub(crate) const PROGRAM: &str = "./community/tools/bt.cmd";
 /// `repo_root` is passed in rather than read here because it is one of the things a running process has that a test
 /// cannot be given, and `main.rs` is where those are read. An absent or empty one is a refusal, not a search: every
 /// selector, `.iml` and `BUILD.bazel` resolves relative to the checkout root, and guessing it from the working
-/// directory would answer "no such test" for a whole tree that is there.
-pub(crate) fn run<I, T>(argv: I, repo_root: Option<&Path>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8
+/// directory would answer "no such test" for a whole tree that is there. `host_slot` says that the checkout is a host
+/// slot of `brd-host`, see [`bt_core::os_runtime::OsRuntimeBuilder::host_slot`].
+pub(crate) fn run<I, T>(argv: I, repo_root: Option<&Path>, host_slot: bool, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
 {
-    report(execute_in(argv, repo_root), stdout, stderr)
+    report(execute_in(argv, repo_root, host_slot), stdout, stderr)
 }
 
 /// Builds the production runtime and runs one invocation.
@@ -47,7 +48,7 @@ where
 /// The spawn runs children in the checkout: bazel resolves a target pattern against the workspace it was started in,
 /// and this binary's own working directory under a `bazel run` launcher is somewhere in an output tree. The two sinks
 /// stay the process's own stdout and stderr; the lane controller is the consumer that routes them elsewhere.
-fn execute_in<I, T>(argv: I, repo_root: Option<&Path>) -> Result<Outcome, Refusal>
+fn execute_in<I, T>(argv: I, repo_root: Option<&Path>, host_slot: bool) -> Result<Outcome, Refusal>
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
@@ -63,6 +64,7 @@ where
     };
     let runtime = OsRuntime::builder(repo_root)
         .spawn(Spawner::ChildIn(repo_root.to_path_buf()))
+        .host_slot(host_slot)
         .build();
     execute(argv, &runtime)
 }

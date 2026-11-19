@@ -54,6 +54,7 @@ pub type Sink = Box<dyn Fn(&str) + Send + Sync>;
 pub struct OsRuntime {
     repo_root: PathBuf,
     spawner: Spawner,
+    host_slot: bool,
     write: Sink,
     write_error: Sink,
 }
@@ -62,6 +63,7 @@ pub struct OsRuntime {
 pub struct OsRuntimeBuilder {
     repo_root: PathBuf,
     spawner: Spawner,
+    host_slot: bool,
     write: Option<Sink>,
     write_error: Option<Sink>,
 }
@@ -74,6 +76,7 @@ impl OsRuntime {
         OsRuntimeBuilder {
             repo_root: repo_root.into(),
             spawner: Spawner::Refuse,
+            host_slot: false,
             write: None,
             write_error: None,
         }
@@ -102,6 +105,16 @@ impl OsRuntimeBuilder {
         self
     }
 
+    /// Whether the checkout is a host slot of `brd-host`. A host slot is a linked work tree too, but no `brd lease pick`
+    /// lands it: the `bt --host` client records the tree of the commit that the host ran. So the runtime of a host slot
+    /// answers no tree, and the run skips the two scans of the untracked files that a tree costs. The default is
+    /// `false`.
+    #[must_use]
+    pub fn host_slot(mut self, host_slot: bool) -> Self {
+        self.host_slot = host_slot;
+        self
+    }
+
     /// The digest's destination. The default is the process's stdout, one line per call.
     #[must_use]
     pub fn write(mut self, sink: impl Fn(&str) + Send + Sync + 'static) -> Self {
@@ -121,6 +134,7 @@ impl OsRuntimeBuilder {
         OsRuntime {
             repo_root: self.repo_root,
             spawner: self.spawner,
+            host_slot: self.host_slot,
             // A handle per call rather than a held lock: the heartbeat writes from its own thread while the run is
             // in progress.
             write: self.write.unwrap_or_else(|| Box::new(|text| write_line(&mut io::stdout(), text))),
@@ -710,7 +724,7 @@ impl Runtime for OsRuntime {
     /// add a gitlink. A directory replaced by a symbolic link makes `update-index` fail, so the answer is an error.
     fn checkout_tree(&self) -> io::Result<Option<CheckoutTree>> {
         let root = &self.repo_root;
-        if !root.join(".git").is_file() {
+        if self.host_slot || !root.join(".git").is_file() {
             return Ok(None);
         }
         // `HEAD:` is the root tree of HEAD.

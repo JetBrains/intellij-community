@@ -25,7 +25,7 @@ struct Answer {
 fn invoke(repo_root: Option<&Path>, argv: &[&str]) -> Answer {
     let mut stdout = Vec::new();
     let mut stderr = Vec::new();
-    let exit_code = run(argv, repo_root, &mut stdout, &mut stderr);
+    let exit_code = run(argv, repo_root, false, &mut stdout, &mut stderr);
     Answer {
         exit_code,
         stdout: String::from_utf8_lossy(&stdout).into_owned(),

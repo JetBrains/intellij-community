@@ -481,9 +481,9 @@ fn a_directory_that_cannot_be_listed_is_an_error() {
     assert!(error.to_string().contains(&absent.display().to_string()), "{error}");
 }
 
-/// Only a linked work tree has a tree: no git and a main checkout answer none. The tree of a clean work tree is the
-/// tree of HEAD. With local changes it is the tree that `git add -A` would stage: a changed file, a new file, a
-/// deleted file, and no ignored file. The index of the work tree stays as it was.
+/// Only a linked work tree has a tree: no git, a main checkout and a host slot answer none. The tree of a clean work
+/// tree is the tree of HEAD. With local changes it is the tree that `git add -A` would stage: a changed file, a new
+/// file, a deleted file, and no ignored file. The index of the work tree stays as it was.
 #[test]
 fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
     let Some(dir) = repository_dir() else {
@@ -523,6 +523,8 @@ fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
         }
     );
     assert_eq!(runtime.commit_tree(&head).expect("the tree of HEAD"), head_tree);
+    let host_slot = OsRuntime::builder(repo).host_slot(true).build();
+    assert_eq!(host_slot.checkout_tree().expect("a host slot is no error"), None);
     let records = runtime.git_path("bd-checks.jsonl").expect("a git path");
     assert!(records.ends_with(".git/worktrees/lease/bd-checks.jsonl"), "{}", records.display());
 
