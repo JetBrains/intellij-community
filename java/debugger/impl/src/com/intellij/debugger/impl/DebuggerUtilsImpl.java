@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
@@ -72,10 +73,16 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
+import com.intellij.xdebugger.BreakpointErrorData;
 import com.intellij.xdebugger.DapMode;
+import com.intellij.xdebugger.XBreakpointBehaviorPolicy;
+import com.intellij.xdebugger.XBreakpointBehaviorPolicy.BreakpointErrorAction;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.jetbrains.jdi.MethodImpl;
@@ -746,11 +753,50 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return requestor instanceof Breakpoint<?> breakpoint ? breakpoint.getDisplayName() : requestor.getClass().getSimpleName();
   }
 
+  /**
+   * Decides whether to stop at a breakpoint whose condition or action failed, and reports the error.
+   * A {@link XBreakpointBehaviorPolicy} decides first. Else DAP, which has no dialog, stops when the breakpoint suspends;
+   * the IDE asks the user.
+   *
+   * @param suspendPolicy the suspend policy of the user breakpoint, not of a technical request that stands for it
+   * @return whether to stop at the breakpoint
+   */
   @ApiStatus.Internal
-  public static boolean askAboutPauseOnException(Project project, String displayName, String exceptionMessage, @NotNull @NlsContexts.DialogTitle String title) {
-    if (DapMode.isDap()) {
-      return false; // Don't stop — continue execution, error is printed to console by the caller
+  public static boolean pauseOnBreakpointError(@NotNull DebugProcessImpl process,
+                                               @NotNull Requestor requestor,
+                                               @NotNull String suspendPolicy,
+                                               @NotNull @NlsContexts.DialogTitle String title,
+                                               @NotNull String exceptionMessage,
+                                               @Nullable Throwable cause) {
+    XBreakpoint<?> xBreakpoint = requestor instanceof Breakpoint<?> breakpoint ? breakpoint.getXBreakpoint() : null;
+    XDebugSession xDebugSession = process.getSession().getXDebugSession();
+    BreakpointErrorData errorData = new BreakpointErrorData(title, exceptionMessage, cause);
+    BreakpointErrorAction policyAction = xDebugSession == null || xBreakpoint == null
+                                         ? BreakpointErrorAction.UNHANDLED
+                                         : XBreakpointBehaviorPolicy.doChooseBreakpointErrorAction(xDebugSession, xBreakpoint, errorData);
+    String displayName = getRequestorStringForUser(requestor);
+    boolean pause;
+    if (policyAction != BreakpointErrorAction.UNHANDLED) {
+      pause = policyAction == BreakpointErrorAction.PAUSE;
     }
+    else if (DapMode.isDap()) {
+      pause = !DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy);
+    }
+    else {
+      pause = askAboutPauseOnException(process.getProject(), displayName, exceptionMessage, title);
+    }
+
+    if (xDebugSession != null && xBreakpoint != null) {
+      XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(xDebugSession.getProject());
+      debuggerManager.getBreakpointManager().fireBreakpointError(xBreakpoint, xDebugSession, errorData);
+    }
+    if (DapMode.isDap()) {
+      process.printToConsole(JavaDebuggerBundle.message("error.failed.evaluating.breakpoint.condition", displayName, exceptionMessage));
+    }
+    return pause;
+  }
+
+  private static boolean askAboutPauseOnException(Project project, String displayName, String exceptionMessage, @NotNull @NlsContexts.DialogTitle String title) {
     final boolean[] considerRequestHit = new boolean[]{true};
     DebuggerInvocationUtil.invokeAndWait(project, () -> {
       final String message = JavaDebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, exceptionMessage);
