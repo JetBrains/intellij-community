@@ -13,6 +13,8 @@ import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import kotlin.system.measureTimeMillis
 
@@ -27,10 +29,17 @@ import kotlin.system.measureTimeMillis
  */
 @ApiStatus.Internal
 class ProjectSynchronizerUtilImpl(val project: Project) : ProjectSynchronizerUtil {
-  override suspend fun applyJpsModelToProjectModel() {
+  /**
+   * Runs the calls one after the other.
+   * Two parallel calls can each create their own serializers, and the model then gets entity sources that the stored serializers do not know.
+   * In unit test mode, [WorkspaceModelImpl.awaitSynchronizationWithJpsModel] also calls [applyJpsModelToProjectModel].
+   */
+  private val syncMutex = Mutex()
+
+  override suspend fun applyJpsModelToProjectModel(): Unit = syncMutex.withLock {
     val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
     if (!workspaceModel.loadedFromCache) {
-      return
+      return@withLock
     }
 
     val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
