@@ -1,7 +1,7 @@
 Set TMP on Windows under --experimental_strict_repo_env.
 
 Backport of https://github.com/bazel-contrib/bazel-gazelle/pull/2509 (commit 8b89ee9f6d3c, in the release after
-0.53.0) to 0.53.0. The functions moved on master: resolve_go_env there is read_go_env_file here. The test of the
+0.53.0) to 0.54.0. The functions moved on master: resolve_go_env there is read_go_env_file here. The test of the
 upstream commit is not included.
 
 With --experimental_strict_repo_env, the repository environment has no TMP and TEMP. On Windows, Go then falls back
