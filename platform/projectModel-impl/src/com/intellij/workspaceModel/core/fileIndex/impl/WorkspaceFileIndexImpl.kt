@@ -203,8 +203,11 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     customFilter: VirtualFileFilter?,
     fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
   ): Boolean {
-    return processContentUnderDirectory(fileOrDir, processor, customFilter, fileSetFilter, true, 0)
+    return processContentUnderDirectory(fileOrDir, processor, customFilter.withoutAll(), fileSetFilter, true, 0)
   }
+
+  /** [VirtualFileFilter.ALL] accepts each file, so the walk does not take a read action per file to call it. */
+  private fun VirtualFileFilter?.withoutAll(): VirtualFileFilter? = takeUnless { it === VirtualFileFilter.ALL }
 
   override fun processIndexableContentUnderDirectory(
     fileOrDir: VirtualFile,
@@ -212,7 +215,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     customFilter: VirtualFileFilter?,
     fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
   ): Boolean {
-    return processContentUnderDirectory(fileOrDir, processor, customFilter, fileSetFilter, false, 0)
+    return processContentUnderDirectory(fileOrDir, processor, customFilter.withoutAll(), fileSetFilter, false, 0)
   }
 
   private fun processContentUnderDirectory(

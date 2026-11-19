@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
-import com.intellij.openapi.vfs.DeduplicatingVirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.platform.workspace.storage.EntityPointer;
@@ -73,17 +72,16 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     ).executeSynchronously();
     if (rootsPair == null) return false; // project is disposed
 
-    VirtualFileFilter deduplicatingFilter = new DeduplicatingVirtualFileFilter(filter);
-    ContentIteratorEx processorEx = toContentIteratorEx(processor);
+    ContentIteratorEx walkProcessor = toWalkProcessor(processor, filter);
     for (VirtualFile root : rootsPair.getFirst()) {
       if (!myWorkspaceFileIndex.processIndexableContentUnderDirectory(
-        root, processorEx, deduplicatingFilter, fileSet -> !isScopeDisposed() && isInContent(fileSet))
+        root, walkProcessor, filter, fileSet -> !isScopeDisposed() && isInContent(fileSet))
       ) {
         return false;
       }
     }
     for (VirtualFile root : rootsPair.getSecond()) {
-      if (deduplicatingFilter.accept(root) && processorEx.processFileEx(root) == TreeNodeProcessingResult.STOP) {
+      if ((filter == null || filter.accept(root)) && walkProcessor.processFileEx(root) == TreeNodeProcessingResult.STOP) {
         return false;
       }
     }

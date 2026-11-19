@@ -43,7 +43,7 @@ public abstract class FileIndexBase implements FileIndex {
     return myWorkspaceFileIndex.processContentUnderDirectory(dir, processorEx, customFilter, fileSet -> !isScopeDisposed() && isInContent(fileSet));
   }
 
-  static @NotNull ContentIteratorEx toContentIteratorEx(@NotNull ContentIterator processor) {
+  private static @NotNull ContentIteratorEx toContentIteratorEx(@NotNull ContentIterator processor) {
     if (processor instanceof ContentIteratorEx) {
       return (ContentIteratorEx)processor;
     }
@@ -55,19 +55,33 @@ public abstract class FileIndexBase implements FileIndex {
                                                   @Nullable VirtualFileFilter filter,
                                                   @NotNull Collection<VirtualFile> topLevelRecursiveRoots,
                                                   @NotNull Collection<VirtualFile> nonRecursiveRoots) {
-    VirtualFileFilter deduplicatingFilter = new DeduplicatingVirtualFileFilter(filter);
-    ContentIteratorEx processorEx = toContentIteratorEx(processor);
+    ContentIteratorEx walkProcessor = toWalkProcessor(processor, filter);
     for (VirtualFile root : topLevelRecursiveRoots) {
-      if (!iterateContentUnderDirectory(root, processorEx, deduplicatingFilter)) {
+      if (!iterateContentUnderDirectory(root, walkProcessor, filter)) {
         return false;
       }
     }
     for (VirtualFile root : nonRecursiveRoots) {
-      if (deduplicatingFilter.accept(root) && processorEx.processFileEx(root) == TreeNodeProcessingResult.STOP) {
+      if ((filter == null || filter.accept(root)) && walkProcessor.processFileEx(root) == TreeNodeProcessingResult.STOP) {
         return false;
       }
     }
     return true;
+  }
+
+  /**
+   * Returns the processor of a walk over the content roots.
+   * Without a custom filter, the returned processor skips a file that the walk visited before.
+   * {@link com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl} runs the processor without the read lock.
+   */
+  static @NotNull ContentIteratorEx toWalkProcessor(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
+    ContentIteratorEx processorEx = toContentIteratorEx(processor);
+    if (filter != null) {
+      return processorEx;
+    }
+    VirtualFileFilter deduplicatingFilter = new DeduplicatingVirtualFileFilter(null);
+    return fileOrDir -> deduplicatingFilter.accept(fileOrDir) ? processorEx.processFileEx(fileOrDir)
+                                                              : TreeNodeProcessingResult.CONTINUE;
   }
 
   @Override

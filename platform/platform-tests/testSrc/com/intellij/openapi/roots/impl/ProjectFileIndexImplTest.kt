@@ -66,7 +66,38 @@ internal class ProjectFileIndexImplTest {
     assertThat(iterated).containsExactlyInAnyOrder(outerDir.path, projectDir.path, assetsDir.path, asset.path)
   }
 
-  /** A walk without a filter visits a root of two file sets once. */
+  /**
+   * A walk without a custom filter takes no read action per file.
+   * The only read actions are the ones of the roots step.
+   */
+  @Test
+  fun `iterateContent without a filter takes no read action per file`(): Unit = timeoutRunBlocking {
+    assertThat(readActionsOfWalk(filter = null)).isLessThanOrEqualTo(MAX_ROOTS_STEP_READ_ACTIONS)
+  }
+
+  /** [VirtualFileFilter.ALL] needs no read lock, so a walk with it takes no read action per file. */
+  @Test
+  fun `iterateContent with the ALL filter takes no read action per file`(): Unit = timeoutRunBlocking {
+    assertThat(readActionsOfWalk(VirtualFileFilter.ALL)).isLessThanOrEqualTo(MAX_ROOTS_STEP_READ_ACTIONS)
+  }
+
+  private suspend fun readActionsOfWalk(filter: VirtualFileFilter?): Int {
+    val root = tempDir.newVirtualDirectory("content")
+    for (dirIndex in 0 until 3) {
+      tempDir.newVirtualDirectory("content/d$dirIndex")
+      for (fileIndex in 0 until 10) {
+        tempDir.newVirtualFile("content/d$dirIndex/f$fileIndex.txt")
+      }
+    }
+    registerRecursiveContentRoot(root)
+
+    val (_, readActions) = countReadActions {
+      ProjectFileIndex.getInstance(projectModel.project).iterateContent(ContentIterator { true }, filter)
+    }
+    return readActions
+  }
+
+  /** A walk without a custom filter visits each file once. */
   @Test
   fun `iterateContent without a filter visits a non-recursive root inside a recursive root once`(): Unit = timeoutRunBlocking {
     val outerDir = tempDir.newVirtualDirectory("outer")
@@ -127,3 +158,6 @@ internal class ProjectFileIndexImplTest {
     return paths
   }
 }
+
+/** The read actions of the roots step, with a margin. A walk with one read action per file takes more than 30. */
+private const val MAX_ROOTS_STEP_READ_ACTIONS = 3
