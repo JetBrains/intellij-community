@@ -172,6 +172,30 @@ describe("jscpd without Bazel", () => {
     equal(result.status, 78)
     match(result.stderr, /^jscpd: found no JSCPD_VERSION line in /)
   })
+
+  it("runs the path that another checkout wrote to the user cache, with no Bazel", async () => {
+    const checkout = join(scratch, "user-cache-hit")
+    await mkdir(join(checkout, "tools"), {recursive: true})
+    for (const name of ["jscpd.cmd", "polyglot-wrapper.sh"]) {
+      await copyFile(join(toolsDir, name), join(checkout, "tools", name))
+    }
+    await writeFile(join(checkout, "tools", "jscpd.MODULE.bazel"), 'JSCPD_VERSION = "9.9.9"\n')
+    // The checkout has no `bazel.cmd`, so a run that asks Bazel fails.
+    const home = join(scratch, "user-cache-home")
+    const env = {HOME: home}
+    const locate = `. "${toolsDir}/polyglot-wrapper.sh"; root=/unused; polyglot_user_cache jscpd;` +
+      ` printf "%s/jscpd-9.9.9-%s-%s" "$user_cache" "$OSTYPE" "$HOSTTYPE"`
+    const located = bash(["-c", locate], {env})
+    equal(located.status, 0, located.stderr)
+    const binary = await writeExecutable(scratch, "cached-jscpd", 'for a in "$@"; do printf "%s\\n" "$a"; done')
+    await mkdir(dirname(located.stdout), {recursive: true})
+    await writeFile(located.stdout, `${binary}\n`)
+    const result = bash([join(checkout, "tools", "jscpd.cmd"), "x", "y z"], {cwd: checkout, env})
+    equal(result.status, 0, result.stderr)
+    deepEqual(result.stdout.split("\n").filter(Boolean), ["x", "y z"])
+    equal(result.stderr, "")
+    equal(existsSync(join(checkout, "out")), false)
+  })
 })
 
 describe("the build step", () => {
