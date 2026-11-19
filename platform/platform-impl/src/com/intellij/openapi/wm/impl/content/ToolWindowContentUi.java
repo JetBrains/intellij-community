@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -509,7 +510,8 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
         }
         if (component instanceof ToolWindowPane) {
           myIsLastComponent.set(ui.window.getAnchor() == ToolWindowAnchor.BOTTOM || ui.window.getAnchor() == ToolWindowAnchor.RIGHT);
-          myInitialHeight.set(ui.window.getAnchor().isHorizontal() ? ui.window.getDecorator().getHeight() : ui.window.getDecorator().getWidth());
+          InternalDecoratorImpl paneDecorator = ui.window.getPaneDecorator();
+          myInitialHeight.set(ui.window.getAnchor().isHorizontal() ? paneDecorator.getHeight() : paneDecorator.getWidth());
           return;
         }
         myIsLastComponent.set(null);
@@ -603,14 +605,16 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
           splitter.setProportion(Math.max(0, Math.min(1, 1f - (float)(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y )/ splitter.getHeight())));
         }
         if (component instanceof ToolWindowPane) {
+          // the pane holds the decorator of the presenting tool window for a presented tool window
+          InternalDecoratorImpl paneDecorator = ui.window.getPaneDecorator();
           if (ui.window.getType() == ToolWindowType.SLIDING) {
-            ui.window.getDecorator().updateBounds(e);
+            paneDecorator.updateBounds(e);
           } else {
-            Dimension size = ui.window.getDecorator().getSize();
+            Dimension size = paneDecorator.getSize();
             if (ui.window.getAnchor().isHorizontal()) {
               size.height = myInitialHeight.get() - myLastPoint.get().y + myPressPoint.get().y;
             }
-            ui.window.getDecorator().setSize(size);
+            paneDecorator.setSize(size);
           }
         }
       }
@@ -783,7 +787,8 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     sink.set(PlatformDataKeys.TOOL_WINDOW_ID, window.getId());
     sink.set(PlatformCoreDataKeys.HELP_ID, window.getHelpId());
     // a frame that shows frame guests gives its active project, see WindowManagerEx.getActiveProject
-    sink.set(CommonDataKeys.PROJECT, IdeFrameGuests.activeProjectOf(window.toolWindowManager.getProject()));
+    Project project = window.getDataContextProject();
+    sink.set(CommonDataKeys.PROJECT, project != null ? project : IdeFrameGuests.activeProjectOf(window.getProject()));
     sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget(window));
     if (getCurrentLayout() instanceof MorePopupAware o) {
       sink.set(MorePopupAware.KEY_TOOLWINDOW_TITLE, o);

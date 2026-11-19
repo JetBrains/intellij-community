@@ -62,6 +62,10 @@ internal fun bringOwnerToFront(toolWindow: ToolWindowImpl, focus: Boolean) {
 }
 
 internal fun getShowingComponentToRequestFocus(toolWindow: ToolWindowImpl): Component? {
+  // the tool window of a frame owner shows the tool window of a frame guest: the focus goes to the content that the user sees
+  toolWindow.toolWindowManager.presentation.shownToolWindowOf(toolWindow.id)?.let {
+    return getShowingComponentToRequestFocus(it)
+  }
   val manager = toolWindow.contentManager
   val lastFocusedContent = toolWindow.getLastFocusedContent()
   if (lastFocusedContent != null) {

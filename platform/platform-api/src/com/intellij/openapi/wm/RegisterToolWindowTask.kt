@@ -8,6 +8,10 @@ import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 
+/**
+ * @property singleProject the tool window shows one project. In a frame that shows several projects, each project registers
+ * its own instance, see [MultiProjectToolWindowFactory].
+ */
 @Internal
 data class RegisterToolWindowTaskData(
   val id: String,
@@ -22,6 +26,7 @@ data class RegisterToolWindowTaskData(
   val stripeTitle: Supplier<@TabTitle String>? = null,
   val hideOnEmptyContent: Boolean = false,
   val pluginDescriptor: PluginDescriptor? = null,
+  val singleProject: Boolean = false,
 )
 
 class RegisterToolWindowTask @Internal constructor(

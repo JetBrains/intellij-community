@@ -565,10 +565,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       if (guest.isDisposed || guest.frameGuestOpening?.endForOwnerClose() == true) continue
       val asked = guest in askedGuests
       if (asked) guest.putUserData(FRAME_GUEST_CLOSE_ASKED_KEY, true)
+      guest.putUserData(FRAME_GUEST_CLOSES_WITH_OWNER_KEY, true)
       val closed = try {
         closeProject(project = guest, saveProject = saveProject, dispose = true, checkCanClose = checkCanClose)
       }
       finally {
+        guest.putUserData(FRAME_GUEST_CLOSES_WITH_OWNER_KEY, null)
         if (asked) guest.putUserData(FRAME_GUEST_CLOSE_ASKED_KEY, null)
       }
       if (!closed) return false
@@ -1457,6 +1459,16 @@ private val LISTENERS_IN_PROJECT_KEY = Key.create<MutableList<ProjectManagerList
  * already, see `ProjectManagerImpl.closeProject`. Used under the write-intent lock.
  */
 private val FRAME_GUEST_CLOSE_ASKED_KEY = Key.create<Boolean>("Project.FrameGuestCloseAsked")
+
+/** Set on a frame guest while the close of its owner closes it, see `ProjectManagerImpl.closeFrameGuests`. */
+private val FRAME_GUEST_CLOSES_WITH_OWNER_KEY = Key.create<Boolean>("Project.FrameGuestClosesWithOwner")
+
+/**
+ * Tells whether this frame guest closes because its frame goes away: the close of its owner closes it, or the application exits.
+ * The state of the frame needs no update for such a close.
+ */
+internal val Project.isClosingWithFrame: Boolean
+  get() = getUserData(FRAME_GUEST_CLOSES_WITH_OWNER_KEY) == true || ApplicationManagerEx.getApplicationEx().isExitInProgress
 
 private val CLOSE_HANDLER_EP = ExtensionPointName<ProjectCloseHandler>("com.intellij.projectCloseHandler")
 

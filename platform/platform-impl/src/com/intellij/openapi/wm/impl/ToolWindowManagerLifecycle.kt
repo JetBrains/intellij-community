@@ -152,7 +152,10 @@ private inline fun process(processor: (manager: ToolWindowManagerImpl) -> Unit) 
  */
 @JvmName("getToolWindowManagerForEvent")
 internal fun getToolWindowManagerForEvent(event: AnActionEvent): ToolWindowManagerEx? {
-  (event.getData(PlatformDataKeys.TOOL_WINDOW) as? ToolWindowImpl)?.let { return it.toolWindowManager }
+  (event.getData(PlatformDataKeys.TOOL_WINDOW) as? ToolWindowImpl)?.let {
+    // the frame owner shows a presented tool window of a frame guest, and the two have one id
+    return (it.presentingToolWindow ?: it).toolWindowManager
+  }
   val project = IdeFrameGuests.frameOwnerOf(event) ?: return null
   return ToolWindowManager.getInstance(project) as? ToolWindowManagerEx
 }
@@ -204,6 +207,10 @@ internal class ToolWindowManagerAppLevelHelper(coroutineScope: CoroutineScope) {
         for (entry in manager.idToEntry.values) {
           manager.saveFloatingOrWindowedState(entry, manager.layoutState.getInfo(entry.id) ?: continue)
         }
+      }
+
+      override fun projectClosing(project: Project) {
+        (project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl)?.projectClosing()
       }
 
       override fun projectClosed(project: Project) {

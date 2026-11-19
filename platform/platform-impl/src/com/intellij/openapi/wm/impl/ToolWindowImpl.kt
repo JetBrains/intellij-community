@@ -63,6 +63,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.FocusTask
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.toolWindow.ToolWindowFactoryScope
 import com.intellij.toolWindow.ToolWindowProperty
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
@@ -134,6 +135,13 @@ private val LOG = logger<ToolWindowManagerImpl>()
   contentFactory: ToolWindowFactory?,
   private var isAvailable: Boolean = true,
   private var stripeTitleProvider: Supplier<@NlsContexts.TabTitle String>,
+  /**
+   * The tool window belongs to a frame guest, and the tool window of the frame owner with the same id presents it.
+   * It never goes into a tool window pane, and it has no stripe button and no activation action of its own.
+   */
+  internal val isPresented: Boolean = false,
+  /** The tool window shows one project, see `RegisterToolWindowTaskData.singleProject`. */
+  internal val isSingleProject: Boolean = false,
 ) : ToolWindowEx {
   private val toolWindowClientId = ClientId.current
   private val contentFactory: AtomicReference<ToolWindowFactory?> = AtomicReference(contentFactory)
@@ -160,6 +168,33 @@ private val LOG = logger<ToolWindowManagerImpl>()
   override fun getId(): String = id
 
   override fun getProject(): Project = toolWindowManager.project
+
+  /**
+   * The tool window of the frame owner that presents this tool window of a frame guest.
+   * `null` when this tool window is not presented, see [isPresented].
+   */
+  internal val presentingToolWindow: ToolWindowImpl?
+    get() = if (isPresented) toolWindowManager.presentingManager?.getEntry(id)?.toolWindow else null
+
+  /**
+   * The project of the data context of this tool window, or `null`.
+   * With `null`, the data context has the active project of the frame.
+   */
+  val dataContextProject: Project?
+    get() = when {
+      // the tool window of a frame guest shows the content of its project
+      isPresented -> project
+      // the tool window shows one project in a frame that can show several projects
+      isSingleProject && ToolWindowFactoryScope.isSplitEnabled -> project
+      else -> null
+    }
+
+  /**
+   * The decorator that a tool window pane holds for this tool window.
+   * The decorator of a presented tool window is inside the decorator of its presenting tool window.
+   */
+  val paneDecorator: InternalDecoratorImpl
+    get() = presentingToolWindow?.decorator ?: decorator!!
 
   override fun getDecoration(): ToolWindowEx.ToolWindowDecoration {
     return ToolWindowEx.ToolWindowDecoration(icon, additionalGearActions)
@@ -308,8 +343,11 @@ private val LOG = logger<ToolWindowManagerImpl>()
 
     val decorator = InternalDecoratorImpl(this, contentUi!!, decoratorChild)
     this.decorator = decorator
+    // the decorator can show the tool window of a frame guest from now on
+    toolWindowManager.presentation.presentingDecoratorCreated(this)
     val editorTabService = ToolWindowEditorTabService.getInstanceOrNull()
-    if (editorTabService != null && editorTabService.hasSupport(id)) {
+    // a presented tool window has no place of its own, so its content cannot move into an editor tab
+    if (editorTabService != null && !isPresented && editorTabService.hasSupport(id)) {
       ApplicationManager.getApplication().invokeLater {
         editorTabService.installDockContainer(toolWindowManager.project, id, decorator)
       }
@@ -453,6 +491,8 @@ private val LOG = logger<ToolWindowManagerImpl>()
       decorator.validate()
       decorator.repaint()
     }
+    // the tool window of a frame guest that this tool window presents follows its visible state and its place
+    toolWindowManager.presentation.presentingInfoApplied(this)
   }
 
   val decoratorComponent: JComponent?
@@ -488,6 +528,10 @@ private val LOG = logger<ToolWindowManagerImpl>()
   }
 
   override fun isActive(): Boolean {
+    if (isPresented) {
+      // the frame of a frame guest is the frame of its owner, and the manager of the owner knows a floating tool window
+      return windowInfo.isVisible && presentingToolWindow?.isActive == true
+    }
     return windowInfo.isVisible && decorator != null && toolWindowManager.activeToolWindowId == id
   }
 

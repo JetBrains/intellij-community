@@ -71,6 +71,14 @@ enum class ProjectFrameCapability {
    * Excludes the frame from project-window traversal order and project-window list entries.
    */
   EXCLUDE_FROM_PROJECT_WINDOW_SWITCH_ORDER,
+
+  /**
+   * Marks a frame owner that has no tool window content of its own.
+   *
+   * A tool window with a project selector lists only the frame guests, and no tool window factory builds content for the frame owner.
+   * A tool window that presents every project itself is not affected, see `MultiProjectToolWindowFactory`.
+   */
+  SUPPRESS_OWN_TOOL_WINDOW_CONTENT,
 }
 
 /**

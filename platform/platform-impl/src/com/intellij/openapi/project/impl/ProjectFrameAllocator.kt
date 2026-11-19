@@ -263,7 +263,7 @@ internal class GuestProjectFrameAllocator(private val frameOwner: Project) : Pro
           frameHelper.editorArea.addGuestEditors(project, fileEditorManager.mainSplitters)
         }
       }
-      (project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl)?.initDetachedDefaultPane(frameHelper.frame)
+      (project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl)?.initDetachedDefaultPane(frameHelper.frame, frameOwner)
       // the card is in the frame, so a restored editor shows as soon as the guest is the active project
       restoreFrameGuestEditors(project, fileEditorManager)
       project.getOrCreateIdeFrameDeferred().complete(frameHelper)

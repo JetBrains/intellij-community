@@ -23,14 +23,19 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.getOrCreateFrameContentPaintedDeferred
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.MultiProjectToolWindowFactory
 import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.ToolWindowManagerAppLevelHelper
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.WindowInfoImpl
@@ -217,6 +222,59 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
     }
     finally {
       LOG.debug(project) { "initialization completed (project=$it)" }
+      isInitialized = true
+      toolWindowsRegistered.complete()
+    }
+  }
+
+  /**
+   * Registers the tool windows of a frame guest that the frame owner presents, see [ToolWindowFactoryScope.SINGLE_PROJECT].
+   * No tool window is shown, and none gets a stripe button or an activation action.
+   * The pending tasks run after the registration, so a task of `ToolWindowManager.invokeLater` finds every tool window registered.
+   *
+   * The function waits for the tool windows of [ownerManager], because the frame type of the owner decides which ids are suppressed.
+   */
+  suspend fun initPresentedUi(ownerManager: ToolWindowManagerImpl) {
+    try {
+      ownerManager.awaitToolWindowsRegistered()
+      val tasks = span("toolwindow init command creation (frame guest)") {
+        val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+          .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
+        addExtraTasks(
+          tasks = computeToolWindowBeans(project = project, projectFrameTypeId = ownerManager.projectFrameTypeId),
+          project = project,
+          ep = ep,
+          suppressedToolWindowIds = manager.getSuppressedToolWindowIds(),
+        )
+      }
+      // the restored editor takes the EDT first
+      StartupUiGate.awaitEditorsShown()
+      val entries = span("toolwindow creating (frame guest)", Dispatchers.EDT) {
+        registerToolWindows(
+          tasks = tasks.map(manager::prepareRegisterToolWindowTask),
+          manager = manager,
+          layout = manager.getLayout(),
+          shouldRegister = { true },
+        )
+      }
+      // dispatch event not in EDT
+      manager.project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries.map { it.entry.id }, manager)
+      // after the event: the frame owner can show a tool window at once, and its content can ask for another tool window of the guest
+      val taskById = tasks.associateBy { it.id }
+      span("toolwindow presenting (frame guest)", Dispatchers.EDT) {
+        for (result in entries) {
+          manager.attachPresented(result.entry, taskById.getValue(result.entry.id))
+        }
+      }
+      registerEpListeners(manager)
+      processPendingTasks()
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.error(e)
+    }
+    finally {
+      LOG.debug(project) { "initialization of a frame guest completed (project=$it)" }
       isInitialized = true
       toolWindowsRegistered.complete()
     }
@@ -416,12 +474,16 @@ private fun registerEpListeners(manager: ToolWindowManagerImpl) {
 }
 
 
+/**
+ * @property isPresented the tool window belongs to a frame guest, and the frame owner presents it, see `ToolWindowImpl.isPresented`
+ */
 internal data class PreparedRegisterToolWindowTask(
   @JvmField val task: RegisterToolWindowTaskData,
   @JvmField val isButtonNeeded: Boolean,
   @JvmField val existingInfo: WindowInfoImpl?,
 
   @JvmField val paneId: String,
+  @JvmField val isPresented: Boolean = false,
 )
 
 internal data class RegisterToolWindowResult(
@@ -477,6 +539,7 @@ private suspend fun addExtraTasks(
   }
 
   val result = filteredTasks.toMutableList()
+  val factoryScope = ToolWindowFactoryScope.of(project)
   // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:
   // 1. read action is required to read a facet list (might cause a deadlock)
   // 2. delay between a collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
@@ -499,8 +562,13 @@ private suspend fun addExtraTasks(
     }
 
     for (bean in provider.getTasks(project)) {
-      val task =
-        beanToTask(project = project, bean = bean, plugin = bean.pluginDescriptor, suppressedToolWindowIds = suppressedToolWindowIds)
+      val task = beanToTask(
+        project = project,
+        bean = bean,
+        plugin = bean.pluginDescriptor,
+        suppressedToolWindowIds = suppressedToolWindowIds,
+        factoryScope = factoryScope,
+      )
       if (task != null) {
         result.add(task)
       }
@@ -513,18 +581,63 @@ internal fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP
   return factory?.anchor ?: ToolWindowAnchor.fromText(bean.anchor ?: ToolWindowAnchor.LEFT.toString())
 }
 
+/**
+ * The tool window factories that a project registers. A frame that shows several projects splits the factories between its projects.
+ */
+internal enum class ToolWindowFactoryScope {
+  /** Every factory: a project with a frame of its own, and a frame owner that shows its own content. */
+  ALL,
+
+  /** A factory that shows one project: a frame guest. The frame owner presents such a tool window. */
+  SINGLE_PROJECT,
+
+  /** A factory with the marker [MultiProjectToolWindowFactory]: a frame owner without tool window content of its own. */
+  MULTI_PROJECT;
+
+  fun accepts(factory: ToolWindowFactory): Boolean {
+    return when (this) {
+      ALL -> true
+      SINGLE_PROJECT -> factory !is MultiProjectToolWindowFactory
+      MULTI_PROJECT -> factory is MultiProjectToolWindowFactory
+    }
+  }
+
+  companion object {
+    /**
+     * The switch of the legacy mode of a tool window. With it, a frame guest registers each tool window that shows one project,
+     * and the tool window of the frame owner presents the tool window of the project that the user selects.
+     */
+    val isSplitEnabled: Boolean
+      get() = Registry.`is`("ide.frame.guests.legacy.tool.windows", false)
+
+    suspend fun of(project: Project): ToolWindowFactoryScope {
+      return when {
+        !isSplitEnabled -> ALL
+        IdeFrameGuests.isFrameGuest(project) -> SINGLE_PROJECT
+        serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_OWN_TOOL_WINDOW_CONTENT) -> MULTI_PROJECT
+        else -> ALL
+      }
+    }
+  }
+}
+
 private suspend fun beanToTask(
   project: Project,
   bean: ToolWindowEP,
   plugin: PluginDescriptor,
   suppressedToolWindowIds: Set<String>,
+  factoryScope: ToolWindowFactoryScope,
 ): RegisterToolWindowTaskData? {
   if (suppressedToolWindowIds.contains(bean.id)) {
     return null
   }
 
   val factory = bean.getToolWindowFactory(plugin)
-  return if (factory.isApplicableAsync(project)) beanToTask(project = project, bean = bean, plugin = plugin, factory = factory) else null
+  // a factory out of the scope is not asked whether it is applicable: the answer is for a project that registers it
+  if (!factoryScope.accepts(factory) || !factory.isApplicableAsync(project)) {
+    return null
+  }
+  return beanToTask(project = project, bean = bean, plugin = plugin, factory = factory)
 }
 
 private fun beanToTask(
@@ -544,6 +657,7 @@ private fun beanToTask(
     contentFactory = factory,
     stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin),
     pluginDescriptor = plugin,
+    singleProject = factory !is MultiProjectToolWindowFactory,
   )
 }
 
@@ -559,6 +673,7 @@ internal suspend fun computeToolWindowBeans(
 ): List<RegisterToolWindowTaskData> {
   val profileId = serviceAsync<ProjectFrameTypeService>().getToolWindowLayoutProfileId(projectFrameTypeId)
   val suppressedToolWindowIds = serviceAsync<ProjectFrameToolWindowLayoutService>().getSuppressedToolWindowIds(profileId)
+  val factoryScope = ToolWindowFactoryScope.of(project)
   return coroutineScope {
     ToolWindowEP.EP_NAME.filterableLazySequence().map { item ->
       async {
@@ -569,7 +684,13 @@ internal suspend fun computeToolWindowBeans(
           }
           val condition = bean.getCondition(item.pluginDescriptor)
           if (condition == null || condition.value(project)) {
-            beanToTask(project = project, bean = bean, plugin = item.pluginDescriptor, suppressedToolWindowIds = suppressedToolWindowIds)
+            beanToTask(
+              project = project,
+              bean = bean,
+              plugin = item.pluginDescriptor,
+              suppressedToolWindowIds = suppressedToolWindowIds,
+              factoryScope = factoryScope,
+            )
           }
           else {
             null

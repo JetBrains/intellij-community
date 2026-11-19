@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.toolWindow.InternalDecoratorImpl
@@ -203,6 +204,10 @@ private fun detachInternalDecorator(entry: ToolWindowEntry) {
 }
 
 private fun removeInternalDecorator(entry: ToolWindowEntry, state: WindowInfoImpl, dirtyMode: Boolean, manager: ToolWindowManagerImpl) {
+  // The same check as in `ToolWindowManagerImpl.doShowWindow`: a test creates no UI, so it has no pane that holds the decorator.
+  if (!manager.toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)) {
+    return
+  }
   entry.toolWindow.decoratorComponent?.let {
     val toolWindowPane = manager.getToolWindowPane(state.safeToolWindowPaneId)
     toolWindowPane.removeDecorator(state, it, dirtyMode, manager)
