@@ -9,9 +9,9 @@ Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)). Amen
 
 ## Context
 
-The engine has api, shared and backend modules ([ADR 0082](./0082-a-backend-module-holds-the-project-scoped-machinery.md)). Both sides of
-the wire need to resolve
-key identities.
+The engine has api, shared and backend modules
+([ADR 0166](./0166-the-light-compatible-backend-code-lives-in-the-backend-baseline-module.md)). Both sides of the
+wire need to resolve key identities.
 
 ## Decision
 
