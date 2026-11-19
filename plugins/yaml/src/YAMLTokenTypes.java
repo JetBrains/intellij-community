@@ -1,10 +1,12 @@
 package org.jetbrains.yaml;
 
+import com.intellij.yaml.syntax.YamlSyntaxTokenTypes;
+
 /**
  * @author oleg
  */
 public interface YAMLTokenTypes {
-  YAMLElementType COMMENT = new YAMLElementType("comment");
+  YAMLElementType COMMENT = new YamlReparseableTokenType("comment", YamlSyntaxTokenTypes.COMMENT);
   YAMLElementType WHITESPACE = new YAMLElementType("whitespace");
   YAMLElementType INDENT = new YAMLElementType("indent");
   YAMLElementType EOL = new YAMLElementType("Eol");
@@ -28,10 +30,10 @@ public interface YAMLTokenTypes {
 
   YAMLElementType SCALAR_KEY = new YAMLElementType("scalar key");
   // sequential TEXT tokens will merge for parser into one token
-  YAMLElementType TEXT = new YAMLElementType("text");
+  YAMLElementType TEXT = new YamlReparseableTokenType("text", YamlSyntaxTokenTypes.TEXT);
 
-  YAMLElementType SCALAR_STRING = new YAMLElementType("scalar string");
-  YAMLElementType SCALAR_DSTRING = new YAMLElementType("scalar dstring");
+  YAMLElementType SCALAR_STRING = new YamlReparseableTokenType("scalar string", YamlSyntaxTokenTypes.SCALAR_STRING);
+  YAMLElementType SCALAR_DSTRING = new YamlReparseableTokenType("scalar dstring", YamlSyntaxTokenTypes.SCALAR_DSTRING);
 
   YAMLElementType SCALAR_LIST = new YAMLElementType("scalar list");
   YAMLElementType SCALAR_TEXT = new YAMLElementType("scalar text");

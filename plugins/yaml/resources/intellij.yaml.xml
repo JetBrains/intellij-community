@@ -33,6 +33,8 @@
     <colorSettings implementation="org.jetbrains.yaml.YAMLColorsPage"
                    bundle="messages.YAMLBundle" key="color.settings.yaml.name"/>
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
+    <registryKey key="yaml.reparse.leaves" defaultValue="true"
+                 description="Gives a YAML text, quoted text or comment leaf the new text without a reparse of the file, if the tokens stay the same"/>
     <fileType name="YAML" implementationClass="org.jetbrains.yaml.YAMLFileType" fieldName="YML" language="yaml"
               extensions="yaml;yml"/>
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
