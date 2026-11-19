@@ -2,10 +2,8 @@
 package com.intellij.collaboration.ui.codereview.details.model
 
 import com.intellij.collaboration.async.stateFlowOf
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
 
 interface CodeReviewBranchesViewModel {
   val sourceBranch: StateFlow<String>
@@ -21,7 +19,7 @@ interface CodeReviewBranchesViewModel {
   val canShowInLog: Boolean get() = false
   fun fetchAndShowInLog() {}
 
-  val canCheckoutInNewWorktree: Boolean get() = false
+  val canCheckoutInNewWorktree: StateFlow<Boolean> get() = stateFlowOf(false)
   fun checkoutInNewWorktree() {}
 
   fun showBranches()

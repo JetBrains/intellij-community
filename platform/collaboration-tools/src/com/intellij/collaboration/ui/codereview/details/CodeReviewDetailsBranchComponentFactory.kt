@@ -73,12 +73,7 @@ object CodeReviewDetailsBranchComponentFactory {
     val worktreeLink = AnActionLink("CodeReview.Branch.CheckoutInNewWorktree", ACTION_LINKS_PLACE).apply {
       autoHideOnDisable = false
       bindEnabledIn(scope, branchesVm.isCheckoutInProgress.map { !it })
-      isVisible = branchesVm.canCheckoutInNewWorktree
-    }
-    scope.launch {
-      branchesVm.isCheckedOut.collect {
-        worktreeLink.isVisible = branchesVm.canCheckoutInNewWorktree
-      }
+      bindVisibilityIn(scope, branchesVm.canCheckoutInNewWorktree)
     }
     // one layout for all links aligns them by the baseline. The timeline and More links stay, and the other links hide when they do not fit.
     val panel = JPanel(HidingRowLayout(ACTION_LINK_GAP)).apply {

@@ -17,6 +17,7 @@ import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.HostedGitRepositoryRemote
 import git4idea.remote.hosting.changesSignalFlow
 import git4idea.remote.hosting.createHostedGitRepositoryRemote
+import git4idea.remote.hosting.gitRemotesFlow
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -86,11 +87,18 @@ class GHPRBranchesViewModel internal constructor(
     }
   }
 
-  override val canCheckoutInNewWorktree: Boolean
-    // A new worktree can't be created for a branch that is already checked out in the current one.
-    get() = GitWorkingTreesService.isWorktreeCreationSupported(gitRepository) && !isCheckedOut.value
+  // A new worktree can't be created for a branch that is already checked out in the current one.
+  override val canCheckoutInNewWorktree: StateFlow<Boolean> =
+    combine(gitRemotesFlow(project), isCheckedOut) { _, checkedOut ->
+      GitWorkingTreesService.isWorktreeCreationSupported(gitRepository) && !checkedOut
+    }.stateIn(
+      cs,
+      SharingStarted.Eagerly,
+      GitWorkingTreesService.isWorktreeCreationSupported(gitRepository) && !isCheckedOut.value
+    )
 
   override fun checkoutInNewWorktree() {
+    if (!canCheckoutInNewWorktree.value) return
     val details = detailsState.value
     checkoutLauncher.launch {
       fetchAndCheckoutBranchInNewWorktree(

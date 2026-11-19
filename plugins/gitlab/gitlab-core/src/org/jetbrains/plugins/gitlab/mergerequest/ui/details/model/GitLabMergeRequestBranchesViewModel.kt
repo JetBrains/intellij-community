@@ -11,6 +11,7 @@ import com.intellij.dvcs.DvcsUtil
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.changesSignalFlow
+import git4idea.remote.hosting.gitRemotesFlow
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -79,11 +80,18 @@ internal class GitLabMergeRequestBranchesViewModel(
     }
   }
 
-  override val canCheckoutInNewWorktree: Boolean
-    // A new worktree can't be created for a branch that is already checked out in the current one.
-    get() = GitWorkingTreesService.isWorktreeCreationSupported(gitRemote.repository) && !isCheckedOut.value
+  // A new worktree can't be created for a branch that is already checked out in the current one.
+  override val canCheckoutInNewWorktree: StateFlow<Boolean> =
+    combine(gitRemotesFlow(gitRemote.repository.project), isCheckedOut) { _, checkedOut ->
+      GitWorkingTreesService.isWorktreeCreationSupported(gitRemote.repository) && !checkedOut
+    }.stateIn(
+      cs,
+      SharingStarted.Eagerly,
+      GitWorkingTreesService.isWorktreeCreationSupported(gitRemote.repository) && !isCheckedOut.value
+    )
 
   override fun checkoutInNewWorktree() {
+    if (!canCheckoutInNewWorktree.value) return
     GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
     checkoutLauncher.launch {
       val details = mergeRequest.details.first()

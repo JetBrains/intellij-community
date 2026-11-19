@@ -42,12 +42,14 @@ internal class CodeReviewCheckoutBranchInNewWorktreeAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val viewModel = e.getData(CodeReviewBranchActionDataKeys.VIEW_MODEL)
-    e.presentation.isEnabledAndVisible = viewModel?.canCheckoutInNewWorktree == true
+    e.presentation.isEnabledAndVisible = viewModel?.canCheckoutInNewWorktree?.value == true
     e.presentation.isEnabled = viewModel?.isCheckoutInProgress?.value != true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getData(CodeReviewBranchActionDataKeys.VIEW_MODEL)?.checkoutInNewWorktree()
+    e.getData(CodeReviewBranchActionDataKeys.VIEW_MODEL)
+      ?.takeIf { it.canCheckoutInNewWorktree.value }
+      ?.checkoutInNewWorktree()
   }
 }
 
