@@ -3414,6 +3414,28 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                   extProperties = listOf(),
                                   isAbstract = false)
     addMetadata(typeMetadata)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ProjectStoreDirectoryEntity",
+                                  entityDataFqName = "com.intellij.platform.workspace.jps.entities.impl.ProjectStoreDirectoryEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "url",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
+    addMetadata(typeMetadata)
     typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.jps.entities.SdkEntity",
                                   entityDataFqName = "com.intellij.platform.workspace.jps.entities.impl.SdkEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
@@ -3747,6 +3769,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleImlFileEntity", metadataHash = 1229378620)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity", metadataHash = -260448549)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity", metadataHash = -161397061)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ProjectStoreDirectoryEntity", metadataHash = 1271692303)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkEntity", metadataHash = 324475262)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkRoot", metadataHash = -2116217859)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkRootTypeId", metadataHash = 1718825746)
