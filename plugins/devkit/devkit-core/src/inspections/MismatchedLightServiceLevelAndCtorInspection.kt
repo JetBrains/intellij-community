@@ -2,6 +2,8 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.jvm.DefaultJvmElementVisitor
 import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.JvmClass
@@ -16,6 +18,7 @@ import com.intellij.lang.jvm.actions.createChangeParametersActions
 import com.intellij.lang.jvm.actions.setMethodParametersRequest
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.workspace.ProjectWorkspace
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
 import com.intellij.psi.PsiFile
@@ -42,10 +45,21 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
         val levelType = getLevelType(annotation, sourceElement.language)
         if (!levelType.isProject() && isProjectLevelExclusiveCtor(method)) {
           val elementToReport = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
-          registerProblemProjectLevelRequired(annotation, elementToReport, file)
+          registerProblemLevelRequired(annotation, elementToReport, file, getProjectLevelFQN(),
+                                       DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.project.level.required"),
+                                       DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.specify.project.level.fix"))
+        }
+        if (levelType != LevelType.WORKSPACE && levelType != LevelType.NOT_SPECIFIED && isWorkspaceLevelExclusiveCtor(method)) {
+          val elementToReport = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
+          registerProblemLevelRequired(annotation, elementToReport, file, getLevelFQN(Service.Level.WORKSPACE),
+                                       DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.workspace.level.required"),
+                                       DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.specify.workspace.level.fix"))
         }
         if (levelType.isApp() && !isAppLevelServiceCtor(method) && !hasAppLevelServiceCtor(clazz)) {
           registerProblemApplicationLevelRequired(method, file)
+        }
+        if (levelType == LevelType.WORKSPACE && !isWorkspaceLevelServiceCtor(method) && !hasWorkspaceLevelServiceCtor(clazz)) {
+          sink.highlight(DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.workspace.level.ctor.required"))
         }
         return true
       }
@@ -79,20 +93,44 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
         }
       }
 
+      private fun hasWorkspaceLevelServiceCtor(clazz: JvmClass): Boolean {
+        return clazz.methods.filter { it.isConstructor }.any { isWorkspaceLevelServiceCtor(it) }
+      }
+
+      /**
+       * Checks if the given [constructor] is suitable for a workspace-level service.
+       */
+      private fun isWorkspaceLevelServiceCtor(constructor: JvmMethod): Boolean {
+        return isAppLevelServiceCtor(constructor) || isWorkspaceLevelExclusiveCtor(constructor)
+      }
+
+      /**
+       * Checks if the given [constructor] requires that the light service class be specified as `@Service(Service.Level.WORKSPACE)`.
+       */
+      private fun isWorkspaceLevelExclusiveCtor(constructor: JvmMethod): Boolean {
+        assert(constructor.isConstructor)
+        val parameters = constructor.parameters
+        return when (parameters.size) {
+          1 -> parameters[0].hasType(ProjectWorkspace::class.java)
+          2 -> parameters[0].hasType(ProjectWorkspace::class.java) && parameters[1].hasType(CoroutineScope::class.java)
+          else -> false
+        }
+      }
+
       private fun JvmParameter.hasType(clazz: Class<*>): Boolean {
         return (this.type as? PsiType)?.canonicalText == clazz.canonicalName
       }
 
-      private fun registerProblemProjectLevelRequired(annotation: JvmAnnotation,
-                                                      elementToReport: PsiJavaCodeReferenceElement,
-                                                      file: PsiFile) {
-        val projectLevelFqn = getProjectLevelFQN()
-        val request = constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, projectLevelFqn)
-        val text = DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.specify.project.level.fix")
-        val actions = createChangeAnnotationAttributeActions(annotation, 0, request, text, text)
+      private fun registerProblemLevelRequired(annotation: JvmAnnotation,
+                                               elementToReport: PsiJavaCodeReferenceElement,
+                                               file: PsiFile,
+                                               levelFqn: String,
+                                               @InspectionMessage message: String,
+                                               @IntentionName fixText: String) {
+        val request = constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, levelFqn)
+        val actions = createChangeAnnotationAttributeActions(annotation, 0, request, fixText, fixText)
         val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
         val holder = (sink as HighlightSinkImpl).holder
-        val message = DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.project.level.required")
         holder.registerProblem(elementToReport, message, *fixes)
       }
 

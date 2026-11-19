@@ -46,4 +46,10 @@ internal class MismatchedLightServiceLevelAndCtorInspectionTest {
 
   @Test
   fun testAppLevelCoroutineScopeCtor() { mismatchedLevel.doTest() }
+
+  @Test
+  fun testFromAppToWorkspaceLevel() { mismatchedLevel.doTest(mismatchedLevel.specifyWorkspaceLevelFixName) }
+
+  @Test
+  fun testWorkspaceLevelProjectCtor() { mismatchedLevel.doTest() }
 }

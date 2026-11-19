@@ -50,4 +50,10 @@ internal class KtMismatchedLightServiceLevelAndCtorInspectionTest {
 
   @Test
   fun testAppLevelSecondaryCoroutineScopeCtor() { mismatchedLevel.doTest() }
+
+  @Test
+  fun testFromAppToWorkspaceLevel() { mismatchedLevel.doTest(mismatchedLevel.specifyWorkspaceLevelFixName) }
+
+  @Test
+  fun testWorkspaceLevelProjectCtor() { mismatchedLevel.doTest() }
 }

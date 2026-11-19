@@ -10,6 +10,13 @@ Reports mismatches between light service levels and its constructors.
   <li>A light service class annotated as an application-level service does not have a no-arg constructor, nor a constructor with one
     parameter of type <code>CoroutineScope</code>.
   </li>
+  <li>A light service class has a constructor with two parameters of types <code>com.intellij.openapi.workspace.ProjectWorkspace</code>
+    and <code>CoroutineScope</code>, or one parameter of type <code>ProjectWorkspace</code>, and is not annotated as a workspace-level
+    service.
+  </li>
+  <li>A light service class annotated as a workspace-level service does not have a no-arg constructor, nor a constructor with
+    parameters of types <code>ProjectWorkspace</code> and <code>CoroutineScope</code>.
+  </li>
 </ul>
 <p></p>
 <p>Example (Kotlin):</p>

@@ -11,7 +11,8 @@ import org.jetbrains.idea.devkit.inspections.MismatchedLightServiceLevelAndCtorI
 /**
  * The fixture of the [MismatchedLightServiceLevelAndCtorInspection] tests. Create it with [mismatchedLightServiceLevelAndCtorFixture].
  *
- * The fixture enables [MismatchedLightServiceLevelAndCtorInspection]. The project has the stubs of `Service`, `Project` and `CoroutineScope`.
+ * The fixture enables [MismatchedLightServiceLevelAndCtorInspection]. The project has the stubs of `Service`, `Project`, `ProjectWorkspace` and
+ * `CoroutineScope`.
  */
 class MismatchedLightServiceLevelAndCtorFixture(fixture: LightJavaCodeInsightTestFixture, fileExtension: String) :
   LightDevKitInspectionFixture(fixture, fileExtension) {
@@ -20,6 +21,12 @@ class MismatchedLightServiceLevelAndCtorFixture(fixture: LightJavaCodeInsightTes
    */
   val annotateAsServiceFixName: String =
     DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.specify.project.level.fix")
+
+  /**
+   * The name of the quick fix that specifies the workspace level of the service.
+   */
+  val specifyWorkspaceLevelFixName: String =
+    DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.specify.workspace.level.fix")
 }
 
 /**
@@ -43,7 +50,7 @@ fun mismatchedLightServiceLevelAndCtorFixture(
     public @interface Service {
       Level[] value() default Level.APP;
 
-      enum Level { APP, PROJECT }
+      enum Level { APP, PROJECT, WORKSPACE }
     }
     """)
   fixture.addClass(
@@ -53,6 +60,14 @@ fun mismatchedLightServiceLevelAndCtorFixture(
     import com.intellij.openapi.components.ComponentManager;
 
     public interface Project extends ComponentManager {}
+    """)
+  fixture.addClass(
+    """
+    package com.intellij.openapi.workspace;
+
+    import com.intellij.openapi.components.ComponentManager;
+
+    public interface ProjectWorkspace extends ComponentManager {}
     """)
   fixture.addClass(
     """
