@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ex.QuickFixWrapper
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.util.messageIfStringOrEmpty
@@ -74,7 +75,11 @@ private fun unknownNameQuickFixes(file: PsiFile, textRange: TextRange, descripti
       addIfNotNull(getAddParameterQuickFix(referencedName, node))
       add(PyRenameUnresolvedRefQuickFix())
     }
-    addAll(PyUnresolvedReferenceQuickFixesImpl.getAutoImportFixes(node, node.reference, node))
+    // The language server sends diagnostics also during indexing, but the import candidates come from the indices.
+    // When the indexing ends, the daemon highlights the file again and adds the import fixes.
+    if (!DumbService.isDumb(file.project)) {
+      addAll(PyUnresolvedReferenceQuickFixesImpl.getAutoImportFixes(node, node.reference, node))
+    }
   }
   return pyLspWrapQuickFixes(node, description, fixes)
 }
