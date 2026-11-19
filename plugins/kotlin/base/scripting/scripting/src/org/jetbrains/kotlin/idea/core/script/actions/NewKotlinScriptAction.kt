@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -36,7 +38,9 @@ import org.jetbrains.kotlin.idea.actions.NewKotlinFileNameValidator
 import org.jetbrains.kotlin.idea.actions.addKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
+import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.definition.kotlinScriptTemplate
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import java.awt.BorderLayout
@@ -70,6 +74,9 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
     override fun createDialogBuilder(project: Project, dataContext: DataContext): CreateFileFromTemplateDialog.Builder {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
             return super.createDialogBuilder(project, dataContext)
+        }
+        runWithModalProgressBlocking(ModalTaskOwner.project(project), KotlinBaseScriptingBundle.message("progress.title.loading.script.definitions")) {
+            ScriptDefinitionProviderImpl.getInstance(project).awaitLoading()
         }
         val directory = LangDataKeys.IDE_VIEW.getData(dataContext)?.directories?.firstOrNull()
         return NewKotlinScriptDialogBuilder(project, collectScriptTypes(project, directory))
