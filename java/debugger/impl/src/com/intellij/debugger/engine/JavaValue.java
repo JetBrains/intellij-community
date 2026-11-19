@@ -15,6 +15,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.agent.MemoryAgentPathsToClosestGCRootsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -546,6 +547,24 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myEvaluationContext.getDebugProcess().getDebuggerContext();
   }
 
+  /**
+   * The context of the frame this value was computed in: the session's when it is that frame, else a context of the
+   * value's own frame, like {@link JavaStackFrame#getFrameDebuggerContext}. So the expression of a value of another frame
+   * (a caller frame, a frame of another thread) is built and converted for that frame and its language.
+   */
+  private @NotNull DebuggerContextImpl getFrameDebuggerContext() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    DebuggerContextImpl context = getDebuggerContext();
+    StackFrameProxyImpl frameProxy = myEvaluationContext.getFrameProxy();
+    if (frameProxy == null || !context.isInitialised() || frameProxy.equals(context.getFrameProxy())) {
+      return context;
+    }
+    DebuggerContextImpl frameContext = DebuggerContextImpl.createDebuggerContext(
+      myEvaluationContext.getDebugProcess().getSession(), myEvaluationContext.getSuspendContext(), frameProxy.threadProxy(), frameProxy);
+    frameContext.initCaches();
+    return frameContext;
+  }
+
   public Project getProject() {
     return myValueDescriptor.getProject();
   }
@@ -614,14 +633,15 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           try {
-            getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext())
+            DebuggerContextImpl frameContext = getFrameDebuggerContext();
+            getDescriptor().getTreeEvaluation(JavaValue.this, frameContext)
               .whenComplete((psiExpression, ex) -> {
                 if (ex != null) {
                   result.setError(ex);
                 }
                 else if (psiExpression != null) {
                   ReadAction.nonBlocking(() -> {
-                    SourcePosition sourcePosition = getDebuggerContext().getSourcePosition();
+                    SourcePosition sourcePosition = frameContext.getSourcePosition();
                     Language language = (sourcePosition != null) ? sourcePosition.getFile().getLanguage() : psiExpression.getLanguage();
                     TextWithImports convertedTextWithImports = TextWithImportsImpl.convertToLanguage(psiExpression, language);
                     XExpression res = TextWithImportsImpl.toXExpression(convertedTextWithImports);
