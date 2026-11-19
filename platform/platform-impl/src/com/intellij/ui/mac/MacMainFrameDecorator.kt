@@ -20,6 +20,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ToolbarService.Companion.getInstance
 import com.intellij.ui.mac.MacFullScreenControlsManager.configureForEmptyToolbarHeader
 import com.intellij.ui.mac.foundation.Foundation
+import com.intellij.ui.tabs.ProjectTabsHandler
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.UIUtil
@@ -34,7 +35,12 @@ import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPane, coroutineScope: CoroutineScope) : IdeFrameDecorator(frame) {
+internal class MacMainFrameDecorator(
+  frame: IdeFrameImpl,
+  glassPane: IdeGlassPane,
+  coroutineScope: CoroutineScope,
+  tabsHandler: ProjectTabsHandler,
+) : IdeFrameDecorator(frame, tabsHandler) {
   companion object {
     private val LOG: Logger
       get() = logger<MacMainFrameDecorator>()
@@ -52,8 +58,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
 
   internal val dispatcher: EventDispatcher<FSListener> = EventDispatcher.create(FSListener::class.java)
 
-  private val tabsHandler: MacWinTabsHandler =
-    if (MacWinTabsHandler.isVersion2()) MacWinTabsHandlerV2(frame, coroutineScope) else MacWinTabsHandler(frame, coroutineScope)
+  private val macTabsHandler = tabsHandler as MacWinTabsHandler
 
   override var isInFullScreen: Boolean = false
     private set
@@ -87,7 +92,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
         if (rootPane != null && rootPane.border != null) {
           rootPane.setBorder(null)
         }
-        tabsHandler.enteringFullScreen()
+        macTabsHandler.enteringFullScreen()
       }
 
       override fun windowEnteredFullScreen(event: FullScreenEvent) {
@@ -137,7 +142,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     rootPane?.putClientProperty(FULL_SCREEN, true)
     storeFullScreenStateIfNeeded()
     rootPane?.putClientProperty(FULL_SCREEN_PROGRESS, null)
-    tabsHandler.enterFullScreen()
+    macTabsHandler.enterFullScreen()
   }
 
   private fun exitFullScreen() {
@@ -148,7 +153,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     storeFullScreenStateIfNeeded()
     rootPane?.putClientProperty(FULL_SCREEN, null)
     rootPane?.putClientProperty(IGNORE_EXIT_FULL_SCREEN, null)
-    tabsHandler.exitFullScreen()
+    macTabsHandler.exitFullScreen()
   }
 
   override fun setStoredFullScreen(state: Boolean) {
@@ -165,10 +170,6 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
   private fun storeFullScreenStateIfNeeded() {
     // todo should we really check that frame has not null project as it was implemented previously?
     frame.doLayout()
-  }
-
-  override fun setProject() {
-    tabsHandler.setProject()
   }
 
   override suspend fun toggleFullScreen(state: Boolean): Boolean {
@@ -245,13 +246,6 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
       }
     }
   }
-
-  override fun appClosing() {
-    tabsHandler.appClosing()
-  }
-
-  override val isTabbedWindow: Boolean
-    get() = MergeAllWindowsAction.isTabbedWindow(frame)
 
   interface FSListener : FullScreenListener, EventListener
 

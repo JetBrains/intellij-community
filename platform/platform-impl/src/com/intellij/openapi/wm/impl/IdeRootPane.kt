@@ -7,12 +7,11 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
-import com.intellij.platform.jbr.JdkEx
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBLayeredPane
-import com.intellij.ui.mac.MacWinTabsHandler
+import com.intellij.ui.tabs.ProjectTabsManager
 import com.intellij.util.StartupUiGate
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -29,12 +28,12 @@ import javax.swing.JRootPane
 private const val PROJECT_FRAME_TYPE_ID_KEY = "projectFrameTypeId"
 
 /**
- * A custom root pane that supports a custom frame title, macOS tabs and an additional toolbar below the menu bar
+ * A custom root pane that supports a custom frame title, project tabs and an additional toolbar below the menu bar
  */
 @ApiStatus.Internal
 class IdeRootPane internal constructor() : JRootPane() {
   private var customFrameTitle: JComponent? = null
-  private val macTabsHandler: JComponent?
+  private val projectTabsComponent: JComponent?
   private var toolbar: JComponent? = null
 
   private var fixedGlassPane: Boolean = false
@@ -70,13 +69,8 @@ class IdeRootPane internal constructor() : JRootPane() {
       }.getOrLogException(logger<IdeRootPane>())
     }
 
-    macTabsHandler = if (SystemInfoRt.isMac && JdkEx.isTabbingModeAvailable()) {
-      MacWinTabsHandler.createAndInstallHandlerComponent(this).also {
-        layeredPane.add(it, (JLayeredPane.DEFAULT_LAYER - 3) as Any)
-      }
-    }
-    else {
-      null
+    projectTabsComponent = ProjectTabsManager.createRootPaneComponent(this)?.also {
+      layeredPane.add(it, (JLayeredPane.DEFAULT_LAYER - 3) as Any)
     }
   }
 
@@ -142,7 +136,7 @@ class IdeRootPane internal constructor() : JRootPane() {
   }
 
   /**
-   * A custom layout which supports a custom frame title [customFrameTitle], macOS tabs handler [macTabsHandler],
+   * A custom layout which supports a custom frame title [customFrameTitle], project tabs [projectTabsComponent],
    * a floating menu [getJMenuBar] and an optional toolbar [toolbar].
    * Lays out components in a vertical stack stretching all of them to window width.
    * Frame title, menu and toolbar will be at their preferred height, and the content will occupy the remaining space.
@@ -161,16 +155,16 @@ class IdeRootPane internal constructor() : JRootPane() {
                                 ?: Dimension()
       val menuBarDimension = menuBar?.takeIf { it.isVisible && isFixedMenu() }?.let(dimensionGetter)
                              ?: Dimension()
-      val tabsHandlerDimension = macTabsHandler?.takeIf { it.isVisible }?.let(dimensionGetter)
-                                 ?: Dimension()
+      val tabsDimension = projectTabsComponent?.takeIf { it.isVisible }?.let(dimensionGetter)
+                          ?: Dimension()
       val toolbarDimension = toolbar?.takeIf { it.isVisible }?.let(dimensionGetter)
                              ?: Dimension()
       val contentDimension = contentPane?.let { dimensionGetter(it) } ?: parent.size
 
       // sum as longs and then coerce to prevent overflow
-      val width = maxOf(frameTitleDimension.width, menuBarDimension.width, tabsHandlerDimension.width, toolbarDimension.width, contentDimension.width).toLong() +
+      val width = maxOf(frameTitleDimension.width, menuBarDimension.width, tabsDimension.width, toolbarDimension.width, contentDimension.width).toLong() +
                   insets.left + insets.right
-      val height = (0L + frameTitleDimension.height + menuBarDimension.height + tabsHandlerDimension.height + toolbarDimension.height + contentDimension.height) +
+      val height = (0L + frameTitleDimension.height + menuBarDimension.height + tabsDimension.height + toolbarDimension.height + contentDimension.height) +
                    insets.top + insets.bottom
 
       return Dimension(width.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
@@ -203,12 +197,12 @@ class IdeRootPane internal constructor() : JRootPane() {
           yShift += mbd.height
         }
       }
-      val tabsHandler = macTabsHandler
-      if (tabsHandler != null && tabsHandler.isVisible) {
-        val toolbarDim = tabsHandler.preferredSize
+      val tabsComponent = projectTabsComponent
+      if (tabsComponent != null && tabsComponent.isVisible) {
+        val toolbarDim = tabsComponent.preferredSize
         if (toolbarDim != null) {
           val toolbarHeight = toolbarDim.height
-          tabsHandler.setBounds(0, yShift, w, toolbarHeight)
+          tabsComponent.setBounds(0, yShift, w, toolbarHeight)
           yShift += toolbarHeight
         }
       }

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JFrame;
 import javax.swing.JRootPane;
 import java.awt.Component;
 import java.awt.Window;
@@ -59,15 +58,6 @@ public final class MergeAllWindowsAction extends IdeDependentAction {
       presentation.setEnabledAndVisible(false);
     }
     super.update(e);
-  }
-
-  public static boolean isTabbedWindow(@NotNull JFrame frame) {
-    if (JdkEx.isTabbingModeAvailable() && WindowManager.getInstance().getAllProjectFrames().length > 1) {
-      ID id = MacUtil.getWindowFromJavaWindow(frame);
-      int tabs = Foundation.invoke(Foundation.invoke(id, "tabbedWindows"), "count").intValue();
-      return tabs > 1;
-    }
-    return false;
   }
 
   @Override

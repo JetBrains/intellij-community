@@ -67,7 +67,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.RectanglePainter2D
@@ -75,6 +74,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
+import com.intellij.ui.tabs.ProjectTabsComponent
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
@@ -1254,7 +1254,7 @@ class IslandsUICustomization : InternalUICustomization() {
     return true
   }
 
-  override fun createProjectTab(frame: JFrame, tabsComponent: WindowTabsComponent) {
+  override fun createProjectTab(frame: JFrame, tabsComponent: ProjectTabsComponent) {
     if (isManyIslandEnabled) {
       if (frame is IdeFrame) {
         frame.project?.also { project ->

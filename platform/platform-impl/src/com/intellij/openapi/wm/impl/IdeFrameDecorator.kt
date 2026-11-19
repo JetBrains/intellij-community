@@ -12,6 +12,8 @@ import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.ui.tabs.ProjectTabsHandler
+import com.intellij.ui.tabs.ProjectTabsManager
 import com.intellij.util.system.OS
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
@@ -34,17 +36,21 @@ private val isCustomDecorationActiveCache = AtomicReference<Boolean>()
 private val defaultCustomDecorationState: Boolean
   get() = OS.CURRENT == OS.Windows && mergeMainMenuWithWindowTitleOverrideValue != false
 
-internal abstract class IdeFrameDecorator protected constructor(@JvmField protected val frame: IdeFrameImpl) {
+internal abstract class IdeFrameDecorator protected constructor(
+  @JvmField protected val frame: IdeFrameImpl,
+  @JvmField protected val tabsHandler: ProjectTabsHandler,
+) {
   companion object {
     internal const val FULL_SCREEN = "ide.frame.full.screen"
 
     fun decorate(frame: IdeFrameImpl, glassPane: IdeGlassPane, coroutineScope: CoroutineScope): IdeFrameDecorator? {
       try {
+        val tabsHandler = ProjectTabsManager.createFrameHandler(frame, coroutineScope)
         return when {
-          OS.CURRENT == OS.Windows -> WinMainFrameDecorator(frame)
-          OS.CURRENT == OS.macOS -> MacMainFrameDecorator(frame, glassPane, coroutineScope)
-          StartupUiUtil.isXToolkit() && X11UiUtil.isFullScreenSupported() -> EWMHFrameDecorator(frame)
-          StartupUiUtil.isWaylandToolkit() && UIUtil.isFullScreenSupportedByDefaultGD() -> WLFrameDecorator(frame)
+          OS.CURRENT == OS.Windows -> WinMainFrameDecorator(frame, tabsHandler)
+          OS.CURRENT == OS.macOS -> MacMainFrameDecorator(frame, glassPane, coroutineScope, tabsHandler)
+          StartupUiUtil.isXToolkit() && X11UiUtil.isFullScreenSupported() -> EWMHFrameDecorator(frame, tabsHandler)
+          StartupUiUtil.isWaylandToolkit() && UIUtil.isFullScreenSupportedByDefaultGD() -> WLFrameDecorator(frame, tabsHandler)
           else -> null
         }
       }
@@ -89,11 +95,12 @@ internal abstract class IdeFrameDecorator protected constructor(@JvmField protec
     notifyFrameComponents(state)
   }
 
-  open fun setProject() {
+  fun setProject() {
+    tabsHandler.setProject()
   }
 
-  open val isTabbedWindow: Boolean
-    get() = false
+  val isTabbedWindow: Boolean
+    get() = ProjectTabsManager.isTabbedWindow(frame)
 
   /**
    * Returns applied state or rejected promise if it cannot be applied.
@@ -105,11 +112,13 @@ internal abstract class IdeFrameDecorator protected constructor(@JvmField protec
     frame.jMenuBar?.putClientProperty(FULL_SCREEN, state)
   }
 
-  open fun appClosing() {}
+  fun appClosing() {
+    tabsHandler.appClosing()
+  }
 }
 
 // AWT-based decorator
-private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(frame) {
+private class WinMainFrameDecorator(frame: IdeFrameImpl, tabsHandler: ProjectTabsHandler) : IdeFrameDecorator(frame, tabsHandler) {
   override val isInFullScreen: Boolean
     get() = ClientProperty.isTrue(frame, FULL_SCREEN)
 
@@ -173,7 +182,7 @@ private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(fra
 }
 
 // Extended WM Hints-based decorator
-private class EWMHFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(frame) {
+private class EWMHFrameDecorator(frame: IdeFrameImpl, tabsHandler: ProjectTabsHandler) : IdeFrameDecorator(frame, tabsHandler) {
 
   override val isInFullScreen: Boolean
     get() = ClientProperty.isTrue(frame, FULL_SCREEN)
@@ -191,7 +200,7 @@ private class EWMHFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(frame)
   }
 }
 
-private class WLFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(frame) {
+private class WLFrameDecorator(frame: IdeFrameImpl, tabsHandler: ProjectTabsHandler) : IdeFrameDecorator(frame, tabsHandler) {
   override val isInFullScreen: Boolean
     get() = ClientProperty.isTrue(frame, FULL_SCREEN)
 
