@@ -146,6 +146,8 @@
     <extensionPoint qualifiedName="com.intellij.projectOpenInterceptor"
                     interface="com.intellij.openapi.project.impl.ProjectOpenInterceptor"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectWorkspaceFactory"
+                    interface="com.intellij.openapi.workspace.impl.ProjectWorkspaceFactory"/>
     <extensionPoint qualifiedName="com.intellij.editor.interLineBreakpointConfigurationProvider"
                     interface="com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider"
                     dynamic="true"/>

@@ -3,6 +3,8 @@ package com.intellij.openapi.workspace.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -11,8 +13,13 @@ import com.intellij.openapi.workspace.ProjectWorkspaceManager
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.getComponentManagerImpl
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 private val WORKSPACE_KEY: Key<ProjectWorkspace> = Key.create("ProjectWorkspaceManagerImpl.WORKSPACE")
+
+private val WORKSPACE_FACTORY_EP: ExtensionPointName<ProjectWorkspaceFactory> = ExtensionPointName("com.intellij.projectWorkspaceFactory")
+
+private val LOG = logger<ProjectWorkspaceManagerImpl>()
 
 /** Tracks live workspaces and the projects bound to each workspace. */
 @ApiStatus.Internal
@@ -44,6 +51,46 @@ class ProjectWorkspaceManagerImpl : ProjectWorkspaceManager {
       startWorkspace(workspace, project)
       return workspace
     }
+  }
+
+  /**
+   * Binds [project] before its services initialize. An existing binding takes precedence.
+   * Otherwise the project joins the live workspace of [frameOwner] if it supports member projects.
+   * If no such workspace exists, the manager tries the factories and falls back to [WorkspaceAsProject].
+   */
+  fun bindProject(project: Project, identityFile: Path, frameOwner: Project?): ProjectWorkspace {
+    val ownerWorkspace = frameOwner?.let(::getWorkspace)
+    synchronized(lock) {
+      project.getUserData(WORKSPACE_KEY)?.let {
+        LOG.error("The project has a workspace before its binding: $project, $it")
+        return it
+      }
+
+      if (ownerWorkspace != null && ownerWorkspace !is WorkspaceAsProject) {
+        val projects = live.get(ownerWorkspace)
+        if (projects != null) {
+          projects.add(project)
+          project.putUserData(WORKSPACE_KEY, ownerWorkspace)
+          return ownerWorkspace
+        }
+      }
+
+      val workspace = createWorkspaceOfHost(project, identityFile) ?: WorkspaceAsProject(project)
+      startWorkspace(workspace, project)
+      return workspace
+    }
+  }
+
+  private fun createWorkspaceOfHost(project: Project, identityFile: Path): ProjectWorkspace? {
+    for (factory in WORKSPACE_FACTORY_EP.extensionList) {
+      val workspace = factory.createWorkspace(project, identityFile) ?: continue
+      val container = workspace.getComponentManagerImpl()
+      if (container is ProjectWorkspaceComponentManager && container.hostProject === project) {
+        return workspace
+      }
+      LOG.error("The workspace of $factory has no container of the project $project: $container")
+    }
+    return null
   }
 
   /** The caller must hold [lock]. */

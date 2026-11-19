@@ -153,8 +153,13 @@ open class TestProjectManager : ProjectManagerImpl() {
     }
   }
 
-  override suspend fun instantiateProject(identityFle: Path, projectName: String?, beforeInit: ((Project) -> Unit)?): ProjectImpl {
-    val project = super.instantiateProject(identityFle, projectName, beforeInit)
+  override suspend fun instantiateProject(
+    identityFle: Path,
+    projectName: String?,
+    beforeInit: ((Project) -> Unit)?,
+    frameOwner: Project?,
+  ): ProjectImpl {
+    val project = super.instantiateProject(identityFle, projectName, beforeInit, frameOwner)
     totalCreatedProjectCount++
     trackProject(project)
     return project

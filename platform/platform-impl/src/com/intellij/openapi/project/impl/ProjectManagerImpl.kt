@@ -110,6 +110,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressed
 import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.openapi.workspace.impl.ProjectWorkspaceManagerImpl
 import com.intellij.platform.PROJECT_NEWLY_CREATED
 import com.intellij.platform.PROJECT_NEWLY_OPENED
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -301,6 +302,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         projectIdentityFile = path,
         projectName = null,
         beforeInit = beforeInit,
+        frameOwner = null,
         projectInitHelper = null,
         runConversionBeforeOpen = false,
         preloadServices = preloadServices,
@@ -899,13 +901,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
               when {
                 options.project != null -> options.project!!
                 options.isNewProject -> prepareNewProject(
-                  projectIdentityFile, options.projectName, options.beforeInit, options.useDefaultProjectAsTemplate,
+                  projectIdentityFile, options.projectName, options.beforeInit, options.frameOwner, options.useDefaultProjectAsTemplate,
                   options.preloadServices, markAsNewlyCreated = options.isProjectCreatedWithWizard,
                   projectInitHelper = initHelper.takeIf { initFrameEarly },
                   projectRootDir = options.projectRootDir,
                 )
                 else -> prepareProject(
-                  projectIdentityFile, options.projectName, options.beforeInit,
+                  projectIdentityFile, options.projectName, options.beforeInit, options.frameOwner,
                   projectInitHelper = initHelper.takeIf { initFrameEarly }, options.runConversionBeforeOpen, options.preloadServices,
                   projectRootDir = options.projectRootDir,
                 )
@@ -1100,7 +1102,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return withContext(ClientId.localId.asContextElement()) {
       TrustedProjects.setProjectTrusted(file, isTrusted = true)
       prepareNewProject(
-        file, options.projectName, options.beforeInit, options.useDefaultProjectAsTemplate, options.preloadServices,
+        file, options.projectName, options.beforeInit, options.frameOwner, options.useDefaultProjectAsTemplate, options.preloadServices,
         options.isProjectCreatedWithWizard, markAsNew = false
       ).also { project ->
         TrustedProjects.setProjectTrusted(project, isTrusted = true)
@@ -1126,6 +1128,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     identityFle: Path,
     projectName: String?,
     beforeInit: ((Project) -> Unit)?,
+    frameOwner: Project?,
   ): ProjectImpl {
     // Capture the ProjectImpl inside the `span` block so the reference is available even if the
     // surrounding `withContext` rethrows a parent cancellation on its way out (e.g., a sibling
@@ -1142,6 +1145,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           parent = ApplicationManager.getApplication().getComponentManagerImpl(),
         ).also { partiallyCreated.set(it) }
       }
+      ProjectWorkspaceManagerImpl.getInstance().bindProject(project, identityFle, frameOwner)
       beforeInit?.let { beforeInit ->
         span("options.beforeInit") {
           beforeInit(project)
@@ -1159,6 +1163,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     identityFle: Path,
     projectName: String?,
     beforeInit: ((Project) -> Unit)?,
+    frameOwner: Project?,
     useDefaultProjectAsTemplate: Boolean,
     preloadServices: Boolean,
     markAsNewlyCreated: Boolean,
@@ -1192,7 +1197,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
       }
 
-      val project = instantiateProject(identityFle, projectName, beforeInit)
+      val project = instantiateProject(identityFle, projectName, beforeInit, frameOwner)
       try {
         project.putUserData(PROJECT_NEWLY_OPENED, markAsNew)
         project.putUserData(PROJECT_NEWLY_CREATED, markAsNewlyCreated)
@@ -1220,6 +1225,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     projectIdentityFile: Path,
     projectName: String?,
     beforeInit: ((Project) -> Unit)?,
+    frameOwner: Project?,
     projectInitHelper: ProjectInitHelper?,
     runConversionBeforeOpen: Boolean,
     preloadServices: Boolean,
@@ -1232,7 +1238,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       null
     }
 
-    val project = instantiateProject(projectIdentityFile, projectName, beforeInit)
+    val project = instantiateProject(projectIdentityFile, projectName, beforeInit, frameOwner)
     try {
       // template as null here because it is not a new project
       initProject(projectIdentityFile, project, preloadServices, template = null, projectInitHelper, projectRootDir)
