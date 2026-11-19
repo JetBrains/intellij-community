@@ -398,7 +398,7 @@ The model listens on the port 31500. It answers every turn with the reply `Air U
   [@test] ../crates/avl-guest/src/lane/services/codex/tests.rs
 
 - The mock server of the backend tests answers the same golden event stream.
-  [@test] ../../../../plugins/air/backend/cli/tests/codex/MockResponsesServerLaneGoldenTest.kt
+  [@test] ../../../../plugins/air/frontback/cli/tests/codex/MockResponsesServerLaneGoldenTest.kt
 
 - A title request gets the message `{"title":"Mock session"}` and is not a turn.
   [@test] ../crates/avl-guest/src/lane/services/codex/tests.rs
