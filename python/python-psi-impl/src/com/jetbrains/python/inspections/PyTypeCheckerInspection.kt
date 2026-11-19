@@ -81,6 +81,7 @@ import com.jetbrains.python.psi.PyYieldExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.analyzeArguments
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.knownFixedTupleLength
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyPsiUtils.flattenParens
@@ -324,6 +325,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       val forPart = node.forPart
       val target = flattenParens(forPart.target)
       if (target !is PyTupleExpression && target !is PyListLiteralExpression) return
+      if (checkStarredTargetCount(target)) return
       val source = forPart.source ?: return
       val sourceType = myTypeEvalContext.getType(source) ?: return
       if (sourceType.containsAny(context = myTypeEvalContext)) return
@@ -336,9 +338,7 @@ open class PyTypeCheckerInspection : PyInspection() {
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         return
       }
-      if (itemType is PyTupleType && !itemType.isHomogeneous) {
-        checkNestedUnpackingBalance(target.elements, itemType)
-      }
+      if (itemType is PyTupleType && checkUnpackingTargetBalance(target, itemType)) return
       if (itemType != null) checkUnpackedTargetTypes(target, itemType, target)
     }
 
@@ -518,6 +518,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       val rhs = node.assignedValue
       if ((lhs !is PyTupleExpression && lhs !is PyListLiteralExpression) || rhs == null) return
       val lhsSeq: PySequenceExpression = lhs
+      if (checkStarredTargetCount(lhsSeq)) return
 
       // Check that the RHS is iterable
       if (checkUnpackIterableValue(rhs)) return
@@ -539,9 +540,9 @@ open class PyTypeCheckerInspection : PyInspection() {
         getUnpackedTupleLength(rhs)
       }
       else {
-        rhsType.elementCount
+        knownFixedTupleLength(rhsType)
       }
-      if (rhsCount >= 0 && checkUnpackBalance(targets.size, lhsStarCount, rhsCount, rhs, lhs,
+      if (rhsCount >= 0 && checkUnpackBalance(targets.size, lhsStarCount, rhsCount, rhs,
                                               CodifiedParam.ofType(rhsType, rhs, myTypeEvalContext))) return
 
       checkNestedUnpackingBalance(targets, rhsType)
@@ -1810,6 +1811,23 @@ open class PyTypeCheckerInspection : PyInspection() {
       return converted.typeArguments.firstOrNull()
     }
 
+    /**
+     * Reports a target list with more than one starred target, at any nesting level.
+     * CPython rejects it at compile time, so the value type does not matter.
+     */
+    private fun checkStarredTargetCount(targetSeq: PySequenceExpression): Boolean {
+      val targets = targetSeq.elements
+      if (targets.count { it is PyStarExpression } > 1) {
+        PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.BAD_UNPACKING, targetSeq,
+                                            PyPsiBundle.message("INSP.tuple.assignment.balance.only.one.starred.expression.allowed.in.assignment"))
+        return true
+      }
+      return targets.any { target ->
+        val nested = flattenParens((target as? PyStarExpression)?.expression ?: target)
+        (nested is PyTupleExpression || nested is PyListLiteralExpression) && checkStarredTargetCount(nested)
+      }
+    }
+
     private fun targetOrResolvedHasExplicitType(target: PyTargetExpression): Boolean {
       var current: PsiElement = target
       while (current is PyTargetExpression) {
@@ -1850,11 +1868,9 @@ open class PyTypeCheckerInspection : PyInspection() {
       for (element in rhsTuple.elements) {
         if (element is PyStarExpression) {
           val operand = element.expression ?: return -1
-          val operandType = myTypeEvalContext.getType(operand)
-          if (operandType !is PyTupleType || operandType.isHomogeneous) {
-            return -1
-          }
-          count += operandType.elementCount
+          val operandCount = knownFixedTupleLength(myTypeEvalContext.getType(operand))
+          if (operandCount < 0) return -1
+          count += operandCount
         }
         else {
           count++
@@ -1865,14 +1881,11 @@ open class PyTypeCheckerInspection : PyInspection() {
 
     private fun checkUnpackBalance(
       targetCount: Int, starCount: Int, valueCount: Int,
-      balanceHighlight: PsiElement, starHighlight: PsiElement,
+      balanceHighlight: PsiElement,
       valueType: CodifiedParam,
     ): Boolean {
-      if (starCount > 1) {
-        PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.BAD_UNPACKING, starHighlight,
-                                            PyPsiBundle.message("INSP.tuple.assignment.balance.only.one.starred.expression.allowed.in.assignment"))
-        return true
-      }
+      // checkStarredTargetCount reports a target list with several starred targets before the balance check.
+      if (starCount > 1) return true
       // A starred target absorbs any surplus, so it only constrains the minimum number of values.
       val expectedCount = if (starCount == 1) targetCount - 1 else targetCount
       val tooMany = starCount == 0 && expectedCount < valueCount
@@ -1889,8 +1902,8 @@ open class PyTypeCheckerInspection : PyInspection() {
     }
 
     private fun checkNestedUnpackingBalance(targets: Array<PyExpression>, assignedTupleType: PyTupleType) {
-      if (assignedTupleType.isHomogeneous) return
-      val count = assignedTupleType.elementCount
+      val count = knownFixedTupleLength(assignedTupleType)
+      if (count < 0) return
       val starIndex = targets.indexOfFirst { it is PyStarExpression }
       for (i in targets.indices) {
         if (i == starIndex) continue
@@ -1905,15 +1918,16 @@ open class PyTypeCheckerInspection : PyInspection() {
       }
     }
 
-    private fun checkUnpackingTargetBalance(targetSeq: PySequenceExpression, assignedTupleType: PyTupleType) {
-      if (assignedTupleType.isHomogeneous) return
-      val valueCount = assignedTupleType.elementCount
-      if (valueCount < 0) return
+    /** Checks the balance of [targetSeq] and of its nested target lists. Returns true when it reports a problem at the top level. */
+    private fun checkUnpackingTargetBalance(targetSeq: PySequenceExpression, assignedTupleType: PyTupleType): Boolean {
+      val valueCount = knownFixedTupleLength(assignedTupleType)
+      if (valueCount < 0) return false
       val targets = targetSeq.elements
       val starCount = targets.count { it is PyStarExpression }
       val valueType = CodifiedParam.ofType(assignedTupleType, targetSeq, myTypeEvalContext)
-      if (checkUnpackBalance(targets.size, starCount, valueCount, targetSeq, targetSeq, valueType)) return
+      if (checkUnpackBalance(targets.size, starCount, valueCount, targetSeq, valueType)) return true
       checkNestedUnpackingBalance(targets, assignedTupleType)
+      return false
     }
 
     private fun checkContextManagerValue(iteratedValue: PyExpression?, isAsync: Boolean) {
