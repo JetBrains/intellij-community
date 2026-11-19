@@ -53,7 +53,7 @@ class MavenArchetypeTest(mavenVersion: String, modelVersion: String) {
     maven.assumeVersion("bundled")
 
     val embedder = mavenEmbedderWrappers.getEmbedder(maven.dir)
-    val archetypes = embedder.getRemoteArchetypes("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/")
+    val archetypes = embedder.getRemoteArchetypes("https://cache-redirector.jetbrains.com/maven-central/")
     val filtered = archetypes
       .filter { archetype: MavenArchetype? ->
         "org.apache.maven.archetypes" == archetype!!.groupId &&
@@ -73,7 +73,7 @@ class MavenArchetypeTest(mavenVersion: String, modelVersion: String) {
       "maven-archetype-archetype",
       "1.0",
       mutableListOf(),
-      "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/")
+      "https://cache-redirector.jetbrains.com/maven-central/")
     assertNotNull(descriptorMap)
   }
 }

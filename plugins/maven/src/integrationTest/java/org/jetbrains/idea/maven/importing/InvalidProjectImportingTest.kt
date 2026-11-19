@@ -284,7 +284,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
       )
     else if (maven.isMaven4)
       arrayOf(
-        "Invalid Collect Request: null -> [] < [central-mirror (https://cache-redirector.jetbrains.com/repo1.maven.org/maven2, default, releases)]",
+        "Invalid Collect Request: null -> [] < [central-mirror (https://cache-redirector.jetbrains.com/maven-central, default, releases)]",
       )
     else
       arrayOf(

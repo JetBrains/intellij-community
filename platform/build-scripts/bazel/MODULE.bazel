@@ -71,7 +71,7 @@ maven.install(
     fetch_sources = True,
     lock_file = "//:maven_install.json",
     repositories = [
-        "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2",
+        "https://cache-redirector.jetbrains.com/maven-central",
         "https://cache-redirector.jetbrains.com/maven/ultimate-public",
         "https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository",
         "https://cache-redirector.jetbrains.com/www.jetbrains.com/intellij-repository/releases",
@@ -101,7 +101,7 @@ http_file(
     name = "protobuf-java_http",
     downloaded_file_path = "protobuf-java-4.33.4.jar",
     sha256 = "3ca892fd6ea8b37d01bb6917dbc0bf2637548b756753f65a28d4f1d4d982347f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.33.4/protobuf-java-4.33.4.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/com/google/protobuf/protobuf-java/4.33.4/protobuf-java-4.33.4.jar",
 )
 
 # Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316

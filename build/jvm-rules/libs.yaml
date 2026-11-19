@@ -1,4 +1,4 @@
-- url: https://cache-redirector.jetbrains.com/repo1.maven.org/maven2
+- url: https://cache-redirector.jetbrains.com/maven-central
   libs:
     # protobuf
     - id: com.google.protobuf:protobuf-java

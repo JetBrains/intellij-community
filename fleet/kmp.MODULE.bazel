@@ -7,7 +7,7 @@ kmp_extension.configure(
     ],
     repositories = [
         # do no sort
-        "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2",
+        "https://cache-redirector.jetbrains.com/maven-central",
         "https://cache-redirector.jetbrains.com/maven/ultimate-public",
         "https://cache-redirector.jetbrains.com/maven/ultimate-private",
         "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2",

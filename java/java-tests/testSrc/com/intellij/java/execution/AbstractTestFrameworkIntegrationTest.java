@@ -207,7 +207,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     File localRepo = new File(JpsMavenSettings.getMavenRepositoryPath());
     return new ArtifactRepositoryManager(
       localRepo,
-      Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")),
+      Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "https://cache-redirector.jetbrains.com/maven-central")),
       new ProgressConsumer() {
         @Override
         public void consume(String message) {

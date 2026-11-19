@@ -22,12 +22,12 @@ const REPOS = `<?xml version="1.0" encoding="UTF-8"?>
     <remote-repository>
       <option name="id" value="central-proxy" />
       <option name="name" value="Maven Central Proxy" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/maven-central" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="intellij-dependencies" />
       <option name="name" value="IntelliJ Dependencies" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/maven/ultimate-public/" />
     </remote-repository>
   </component>
 </project>`
@@ -44,8 +44,8 @@ describe("parseModulesXml", () => {
 describe("parseRepositories", () => {
   it("returns the repository URLs in file order without a trailing slash", () => {
     deepEqual(parseRepositories(REPOS), [
-      "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2",
-      "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies",
+      "https://cache-redirector.jetbrains.com/maven-central",
+      "https://cache-redirector.jetbrains.com/maven/ultimate-public",
     ])
   })
 })

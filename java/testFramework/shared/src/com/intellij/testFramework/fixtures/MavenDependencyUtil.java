@@ -114,7 +114,7 @@ public final class MavenDependencyUtil {
 
   private static final List<RemoteRepositoryDescription> REPOS_FOR_TESTING = List.of(
     new RemoteRepositoryDescription("central-proxy", "Maven Central Proxy",
-                                    "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"),
+                                    "https://cache-redirector.jetbrains.com/maven-central"),
     new RemoteRepositoryDescription("intellij-dependencies", "IntelliJ Dependencies",
                                     "https://cache-redirector.jetbrains.com/maven/ultimate-public")
   );

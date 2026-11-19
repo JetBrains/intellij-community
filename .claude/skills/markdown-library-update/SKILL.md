@@ -33,9 +33,9 @@ set -euo pipefail
 
 MARKDOWN_VERSION="A.B.C" # replace with the requested version
 if [[ "$MARKDOWN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  MARKDOWN_REPOSITORY_BASE_URL="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains"
+  MARKDOWN_REPOSITORY_BASE_URL="https://cache-redirector.jetbrains.com/maven-central/org/jetbrains"
 elif [[ "$MARKDOWN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  MARKDOWN_REPOSITORY_BASE_URL="https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains"
+  MARKDOWN_REPOSITORY_BASE_URL="https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains"
 else
   echo "Unsupported Markdown version: $MARKDOWN_VERSION" >&2
   exit 1

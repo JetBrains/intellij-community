@@ -179,7 +179,7 @@ internal class MavenDomTestFixtureImpl internal constructor(
         <mirrors>
           <mirror>
             <id>central-mirror</id>
-            <url>https://cache-redirector.jetbrains.com/repo1.maven.org/maven2</url>
+            <url>https://cache-redirector.jetbrains.com/maven-central</url>
             <mirrorOf>central</mirrorOf>
           </mirror>
         </mirrors>
