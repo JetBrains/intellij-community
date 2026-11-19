@@ -1,5 +1,7 @@
 package com.intellij.platform.lsp
 
+import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
@@ -26,6 +28,7 @@ import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.Registration
 import org.eclipse.lsp4j.RegistrationParams
 import org.eclipse.lsp4j.TextEdit
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -167,21 +170,29 @@ class LspOnTypeFormattingTest {
 
     @Test
     fun `on type formatting skipped when live template is active`(): Unit = timeoutRunBlocking {
-      val virtualFile =
-        codeInsightFixture.configureByText("test_completion.txt", "Test()<caret>").virtualFile
+      val virtualFile = codeInsightFixture.configureByText("test_live_template.txt", "<caret>").virtualFile
       val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
-      serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
+      val requestDeferred = serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
         it.textDocument.uri == serverSession.fileUri(virtualFile) && it.ch in triggerCharacters
       }) { listOf(TextEdit(Range(Position(0, 0), Position(0, 0)), "\t")) }
 
       withContext(Dispatchers.EDT) {
+        // In a unit test, a template ends right after it starts, unless template testing is on.
+        TemplateManagerImpl.setTemplateTesting(codeInsightFixture.testRootDisposable)
+        val templateManager = TemplateManager.getInstance(project)
+        val template = templateManager.createTemplate("", "", "Test(\$ARG\$)")
+        template.addVariable("ARG", "", "", true)
+        templateManager.startTemplate(codeInsightFixture.editor, template)
+        assertNotNull(templateManager.getActiveTemplate(codeInsightFixture.editor), "The live template should be active")
         codeInsightFixture.type(";")
-        codeInsightFixture.type("sout")
-        codeInsightFixture.performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM)
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }
+
       awaitLspJobs(project)
-      codeInsightFixture.checkResult("Test();sout")
+      codeInsightFixture.checkResult("Test(;)")
+      assertTrue { requestDeferred.isActive }
+      requestDeferred.cancel()
     }
 
     @Test
@@ -210,11 +221,17 @@ class LspOnTypeFormattingTest {
       val virtualFile = codeInsightFixture.configureByText("test_trigger.txt", "<caret>").virtualFile
       val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val times = 5
-      repeat(times) {
+      val fileUri = serverSession.fileUri(virtualFile)
+      // The client skips the request of a character when the next character is typed before the request is sent.
+      // So the requests of the first characters are optional, and the request of the last character must come.
+      val earlierRequests = List(times - 1) {
         serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
-          it.textDocument.uri == serverSession.fileUri(virtualFile) && it.ch in triggerCharacters
+          it.textDocument.uri == fileUri && it.ch in triggerCharacters && it.position.character < times
         }) { listOf(TextEdit(Range(Position(0, 0), Position(0, 0)), "\t")) }
       }
+      serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
+        it.textDocument.uri == fileUri && it.ch in triggerCharacters && it.position.character == times
+      }) { listOf(TextEdit(Range(Position(0, 0), Position(0, 0)), "\t")) }
 
       withContext(Dispatchers.EDT) {
         repeat(times) {
@@ -223,6 +240,7 @@ class LspOnTypeFormattingTest {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }
       awaitLspJobs(project)
+      earlierRequests.forEach { it.cancel() }
       codeInsightFixture.checkResult("\t;;;;;")
     }
 
