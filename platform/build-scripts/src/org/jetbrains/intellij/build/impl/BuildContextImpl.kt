@@ -416,6 +416,8 @@ class BuildContextImpl internal constructor(
 
     jvmArgs += "-Dcompose.swing.render.on.graphics=true"
 
+    jvmArgs += "-XX:-UseBASE64Intrinsics"
+
     jvmArgs += getCommandLineArgumentsForOpenPackages(context = this, os)
 
     return jvmArgs
