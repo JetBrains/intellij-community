@@ -405,6 +405,11 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
             }
         }
     }
+    // A compiler that crashed reports no located diagnostic, so the failed action names the target and the cause. Only
+    // a build that failed is read so: a test action that failed must stay a test failure.
+    if build_errors.is_empty() && (!bep.failed_to_build.is_empty() || bazel_exit == 1) {
+        build_errors = parse_action_failures(bazel_output, &runtime.repo_root().to_string_lossy());
+    }
     // A pattern or a target that bazel could not load or analyse has no compile error and no test result.
     for error in &bep.abort_causes {
         if !build_errors.contains(error) {
@@ -503,6 +508,51 @@ fn is_interrupted(case: &TestCase) -> bool {
 ///
 /// The input is bazel's captured output, not the BEP: the BEP's `action.stderr` URI points at
 /// bazel-out/_tmp/actions/stderr-*, which bazel deletes before this code can read it.
+/// The longest message of a failed action that [`parse_action_failures`] keeps. A compiler crash names a class and a
+/// signature, and the rest of such a line repeats them.
+const MAX_ACTION_MESSAGE: usize = 300;
+
+/// The failed actions of a bazel output, for a build error without a located diagnostic, such as a crash of the
+/// compiler. Bazel names each one on an `ERROR:` line with the BUILD file, the description of the action (its kind and
+/// its target), and the exit code:
+///
+///   ERROR: /…/plugins/x/BUILD.bazel:74:12: compile //plugins/x:x_test_lib (kt: 463, java: 0) failed: (Exit -1): java failed: …
+///   Kotlinc Runner: Error: [Internal Error] java.lang.RuntimeException: Error generating class file …: Method too large: …
+///
+/// Each answer is the BUILD file relative to `repo_root`, the description up to the exit code, and the first message of
+/// the action without a location, when the action has one before the next `ERROR:` line.
+pub fn parse_action_failures(text: &str, repo_root: &str) -> Vec<String> {
+    let action = crate::regex!(r"^ERROR: (\S+/BUILD(?:\.bazel)?):(\d+):(\d+): (.+? failed: \(Exit -?\d+\))");
+    let message = crate::regex!(r"^(?:[A-Za-z0-9_][A-Za-z0-9_ ]*: )?(?:Error|error):\s*(.+)$");
+    let execroot = crate::regex!(r"[^\s\[\]()]*/execroot/_main/");
+    let root = format!("{}/", repo_root.trim_end_matches('/'));
+    let mut failures: Vec<String> = Vec::new();
+    let mut open = false;
+    for line in text.split('\n') {
+        let line = line.trim_end();
+        if let Some(found) = action.captures(line) {
+            let file = found[1].strip_prefix(root.as_str()).unwrap_or(&found[1]);
+            failures.push(format!("{file}:{}:{}: {}", &found[2], &found[3], &found[4]));
+            open = true;
+        } else if line.starts_with("ERROR: ") {
+            open = false;
+        } else if open && let Some(found) = message.captures(line.trim_start()) {
+            let full = execroot.replace_all(found[1].trim(), "");
+            let text = if full.chars().count() > MAX_ACTION_MESSAGE {
+                format!("{}…", full.chars().take(MAX_ACTION_MESSAGE).collect::<String>())
+            } else {
+                full.into_owned()
+            };
+            if let Some(last) = failures.last_mut() {
+                last.push_str(": ");
+                last.push_str(&text);
+            }
+            open = false;
+        }
+    }
+    failures
+}
+
 pub fn parse_compile_errors(text: &str) -> Vec<String> {
     // The repo's JvmCompile worker reports the message and the location on separate lines, with the location
     // indented and absolute:

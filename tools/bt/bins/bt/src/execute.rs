@@ -19,7 +19,7 @@ use crate::prepare::{Prepare, prepare_host};
 use crate::remote::brd_host::BrdHost;
 use crate::remote::{Host, HostLink, run_on_host};
 use bt_core::bep::{BepSummary, parse_bep};
-use bt_core::evidence::keep_failed_evidence;
+use bt_core::evidence::{keep_bazel_output, keep_failed_evidence};
 use bt_core::lanes::{
     BEP_FLAG, LaneSpec, RunPlan, bazel_command, bep_override, build_bazel_args, default_shards, uses_shard_plan, wildcard_guards,
 };
@@ -532,6 +532,9 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         .failures
         .first()
         .map(|failure| format!("{WRAPPER} {}", posix_shell_quote(&rerun_selector(failure))));
+    let bazel_log = (result.status == RunStatus::BuildFailed)
+        .then(|| keep_bazel_output(runtime, kept_run.as_deref(), &spawned.output))
+        .flatten();
     let json = args.json.then(|| {
         let mut payload = to_json(&result);
         payload.class_time_budget_violations = class_time_budget_violations.clone();
@@ -547,6 +550,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             kept_run,
             class_time_budget_violations,
             time: Some(time),
+            bazel_log,
         },
     );
     Ok(Outcome {

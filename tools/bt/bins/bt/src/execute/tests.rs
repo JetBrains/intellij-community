@@ -196,17 +196,29 @@ fn failed_build_tree(output: &str) -> FakeRuntime {
     fake
 }
 
-/// A failed build with no error that bt recognises shows the tail of bazel, as an INFRA run does.
+/// A failed build with no error that bt recognises shows the tail of bazel, as an INFRA run does, and keeps the whole
+/// output of bazel in a file that the digest names.
 #[test]
 fn a_failed_build_without_a_known_error_shows_the_tail_of_bazel() {
-    let fake = failed_build_tree("ERROR: a genrule failed\nERROR: Build did NOT complete successfully");
+    let output = "ERROR: a genrule failed\nERROR: Build did NOT complete successfully";
+    let fake = failed_build_tree(output);
     let outcome = run(&["--lane", "fast"], &fake);
 
     assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
+    let log = outcome
+        .text
+        .lines()
+        .find_map(|line| line.strip_prefix("bazel  ")?.split_once("  ").map(|(path, _)| path.to_owned()))
+        .unwrap_or_else(|| panic!("no bazel line in:\n{}", outcome.text));
+    assert!(log.starts_with("out/bt-runs/") && log.ends_with("/bazel-output.log"), "{log}");
     assert_mentions(
         &outcome.text,
-        &["cause  bt recognised no build error; the tail of the bazel output is above"],
+        &[
+            &format!("cause  bt recognised no build error; the output of bazel is in {log}"),
+            &format!("bazel  {log}  (the output of bazel, where the build failed)"),
+        ],
     );
+    assert_eq!(fake.state().files.get(&format!("{REPO_ROOT}/{log}")).map(String::as_str), Some(output));
     assert_mentions(&fake.state().stderr.join("\n"), &["ERROR: a genrule failed"]);
 
     // `--verbose` shows the whole output of bazel once, and no tail after it

@@ -69,6 +69,11 @@ metrics of its `bazel build`), the two reads of the check record, and the bazel 
 bazel reports. A narrow cached run is almost all of that, so the line shows where its time went without a profile. A
 part of 10 s or more gets a `note` line with its cause and what to do.
 
+A test run whose build failed counts the tests that its other invocations ran, names each target that did not build,
+and keeps the output of bazel in `bazel-output.log` of a run directory under `out/bt-runs`, which a `bazel` line names.
+A build error without a located diagnostic, such as a crash of the compiler, is the `ERROR:` line of the failed action:
+the BUILD file, the kind of the action and its target, the exit code, and the first message of the action.
+
 ## Modules
 
 `--module <jps module>` runs the test target of a JPS module. `crates/bt-core/src/modules.rs` resolves it. A test

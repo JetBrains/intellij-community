@@ -874,3 +874,68 @@ fn the_digest_ends_with_the_time_line() {
     );
     assert_eq!(text.lines().last(), Some("time   bazel 3.3s"), "{text}");
 }
+
+/// A lane whose build failed for some targets still ran the tests of the others. The digest counts them, names each
+/// target that did not build, the build error, and the file that keeps the output of bazel.
+#[test]
+fn a_build_failure_of_a_lane_names_the_targets_that_did_not_build_and_the_bazel_log() {
+    let error = "plugins/air/tests/integration/bridge/BUILD.bazel:74:12: compile //plugins/air/tests/integration/bridge:bridge_test_lib \
+                 (kt: 463, java: 0) failed: (Exit -1): [Internal Error] java.lang.RuntimeException: Method too large";
+    let result = digest_result(|result| {
+        result.status = RunStatus::BuildFailed;
+        result.exit_code = exit::BUILD_FAILED;
+        result.build_errors = vec![error.to_owned()];
+        result.targets = vec![
+            digest_target(|target| {
+                target.label = "//p:ran".to_owned();
+                target.tests = 313;
+            }),
+            TargetResult {
+                label: "//plugins/air/tests/integration/bridge:bridge_test".to_owned(),
+                ..TargetResult::default()
+            },
+            TargetResult {
+                label: "//plugins/air/tests/integration/contract:contract_test".to_owned(),
+                ..TargetResult::default()
+            },
+        ];
+    });
+    let text = render_digest(
+        &result,
+        &RenderOptions {
+            bazel_log: Some("out/bt-runs/0000000001000/bazel-output.log".to_owned()),
+            ..RenderOptions::default()
+        },
+    );
+    let lines: Vec<&str> = text.lines().collect();
+    assert_eq!(lines[0], "BUILD FAILED  313 tests ran, 2 targets did not build", "{text}");
+    assert_eq!(lines[2], error, "{text}");
+    assert_eq!(
+        lines[3], "did not build  //plugins/air/tests/integration/bridge:bridge_test",
+        "{text}"
+    );
+    assert_eq!(
+        lines[4], "did not build  //plugins/air/tests/integration/contract:contract_test",
+        "{text}"
+    );
+    assert!(
+        text.contains("bazel  out/bt-runs/0000000001000/bazel-output.log  (the output of bazel, where the build failed)"),
+        "{text}"
+    );
+    assert!(!text.contains("cause"), "a known build error needs no cause line: {text}");
+
+    let unknown = render_digest(
+        &digest_result(|result| {
+            result.status = RunStatus::BuildFailed;
+            result.exit_code = exit::BUILD_FAILED;
+        }),
+        &RenderOptions {
+            bazel_log: Some("out/bt-runs/0000000001000/bazel-output.log".to_owned()),
+            ..RenderOptions::default()
+        },
+    );
+    assert!(
+        unknown.contains("cause  bt recognised no build error; the output of bazel is in out/bt-runs/0000000001000/bazel-output.log"),
+        "{unknown}"
+    );
+}

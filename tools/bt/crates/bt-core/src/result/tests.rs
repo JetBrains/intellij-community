@@ -631,6 +631,73 @@ fn parse_compile_errors_reads_the_worker_and_the_inline_forms() {
     );
 }
 
+/// A compiler that crashed reports no located diagnostic: the build error is the failed action, its target and its kind,
+/// with the message of the crash. The fixture is the output of bazel of a real crash on the Studio, 2026-11-19, with the
+/// paths of the slot and the cache replaced.
+#[test]
+fn a_compiler_crash_is_named_by_its_failed_action_and_its_message() {
+    let output = include_str!("../../testdata/bazel-output-compiler-crash.txt");
+    assert_eq!(
+        parse_compile_errors(output),
+        Vec::<String>::new(),
+        "the crash has no located diagnostic"
+    );
+    let failures = parse_action_failures(output, "/repo");
+    assert_eq!(failures.len(), 1, "{failures:?}");
+    let failure = &failures[0];
+    assert!(
+        failure.starts_with(
+            "plugins/air/tests/integration/bridge/BUILD.bazel:74:12: compile //plugins/air/tests/integration/bridge:bridge_test_lib \
+             (kt: 463, java: 0) failed: (Exit -1): [Internal Error] java.lang.RuntimeException: Error generating class file \
+             com/intellij/air/integration/bridge/authored/AirAuthoredBodies.class (compiled from \
+             [plugins/air/tests/integration/bridge/testGen/AirAuthoredBodies.generated.kt]): Method too large: "
+        ),
+        "{failure}"
+    );
+    assert!(failure.ends_with('…'), "the message is cut: {failure}");
+
+    // A build that failed with that output is BUILD FAILED, with the action as its error.
+    let fake = FakeRuntime::new([]);
+    let bep = BepSummary {
+        failed_to_build: vec!["//plugins/air/tests/integration/contract:contract_test".to_owned()],
+        saw_any_event: true,
+        ..BepSummary::default()
+    };
+    let result = collect_results(
+        &fake,
+        &bep,
+        1000,
+        1,
+        &output.replace("/repo/", &format!("{}/", fake.repo_root().display())),
+    );
+    assert_eq!(result.status, RunStatus::BuildFailed);
+    assert_eq!(result.build_errors.len(), 1, "{:?}", result.build_errors);
+    assert!(
+        result.build_errors[0].starts_with("plugins/air/tests/integration/bridge/BUILD.bazel:74:12: compile "),
+        "{:?}",
+        result.build_errors
+    );
+}
+
+/// An action line without its message, a later `ERROR:` line that ends the action, and a run without a failed action.
+#[test]
+fn a_failed_action_takes_only_its_own_message() {
+    let output = [
+        "ERROR: /repo/a/BUILD.bazel:3:14: Clippy //a:a failed: (Exit 1): process_wrapper failed: error executing Clippy command",
+        "ERROR: Build did NOT complete successfully",
+        "error: this message belongs to no action",
+    ]
+    .join("\n");
+    assert_eq!(
+        parse_action_failures(&output, "/repo"),
+        ["a/BUILD.bazel:3:14: Clippy //a:a failed: (Exit 1)"]
+    );
+    assert_eq!(
+        parse_action_failures("INFO: Build completed successfully\n", "/repo"),
+        Vec::<String>::new()
+    );
+}
+
 /// Two shards that read different plans can have split the classes differently, so a class can have run in no shard.
 /// A cached shard keeps the report of the run that cached it, which is how two plans meet in one run.
 #[test]
