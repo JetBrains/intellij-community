@@ -299,13 +299,16 @@ internal class LspSemanticTokensTest {
 
     @Test
     fun `custom token types and modifiers are advertised in the client capabilities`() = timeoutRunBlocking {
-      val virtualFile = codeInsightFixture.configureByText("capabilities.txt", "aaa").virtualFile
-      fakeLspIntegration.serverSession(virtualFile)
+      val file = openFile(fakeLspIntegration, "capabilities.txt", "aaa", emptyList())
 
       val semanticTokens = fakeLspIntegration.client.descriptor.clientCapabilities.textDocument.semanticTokens
 
       assertEquals(listOf("keyword", "customType"), semanticTokens.tokenTypes)
       assertEquals(listOf("customModifier"), semanticTokens.tokenModifiers)
+      // After didOpen, the client asks for the tokens only when the LSP highlighting pass is registered. An earlier test can register it.
+      // This highlighting run registers the pass, so the request always comes.
+      codeInsightFixture.doHighlighting()
+      file.serverSession.awaitExpected()
     }
   }
 
