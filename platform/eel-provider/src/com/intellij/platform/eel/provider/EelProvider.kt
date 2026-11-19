@@ -103,7 +103,7 @@ fun Project.getEelDescriptor(): EelDescriptor {
   "com.intellij.aiagentextensions.skills.settings.ProjectAgentHomeTest",
   "com.intellij.air.acp.runtime.registry.AcpExternalCatalogEntryStartConfigTest",
   "com.intellij.air.acp.runtime.registry.InstallOrUpdateAgentTest",
-  "com.intellij.air.backend.machine.AgentMachineLeaseServiceTest",
+  "com.intellij.air.machine.AgentMachineLeaseServiceTest",
   "com.intellij.air.frontend.llm.AirLlmProxyBackendDescriptorStateTest",
   "com.intellij.air.shared.core.AirAgentEnvironmentTest",
   "com.intellij.draft.customization.DraftProjectEelPreInit",
