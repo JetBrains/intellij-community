@@ -220,7 +220,41 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
     @Override
     public void replace(int startIndex, int endIndex, @NotNull SegmentArrayWithData newData) {
-      withFreezedHighlighters(() -> super.replace(startIndex, endIndex, newData));
+      withFreezedHighlighters(() -> replaceMappings(startIndex, endIndex, newData));
+    }
+
+    private void replaceMappings(int startIndex, int endIndex, @NotNull SegmentArrayWithData newData) {
+      int newStart = 0;
+      int newEnd = newData.getSegmentCount();
+      while (startIndex < endIndex && newStart < newEnd && canReuseMapping(startIndex, newData, newStart)) {
+        setElementLight(startIndex++, newData.getSegmentStart(newStart), newData.getSegmentEnd(newStart), newData.getSegmentData(newStart));
+        newStart++;
+      }
+      while (startIndex < endIndex && newStart < newEnd && canReuseMapping(endIndex - 1, newData, newEnd - 1)) {
+        endIndex--;
+        newEnd--;
+        setElementLight(endIndex, newData.getSegmentStart(newEnd), newData.getSegmentEnd(newEnd), newData.getSegmentData(newEnd));
+      }
+      if (startIndex == endIndex && newStart == newEnd) return;
+      if (newStart == 0 && newEnd == newData.getSegmentCount()) {
+        super.replace(startIndex, endIndex, newData);
+        return;
+      }
+      SegmentArrayWithData middle = new SegmentArrayWithData(newData.createStorage());
+      for (int i = newStart; i < newEnd; i++) {
+        middle.setElementAt(i - newStart, newData.getSegmentStart(i), newData.getSegmentEnd(i), newData.getSegmentData(i));
+      }
+      super.replace(startIndex, endIndex, middle);
+    }
+
+    private boolean canReuseMapping(int oldIndex, @NotNull SegmentArrayWithData newData, int newIndex) {
+      IElementType token = unpackTokenFromData(newData.getSegmentData(newIndex));
+      Mapper mapper = getMappingDocument(token);
+      MappedRange oldMapping = myRanges[oldIndex];
+      if (oldMapping == null) return mapper == null;
+      if (oldMapping.mapper != mapper || oldMapping.outerToken != token || !oldMapping.range.isValid()) return false;
+      return Comparing.equal(mapper.doc.getCharsSequence().subSequence(oldMapping.range.getStartOffset(), oldMapping.range.getEndOffset()),
+                             getLexedText().subSequence(newData.getSegmentStart(newIndex), newData.getSegmentEnd(newIndex)));
     }
 
     @Override
