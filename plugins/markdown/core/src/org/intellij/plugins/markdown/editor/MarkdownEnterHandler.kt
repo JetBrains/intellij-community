@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
 import com.intellij.injected.editor.EditorWindow
@@ -17,7 +16,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
-import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.supportsMarkdown
@@ -99,24 +97,15 @@ internal class MarkdownEnterHandler : EnterHandlerDelegate {
 
   private fun processBlockQuote(editor: Editor, element: PsiElement) {
     val quote = PsiTreeUtil.getParentOfType(element, MarkdownBlockQuote::class.java) ?: return
-    val markdown = CodeStyle.getCustomSettings(quote.containingFile, MarkdownCustomCodeStyleSettings::class.java)
-
     val document = editor.document
-    val text = document.charsSequence
-    val quoteStart = quote.textRange.startOffset
-    val quoteLineStart = document.getLineStartOffset(document.getLineNumber(quoteStart))
-    // Outer `>` markers and whitespace stay. A list marker on the same line becomes spaces.
-    val outerPrefix = text.subSequence(quoteLineStart, quoteStart)
-      .map { if (it == '>' || it.isWhitespace()) it else ' ' }
-      .joinToString("")
-    val marker = if (markdown.FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL) "> " else ">"
+    val indent = MarkdownPsiUtil.getBlockQuoteIndent(quote, document)
 
     val offset = editor.caretModel.offset
     val lineStart = document.getLineStartOffset(document.getLineNumber(offset))
-    if (text.subSequence(lineStart, offset).isBlank()) {
+    if (document.charsSequence.subSequence(lineStart, offset).isBlank()) {
       document.deleteString(lineStart, offset)
     }
-    EditorModificationUtil.insertStringAtCaret(editor, outerPrefix + marker)
+    EditorModificationUtil.insertStringAtCaret(editor, indent)
   }
 
   /**

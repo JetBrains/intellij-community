@@ -100,6 +100,14 @@ public class MarkdownEnterHandlerTest {
     doTest();
   }
 
+  public void testQuoteInListBeforeItem() {
+    doTest();
+  }
+
+  public void testQuoteInNestedListBeforeItem() {
+    doTest();
+  }
+
   private void doTest() {
     CodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile(testName + ".before.md");

@@ -1,8 +1,13 @@
 package org.intellij.plugins.markdown.util
 
+import com.intellij.application.options.CodeStyle
+import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
+import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 internal object MarkdownPsiUtil {
@@ -40,5 +45,11 @@ internal object MarkdownPsiUtil {
       }
     }
     return null
+  }
+
+  fun getBlockQuoteIndent(quote: MarkdownBlockQuote, document: Document): String {
+    val markdown = CodeStyle.getCustomSettings(quote.containingFile, MarkdownCustomCodeStyleSettings::class.java)
+    val marker = if (markdown.FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL) "> " else ">"
+    return MarkdownCodeFenceUtils.getIndent(document, quote.textRange.startOffset) + marker
   }
 }

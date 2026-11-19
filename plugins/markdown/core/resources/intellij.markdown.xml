@@ -264,6 +264,7 @@
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" order="last"/>
     <copyPastePreProcessor implementation="org.intellij.plugins.markdown.editor.MarkdownLinkPastePreProcessor"/>
+    <copyPastePreProcessor implementation="org.intellij.plugins.markdown.editor.MarkdownIndentPastePreProcessor"/>
     <enterHandlerDelegate id="MarkdownEnterHandler"
                           implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
 
