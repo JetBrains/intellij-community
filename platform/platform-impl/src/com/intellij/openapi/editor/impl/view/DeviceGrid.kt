@@ -6,8 +6,6 @@ import java.awt.geom.AffineTransform
 import kotlin.math.ceil
 import kotlin.math.floor
 
-private const val EPSILON: Double = 1e-6
-
 /**
  * The pixel grid of a device in the coordinates of a paint. The paint neither rotates nor shears.
  */
@@ -21,7 +19,7 @@ class DeviceGrid(
   /**
    * The height of one device pixel.
    */
-  val pixelHeight: Double get() = 1.0 / scaleY
+  val pixelHeight: Double = 1.0 / scaleY
 
   /**
    * Gives the pixel boundary nearest to [x].
@@ -52,12 +50,17 @@ class DeviceGrid(
   }
 
   companion object {
+    private const val EPSILON: Double = 1e-6
+
     /**
      * Gives the grid of [transform], or null when the transform rotates, shears or mirrors.
      */
     @JvmStatic
     fun of(transform: AffineTransform): DeviceGrid? {
-      if (transform.shearX != 0.0 || transform.shearY != 0.0 || transform.scaleX <= 0.0 || transform.scaleY <= 0.0) {
+      if (transform.shearX != 0.0 ||
+          transform.shearY != 0.0 ||
+          transform.scaleX <= 0.0 ||
+          transform.scaleY <= 0.0) {
         return null
       }
       return DeviceGrid(transform.scaleX, transform.translateX, transform.scaleY, transform.translateY)

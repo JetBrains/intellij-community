@@ -29,26 +29,12 @@ object BackgroundOutline {
    */
   @JvmStatic
   fun build(rows: BackgroundRows, styleId: Int, radius: Double): Path2D {
-    val grid = OutlineGrid(rows, styleId)
+    val grid = OutlineGrid(rows, styleId, null)
     val path = Path2D.Double(Path2D.WIND_NON_ZERO)
     for (cycle in grid.trace()) {
       grid.appendCycle(path, cycle, radius)
     }
     return path
-  }
-
-  /**
-   * Gives the boundary of the union of the rectangles of [styleId] as closed cycles of corners.
-   *
-   * The interior lies on the right of each edge. An outer cycle therefore turns clockwise on the screen,
-   * and a hole turns counterclockwise. Two shapes that touch at one corner give two cycles.
-   * A cycle holds no collinear corner, and it holds its last corner once.
-   */
-  @JvmStatic
-  @TestOnly
-  fun cycles(rows: BackgroundRows, styleId: Int): List<List<Point2D.Double>> {
-    val grid = OutlineGrid(rows, styleId)
-    return grid.trace().map { cycle -> cycle.map { corner -> grid.point(corner) } }
   }
 
   /**
@@ -62,6 +48,24 @@ object BackgroundOutline {
   @JvmStatic
   fun split(rows: BackgroundRows, styleId: Int, radius: Double, device: DeviceGrid): BackgroundPieces {
     return OutlineGrid(rows, styleId, device).split(radius, device)
+  }
+
+  /**
+   * Gives the boundary of the union of the rectangles of [styleId] as closed cycles of corners.
+   *
+   * The interior lies on the right of each edge. An outer cycle therefore turns clockwise on the screen,
+   * and a hole turns counterclockwise. Two shapes that touch at one corner give two cycles.
+   * A cycle holds no collinear corner, and it holds its last corner once.
+   */
+  @JvmStatic
+  @TestOnly
+  fun cycles(rows: BackgroundRows, styleId: Int): List<List<Point2D.Double>> {
+    val grid = OutlineGrid(rows, styleId, null)
+    return grid.trace().map { cycle: IntArray ->
+      cycle.map { corner: Int ->
+        grid.point(corner)
+      }
+    }
   }
 }
 
@@ -85,7 +89,7 @@ class BackgroundPieces(
  * A band is covered where a rectangle covers it, so the grid holds the union of the rectangles.
  * A corner is one point of the grid, and the code keeps it as the index pair `yIndex * xs.size + xIndex`.
  */
-private class OutlineGrid(rows: BackgroundRows, styleId: Int, private val device: DeviceGrid? = null) {
+private class OutlineGrid(rows: BackgroundRows, styleId: Int, private val device: DeviceGrid?) {
   private val xs: DoubleArray
   private val ys: DoubleArray
   private val cellCount: Int
