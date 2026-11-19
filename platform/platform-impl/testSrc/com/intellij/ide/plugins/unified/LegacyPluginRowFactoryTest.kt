@@ -71,7 +71,9 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.event.FocusEvent
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -952,6 +954,32 @@ internal class LegacyPluginRowFactoryTest {
         host.dispose(closeSession = false)
       }
     }
+
+  @Test
+  fun `primary mouse press selects the plugin before release`(): Unit = timeoutRunBlocking {
+    val pluginId = PluginId.getId("mouse.press.plugin")
+    val selectionChanges = ArrayList<List<PluginOccurrenceId>>()
+    withContext(Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val plugin = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Mouse Press Plugin").build()
+        val item = PluginItemState(pluginId, plugin.name, modelHandle = PluginItemModelHandle(plugin))
+        val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), { _, _ -> }, onSelectionChanged = selectionChanges::add)
+        factory.createReconciler { _, _ -> }.use { reconciler ->
+          val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
+          factory.rowsRendered(listOf(binding))
+          val row = binding.row.component
+          val press = MouseEvent(row, MouseEvent.MOUSE_PRESSED, 0, InputEvent.BUTTON1_DOWN_MASK, 1, 1, 1, false, MouseEvent.BUTTON1)
+          row.dispatchEvent(press)
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+    assertThat(selectionChanges).containsExactly(listOf(PluginOccurrenceId(PluginSectionId.Installed, pluginId)))
+  }
 
   @Test
   fun `Enter invokes the primary action without selecting the plugin`(): Unit =

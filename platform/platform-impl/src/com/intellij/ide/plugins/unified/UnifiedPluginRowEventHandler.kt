@@ -52,12 +52,16 @@ internal class UnifiedPluginRowEventHandler(
         showPopup(row, event)
         event.consume()
       }
-      else if (SwingUtilities.isLeftMouseButton(event)) {
-        when {
-          event.isShiftDown -> selectRange(row, FocusEvent.Cause.MOUSE_EVENT)
-          isPluginRowToggleSelectionEvent(event) -> toggleSelection(row)
-          else -> selectExclusive(row, requestFocus = true, focusCause = FocusEvent.Cause.MOUSE_EVENT)
-        }
+    }
+
+    override fun mousePressed(event: MouseEvent) {
+      if (isPluginRowActionControl(event.component)) return
+      val row = findRow(event.component) ?: return
+      if (isPluginRowContextMenuEvent(event) || !SwingUtilities.isLeftMouseButton(event)) return
+      when {
+        event.isShiftDown -> selectRange(row, FocusEvent.Cause.MOUSE_EVENT)
+        isPluginRowToggleSelectionEvent(event) -> toggleSelection(row)
+        else -> selectExclusive(row, requestFocus = true, focusCause = FocusEvent.Cause.MOUSE_EVENT)
       }
     }
 

@@ -599,6 +599,11 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `enablement change survives an in-flight refresh`
   )
 
+- A primary mouse press on row content must apply row selection before release.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
+    `primary mouse press selects the plugin before release`
+  )
+
 - Activating row content must select the plugin without invoking its primary action.
 - Enter on a focused row must invoke its primary action without changing the selection.
 - Space on a focused, eligible installed plugin row must invoke its enablement action when no update or restart is available.
