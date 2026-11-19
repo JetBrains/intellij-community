@@ -15,7 +15,6 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
@@ -24,13 +23,13 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 
 @ApiStatus.Internal
 class PathsVerifier(
@@ -216,10 +215,11 @@ class PathsVerifier(
         return false
       }
       val name = pieces.last()
-      val afterFile = File(parent.path, name)
+      val existingFile = parent.findChild(name)
+      val afterFilePath = VcsUtil.getFilePath(parent, name, existingFile?.isDirectory ?: false)
       val file = try {
         //if user already accepted overwriting, we shouldn't have created a new one
-        if (delayedPrecheckContext.overriddenPaths.contains(VcsUtil.getFilePath(afterFile))) parent.findChild(name)
+        if (delayedPrecheckContext.overriddenPaths.contains(afterFilePath)) existingFile
         else createFile(parent, name)
       }
       catch (e: IOException) {
@@ -337,7 +337,7 @@ class PathsVerifier(
       }
       var nextChild = child!!.findChild(piece)
       if (nextChild == null) {
-        nextChild = VfsUtil.createDirectories(child.path + '/' + piece) ?: throw IOException("Can't create directory: $piece")
+        nextChild = child.createChildDirectory(PatchApplier::class.java, piece)
         createdDirectories.add(nextChild)
       }
       child = nextChild
@@ -360,11 +360,10 @@ class PathsVerifier(
       val needMove = newParent != oldParent
       if (needRename) {
         if (needMove) {
-          val oldParentFile = VfsUtilCore.virtualToIoFile(oldParent!!)
-          val targetAfterRenameFile = File(oldParentFile, newName)
-          if (targetAfterRenameFile.exists() && current.exists()) {
+          val oldParentPath = oldParent!!.toNioPathOrNull()
+          if (oldParentPath != null && Files.exists(oldParentPath.resolve(newName)) && current.exists()) {
             // if there is a conflict during first rename we have to rename to third name, then move, then rename to final target
-            performRenameWithConflicts(oldParentFile)
+            performRenameWithConflicts(oldParentPath)
             return current
           }
         }
@@ -377,17 +376,26 @@ class PathsVerifier(
     }
 
     @Throws(IOException::class)
-    private fun performRenameWithConflicts(oldParent: File) {
-      val tmpFileWithUniqueName = FileUtil.createTempFile(oldParent, "tempFileToMove", null, false) //NON-NLS
-      val newParentFile = VfsUtilCore.virtualToIoFile(newParent)
-      var destFile = File(newParentFile, tmpFileWithUniqueName.name)
-      while (destFile.exists()) {
-        destFile = File(newParentFile,
-                        FileUtil.createTempFile(oldParent, FileUtilRt.getNameWithoutExtension(destFile.name), null, false).name)
+    private fun performRenameWithConflicts(oldParent: Path) {
+      val newParentPath = newParent.toNioPath()
+      var tempName = reserveTempName(oldParent, "tempFileToMove") //NON-NLS
+      while (Files.exists(newParentPath.resolve(tempName))) {
+        tempName = reserveTempName(oldParent, FileUtilRt.getNameWithoutExtension(tempName))
       }
-      current.rename(PatchApplier::class.java, destFile.name)
+      current.rename(PatchApplier::class.java, tempName)
       current.move(PatchApplier::class.java, newParent)
       current.rename(PatchApplier::class.java, newName)
+    }
+
+    /**
+     * Returns a name that no file in [dir] has.
+     * The function creates a temporary file with this name and deletes it at once.
+     */
+    @Throws(IOException::class)
+    private fun reserveTempName(dir: Path, prefix: String): String {
+      val tempFile = Files.createTempFile(dir, prefix, null)
+      Files.delete(tempFile)
+      return tempFile.fileName.toString()
     }
   }
 
