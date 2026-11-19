@@ -11,6 +11,7 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileChooser.FileTextField;
+import com.intellij.openapi.fileChooser.NioFileChooserDialog;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.FileSaverDialogImpl;
@@ -61,6 +62,16 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
            universal != null ? universal.createPathChooser(project, parent, descriptor) :
            parent != null ? new FileChooserDialogImpl(descriptor, parent, project) :
            new FileChooserDialogImpl(descriptor, project);
+  }
+
+  @Override
+  public @Nullable NioFileChooserDialog createNioFileChooser(
+    @NotNull FileChooserDescriptor descriptor,
+    @Nullable Project project,
+    @Nullable Component parent
+  ) {
+    var universal = getUniversalFactory(project);
+    return universal != null ? universal.createNioFileChooser(project, parent, descriptor) : null;
   }
 
   @Override

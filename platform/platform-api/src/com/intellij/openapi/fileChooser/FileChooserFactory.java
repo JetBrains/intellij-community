@@ -4,11 +4,16 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JTextField;
 import java.awt.Component;
+import java.util.Arrays;
 
 public abstract class FileChooserFactory {
   public static FileChooserFactory getInstance() {
@@ -26,6 +31,20 @@ public abstract class FileChooserFactory {
     @Nullable Project project,
     @Nullable Component parent
   );
+
+  /**
+   * Creates a file chooser that returns the chosen files as {@link java.nio.file.Path} values.
+   * <p>
+   * The default implementation throws {@link UnsupportedOperationException}
+   */
+  @ApiStatus.Experimental
+  public @NotNull NioFileChooserDialog createNioFileChooser(
+    @NotNull FileChooserDescriptor descriptor,
+    @Nullable Project project,
+    @Nullable Component parent
+  ) {
+    throw new UnsupportedOperationException("NioFileChooser is not available");
+  }
 
   /**
    * Creates Save File dialog.
