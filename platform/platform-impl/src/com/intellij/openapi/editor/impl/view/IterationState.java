@@ -835,7 +835,7 @@ public final class IterationState {
       mySyntaxLayer = createLayer(
         syntax.getBackgroundColor(),
         HighlighterLayer.SYNTAX,
-        false,
+        myRoundedHighlighting,
         false,
         false,
         Integer.MAX_VALUE

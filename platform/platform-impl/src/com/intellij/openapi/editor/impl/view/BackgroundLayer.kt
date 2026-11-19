@@ -9,8 +9,8 @@ import java.awt.Color
  * One background style of a painted block.
  *
  * While the editor rounds the corners of the highlighting, these backgrounds are rounded: the selection, an
- * [HighlighterTargetArea.EXACT_RANGE] highlighter, the fold placeholder and the guarded block.
- * These backgrounds stay straight: a [HighlighterTargetArea.LINES_IN_RANGE] highlighter, the caret row and the syntax.
+ * [HighlighterTargetArea.EXACT_RANGE] highlighter, the fold placeholder, the guarded block and the syntax.
+ * These backgrounds stay straight: a [HighlighterTargetArea.LINES_IN_RANGE] highlighter and the caret row.
  * In column mode the editor does not round, so every background is straight.
  *
  * @property isRounded the paint rounds the corners of this background.

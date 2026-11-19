@@ -529,6 +529,49 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testRoundedSyntaxTokensOfTwoColors() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcdefgh\n<caret>ijkl");
+        setTokenEditorHighlighter(
+          new int[]{0, 2, 4, 6},
+          new TextAttributes[]{
+            new TextAttributes(),
+            new TextAttributes(null, Color.red, null, null, Font.PLAIN),
+            new TextAttributes(null, Color.green, null, null, Font.PLAIN),
+            new TextAttributes(),
+          }
+        );
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testRoundedMultiLineSyntaxToken() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("ab\ncdef\nghijklmnop\n<caret>q");
+        setTokenEditorHighlighter(
+          new int[]{0, 1, 10},
+          new TextAttributes[]{
+            new TextAttributes(),
+            new TextAttributes(null, Color.red, null, null, Font.PLAIN),
+            new TextAttributes(),
+          }
+        );
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
   public void testPartialRepaintOfRoundedSelection() {
     myFixture.runTest(() -> {
       var state = setSelectionLook(true, true);
