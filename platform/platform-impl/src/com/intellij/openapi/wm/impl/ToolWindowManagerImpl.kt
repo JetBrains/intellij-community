@@ -2318,6 +2318,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * tool window depending on a decoration type.
    */
   open fun movedOrResized(source: InternalDecoratorImpl) {
+    if (source.toolWindow.isPresented) {
+      // the decorator of the presenting tool window gets the same event, and the frame owner keeps the size
+      return
+    }
     decorators.movedOrResized(source)
   }
 
