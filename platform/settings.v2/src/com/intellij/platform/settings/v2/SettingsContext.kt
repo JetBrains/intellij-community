@@ -158,5 +158,5 @@ private object LanguageSerializer : Serializer<Language> {
   override fun serialize(value: Language): SettingsValue = StringValue(value.id)
 
   override fun deserialize(value: SettingsValue): Language =
-    Language.findLanguageByID(value.requireValue<StringValue>().value) ?: Language.ANY
+    Language.findLanguageByID((value as StringValue).value) ?: Language.ANY
 }

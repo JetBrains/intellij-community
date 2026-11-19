@@ -4,14 +4,13 @@ Date: 2026-09-24
 
 ## Status
 
-Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)). Amended by
-[ADR 0175](./0175-the-promoter-interface-and-its-extension-point-live-in-the-api-module.md).
+Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
 
 ## Context
 
-The engine has api, shared and backend modules
-([ADR 0166](./0166-the-light-compatible-backend-code-lives-in-the-backend-baseline-module.md)). Both sides of the
-wire need to resolve key identities.
+The engine has api, shared and backend modules ([ADR 0082](./0082-a-backend-module-holds-the-project-scoped-machinery.md)). Both sides of
+the wire need to resolve
+key identities.
 
 ## Decision
 

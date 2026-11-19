@@ -39,7 +39,6 @@ jvm_library(
         "//platform/observable",
         "//platform/platform-impl/ui",
         "//platform/projectModel-api:projectModel",
-        "//platform/settings.v2",
         "//platform/util",
         "//platform/util/coroutines",
         "//platform/util:util-ui",

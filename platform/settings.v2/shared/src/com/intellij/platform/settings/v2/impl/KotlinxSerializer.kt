@@ -35,11 +35,19 @@ private class KSerializerAdapter<T>(private val delegate: KSerializer<T>) : Seri
   override fun serialize(value: T): SettingsValue = SettingsValueJson.fromElement(objectJson.encodeToJsonElement(delegate, value))
 
   /**
-   * Decodes [value] through the kotlinx [delegate]. kotlinx reports a value that does not fit [T] with
-   * [IllegalArgumentException], and its `SerializationException` is a subtype of it. So the failure already follows the
-   * contract of [Serializer.deserialize], and it propagates as it is.
+   * Decodes [value] through the kotlinx [delegate].
    *
-   * @throws IllegalArgumentException if [value] does not match the shape of [T]
+   * kotlinx reports a value that does not fit [T] with [IllegalArgumentException], and its
+   * `SerializationException` is a subtype of it. This method rethrows it as the [ClassCastException] that
+   * [Serializer.deserialize] uses for a type mismatch, so the key resolves to its default.
+   *
+   * @throws ClassCastException if [value] does not match the shape of [T]
    */
-  override fun deserialize(value: SettingsValue): T = objectJson.decodeFromJsonElement(delegate, SettingsValueJson.toElement(value))
+  override fun deserialize(value: SettingsValue): T =
+    try {
+      objectJson.decodeFromJsonElement(delegate, SettingsValueJson.toElement(value))
+    }
+    catch (e: IllegalArgumentException) {
+      throw ClassCastException("Stored value does not match ${delegate.descriptor.serialName}: ${e.message}").apply { initCause(e) }
+    }
 }

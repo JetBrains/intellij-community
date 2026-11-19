@@ -27,7 +27,7 @@ import com.intellij.platform.settings.v2.SaveResult
 import com.intellij.platform.settings.v2.SettingsContext
 import com.intellij.platform.settings.v2.SettingsKey
 import com.intellij.platform.settings.v2.SettingsValue.MapValue
-import com.intellij.platform.settings.v2.impl.FileSettingsContext
+import com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.ProjectScope
 import kotlinx.coroutines.CoroutineScope
@@ -83,7 +83,7 @@ internal class FileLayerService(private val project: Project, private val scope:
   }
 
   override fun availableLocalities(context: SettingsContext): Set<LayerLocality> =
-    if (context.realContext is FileSettingsContext) localities.toSet() else emptySet()
+    if (context.realContext is VirtualFileSettingsContext) localities.toSet() else emptySet()
 
   /**
    * Returns the directory context whose config stores [context]. The disk decides (ADR 0121). A file stores in the
@@ -91,7 +91,7 @@ internal class FileLayerService(private val project: Project, private val scope:
    * path that does not exist is its own storage context, so its save is dropped (ADR 0122).
    */
   override fun storageContext(context: SettingsContext): SettingsContext {
-    val virtualFileContext = context.realContext as? FileSettingsContext ?: return context
+    val virtualFileContext = context.realContext as? VirtualFileSettingsContext ?: return context
     return if (Files.isRegularFile(virtualFileContext.nioPath)) virtualFileContext.parentContext else virtualFileContext
   }
 
@@ -102,7 +102,7 @@ internal class FileLayerService(private val project: Project, private val scope:
    * @return [SaveResult.DROPPED] when [storageContext] is not a directory on the disk, else [SaveResult.SAVED]
    */
   override suspend fun writeData(storageContext: SettingsContext, locality: LayerLocality, slices: Map<SettingsContext, MapValue>): SaveResult {
-    val directoryContext = requireNotNull(storageContext.realContext as? FileSettingsContext) {
+    val directoryContext = requireNotNull(storageContext.realContext as? VirtualFileSettingsContext) {
       "storage context '${storageContext.identity}' is not a file context"
     }
     if (!withContext(Dispatchers.IO) { Files.isDirectory(directoryContext.nioPath) }) {
@@ -112,7 +112,7 @@ internal class FileLayerService(private val project: Project, private val scope:
     val directoryData = slices.entries.firstOrNull { it.key.identity == storageContext.identity }?.value ?: MapValue(emptyMap())
     val perFileData = slices.filterKeys { it.identity != storageContext.identity }
       .mapKeys { (context, _) ->
-        val fileContext = context.realContext as? FileSettingsContext
+        val fileContext = context.realContext as? VirtualFileSettingsContext
         require(fileContext != null && fileContext.parentContext.identity == storageContext.identity) {
           "'${context.identity}' is not a file directly under '${storageContext.identity}'"
         }
@@ -141,29 +141,29 @@ internal class FileLayerService(private val project: Project, private val scope:
    * `.jetbrains.local.json` or `.jetbrains.env.json`. It resolves the path from the url, with no VFS access.
    */
   private fun configPath(storageContext: SettingsContext, locality: LayerLocality): Path {
-    val directoryContext = requireNotNull(storageContext.realContext as? FileSettingsContext) {
+    val directoryContext = requireNotNull(storageContext.realContext as? VirtualFileSettingsContext) {
       "storage context '${storageContext.identity}' is not a file context"
     }
     return directoryContext.nioPath.resolve(localityFileName(CONFIG_FILE, locality))
   }
 
   /** Holds the local path of this context, resolved from its url with no VFS access. */
-  private val FileSettingsContext.nioPath: Path
+  private val VirtualFileSettingsContext.nioPath: Path
     get() = Path.of(VirtualFileManager.extractPath(url))
 
   override suspend fun split(storageContext: SettingsContext, locality: LayerLocality, model: MapValue): List<Pair<SettingsContext, MapValue>> {
-    val fileSettingsContext = storageContext.realContext as? FileSettingsContext ?: return listOf(storageContext to model)
-    val currentFileConfigs = currentFileConfigsMap[fileSettingsContext.url to locality].orEmpty()
+    val virtualFileSettingsContext = storageContext.realContext as? VirtualFileSettingsContext ?: return listOf(storageContext to model)
+    val currentFileConfigs = currentFileConfigsMap[virtualFileSettingsContext.url to locality].orEmpty()
     val filesData = (model.values[PER_FILE_CONTAINER] as? MapValue)?.values ?: emptyMap()
     val layersData = ArrayList<Pair<SettingsContext, MapValue>>()
     // The directory layer is everything but the synthetic per-file container.
     layersData.add(storageContext to MapValue.wrapOwned(model.values - PER_FILE_CONTAINER))
     val newFileConfigs = LinkedHashMap<String, SettingsContext>()
-    val project = fileSettingsContext.project
+    val project = virtualFileSettingsContext.project
     if (project != null && filesData.isNotEmpty()) {
       readAction {
         val directoryVirtualFile =
-          VirtualFileManager.getInstance().findFileByUrl(fileSettingsContext.url)?.takeIf { it.isValid && it.isDirectory }
+          VirtualFileManager.getInstance().findFileByUrl(virtualFileSettingsContext.url)?.takeIf { it.isValid && it.isDirectory }
           ?: return@readAction
         for ((fileName, unTypedFileData) in filesData) {
           val fileData = unTypedFileData as? MapValue ?: continue
@@ -178,7 +178,7 @@ internal class FileLayerService(private val project: Project, private val scope:
     for ((currentFileName, currentFileContext) in currentFileConfigs) {
       if (currentFileName !in newFileConfigs) layersData.add(currentFileContext to MapValue(emptyMap()))
     }
-    currentFileConfigsMap[fileSettingsContext.url to locality] = newFileConfigs
+    currentFileConfigsMap[virtualFileSettingsContext.url to locality] = newFileConfigs
     return layersData
   }
 
@@ -235,7 +235,7 @@ internal class FileLayerService(private val project: Project, private val scope:
    */
   private fun SettingsContext.coveredBy(scopeContext: SettingsContext): Boolean {
     val real = scopeContext.realContext
-    return if (real is FileSettingsContext && Files.isRegularFile(real.nioPath)) identity == real.parentContext.identity
+    return if (real is VirtualFileSettingsContext && Files.isRegularFile(real.nioPath)) identity == real.parentContext.identity
     else scopeContext.isAncestorOf(this, strict = false)
   }
 

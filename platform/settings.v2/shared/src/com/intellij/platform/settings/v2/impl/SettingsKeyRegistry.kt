@@ -10,10 +10,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.settings.v2.SettingsKey
-import com.intellij.platform.settings.v2.SettingsKeyPromoter
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.isActive
@@ -23,6 +23,34 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * Registers the settings keys of one plugin, so the platform knows them before anybody reads them.
+ *
+ * ```xml
+ * <extensions defaultExtensionNs="com.intellij">
+ *   <settings.v2.keyPromoter implementation="com.example.MyKeyPromoter"/>
+ * </extensions>
+ * ```
+ *
+ * The registry knows a key only after a promoter or a write registers it. An identity that nobody promoted or wrote
+ * resolves to nothing. A mutation from another side can carry such an identity, so a promoter makes the key known
+ * before that mutation arrives.
+ */
+@Experimental
+interface SettingsKeyPromoter {
+  /**
+   * Registers every key this plugin declares.
+   *
+   * @param register takes a key of this plugin, and refuses a key of another one
+   */
+  fun promote(register: (SettingsKey<*>) -> Unit)
+
+  companion object {
+    @Internal
+    val EP_NAME: ExtensionPointName<SettingsKeyPromoter> = ExtensionPointName("com.intellij.settings.v2.keyPromoter")
+  }
+}
 
 /**
  * Holds every registered key by its [identity][SettingsKey.identity], so an identity from the wire resolves to the

@@ -982,7 +982,6 @@ platform/platform-impl/os-certificates
 platform/platform-impl/playback
 platform/platform-impl/plugin-signature-verifier
 platform/platform-impl/presentation-assistant
-platform/platform-impl/presentation-assistant/tests
 platform/platform-impl/recentProjects
 platform/platform-impl/registry-ui
 platform/platform-impl/remote

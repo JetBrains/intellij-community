@@ -6,7 +6,6 @@ targets:
   - ../src/com/intellij/platform/settings/v2/SettingsMapKey.kt
   - ../src/com/intellij/platform/settings/v2/SettingsKey.kt
   - ../src/com/intellij/platform/settings/v2/SettingsAccessContext.kt
-  - ../src/com/intellij/platform/settings/v2/PerOsSettings.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultImpl.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/mapValue.kt
 ---
@@ -80,21 +79,6 @@ a child key lives inside the selected slot. Map keys can nest, for example profi
 - A map key must not be written directly. Every write path fails such a write with `IllegalArgumentException` and
   stores nothing. A batch with such an entry fails as a whole.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMapKeyDirectWriteTest.kt
-
-### Per-OS storage
-
-- The read-only key `OS` must return the id of the current operating system: `windows`, `macos`, `linux`, `freebsd`,
-  `ohos` or `other`. A write of it must fail with `ReadOnlySettingsException`. See
-  [ADR 0177](../adr/0177-the-platform-gives-a-read-only-os-key-and-one-per-os-storage-that-all-features-share.md).
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsPerOsTest.kt
-- A child key of `PER_OS_SETTINGS` must read and write the slot of the current OS.
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsPerOsTest.kt
-- A read must not take a value that the slot of another OS holds.
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsPerOsTest.kt
-- A read that pins another OS must read the slot of that OS.
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsPerOsTest.kt
-- A child key of a plugin must read and write its slot in `PER_OS_SETTINGS`, under its own identity.
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsPerOsTest.kt
 
 ### Slot operations
 

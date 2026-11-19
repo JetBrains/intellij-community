@@ -5,7 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.settings.v2.impl.FileSettingsContext
+import com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.VfsTestUtil
@@ -150,4 +150,4 @@ class SettingsContextTest {
 
 private fun SettingsContext.chain(): List<SettingsContext> = generateSequence(this) { it.parentContext }.toList()
 
-private fun List<SettingsContext>.fileNodes(): List<String> = mapNotNull { (it as? FileSettingsContext)?.url }
+private fun List<SettingsContext>.fileNodes(): List<String> = mapNotNull { (it as? VirtualFileSettingsContext)?.url }

@@ -50,9 +50,8 @@ import java.util.concurrent.ConcurrentHashMap
  * [accessFor].
  *
  * **Value type.** Every key has a [serializer]. For the built-in scalars [Int], [Long], [Double], [Boolean], and
- * [String], and for an enum, it is inferred from an eager default and may be omitted. An enum is stored by its
- * constant name (see [enumSerializer]). Any other type must pass one explicitly. This includes a [readonly] key, whose
- * value is never persisted.
+ * [String], it is inferred from the default and may be omitted. Any other type must pass one explicitly. This
+ * includes a [readonly] key, whose value is never persisted.
  *
  * Only the platform extends this class. [SettingsMapKey] is its only subclass.
  *
@@ -197,10 +196,7 @@ open class SettingsKey<T>(
     return this
   }
 
-  /**
-   * Creates a key with an eager [default]. When [serializer] is `null`, it infers a built-in one from a scalar or an
-   * enum [default].
-   */
+  /** Creates a key with an eager [default]. When [serializer] is `null`, it infers a built-in one from a scalar [default]. */
   constructor(
     name: String,
     default: T,
@@ -211,7 +207,7 @@ open class SettingsKey<T>(
     contextFilter: (SettingsContext) -> Boolean = { true },
     validator: (T) -> String? = { null },
     locality: KeyLocality = KeyLocality.SHAREABLE,
-  ) : this(name, serializer ?: inferSerializerFromDefault(default), readonly, storageKey, layerFilter, contextFilter,
+  ) : this(name, serializer ?: inferScalarSerializer(default), readonly, storageKey, layerFilter, contextFilter,
            validator, locality, { default })
 
   /** Computes the key's default value for [context]. Called by the platform whenever the default is needed. */
@@ -241,14 +237,13 @@ open class SettingsKey<T>(
    *
    * The config files are hand-editable, so a value can have the wrong type or shape for its key (a string where a
    * number is expected, a list where a scalar is, …); such a value must not break resolution, and its well-typed
-   * siblings are unaffected. A serializer reports such a value with [IllegalArgumentException], which gives a warning.
-   * Any other exception propagates.
+   * siblings are unaffected. Control-flow exceptions propagate.
    */
   private inline fun deserializeOrElse(value: SettingsValue, onMalformed: () -> T): T =
     try {
       serializer.deserialize(value)
     }
-    catch (e: IllegalArgumentException) {
+    catch (e: ClassCastException) {
       LOG.warn("Ignoring malformed stored value for settings key '$identity'.", e)
       onMalformed()
     }

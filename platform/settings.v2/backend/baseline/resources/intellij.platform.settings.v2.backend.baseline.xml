@@ -14,6 +14,8 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.settings.v2.impl.ProjectSettingsLoadActivity"/>
+    <applicationService serviceInterface="com.intellij.platform.settings.v2.ContextFactory"
+                        serviceImplementation="com.intellij.platform.settings.v2.impl.BackendSettingsContextFactory"/>
     <search.topHitProvider implementation="com.intellij.platform.settings.v2.impl.ApplicationTeamEditingModeOptionProvider"/>
     <search.projectOptionsTopHitProvider implementation="com.intellij.platform.settings.v2.impl.ProjectTeamEditingModeOptionProvider"/>
   </extensions>
@@ -21,4 +23,8 @@
     <listener class="com.intellij.platform.settings.v2.impl.SettingsProjectListener"
               topic="com.intellij.openapi.project.ProjectCloseListener"/>
   </applicationListeners>
+  <actions resource-bundle="messages.SettingsV2Bundle">
+    <action id="internal.settings.v2.DumpSettingsContext" internal="true"
+            class="com.intellij.platform.settings.v2.impl.DumpSettingsContextAction"/>
+  </actions>
 </idea-plugin>

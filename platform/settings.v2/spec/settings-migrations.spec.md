@@ -34,9 +34,6 @@ not list, and records each migration that ends with success.
 - Declarative helpers for simple migrations. They can come later, on top of this base. See
   [ADR 0169](../adr/0169-a-migration-is-a-suspend-function-of-its-scope-context-and-the-platform-does-not-know-its-source.md).
 - Migrations of other kinds, for example a migration per directory.
-- The stored state of a component that is not a setting, for example the bounds of a window. A migration does not
-  move it. It stays in the `PersistentStateComponent`. See
-  [ADR 0176](../adr/0176-the-stored-state-of-a-migrated-component-stays-in-its-persistent-state-component.md).
 
 ## Requirements
 

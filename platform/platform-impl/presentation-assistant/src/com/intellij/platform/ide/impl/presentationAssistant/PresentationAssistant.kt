@@ -2,15 +2,11 @@
 package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
@@ -22,21 +18,13 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.settings.v2.SettingsChangeListener
-import com.intellij.platform.settings.v2.SettingsContext
-import com.intellij.platform.settings.v2.getValue
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
-import com.intellij.util.asDisposable
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.TestOnly
 import java.awt.Color
 
 internal enum class PresentationAssistantPopupSize(val value: Int, @Nls val displayName: String) {
@@ -96,6 +84,16 @@ internal enum class PresentationAssistantTheme(val value: Int, @Nls val displayN
        JBColor.namedColor("PresentationAssistant.Pale.keymapLabel", JBColor.foreground()));
 
   companion object {
+    fun fromValueOrDefault(value: Int?) = value.takeIf {
+      PresentationAssistant.isThemeEnabled
+    }.let {
+      when(it) {
+        BRIGHT.value-> BRIGHT
+        PALE.value -> PALE
+        else -> DEFAULT
+      }
+    }
+
     val DEFAULT: PresentationAssistantTheme get() =
       if (LafManager.getInstance().currentUIThemeLookAndFeel.name == "Light with Light Header") PALE else BRIGHT
   }
@@ -143,6 +141,22 @@ internal fun PresentationAssistantState.resetDelta() {
   deltaY = null
 }
 
+internal val PresentationAssistantState.alignmentIfNoDelta: PresentationAssistantPopupAlignment?
+  get() {
+    if (deltaX == null || deltaY == null) {
+      return PresentationAssistantPopupAlignment.from(horizontalAlignment, verticalAlignment)
+    }
+    else {
+      return null
+    }
+  }
+
+internal fun PresentationAssistantState.mainKeymapKind(): KeymapKind = KeymapKind.from(mainKeymapName)
+
+internal fun PresentationAssistantState.alternativeKeymapKind(): KeymapKind? {
+  return alternativeKeymapName.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
+}
+
 @State(name = "PresentationAssistantIJ",
        category = SettingsCategory.UI,
        exportable = true,
@@ -158,35 +172,14 @@ class PresentationAssistant(private val coroutineScope: CoroutineScope) : Persis
     XmlSerializerUtil.copyBean(p, configuration)
   }
 
-  init {
-    // A shown popup group follows POPUP_ALIGNMENT by itself, see ActionInfoPopupGroup, so a drop does not close it.
-    val keysOfPresenter = PresentationAssistantSettings.ALL_KEYS - PresentationAssistantSettings.POPUP_ALIGNMENT
-    val showCurrentSettings = SettingsChangeListener { key, _ ->
-      // A listener has no thread contract. Any modality, because a modal dialog such as Settings can write a key.
-      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        if (key == PresentationAssistantSettings.SHOW_ACTION_DESCRIPTIONS) {
-          val project = ProjectUtil.getActiveProject()
-          updatePresenter(project, showInitialAction = project != null)
-        }
-        else {
-          updatePresenter()
-        }
-      }
-    }
-    val listenersDisposable = coroutineScope.asDisposable()
-    for (key in keysOfPresenter) {
-      key.addListener(listenersDisposable, SettingsContext.app(), showCurrentSettings)
-    }
-  }
-
   fun initialize() {
-    if (PresentationAssistantSettings.SHOW_ACTION_DESCRIPTIONS.getValue() && presenter == null) {
+    if (configuration.showActionDescriptions && presenter == null) {
       presenter = ShortcutPresenter(coroutineScope.childScope())
     }
   }
 
   fun updatePresenter(project: Project? = null, showInitialAction: Boolean = false) {
-    val isEnabled = PresentationAssistantSettings.SHOW_ACTION_DESCRIPTIONS.getValue()
+    val isEnabled = configuration.showActionDescriptions
     if (isEnabled && presenter == null) {
       val presenter = ShortcutPresenter(coroutineScope.childScope())
       this.presenter = presenter
@@ -207,21 +200,8 @@ class PresentationAssistant(private val coroutineScope: CoroutineScope) : Persis
     }
   }
 
-  /**
-   * Launches [action] in the coroutine scope of this service, in the modality of the caller.
-   *
-   * @return the job of [action]
-   */
-  internal fun launchInServiceScope(action: suspend () -> Unit): Job =
-    coroutineScope.launch(ModalityState.defaultModalityState().asContextElement()) { action() }
-
-  /** Tells whether the presenter exists, that is whether the popup shows the actions. Call it on the EDT. */
-  @get:TestOnly
-  internal val hasPresenter: Boolean
-    get() = presenter != null
-
   internal fun checkIfMacKeymapIsAvailable() {
-    val alternativeKeymap = PresentationAssistantSettings.alternativeKeymapKind()
+    val alternativeKeymap = configuration.alternativeKeymapKind()
     if (warningAboutMacKeymapWasShown
         || SystemInfoRt.isMac
         || alternativeKeymap == null

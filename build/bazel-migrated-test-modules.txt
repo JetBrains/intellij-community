@@ -218,7 +218,6 @@ intellij.platform.ide.impl.tests
 intellij.platform.ide.impl.wsl.tests
 intellij.platform.ide.initialConfigImport.tests
 intellij.platform.ide.nonModalWelcomeScreen.tests
-intellij.platform.ide.presentationAssistant.tests
 intellij.platform.ide.tabInEditor.tests
 intellij.platform.ide.util.io.native.tests
 intellij.platform.ijent.tests

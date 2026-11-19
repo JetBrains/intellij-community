@@ -12,8 +12,6 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.platform.settings.v2.getValue
-import com.intellij.platform.settings.v2.setValue
 import java.util.function.Supplier
 
 class PresentationAssistantQuickSettingsGroup: DefaultActionGroup(), DumbAware {
@@ -37,15 +35,17 @@ internal class PresentationAssistantQuickSettingsSizeGroup: DefaultActionGroup(I
 }
 
 internal class PresentationAssistantQuickSettingsSize(val size: PresentationAssistantPopupSize): DumbAwareToggleAction(size.displayName) {
+  private val configuration = service<PresentationAssistant>().configuration
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun isSelected(e: AnActionEvent): Boolean = PresentationAssistantSettings.POPUP_SIZE.getValue() == size
+  override fun isSelected(e: AnActionEvent): Boolean = configuration.popupSize == size.value
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
-      PresentationAssistantSettings.updateAsync {
-        PresentationAssistantSettings.POPUP_SIZE.setValue(size)
-      }
+      val presentationAssistant = service<PresentationAssistant>()
+      presentationAssistant.configuration.popupSize = size.value
+      presentationAssistant.updatePresenter()
     }
   }
 }
@@ -60,16 +60,22 @@ internal class PresentationAssistantQuickSettingsPositionGroup: DefaultActionGro
 }
 
 internal class PresentationAssistantQuickSettingsPosition(val position: PresentationAssistantPopupAlignment): DumbAwareToggleAction(position.displayName) {
+  private val configuration = service<PresentationAssistant>().configuration
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun isSelected(e: AnActionEvent): Boolean = PresentationAssistantSettings.popupAlignmentIfNoDelta == position
+  override fun isSelected(e: AnActionEvent): Boolean =
+    configuration.alignmentIfNoDelta?.let {
+      it.y == position.y && it.x == position.x
+    } == true
+
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
-      service<PresentationAssistant>().configuration.resetDelta()
-      PresentationAssistantSettings.updateAsync {
-        PresentationAssistantSettings.POPUP_ALIGNMENT.setValue(position)
-      }
+      configuration.verticalAlignment = position.y
+      configuration.horizontalAlignment = position.x
+      configuration.resetDelta()
+      service<PresentationAssistant>().updatePresenter()
     }
   }
 }
@@ -83,15 +89,16 @@ internal class PresentationAssistantQuickSettingsThemeGroup: DefaultActionGroup(
 }
 
 internal class PresentationAssistantQuickSettingsTheme(val theme: PresentationAssistantTheme): DumbAwareToggleAction(theme.displayName) {
+  private val configuration = service<PresentationAssistant>().configuration
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun isSelected(e: AnActionEvent): Boolean = PresentationAssistantSettings.THEME.getValue() == theme
+  override fun isSelected(e: AnActionEvent): Boolean = configuration.theme == theme.value
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
-      PresentationAssistantSettings.updateAsync {
-        PresentationAssistantSettings.THEME.setValue(theme)
-      }
+      configuration.theme = theme.value
+      service<PresentationAssistant>().updatePresenter()
     }
   }
 }

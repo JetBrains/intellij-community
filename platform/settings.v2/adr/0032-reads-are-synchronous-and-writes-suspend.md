@@ -26,7 +26,5 @@ the same suspend write.
 - Any code can read a setting, with no coroutine.
 - A write needs a coroutine, or the blocking bridge.
 - One read API, so no caller picks between stale and fresh.
-- An interface element does not wait for its write, so the UI does not lag. Until the write lands, the element can
-  show the old stored value. It follows the storage through a read or a change listener.
 - The resulting behavior is in the [layer resolution spec](../spec/layer-resolution.spec.md) and the
   [settings writes spec](../spec/settings-writes.spec.md).

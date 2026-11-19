@@ -3,8 +3,6 @@ name: Key Registry
 description: Requirements for the registry that resolves a key identity to its key, and for key promotion.
 style: plain-1
 targets:
-  - ../src/com/intellij/platform/settings/v2/SettingsKeyPromoter.kt
-  - ../resources/intellij.platform.settings.v2.xml
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsKeyRegistry.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultImpl.kt
   - ../shared/resources/intellij.platform.settings.v2.shared.xml
@@ -42,9 +40,8 @@ from outside, such as from another remote-dev side, could resolve to nothing.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 - A different key with a taken identity must be refused and logged.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
-- The platform must promote the keys that the API module declares: `EDIT_TEAM_LAYER`, `LANGUAGE`, `OS` and
-  `PER_OS_SETTINGS`. An integration test covers them, because a write reports a missing promotion only outside the
-  unit test mode.
+- The platform must promote the keys that the API module declares, `EDIT_TEAM_LAYER` and `LANGUAGE`. A missing
+  promotion shows only on a write outside the unit test mode, so only an integration test covers it.
   [@test] ../../../../platform/unified/integrationTests/testSrc/com/intellij/platform/unified/integrationTests/JetBrainsLightSettingsTest.kt
 - A promoter must register the keys of its own plugin only. A platform key has no plugin of its own, and the core
   plugin promotes it.
@@ -66,9 +63,6 @@ from outside, such as from another remote-dev side, could resolve to nothing.
 - Discovery must start when the registry is created, in the background. The registry is ready when every
   promoter ran. See [ADR 0109](../adr/0109-promoting-keys-is-the-discovery-and-it-runs-in-the-background.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
-- The promoter interface and its extension point must be part of the API module, so a plugin promotes its keys with
-  no dependency on the shared module. The registry stays in the shared module. See
-  [ADR 0175](../adr/0175-the-promoter-interface-and-its-extension-point-live-in-the-api-module.md).
 - The registry must hold its keys strongly. See [ADR 0112](../adr/0112-the-registry-holds-keys-strongly.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 
@@ -88,10 +82,6 @@ from outside, such as from another remote-dev side, could resolve to nothing.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 - In a unit test the write check must be off. `withRegistryChecks` turns it on for a block.
   See [ADR 0113](../adr/0113-a-test-opts-into-registry-checks.md).
-- A write in a unit test must prove no promotion, because the write check is off there. A unit test of a plugin
-  proves its promotion with `SettingsKeyRegistry.holds` after `awaitReady`, when the test application loads the
-  descriptor of the promoter. An integration test reports a missing promotion on the first write.
-  [@test] ../../platform-impl/presentation-assistant/tests/src/com/intellij/platform/ide/impl/presentationAssistant/PresentationAssistantSettingsChangeTest.kt
 
 ## Open Questions / Risks
 

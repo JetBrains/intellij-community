@@ -5,9 +5,9 @@ style: plain-1
 targets:
   - ../shared/src/com/intellij/platform/settings/v2/impl/rpc/SettingsContentRootsApi.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/contentRoots.kt
-  - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsContextFactory.kt
   - ../../../../remote-dev/settings/v2/backend/split/src/com/intellij/platform/settings/v2/impl/rpc/BackendContentRootsApi.kt
   - ../../../../remote-dev/settings/v2/backend/split/src/com/intellij/platform/settings/v2/impl/rpc/SettingsRemoteApiProvider.kt
+  - ../../../../remote-dev/settings/v2/frontend/split/src/com/intellij/platform/settings/v2/impl/FrontendSettingsContextFactory.kt
   - ../../../../remote-dev/settings/v2/frontend/split/src/com/intellij/platform/settings/v2/impl/rpc/FrontendContentRootService.kt
   - ../../../../remote-dev/settings/v2/frontend/split/src/com/intellij/platform/settings/v2/impl/rpc/FrontendContentRootsActivity.kt
 ---
@@ -35,22 +35,15 @@ project identity. This is the first remote-dev part of settings v2.
   See [ADR 0084](../adr/0084-each-side-has-its-own-vault-and-every-read-is-local.md) and
   [ADR 0095](../adr/0095-the-first-remote-dev-target.md).
 
-- The file contexts of a client light session before its upgrade. It has no backend, so it anchors on the base
-  directory of its own project. The [Settings Contexts](settings-contexts.spec.md) spec owns that.
-
 ## Requirements
 
-- The backend must send the topmost content roots of a project, then each later state of them.
-- The roots that the backend sends must be the roots that the backend anchors on.
+- The backend must send the topmost content roots of a project, then each later state of them. It computes them
+  with the same function as its own roots cache.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
   [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/FrontendFileContextsTest.kt
 - The backend must not send two equal states in a row.
 - The frontend must start listening for the roots when the project opens, so the roots arrive as soon as possible.
   Until they arrive, a file gets the project context.
-- The frontend must supply the roots that it received as the content roots provider of the context factory. See
-  [ADR 0179](../adr/0179-one-context-factory-serves-every-product-mode-and-an-extension-point-gives-it-the-content-roots.md) and the
-  [Settings Contexts](settings-contexts.spec.md) spec.
-  [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/FrontendFileContextsTest.kt
 - A frontend file under a root must get a file context with the backend root url and the relative path.
   See [ADR 0107](../adr/0107-the-connection-carries-a-live-table-of-content-roots.md) and
   [ADR 0127](../adr/0127-a-file-context-anchors-on-the-backend-root-url-on-both-sides.md).

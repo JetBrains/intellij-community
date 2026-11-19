@@ -1,20 +1,17 @@
 # 0166. The light-compatible backend code lives in the backend.baseline module
 
 Date: 2026-11-05
-Merged: 2026-11-19
 
 ## Status
 
-Accepted ([IJPL-260062](https://youtrack.jetbrains.com/issue/IJPL-260062),
-[IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)). Amended by
-[ADR 0179](./0179-one-context-factory-serves-every-product-mode-and-an-extension-point-gives-it-the-content-roots.md).
+Accepted ([IJPL-260062](https://youtrack.jetbrains.com/issue/IJPL-260062)). Amends
+[ADR 0082](./0082-a-backend-module-holds-the-project-scoped-machinery.md).
 
 ## Context
 
-Remote dev splits the IDE into a frontend and a backend, and a coordinator daemon may follow. The engine had an
-api module and a shared implementation module only. So it got a backend module,
-`intellij.platform.settings.v2.backend`, for the project-scoped machinery and the file layer provider. That module
-depends on `intellij.platform.backend`, so it loads in the monolith and in a remote-development backend only.
+[ADR 0082](./0082-a-backend-module-holds-the-project-scoped-machinery.md) put the project-scoped machinery and the
+file layer provider into `intellij.platform.settings.v2.backend`. That module depends on `intellij.platform.backend`,
+so it loads in the monolith and in a remote-development backend only.
 
 JetBrains Light starts in the light monolith mode. It leaves every backend module out, so it had no context factory,
 no project load and no project close flush. The light mode opens a folder with no indexes and no scan of the project
@@ -31,10 +28,6 @@ project load activity, the per-project snapshot cache, the roots cache, the proj
 dump action. The file layer provider stays in `intellij.platform.settings.v2.backend`.** The backend module depends on
 the baseline module.
 
-The backend module sits next to the api and shared modules. All layer providers are meant to end up there; a
-frontend gets its own providers or the data over RPC. The vault, contexts, provider base classes and the cache
-engine stay shared.
-
 ## Consequences
 
 - JetBrains Light reads and writes the application and the project settings. The vault starts there at the
@@ -43,8 +36,6 @@ engine stay shared.
   ([ADR 0164](./0164-file-settings-are-off-in-the-light-mode-until-the-move-to-the-full-mode.md)).
 - A new backend class goes to the baseline module unless it needs the indexes, the project model or another
   service that the light mode has not.
-- The split has a seam, though what moves across it is not finished.
-- Whether the app-level cache stays shared, and where the VFS-touching parts land, are open.
 - The resulting behavior is in the [file layers spec](../spec/file-layers.spec.md) and the
   [layer loading spec](../spec/layer-loading.spec.md).
 
@@ -59,18 +50,3 @@ it is.
 
 The light mode exists to open a folder with no scan. A lazy discovery of the configs is a later step
 ([IJPL-260652](https://youtrack.jetbrains.com/issue/IJPL-260652)).
-
-## Earlier decisions
-
-### 0082, 2026-09-02: a backend module holds the project-scoped machinery
-
-An `intellij.platform.settings.v2.backend` module sits next to the api and shared modules. It holds the
-project-scoped machinery (the per-project binary cache, the project load activity, the project-close listener) and
-the file layer provider. All layer providers are meant to end up there; a frontend gets its own providers or the data
-over RPC. The vault, contexts, provider base classes and the cache engine stay shared.
-
-Its consequences: the split has a seam, though what moves across it is not finished. Whether the app-level cache
-stays shared, and where the VFS-touching parts land, are open.
-
-It changed because JetBrains Light loads no backend module, so the project-scoped machinery did not work there. The
-decision above moves that machinery to the baseline module and keeps the file layer provider in the backend module.

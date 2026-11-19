@@ -15,7 +15,6 @@
     <module name="intellij.platform.ide.ui"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.resources.en"/>
-    <module name="intellij.platform.settings.v2"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
@@ -35,9 +34,6 @@
                        key="presentation.assistant.notification"/>
     <actionConfigurationCustomizer
       implementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantListenerRegistrar"/>
-    <settings.v2.keyPromoter implementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantSettingsPromoter"/>
-    <settings.v2.appMigration id="presentationAssistant.importComponentState"
-                              implementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantSettingsImport"/>
   </extensions>
 
   <actions>

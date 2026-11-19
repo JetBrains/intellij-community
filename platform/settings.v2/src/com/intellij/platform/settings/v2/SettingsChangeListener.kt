@@ -21,10 +21,6 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * directory context while its file layer loads, waits until the context gets ready. Then a contextual callback fires
  * once, and only when the stored value changed in total. A key-only callback fires once per changed context. A context
  * under the context of a key-only callback can still be dirty. Check [SettingsContext.isReady] before you read there.
- *
- * The callback has no thread contract. The vault calls it with no lock held, on the thread of the change that made it
- * due, such as the thread of a write or of a reload. A listener that needs a thread, such as the EDT, moves there
- * itself.
  */
 @Experimental
 fun interface SettingsChangeListener {

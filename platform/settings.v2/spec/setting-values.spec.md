@@ -51,16 +51,6 @@ its own format, so neither the key nor the serializer knows the format.
 
 - A key with a scalar default of type `Int`, `Long`, `Double`, `Boolean` or `String` infers its serializer.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsResolutionTest.kt
-- A key with an enum entry as its default infers the enum serializer, also for an entry with a body.
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsEnumSerializerTest.kt
-- The enum serializer must store an entry by its constant name, as a string, with no conversion of the name. Two
-  constants that differ only by the case or by an underscore stay distinct. See
-  [ADR 0178](../adr/0178-an-enum-is-stored-by-its-constant-name-with-no-conversion.md).
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsEnumSerializerTest.kt
-- `enumSerializer<E>()` gives the enum serializer for explicit use, and it composes with `nullable()`, `listOf()` and
-  `mapOf()`. `enumSerializer(enumClass)` gives the same serializer where the enum is known only as a class, for
-  example in Java code.
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsEnumSerializerTest.kt
 - A key with any other default type must pass a serializer. Otherwise its construction fails.
 - `nullable()` wraps a serializer so that `null` round-trips as the null value.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNullDefaultTest.kt
@@ -89,28 +79,12 @@ its own format, so neither the key nor the serializer knows the format.
 - The other keys of the same layer must still resolve their stored values.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsJsonRobustnessTest.kt
 - The engine must log a warning for a malformed value.
-- A deserializer must do its best to restore a stored value. When it cannot, it must throw `IllegalArgumentException`
-  with a message that says what is wrong. This applies to every kind of incorrect value: an unexpected type or shape,
-  an unknown name, or anything else.
-- Every built-in serializer must check the type of the stored value. A wrong scalar, a wrong element of a list, a
-  wrong value of a map, and a wrong value of a nullable serializer must each give `IllegalArgumentException`, so the
-  key resolves to its default with a warning.
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMalformedValueTest.kt
-- A stored enum name that no constant has, and a stored value that is not a string, must make an enum key resolve to
-  its default with a warning.
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsEnumSerializerTest.kt
-- A custom serializer that throws `IllegalArgumentException` must make its key resolve to the default with a warning.
-  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMalformedValueTest.kt
 
 ## Error Handling
 
-- A serializer signals an incorrect stored value with `IllegalArgumentException`. The engine catches only that
-  exception and treats it as a malformed value.
-- The kotlinx bridge lets a decode failure of kotlinx propagate. Its `SerializationException` is an
-  `IllegalArgumentException`.
+- A serializer signals a type mismatch with `ClassCastException`. The engine catches only that exception.
+- The kotlinx bridge rethrows a decode failure of kotlinx as `ClassCastException`.
 
 ## Open Questions / Risks
 
-- A rename of an enum constant breaks the values stored under the old name. A mechanism that lets a constant declare
-  its exact stored value would keep them. See
-  [ADR 0178](../adr/0178-an-enum-is-stored-by-its-constant-name-with-no-conversion.md).
+- None.

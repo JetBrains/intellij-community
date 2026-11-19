@@ -37,13 +37,7 @@ class SettingsListSerializerTest {
       return ListValue(items)
     }
 
-    override fun deserialize(value: SettingsValue): List<String> {
-      require(value is ListValue) { "Expected a stored list, but found $value" }
-      return value.items.map { item ->
-        require(item is StringValue) { "Expected a stored string, but found $item" }
-        item.value
-      }
-    }
+    override fun deserialize(value: SettingsValue): List<String> = (value as ListValue).items.map { (it as StringValue).value }
   }
 
   @TestDisposable

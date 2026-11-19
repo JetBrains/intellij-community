@@ -15,9 +15,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * API module, so the [SettingsContext] factories can delegate to it. API consumers use those factories, not this
  * interface.
  *
- * One implementation serves every side of the product: `SettingsContextFactory` in
- * `intellij.platform.settings.v2.shared`. A side supplies only the roots of a file context, through the
- * `settings.v2.contentRootsProvider` extension point.
+ * Each side of the product registers its own implementation as an application service.
+ * `BackendSettingsContextFactory` in `intellij.platform.settings.v2.backend` serves the monolith and the backend.
+ * `FrontendSettingsContextFactory` in `intellij.platform.settings.v2.frontend.split` serves the frontend.
  */
 @Internal
 interface ContextFactory {

@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.settings.v2.getValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -142,6 +141,8 @@ internal class ShortcutPresenter(private val coroutineScope: CoroutineScope) {
   }
 
   private fun getActionFragments(actionData: ActionData): List<TextData> {
+    val configuration = service<PresentationAssistant>().configuration
+
     val actionId = actionData.actionId
     val parentGroupName = parentNames[actionId]
     val actionText = (if (parentGroupName != null) "$parentGroupName ${MacKeymapUtil.RIGHT} " else "") +
@@ -152,21 +153,20 @@ internal class ShortcutPresenter(private val coroutineScope: CoroutineScope) {
       fragments.add(TextData(actionText))
     }
 
-    val mainKeymap = PresentationAssistantSettings.mainKeymapKind()
+    val mainKeymap = configuration.mainKeymapKind()
     val keymapManager = KeymapManager.getInstance()
     getShortcutTextData(keymap = mainKeymap,
-                        label = PresentationAssistantSettings.MAIN_KEYMAP_LABEL.getValue(),
+                        label = configuration.mainKeymapLabel,
                         actionId = actionId,
                         shownShortcut = actionText,
                         keymapManager = keymapManager)?.let {
       fragments.add(it)
     }
 
-    val alternativeKeymap = PresentationAssistantSettings.alternativeKeymapKind()
+    val alternativeKeymap = configuration.alternativeKeymapKind()
     if (alternativeKeymap != null) {
       val mainShortcut = getShortcutsText(keymapManager.getKeymap(mainKeymap.value)?.getShortcuts(actionId), mainKeymap)
-      getShortcutTextData(alternativeKeymap, PresentationAssistantSettings.ALTERNATIVE_KEYMAP_LABEL.getValue(), actionId, mainShortcut,
-                          keymapManager)?.let {
+      getShortcutTextData(alternativeKeymap, configuration.alternativeKeymapLabel, actionId, mainShortcut, keymapManager)?.let {
         fragments.add(it)
       }
     }
