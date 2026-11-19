@@ -451,42 +451,6 @@ public final class PathsVerifier {
 
   private static VirtualFile createFile(final VirtualFile parent, final String name) throws IOException {
     return parent.createChildData(PatchApplier.class, name);
-    /*final Ref<IOException> ioExceptionRef = new Ref<IOException>();
-    final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          result.set(parent.createChildData(PatchApplier.class, name));
-        }
-        catch (IOException e) {
-          ioExceptionRef.set(e);
-        }
-      }
-    });
-    if (! ioExceptionRef.isNull()) {
-      throw ioExceptionRef.get();
-    }
-    return result.get();*/
-  }
-
-  private static VirtualFile moveFile(VirtualFile file, VirtualFile newParent) throws IOException {
-    file.move(FilePatch.class, newParent);
-    return file;
-    /*final Ref<IOException> ioExceptionRef = new Ref<IOException>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          file.move(FilePatch.class, newParent);
-        }
-        catch (IOException e) {
-          ioExceptionRef.set(e);
-        }
-      }
-    });
-    if (! ioExceptionRef.isNull()) {
-      throw ioExceptionRef.get();
-    }
-    return file;*/
   }
 
   private @Nullable VirtualFile makeSureParentPathExists(@NotNull String[] pieces) throws IOException {
@@ -543,18 +507,6 @@ public final class PathsVerifier {
       myNewParent = newParent;
       myCurrent = current;
       myNewName = newName;
-    }
-
-    public VirtualFile getCurrent() {
-      return myCurrent;
-    }
-
-    public VirtualFile getNewParent() {
-      return myNewParent;
-    }
-
-    public String getNewName() {
-      return myNewName;
     }
 
     public VirtualFile doMove() throws IOException {
@@ -647,10 +599,6 @@ public final class PathsVerifier {
 
     public List<FilePath> getOverridenPaths() {
       return myOverridenPaths;
-    }
-
-    public Collection<FilePath> getAlreadyDeletedPaths() {
-      return mySkipDeleted.keySet();
     }
   }
 
