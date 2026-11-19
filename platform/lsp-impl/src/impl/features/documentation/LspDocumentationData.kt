@@ -78,7 +78,10 @@ data class LspDocumentationData(
 ) {
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-  fun toQuickDocHtml(project: Project): DocumentationResult.Documentation {
+  fun toQuickDocHtml(project: Project): DocumentationResult.Documentation = DocumentationResult.documentation(toHtml(project))
+
+  @RequiresReadLock
+  internal fun toHtml(project: Project): @NlsSafe String {
     @NlsSafe
     val htmlDefinition = definitionCodeBlock
       ?.let {
@@ -101,7 +104,7 @@ data class LspDocumentationData(
       ?.let {
         DocumentationMarkup.CONTENT_START + it + DocumentationMarkup.CONTENT_END
       }
-    return DocumentationResult.documentation((htmlDefinition ?: "") + (htmlDescription ?: ""))
+    return (htmlDefinition ?: "") + (htmlDescription ?: "")
   }
 
   enum class DescriptionMarkup {

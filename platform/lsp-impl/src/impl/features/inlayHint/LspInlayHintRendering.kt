@@ -1,16 +1,21 @@
 package com.intellij.platform.lsp.impl.features.inlayHint
 
 import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.InlayPresentationFactory.HoverListener
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient.Companion.DEFAULT_REQUEST_TIMEOUT_MS
 import com.intellij.platform.lsp.api.LspClientDescriptor
@@ -18,20 +23,28 @@ import com.intellij.platform.lsp.api.customization.LspInlayHintSupport
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
+import com.intellij.platform.lsp.impl.features.documentation.createLspDocumentationData
 import com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayItem
 import com.intellij.platform.lsp.impl.supportsInlayHintResolve
 import com.intellij.platform.lsp.util.getOffsetInDocument
+import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.eclipse.lsp4j.InlayHint
 import org.eclipse.lsp4j.InlayHintLabelPart
+import org.eclipse.lsp4j.MarkupContent
+import org.eclipse.lsp4j.MarkupKind
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.awt.Cursor
+import java.awt.Point
+import java.awt.event.MouseEvent
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val MAX_ALLOWED_INLAY_HINT_LENGTH = 100
@@ -80,7 +93,8 @@ private class LspInlayHintItem(
   override val identity: Any = LspInlayHintIdentity(lspClient.descriptor, inlayHint.label, maxChars, supportsResolve)
 
   override fun buildPresentation(editor: Editor, factory: PresentationFactory): InlayPresentation {
-    val presentation = buildInlayPresentation(factory, inlayHint, maxChars, supportsResolve) { partIndex ->
+    val presentation = buildInlayPresentation(factory, inlayHint, maxChars, supportsResolve,
+                                            tooltipListener = { partIndex -> TooltipListener(editor, factory, partIndex) }) { partIndex ->
       navigateToLabelPart(editor, partIndex)
     }
     return factory.roundWithBackground(presentation)
@@ -91,6 +105,53 @@ private class LspInlayHintItem(
     if (newHint !== inlayHint) {
       inlayHint = newHint
       resolvedHint = null
+    }
+  }
+
+  @RequiresReadLock
+  private fun tooltipHtml(tooltip: MarkupContent): @NlsSafe String {
+    return XmlStringUtil.wrapInHtml(createLspDocumentationData(tooltip).toHtml(project))
+  }
+
+  private inner class TooltipListener(
+    private val editor: Editor,
+    private val factory: PresentationFactory,
+    private val partIndex: Int?,
+  ) : HoverListener {
+    private var inlay: Inlay<*>? = null
+    private var event: MouseEvent? = null
+    private var shown: LightweightHint? = null
+    private var job: Job? = null
+
+    override fun onHover(event: MouseEvent, translated: Point) {
+      if (editor.isDisposed) return
+      this.event = event
+      if (shown?.isVisible == true || job?.isActive == true) return
+      val tooltip = getInlayHintTooltip(resolvedHint ?: inlayHint, partIndex) ?: return
+      val hoveredInlay = inlay ?: editor.inlayModel.getElementAt(event.point)?.also {
+        inlay = it
+        Disposer.register(it) { onHoverFinished() }
+      } ?: return
+      if (!hoveredInlay.isValid) return
+
+      job = LspCoroutineScopeService.getInstance(project).cs.launch {
+        val html = readAction { tooltipHtml(tooltip) }
+        withContext(Dispatchers.EDT) {
+          val lastEvent = this@TooltipListener.event ?: return@withContext
+          if (!editor.isDisposed && hoveredInlay.isValid &&
+              editor.contentComponent.isShowing && shown?.isVisible != true) {
+            shown = factory.showTooltip(lastEvent, html)
+          }
+        }
+      }
+    }
+
+    override fun onHoverFinished() {
+      event = null
+      job?.cancel()
+      job = null
+      shown?.hide()
+      shown = null
     }
   }
 
@@ -119,6 +180,12 @@ private class LspInlayHintItem(
   }
 }
 
+/** Returns the part tooltip, or the hint tooltip when the part has none. Empty text is a supplied tooltip. */
+internal fun getInlayHintTooltip(inlayHint: InlayHint, partIndex: Int?): MarkupContent? {
+  val tooltip = partIndex?.let { inlayHint.label.right?.getOrNull(it)?.tooltip } ?: inlayHint.tooltip ?: return null
+  return tooltip.right ?: MarkupContent(MarkupKind.PLAINTEXT, tooltip.left)
+}
+
 /**
  * The rendered identity of an inlay hint: everything [buildInlayPresentation] reads, and nothing else.
  *
@@ -138,6 +205,7 @@ private fun buildInlayPresentation(
   inlayHint: InlayHint,
   maxChars: Int,
   supportsResolve: Boolean,
+  tooltipListener: (partIndex: Int?) -> HoverListener,
   onLabelPartClick: (partIndex: Int) -> Unit,
 ): InlayPresentation {
   val label = inlayHint.label
@@ -154,7 +222,7 @@ private fun buildInlayPresentation(
       currentInlayHintLength += value.length
       if (currentInlayHintLength > maxChars) {
         // Do not add this part; append ellipsis to indicate truncation and stop
-        subPresentations += factory.smallText(ellipsis)
+        subPresentations += factory.onHover(factory.smallText(ellipsis), tooltipListener(null))
         break
       }
 
@@ -168,7 +236,7 @@ private fun buildInlayPresentation(
         inlayPresentation = factory.withCursorOnHoverWhenControlDown(clickable, cursor)
       }
 
-      subPresentations += inlayPresentation
+      subPresentations += factory.onHover(inlayPresentation, tooltipListener(partIndex))
     }
 
     return SequencePresentation(subPresentations)
@@ -177,7 +245,7 @@ private fun buildInlayPresentation(
   // If the label consists of a single text part, truncate it by total length
   val hintText = label.left ?: ""
   val shownText = if (hintText.length > maxChars) hintText.take(maxChars) + ellipsis else hintText
-  return factory.smallText(shownText)
+  return factory.onHover(factory.smallText(shownText), tooltipListener(null))
 }
 
 /**

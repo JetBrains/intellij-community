@@ -2,6 +2,9 @@ package com.intellij.platform.lsp
 
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.presentation.DynamicInsetPresentation
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.codeInsight.hints.presentation.StaticDelegatePresentation
@@ -9,11 +12,13 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.common.FakeLspServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
+import com.intellij.platform.lsp.impl.features.inlayHint.getInlayHintTooltip
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.awaitPendingEditorOpen
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -34,6 +39,8 @@ import org.eclipse.lsp4j.InlayHint
 import org.eclipse.lsp4j.InlayHintLabelPart
 import org.eclipse.lsp4j.InlayHintRegistrationOptions
 import org.eclipse.lsp4j.Location
+import org.eclipse.lsp4j.MarkupContent
+import org.eclipse.lsp4j.MarkupKind
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.Registration
@@ -47,6 +54,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
@@ -70,6 +78,74 @@ internal class LspInlayHintTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   private enum class HintChange { EDIT, SERVER_REFRESH }
+
+  @Nested
+  inner class TooltipContent {
+    @Test
+    fun `string label uses the hint tooltip as plain text`() {
+      val hint = InlayHint(Position(0, 5), Either.forLeft(": String")).apply {
+        setTooltip("**plain** <text>")
+      }
+
+      assertEquals(MarkupContent(MarkupKind.PLAINTEXT, "**plain** <text>"), getInlayHintTooltip(hint, null))
+    }
+
+    @Test
+    fun `selected part tooltip takes precedence over hint tooltip`() {
+      val hint = inlayHint("first", "second").apply { setTooltip("Whole hint") }
+      val tooltip = MarkupContent(MarkupKind.MARKDOWN, "**Second part**")
+      hint.label.right[0].setTooltip("First part")
+      hint.label.right[1].setTooltip(tooltip)
+
+      assertSame(tooltip, getInlayHintTooltip(hint, 1))
+    }
+
+    @Test
+    fun `part without a tooltip falls back to hint markup`() {
+      val tooltip = MarkupContent(MarkupKind.MARKDOWN, "**Whole hint**")
+      val hint = inlayHint("first", "second").apply { setTooltip(tooltip) }
+      hint.label.right[0].setTooltip("First part")
+
+      assertSame(tooltip, getInlayHintTooltip(hint, 1))
+    }
+
+    @Test
+    fun `whole hint lookup does not select a part tooltip`() {
+      val hint = inlayHint("first").apply { setTooltip("Whole hint") }
+      hint.label.right[0].setTooltip("First part")
+
+      assertEquals(MarkupContent(MarkupKind.PLAINTEXT, "Whole hint"), getInlayHintTooltip(hint, null))
+    }
+
+    @Test
+    fun `missing tooltip does not use another part`() {
+      val hint = inlayHint("first", "second")
+      hint.label.right[0].setTooltip("First part")
+
+      assertNull(getInlayHintTooltip(hint, 1))
+      assertNull(getInlayHintTooltip(hint, null))
+      assertNull(getInlayHintTooltip(InlayHint(Position(0, 5), Either.forLeft(": String")), null))
+    }
+
+    @Test
+    fun `empty and whitespace tooltips remain supplied content`() {
+      for (text in listOf("", " \t\n")) {
+        val tooltips = listOf<Either<String, MarkupContent>>(
+          Either.forLeft(text),
+          Either.forRight(MarkupContent(MarkupKind.PLAINTEXT, text)),
+          Either.forRight(MarkupContent(MarkupKind.MARKDOWN, text)),
+        )
+        for (tooltip in tooltips) {
+          val hint = inlayHint("part").apply { setTooltip("Whole hint") }
+          hint.label.right[0].tooltip = tooltip
+
+          assertEquals(text, getInlayHintTooltip(hint, 0)?.value)
+          hint.tooltip = tooltip
+          assertEquals(text, getInlayHintTooltip(hint, null)?.value)
+        }
+      }
+    }
+  }
 
   @Nested
   inner class StaticRegistration {
@@ -380,6 +456,66 @@ internal class LspInlayHintTest {
         checkInlaysRetrying(sourceText, "hello/*<# [clickable] #>*/ world")
         interactWithLabel(0)
         checkNavigation(6)
+      }
+    }
+
+    @Test
+    fun `string label hover starts one cancellable tooltip task`(): Unit = timeoutRunBlocking {
+      val hint = InlayHint(Position(0, 5), Either.forLeft(": String")).apply { setTooltip("String tooltip") }
+      checkTooltipHover(hint, 0, "hello/*<# : String #>*/ world", "stringTooltip.txt")
+    }
+
+    @Test
+    fun `part hover starts one cancellable tooltip task`(): Unit = timeoutRunBlocking {
+      val hint = inlayHint("first", "second")
+      hint.label.right[1].setTooltip(MarkupContent(MarkupKind.MARKDOWN, "**Second part**"))
+      checkTooltipHover(hint, 1, "hello/*<# [first second] #>*/ world", "partTooltip.txt")
+    }
+
+    @Test
+    fun `ellipsis hover uses the whole hint tooltip`(): Unit = timeoutRunBlocking {
+      val hint = inlayHint("shown", "x".repeat(100)).apply { setTooltip("Whole hint") }
+      checkTooltipHover(hint, 1, "hello/*<# [shown ...] #>*/ world", "ellipsisTooltip.txt")
+    }
+
+    private suspend fun checkTooltipHover(hint: InlayHint, partIndex: Int, expected: String, fileName: String) {
+      val serverSession = inlayHintSession(hint, fileName)
+      checkInlaysRetrying("hello world", expected)
+      awaitLspJobs()
+
+      assertNoResolveRequest(serverSession) {
+        withContext(Dispatchers.EDT) {
+          interactWithLabel(partIndex, modifiers = 0, click = false, exit = false)
+          val scopeJob = LspCoroutineScopeService.getInstance(project).cs.coroutineContext.job
+          val tooltipJob = scopeJob.children.single()
+          assertTrue(tooltipJob.isActive)
+
+          interactWithLabel(partIndex, modifiers = 0, click = false, exit = false)
+          assertSame(tooltipJob, scopeJob.children.single(), "Moving within the part must reuse the pending task")
+
+          (managedInlayAt(5).renderer as PresentationRenderer).presentation.mouseExited()
+          assertTrue(tooltipJob.isCancelled, "Leaving the hint must cancel pending tooltip work")
+        }
+      }
+    }
+
+    @Test
+    fun `removing an inlay cancels pending tooltip work`(): Unit = timeoutRunBlocking {
+      val hint = InlayHint(Position(0, 5), Either.forLeft(": String")).apply { setTooltip("String tooltip") }
+      val serverSession = inlayHintSession(hint, "removedTooltip.txt")
+      checkInlaysRetrying("hello world", "hello/*<# : String #>*/ world")
+      awaitLspJobs()
+
+      assertNoResolveRequest(serverSession) {
+        withContext(Dispatchers.EDT) {
+          interactWithLabel(0, modifiers = 0, click = false, exit = false)
+          val tooltipJob = LspCoroutineScopeService.getInstance(project).cs.coroutineContext.job.children.single()
+
+          Disposer.dispose(managedInlayAt(5))
+
+          assertTrue(tooltipJob.isCancelled, "Removing the inlay must cancel pending tooltip work")
+          assertTrue(managedInlaysAt(5).isEmpty())
+        }
       }
     }
 
@@ -836,25 +972,43 @@ internal class LspInlayHintTest {
     },
     click: Boolean = true,
     inlayOffset: Int = 5,
+    exit: Boolean = true,
   ) {
     withContext(Dispatchers.EDT) {
-      var presentation = (managedInlayAt(inlayOffset).renderer as PresentationRenderer).presentation
-      while (presentation is StaticDelegatePresentation) presentation = presentation.presentation
-      val point = if (presentation is SequencePresentation) {
-        Point(presentation.presentations.take(partIndex).sumOf { it.width } + presentation.presentations[partIndex].width / 2,
-              presentation.height / 2)
-      }
-      else {
-        Point(presentation.width / 2, presentation.height / 2)
-      }
+      val inlay = managedInlayAt(inlayOffset)
+      val presentation = (inlay.renderer as PresentationRenderer).presentation
+      val point = labelPoint(presentation, partIndex)
+      val bounds = checkNotNull(inlay.bounds)
       val component = codeInsightFixture.editor.contentComponent
-      presentation.mouseMoved(MouseEvent(component, MouseEvent.MOUSE_MOVED, 0, modifiers, point.x, point.y, 0, false), point)
+      val x = bounds.x + point.x
+      val y = bounds.y + point.y
+      presentation.mouseMoved(MouseEvent(component, MouseEvent.MOUSE_MOVED, 0, modifiers, x, y, 0, false), point)
       if (click) {
-        val event = MouseEvent(component, MouseEvent.MOUSE_CLICKED, 0, modifiers, point.x, point.y, 1, false, button)
+        val event = MouseEvent(component, MouseEvent.MOUSE_CLICKED, 0, modifiers, x, y, 1, false, button)
         presentation.mouseClicked(event, point)
       }
-      presentation.mouseExited()
+      if (exit) presentation.mouseExited()
     }
+  }
+
+  private fun labelPoint(root: InlayPresentation, partIndex: Int): Point {
+    var presentation = root
+    val point = Point()
+    while (presentation is StaticDelegatePresentation) {
+      when (presentation) {
+        is InsetPresentation -> point.translate(presentation.left, presentation.top)
+        is DynamicInsetPresentation -> point.translate(presentation.valueProvider.left, presentation.valueProvider.top)
+      }
+      presentation = presentation.presentation
+    }
+    if (presentation is SequencePresentation) {
+      point.translate(presentation.presentations.take(partIndex).sumOf { it.width } + presentation.presentations[partIndex].width / 2,
+                      presentation.height / 2)
+    }
+    else {
+      point.translate(presentation.width / 2, presentation.height / 2)
+    }
+    return point
   }
 
   private suspend fun checkNavigation(offset: Int, targetFile: VirtualFile = codeInsightFixture.file.virtualFile) {
