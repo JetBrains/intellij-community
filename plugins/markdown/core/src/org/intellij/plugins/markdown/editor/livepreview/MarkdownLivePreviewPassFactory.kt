@@ -7,9 +7,11 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -18,8 +20,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
+import org.intellij.plugins.markdown.util.MarkdownPluginScope
 
 /** Recomputes live-preview specs when the Markdown PSI changes. */
 @Suppress("SplitModeApiUsage")
@@ -61,21 +65,34 @@ private class MarkdownLivePreviewPass(editor: Editor, psiFile: PsiFile):
 /**
  * Publishes the specs of the committed document at once, so an editor that turns live preview on does not wait
  * for the next highlighting pass. After that, the pass keeps the specs current.
+ * With [force], the new specs also replace the specs of the same document.
  */
-internal suspend fun Editor.publishCurrentLivePreviewSpecs() {
+internal suspend fun Editor.publishCurrentLivePreviewSpecs(force: Boolean = false) {
   val project = project ?: return
   val specSet = readAction {
     val documentManager = PsiDocumentManager.getInstance(project)
     val file = documentManager.getPsiFile(document)?.takeIf { it.language.isMarkdownLanguage() }
     when {
-      file == null || !documentManager.isCommitted(document) || hasCurrentLivePreviewSpecs(project) -> null
+      file == null || !documentManager.isCommitted(document) || !force && hasCurrentLivePreviewSpecs(project) -> null
       else -> computeLivePreviewSpecs(file, this)
     }
   } ?: return
   // Document changes happen on the EDT, so the version check stays true until the publication.
   withContext(Dispatchers.EDT) {
-    if (specSet.documentVersion.matches(document, project)) {
-      publishLivePreviewSpecs(specSet)
+    if (!specSet.documentVersion.matches(document, project)) return@withContext
+    if (force) livePreviewSpecSetFlow().value = specSet else publishLivePreviewSpecs(specSet)
+  }
+}
+
+internal class MarkdownLivePreviewTrustListener : TrustedProjectsListener {
+  override fun onProjectTrusted(project: Project) = republish(project)
+  override fun onProjectUntrusted(project: Project) = republish(project)
+
+  private fun republish(project: Project) {
+    val editors = EditorFactory.getInstance().allEditors.filter { it.project == project && it.computesLivePreview() }
+    if (editors.isEmpty()) return
+    MarkdownPluginScope.scope(project).launch {
+      editors.forEach { it.publishCurrentLivePreviewSpecs(force = true) }
     }
   }
 }

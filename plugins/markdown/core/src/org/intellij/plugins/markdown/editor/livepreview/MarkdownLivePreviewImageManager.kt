@@ -30,11 +30,11 @@ internal class MarkdownLivePreviewImageManager(
 ) : Disposable {
   private val file = FileDocumentManager.getInstance().getFile(editor.document)
     ?: error("Markdown live preview editor has no document file")
-  private val loadingSources = ConcurrentHashMap<String, Deferred<MarkdownLivePreviewSpec.ImageSource?>>()
+  private val loadingSources = ConcurrentHashMap<String, Deferred<LoadedImage>>()
   private val coroutineScope = MarkdownApplicationScope.createChildScope()
 
-  /** Keeps the size of each loaded image. */
-  private val watcher = MarkdownImageWatcher<MarkdownLivePreviewSpec.ImageSource>(
+  /** Keeps the loaded state of each image. */
+  private val watcher = MarkdownImageWatcher<LoadedImage>(
     coroutineScope,
     onChanged = ::reload,
     resolve = { destination -> MarkdownImageLoader.findImageFile(project, file, destination) },
@@ -50,27 +50,26 @@ internal class MarkdownLivePreviewImageManager(
 
   suspend fun load(destination: String) {
     if (!TrustedProjects.isProjectTrusted(project)) return
-    val source = watcher.loadedValueOf(destination) ?: startLoading(destination).await()
-    publishSource(destination, source)
+    val image = watcher.loadedValueOf(destination) ?: startLoading(destination).await()
+    publish(destination, image)
   }
 
-  /** The [MarkdownLivePreviewSpec.ImageSource] already loaded source of [destination], or null when none is loaded. */
-  fun findImageData(destination: String): MarkdownLivePreviewSpec.ImageSource? = watcher.loadedValueOf(destination)
+  /** The image of [destination] that is already loaded, or null when none is loaded. */
+  fun findImage(destination: String): LoadedImage? = watcher.loadedValueOf(destination)
 
-  private fun startLoading(destination: String): Deferred<MarkdownLivePreviewSpec.ImageSource?> {
+  private fun startLoading(destination: String): Deferred<LoadedImage> {
     return loadingSources.computeIfAbsent(destination) {
       coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) { loadImage(destination) }
     }.also { it.start() }
   }
 
-  private suspend fun loadImage(destination: String): MarkdownLivePreviewSpec.ImageSource? {
+  private suspend fun loadImage(destination: String): LoadedImage {
     try {
       val image = withBackgroundProgress(project, MarkdownBundle.message("markdown.image.loading"), cancellable = true) {
         MarkdownImageLoader.load(project, file, destination)
       }
-      val source = image?.toImageSource()
-      watcher.onImageLoaded(destination, image?.file, source)
-      return source
+      watcher.onImageLoaded(destination, image.file, image)
+      return image
     }
     finally {
       loadingSources.remove(destination)
@@ -80,16 +79,16 @@ internal class MarkdownLivePreviewImageManager(
   private fun reload(destinations: Set<String>) {
     for (destination in destinations) {
       val deferred = startLoading(destination)
-      coroutineScope.launch { publishSource(destination, deferred.await()) }
+      coroutineScope.launch { publish(destination, deferred.await()) }
     }
   }
 
-  private fun publishSource(destination: String, source: MarkdownLivePreviewSpec.ImageSource?) {
+  private fun publish(destination: String, image: LoadedImage) {
     editor.livePreviewSpecSetFlow().update { specSet ->
       if (specSet == null) return@update null
       val elements = specSet.elements.map { spec ->
         if (spec is MarkdownLivePreviewSpec.Image && spec.destination == destination) {
-          spec.copy(source = source)
+          spec.copy(source = image.source, failure = image.failure)
         } else spec
       }
       MarkdownLivePreviewSpecSet(specSet.documentVersion, elements)
@@ -107,11 +106,6 @@ private fun MarkdownLivePreviewSpecSet.imageDestinations(): Set<String> {
     .filterIsInstance<MarkdownLivePreviewSpec.Image>()
     .filterNot { it.isBrowserOwned }
     .mapTo(HashSet()) { it.destination }
-}
-
-private fun LoadedImage.toImageSource(): MarkdownLivePreviewSpec.ImageSource? {
-  val [width, height] = size ?: return null
-  return MarkdownLivePreviewSpec.ImageSource(file.modificationStamp, width, height)
 }
 
 private val IMAGE_MANAGER_KEY = Key.create<MarkdownLivePreviewImageManager>("markdown.live.preview.image.manager")

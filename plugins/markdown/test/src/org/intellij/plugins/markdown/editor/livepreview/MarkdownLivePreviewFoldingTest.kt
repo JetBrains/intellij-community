@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.idea.TestFor
@@ -49,6 +50,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertNothingLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -1982,7 +1984,7 @@ class MarkdownLivePreviewFoldingTest {
   }
 
   @Test
-  fun testSiblingPrefixPathOutsideProjectRestoresItsSource(): Unit = timeoutRunBlocking {
+  fun testSiblingPrefixPathOutsideProjectShowsAPlaceholder(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       // The sibling `<root>-other` of the content root shares its name prefix and lies outside it.
       // The fixture cleans the content root only, so the test deletes the sibling itself.
@@ -1992,7 +1994,7 @@ class MarkdownLivePreviewFoldingTest {
       configureProjectFile("![alt](../../$sibling/image.png)\n\ntail")
 
       assertEquals(1, computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
-      waitForNoImageInlay()
+      waitForPlaceholders(MarkdownBundle.message("markdown.live.preview.image.outside.project", "../../$sibling/image.png"))
     }
   }
 
@@ -2011,15 +2013,64 @@ class MarkdownLivePreviewFoldingTest {
   }
 
   @Test
-  fun testBrokenImageAndMissingImageStayRaw(): Unit = timeoutRunBlocking {
+  fun testBrokenAndMissingImagesShowPlaceholders(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       addBinaryFile("docs/broken.png", "not an image".toByteArray())
       configureProjectFile("![broken](broken.png)\n\n![missing](missing.png)\n\ntail")
 
-      waitForNoImageInlay()
+      waitForPlaceholders(
+        MarkdownBundle.message("markdown.live.preview.image.unreadable", "broken.png"),
+        MarkdownBundle.message("markdown.live.preview.image.not.found", "missing.png"),
+      )
+      assertEquals(
+        listOf("![broken](broken.png)" to "broken", "![missing](missing.png)" to "missing"),
+        concealedWithPlaceholders(),
+      )
+    }
+  }
 
-      assertThat(concealed()).isEmpty()
-      myFixture.checkResult("![broken](broken.png)\n\n![missing](missing.png)\n\ntail")
+  @Test
+  fun testMissingImagePlaceholderBecomesTheImageWhenTheFileAppears(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      configureProjectFile("![alt](image.png)\n\ntail")
+      waitForPlaceholders(MarkdownBundle.message("markdown.live.preview.image.not.found", "image.png"))
+
+      addPng(60, 30)
+
+      waitForLoadedImage()
+    }
+  }
+
+  @Test
+  fun testUntrustedProjectShowsPlaceholderUntilTheProjectIsTrusted(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      addPng(60, 30)
+      TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
+        TrustedProjects.setProjectTrusted(myFixture.project, false)
+        try {
+          configureProjectFile("![alt](image.png)\n\ntail")
+          waitForPlaceholders(MarkdownBundle.message("markdown.live.preview.image.untrusted"))
+          assertEquals(listOf("![alt](image.png)" to "alt"), concealedWithPlaceholders())
+
+          TrustedProjects.setProjectTrusted(myFixture.project, true)
+
+          waitForLoadedImage()
+        }
+        finally {
+          TrustedProjects.setProjectTrusted(myFixture.project, true)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun testBrokenDataUriShowsTheLoadFailedPlaceholder(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val destination = "data:image/png;base64,${Base64.getEncoder().encodeToString("not an image".toByteArray())}"
+      configureProjectFile("![alt]($destination)\n\ntail")
+      EditorTestUtil.setEditorVisibleSize(myFixture.editor, 80, 12)
+
+      waitForPlaceholders(MarkdownBundle.message("markdown.live.preview.image.load.failed", destination))
     }
   }
 
@@ -2123,8 +2174,7 @@ class MarkdownLivePreviewFoldingTest {
 
       ApplicationManager.getApplication().runWriteAction { image.setBinaryContent(pngBytes(3, 3)) }
 
-      waitForNoImageInlay()
-      assertThat(concealed()).isEmpty()
+      waitForPlaceholders(MarkdownBundle.message("markdown.live.preview.image.too.large", "image.png"))
     }
   }
 
@@ -2138,8 +2188,7 @@ class MarkdownLivePreviewFoldingTest {
 
       ApplicationManager.getApplication().runWriteAction { image.setBinaryContent(pngBytes(3, 3)) }
 
-      waitForNoImageInlay()
-      assertThat(concealed()).isEmpty()
+      waitForPlaceholders(MarkdownBundle.message("markdown.live.preview.image.too.large", "image.png"))
     }
   }
 
@@ -2508,7 +2557,7 @@ class MarkdownLivePreviewFoldingTest {
   @Test
   fun testRevealingElementsWithDifferentFoldCounts(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
-      val content = "![missing](missing.png)\n\n**bold**\n\n- [ ] task\n\n-----\n\ntail"
+      val content = "    code\n\n**bold**\n\n- [ ] task\n\n-----\n\ntail"
       configureProjectFile(content)
       assertEquals(listOf("**", "**", "- [ ]", "-----"), concealed())
 
@@ -2524,7 +2573,7 @@ class MarkdownLivePreviewFoldingTest {
       assertEquals(listOf("**", "**", "- [ ]"), concealed())
       assertThat(thematicBreakHighlighters()).isEmpty()
 
-      moveCaretTo(content.indexOf("missing") + 1)
+      moveCaretTo(content.indexOf("code") + 1)
       assertEquals(listOf("**", "**", "- [ ]", "-----"), concealed())
       select(content.indexOf("bold"), content.indexOf("task") + 1)
       assertEquals(listOf("-----"), concealed())
@@ -2763,7 +2812,7 @@ class MarkdownLivePreviewFoldingTest {
     return imageInlays().single()
   }
 
-  /** Waits until [count] image inlays exist. A local image has a loaded source by construction. */
+  /** Waits until [count] image inlays exist. */
   private fun waitForImageInlays(count: Int) {
     PlatformTestUtil.waitWithEventsDispatching(
       "Image inlays were not added",
@@ -2771,6 +2820,24 @@ class MarkdownLivePreviewFoldingTest {
       10,
     )
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+  }
+
+  /** Waits until the image inlays, in document order, show the placeholders with [texts]. */
+  private fun waitForPlaceholders(vararg texts: String) {
+    PlatformTestUtil.waitWithEventsDispatching(
+      "Image placeholders were not shown",
+      { imageInlays().sortedBy { it.offset }.map { it.renderer.inlayText } == texts.toList() },
+      10,
+    )
+  }
+
+  private fun waitForLoadedImage() {
+    PlatformTestUtil.waitWithEventsDispatching(
+      "The image did not replace the placeholder",
+      { imageInlays().singleOrNull()?.renderer?.source != null },
+      10,
+    )
+    assertNull(imageInlays().single().renderer.inlayText)
   }
 
   private fun waitForNoImageInlay() {

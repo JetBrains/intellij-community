@@ -247,5 +247,7 @@
     <applicationListeners>
       <listener topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
                 class="org.intellij.plugins.markdown.settings.MarkdownSettingsMigration"/>
+      <listener topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
+                class="org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewTrustListener"/>
     </applicationListeners>
 </idea-plugin>

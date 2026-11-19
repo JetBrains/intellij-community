@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec.ImageFailure
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec.ImageSource
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver.Resolution
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver.resolve
 import org.jetbrains.annotations.ApiStatus
@@ -19,9 +21,12 @@ import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 import kotlin.math.roundToInt
 
-/** The [file] of an image and its [size]. No size means that the file is outside the limits. */
 @ApiStatus.Internal
-class LoadedImage(val file: VirtualFile, val size: Pair<Int, Int>?)
+class LoadedImage(
+  val file: VirtualFile?,
+  val source: ImageSource? = null,
+  val failure: ImageFailure? = null,
+)
 
 private const val SCALE_FACTOR = 1024 * 1024
 
@@ -30,40 +35,51 @@ object MarkdownImageLoader {
   private val LOG = Logger.getInstance(MarkdownImageLoader::class.java)
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  suspend fun load(project: Project, file: VirtualFile, destination: String): LoadedImage? {
+  suspend fun load(project: Project, file: VirtualFile, destination: String): LoadedImage {
     ThreadingAssertions.assertBackgroundThread()
     return try {
-      val imageFile = findImageFile(project, file, destination) ?: return null
-      LoadedImage(imageFile, readSize(imageFile))
+      when (val resolution = resolveImage(project, file, destination)) {
+        is Resolution.Found -> read(resolution.file)
+        Resolution.Forbidden -> LoadedImage(null, failure = ImageFailure.OUTSIDE_PROJECT)
+        Resolution.NotFound -> LoadedImage(null, failure = ImageFailure.NOT_FOUND)
+      }
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
       LOG.warn("Failed to resolve Markdown image $destination", e)
-      null
+      LoadedImage(null, failure = ImageFailure.UNREADABLE)
     }
   }
 
   suspend fun findImageFile(project: Project, file: VirtualFile, destination: String): VirtualFile? {
-    if (!TrustedProjects.isProjectTrusted(project)) return null
-    val projectRoot = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file)
-                      ?: project.guessProjectDir()
-                      ?: return null
-    val imageFile = (resolve(file, projectRoot, destination) as? Resolution.Found)?.file ?: return null
-    return imageFile.takeIf { it.isValid && !it.isDirectory }
+    return when (val resolution = resolveImage(project, file, destination)) {
+      is Resolution.Found -> resolution.file
+      Resolution.Forbidden, Resolution.NotFound -> null
+    }
   }
 
-  /** The intrinsic size of [file], or null when it is not an image inside the registry limits. */
-  private fun readSize(file: VirtualFile): Pair<Int, Int>? {
+  private suspend fun resolveImage(project: Project, file: VirtualFile, destination: String): Resolution {
+    if (!TrustedProjects.isProjectTrusted(project)) return Resolution.NotFound
+    val projectRoot = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file)
+                      ?: project.guessProjectDir()
+                      ?: return Resolution.NotFound
+    return resolve(file, projectRoot, destination)
+  }
+
+  /** The intrinsic size of [file], or a failure when [file] is not an image inside the registry limits. */
+  private fun read(file: VirtualFile): LoadedImage {
     val maxBytes = Registry.intValue("markdown.live.preview.image.max.megabytes") * SCALE_FACTOR
-    if (maxBytes < 0 || file.length > maxBytes) return null
+    if (maxBytes < 0 || file.length > maxBytes) return LoadedImage(file, failure = ImageFailure.TOO_LARGE)
 
     val content = file.contentsToByteArray()
-    if (content.size.toLong() > maxBytes) return null
+    if (content.size.toLong() > maxBytes) return LoadedImage(file, failure = ImageFailure.TOO_LARGE)
 
     val isSvg = file.extension.equals("svg", ignoreCase = true)
-    val size = (if (isSvg) readSvgSize(content) else readRasterSize(content)) ?: return null
+    val size = if (isSvg) readSvgSize(content) else readRasterSize(content)
+    val [width, height] = size ?: return LoadedImage(file, failure = ImageFailure.UNREADABLE)
     val maxPixels = Registry.intValue("markdown.live.preview.image.max.megapixels") * SCALE_FACTOR
-    return size.takeIf { (width, height) -> width.toDouble() * height <= maxPixels }
+    if (width.toDouble() * height > maxPixels) return LoadedImage(file, failure = ImageFailure.TOO_LARGE)
+    return LoadedImage(file, ImageSource(file.modificationStamp, width, height))
   }
 
   private fun readSvgSize(content: ByteArray): Pair<Int, Int>? {

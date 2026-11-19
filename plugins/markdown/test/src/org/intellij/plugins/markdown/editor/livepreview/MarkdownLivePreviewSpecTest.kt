@@ -185,12 +185,15 @@ class MarkdownLivePreviewSpecTest {
   }
 
   @Test
-  fun testImagesAreNotRenderedInUntrustedProject() {
+  fun testImagesInUntrustedProjectHaveTheUntrustedFailure() {
     TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
       TrustedProjects.setProjectTrusted(myFixture.project, false)
       try {
         myFixture.configureByText("test.md", "![local](image.png)\n\n![remote](https://example.org/image.png)")
-        assertThat(timeoutRunBlocking { readAction { computeLivePreviewSpecs(myFixture.file, myFixture.editor) } }.elements.filterIsInstance<MarkdownLivePreviewSpec.Image>()).isEmpty()
+        val images = timeoutRunBlocking { readAction { computeLivePreviewSpecs(myFixture.file, myFixture.editor) } }.elements.filterIsInstance<MarkdownLivePreviewSpec.Image>()
+        assertEquals(listOf("image.png", "https://example.org/image.png"), images.map { it.destination })
+        assertEquals(listOf(MarkdownLivePreviewSpec.ImageFailure.UNTRUSTED), images.map { it.failure }.distinct())
+        assertTrue(images.all { it.source == null })
       }
       finally {
         TrustedProjects.setProjectTrusted(myFixture.project, true)
