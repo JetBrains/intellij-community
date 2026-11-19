@@ -96,6 +96,9 @@ override it.
   branch. Such a failure is expected until the user accepts the ADR.
 - A `Proposed` ADR that amends or supersedes another ADR does not change the status of that ADR. The old status
   changes when the new ADR is accepted.
+- The rules below about an accepted ADR apply to an ADR that is in master: its file exists in `origin/master`. An
+  ADR that is not in master yet belongs to the branch. Edit it in place, merge it with another ADR of the branch, or
+  drop it, whatever its status is. Never amend or supersede it with a new ADR in the same branch.
 - An accepted ADR keeps its decision. You may reword it, clarify it, or add details to it, when the decision stays
   the same. A missed detail or a wrong statement about the code is fixed in place. You may also add a missed
   consequence or rejected alternative.
