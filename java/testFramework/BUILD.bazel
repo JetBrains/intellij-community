@@ -74,6 +74,7 @@ jvm_library(
         "//platform/ide-core",
         "//java/execution/impl",
         "//platform/testFramework",
+        "//java/java-runtime:rt",
         "//platform/workspace/storage",
         "//java/idea-ui:ui",
         "//java/debugger/impl",
