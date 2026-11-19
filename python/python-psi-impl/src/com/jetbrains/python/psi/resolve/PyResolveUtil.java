@@ -480,16 +480,19 @@ public final class PyResolveUtil {
     else if (scopeOwner instanceof PyTypeAliasStatement) {
       return resolveTypeParameters((PyTypeParameterListOwner)scopeOwner, name);
     }
+    else if (scopeOwner instanceof PyClass classScope) {
+      final PyClassLikeType scopeType = classScope.getType(resolveContext.getTypeEvalContext());
+      // A class binds its own type parameters whether or not its type could be evaluated, so they are
+      // appended even when there are no members to resolve against.
+      final List<? extends RatedResolveResult> ownMembers =
+        scopeType == null ? null
+                          : scopeType.resolveMember(name, null, AccessDirection.READ, resolveContext, /* inherited = */ false);
+      return ContainerUtil.concat(ContainerUtil.notNullize(ownMembers), resolveTypeParameters(classScope, name));
+    }
     else {
       final PyType scopeType = resolveContext.getTypeEvalContext().getType((PyTypedElement)scopeOwner);
       if (scopeType == null) return Collections.emptyList();
-      List<? extends RatedResolveResult> typeMembers = scopeType.resolveMember(name, null, AccessDirection.READ, resolveContext);
-      if (scopeOwner instanceof PyClass pyClass) {
-        return ContainerUtil.concat(ContainerUtil.notNullize(typeMembers), resolveTypeParameters(pyClass, name));
-      }
-      else {
-        return ContainerUtil.notNullize(typeMembers);
-      }
+      return ContainerUtil.notNullize(scopeType.resolveMember(name, null, AccessDirection.READ, resolveContext));
     }
   }
 
