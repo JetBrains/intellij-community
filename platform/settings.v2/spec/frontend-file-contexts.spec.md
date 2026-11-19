@@ -35,10 +35,13 @@ project identity. This is the first remote-dev part of settings v2.
   See [ADR 0084](../adr/0084-each-side-has-its-own-vault-and-every-read-is-local.md) and
   [ADR 0095](../adr/0095-the-first-remote-dev-target.md).
 
+- The file contexts of a client light session before its upgrade. It has no backend, so it anchors on the base
+  directory of its own project. The [Settings Contexts](settings-contexts.spec.md) spec owns that.
+
 ## Requirements
 
-- The backend must send the topmost content roots of a project, then each later state of them. It computes them
-  with the same function as its own roots cache.
+- The backend must send the topmost content roots of a project, then each later state of them.
+- The roots that the backend sends must be the roots that the backend anchors on.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
   [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/FrontendFileContextsTest.kt
 - The backend must not send two equal states in a row.
