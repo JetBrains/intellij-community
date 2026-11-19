@@ -40,19 +40,22 @@ internal class EelUnitTestPath(val fileSystem: EelUnitTestFileSystem, val delega
     return EelUnitTestPath(fileSystem, parent)
   }
 
+  private val rootNameCount: Int
+    get() = if (delegate.isAbsolute) root.delegate.nameCount else 0
+
   override fun getNameCount(): Int {
     if (delegate == fileSystem.root.delegate) {
       return 0
     }
-    return delegate.nameCount - root.delegate.nameCount
+    return delegate.nameCount - rootNameCount
   }
 
   override fun getName(index: Int): Path {
-    return EelUnitTestPath(fileSystem, delegate.getName(index + root.delegate.nameCount))
+    return EelUnitTestPath(fileSystem, delegate.getName(index + rootNameCount))
   }
 
   override fun subpath(beginIndex: Int, endIndex: Int): Path {
-    return EelUnitTestPath(fileSystem, delegate.subpath(beginIndex + root.delegate.nameCount, endIndex + root.delegate.nameCount))
+    return EelUnitTestPath(fileSystem, delegate.subpath(beginIndex + rootNameCount, endIndex + rootNameCount))
   }
 
   override fun startsWith(other: Path): Boolean {

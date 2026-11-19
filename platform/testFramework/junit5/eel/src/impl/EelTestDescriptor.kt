@@ -6,7 +6,13 @@ import com.intellij.platform.eel.EelPathBoundDescriptor
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
-internal class EelTestDescriptor(override val rootPath: Path, val id: String, override val osFamily: EelOsFamily) : EelPathBoundDescriptor {
+/**
+ * [rootPath] is parsed on the first read. The fixture registers the routing backend of the fake root after it creates
+ * the descriptor, so a later parse gives a path of the fake file system.
+ */
+internal class EelTestDescriptor(private val fakeRoot: String, val id: String, override val osFamily: EelOsFamily) : EelPathBoundDescriptor {
+  override val rootPath: Path by lazy { Path.of(fakeRoot) }
+
   override val name: @NonNls String = "mock $id"
 
   override fun equals(other: Any?): Boolean {
@@ -15,14 +21,14 @@ internal class EelTestDescriptor(override val rootPath: Path, val id: String, ov
 
     other as EelTestDescriptor
 
-    if (rootPath != other.rootPath) return false
+    if (fakeRoot != other.fakeRoot) return false
     if (id != other.id) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = rootPath.hashCode()
+    var result = fakeRoot.hashCode()
     result = 31 * result + id.hashCode()
     return result
   }

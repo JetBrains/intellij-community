@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.impl.nio
 
+import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import java.net.URI
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
@@ -18,7 +19,23 @@ import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 
-internal class EelUnitTestFileSystemProvider(val defaultProvider: FileSystemProvider) : FileSystemProvider() {
+internal class EelUnitTestFileSystemProvider(
+  val defaultProvider: FileSystemProvider,
+  private val fakeRoot: String,
+  private val supportsPosixRouting: Boolean,
+) : FileSystemProvider(), RoutingAwareFileSystemProvider {
+
+  private val fakeRootPrefix: String = fakeRoot.replace("\\", "/").trimEnd('/') + "/"
+
+  /** Whether [path] is the fake root or a path under it. Both separators are accepted. */
+  fun isUnderFakeRoot(path: String): Boolean {
+    val candidate = path.replace("\\", "/")
+    return candidate.startsWith(fakeRootPrefix) || candidate == fakeRootPrefix.dropLast(1)
+  }
+
+  override fun canHandleRouting(path: Path): Boolean {
+    return supportsPosixRouting && isUnderFakeRoot(path.toString())
+  }
 
   override fun getScheme(): String? {
     return defaultProvider.scheme

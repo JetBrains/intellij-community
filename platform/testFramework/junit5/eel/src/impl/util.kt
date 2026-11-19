@@ -36,7 +36,6 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.io.path.Path
 import kotlin.io.path.name
 
 private val EelPlatform.name: String
@@ -78,8 +77,9 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
 
   val apiRef = AtomicReference<EelApi>(null)
   val id = Ksuid.generate()
-  val descriptor = EelTestDescriptor(Path(fakeRoot), id, os.osFamily)
-  val fakeLocalFileSystem = EelUnitTestFileSystem(EelUnitTestFileSystemProvider(defaultProvider), os, directory, fakeRoot, descriptor)
+  val descriptor = EelTestDescriptor(fakeRoot, id, os.osFamily)
+  val fakeProvider = EelUnitTestFileSystemProvider(defaultProvider, fakeRoot, os is EelPlatform.Posix)
+  val fakeLocalFileSystem = EelUnitTestFileSystem(fakeProvider, os, directory, fakeRoot, descriptor)
 
   // EelDescriptor has almost static lifetime by contract, so we bind it to the application service
   val disposable: Disposable = ApplicationManager.getApplication().service<TestEelService>()
@@ -87,7 +87,7 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
   MultiRoutingFileSystemBackend.EP_NAME.point.registerExtension(
     object : MultiRoutingFileSystemBackend {
       override fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem? =
-        if (sanitizedPath.startsWith(fakeRoot.replace("\\", "/")))
+        if (fakeProvider.isUnderFakeRoot(sanitizedPath))
           fakeLocalFileSystem
         else
           null
@@ -135,14 +135,14 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
 
   val eelApi = eelApiByOs(fakeLocalFileSystem, descriptor, machine, os)
   apiRef.set(eelApi)
-  val root = Path.of(fakeRoot)
 
   // We can't dispose descriptor after each test because EelMachineResolver must be available till the end of the app
   Disposer.register(disposable) {
     directory.delete(true)
   }
 
-  initialized(IsolatedFileSystemImpl(root, descriptor, eelApi)) {
+  // The backend is registered now, so the root routes to the fake file system.
+  initialized(IsolatedFileSystemImpl(descriptor.rootPath, descriptor, eelApi)) {
   }
 }
 
