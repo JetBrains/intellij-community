@@ -59,6 +59,8 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.ProjectRootEntityWorkspaceFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.ModuleImlFileEntityWorkspaceFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.ProjectStoreDirectoryEntityWorkspaceFileIndexContributor"/>
+    <workspaceModel.entityLifecycleSupporter implementation="com.intellij.workspaceModel.ide.impl.ProjectStoreDirectoryEntityLifecycleSupporter"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.AutoExcludeWorkspaceFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.AutoExcludeInContentRootsWorkspaceFileIndexContributor"/>
 
