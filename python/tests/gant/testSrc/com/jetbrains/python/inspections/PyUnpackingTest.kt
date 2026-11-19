@@ -446,4 +446,70 @@ class PyUnpackingTest : PyCodeInsightTestCase() {
           expr = {*LegacyIterable()}
       """.trimIndent())
   }
+
+  @Nested
+  inner class StarTargets {
+    @Test
+    fun `value of a star target must be iterable`() = test("""
+      def g(number: int, numbers: list[int]):
+          a, *b = number # WARNING Expected an iterable, got 'int'
+          for a, *b in numbers: # WARNING Expected an iterable, got 'int'
+              pass
+          a, *b = "xyz"
+      """.trimIndent())
+
+    @Test
+    fun `value of known length needs enough items`() = test("""
+      def g(one: tuple[int], two: tuple[int, str]):
+          a, b, *c = (1,) # WARNING Not enough values to unpack from 'tuple[Literal[1]]': expected 2, got 1
+          a, b, *c = one # WARNING Not enough values to unpack from 'tuple[int]': expected 2, got 1
+          a, *b, c = two
+          a, *b = 1, 2, 3
+      """.trimIndent())
+
+    @Test
+    fun `for target over items of known length`() = test("""
+      def g(ones: list[tuple[int]], threes: list[tuple[int, int, int]]):
+          for a, b, *c in ones: # WARNING Not enough values to unpack from 'tuple[int]': expected 2, got 1
+              pass
+          for a, b in threes: # WARNING Too many values to unpack from 'tuple[int, int, int]': expected 2, got 3
+              pass
+          for a, *b, c in threes:
+              pass
+          for a, *b in ones:
+              pass
+      """.trimIndent())
+
+    @Test
+    fun `value of unknown length is not counted`() = test("""
+      def g[*Ts](numbers: list[int], rows: list[list[int]], open_rows: list[tuple[int, *tuple[str, ...]]],
+                 open_tail: tuple[int, *tuple[str, ...]], variadic: tuple[int, *Ts]):
+          a, b, *c = numbers
+          a, b, c = numbers
+          for a, b, c in rows:
+              pass
+          for a, b, c in open_rows:
+              pass
+          a, b, c = open_tail
+          (a,) = variadic
+      """.trimIndent())
+
+    @Test
+    fun `two star targets in one target list`() = test("""
+      def g(numbers: list[int], rows: list[list[int]]):
+          a, *b, *c = numbers # WARNING Only one starred expression allowed in assignment
+          a, *b, *c = 1, 2, 3 # WARNING Only one starred expression allowed in assignment
+          a, (*b, *c) = numbers # WARNING Only one starred expression allowed in assignment
+          for a, *b, *c in rows: # WARNING Only one starred expression allowed in assignment
+              pass
+      """.trimIndent())
+
+    @Test
+    fun `star target is a list`() = test("""
+      def g(pair: tuple[int, str]):
+          a, *b = pair
+          expr = b
+      #   └ TYPE list[str]
+      """.trimIndent())
+  }
 }
