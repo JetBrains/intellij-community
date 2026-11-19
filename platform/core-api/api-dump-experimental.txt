@@ -416,6 +416,11 @@ f:com.intellij.openapi.vfs.VirtualFileUtil
 - com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
 - com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 - <init>(com.intellij.openapi.vfs.VirtualFileListener):V
+*:com.intellij.openapi.workspace.ProjectWorkspace
+- com.intellij.openapi.components.ComponentManager
+- a:getProjects():java.util.List
+*f:com.intellij.openapi.workspace.ProjectWorkspacesKt
+- sf:getWorkspace(com.intellij.openapi.project.Project):com.intellij.openapi.workspace.ProjectWorkspace
 com.intellij.pom.Navigatable
 - *:navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
 *f:com.intellij.psi.BasicInspectionVisitorBean
