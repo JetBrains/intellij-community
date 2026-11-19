@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ExactNameTempDirTestFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplateProvider
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl
@@ -32,6 +33,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import com.intellij.testFramework.closeLegacyLightProject
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import com.intellij.testFramework.common.checkEditorsReleased
@@ -187,6 +189,17 @@ private class LightJavaCodeInsightTestFixtureImpl(
   override fun getTestName(lowercaseFirstLetter: Boolean): String = PlatformTestUtil.getTestName(testMethodName, lowercaseFirstLetter)
 }
 
+/**
+ * Runs [delegate] in a dumb [indexingMode], as `LightJavaCodeInsightFixtureTestCase` wraps its fixture for a JUnit 3 indexing mode suite.
+ */
+@TestOnly
+private class LightJavaIndexingModeCodeInsightTestFixture(
+  private val lightDelegate: LightJavaCodeInsightTestFixture,
+  indexingMode: IndexingMode,
+) : JavaIndexingModeCodeInsightTestFixture(lightDelegate, indexingMode), LightJavaCodeInsightTestFixture {
+  override fun getTestName(lowercaseFirstLetter: Boolean): String = lightDelegate.getTestName(lowercaseFirstLetter)
+}
+
 // LightJavaCodeInsightFixtureTestCase.setUp sets this project language level for each test.
 private val PROJECT_LANGUAGE_LEVEL: LanguageLevel = LanguageLevel.JDK_1_6
 
@@ -332,8 +345,11 @@ fun lightJavaCodeInsightFixture(
       }
     }
   }
-  val codeInsightFixture = LightJavaCodeInsightTestFixtureImpl(ideaProjectFixture, ExactNameTempDirTestFixture(lightProject.sourceRootPath),
-                                                                testMethodName)
+  val indexingMode = IndexingModeTemplateProvider.getIndexingMode(context.extensionContext)
+  val lightFixture = LightJavaCodeInsightTestFixtureImpl(ideaProjectFixture, ExactNameTempDirTestFixture(lightProject.sourceRootPath),
+                                                         testMethodName)
+  val codeInsightFixture: LightJavaCodeInsightTestFixture =
+    if (indexingMode == IndexingMode.SMART) lightFixture else LightJavaIndexingModeCodeInsightTestFixture(lightFixture, indexingMode)
   codeInsightFixture.testDataPath = lightTestDataPath(basePath)
   codeInsightFixture.setUp()
 

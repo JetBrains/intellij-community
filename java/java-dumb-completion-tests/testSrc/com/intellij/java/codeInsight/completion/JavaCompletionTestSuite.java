@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.TestCaseLoader;
 import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
@@ -50,6 +51,8 @@ public class JavaCompletionTestSuite extends TestSuite {
       if (JavaCompletionFeaturesTest.class.equals(aClass)) continue;
       // Exclude feature suggester tests
       if (aClass.getPackageName().equals("com.intellij.java.ifs")) continue;
+      // JavaDumbCompletionTestSuite runs the JUnit 5 classes
+      if (aClass.isAnnotationPresent(IndexingModeTemplate.class)) continue;
       if (TestIndexingModeSupporter.class.isAssignableFrom(aClass)) {
         Class<? extends TestIndexingModeSupporter> testCaseClass = aClass.asSubclass(TestIndexingModeSupporter.class);
         TestIndexingModeSupporter.addAllTests(testCaseClass, suite);
