@@ -8,6 +8,8 @@ import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import java.awt.Cursor
+import java.awt.event.MouseEvent
 import javax.swing.JButton
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -43,6 +45,29 @@ class ExtendableTextFieldTest {
 
     val buttons = textField.components.filterIsInstance<JButton>()
     assertTrue(buttons.isEmpty())
+  }
+
+  @Test
+  fun `a change of the look and feel keeps a cursor that a client sets after the UI`() {
+    val textField = ExtendableTextField()
+    textField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.Add, "Add") {})
+    textField.setSize(200, 30)
+    // with an icon, the UI sets the cursor on a mouse move
+    textField.dispatchEvent(MouseEvent(
+      textField,
+      MouseEvent.MOUSE_MOVED,
+      0,
+      0,
+      100,
+      15,
+      0,
+      false
+    ))
+    textField.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+
+    textField.updateUI()
+
+    assertEquals(Cursor.WAIT_CURSOR, textField.cursor.type)
   }
 }
 

@@ -24,6 +24,7 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JdkConstants;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -93,7 +94,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private final Handler handler = new Handler();
   private boolean monospaced;
   private Object variant;
-  private int cursor;
+  // the cursor that the UI set last, or null before the UI sets a cursor
+  private @Nullable Cursor cursor;
 
   public TextFieldWithPopupHandlerUI() {}
 
@@ -199,6 +201,21 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return null;
   }
 
+  /**
+   * Returns the cursor type outside clickable icons, which use the hand cursor.
+   * The UI calls this for fields with icons or search fields.
+   * After setting the cursor, it also calls this on mouse moves when no icons remain.
+   *
+   * @param point the point in component coordinates; it can be outside the component on mouse exit
+   * @return a predefined cursor type; {@link Cursor#TEXT_CURSOR} by default
+   * @see Cursor#getPredefinedCursor(int)
+   */
+  @ApiStatus.Internal
+  @JdkConstants.CursorType
+  protected int getCursorTypeAt(@NotNull Point point) {
+    return Cursor.TEXT_CURSOR;
+  }
+
   protected void showSearchPopup() {
   }
 
@@ -242,6 +259,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       if (holder.iconButton instanceof IconButton iconButton) {
         iconButton.removeListeners();
       }
+    }
+
+    if (hasSetCursor()) {
+      // Clear only the cursor instance last set by this UI so the next UI can install its default.
+      if (component.getCursor() == cursor) {
+        component.setCursor(null);
+      }
+      cursor = null;
     }
   }
 
@@ -390,7 +415,11 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       }
       else if (getComponent() != null && isSearchField(getComponent())) {
         SearchAction action = getActionUnder(e.getPoint());
-        setCursor(action != null ? Cursor.HAND_CURSOR : Cursor.TEXT_CURSOR);
+        setCursor(action != null ? Cursor.HAND_CURSOR : getCursorTypeAt(e.getPoint()));
+      }
+      else if (hasSetCursor()) {
+        // Keep updating the cursor after the icons disappear.
+        setCursor(getCursorTypeAt(e.getPoint()));
       }
     }
 
@@ -560,21 +589,26 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private void handleMouse(MouseEvent event, boolean run) {
     JTextComponent component = getComponent();
     if (component != null) {
-      IconHolder result = getIconHolder(component, event.getX(), event.getY());
-      Runnable action = result == null ? null : result.extension.getActionOnClick();
-      if (action == null) {
-        setCursor(Cursor.TEXT_CURSOR);
-      }
-      else {
-        setCursor(Cursor.HAND_CURSOR);
-        if (run) {
-          action.run();
-          //update icon after action is performed
-          getIconHolder(component, event.getX(), event.getY());
-          event.consume();
-        }
+      var action = updateHoverAndCursor(component, event.getPoint());
+      if (action != null && run) {
+        action.run();
+        //update icon after action is performed
+        getIconHolder(component, event.getX(), event.getY());
+        event.consume();
       }
     }
+  }
+
+  /**
+   * Updates the hovered icon and the cursor for the point.
+   *
+   * @return the action of the clickable icon at the point, or {@code null} if no clickable icon is there
+   */
+  private @Nullable Runnable updateHoverAndCursor(@NotNull JTextComponent component, @NotNull Point point) {
+    var holder = getIconHolder(component, point.x, point.y);
+    var action = holder == null ? null : holder.extension.getActionOnClick();
+    setCursor(action == null ? getCursorTypeAt(point) : Cursor.HAND_CURSOR);
+    return action;
   }
 
   private @Nullable IconHolder getIconHolder(@NotNull JTextComponent component, int x, int y) {
@@ -598,11 +632,21 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return result;
   }
 
-  private void setCursor(int cursor) {
-    if (this.cursor != cursor) {
-      this.cursor = cursor; // do not update cursor every time
+  /**
+   * @return {@code true} after the UI sets the cursor of the text component.
+   * The value is {@code false} again after {@link #uninstallListeners}.
+   */
+  private boolean hasSetCursor() {
+    return cursor != null;
+  }
+
+  private void setCursor(@JdkConstants.CursorType int type) {
+    if (cursor == null || cursor.getType() != type) {
+      cursor = Cursor.getPredefinedCursor(type); // do not update cursor every time
       JTextComponent component = getComponent();
-      if (component != null) component.setCursor(Cursor.getPredefinedCursor(cursor));
+      if (component != null) {
+        component.setCursor(cursor);
+      }
     }
   }
 
