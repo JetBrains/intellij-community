@@ -5695,6 +5695,31 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-93514"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON310)
+  fun `typing names in __all__ before the Python version that declares them`() = test(
+    """
+    import typing
+    from typing import TypedDict, Unpack, Self
+    from typing import Unpack as U
+
+    class C(TypedDict): ...
+
+    def f(**kwargs: Unpack[C]) -> None: ...
+
+    def g(**kwargs: U[C]) -> None: ...
+
+    def h(**kwargs: typing.Unpack[C]) -> None: ...
+
+    class D:
+        def m(self) -> Self: ...
+
+    __all__ = ["f"]
+    x: __all__
+    #  ^^^^^^^ WARNING Invalid type annotation
+    """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-87570"])
   fun `TypeVarTuple unpacked with aliased Unpack`() = test("""
     from typing import TypeVarTuple, Unpack as U
