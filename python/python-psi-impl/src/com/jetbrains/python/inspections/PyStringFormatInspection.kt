@@ -546,8 +546,7 @@ class PyStringFormatInspection : PyInspection() {
 
         // inspect options available only for numeric types
         if (chunk.hasSignOption() || chunk.useAlternateForm() || chunk.hasZeroPadding() || chunk.hasThousandsSeparator()) {
-          // TODO: not using "KNOWN_COMPLEX_TYPES" because some of those won't be available at runtime and -> Any, need to check QName
-          specifyTypes(supportedTypes, setOf("complex"))
+          specifyTypes(supportedTypes, NUMERIC_BUILTIN_TYPES)
           hasTypeOptions = true
         }
 
@@ -845,6 +844,12 @@ class PyStringFormatInspection : PyInspection() {
 private val VALID_NON_TYPE_FORMAT_SPEC_ENDINGS = ('0'..'9').toSet() +
                                                  setOf('<', '>', '^', '=', '+', '-', ' ', '_', ',', '#', 'z')
 
+/**
+ * The short names of the numeric builtins. A format option gives these names, and the options of a field intersect them by name.
+ * `PyLegacyDocstringTypeParser.getTypeByName` cannot resolve qualified names such as `numpy.int64`.
+ */
+private val NUMERIC_BUILTIN_TYPES = setOf(PyNames.TYPE_INT, PyNames.TYPE_FLOAT, PyNames.TYPE_COMPLEX)
+
 private val NEW_STYLE_FORMAT_CONVERSIONS = mapOf(
   's' to setOf("str"),
   'b' to setOf("int"),
@@ -853,13 +858,13 @@ private val NEW_STYLE_FORMAT_CONVERSIONS = mapOf(
   'o' to setOf("int"),
   'x' to setOf("int"),
   'X' to setOf("int"),
-  'n' to setOf("int", "float", "complex"),
-  'e' to setOf("int", "float", "complex"),
-  'E' to setOf("int", "float", "complex"),
-  'f' to setOf("int", "float", "complex"),
-  'F' to setOf("int", "float", "complex"),
-  'g' to setOf("int", "float", "complex"),
-  'G' to setOf("int", "float", "complex"),
+  'n' to NUMERIC_BUILTIN_TYPES,
+  'e' to NUMERIC_BUILTIN_TYPES,
+  'E' to NUMERIC_BUILTIN_TYPES,
+  'f' to NUMERIC_BUILTIN_TYPES,
+  'F' to NUMERIC_BUILTIN_TYPES,
+  'g' to NUMERIC_BUILTIN_TYPES,
+  'G' to NUMERIC_BUILTIN_TYPES,
   '%' to setOf("int", "float"),
 )
 
