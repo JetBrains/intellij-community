@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.definitions
 
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.IoTestUtil
@@ -10,6 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.runInEdtAndWait
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
@@ -48,10 +51,11 @@ abstract class AbstractDefinitionFromDependenciesProviderTest : HeavyPlatformTes
                 PsiTestUtil.addLibrary(module, jar.absolutePath)
             }
         }
+        awaitDefinitions()
 
-        val provider = DefinitionFromDependenciesProvider(project)
+        val provider = DefinitionFromDependenciesProvider.getInstance(project)
         val discoveredFqns = provider.definitionClasses()
-        val discoveredClasspath = provider.getTemplateClasspath().map { it.pathString }
+        val discoveredClasspath = provider.templateClasspath().map { it.pathString }
 
         val fileText = File(path, "test.kts").readText()
         val expectedNames = InTextDirectivesUtils.findListWithPrefixes(fileText, "// NAME:").sorted()
@@ -63,6 +67,12 @@ abstract class AbstractDefinitionFromDependenciesProviderTest : HeavyPlatformTes
             discoveredClasspath.map { it.removeTestDirPrefix() }.sorted(),
             expectedClasspath
         )
+    }
+
+    /** Waits for the checks after the roots changes and for the loads that they asked for. */
+    protected fun awaitDefinitions() {
+        runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
+        runBlocking { ScriptDefinitionProviderImpl.getInstance(project).awaitLoading() }
     }
 
     private fun String.removeTestDirPrefix(): String = substringAfterLast(getTestName(true))

@@ -7,9 +7,10 @@ import com.intellij.openapi.fileEditor.SplitEditorToolbar
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.registerExtension
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.core.script.definition.ScriptEditorToolbarProvider
 import org.jetbrains.kotlin.idea.core.script.definition.editorToolbar
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -112,6 +113,8 @@ class ScriptEditorToolbarNotificationProviderTest : KotlinLightCodeInsightFixtur
             )
         }
 
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        val definitionProvider = ScriptDefinitionProviderImpl.getInstance(project)
+        definitionProvider.scheduleLoading()
+        runBlocking { definitionProvider.awaitLoading() }
     }
 }

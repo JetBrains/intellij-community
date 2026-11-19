@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_SCRIPTING_SETTINGS_ID
 import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.statistics.KotlinScriptingSettingsCollector
 import java.awt.BorderLayout
 import java.awt.Component
@@ -191,7 +192,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         appliedSnapshot = edited.detached()
         updateReloadAvailability()
 
-        KotlinScriptService.getInstance(project).scheduleReloadOpenScripts()
+        KotlinScriptService.getInstance(project).scheduleReloadOutdatedOpenScripts()
     }
 
     private fun reportChanges(edited: ScriptDefinitionsSnapshot) {
@@ -216,9 +217,10 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
 
     private fun reloadDefinitions() {
         KotlinScriptingSettingsCollector.logDefinitionsReloaded(project)
+        ScriptDefinitionProviderImpl.getInstance(project).scheduleLoading()
 
         val modality = ModalityState.stateForComponent(reloadButton)
-        KotlinScriptService.getInstance(project).scheduleReloadOpenScripts().invokeOnCompletion { failure ->
+        KotlinScriptService.getInstance(project).scheduleReloadOutdatedOpenScripts().invokeOnCompletion { failure ->
             if (failure != null) return@invokeOnCompletion
             ApplicationManager.getApplication().invokeLater({
                 showReloadDoneBalloon()
@@ -242,6 +244,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
 
     private fun readSnapshot(): ScriptDefinitionsSnapshot? =
         underModalProgress(KotlinBaseScriptingBundle.message("looking.for.script.definitions.in.classpath")) {
+            ScriptDefinitionProviderImpl.getInstance(project).awaitLoading()
             readScriptDefinitionsSnapshot(project)
         }
 

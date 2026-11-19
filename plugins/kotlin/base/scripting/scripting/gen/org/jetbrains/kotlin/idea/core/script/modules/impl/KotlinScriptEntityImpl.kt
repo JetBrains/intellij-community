@@ -45,6 +45,16 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
             readField("dependencies")
             return dataSource.dependencies
         }
+    override val definitionId: String
+        get() {
+            readField("definitionId")
+            return dataSource.definitionId
+        }
+    override val definitionFingerprint: Long
+        get() {
+            readField("definitionFingerprint")
+            return dataSource.definitionFingerprint
+        }
     override val sdkId: SdkId?
         get() {
             readField("sdkId")
@@ -82,6 +92,9 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
             if (!getEntityData().isDependenciesInitialized()) {
                 error("Field KotlinScriptEntity#dependencies should be initialized")
             }
+            if (!getEntityData().isDefinitionIdInitialized()) {
+                error("Field KotlinScriptEntity#definitionId should be initialized")
+            }
         }
 
         override fun connectionIdList(): List<ConnectionId> {
@@ -109,6 +122,9 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
             if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
             if (this.virtualFileUrl != dataSource.virtualFileUrl) this.virtualFileUrl = dataSource.virtualFileUrl
             if (this.dependencies != dataSource.dependencies) this.dependencies = dataSource.dependencies.toMutableList()
+            if (this.definitionId != dataSource.definitionId) this.definitionId = dataSource.definitionId
+            if (this.definitionFingerprint != dataSource.definitionFingerprint) this.definitionFingerprint =
+                dataSource.definitionFingerprint
             if (this.sdkId != dataSource.sdkId) this.sdkId = dataSource.sdkId
             if (this.configurationId != dataSource.configurationId) this.configurationId = dataSource.configurationId
             if (this.relatedModuleIds != dataSource.relatedModuleIds) this.relatedModuleIds = dataSource.relatedModuleIds.toMutableList()
@@ -156,6 +172,20 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
                 checkModificationAllowed()
                 getEntityData(true).dependencies = value
                 dependenciesUpdater.invoke(value)
+            }
+        override var definitionId: String
+            get() = getEntityData().definitionId
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).definitionId = value
+                changedProperty.add("definitionId")
+            }
+        override var definitionFingerprint: Long
+            get() = getEntityData().definitionFingerprint
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).definitionFingerprint = value
+                changedProperty.add("definitionFingerprint")
             }
         override var sdkId: SdkId?
             get() = getEntityData().sdkId
@@ -218,12 +248,15 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
 internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(), SoftLinkable {
     lateinit var virtualFileUrl: VirtualFileUrl
     lateinit var dependencies: MutableList<KotlinScriptLibraryEntityId>
+    lateinit var definitionId: String
+    var definitionFingerprint: Long = 0
     var sdkId: SdkId? = null
     var configurationId: ScriptCompilationConfigurationId? = null
     var relatedModuleIds: MutableList<ModuleId> = listOf<ModuleId>().toMutableWorkspaceList()
     var reports: MutableList<ScriptDiagnosticData> = listOf<ScriptDiagnosticData>().toMutableWorkspaceList()
     internal fun isVirtualFileUrlInitialized(): Boolean = ::virtualFileUrl.isInitialized
     internal fun isDependenciesInitialized(): Boolean = ::dependencies.isInitialized
+    internal fun isDefinitionIdInitialized(): Boolean = ::definitionId.isInitialized
     override fun getLinks(): Set<SymbolicEntityId<*>> {
         val result = HashSet<SymbolicEntityId<*>>()
         for (item in dependencies) {
@@ -382,7 +415,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     }
 
     override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-        return KotlinScriptEntity(virtualFileUrl, dependencies, entitySource) {
+        return KotlinScriptEntity(virtualFileUrl, dependencies, definitionId, definitionFingerprint, entitySource) {
             this.sdkId = this@KotlinScriptEntityData.sdkId
             this.configurationId = this@KotlinScriptEntityData.configurationId
             this.relatedModuleIds = this@KotlinScriptEntityData.relatedModuleIds.toMutableWorkspaceList()
@@ -402,6 +435,8 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         if (this.entitySource != other.entitySource) return false
         if (this.virtualFileUrl != other.virtualFileUrl) return false
         if (this.dependencies != other.dependencies) return false
+        if (this.definitionId != other.definitionId) return false
+        if (this.definitionFingerprint != other.definitionFingerprint) return false
         if (this.sdkId != other.sdkId) return false
         if (this.configurationId != other.configurationId) return false
         if (this.relatedModuleIds != other.relatedModuleIds) return false
@@ -415,6 +450,8 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         other as KotlinScriptEntityData
         if (this.virtualFileUrl != other.virtualFileUrl) return false
         if (this.dependencies != other.dependencies) return false
+        if (this.definitionId != other.definitionId) return false
+        if (this.definitionFingerprint != other.definitionFingerprint) return false
         if (this.sdkId != other.sdkId) return false
         if (this.configurationId != other.configurationId) return false
         if (this.relatedModuleIds != other.relatedModuleIds) return false
@@ -426,6 +463,8 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         var result = entitySource.hashCode()
         result = 31 * result + virtualFileUrl.hashCode()
         result = 31 * result + dependencies.hashCode()
+        result = 31 * result + definitionId.hashCode()
+        result = 31 * result + definitionFingerprint.hashCode()
         result = 31 * result + sdkId.hashCode()
         result = 31 * result + configurationId.hashCode()
         result = 31 * result + relatedModuleIds.hashCode()
@@ -437,6 +476,8 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         var result = javaClass.hashCode()
         result = 31 * result + virtualFileUrl.hashCode()
         result = 31 * result + dependencies.hashCode()
+        result = 31 * result + definitionId.hashCode()
+        result = 31 * result + definitionFingerprint.hashCode()
         result = 31 * result + sdkId.hashCode()
         result = 31 * result + configurationId.hashCode()
         result = 31 * result + relatedModuleIds.hashCode()

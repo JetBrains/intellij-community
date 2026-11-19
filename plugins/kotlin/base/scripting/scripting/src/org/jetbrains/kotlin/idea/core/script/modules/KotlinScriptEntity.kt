@@ -13,6 +13,12 @@ interface KotlinScriptEntity : WorkspaceEntity {
     @IndexVfu
     val virtualFileUrl: VirtualFileUrl
     val dependencies: List<KotlinScriptLibraryEntityId>
+
+    /** The definition that the configuration of the script comes from. */
+    val definitionId: String
+
+    /** The fingerprint of the template files of that definition, so that a rebuilt template with the same id makes the script outdated. */
+    val definitionFingerprint: Long
     val sdkId: SdkId?
     val configurationId: ScriptCompilationConfigurationId?
 

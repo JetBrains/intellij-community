@@ -38,9 +38,14 @@ internal fun scriptTemplateMarkerPath(fqName: String): @NlsSafe String = "$SCRIP
 /** The marker file name of [fqName]. It names a file, so it is never translated. */
 internal fun scriptTemplateMarkerFileName(fqName: String): @NlsSafe String = "$fqName.classname"
 
-/** True when a marker file in a project dependency declares [fqName]. */
-internal fun isScriptTemplateInDependency(project: Project, fqName: String): Boolean =
-    fqName in ScriptTemplatesFromDependenciesCache.getOrDiscover(project).fqns
+/**
+ * True when a marker file in a project dependency declares [fqName].
+ * The answer comes from the last load of the definitions, so the call starts the first load when none ran.
+ */
+internal fun isScriptTemplateInDependency(project: Project, fqName: String): Boolean {
+    ScriptDefinitionProviderImpl.getInstance(project)
+    return fqName in DefinitionFromDependenciesProvider.getInstance(project).templates.fqns
+}
 
 /** True when the IDE loads the definition, either from the settings or from a marker file on the classpath. */
 internal fun isScriptTemplateActive(project: Project, fqName: String): Boolean =

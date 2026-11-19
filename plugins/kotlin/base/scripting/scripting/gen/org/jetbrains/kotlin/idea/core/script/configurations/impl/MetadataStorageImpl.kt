@@ -190,6 +190,22 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     isComputable = false,
                     isKey = false,
                     isOpen = false,
+                    name = "definitionId",
+                    valueType = primitiveTypeStringNotNullable,
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "definitionFingerprint",
+                    valueType = primitiveTypeLongNotNullable,
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
                     name = "sdkId",
                     valueType = ValueTypeMetadata.SimpleType.CustomType(
                         isNullable = true,
@@ -675,7 +691,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity", metadataHash = 123450241)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity", metadataHash = -549866607)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptLibraryEntityId", metadataHash = 1226772556)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = 206069110)
         addMetadataHash(

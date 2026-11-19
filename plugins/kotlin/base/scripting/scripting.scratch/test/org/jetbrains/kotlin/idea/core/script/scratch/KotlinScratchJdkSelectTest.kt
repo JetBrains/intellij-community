@@ -5,10 +5,12 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import org.jetbrains.kotlin.idea.core.script.configurations.defaultJavaHome
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
@@ -18,6 +20,11 @@ class KotlinScratchJdkSelectTest : LightJavaCodeInsightFixtureTestCase() {
     override fun tearDown() {
         try {
             testScope.cancel()
+            PlatformTestUtil.waitWithEventsDispatching(
+                "The scratch coroutines must finish before the project closes",
+                { testScope.coroutineContext.job.isCompleted },
+                60,
+            )
         } catch (e: Throwable) {
             addSuppressedException(e)
         } finally {
