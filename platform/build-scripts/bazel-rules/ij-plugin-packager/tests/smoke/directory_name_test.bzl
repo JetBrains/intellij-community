@@ -10,7 +10,7 @@ def _directory_name_test_impl(ctx):
     files = target_under_test[DefaultInfo].files.to_list()
     asserts.equals(
         env,
-        [dist_directory + "/" + ctx.attr.expected_directory_name, dist_directory + "/packed-modules.yaml"],
+        sorted([dist_directory + "/" + ctx.attr.expected_directory_name, dist_directory + "/file-attributes.txt", dist_directory + "/packed-modules.yaml"]),
         sorted([file.dirname.split("/")[-1] + "/" + file.basename for file in files]),
     )
     return analysistest.end(env)

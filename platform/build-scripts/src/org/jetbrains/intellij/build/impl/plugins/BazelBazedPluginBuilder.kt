@@ -41,7 +41,7 @@ internal data class PluginsSplitByBuildingMethod(
 internal data class PluginBuiltByBazelDescriptor(
   val mainModule: String,
   val bazelTarget: String,
-  /** The `<target name>_dist` directory of [bazelTarget]. It holds the plugin directory and `packed-modules.yaml`. */
+  /** The `<target name>_dist` directory of [bazelTarget]. It holds the plugin directory, `packed-modules.yaml` and `file-attributes.txt`. */
   val distributionDirectory: Path,
 )
 
@@ -118,6 +118,12 @@ internal fun buildPluginsByBazel(
         buildContext.messages.logErrorAndThrow("Cannot build '${plugin.mainModule}' because '${packedModulesPath}' does not exist")
       }
       val distributionFileEntries = readPackedModules(packedModulesPath, plugin.mainModule, pluginTargetDir, buildContext.outputProvider)
+      val fileAttributesPath = plugin.distributionDirectory.resolve(IJ_PLUGIN_FILE_ATTRIBUTES_FILE_NAME)
+      if (!fileAttributesPath.exists()) {
+        buildContext.messages.logErrorAndThrow("Cannot build '${plugin.mainModule}' because '${fileAttributesPath}' does not exist")
+      }
+      val fileModes = readIjPluginFileModes(fileAttributesPath)
+      applyIjPluginFileModes(pluginTargetDir, fileModes)
       if (searchableOptionSet != null) {
         // `ij_plugin` never packs searchable options: the index is produced by running the IDE assembled from
         // index-free plugin distributions, so it can only be added to the distribution afterwards
@@ -135,7 +141,7 @@ internal fun buildPluginsByBazel(
           }
       }
       storeXmlDescriptorsInCache(descriptorCacheContainer.forPlugin(pluginTargetDir), plugin.mainModule, distributionFileEntries)
-      val pluginBuildResult = PluginBuildResult(plugin.mainModule, pluginTargetDir, os = null, arch = null, distributionFileEntries)
+      val pluginBuildResult = PluginBuildResult(plugin.mainModule, pluginTargetDir, os = null, arch = null, distributionFileEntries, fileModes)
       if (pluginBuilt != null) {
         val additionalEntries = pluginBuilt(pluginBuildResult, null, pluginTargetDir)
         pluginBuildResult.copy(distribution = distributionFileEntries + additionalEntries)

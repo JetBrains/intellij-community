@@ -23,6 +23,7 @@ jps_test(
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-default-settings",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-eap-settings",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-exact-settings",
+        "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-file-attributes",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-nightly-settings",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-release-settings",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-with-restricted-compatibility-range-in-release",
@@ -37,6 +38,7 @@ jps_test(
         "-Dij.plugin.packager.test.release=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-release-settings)",
         "-Dij.plugin.packager.test.restricted.range.in.release=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-with-restricted-compatibility-range-in-release)",
         "-Dij.plugin.packager.test.smoke=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-default-settings)",
+        "-Dij.plugin.packager.test.smoke.file.attributes=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-file-attributes)",
     ],
     runtime_deps = [":ij-plugin-packager-tests-lib"],
 )

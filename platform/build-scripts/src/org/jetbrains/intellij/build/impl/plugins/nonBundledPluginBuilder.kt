@@ -42,6 +42,7 @@ import org.jetbrains.intellij.build.impl.generatePluginRepositoryMetaFile
 import org.jetbrains.intellij.build.impl.handleCustomPlatformSpecificAssets
 import org.jetbrains.intellij.build.impl.nonBundledPluginsStageDir
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.regularFileUnixMode
 import org.jetbrains.intellij.build.impl.validateCoScramblePluginsAreNotPublished
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.io.ZipArchiver
@@ -207,8 +208,10 @@ private fun buildNonBundledPlugins(
 
       if (isPluginArchiveEnabled) {
         archivePlugin(
-          optimizedZip = layout == null || !layout.enableSymlinksAndExecutableResources && layout.executableDeclarations.isEmpty(),
+          optimizedZip = (layout == null || !layout.enableSymlinksAndExecutableResources && layout.executableDeclarations.isEmpty()) &&
+                         pluginBuildResult.fileModes.isEmpty(),
           executables = layout?.executableDeclarations?.map { it.path }.orEmpty(),
+          fileModes = pluginBuildResult.fileModes,
           source = pluginDirOrFile,
           target = destFile,
           compress = compressPluginArchive,
@@ -325,6 +328,7 @@ private fun archivePlugin(
   compress: Boolean,
   optimizedZip: Boolean,
   executables: List<String>,
+  fileModes: Map<String, Int>,
   withBlockMap: Boolean,
   json: Lazy<JSON>,
   context: BuildContext,
@@ -334,7 +338,15 @@ private fun archivePlugin(
     .setAttribute("outputFile", target.toString())
     .setAttribute("optimizedZip", optimizedZip)
     .use {
-      archivePlugin(optimized = optimizedZip, target = target, compress = compress, source = source, executables = executables, context = context)
+      archivePlugin(
+        optimized = optimizedZip,
+        target = target,
+        compress = compress,
+        source = source,
+        executables = executables,
+        fileModes = fileModes,
+        context = context,
+      )
     }
   if (withBlockMap) {
     spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).use {
@@ -343,7 +355,19 @@ private fun archivePlugin(
   }
 }
 
-private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, source: Path, executables: List<String>, context: BuildContext) {
+/**
+ * A file gets the mode from [fileModes] when it has an entry there. [fileModes] comes from the `ij_plugin` Bazel rule.
+ * When [fileModes] is not empty, the disk is not read, because Bazel writes each output file with the mode `0555`.
+ */
+private fun archivePlugin(
+  optimized: Boolean,
+  target: Path,
+  compress: Boolean,
+  source: Path,
+  executables: List<String>,
+  fileModes: Map<String, Int>,
+  context: BuildContext,
+) {
   if (optimized) {
     writeNewZipWithoutIndex(target, compress) { zipCreator ->
       val archiver = ZipArchiver()
@@ -364,7 +388,11 @@ private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, s
         val fileSystem = FileSystems.getDefault()
         val matchers = executables.map { fileSystem.getPathMatcher("glob:$it") }
         out.dir(startDir = source, prefix = "${source.fileName}/", entryCustomizer = { entry, file, relativePath ->
-          if (Files.isExecutable(file) || matchers.any { it.matches(Path.of(relativePath)) }) {
+          val fileMode = fileModes.get(relativePath)
+          if (fileMode != null) {
+            entry.unixMode = regularFileUnixMode(fileMode)
+          }
+          else if (fileModes.isEmpty() && Files.isExecutable(file) || matchers.any { it.matches(Path.of(relativePath)) }) {
             entry.unixMode = executableFileUnixMode
           }
         })

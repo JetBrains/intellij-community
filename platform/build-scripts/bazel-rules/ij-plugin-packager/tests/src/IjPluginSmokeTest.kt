@@ -3,6 +3,7 @@ package com.intellij.tools.build.bazel.ijPluginPackager
 import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContent
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.FileSystems
@@ -23,6 +24,16 @@ internal class IjPluginSmokeTest {
           file("intellij.ijPluginPackagerSmoke.library.jar")
           file("intellij.ijPluginPackagerSmoke.optional.jar")
         }
+      }
+      dir("bin") {
+        dir("descriptor-data-tree") {
+          dir("subdir") {
+            file("second.txt", "second")
+          }
+          file("first.txt", "first")
+          file("third.bin", "third")
+        }
+        file("tool", "third")
       }
       dir("descriptor-data-dir") {
         dir("subdir") {
@@ -76,6 +87,23 @@ internal class IjPluginSmokeTest {
         ),
       )
     }
+  }
+
+  @Test
+  fun smokePluginStatesModesOfNonClasspathData() {
+    val propertyName = "ij.plugin.packager.test.smoke.file.attributes"
+    val runfilePath = requireNotNull(System.getProperty(propertyName)) { "System property $propertyName is not set" }
+    val fileAttributes = BazelRunfiles.resolveRunfilePath(runfilePath)
+    assertEquals(
+      """
+        bin/descriptor-data-tree/first.txt:0755
+        bin/descriptor-data-tree/subdir/second.txt:0755
+        bin/descriptor-data-tree/third.bin:0755
+        bin/tool:0755
+
+      """.trimIndent(),
+      Files.readString(fileAttributes),
+    )
   }
 
   private fun assertFilesExist(directory: Path, relativePaths: List<String>) {

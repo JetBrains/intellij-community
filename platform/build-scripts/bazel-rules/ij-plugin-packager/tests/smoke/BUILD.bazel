@@ -1,5 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "strip_prefix")
 load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
 load("//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
@@ -7,6 +7,7 @@ load("//platform/build-scripts/bazel-rules:unpack_archive.bzl", "unpack_zip_arch
 load(":build_settings_test.bzl", "ij_plugin_settings_test_target")
 load(":directory_name_test.bzl", "directory_name_tests")
 load(":non_classpath_data_test.bzl", "non_classpath_data_attribute_tests")
+load(":plugin_output_file.bzl", "plugin_output_file")
 
 # A minimal plugin used to check that `ij_plugin` rule and the packager worker actually work.
 ij_plugin_module(
@@ -17,6 +18,8 @@ ij_plugin_module(
         ":descriptor-data-root",
         ":descriptor-data",
         ":descriptor-data-tree-files",
+        ":descriptor-executable-data",
+        ":descriptor-executable-tree",
     ],
     resource_strip_prefix = "descriptor/resources",
     resources = glob(["descriptor/resources/**/*"]),
@@ -73,6 +76,21 @@ unpack_zip_archive(
 pkg_files(
     name = "descriptor-data-tree-files",
     srcs = [":descriptor-data-tree"],
+)
+
+pkg_files(
+    name = "descriptor-executable-data",
+    srcs = ["descriptor/data/third.bin"],
+    attributes = pkg_attributes(mode = "0755"),
+    renames = {"descriptor/data/third.bin": "bin/tool"},
+)
+
+# the mode applies to each regular file of a directory that an action writes
+pkg_files(
+    name = "descriptor-executable-tree",
+    srcs = [":descriptor-data-tree"],
+    attributes = pkg_attributes(mode = "755"),
+    prefix = "bin",
 )
 
 pkg_filegroup(
@@ -148,6 +166,14 @@ ij_plugin(
 ij_plugin_settings_test_target(
     name = "smoke-plugin-default-settings",
     plugin = ":smoke-plugin",
+)
+
+plugin_output_file(
+    name = "smoke-plugin-file-attributes",
+    testonly = True,
+    basename = "file-attributes.txt",
+    plugin = ":smoke-plugin",
+    visibility = ["//platform/build-scripts/bazel-rules/ij-plugin-packager/tests:__pkg__"],
 )
 
 ij_plugin_settings_test_target(

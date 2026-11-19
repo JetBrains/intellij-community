@@ -38,8 +38,10 @@ import kotlin.io.path.readText
  *   Specify each module only once.
  * * `--skip_unresolved_optional_modules` (takes no value): skips a content module with the `optional` or `on-demand` loading rule if no
  *   `--content_module` argument specifies it; the module is also removed from `plugin.xml`. Without this option, such a module causes an error;
- * * `--non_classpath_data relative_output_path:input_path`: copies a file or directory to the relative path in the plugin distribution;
+ * * `--non_classpath_data relative_output_path:mode:input_path`: copies a file or directory to the relative path in the plugin distribution;
+ *   `mode` is the octal mode of the copied file, or of each regular file of the copied directory, for example `0644`;
  * * `--packed_modules path`: enables generation of the `packed-modules.yaml` file, which names each jar in the distribution and the modules packed into it;
+ * * `--file_attributes path`: enables generation of the `file-attributes.txt` file, which states each mode other than `0644`, see [FileAttributesWriter];
  * * `--plugin_version version`: updates `<version>` tag in `plugin.xml` with the provided version;
  * * `--since_build build`: updates `since-build` attribute in `<idea-version>` tag in `plugin.xml` with the provided value;
  * * `--until_build build`: updates `until-build` attribute in `<idea-version>` tag in `plugin.xml` with the provided value;
@@ -65,6 +67,7 @@ object IjPluginPackager {
 
     var descriptorModule: ModuleArgument? = null
     var packedModulesPath: Path? = null
+    var fileAttributesPath: Path? = null
     val contentModuleArguments = HashMap<String, ModuleArgument>()
     val nonClasspathData = ArrayList<NonClasspathDataArgument>()
     var pluginVersion: String? = null
@@ -95,6 +98,10 @@ object IjPluginPackager {
         "--packed_modules" -> {
           require(packedModulesPath == null) { "--packed_modules must be specified only once" }
           packedModulesPath = baseDir.resolve(args[index + 1])
+        }
+        "--file_attributes" -> {
+          require(fileAttributesPath == null) { "--file_attributes must be specified only once" }
+          fileAttributesPath = baseDir.resolve(args[index + 1])
         }
         "--non_classpath_data" -> nonClasspathData.add(parseNonClasspathDataArgument(args[index + 1], baseDir))
         "--plugin_version" -> {
@@ -191,7 +198,10 @@ object IjPluginPackager {
     contentModulesToMergeWithMainJar.forEach {
       packedModulesWriter?.addContentModule(descriptorOutputJar, it.moduleElement.name)
     }
-    copyNonClasspathData(nonClasspathData, outputDirectory)
+    val fileModes = copyNonClasspathData(nonClasspathData, outputDirectory)
+    if (fileAttributesPath != null) {
+      writeFileAttributes(fileAttributesPath, fileModes)
+    }
     val additionalJars = descriptorModuleArgument.jars.asSequence().drop(1)
     packAdditionalJarsForDescriptorModule(
       jars = additionalJars,
@@ -352,18 +362,20 @@ object IjPluginPackager {
   }
 
   private fun parseNonClasspathDataArgument(argument: String, baseDir: Path): NonClasspathDataArgument {
-    val separatorIndex = argument.indexOf(':')
-    require(separatorIndex > 0 && separatorIndex < argument.lastIndex) {
-      "Expected a non-classpath data argument in the form relative_output_path:input_path. Got: $argument"
+    val match = requireNotNull(NON_CLASSPATH_DATA_ARGUMENT_PATTERN.matchEntire(argument)) {
+      "Expected a non-classpath data argument in the form relative_output_path:mode:input_path. Got: $argument"
     }
-    val outputPath = argument.substring(0, separatorIndex)
+    val (outputPath, modeText, inputPath) = match.destructured
     val relativeOutputPath = Path.of(outputPath)
     if (relativeOutputPath.isAbsolute) {
       throw IjPluginPackagingException("Non-classpath data output path must be relative: $outputPath")
     }
+    val mode = modeText.toIntOrNull(8)?.takeIf { it in 0..MAX_FILE_MODE }
+               ?: throw IjPluginPackagingException("Non-classpath data mode must be an octal value from 0000 to 0777: $modeText")
     return NonClasspathDataArgument(
       relativeOutputPath = relativeOutputPath,
-      source = baseDir.resolve(argument.substring(separatorIndex + 1)),
+      mode = mode,
+      source = baseDir.resolve(inputPath),
     )
   }
 
@@ -405,6 +417,8 @@ private fun substituteBuildNumber(string: String?, buildNumberFromFile: Lazy<Str
 }
 
 private val JAR_NAME_WITH_VERSION_PATTERN = Regex("(.*)-\\d+(?:\\.\\d+)*\\.jar")
+
+private val NON_CLASSPATH_DATA_ARGUMENT_PATTERN = Regex("([^:]+):([^:]+):(.+)")
 
 private fun removeVersionFromJar(fileName: String): String {
   val matcher = JAR_NAME_WITH_VERSION_PATTERN.matchEntire(fileName)

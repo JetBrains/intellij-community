@@ -17,6 +17,7 @@ def _ij_plugin_impl(ctx):
     dist_dir_name = ctx.label.name + _DIST_DIRECTORY_SUFFIX
     output_dir = ctx.actions.declare_directory(dist_dir_name + "/" + dir_name)
     packed_modules_file = ctx.actions.declare_file(dist_dir_name + "/packed-modules.yaml")
+    file_attributes_file = ctx.actions.declare_file(dist_dir_name + "/file-attributes.txt")
 
     ide_build_number = ctx.attr._ide_build_number[_IdeBuildNumberProvider].build_number
     explicit_plugin_version = ctx.attr._plugin_version[_PluginVersionProvider].plugin_version
@@ -52,6 +53,8 @@ def _ij_plugin_impl(ctx):
 
     args.add("--packed_modules")
     args.add(packed_modules_file)
+    args.add("--file_attributes")
+    args.add(file_attributes_file)
 
     # the standalone community repository has no ultimate modules, so a community plugin is packed without them
     if not ctx.attr._inside_ultimate[BuildSettingInfo].value:
@@ -86,7 +89,7 @@ def _ij_plugin_impl(ctx):
         # so they would make the action key differ across Linux/macOS/Windows (see `bazel_scrubbing.cfg`).
         # `JvmCompile` in `@rules_jvm` relies on the same JBR-is-available-in-the-exec-root assumption.
         inputs = depset(inputs),
-        outputs = [output_dir, packed_modules_file],
+        outputs = [output_dir, packed_modules_file, file_attributes_file],
         tools = [ctx.file._packager_launcher, ctx.file._packager],
         executable = java_runtime.java_executable_exec_path,
         execution_requirements = {
@@ -105,7 +108,7 @@ def _ij_plugin_impl(ctx):
         progress_message = "Packaging plugin %{label}",
     )
     return [
-        DefaultInfo(files = depset([output_dir, packed_modules_file])),
+        DefaultInfo(files = depset([output_dir, packed_modules_file, file_attributes_file])),
     ]
 
 def _plugin_module_info(target):
@@ -128,12 +131,12 @@ def _add_non_classpath_data(args, inputs, module_info, root_output_directory = "
             relative_path = root_output_directory + "/" + relative_path
         args.add("--non_classpath_data")
 
-        # A directory is one argument: the packager copies its tree.
-        args.add_all([data.file], expand_directories = False, format_each = relative_path + ":%s")
+        # A directory is one argument: the packager copies its tree and gives the mode to each regular file of it.
+        args.add_all([data.file], expand_directories = False, format_each = relative_path + ":" + data.mode + ":%s")
         inputs.append(data.file)
 
 # The suffix that the rule adds to the target name to get the name of the dist directory.
-# The dist directory is in the package of the target, and holds the plugin directory and `packed-modules.yaml`.
+# The dist directory is in the package of the target, and holds the plugin directory, `packed-modules.yaml` and `file-attributes.txt`.
 # `BazelBuildFileGenerator` uses the same suffix in `bazel-targets.json`.
 _DIST_DIRECTORY_SUFFIX = "_dist"
 
@@ -187,8 +190,14 @@ ij_plugin = rule(
 Builds a directory containing a plugin distribution for IntelliJ-based IDEs.
 
 The rule writes its output to the `<name>_dist` directory in the package of the target, where `<name>` is the target name.
-That directory holds only the plugin directory and `packed-modules.yaml`.
+That directory holds only the plugin directory, `packed-modules.yaml` and `file-attributes.txt`.
 The `packed-modules.yaml` file names each jar in the distribution, and under each jar the modules the packager put into it.
+
+The `file-attributes.txt` file states the mode of each regular file in the plugin directory that has a mode other than `0644`.
+Each line is `<relative path>:<mode>`, for example `bin/launcher.sh:0755`. The path is relative to the plugin directory and uses `/`.
+The mode has four octal digits. The lines are sorted by path. The file is empty when all files have the mode `0644`.
+The modes come from the `pkg_attributes` of `non_classpath_data`. Bazel writes each file of the plugin directory with the mode `0555`,
+so a consumer must take the modes from this file and not from the disk.
 
 This rule is experimental, and its API may change. Do not migrate plugins to it yet.
 """,

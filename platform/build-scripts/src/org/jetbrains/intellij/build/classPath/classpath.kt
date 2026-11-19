@@ -325,6 +325,11 @@ data class PluginBuildResult(
   @JvmField val os: OsFamily?,
   @JvmField val arch: JvmArchitecture?,
   @JvmField val distribution: Collection<DistributionFileEntry>,
+  /**
+   * The mode of each regular file in [dir] that has a mode other than `0644`, keyed by the path relative to [dir] with `/` as the separator.
+   * Only a plugin that the `ij_plugin` Bazel rule builds fills it, from the `file-attributes.txt` file of the rule.
+   */
+  @JvmField val fileModes: Map<String, Int> = emptyMap(),
 )
 
 /**
