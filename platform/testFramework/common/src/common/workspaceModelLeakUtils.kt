@@ -180,6 +180,7 @@ private fun doTestWorkspaceModelLeak(unitTestProject: Project? = null, testClass
     var projects: Set<Project> = emptySet()
     try {
       runInEdtAndWait {
+        LeakHunter.tryClearingNonReachableObjects()
         projects = collectAllNonDisposedProjects(unitTestProject)
 
         val expectedStorages: Set<EntityStorage> = run {

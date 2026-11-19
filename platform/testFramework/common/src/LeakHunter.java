@@ -338,7 +338,7 @@ public final class LeakHunter {
   // perform as many magic tricks as possible to clear the memory of stale objects:
   // index update queues, caches, references to dangling threads/coroutines/invokeLaters, etc
   @TestOnly
-  private static void tryClearingNonReachableObjects() {
+  public static void tryClearingNonReachableObjects() {
     // avoid walking heap during indexes rebuilding because they allocate huge queues with a lot of short-lived transient UpdateOp objects during the process,
     // which then are stored in the leak-hunter own queue even though they are no longer reachable
     waitForIndicesToUpdate();
