@@ -58,6 +58,24 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
     }
 
     val marker = mark()
+    val nodeType = parseBlockNodeContent(indent, insideSequence)
+    if (nodeType !== null) {
+      marker.done(nodeType)
+      marker.setCustomEdgeTokenBinders(
+        left = { tokens, _, _ -> findLeftRange(tokens) },
+        WhitespacesBinders.greedyRightBinder(),
+      )
+    }
+    else {
+      marker.drop()
+    }
+  }
+
+  /**
+   * Parses the content of a block node.
+   * Returns the type of the node, or null if the content is not one block mapping, block sequence or compound value.
+   */
+  private fun parseBlockNodeContent(indent: Int, insideSequence: Boolean): SyntaxElementType? {
     passJunk()
 
     var endOfNodeMarker: SyntaxTreeBuilder.Marker? = null
@@ -114,17 +132,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
     }
 
     includeBlockEmptyTail(indent)
-
-    if (nodeType !== null) {
-      marker.done(nodeType)
-      marker.setCustomEdgeTokenBinders(
-        left = { tokens, _, _ -> findLeftRange(tokens) },
-        WhitespacesBinders.greedyRightBinder(),
-      )
-    }
-    else {
-      marker.drop()
-    }
+    return nodeType
   }
 
   private fun includeBlockEmptyTail(indent: Int) {
