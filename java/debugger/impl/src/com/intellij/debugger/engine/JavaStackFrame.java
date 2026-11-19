@@ -323,10 +323,12 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     if (myDescriptor.getUiIndex() != 0) {
       return Collections.emptyList();
     }
-    return StreamEx.of(DebuggerUtilsEx.getEventDescriptors(evaluationContext.getSuspendContext()))
+    SuspendContextImpl suspendContext = evaluationContext.getSuspendContext();
+    return StreamEx.of(DebuggerUtilsEx.getEventDescriptors(suspendContext))
       .map(p -> p.getSecond())
       .select(ExceptionEvent.class)
       .map(ExceptionEvent::exception)
+      .append(suspendContext.getThrownException())
       .nonNull()
       .distinct()
       .map(e -> JavaValue.create(myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, e), evaluationContext, myNodeManager))

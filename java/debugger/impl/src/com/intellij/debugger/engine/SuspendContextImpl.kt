@@ -93,6 +93,16 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   @set:ApiStatus.Internal
   var lightThreadFilter: Any? = null
 
+  /**
+   * The exception thrown at a pause that has no [eventSet] to tell it, such as a pause made again in another process
+   * over the same VM. Set once, on the manager thread, by whoever makes such a context, before it is announced.
+   * [JavaStackFrame] shows it on the top frame with the exceptions of the event set.
+   */
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  @Volatile
+  var thrownException: ObjectReference? = null
+
   @JvmField
   internal var myResumedThreads: MutableSet<ThreadReferenceProxyImpl>? = null
 
