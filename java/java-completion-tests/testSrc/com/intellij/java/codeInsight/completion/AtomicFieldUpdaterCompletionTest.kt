@@ -1,13 +1,27 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.completion.lightCompletionFixture
+import com.intellij.codeInsight.completion.lightCompletionProjectFixture
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @NeedsIndex.Full
-class AtomicFieldUpdaterCompletionTest : LightFixtureCompletionTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+@IndexingModeTemplate
+class AtomicFieldUpdaterCompletionTest {
+  private val completion by lightCompletionFixture(projectFixture)
+  private val myFixture get() = completion.fixture
+
+  @BeforeEach
+  fun setUp(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
 
     myFixture.addClass("""package foo.bar;
 class Base{
@@ -30,39 +44,47 @@ class Data extends Base {
 }""")
   }
 
-  fun testUpdateableIntFirst() {
+  @Test
+  fun testUpdateableIntFirst(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     doTest("updateableInt", 0, "updateableIntFirst", "updateableIntSecond")
   }
 
-  fun testUpdateableIntSecond() {
+  @Test
+  fun testUpdateableIntSecond(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     doTest("updateableIntS", 0, "updateableIntSecond")
   }
 
-  fun testUpdateableLong() {
+  @Test
+  fun testUpdateableLong(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     doTest("updateableL", 0, "updateableLong")
   }
 
-  fun testUpdateableArray() {
+  @Test
+  fun testUpdateableArray(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     doTest("updateableA", 0, "updateableArray")
   }
 
-  fun testUpdateableString() {
+  @Test
+  fun testUpdateableString(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     doTest("updateableS", 0, "updateableString", "updateableIntSecond", "nonUpdateableStringFirst", "nonUpdateableStringSecond")
   }
 
-  fun testUpdateableAll() {
+  @Test
+  fun testUpdateableAll(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     doTest("updateable", 3,
            "updateableArray", "updateableIntFirst", "updateableIntSecond", "updateableLong", "updateableObject",
            "updateableString", "nonUpdateableStringFirst", "nonUpdateableStringSecond", "nonUpdateableType")
   }
 
-  fun testAll() {
+  @Test
+  fun testAll(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     doTest("", 5, "other",
            "updateableArray", "updateableIntFirst", "updateableIntSecond", "updateableLong", "updateableObject",
            "updateableString", "nonUpdateableStringFirst", "nonUpdateableStringSecond", "nonUpdateableType")
   }
 
-  fun testUpdateableBase() {
+  @Test
+  fun testUpdateableBase(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     doTest("base", -1)
   }
 
@@ -74,19 +96,19 @@ class Data extends Base {
       else -> REFERENCE
     }
     myFixture.configureByText("Main.java", getMainClassText(prefix, updater))
-    complete()
-    val items = myItems
+    completion.complete()
+    val items = completion.items
     if (items == null) {
-      assertEquals("Only one item should auto-complete immediately", expectedNames.size, 1)
+      assertEquals(expectedNames.size, 1, "Only one item should auto-complete immediately")
       myFixture.checkResult(getMainClassText(expectedName, updater))
       return
     }
     val lookupStrings = items.map { it.lookupString }
-    assertEquals("Lookup strings", expectedNames.asList(), lookupStrings)
+    assertEquals(expectedNames.asList(), lookupStrings, "Lookup strings")
     if (index < 0) return
 
     val lookupElement = items[index]
-    selectItem(lookupElement!!)
+    completion.selectItem(lookupElement!!)
     myFixture.checkResult(getMainClassText(expectedName, updater))
   }
 
@@ -104,6 +126,7 @@ class Main {
   }
 
   companion object {
+    private val projectFixture = lightCompletionProjectFixture()
     private const val INTEGER = "AtomicIntegerFieldUpdater"
     private const val LONG = "AtomicLongFieldUpdater"
     private const val REFERENCE = "AtomicReferenceFieldUpdater"

@@ -1,74 +1,95 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.completion.lightCompletionFixture
+import com.intellij.codeInsight.completion.lightCompletionProjectFixture
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate
 import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.DumbModeAccessType
+import kotlinx.coroutines.Dispatchers
+import org.junit.jupiter.api.Assertions.assertIterableEquals
+import org.junit.jupiter.api.Test
 import kotlin.math.min
 
 @NeedsIndex.Full
-class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() {
-  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/"
+@TestApplication
+@IndexingModeTemplate
+class JavaReflectionParametersCompletionTest {
+  companion object {
+    private val projectFixture = lightCompletionProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8)
+  }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_8
+  private val completion by lightCompletionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/")
+  private val myFixture get() = completion.fixture
 
-  fun testAnnotation() = doTest(0, "Bar.class", "Foo.class")
+  @Test
+  fun testAnnotation(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(0, "Bar.class", "Foo.class") }
 
-  fun testInheritedAnnotation() = doTest(1, "Bar.class", "Foo.class")
+  @Test
+  fun testInheritedAnnotation(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(1, "Bar.class", "Foo.class") }
 
-  fun testDeclaredAnnotation() = doTest(0, "Foo.class", "Bar.class")
+  @Test
+  fun testDeclaredAnnotation(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(0, "Foo.class", "Bar.class") }
 
-  fun testInheritedDeclaredAnnotation() = doTest(1, "Foo.class", "Bar.class")
+  @Test
+  fun testInheritedDeclaredAnnotation(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(1, "Foo.class", "Bar.class") }
 
-  fun testAnnotationsByType() = doTest(0, "Bar.class", "Foo.class")
+  @Test
+  fun testAnnotationsByType(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(0, "Bar.class", "Foo.class") }
 
-  fun testDeclaredAnnotationsByType() = doTest(0, "Foo.class", "Bar.class")
+  @Test
+  fun testDeclaredAnnotationsByType(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(0, "Foo.class", "Bar.class") }
 
   @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
-  fun testConstructor() {
+  @Test
+  fun testConstructor(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     addConstructors()
     doTest(1, "Construct()", "Construct(int n,java.lang.String s)", "Construct(int n)", "Construct(java.lang.String s)")
   }
 
-  fun testDeclaredConstructor() {
+  @Test
+  fun testDeclaredConstructor(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     addConstructors()
     doTest(0, "Construct()", "Construct(int n,java.lang.String s)", "Construct(int n)", "Construct(java.lang.String s)")
   }
 
-  fun testImports() {
+  @Test
+  fun testImports(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     addMoreClasses()
     doTest(1, "Bar.class", "Baz.class")
   }
 
-  fun testVariable() {
+  @Test
+  fun testVariable(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     addMoreClasses()
     addClasses()
-    configureByFile(getTestName(false) + ".java")
+    completion.configureByFile(myFixture.getTestName(false) + ".java")
 
-    val lookupItems = lookup.items
-    assertOrderedEquals(lookupFirstItemsTexts(lookupItems, 3), "Bar.class", "Foo.class", "Baz foo.baz")
-    selectItem(lookupItems.first { it.lookupString == "aType" })
-    myFixture.checkResultByFile(getTestName(false) + "_after.java")
+    val lookupItems = completion.getLookup()!!.items
+    assertIterableEquals(listOf("Bar.class", "Foo.class", "Baz foo.baz"), lookupFirstItemsTexts(lookupItems, 3))
+    completion.selectItem(lookupItems.first { it.lookupString == "aType" })
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.java")
   }
 
   private fun doTest(index: Int, vararg expected: String) {
     addClasses()
-    configureByFile(getTestName(false) + ".java")
+    completion.configureByFile(myFixture.getTestName(false) + ".java")
 
-    val lookupItems = lookup.items
+    val lookupItems = completion.getLookup()!!.items
     val texts = lookupFirstItemsTexts(lookupItems, expected.size)
-    assertOrderedEquals(texts, *expected)
-    selectItem(lookupItems[index])
-    myFixture.checkResultByFile(getTestName(false) + "_after.java")
+    assertIterableEquals(expected.toList(), texts)
+    completion.selectItem(lookupItems[index])
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.java")
   }
 
   private fun addClasses() {

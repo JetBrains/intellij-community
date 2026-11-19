@@ -16,58 +16,79 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.completion.lightCompletionFixture
+import com.intellij.codeInsight.completion.lightCompletionProjectFixture
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import org.junit.jupiter.api.Assertions.assertIterableEquals
+import org.junit.jupiter.api.Test
 
 @NeedsIndex.ForStandardLibrary
-class JavaReflectionCompletionOverloadTest : LightFixtureCompletionTestCase() {
+@TestApplication
+@IndexingModeTemplate
+class JavaReflectionCompletionOverloadTest {
+  companion object {
+    private val projectFixture = lightCompletionProjectFixture()
+  }
 
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/reflectionOverload/"
+  private val completion by lightCompletionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/reflectionOverload/")
+  private val myFixture get() = completion.fixture
 
-  fun testOverloadMethods() = doTest(2,
+  @Test
+  fun testOverloadMethods(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(2,
                                      "method()", "method(C)", "method(A, B)",
-                                     "equals(Object)")
+                                     "equals(Object)") }
 
-  fun testJavaLangObjectMethods() = doTest(5,
+  @Test
+  fun testJavaLangObjectMethods(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(5,
                                            "method()",
                                            "equals(Object)", "getClass()", "hashCode()",
                                            "notify()", "notifyAll()", "toString()",
                                            "wait()", "wait(long)", "wait(long, int)"
-  )
+  ) }
 
-  fun testJavaLangObjectOwnMethods() = doTest(10,
+  @Test
+  fun testJavaLangObjectOwnMethods(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(10,
                                               "clone()", "equals(Object)",
                                               "finalize()", "getClass()", "hashCode()",
                                               "notify()", "notifyAll()", "registerNatives()", "toString()",
-                                              "wait()", "wait(long)", "wait(long, int)")
+                                              "wait()", "wait(long)", "wait(long, int)") }
 
-  fun testOverriddenMethod() = doTest(2,
+  @Test
+  fun testOverriddenMethod(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(2,
                                       "gpMethod(A, B)", "method()", "pMethod(C)",
-                                      "equals(Object)")
+                                      "equals(Object)") }
 
-  fun testShadowedMethod() = doTest(0,
+  @Test
+  fun testShadowedMethod(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(0,
                                     "shadowed()",
-                                    "equals(Object)")
+                                    "equals(Object)") }
 
-  fun testOverloadedMethod() = doTest(1,
+  @Test
+  fun testOverloadedMethod(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(1,
                                       "overloaded()", "overloaded(int)",
-                                      "equals(Object)")
+                                      "equals(Object)") }
 
-  fun testOverloadedMethodPrefix() = doTest(2,
-                                            "foo()", "foo(int)", "foo(String)")
+  @Test
+  fun testOverloadedMethodPrefix(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(2,
+                                            "foo()", "foo(int)", "foo(String)") }
 
-  fun testOverloadedInheritedMethod() = doTest(1,
+  @Test
+  fun testOverloadedInheritedMethod(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(1,
                                                "overloaded(int)", "overloaded(String)",
-                                               "equals(Object)")
-
+                                               "equals(Object)") }
 
   private fun doTest(index: Int, vararg expected: String) {
-    configureByFile(getTestName(false) + ".java")
+    completion.configureByFile(myFixture.getTestName(false) + ".java")
 
-    val lookupItems = lookup.items
+    val lookupItems = completion.getLookup()!!.items
     val texts = lookupFirstItemsTexts(lookupItems, expected.size)
-    assertOrderedEquals(texts, *expected)
-    if (index >= 0) selectItem(lookupItems[index])
-    myFixture.checkResultByFile(getTestName(false) + "_after.java")
+    assertIterableEquals(expected.toList(), texts)
+    if (index >= 0) completion.selectItem(lookupItems[index])
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.java")
   }
 }

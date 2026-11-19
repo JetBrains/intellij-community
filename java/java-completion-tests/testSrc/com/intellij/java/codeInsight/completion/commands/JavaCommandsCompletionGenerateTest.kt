@@ -1,22 +1,40 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion.commands
 
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.completion.lightCompletionFixture
+import com.intellij.codeInsight.completion.lightCompletionProjectFixture
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @NeedsIndex.SmartMode(reason = "it requires highlighting")
-class JavaCommandsCompletionGenerateTest : LightFixtureCompletionTestCase() {
-
-  override fun setUp() {
-    super.setUp()
-    Registry.get("ide.completion.command.enabled").setValue(false, getTestRootDisposable())
-    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+@TestApplication
+@IndexingModeTemplate
+class JavaCommandsCompletionGenerateTest {
+  companion object {
+    private val projectFixture = lightCompletionProjectFixture()
   }
 
-  fun testGenerateWithTabs() {
+  private val completion by lightCompletionFixture(projectFixture)
+  private val myFixture get() = completion.fixture
+
+  @BeforeEach
+  fun setUp() {
+    Registry.get("ide.completion.command.enabled").setValue(false, myFixture.testRootDisposable)
+    Registry.get("ide.completion.command.force.enabled").setValue(true, myFixture.testRootDisposable)
+  }
+
+  @Test
+  fun testGenerateWithTabs(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     //don't move, there are tabs instead of spaces
     val text = """
 package org.test;
@@ -29,7 +47,7 @@ public class Test {
 }""".trimIndent()
     myFixture.configureByText(JavaFileType.INSTANCE, text)
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Generate 'No-Args Constructor'", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Generate 'No-Args Constructor'", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
 package org.test;
@@ -43,7 +61,8 @@ public class Test {
 }""".trimIndent())
   }
 
-  fun testGenerateNoArgsConstructor() {
+  @Test
+  fun testGenerateNoArgsConstructor(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
           int a;
@@ -51,7 +70,7 @@ public class Test {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Generate 'No-Args Constructor'", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Generate 'No-Args Constructor'", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
         class A { 
@@ -62,7 +81,8 @@ public class Test {
         }""".trimIndent())
   }
 
-  fun testGenerateNoArgsConstructorWithConstructor() {
+  @Test
+  fun testGenerateNoArgsConstructorWithConstructor(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
           int a;
@@ -70,7 +90,7 @@ public class Test {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Generate 'No-Args Constructor'", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Generate 'No-Args Constructor'", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
         class A { 
@@ -81,7 +101,8 @@ public class Test {
         }""".trimIndent())
   }
 
-  fun testGenerateAllArgsConstructor() {
+  @Test
+  fun testGenerateAllArgsConstructor(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
           int a;
@@ -89,7 +110,7 @@ public class Test {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
         class A { 
@@ -101,7 +122,8 @@ public class Test {
         }""".trimIndent())
   }
 
-  fun testGenerateAllArgsConstructorWithSuper() {
+  @Test
+  fun testGenerateAllArgsConstructorWithSuper(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A extends B<String>{ 
           int a;
@@ -113,7 +135,7 @@ public class Test {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
         class A extends B<String>{ 
@@ -130,7 +152,8 @@ public class Test {
         }""".trimIndent())
   }
 
-  fun testNoGenerateNoArgsConstructor() {
+  @Test
+  fun testNoGenerateNoArgsConstructor(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A {
           public A(){}
@@ -142,7 +165,8 @@ public class Test {
     assertNull(elements.firstOrNull { element -> element.lookupString.contains("Generate 'No-Args Constructor'", ignoreCase = true) })
   }
 
-  fun testNoGenerateAllArgsConstructorForAnonymousClass() {
+  @Test
+  fun testNoGenerateAllArgsConstructorForAnonymousClass(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A {
           int a;
@@ -157,7 +181,8 @@ public class Test {
     assertNull(elements.firstOrNull { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
   }
 
-  fun testNoExceptionGenerateAllArgsConstructorForMarkdown() {
+  @Test
+  fun testNoExceptionGenerateAllArgsConstructorForMarkdown(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A {
           int a;
@@ -171,7 +196,7 @@ public class Test {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
         class A {
@@ -190,7 +215,8 @@ public class Test {
         }""".trimIndent())
   }
 
-  fun testNoExceptionGenerateAllArgsConstructorForUsualComments() {
+  @Test
+  fun testNoExceptionGenerateAllArgsConstructorForUsualComments(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A {
           int a;
@@ -206,7 +232,7 @@ public class Test {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
         class A {
@@ -227,7 +253,8 @@ public class Test {
         }""".trimIndent())
   }
 
-  fun testNoGenerateAllArgsConstructor() {
+  @Test
+  fun testNoGenerateAllArgsConstructor(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A extends B{ 
           int a;

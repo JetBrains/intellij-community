@@ -1,23 +1,40 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion.commands
 
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.completion.lightCompletionFixture
+import com.intellij.codeInsight.completion.lightCompletionProjectFixture
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.awaitPendingNavigation
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @NeedsIndex.SmartMode(reason = "it requires highlighting")
-class JavaCommandsCompletionGoToTest : LightFixtureCompletionTestCase() {
-
-  override fun setUp() {
-    super.setUp()
-    Registry.get("ide.completion.command.enabled").setValue(false, getTestRootDisposable())
-    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+@TestApplication
+@IndexingModeTemplate
+class JavaCommandsCompletionGoToTest {
+  companion object {
+    private val projectFixture = lightCompletionProjectFixture()
   }
 
-  fun testCommandsOnlyGoToDeclaration() {
+  private val completion by lightCompletionFixture(projectFixture)
+  private val myFixture get() = completion.fixture
+
+  @BeforeEach
+  fun setUp() {
+    Registry.get("ide.completion.command.enabled").setValue(false, myFixture.testRootDisposable)
+    Registry.get("ide.completion.command.force.enabled").setValue(true, myFixture.testRootDisposable)
+  }
+
+  @Test
+  fun testCommandsOnlyGoToDeclaration(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
@@ -29,9 +46,9 @@ class JavaCommandsCompletionGoToTest : LightFixtureCompletionTestCase() {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Go to dec", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Go to dec", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    awaitPendingNavigation(project)
+    awaitPendingNavigation(myFixture.project)
     myFixture.checkResult("""
       class A { 
         void foo() {
@@ -44,7 +61,8 @@ class JavaCommandsCompletionGoToTest : LightFixtureCompletionTestCase() {
     """.trimIndent())
   }
 
-  fun testCommandsGoToSuper() {
+  @Test
+  fun testCommandsGoToSuper(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
         public class TestSuper {
         
@@ -60,8 +78,8 @@ class JavaCommandsCompletionGoToTest : LightFixtureCompletionTestCase() {
         }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Go to super", ignoreCase = true) })
-    awaitPendingNavigation(project)
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Go to super", ignoreCase = true) })
+    awaitPendingNavigation(myFixture.project)
     myFixture.checkResult("""
         public class TestSuper {
         
@@ -78,7 +96,8 @@ class JavaCommandsCompletionGoToTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testCommandsOnlyGoToImplementation() {
+  @Test
+  fun testCommandsOnlyGoToImplementation(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       interface A{
 
@@ -94,9 +113,9 @@ class JavaCommandsCompletionGoToTest : LightFixtureCompletionTestCase() {
       }      
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    awaitPendingNavigation(project)
+    awaitPendingNavigation(myFixture.project)
     myFixture.checkResult("""
       interface A{
 
@@ -113,7 +132,8 @@ class JavaCommandsCompletionGoToTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testCommandsOnlyGoToImplementationAfterSemicolon() {
+  @Test
+  fun testCommandsOnlyGoToImplementationAfterSemicolon(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       interface A{
 
@@ -129,9 +149,9 @@ class JavaCommandsCompletionGoToTest : LightFixtureCompletionTestCase() {
       }      
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    awaitPendingNavigation(project)
+    awaitPendingNavigation(myFixture.project)
     myFixture.checkResult("""
       interface A{
 

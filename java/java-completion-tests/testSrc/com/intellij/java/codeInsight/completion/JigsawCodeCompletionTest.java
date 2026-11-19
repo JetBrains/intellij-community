@@ -181,7 +181,7 @@ public class JigsawCodeCompletionTest extends LightFixtureCompletionTestCase {
     final LookupElement[] elements = myFixture.getLookupElements();
     assertEquals(Arrays.toString(elements), variants.length, elements.length);
     for (int i = 0; i < elements.length; i++) {
-      final LookupElementPresentation element = NormalCompletionTestCase.renderElement(elements[i]);
+      final LookupElementPresentation element = NormalCompletionFixture.renderElement(elements[i]);
       assertEquals(variants[i].text(), element.getItemText());
       assertEquals(variants[i].tail(), element.getTailText());
       assertEquals(variants[i].color(), element.getItemTextForeground());
