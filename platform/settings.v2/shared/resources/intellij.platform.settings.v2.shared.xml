@@ -46,4 +46,8 @@
     <listener class="com.intellij.platform.settings.v2.impl.SettingsAppLifecycleListener"
               topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
+  <actions resource-bundle="messages.SettingsV2Bundle">
+    <action id="internal.settings.v2.DumpSettingsContext" internal="true"
+            class="com.intellij.platform.settings.v2.impl.SettingsContextDumpAction"/>
+  </actions>
 </idea-plugin>
