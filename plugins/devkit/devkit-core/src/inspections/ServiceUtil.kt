@@ -27,6 +27,7 @@ import org.jetbrains.uast.tryResolve
 enum class LevelType {
   APP,
   PROJECT,
+  WORKSPACE,
   MODULE,
   APP_AND_PROJECT,
 
@@ -77,6 +78,7 @@ fun getLevelType(project: Project, uClass: UClass): LevelType {
       when (element.extensionPoint?.effectiveQualifiedName) {
         "com.intellij.applicationService" -> levels.add(Service.Level.APP)
         "com.intellij.projectService" -> levels.add(Service.Level.PROJECT)
+        "com.intellij.workspaceService" -> levels.add(Service.Level.WORKSPACE)
         "com.intellij.moduleService" -> isModuleService = true
         else -> {}
       }
@@ -123,6 +125,7 @@ private fun getLevelType(annotation: UAnnotation): LevelType {
 
 private fun toLevelType(levels: Collection<Service.Level>): LevelType {
   return when {
+    Service.Level.WORKSPACE in levels -> if (levels.all { it == Service.Level.WORKSPACE }) LevelType.WORKSPACE else LevelType.NOT_SPECIFIED
     levels.containsAll(setOf(Service.Level.APP, Service.Level.PROJECT)) -> LevelType.APP_AND_PROJECT
     levels.contains(Service.Level.APP) -> LevelType.APP
     levels.contains(Service.Level.PROJECT) -> LevelType.PROJECT
@@ -166,4 +169,6 @@ internal fun isLightService(psiClass: PsiClass) : Boolean {
   return psiClass.hasAnnotation(Service::class.java.canonicalName)
 }
 
-fun getProjectLevelFQN(): String = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"
+fun getLevelFQN(level: Service.Level): String = "${Service.Level::class.java.canonicalName}.$level"
+
+fun getProjectLevelFQN(): String = getLevelFQN(Service.Level.PROJECT)

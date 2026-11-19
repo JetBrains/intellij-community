@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.openapi.components.Service
 import com.intellij.psi.PsiElement
-import org.jetbrains.idea.devkit.inspections.getProjectLevelFQN
+import org.jetbrains.idea.devkit.inspections.getLevelFQN
 import org.jetbrains.idea.devkit.inspections.quickfix.AddServiceAnnotationProvider
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.util.addAnnotation
@@ -19,8 +19,7 @@ internal class KotlinAddServiceAnnotationProvider : AddServiceAnnotationProvider
     } ?: return
     val annotationInnerText = when (level) {
       Service.Level.APP -> null
-      Service.Level.PROJECT -> getProjectLevelFQN()
-      Service.Level.WORKSPACE -> return
+      Service.Level.PROJECT, Service.Level.WORKSPACE -> getLevelFQN(level)
     }
     ktClass.addAnnotation(
       annotationClassId = ClassId.fromString(Service::class.java.canonicalName),

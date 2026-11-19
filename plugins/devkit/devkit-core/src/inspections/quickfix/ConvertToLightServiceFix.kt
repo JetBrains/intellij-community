@@ -19,7 +19,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.highlighting.RemoveDomElementQuickFix
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.inspections.getProjectLevelFQN
+import org.jetbrains.idea.devkit.inspections.getLevelFQN
 
 internal class ConvertToLightServiceFix private constructor(private val classPointer: SmartPsiElementPointer<PsiElement>,
                                                             private val xmlTagPointer: SmartPsiElementPointer<XmlTag>,
@@ -37,7 +37,7 @@ internal class ConvertToLightServiceFix private constructor(private val classPoi
     val key = when (level) {
       Service.Level.APP -> "inspection.light.service.migration.app.level.fix"
       Service.Level.PROJECT -> "inspection.light.service.migration.project.level.fix"
-      Service.Level.WORKSPACE -> return getFamilyName()
+      Service.Level.WORKSPACE -> "inspection.light.service.migration.workspace.level.fix"
     }
     return DevKitBundle.message(key)
   }
@@ -70,13 +70,12 @@ internal class JavaAddServiceAnnotationProvider : AddServiceAnnotationProvider {
     if (aClass !is PsiClass) return
     val attributes = when (level) {
       Service.Level.APP -> emptyArray()
-      Service.Level.PROJECT -> {
+      Service.Level.PROJECT, Service.Level.WORKSPACE -> {
         val factory = JavaPsiFacade.getElementFactory(aClass.project)
-        val projectLevelFqn = getProjectLevelFQN()
-        val newAnnotation = factory.createAnnotationFromText("@${Service::class.java.canonicalName}(${projectLevelFqn})", aClass)
+        val levelFqn = getLevelFQN(level)
+        val newAnnotation = factory.createAnnotationFromText("@${Service::class.java.canonicalName}(${levelFqn})", aClass)
         newAnnotation.parameterList.attributes
       }
-      Service.Level.WORKSPACE -> return
     }
     val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(Service::class.java.canonicalName, attributes, aClass.modifierList!!)
     if (annotation != null) {

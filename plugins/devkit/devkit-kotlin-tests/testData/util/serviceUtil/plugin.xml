@@ -5,6 +5,7 @@
     <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
     <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+    <extensionPoint name="workspaceService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -14,6 +15,7 @@
     <moduleService serviceImplementation="serviceDeclarations.KtRegisteredModuleService"/>
     <projectService serviceImplementation="serviceDeclarations.RegisteredProjectService"/>
     <projectService serviceImplementation="serviceDeclarations.KtRegisteredProjectService"/>
+    <workspaceService serviceImplementation="serviceDeclarations.RegisteredWorkspaceService"/>
   </extensions>
 
 </idea-plugin>

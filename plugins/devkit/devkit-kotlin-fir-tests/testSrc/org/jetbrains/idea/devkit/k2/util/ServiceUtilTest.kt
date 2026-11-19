@@ -80,7 +80,7 @@ class ServiceUtilTest {
         Level[] value() default Level.APP;
       
         enum Level {
-          APP, PROJECT
+          APP, PROJECT, WORKSPACE
         }
       }
       """.trimIndent()
@@ -111,6 +111,16 @@ class ServiceUtilTest {
       import com.intellij.openapi.components.ComponentManager;
       
       public interface Project extends ComponentManager { }
+      """.trimIndent()
+    )
+
+    myFixture.addClass(
+      """
+      package com.intellij.openapi.workspace;
+
+      import com.intellij.openapi.components.ComponentManager;
+
+      public interface ProjectWorkspace extends ComponentManager { }
       """.trimIndent()
     )
 
