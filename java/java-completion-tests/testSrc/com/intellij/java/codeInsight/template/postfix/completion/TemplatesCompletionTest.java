@@ -4,7 +4,7 @@ package com.intellij.java.codeInsight.template.postfix.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.CompletionItemLookupElement;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
+import com.intellij.codeInsight.completion.JavaCompletionAutoPopupFixture;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
@@ -18,44 +18,61 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.SwitchStatementPostfixTemplate;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 
+import static com.intellij.codeInsight.completion.JavaCompletionAutoPopupFixtureKt.javaCompletionAutoPopupFixture;
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 @NeedsIndex.SmartMode(reason = "AutoPopup shouldn't work in dumb mode")
-public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+@IndexingModeTemplate
+public class TemplatesCompletionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<JavaCompletionAutoPopupFixture> autoPopupFixture = javaCompletionAutoPopupFixture(projectFixture);
+  private LightJavaCodeInsightTestFixture myFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = autoPopupFixture.get().getFixture();
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/postfix/completion");
     LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable());
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
-      assertNotNull(settings);
-      settings.setProviderToDisabledTemplates(new HashMap<>());
-      settings.setPostfixTemplatesEnabled(true);
-      settings.setTemplatesCompletionEnabled(true);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
+    assertNotNull(settings);
+    settings.setProviderToDisabledTemplates(new HashMap<>());
+    settings.setPostfixTemplatesEnabled(true);
+    settings.setTemplatesCompletionEnabled(true);
   }
 
+  @Test
   public void testSimpleCompletionList() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     doAutoPopupTest("ins", InstanceofExpressionPostfixTemplate.class);
   }
 
+  @Test
   public void testAutopopupWithEnabledLiveTemplatesInCompletion() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable());
 
@@ -70,15 +87,18 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     assertInstanceOf(((PostfixTemplateLookupElement)item).getPostfixTemplate(), InstanceofExpressionPostfixTemplate.class);
   }
 
+  @Test
   public void testDoNotShowTemplateInInappropriateContext() {
     doAutoPopupTest("instanceof", null);
   }
 
   // IDEA-119910 Middle matching doesn't work if pattern starts with a digit
+  @Test
   public void testRestartCompletionForExactMatchOnly() {
     doCompleteTest(".2", '\n');
   }
 
+  @Test
   public void testRestartCompletionForExactMatch() {
     configureByFile();
     type("not");
@@ -94,18 +114,22 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     assertEquals(".notnull", currentItem.getLookupString());
   }
 
+  @Test
   public void testShowTemplateInAutoPopup() {
     doAutoPopupTest("instanceof", InstanceofExpressionPostfixTemplate.class);
   }
 
+  @Test
   public void testShowAutoPopupForAliases() {
     doAutoPopupTest("nn", NotNullCheckPostfixTemplate.class);
   }
 
+  @Test
   public void testShowAutoPopupForFloatLiterals() {
     doAutoPopupTest("fori", ForAscendingPostfixTemplate.class);
   }
 
+  @Test
   public void testDoNotShowTemplateIfPluginIsDisabled() {
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     assertNotNull(settings);
@@ -113,6 +137,7 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     doAutoPopupTest("instanceof", null);
   }
 
+  @Test
   public void testDoNotShowTemplateIfTemplateCompletionIsDisabled() {
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     assertNotNull(settings);
@@ -120,10 +145,12 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     doAutoPopupTest("instanceof", null);
   }
 
+  @Test
   public void testDoNotShowTemplateInMultiCaretMode() {
     doAutoPopupTest("instanceof", null);
   }
 
+  @Test
   public void testDoNotAutoCompleteCompletionElementIfTemplateUnique() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     configureByFile();
@@ -131,6 +158,7 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     checkResultByFile();
   }
 
+  @Test
   public void testDoNotCompleteTemplateInMultiCaretMode() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     configureByFile();
@@ -138,24 +166,29 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     checkResultByFile();
   }
 
+  @Test
   public void testShowTemplateOnDoubleLiteral() {
     doAutoPopupTest("switch", SwitchStatementPostfixTemplate.class);
   }
 
+  @Test
   public void testSelectTemplateByTab() {
     doCompleteTest("par", '\t');
   }
 
+  @Test
   public void testSelectTemplateByEnter() {
     doCompleteTest("par", '\n');
   }
 
+  @Test
   public void testQuickTypingWithTab() {
     configureByFile();
     myFixture.type("par\t");
     checkResultByFile();
   }
 
+  @Test
   public void testDoNotShowDisabledTemplate() {
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     assertNotNull(settings);
@@ -163,6 +196,7 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     doAutoPopupTest("instanceof", null);
   }
 
+  @Test
   public void testDoNotShowTemplateOnCompletion() {
     configureByFile();
     myFixture.completeBasic();
@@ -171,6 +205,7 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     assertNull(ContainerUtil.findInstance(elements, PostfixTemplateLookupElement.class));
   }
 
+  @Test
   public void testRecalculatePrefix() {
     configureByFile();
     type("par");
@@ -185,6 +220,7 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     myFixture.assertPreferredCompletionItems(selectedIndex, ".par", "parents");
   }
 
+  @Test
   @TestFor(issues = "IDEA-388573")
   public void testInvalidRangeAfterDeletingPostfixDot() {
     Registry.get("postfix.template.mod.completion.enabled").setValue(true, myFixture.getTestRootDisposable());
@@ -197,6 +233,7 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     type("\b");
   }
 
+  @Test
   public void testTabCompletionWithTemplatesInAutopopup() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
 
@@ -209,15 +246,11 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     checkResultByFile();
   }
 
+  @Test
   public void testShouldNotExpandInMultiCaretMode() {
     configureByFile();
     type(".if\t");
     checkResultByFile();
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/postfix/completion";
   }
 
   private void doCompleteTest(String textToType, char c) {
@@ -244,6 +277,7 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
     }
   }
 
+  @Test
   public void testOptionallyShowingSuitableLiveTemplatesBeforeOtherCompletionSuggestions() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     Registry.get("ide.completion.show.live.templates.on.top").setValue(true, myFixture.getTestRootDisposable());
@@ -259,10 +293,18 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
 
 
   private void configureByFile() {
-    EdtTestUtil.runInEdtAndWait(() -> myFixture.configureByFile(getTestName(true) + ".java"));
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.configureByFile(myFixture.getTestName(true) + ".java"));
   }
 
   private void checkResultByFile() {
-    myFixture.checkResultByFile(getTestName(true) + "_after.java");
+    myFixture.checkResultByFile(myFixture.getTestName(true) + "_after.java");
+  }
+
+  private void type(String s) {
+    autoPopupFixture.get().type(s);
+  }
+
+  private LookupImpl getLookup() {
+    return autoPopupFixture.get().getLookup();
   }
 }
