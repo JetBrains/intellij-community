@@ -43,4 +43,6 @@ internal object MarkdownPsiUtils {
                                              && element.node?.noParentOfTypes(TokenSet.create(MarkdownElementTypes.LIST_ITEM)) ?: false
 
   fun isInOuterListItem(element: PsiElement) = element.parents().any { isOuterListItem(it) }
+
+  fun isTableCell(element: PsiElement) = element.node?.hasType(MarkdownElementTypes.TABLE_CELL) ?: false
 }

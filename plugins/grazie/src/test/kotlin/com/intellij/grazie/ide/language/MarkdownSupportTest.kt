@@ -162,6 +162,17 @@ class MarkdownSupportTest {
   }
 
   @Test
+  fun `test grammar check in table cells`() {
+    grazie.fixture.configureByText("a.md", """
+      | Name | Notes |
+      | ---- | ----- |
+      | yes  | It is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> friend there |
+      | no   | used only in tests, it has <TYPO descr="Typo: In word 'errosr'">errosr</TYPO> |
+    """.trimIndent())
+    grazie.fixture.checkHighlighting()
+  }
+
+  @Test
   fun `test grammar check in html comment`() {
     grazie.fixture.configureByText("a.md", """
       <!-- It is <GRAMMAR_ERROR <TYPO descr="Typo: In word 'descr'">descr</TYPO>=\"EN_A_VS_AN\">an</GRAMMAR_ERROR> friend there -->

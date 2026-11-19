@@ -20,7 +20,7 @@ class MarkdownTextExtractor : TextExtractor() {
 
   public override fun buildTextContents(root: PsiElement, allowedDomains: Set<TextContent.TextDomain>): List<TextContent> {
     if (allowedDomains.contains(TextContent.TextDomain.PLAIN_TEXT) &&
-        (MarkdownPsiUtils.isHeaderContent(root) || MarkdownPsiUtils.isParagraph(root))) {
+        (MarkdownPsiUtils.isHeaderContent(root) || MarkdownPsiUtils.isParagraph(root) || MarkdownPsiUtils.isTableCell(root))) {
       val content = TextContentBuilder.FromPsi
         .withUnknown {
           it.node.isMarkdownCodeType() || it.node.isTestLink() ||
