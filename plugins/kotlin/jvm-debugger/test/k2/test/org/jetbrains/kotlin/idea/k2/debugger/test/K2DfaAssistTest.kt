@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.debugger.test
 
-import com.intellij.debugger.engine.dfaassist.DfaAssistTest
+import com.intellij.debugger.engine.dfaassist.dfaAssistFixture
 import com.intellij.debugger.mockJDI.MockLocalVariable
 import com.intellij.debugger.mockJDI.MockStackFrame
 import com.intellij.debugger.mockJDI.MockVirtualMachine
@@ -9,19 +9,28 @@ import com.intellij.debugger.mockJDI.values.MockBooleanValue
 import com.intellij.debugger.mockJDI.values.MockIntegerValue
 import com.intellij.debugger.mockJDI.values.MockObjectReference
 import com.intellij.debugger.mockJDI.values.MockValue
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.junit.jupiter.api.Test
 import java.lang.annotation.ElementType
 import java.util.function.BiConsumer
 
-class K2DfaAssistTest : DfaAssistTest() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
+@TestApplication
+class K2DfaAssistTest {
+    companion object {
+        private val projectFixture = lightJavaProjectFixture(ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources())
+    }
+
+    private val dfaAssist by dfaAssistFixture(projectFixture)
 
     
 
+    @Test
     fun testSimple() {
         doTest("""fun test(x: Int) {
                     <caret>if (x > 0/*TRUE*/) {
@@ -40,6 +49,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                 }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
     }
 
+    @Test
     fun testSuppression() {
         doTest("""fun test(x: Boolean, y: Boolean) {
                <caret>if(!x/*FALSE*/) /*unreachable_start*/{}/*unreachable_end*/
@@ -51,6 +61,7 @@ class K2DfaAssistTest : DfaAssistTest() {
             }""") { vm, frame -> frame.addVariable("x", MockBooleanValue(vm, true)) }
     }
 
+    @Test
     fun testWhen() {
         doTest("""fun obj(x: Any) {
                     <caret>when(x) {
@@ -64,6 +75,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                 }""") { vm, frame -> frame.addVariable("x", MockValue.createValue(1, Integer::class.java, vm)) }
     }
 
+    @Test
     fun testElvis() {
         doTest("""fun obj(x: String?) {
                     <caret>x /*unreachable_start*/?: return/*unreachable_end*/
@@ -74,6 +86,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                 }""") { vm, frame -> frame.addVariable("x", MockValue.createValue("x", String::class.java, vm)) }
     }
 
+    @Test
     fun testLet() {
         doTest("""fun obj(x: String?) {
                     <caret>x/*unreachable_start*/?.let { println() }/*unreachable_end*/
@@ -84,6 +97,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                 }""") { vm, frame -> frame.addVariable(MockLocalVariable(vm, "x", vm.createReferenceType(String::class.java), null)) }
     }
 
+    @Test
     fun testUnreachableWhile() {
         doTest("""fun test(x: Int) {
                     <caret>while (x < 0/*FALSE*/) /*unreachable_start*/{
@@ -96,6 +110,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                 }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
     }
 
+    @Test
     fun testUnreachableFor() {
         doTest("""fun test(x: Int) {
                     <caret>for (y in 10..x) /*unreachable_start*/{
@@ -108,6 +123,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                 }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
     }
 
+    @Test
     fun testUnreachableTail() {
         doTest("""fun test(x: Int) {
                     <caret>if (x > 0/*TRUE*/) {
@@ -124,6 +140,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                 }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
     }
 
+    @Test
     fun testUnreachableTailContract() {
         doTest("""fun test(x: Int) {
                         <caret>check(x <= 0/*FALSE*/) { "" }
@@ -137,6 +154,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                     }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
     }
 
+    @Test
     fun testUnreachableTailInLambda() {
         doTest("""fun test(x: Int) {
                     <caret>run {
@@ -155,6 +173,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                 }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
     }
 
+    @Test
     fun testUnreachableTailInLambda2() {
         doTest("""fun test(x: Int) {
                     run {
@@ -173,6 +192,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                 }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
     }
 
+    @Test
     fun testSmartCast() {
         doTest("""fun main() {
                         test(object : ArrayList<String>(){}, -1)
@@ -186,6 +206,7 @@ class K2DfaAssistTest : DfaAssistTest() {
                     """) { vm, frame -> frame.addVariable("i", MockIntegerValue(vm, -1)) }
     }
 
+    @Test
     fun testWrapped() {
         doTest("""fun test(x: Int) {
                     var y = x
@@ -210,6 +231,7 @@ class K2DfaAssistTest : DfaAssistTest() {
 
     class Nested(@Suppress("unused") val x:Int)
 
+    @Test
     fun testThis() {
         doTest("""package org.jetbrains.kotlin.idea.k2.debugger.test
             class K2DfaAssistTest {
@@ -227,6 +249,7 @@ class K2DfaAssistTest : DfaAssistTest() {
     private interface I
     private object O: I
 
+    @Test
     fun testObject() {
         doTest("""package org.jetbrains.kotlin.idea.k2.debugger.test
             class K2DfaAssistTest {
@@ -243,6 +266,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testQualified() {
         doTest("""package org.jetbrains.kotlin.idea.k2.debugger.test
             class K2DfaAssistTest {
@@ -257,6 +281,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testExtensionMethod() {
         doTest("""fun String.isLong(): Boolean {
                       <caret>return this.length > 5/*FALSE*/ || length > 2/*TRUE*/
@@ -269,6 +294,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testDeconstruction() {
         doTest("""fun test(x: Pair<Int, Int>) {
                       val (a, b) = x
@@ -283,6 +309,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testNPE() {
         doTest("""
             fun test(x: String?) {
@@ -293,6 +320,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testAsNull() {
         doTest("""
             fun test(x: Any?) {
@@ -304,6 +332,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testAs() {
         doTest("""
             fun test(x: Any?) {
@@ -314,6 +343,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testNull() {
         doTest("""
             fun main() {
@@ -330,6 +360,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testEnum() {
         val text = """import java.lang.annotation.ElementType
                 
@@ -344,6 +375,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInlineFunction() {
         val text = """
             fun main() {
@@ -370,6 +402,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInlineFunctionMultiLevel() {
         val text = """
             fun main() {
@@ -401,6 +434,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInlineFunctionThis() {
         val text = """
             package org.jetbrains.kotlin.idea.k2.debugger.test
@@ -426,6 +460,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInlineFunctionMultiLevelThis() {
         val text = """
             fun main() {
@@ -456,6 +491,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInlineFunctionGenericUnboxed() {
         val text = """
             package org.jetbrains.kotlin.idea.k2.debugger.test
@@ -473,6 +509,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInlineFunctionReceiverThis() {
         val text = """
             fun main() {
@@ -490,6 +527,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testNullableBoolean() {
         val text = """
             fun main() {
@@ -509,6 +547,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInlineClass() {
         val text = """
             fun main() {
@@ -529,6 +568,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInlineClassBoxing() {
         val text = """
             fun main() {
@@ -549,8 +589,9 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testPlatformBooleanNull() {
-        createAndSaveFile("AA.java", """
+        VfsTestUtil.createFile(projectFixture.get().sourceRoot, "AA.java", """
             public class AA {
                 public static Boolean getBoolean() {
                     return null;
@@ -572,6 +613,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInlineLambdaThis() {
         val text = """
             package org.jetbrains.kotlin.idea.k2.debugger.test
@@ -595,6 +637,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInlineLambdaThisSmartCast() {
         val text = """
             package org.jetbrains.kotlin.idea.k2.debugger.test
@@ -620,6 +663,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
     
+    @Test
     fun testLambdaInsideInlineFunction() {
         val text = """
             inline fun useClazz(clazz: Any) {
@@ -639,6 +683,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testLambdaUsesInlineClass() {
         val text = """
             @JvmInline
@@ -659,6 +704,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testJavaStaticField() {
         val text = """
             import java.io.File
@@ -673,6 +719,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         doTest(text) { _, _ -> }
     }
 
+    @Test
     fun testSmartCastDoesNotAffectDebugging() {
         val text = """
             fun useNullable(clazz: Any?) {
@@ -692,6 +739,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testSmartCastDoesNotAffectDebugging2() {
         val text = """
             fun useNullable(clazz: Any?) {
@@ -711,6 +759,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
     
+    @Test
     fun testGenericExtensionMethod() {
         val text = """
             fun <T> T.check() {
@@ -732,6 +781,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testInnerClass() {
         val text = """
             package org.jetbrains.kotlin.idea.k2.debugger.test
@@ -754,6 +804,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testLambdaCapture() {
         val text = """
             fun compareUsingLambda(a: Int, b: Int) {
@@ -775,6 +826,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testFunCapture() {
         val text = """
             fun main() {
@@ -804,6 +856,7 @@ class K2DfaAssistTest : DfaAssistTest() {
         }
     }
 
+    @Test
     fun testLambdaArgCapture() {
         val text = """
             fun main() {
@@ -836,6 +889,7 @@ class K2DfaAssistTest : DfaAssistTest() {
     @JvmInline
     value class ValueInt(val i: Int)
     
+    @Test
     fun testIsValueClass() {
         val text = """
             package org.jetbrains.kotlin.idea.k2.debugger.test
@@ -860,6 +914,6 @@ class K2DfaAssistTest : DfaAssistTest() {
     }
 
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
-        doTest(text, mockValues, "Test.kt")
+        dfaAssist.doTest(text, mockValues, "Test.kt")
     }
 }
