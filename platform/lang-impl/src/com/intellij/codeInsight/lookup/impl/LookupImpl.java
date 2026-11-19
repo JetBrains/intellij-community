@@ -40,6 +40,7 @@ import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
@@ -57,6 +58,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientProjectSession;
@@ -1343,9 +1345,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           .withSelection(TextRange.create(start, actionContext.offset()));
         long stamp = file.getFileDocument().getModificationStamp();
         // Cache current item result
-        ReadAction.nonBlocking(
+        NonBlockingReadAction<?> action = ReadAction.nonBlocking(
           () -> wrapper.computeCommand(finalActionContext, ModCompletionItem.DEFAULT_INSERTION_CONTEXT))
-          .withDocumentsCommitted(getProject())
+          .withDocumentsCommitted(getProject());
+        if (!LightEdit.owns(getProject())) {
+          action = action.inSmartMode(getProject());
+        }
+        action
           .expireWith(this)
           .expireWhen(() -> stamp != finalActionContext.file().getFileDocument().getModificationStamp())
           .submit(AppExecutorUtil.getAppExecutorService());
