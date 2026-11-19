@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.wm.MultiProjectToolWindowFactory
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.toolWindow.DefaultToolWindowLayoutBuilder
 import com.intellij.toolWindow.DefaultToolWindowLayoutExtension
@@ -25,7 +25,7 @@ internal const val SETTINGS_TOOL_WINDOW_REGISTRY_KEY: String = "ide.settings.too
  * A project that opens with the registry key [SETTINGS_TOOL_WINDOW_REGISTRY_KEY] off has no Settings tool window,
  * so nothing of it shows in the menus. Turning the key off later hides the stripe button at once.
  */
-internal class SettingsToolWindowFactory : ToolWindowFactory, DumbAware {
+internal class SettingsToolWindowFactory : MultiProjectToolWindowFactory, DumbAware {
   override suspend fun isApplicableAsync(project: Project): Boolean {
     return RegistryManager.getInstance().`is`(SETTINGS_TOOL_WINDOW_REGISTRY_KEY)
   }

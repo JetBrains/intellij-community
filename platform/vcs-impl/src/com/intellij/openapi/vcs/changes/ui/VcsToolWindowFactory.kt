@@ -17,8 +17,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.C
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.IS_IN_COMMIT_TOOLWINDOW_KEY
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.ex.VcsActivationListener
+import com.intellij.openapi.wm.MultiProjectToolWindowFactory
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.ToolWindowEx
@@ -33,7 +33,7 @@ import javax.swing.JPanel
 private val IS_CONTENT_CREATED = Key.create<Boolean>("ToolWindow.IsContentCreated")
 internal val CHANGES_VIEW_EXTENSION = Key.create<ChangesViewContentEP>("Content.ChangesViewExtension")
 
-abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
+abstract class VcsToolWindowFactory : MultiProjectToolWindowFactory, DumbAware {
   override fun init(window: ToolWindow) {
     val connection = window.project.messageBus.connect(window.disposable)
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {

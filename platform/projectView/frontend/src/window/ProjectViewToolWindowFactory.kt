@@ -8,15 +8,15 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.MultiProjectToolWindowFactory
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import javax.swing.Icon
 
-internal class ProjectViewToolWindowFactory : ToolWindowFactory, DumbAware {
+internal class ProjectViewToolWindowFactory : MultiProjectToolWindowFactory, DumbAware {
   override val icon: Icon
     get() = AllIcons.Toolwindows.ToolWindowProject
 

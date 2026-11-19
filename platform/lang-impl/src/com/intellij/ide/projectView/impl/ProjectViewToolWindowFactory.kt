@@ -6,8 +6,8 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.MultiProjectToolWindowFactory
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import org.jetbrains.annotations.ApiStatus
@@ -16,7 +16,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 @VisibleForTesting
-class ProjectViewToolWindowFactory : ToolWindowFactory, DumbAware {
+class ProjectViewToolWindowFactory : MultiProjectToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     (ProjectView.getInstance(project) as ProjectViewImpl).setupImpl(toolWindow)
   }

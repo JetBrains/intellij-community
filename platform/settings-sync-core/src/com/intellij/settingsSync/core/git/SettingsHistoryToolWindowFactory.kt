@@ -9,9 +9,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.wm.MultiProjectToolWindowFactory
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncEventListener
@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 
-internal class SettingsHistoryToolWindowFactory(private val corotineScope: CoroutineScope) : ToolWindowFactory, DumbAware {
+internal class SettingsHistoryToolWindowFactory(private val corotineScope: CoroutineScope) : MultiProjectToolWindowFactory, DumbAware {
   companion object {
     const val ID = "Backup and Sync History"
   }
