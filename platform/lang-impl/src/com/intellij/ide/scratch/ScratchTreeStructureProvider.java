@@ -33,6 +33,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.AsyncFileListener;
@@ -119,7 +120,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
         }
       };
     }, disposable);
-    ConcurrentMap<RootType, Disposable> disposables = ConcurrentFactoryMap.createMap(o -> Disposer.newDisposable(o.getDisplayName()));
+    ConcurrentMap<RootType, CheckedDisposable> disposables = ConcurrentFactoryMap.createMap(o -> Disposer.newCheckedDisposable(o.getDisplayName()));
     for (RootType rootType : RootType.getAllRootTypes()) {
       registerRootTypeUpdater(project, rootType, onUpdate, disposable, disposables);
     }
@@ -142,14 +143,15 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
                                               @NotNull RootType rootType,
                                               @NotNull Runnable onUpdate,
                                               @NotNull Disposable parentDisposable,
-                                              @NotNull Map<RootType, Disposable> disposables) {
+                                              @NotNull Map<RootType, CheckedDisposable> disposables) {
     if (rootType.isHidden()) return;
-    Disposable rootDisposable = disposables.get(rootType);
+    CheckedDisposable rootDisposable = disposables.get(rootType);
     Disposer.register(parentDisposable, rootDisposable);
 
     NonUrgentExecutor.getInstance().execute(() -> {
       ReadAction.runBlocking(() -> {
-        rootType.registerTreeUpdater(project, parentDisposable, onUpdate);
+        if (rootDisposable.isDisposed()) return;
+        rootType.registerTreeUpdater(project, rootDisposable, onUpdate);
       });
     });
   }
