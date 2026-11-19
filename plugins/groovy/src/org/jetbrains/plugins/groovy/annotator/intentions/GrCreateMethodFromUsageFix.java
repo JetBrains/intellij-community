@@ -129,9 +129,7 @@ public class GrCreateMethodFromUsageFix extends GrCreateFromUsageBaseFix impleme
   }
 
   protected @NotNull String getMethodName() {
-    var ref = getRefExpr();
-    var name = ref == null ? null : ref.getReferenceName();
-    return name != null ? name : myInitialReferenceName;
+    return myInitialReferenceName;
   }
 
   protected boolean shouldBeAbstract(PsiClass aClass) {

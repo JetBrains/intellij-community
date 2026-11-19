@@ -94,13 +94,13 @@ public class GrCreateMethodFromUsageTest {
 
   @ParameterizedTest
   @CsvSource({
-    "new A().<caret>foo, getFoo, getBar",
-    "new A().<caret>foo = 1, setFoo, setBar"
+    "new A().<caret>foo, getFoo",
+    "new A().<caret>foo = 1, setFoo"
   })
-  public void testTextAfterReferenceRename(String usage, String originalMethodName, String currentMethodName) {
+  public void testTextAfterReferenceRename(String usage, String methodName) {
     var myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", "class A {}\n" + usage);
-    var text = "Create method '" + originalMethodName + "'";
+    var text = "Create method '" + methodName + "'";
     var action = assertInstanceOf(GrCreateMethodFromUsageFix.class,
                                  IntentionActionDelegate.unwrap(myFixture.findSingleIntention(text)));
 
@@ -109,7 +109,7 @@ public class GrCreateMethodFromUsageTest {
     myFixture.doHighlighting();
 
     assertTrue(ReadAction.computeBlocking(() -> action.isAvailable(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile())));
-    assertEquals("Create method '" + currentMethodName + "'", ReadAction.computeBlocking(action::getText));
+    assertEquals(text, ReadAction.computeBlocking(action::getText));
   }
 
   public void _testSimple2() {
