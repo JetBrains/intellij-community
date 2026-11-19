@@ -161,13 +161,45 @@ impl OsRuntimeBuilder {
     }
 }
 
+/// The variables that tie a git process to one repository, as `git rev-parse --local-env-vars` lists them.
+///
+/// A parent git exports some of them to its children, such as `git rebase --exec` for each step. A child git that
+/// inherits them works on that repository and not on the one of its `-C`.
+pub const GIT_LOCAL_ENV_VARS: [&str; 15] = [
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_CONFIG",
+    "GIT_CONFIG_PARAMETERS",
+    "GIT_CONFIG_COUNT",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_IMPLICIT_WORK_TREE",
+    "GIT_GRAFT_FILE",
+    "GIT_INDEX_FILE",
+    "GIT_NO_REPLACE_OBJECTS",
+    "GIT_REPLACE_REF_BASE",
+    "GIT_PREFIX",
+    "GIT_SHALLOW_FILE",
+    "GIT_COMMON_DIR",
+];
+
+/// A `git` command without the inherited variables of [`GIT_LOCAL_ENV_VARS`], so its `-C` alone names its
+/// repository. Every git spawn of this crate starts from it, the tests included.
+pub fn git_command() -> Command {
+    let mut command = Command::new("git");
+    for name in GIT_LOCAL_ENV_VARS {
+        command.env_remove(name);
+    }
+    command
+}
+
 impl OsRuntime {
     /// The stdout of one git command in the checkout, or an error with what git said.
     ///
     /// Not through the injected spawn, for the reason of [`Runtime::list_files`]: a read of the checkout is not a
     /// subprocess that the controller must keep out of a held lease.
     fn git(&self, args: &[&str]) -> io::Result<String> {
-        let ran = Command::new("git")
+        let ran = git_command()
             .arg("-C")
             .arg(&self.repo_root)
             .args(args)
@@ -476,7 +508,7 @@ struct Git<'a> {
 /// `GIT_OPTIONAL_LOCKS=0` keeps `git status` from a refresh of the index, which would take `index.lock` from a commit
 /// that runs at the same time.
 fn git(root: &Path, args: &[&str], with: &Git<'_>) -> io::Result<Vec<u8>> {
-    let mut command = Command::new("git");
+    let mut command = git_command();
     command
         .arg("-C")
         .arg(root)

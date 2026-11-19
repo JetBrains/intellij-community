@@ -64,6 +64,17 @@ fn child_process() {
             );
             0
         }
+        script if script.starts_with("git-isolation:") => {
+            // The repository of the parent, which the inherited variables of git name a different one.
+            let repo = Path::new(&script["git-isolation:".len()..]);
+            write_in(repo, "module/Driver.kt", "first\n");
+            git_in(repo, &["init", "-q", "-b", "main"], None);
+            git_in(repo, &["add", "module/Driver.kt"], None);
+            git_in(repo, &["commit", "-q", "-m", "first"], None);
+            git_in(repo, &["branch", "published"], None);
+            let read = OsRuntime::builder(repo).build().revision_text("HEAD", "module/Driver.kt");
+            i32::from(read.ok().flatten().as_deref() != Some("first\n"))
+        }
         script => {
             if let Some(Ok(milliseconds)) = script.strip_prefix("sleep:").map(str::parse::<u64>) {
                 thread::sleep(Duration::from_millis(milliseconds));
@@ -272,10 +283,7 @@ fn lines_are_split_the_way_the_bep_reader_expects() {
 }
 
 fn git_available() -> bool {
-    Command::new("git")
-        .arg("--version")
-        .output()
-        .is_ok_and(|output| output.status.success())
+    git_command().arg("--version").output().is_ok_and(|output| output.status.success())
 }
 
 /// The directory of a test repository, or `None` where no git is installed: nothing here can stand in for git.
@@ -297,7 +305,7 @@ fn write_in(repo: &Path, path: &str, text: &str) {
 /// Runs git in `repo`, and answers its stdout without the line end. It is isolated from the configuration of the
 /// host, which may sign, hook or template a repository.
 fn git_in(repo: &Path, args: &[&str], index: Option<&Path>) -> String {
-    let mut command = Command::new("git");
+    let mut command = git_command();
     command
         .arg("-C")
         .arg(repo)
@@ -390,7 +398,7 @@ fn a_revision_reads_its_files_and_the_upstream_base_is_the_merge_base() {
     let dir = tempfile::tempdir().expect("a temporary directory");
     let repo = dir.path();
     let git = |args: &[&str]| -> String {
-        let output = Command::new("git")
+        let output = git_command()
             .arg("-C")
             .arg(repo)
             .args([
@@ -658,4 +666,38 @@ fn the_resolver_runtime_runs_the_accio_wrapper_in_the_checkout_root() {
     );
     let refused = runtime.accio(&["fail"]).expect_err("a refusal");
     assert!(refused.message.ends_with("exited with 3:\nno index"), "{}", refused.message);
+}
+
+/// A parent git, such as `git rebase --exec`, exports the variables that name its repository. A test that runs git
+/// under them, and the runtime itself, still write only their own repository, so the repository of the parent keeps
+/// its config, its refs and its index.
+#[test]
+fn an_inherited_git_dir_reaches_no_git_of_the_runtime_or_its_tests() {
+    let Some(dir) = repository_dir() else {
+        return;
+    };
+    let decoy = dir.path().join("decoy");
+    let own = dir.path().join("own");
+    std::fs::create_dir_all(&decoy).expect("mkdir");
+    git_in(&decoy, &["init", "-q", "-b", "main"], None);
+    let config = || std::fs::read_to_string(decoy.join(".git/config")).expect("the config of the decoy");
+    let before = config();
+
+    let mut command = child(None, &format!("git-isolation:{}", own.display()));
+    command
+        .env("GIT_DIR", decoy.join(".git"))
+        .env("GIT_WORK_TREE", &decoy)
+        .env("GIT_INDEX_FILE", decoy.join(".git/index"))
+        .env("GIT_COMMON_DIR", decoy.join(".git"));
+    let ran = command.output().expect("the child runs");
+    assert!(ran.status.success(), "{ran:?}");
+
+    assert_eq!(config(), before, "the child changed the config of the decoy");
+    assert_eq!(git_in(&decoy, &["for-each-ref"], None), "", "the child wrote a ref of the decoy");
+    assert!(!decoy.join(".git/index").exists(), "the child wrote the index of the decoy");
+    assert_eq!(git_in(&own, &["log", "--format=%s"], None), "first");
+    assert_eq!(
+        git_in(&own, &["branch", "--list", "published", "--format=%(refname)"], None),
+        "refs/heads/published"
+    );
 }
