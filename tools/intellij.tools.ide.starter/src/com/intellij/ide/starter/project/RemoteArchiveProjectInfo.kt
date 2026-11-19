@@ -21,17 +21,17 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Project stored on a remote server as an archive
+ * Project stored on a remote server as an archive.
  */
-data class RemoteArchiveProjectInfo(
-  val projectURL: String,
+open class RemoteArchiveProjectInfoBase(
+  open val projectURL: String,
   override val isReusable: Boolean = false,
   override val downloadTimeout: Duration = 10.minutes,
   override val configureProjectBeforeUse: (IDETestContext) -> Unit = {},
   /**
    * Relative path inside top-level archive directory, where project home is located
    */
-  val projectHomeRelativePath: (Path) -> Path = { it },
+  open val projectHomeRelativePath: (Path) -> Path = { it },
   private val description: String = "",
   private val stripRoot: Boolean = true,
   private val unpackInplace: Boolean = false
@@ -96,7 +96,7 @@ data class RemoteArchiveProjectInfo(
     return projectHome
   }
 
-  private fun String.transformUrlToZipName(): String {
+  protected open fun String.transformUrlToZipName(): String {
     // A host can serve the mirror under this path. The rest of the url names the archive on each host.
     val mirrorPath = "/files/p/ij/space-vcs-archive-mirror/"
     val spaceVcsArchiveMirrorPrefix = projectURL.indexOf(mirrorPath).takeIf { it >= 0 }
@@ -107,16 +107,6 @@ data class RemoteArchiveProjectInfo(
       }
       spaceVcsArchiveMirrorPrefix != null -> {
         this.removePrefix(spaceVcsArchiveMirrorPrefix).split("/").joinToString("_", postfix = ".zip")
-      }
-      projectURL.contains("https://kmp.jetbrains.com") -> {
-        val regex = Regex("""[?&]name=([^&]+)""", RegexOption.IGNORE_CASE)
-        val nameEncoded = regex.find(this)?.groupValues?.getOrNull(1)
-        val name = nameEncoded
-          ?.let { java.net.URLDecoder.decode(it, StandardCharsets.UTF_8) }
-          ?.trim()
-          ?.takeIf { it.isNotEmpty() }
-          ?: "kmp_project"
-        "$name.zip"
       }
       else -> projectURL.split("/").last()
     }
@@ -129,3 +119,29 @@ data class RemoteArchiveProjectInfo(
   /** The name of the archive. The content of the archive is not known before the download. */
   override fun getName(): String = projectURL.transformUrlToZipName().removeSuffix(".zip")
 }
+
+/**
+ * Project stored on a remote server as an archive
+ */
+data class RemoteArchiveProjectInfo(
+  override val projectURL: String,
+  override val isReusable: Boolean = false,
+  override val downloadTimeout: Duration = 10.minutes,
+  override val configureProjectBeforeUse: (IDETestContext) -> Unit = {},
+  /**
+   * Relative path inside top-level archive directory, where project home is located
+   */
+  override val projectHomeRelativePath: (Path) -> Path = { it },
+  private val description: String = "",
+  private val stripRoot: Boolean = true,
+  private val unpackInplace: Boolean = false
+) : RemoteArchiveProjectInfoBase(
+  projectURL,
+  isReusable,
+  downloadTimeout,
+  configureProjectBeforeUse,
+  projectHomeRelativePath,
+  description,
+  stripRoot,
+  unpackInplace,
+)
