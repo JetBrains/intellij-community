@@ -43,7 +43,7 @@ public abstract class FileIndexBase implements FileIndex {
     return myWorkspaceFileIndex.processContentUnderDirectory(dir, processorEx, customFilter, fileSet -> !isScopeDisposed() && isInContent(fileSet));
   }
 
-  private static @NotNull ContentIteratorEx toContentIteratorEx(@NotNull ContentIterator processor) {
+  static @NotNull ContentIteratorEx toContentIteratorEx(@NotNull ContentIterator processor) {
     if (processor instanceof ContentIteratorEx) {
       return (ContentIteratorEx)processor;
     }

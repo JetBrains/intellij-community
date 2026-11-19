@@ -90,13 +90,6 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return true;
   }
 
-  private static @NotNull ContentIteratorEx toContentIteratorEx(@NotNull ContentIterator processor) {
-    if (processor instanceof ContentIteratorEx) {
-      return (ContentIteratorEx)processor;
-    }
-    return fileOrDir -> processor.processFile(fileOrDir) ? TreeNodeProcessingResult.CONTINUE : TreeNodeProcessingResult.STOP;
-  }
-
   private @Nullable Pair<Collection<VirtualFile>, Collection<VirtualFile>> collectContentRoots(boolean includeNonIndexable) {
     Project project = myModule.getProject();
     if (project.isDisposed()) return null;

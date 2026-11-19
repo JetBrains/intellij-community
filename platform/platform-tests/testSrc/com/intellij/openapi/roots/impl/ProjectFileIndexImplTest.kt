@@ -2,9 +2,11 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.platform.backend.workspace.storeAndGet
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -12,6 +14,8 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.workspaceModel.update
+import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
 import com.intellij.util.indexing.testEntities.NonRecursiveFileSetContributor
@@ -39,6 +43,7 @@ internal class ProjectFileIndexImplTest {
   fun setUp() {
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonRecursiveFileSetContributor(), disposable)
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetTestContributor(), disposable)
   }
 
   /**
@@ -61,6 +66,45 @@ internal class ProjectFileIndexImplTest {
     assertThat(iterated).containsExactlyInAnyOrder(outerDir.path, projectDir.path, assetsDir.path, asset.path)
   }
 
+  /** A walk without a filter visits a root of two file sets once. */
+  @Test
+  fun `iterateContent without a filter visits a non-recursive root inside a recursive root once`(): Unit = timeoutRunBlocking {
+    val outerDir = tempDir.newVirtualDirectory("outer")
+    val innerDir = tempDir.newVirtualDirectory("outer/inner")
+    registerRecursiveContentRoot(outerDir)
+    registerNonRecursiveContentRoot(innerDir)
+
+    val iterated = iterateContent()
+
+    assertThat(iterated.filter { it == innerDir.path }).hasSize(1)
+  }
+
+  /** A custom filter can need the read lock, so the walk still runs it under a read action. */
+  @Test
+  fun `iterateContent with a filter runs the filter in a read action`(): Unit = timeoutRunBlocking {
+    val root = tempDir.newVirtualDirectory("content")
+    val file = tempDir.newVirtualFile("content/a.txt")
+    registerRecursiveContentRoot(root)
+
+    val filtered = mutableListOf<String>()
+    val iterated = iterateContent(VirtualFileFilter { candidate ->
+      assertThat(ApplicationManager.getApplication().isReadAccessAllowed).isTrue()
+      filtered.add(candidate.path)
+      true
+    })
+
+    assertThat(filtered).contains(file.path)
+    assertThat(iterated).contains(file.path)
+  }
+
+  private suspend fun registerRecursiveContentRoot(root: VirtualFile) {
+    workspaceModel.update { storage ->
+      storage.addEntity(
+        IndexingTestEntity(listOf(virtualFileUrlManager.storeAndGet(root)), emptyList(), NonPersistentEntitySource)
+      )
+    }
+  }
+
   private suspend fun registerNonRecursiveContentRoot(root: VirtualFile) {
     workspaceModel.update { storage ->
       storage.addEntity(NonRecursiveTestEntity(virtualFileUrlManager.storeAndGet(root), NonPersistentEntitySource))
@@ -74,12 +118,12 @@ internal class ProjectFileIndexImplTest {
   }
 
   /** Paths, not files: cache-avoiding root wrappers do not compare by identity. */
-  private fun iterateContent(): List<String> {
+  private fun iterateContent(filter: VirtualFileFilter? = null): List<String> {
     val paths = mutableListOf<String>()
     ProjectFileIndex.getInstance(projectModel.project).iterateContent(ContentIterator { file ->
       paths.add(file.path)
       true
-    })
+    }, filter)
     return paths
   }
 }
