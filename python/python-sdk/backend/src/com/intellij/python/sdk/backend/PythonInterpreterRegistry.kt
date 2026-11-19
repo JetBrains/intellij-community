@@ -1,24 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.python.sdk.backend.impl.PythonInterpreterStore
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -41,7 +35,7 @@ import java.nio.file.Path
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class PythonInterpreterRegistry(project: Project, private val scope: CoroutineScope) {
+class PythonInterpreterRegistry(project: Project, scope: CoroutineScope) {
   /** The state and the storage behind this API. */
   internal val store: PythonInterpreterStore = PythonInterpreterStore(project, scope)
 
@@ -126,17 +120,6 @@ class PythonInterpreterRegistry(project: Project, private val scope: CoroutineSc
    * records, so the computation of a snapshot does not call it.
    */
   suspend fun findEnsuringRecord(key: PythonInterpreterKey): PythonInterpreter? = store.findEnsuringRecord(key)
-
-  /**
-   * Calls [listener] on the EDT after each computation of the list, until [parentDisposable] is disposed. A computation
-   * that changes nothing also calls it. For a UI that cannot collect a flow, such as a Java form.
-   */
-  fun addChangeListener(parentDisposable: Disposable, listener: Runnable) {
-    val job = scope.launch(Dispatchers.EDT) {
-      store.allFlow.drop(1).collect { listener.run() }
-    }
-    Disposer.register(parentDisposable) { job.cancel() }
-  }
 
   /**
    * The interpreters of all the [PyProject]s of this project, for All Interpreters. That page shows them as a history.
