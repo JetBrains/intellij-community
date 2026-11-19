@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The bash half of the polyglot wrappers, without Bazel: the Git Bash hand-off, the roots in both checkout layouts,
-// the override, the build step against a stand-in `bazel.cmd`, and the jscpd paths that need no Bazel. The event file
-// reader of the CMD half runs when a PowerShell is on PATH.
+// the override, the user cache, the build step against a stand-in `bazel.cmd`, and the jscpd paths that need no Bazel.
+// The event file reader of the CMD half runs when a PowerShell is on PATH.
 // Run with `node --test community/tools/polyglot-wrapper.test.mjs`.
 
 import {after, before, describe, it} from "node:test"
@@ -130,6 +130,33 @@ describe("the override", () => {
     const result = bash([join(toolsDir, "bt.cmd")], {env: {AIR_BT_BIN: join(scratch, "missing")}})
     equal(result.status, 6)
     match(result.stderr, /^bt: AIR_BT_BIN is not an executable file: /)
+  })
+})
+
+describe("the user cache", () => {
+  /**
+   * @param {Record<string, string | undefined>} variables the values of HOME and OSTYPE, undefined to unset one
+   */
+  function userCache(variables) {
+    const assignments = Object.entries(variables)
+      .map(([name, value]) => (value === undefined ? `unset ${name}` : `${name}="${value}"`))
+      .join("; ")
+    const script = `. "${toolsDir}/polyglot-wrapper.sh"; root=/checkout; ${assignments}; polyglot_user_cache openspec; printf "%s" "$user_cache"`
+    const result = bash(["-c", script])
+    equal(result.status, 0, result.stderr)
+    return result.stdout
+  }
+
+  it("is the cache of the monorepo tools on macOS, as tool-wrapper.sh has it", () => {
+    equal(userCache({HOME: "/home/u", OSTYPE: "darwin25"}), "/home/u/Library/Caches/JetBrains/monorepo-tools/openspec")
+  })
+
+  it("is the cache of the monorepo tools on Linux, as tool-wrapper.sh has it", () => {
+    equal(userCache({HOME: "/home/u", OSTYPE: "linux-gnu"}), "/home/u/.cache/JetBrains/monorepo-tools/openspec")
+  })
+
+  it("is the out folder of the checkout without HOME", () => {
+    equal(userCache({HOME: undefined, OSTYPE: "darwin25"}), "/checkout/out/openspec")
   })
 })
 
