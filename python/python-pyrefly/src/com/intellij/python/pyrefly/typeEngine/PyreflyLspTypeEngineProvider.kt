@@ -6,13 +6,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.LspClientManager
-import com.intellij.platform.lsp.api.ensureClientStarted
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyrefly.PyreflyExecutableProvider
 import com.intellij.python.pyrefly.PyreflyPyTool
-import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
-import com.intellij.python.pyrefly.lsp.pyreflyDescriptor
+import com.intellij.python.pyrefly.lsp.pyreflyTypeEngineDescriptor
 import com.jetbrains.python.psi.types.engine.PyTypeEngine
 import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 
@@ -61,7 +59,7 @@ class PyreflyLspTypeEngineProvider : PyTypeEngineProvider {
     }
 
     LspClientManager.getInstance(project)
-      .ensureClientStarted<PyreflyLspIntegrationProvider>(pyreflyDescriptor(evoPyProject.pyProject))
+      .ensureClientStarted(PyreflyPyTool.typeEngineProviderClass(), pyreflyTypeEngineDescriptor(evoPyProject.pyProject))
     return PyreflyLspTypeEngine(evoPyProject.pyProject)
   }
 

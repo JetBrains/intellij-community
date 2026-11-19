@@ -18,13 +18,16 @@ import com.intellij.platform.lsp.api.customization.LspFoldingRangeDisabled
 import com.intellij.python.lsp.core.PyLspToolCustomization
 import com.intellij.python.lsp.core.PyLspToolDescriptor
 import com.intellij.python.lsp.core.PyLspToolSettings
+import com.intellij.python.lsp.core.isActiveOn
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspServerModificationTracker
 import com.intellij.python.pyrefly.PyreflyBundle
 import com.intellij.python.pyrefly.PyreflyConfiguration
 import com.intellij.python.pyrefly.PyreflyExecutableProvider
 import com.intellij.python.pyrefly.PyreflyPyTool
+import com.intellij.python.pyrefly.PyreflyTypeEngineConfiguration
 import com.intellij.python.pyrefly.PyreflyUsageCollector
+import com.intellij.python.pytools.backend.PyTypeEngineSelectableTool
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.project.PyProject
@@ -37,17 +40,33 @@ import org.eclipse.lsp4j.InitializeResult
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
 
+/**
+ * A Pyrefly server for [servedProjects].
+ *
+ * With [runsBundledPyrefly], the server runs the binary of the plugin for the type engine, and it reads
+ * [PyreflyTypeEngineConfiguration]. Otherwise it runs the `pyrefly` of the environment for the External Tools
+ * tool, and it reads [PyreflyConfiguration].
+ */
 class PyreflyLspClientDescriptor(
   pyProject: PyProject,
   servedProjects: List<PyProject> = listOf(pyProject),
-) : PyLspToolDescriptor(pyProject, PyreflyPyTool.getInstance(), servedProjects) {
+  val runsBundledPyrefly: Boolean = false,
+) : PyLspToolDescriptor(
+  pyProject,
+  PyreflyPyTool.getInstance(),
+  servedProjects,
+  if (runsBundledPyrefly) PyreflyBundle.message("pyrefly.bundled.server.name") else PyreflyPyTool.getInstance().lspServerName,
+) {
   override val toolConfig: PyLspToolSettings
-    get() = project.service<PyreflyConfiguration>()
+    get() = if (runsBundledPyrefly) PyreflyTypeEngineConfiguration.getInstance(project) else project.service<PyreflyConfiguration>()
+
+  override val servesTypeEngine: Boolean
+    get() = if (runsBundledPyrefly) PyreflyPyTool.getInstance().runsBundledPyrefly(project) else super.servesTypeEngine
 
   override val lsp4jServerClass: Class<out Lsp4jServer>
     get() = PyreflyLsp4jServer::class.java
 
-  override val lspCustomization: PyLspToolCustomization = object : PyLspToolCustomization(toolConfig, pyTool, project) {
+  override val lspCustomization: PyLspToolCustomization = object : PyLspToolCustomization(toolConfig, pyTool, project, ::isActive) {
     override val foldingRangeCustomizer: LspFoldingRangeCustomizer = LspFoldingRangeDisabled
 
     override val diagnosticsSupport: PyLspToolDiagnosticsSupport = object : PyLspToolDiagnosticsSupport() {
@@ -95,8 +114,11 @@ class PyreflyLspClientDescriptor(
 
   override val usesExcludedRoots: Boolean = true
 
-  val runsBundledPyrefly: Boolean
-    get() = PyreflyPyTool.getInstance().isSelectedAsTypeEngine(project) && PyreflyPyTool.isBundledPyreflyEnabled()
+  /** Whether this server may serve now: the bundled one for the type engine, the other one for the External Tools tool. */
+  private fun isActive(): Boolean = when {
+    runsBundledPyrefly -> PyreflyPyTool.getInstance().runsBundledPyrefly(project)
+    else -> pyTool.isActiveOn(project) || (pyTool as? PyTypeEngineSelectableTool)?.runsForExternalTypeEngine(project) == true
+  }
 
   override fun hasExecutable(): Boolean {
     if (!runsBundledPyrefly) {

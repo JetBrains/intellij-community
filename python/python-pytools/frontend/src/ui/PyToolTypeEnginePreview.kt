@@ -32,6 +32,25 @@ class PyToolTypeEnginePreview(private val project: Project) {
   val pendingDisable: AtomicProperty<Set<String>> = AtomicProperty(emptySet())
 
   /**
+   * Package names of the engines that run a server of their own, apart from the tool of the same package.
+   *
+   * Only the Type Engine page writes it, from the backend state, because this module cannot depend on the Type Engine
+   * module. [stagedEnginePackage] cannot carry this fact, because the Type Engine page also reads it back to select its
+   * engine button. The readers do not use this set directly. They ask [engineRunsTool].
+   */
+  val ownServerPackages: AtomicProperty<Set<String>> = AtomicProperty(emptySet())
+
+  /**
+   * Returns true when the engine [enginePackage] runs the tool [toolPackage].
+   *
+   * An engine runs the tool of its own package, unless the engine runs a server of its own, see [ownServerPackages].
+   * [enginePackage] takes the values of [stagedEnginePackage]. Every reader of the External Tools page asks this, so
+   * the staged-engine observer and the engine check of a row decide the same way.
+   */
+  fun engineRunsTool(enginePackage: String?, toolPackage: String): Boolean =
+    enginePackage == toolPackage && enginePackage !in ownServerPackages.get()
+
+  /**
    * Returns true when the persisted enabled flag of the tool [packageName] is on.
    *
    * The selected engine runs its tool without this flag. So only a tool with this flag on stays in use after
