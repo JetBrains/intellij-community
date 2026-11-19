@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.minor.facet
 
+import com.intellij.python.community.plugin.impl.facet.PythonFacet
+import com.intellij.python.community.plugin.impl.facet.PythonFacetType
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
@@ -21,7 +23,7 @@ fun setSdkToFacet(item: Sdk?, module: Module) {
 
 private fun setSdkToFacetImpl(item: Sdk?, module: Module) {
   val facetManager = FacetManager.getInstance(module)
-  val facet = facetManager.getFacetByType(MinorPythonFacet.ID)
+  val facet = facetManager.getFacetByType(PythonFacet.ID)
   if (facet == null) {
     ApplicationManager.getApplication().runWriteAction {
       addFacet(facetManager, item, module)
@@ -33,7 +35,7 @@ private fun setSdkToFacetImpl(item: Sdk?, module: Module) {
 }
 
 private fun setFacetSdk(
-  facet: MinorPythonFacet,
+  facet: PythonFacet,
   item: Sdk?,
   module: Module,
 ) {
@@ -51,6 +53,6 @@ private fun addFacet(
   module: Module,
 ) {
   val facet = facetManager.addFacet(
-    MinorPythonFacetType.getInstance(), "Python facet", null)
+    PythonFacetType.getInstance(), "Python facet", null)
   setFacetSdk(facet, sdk, module)
 }

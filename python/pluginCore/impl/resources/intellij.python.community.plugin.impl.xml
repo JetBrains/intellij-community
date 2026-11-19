@@ -26,6 +26,7 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <facetType implementation="com.intellij.python.community.plugin.impl.facet.PythonFacetType"/>
   </extensions>
 
   <actions resource-bundle="messages.PyBundle">

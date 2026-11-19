@@ -21,6 +21,7 @@ import com.intellij.openapi.options.NoAutomaticReset
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.util.PlatformUtils
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -45,6 +46,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
+import com.jetbrains.python.project.asPyProjectCandidate
 import com.jetbrains.python.project.asPyProjectOrCandidate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -464,16 +466,22 @@ internal class PyWorkspaceStructureScope(val scope: CoroutineScope)
 
 /**
  * The modules that the Python > Workspace page lists: the modules of the Python projects of the [EvoPyProjectModel]
- * snapshot, by name. Without a Python project, it is the root module, see [workspaceAddTargetOf]. It gets the regular
- * pane as a Python project candidate, see [asPyProjectOrCandidate]. Another module that is no Python project is not listed.
+ * snapshot, by name. With [listsEveryModule], as in IntelliJ IDEA, every other module with a content root follows.
+ * Without it, as in GoLand or WebStorm, the root module follows only when there is no Python project, see
+ * [workspaceAddTargetOf]. Each other module gets the regular pane as a Python project candidate, see
+ * [asPyProjectOrCandidate], and the interpreter that the user sets makes it a Python project.
  */
-internal fun workspaceModulesOf(project: Project): List<Module> {
+internal fun workspaceModulesOf(project: Project, listsEveryModule: Boolean = PlatformUtils.isIntelliJ()): List<Module> {
   val pyProjectModules = EvoPyProjectModel.getInstance(project).snapshotOrNull()?.evoPyProjects.orEmpty()
     .map { it.pyProject.residesOnModule }
     .distinct()
     .sortedBy { it.name }
     .toList()
-  return pyProjectModules.ifEmpty { listOfNotNull(workspaceAddTargetOf(project)) }
+  if (!listsEveryModule) return pyProjectModules.ifEmpty { listOfNotNull(workspaceAddTargetOf(project)) }
+  val others = ModuleManager.getInstance(project).modules
+    .filter { it !in pyProjectModules && it.asPyProjectCandidate() != null }
+    .sortedBy { it.name }
+  return pyProjectModules + others
 }
 
 /**

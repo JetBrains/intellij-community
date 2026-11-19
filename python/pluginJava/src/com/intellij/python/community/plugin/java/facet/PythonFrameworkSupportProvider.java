@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.facet;
 
+import com.intellij.python.community.plugin.impl.facet.PythonFacetType;
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
@@ -15,7 +16,7 @@ import javax.swing.Icon;
 
 final class PythonFrameworkSupportProvider extends FrameworkSupportProvider {
   PythonFrameworkSupportProvider() {
-    super("Python", JavaPythonFacetType.getInstance().getPresentableName());
+    super("Python", PythonFacetType.getInstance().getPresentableName());
   }
 
   @Override
@@ -35,6 +36,6 @@ final class PythonFrameworkSupportProvider extends FrameworkSupportProvider {
 
   @Override
   public boolean isSupportAlreadyAdded(@NotNull Module module) {
-    return !FacetManager.getInstance(module).getFacetsByType(JavaPythonFacetType.getInstance().getId()).isEmpty();
+    return !FacetManager.getInstance(module).getFacetsByType(PythonFacetType.getInstance().getId()).isEmpty();
   }
 }

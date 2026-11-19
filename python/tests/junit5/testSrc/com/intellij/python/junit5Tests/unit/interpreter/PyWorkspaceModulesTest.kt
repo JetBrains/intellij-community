@@ -31,6 +31,29 @@ internal class PyWorkspaceModulesTest {
     val model = EvoPyProjectModel.getInstance(project)
     while (model.snapshotOrNull()?.forPyProject(pyProject) == null) delay(50.milliseconds)
 
-    assertThat(workspaceModulesOf(project)).containsExactly(pyProject.residesOnModule)
+    assertThat(workspaceModulesOf(project, listsEveryModule = false)).containsExactly(pyProject.residesOnModule)
+  }
+}
+
+/**
+ * In IntelliJ IDEA the Python > Workspace page lists every module with a content root, the Python projects first. The
+ * pane of another module sets its first interpreter, which makes it a Python project.
+ */
+@TestApplication
+internal class PyWorkspaceEveryModuleTest {
+  private val projectFixture = projectFixture()
+  private val pyProjectFixture = projectFixture.pyProjectFixture(projectFixture.pathInProjectFixture(Path("app")))
+  private val withoutRootFixture = projectFixture.moduleFixture("without-root")
+
+  @Test
+  fun `every module with a content root is listed, the Python projects first`(): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    val pyProject = pyProjectFixture.get()
+    withoutRootFixture.get()
+    val model = EvoPyProjectModel.getInstance(project)
+    while (model.snapshotOrNull()?.forPyProject(pyProject) == null) delay(50.milliseconds)
+
+    // A module without a content root can be no Python project, so it has no pane and is not listed.
+    assertThat(workspaceModulesOf(project, listsEveryModule = true)).containsExactly(pyProject.residesOnModule)
   }
 }

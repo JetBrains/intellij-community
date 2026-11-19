@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.facet;
 
+import com.intellij.python.community.plugin.impl.facet.PythonFacet;
+import com.intellij.python.community.plugin.impl.facet.PythonFacetType;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
@@ -62,7 +64,7 @@ final class PythonFrameworkSupportConfigurable extends FrameworkSupportConfigura
   public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel model, @Nullable Library library) {
     final FacetManager facetManager = FacetManager.getInstance(module);
     ModifiableFacetModel facetModel = facetManager.createModifiableModel();
-    JavaPythonFacet facet = facetManager.createFacet(JavaPythonFacetType.getInstance(), "Python", null);
+    PythonFacet facet = facetManager.createFacet(PythonFacetType.getInstance(), "Python", null);
     if (mySdkComboBox != null) {
       facet.getConfiguration().setSdk(mySdkComboBox.getSelectedSdk());
     }
