@@ -97,7 +97,8 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass
 
     var errors: MutableList<ProblemDescriptor>? = null
     loop@ for (method in constructors) {
-      if (isAllowedParameters(method.parameterList, extensionPoint, isAppLevelExtensionPoint, serviceClientKind, isServiceAnnotation)) {
+      if (isAllowedParameters(method.parameterList, extensionPoint, isAppLevelExtensionPoint, area == Area.IDEA_WORKSPACE,
+                              serviceClientKind, isServiceAnnotation)) {
         // allow to have empty constructor and extra (e.g. DartQuickAssistIntention)
         return null
       }
@@ -120,6 +121,7 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass
           when {
             isAppLevelExtensionPoint -> ""
             area == Area.IDEA_PROJECT -> DevKitBundle.message("inspections.non.default.warning.suffix.project")
+            area == Area.IDEA_WORKSPACE -> DevKitBundle.message("inspections.non.default.warning.suffix.workspace")
             else -> DevKitBundle.message("inspections.non.default.warning.suffix.module")
           }
         }
@@ -136,10 +138,12 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass
     when (areaName) {
       "IDEA_PROJECT" -> return Area.IDEA_PROJECT
       "IDEA_MODULE" -> return Area.IDEA_MODULE
+      "IDEA_WORKSPACE" -> return Area.IDEA_WORKSPACE
       else -> {
         when (extensionPoint.name.value) {
           "projectService" -> return Area.IDEA_PROJECT
           "moduleService" -> return Area.IDEA_MODULE
+          "workspaceService" -> return Area.IDEA_WORKSPACE
         }
       }
     }
@@ -243,6 +247,7 @@ private val allowedClientProjectSessionsQualifiedNames = setOf(
 private val allowedServiceQualifiedNames = setOf(
   "com.intellij.openapi.project.Project",
   "com.intellij.openapi.module.Module",
+  "com.intellij.openapi.workspace.ProjectWorkspace",
   "com.intellij.util.messages.MessageBus",
   "com.intellij.openapi.options.SchemeManagerFactory",
   "com.intellij.openapi.editor.actionSystem.TypedActionHandler",
@@ -255,6 +260,7 @@ private val allowedServiceNames = allowedServiceQualifiedNames.mapTo(HashSet(all
 private fun isAllowedParameters(list: PsiParameterList,
                                 extensionPoint: ExtensionPoint?,
                                 isAppLevelExtensionPoint: Boolean,
+                                isWorkspaceArea: Boolean,
                                 clientKind: ClientKind?,
                                 isServiceAnnotation: Boolean): Boolean {
   if (list.isEmpty) {
@@ -281,6 +287,14 @@ private fun isAllowedParameters(list: PsiParameterList,
 
     val qualifiedName = (type.resolve() ?: return false).qualifiedName
     if (!allowedServiceQualifiedNames.contains(qualifiedName)) {
+      return false
+    }
+
+    if (name == "ProjectWorkspace" && !isWorkspaceArea && !isServiceAnnotation) {
+      return false
+    }
+
+    if (isWorkspaceArea && (name == "Project" || name == "Module")) {
       return false
     }
 

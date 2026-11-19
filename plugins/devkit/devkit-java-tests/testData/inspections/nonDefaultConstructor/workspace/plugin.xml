@@ -1,0 +1,15 @@
+<idea-plugin>
+  <id>com.intellij</id>
+
+  <extensionPoints>
+    <extensionPoint name="workspaceService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+    <extensionPoint name="workspaceExtension" interface="java.lang.Runnable" area="IDEA_WORKSPACE"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <workspaceService serviceImplementation="workspace.WorkspaceService"/>
+    <workspaceService serviceImplementation="workspace.WorkspaceServiceWithProject"/>
+    <workspaceExtension implementation="workspace.WorkspaceExtension"/>
+  </extensions>
+
+</idea-plugin>
