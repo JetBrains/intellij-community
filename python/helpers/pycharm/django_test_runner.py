@@ -1,4 +1,4 @@
-from tcunittest import TeamcityTestRunner, TeamcityTestResult
+from tcunittest import TeamcityTestRunner, TeamcityTestResult, class_level_error_suite
 from tcmessages import TeamcityServiceMessages
 import sys
 from pycharm_run_utils import adjust_django_sys_path
@@ -92,6 +92,9 @@ class DjangoTeamcityTestResult(TeamcityTestResult):
     super(DjangoTeamcityTestResult, self).__init__(**kwargs)
 
   def _getSuite(self, test):
+    class_level_error = class_level_error_suite(test, "django_testid://")
+    if class_level_error:
+      return class_level_error
     if hasattr(test, "suite"):
       suite = strclass(test.suite)
       suite_location = test.suite.location
