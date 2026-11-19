@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.workspace.ProjectWorkspace
 import org.jetbrains.annotations.TestOnly
 
 private val testDescriptor by lazy { DefaultPluginDescriptor("test") }
@@ -103,6 +104,7 @@ fun processAllServiceDescriptors(componentManager: ComponentManager, consumer: (
     val containerDescriptor = when (componentManager) {
       is Application -> pluginDescriptor.appContainerDescriptor
       is Project -> pluginDescriptor.projectContainerDescriptor
+      is ProjectWorkspace -> pluginDescriptor.workspaceContainerDescriptor
       else -> pluginDescriptor.moduleContainerDescriptor
     }
     containerDescriptor.services.forEach {
