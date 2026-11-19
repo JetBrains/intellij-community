@@ -14,7 +14,6 @@ import com.intellij.terminal.frontend.session.TerminalSessionsManager
 import com.intellij.terminal.frontend.session.createStandardStateAwareTerminalSession
 import com.intellij.terminal.frontend.session.createTerminalSession
 import com.intellij.terminal.frontend.session.ketraterm.KetraTermTerminalSession
-import com.intellij.terminal.frontend.session.ketraterm.createKetraTermTerminalSession
 import com.intellij.terminal.frontend.session.startStandardTerminalSession
 import com.intellij.terminal.frontend.session.startTerminalProcess
 import com.intellij.terminal.frontend.session.toDto
@@ -42,6 +41,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import org.jetbrains.plugins.terminal.session.TerminalGridSize
+import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.toState
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
@@ -156,7 +157,6 @@ object TerminalSessionTestUtil {
     initialGridGeometry: TerminalGridGeometry = DEFAULT_GRID_GEOMETRY,
     processType: TerminalProcessType = TerminalProcessType.SHELL,
     shellCommand: List<String> = emptyList(),
-    useDocumentRenderer: Boolean = false,
   ): Pair<TerminalSession, LoopbackTtyConnector> {
     val connector = LoopbackTtyConnector()
     val workingDirectory = System.getProperty("user.home")
@@ -169,12 +169,8 @@ object TerminalSessionTestUtil {
       .shellCommand(shellCommand)
       .build()
     val delegateScope = coroutineScope.childScope("original session")
-    val delegate = if (useDocumentRenderer) {
-      require(emulatorType == TerminalEmulatorType.KetraTerm)
-      createKetraTermTerminalSession(project, connector, options, JBTerminalSystemSettingsProvider(), delegateScope, useDocumentRenderer = true)
-    }
-    else createTerminalSession(project, connector, options, JBTerminalSystemSettingsProvider(), delegateScope)
-    if (isLowLevelSession || delegate is KetraTermTerminalSession && !useDocumentRenderer) {
+    val delegate = createTerminalSession(project, connector, options, JBTerminalSystemSettingsProvider(), delegateScope)
+    if (isLowLevelSession || delegate is KetraTermTerminalSession) {
       return delegate to connector
     }
     val startupOptions = TerminalStartupOptionsImpl(
@@ -190,6 +186,9 @@ object TerminalSessionTestUtil {
 
   /** The geometry of [createLoopbackTerminalSession]: an 80x24 grid without a cell pixel size. */
   val DEFAULT_GRID_GEOMETRY: TerminalGridGeometry = TerminalGridGeometry(TerminalSize(80, 24))
+
+  fun resizeEvent(size: TerminalGridSize): TerminalResizeEvent =
+    TerminalResizeEvent(DEFAULT_GRID_GEOMETRY.toDto().copy(gridSize = size))
 
   suspend fun TerminalSession.awaitOutputEvent(targetEvent: TerminalOutputEvent) {
     return coroutineScope {

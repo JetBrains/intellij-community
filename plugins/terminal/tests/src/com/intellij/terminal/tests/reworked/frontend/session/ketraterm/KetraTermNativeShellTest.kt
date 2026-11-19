@@ -7,7 +7,6 @@ import com.intellij.terminal.frontend.session.ketraterm.createKetraTermTerminalS
 import com.intellij.terminal.frontend.session.ketraterm.localKetraTermDirectory
 import com.intellij.terminal.tests.reworked.util.LoopbackTtyConnector
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.jediterm.core.util.TermSize
 import io.github.ketraterm.session.TerminalSessionState
@@ -26,7 +25,6 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
@@ -34,7 +32,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 
 @TestApplication
-@SystemProperty(propertyKey = "ketraterm.experimental.enableDocumentModel", propertyValue = "true")
 internal class KetraTermNativeShellTest {
   @Test
   fun `native hooks preserve prompt and command boundaries`(@TempDir scripts: Path): Unit = timeoutRunBlocking {
@@ -54,18 +51,18 @@ internal class KetraTermNativeShellTest {
                    "\u001b]133;C\u0007\r\noutput\r\n\u001b]133;D;7\u0007"
       stream.forEach { connector.feed(it.toString()) }
       var enabled = false
-      var beforePrompt = ""
+      var promptFinished = false
       var started = false
       while (true) {
         when (val event = events.receive()) {
           is TerminalStateChangedEvent -> enabled = event.state.isShellIntegrationEnabled
-          is TerminalContentUpdatedEvent -> beforePrompt = event.text
           TerminalPromptFinishedEvent -> {
             assertThat(enabled).isTrue()
-            assertThat(beforePrompt).contains("PS> ").doesNotContain("echo native")
+            promptFinished = true
           }
           is TerminalCommandStartedEvent -> {
             assertThat(event.command).isEqualTo("echo native")
+            assertThat(promptFinished).isTrue()
             started = true
           }
           is TerminalCommandFinishedEvent -> {

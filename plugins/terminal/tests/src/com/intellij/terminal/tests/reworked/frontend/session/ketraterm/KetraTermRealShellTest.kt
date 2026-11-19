@@ -5,9 +5,9 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.session.ketraterm.KetraTermTerminalSession
 import com.intellij.terminal.frontend.session.ketraterm.localKetraTermDirectory
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil
+import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.resizeEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import io.github.ketraterm.input.event.TerminalKey
 import io.github.ketraterm.input.event.TerminalKeyEvent
@@ -30,7 +30,6 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
@@ -43,23 +42,14 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 @TestApplication
-@SystemProperty(propertyKey = "ketraterm.experimental.enableDocumentModel", propertyValue = "true")
-@SystemProperty(propertyKey = "ketraterm.experimental.disableDocumentModel", propertyValue = "false")
-internal class KetraTermRealShellTest : KetraTermRealShellTestCase(documentProjection = true)
-
-@TestApplication
-@SystemProperty(propertyKey = "ketraterm.experimental.enableDocumentModel", propertyValue = "false")
-@SystemProperty(propertyKey = "ketraterm.experimental.disableDocumentModel", propertyValue = "true")
-internal class KetraTermRealShellNativeTest : KetraTermRealShellTestCase(documentProjection = false)
-
-internal abstract class KetraTermRealShellTestCase(private val documentProjection: Boolean) {
+internal class KetraTermRealShellTest {
   @ParameterizedTest(name = "{0}")
   @MethodSource("shells")
   fun `PowerShell evaluates pasted lines in clipboard order`(shellPath: Path?): Unit = runShell(shellPath) { session, events ->
     val text = "@(\r\n'first'\r\n'second'\r\n) -join ':'"
     assertThat(session.sendText(TerminalSendTextOptions(text, shouldExecute = false, useBracketedPasteMode = true))).isTrue()
     assertThat(session.terminalSession.submitInput(TerminalKeyEvent.key(TerminalKey.ENTER))).isEqualTo(TerminalInputAdmission.ACCEPTED)
-    session.awaitContent(events, "first:second")
+    session.awaitContent("first:second")
     events.awaitEvent("shell prompt after paste") { it == TerminalPromptFinishedEvent }
   }
 
@@ -101,7 +91,7 @@ internal abstract class KetraTermRealShellTestCase(private val documentProjectio
     assertThat(session.sendText(TerminalSendTextOptions(program, shouldExecute = true, useBracketedPasteMode = false))).isTrue()
     events.awaitEvent("alternate screen entry") { it is TerminalStateChangedEvent && it.state.isAlternateScreenBuffer }
     assertThat(session.terminalSession.activeShellCommandLine()).isNull()
-    session.getInputChannel().send(TerminalResizeEvent(TerminalGridSize(100, 32)))
+    session.getInputChannel().send(resizeEvent(TerminalGridSize(100, 32)))
     session.terminalSession.encodeKey(TerminalKeyEvent.key(TerminalKey.ENTER))
     events.awaitEvent("alternate screen exit") { it is TerminalStateChangedEvent && !it.state.isAlternateScreenBuffer }
     events.awaitEvent("shell prompt") { it == TerminalPromptFinishedEvent }
@@ -125,18 +115,18 @@ internal abstract class KetraTermRealShellTestCase(private val documentProjectio
 
       val marker = "KETRA-NVIM-${UUID.randomUUID()}"
       assertThat(session.terminalSession.submitInput(TerminalKeyEvent.text("i$marker"))).isEqualTo(TerminalInputAdmission.ACCEPTED)
-      session.awaitContent(events, marker)
+      session.awaitContent(marker)
       for (size in listOf(TerminalGridSize(100, 32), TerminalGridSize(67, 19), TerminalGridSize(80, 24))) {
-        session.getInputChannel().send(TerminalResizeEvent(size))
+        session.getInputChannel().send(resizeEvent(size))
         assertThat(session.terminalSession.submitInput(listOf(
           TerminalKeyEvent.key(TerminalKey.ESCAPE),
           TerminalKeyEvent.text(":redraw!"),
           TerminalKeyEvent.key(TerminalKey.ENTER),
         ))).isEqualTo(TerminalInputAdmission.ACCEPTED)
-        session.awaitContent(events, "KETRA-NVIM-SIZE-${size.columns}x${size.rows}", size)
+        session.awaitContent("KETRA-NVIM-SIZE-${size.columns}x${size.rows}", size)
       }
       assertThat(session.terminalSession.submitInput(TerminalKeyEvent.text("A-RESIZED"))).isEqualTo(TerminalInputAdmission.ACCEPTED)
-      session.awaitContent(events, "$marker-RESIZED")
+      session.awaitContent("$marker-RESIZED")
 
       assertThat(session.terminalSession.submitInput(listOf(
         TerminalKeyEvent.key(TerminalKey.ESCAPE),
@@ -178,7 +168,6 @@ internal abstract class KetraTermRealShellTestCase(private val documentProjectio
       }
     }
     try {
-      assertThat(session.compatibilityEnabled).isEqualTo(documentProjection)
       events.awaitEvent("initial shell prompt") { it == TerminalPromptFinishedEvent }
       assertThat(Path.of(requireNotNull(localKetraTermDirectory(session.shellState.currentWorkingDirectoryUri()!!)))).isEqualTo(directory)
       assertThat(session.terminalSession.activeShellCommandLine()).isNotNull()
@@ -188,7 +177,7 @@ internal abstract class KetraTermRealShellTestCase(private val documentProjectio
       events.awaitEvent("process exit") { it == TerminalSessionTerminatedEvent }
       assertThat(session.isClosed).isTrue()
       assertThat(result.ttyConnector.isConnected).isFalse()
-      assertThat(documentContentReceived.get()).isEqualTo(documentProjection)
+      assertThat(documentContentReceived.get()).isFalse()
     }
     finally {
       result.ttyConnector.close()
@@ -199,16 +188,9 @@ internal abstract class KetraTermRealShellTestCase(private val documentProjectio
   }
 
   private suspend fun KetraTermTerminalSession.awaitContent(
-    events: Channel<TerminalOutputEvent>,
     text: String,
     size: TerminalGridSize? = null,
   ) {
-    if (documentProjection) {
-      events.awaitEvent("content $text") {
-        it is TerminalContentUpdatedEvent && text in it.text
-      }
-      return
-    }
     var lastScreen = ""
     val received = withTimeoutOrNull(20.seconds) {
       terminalSession.renderGeneration.first {

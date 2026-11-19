@@ -829,7 +829,7 @@ internal class TerminalMouseEventsHandlingTest {
    */
   @Nested
   @ParameterizedClass
-  @EnumSource(TerminalEmulatorType::class)
+  @EnumSource(TerminalEmulatorType::class, names = ["JediTerm", "Ghostty"])
   inner class PromptClicks(private val emulatorType: TerminalEmulatorType) {
     @Test
     fun `click in the typed command moves the cursor there`(): Unit =

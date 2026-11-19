@@ -35,14 +35,13 @@ import org.junit.jupiter.api.Test
 @TestApplication
 internal class KetraTermLifecycleTest {
   @Test
-  fun `Swing sessions emit metadata without projected content by default`(): Unit = timeoutRunBlocking {
+  fun `Swing sessions emit metadata without projected content`(): Unit = timeoutRunBlocking {
     val scope = childScope("Native metadata", Dispatchers.Default)
     val (base, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
       projectFixture.get(), scope, emulatorType = TerminalEmulatorType.KetraTerm, isLowLevelSession = true,
     )
     val session = base as KetraTermTerminalSession
     try {
-      assertThat(session.compatibilityEnabled).isFalse()
       connector.feed("\u001b]1341;initialized;current_directory=2f746d70;history_path=\u0007" +
                      "\u001b]1341;prompt_started\u0007>\u001b]1341;prompt_finished\u0007text")
       connector.close()

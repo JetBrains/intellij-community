@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend.ketraterm
 
+import com.intellij.terminal.tests.reworked.frontend.session.ketraterm.awaitText
+import com.intellij.terminal.frontend.session.ketraterm.KetraTermTerminalSession
 import com.intellij.ide.CopyProvider
 import com.intellij.ide.actions.CloseAction
 import com.intellij.openapi.actionSystem.ActionManager
@@ -20,11 +22,8 @@ import com.intellij.terminal.frontend.view.ketraterm.KetraTermTerminalView
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.util.asDisposable
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,8 +33,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.TerminalSelectAllProvider
-import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
-import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import java.awt.datatransfer.DataFlavor
@@ -43,7 +40,6 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 @TestApplication
-@SystemProperty(propertyKey = "ketraterm.experimental.enableDocumentModel", propertyValue = "true")
 internal class KetraTermActionsTest {
   companion object {
     private val projectFixture = projectFixture()
@@ -240,22 +236,15 @@ internal class KetraTermActionsTest {
     val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
       project, scope, emulatorType = TerminalEmulatorType.KetraTerm, isLowLevelSession = true,
     )
-    val applied = CompletableDeferred<Unit>()
     try {
       val view = withContext(Dispatchers.EDT) {
         KetraTermTerminalView(project, JBTerminalSystemSettingsProviderBase(), scope).also { view ->
           view.terminal.size = view.terminal.preferredGridSize(80, 24)
-          view.outputModels.regular.addListener(scope.asDisposable(), object : TerminalOutputModelListener {
-            override fun afterContentChanged(event: TerminalContentChangeEvent) {
-              val model = view.outputModels.regular
-              if (model.getText(model.startOffset, model.endOffset).contains("native-select-all")) applied.complete(Unit)
-            }
-          })
           view.connectToSession(session)
         }
       }
       connector.feed("native-select-all\r\n")
-      applied.await()
+      (session as KetraTermTerminalSession).awaitText("native-select-all")
       withContext(Dispatchers.EDT) {
         val baseContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT, view.terminal)
         val context = CustomizedDataContext.withSnapshot(baseContext) { sink ->

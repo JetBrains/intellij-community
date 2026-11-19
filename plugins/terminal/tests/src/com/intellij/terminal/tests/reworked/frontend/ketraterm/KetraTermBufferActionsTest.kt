@@ -20,7 +20,6 @@ import com.intellij.terminal.tests.reworked.util.LoopbackTtyConnector
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +35,6 @@ import javax.swing.JPanel
 import javax.swing.KeyStroke
 
 @TestApplication
-@SystemProperty(propertyKey = "ketraterm.experimental.enableDocumentModel", propertyValue = "false")
 internal class KetraTermBufferActionsTest {
   @Test
   fun `native selection supplies the search query without a document`(): Unit = withTerminal { view, connector ->

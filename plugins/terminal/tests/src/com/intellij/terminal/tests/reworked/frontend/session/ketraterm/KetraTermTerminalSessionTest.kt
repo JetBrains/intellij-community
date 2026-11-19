@@ -2,13 +2,12 @@
 package com.intellij.terminal.tests.reworked.frontend.session.ketraterm
 
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.frontend.session.ketraterm.KetraTermOutputProjector
 import com.intellij.terminal.frontend.session.ketraterm.KetraTermTerminalSession
 import com.intellij.terminal.tests.reworked.util.LoopbackTtyConnector
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil
+import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.resizeEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import io.github.ketraterm.input.event.TerminalKeyEvent
 import io.github.ketraterm.input.event.TerminalPasteEvent
@@ -16,7 +15,6 @@ import io.github.ketraterm.session.TerminalInputAdmission
 import io.github.ketraterm.session.TerminalSessionState
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -26,14 +24,10 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
@@ -43,7 +37,6 @@ import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
 import org.junit.jupiter.api.Test
 
 @TestApplication
-@SystemProperty(propertyKey = "ketraterm.experimental.enableDocumentModel", propertyValue = "true")
 internal class KetraTermTerminalSessionTest {
   @Test
   fun `fragmented shell commands preserve the prompt boundary`() = runSession { session, connector, events ->
@@ -51,15 +44,8 @@ internal class KetraTermTerminalSessionTest {
     val stream = "${osc}initialized;current_directory=2f746d70;history_path=\u0007" +
                  "${osc}prompt_started\u0007PROMPT>${osc}prompt_finished\u001b\\echo typed"
     stream.forEach { connector.feed(it.toString()) }
-    var beforePrompt = ""
-    while (true) {
-      when (val event = events.receive()) {
-        TerminalPromptFinishedEvent -> break
-        is TerminalContentUpdatedEvent -> beforePrompt = event.text
-        else -> Unit
-      }
-    }
-    assertThat(beforePrompt).contains("PROMPT>").doesNotContain("echo typed")
+    while (events.receive() != TerminalPromptFinishedEvent) { }
+    session.awaitText("PROMPT>echo typed")
     val command = session.commandLine.first { it?.commandText == "echo typed" }
     assertThat(command!!.cursorOffset).isEqualTo("echo typed".length)
     assertThat(session.shellState.recordCount()).isEqualTo(1)
@@ -88,26 +74,18 @@ internal class KetraTermTerminalSessionTest {
   }
 
   @Test
-  fun `the host clear operation removes local output without sending input`() = runSession { session, connector, events ->
+  fun `the host clear operation removes local output without sending input`() = runSession { session, connector, _ ->
     connector.feed("retained\r\nvisible")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("visible")) break
-    }
-    val generation = session.terminalSession.renderGeneration.value
+    session.awaitText("visible")
     connector.responseHandler = { error("A local clear must not send bytes") }
     session.getInputChannel().send(TerminalClearBufferEvent())
-    session.terminalSession.renderGeneration.first { it > generation }
-    val projector = KetraTermOutputProjector()
-    session.terminalSession.readRenderFrameForAbsoluteRange(0, Long.MAX_VALUE) { frame ->
-      assertThat(projector.project(frame)?.text.orEmpty()).doesNotContain("retained", "visible")
+    session.terminalSession.renderGeneration.first {
+      val text = session.retainedText()
+      "retained" !in text && "visible" !in text
     }
     connector.responseHandler = null
     connector.feed("after-clear")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("after-clear")) break
-    }
+    session.awaitText("after-clear")
   }
 
   @Test
@@ -124,16 +102,11 @@ internal class KetraTermTerminalSessionTest {
   }
 
   @Test
-  fun `character transport preserves a split supplementary scalar`() = runSession { _, connector, events ->
+  fun `character transport preserves a split supplementary scalar`() = runSession { session, connector, _ ->
     connector.feed("\uD83D")
     connector.feed("\uDE00done")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.contains("done")) {
-        assertThat(event.text).contains("😀done").doesNotContain("�")
-        break
-      }
-    }
+    session.awaitText("done")
+    assertThat(session.retainedText()).contains("😀done").doesNotContain("�")
   }
 
   @Test
@@ -195,39 +168,9 @@ internal class KetraTermTerminalSessionTest {
   }
 
   @Test
-  fun `unchanged wrapped rows do not create another content event`() = runSession { session, connector, events ->
-    connector.feed("w".repeat(200) + "END")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("END")) break
-    }
-    val projector = KetraTermOutputProjector()
-    session.terminalSession.readRenderFrameForAbsoluteRange(0, Long.MAX_VALUE) { frame ->
-      assertThat(projector.project(frame)!!.text).isEqualTo("w".repeat(200) + "END")
-    }
-    session.terminalSession.readRenderFrameForAbsoluteRange(0, Long.MAX_VALUE) { frame ->
-      assertThat(projector.project(frame)).isNull()
-    }
-  }
-
-  @Test
-  fun `the projected cursor includes retained history`() = runSession { session, connector, events ->
-    connector.feed((0 until 50).joinToString("") { "line$it\r\n" } + "END")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("END")) {
-        assertThat(event.cursorLogicalLineIndex).isEqualTo(50)
-        assertThat(event.cursorColumnIndex).isEqualTo(3)
-        assertThat(event.screenTopLogicalLineIndex).isEqualTo(27)
-        break
-      }
-    }
-  }
-
-  @Test
   fun `resize reaches the transport and native grid`() = runSession { session, connector, _ ->
     withContext(Dispatchers.IO) { connector.awaitResize(1000) }
-    session.getInputChannel().send(TerminalResizeEvent(TerminalGridSize(113, 37)))
+    session.getInputChannel().send(resizeEvent(TerminalGridSize(113, 37)))
     val size = withContext(Dispatchers.IO) { connector.awaitResize(1000) }
     assertThat(size!!.columns).isEqualTo(113)
     assertThat(size.rows).isEqualTo(37)
@@ -256,10 +199,7 @@ internal class KetraTermTerminalSessionTest {
     }
     assertThat(failure).isNotNull()
     connector.feed("survives")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("survives")) break
-    }
+    session.awaitText("survives")
     assertThat(session.isClosed).isFalse()
   }
 
@@ -272,21 +212,11 @@ internal class KetraTermTerminalSessionTest {
     val session = base as KetraTermTerminalSession
     try {
       connector.feed("final")
-      val codes = IntArray(80)
-      val attrs = LongArray(80)
-      val flags = IntArray(80)
-      session.terminalSession.renderGeneration.first {
-        var received = false
-        session.terminalSession.readRenderFrame { frame ->
-          frame.copyLine(0, codes, attrWords = attrs, flags = flags)
-          received = codes[0] == 'f'.code && codes[4] == 'l'.code
-        }
-        received
-      }
+      session.awaitText("final")
       session.terminalSession.close()
       session.coroutineScope.coroutineContext.job.join()
       val events = session.getOutputFlow().toList().flatten()
-      assertThat(events.filterIsInstance<TerminalContentUpdatedEvent>().last().text).isEqualTo("final")
+      assertThat(session.retainedText()).isEqualTo("final")
       assertThat(events.last()).isEqualTo(TerminalSessionTerminatedEvent)
     }
     finally {
@@ -295,178 +225,12 @@ internal class KetraTermTerminalSessionTest {
     }
   }
 
-  @Test
-  fun `document output waits for the synchronized timeout`(): Unit = timeoutRunBlocking {
-    val scope = childScope("KetraTerm synchronized document", Dispatchers.Default)
-    val (base, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
-      projectFixture.get(), scope, emulatorType = TerminalEmulatorType.KetraTerm, useDocumentRenderer = true,
-      isLowLevelSession = true,
-    )
-    val session = base as KetraTermTerminalSession
-    val completed = CompletableDeferred<Unit>()
-    scope.launch(Dispatchers.Unconfined) {
-      session.getOutputFlow().collect { batch ->
-        for (event in batch) {
-          if (event is TerminalContentUpdatedEvent && event.text.endsWith("hidden-until-timeout")) {
-            assertThat(session.terminalSession.modeSnapshot.isSynchronizedOutput).isFalse()
-            completed.complete(Unit)
-          }
-        }
-      }
-    }
-    try {
-      connector.feed("\u001b[?2026hhidden-until-timeout")
-      completed.await()
-    }
-    finally {
-      connector.close()
-      scope.cancel()
-    }
-  }
-
-  @Test
-  fun `document shell events retain synchronized boundaries`() = runSession(useDocumentRenderer = true) { _, connector, events ->
-    connector.feed("\u001b[?2026h\u001b]1341;prompt_started\u0007PROMPT>" +
-                   "\u001b]1341;prompt_finished\u0007following-output\u001b[?2026l")
-    var beforePrompt = ""
-    while (true) {
-      when (val event = events.receive()) {
-        TerminalPromptFinishedEvent -> break
-        is TerminalContentUpdatedEvent -> beforePrompt = event.text
-        else -> Unit
-      }
-    }
-    assertThat(beforePrompt).endsWith("PROMPT>").doesNotContain("following-output")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("following-output")) break
-    }
-  }
-
-  @Test
-  fun `document termination includes pending history`() = runSession(useDocumentRenderer = true) { _, connector, events ->
-    val text = (0 until 600).joinToString("") { "line$it\r\n" } + "END"
-    connector.feed("\u001b[?2026h$text")
-    connector.close()
-    var lastContent: TerminalContentUpdatedEvent? = null
-    while (true) {
-      when (val event = events.receive()) {
-        TerminalSessionTerminatedEvent -> break
-        is TerminalContentUpdatedEvent -> lastContent = event
-        else -> Unit
-      }
-    }
-    assertThat(requireNotNull(lastContent).text).isEqualTo(text.replace("\r\n", "\n"))
-  }
-
-  @Test
-  fun `document palette changes publish without output`() = runSession(useDocumentRenderer = true) { session, connector, events ->
-    connector.feed("\u001b[38;5;17mPALETTE")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("PALETTE")) break
-    }
-    val colors = session.terminalSession.palette.toIndexedColorsArray()
-    colors[17] = 0xFF123456.toInt()
-    session.terminalSession.setThemePalette(session.terminalSession.palette.copy(indexedColors = colors))
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("PALETTE")) {
-        assertThat(event.styles.single().style.foreground!!.rgb).isEqualTo(0x123456)
-        break
-      }
-    }
-  }
-
-  @Test
-  fun `document resize retains both buffer contents`() = runSession(useDocumentRenderer = true) { session, connector, events ->
-    connector.feed("PRIMARY")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("PRIMARY")) break
-    }
-    session.getInputChannel().send(TerminalResizeEvent(TerminalGridSize(40, 12)))
-    session.terminalSession.renderGeneration.first {
-      var resized = false
-      session.terminalSession.readRenderFrame { frame -> resized = frame.columns == 40 && frame.rows == 12 }
-      resized
-    }
-    connector.feed("\u001b[?1049hALTERNATE")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("ALTERNATE")) {
-        assertThat(event.text).doesNotContain("PRIMARY")
-        break
-      }
-    }
-    connector.feed("\u001b[?1049l")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text.endsWith("PRIMARY")) {
-        assertThat(event.text).doesNotContain("ALTERNATE")
-        break
-      }
-    }
-  }
-
-  @Test
-  fun `document state changes publish without text changes`() = runSession(useDocumentRenderer = true) { _, connector, events ->
-    connector.feed("unchanged")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalContentUpdatedEvent && event.text == "unchanged") break
-    }
-    connector.feed("\u001b]2;changed-title\u0007\u001b[?25l")
-    while (true) {
-      val event = events.receive()
-      if (event is TerminalStateChangedEvent && event.state.windowTitle == "changed-title") {
-        assertThat(event.state.isCursorVisible).isFalse()
-        break
-      }
-    }
-  }
-
-  @Test
-  fun `document cancellation releases a full output queue`(): Unit = timeoutRunBlocking {
-    val scope = childScope("KetraTerm document backpressure", Dispatchers.Default)
-    val (base, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
-      projectFixture.get(), scope, emulatorType = TerminalEmulatorType.KetraTerm, useDocumentRenderer = true,
-      isLowLevelSession = true,
-    )
-    val session = base as KetraTermTerminalSession
-    val collectorBlocked = CompletableDeferred<Unit>()
-    scope.launch {
-      session.getOutputFlow().collect { batch ->
-        if (batch.any { it is TerminalCommandStartedEvent && it.command == "gate" }) {
-          collectorBlocked.complete(Unit)
-          awaitCancellation()
-        }
-      }
-    }
-    try {
-      connector.feed("\u001b]1341;command_started;command=67617465\u0007")
-      collectorBlocked.await()
-      val initialRecords = session.shellState.recordCount()
-      connector.feed("\u001b]1341;prompt_started\u0007".repeat(80))
-      while (session.shellState.recordCount() < initialRecords + 65) yield()
-      session.coroutineScope.cancel()
-      session.terminalSession.state.first { it is TerminalSessionState.Closed }
-      assertThat(connector.isConnected).isFalse()
-    }
-    finally {
-      connector.close()
-      scope.cancel()
-    }
-  }
-
   private fun runSession(
-    useDocumentRenderer: Boolean = false,
     action: suspend CoroutineScope.(KetraTermTerminalSession, LoopbackTtyConnector, Channel<TerminalOutputEvent>) -> Unit,
   ) = timeoutRunBlocking {
     val scope = childScope("KetraTerm adapter test", Dispatchers.Default)
     val (base, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
       projectFixture.get(), scope, emulatorType = TerminalEmulatorType.KetraTerm, isLowLevelSession = true,
-      useDocumentRenderer = useDocumentRenderer,
     )
     val session = base as KetraTermTerminalSession
     val events = Channel<TerminalOutputEvent>(Channel.UNLIMITED)

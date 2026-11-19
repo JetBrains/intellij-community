@@ -69,7 +69,7 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
 
   init {
     val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
-      project, scope, emulatorType, useDocumentRenderer = emulatorType == TerminalEmulatorType.KetraTerm,
+      project, scope, emulatorType,
     )
     this.session = session
     this.connector = connector

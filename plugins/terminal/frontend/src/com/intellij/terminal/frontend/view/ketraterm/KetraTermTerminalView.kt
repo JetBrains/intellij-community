@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -25,18 +24,13 @@ import com.intellij.terminal.frontend.session.ketraterm.KetraTermTextInput
 import com.intellij.terminal.frontend.session.ketraterm.MAX_PENDING_TEXT_INPUTS
 import com.intellij.terminal.frontend.session.ketraterm.MAX_PENDING_TEXT_UNITS
 import com.intellij.terminal.frontend.session.ketraterm.prepareKetraTermTextInput
-import com.intellij.terminal.frontend.session.ketraterm.isKetraTermDocumentProjectionEnabled
 import com.intellij.terminal.frontend.session.ketraterm.KetraTermTerminalSession
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalClipboard
 import com.intellij.terminal.frontend.view.impl.dnd.installTerminalDropHandler
 import com.intellij.terminal.frontend.view.impl.refreshVfsOnCommandFinish
 import com.intellij.terminal.frontend.view.impl.setupComponentKeyEventsHandling
-import com.intellij.terminal.frontend.view.impl.TerminalOutputModelControllerImpl
-import com.intellij.terminal.frontend.view.impl.TerminalSessionController
-import com.intellij.terminal.frontend.view.impl.TerminalShellIntegrationEventsHandler
 import com.intellij.terminal.frontend.view.impl.TerminalShellLifecycleModel
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
-import com.intellij.terminal.frontend.view.TerminalKeyEventImpl
 import com.intellij.terminal.frontend.view.TerminalKeyEventsListener
 import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
 import com.intellij.terminal.frontend.view.TerminalView
@@ -57,7 +51,6 @@ import io.github.ketraterm.ui.swing.host.SwingTerminalSearchColors
 import java.awt.BorderLayout
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlinx.coroutines.awaitCancellation
@@ -67,6 +60,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -78,7 +72,6 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
-import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
 import org.jetbrains.plugins.terminal.session.impl.dto.CellPixelSizeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
@@ -91,13 +84,10 @@ import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.TerminalSelectAllProvider
 import org.jetbrains.plugins.terminal.util.convertNativePathToNioPath
 import org.jetbrains.plugins.terminal.util.getNow
-import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
-import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
-import org.jetbrains.plugins.terminal.view.impl.TerminalOutputModelsSetImpl
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextBuilderImpl
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
-import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
 
 /** Embeds the Swing renderer and reports shell activity to IntelliJ. */
@@ -115,20 +105,15 @@ internal class KetraTermTerminalView(
   private val state = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.NotStarted)
   override val sessionState = state.asStateFlow()
   internal val sessionModel = TerminalSessionModelImpl()
-  private val compatibilityEnabled = isKetraTermDocumentProjectionEnabled()
-  override val supportsOutputModel: Boolean get() = compatibilityEnabled
+  override val supportsOutputModel: Boolean get() = false
   override val shellLifecycle = TerminalShellLifecycleModel()
   override val typedCommand: String?
     get() = if (shellLifecycle.outputStatus.value == TerminalOutputStatus.TypingCommand) {
       nativeSession?.commandLine?.value?.commandText
     }
     else null
-  private val regular by lazy { createModel() }
-  private val alternative by lazy { createModel(maxOutputLength = 0) }
-  override val outputModels by lazy {
-    check(compatibilityEnabled) { "Enable ketraterm.experimental.enableDocumentModel to use document APIs with KetraTerm Swing" }
-    TerminalOutputModelsSetImpl(regular, alternative)
-  }
+  override val outputModels: TerminalOutputModelsSet
+    get() = throw UnsupportedOperationException("The native terminal view has no IntelliJ output model.")
   override val workingDirectoryFlow = sessionModel.terminalState.mapStateIn(coroutineScope) { terminalState ->
     val directory = terminalState.currentDirectory
     val session = sessionDeferred.getNow()
@@ -136,14 +121,9 @@ internal class KetraTermTerminalView(
   }
   override val bracketedPasteMode = sessionModel.terminalState.mapStateIn(coroutineScope) { it.isBracketedPasteMode }
 
-  private val events = MutableSharedFlow<TerminalKeyEvent>(
-    extraBufferCapacity = 100,
-    onBufferOverflow = BufferOverflow.DROP_OLDEST,
-  )
-  override val keyEventsFlow = events.asSharedFlow()
+  override val keyEventsFlow = emptyFlow<TerminalKeyEvent>()
   private val nativeKeys = MutableSharedFlow<KeyEvent>(extraBufferCapacity = 100, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   internal val nativeKeyEvents = nativeKeys.asSharedFlow()
-  private val keyListeners = CopyOnWriteArrayList<TerminalKeyEventsListener>()
   private val shortcutStatistics = TerminalShortcutsPressStatistics(project, this)
   private val appearance = KetraTermSettings(settings)
   private val hyperlinkDetector = KetraTermHyperlinkDetector(
@@ -160,7 +140,6 @@ internal class KetraTermTerminalView(
     },
     localFileLinks = { nativeSession?.eelDescriptor == LocalEelDescriptor },
   )
-  private val controller: TerminalSessionController?
   @Volatile private var nativeSession: KetraTermTerminalSession? = null
   private val inputLock = Any()
   private val pendingInput = ArrayDeque<KetraTermTextInput>()
@@ -234,7 +213,6 @@ internal class KetraTermTerminalView(
       sink[CommonDataKeys.PROJECT] = project
       sink[TerminalFontSizeProvider.DATA_KEY] = TerminalFontSizeProviderImpl.getInstance()
       sink[TerminalView.DATA_KEY] = this@KetraTermTerminalView
-      if (compatibilityEnabled) sink[TerminalOutputModel.DATA_KEY] = outputModels.active.value
       sink[PlatformDataKeys.COPY_PROVIDER] = copyProvider
       sink[PlatformDataKeys.PASTE_PROVIDER] = pasteProvider
       sink[TerminalSelectAllProvider.DATA_KEY] = selectAllProvider
@@ -245,25 +223,6 @@ internal class KetraTermTerminalView(
   init {
     refreshSearchColors()
     val disposable = coroutineScope.asDisposable()
-    controller = if (compatibilityEnabled) {
-      val regularController = TerminalOutputModelControllerImpl(project, regular)
-      val result = TerminalSessionController(
-        sessionModel, regularController, TerminalOutputModelControllerImpl(project, alternative),
-        startupOptionsDeferred, settings, coroutineScope.childScope("KetraTerm output model"),
-      )
-      result.addEventsHandler(shellLifecycle)
-      result.addEventsHandler(TerminalShellIntegrationEventsHandler(
-        regularController, sessionModel, shellIntegrationDeferred, sessionDeferred,
-        startupOptionsDeferred, coroutineScope.childScope("KetraTerm shell integration"),
-      ))
-      result.addTerminationCallback(disposable) {
-        state.value = TerminalViewSessionState.Terminated
-        completion?.close()
-        completion = null
-      }
-      result
-    } else null
-
     val refreshShortcuts = setupComponentKeyEventsHandling(project, terminal, settings, disposable)
     appearance.installListeners(coroutineScope, onHostSettingsChanged = refreshShortcuts) {
       terminal.reloadSettings()
@@ -281,7 +240,6 @@ internal class KetraTermTerminalView(
 
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
       sessionModel.terminalState.collect { value ->
-        if (compatibilityEnabled) outputModels.setActiveModel(value.isAlternateScreenBuffer)
         if (appearance.setAlternateScreen(value.isAlternateScreenBuffer)) terminal.reloadSettings()
         title.change { applicationTitle = value.windowTitle }
       }
@@ -294,7 +252,6 @@ internal class KetraTermTerminalView(
         withContext(NonCancellable + Dispatchers.UI) {
           synchronized(inputLock) { pendingInput.clear() }
           terminal.removeKeyListener(keyListener)
-          keyListeners.clear()
           completion?.close()
           search.close()
           terminal.dispose()
@@ -318,25 +275,21 @@ internal class KetraTermTerminalView(
       }
       startupOptionsDeferred.complete(session.startupOptions)
       sessionDeferred.complete(session)
-      check(compatibilityEnabled == session.compatibilityEnabled)
-      if (controller != null) controller.handleEvents(session)
-      else {
-        coroutineScope.launch {
-          session.getOutputFlow().collect { batch ->
-            withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
-              for (event in batch) {
-                shellLifecycle.handleEvent(event)
-                when (event) {
-                  is org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent ->
-                    sessionModel.updateTerminalState(event.state.toTerminalState())
-                  org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent -> java.awt.Toolkit.getDefaultToolkit().beep()
-                  org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent -> {
-                    state.value = TerminalViewSessionState.Terminated
-                    completion?.close()
-                    completion = null
-                  }
-                  else -> Unit
+      coroutineScope.launch {
+        session.getOutputFlow().collect { batch ->
+          withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+            for (event in batch) {
+              shellLifecycle.handleEvent(event)
+              when (event) {
+                is org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent ->
+                  sessionModel.updateTerminalState(event.state.toTerminalState())
+                org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent -> java.awt.Toolkit.getDefaultToolkit().beep()
+                org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent -> {
+                  state.value = TerminalViewSessionState.Terminated
+                  completion?.close()
+                  completion = null
                 }
+                else -> Unit
               }
             }
           }
@@ -377,8 +330,7 @@ internal class KetraTermTerminalView(
   }
 
   override fun addKeyEventsListener(parentDisposable: Disposable, listener: TerminalKeyEventsListener) {
-    keyListeners.add(listener)
-    Disposer.register(parentDisposable) { keyListeners.remove(listener) }
+    // Native key events are available through nativeKeyEvents.
   }
 
   override fun setTopComponent(component: JComponent, disposable: Disposable) {
@@ -405,15 +357,7 @@ internal class KetraTermTerminalView(
   private fun notifyKey(event: KeyEvent) {
     shortcutStatistics.afterKeyEvent(event)
     nativeKeys.tryEmit(event)
-    if (!compatibilityEnabled) return
-    val model = outputModels.active.value
-    val terminalEvent = TerminalKeyEventImpl(event, model.cursorOffset, model)
-    events.tryEmit(terminalEvent)
-    for (listener in keyListeners) listener.afterKeyEvent(terminalEvent)
   }
-
-  private fun createModel(maxOutputLength: Int = TerminalUiUtils.getDefaultMaxOutputLength()): MutableTerminalOutputModel =
-    MutableTerminalOutputModelImpl(DocumentImpl("", true), maxOutputLength)
 
   companion object {
     private val LOG = logger<KetraTermTerminalView>()

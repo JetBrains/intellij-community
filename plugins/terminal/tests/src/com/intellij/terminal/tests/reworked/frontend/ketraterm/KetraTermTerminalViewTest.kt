@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend.ketraterm
 
+import com.intellij.terminal.tests.reworked.frontend.session.ketraterm.awaitText
+import com.intellij.terminal.tests.reworked.frontend.session.ketraterm.retainedText
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -16,10 +18,8 @@ import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.TestActionEvent
-import com.intellij.util.asDisposable
 import io.github.ketraterm.session.TerminalSessionState
 import io.github.ketraterm.ui.swing.api.SwingTerminal
 import java.awt.datatransfer.DataFlavor
@@ -39,12 +39,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
-import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
-import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.junit.jupiter.api.Test
 
 @TestApplication
-@SystemProperty(propertyKey = "ketraterm.experimental.enableDocumentModel", propertyValue = "true")
 internal class KetraTermTerminalViewTest {
   @Test
   fun `the native PowerShell view enables the completion action`(): Unit = timeoutRunBlocking {
@@ -91,7 +88,6 @@ internal class KetraTermTerminalViewTest {
       project, scope, emulatorType = TerminalEmulatorType.KetraTerm, isLowLevelSession = true,
     )
     val session = base as KetraTermTerminalSession
-    val applied = CompletableDeferred<Unit>()
     val written = ByteArrayOutputStream()
     val inputHandled = CompletableDeferred<Unit>()
     connector.responseHandler = { bytes ->
@@ -104,17 +100,11 @@ internal class KetraTermTerminalViewTest {
       val view = withContext(Dispatchers.UI) {
         KetraTermTerminalView(project, JBTerminalSystemSettingsProvider(), scope).also { view ->
           view.terminal.setSize(800, 480)
-          view.outputModels.regular.addListener(scope.asDisposable(), object : TerminalOutputModelListener {
-            override fun afterContentChanged(event: TerminalContentChangeEvent) {
-              val model = view.outputModels.regular
-              if (model.getText(model.startOffset, model.endOffset).contains("render-ready")) applied.complete(Unit)
-            }
-          })
         }
       }
       view.connectToSession(session)
       connector.feed("\u001b[31mrender-ready\u001b[0m\r\n")
-      applied.await()
+      session.awaitText("render-ready")
       withContext(Dispatchers.UI) {
         assertThat(view.preferredFocusableComponent).isInstanceOf(SwingTerminal::class.java)
         assertThat(view.sessionState.value).isEqualTo(TerminalViewSessionState.Running)
@@ -227,8 +217,7 @@ internal class KetraTermTerminalViewTest {
       }
       view.sessionState.first { it == TerminalViewSessionState.Terminated }
       withContext(Dispatchers.UI) {
-        val model = view.outputModels.regular
-        assertThat(model.getText(model.startOffset, model.endOffset).toString()).contains("output-before-exit")
+        assertThat(session.retainedText()).contains("output-before-exit")
         assertThat(view.createSendTextBuilder().trySend("ignored")).isFalse()
       }
     }

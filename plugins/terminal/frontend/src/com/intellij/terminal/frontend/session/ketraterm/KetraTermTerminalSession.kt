@@ -53,6 +53,7 @@ import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -62,7 +63,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
@@ -80,7 +80,6 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
@@ -100,17 +99,15 @@ import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
 import io.github.ketraterm.input.event.TerminalInputEvent as KetraInputEvent
 import io.github.ketraterm.session.TerminalSession as KetraSession
 
-/** Owns a KetraTerm pipeline and the ordered IntelliJ compatibility event stream. */
+/** Owns a KetraTerm pipeline and its IntelliJ lifecycle events. */
 @ApiStatus.Internal
 class KetraTermTerminalSession internal constructor(
   private val ttyConnector: TtyConnector,
   options: ShellStartupOptions,
   settings: JBTerminalSystemSettingsProviderBase,
   override val coroutineScope: CoroutineScope,
-  useDocumentRenderer: Boolean = false,
   private val shellLaunch: TerminalShellLaunch? = null,
 ) : TerminalSession {
-  internal val compatibilityEnabled = useDocumentRenderer || isKetraTermDocumentProjectionEnabled()
   private val initialSize = requireNotNull(options.initialTermSize)
   private val controller = TerminalShellIntegrationController()
   private val hostShellState by lazy(LazyThreadSafetyMode.NONE) { TerminalShellIntegrationState() }
@@ -125,18 +122,14 @@ class KetraTermTerminalSession internal constructor(
   private val mutablePromptReady = MutableStateFlow(false)
   private var editingPrompt = false
   val promptReady: StateFlow<Boolean> = mutablePromptReady
-  private val projectionLock = ReentrantLock()
-  private val projector by lazy(LazyThreadSafetyMode.NONE) { KetraTermOutputProjector() }
+  private val outputLock = ReentrantLock()
   private val pendingEvents = ConcurrentLinkedQueue<TerminalOutputEvent>()
   private val output = Channel<List<TerminalOutputEvent>>(64)
   private val outputFlow = output.consumeAsFlow()
   private val input = Channel<TerminalInputEvent>(64)
-  private val documentProjectionRequests = if (useDocumentRenderer) Channel<Unit>(Channel.CONFLATED) else null
   private var lastState: TerminalStateDto? = null
-  private var lastCursor: org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent? = null
   @Volatile private var outputCompleted = false
   private val commandReader by lazy(LazyThreadSafetyMode.NONE) { KetraTermCommandLineReader() }
-  @Volatile private var inputPending = false
   @Volatile private var title = ""
   @Volatile private var directory = options.workingDirectory
   private val localConnector = ttyConnector.original as? LocalTerminalTtyConnector
@@ -161,11 +154,7 @@ class KetraTermTerminalSession internal constructor(
       initialSize.rows,
       maxHistory = (TerminalUiUtils.getDefaultMaxOutputLength() / initialSize.columns).coerceAtLeast(initialSize.rows),
     ),
-    connector = KetraTermTtyConnector(ttyConnector, projectionLock) { pending ->
-      inputPending = pending
-      updateCommandLine()
-      documentProjectionRequests?.trySend(Unit)
-    },
+    connector = KetraTermTtyConnector(ttyConnector, outputLock, ::updateCommandLine),
     hostEvents = object : HostEventSink {
       override fun bell() {
         if (settings.audibleBell()) pendingEvents.add(TerminalBeepEvent)
@@ -204,7 +193,6 @@ class KetraTermTerminalSession internal constructor(
     coroutineScope.awaitCancellationAndInvoke {
       input.cancel()
       if (!outputCompleted) output.cancel()
-      documentProjectionRequests?.cancel()
       try {
         terminalSession.close()
       }
@@ -221,7 +209,7 @@ class KetraTermTerminalSession internal constructor(
       }
     })
     controller.addEventSink { event ->
-      projectionLock.withLock {
+      outputLock.withLock {
         var lineId = 0L
         var includeLine = false
         terminalSession.readRenderFrame { frame ->
@@ -255,7 +243,7 @@ class KetraTermTerminalSession internal constructor(
           }
           else -> Unit
         }
-        emitProjection()
+        publishState()
         sendBatch(listOf(event))
       }
     }
@@ -265,10 +253,10 @@ class KetraTermTerminalSession internal constructor(
         val trackerScope = coroutineScope.childScope("KetraTerm working directory fallback")
         nativeCwdTrackerScope = trackerScope
         addHeuristicBasedCwdListener(connector, localConnector, trackerScope) { value ->
-          projectionLock.withLock {
+          outputLock.withLock {
             if (nativeCwdTrackerScope != null) {
               directory = value
-              emitProjection()
+              publishState()
             }
           }
         }
@@ -292,33 +280,21 @@ class KetraTermTerminalSession internal constructor(
     }
     shellLaunch?.attach(terminalSession)
     terminalSession.start(initialSize.columns, initialSize.rows)
-    val projectionJob = coroutineScope.launch(Dispatchers.IO + CoroutineName("KetraTerm compatibility projection")) {
-      val requests = documentProjectionRequests
-      if (requests == null) {
-        terminalSession.renderGeneration.collectKetraTermProjections({ inputPending }) { prioritizeVisible ->
-          projectionLock.withLock {
-            emitProjection(prioritizeVisible = prioritizeVisible, requirePublishedFrame = true)
-            compatibilityEnabled && projector.hasPendingHistory
-          }
-        }
-      }
-      else coroutineScope {
-        launch {
-          terminalSession.renderGeneration.collect { requests.trySend(Unit) }
-        }
-        requests.collectKetraTermProjections({ inputPending }) { prioritizeVisible ->
-          projectionLock.withLock {
-            emitProjection(prioritizeVisible = prioritizeVisible, deferSynchronizedOutput = true)
-            compatibilityEnabled && projector.hasPendingHistory
-          }
-        }
+    val stateJob = coroutineScope.launch(Dispatchers.IO + CoroutineName("KetraTerm state updates")) {
+      val generations = terminalSession.renderGeneration
+      var observed = Long.MIN_VALUE
+      while (true) {
+        generations.first { it != observed }
+        delay(4)
+        observed = generations.value
+        outputLock.withLock { publishState() }
       }
     }
     coroutineScope.launch(Dispatchers.IO + CoroutineName("KetraTerm process exit")) {
       terminalSession.state.first { it is TerminalSessionState.Closed }
-      projectionJob.cancel()
-      projectionLock.withLock {
-        emitProjection()
+      stateJob.cancel()
+      outputLock.withLock {
+        publishState()
         sendBatch(listOf(TerminalSessionTerminatedEvent))
         output.close()
         outputCompleted = true
@@ -361,7 +337,7 @@ class KetraTermTerminalSession internal constructor(
       }
       is TerminalResizeEvent -> terminalSession.tryResizeViewport(event.newGeometry.gridSize.columns, event.newGeometry.gridSize.rows)
       is TerminalCloseEvent -> terminalSession.close()
-      is TerminalClearBufferEvent -> projectionLock.withLock {
+      is TerminalClearBufferEvent -> outputLock.withLock {
         if (terminalSession.clearBuffer()) {
           var primary = false
           terminalSession.readRenderFrame { primary = it.activeBuffer == TerminalRenderBufferKind.PRIMARY }
@@ -375,7 +351,7 @@ class KetraTermTerminalSession internal constructor(
               directory?.let(::updateDirectory)
             }
           }
-          emitProjection()
+          publishState()
         }
       }
       is TerminalSetColorSchemeEvent -> setPalette(event.colorScheme)
@@ -388,14 +364,14 @@ class KetraTermTerminalSession internal constructor(
   }
 
   private fun processShellCommand(command: String) {
-    projectionLock.withLock {
+    outputLock.withLock {
       controller.processCustomCommand(command.split(';'))
       updateCommandLine()
     }
   }
 
   private fun processNativeShellMarker(event: ShellIntegrationEvent) {
-    projectionLock.withLock {
+    outputLock.withLock {
       nativeShellReady = true
       val projected = when (event.marker) {
         ShellIntegrationMarker.PROMPT_START -> {
@@ -415,13 +391,13 @@ class KetraTermTerminalSession internal constructor(
           if (command == null || exitCode == null) null else TerminalCommandFinishedEvent(command, exitCode, directory)
         }
       }
-      emitProjection()
+      publishState()
       if (projected != null) sendBatch(listOf(projected))
     }
   }
 
   private fun updateCommandLine() {
-    projectionLock.withLock {
+    outputLock.withLock {
       if (!editingPrompt) return
       terminalSession.readRenderFrame { frame ->
         val ready = editingPrompt && frame.activeBuffer == TerminalRenderBufferKind.PRIMARY
@@ -437,7 +413,7 @@ class KetraTermTerminalSession internal constructor(
   }
 
   private fun updateDirectory(value: String) {
-    projectionLock.withLock {
+    outputLock.withLock {
       if (directory == value && shellState.currentWorkingDirectoryUri() != null) return
       directory = value
       try {
@@ -449,27 +425,14 @@ class KetraTermTerminalSession internal constructor(
         rethrowControlFlowException(error)
         LOG.warn("Cannot map the shell directory to a file URI", error)
       }
-      emitProjection()
+      publishState()
     }
   }
 
-  private fun emitProjection(
-    prioritizeVisible: Boolean = false,
-    requirePublishedFrame: Boolean = false,
-    deferSynchronizedOutput: Boolean = false,
-  ) {
-    val publishedFrameGeneration = if (compatibilityEnabled && requirePublishedFrame) {
-      terminalSession.readPublishedFrame { it.frameGeneration } ?: return
-    }
-    else null
-    var content: TerminalContentUpdatedEvent? = null
+  private fun publishState() {
     var state: TerminalStateDto? = null
-    val readState: (io.github.ketraterm.render.api.TerminalRenderFrame) -> Unit = readState@ { frame ->
+    terminalSession.readRenderFrame { frame ->
       val modes = terminalSession.modeSnapshot
-      if (deferSynchronizedOutput && modes.isSynchronizedOutput) return@readState
-      if (compatibilityEnabled) {
-        content = projector.project(frame, prioritizeVisible = prioritizeVisible, publishedFrameGeneration = publishedFrameGeneration)
-      }
       val cursor = frame.cursor
       val cursorShape = when (cursor.shape) {
         TerminalRenderCursorShape.BLOCK -> if (cursor.blinking) CursorShapeDto.BLINK_BLOCK else CursorShapeDto.STEADY_BLOCK
@@ -495,17 +458,12 @@ class KetraTermTerminalSession internal constructor(
         modes.isBracketedPasteEnabled, title, nativeShellReady || controller.isShellIntegrationEnabled, directory,
       )
     }
-    if (compatibilityEnabled) terminalSession.readRenderFrameForAbsoluteRange(0, Long.MAX_VALUE, readState)
-    else terminalSession.readRenderFrame(readState)
     if (state == null) return
     val events = ArrayList<TerminalOutputEvent>(4)
     if (lastState != state) {
       lastState = state
       events.add(TerminalStateChangedEvent(requireNotNull(state)))
     }
-    if (content != null) events.add(requireNotNull(content))
-    else if (compatibilityEnabled && lastCursor != projector.cursor) events.add(projector.cursor)
-    if (compatibilityEnabled) lastCursor = projector.cursor
     while (true) events.add(pendingEvents.poll() ?: break)
     if (events.isNotEmpty()) sendBatch(events)
   }
@@ -538,14 +496,13 @@ internal fun createKetraTermTerminalSession(
   options: ShellStartupOptions,
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
-  useDocumentRenderer: Boolean = false,
   shellLaunch: TerminalShellLaunch? = null,
 ): KetraTermTerminalSession {
   var session: KetraTermTerminalSession? = null
   var started = false
   try {
     coroutineScope.ensureActive()
-    session = KetraTermTerminalSession(ttyConnector, options, settings, coroutineScope, useDocumentRenderer, shellLaunch)
+    session = KetraTermTerminalSession(ttyConnector, options, settings, coroutineScope, shellLaunch)
     session.start()
     started = true
     return session
@@ -566,6 +523,7 @@ internal fun createKetraTermTerminalSession(
     }
   }
 }
+
 private const val MAX_TEXT_INPUT_EVENTS = 256
 internal const val MAX_PENDING_TEXT_INPUTS = 16
 internal const val MAX_PENDING_TEXT_UNITS = 16 * 1024 * 1024
@@ -609,10 +567,6 @@ internal fun prepareKetraTermTextInput(options: TerminalSendTextOptions): KetraT
   if (events.size > MAX_TEXT_INPUT_EVENTS) return null
   return KetraTermTextInput(events, usePaste, options.requireBracketedPasteMode, hasLineBreaks, workUnits)
 }
-
-internal fun isKetraTermDocumentProjectionEnabled(): Boolean =
-  System.getProperty("ketraterm.experimental.disableDocumentModel")?.let { !it.toBoolean() }
-  ?: java.lang.Boolean.getBoolean("ketraterm.experimental.enableDocumentModel")
 
 internal fun localKetraTermDirectory(value: String): String? = try {
   val uri = URI(value)

@@ -19,7 +19,7 @@ import org.jetbrains.plugins.terminal.ShellTerminalWidget
 internal class KetraTermTtyConnector(
   private val connector: TtyConnector,
   private val outputLock: ReentrantLock,
-  private val afterOutput: (Boolean) -> Unit,
+  private val afterOutput: () -> Unit,
 ) : TerminalConnector {
   private val started = AtomicBoolean()
   private val closed = AtomicBoolean()
@@ -36,7 +36,7 @@ internal class KetraTermTtyConnector(
             val count = stream.read(bytes)
             if (count < 0) break
             if (count == 0) continue
-            deliver(listener, bytes, count, stream.available() > 0)
+            deliver(listener, bytes, count)
           }
         }
         else {
@@ -64,18 +64,18 @@ internal class KetraTermTtyConnector(
       chars.flip()
       val result = encoder.encode(chars, bytes, end)
       if (result.isError) result.throwException()
-      deliver(listener, bytes.array(), bytes.position(), !end && connector.ready())
+      deliver(listener, bytes.array(), bytes.position())
       bytes.clear()
       chars.compact()
       if (end) break
     }
   }
 
-  private fun deliver(listener: TerminalConnectorListener, bytes: ByteArray, length: Int, inputPending: Boolean) {
+  private fun deliver(listener: TerminalConnectorListener, bytes: ByteArray, length: Int) {
     if (length == 0) return
     outputLock.withLock {
       listener.onBytes(bytes, 0, length)
-      afterOutput(inputPending)
+      afterOutput()
     }
   }
 
