@@ -156,6 +156,23 @@ class BazelCompactExecutionLogTest {
   }
 
   @Test
+  fun `reads the queue time, and reads no queue time as zero`() {
+    val log = writeLog(
+      spawnEntry(mnemonic = "Queued") { writeMetrics(executionWallTimeMillis = 1_000, queueTimeMillis = 3_750) },
+      spawnEntry(mnemonic = "NotQueued") { writeMetrics(executionWallTimeMillis = 1_000) },
+      spawnEntry(mnemonic = "None"),
+    )
+
+    val spawns = BazelCompactExecutionLog.readSpawns(log) { true }
+
+    assertThat(spawns.map { it.mnemonic to it.queueTimeNanos }).containsExactly(
+      "Queued" to 3_750_000_000L,
+      "NotQueued" to 0L,
+      "None" to 0L,
+    )
+  }
+
+  @Test
   fun `reads an empty log`() {
     assertThat(BazelCompactExecutionLog.readSpawns(writeLog()) { true }).isEmpty()
   }

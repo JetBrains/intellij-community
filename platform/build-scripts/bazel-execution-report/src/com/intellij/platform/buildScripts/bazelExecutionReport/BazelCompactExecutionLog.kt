@@ -45,6 +45,7 @@ internal object BazelCompactExecutionLog {
 
   // The tags of `SpawnMetrics`.
   private const val METRICS_TOTAL_TIME = (1 shl 3) or WIRETYPE_LENGTH_DELIMITED
+  private const val METRICS_QUEUE_TIME = (5 shl 3) or WIRETYPE_LENGTH_DELIMITED
   private const val METRICS_EXECUTION_WALL_TIME = (8 shl 3) or WIRETYPE_LENGTH_DELIMITED
 
   // The tags of `google.protobuf.Duration`.
@@ -158,6 +159,7 @@ internal object BazelCompactExecutionLog {
     var remoteCacheable = false
     var totalTimeNanos = 0L
     var executionWallTimeNanos = 0L
+    var queueTimeNanos = 0L
     input.forEachField { tag ->
       when (tag) {
         SPAWN_OUTPUTS -> input.readMessage {
@@ -170,6 +172,7 @@ internal object BazelCompactExecutionLog {
             when (it) {
               METRICS_TOTAL_TIME -> totalTimeNanos = input.readMessage { readDurationNanos(input) }
               METRICS_EXECUTION_WALL_TIME -> executionWallTimeNanos = input.readMessage { readDurationNanos(input) }
+              METRICS_QUEUE_TIME -> queueTimeNanos = input.readMessage { readDurationNanos(input) }
               else -> input.skipField(it)
             }
           }
@@ -191,6 +194,7 @@ internal object BazelCompactExecutionLog {
       cacheHit = cacheHit,
       remoteCacheable = remoteCacheable,
       wallTimeNanos = if (executionWallTimeNanos > 0) executionWallTimeNanos else totalTimeNanos,
+      queueTimeNanos = queueTimeNanos,
     )
   }
 

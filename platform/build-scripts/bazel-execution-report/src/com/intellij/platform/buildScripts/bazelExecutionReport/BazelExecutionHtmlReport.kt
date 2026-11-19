@@ -81,15 +81,18 @@ internal object BazelExecutionHtmlReport {
       write("<p class=\"note\">No actions run locally.</p>\n")
       return
     }
-    write("<table>\n<tr><th>Action kind</th><th>Actions</th><th>Wall time</th></tr>\n")
+    write("<table>\n<tr><th>Action kind</th><th>Actions</th><th>Wall time</th><th>Queue time</th></tr>\n")
     for (actions in summary.localActionsByMnemonic) {
-      write("<tr><td>${escape(actions.mnemonic)}</td>${number(actions.count)}<td class=\"number\">${formatWallTime(actions.wallTimeNanos)}</td></tr>\n")
+      write("<tr><td>${escape(actions.mnemonic)}</td>${number(actions.count)}<td class=\"number\">${formatWallTime(actions.wallTimeNanos)}</td>")
+      write("<td class=\"number\">${formatWallTime(actions.queueTimeNanos)}</td></tr>\n")
     }
     write("<tr class=\"total\"><td>total</td>${number(summary.localActionsByMnemonic.sumOf { it.count })}")
-    write("<td class=\"number\">${formatWallTime(summary.localWallTimeNanos)}</td></tr>\n")
+    write("<td class=\"number\">${formatWallTime(summary.localWallTimeNanos)}</td>")
+    write("<td class=\"number\">${formatWallTime(summary.localQueueTimeNanos)}</td></tr>\n")
     write("</table>\n")
     write("<p class=\"note\">The wall time is the sum over the actions, not CPU time. ")
     write("Parallel actions can make it exceed the build time.</p>\n")
+    write("<p class=\"note\">The queue time is the wait for the local resources and, for a worker, for a free worker slot.</p>\n")
   }
 
   /**

@@ -4,6 +4,7 @@ package com.intellij.platform.buildScripts.bazelExecutionReport
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReportOutput.formatSize
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReportOutput.limitText
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReportOutput.reportBuildProblems
+import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReportOutput.reportStatistics
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReportOutput.reportSummary
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReportOutput.reportViolations
 import org.jetbrains.annotations.ApiStatus
@@ -34,7 +35,8 @@ import java.io.IOException
  * The tool does not support the JSON log of `--execution_log_json_file`.
  *
  * The report counts the actions by their source: the remote cache, the disk cache, or a local run.
- * It counts the actions run locally again for each action kind, such as `JvmCompile` or `Rustc`, with the sum of their wall time.
+ * It counts the actions run locally again for each action kind, such as `JvmCompile` or `Rustc`, with the sum of their wall time
+ * and of their queue time. Under TeamCity, it also writes the queue time of each action kind as a build statistic value.
  * It counts the test actions again in a separate section, and lists each of them. It ends with the largest blobs.
  * `--largest-blobs-count` limits the list of largest blobs. See [Summary].
  * `--html-report-path` also writes the report as an HTML page, e.g., for a TeamCity report tab. See [BazelExecutionHtmlReport].
@@ -62,6 +64,9 @@ object BazelExecutionReport {
     val out = System.out.bufferedWriter()
     try {
       out.reportSummary(summary)
+      if (System.getenv("TEAMCITY_VERSION") != null) {
+        out.reportStatistics(summary)
+      }
       out.reportSizeCheck(violations, options)
     }
     finally {
@@ -162,12 +167,16 @@ object BazelExecutionReport {
     val localActionsByMnemonic: List<LocalActions> = spawns.asSequence()
       .filter { it.source() == Source.LOCAL }
       .groupBy { it.mnemonic }
-      .map { [mnemonic, group] -> LocalActions(mnemonic, group.size, group.sumOf { it.wallTimeNanos }) }
+      .map { [mnemonic, group] -> LocalActions(mnemonic, group.size, group.sumOf { it.wallTimeNanos }, group.sumOf { it.queueTimeNanos }) }
       .sortedWith(compareByDescending<LocalActions> { it.count }.thenBy { it.mnemonic })
 
     /** The sum of the wall time of the actions run locally. */
     @JvmField
     val localWallTimeNanos: Long = localActionsByMnemonic.sumOf { it.wallTimeNanos }
+
+    /** The sum of the queue time of the actions run locally. */
+    @JvmField
+    val localQueueTimeNanos: Long = localActionsByMnemonic.sumOf { it.queueTimeNanos }
 
     /** The number of test actions for each source. */
     @JvmField
@@ -234,11 +243,16 @@ object BazelExecutionReport {
   }
 
   /**
-   * The actions run locally of one action kind: their number and the sum of their wall time.
+   * The actions run locally of one action kind: their number, the sum of their wall time, and the sum of their queue time.
    *
    * Bazel runs actions in parallel, so the sum can exceed the wall time of the build.
    */
-  internal class LocalActions(@JvmField val mnemonic: String, @JvmField val count: Int, @JvmField val wallTimeNanos: Long)
+  internal class LocalActions(
+    @JvmField val mnemonic: String,
+    @JvmField val count: Int,
+    @JvmField val wallTimeNanos: Long,
+    @JvmField val queueTimeNanos: Long,
+  )
 
   /**
    * Returns the size of each distinct blob of the spawns, by hash.
@@ -285,6 +299,12 @@ object BazelExecutionReport {
      * It is zero when the log has no metrics for the spawn. It is not CPU time.
      */
     @JvmField val wallTimeNanos: Long = 0,
+    /**
+     * The queue time of the spawn: `SpawnMetrics.queue_time`. A local spawn waits there for the local resources,
+     * and a worker spawn also for a free worker slot. For a worker spawn, it also holds the creation of the work request.
+     * It is zero when the log has no queue time for the spawn.
+     */
+    @JvmField val queueTimeNanos: Long = 0,
   ) {
     /**
      * The output blobs. [BazelCompactExecutionLog] sets them after its second pass, and only for the spawns that the caller selects.

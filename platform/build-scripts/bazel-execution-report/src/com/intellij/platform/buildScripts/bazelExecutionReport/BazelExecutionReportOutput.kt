@@ -7,6 +7,7 @@ import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionRep
 import com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReport.TEST_MNEMONIC
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes.BUILD_PROBLEM
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes.BUILD_STATISTIC_VALUE
 import java.io.BufferedWriter
 import kotlin.math.roundToLong
 
@@ -20,13 +21,17 @@ internal object BazelExecutionReportOutput {
     write("note: the counts leave out the hits of the local action cache, because the execution log does not hold them\n")
 
     val local = summary.localActionsByMnemonic
-    write("actions run locally by action kind: ${local.size} action kinds, ${formatWallTime(summary.localWallTimeNanos)} wall time\n")
+    write("actions run locally by action kind: ${local.size} action kinds, ${formatWallTime(summary.localWallTimeNanos)} wall time, ")
+    write("${formatWallTime(summary.localQueueTimeNanos)} queue time\n")
     val countWidth = local.maxOfOrNull { it.count.toString().length } ?: 0
     val timeWidth = local.maxOfOrNull { formatWallTime(it.wallTimeNanos).length } ?: 0
+    val queueWidth = local.maxOfOrNull { formatWallTime(it.queueTimeNanos).length } ?: 0
     for (actions in local) {
-      write("  ${actions.count.toString().padStart(countWidth)}  ${formatWallTime(actions.wallTimeNanos).padStart(timeWidth)}  ${actions.mnemonic}\n")
+      write("  ${actions.count.toString().padStart(countWidth)}  ${formatWallTime(actions.wallTimeNanos).padStart(timeWidth)}")
+      write("  ${formatWallTime(actions.queueTimeNanos).padStart(queueWidth)}  ${actions.mnemonic}\n")
     }
     write("note: the wall time is the sum over the actions, not CPU time. Parallel actions can make it exceed the build time\n")
+    write("note: the queue time is the wait for the local resources and, for a worker, for a free worker slot\n")
 
     write("uploadable outputs of the actions run locally: ${blobCount(summary.uploads)}, ${formatSize(summary.uploads.values.sum())}\n")
     for ((mnemonic, blobs) in summary.uploadsByMnemonic) {
@@ -78,6 +83,19 @@ internal object BazelExecutionReportOutput {
     val targets = blob.targets.joinToString(" ")
     val mnemonics = blob.mnemonics.joinToString(",")
     write("$indent$size  x${blob.paths.size}  $targets  [$mnemonics]  ${blob.paths.first()}\n")
+  }
+
+  /**
+   * Writes the queue time of each action kind run locally as a TeamCity build statistic value, in milliseconds.
+   *
+   * A chart of the value shows when the actions of a worker, such as `IjPluginPackaging`, start to wait for a slot or for the resources.
+   */
+  fun BufferedWriter.reportStatistics(summary: Summary) {
+    for (actions in summary.localActionsByMnemonic) {
+      val key = "bazel.queueTimeMs.${actions.mnemonic}"
+      write(ServiceMessage.asString(BUILD_STATISTIC_VALUE, mapOf("key" to key, "value" to (actions.queueTimeNanos / 1_000_000L).toString())))
+      write("\n")
+    }
   }
 
   /**

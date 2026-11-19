@@ -53,6 +53,7 @@ internal object TestExecutionLog {
 
   // The field numbers of `SpawnMetrics`.
   const val METRICS_TOTAL_TIME = 1
+  const val METRICS_QUEUE_TIME = 5
   const val METRICS_EXECUTION_WALL_TIME = 8
 
   // The field numbers of `google.protobuf.Duration`.
@@ -124,10 +125,13 @@ internal object TestExecutionLog {
   /**
    * Writes a `SpawnMetrics` message into a spawn, for [spawnEntry] `extraFields`. A null duration leaves its field out.
    */
-  fun CodedOutputStream.writeMetrics(executionWallTimeMillis: Long? = null, totalTimeMillis: Long? = null) {
+  fun CodedOutputStream.writeMetrics(executionWallTimeMillis: Long? = null, totalTimeMillis: Long? = null, queueTimeMillis: Long? = null) {
     writeByteArray(SPAWN_METRICS, message {
       if (totalTimeMillis != null) {
         writeByteArray(METRICS_TOTAL_TIME, duration(totalTimeMillis))
+      }
+      if (queueTimeMillis != null) {
+        writeByteArray(METRICS_QUEUE_TIME, duration(queueTimeMillis))
       }
       if (executionWallTimeMillis != null) {
         writeByteArray(METRICS_EXECUTION_WALL_TIME, duration(executionWallTimeMillis))
