@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nls
 
 internal class ProblemFilter(val state: ProblemsViewState) : (Problem) -> Boolean {
   override fun invoke(problem: Problem): Boolean {
+    if (state.hideBySeverity.isEmpty()) return true
     val highlighting = problem as? HighlightingProblem ?: return true
     return !(state.hideBySeverity.contains(highlighting.severity))
   }

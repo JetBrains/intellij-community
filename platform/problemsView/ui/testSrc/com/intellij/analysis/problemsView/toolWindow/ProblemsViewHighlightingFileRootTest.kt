@@ -36,6 +36,19 @@ class ProblemsViewHighlightingFileRootTest {
   private val testFile by sourceRoot.virtualFileFixture("TestFile.kt", "")
 
   @Test
+  fun `an empty severity filter does not read the problem severity`() {
+    val provider = object : ProblemsProvider {
+      override val project: Project = this@ProblemsViewHighlightingFileRootTest.project
+    }
+    val problem = object : HighlightingProblem(provider, testFile, mock(RangeHighlighter::class.java)) {
+      override val severity: Int
+        get() = error("The empty filter must not read the severity")
+    }
+
+    assertTrue(ProblemFilter(ProblemsViewState())(problem))
+  }
+
+  @Test
   fun `single context without tool grouping returns direct ProblemNodes`() {
     val problems = listOf(
       testProblem(contextGroup = null, group = "Tool A"),
