@@ -87,14 +87,14 @@ internal class UnifiedPluginsPageViewTest {
   }
 
   @Test
-  fun `default split gives the list half of narrow widths and one eleventh of extra width`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+  fun `default split caps the list at 350 scaled pixels`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val properties = PropertiesComponent.getInstance()
     val previousProportion = properties.getValue(SPLIT_PROPORTION_PROPERTY)
     try {
       properties.unsetValue(SPLIT_PROPORTION_PROPERTY)
       val splitter = createView().component as OnePixelSplitter
 
-      for ((width, expectedListWidth) in listOf(600 to 300, 700 to 350, 1800 to 450)) {
+      for ((width, expectedListWidth) in listOf(600 to 300, 700 to 350, 1800 to 350)) {
         splitter.setSize(JBUI.scale(width), JBUI.scale(320))
         splitter.doLayout()
         assertThat(splitter.firstComponent.width)
@@ -579,12 +579,20 @@ internal class UnifiedPluginsPageViewTest {
     val actionRight = SwingUtilities.convertPoint(expansionControl, Point(expansionControl.width, 0), scrollPane.viewport).x
     assertThat(actionRight).isLessThanOrEqualTo(scrollPane.viewport.width)
 
-    view.component.setSize(fullTitleWidth * 11, 320)
-    layoutRecursively(view.component)
-    view.render(controller.state.value)
+    val properties = PropertiesComponent.getInstance()
+    val previousProportion = properties.getValue(SPLIT_PROPORTION_PROPERTY)
+    try {
+      view.component.setSize(fullTitleWidth * 2, 320)
+      (view.component as OnePixelSplitter).proportion = 0.9f
+      layoutRecursively(view.component)
+      view.render(controller.state.value)
 
-    assertThat(titleLabel.text).isEqualTo(fullTitle)
-    assertThat(titleLabel.toolTipText).isNull()
+      assertThat(titleLabel.text).isEqualTo(fullTitle)
+      assertThat(titleLabel.toolTipText).isNull()
+    }
+    finally {
+      restoreProperty(properties, SPLIT_PROPORTION_PROPERTY, previousProportion)
+    }
   }
 
   @Test

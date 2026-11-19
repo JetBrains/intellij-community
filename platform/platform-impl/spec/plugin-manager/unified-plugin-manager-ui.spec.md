@@ -107,14 +107,13 @@ This specification covers the page structure, section model, search, source load
     `compatible multi selection renders every row and details occurrence`
   )
 
-- The default split must assign equal widths when the available width is at most 700 scaled pixels.
-- Above 700 scaled pixels, the list must receive one eleventh of each extra pixel.
+- The default list width must be half of the available width, up to 350 scaled pixels.
 - Pane minimum widths must take priority when the page is too narrow for the default split.
 - The default split must follow page resizing until the user moves the divider.
 - The page must save the user's split proportion and restore it when the page reopens.
 - The details pane must have a minimum width of 220 scaled pixels.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
-    `default split gives the list half of narrow widths and one eleventh of extra width`;
+    `default split caps the list at 350 scaled pixels`;
     `nested layout does not save the default split`;
     `user split proportion persists across views and resizes`
   )
@@ -740,6 +739,8 @@ Untested: No focused test verifies Shift-selection across sections.
   )
 
 - Install, Update, and Restart actions must use the secondary button style in unified rows and details.
+- In Islands, secondary row buttons must use the theme's border color for accented surfaces.
+- A row button with a custom border color must use that color.
 - The legacy Plugins page must keep its existing action button style.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `unified host uses secondary plugin action buttons`;

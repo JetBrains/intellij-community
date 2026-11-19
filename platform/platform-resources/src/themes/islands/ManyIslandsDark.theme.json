@@ -887,6 +887,7 @@
     "Plugins": {
       "SectionHeader.background": "dialog-bg-inline",
       "hoverBackground": "selection-bg-hovered",
+      "List.Button.borderColor": "control-border-over-accent",
       "Button": {
         "installFillForeground": "text-over-accent",
         "installFillBackground": "control-success-bg",

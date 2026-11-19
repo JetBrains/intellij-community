@@ -1487,8 +1487,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     const val ERROR_LEFT_INSET: Int = 16
     const val ERROR_RETRY_GAP: Int = 8
     const val PLUGIN_LIST_MIN_WIDTH: Int = 280
-    const val SPLIT_EQUAL_WIDTH: Int = 700
-    const val SPLIT_EXTRA_WIDTH_PARTS: Int = 11
+    const val PLUGIN_LIST_DEFAULT_WIDTH: Int = 350
     const val SPLIT_PROPORTION_KEY: String = "UnifiedPluginsPage.SplitProportion"
     const val SPLIT_STORAGE_DEFAULT_PROPORTION: Float = 0f
     const val REALIZATION_CHUNK_SIZE: Int = 100
@@ -1515,9 +1514,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   }
 
   private fun defaultListProportion(availableWidth: Int): Float {
-    val equalWidth = JBUI.scale(SPLIT_EQUAL_WIDTH)
-    val listWidth = minOf(availableWidth, equalWidth) / 2f +
-                    (availableWidth - equalWidth).coerceAtLeast(0) / SPLIT_EXTRA_WIDTH_PARTS.toFloat()
+    val listWidth = minOf(availableWidth / 2f, JBUI.scale(PLUGIN_LIST_DEFAULT_WIDTH).toFloat())
     return listWidth / availableWidth
   }
 

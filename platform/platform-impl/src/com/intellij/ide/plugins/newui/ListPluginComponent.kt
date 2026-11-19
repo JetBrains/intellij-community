@@ -1670,6 +1670,12 @@ class ListPluginComponent private constructor(
     }
   }
 
+  private fun applyRowButtonBorder(component: JComponent) {
+    if (!myUseSecondaryButtons || component !is JButton || component.getClientProperty("JButton.borderColor") != null) return
+    val borderColor = UIManager.getColor("Plugins.List.Button.borderColor") ?: return
+    component.putClientProperty("JButton.borderColor", borderColor)
+  }
+
   private inner class BaselineLayout : AbstractLayoutManager() {
     private val myHGap: JBValue = JBValue.Float(
       if (myUseCompactUnifiedRowLayout) 12f else if (myUseUnifiedRowLayout) 8f else 10f,
@@ -2022,6 +2028,7 @@ class ListPluginComponent private constructor(
     }
 
     fun addButtonComponent(component: JComponent, index: Int) {
+      applyRowButtonBorder(component)
       if (myButtonComponents.isEmpty() || index == -1) {
         myButtonComponents.add(component)
       }

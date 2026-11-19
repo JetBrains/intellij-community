@@ -68,6 +68,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Component
 import java.awt.Container
 import java.awt.event.FocusEvent
@@ -82,6 +83,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTabbedPane
 import javax.swing.JProgressBar
+import javax.swing.UIManager
 import kotlin.math.abs
 
 @TestApplication
@@ -185,6 +187,9 @@ internal class LegacyPluginRowFactoryTest {
   @Test
   fun `unified host uses secondary plugin action buttons`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+    val borderKey = "Plugins.List.Button.borderColor"
+    val rowBorderColor = Color.WHITE
+    val previousBorder = UIManager.put(borderKey, rowBorderColor)
     try {
       val searchListener = LinkListener<Any> { _, _ -> }
       val listModel = ListPluginModel()
@@ -254,9 +259,9 @@ internal class LegacyPluginRowFactoryTest {
       factory.rowsRendered(bindings)
 
       val rows = bindings.associate { it.occurrenceId.pluginId to (it.row as LegacyPluginRow) }
-      assertSecondaryStyle(checkNotNull(rows.getValue(marketplacePluginId).component.myInstallButton))
-      assertSecondaryStyle(checkNotNull(rows.getValue(updatePluginId).component.myUpdateButton))
-      assertSecondaryStyle(checkNotNull(rows.getValue(restartPluginId).component.myRestartButton))
+      assertSecondaryStyle(checkNotNull(rows.getValue(marketplacePluginId).component.myInstallButton), rowBorderColor)
+      assertSecondaryStyle(checkNotNull(rows.getValue(updatePluginId).component.myUpdateButton), rowBorderColor)
+      assertSecondaryStyle(checkNotNull(rows.getValue(restartPluginId).component.myRestartButton), rowBorderColor)
 
       val details = host.createDetails(searchListener, marketplace = true)
       assertThat(details.useSecondaryButtons).isTrue()
@@ -264,6 +269,7 @@ internal class LegacyPluginRowFactoryTest {
       reconciler.close()
     }
     finally {
+      UIManager.put(borderKey, previousBorder)
       host.dispose(closeSession = false)
     }
   }
@@ -2002,12 +2008,12 @@ internal class LegacyPluginRowFactoryTest {
     return result
   }
 
-  private fun assertSecondaryStyle(button: JButton) {
+  private fun assertSecondaryStyle(button: JButton, borderColor: Color) {
     assertThat(button.getClientProperty("JButton.textColor")).isNull()
     assertThat(button.getClientProperty("JButton.focusedTextColor")).isNull()
     assertThat(button.getClientProperty("JButton.backgroundColor")).isNull()
     assertThat(button.getClientProperty("JButton.focusedBackgroundColor")).isNull()
-    assertThat(button.getClientProperty("JButton.borderColor")).isNull()
+    assertThat(button.getClientProperty("JButton.borderColor")).isEqualTo(borderColor)
     assertThat(button.getClientProperty("JButton.focusedBorderColor")).isNull()
   }
 
