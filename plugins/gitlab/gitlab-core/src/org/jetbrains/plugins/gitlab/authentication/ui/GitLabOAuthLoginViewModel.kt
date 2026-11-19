@@ -6,6 +6,7 @@ import com.intellij.collaboration.auth.ui.login.LoginModel.LoginState
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.util.ValidationBinding
 import com.intellij.collaboration.ui.util.validationBinding
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
@@ -18,7 +19,6 @@ import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,7 +47,7 @@ internal class GitLabOAuthLoginViewModel(
 ) : GitLabGitAuthorizationSignal {
 
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
-  private var loginJob: Job? = null
+  private val loginLauncher = SingleCoroutineLauncher(cs)
 
   val servers: List<String> =
     (GitRepositoryManager.getInstance(project).collectRemotes().mapNotNull { getServerPath(it.url) } +
@@ -115,9 +115,7 @@ internal class GitLabOAuthLoginViewModel(
   }
 
   fun requestLogin() {
-    if (_loginState.value is LoginState.Connecting) return
-    loginJob?.cancel()
-    loginJob = cs.launch {
+    loginLauncher.launch {
       _loginState.value = LoginState.Connecting
       try {
         val serverUri = _serverUri.value
@@ -137,9 +135,6 @@ internal class GitLabOAuthLoginViewModel(
       catch (e: Throwable) {
         _loginState.value = LoginState.Failed(e)
       }
-      finally {
-        loginJob = null
-      }
     }
   }
 
@@ -149,7 +144,7 @@ internal class GitLabOAuthLoginViewModel(
   }
 
   fun cancelLogin() {
-    loginJob?.cancel()
+    loginLauncher.cancel()
     if (_loginState.value is LoginState.Connecting) {
       _loginState.value = LoginState.Disconnected
       _outcome.value = null
