@@ -84,6 +84,39 @@ internal class MarkdownCodeSpanConfigurationRunnerTest {
   }
 
   @Test
+  fun `test code span run marker is not shown for temporary run configuration of nested class`() {
+    myFixture.addClass("""
+      public class JavaClass {
+        static void main(String[] args) {}
+        static class Nested {}
+      }
+    """.trimIndent())
+    withTemporaryRunConfiguration("Nested") {
+      configureMarkdown("`Nested`")
+
+      assertThat(findRunMarkers(AllIcons.RunConfigurations.TestState.Run)).isEmpty()
+      assertThat(findRunMarkers()).isEmpty()
+    }
+  }
+
+  @Test
+  fun `test code span run marker is not shown for temporary run configuration of outer class`() {
+    myFixture.addClass("""
+      public class JavaClass {
+        static class Nested {
+          static void main(String[] args) {}
+        }
+      }
+    """.trimIndent())
+    withTemporaryRunConfiguration("JavaClass") {
+      configureMarkdown("`JavaClass`")
+
+      assertThat(findRunMarkers(AllIcons.RunConfigurations.TestState.Run)).isEmpty()
+      assertThat(findRunMarkers()).isEmpty()
+    }
+  }
+
+  @Test
   fun `test duplicate code spans on one line produce one Java run action`() {
     addJavaClassWithMainMethod("JavaClass")
     configureMarkdown("`JavaClass` `JavaClass` `JavaClass`")
@@ -122,6 +155,18 @@ internal class MarkdownCodeSpanConfigurationRunnerTest {
     runManager.addConfiguration(
       runManager.createConfiguration("Smoke Tests Dev", ApplicationConfigurationType.getInstance().configurationFactories.single())
     )
+  }
+
+  private fun withTemporaryRunConfiguration(name: String, block: () -> Unit) {
+    val runManager = RunManager.getInstance(myFixture.project)
+    val settings = runManager.createConfiguration(name, ApplicationConfigurationType.getInstance().configurationFactories.single())
+    runManager.setTemporaryConfiguration(settings)
+    try {
+      block()
+    }
+    finally {
+      runManager.removeConfiguration(settings)
+    }
   }
 
   private fun findRunMarkers(icon: Icon = AllIcons.RunConfigurations.TestState.Run_run): List<LineMarkerInfo<*>> {
