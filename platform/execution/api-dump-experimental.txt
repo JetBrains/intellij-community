@@ -198,6 +198,7 @@ f:com.intellij.execution.target.TargetEnvironmentType$Companion
 - f:build():com.intellij.execution.target.java.JavaTargetParameter
 - f:fixed(java.lang.String):com.intellij.execution.target.java.JavaTargetParameter$Builder
 - f:resolved(java.lang.String):com.intellij.execution.target.java.JavaTargetParameter$Builder
+- f:toResolve(java.lang.String):com.intellij.execution.target.java.JavaTargetParameter$Builder
 *f:com.intellij.execution.target.java.JavaTargetParameter$Companion
 - f:fixed(java.lang.String):com.intellij.execution.target.java.JavaTargetParameter
 *f:com.intellij.execution.target.java.TargetPath

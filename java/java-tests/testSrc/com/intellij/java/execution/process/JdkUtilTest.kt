@@ -5,6 +5,8 @@ import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.java.JavaTargetParameter
+import com.intellij.execution.target.java.TargetPaths
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.projectRoots.CommandLineWrapperClassProvider
 import com.intellij.openapi.projectRoots.JdkCommandLineSetup
@@ -20,6 +22,8 @@ import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import kotlin.io.path.pathString
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -27,6 +31,11 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   companion object {
     private val jdk = lazy { SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()) }
     private const val WRAPPER_NAME = "com.intellij.rt.execution.CommandLineWrapper"
+    private const val AGENT = "-agentpath:"
+    private const val ARGS = "=args,file="
+    private val AGENT_PATH = Path.of("/","path", "to", "local", "agent").pathString
+    private val DUMP_FILE = Path.of("/", "path", "to", "remote", "output").pathString
+    private val FULL_AGENT = "$AGENT$AGENT_PATH$ARGS$DUMP_FILE"
   }
 
   private val parameters = SimpleJavaParameters()
@@ -115,6 +124,112 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     assertThat(args).containsExactly("hello/hello.Main", "1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space")
   }
 
+  @Test fun `target-dependent parameter with dynamic VM options in classpath jar`() {
+    parameters.isUseClasspathJar = true
+    parameters.setUseDynamicVMOptions(true)
+    parameters.setUseDynamicParameters(true)
+    addTargetDependentAgent()
+    doTest("-Xmx256m", FULL_AGENT, "-classpath", "#idea_rt#:#classpath.jar#", WRAPPER_NAME, "#classpath.jar#", "hello.Main")
+  }
+
+  @Test fun `target-dependent parameter with dynamic VM options in wrapper file`() {
+    parameters.isUseClasspathJar = false
+    parameters.setUseDynamicVMOptions(true)
+    parameters.setUseDynamicParameters(true)
+    addTargetDependentAgent()
+    doTest("-Xmx256m", FULL_AGENT, "-classpath", "#idea_rt#", WRAPPER_NAME, "#classpath#", "@vm_params", "#vm_params#", "@app_params", "#app_params#", "hello.Main")
+  }
+
+  @Test fun `target-dependent parameter with dynamic VM options in arg file`() {
+    setModuleMode()
+    parameters.setUseDynamicVMOptions(true)
+    addFixedTargetParameter()
+    doTest("#arg_file#", "-m", "hello/hello.Main", "hello")
+    assertThat(argFileLines()).contains(FULL_AGENT)
+  }
+
+  @Test fun `target-dependent VM option precedes main class in arg file`() {
+    setModuleMode()
+    parameters.setUseDynamicVMOptions(true)
+    parameters.setUseDynamicParameters(true)
+    addFixedTargetParameter()
+    doTest("#arg_file#")
+    assertThat(argFileLines()).containsSubsequence(FULL_AGENT, "-m", "hello/hello.Main", "hello")
+  }
+
+  @Test fun `target-dependent VM option stays on command line when VM options are not dynamic`() {
+    setModuleMode()
+    parameters.setUseDynamicParameters(true)
+    addFixedTargetParameter()
+    doTest("-Xmx256m", "-Dan.option=1", FULL_AGENT, "#arg_file#")
+    assertThat(argFileLines()).doesNotContain(FULL_AGENT).containsSubsequence("-m", "hello/hello.Main", "hello")
+  }
+
+  @Test fun `target-dependent parameter stays on command line with arg file classpath`() {
+    setModuleMode()
+    addFixedTargetParameter()
+    doTest("-Xmx256m", "-Dan.option=1", FULL_AGENT, "#arg_file#", "-m", "hello/hello.Main", "hello")
+    assertThat(argFileLines()).doesNotContain(FULL_AGENT)
+  }
+
+  @Test fun `arg file waits for target paths`() {
+    setModuleMode()
+    parameters.setUseDynamicVMOptions(true)
+    parameters.setUseDynamicParameters(true)
+    val callbacks = mutableListOf<String>()
+    parameters.targetDependentParameters.addParameter {
+      val paths = TargetPaths.ordered {
+        upload(AGENT_PATH, afterUploadResolved = { callbacks += "upload:$it" })
+        download(DUMP_FILE, afterDownloadResolved = { callbacks += "download:$it" })
+      }
+      JavaTargetParameter.Builder(paths).fixed(AGENT).toResolve(AGENT_PATH).fixed(ARGS).toResolve(DUMP_FILE).build()
+    }
+    doTest("#arg_file#")
+    assertThat(callbacks).containsExactlyInAnyOrder("upload:$AGENT_PATH", "download:$DUMP_FILE")
+    assertThat(argFileLines()).containsSubsequence(FULL_AGENT, "-m", "hello/hello.Main", "hello")
+  }
+
+  @Test fun `target-dependent parameter on full command line`() {
+    parameters.setUseDynamicClasspath(false)
+    addFixedTargetParameter()
+    doTest("-Xmx256m", "-Dan.option=1", FULL_AGENT, "-classpath", "/classes/hello.jar", "hello.Main", "hello")
+  }
+
+  @Test fun `target-dependent parameter with explicit classpath`() {
+    parameters.vmParametersList.addAll("-classpath", "/explicit")
+    addFixedTargetParameter()
+    doTest("-Xmx256m", "-Dan.option=1", "-classpath", "/explicit", FULL_AGENT, "hello.Main", "hello")
+  }
+
+  @Test fun `target-dependent parameter with jar`() {
+    parameters.mainClass = null
+    parameters.classPath.clear()
+    parameters.jarPath = "/classes/main.jar"
+    addFixedTargetParameter()
+    doTest("-Xmx256m", "-Dan.option=1", FULL_AGENT, "-jar", "/classes/main.jar", "hello")
+  }
+
+  @Test fun `target-dependent parameter without wrapper provider`() {
+    ExtensionTestUtil.maskExtensions(CommandLineWrapperClassProvider.EP_NAME, emptyList(), testRootDisposable)
+    addFixedTargetParameter()
+    doTest("-Xmx256m", "-Dan.option=1", FULL_AGENT, "-classpath", "/classes/hello.jar", "hello.Main", "hello")
+  }
+
+  @Test fun `legacy API keeps target-dependent parameter on full command line`() {
+    parameters.setUseDynamicClasspath(false)
+    addFixedTargetParameter()
+    doTest("-Xmx256m", "-Dan.option=1", FULL_AGENT, "-classpath", "/classes/hello.jar", "hello.Main", "hello", legacy = true)
+  }
+
+  @Test fun `legacy API puts target-dependent VM option in arg file`() {
+    setModuleMode()
+    parameters.setUseDynamicVMOptions(true)
+    parameters.setUseDynamicParameters(true)
+    addFixedTargetParameter()
+    doTest("#arg_file#", legacy = true)
+    assertThat(argFileLines()).containsSubsequence(FULL_AGENT, "-m", "hello/hello.Main", "hello")
+  }
+
   @Test fun `the Java plugin gives CommandLineWrapper`() {
     assertThat(JdkCommandLineSetup.commandLineWrapperClass()?.name).isEqualTo(WRAPPER_NAME)
   }
@@ -135,14 +250,21 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     assertThat(actual).containsExactly("1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space", "unicode\u2026")
   }
 
-  private fun doTest(vararg expected: String) {
-    val request = LocalTargetEnvironmentRequest()
-    val cmd = parameters.toCommandLine(request)
-    request.prepareEnvironment(TargetProgressIndicator.EMPTY)
-    filesToDelete = cmd.filesToDeleteOnTermination
-
+  private fun doTest(vararg expected: String, legacy: Boolean = false) {
+    val commands = if (legacy) {
+      parameters.toCommandLine().getCommandLineList(null).also { args ->
+        filesToDelete = args.filter { it.startsWith("@") }.map { File(it.substring(1)) }
+      }
+    }
+    else {
+      val request = LocalTargetEnvironmentRequest()
+      val cmd = parameters.toCommandLine(request)
+      request.prepareEnvironment(TargetProgressIndicator.EMPTY)
+      filesToDelete = cmd.filesToDeleteOnTermination
+      cmd.build().collectCommandsSynchronously()
+    }
     val actual = ParametersList()
-    actual.addAll(cmd.build().collectCommandsSynchronously())
+    actual.addAll(commands)
     val toCompare = mutableListOf<String>()
     actual.parameters.forEachIndexed { i, arg ->
       if (i > 0 && !arg.contains(".encoding=")) {
@@ -171,6 +293,24 @@ class JdkUtilTest : BareTestFixtureTestCase() {
       else -> path
     }
   }
+
+  private fun addTargetDependentAgent() {
+    parameters.targetDependentParameters.addParameter {
+      JavaTargetParameter.Builder(uploadPaths = setOf(AGENT_PATH),
+                                  downloadPaths = setOf(DUMP_FILE))
+        .fixed(AGENT)
+        .toResolve(AGENT_PATH)
+        .fixed(ARGS)
+        .toResolve(DUMP_FILE)
+        .build()
+    }
+  }
+
+  private fun addFixedTargetParameter() {
+    parameters.targetDependentParameters.addParameter { JavaTargetParameter.fixed(FULL_AGENT) }
+  }
+
+  private fun argFileLines(): List<String> = filesToDelete!!.single { it.name.contains("idea_arg_file") }.readLines()
 
   private fun setModuleMode() {
     parameters.modulePath.addAll(parameters.classPath.pathList)

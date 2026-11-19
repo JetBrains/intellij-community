@@ -343,6 +343,10 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
         argFile.addPromisedParameter("-p", composeClassPathValues(javaParameters, modulePath))
       }
 
+      if (dynamicVMOptions) {
+        appendTargetDependentParameters(javaParameters, argFile::addPromisedParameter)
+      }
+
       if (dynamicParameters) {
         for (nextMainClassParam in getMainClassParams(javaParameters)) {
           argFile.addPromisedParameter(nextMainClassParam)
@@ -398,6 +402,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
             appendVmParameter(param)
           }
         }
+        appendTargetDependentParameters(javaParameters)
         jarFile.addToManifest("VM-Options", ParametersListUtil.join(properties))
       }
       else {
@@ -459,6 +464,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
             appendVmParameter(param)
           }
         }
+        appendTargetDependentParameters(javaParameters)
         if (toWrite.isNotEmpty()) {
           vmParamsFile = FileUtil.createTempFile("idea_vm_params$pseudoUniquePrefix", null)
           commandLine.addFileToDeleteOnTermination(vmParamsFile)
@@ -571,6 +577,13 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     vmParameters.list.forEach {
       appendVmParameter(it)
     }
+    appendTargetDependentParameters(javaParameters)
+  }
+
+  private fun appendTargetDependentParameters(
+    javaParameters: SimpleJavaParameters,
+    addParameter: (TargetValue<String>) -> Unit = commandLine::addParameter,
+  ) {
     val targetDependentParameters = javaParameters.targetDependentParameters
     targetDependentParameters.asTargetParameters().forEach { javaParameterFunction ->
       val value = javaParameterFunction.apply(request)
@@ -584,7 +597,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
           requestDownloadFromTarget(path.localPath, true) { path.afterUploadOrDownloadResolved(it) }
         }
       )
-      commandLine.addParameter(value.parameter)
+      addParameter(value.parameter)
     }
     dependingOnEnvironmentPromise += environmentPromise.then { (environment, _) ->
       targetDependentParameters.setTargetEnvironment(environment)
@@ -769,20 +782,21 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     private val myPromisedOptionValues: MutableMap<String, TargetValue<String>> = LinkedHashMap()
     private val myPromisedParameters = mutableListOf<TargetValue<String>>()
-    private val myAllPromises = mutableListOf<Promise<String>>()
 
     fun addPromisedParameter(@NonNls optionName: String, promisedValue: TargetValue<String>) {
       myPromisedOptionValues[optionName] = promisedValue
-      registerPromise(promisedValue)
     }
 
     fun addPromisedParameter(promisedValue: TargetValue<String>) {
       myPromisedParameters.add(promisedValue)
-      registerPromise(promisedValue)
     }
 
     fun scheduleWriteFileWhenReady(vmParameters: ParametersList, rememberContent: () -> Unit) {
-      myAllPromises.collectResults().onSuccess {
+      val promises = buildList {
+        addAll(myPromisedOptionValues.values)
+        addAll(myPromisedParameters)
+      }.map { it.targetValue }
+      promises.collectResults().onSuccess {
         try {
           writeArgFileNow(vmParameters)
           rememberContent.invoke()
@@ -813,10 +827,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
         fileArgs.add(nextResolvedParameter.targetValue.blockingGet(0))
       }
       CommandLineWrapperUtil.writeArgumentsFile(file, fileArgs, platform.lineSeparator, charset)
-    }
-
-    private fun registerPromise(value: TargetValue<String>) {
-      myAllPromises.add(value.targetValue)
     }
 
   }

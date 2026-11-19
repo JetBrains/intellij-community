@@ -3,7 +3,6 @@ package com.intellij.execution.target.java
 
 import com.intellij.execution.target.value.TargetValue
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.TimeoutException
 
 /**
  * Java parameter for run target with requests to unload/download files necessary for its proper functioning
@@ -17,6 +16,10 @@ class JavaTargetParameter private constructor(
 
   /**
    * Resolves all upload and download paths provided by this parameter.
+   *
+   * Resolve an instance once: call this function or [toLocalParameter] only one time.
+   * A second call throws [IllegalStateException].
+   * Build a new instance for each command line setup.
    */
   fun resolvePaths(
     uploadPathsResolver: (TargetPath) -> TargetValue<String>,
@@ -27,6 +30,9 @@ class JavaTargetParameter private constructor(
 
   /**
    * Returns the parameter with paths resolved to local versions.
+   *
+   * This function resolves the paths of the instance, as [resolvePaths] does.
+   * A second call of either function throws [IllegalStateException].
    */
   fun toLocalParameter(): String {
     targetPaths.resolveAll(
@@ -44,33 +50,26 @@ class JavaTargetParameter private constructor(
                 downloadPaths: Set<String> = setOf())
       : this(TargetPaths.unordered(uploadPaths, downloadPaths))
 
-    private val parameterBuilderParts: MutableList<() -> String> = mutableListOf()
+    private val targetValues: MutableList<TargetValue<String>> = mutableListOf()
 
     /**
      * Adds given string as-is to the overall parameter.
      */
-    fun fixed(value: String): Builder = apply { parameterBuilderParts += { value } }
+    fun fixed(value: String): Builder = apply { targetValues += TargetValue.fixed(value) }
 
     /**
-     * Adds string that is a resolved version of given one. If it is a file path, then it will be resolved to
-     * satisfy file system on target.
+     * Adds the target version of the given local path. The path must be declared in the target paths of this builder.
+     * The value completes after [JavaTargetParameter.resolvePaths] or [JavaTargetParameter.toLocalParameter] resolves the path.
+     *
+     * @throws IllegalArgumentException if the target paths of this builder do not declare [value].
      */
-    fun resolved(value: String): Builder = apply { parameterBuilderParts += { getResolved(value) } }
+    fun toResolve(value: String): Builder = apply { targetValues += targetPaths.resolveAsync(value) }
+
+    @Deprecated("Use toResolve", ReplaceWith("toResolve(value)"))
+    fun resolved(value: String): Builder = toResolve(value)
 
     fun build(): JavaTargetParameter {
-      val parameter = TargetValue.map(TargetValue.EMPTY_VALUE) {
-        parameterBuilderParts.joinToString("") { it() }
-      }
-      return JavaTargetParameter(parameter, targetPaths)
-    }
-
-    private fun getResolved(localPath: String): String {
-      return try {
-        targetPaths.getResolved(localPath).targetValue.blockingGet(0)!!
-      }
-      catch (e: TimeoutException) {
-        throw IllegalArgumentException("Parameter corresponding to $localPath must be resolved", e)
-      }
+      return JavaTargetParameter(TargetValue.composite(targetValues) { it.joinToString("") }, targetPaths)
     }
   }
 

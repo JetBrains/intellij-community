@@ -20,6 +20,11 @@ public final class JavaTargetDependentParameters {
   private final List<Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>> parameters = new ArrayList<>();
   private TargetEnvironment myEnvironment;
 
+  /**
+   * Adds a function that builds a parameter for a target request.
+   * The function must return a new {@link JavaTargetParameter} on each call,
+   * because a parameter resolves its paths only once.
+   */
   public void addParameter(@NotNull Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter> parameter) {
     parameters.add(parameter);
   }

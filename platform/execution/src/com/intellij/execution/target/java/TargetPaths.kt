@@ -3,13 +3,18 @@ package com.intellij.execution.target.java
 
 import com.intellij.execution.target.value.TargetValue
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Experimental
-sealed class TargetPaths {
+sealed class TargetPaths(private val paths: List<TargetPath>) {
 
   companion object {
     /**
      * Build paths that do not depend on each other in resolved forms.
+     *
+     * @throws IllegalArgumentException if a path is in both [uploadPaths] and [downloadPaths].
      */
     @JvmStatic
     fun unordered(uploadPaths: Set<String> = emptySet(), downloadPaths: Set<String> = emptySet()): TargetPaths {
@@ -17,9 +22,11 @@ sealed class TargetPaths {
     }
 
     /**
-     * Build paths that can depend on each other in resolved form..
+     * Build paths that can depend on each other in resolved form.
      * For example, one may use some resolved path to build another path,
-     * or to write in in a file that must be uploaded to target.
+     * or to write in a file that must be uploaded to target.
+     *
+     * @throws IllegalArgumentException if [buildOrder] adds a local path more than once.
      */
     @JvmStatic
     fun ordered(buildOrder: OrderBuilder.() -> Unit): TargetPaths {
@@ -29,13 +36,31 @@ sealed class TargetPaths {
     }
   }
 
-  internal var resolvedPaths: Map<TargetPath, TargetValue<String>>? = null
+  private val slots: Map<String, AsyncPromise<TargetValue<String>>> = paths.associate { it.localPath to AsyncPromise() }
+  private val resolutionStarted = AtomicBoolean()
 
-  internal abstract fun resolveAll(uploadPathsResolver: (TargetPath) -> TargetValue<String>,
-                                   downloadPathsResolver: (TargetPath) -> TargetValue<String>)
+  init {
+    require(slots.size == paths.size) { "Duplicate local paths: ${paths.map { it.localPath }}" }
+  }
 
-  internal fun getResolved(localValue: String): TargetValue<String> = resolvedPaths?.entries?.find { localValue == it.key.localPath }?.value
-                                                                      ?: throw IllegalStateException("Path $localValue is not resolved")
+  /**
+   * Returns a value for [localPath]. The value completes after [resolveAll] resolves the path.
+   */
+  internal fun resolveAsync(localPath: String): TargetValue<String> {
+    val slot = slots[localPath] ?: throw IllegalArgumentException("Path $localPath is not declared")
+    return PendingTargetValue(slot)
+  }
+
+  /**
+   * Resolves all paths in the declaration order. Call it once.
+   */
+  internal fun resolveAll(uploadPathsResolver: (TargetPath) -> TargetValue<String>,
+                          downloadPathsResolver: (TargetPath) -> TargetValue<String>) {
+    check(resolutionStarted.compareAndSet(false, true)) { "Paths are already resolved" }
+    for (path in paths) {
+      slots.getValue(path.localPath).setResult(path.resolve(uploadPathsResolver, downloadPathsResolver))
+    }
+  }
 
   class OrderBuilder {
     private val orderedPaths = mutableListOf<TargetPath>()
@@ -54,26 +79,19 @@ sealed class TargetPaths {
       orderedPaths += TargetPath.toDownload(localPath, beforeDownloadResolved, afterDownloadResolved)
     }
 
-    fun build(): TargetPaths = Ordered(orderedPaths)
+    fun build(): TargetPaths = Ordered(orderedPaths.toList())
   }
 
-  private class Unordered(val uploadPaths: Set<String> = emptySet(),
-                          val downloadPaths: Set<String> = emptySet()) : TargetPaths() {
+  private class Unordered(uploadPaths: Set<String>, downloadPaths: Set<String>)
+    : TargetPaths(uploadPaths.map { TargetPath.toUpload(it) } + downloadPaths.map { TargetPath.toDownload(it) })
 
-    override fun resolveAll(uploadPathsResolver: (TargetPath) -> TargetValue<String>,
-                            downloadPathsResolver: (TargetPath) -> TargetValue<String>) {
-      resolvedPaths = uploadPaths.map { TargetPath.toUpload(it) }.associateWith(uploadPathsResolver) +
-                      downloadPaths.map { TargetPath.toDownload(it) }.associateWith(downloadPathsResolver)
-    }
-  }
+  private class Ordered(paths: List<TargetPath>) : TargetPaths(paths)
+}
 
-  private class Ordered(val paths: Iterable<TargetPath>) : TargetPaths() {
+private class PendingTargetValue(private val slot: Promise<TargetValue<String>>) : TargetValue<String> {
+  override fun getLocalValue(): Promise<String> = slot.thenAsync { it.localValue }
 
-    override fun resolveAll(uploadPathsResolver: (TargetPath) -> TargetValue<String>,
-                            downloadPathsResolver: (TargetPath) -> TargetValue<String>) {
-      resolvedPaths = paths.associateWith { it.resolve(uploadPathsResolver, downloadPathsResolver) }
-    }
-  }
+  override fun getTargetValue(): Promise<String> = slot.thenAsync { it.targetValue }
 }
 
 @ApiStatus.Experimental

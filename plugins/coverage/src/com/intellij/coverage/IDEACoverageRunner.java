@@ -243,9 +243,9 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
 
       return new JavaTargetParameter.Builder(targetPaths)
         .fixed("-javaagent:")
-        .resolved(agentPath)
+        .toResolve(agentPath)
         .fixed("=")
-        .resolved(tempFilePath)
+        .toResolve(tempFilePath)
         .build();
     }
     catch (IOException e) {

@@ -281,9 +281,9 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                                                        boolean includeNoLocation) {
     builder
       .fixed("-javaagent:")
-      .resolved(agentPath)
+      .toResolve(agentPath)
       .fixed("=destfile=")
-      .resolved(sessionDataFilePath)
+      .toResolve(sessionDataFilePath)
       .fixed(",append=false");
     if (includeNoLocation) {
       // JaCoCo engine ignores classes with no location.

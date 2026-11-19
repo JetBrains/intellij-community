@@ -153,6 +153,21 @@ public class JaCoCoRunnerTest extends HeavyPlatformTestCase {
   }
 
   @Test
+  public void argFileHoldsAgentInDynamicVmOptionsMode() {
+    setRegistryPropertyForTest("idea.jacoco.collect.coverage.for.classes.with.no.location", "off");
+    SimpleJavaParameters parameters = ArgFileCommandLines.argFileParameters();
+    new JaCoCoCoverageRunner().appendCoverageArgument("coverage.exec", null, null, parameters, true, true, null, getProject());
+
+    ArgFileCommandLine result = ArgFileCommandLines.build(parameters);
+
+    Pattern agent = Pattern.compile("-javaagent:.*jacocoagent.*\\.jar=destfile=.*coverage\\.exec,append=false");
+    Assert.assertTrue(String.valueOf(result.getArgFileLines()),
+                      result.getArgFileLines().stream().anyMatch(line -> agent.matcher(line).matches()));
+    Assert.assertTrue(String.valueOf(result.getCommandLine()),
+                      result.getCommandLine().stream().noneMatch(line -> line.startsWith("-javaagent:")));
+  }
+
+  @Test
   public void modulesFollowRunConfigurationModuleDependencies() {
     Module dependency = createModule("dependency");
     ModuleRootModificationUtil.addDependency(getModule(), dependency);
