@@ -17,9 +17,16 @@ package com.jetbrains.python.psi.types
 
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 
 object PyABCUtil {
+  /**
+   * The structural requirement of a `**` operand, as in `_typeshed.SupportsKeysAndGetItem`.
+   * CPython calls only `keys()` and `__getitem__` of an operand that is not a `dict`.
+   */
+  const val SUPPORTS_KEYS_AND_GET_ITEM: String = "SupportsKeysAndGetItem"
+
   @JvmStatic
   fun isSubclass(subClass: PyClass, superClass: PyClass, context: TypeEvalContext?): Boolean {
     val superName = superClass.name
@@ -51,6 +58,13 @@ object PyABCUtil {
     val hasGetItem = hasMethod(subClass, PyNames.GETITEM, inherited, context)
     if (PyNames.ITERABLE == superClassName) {
       return hasIter || hasGetItem
+    }
+    if (SUPPORTS_KEYS_AND_GET_ITEM == superClassName) {
+      // CPython finds `__getitem__` on the type, but `keys` by a normal attribute lookup on the instance.
+      return hasGetItem && (hasMethod(subClass, PyNames.KEYS, inherited, context) ||
+                            subClass.findInstanceAttribute(PyNames.KEYS, inherited) != null ||
+                            hasMethod(subClass, PyNames.GETATTR, inherited, context) ||
+                            hasOwnGetAttribute(subClass, inherited, context))
     }
     if (PyNames.ITERATOR == superClassName) {
       return (hasIter && (hasMethod(subClass, PyNames.NEXT, inherited, context) || hasMethod(
@@ -142,6 +156,12 @@ object PyABCUtil {
       is PyIntersectionType -> type.toStream().filter { !it.isAnyOrUnknown }.anyMatch { isSubtype(it!!, superClassName, context) }
       else -> false
     }
+  }
+
+  /** True when [cls] or an ancestor other than `object` defines `__getattribute__`, which can give any attribute. */
+  private fun hasOwnGetAttribute(cls: PyClass, inherited: Boolean, context: TypeEvalContext?): Boolean {
+    val owner = cls.findMethodByName(PyNames.GETATTRIBUTE, inherited, context)?.containingClass ?: return false
+    return !PyUtil.isObjectClass(owner)
   }
 
   private fun hasMethod(cls: PyClass, name: String, inherited: Boolean, context: TypeEvalContext?): Boolean {
