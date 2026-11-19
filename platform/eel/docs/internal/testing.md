@@ -75,4 +75,4 @@ Integration tests that use `EelFixture` live in `intellij.platform.ijent.integra
 
 ## Regenerate Builders
 
-Run `BuildersGeneratorTest` from `intellij.platform.eel.codegen` after you change a method with a `@GeneratedBuilder` argument. Commit the new files in `community/platform/eel/gen-builders/`.
+Run `./tests.cmd --module intellij.platform.eel.codegen --test com.intellij.platform.eel.codegen.BuildersGeneratorTest` after you change a method with a `@GeneratedBuilder` argument. Commit the new files in `community/platform/eel/gen-builders/`.

@@ -1173,7 +1173,7 @@ under cargo's own feature resolution, the reference gates, and one live command:
 ./bazel.cmd test @community//tools/vm/... //plugins/air/tests/integration/vm-contract/... @community//tools/bt/...
 ./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-arm64 @community//tools/vm:air-trace-record-linux-arm64
 (cd community/tools/vm && cargo test)
-./community/tools/bt.cmd AirSpecReferencesTest
+./community/tools/bt.cmd //plugins/air:air-plugin-tests_test --filter com.intellij.air.plugin.AirSpecReferencesTest
 (cd plugins/air/docs && pnpm run check)
 ./community/tools/vm.cmd status
 ```

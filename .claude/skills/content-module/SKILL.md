@@ -242,7 +242,7 @@ Then do the [common steps](#common-steps).
 ./tests.cmd --module intellij.projectStructureTests --test com.intellij.ideaProjectStructure.fast.PluginsAvailableInIdeaFreeModeTest
 ```
 
-For Rider, also run `RiderPackagingTest`. After a conversion, search for the old descriptor file name. No `xi:include` or `config-file` reference to it can remain.
+For Rider, also run `./tests.cmd --module intellij.rider.build.tests --test com.jetbrains.rider.build.RiderPackagingTest` from the ultimate root. After a conversion, search for the old descriptor file name. No `xi:include` or `config-file` reference to it can remain.
 
 ## Pitfalls
 

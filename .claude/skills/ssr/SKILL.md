@@ -54,4 +54,4 @@ Both nodes should be located under `<inspection_tool class="SSBasedInspection"` 
 </inspection_tool>
 ```
 
-- You must run `InspectionProfileConsistencyTest` after changing xml files
+- You must run `./tests.cmd --module intellij.projectStructureTests --test com.intellij.ideaProjectStructure.slow.InspectionProfileConsistencyTest` from the ultimate root after changing xml files

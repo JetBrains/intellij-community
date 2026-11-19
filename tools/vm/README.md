@@ -308,7 +308,7 @@ bun community/build/rust-tools/sync.mjs --check
   each one installs it with `avl_affected::bridge::install_fixture`.
 - The cross-target cargo clippy lints the `cfg(windows)` code and the tests, which the Bazel clippy targets do not.
   `avl-guest` runs only inside a guest, so it is left out.
-- After a change of a spec or a move of a file that a spec names, run `./community/tools/bt.cmd AirSpecReferencesTest`.
+- After a change of a spec or a move of a file that a spec names, run `./community/tools/bt.cmd //plugins/air:air-plugin-tests_test --filter com.intellij.air.plugin.AirSpecReferencesTest`.
 - After a change of a Starlark file, run `bazel run //:format.check`.
 
 A golden is an `expect-test` snapshot: an `expect!` in the test, or a file that `expect_file!` names. `UPDATE_EXPECT=1

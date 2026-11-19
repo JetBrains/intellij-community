@@ -49,7 +49,7 @@ Eel is a word, not an acronym. Write "Eel", not "EEL". Never expand it. "Executi
 
 - The API modules `intellij.platform.eel` and `intellij.platform.eel.nioFs` cannot depend on `core`. See [Module Layout](../internal/module-layout.md).
 - Do not add code to `intellij.platform.eel.provider` by default.
-- After you change a method with a `@GeneratedBuilder` argument, run `BuildersGeneratorTest` and commit the generated builders.
+- After you change a method with a `@GeneratedBuilder` argument, run `./tests.cmd --module intellij.platform.eel.codegen --test com.intellij.platform.eel.codegen.BuildersGeneratorTest` and commit the generated builders.
 - Run the affected tests with `./tests.cmd --module intellij.platform.eel.tests --test <FQN>`.
 
 ## IJent
