@@ -7,6 +7,7 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.coroutineScope
@@ -19,6 +20,10 @@ private object EditorWarmUp
 private val LOG = logger<EditorWarmUp>()
 
 private const val EDITOR_CLASSES_PATH = "com/intellij/openapi/editor/impl/warmup/editor-classes.txt"
+
+// Access to InspectionWidgetActionProvider.EP_NAME initializes it
+private val INSPECTION_WIDGET_ACTION_PROVIDER_EP =
+  ExtensionPointName<InspectionWidgetActionProvider>("com.intellij.iw.actionProvider")
 
 /**
  * The warm-up class list of the editor implementation.
@@ -41,7 +46,8 @@ internal suspend fun warmUpEditorClasses(listenerPoint: ExtensionPointName<Edito
   coroutineScope {
     launch { warmUpClasses(EDITOR_CLASSES.loadOnly, initialize = false) { classLoader } }
     launch { warmUpInspectionWidgetBundles() }
-    launch { warmUpListenerClasses(listenerPoint) }
+    launch { warmUpExtensionClasses(listenerPoint, "editor factory listener") }
+    launch { warmUpExtensionClasses(INSPECTION_WIDGET_ACTION_PROVIDER_EP, "inspection widget action provider") }
   }
 }
 
@@ -62,18 +68,18 @@ private fun warmUpInspectionWidgetBundles() {
 }
 
 /**
- * Loads the classes of the registered [EditorFactoryListener] extensions through the class loaders of their plugins.
- * The extensions stay uncreated. The EDT creates them when it notifies the listeners about the first editor.
+ * Loads registered extension classes through their plugin class loaders.
+ * The extension instances stay uncreated.
  */
-private suspend fun warmUpListenerClasses(listenerPoint: ExtensionPointName<EditorFactoryListener>) {
-  for (extension in listenerPoint.filterableLazySequence()) {
+private suspend fun <T : Any> warmUpExtensionClasses(extensionPoint: ExtensionPointName<T>, extensionKind: String) {
+  for (extension in extensionPoint.filterableLazySequence()) {
     currentCoroutineContext().ensureActive()
     try {
       extension.implementationClass?.declaredConstructors
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
-      LOG.warn("Cannot prepare editor factory listener class: ${extension.implementationClassName}", e)
+      LOG.warn("Cannot prepare $extensionKind class: ${extension.implementationClassName}", e)
     }
   }
 }

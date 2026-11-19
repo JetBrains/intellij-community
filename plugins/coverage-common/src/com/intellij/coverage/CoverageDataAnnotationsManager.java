@@ -153,7 +153,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
       if (manager == null) return;
 
       manager.runTask(editor, () -> {
-        PsiFile psiFile = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
+        PsiFile psiFile = ReadAction.computeBlocking(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
         if (editor.isDisposed() || psiFile == null || !psiFile.isPhysical()) return;
         manager.show(editor, psiFile);
       });
