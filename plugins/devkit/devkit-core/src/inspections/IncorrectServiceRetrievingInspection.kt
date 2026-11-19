@@ -32,6 +32,7 @@ internal class IncorrectServiceRetrievingInspection : ServiceRetrievingInspectio
           val message = when (howServiceRetrieved) {
             Level.APP -> DevKitBundle.message("inspection.incorrect.service.retrieving.mismatch.for.project.level")
             Level.PROJECT -> DevKitBundle.message("inspection.incorrect.service.retrieving.mismatch.for.app.level")
+            Level.WORKSPACE -> return true
           }
           holder.registerUProblem(node, message)
         }
@@ -45,6 +46,7 @@ internal class IncorrectServiceRetrievingInspection : ServiceRetrievingInspectio
            when (howServiceRetrieved) {
              Level.APP -> serviceLevel.isApp()
              Level.PROJECT -> serviceLevel.isProject()
+             Level.WORKSPACE -> true
            }
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,6 +29,12 @@ public @interface Service {
     /**
      * Project-level instance, can take {@link Project} as constructor parameter.
      */
-    PROJECT
+    PROJECT,
+
+    /**
+     * Workspace-level instance. Its constructor can take a {@code ProjectWorkspace}.
+     */
+    @ApiStatus.Experimental
+    WORKSPACE
   }
 }

@@ -37,6 +37,7 @@ internal class ConvertToLightServiceFix private constructor(private val classPoi
     val key = when (level) {
       Service.Level.APP -> "inspection.light.service.migration.app.level.fix"
       Service.Level.PROJECT -> "inspection.light.service.migration.project.level.fix"
+      Service.Level.WORKSPACE -> return getFamilyName()
     }
     return DevKitBundle.message(key)
   }
@@ -75,6 +76,7 @@ internal class JavaAddServiceAnnotationProvider : AddServiceAnnotationProvider {
         val newAnnotation = factory.createAnnotationFromText("@${Service::class.java.canonicalName}(${projectLevelFqn})", aClass)
         newAnnotation.parameterList.attributes
       }
+      Service.Level.WORKSPACE -> return
     }
     val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(Service::class.java.canonicalName, attributes, aClass.modifierList!!)
     if (annotation != null) {

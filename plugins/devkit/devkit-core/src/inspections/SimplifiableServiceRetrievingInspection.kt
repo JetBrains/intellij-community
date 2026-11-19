@@ -66,6 +66,7 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
       it.sourcePsi !== containingMethod?.sourcePsi && when (howServiceRetrieved) {
         Service.Level.APP -> isGetInstanceApplicationLevel(it)
         Service.Level.PROJECT -> isGetInstanceProjectLevel(it)
+        Service.Level.WORKSPACE -> false
       }
     }?.takeIf { method -> method.returnType == retrievingExpression.getExpressionType()  }
   }

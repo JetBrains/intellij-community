@@ -20,6 +20,7 @@ internal class KotlinAddServiceAnnotationProvider : AddServiceAnnotationProvider
     val annotationInnerText = when (level) {
       Service.Level.APP -> null
       Service.Level.PROJECT -> getProjectLevelFQN()
+      Service.Level.WORKSPACE -> return
     }
     ktClass.addAnnotation(
       annotationClassId = ClassId.fromString(Service::class.java.canonicalName),
