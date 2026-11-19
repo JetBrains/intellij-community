@@ -27,15 +27,21 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.awt.Component
 import java.awt.Container
+import java.awt.DefaultKeyboardFocusManager
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.KeyboardFocusManager
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.event.ActionEvent
+import java.awt.event.FocusEvent
+import java.awt.event.KeyEvent
 import javax.accessibility.AccessibleRole
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JToggleButton
+import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
 @TestApplication
@@ -257,7 +263,8 @@ internal class UnifiedPluginsPageRealRowsTest {
       assertThat(button.accessibleContext.accessibleName).isEqualTo(IdeBundle.message("inline.actions.more.actions.text"))
       assertThat((button.action as ActionGroup).isPopup).isTrue()
       assertThat(button.isVisible).isTrue()
-      assertThat(button.isFocusable).isTrue()
+      assertThat(header.isFocusable).isTrue()
+      assertThat(header.accessibleContext.accessibleDescription).isEqualTo(button.accessibleContext.accessibleName)
     }
 
     controller.setQuery(PluginsQueryState("language", "language", 1))
@@ -487,7 +494,7 @@ internal class UnifiedPluginsPageRealRowsTest {
     }
 
   @Test
-  fun `Tab order includes one plugin row and its controls`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+  fun `Tab order uses one plugin row and arrows reach the headers`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val factory = RecordingRowFactory()
     val installedItems = (1..4).map { item("installed.$it") }
     val bundledItems = (1..4).map { item("bundled.$it", "Languages") }
@@ -512,22 +519,20 @@ internal class UnifiedPluginsPageRealRowsTest {
     val selectedRow = factory.row(PluginSectionId.Installed, installedItems[1])
     val order = view.focusTraversalOrder()
     assertThat((view.component as Splitter).firstComponent.isFocusTraversalPolicyProvider).isTrue()
-    assertThat(order.filterIsInstance<JToggleButton>()).hasSize(1)
-    assertThat(order.filter { it in factory.activeRows.values.map(RecordingRow::component) })
-      .containsExactly(selectedRow.component)
-    assertThat(order).contains(selectedRow.actionButton)
-    assertThat(order.indexOf(selectedRow.actionButton)).isEqualTo(order.indexOf(selectedRow.component) + 1)
-    val categoryAction = componentsOfType(categoryHeaders(view).single(), ActionButton::class.java).single()
-    assertThat(order).doesNotContain(categoryAction, promotionButton)
+    assertThat(order).containsExactly(selectedRow.component)
+    val categoryHeader = categoryHeaders(view).single()
+    val categoryAction = componentsOfType(categoryHeader, ActionButton::class.java).single()
 
     controller.selectOccurrence(PluginOccurrenceId(PluginSectionId.Bundled, bundledItems.first().pluginId))
     view.render(controller.state.value)
     val bundledRow = factory.row(PluginSectionId.Bundled, bundledItems.first())
     val bundledOrder = view.focusTraversalOrder()
-    assertThat(bundledOrder.filterIsInstance<JToggleButton>()).hasSize(1)
-    assertThat(bundledOrder).contains(categoryAction, promotionButton, bundledRow.component, bundledRow.actionButton)
-    assertThat(bundledOrder.indexOf(categoryAction)).isLessThan(bundledOrder.indexOf(promotionButton))
-    assertThat(bundledOrder.indexOf(promotionButton)).isLessThan(bundledOrder.indexOf(bundledRow.component))
+    assertThat(bundledOrder).containsSubsequence(promotionButton, bundledRow.component)
+    assertThat(bundledOrder).doesNotContain(categoryHeader, categoryAction, bundledRow.actionButton)
+    assertThat(factory.keyboardOrder).containsSubsequence(categoryHeader, bundledRow.component)
+    assertThat(factory.keyboardOrder).doesNotContain(categoryAction, promotionButton, bundledRow.actionButton)
+    assertThat(factory.keyboardOrder.filterIsInstance<JToggleButton>().map { it.accessibleContext.accessibleName })
+      .contains(IdeBundle.message("plugin.manager.tab.installed"), IdeBundle.message("plugins.configurable.bundled"))
 
     controller.selectOccurrences(installedItems.take(2).map { PluginOccurrenceId(PluginSectionId.Installed, it.pluginId) })
     view.render(controller.state.value)
@@ -541,6 +546,57 @@ internal class UnifiedPluginsPageRealRowsTest {
       .containsExactly(firstRow.component)
     view.close()
   }
+
+  @Test
+  fun `arrow order includes both footer actions and expansion keeps the preview focus`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UI) {
+      val factory = RecordingRowFactory()
+      val sectionId = PluginSectionId.Installed
+      val items = (1..5).map { item("installed.$it") }
+      val controller = UnifiedPluginsPageController(listOf(section(sectionId, *items.toTypedArray())))
+      val selected = PluginOccurrenceId(sectionId, items.first().pluginId)
+      controller.selectOccurrence(selected)
+      lateinit var view: UnifiedPluginsPageView
+      view = createView(factory, onSectionExpansionChanged = { id, expanded ->
+        controller.setSectionExpanded(id, expanded)
+        view.render(controller.state.value)
+      })
+      view.use {
+        view.render(controller.state.value)
+        prepareForScrolling(view)
+
+        val previewRows = factory.activeRows.values.toList()
+        val header = factory.keyboardOrder.first() as JToggleButton
+        val footer = factory.keyboardOrder.last() as JToggleButton
+        assertThat(footer.accessibleContext.accessibleName).isEqualTo(IdeBundle.message("plugins.configurable.show.hidden.row", 2))
+        assertThat(factory.keyboardOrder).containsExactlyElementsOf(listOf(header) + previewRows.map { it.component } + footer)
+
+        val originalFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+        val focusManager = object : DefaultKeyboardFocusManager() {
+          override fun getFocusOwner(): Component = footer
+        }
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(focusManager)
+        try {
+          val focus = FocusEvent(footer, FocusEvent.FOCUS_GAINED, false, null, FocusEvent.Cause.TRAVERSAL)
+          footer.focusListeners.forEach { it.focusGained(focus) }
+          val enterKey = footer.getInputMap(JComponent.WHEN_FOCUSED).get(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
+          footer.actionMap.get(enterKey).actionPerformed(ActionEvent(footer, ActionEvent.ACTION_PERFORMED, null))
+
+          assertThat(footer.accessibleContext.accessibleName).isEqualTo(IdeBundle.message("plugins.configurable.show.less"))
+          val expandedRows = items.map { factory.row(sectionId, it).component }
+          assertThat(factory.keyboardOrder).containsExactlyElementsOf(listOf(header) + expandedRows + footer)
+          assertThat(previewRows.last().lastFocusCause).isEqualTo(FocusEvent.Cause.TRAVERSAL)
+          assertThat(controller.state.value.selectedOccurrences).containsExactly(selected)
+
+          footer.actionMap.get(enterKey).actionPerformed(ActionEvent(footer, ActionEvent.ACTION_PERFORMED, null))
+          assertThat(factory.keyboardOrder).containsExactlyElementsOf(listOf(header) + previewRows.map { it.component } + footer)
+          assertThat(controller.state.value.selectedOccurrences).containsExactly(selected)
+        }
+        finally {
+          KeyboardFocusManager.setCurrentKeyboardFocusManager(originalFocusManager)
+        }
+      }
+    }
 
   @Test
   fun `Marketplace link follows Suggested rows in arrow order and stays outside Tab order`(): Unit =
@@ -571,7 +627,7 @@ internal class UnifiedPluginsPageRealRowsTest {
         assertThat(link.icon).isSameAs(AllIcons.Ide.External_link_arrow)
         val repositoryRow = factory.row(repositoryId, repositoryItem)
         assertThat(factory.keyboardOrder).containsExactly(firstRow.component, lastRow, link, repositoryRow.component)
-        assertThat(view.focusTraversalOrder()).endsWith(firstRow.component, firstRow.actionButton).doesNotContain(link)
+        assertThat(view.focusTraversalOrder()).containsExactly(firstRow.component)
 
         controller.setQuery(PluginsQueryState("plugin", "plugin", revision = 1))
         view.render(controller.state.value, showMarketplaceLink = true)
@@ -1046,11 +1102,12 @@ internal class UnifiedPluginsPageRealRowsTest {
     details: PluginDetailsPresenter? = null,
     onBundledCategoryAction: (BundledPluginCategoryGroupState) -> Unit = {},
     createBundledCategoryPromotion: (String) -> JComponent? = { null },
+    onSectionExpansionChanged: (PluginSectionId, Boolean) -> Unit = { _, _ -> },
   ): UnifiedPluginsPageView {
     return UnifiedPluginsPageView(
       {},
       {},
-      { _, _ -> },
+      onSectionExpansionChanged,
       factory,
       details,
       onBundledCategoryAction = onBundledCategoryAction,
@@ -1152,7 +1209,13 @@ internal class UnifiedPluginsPageRealRowsTest {
 
   private class RecordingRow : PluginRow {
     val actionButton = JButton("Action")
-    override val component: JComponent = JPanel().apply {
+    var lastFocusCause: FocusEvent.Cause? = null
+      private set
+    override val component: JComponent = object : JPanel() {
+      override fun requestFocus(cause: FocusEvent.Cause) {
+        lastFocusCause = cause
+      }
+    }.apply {
       preferredSize = Dimension(200, ROW_HEIGHT)
       minimumSize = Dimension(0, 0)
       isFocusable = true
@@ -1167,8 +1230,6 @@ internal class UnifiedPluginsPageRealRowsTest {
       component.preferredSize = Dimension(200, height)
       component.minimumSize = component.preferredSize
     }
-
-    override fun focusableComponents(): List<JComponent> = listOf(actionButton)
 
     override fun renderSelection(selected: Boolean) {
       this.selected = selected

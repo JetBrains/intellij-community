@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.OnOffButton
 import java.awt.Component
 import java.awt.event.FocusAdapter
@@ -29,6 +30,7 @@ internal class UnifiedPluginRowEventHandler(
   private val onSelectionChanged: (List<PluginOccurrenceId>) -> Unit,
   private val revealKeyboardSelection: ((PluginOccurrenceId) -> Unit)? = null,
   private val onSelectAllRequested: ((PluginOccurrenceId) -> Unit)? = null,
+  private val onKeyboardControlFocus: ((JComponent) -> Unit)? = null,
 ) : EventHandler() {
   private val occurrences = IdentityHashMap<ListPluginComponent, PluginOccurrenceId>()
   private val listenerOwners = IdentityHashMap<Component, ListPluginComponent>()
@@ -88,6 +90,7 @@ internal class UnifiedPluginRowEventHandler(
 
   private val keyListener = object : KeyAdapter() {
     override fun keyPressed(event: KeyEvent) {
+      if (event.isConsumed) return
       val selectAllShortcut = event.keyCode == KeyEvent.VK_A && (event.isMetaDown || event.isControlDown)
       val handleFromSwitch = event.component is OnOffButton &&
                              (event.keyCode == KeyEvent.VK_UP || event.keyCode == KeyEvent.VK_DOWN || selectAllShortcut)
@@ -226,7 +229,12 @@ internal class UnifiedPluginRowEventHandler(
     if (selectionAnchor !in orderedRows) selectionAnchor = null
   }
 
+  fun focusRowFromKeyboard(row: ListPluginComponent) {
+    if (row in orderedRows) selectExclusive(row, requestFocus = true, focusCause = FocusEvent.Cause.TRAVERSAL)
+  }
+
   private fun navigateWithArrows(event: KeyEvent, source: Component): Boolean {
+    if (event.modifiersEx != 0) return false
     val step = when (event.keyCode) {
       KeyEvent.VK_UP -> -1
       KeyEvent.VK_DOWN -> 1
@@ -237,14 +245,19 @@ internal class UnifiedPluginRowEventHandler(
 
     event.consume()
     val target = keyboardOrder[(index + step).coerceIn(0, keyboardOrder.lastIndex)]
+    if (target === source) return true
     if (target is ListPluginComponent) {
-      selectExclusive(target, requestFocus = true, focusCause = FocusEvent.Cause.TRAVERSAL)
+      focusRowFromKeyboard(target)
     }
-    else if (target !== source) {
-      selectionAnchor = null
-      updateSelection(emptyList(), null, FocusEvent.Cause.TRAVERSAL)
+    else {
+      if (target is ActionLink) {
+        selectionAnchor = null
+        updateSelection(emptyList(), null, FocusEvent.Cause.TRAVERSAL)
+      }
       SwingUtilities.invokeLater {
-        if (target in keyboardOrder) target.requestFocus(FocusEvent.Cause.TRAVERSAL)
+        if (target in keyboardOrder) {
+          onKeyboardControlFocus?.invoke(target) ?: target.requestFocus(FocusEvent.Cause.TRAVERSAL)
+        }
       }
     }
     return true

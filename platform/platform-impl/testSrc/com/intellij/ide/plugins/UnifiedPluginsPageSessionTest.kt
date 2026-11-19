@@ -1334,6 +1334,8 @@ internal class UnifiedPluginsPageSessionTest {
         waitForSelectedPluginIds(content, repositoryIds)
         pressArrow(row(repositoryPlugin.pluginId), KeyEvent.VK_UP)
         waitForSelectedPluginIds(content, emptySet())
+        pressArrow(searchField(session).textEditor, KeyEvent.VK_DOWN)
+        waitForSelectedPluginIds(content, suggestedIds)
       }
       finally {
         Disposer.dispose(session)

@@ -467,13 +467,11 @@ internal class UnifiedPluginsPageViewTest {
     val focusColor = JBUI.CurrentTheme.ActionButton.focusedBorder()
     val focusTop = JBUI.scale(8)
     val focusGap = JBUI.scale(1)
-    val focusWidth = JBUI.scale(2)
-    assertThat(header.selectionColor).isNull()
+    assertThat(header.selectionColor).isEqualTo(hoverColor)
+    assertThat(headerButton.border).isSameAs(contentBorder)
     assertThat(headerButton.border.getBorderInsets(headerButton)).isEqualTo(contentInsets)
-    assertThat(Color(focusedImage.getRGB(hoverX, focusTop), true).rgb).isNotEqualTo(focusColor.rgb)
-    assertThat(Color(focusedImage.getRGB(hoverX, focusTop + focusGap), true).rgb).isEqualTo(focusColor.rgb)
-    assertThat(Color(focusedImage.getRGB(hoverX, focusTop + focusGap + focusWidth - 1), true).rgb).isEqualTo(focusColor.rgb)
-    assertThat(Color(focusedImage.getRGB(hoverX, focusTop + focusGap + focusWidth), true).rgb).isNotEqualTo(focusColor.rgb)
+    assertThat(Color(focusedImage.getRGB(hoverX, hoverY), true).rgb).isEqualTo(hoverColor.rgb)
+    assertThat(Color(focusedImage.getRGB(hoverX, focusTop + focusGap), true).rgb).isNotEqualTo(focusColor.rgb)
 
     headerButton.focusListeners.forEach { it.focusLost(FocusEvent(headerButton, FocusEvent.FOCUS_LOST)) }
     assertThat(header.selectionColor).isNull()
@@ -516,6 +514,36 @@ internal class UnifiedPluginsPageViewTest {
     headerButton.actionMap.get(enterActionKey).actionPerformed(ActionEvent(headerButton, ActionEvent.ACTION_PERFORMED, null))
     assertThat(expansionChanges.last()).isEqualTo(PluginSectionId.Installed to true)
     view.close()
+  }
+
+  @Test
+  fun `Right expands a section header and Left collapses it`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val installed = PluginSectionId.Installed
+    val controller = UnifiedPluginsPageController(listOf(section(installed, itemCount = 5)))
+    lateinit var view: UnifiedPluginsPageView
+    view = createView(onExpansionChanged = { id, expanded ->
+      controller.setSectionExpanded(id, expanded)
+      view.render(controller.state.value)
+    })
+    view.use {
+      view.render(controller.state.value)
+      val header = sectionHeader(view, IdeBundle.message("plugin.manager.tab.installed"))
+      val button = componentsOfType(header, JToggleButton::class.java).single()
+      fun press(keyCode: Int) {
+        val event = KeyEvent(button, KeyEvent.KEY_PRESSED, 0, 0, keyCode, KeyEvent.CHAR_UNDEFINED)
+        button.keyListeners.forEach { it.keyPressed(event) }
+        assertThat(event.isConsumed).isTrue()
+      }
+
+      press(KeyEvent.VK_LEFT)
+      assertThat(button.isSelected).isFalse()
+      press(KeyEvent.VK_RIGHT)
+      assertThat(button.isSelected).isTrue()
+      press(KeyEvent.VK_RIGHT)
+      assertThat(button.isSelected).isTrue()
+      press(KeyEvent.VK_LEFT)
+      assertThat(button.isSelected).isFalse()
+    }
   }
 
   @Test
@@ -1180,7 +1208,7 @@ internal class UnifiedPluginsPageViewTest {
   }
 
   @Test
-  fun `sticky header preserves the focus outline of its expansion control`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+  fun `sticky header preserves its keyboard highlight`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val controller = UnifiedPluginsPageController(
       listOf(section(PluginSectionId.Installed, itemCount = 5), section(PluginSectionId.Bundled, itemCount = 20))
     )
@@ -1193,7 +1221,7 @@ internal class UnifiedPluginsPageViewTest {
       view.render(controller.state.value)
       prepareForScrolling(view)
       val title = IdeBundle.message("plugins.configurable.bundled")
-      val header = sectionHeader(view, title)
+      val header = sectionHeader(view, title) as SelectablePanel
       val button = componentsOfType(header, JToggleButton::class.java).single()
       val headerSlot = header.parent
       val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
@@ -1219,23 +1247,24 @@ internal class UnifiedPluginsPageViewTest {
         gainFocus(FocusEvent.Cause.MOUSE_EVENT)
         button.doClick()
         assertThat(bundledList.model.size).isEqualTo(20)
-        assertThat(button.isBorderPainted).isFalse()
+        assertThat(header.selectionColor).isNull()
 
         scrollToRow(scrollPane, bundledList, 5)
         assertThat(header.parent).isNotSameAs(headerSlot)
         restoreFocus()
-        assertThat(button.isBorderPainted).isFalse()
+        assertThat(header.selectionColor).isNull()
 
         scrollPane.viewport.viewPosition = Point()
         assertThat(header.parent).isSameAs(headerSlot)
         restoreFocus()
-        assertThat(button.isBorderPainted).isFalse()
+        assertThat(header.selectionColor).isNull()
 
         gainFocus(FocusEvent.Cause.TRAVERSAL_FORWARD)
-        assertThat(button.isBorderPainted).isTrue()
+        val keyboardHighlight = header.selectionColor
+        assertThat(keyboardHighlight).isNotNull()
         scrollToRow(scrollPane, bundledList, 5)
         restoreFocus()
-        assertThat(button.isBorderPainted).isTrue()
+        assertThat(header.selectionColor).isEqualTo(keyboardHighlight)
       }
       finally {
         KeyboardFocusManager.setCurrentKeyboardFocusManager(originalFocusManager)

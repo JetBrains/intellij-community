@@ -67,6 +67,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.awt.event.KeyAdapter
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
@@ -127,6 +128,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   private var renderedState: UnifiedPluginsPageState? = null
   private var renderedSearchControls: UnifiedPluginsSearchControlsState? = null
   private var pendingSelectionRevealRevision: Long? = null
+  private var pendingFooterFocus: (() -> Unit)? = null
   private var handlingViewportChange = false
   private var rendering = false
   private var updatingSearchField = false
@@ -289,6 +291,12 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
             onBundledCategoryAction = onBundledCategoryAction,
             createBundledCategoryPromotion = createBundledCategoryPromotion,
             realRows = rowFactory != null,
+            onRestoreFooterFocus = { previewRow, header ->
+              pendingFooterFocus = {
+                val row = previewRow?.let { rowReconciler?.row(it) }
+                focusKeyboardControl(row?.component ?: header)
+              }
+            },
           )
         }
         sectionView.render(section, state.query.revision, state.selectedOccurrences, viewportAnchor?.id, showMarketplaceLink)
@@ -308,6 +316,9 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       pendingSelectionRevealRevision = state.query.revision
     }
     revealPendingSelection()
+    val restoreFooterFocus = pendingFooterFocus
+    pendingFooterFocus = null
+    restoreFooterFocus?.invoke()
     sectionsPanel.repaint()
     scheduleResultsAnnouncement()
   }
@@ -362,17 +373,14 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     sectionViews.values.forEach { sectionView ->
       sectionView.setRealRows(bindingsBySection[sectionView.id].orEmpty())
     }
-    val keyboardOrder = buildList {
-      for (section in state.sections) {
-        bindingsBySection[section.id].orEmpty().forEach { add(it.row.component) }
-        sectionViews[section.id]?.visibleMarketplaceLink()?.let(::add)
-      }
-    }
-    factory.rowsRendered(bindings, keyboardOrder)
+    factory.rowsRendered(bindings, keyboardNavigationOrder(state))
     val selectedOccurrences = state.selectedOccurrences.toHashSet()
     bindings.forEach { binding -> binding.row.renderSelection(binding.occurrenceId in selectedOccurrences) }
     renderDetails(state, reconciler)
   }
+
+  private fun keyboardNavigationOrder(state: UnifiedPluginsPageState): List<JComponent> =
+    state.sections.flatMap { sectionViews[it.id]?.keyboardNavigationComponents().orEmpty() }
 
   private fun renderDetails(state: UnifiedPluginsPageState, reconciler: PluginRowReconciler<PluginRow, Any>) {
     val presenter = detailsPresenter ?: return
@@ -490,8 +498,23 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     if (revealOccurrence(occurrenceId)) updateStickyHeader()
   }
 
+  @RequiresEdt
+  fun focusKeyboardControl(control: JComponent) {
+    if (!control.isFocusable || !control.isEnabled) return
+    if (SwingUtilities.isDescendingFrom(control, sectionsPanel)) {
+      val bounds = SwingUtilities.convertRectangle(control, Rectangle(control.size), sectionsPanel)
+      if (revealBounds(bounds)) updateStickyHeader()
+    }
+    else if (!SwingUtilities.isDescendingFrom(control, stickyHeaderHost)) return
+    control.requestFocus(FocusEvent.Cause.TRAVERSAL)
+  }
+
   private fun revealOccurrence(occurrenceId: PluginOccurrenceId): Boolean {
     val bounds = sectionViews[occurrenceId.sectionId]?.occurrenceBounds(occurrenceId, sectionsPanel) ?: return false
+    return revealBounds(bounds)
+  }
+
+  private fun revealBounds(bounds: Rectangle): Boolean {
     val viewport = scrollPane.viewport
     val viewRect = viewport.viewRect
     if (viewRect.isEmpty) return false
@@ -603,6 +626,12 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
 
   private fun configureSearchField() {
     searchField.textEditor.apply {
+      addKeyListener(object : KeyAdapter() {
+        override fun keyPressed(event: KeyEvent) {
+          if (event.isConsumed || event.keyCode != KeyEvent.VK_DOWN || event.modifiersEx != 0) return
+          if (focusListFromSearch()) event.consume()
+        }
+      })
       accessibleContext.accessibleName = IdeBundle.message("plugin.manager.search.accessible.name")
       emptyText.text = IdeBundle.message("plugin.manager.search.all.plugins")
       background = PluginManagerConfigurable.SEARCH_BG_COLOR
@@ -618,6 +647,21 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     }
   }
 
+  private fun focusListFromSearch(): Boolean {
+    if (rowFactory == null) return false
+    val state = renderedState ?: return false
+    val selectedRow = state.selectedOccurrence?.let { rowReconciler?.row(it) }
+    if (selectedRow != null) {
+      focusKeyboardControl(selectedRow.component)
+      return true
+    }
+    val first = keyboardNavigationOrder(state).firstOrNull() ?: return false
+    val occurrenceId = sectionViews.values.firstNotNullOfOrNull { it.occurrenceOf(first) }
+    val row = occurrenceId?.let { rowReconciler?.row(it) }
+    if (row != null) row.selectAndFocusFromKeyboard() else focusKeyboardControl(first)
+    return true
+  }
+
   private class SectionView(
     val id: PluginSectionId,
     private val isRendering: () -> Boolean,
@@ -628,6 +672,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     private val onBundledCategoryAction: (BundledPluginCategoryGroupState) -> Unit,
     private val createBundledCategoryPromotion: (String) -> JComponent?,
     private val realRows: Boolean,
+    private val onRestoreFooterFocus: (PluginOccurrenceId?, JComponent) -> Unit,
   ) {
     private val model = DefaultListModel<PluginItemState>()
     private val titleLabel = JBLabel()
@@ -849,6 +894,11 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
                                   section.expanded &&
                                   renderedQueryRevision == queryRevision &&
                                   hasSameRealizedPrefix(visibleItems)
+      if (expanded != section.expanded && expansionRow.isVisible &&
+          expansionRow.focusComponent.isFocusOwner && expansionRow.hasKeyboardFocus) {
+        val previewTail = realRowComponents.keys.lastOrNull().takeIf { section.expanded }
+        onRestoreFooterFocus(previewTail, fullHeaderButton.focusComponent)
+      }
       expanded = section.expanded
       renderedQueryRevision = queryRevision
       fullHeaderButton.setPresentation(section.canExpand, section.expanded, title)
@@ -977,17 +1027,19 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       }
 
       val focusComponent: JComponent = toggleButton
-      val hasFocusOutline: Boolean
-        get() = toggleButton.isBorderPainted
+      var hasKeyboardFocus: Boolean = false
+        private set
 
       init {
         toggleButton.layout = BorderLayout()
         toggleButton.addActionListener { onToggle() }
-        configureSectionButton(this, toggleButton, isFooter, onHighlightChanged, ::consumeMouseFocusRestore)
+        configureSectionButton(this, toggleButton, isFooter, onHighlightChanged, ::consumeMouseFocusRestore) {
+          hasKeyboardFocus = it
+        }
       }
 
-      fun restoreFocus(focusOwner: Component, hadFocusOutline: Boolean) {
-        restoringMouseFocus = !hadFocusOutline
+      fun restoreFocus(focusOwner: Component, hadKeyboardFocus: Boolean) {
+        restoringMouseFocus = !hadKeyboardFocus
         IdeFocusManager.getGlobalInstance().requestFocus(focusOwner, false)
       }
 
@@ -1178,21 +1230,31 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
 
     fun firstRealRowOccurrence(): PluginOccurrenceId? = realRowComponents.keys.firstOrNull()
 
-    fun visibleMarketplaceLink(): JComponent? = marketplaceLink?.takeIf { marketplaceLinkPanel?.isVisible == true }
+    fun keyboardNavigationComponents(): List<JComponent> = buildList {
+      val headerButton = fullHeaderButton.focusComponent
+      if (headerButton.isFocusable && headerButton.isEnabled) add(headerButton)
+      val rowAndCategoryTargets = HashSet(realRowComponents.values)
+      categoryHeaderViews.values.mapTo(rowAndCategoryTargets) { it.component }
+      for (component in rowsPanel.components) {
+        if (component is JComponent && component in rowAndCategoryTargets) add(component)
+      }
+      if (expansionRow.isVisible) add(expansionRow.focusComponent)
+      if (marketplaceLinkPanel?.isVisible == true) add(checkNotNull(marketplaceLink))
+    }
+
+    fun occurrenceOf(component: Component): PluginOccurrenceId? =
+      realRowComponents.entries.firstOrNull { it.value === component }?.key
 
     fun focusTraversalComponents(activeRow: PluginRow?): List<Component> {
       val result = ArrayList<Component>()
       val activeOccurrence = realRowComponents.entries.firstOrNull { it.value === activeRow?.component }?.key
-      if (activeOccurrence != null) result.add(fullHeaderButton.focusComponent)
       if (retryLink.parent != null) result.add(retryLink)
       if (activeOccurrence != null) {
         val category = categoryGroupsByPluginId[activeOccurrence.pluginId]?.category
         if (category != null) {
-          categoryHeaderViews[category]?.let { result.add(it.actionComponent) }
           categoryPromotionPanels[category]?.let { addFocusableDescendants(it, result) }
         }
         result.add(checkNotNull(activeRow).component)
-        result.addAll(activeRow.focusableComponents())
       }
       return result.filter { it.isFocusable && it.isEnabled && it.isVisible }
     }
@@ -1306,10 +1368,10 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     private fun moveHeaderPreservingFocus(move: () -> Unit) {
       val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
         ?.takeIf { focusOwner -> SwingUtilities.isDescendingFrom(focusOwner, header) }
-      val hadFocusOutline = fullHeaderButton.hasFocusOutline
+      val hadKeyboardFocus = fullHeaderButton.hasKeyboardFocus
       move()
       if (focusOwner != null) {
-        fullHeaderButton.restoreFocus(focusOwner, hadFocusOutline)
+        fullHeaderButton.restoreFocus(focusOwner, hadKeyboardFocus)
       }
     }
 
@@ -1397,16 +1459,23 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       templatePresentation.icon = AllIcons.Actions.More
       templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
     }
-    val actionComponent: JComponent = ActionButton(
+    private val moreButton = ActionButton(
       moreActionsGroup,
       moreActionsGroup.templatePresentation.clone(),
       CATEGORY_ACTIONS_PLACE,
       ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE,
-    ).apply {
-      isFocusable = true
-    }
-    val component: JComponent = JPanel(BorderLayout()).apply {
+    )
+    val component: JComponent = SelectablePanel().apply {
+      layout = BorderLayout()
       isOpaque = false
+      isFocusable = true
+      selectionArc = JBUI.scale(PLUGIN_CARD_SELECTION_ARC)
+      selectionInsets = JBUI.insets(
+        SECTION_HEADER_HOVER_TOP_INSET,
+        SECTION_HEADER_HOVER_HORIZONTAL_INSET,
+        SECTION_HEADER_HOVER_BOTTOM_INSET,
+        SECTION_HEADER_HOVER_HORIZONTAL_INSET,
+      )
       border = JBUI.Borders.empty(
         SECTION_HEADER_TOP_INSET,
         SECTION_HEADER_LEFT_INSET,
@@ -1416,12 +1485,32 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       add(titleLabel, BorderLayout.CENTER)
       add(JPanel(GridBagLayout()).apply {
         isOpaque = false
-        add(actionComponent)
+        add(moreButton)
       }, BorderLayout.EAST)
       val fixedHeight = JBUI.scale(SECTION_HEADER_HEIGHT)
       preferredSize = Dimension(0, fixedHeight)
       minimumSize = Dimension(0, fixedHeight)
       maximumSize = Dimension(Int.MAX_VALUE, fixedHeight)
+      accessibleContext.accessibleDescription = moreActionsGroup.templatePresentation.text
+      addFocusListener(object : FocusAdapter() {
+        override fun focusGained(event: FocusEvent) {
+          selectionColor = sectionHighlightColor().takeIf { event.cause != FocusEvent.Cause.MOUSE_EVENT }
+        }
+
+        override fun focusLost(event: FocusEvent) {
+          selectionColor = null
+        }
+      })
+      addKeyListener(object : KeyAdapter() {
+        override fun keyPressed(event: KeyEvent) {
+          if (event.isConsumed || event.modifiersEx != 0) return
+          if (event.keyCode == KeyEvent.VK_ENTER || event.keyCode == KeyEvent.VK_SPACE) {
+            event.consume()
+            selectionColor = sectionHighlightColor()
+            moreButton.click()
+          }
+        }
+      })
     }
 
     fun render(state: BundledPluginCategoryGroupState) {
@@ -1520,6 +1609,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       isFooter: Boolean,
       onHighlightChanged: ((Boolean) -> Unit)? = null,
       consumeMouseFocusRestore: (() -> Boolean)? = null,
+      onKeyboardFocusChanged: ((Boolean) -> Unit)? = null,
     ) {
       panel.layout = BorderLayout()
       panel.isOpaque = false
@@ -1537,19 +1627,22 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         if (isFooter) 0 else SECTION_HEADER_BOTTOM_INSET,
         SECTION_HEADER_RIGHT_INSET,
       )
-      val focusBorder = createUnifiedPluginFocusBorder(button, contentBorder, panel.selectionInsets, panel.selectionArc)
+      val focusBorder = if (isFooter) createUnifiedPluginFocusBorder(button, contentBorder, panel.selectionInsets, panel.selectionArc)
+                        else contentBorder
       var focusVisible = false
 
       fun updatePresentation() {
         val showFocus = button.isEnabled && focusVisible
-        button.isBorderPainted = showFocus
-        button.border = if (showFocus) focusBorder else contentBorder
-        val token = ListPluginComponent.HOVER_COLOR.takeIf { button.isEnabled && !showFocus && button.model.isRollover }
-        panel.selectionColor = token?.let { ColorUtil.alphaBlending(it, PluginManagerConfigurable.MAIN_BG_COLOR) }
+        val showOutline = isFooter && showFocus
+        button.isBorderPainted = showOutline
+        button.border = if (showOutline) focusBorder else contentBorder
+        val showHighlight = button.isEnabled && !showOutline && (showFocus || button.model.isRollover)
+        panel.selectionColor = if (showHighlight) sectionHighlightColor() else null
         val cursor = if (button.isEnabled) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
         panel.cursor = cursor
         button.cursor = cursor
-        onHighlightChanged?.invoke(showFocus || token != null)
+        onHighlightChanged?.invoke(showFocus || showHighlight)
+        onKeyboardFocusChanged?.invoke(showFocus)
       }
 
       button.apply {
@@ -1560,6 +1653,23 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTIVATE_SECTION_BUTTON)
         actionMap.put(ACTIVATE_SECTION_BUTTON, object : AbstractAction() {
           override fun actionPerformed(event: java.awt.event.ActionEvent) = doClick()
+        })
+        addKeyListener(object : KeyAdapter() {
+          override fun keyPressed(event: KeyEvent) {
+            if (event.isConsumed || event.modifiersEx != 0 || !isEnabled) return
+            val arrow = event.keyCode == KeyEvent.VK_LEFT || event.keyCode == KeyEvent.VK_RIGHT
+            if (arrow && isFooter) return
+            if (arrow || event.keyCode == KeyEvent.VK_ENTER || event.keyCode == KeyEvent.VK_SPACE) {
+              if (isFocusOwner && !focusVisible) {
+                focusVisible = true
+                updatePresentation()
+              }
+              if (arrow) {
+                event.consume()
+                if (isSelected != (event.keyCode == KeyEvent.VK_RIGHT)) doClick(0)
+              }
+            }
+          }
         })
         model.addChangeListener { updatePresentation() }
         addFocusListener(object : FocusAdapter() {
@@ -1578,6 +1688,8 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       panel.add(button, BorderLayout.CENTER)
       updatePresentation()
     }
+
+    fun sectionHighlightColor() = ColorUtil.alphaBlending(ListPluginComponent.HOVER_COLOR, PluginManagerConfigurable.MAIN_BG_COLOR)
 
     fun addFocusableDescendants(component: Component, result: MutableList<Component>) {
       if (!component.isVisible) return

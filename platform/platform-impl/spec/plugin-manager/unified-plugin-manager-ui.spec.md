@@ -573,8 +573,12 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `expandable section header supports mouse keyboard hover and focus`
   )
 
-- Up and Down must navigate between rendered plugin rows across sections.
+- Up and Down must navigate plugin rows, expandable section headers, Bundled category headers, and visible expansion rows in display order.
 - Up and Down on a focused enablement switch must change the row selection without toggling the switch.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `Tab order uses one plugin row and arrows reach the headers`;
+    `arrow order includes both footer actions and expansion keeps the preview focus`
+  )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `Space dispatches the row action and switch arrows navigate rows`
   )
@@ -584,19 +588,35 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
 
 - Up and Down must visit the Marketplace link after the Suggested rows when the link is visible.
 - Moving to the link with an arrow key must clear the plugin selection.
+- Down from the search field must focus the selected plugin or the first item in the arrow order.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
     `arrows move between Suggested rows the Marketplace link and the next section`
   )
 
-- Tab must visit the active section and category actions, one plugin row, and that row's controls before it leaves the list for details.
+- The settings gear must be a Tab stop.
+- Tab must visit one plugin row before it leaves the list for details.
 - The last selected row must be the list's row stop. Without a selection, the first rendered row must be that stop.
-- The Marketplace link must stay outside the Tab order.
+- Tab must skip section headers, category headers, expansion rows, row controls, and the Marketplace link.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
-    `Tab order includes one plugin row and its controls`;
+    `Tab order uses one plugin row and arrows reach the headers`;
     `Marketplace link follows Suggested rows in arrow order and stays outside Tab order`
   )
 
-- Plugin rows and section headers must show an outline for keyboard focus.
+- Right on a section header must expand it. Left must collapse it.
+- Enter and Space must activate the focused section header or expansion row.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
+    `Right expands a section header and Left collapses it`;
+    `expandable section header supports mouse keyboard hover and focus`
+  )
+
+- Expanding from the footer with the keyboard must move focus to the last preview plugin if it is available.
+- Collapsing from the footer with the keyboard must move focus to the section header.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `arrow order includes both footer actions and expansion keeps the preview focus`
+  )
+
+- A focused plugin row outside the selection must show a keyboard focus outline.
+- Section headers and Bundled category headers must use the hover highlight for keyboard focus.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `unified rows use stable island selection geometry`
   )
@@ -722,11 +742,11 @@ Untested: No focused test verifies Shift-selection across sections.
 - The current section header must remain visible while its rows scroll.
 - The next section header must replace it without duplicating its controls.
 - A sticky expansion control must remain functional.
-- Moving a header into or out of its sticky position must preserve whether its focus outline is visible.
+- Moving a header into or out of its sticky position must preserve its keyboard highlight.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
     `sticky header is pushed off by the next section without duplicating controls`;
     `sticky expansion control collapses its section`;
-    `sticky header preserves the focus outline of its expansion control`
+    `sticky header preserves its keyboard highlight`
   )
 
 - A section header must remain visible after the first layout, a section replacement, and a resize.
@@ -881,6 +901,7 @@ Untested: No focused test verifies that Internal ignores the legacy Show All que
 - Bundled category titles must use the secondary text color and the same weight as section titles.
 - Each category header must show a More actions button with an accessible name.
 - The popup must offer Enable All or Disable All for the complete category.
+- Enter and Space on a focused category header must open its More actions popup.
 - Category actions must include plugins beyond the display limit.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
     `expanded Bundled section publishes category actions only without a query`;

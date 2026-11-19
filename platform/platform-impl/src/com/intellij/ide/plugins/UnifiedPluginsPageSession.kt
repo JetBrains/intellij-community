@@ -66,6 +66,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.ApplicationInfoImpl.DEFAULT_PLUGINS_HOST
 import com.intellij.openapi.diagnostic.Logger
@@ -99,10 +100,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.event.ContainerAdapter
+import java.awt.event.ContainerEvent
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -261,6 +265,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
       ::selectOccurrences,
       onKeyboardNavigation = { occurrenceId -> view.revealKeyboardSelection(occurrenceId) },
       onSelectAllRequested = ::selectAllDisplayed,
+      onKeyboardControlFocus = { component -> view.focusKeyboardControl(component) },
     )
     val detailsPresenter = LegacyPluginDetailsPresenter(host, searchListener)
     view = UnifiedPluginsPageView(
@@ -603,7 +608,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
             actions.group,
             IdeBundle.message("plugin.manager.tooltip"),
             AllIcons.General.GearPlain,
-          ),
+          ).also(::makeToolbarButtonsFocusable),
           GridBagConstraints().apply {
             gridx = 2
             gridy = 0
@@ -617,6 +622,18 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
         sink[PluginManagerConfigurable.PLUGIN_INSTALL_CALLBACK_DATA_KEY] = installCallback
       }
     }
+  }
+
+  /** Includes the gear in the Tab order, including after a toolbar update replaces the button. */
+  private fun makeToolbarButtonsFocusable(toolbar: Container) {
+    fun makeFocusable(component: Component) {
+      if (component is ActionButton) component.isFocusable = true
+      if (component is Container) component.components.forEach(::makeFocusable)
+    }
+    makeFocusable(toolbar)
+    toolbar.addContainerListener(object : ContainerAdapter() {
+      override fun componentAdded(event: ContainerEvent) = makeFocusable(event.child)
+    })
   }
 
   private fun createContentComponent(): JComponent {

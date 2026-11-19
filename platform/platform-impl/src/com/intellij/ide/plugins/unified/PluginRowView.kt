@@ -28,7 +28,8 @@ internal interface PluginRowFactory {
 internal interface PluginRow : AutoCloseable {
   val component: JComponent
 
-  fun focusableComponents(): List<JComponent> = emptyList()
+  @RequiresEdt
+  fun selectAndFocusFromKeyboard() {}
 
   @RequiresEdt
   fun renderSelection(selected: Boolean)

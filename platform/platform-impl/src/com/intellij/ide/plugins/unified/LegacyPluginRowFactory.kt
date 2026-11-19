@@ -23,9 +23,15 @@ internal class LegacyPluginRowFactory @RequiresEdt constructor(
   onSelectionChanged: (List<PluginOccurrenceId>) -> Unit,
   onKeyboardNavigation: ((PluginOccurrenceId) -> Unit)? = null,
   onSelectAllRequested: ((PluginOccurrenceId) -> Unit)? = null,
+  onKeyboardControlFocus: ((JComponent) -> Unit)? = null,
 ) : PluginRowFactory {
   private val sectionContexts = HashMap<PluginSectionId, SectionContext>()
-  private val eventHandler = UnifiedPluginRowEventHandler(onSelectionChanged, onKeyboardNavigation, onSelectAllRequested)
+  private val eventHandler = UnifiedPluginRowEventHandler(
+    onSelectionChanged,
+    onKeyboardNavigation,
+    onSelectAllRequested,
+    onKeyboardControlFocus,
+  )
 
   @RequiresEdt
   override fun specification(section: PluginSectionState, item: PluginItemState): PluginRowSpecification<Any> {
@@ -119,7 +125,7 @@ internal class LegacyPluginRow(
   val preparedUpdate: PluginPreparedUpdateState?
     get() = renderedInput?.preparedUpdate
 
-  override fun focusableComponents(): List<JComponent> = component.getFocusableComponents()
+  override fun selectAndFocusFromKeyboard() = eventHandler.focusRowFromKeyboard(component)
 
   fun renderInput(input: PluginRowInput?) {
     if (input == null || input == renderedInput) return
