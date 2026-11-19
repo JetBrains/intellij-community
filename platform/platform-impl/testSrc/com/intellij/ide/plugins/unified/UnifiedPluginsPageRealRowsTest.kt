@@ -14,6 +14,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -238,7 +239,9 @@ internal class UnifiedPluginsPageRealRowsTest {
       assertThat(header.insets.right).isEqualTo(JBUI.scale(12))
       assertThat(header.insets.bottom).isEqualTo(JBUI.scale(4))
       assertThat(header.insets.left).isEqualTo(JBUI.scale(16))
-      assertThat(componentsOfType(header, JBLabel::class.java).single().font.style).isEqualTo(Font.PLAIN)
+      val titleLabel = componentsOfType(header, JBLabel::class.java).single()
+      assertThat(titleLabel.font.style).isEqualTo(Font.BOLD)
+      assertThat(titleLabel.foreground).isEqualTo(UIUtil.getContextHelpForeground())
     }
     assertThat(headers.map { componentsOfType(it, ActionLink::class.java).single().text })
       .containsOnly(IdeBundle.message("plugins.configurable.enable.all"))

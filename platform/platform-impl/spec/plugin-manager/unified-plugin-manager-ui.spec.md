@@ -837,6 +837,7 @@ Untested: No focused test verifies that Internal ignores the legacy Show All que
   )
 
 - An expanded Bundled section must group plugins by category when the query is empty.
+- Bundled category titles must use the secondary text color and the same weight as section titles.
 - Each category must offer Enable All or Disable All for the complete category.
 - Category actions must include plugins beyond the display limit.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (

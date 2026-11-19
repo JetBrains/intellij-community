@@ -1316,7 +1316,8 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   ) {
     private var state: BundledPluginCategoryGroupState? = null
     private val titleLabel = JBLabel().apply {
-      font = font.deriveFont(Font.PLAIN)
+      font = font.deriveFont(Font.BOLD)
+      foreground = UIUtil.getContextHelpForeground()
     }
     val actionLink = ActionLink().apply {
       addActionListener { state?.let(onAction) }
