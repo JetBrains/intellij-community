@@ -162,13 +162,13 @@ object BazelExecutionReport {
     @JvmField
     val actions: Map<Source, Int> = spawns.groupingBy { it.source() }.eachCount()
 
-    /** The actions run locally for each action kind, the largest count first. */
+    /** The actions run locally for each action kind, the largest wall time first. */
     @JvmField
     val localActionsByMnemonic: List<LocalActions> = spawns.asSequence()
       .filter { it.source() == Source.LOCAL }
       .groupBy { it.mnemonic }
       .map { [mnemonic, group] -> LocalActions(mnemonic, group.size, group.sumOf { it.wallTimeNanos }, group.sumOf { it.queueTimeNanos }) }
-      .sortedWith(compareByDescending<LocalActions> { it.count }.thenBy { it.mnemonic })
+      .sortedWith(compareByDescending<LocalActions> { it.wallTimeNanos }.thenByDescending { it.count }.thenBy { it.mnemonic })
 
     /** The sum of the wall time of the actions run locally. */
     @JvmField
