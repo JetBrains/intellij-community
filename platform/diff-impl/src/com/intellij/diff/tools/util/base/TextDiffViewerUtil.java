@@ -8,6 +8,8 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileDocumentContentImpl;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.tools.simple.SimpleDiffViewer;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
@@ -261,6 +263,13 @@ public final class TextDiffViewerUtil {
 
     protected abstract @NotNull @Nls String getText(@NotNull T option);
 
+    /**
+     * Tells if the user can select an option in the context of {@code e}.
+     */
+    protected boolean isOptionSelectionEnabled(@NotNull AnActionEvent e) {
+      return true;
+    }
+
     private class MyAction extends AnAction implements Toggleable, DumbAware {
       private final @NotNull T myOption;
 
@@ -272,6 +281,7 @@ public final class TextDiffViewerUtil {
       @Override
       public void update(@NotNull AnActionEvent e) {
         Toggleable.setSelected(e.getPresentation(), getValue() == myOption);
+        e.getPresentation().setEnabled(isOptionSelectionEnabled(e));
       }
 
       MyAction(@NotNull T option) {
@@ -299,6 +309,11 @@ public final class TextDiffViewerUtil {
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabledAndVisible(myPolicies.length > 1);
+    }
+
+    @Override
+    protected boolean isOptionSelectionEnabled(@NotNull AnActionEvent e) {
+      return !(e.getData(DiffDataKeys.DIFF_VIEWER) instanceof SimpleDiffViewer viewer) || viewer.isPolicySelectionEnabled();
     }
 
     @Override

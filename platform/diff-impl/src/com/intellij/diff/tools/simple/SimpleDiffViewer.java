@@ -542,6 +542,15 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return true;
   }
 
+  /**
+   * Tells if the user can select the ignore policy and the highlighting policy.
+   * When this is false, the policy actions show, but they are disabled.
+   */
+  @ApiStatus.Internal
+  public boolean isPolicySelectionEnabled() {
+    return true;
+  }
+
   //
   // Misc
   //
