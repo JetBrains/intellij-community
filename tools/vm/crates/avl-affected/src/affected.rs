@@ -419,8 +419,8 @@ impl<'a> SuiteJoin<'a> {
 }
 
 /// The dotted-prefix rule `docs/guides/flow-authoring-guide.md` states for a step endpoint: an endpoint covers its
-/// own module and every module nested under it, so `intellij.air.backend.acp` covers
-/// `intellij.air.backend.acp.runtime` and does not cover `intellij.air.backend.acpx`.
+/// own module and every module nested under it, so `intellij.air.acp` covers
+/// `intellij.air.acp.runtime` and does not cover `intellij.air.acpx`.
 fn module_covers(endpoint: &str, module: &str) -> bool {
     module == endpoint || module.strip_prefix(endpoint).is_some_and(|rest| rest.starts_with('.'))
 }

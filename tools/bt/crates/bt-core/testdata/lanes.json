@@ -93,7 +93,7 @@
     "//plugins/air/tests/integration/headless/opencode:opencode_test_lib",
     "//plugins/air/tests/integration/headless/pi:pi_test_lib",
     "//plugins/air/tests/integration/jcp:jcp_test_lib",
-    "//plugins/air/tests/property/acp:air-backend-acp-property-tests_test_lib",
+    "//plugins/air/tests/property/acp:air-acp-property-tests_test_lib",
     "//plugins/air/tests/property/gui:air-frontend-session-view-gui-property-tests_test_lib"
   ],
   "laneWideModules": {
