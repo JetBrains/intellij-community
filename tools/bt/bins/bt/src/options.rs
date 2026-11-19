@@ -66,22 +66,15 @@ Options:
   --no-cache               --cache_test_results=no
   --json                   emit one JSON object on stdout and nothing else
   --dry-run                print the resolved label, filter, and argv; run nothing
-  --list                   print the resolution candidates for the selector; run nothing
   --verbose                also echo bazel's own captured output
   --host <ssh alias>       run the committed HEAD on that machine through brd-host of Branch Deck: send
                            the missing git objects, check the commit out in a host slot that the
                            machine lends to this run only, run the same command, stream its output,
                            copy back the kept logs of out/bt-runs; Ctrl+C cancels the run there;
-                           refused when the checkout has local changes; --prepare installs the agent
-                           first; `brd install` puts brd-host into ~/.local/bin
+                           refused when the checkout has local changes; `brd install` puts
+                           brd-host into ~/.local/bin, and `brd-host setup <alias>` readies the machine
   --host-repo <path>       the main repository on the --host machine (env BT_HOST_REPO, default
-                           the one of the host file of --prepare, ~/projects/idea-1)
-  --prepare                with --host: make that machine ready, step by step (ssh, the repository,
-                           the PATH, the tools, the brd-host agent, the credentials, the remote
-                           cache), and say ok, done or missing for each; --dry-run changes nothing.
-                           Run it in a terminal: the credential copy asks y/N and refuses without a
-                           terminal
-  --yes                    with --prepare: copy the missing credentials without the question
+                           the one of the host file that `brd-host setup` writes)
   --help
 
 Examples:
@@ -195,10 +188,6 @@ fn lanes_text(areas: &Areas) -> String {
 /// Everything after `--` is bazel's, verbatim and unexamined.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Parser)]
 #[command(name = "bt", disable_version_flag = true, arg_required_else_help = true)]
-#[expect(
-    clippy::struct_excessive_bools,
-    reason = "each bool is an independent command-line switch, as clap derives it"
-)]
 pub(crate) struct Args {
     /// The one selector.
     pub(crate) selector: Option<String>,
@@ -219,29 +208,28 @@ pub(crate) struct Args {
     pub(crate) test_env: Vec<String>,
     #[arg(long, overrides_with = "no_cache")]
     pub(crate) no_cache: bool,
+    #[command(flatten)]
+    pub(crate) shared: SharedFlags,
+    #[arg(last = true)]
+    pub(crate) passthrough: Vec<String>,
+}
+
+/// The flags of a test run and of `bt build`.
+#[derive(Clone, Debug, Default, PartialEq, Eq, clap::Args)]
+pub(crate) struct SharedFlags {
     #[arg(long, overrides_with = "json")]
     pub(crate) json: bool,
     #[arg(long, overrides_with = "dry_run")]
     pub(crate) dry_run: bool,
-    #[arg(long, overrides_with = "list")]
-    pub(crate) list: bool,
     #[arg(long, overrides_with = "verbose")]
     pub(crate) verbose: bool,
-    /// An ssh alias: the run goes to that machine.
+    /// An ssh alias: the command goes to that machine.
     #[arg(long, allow_hyphen_values = true, value_parser = flag_value)]
     pub(crate) host: Option<String>,
-    /// The main repository on the `--host` machine. A run without `--host` ignores it, so an exported variable
-    /// changes no local run.
+    /// The main repository on the `--host` machine. A command without `--host` ignores it, so an exported variable
+    /// changes no local command.
     #[arg(long, env = "BT_HOST_REPO", allow_hyphen_values = true, value_parser = flag_value)]
     pub(crate) host_repo: Option<String>,
-    /// Makes the `--host` machine ready for runs, and runs nothing.
-    #[arg(long, overrides_with = "prepare")]
-    pub(crate) prepare: bool,
-    /// With `--prepare`: copy the missing credentials without the question.
-    #[arg(long, overrides_with = "yes")]
-    pub(crate) yes: bool,
-    #[arg(last = true)]
-    pub(crate) passthrough: Vec<String>,
 }
 
 /// One parsed invocation of `bt build`.
@@ -251,18 +239,8 @@ pub(crate) struct BuildArgs {
     /// The target patterns, as bazel takes them.
     #[arg(required = true, value_parser = target_pattern)]
     pub(crate) patterns: Vec<String>,
-    #[arg(long, overrides_with = "json")]
-    pub(crate) json: bool,
-    #[arg(long, overrides_with = "dry_run")]
-    pub(crate) dry_run: bool,
-    #[arg(long, overrides_with = "verbose")]
-    pub(crate) verbose: bool,
-    /// An ssh alias: the build goes to that machine.
-    #[arg(long, allow_hyphen_values = true, value_parser = flag_value)]
-    pub(crate) host: Option<String>,
-    /// The main repository on the `--host` machine, as for a test run.
-    #[arg(long, env = "BT_HOST_REPO", allow_hyphen_values = true, value_parser = flag_value)]
-    pub(crate) host_repo: Option<String>,
+    #[command(flatten)]
+    pub(crate) shared: SharedFlags,
     #[arg(last = true)]
     pub(crate) passthrough: Vec<String>,
 }

@@ -5,7 +5,7 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use bt_core::areas::{Area, Areas};
-use bt_core::{Refusal, affected_text, exit, fail_usage, resolve_module};
+use bt_core::{Refusal, exit, fail_usage};
 use serde::{Deserialize, Serialize};
 
 use crate::build::execute_build;
@@ -15,7 +15,6 @@ use crate::digest::{
     rerun_selector, tail_lines, trim_frames,
 };
 use crate::options::{Args, Invocation, parse_args};
-use crate::prepare::{Prepare, prepare_host};
 use crate::remote::brd_host::BrdHost;
 use crate::remote::{Host, HostLink, run_on_host};
 use bt_core::bep::{BepSummary, parse_bep};
@@ -26,15 +25,12 @@ use bt_core::lanes::{
 use bt_core::os_runtime::command_line;
 use bt_core::result::{FlakyRun, RunResult, RunStatus, ShardTimeout, TargetResult, TargetTiming, collect_results, is_verdict};
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
-use bt_core::scan::{ResolutionInputs, derive_package, read_text};
-use bt_core::selector::{
-    Resolution, Selector, SelectorKind, as_filter_or_package, checkout_label, directory_pattern, no_tests_hint, resolve_selector,
-    suggest_names, wanted_simple_name,
-};
+use bt_core::scan::ResolutionInputs;
+use bt_core::selector::{Resolution, Selector, SelectorKind, as_filter_or_package, no_tests_hint, resolve_selector};
 use bt_core::shard_plan::{
     Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS, ShardPlan, TreeTargets,
 };
-use bt_core::suites::{named_suites, resolve_suite_run};
+use bt_core::suites::resolve_suite_run;
 
 /// What one invocation answers.
 ///
@@ -182,35 +178,27 @@ where
             text,
             json: None,
         }),
-        Invocation::Build(args) => match &args.host {
+        Invocation::Build(args) => match &args.shared.host {
             Some(alias) => {
                 let host = Host {
                     alias,
-                    repo: args.host_repo.as_deref(),
+                    repo: args.shared.host_repo.as_deref(),
                 };
-                run_on_host(&host, CheckCommand::Build, args.json, &argv, runtime, link)
+                run_on_host(&host, CheckCommand::Build, args.shared.json, &argv, runtime, link)
             }
             None => execute_build(&args, runtime),
         },
-        Invocation::Run(args) => match &args.host {
+        Invocation::Run(args) => match &args.shared.host {
             Some(alias) => {
                 let host = Host {
                     alias,
-                    repo: args.host_repo.as_deref(),
+                    repo: args.shared.host_repo.as_deref(),
                 };
-                if args.prepare {
-                    let prepare = Prepare {
-                        change: !args.dry_run,
-                        yes: args.yes,
-                    };
-                    return Ok(prepare_host(&host, &prepare, runtime, link));
-                }
                 if args.selector.is_none() && args.module.is_none() && args.lane.is_none() {
                     return Err(fail_usage("Pass a selector, --module or --lane; see --help"));
                 }
-                run_on_host(&host, CheckCommand::Test, args.json, &argv, runtime, link)
+                run_on_host(&host, CheckCommand::Test, args.shared.json, &argv, runtime, link)
             }
-            None if args.prepare => Err(fail_usage("--prepare needs --host")),
             None => execute_args(&args, runtime, &areas),
         },
     }
@@ -276,13 +264,6 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
                 ));
             }
             let inputs = ResolutionInputs::new(runtime, areas);
-            if args.list {
-                return Ok(Outcome {
-                    exit_code: exit::GREEN,
-                    text: list_candidates(runtime, areas, selector, &inputs)?,
-                    json: None,
-                });
-            }
             let mut resolution = if selector.kind.names_suites() {
                 resolve_suite_run(runtime, areas.with_catalog()?, selector, lane_name)?
             } else {
@@ -354,11 +335,11 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     // A green run records this tree only when the files are the same after it. bt reads it before the first bazel
     // command of the run, such as the query of the groups. A dry run records nothing.
     let record_started = runtime.now_ms();
-    let tree_before = if args.dry_run { None } else { tree_before_run(runtime) };
+    let tree_before = if args.shared.dry_run { None } else { tree_before_run(runtime) };
     let mut check_record_ms = runtime.now_ms().saturating_sub(record_started);
     let groups = if !(planned && owns_bep_file) {
         Groups::default()
-    } else if args.dry_run {
+    } else if args.shared.dry_run {
         // A dry run starts no bazel command, so it waits for the server lock of no other command and starts no server.
         recorded_plan.unchecked_groups(&resolution.labels)
     } else {
@@ -370,7 +351,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
                 return Ok(Outcome {
                     exit_code: exit::INFRA,
                     text: format!("INFRA  {message}"),
-                    json: args.json.then(|| infra_payload(&message)),
+                    json: args.shared.json.then(|| infra_payload(&message)),
                 });
             }
         }
@@ -439,7 +420,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     }
     let build_only = lane.and_then(|(area, spec)| spec.build_only_args(area.lanes()));
 
-    if args.dry_run {
+    if args.shared.dry_run {
         return Ok(Outcome {
             exit_code: exit::GREEN,
             text: dry_run_text(runtime, &plan.resolution, &invocations, build_only.as_deref()),
@@ -503,7 +484,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
 
     // The words of bazel are the only evidence when bt reads nothing structural from the run: an INFRA run, and a
     // failed build without a build error. `--verbose` shows all of them already.
-    if args.verbose {
+    if args.shared.verbose {
         runtime.write_error(&spawned.output);
     } else if result.status == RunStatus::Infra || (result.status == RunStatus::BuildFailed && result.build_errors.is_empty()) {
         runtime.write_error(&tail_lines(&spawned.output, DIGEST_TAIL_LINES));
@@ -535,7 +516,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     let bazel_log = (result.status == RunStatus::BuildFailed)
         .then(|| keep_bazel_output(runtime, kept_run.as_deref(), &spawned.output))
         .flatten();
-    let json = args.json.then(|| {
+    let json = args.shared.json.then(|| {
         let mut payload = to_json(&result);
         payload.class_time_budget_violations = class_time_budget_violations.clone();
         payload
@@ -899,66 +880,6 @@ fn build_excluded_targets(runtime: &dyn Runtime, args: &[String]) -> Option<Outc
         ),
         json: None,
     })
-}
-
-/// What `--list` prints: everything resolution would have considered, without running anything. It is the escape
-/// hatch for an ambiguity the refusal text cannot fully explain.
-fn list_candidates(runtime: &dyn Runtime, areas: &Areas, selector: &Selector, inputs: &ResolutionInputs<'_>) -> Result<String, Refusal> {
-    match selector.kind {
-        SelectorKind::Label | SelectorKind::Pattern => {
-            return Ok(format!("label   {}", checkout_label(runtime, &selector.name)));
-        }
-        SelectorKind::Dir => {
-            return Ok(format!("label   {}", directory_pattern(runtime, &selector.name)?));
-        }
-        SelectorKind::Module => {
-            let resolution = resolve_module(runtime, areas, &selector.name)?;
-            return Ok(format!("label   {}", resolution.labels.join(" ")));
-        }
-        // Every lane the selector names, before `--lane` narrows it, so a two-lane refusal can be read in full.
-        SelectorKind::Flow | SelectorKind::Suite => {
-            return Ok(affected_text(&named_suites(runtime, areas.with_catalog()?, selector)?));
-        }
-        SelectorKind::Package => {
-            let lines: Vec<String> = inputs
-                .roots()?
-                .iter()
-                .filter(|root| {
-                    root.package_prefix.as_deref().is_some_and(|prefix| {
-                        selector.name == prefix || selector.name.strip_prefix(prefix).is_some_and(|rest| rest.starts_with('.'))
-                    })
-                })
-                .map(|root| format!("{}\n    {}", root.label, root.src_dir))
-                .collect();
-            if lines.is_empty() {
-                return Ok(format!("(no test root declares a prefix covering {})", selector.name));
-            }
-            return Ok(lines.join("\n"));
-        }
-        SelectorKind::SimpleName | SelectorKind::Fqn => {}
-    }
-
-    let index = inputs.index()?;
-    let simple_name = wanted_simple_name(selector);
-    let Some(candidates) = index.get(simple_name).filter(|found| !found.is_empty()) else {
-        let suggestions = suggest_names(simple_name, index.keys().map(String::as_str), 3);
-        if suggestions.is_empty() {
-            return Ok("(no candidates)".to_owned());
-        }
-        return Ok(format!("(no candidates)\nsimilar: {}", suggestions.join(", ")));
-    };
-    let mut lines = Vec::new();
-    for candidate in candidates {
-        let text = read_text(runtime, &candidate.file)?;
-        lines.push(format!(
-            "{}.{}\n    {}\n    {}",
-            derive_package(&text),
-            candidate.simple_name,
-            candidate.root.label,
-            candidate.file
-        ));
-    }
-    Ok(lines.join("\n"))
 }
 
 #[cfg(test)]

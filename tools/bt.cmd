@@ -7,37 +7,20 @@ GOTO :CMDSCRIPT
 # optimized): `@community//tools/bt:bt` in an ultimate checkout, `//tools/bt:bt` in a community-only one.
 #
 # It lives in `community/tools` so that every tree of the monorepo runs it from one path, and so does its source,
-# so both checkout layouts build it. `bt.json` at the checkout root names the areas it resolves in.
+# so both checkout layouts build it. `bt.json` at the checkout root names the areas and their lane tables.
 #
-# Same shape as `community/tools/vm.cmd`, for the same reasons, and the differences from the bun wrapper
-# this replaced on 2026-08-24 are decisions rather than simplifications.
-# `plugins/air/docs/decisions/0107-bt-is-the-go-binary.md` records them, and ADR 0174 keeps them for the Rust
-# binary; the two that change what a caller sees:
+# Same shape as `community/tools/vm.cmd`, for the same reasons. Two rules change what a caller sees:
 #
-# 1. **No cache, and no version key.** The old wrapper cached the one fact `bazel run` establishes, because
-#    what it resolved was a *pinned* bun: a version bump changed the cache file's name, so a stale entry
-#    became unreachable rather than wrong. This wrapper resolves a binary built from working-copy sources,
-#    which change on every edit and are keyed by nothing. There is no honest cache key, and a wrong one is
-#    silent: BT would report a verdict about test-selection code it did not run. So every invocation runs
-#    `bazel build`, the build's event file names the binary, and the build *is* the freshness guarantee. It is no
-#    `bazel run`, for the reason of note 1 of vm.cmd: a `bazel run` drops the analysis that the last build made. ADR 0105 records that trap already
-#    paid for once - an `lstat` freshness check that degraded to "always reinstall", passed its whole suite,
-#    and failed on hardware.
-#
-#    The cost is ~1.3 s of analysis, warm, on a command whose cheapest useful run is a bazel test invocation.
-#    What it also costs is ADR 0017's one genuine property: a cached path kept BT running when
-#    `--lockfile_mode=error` took every other Bazel command down, so BT could report the breakage. Now a
-#    broken MODULE.bazel takes BT with it - which is why the exit-6 message below leaves Bazel's own output
-#    on stderr rather than summarizing it.
+# 1. **No cache, and no version key.** The binary comes from the sources of the working copy, which no key can
+#    name. A wrong key is silent: BT would report a verdict about test-selection code it did not run. So every
+#    invocation runs `bazel build`, the event file of the build names the binary, and the build is the freshness
+#    guarantee. It is no `bazel run`, for the reason of note 1 of vm.cmd: a `bazel run` drops the analysis that
+#    the last build made. The cost is ~1.3 s of analysis, warm. A broken MODULE.bazel stops BT too, so the
+#    exit-6 message below leaves the output of Bazel on stderr.
 #
 # 2. **`AIR_BT_BIN` overrides everything, checked before Bazel is consulted at all.** It names an explicit
-#    binary and skips the build entirely: a debugger attaching to it, a hand-built binary, or one binary held
-#    for the whole of a comparison rather than rebuilt between its halves. Mirrors `AIR_VM_BIN`.
-#
-# `--refresh` is gone: there is nothing to drop. It is refused loudly rather than ignored, because an agent
-# passing it would otherwise have its first argument silently swallowed and get a different run than it asked
-# for. The refusal comes before even `AIR_BT_BIN`, because it is a statement about the caller's argv rather
-# than about where the binary comes from: one message answers it however BT would have been resolved.
+#    binary and skips the build: a debugger attaching to it, a hand-built binary, or one binary held for the
+#    whole of a comparison. Mirrors `AIR_VM_BIN`.
 
 # A .cmd file has no shebang, so an ENOEXEC fallback picks the interpreter - dash on Ubuntu, bash on
 # macOS. Pin it, as tests.cmd and vm.cmd do, rather than leaving the wrapper's behaviour to the caller.
@@ -56,11 +39,6 @@ polyglot_hand_off_to_cmd "$0" "$@"
 # `root` reaches the binary as BUILD_WORKSPACE_DIRECTORY, which is what every path BT builds is relative to.
 polyglot_find_roots "$self_dir"
 target="${label_prefix}tools/bt:bt"
-
-if [ $# -gt 0 ] && [ "$1" = "--refresh" ]; then
-  echo "bt: --refresh no longer exists; the wrapper rebuilds on every invocation" >&2
-  exit 2
-fi
 
 # BUILD_WORKSPACE_DIRECTORY is how BT finds the checkout - a Bazel-built binary's own path is inside a Bazel
 # output tree and says nothing about it, and the binary refuses rather than guessing. Any RUNFILES_* in the
@@ -98,11 +76,6 @@ REM Windows-incompatible.
 
 call "%~dp0polyglot-wrapper.cmd"
 set "TARGET=%LABEL_PREFIX%tools/bt:bt"
-
-if "%~1"=="--refresh" (
-  echo bt: --refresh no longer exists; the wrapper rebuilds on every invocation 1>&2
-  exit /B 2
-)
 
 set "BUILD_WORKSPACE_DIRECTORY=%ROOT%"
 set "JAVA_RUNFILES="

@@ -17,13 +17,10 @@
 mod build;
 mod check;
 mod cli;
-mod credentials;
 mod digest;
 mod execute;
 mod options;
-mod prepare;
 mod remote;
-mod ssh;
 
 use std::path::PathBuf;
 use std::process::ExitCode;

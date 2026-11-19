@@ -218,7 +218,10 @@ fn a_failed_build_without_a_known_error_shows_the_tail_of_bazel() {
             &format!("bazel  {log}  (the output of bazel, where the build failed)"),
         ],
     );
-    assert_eq!(fake.state().files.get(&format!("{REPO_ROOT}/{log}")).map(String::as_str), Some(output));
+    assert_eq!(
+        fake.state().files.get(&format!("{REPO_ROOT}/{log}")).map(String::as_str),
+        Some(output)
+    );
     assert_mentions(&fake.state().stderr.join("\n"), &["ERROR: a genrule failed"]);
 
     // `--verbose` shows the whole output of bazel once, and no tail after it
@@ -994,35 +997,7 @@ fn a_flow_selector_dry_runs_as_its_lane_and_lane_settles_it() {
     assert!(!settled.text.contains("--test_filter"), "{}", settled.text);
     let ambiguous = refusal(execute(["flow-manage-launch-preset", "--dry-run"], &fake));
     assert_eq!(ambiguous.code, "affected_lanes_ambiguous");
-    // `--list` shows every lane before `--lane` narrows it.
-    let listed = run(&["flow-manage-launch-preset", "--list"], &fake);
-    assert_mentions(
-        &listed.text,
-        &[
-            "gui-chat AirManageLaunchPresetGeneratedFlowUiTest (manage-launch-preset)",
-            "ui AirManageLaunchPresetQuickStartGeneratedFlowUiTest (manage-launch-preset-quick-start)",
-        ],
-    );
     assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
-}
-
-#[test]
-fn list_prints_candidates_without_running_bazel() {
-    let fake = fake_air_tree();
-    let outcome = run(&["AgentPromptChangesTreeContextContributorTest", "--list"], &fake);
-    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
-    assert_mentions(
-        &outcome.text,
-        &[
-            "com.intellij.air.backend.vcs.context.AgentPromptChangesTreeContextContributorTest",
-            "//plugins/air/backend/vcs:air-backend-vcs-tests_test",
-            "//plugins/air/frontend/prompt/vcs:air-frontend-prompt-vcs-tests_test",
-        ],
-    );
-    let near = run(&["AgentThreadCliTst", "--list"], &fake);
-    assert_eq!(near.text, "(no candidates)\nsimilar: AgentThreadCliTest");
-    let package = run(&["com.intellij.air.shared.core", "--list"], &fake);
-    assert_mentions(&package.text, &[CORE_LABEL]);
 }
 
 /// A label outside plugins/air is not resolved at all, which is what makes the wrapper usable for any target.
@@ -1073,26 +1048,28 @@ fn a_directory_inside_the_integration_tree_keeps_its_tags() {
     assert!(!text.contains("--test_tag_filters"), "{text}");
 }
 
-/// A run and its candidate list name one pattern for a directory under `community/` of the ultimate root.
+/// A run names one pattern for a directory under `community/` of the ultimate root.
 #[test]
 fn a_directory_under_community_runs_in_the_community_repository() {
     let fake = fake_air_tree();
     fake.put("community/MODULE.bazel", "");
     fake.put("community/tools/vm/BUILD.bazel", "");
-    for argv in [["community/tools/vm", "--dry-run"], ["community/tools/vm", "--list"]] {
-        assert_mentions(&run(&argv, &fake).text, &["label   @community//tools/vm/..."]);
-    }
+    assert_mentions(
+        &run(&["community/tools/vm", "--dry-run"], &fake).text,
+        &["label   @community//tools/vm/..."],
+    );
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
-/// A run and its candidate list name the `@community` label for a label under `community/` of the ultimate root.
+/// A run names the `@community` label for a label under `community/` of the ultimate root.
 #[test]
 fn a_label_under_community_runs_in_the_community_repository() {
     let fake = fake_air_tree();
     fake.put("community/MODULE.bazel", "");
-    for argv in [["//community/tools/bt/...", "--dry-run"], ["//community/tools/bt/...", "--list"]] {
-        assert_mentions(&run(&argv, &fake).text, &["label   @community//tools/bt/..."]);
-    }
+    assert_mentions(
+        &run(&["//community/tools/bt/...", "--dry-run"], &fake).text,
+        &["label   @community//tools/bt/..."],
+    );
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
@@ -1345,17 +1322,8 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult {
             self.0.spawn_streaming(command)
         }
-        fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
-            self.0.spawn_with_input(command, input)
-        }
-        fn spawn_watched(&self, command: &[OsString], idle: std::time::Duration) -> SpawnResult {
-            self.0.spawn_watched(command, idle)
-        }
         fn home_dir(&self) -> Option<PathBuf> {
             self.0.home_dir()
-        }
-        fn confirm(&self, question: &str) -> Option<bool> {
-            self.0.confirm(question)
         }
         fn temp_file(&self, prefix: &str) -> PathBuf {
             self.0.temp_file(prefix)
@@ -1582,8 +1550,6 @@ fn a_module_runs_its_jps_test_with_the_filter() {
     assert!(!package.text.contains("--test_filter"), "{}", package.text);
     let unfiltered = run(&["--module", "intellij.platform.util.tests", "--dry-run"], &fake);
     assert_mentions(&unfiltered.text, &[&format!("label   {UTIL_LABEL}"), "filter  (none)"]);
-    let listed = run(&["--module", "intellij.platform.util.tests", "--list"], &fake);
-    assert_eq!(listed.text, format!("label   {UTIL_LABEL}"));
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 

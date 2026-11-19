@@ -166,7 +166,8 @@ brd-host run <alias> --head --fetch out/bt-runs [--repo <path>] --report-fd 3 --
 1. `brd-host` refuses a checkout with local changes, untracked files included, because only the commit reaches the
    host.
 2. `brd-host` sends the git objects that the host lacks, as a thin pack, to the main repository of the host.
-   `--host-repo` or `BT_HOST_REPO` names that repository. Without them, the host file of `--prepare` names it.
+   `--host-repo` or `BT_HOST_REPO` names that repository. Without them, the host file that `brd-host setup` writes
+   names it.
 3. The agent checks out the commit in a host slot, and runs `./community/tools/bt.cmd` there with the same arguments,
    less `--host`. Its stderr and the lines of `brd-host` stream here as they come. The stdout of `brd-host` is the
    digest or the `--json` payload, and bt reads it. `brd-host` writes one JSON report of the run to the descriptor 3:
@@ -178,8 +179,8 @@ brd-host run <alias> --head --fetch out/bt-runs [--repo <path>] --report-fd 3 --
    `brd-host` stays in the process group of bt, so Ctrl+C reaches it, and bt only waits. Ctrl+C cancels the run on the
    host and shows its output to the end. A second Ctrl+C leaves at once with 6, and with `--json` it writes the payload
    of an infrastructure outcome.
-6. A host that has none of the commits near HEAD would need the whole history. bt refuses that with `host_behind`,
-   and `--prepare` moves the master of the host.
+6. A host that has none of the commits near HEAD would need the whole history. `brd-host` refuses that, and bt
+   passes the refusal on as `host_behind` with the message of `brd-host`.
 
 ### The host slots
 
@@ -187,41 +188,6 @@ The host lends each run a host slot of Branch Deck for that run only: the slot t
 one used longest ago, else the run waits in a queue, one line a minute. `brd-host` names the affinity of a checkout
 from its path. The host keeps a fixed set of warm slots, so two checkouts never make it clone and nothing returns a
 slot by hand.
-
-### Prepare a host
-
-`bt --host <alias> --prepare` makes a machine of the user ready for `--host` runs. The user runs it in a terminal.
-Each step is idempotent and prints `ok`, `done` or `missing`. An optional tool prints `absent`. `--dry-run` changes
-nothing. `bins/bt/src/prepare.rs` holds the steps, and `bins/bt/src/ssh.rs` bounds each ssh call:
-
-1. ssh: the alias answers in batch mode. Otherwise the step names the `~/.ssh/config` settings to check
-   (`AddressFamily inet`, and `IdentitiesOnly yes` only with an `IdentityFile`), and the other steps do not run.
-2. The repository (`--host-repo`): a missing one is created with `feature.manyFiles`, `core.untrackedCache` and
-   `core.fsmonitor=true`. Then the local master goes to `refs/heads/sync` there, and `checkout -B master sync` makes
-   it the master. The step warns about the size first, because the whole history crosses the network. An existing
-   master moves to the local master only when it is clean and an ancestor. An existing repository without
-   `core.fsmonitor=true` gets it, and the step says what the value was. The give-back of a host slot runs one
-   `status` after each run, and without fsmonitor it reads every file: 18-19 s on the Studio, against 2.5 s.
-3. PATH: `~/.local/bin` goes on the PATH in `~/.zshenv`. `brd-host` lives there, and the agent reads the login
-   environment through it. The host needs no `brd`, because the agent links the lease pool of Branch Deck.
-4. Tools: git, Xcode, rustup, docker and tmux. The step only reports them, and it never installs one.
-5. The agent: `brd-host setup <alias> --repo <repo> --name 'bt on <host name>'`. Over ssh, it copies the local
-   `brd-host` to `~/.local/bin/brd-host` on the host when the host has another build, adds this client to the allow list
-   of the agent, and starts the LaunchAgent `com.jetbrains.brd-host`. The host file
-   `~/.config/brd-host/hosts/<alias>.json` here pins the agent. Then the agent must answer a hello, and an agent of
-   another build gets the hint `brd-host upgrade <alias>`. With `--dry-run`, the step only asks the agent for its
-   hello.
-6. Credentials: the host must have the `~/.netrc` entries of the Bazel remote services (the hosts that `.bazelrc` and
-   its imports name), the `~/.m2/settings.xml` servers of the `.idea/jarRepositories.xml` repositories on the Space
-   package host, and the expiry marker of the token of each such server. `IJPrivatePackagesAuthorizer` names that
-   marker by the hash of the token and keeps the expiry as its modification time, so the copy keeps that time. A local
-   marker that is missing or in the past means that the local token must be renewed first. The step prints host names
-   and server ids only, never a value. It copies a missing entry only after a yes at the terminal, or with `--yes`.
-   Without a terminal it refuses, so an agent cannot start the copy. `credentials.rs` merges each entry into the host
-   file and writes the file through the stdin of ssh, atomically and with mode 600. Then the remote cache must answer
-   404, not 401.
-
-A run without `--prepare` copies no credential.
 
 ## Links into the Air UI-lane workspace
 

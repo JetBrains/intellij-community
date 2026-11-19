@@ -110,18 +110,10 @@ pub struct State {
     /// The answers of the next spawns, in order. A spawn takes the first one, and answers [`State::spawn_result`]
     /// when none is left.
     pub spawn_results: VecDeque<SpawnResult>,
-    /// The stdin of each [`Runtime::spawn_with_input`], in order.
-    pub inputs: Vec<String>,
-    /// The idle limit of each [`Runtime::spawn_watched`], in order.
-    pub idle_limits: Vec<std::time::Duration>,
     /// Answers by command: a spawn whose argv, joined by spaces, holds the text of a rule answers the result of the
     /// first such rule, before the queue of [`State::spawn_results`] is asked. A `bazel query` needs a rule: without
     /// one the spawn panics, so a test cannot read a query that it did not script as a tree without targets.
     pub spawn_rules: Vec<(String, SpawnResult)>,
-    /// The answer of [`Runtime::confirm`]: `None` stands for a stdin that is not a terminal.
-    pub confirm_answer: Option<bool>,
-    /// The questions that [`Runtime::confirm`] was asked, in order.
-    pub questions: Vec<String>,
     pub clock: u64,
     /// The answer of [`Runtime::self_build_ms`].
     pub self_build_ms: Option<u64>,
@@ -400,18 +392,6 @@ impl Runtime for FakeRuntime {
         self.scripted_spawn(command)
     }
 
-    /// Records the argv and the idle limit, and answers the scripted result.
-    fn spawn_watched(&self, command: &[OsString], idle: std::time::Duration) -> SpawnResult {
-        self.state().idle_limits.push(idle);
-        self.scripted_spawn(command)
-    }
-
-    /// Records the argv and the input, and answers the scripted result.
-    fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
-        self.state().inputs.push(input.to_owned());
-        self.scripted_spawn(command)
-    }
-
     fn temp_file(&self, prefix: &str) -> PathBuf {
         PathBuf::from(format!("/tmp/{prefix}.json"))
     }
@@ -447,12 +427,6 @@ impl Runtime for FakeRuntime {
 
     fn home_dir(&self) -> Option<PathBuf> {
         Some(PathBuf::from(HOME_DIR))
-    }
-
-    fn confirm(&self, question: &str) -> Option<bool> {
-        let mut state = self.state();
-        state.questions.push(question.to_owned());
-        state.confirm_answer
     }
 
     fn now_ms(&self) -> u64 {
