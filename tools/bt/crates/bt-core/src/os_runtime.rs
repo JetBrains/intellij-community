@@ -113,14 +113,14 @@ impl OsRuntimeBuilder {
     /// answers no tree, and the run skips the two scans of the untracked files that a tree costs. The default is
     /// `false`.
     #[must_use]
-    pub fn host_slot(mut self, host_slot: bool) -> Self {
+    pub const fn host_slot(mut self, host_slot: bool) -> Self {
         self.host_slot = host_slot;
         self
     }
 
     /// How long the wrapper built this binary, see [`Runtime::self_build_ms`]. The default is `None`.
     #[must_use]
-    pub fn self_build_ms(mut self, self_build_ms: Option<u64>) -> Self {
+    pub const fn self_build_ms(mut self, self_build_ms: Option<u64>) -> Self {
         self.self_build_ms = self_build_ms;
         self
     }
