@@ -29,6 +29,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -42,9 +43,7 @@ import org.jetbrains.plugins.terminal.session.guessShellName
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
-import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
 import java.awt.Component
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -241,12 +240,9 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
         TerminalProcessType.SHELL -> Unit
         TerminalProcessType.NON_SHELL -> return@withTimeoutOrNull terminalView.bracketedPasteMode.value
       }
-      val shellIntegration = terminalView.shellIntegrationDeferred.getNow()
-                             ?: if (startupOptions.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED"] == "1") {
-                               terminalView.shellIntegrationDeferred.await()
-                             }
-                             else return@withTimeoutOrNull terminalView.bracketedPasteMode.value
-      shellIntegration.outputStatus.first { it == TerminalOutputStatus.TypingCommand }
+      combine(terminalView.bracketedPasteMode, terminalView.shellLifecycle.outputStatus) { paste, status ->
+        paste || status == TerminalOutputStatus.TypingCommand
+      }.first { it }
       withTimeoutOrNull(100.milliseconds) {
         terminalView.bracketedPasteMode.first { it }
       }
@@ -269,10 +265,8 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     if (tab.processOptions.processType != TerminalProcessType.SHELL) return false
     val currentDirectory = tab.view.workingDirectoryFlow.value ?: return false
     if (!FileUtil.pathsEqual(workingDirectory, currentDirectory.toString())) return false
-    val shellIntegration = tab.view.shellIntegrationDeferred.getNow() ?: return false
-    if (shellIntegration.outputStatus.value != TerminalOutputStatus.TypingCommand) return false
-    val block = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return false
-    return block.getTypedCommandText(tab.view.outputModels.regular)?.isEmpty() == true
+    if (tab.view.shellLifecycle.outputStatus.value != TerminalOutputStatus.TypingCommand) return false
+    return tab.view.typedCommand?.isEmpty() == true
   }
 
   @RequiresEdt(generateAssertion = false)

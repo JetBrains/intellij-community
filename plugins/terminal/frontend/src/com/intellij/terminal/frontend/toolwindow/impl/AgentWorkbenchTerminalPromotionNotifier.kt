@@ -20,7 +20,6 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.IslandsState
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -36,8 +35,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandStartedEvent
+import com.intellij.terminal.frontend.view.TerminalShellLifecycle
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.util.Locale
@@ -78,7 +76,7 @@ private const val AGENT_WORKBENCH_PROMOTION_DISMISSED_KEY = "terminal.agent.work
  *    - The app-level gate has not marked the promotion as dismissed before.
  *
  * Banner behavior:
- * - The banner is inserted above the terminal content in the current [TerminalViewImpl].
+ * - The banner is inserted above the terminal content in the current [TerminalView].
  * - The close action permanently dismisses the promotion and removes the banner.
  * - The install action permanently dismisses the promotion, logs `promo.install.clicked`, installs and
  *   enables Agent Workbench, disposes the banner on success, activates the Agent Workbench tool window,
@@ -125,8 +123,7 @@ internal class AgentWorkbenchTerminalPromotionNotifier(private val project: Proj
       return
     }
 
-    view.coroutineScope.launch {
-      val shellIntegration = view.shellIntegrationDeferred.await()
+    view.coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
       if (!controller.isPromotionAvailable()) {
         return@launch
       }
@@ -134,8 +131,8 @@ internal class AgentWorkbenchTerminalPromotionNotifier(private val project: Proj
       val viewDisposable = Disposer.newCheckedDisposable(view.coroutineScope.asDisposable(), "AgentWorkbenchTerminalPromotionView")
       val listenerDisposable = Disposer.newDisposable(viewDisposable, "AgentWorkbenchTerminalPromotionListener")
       val promotionState = AtomicReference(AgentWorkbenchTerminalPromotionListenerState.ARMED)
-      shellIntegration.addCommandExecutionListener(listenerDisposable, object : TerminalCommandExecutionListener {
-        override fun commandStarted(event: TerminalCommandStartedEvent) {
+      view.shellLifecycle.addListener(listenerDisposable, object : TerminalShellLifecycle.Listener {
+        override fun commandStarted(command: String) {
           if (!promotionState.compareAndSet(AgentWorkbenchTerminalPromotionListenerState.ARMED,
                                             AgentWorkbenchTerminalPromotionListenerState.ATTEMPT_IN_PROGRESS)) {
             return
@@ -145,7 +142,7 @@ internal class AgentWorkbenchTerminalPromotionNotifier(private val project: Proj
             return
           }
 
-          val provider = matchAgentWorkbenchTerminalProvider(event.commandBlock.executedCommand)
+          val provider = matchAgentWorkbenchTerminalProvider(command)
           if (provider == null) {
             rearmPromotionListening(promotionState)
             return
@@ -388,14 +385,13 @@ fun matchAgentWorkbenchTerminalProvider(commandLine: String?): AgentWorkbenchTer
   }
 }
 
-private fun showAgentWorkbenchPromotionBanner(
+internal fun showAgentWorkbenchPromotionBanner(
   project: Project,
   provider: AgentWorkbenchTerminalProvider,
   view: TerminalView,
   dismissPromotion: () -> Unit,
   onBannerDisposed: () -> Unit,
 ): Boolean {
-  val terminalViewImpl = view as? TerminalViewImpl ?: return false
   val bannerDisposable = Disposer.newDisposable(view.coroutineScope.asDisposable(), "AgentWorkbenchPromotionBanner")
   Disposer.register(bannerDisposable) {
     onBannerDisposed()
@@ -422,7 +418,7 @@ private fun showAgentWorkbenchPromotionBanner(
     },
   )
   try {
-    terminalViewImpl.setTopComponent(banner, bannerDisposable)
+    view.setTopComponent(banner, bannerDisposable)
   }
   catch (e: Exception) {
     Disposer.dispose(bannerDisposable)

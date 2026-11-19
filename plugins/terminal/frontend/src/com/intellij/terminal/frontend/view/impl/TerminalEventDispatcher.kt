@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -26,17 +27,23 @@ import com.intellij.terminal.frontend.view.TerminalAllowedActionsProvider
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
+import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalEscapeBehaviorChangeNotification
 import java.awt.AWTEvent
+import java.awt.KeyboardFocusManager
 import java.awt.Point
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseWheelListener
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.swing.JComponent
 import javax.swing.KeyStroke
 
 /**
@@ -56,8 +63,9 @@ import javax.swing.KeyStroke
  * This action only enables itself if all the actions from our list corresponding to the same shortcut are disabled.
  * It then sends the received shortcut to the terminal using [eventsHandler].
  */
-private class TerminalEventDispatcher(
-  private val editor: EditorEx,
+internal class TerminalEventDispatcher(
+  private val project: Project?,
+  private val component: JComponent,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val eventsHandler: TerminalKeyEventsHandler,
   private val parentDisposable: Disposable,
@@ -80,7 +88,7 @@ private class TerminalEventDispatcher(
   private var ignoreNextKeyTypedEvent: Boolean = true
 
   override fun dispatch(e: AWTEvent): Boolean {
-    if (e is KeyEvent) {
+    if (settings.overrideIdeShortcuts() && e is KeyEvent) {
       dispatchKeyEvent(e)
     }
     return false
@@ -92,10 +100,10 @@ private class TerminalEventDispatcher(
     // Special handling for Escape shortcut - show notification about behavior change.
     // Should be checked before the action system.
     if (e.id == KeyEvent.KEY_PRESSED && e.keyCode == KeyEvent.VK_ESCAPE && e.modifiersEx == 0) {
-      TerminalEscapeBehaviorChangeNotification.showNotificationIfNeeded(editor.project!!)
+      project?.let { TerminalEscapeBehaviorChangeNotification.showNotificationIfNeeded(it) }
     }
 
-    if (TerminalCmdKShortcutDialog.handleIfNeeded(editor.project, editor.contentComponent, e)) {
+    if (TerminalCmdKShortcutDialog.handleIfNeeded(project, component, e)) {
       e.consume()
       ignoreNextKeyTypedEvent = true
       return
@@ -132,7 +140,7 @@ private class TerminalEventDispatcher(
     this.allowedActionIds = actionIds
     if (!myRegistered) {
       IdeEventQueue.getInstance().addDispatcher(this, parentDisposable)
-      sendShortcutAction.register(editor.contentComponent, actionIds)
+      sendShortcutAction.register(component, actionIds)
       myRegistered = true
       // The same reasoning as with the initialization:
       // the terminal might have been activated with a shortcut that will be immediately followed by a "key typed" event.
@@ -146,7 +154,7 @@ private class TerminalEventDispatcher(
     ThreadingAssertions.assertEventDispatchThread()
     if (myRegistered) {
       IdeEventQueue.getInstance().removeDispatcher(this)
-      sendShortcutAction.unregister(editor.contentComponent)
+      sendShortcutAction.unregister(component)
       allowedActionIds = emptyList()
       myRegistered = false
       LOG.trace { "Dispatcher unregistered: finish capturing key events" }
@@ -265,6 +273,7 @@ private class TerminalEventDispatcher(
       "Terminal.Escape",
       "Terminal.SwitchFocusToEditor",
       "Terminal.CopySelectedText",
+      "Terminal.SelectAll",
       "Terminal.Paste",
       "Terminal.PasteFromHistory",
       "Terminal.LineUp",
@@ -327,7 +336,7 @@ fun createTerminalKeyEventDispatcherForTests(
   settings: JBTerminalSystemSettingsProviderBase,
   eventsHandler: TerminalKeyEventsHandler,
   disposable: Disposable,
-): IdeEventQueue.NonLockedEventDispatcher = TerminalEventDispatcher(editor, settings, eventsHandler, disposable)
+): IdeEventQueue.NonLockedEventDispatcher = TerminalEventDispatcher(editor.project, editor.contentComponent, settings, eventsHandler, disposable)
 
 @ApiStatus.Internal
 @VisibleForTesting
@@ -338,7 +347,7 @@ fun setupKeyEventsHandling(
   disposable: Disposable,
 ) {
   // Key events forwarding from the editor to the shell
-  val eventDispatcher = TerminalEventDispatcher(editor, settings, eventsHandler, disposable)
+  val eventDispatcher = TerminalEventDispatcher(editor.project, editor.contentComponent, settings, eventsHandler, disposable)
 
   editor.addFocusListener(object : FocusChangeListener {
     override fun focusGained(editor: Editor) {
@@ -417,4 +426,52 @@ private fun EditorEx.mousePointToGridCell(point: Point, line: Int): VisualPositi
   val lineStartX = visualPositionToXY(VisualPosition(line, 0)).x
   val column = ((point.x - lineStartX) / grid.charWidth).toInt().coerceIn(0, (grid.columns - 1).coerceAtLeast(0))
   return VisualPosition(line, column)
+}
+
+/** Installs the terminal shortcut policy for a component that handles its own key events. */
+internal fun setupComponentKeyEventsHandling(
+  project: Project,
+  component: JComponent,
+  settings: JBTerminalSystemSettingsProviderBase,
+  disposable: Disposable,
+): () -> Unit {
+  val handler = object : TerminalKeyEventsHandler {
+    override fun keyPressed(e: KeyEvent) = forward(e)
+    override fun keyTyped(e: KeyEvent) = forward(e)
+    override fun keyReleased(e: KeyEvent) = forward(e)
+
+    private fun forward(e: KeyEvent) {
+      redispatchTerminalKeyEvent(component, e)
+      e.consume()
+    }
+  }
+  val dispatcher = TerminalEventDispatcher(project, component, settings, handler, disposable)
+  val disposed = AtomicBoolean()
+  val refresh = {
+    if (!disposed.get() && component.hasFocus() && settings.overrideIdeShortcuts()) dispatcher.registerIfNeeded()
+    else dispatcher.unregisterIfRegistered()
+  }
+  val listener = object : FocusAdapter() {
+    override fun focusGained(e: FocusEvent) = refresh()
+    override fun focusLost(e: FocusEvent) = dispatcher.unregisterIfRegistered()
+  }
+  component.addFocusListener(listener)
+  Disposer.register(disposable) {
+    disposed.set(true)
+    UIUtil.invokeLaterIfNeeded {
+      component.removeFocusListener(listener)
+      dispatcher.unregisterIfRegistered()
+    }
+  }
+  refresh()
+  return refresh
+}
+
+/** Sends a key event from the IDE shortcut handler to the terminal component. */
+internal fun redispatchTerminalKeyEvent(component: JComponent, event: KeyEvent) {
+  val forwarded = if (event.isConsumed) {
+    KeyEvent(component, event.id, event.`when`, event.modifiersEx, event.keyCode, event.keyChar, event.keyLocation)
+  }
+  else event
+  KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(component, forwarded)
 }

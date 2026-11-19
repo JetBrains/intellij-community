@@ -46,6 +46,7 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex",
         "//libraries/jediterm-core",
         "//libraries/jediterm-ui",
+        "//libraries/ketraterm",
         "//platform/core-ui",
         "//platform/code-style-api:codeStyle",
         "//libraries/guava",

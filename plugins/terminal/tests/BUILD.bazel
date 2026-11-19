@@ -73,6 +73,8 @@ jvm_library(
         "//libraries/pty4j",
         "//libraries/guava",
         "//libraries/junit4",
+        "//platform/indexing-api:indexing",
+        "//libraries/ketraterm",
         "//platform/eel-provider",
         "//platform/lang-impl",
         "//platform/testFramework/junit5/eel",
@@ -95,6 +97,7 @@ jvm_library(
         "//libraries/junit6-params",
         "//platform/util/jdom",
         "//platform/runtime/product",
+        "//libraries/kotlinx/coroutines/test",
     ],
 )
 ### auto-generated section `build intellij.terminal.tests` end

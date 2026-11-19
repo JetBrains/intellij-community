@@ -87,9 +87,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<Process> {
     }
 
     if (updatedOptions.getProcessType() == TerminalProcessType.SHELL && enableShellIntegration()) {
-      updatedOptions = LocalShellIntegrationInjector.injectShellIntegration(updatedOptions,
-                                                                            isGenOneTerminalEnabled(),
-                                                                            isGenTwoTerminalEnabled());
+      updatedOptions = configureShellIntegration(updatedOptions);
     }
     if (updatedOptions.getProcessType() == TerminalProcessType.SHELL) {
       updatedOptions = TerminalPSReadLineUpdateUtil.configureOptions(updatedOptions);
@@ -168,6 +166,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<Process> {
     Map<String, String> masked = new LinkedHashMap<>(env);
     masked.replaceAll((key, value) -> SECRET_ENV_KEY.matcher(key).find() ? "***" : value);
     return masked;
+  }
+
+  /** Prepares shell hooks before the process starts. */
+  protected @NotNull ShellStartupOptions configureShellIntegration(@NotNull ShellStartupOptions options) {
+    return LocalShellIntegrationInjector.injectShellIntegration(options, isGenOneTerminalEnabled(), isGenTwoTerminalEnabled());
   }
 
   private static @NotNull String stringifyProcessInfo(@NotNull List<String> command,

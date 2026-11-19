@@ -19,6 +19,7 @@ load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 dev_dist_plugin_descriptor(
     content_modules = [
         "intellij.libraries.completion.ranking.sh",
+        "intellij.libraries.ketraterm",
         "intellij.terminal.backend",
         "intellij.terminal.cloud",
         "intellij.terminal.completion",

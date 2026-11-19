@@ -484,6 +484,7 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
    */
   @Suppress("OVERRIDE_DEPRECATION")
   private class FakeTerminalView : TerminalView {
+    override val shellLifecycle: com.intellij.terminal.frontend.view.TerminalShellLifecycle get() = notUsedInTest()
     private val keyEventsListeners = DisposableWrapperList<TerminalKeyEventsListener>()
 
     fun fireKeyEvent(event: TerminalKeyEvent) {

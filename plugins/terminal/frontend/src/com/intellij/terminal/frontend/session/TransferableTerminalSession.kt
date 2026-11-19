@@ -35,6 +35,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import java.util.concurrent.atomic.AtomicBoolean
@@ -500,6 +501,9 @@ private class TransferableTerminalSessionImpl(
       },
       stateTransitionObserver: (TerminalViewSessionState) -> Unit = {},
     ): TransferableTerminalSession {
+      require((requestedOptions.emulatorType ?: TerminalEmulatorType.default) != TerminalEmulatorType.KetraTerm) {
+        "KetraTerm does not support transferable sessions"
+      }
       return TransferableTerminalSessionImpl(
         parentScope = parentScope,
         startupFusInfo = startupFusInfo,

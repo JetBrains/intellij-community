@@ -43,6 +43,11 @@ jvm_library(
         "//platform/ide-core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/util:util-ui",
+        "//plugins/terminal/frontend",
+        "//plugins/terminal",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/mockito",
+        "//libraries/mockito-kotlin",
     ],
 )
 ### auto-generated section `build intellij.mcpserver.terminal.frontend.tests` end

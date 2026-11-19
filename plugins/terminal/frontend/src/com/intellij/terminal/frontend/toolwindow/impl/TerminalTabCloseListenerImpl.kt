@@ -41,10 +41,10 @@ internal class TerminalTabCloseListenerImpl private constructor(
         return true
       }
 
-      val shellIntegration = view.shellIntegrationDeferred.getNow()
-      if (shellIntegration != null) {
+      val status = view.shellLifecycle.outputStatus.value
+      if (status != null) {
         // If shell integration is available, use its knowledge about the command execution status.
-        return shellIntegration.outputStatus.value == TerminalOutputStatus.ExecutingCommand
+        return status == TerminalOutputStatus.ExecutingCommand
       }
 
       // If it is a shell process with no shell integration, use heavy-weight check of shell's child processes.

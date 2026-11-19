@@ -4,7 +4,9 @@ package com.intellij.terminal.frontend.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
+import com.intellij.terminal.frontend.view.ketraterm.KetraTermTerminalView
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
@@ -19,16 +21,22 @@ internal class TerminalPageDownAction : TerminalScrollingAction(PageDownHandler(
 
 internal interface ScrollingHandler {
   fun doExecute(editor: Editor)
+  fun doExecute(view: KetraTermTerminalView)
 }
 
 internal abstract class TerminalScrollingAction(private val handler: ScrollingHandler) : TerminalPromotedDumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.terminalEditor?.isOutputModelEditor == true
+    e.presentation.isEnabled = e.terminalView is KetraTermTerminalView || e.terminalEditor?.isOutputModelEditor == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    val view = e.terminalView
+    if (view is KetraTermTerminalView) {
+      handler.doExecute(view)
+      return
+    }
     val editor = e.terminalEditor ?: return
     handler.doExecute(editor)
   }
@@ -43,6 +51,14 @@ private class LineUpHandler : ScrollingHandlerImpl(Unit.LINE, -1)
 private class LineDownHandler : ScrollingHandlerImpl(Unit.LINE, +1)
 
 private abstract class ScrollingHandlerImpl(private val unit: Unit, private val direction: Int) : ScrollingHandler {
+  override fun doExecute(view: KetraTermTerminalView) {
+    val rows = when (unit) {
+      Unit.LINE -> 1
+      Unit.PAGE -> view.terminal.viewportState().visibleRows
+    }
+    view.terminal.scrollViewportBy(-direction * rows.toDouble())
+  }
+
   override fun doExecute(editor: Editor) {
     val scrollingModel = editor.getUserData(TerminalOutputScrollingModel.KEY) ?: return
     when (unit) {

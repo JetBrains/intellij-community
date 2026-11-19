@@ -4,6 +4,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
+import com.intellij.terminal.frontend.view.ketraterm.KetraTermTerminalView
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
@@ -15,6 +17,11 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.termin
 
 internal class TerminalClearAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
+    val view = e.terminalView
+    if (view is KetraTermTerminalView) {
+      view.clearBuffer()
+      return
+    }
     if (e.terminalEditor?.isOutputModelEditor == true) {
       e.terminalInput?.sendClearBuffer()
     }
@@ -25,6 +32,11 @@ internal class TerminalClearAction : TerminalPromotedDumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
+    val view = e.terminalView
+    if (view is KetraTermTerminalView) {
+      e.presentation.isEnabledAndVisible = view.canClearBuffer
+      return
+    }
     e.presentation.isEnabledAndVisible =
       ((e.terminalEditor?.isPromptEditor == true || e.terminalEditor?.isOutputEditor == true) && e.terminalSession?.model?.isCommandRunning != true) ||
       (e.terminalEditor?.isOutputModelEditor == true && !SystemInfo.isWindows)

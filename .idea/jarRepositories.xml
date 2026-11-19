@@ -56,5 +56,10 @@
       <option name="name" value="Kotlin Experimental (expireable per-merge-to-master dev-builds)" />
       <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/experimental" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="ketraterm-releases" />
+      <option name="name" value="Maven Central (KetraTerm releases)" />
+      <option name="url" value="https://repo.maven.apache.org/maven2" />
+    </remote-repository>
   </component>
 </project>

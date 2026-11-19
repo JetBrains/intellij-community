@@ -32,6 +32,10 @@ sealed class TerminalChangeFontSizeAction(private val myStep: Float) : DumbAware
       if (terminalWidget != null) {
         return ClassicTerminalChangeFontHandler(terminalWidget)
       }
+      val provider = e.getData(TerminalFontSizeProvider.DATA_KEY)
+      if (provider != null) {
+        return ReworkedTerminalChangeFontHandler(provider)
+      }
       val editor = e.getData(TerminalPlatformDataKeys.EDITOR_KEY)
       if (editor != null) {
         val strategy = editor.getUserData(TerminalFontSizeProvider.KEY)

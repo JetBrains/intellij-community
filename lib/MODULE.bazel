@@ -8744,6 +8744,244 @@ http_file(
 )
 
 http_file(
+    name = "io_github_ketraterm-ketraterm-completion-host-1_0_1_http",
+    downloaded_file_path = "ketraterm-completion-host-1.0.1.jar",
+    sha256 = "d6817d7b7870d59b7c5b6b2e71c44f5d9c666958330a71b98a15767269d2e8eb",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-completion-host/1.0.1/ketraterm-completion-host-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-completion-host-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-completion-host-1.0.1-sources.jar",
+    sha256 = "e012da5ee46d4d71cc3b3a5eb413614bd336e472d32849b32d63797f12be9661",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-completion-host/1.0.1/ketraterm-completion-host-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-shell-launch-1_0_1_http",
+    downloaded_file_path = "ketraterm-shell-launch-1.0.1.jar",
+    sha256 = "8d77c7e47bbf73e8a3dac00ee0061d4c708333c26f22b9661baab3cc69205fdc",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-shell-launch/1.0.1/ketraterm-shell-launch-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-shell-integration-1_0_1_http",
+    downloaded_file_path = "ketraterm-shell-integration-1.0.1.jar",
+    sha256 = "d7ccec082b4e2972cc8cd5de9b67b11c86bca5666ce386b3c3a2455134649b83",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-shell-integration/1.0.1/ketraterm-shell-integration-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-shell-launch-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-shell-launch-1.0.1-sources.jar",
+    sha256 = "900e03b5771c6c25e6c6d515b0777a22c061249316e2e4c13abe2199f82baf6a",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-shell-launch/1.0.1/ketraterm-shell-launch-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-shell-integration-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-shell-integration-1.0.1-sources.jar",
+    sha256 = "5937e62e238dac22fc5bbb3676028229e810529ebdef7aff85e9d7bfa93165f3",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-shell-integration/1.0.1/ketraterm-shell-integration-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-ui-swing-1_0_1_http",
+    downloaded_file_path = "ketraterm-ui-swing-1.0.1.jar",
+    sha256 = "d360f1ca6aba5ae32b7ab3004f172d3859648d6d395155665579e8db3e261548",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-ui-swing/1.0.1/ketraterm-ui-swing-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-session-1_0_1_http",
+    downloaded_file_path = "ketraterm-session-1.0.1.jar",
+    sha256 = "2339ca3a83e84449560e85ca98db08b35bea7d0e4507996cdc06f845c8ccae82",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-session/1.0.1/ketraterm-session-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-core-1_0_1_http",
+    downloaded_file_path = "ketraterm-core-1.0.1.jar",
+    sha256 = "2e7d5eeb9556cbe24c928f046d0eee2a83100adf504fcc917b841c578061c8ea",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-core/1.0.1/ketraterm-core-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-parser-1_0_1_http",
+    downloaded_file_path = "ketraterm-parser-1.0.1.jar",
+    sha256 = "181cb5cf831a3636e85902ff1dccbeb58e790148fcf4be468e2fe02a66e8a97d",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-parser/1.0.1/ketraterm-parser-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-host-1_0_1_http",
+    downloaded_file_path = "ketraterm-host-1.0.1.jar",
+    sha256 = "07fae4ae985fc7adae23f40000f0056db85a996324dd7ab6de165f6a31d401f4",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-host/1.0.1/ketraterm-host-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-transport-api-1_0_1_http",
+    downloaded_file_path = "ketraterm-transport-api-1.0.1.jar",
+    sha256 = "ec47851cf1f94733c8a5b4ed56d75a1c7712c00f5408b7871a517d5d2c1e6596",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-transport-api/1.0.1/ketraterm-transport-api-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-protocol-1_0_1_http",
+    downloaded_file_path = "ketraterm-protocol-1.0.1.jar",
+    sha256 = "f720d66d48ec67820294e602c1298227b0a96a82f6bb3b890f2810625d74339c",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-protocol/1.0.1/ketraterm-protocol-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-input-1_0_1_http",
+    downloaded_file_path = "ketraterm-input-1.0.1.jar",
+    sha256 = "a0ee4266991968a2fa4e64bf68efd609fac1d137ebfd15678d9570e5f02c57be",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-input/1.0.1/ketraterm-input-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-render-api-1_0_1_http",
+    downloaded_file_path = "ketraterm-render-api-1.0.1.jar",
+    sha256 = "e56b692be6c28048df42c2bf2a0844d5d33d9083d8a5f2c94fd1b5e0e8e56a52",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-render-api/1.0.1/ketraterm-render-api-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-render-cache-1_0_1_http",
+    downloaded_file_path = "ketraterm-render-cache-1.0.1.jar",
+    sha256 = "82785178d8ca224f00933755012d6aec90a318e04df817491f6bdae8d40d8408",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-render-cache/1.0.1/ketraterm-render-cache-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-ui-swing-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-ui-swing-1.0.1-sources.jar",
+    sha256 = "3893ae87f0a0bd2f9bb85bdaad3f974bfe1a7e4d07f63b46c5d841ce93a754fc",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-ui-swing/1.0.1/ketraterm-ui-swing-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-session-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-session-1.0.1-sources.jar",
+    sha256 = "42a892c3d67f72142f396b786f506ef3cd77730309121aed6a83cd9dbda1ead3",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-session/1.0.1/ketraterm-session-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-core-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-core-1.0.1-sources.jar",
+    sha256 = "75e0cdea47ebcb6de463786bd301d483ffab7f6692b09899d6daaec0dc280397",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-core/1.0.1/ketraterm-core-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-parser-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-parser-1.0.1-sources.jar",
+    sha256 = "215cb6055a2a398f6a65831ac31b7ace36c4ef1053d25e52ab3ea57f0b001c7e",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-parser/1.0.1/ketraterm-parser-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-host-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-host-1.0.1-sources.jar",
+    sha256 = "d0bddc958af620d10e745666df214fd9343439ebccdbbcf8f9ab3261907de1a7",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-host/1.0.1/ketraterm-host-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-transport-api-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-transport-api-1.0.1-sources.jar",
+    sha256 = "66c4f14ee9d41c102deba362ea0e692fd6c63406449ee98b8e95512d86a13929",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-transport-api/1.0.1/ketraterm-transport-api-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-protocol-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-protocol-1.0.1-sources.jar",
+    sha256 = "d80223655431787b4dec160e77c4c23edb2c14c5478be72f4302a2bd3c863ceb",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-protocol/1.0.1/ketraterm-protocol-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-input-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-input-1.0.1-sources.jar",
+    sha256 = "aedeb112556e5785ca00a180a777ae8557bffecfe053dd1ce79b44c25ba85758",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-input/1.0.1/ketraterm-input-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-render-api-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-render-api-1.0.1-sources.jar",
+    sha256 = "6be7687891b348b86e2efa935484b4677594558cf20fc460fa8276e7f7ca2827",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-render-api/1.0.1/ketraterm-render-api-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-render-cache-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-render-cache-1.0.1-sources.jar",
+    sha256 = "75d2ce7e1f6988fed2c7553b6bd6380013bdb26299e8605870015c637b1f0ec5",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-render-cache/1.0.1/ketraterm-render-cache-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-ui-swing-host-1_0_1_http",
+    downloaded_file_path = "ketraterm-ui-swing-host-1.0.1.jar",
+    sha256 = "145f76cc2821d6cd673c14ff69f3d97156410d17015c5ed7ad81b161635941dd",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-ui-swing-host/1.0.1/ketraterm-ui-swing-host-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-completion-1_0_1_http",
+    downloaded_file_path = "ketraterm-completion-1.0.1.jar",
+    sha256 = "1de4a4c121ce97e38813838fa9f3b7a398fa6851e9d181bb2e6d6ac3ac792f01",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-completion/1.0.1/ketraterm-completion-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-completion-session-1_0_1_http",
+    downloaded_file_path = "ketraterm-completion-session-1.0.1.jar",
+    sha256 = "1344949d76ae259d95e9183fe40018224ded8288cd884974c5bd24986951ddd3",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-completion-session/1.0.1/ketraterm-completion-session-1.0.1.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-ui-swing-host-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-ui-swing-host-1.0.1-sources.jar",
+    sha256 = "c9ece538b2f9df4e3bbe54c5157a8e5434fe61be86cff9b0d68822c9d2efdb50",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-ui-swing-host/1.0.1/ketraterm-ui-swing-host-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-completion-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-completion-1.0.1-sources.jar",
+    sha256 = "fe6b78a678bb1dbdf23e5b98b4a0c8723f325c8bcfef3e373b3471b88eee8ab4",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-completion/1.0.1/ketraterm-completion-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_ketraterm-ketraterm-completion-session-1_0_1-sources_http",
+    downloaded_file_path = "ketraterm-completion-session-1.0.1-sources.jar",
+    sha256 = "0e00a836fabed56f6d8a15f7e01ce30f2fea9c1da51b6c7b11363446cdae1a4d",
+    url = "https://repo.maven.apache.org/maven2/io/github/ketraterm/ketraterm-completion-session/1.0.1/ketraterm-completion-session-1.0.1-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_10_2_http",
+    downloaded_file_path = "kotlinx-coroutines-swing-1.10.2.jar",
+    sha256 = "02bdb85f20ec08004429abf6887e8d0e40f3ab637d7462f817f0f8abbe7d1eb5",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.10.2/kotlinx-coroutines-swing-1.10.2.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_10_2-sources_http",
+    downloaded_file_path = "kotlinx-coroutines-swing-1.10.2-sources.jar",
+    sha256 = "e08647aaf14d303b6caaf489623a8843e8bd043587ada3d012d1dd5ea0f6b01d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.10.2/kotlinx-coroutines-swing-1.10.2-sources.jar",
+)
+
+http_file(
     name = "com_jetbrains-keychain-4_4_3_http",
     downloaded_file_path = "keychain-4.4.3.jar",
     sha256 = "8e1186cccf455e34775c35cc39c690d0064922570ce799c63ac409210d17e8cc",

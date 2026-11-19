@@ -20,7 +20,7 @@ import com.intellij.platform.eel.provider.portAccessibleLocally.EelPortAccessibl
 import com.intellij.platform.eel.provider.resolveEelMachine
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.impl.cursorOffsetFlow
+import com.intellij.terminal.frontend.view.impl.TerminalCursorObservation
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
@@ -224,13 +224,12 @@ private fun resetWatcherOnCursorLineChange(
   coroutineScope: CoroutineScope,
 ) {
   coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement() + CoroutineName("TerminalPortsWatcher reset job")) {
-    val outputModel = terminalView.outputModels.regular
-    var curCursorLine = outputModel.getLineByOffset(outputModel.cursorOffset)
-    outputModel.cursorOffsetFlow
+    val observation = TerminalCursorObservation(terminalView, coroutineScope)
+    var curCursorLine = observation.lineId()
+    observation.changes
       .sample(300.milliseconds)
       .collect {
-        val cursorOffset = outputModel.cursorOffset
-        val newLine = outputModel.getLineByOffset(cursorOffset)
+        val newLine = observation.lineId()
         if (newLine != curCursorLine) {
           curCursorLine = newLine
           watcher.resetDelay()

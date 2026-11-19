@@ -20,7 +20,10 @@ internal class TerminalShortcutsPressStatistics(
   private val terminalView: TerminalView,
 ) : TerminalKeyEventsListener {
   override fun afterKeyEvent(event: TerminalKeyEvent) {
-    val keyEvent = event.awtEvent
+    afterKeyEvent(event.awtEvent)
+  }
+
+  fun afterKeyEvent(keyEvent: KeyEvent) {
     if (isIgnoredShortcut(keyEvent)) return
     if (isShortcut(keyEvent)) {
       ReworkedTerminalUsageCollector.logShortcutPressed(project, keyEvent, terminalView.getRunningProcessExecutableForFus())

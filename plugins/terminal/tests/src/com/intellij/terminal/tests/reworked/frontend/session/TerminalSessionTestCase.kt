@@ -103,5 +103,5 @@ internal abstract class TerminalSessionTestCase(protected val emulatorType: Term
  * Makes this emulator [TerminalEmulatorType.default] until [disposable] is disposed.
  */
 internal fun TerminalEmulatorType.setDefault(disposable: Disposable) {
-  Registry.get("terminal.use.ghostty.emulator").setValue(this == TerminalEmulatorType.Ghostty, disposable)
+  Registry.get("terminal.emulator").setValue(name, disposable)
 }

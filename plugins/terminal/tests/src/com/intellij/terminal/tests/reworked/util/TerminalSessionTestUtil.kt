@@ -13,6 +13,8 @@ import com.intellij.terminal.emulator.TerminalSize
 import com.intellij.terminal.frontend.session.TerminalSessionsManager
 import com.intellij.terminal.frontend.session.createStandardStateAwareTerminalSession
 import com.intellij.terminal.frontend.session.createTerminalSession
+import com.intellij.terminal.frontend.session.ketraterm.KetraTermTerminalSession
+import com.intellij.terminal.frontend.session.ketraterm.createKetraTermTerminalSession
 import com.intellij.terminal.frontend.session.startStandardTerminalSession
 import com.intellij.terminal.frontend.session.startTerminalProcess
 import com.intellij.terminal.frontend.session.toDto
@@ -24,22 +26,23 @@ import com.jediterm.terminal.TtyConnector
 import com.pty4j.windows.conpty.WinConPtyProcess
 import com.pty4j.windows.cygwin.CygwinPtyProcess
 import com.pty4j.windows.winpty.WinPtyProcess
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
-import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.TerminalEmulatorType
-import org.jetbrains.plugins.terminal.TerminalEngine
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import org.jetbrains.plugins.terminal.session.impl.dto.toState
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent
@@ -47,18 +50,17 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
-import org.jetbrains.plugins.terminal.session.impl.dto.toState
+import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import org.jetbrains.plugins.terminal.TerminalEmulatorType
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.util.ShellEelProcess
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.updateContent
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.jupiter.api.Assumptions
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 object TerminalSessionTestUtil {
   /** Starts the same terminal session used in production */
@@ -102,8 +104,9 @@ object TerminalSessionTestUtil {
       .build()
 
     return if (isLowLevelSession) {
-      val (ttyConnector, configuredOptions) = startTerminalProcess(project, allOptions)
-      val session = createTerminalSession(project, ttyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), coroutineScope)
+      val (ttyConnector, configuredOptions, shellLaunch) = startTerminalProcess(project, allOptions)
+      val session = createTerminalSession(project, ttyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), coroutineScope,
+                                          shellLaunch = shellLaunch)
       TestTerminalSessionResult(session, ttyConnector)
     }
     else {
@@ -152,6 +155,8 @@ object TerminalSessionTestUtil {
     envVariables: Map<String, String> = emptyMap(),
     initialGridGeometry: TerminalGridGeometry = DEFAULT_GRID_GEOMETRY,
     processType: TerminalProcessType = TerminalProcessType.SHELL,
+    shellCommand: List<String> = emptyList(),
+    useDocumentRenderer: Boolean = false,
   ): Pair<TerminalSession, LoopbackTtyConnector> {
     val connector = LoopbackTtyConnector()
     val workingDirectory = System.getProperty("user.home")
@@ -161,10 +166,15 @@ object TerminalSessionTestUtil {
       .setFinalWorkingDirectoryEelPath(Path.of(workingDirectory).asEelPath())
       .emulatorType(emulatorType)
       .envVariables(envVariables)
+      .shellCommand(shellCommand)
       .build()
     val delegateScope = coroutineScope.childScope("original session")
-    val delegate = createTerminalSession(project, connector, options, JBTerminalSystemSettingsProvider(), delegateScope)
-    if (isLowLevelSession) {
+    val delegate = if (useDocumentRenderer) {
+      require(emulatorType == TerminalEmulatorType.KetraTerm)
+      createKetraTermTerminalSession(project, connector, options, JBTerminalSystemSettingsProvider(), delegateScope, useDocumentRenderer = true)
+    }
+    else createTerminalSession(project, connector, options, JBTerminalSystemSettingsProvider(), delegateScope)
+    if (isLowLevelSession || delegate is KetraTermTerminalSession && !useDocumentRenderer) {
       return delegate to connector
     }
     val startupOptions = TerminalStartupOptionsImpl(

@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.impl
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.DataManager
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.clients.McpClient
@@ -28,14 +29,15 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
+import com.intellij.terminal.frontend.view.TerminalShellLifecycle
 import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.IslandsState
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.PathUtilRt
 import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CancellationException
@@ -45,9 +47,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandStartedEvent
 import java.awt.BorderLayout
 import java.nio.file.Paths
 import java.util.Locale
@@ -83,18 +82,26 @@ internal class McpServerTerminalPromotionNotifier(private val project: Project) 
         }
       }
       else {
-        waitForAgentCommandStart(view)
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          listenForAgentCommands(view)
+        }
       }
     }
   }
 
-  private suspend fun waitForAgentCommandStart(view: TerminalView) {
-    val shellIntegration = view.shellIntegrationDeferred.await()
+  @RequiresEdt
+  internal fun listenForAgentCommands(
+    view: TerminalView,
+    resolvePromotion: suspend (McpServerTerminalProvider) -> McpServerTerminalPromotion? = { resolveTerminalPromotion(project, it) },
+  ) {
     val viewDisposable = Disposer.newCheckedDisposable(view.coroutineScope.asDisposable())
     val promotionState = AtomicReference(McpServerTerminalPromotionListenerState.ATTACHED)
     val activeCommandTracker = McpServerTerminalPromotionActiveCommandTracker<Any>()
-    shellIntegration.addCommandExecutionListener(viewDisposable, object : TerminalCommandExecutionListener {
-      override fun commandStarted(event: TerminalCommandStartedEvent) {
+    view.shellLifecycle.addListener(viewDisposable, object : TerminalShellLifecycle.Listener {
+      private var runningCommandKey: Any? = null
+
+      override fun commandStarted(command: String) {
+        runningCommandKey = null
         if (!promotionState.compareAndSet(McpServerTerminalPromotionListenerState.ATTACHED,
                                           McpServerTerminalPromotionListenerState.ATTEMPT_IN_PROGRESS)) {
           return
@@ -105,17 +112,18 @@ internal class McpServerTerminalPromotionNotifier(private val project: Project) 
           return
         }
 
-        val provider = matchMcpServerTerminalProvider(event.commandBlock.executedCommand)
+        val provider = matchMcpServerTerminalProvider(command)
         if (provider == null) {
           attachPromoListener(promotionState)
           return
         }
-        val commandKey = event.commandBlock.id
+        val commandKey = Any()
+        runningCommandKey = commandKey
         activeCommandTracker.trackStartedCommand(commandKey)
 
         view.coroutineScope.launch(Dispatchers.Default + CoroutineName("MCP server terminal promotion")) {
           try {
-            val promotion = resolveTerminalPromotion(project, provider)
+            val promotion = resolvePromotion(provider)
             if (promotion == null) {
               activeCommandTracker.clear(commandKey)
               attachPromoListener(promotionState)
@@ -156,6 +164,7 @@ internal class McpServerTerminalPromotionNotifier(private val project: Project) 
             }
           }
           catch (t: Throwable) {
+            rethrowControlFlowException(t)
             LOG.error(t)
             activeCommandTracker.clear(commandKey)
             attachPromoListener(promotionState)
@@ -163,12 +172,12 @@ internal class McpServerTerminalPromotionNotifier(private val project: Project) 
         }
       }
 
-      override fun commandFinished(event: TerminalCommandFinishedEvent) {
-        val bannerDisposable = activeCommandTracker.markCommandFinished(event.commandBlock.id) ?: return
-        view.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          if (!bannerDisposable.isDisposed) {
-            Disposer.dispose(bannerDisposable)
-          }
+      override fun commandFinished(command: String?, exitCode: Int) {
+        val commandKey = runningCommandKey ?: return
+        runningCommandKey = null
+        val bannerDisposable = activeCommandTracker.markCommandFinished(commandKey) ?: return
+        if (!bannerDisposable.isDisposed) {
+          Disposer.dispose(bannerDisposable)
         }
       }
     })
@@ -219,7 +228,7 @@ internal data class McpServerTerminalPromotionCandidates(
   }
 }
 
-private data class McpServerTerminalPromotion(
+internal data class McpServerTerminalPromotion(
   val provider: McpServerTerminalProvider,
   val issue: McpServerTerminalPromotionIssue,
   val setupClients: List<McpClient>,
@@ -342,14 +351,14 @@ private fun collectTerminalPromotionCandidates(
   }
 }
 
-private fun showMcpServerTerminalPromotionBanner(
+@RequiresEdt
+internal fun showMcpServerTerminalPromotionBanner(
   project: Project,
   promotion: McpServerTerminalPromotion,
   view: TerminalView,
   onBannerPrepared: (CheckedDisposable) -> Unit,
   onBannerDisposed: (wasAttached: Boolean) -> Unit,
 ): Boolean {
-  val terminalView = view as? TerminalViewImpl ?: return false
   val bannerDisposable = Disposer.newCheckedDisposable(view.coroutineScope.asDisposable(), "McpServerTerminalPromotionBanner")
   var bannerAttached = false
   Disposer.register(bannerDisposable) {
@@ -422,7 +431,7 @@ private fun showMcpServerTerminalPromotionBanner(
     return false
   }
   bannerAttached = true
-  terminalView.setTopComponent(banner, bannerDisposable)
+  view.setTopComponent(banner, bannerDisposable)
   return true
 }
 

@@ -1,0 +1,47 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.ketraterm` start
+jvm_library(
+    name = "ketraterm",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ketraterm",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-ketraterm-ketraterm-swing",
+        "@lib//:libraries-ketraterm-ketraterm-ui-swing-host",
+        "@lib//:libraries-ketraterm-kotlinx-coroutines-swing",
+        "@lib//:libraries-ketraterm-ketraterm-shell-launch",
+        "@lib//:libraries-ketraterm-ketraterm-completion-host",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-ketraterm-ketraterm-swing",
+        "@lib//:libraries-ketraterm-ketraterm-ui-swing-host",
+        "@lib//:libraries-ketraterm-kotlinx-coroutines-swing",
+        "@lib//:libraries-ketraterm-ketraterm-shell-launch",
+        "@lib//:libraries-ketraterm-ketraterm-completion-host",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
+)
+### auto-generated section `build intellij.libraries.ketraterm` end
+
+### auto-generated section `iml intellij.libraries.ketraterm` start
+exports_files(
+    [
+        "intellij.libraries.ketraterm.iml",
+        "resources/intellij.libraries.ketraterm.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.ketraterm` end

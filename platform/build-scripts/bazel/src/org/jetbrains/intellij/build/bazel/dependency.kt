@@ -105,12 +105,13 @@ internal fun generateDeps(
       }
 
       val jpsLibrary = element.library ?: error("library dependency '$element' from module ${module.module.name} is not resolved")
+      val repositoryJpsLibrary = jpsLibrary.asTyped(JpsRepositoryLibraryType.INSTANCE)
       val files: List<Path> = jpsLibrary.getPaths(JpsOrderRootType.COMPILED)
+        .filterNot { repositoryJpsLibrary != null && it.startsWith(m2Repo) && it.name.endsWith(".pom") }
       if (files.isEmpty()) {
         error("library '${jpsLibrary.name}' in module ${module.module.name} has no compiled roots")
       }
 
-      val repositoryJpsLibrary = jpsLibrary.asTyped(JpsRepositoryLibraryType.INSTANCE)
       val isSnapshotOutsideOfTree = files.any { it.name.endsWith("-SNAPSHOT.jar") } &&
                                     files.all { !it.startsWith(context.communityRoot) &&
                                                 context.ultimateRoot?.let { ultimateRoot -> !it.startsWith(ultimateRoot) } ?: true }
@@ -282,7 +283,7 @@ internal fun generateDeps(
           val library = context.addMavenLibrary(
             MavenLibrary(
               mavenCoordinates = "${jpsMavenLibraryDescriptor.groupId}:${jpsMavenLibraryDescriptor.artifactId}:${jpsMavenLibraryDescriptor.version}",
-              jars = repositoryJpsLibrary.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
+              jars = files.map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
               sourceJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.SOURCES).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
               javadocJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.DOCUMENTATION).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
               target = LibraryTarget(targetName = targetName, container = libraryContainer, jpsName = jpsLibrary.name, moduleLibraryModuleName = moduleLibraryModuleName),

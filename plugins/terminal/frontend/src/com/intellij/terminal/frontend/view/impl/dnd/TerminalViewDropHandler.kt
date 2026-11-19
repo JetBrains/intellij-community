@@ -3,6 +3,8 @@ package com.intellij.terminal.frontend.view.impl.dnd
 import com.intellij.ide.dnd.DnDDropHandler
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
+import com.intellij.ide.dnd.DnDSupport
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
@@ -14,7 +16,7 @@ import com.intellij.terminal.frontend.dnd.TerminalDroppedContentResolver
 import com.intellij.terminal.frontend.toolwindow.impl.getRunningProcessExecutableForFus
 import com.intellij.terminal.frontend.toolwindow.impl.getTerminalContext
 import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,7 +35,7 @@ import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentSource
 internal class TerminalViewDropHandler(
   private val project: Project,
   private val terminalView: TerminalView,
-  private val scrollingModel: TerminalOutputScrollingModel,
+  private val scrollToCursor: () -> Unit,
 ) : DnDDropHandler {
   override fun drop(event: DnDEvent) {
     val data = TerminalDropData(event)
@@ -68,8 +70,19 @@ internal class TerminalViewDropHandler(
 
       withContext(Dispatchers.UI + modalityState.asContextElement()) {
         IdeFocusManager.getInstance(project).requestFocusInProject(terminalView.preferredFocusableComponent, project)
-        scrollingModel.scrollToCursor(true)
+        scrollToCursor()
       }
     }
   }
+}
+
+internal fun TerminalView.installTerminalDropHandler(project: Project, scrollToCursor: () -> Unit) {
+  if (ApplicationManager.getApplication().isHeadlessEnvironment) return
+
+  DnDSupport.createBuilder(component)
+    .setDropHandler(TerminalViewDropHandler(project, this, scrollToCursor))
+    .setDisposableParent(coroutineScope.asDisposable())
+    .enableAsNativeTarget()
+    .disableAsSource()
+    .install()
 }

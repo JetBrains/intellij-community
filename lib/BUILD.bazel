@@ -10839,6 +10839,285 @@ jvm_import(
 )
 
 copy_file(
+    name = "io.github.ketraterm/ketraterm-completion-host-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-completion-host-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-completion-host-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ketraterm-ketraterm-completion-host",
+    jar = "@io_github_ketraterm-ketraterm-completion-host-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-completion-host-1_0_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-shell-launch-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-shell-launch-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-shell-launch-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-shell-integration-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-shell-integration-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-shell-integration-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-ketraterm-ketraterm-shell-launch",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_github_ketraterm-ketraterm-shell-launch-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-shell-integration-1_0_1_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-shell-launch-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-shell-launch-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-shell-launch-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-shell-integration-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-shell-integration-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-shell-integration-1_0_1-sources_http//file",
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-ui-swing-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-ui-swing-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-ui-swing-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-session-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-session-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-session-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-core-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-core-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-core-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-parser-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-parser-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-parser-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-host-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-host-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-host-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-transport-api-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-transport-api-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-transport-api-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-protocol-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-protocol-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-protocol-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-input-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-input-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-input-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-render-api-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-render-api-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-render-api-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-render-cache-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-render-cache-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-render-cache-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-ketraterm-ketraterm-swing",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_github_ketraterm-ketraterm-ui-swing-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-session-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-core-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-parser-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-host-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-transport-api-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-protocol-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-input-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-render-api-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-render-cache-1_0_1_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-ui-swing-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-ui-swing-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-ui-swing-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-session-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-session-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-session-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-core-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-core-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-core-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-parser-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-parser-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-parser-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-host-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-host-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-host-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-transport-api-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-transport-api-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-transport-api-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-protocol-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-protocol-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-protocol-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-input-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-input-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-input-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-render-api-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-render-api-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-render-api-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-render-cache-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-render-cache-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-render-cache-1_0_1-sources_http//file",
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-ui-swing-host-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-ui-swing-host-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-ui-swing-host-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-completion-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-completion-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-completion-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.ketraterm/ketraterm-completion-session-1.0.1.jar_copy",
+    src = "@io_github_ketraterm-ketraterm-completion-session-1_0_1_http//file",
+    out = "io.github.ketraterm/ketraterm-completion-session-1.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-ketraterm-ketraterm-ui-swing-host",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_github_ketraterm-ketraterm-ui-swing-host-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-completion-1_0_1_http_import",
+        ":io_github_ketraterm-ketraterm-completion-session-1_0_1_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-ui-swing-host-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-ui-swing-host-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-ui-swing-host-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-completion-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-completion-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-completion-1_0_1-sources_http//file",
+)
+
+jvm_import(
+    name = "io_github_ketraterm-ketraterm-completion-session-1_0_1_http_import",
+    jar = "@io_github_ketraterm-ketraterm-completion-session-1_0_1_http//file",
+    source_jar = "@io_github_ketraterm-ketraterm-completion-session-1_0_1-sources_http//file",
+)
+
+copy_file(
+    name = "org.jetbrains.kotlinx/kotlinx-coroutines-swing-1.10.2.jar_copy",
+    src = "@org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_10_2_http//file",
+    out = "org.jetbrains.kotlinx/kotlinx-coroutines-swing-1.10.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ketraterm-kotlinx-coroutines-swing",
+    jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_10_2_http//file",
+    source_jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_10_2-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "com.jetbrains/keychain-4.4.3.jar_copy",
     src = "@com_jetbrains-keychain-4_4_3_http//file",
     out = "com.jetbrains/keychain-4.4.3.jar",

@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
@@ -19,11 +21,12 @@ class TerminalMoveFocusToEditorAction : DumbAwareAction(), ActionRemoteBehaviorS
   }
 
   override fun update(e: AnActionEvent) {
+    val terminalComponent = UIUtil.getParentOfType(TerminalPanelMarker.KetraTerm::class.java, e.getData(PlatformDataKeys.CONTEXT_COMPONENT))
     val enabled = e.project != null &&
-                  e.terminalEditor?.isReworkedTerminalEditor == true &&
+                  (e.terminalEditor?.isReworkedTerminalEditor == true || terminalComponent != null) &&
                   e.getData(PlatformDataKeys.TOOL_WINDOW) != null // if null, it means the terminal itself is in an editor tab (!)
     e.presentation.isEnabledAndVisible = enabled
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }

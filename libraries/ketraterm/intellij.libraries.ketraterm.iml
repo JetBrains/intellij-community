@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="ketraterm-swing" type="repository">
+        <properties packaging="pom" jar-repository-id="ketraterm-releases" maven-id="io.github.ketraterm:ketraterm-swing:1.0.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-ui-swing/1.0.1/ketraterm-ui-swing-1.0.1.jar">
+              <sha256sum>d360f1ca6aba5ae32b7ab3004f172d3859648d6d395155665579e8db3e261548</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-session/1.0.1/ketraterm-session-1.0.1.jar">
+              <sha256sum>2339ca3a83e84449560e85ca98db08b35bea7d0e4507996cdc06f845c8ccae82</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-input/1.0.1/ketraterm-input-1.0.1.jar">
+              <sha256sum>a0ee4266991968a2fa4e64bf68efd609fac1d137ebfd15678d9570e5f02c57be</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-render-api/1.0.1/ketraterm-render-api-1.0.1.jar">
+              <sha256sum>e56b692be6c28048df42c2bf2a0844d5d33d9083d8a5f2c94fd1b5e0e8e56a52</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-render-cache/1.0.1/ketraterm-render-cache-1.0.1.jar">
+              <sha256sum>82785178d8ca224f00933755012d6aec90a318e04df817491f6bdae8d40d8408</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-core/1.0.1/ketraterm-core-1.0.1.jar">
+              <sha256sum>2e7d5eeb9556cbe24c928f046d0eee2a83100adf504fcc917b841c578061c8ea</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-parser/1.0.1/ketraterm-parser-1.0.1.jar">
+              <sha256sum>181cb5cf831a3636e85902ff1dccbeb58e790148fcf4be468e2fe02a66e8a97d</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-host/1.0.1/ketraterm-host-1.0.1.jar">
+              <sha256sum>07fae4ae985fc7adae23f40000f0056db85a996324dd7ab6de165f6a31d401f4</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-transport-api/1.0.1/ketraterm-transport-api-1.0.1.jar">
+              <sha256sum>ec47851cf1f94733c8a5b4ed56d75a1c7712c00f5408b7871a517d5d2c1e6596</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-protocol/1.0.1/ketraterm-protocol-1.0.1.jar">
+              <sha256sum>f720d66d48ec67820294e602c1298227b0a96a82f6bb3b890f2810625d74339c</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-swing/1.0.1/ketraterm-swing-1.0.1.pom" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-ui-swing/1.0.1/ketraterm-ui-swing-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-session/1.0.1/ketraterm-session-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-core/1.0.1/ketraterm-core-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-parser/1.0.1/ketraterm-parser-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-host/1.0.1/ketraterm-host-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-transport-api/1.0.1/ketraterm-transport-api-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-protocol/1.0.1/ketraterm-protocol-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-input/1.0.1/ketraterm-input-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-render-api/1.0.1/ketraterm-render-api-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-render-cache/1.0.1/ketraterm-render-cache-1.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-ui-swing/1.0.1/ketraterm-ui-swing-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-session/1.0.1/ketraterm-session-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-core/1.0.1/ketraterm-core-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-parser/1.0.1/ketraterm-parser-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-host/1.0.1/ketraterm-host-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-transport-api/1.0.1/ketraterm-transport-api-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-protocol/1.0.1/ketraterm-protocol-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-input/1.0.1/ketraterm-input-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-render-api/1.0.1/ketraterm-render-api-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-render-cache/1.0.1/ketraterm-render-cache-1.0.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="ketraterm-ui-swing-host" type="repository">
+        <properties jar-repository-id="ketraterm-releases" maven-id="io.github.ketraterm:ketraterm-ui-swing-host:1.0.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-ui-swing-host/1.0.1/ketraterm-ui-swing-host-1.0.1.jar">
+              <sha256sum>145f76cc2821d6cd673c14ff69f3d97156410d17015c5ed7ad81b161635941dd</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-completion/1.0.1/ketraterm-completion-1.0.1.jar">
+              <sha256sum>1de4a4c121ce97e38813838fa9f3b7a398fa6851e9d181bb2e6d6ac3ac792f01</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-completion-session/1.0.1/ketraterm-completion-session-1.0.1.jar">
+              <sha256sum>1344949d76ae259d95e9183fe40018224ded8288cd884974c5bd24986951ddd3</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="io.github.ketraterm:ketraterm-session" />
+            <dependency maven-id="io.github.ketraterm:ketraterm-ui-swing" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-swing" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-ui-swing-host/1.0.1/ketraterm-ui-swing-host-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-completion/1.0.1/ketraterm-completion-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-completion-session/1.0.1/ketraterm-completion-session-1.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-ui-swing-host/1.0.1/ketraterm-ui-swing-host-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-completion/1.0.1/ketraterm-completion-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-completion-session/1.0.1/ketraterm-completion-session-1.0.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="kotlinx-coroutines-swing" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.10.2/kotlinx-coroutines-swing-1.10.2.jar">
+              <sha256sum>02bdb85f20ec08004429abf6887e8d0e40f3ab637d7462f817f0f8abbe7d1eb5</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.10.2/kotlinx-coroutines-swing-1.10.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.10.2/kotlinx-coroutines-swing-1.10.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="ketraterm-shell-launch" type="repository">
+        <properties jar-repository-id="ketraterm-releases" maven-id="io.github.ketraterm:ketraterm-shell-launch:1.0.1">
+          <exclude>
+            <dependency maven-id="io.github.ketraterm:ketraterm-session" />
+            <dependency maven-id="io.github.ketraterm:ketraterm-protocol" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-shell-launch/1.0.1/ketraterm-shell-launch-1.0.1.jar">
+              <sha256sum>8d77c7e47bbf73e8a3dac00ee0061d4c708333c26f22b9661baab3cc69205fdc</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-shell-integration/1.0.1/ketraterm-shell-integration-1.0.1.jar">
+              <sha256sum>d7ccec082b4e2972cc8cd5de9b67b11c86bca5666ce386b3c3a2455134649b83</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-shell-launch/1.0.1/ketraterm-shell-launch-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-shell-integration/1.0.1/ketraterm-shell-integration-1.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-shell-launch/1.0.1/ketraterm-shell-launch-1.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-shell-integration/1.0.1/ketraterm-shell-integration-1.0.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="ketraterm-completion-host" type="repository">
+        <properties jar-repository-id="ketraterm-releases" maven-id="io.github.ketraterm:ketraterm-completion-host:1.0.1">
+          <exclude>
+            <dependency maven-id="io.github.ketraterm:ketraterm-completion" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-completion-host/1.0.1/ketraterm-completion-host-1.0.1.jar">
+              <sha256sum>d6817d7b7870d59b7c5b6b2e71c44f5d9c666958330a71b98a15767269d2e8eb</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-completion-host/1.0.1/ketraterm-completion-host-1.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/ketraterm/ketraterm-completion-host/1.0.1/ketraterm-completion-host-1.0.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" exported="" />
+  </component>
+</module>

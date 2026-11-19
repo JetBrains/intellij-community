@@ -1,59 +1,40 @@
 package com.intellij.terminal.frontend.view.impl
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.impl.TerminalHeuristicsBasedCommandFinishTracker.Companion.MAX_LINE_LENGTH
-import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
-import org.jetbrains.plugins.terminal.view.TerminalLineIndex
-import org.jetbrains.plugins.terminal.view.TerminalOffset
-import org.jetbrains.plugins.terminal.view.TerminalOutputModel
-import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import java.awt.event.KeyEvent
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * This is a heuristic-based tracker that allows to guess when command is finished in the terminal
- * and call the provided [onCommandFinish] function.
- *
- * This tracker analyzes key events passed to [handleKeyPressed] method to guess if command execution is started.
- * Then it analyzes [TerminalOutputModel] updates by checking if line with cursor contains the same prompt,
- * that was before command execution started.
- *
- * **Limitation**: the tracker will fail to detect command finish if the prompt text is changed after command finish.
- * For example, if a user changed the directory or Git branch.
- * Also, it doesn't try to track lines longer than [MAX_LINE_LENGTH] for performance reasons.
- *
- * Stops operating once the provided coroutine scope is canceled.
+ * Detects command completion when the cursor returns to the previous prompt on a different line.
+ * The bounded cursor reader supports both document and native views.
+ * A changed prompt can prevent detection. The owning scope stops observation.
  */
 internal class TerminalHeuristicsBasedCommandFinishTracker private constructor(
-  private val terminalView: TerminalView,
+  terminalView: TerminalView,
   coroutineScope: CoroutineScope,
   private val onCommandFinish: () -> Unit,
 ) {
-  private val outputModel: TerminalOutputModel
-    get() = terminalView.outputModels.regular
+  private val observation = TerminalCursorObservation(terminalView, coroutineScope)
 
   // Guarded by EDT
   private var curLineInfo: LineInfo? = null
 
   private val commandStartRequests = MutableSharedFlow<LineInfo>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val modelUpdatesFlow = createModelUpdatesFlow(coroutineScope.childScope("TerminalOutputModel updates"))
+  private val modelUpdatesFlow = observation.changes
 
   init {
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
@@ -63,8 +44,8 @@ internal class TerminalHeuristicsBasedCommandFinishTracker private constructor(
     }
 
     coroutineScope.launch(Dispatchers.UI) {
-      terminalView.keyEventsFlow.collect {
-        handleKeyPressed(it.awtEvent)
+      observation.keys.collect {
+        handleKeyPressed(it)
       }
     }
   }
@@ -73,10 +54,8 @@ internal class TerminalHeuristicsBasedCommandFinishTracker private constructor(
     try {
       doHandleKeyPressed(e)
     }
-    catch (ex: CancellationException) {
-      throw ex
-    }
     catch (ex: Exception) {
+      rethrowControlFlowException(ex)
       LOG.error(ex)
     }
   }
@@ -86,8 +65,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker private constructor(
 
     val lineInfo = curLineInfo
     if (e.keyCode == KeyEvent.VK_ENTER && lineInfo != null) {
-      val cursorOffset = outputModel.cursorOffset
-      val textBeforeCursor = getTextBeforeCursor(cursorOffset) ?: return
+      val textBeforeCursor = observation.readLine()?.prefix ?: return
       if (textBeforeCursor.startsWith(lineInfo.promptText) && textBeforeCursor.length > lineInfo.promptText.length) {
         // There is some command to execute
         check(commandStartRequests.tryEmit(lineInfo))
@@ -98,16 +76,16 @@ internal class TerminalHeuristicsBasedCommandFinishTracker private constructor(
 
   private fun updateCurLineInfo() {
     val lineInfo = curLineInfo
-    val cursorOffset = outputModel.cursorOffset
-    val cursorLine = outputModel.getLineByOffset(cursorOffset)
-    val textBeforeCursor = getTextBeforeCursor(cursorOffset)
+    val snapshot = observation.readLine()
+    val cursorLine = snapshot?.id
+    val textBeforeCursor = snapshot?.prefix
 
     when {
       textBeforeCursor == null -> {
         curLineInfo = null
       }
-      lineInfo?.line != cursorLine -> {
-        curLineInfo = LineInfo(cursorLine, textBeforeCursor.toString())
+      lineInfo == null || lineInfo.line != cursorLine -> {
+        curLineInfo = LineInfo(requireNotNull(cursorLine), textBeforeCursor)
       }
       !textBeforeCursor.startsWith(lineInfo.promptText) -> {
         curLineInfo = lineInfo.copy(promptText = textBeforeCursor.toString())
@@ -124,10 +102,8 @@ internal class TerminalHeuristicsBasedCommandFinishTracker private constructor(
     // Heuristic: suspend until we detect the current line has the same prompt as in the provided LineInfo
     // Then we can consider that command is finished
     modelUpdatesFlow.debounce(PROMPT_CHECKING_DELAY).first {
-      val cursorOffset = outputModel.cursorOffset
-      val cursorLine = outputModel.getLineByOffset(cursorOffset)
-
-      cursorLine != lineInfo.line && getTextBeforeCursor(cursorOffset) == lineInfo.promptText
+      val line = observation.readLine()
+      line != null && line.id != lineInfo.line && line.prefix == lineInfo.promptText
     }
 
     onCommandFinish()
@@ -135,37 +111,13 @@ internal class TerminalHeuristicsBasedCommandFinishTracker private constructor(
     LOG.debug { "Command finish detected" }
   }
 
-  private fun getTextBeforeCursor(cursorOffset: TerminalOffset): CharSequence? {
-    val lineNumber = outputModel.getLineByOffset(cursorOffset)
-    val lineStartOffset = outputModel.getStartOfLine(lineNumber)
-
-    val length = cursorOffset - lineStartOffset
-    return if (length <= MAX_LINE_LENGTH) {
-      outputModel.getText(lineStartOffset, lineStartOffset + length)
-    }
-    else null // Line is too long, let's do not try to track it.
-  }
-
-  private fun createModelUpdatesFlow(coroutineScope: CoroutineScope): Flow<Unit> {
-    val flow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-    outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChangeEvent) {
-        check(flow.tryEmit(Unit))
-      }
-    })
-
-    return flow
-  }
-
   private data class LineInfo(
-    val line: TerminalLineIndex,
+    val line: Long,
     val promptText: String,
   )
 
   companion object {
     private const val PROMPT_CHECKING_DELAY = 500L
-    private const val MAX_LINE_LENGTH = 1000
 
     private val LOG = logger<TerminalHeuristicsBasedCommandFinishTracker>()
 

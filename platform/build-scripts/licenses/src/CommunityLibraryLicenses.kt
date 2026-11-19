@@ -727,6 +727,10 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
       sourceCodeUrl = "https://github.com/hunterhacker/jdom"
     ),
 
+  LibraryLicense("KetraTerm", libraryName = "ketraterm-swing", url = "https://github.com/ketraterm/KetraTerm")
+    .additionalLibraryNames("ketraterm-ui-swing-host", "ketraterm-shell-launch", "ketraterm-completion-host")
+    .apache("https://www.apache.org/licenses/LICENSE-2.0.txt"),
+
   LibraryLicense(libraryName = "jediterm-core", url = "https://github.com/JetBrains/jediterm")
     .apache("https://github.com/JetBrains/jediterm/blob/master/LICENSE-APACHE-2.0.txt")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -891,6 +895,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .suppliedByOrganizations(Suppliers.JETBRAINS),
 
   LibraryLicense("Kotlin Coroutines for JDK 8", libraryName = "kotlinx-coroutines-core", url = "https://github.com/Kotlin/kotlinx.coroutines")
+    .additionalLibraryNames("kotlinx-coroutines-swing")
     .apache("https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
 
