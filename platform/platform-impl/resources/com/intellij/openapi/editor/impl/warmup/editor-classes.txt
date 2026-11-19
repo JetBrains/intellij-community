@@ -13,6 +13,7 @@ com.intellij.openapi.editor.impl.EditorAccessibilityCaret
 com.intellij.openapi.editor.impl.EditorAccessibilityDocument
 com.intellij.openapi.editor.impl.view.EditorView
 com.intellij.openapi.editor.impl.view.IterationState
+com.intellij.openapi.command.impl.CommandIdentity
 # Load only
 # The static initializers of these classes can access the toolkit, UI listeners or Swing state.
 com.intellij.openapi.editor.impl.EditorImpl
