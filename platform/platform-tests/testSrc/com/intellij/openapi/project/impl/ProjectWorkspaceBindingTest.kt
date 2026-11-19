@@ -1,12 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
+import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.OpenProjectImplOptions
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.DelegatingComponentManagerEx
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -16,8 +22,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.workspace.ProjectWorkspace
 import com.intellij.openapi.workspace.impl.ProjectWorkspaceComponentManager
 import com.intellij.openapi.workspace.impl.ProjectWorkspaceFactory
+import com.intellij.openapi.workspace.impl.ProjectWorkspaceManagerImpl
 import com.intellij.openapi.workspace.impl.WorkspaceAsProject
 import com.intellij.openapi.workspace.workspace
+import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -25,6 +33,7 @@ import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
@@ -34,6 +43,7 @@ import org.junit.jupiter.api.Timeout
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.name
+import kotlin.io.path.readText
 
 /**
  * The binding of a project to its [ProjectWorkspace], see `ProjectWorkspaceManagerImpl.bindProject`.
@@ -86,6 +96,69 @@ internal class ProjectWorkspaceBindingTest {
     assertThat(atDispose).containsExactly(ownerWorkspace)
   }
 
+  @Test
+  fun `a workspace ends after its last project`(): Unit = timeoutRunBlocking {
+    registerHostFactory()
+    val owner = openOwner("owner")
+    val guest = openGuest("guest", owner)
+    val workspace = owner.workspace
+    assertThat(guest.workspace).isSameAs(workspace)
+
+    PlatformTestUtil.forceCloseProjectWithoutSaving(guest)
+    assertThat(workspace.isDisposed).isFalse()
+    assertThat(manager.liveWorkspaces()).contains(workspace)
+
+    PlatformTestUtil.forceCloseProjectWithoutSaving(owner)
+    assertThat(workspace.isDisposed).isTrue()
+    assertThat(manager.liveWorkspaces()).doesNotContain(workspace)
+  }
+
+  @Test
+  fun `a workspace service is alive in the dispose of a project service`(): Unit = timeoutRunBlocking {
+    val project = openOwner("project")
+    val workspace = project.workspace
+    val disposedInDispose = ArrayList<Boolean>()
+    project.service<WorkspaceRecordingProjectService>().onDispose = {
+      workspace.service<TestWorkspaceService>()
+      disposedInDispose.add(workspace.isDisposed)
+    }
+
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+
+    assertThat(disposedInDispose).containsExactly(false)
+    assertThat(workspace.isDisposed).isTrue()
+  }
+
+  @Test
+  fun `the default project has a workspace`() {
+    val defaultProject = ProjectManager.getInstance().defaultProject
+    val workspace = defaultProject.workspace
+
+    assertThat(workspace).isInstanceOf(WorkspaceAsProject::class.java)
+    assertThat(defaultProject.workspace).isSameAs(workspace)
+    assertThat(manager.liveWorkspaces()).contains(workspace)
+    val service = defaultProject.service<TestDefaultProjectService>()
+    assertThat(service.project.workspace).isSameAs(workspace)
+  }
+
+  @Test
+  fun `a workspace service keeps its state in the store of its project`(): Unit = timeoutRunBlocking {
+    val project = openOwner("project")
+    val workspace = project.workspace
+    assertThat(workspace.getComponentManagerImpl().componentStore).isSameAs(project.stateStore)
+
+    val service = workspace.service<TestWorkspaceStateService>()
+    assertThat(service.initialized).isTrue()
+    service.state.value = "changed"
+    saveSettings(project, forceSavingAllSettings = true)
+
+    val file = project.stateStore.storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
+    assertThat(withContext(Dispatchers.IO) { file.readText() }).contains(TEST_STATE_NAME)
+  }
+
+  private val manager: ProjectWorkspaceManagerImpl
+    get() = ProjectWorkspaceManagerImpl.getInstance()
+
   private fun registerHostFactory() {
     val ep = ExtensionPointName<ProjectWorkspaceFactory>("com.intellij.projectWorkspaceFactory")
     ExtensionTestUtil.maskExtensions(ep, listOf(TestHostWorkspaceFactory()), disposable, fireEvents = false)
@@ -137,6 +210,36 @@ private class TestHostWorkspace(project: Project) : ProjectWorkspace, Delegating
 
   override fun <T : Any?> putUserData(key: Key<T?>, value: T?) {
     container.putUserData(key, value)
+  }
+}
+
+@Service(Service.Level.WORKSPACE)
+private class TestWorkspaceService
+
+@Service(Service.Level.PROJECT)
+private class TestDefaultProjectService(val project: Project, @Suppress("unused") val scope: CoroutineScope)
+
+private const val TEST_STATE_NAME = "ProjectWorkspaceBindingTestState"
+
+private class TestWorkspaceState {
+  var value: String = "initial"
+}
+
+@Service(Service.Level.WORKSPACE)
+@State(name = TEST_STATE_NAME, storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+private class TestWorkspaceStateService : PersistentStateComponent<TestWorkspaceState> {
+  var initialized: Boolean = false
+  private var current = TestWorkspaceState()
+
+  override fun getState(): TestWorkspaceState = current
+
+  override fun loadState(state: TestWorkspaceState) {
+    current = state
+    initialized = true
+  }
+
+  override fun noStateLoaded() {
+    initialized = true
   }
 }
 

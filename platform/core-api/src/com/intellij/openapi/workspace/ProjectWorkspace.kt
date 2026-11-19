@@ -12,6 +12,8 @@ import org.jetbrains.annotations.ApiStatus
  * Register a workspace service with `<workspaceService>` or `@Service(Service.Level.WORKSPACE)`
  * in a module that depends on `intellij.platform.frontend`.
  * Constructors of workspace services, listeners, and extensions can take a [ProjectWorkspace], a `CoroutineScope`, or both in that order.
+ *
+ * When the last project closes, the platform disposes its project services before the workspace services.
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable

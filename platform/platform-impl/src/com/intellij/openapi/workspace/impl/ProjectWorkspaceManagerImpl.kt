@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.workspace.ProjectWorkspace
@@ -37,18 +38,20 @@ class ProjectWorkspaceManagerImpl : ProjectWorkspaceManager {
 
   /**
    * Creates a single-project workspace on first access if the project has no binding.
+   * The default project facade holds the binding for its implementation.
    *
    * @throws AlreadyDisposedException if the project was disposed before it acquired a workspace.
    */
   override fun getWorkspace(project: Project): ProjectWorkspace {
     project.getUserData(WORKSPACE_KEY)?.let { return it }
+    val holder = if (project.isDefault) ProjectManager.getInstance().defaultProject else project
     synchronized(lock) {
-      project.getUserData(WORKSPACE_KEY)?.let { return it }
-      if (project.isDisposed) {
-        throw AlreadyDisposedException("The project is disposed and has no workspace: $project")
+      holder.getUserData(WORKSPACE_KEY)?.let { return it }
+      if (holder.isDisposed) {
+        throw AlreadyDisposedException("The project is disposed and has no workspace: $holder")
       }
-      val workspace = WorkspaceAsProject(project)
-      startWorkspace(workspace, project)
+      val workspace = WorkspaceAsProject(holder)
+      startWorkspace(workspace, holder)
       return workspace
     }
   }

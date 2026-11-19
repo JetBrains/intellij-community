@@ -3,7 +3,6 @@ package com.intellij.openapi.workspace.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.workspace.ProjectWorkspace
@@ -14,12 +13,10 @@ import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.platform.testFramework.setPluginClassLoaderForMainAndSubPlugins
 import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.CoroutineScope
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -34,14 +31,6 @@ internal class ProjectWorkspaceContainerTest {
 
   private val manager: ProjectWorkspaceManagerImpl
     get() = ProjectWorkspaceManagerImpl.getInstance()
-
-  @AfterEach
-  fun releaseWorkspaces(): Unit = timeoutRunBlocking {
-    edtWriteAction {
-      manager.releaseProject(firstProjectFixture.get())
-      manager.releaseProject(secondProjectFixture.get())
-    }
-  }
 
   @Test
   fun `a light service has one instance for each workspace`() {

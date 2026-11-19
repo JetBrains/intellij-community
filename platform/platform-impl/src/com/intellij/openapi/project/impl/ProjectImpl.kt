@@ -21,6 +21,7 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectNameListener
@@ -37,6 +38,8 @@ import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.openapi.workspace.ProjectWorkspaceManager
+import com.intellij.openapi.workspace.impl.ProjectWorkspaceManagerImpl
 import com.intellij.platform.project.registerNewProjectId
 import com.intellij.platform.project.unregisterProjectId
 import com.intellij.platform.util.coroutines.childScope
@@ -345,6 +348,10 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     }
 
     super.dispose()
+
+    runCatching {
+      (app.serviceIfCreated<ProjectWorkspaceManager>() as? ProjectWorkspaceManagerImpl)?.releaseProject(this)
+    }.getOrLogException(LOG)
 
     componentStoreValue.valueIfInitialized?.release()
 
