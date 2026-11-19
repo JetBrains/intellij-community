@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -111,29 +111,24 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public final class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator, Configurable.WithEpDependencies {
-  private static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
-    final NamedConfigurable<?> configurable1 = o1.getConfigurable();
-    final NamedConfigurable<?> configurable2 = o2.getConfigurable();
-    if (configurable1.getClass() == configurable2.getClass()) {
-      return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
-    }
-    final Object editableObject1 = configurable1.getEditableObject();
-    final Object editableObject2 = configurable2.getEditableObject();
-
-    if (editableObject2 instanceof Module && editableObject1 instanceof ModuleGroup) return -1;
-    if (editableObject1 instanceof Module && editableObject2 instanceof ModuleGroup) return 1;
-
-    if (editableObject2 instanceof Module && editableObject1 instanceof String) return 1;
-    if (editableObject1 instanceof Module && editableObject2 instanceof String) return -1;
-
-    if (editableObject2 instanceof Module && editableObject1 instanceof Facet) return 1;
-    if (editableObject1 instanceof Module && editableObject2 instanceof Facet) return -1;
-
-    if (editableObject2 instanceof ModuleGroup && editableObject1 instanceof String) return 1;
-    if (editableObject1 instanceof ModuleGroup && editableObject2 instanceof String) return -1;
-
-    return 0;
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
+    var editableObject1 = o1.getConfigurable().getEditableObject();
+    var editableObject2 = o2.getConfigurable().getEditableObject();
+    var rankComparison = Integer.compare(getSortRank(editableObject1), getSortRank(editableObject2));
+    return rankComparison != 0 ? rankComparison : StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
   };
+
+  private static int getSortRank(Object editableObject) {
+    return switch (editableObject) {
+      case ModuleGroup _ -> 0;
+      case Module _ -> 1;
+      case Facet<?> _ -> 2;
+      case String _ -> 3;
+      case null, default -> 4;
+    };
+  }
 
   private boolean myHideModuleGroups;
   private boolean myFlattenModules;
