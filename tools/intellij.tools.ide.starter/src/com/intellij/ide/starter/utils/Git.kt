@@ -24,6 +24,34 @@ import kotlin.time.Duration.Companion.seconds
 
 object Git {
   private val homeDir: Path by lazy { Paths.get(PathManager.getHomePath()) }
+
+  /**
+   * The variables that tie a git process to one repository, as `git rev-parse --local-env-vars` lists them.
+   *
+   * A parent git exports some of them to its children, for example `git rebase --exec` for each step. A child git that inherits them
+   * works on that repository and not on the one of its working directory.
+   */
+  private val GIT_LOCAL_ENV_VARS: Set<String> = setOf(
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_CONFIG",
+    "GIT_CONFIG_PARAMETERS",
+    "GIT_CONFIG_COUNT",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_IMPLICIT_WORK_TREE",
+    "GIT_GRAFT_FILE",
+    "GIT_INDEX_FILE",
+    "GIT_NO_REPLACE_OBJECTS",
+    "GIT_REPLACE_REF_BASE",
+    "GIT_PREFIX",
+    "GIT_SHALLOW_FILE",
+    "GIT_COMMON_DIR",
+  )
+
+  /** The environment of this process without [GIT_LOCAL_ENV_VARS], so the working directory alone names the repository of a local git. */
+  fun localGitEnvironment(parent: Map<String, String> = System.getenv()): Map<String, String> = parent - GIT_LOCAL_ENV_VARS
+
   val branch by lazy { getShortBranchName(homeDir) }
   val localBranch by lazy { getLocalGitBranch(homeDir) }
   val getDefaultBranch by lazy {
@@ -113,9 +141,9 @@ object Git {
       workDir = workDir,
       timeout = timeout,
       args = args,
+      environmentVariables = localGitEnvironment(),
       stdoutRedirect = stdoutRedirect,
       stderrRedirect = stderrRedirect,
-      onlyEnrichExistedEnvVariables = true,
     ).start()
     else -> {
       val exitCode = EelProcessExecutor(
@@ -148,6 +176,7 @@ object Git {
         // tree, and the checkout root it yields is then used for every output path the starter writes.
         workDir = homeDir,
         timeout = 1.minutes,
+        environmentVariables = localGitEnvironment(),
         args = listOf("git", "rev-parse", "--show-toplevel", "HEAD"),
         stdoutRedirect = stdout
       ).start()
@@ -190,10 +219,10 @@ object Git {
         presentableName = cmdName,
         workDir = destinationDir.parent.toAbsolutePath(),
         timeout = timeout,
+        environmentVariables = localGitEnvironment(),
         args = arguments,
         stdoutRedirect = stdoutRedirect,
         stderrRedirect = stderrRedirect,
-        onlyEnrichExistedEnvVariables = true
       ).start()
     } ?: throw GitRemoteException(cmdName, buildString {
       appendLine("The command was: $command")
@@ -973,6 +1002,7 @@ object Git {
       ProcessExecutor(
         "git verify branch",
         workDir = homeDir, timeout = 1.minutes,
+        environmentVariables = localGitEnvironment(),
         args = listOf("git", "show-ref", "refs/heads/$branch"),
         stdoutRedirect = stdout
       ).start()
