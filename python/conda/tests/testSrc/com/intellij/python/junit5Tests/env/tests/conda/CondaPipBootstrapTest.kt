@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
+import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -56,22 +57,37 @@ internal class CondaPipBootstrapTest {
   @Test
   fun `PyPI package installs into a conda env without pip`(@CondaEnv baseEnv: PyCondaEnv, @TempDir tempDir: Path): Unit =
     timeoutRunBlocking(15.minutes) {
-      val conda = baseEnv.fullCondaPathOnTarget
-      val envPath = tempDir.resolve("env")
-      runConda(conda, "create", "-y", "-p", envPath.pathString, "python=3.11").assertSuccess("conda create")
-      runConda(conda, "remove", "-y", "-p", envPath.pathString, "--force", PyPackageNames.PIP).assertSuccess("conda remove pip")
+      try {
+        val conda = baseEnv.fullCondaPathOnTarget
+        val envPath = tempDir.resolve("env")
+        runConda(conda, "create", "-y", "-p", envPath.pathString, "python=3.11").assertSuccess("conda create")
+        runConda(conda, "remove", "-y", "-p", envPath.pathString, "--force", PyPackageNames.PIP).assertSuccess("conda remove pip")
 
-      val project = projectFixture.get()
-      val env = PyCondaEnv(PyCondaEnvIdentity.UnnamedEnv(envPath, false), conda)
-      val condaSdk = env.createSdkFromThisEnv(project, null, project.basePath?.toNioPathOrNull()!!).getOrThrow().getSdkAPI()
-      sdk = condaSdk
-      val manager = CondaPackageManager(project, condaSdk.pythonInterpreterResultAsync().orThrow()).also { Disposer.register(project, it) }
+        val project = projectFixture.get()
+        val env = PyCondaEnv(PyCondaEnvIdentity.UnnamedEnv(envPath, false), conda)
+        val condaSdk = env.createSdkFromThisEnv(project, null, project.basePath?.toNioPathOrNull()!!).getOrThrow().getSdkAPI()
+        sdk = condaSdk
+        val manager =
+          CondaPackageManager(project, condaSdk.pythonInterpreterResultAsync().orThrow()).also { Disposer.register(project, it) }
 
-      val spec = PythonRepositoryPackageSpecification(PyPiPackageRepository, "yandex-book-api", "0.1.0")
-      manager.installPackage(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))).getOrThrow()
+        val spec = PythonRepositoryPackageSpecification(PyPiPackageRepository, "yandex-book-api", "0.1.0")
+        manager.installPackage(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))).getOrThrow()
 
-      runConda(conda, "run", "-p", envPath.pathString, "python", "-m", "pip", "show", "yandex-book-api").assertSuccess("pip show yandex-book-api")
-      assertTrue(manager.listInstalledPackages().any { it.name == PyPackageNames.PIP }, "pip is not bootstrapped")
+        runConda(conda,
+                 "run",
+                 "-p",
+                 envPath.pathString,
+                 "python",
+                 "-m",
+                 "pip",
+                 "show",
+                 "yandex-book-api").assertSuccess("pip show yandex-book-api")
+        assertTrue(manager.listInstalledPackages().any { it.name == PyPackageNames.PIP }, "pip is not bootstrapped")
+      }finally {
+        if (SystemInfo.isWindows) {
+          deleteCheckLocking(tempDir)
+        }
+      }
     }
 
   private suspend fun runConda(conda: String, vararg args: String): Pair<Int, String> = withContext(Dispatchers.IO) {
