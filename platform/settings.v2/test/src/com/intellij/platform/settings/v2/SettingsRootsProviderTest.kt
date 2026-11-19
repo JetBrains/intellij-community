@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.settings.v2.impl.SettingsContentRootsProvider
-import com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext
+import com.intellij.platform.settings.v2.impl.FileSettingsContext
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -58,7 +58,7 @@ class SettingsRootsProviderTest {
     val firstRoot = readAction { file.parent }
     maskProviders(rootsProvider(firstRoot.url), rootsProvider(baseDir.url))
 
-    val context = readAction { SettingsContext.file(file, project) } as VirtualFileSettingsContext
+    val context = readAction { SettingsContext.file(file, project) } as FileSettingsContext
 
     assertEquals(firstRoot.url, context.rootUrl)
     assertEquals("Sample.txt", context.relativePath)

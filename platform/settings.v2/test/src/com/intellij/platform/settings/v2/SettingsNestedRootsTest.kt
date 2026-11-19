@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.settings.v2.impl.SettingsRootsCache
-import com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext
+import com.intellij.platform.settings.v2.impl.FileSettingsContext
 import com.intellij.platform.settings.v2.impl.topmostContentRoots
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
@@ -53,7 +53,7 @@ class SettingsNestedRootsTest {
     val file = VfsTestUtil.createFile(outer, "module/src/main/a/Sample.java")
     addContentRoot(readAction { file.parent })
 
-    val context = readAction { SettingsContext.file(file, project) } as VirtualFileSettingsContext
+    val context = readAction { SettingsContext.file(file, project) } as FileSettingsContext
 
     assertEquals(sourceRoot.url, context.rootUrl)
     assertEquals("outer/module/src/main/a/Sample.java", context.relativePath)
@@ -137,7 +137,7 @@ class SettingsNestedRootsTest {
       writeAction { root.rename(this, "${sourceRoot.name}-after-rename") }
 
       assertTrue(root.url in readAction { cache.rootUrls() })
-      val context = readAction { SettingsContext.file(file, project) } as VirtualFileSettingsContext
+      val context = readAction { SettingsContext.file(file, project) } as FileSettingsContext
       assertEquals(root.url, context.rootUrl)
       assertEquals("Sample.txt", context.relativePath)
     }
@@ -164,7 +164,7 @@ class SettingsNestedRootsTest {
   }
 
   private fun fileIdentity(relativePath: String): String =
-    VirtualFileSettingsContext(projectId = project.locationHash,
+    FileSettingsContext(projectId = project.locationHash,
                                rootUrl = sourceRoot.url,
                                relativePath = relativePath).identity
 }

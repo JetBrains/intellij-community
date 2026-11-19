@@ -76,7 +76,7 @@ internal class ProjectSettingsContext(
  * @property rootUrl the url of the anchor root
  * @property relativePath the path of this node under [rootUrl], or `""` for the root itself
  */
-class VirtualFileSettingsContext(
+class FileSettingsContext(
   /** Holds the [ProjectSettingsContext.projectId] of the project that holds this file. */
   val projectId: String,
   val rootUrl: String,
@@ -97,9 +97,9 @@ class VirtualFileSettingsContext(
    */
   override val parentContext: SettingsContext =
     if (relativePath.isEmpty()) ProjectSettingsContext(projectId)
-    else VirtualFileSettingsContext(projectId, rootUrl, relativePath.substringBeforeLast('/', ""))
+    else FileSettingsContext(projectId, rootUrl, relativePath.substringBeforeLast('/', ""))
 
-  override fun equals(other: Any?): Boolean = other is VirtualFileSettingsContext && other.identity == identity
+  override fun equals(other: Any?): Boolean = other is FileSettingsContext && other.identity == identity
   override fun hashCode(): Int = identity.hashCode()
 }
 
