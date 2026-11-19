@@ -697,7 +697,18 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       horizontalAlignment = SwingConstants.CENTER
       verticalAlignment = SwingConstants.CENTER
     }
-    private val expansionControl = JPanel(HorizontalLayout(EXPANSION_CONTROL_GAP, SwingConstants.CENTER)).apply {
+    private val expansionControl = object : JPanel(HorizontalLayout(EXPANSION_CONTROL_GAP, SwingConstants.CENTER)) {
+      var isHighlighted = false
+        set(value) {
+          if (field == value) return
+          field = value
+          repaint()
+        }
+
+      override fun paint(g: Graphics) {
+        if (expanded || isHighlighted) super.paint(g)
+      }
+    }.apply {
       isOpaque = false
       add(expansionTextLabel)
       add(expansionChevronLabel)
@@ -731,7 +742,10 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         titleLabel.labelFor = rowsPanel
       }
 
-      fullHeaderButton = SectionHeaderButton(sectionButtonBorder) { onExpansionChanged(id, !expanded) }.apply {
+      fullHeaderButton = SectionHeaderButton(
+        sectionButtonBorder,
+        onHighlightChanged = { expansionControl.isHighlighted = it },
+      ) { onExpansionChanged(id, !expanded) }.apply {
         addContent(titleAndStatus, BorderLayout.CENTER)
         addContent(expansionControl, BorderLayout.EAST)
         forwardMouseEventsFromChildren()
@@ -911,6 +925,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
 
     private class SectionHeaderButton(
       contentBorder: Border,
+      onHighlightChanged: ((Boolean) -> Unit)? = null,
       private val onToggle: () -> Unit,
     ) : SelectablePanel() {
       private val toggleButton = object : JToggleButton() {
@@ -936,7 +951,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       init {
         toggleButton.layout = BorderLayout()
         toggleButton.addActionListener { onToggle() }
-        configureSectionButton(this, toggleButton, contentBorder)
+        configureSectionButton(this, toggleButton, contentBorder, onHighlightChanged)
       }
 
       override fun doLayout() {
@@ -1425,7 +1440,12 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   }
 
   private companion object {
-    fun configureSectionButton(panel: SelectablePanel, button: AbstractButton, contentBorder: Border) {
+    fun configureSectionButton(
+      panel: SelectablePanel,
+      button: AbstractButton,
+      contentBorder: Border,
+      onHighlightChanged: ((Boolean) -> Unit)? = null,
+    ) {
       panel.layout = BorderLayout()
       panel.isOpaque = false
       panel.selectionArc = JBUI.scale(PLUGIN_CARD_SELECTION_ARC)
@@ -1447,6 +1467,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         val cursor = if (button.isEnabled) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
         panel.cursor = cursor
         button.cursor = cursor
+        onHighlightChanged?.invoke(showFocus || token != null)
       }
 
       button.apply {
@@ -1503,8 +1524,8 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     const val SECTION_HEADER_LEFT_INSET: Int = 16
     const val SECTION_HEADER_RIGHT_INSET: Int = 12
     const val SECTION_HEADER_HOVER_HORIZONTAL_INSET: Int = 8
-    const val SECTION_HEADER_HOVER_TOP_INSET: Int = 7
-    const val SECTION_HEADER_HOVER_BOTTOM_INSET: Int = 3
+    const val SECTION_HEADER_HOVER_TOP_INSET: Int = 8
+    const val SECTION_HEADER_HOVER_BOTTOM_INSET: Int = 4
     const val PLUGIN_CARD_SELECTION_ARC: Int = 8
     const val SECTION_HEADER_TOP_INSET: Int = 8
     const val STATIC_ROW_HEIGHT: Int = 36

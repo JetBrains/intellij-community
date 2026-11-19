@@ -345,6 +345,41 @@ internal class UnifiedPluginsPageViewTest {
   }
 
   @Test
+  fun `section header reveals Show more on hover and keyboard focus`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 5)))
+    createView().use { view ->
+      view.render(controller.state.value)
+      val header = sectionHeader(view, IdeBundle.message("plugin.manager.tab.installed"))
+      val button = componentsOfType(header, JToggleButton::class.java).single()
+      val control = componentsOfType(button, JBLabel::class.java)
+        .single { it.text == IdeBundle.message("plugins.configurable.show.more") }
+        .parent as JComponent
+
+      fun expansionControlPainted(): Boolean {
+        header.setSize(JBUI.scale(320), JBUI.scale(40))
+        layoutRecursively(header)
+        val image = paintedImage(control)
+        return image.getRGB(0, 0, image.width, image.height, null, 0, image.width).any { it ushr 24 != 0 }
+      }
+
+      assertThat(expansionControlPainted()).isFalse()
+
+      button.model.isRollover = true
+      assertThat(expansionControlPainted()).isTrue()
+      button.model.isRollover = false
+
+      button.focusListeners.forEach { it.focusGained(FocusEvent(button, FocusEvent.FOCUS_GAINED)) }
+      assertThat(expansionControlPainted()).isTrue()
+      button.focusListeners.forEach { it.focusLost(FocusEvent(button, FocusEvent.FOCUS_LOST)) }
+      assertThat(expansionControlPainted()).isFalse()
+
+      controller.setSectionExpanded(PluginSectionId.Installed, true)
+      view.render(controller.state.value)
+      assertThat(expansionControlPainted()).isTrue()
+    }
+  }
+
+  @Test
   fun `expandable section header supports mouse keyboard hover and focus`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val expansionChanges = ArrayList<Pair<PluginSectionId, Boolean>>()
     val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 5)))
@@ -366,14 +401,14 @@ internal class UnifiedPluginsPageViewTest {
     headerButton.model.isRollover = true
     val image = paintedImage(header)
     val hoverX = header.width / 2
-    val hoverY = JBUI.scale(7 + 2)
+    val hoverY = JBUI.scale(8 + 2)
     val hoverColor = ColorUtil.alphaBlending(ListPluginComponent.HOVER_COLOR, PluginManagerConfigurable.MAIN_BG_COLOR)
     assertThat((header as SelectablePanel).selectionColor).isEqualTo(hoverColor)
     assertThat(Color(image.getRGB(hoverX, hoverY), true).rgb).isEqualTo(hoverColor.rgb)
-    assertThat(Color(image.getRGB(hoverX, JBUI.scale(7) - 1), true).rgb).isNotEqualTo(hoverColor.rgb)
-    assertThat(Color(image.getRGB(hoverX, header.height - JBUI.scale(3) + 1), true).rgb)
+    assertThat(Color(image.getRGB(hoverX, JBUI.scale(8) - 1), true).rgb).isNotEqualTo(hoverColor.rgb)
+    assertThat(Color(image.getRGB(hoverX, header.height - JBUI.scale(4) + 1), true).rgb)
       .isNotEqualTo(hoverColor.rgb)
-    assertThat(header.height - JBUI.scale(7) - JBUI.scale(3)).isEqualTo(JBUI.scale(30))
+    assertThat(header.height - JBUI.scale(8) - JBUI.scale(4)).isEqualTo(JBUI.scale(28))
     assertThat(Color(image.getRGB(0, header.height / 2), true).rgb).isNotEqualTo(hoverColor.rgb)
 
     headerButton.model.isRollover = false
@@ -382,7 +417,7 @@ internal class UnifiedPluginsPageViewTest {
     headerButton.focusListeners.forEach { it.focusGained(FocusEvent(headerButton, FocusEvent.FOCUS_GAINED)) }
     val focusedImage = paintedImage(header)
     val focusColor = JBUI.CurrentTheme.ActionButton.focusedBorder()
-    val focusTop = JBUI.scale(7)
+    val focusTop = JBUI.scale(8)
     val focusGap = JBUI.scale(1)
     val focusWidth = JBUI.scale(2)
     assertThat(header.selectionColor).isNull()

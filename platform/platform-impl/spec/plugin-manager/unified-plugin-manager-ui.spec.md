@@ -497,6 +497,12 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt
 
+- A collapsed section header must show “Show more” on hover or keyboard focus.
+- An expanded section header must show “Show less” when the section can collapse.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
+    `section header reveals Show more on hover and keyboard focus`
+  )
+
 - Manual expansion must keep selected plugins and their details.
 - Manual collapse must keep selected plugins that remain visible and remove selections it hides.
 - Plugin details must follow the retained selection.
