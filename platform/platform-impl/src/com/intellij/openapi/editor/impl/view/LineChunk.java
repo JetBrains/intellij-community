@@ -68,6 +68,13 @@ class LineChunk {
   }
 
   /**
+   * Says that the chunk holds its fragments, so {@link #fragmentCount()} and {@link #getFragment(int)} can read them.
+   */
+  boolean isLaidOut() {
+    return fragments != null;
+  }
+
+  /**
    * Returns the largest ascent of the fonts of the font families in this chunk, or -1 before its first layout.
    * The editor fonts count as 0. The value stays after {@link #clearFragments()}, and each layout writes it again.
    */
