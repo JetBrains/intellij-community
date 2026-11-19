@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.LongAdder
  * Counts the work of the Python code insight. For the native Python support, it counts type evaluations, type contexts,
  * type matches, type walks, overload checks, control flow builds and resolve path cache clears.
  * For the Django template support of the Django plugin, it counts the scans of the tag libraries and of the `{% load %}`
- * tags of a template.
+ * tags of a template, and the scans for the calls that get the value of an assignment.
  * [Counter] is a closed set, so the counters of a plugin that builds on the Python support are here too.
  *
  * The counting is off by default. Then each hook costs one volatile read. A test turns the counting on with [enable],
@@ -38,6 +38,7 @@ object PyCodeInsightCounters {
     PATH_CACHE_CLEARS("resolve.pathCache.clears"),
     DJANGO_TAG_LIBRARY_SCANS("django.tagLibrary.scans"),
     DJANGO_TEMPLATE_LOAD_SCANS("django.template.loadScans"),
+    DJANGO_ASSIGNMENT_CALL_SCANS("django.assignment.callScans"),
   }
 
   /** The counter values at one moment. */
