@@ -514,6 +514,8 @@ class BuildContextImpl internal constructor(
       jvmArgs.add("--enable-native-access=ALL-UNNAMED")
     }
 
+    jvmArgs.add("-XX:-UseBASE64Intrinsics")
+
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(context = this, os))
 
     return jvmArgs
