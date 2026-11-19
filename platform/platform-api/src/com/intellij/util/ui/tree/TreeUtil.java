@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.ui.UISettings;
@@ -7,6 +7,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -102,6 +104,9 @@ public final class TreeUtil {
   private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
   private static final Key<Function<TreePath, Navigatable>> NAVIGATABLE_PROVIDER = Key.create("TreeUtil: convert TreePath to Navigatable");
+  private static final String COMPARATOR_CONTRACT_VIOLATION_MESSAGE = "Comparison method violates its general contract!";
+  private static final int MAX_DIAGNOSTIC_CHILDREN = 100;
+  private static final int MAX_DIAGNOSTIC_NODE_TEXT_LENGTH = 200;
 
   private TreeUtil() {}
 
@@ -468,13 +473,79 @@ public final class TreeUtil {
   }
 
   public static <T extends MutableTreeNode> void sortChildren(@NotNull T node, @Nullable Comparator<? super T> comparator) {
-    //noinspection unchecked
-    final List<T> children = (List)listChildren(node);
-    children.sort(comparator);
-    for (int i = node.getChildCount() - 1; i >= 0; i--) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    var children = (List<T>)(List)listChildren(node);
+    try {
+      children.sort(comparator);
+    }
+    catch (IllegalArgumentException exception) {
+      if (COMPARATOR_CONTRACT_VIOLATION_MESSAGE.equals(exception.getMessage())) {
+        //noinspection AssignmentToCatchBlockParameter
+        exception = new ComparatorContractViolationException(exception, createSortDiagnostic(node, comparator, listChildren(node)));
+      }
+      throw exception;
+    }
+    for (var i = node.getChildCount() - 1; i >= 0; i--) {
       node.remove(i);
     }
     addChildrenTo(node, children);
+  }
+
+  private static String createSortDiagnostic(TreeNode parent, @Nullable Comparator<?> comparator, List<? extends TreeNode> children) {
+    var result = new StringBuilder();
+    result.append("Comparator: ")
+      .append(comparator == null ? "null (natural ordering)" : comparator.getClass().getName())
+      .append('\n');
+    result.append("Parent: ").append(describeNode(parent)).append('\n');
+    result.append("Children in original order (").append(children.size()).append("):\n");
+    int count = Math.min(children.size(), MAX_DIAGNOSTIC_CHILDREN);
+    for (var i = 0; i < count; i++) {
+      result.append("  [").append(i).append("] ").append(describeNode(children.get(i))).append('\n');
+    }
+    if (count < children.size()) {
+      result.append("  ... ").append(children.size() - count).append(" more children omitted\n");
+    }
+    return result.toString();
+  }
+
+  private static String describeNode(TreeNode node) {
+    var userObjectType = "";
+    try {
+      if (node instanceof DefaultMutableTreeNode mutableNode) {
+        var userObject = mutableNode.getUserObject();
+        userObjectType = ", user object type=" + (userObject == null ? "null" : userObject.getClass().getName());
+      }
+    }
+    catch (Throwable t) {
+      userObjectType = ", user object type unavailable: " + t.getClass().getName();
+    }
+
+    String text;
+    try {
+      text = String.valueOf(node).replace('\n', ' ').replace('\r', ' ');
+    }
+    catch (Throwable throwable) {
+      text = "<toString failed: " + throwable.getClass().getName() + ">";
+    }
+    if (text.length() > MAX_DIAGNOSTIC_NODE_TEXT_LENGTH) {
+      text = text.substring(0, MAX_DIAGNOSTIC_NODE_TEXT_LENGTH) + "...";
+    }
+    return node.getClass().getName() + userObjectType + ": " + text;
+  }
+
+  @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
+  private static final class ComparatorContractViolationException extends IllegalArgumentException implements ExceptionWithAttachments {
+    private final Attachment[] myAttachments;
+
+    private ComparatorContractViolationException(IllegalArgumentException cause, String diagnostic) {
+      super(cause.getMessage(), cause);
+      myAttachments = new Attachment[]{new Attachment("tree-sort-children.txt", diagnostic)};
+    }
+
+    @Override
+    public Attachment @NotNull [] getAttachments() {
+      return myAttachments;
+    }
   }
 
   public static void addChildrenTo(final @NotNull MutableTreeNode node, final @NotNull List<? extends TreeNode> children) {
