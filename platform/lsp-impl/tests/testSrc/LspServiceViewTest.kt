@@ -97,19 +97,22 @@ internal class LspServiceViewTest {
       assertContentType(consoleView, "IN   ", ConsoleViewContentType.LOG_VERBOSE_OUTPUT)
 
       val trafficLinks = findTrafficHyperlinks(consoleView)
-      val initializeRequestLink = requireNotNull(trafficLinks["request 'initialize'"]) {
+      val initializeRequestLink = requireNotNull(trafficLinks["request 'initialize'"]?.single()) {
         "The 'initialize' request header should be a hyperlink, found links: ${trafficLinks.keys}"
       }
       assertTrue("\"initialize\"" in initializeRequestLink.json,
                  "The hyperlink should carry the raw request payload, got: ${initializeRequestLink.json.take(200)}")
       assertTrue(initializeRequestLink.header.startsWith("→"), "An outbound payload popup title should use the outbound arrow")
 
-      val logMessageNotificationLink = requireNotNull(trafficLinks["notification 'window/logMessage'"]) {
+      // The server sent two window/logMessage notifications, so two links have this header
+      val logMessageNotificationLinks = requireNotNull(trafficLinks["notification 'window/logMessage'"]) {
         "The 'window/logMessage' notification header should be a hyperlink, found links: ${trafficLinks.keys}"
       }
-      assertTrue("log-message-marker" in logMessageNotificationLink.json,
-                 "The hyperlink should carry the raw notification payload, got: ${logMessageNotificationLink.json.take(200)}")
-      assertTrue(logMessageNotificationLink.header.startsWith("←"), "An inbound payload popup title should use the inbound arrow")
+      for (marker in listOf("log-message-marker", "error-message-marker")) {
+        assertTrue(logMessageNotificationLinks.any { marker in it.json },
+                   "A hyperlink should carry the raw payload of the '$marker' notification, got: ${logMessageNotificationLinks.map { it.json.take(200) }}")
+      }
+      assertTrue(logMessageNotificationLinks.all { it.header.startsWith("←") }, "An inbound payload popup title should use the inbound arrow")
     }
 
     stopFakeServers(project, fakeLspIntegration.providerClass)
@@ -200,7 +203,8 @@ internal class LspServiceViewTest {
   }
 
   /** Maps the hyperlink text (up to the `(id=...)` part) to its [LspTrafficPayloadHyperlinkInfo]. */
-  private fun findTrafficHyperlinks(consoleView: ConsoleViewImpl): Map<String, LspTrafficPayloadHyperlinkInfo> {
+  /** The traffic hyperlinks of the console, by their header text. The order of the markup model highlighters is not defined. */
+  private fun findTrafficHyperlinks(consoleView: ConsoleViewImpl): Map<String, List<LspTrafficPayloadHyperlinkInfo>> {
     val editor = requireNotNull(consoleView.editor) { "The console editor should be initialized" }
     return editor.markupModel.allHighlighters
       .mapNotNull { highlighter ->
@@ -208,6 +212,6 @@ internal class LspServiceViewTest {
         val text = editor.document.getText(highlighter.textRange).substringBefore(" (id=")
         text to info
       }
-      .toMap()
+      .groupBy({ it.first }, { it.second })
   }
 }
