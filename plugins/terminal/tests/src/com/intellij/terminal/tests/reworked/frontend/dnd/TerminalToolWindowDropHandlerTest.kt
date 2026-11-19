@@ -14,7 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.frontend.toolwindow.impl.dnd.TerminalToolWindowDropHandler
 import com.intellij.terminal.frontend.toolwindow.impl.shouldUseReworkedTerminal
@@ -27,10 +28,9 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.job
+import kotlinx.coroutines.coroutineScope
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
@@ -85,7 +85,7 @@ internal class TerminalToolWindowDropHandlerTest {
       val droppedFile = directory.resolve("build.sh").createFile()
 
       withTerminalToolWindowManager(project) {
-        this@timeoutRunBlocking.drop(droppedFile, toolWindow, contentManager)
+        drop(droppedFile, toolWindow, contentManager)
 
         val tab = contentManager.contents.single().getTerminalTab()
         assertThat(tab).isNotNull()
@@ -148,20 +148,17 @@ internal class TerminalToolWindowDropHandlerTest {
   /**
    * Drops [file] on [toolWindow] at a point that reports [contentManager], and waits for the new tab.
    */
-  private suspend fun CoroutineScope.drop(file: Path, toolWindow: ToolWindowEx, contentManager: ContentManager) {
-    val handlerScope = childScope("drop handler scope")
-
-    try {
-      val handler = TerminalToolWindowDropHandler.createDropHandler(toolWindow, handlerScope)
-      val event = dropEventOf(virtualFileOf(file), partProviding(contentManager, size = 100), Point(50, 50))
-
-      WriteIntentReadAction.run { handler.drop(event) }
-
-      handlerScope.coroutineContext.job.children.forEach { it.join() }
-    }
-    finally {
-      handlerScope.cancel()
-    }
+  private suspend fun drop(file: Path, toolWindow: ToolWindowEx, contentManager: ContentManager) = coroutineScope {
+    val added = CompletableDeferred<Unit>()
+    project.messageBus.connect(disposable).subscribe(TerminalTabsManagerListener.TOPIC, object : TerminalTabsManagerListener {
+      override fun tabAdded(tab: TerminalToolWindowTab) {
+        if (tab.content.manager === contentManager) added.complete(Unit)
+      }
+    })
+    val handler = TerminalToolWindowDropHandler.createDropHandler(toolWindow, this)
+    val event = dropEventOf(virtualFileOf(file), partProviding(contentManager, size = 100), Point(50, 50))
+    WriteIntentReadAction.run { handler.drop(event) }
+    added.await()
   }
 
   private fun registerTerminalToolWindow(): ToolWindowEx =

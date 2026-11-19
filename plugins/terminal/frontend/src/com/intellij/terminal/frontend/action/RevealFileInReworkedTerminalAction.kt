@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -19,7 +18,6 @@ import com.intellij.platform.util.annotations.paths.OsPath
 import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
@@ -44,13 +42,11 @@ internal class RevealFileInReworkedTerminalAction : DumbAwareAction(), ActionRem
     val file = getContextFile(e) ?: return
     e.coroutineScope.launch(Dispatchers.IO) {
       val path = getNearestDirectoryPath(file, project) ?: return@launch
-      withContext(Dispatchers.EDT) {
-        createTerminalTab(
-          project,
-          workingDirectory = path.toString(),
-          startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_IN_TERMINAL)
-        )
-      }
+      createTerminalTab(
+        project,
+        workingDirectory = path.toString(),
+        startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_IN_TERMINAL)
+      )
     }
   }
 

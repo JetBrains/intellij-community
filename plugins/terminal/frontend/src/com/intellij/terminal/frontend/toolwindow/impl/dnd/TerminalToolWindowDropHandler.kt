@@ -7,7 +7,6 @@ import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.terminal.frontend.dnd.TerminalDropData
@@ -17,9 +16,7 @@ import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
@@ -73,14 +70,12 @@ internal object TerminalToolWindowDropHandler {
       }
 
       val dir = getDirectory(filePath) ?: return@launch
-      withContext(Dispatchers.EDT) {
-        createTerminalTab(
-          window.project,
-          workingDirectory = dir.toString(),
-          contentManager = contentManager,
-          startupFusInfo = fusInfo
-        )
-      }
+      createTerminalTab(
+        window.project,
+        workingDirectory = dir.toString(),
+        contentManager = contentManager,
+        startupFusInfo = fusInfo
+      )
     }
   }
 

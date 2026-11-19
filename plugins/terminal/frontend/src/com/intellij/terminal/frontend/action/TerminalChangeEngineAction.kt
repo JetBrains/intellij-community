@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
+import com.intellij.terminal.frontend.toolwindow.impl.requestOpenTerminalTab
 import com.intellij.terminal.frontend.toolwindow.impl.migration.askForFeedbackIfSwitchedBackToClassicTerminal
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.application
@@ -33,7 +33,7 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
       // Call save manually, because otherwise this change will be synced to backend only at some time later.
       saveSettingsForRemoteDevelopment(e.coroutineScope, application)
 
-      createTerminalTab(
+      requestOpenTerminalTab(
         project,
         contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER),
         startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.SWITCH_ENGINE),

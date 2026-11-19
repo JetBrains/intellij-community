@@ -50,6 +50,8 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -85,20 +87,16 @@ class TerminalToolWindowTabsManagerImpl(
    */
   private var isTabsRestorePending: Boolean = false
 
+  private val defaultTabMutex = Mutex()
+
   init {
     project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun toolWindowShown(toolWindow: ToolWindow) {
         if (toolWindow.id != TerminalToolWindowFactory.TOOL_WINDOW_ID) {
           return
         }
-        val modalityState = ModalityState.current()
-        coroutineScope.launch(Dispatchers.Default) {
-          awaitEditorClassesForTerminal()
-          withContext(Dispatchers.EDT + modalityState.asContextElement()) {
-            if (!project.isDisposed) {
-              onToolWindowShown(toolWindow)
-            }
-          }
+        coroutineScope.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
+          onToolWindowShown(toolWindow)
         }
       }
     })
@@ -151,7 +149,14 @@ class TerminalToolWindowTabsManagerImpl(
 
   @VisibleForTesting
   @RequiresEdt
-  internal fun onToolWindowShown(toolWindow: ToolWindow) {
+  internal suspend fun onToolWindowShown(toolWindow: ToolWindow) {
+    if (!toolWindow.isVisible || (!isTabsRestorePending && !toolWindow.contentManager.isEmpty)) {
+      return
+    }
+    awaitEditorClassesForTerminal()
+    if (project.isDisposed || !toolWindow.isVisible) {
+      return
+    }
     if (isTabsRestorePending) {
       isTabsRestorePending = false
       restoreTabs(toolWindow)
@@ -159,13 +164,8 @@ class TerminalToolWindowTabsManagerImpl(
       installTabsPersistence()
     }
 
-    if (toolWindow.isVisible && toolWindow.contentManager.isEmpty) {
-      if (shouldUseReworkedTerminal()) {
-        createTabBuilder()
-          .startupFusInfo(TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_TOOLWINDOW))
-          .createTab()
-      }
-      else {
+    defaultTabMutex.withLock {
+      if (toolWindow.isVisible && toolWindow.contentManager.isEmpty) {
         createTerminalTab(project, startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_TOOLWINDOW))
       }
     }

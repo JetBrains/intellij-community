@@ -175,7 +175,9 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     shell: String?,
   ) {
     if (shell == null) {
-      createReworkedTab(project, command, workingDirectory, title, requestFocus = true, sourceFileUrl)
+      terminalProjectScope(project).launch(start = CoroutineStart.UNDISPATCHED) {
+        createReworkedTab(project, command, workingDirectory, title, requestFocus = true, sourceFileUrl)
+      }
       return
     }
     terminalProjectScope(project).launch(Dispatchers.IO) {
@@ -183,16 +185,13 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
       val context = LocalOptionsConfigurer.configureStartupOptions(options, project).toExecOptions()
       val shellCommand = if (context.execCommand.shellName.value == shell) context.execCommand.command
                          else LocalTerminalStartCommandBuilder.convertShellPathToCommand(shell, context.eelDescriptor)
-      withContext(Dispatchers.EDT) {
-        if (!project.isDisposed) {
-          createReworkedTab(project, command, context.workingDirectory.asNioPath().toString(), title, true, sourceFileUrl, shellCommand)
-        }
+      if (!project.isDisposed) {
+        createReworkedTab(project, command, context.workingDirectory.asNioPath().toString(), title, true, sourceFileUrl, shellCommand)
       }
     }
   }
 
-  @RequiresEdt(generateAssertion = false)
-  private fun createReworkedTab(
+  private suspend fun createReworkedTab(
     project: Project,
     command: String,
     workingDirectory: String,
@@ -200,7 +199,7 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     requestFocus: Boolean,
     sourceFileUrl: String?,
     shellCommand: List<String>? = null,
-  ) {
+  ) = withContext(Dispatchers.EDT) {
     val tab = TerminalToolWindowTabsManager.getInstance(project)
       .createTabBuilder()
       .workingDirectory(workingDirectory)
@@ -209,7 +208,7 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
       .requestFocus(requestFocus)
       // A tab that stays hidden would never start its shell, and the command would wait forever.
       .deferSessionStartUntilUiShown(requestFocus)
-      .createTab()
+      .createTabAsync()
     if (sourceFileUrl != null) associateTerminal(tab.content, sourceFileUrl)
     markAutomaticTitle(tab.content, title)
     enqueueCommand(tab.content, tab.view, command)

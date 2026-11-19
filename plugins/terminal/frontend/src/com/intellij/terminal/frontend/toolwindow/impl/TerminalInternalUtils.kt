@@ -1,7 +1,14 @@
 package com.intellij.terminal.frontend.toolwindow.impl
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
@@ -12,23 +19,29 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.execution.ParametersListUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabState
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.getNow
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
+
+private val LOG = fileLogger()
 
 /**
  * Creates the new terminal tab in the Terminal Tool Window.
  * Actual [TerminalEngine] of the created tab depends on the user settings and known restrictions.
  */
-internal fun createTerminalTab(
+internal suspend fun createTerminalTab(
   project: Project,
   shellCommand: List<String>? = null,
   workingDirectory: String? = null,
@@ -36,25 +49,59 @@ internal fun createTerminalTab(
   contentManager: ContentManager? = null,
   startupFusInfo: TerminalStartupFusInfo? = null,
 ) {
-  if (shouldUseReworkedTerminal()) {
+  try {
+    if (!shouldUseReworkedTerminal()) {
+      withContext(Dispatchers.EDT) {
+        openClassicTerminalTab(project, shellCommand, workingDirectory, tabName, contentManager)
+      }
+      return
+    }
     TerminalToolWindowTabsManager.getInstance(project).createTabBuilder()
       .shellCommand(shellCommand)
       .workingDirectory(workingDirectory)
       .tabName(tabName)
       .contentManager(contentManager)
       .startupFusInfo(startupFusInfo)
-      .createTab()
+      .createTabAsync()
   }
-  else {
-    // Otherwise, create the Classic or Gen1 terminal tab using old API.
-    val tabState = TerminalTabState().also {
-      it.myShellCommand = shellCommand
-      it.myWorkingDirectory = workingDirectory
-      it.myTabName = tabName
-    }
-    val engine = TerminalOptionsProvider.instance.terminalEngine
-    TerminalToolWindowManager.getInstance(project).createNewTab(engine, tabState, contentManager)
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    LOG.warn("Failed to open a terminal tab", e)
+    throw e
   }
+}
+
+/**
+ * Launches [createTerminalTab] in the terminal project scope and returns its job.
+ */
+internal fun requestOpenTerminalTab(
+  project: Project,
+  shellCommand: List<String>? = null,
+  workingDirectory: String? = null,
+  @NlsSafe tabName: String? = null,
+  contentManager: ContentManager? = null,
+  startupFusInfo: TerminalStartupFusInfo? = null,
+): Job {
+  val context = ClientId.current.asContextElement() + ModalityState.defaultModalityState().asContextElement()
+  return terminalProjectScope(project).launch(context) {
+    createTerminalTab(project, shellCommand, workingDirectory, tabName, contentManager, startupFusInfo)
+  }
+}
+
+private fun openClassicTerminalTab(
+  project: Project,
+  shellCommand: List<String>?,
+  workingDirectory: String?,
+  @NlsSafe tabName: String?,
+  contentManager: ContentManager?,
+) {
+  val tabState = TerminalTabState().also {
+    it.myShellCommand = shellCommand
+    it.myWorkingDirectory = workingDirectory
+    it.myTabName = tabName
+  }
+  val engine = TerminalOptionsProvider.instance.terminalEngine
+  TerminalToolWindowManager.getInstance(project).createNewTab(engine, tabState, contentManager)
 }
 
 /**

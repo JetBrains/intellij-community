@@ -61,19 +61,18 @@ internal fun launchTerminalAgent(
     }
 
     val terminalAgent = TerminalAgent.findByKey(agentKey) ?: return@launch
+    if (project.isDisposed) return@launch
+    val tab = TerminalToolWindowTabsManager.getInstance(project).createTabBuilder()
+      .shellCommand(launchSpec.command)
+      .processType(TerminalProcessType.NON_SHELL)
+      .tabName(terminalAgent.displayName)
+      .closeOnProcessTermination(
+        shouldClose = TerminalOptionsProvider.instance.closeSessionOnLogout &&
+          launchSpec.mode != TerminalAgentMode.INSTALL_AND_RUN
+      )
+      .createTabAsync()
+
     withContext(Dispatchers.EDT) {
-      if (project.isDisposed) return@withContext
-
-      val tab = TerminalToolWindowTabsManager.getInstance(project).createTabBuilder()
-        .shellCommand(launchSpec.command)
-        .processType(TerminalProcessType.NON_SHELL)
-        .tabName(terminalAgent.displayName)
-        .closeOnProcessTermination(
-          shouldClose = TerminalOptionsProvider.instance.closeSessionOnLogout &&
-            launchSpec.mode != TerminalAgentMode.INSTALL_AND_RUN
-        )
-        .createTab()
-
       if (terminalAgent.showIconInTab && terminalAgent.icon != null) {
         tab.content.putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
         tab.content.icon = terminalAgent.icon

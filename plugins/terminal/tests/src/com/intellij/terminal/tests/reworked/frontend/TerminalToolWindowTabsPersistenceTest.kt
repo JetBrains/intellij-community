@@ -25,8 +25,10 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
@@ -109,7 +111,9 @@ internal class TerminalToolWindowTabsPersistenceTest {
     assertThat(toolWindow.contentManager.contents).isEmpty()
 
     withTerminalToolWindowManager(project) {
-      showToolWindow(toolWindow)
+      coroutineScope {
+        repeat(2) { launch { showToolWindow(toolWindow) } }
+      }
 
       val content = toolWindow.contentManager.contents.single()
       assertThat(content.getTerminalTab()).isNotNull()
@@ -438,7 +442,7 @@ internal class TerminalToolWindowTabsPersistenceTest {
   /**
    * Stores [tabs], initializes the tool window, and shows it, so the tool window has a content for each stored tab.
    */
-  private fun restoreStoredTabs(vararg tabs: TerminalSessionPersistedTab): ToolWindow {
+  private suspend fun restoreStoredTabs(vararg tabs: TerminalSessionPersistedTab): ToolWindow {
     val toolWindow = initializeToolWindow(*tabs)
     showToolWindow(toolWindow)
     return toolWindow
@@ -449,7 +453,7 @@ internal class TerminalToolWindowTabsPersistenceTest {
    * and its tool window is never visible. So the test sends the event to the manager with a visible tool window.
    */
   @Suppress("JavaDefaultMethodsNotOverriddenByDelegation")
-  private fun showToolWindow(toolWindow: ToolWindow) {
+  private suspend fun showToolWindow(toolWindow: ToolWindow) {
     val visibleToolWindow = object : ToolWindowEx by (toolWindow as ToolWindowEx) {
       override fun isVisible(): Boolean = true
     }

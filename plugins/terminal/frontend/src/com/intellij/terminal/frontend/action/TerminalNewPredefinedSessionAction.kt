@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
+import com.intellij.terminal.frontend.toolwindow.impl.requestOpenTerminalTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -124,14 +124,12 @@ internal class TerminalNewPredefinedSessionAction : DumbAwareAction() {
   ) : DumbAwareAction(presentableName, null, icon) {
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
-      val contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER)
-      val startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.START_NEW_PREDEFINED_SESSION)
-      createTerminalTab(
+      requestOpenTerminalTab(
         project,
         shellCommand = myCommand,
         tabName = templateText,
-        contentManager = contentManager,
-        startupFusInfo = startupFusInfo,
+        contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER),
+        startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.START_NEW_PREDEFINED_SESSION),
       )
     }
   }

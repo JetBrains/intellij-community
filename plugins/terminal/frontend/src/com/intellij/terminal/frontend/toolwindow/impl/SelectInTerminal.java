@@ -34,7 +34,7 @@ final class SelectInTerminal implements SelectInTarget, DumbAware {
     Project project = context.getProject();
     VirtualFile selectedFile = context.getVirtualFile();
     TerminalStartupFusInfo fusInfo = new TerminalStartupFusInfo(TerminalTabOpeningWay.SELECT_IN_TERMINAL);
-    TerminalInternalUtilsKt.createTerminalTab(project, null, selectedFile.getPath(), null, null, fusInfo);
+    TerminalInternalUtilsKt.requestOpenTerminalTab(project, null, selectedFile.getPath(), null, null, fusInfo);
   }
 
   @Override

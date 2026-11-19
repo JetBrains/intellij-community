@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
+import com.intellij.terminal.frontend.toolwindow.impl.requestOpenTerminalTab
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalEnvironmentChanged
@@ -40,7 +40,7 @@ class TerminalSessionReloadNotificationManager(private val project: Project) {
     if (!hasTerminalSession(project)) return
 
     val reloadAction = NotificationAction.createSimpleExpiring(TerminalBundle.message("notification.environment.changed.action")) {
-      createTerminalTab(project) 
+      requestOpenTerminalTab(project)
     }
     val doNotAddAction = NotificationAction.createExpiring(EditorBundle.message("notification.dont.show.again.message")) { _, notification ->
       notification.setDoNotAskFor(project)
