@@ -2701,6 +2701,9 @@ private fun referenceIsCorrectTypeHint(
   }
   when (resolvedElement) {
     is PyTargetExpression -> {
+      // A name in `__all__` without a declaration for this Python version resolves to `__all__`, as `typing.Unpack` before 3.11.
+      // The inspection cannot check such a name.
+      if (resolvedElement.name == PyNames.ALL && referenceExpression.referencedName != PyNames.ALL) return true
       val qName = resolvedElement.qualifiedName ?: return true
       if (PyTypingTypeProvider.OPAQUE_NAMES.contains(qName)) return true
       val assignedTypeAliasValue = PyTypingAliasStubType.getAssignedValueStubLike(resolvedElement)
