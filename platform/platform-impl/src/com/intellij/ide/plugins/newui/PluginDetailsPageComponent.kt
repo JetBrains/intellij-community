@@ -831,6 +831,7 @@ class PluginDetailsPageComponent private constructor(
       })
       showBorder = true
     }
+    tabs.component.background = PluginManagerConfigurable.MAIN_BG_COLOR
     val wrapper = NonOpaquePanel(BorderLayout()).apply {
       border = JBUI.Borders.emptyTop(6)
       add(tabs.component)

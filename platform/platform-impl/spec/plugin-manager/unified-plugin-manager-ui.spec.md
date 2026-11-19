@@ -797,6 +797,7 @@ Untested: No focused test verifies Shift-selection across sections.
   )
 
 - Plugin details must use single-row tabs and offer an overflow menu when the tabs do not fit.
+- The unified details tab strip must use the Plugins page background.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `details page spacing is enabled only for the unified page`
   )

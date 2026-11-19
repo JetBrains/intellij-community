@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.ListPluginModel
 import com.intellij.ide.plugins.PluginInfoProvider
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.TagPanel
 import com.intellij.ide.plugins.newui.BaselinePanel
@@ -511,6 +512,7 @@ internal class LegacyPluginRowFactoryTest {
         assertThat(unifiedTabs.tabs.map { it.text }).allMatch(String::isNotBlank)
         assertThat(unifiedTabs.presentation.showBorder).isTrue()
         assertThat(unifiedTabs.getDecoration().labelInsets).isEqualTo(JBUI.insets(10, 8))
+        assertThat(unifiedTabs.background).isSameAs(PluginManagerConfigurable.MAIN_BG_COLOR)
         legacyTabs.setBounds(0, 0, JBUI.scale(800), JBUI.scale(600))
         unifiedTabs.setBounds(0, 0, JBUI.scale(800), JBUI.scale(600))
         legacyTabs.doLayout()
