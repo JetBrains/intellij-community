@@ -10,9 +10,14 @@ import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.updateSettings.impl.InternalPluginResults
+import com.intellij.openapi.updateSettings.impl.PluginUpdateDialog
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.AppIcon
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -21,9 +26,8 @@ import kotlinx.coroutines.withContext
 /**
  * Handles `jetbrains://tool/plugin/install?id=<pluginId>[&ids=<id1>,<id2>,…]` URLs.
  *
- * The marketplace confirmation dialog shown by [installAndEnable] is the user-consent gate;
- * we do not enforce a host allowlist here because OS-level protocol handlers do not provide
- * a verifiable origin.
+ * The dialogs shown by [installAndEnable] and [PluginUpdateDialog] require user consent.
+ * OS protocol handlers provide no verifiable origin, so this command uses no host allowlist.
  */
 internal class InstallPluginJbProtocolCommand : JBProtocolCommand("plugin") {
   override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): @DialogMessage String? {
@@ -35,20 +39,47 @@ internal class InstallPluginJbProtocolCommand : JBProtocolCommand("plugin") {
       return IdeBundle.message("jb.protocol.parameter.missing", "id")
     }
 
-    val toInstall = ids.filterNot { PluginManagerCore.isPluginInstalled(it) }.toSet()
-    if (toInstall.isEmpty()) {
+    val installedIds = ids.filter { PluginManagerCore.isPluginInstalled(it) }.toSet()
+    val toInstall = ids.toSet() - installedIds
+    warmUpPluginStates(ids.toSet())
+    reopenRecentProjectsIfNeeded()
+    val project = withContext(Dispatchers.EDT) {
+      RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
+    }
+    val updates = if (installedIds.isEmpty()) InternalPluginResults.empty() else withContext(Dispatchers.IO) {
+      withBackgroundProgress(project, IdeBundle.message("updates.checking.plugins")) {
+        coroutineToIndicator { indicator ->
+          UpdateCheckerFacade.getInstance().getPluginUpdates(installedIds, indicator)
+        }
+      }
+    }
+    val downloaders = updates.pluginUpdates.all
+    if (toInstall.isEmpty() && downloaders.isEmpty()) {
+      if (updates.errors.isNotEmpty()) {
+        return updates.errors.entries.joinToString("\n") { entry ->
+          val host = entry.key
+          if (host == null) IdeBundle.message("updates.plugins.error.message1", entry.value.message)
+          else IdeBundle.message("updates.plugins.error.message2", host, entry.value.message)
+        }
+      }
       val names = ids.joinToString(", ") {
         PluginManagerCore.getPlugin(it)?.name ?: it.idString
       }
       return IdeBundle.message("jb.protocol.plugin.install.already.installed", names)
     }
 
-    warmUpPluginStates(toInstall)
-    reopenRecentProjectsIfNeeded()
+    val installedPlugins = withContext(Dispatchers.IO) {
+      UiPluginManager.getInstance().findInstalledPlugins(installedIds)
+    }
     withContext(Dispatchers.EDT) {
-      val project = RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       AppIcon.getInstance().requestAttention(project, true)
-      installAndEnable(project, toInstall, showDialog = true, selectAlInDialog = true) { }
+      if (toInstall.isNotEmpty()) {
+        installAndEnable(project, toInstall, showDialog = true, selectAlInDialog = true) { }
+      }
+      if (downloaders.isNotEmpty()) {
+        val dialog = PluginUpdateDialog(project, downloaders.map { it.uiModel }, updates.pluginNods, installedPlugins)
+        PluginUpdateDialog.showDialogAndUpdateDownloaders(downloaders, dialog)
+      }
     }
     return null
   }
