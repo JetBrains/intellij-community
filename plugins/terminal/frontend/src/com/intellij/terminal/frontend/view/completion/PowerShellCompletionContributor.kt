@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -19,10 +19,8 @@ import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellComp
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellBasedCompletionListener
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.io.File
 import javax.swing.Icon
-import kotlin.coroutines.resume
 
 @ApiStatus.Internal
 class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
@@ -38,9 +36,7 @@ class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
       return null
     }
 
-    context.terminalView.sendText(CALL_COMPLETION_SEQUENCE)
-
-    val result: String = awaitCompletionResult(context.shellIntegration)
+    val result: String = requestCompletionResult(context)
     LOG.trace { "PowerShell completion result: $result" }
 
     val json = Json { ignoreUnknownKeys = true }
@@ -83,16 +79,24 @@ class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
     )
   }
 
-  private suspend fun awaitCompletionResult(shellIntegration: TerminalShellIntegration): String {
-    return suspendCancellableCoroutine { continuation ->
-      val disposable = Disposer.newDisposable()
-      continuation.invokeOnCancellation { Disposer.dispose(disposable) }
-      shellIntegration.addShellBasedCompletionListener(disposable, object : TerminalShellBasedCompletionListener {
+  /**
+   * Sends the completion request to the shell and awaits the result.
+   * The listener is added before the request is sent, because the shell can reply before this method resumes.
+   */
+  private suspend fun requestCompletionResult(context: TerminalCommandCompletionContext): String {
+    val deferredResult = CompletableDeferred<String>()
+    val disposable = Disposer.newDisposable()
+    try {
+      context.shellIntegration.addShellBasedCompletionListener(disposable, object : TerminalShellBasedCompletionListener {
         override fun completionFinished(result: String) {
-          Disposer.dispose(disposable)
-          continuation.resume(result)
+          deferredResult.complete(result)
         }
       })
+      context.terminalView.sendText(CALL_COMPLETION_SEQUENCE)
+      return deferredResult.await()
+    }
+    finally {
+      Disposer.dispose(disposable)
     }
   }
 
