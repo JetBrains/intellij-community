@@ -151,6 +151,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
     return proxy;
   }
 
+  @Override
+  boolean wakeEventReaderForRelease(@NotNull VirtualMachine vm) {
+    DebuggerEventThread eventThread = myEventThreads.get(vm);
+    return eventThread != null && eventThread.wakeForRelease();
+  }
+
   private static void showStatusText(DebugProcessEvents debugProcess, Event event) {
     Requestor requestor = RequestManagerImpl.findRequestor(event.request());
     Breakpoint<?> breakpoint = null;
@@ -196,9 +202,29 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
 
     private boolean myIsStopped = false;
+    private boolean myReleaseWakeUp;
+    private @Nullable Thread myThread;
 
     public synchronized void stopListening() {
       myIsStopped = true;
+    }
+
+    /** Makes the reader call {@link DebugProcessImpl#commitRelease()} after its current set; false if it has stopped. */
+    synchronized boolean wakeForRelease() {
+      if (myIsStopped) {
+        return false;
+      }
+      myReleaseWakeUp = true;
+      if (myThread != null) {
+        myThread.interrupt();
+      }
+      return true;
+    }
+
+    private synchronized boolean takeReleaseWakeUp() {
+      boolean wakeUp = myReleaseWakeUp;
+      myReleaseWakeUp = false;
+      return wakeUp;
     }
 
     private synchronized boolean isStopped() {
@@ -207,10 +233,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     @Override
     public void run() {
+      synchronized (this) {
+        myThread = Thread.currentThread();
+      }
       try {
         EventQueue eventQueue = myVmProxy.getVirtualMachine().eventQueue();
         while (!isStopped()) {
           try {
+            if (takeReleaseWakeUp()) {
+              myDebuggerManagerThread.invokeAndWait(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
+                @Override
+                protected void action() {
+                  if (commitRelease()) {
+                    myEventThreads.remove(myVmProxy.getVirtualMachine());
+                    stopListening();
+                  }
+                }
+              });
+              continue;
+            }
             final EventSet eventSet = eventQueue.remove();
 
             myDebuggerManagerThread.invokeAndWait(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
@@ -339,7 +380,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
             });
           }
-          catch (InterruptedException | ProcessCanceledException | VMDisconnectedException e) {
+          catch (InterruptedException ignored) { // only a release wakes the reader: the loop top commits it
+          }
+          catch (ProcessCanceledException | VMDisconnectedException e) {
             throw e;
           }
           catch (Throwable e) {
@@ -347,10 +390,16 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }
         }
       }
-      catch (InterruptedException | VMDisconnectedException e) {
-        invokeVMDeathEvent();
+      catch (VMDisconnectedException e) {
+        if (!isStopped()) {
+          invokeVMDeathEvent();
+        }
       }
       finally {
+        synchronized (this) {
+          myIsStopped = true;
+          myThread = null;
+        }
         Thread.interrupted(); // reset interrupted status
       }
     }
@@ -513,7 +562,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
         trackClassRedefinitions();
       }
 
-      showStatusText(JavaDebuggerBundle.message("status.connected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection())));
+      if (!isVirtualMachineAdopted()) {
+        showStatusText(JavaDebuggerBundle.message("status.connected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection())));
+      }
       LOG.debug("leave: processVMStartEvent()");
 
       if (session != null) {

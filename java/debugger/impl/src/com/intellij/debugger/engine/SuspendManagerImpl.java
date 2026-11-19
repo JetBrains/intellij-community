@@ -358,7 +358,8 @@ public class SuspendManagerImpl implements SuspendManager {
     suspendContext.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
   }
 
-  private void notifyPaused(@NotNull SuspendContextImpl suspendContext, boolean pushPaused) {
+  @ApiStatus.Internal
+  public void notifyPaused(@NotNull SuspendContextImpl suspendContext, boolean pushPaused) {
     if (pushPaused) {
       pushPausedContext(suspendContext);
     }

@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,12 +43,14 @@ public final class HotSwapManager {
   private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<>();
   private static final String CLASS_EXTENSION = ".class";
 
-  private long getTimeStamp(DebuggerSession session) {
+  @ApiStatus.Internal
+  public long getTimeStamp(@NotNull DebuggerSession session) {
     Long tStamp = myTimeStamps.get(session);
     return tStamp != null ? tStamp.longValue() : 0;
   }
 
-  private void setTimeStamp(DebuggerSession session, long tStamp) {
+  @ApiStatus.Internal
+  public void setTimeStamp(@NotNull DebuggerSession session, long tStamp) {
     myTimeStamps.put(session, tStamp);
   }
 
@@ -74,7 +78,36 @@ public final class HotSwapManager {
     ));
   }
 
-  /** Finds already compiled class files in class roots without applying the session HotSwap timestamp filter. */
+  /**
+   * The class files of a debug process whose host knows them better than the module class roots do: e.g. the language server, which
+   * has no {@code CompilerModuleExtension} and knows the class path of the session and what the VM was redefined with.
+   */
+  @ApiStatus.Internal
+  public interface ClassFileFinder {
+    /**
+     * Called on the debugger manager thread. A name in the result is the host's: its class file, or {@code null} when the VM must not be
+     * redefined from it (its bytes may differ from what the VM runs). A name not in the result is left to the module class roots.
+     */
+    @NotNull Map<String, @Nullable HotSwapClassFile> findClassFiles(@NotNull Collection<String> qualifiedNames);
+
+    /**
+     * {@code true} when the host vouches that the sources the session sees match the class bytes it hands out: e.g. the language server,
+     * whose sources do not move under the session. Then the breakpoint instrumentation skips its source baseline check.
+     */
+    @ApiStatus.Internal
+    default boolean vouchesForSources() {
+      return false;
+    }
+  }
+
+  /** The {@link ClassFileFinder} of a debug process, asked first by {@link #findExistingClassesForHotSwap}. */
+  @ApiStatus.Internal
+  public static final Key<ClassFileFinder> CLASS_FILE_FINDER = Key.create("HotSwapManager.CLASS_FILE_FINDER");
+
+  /**
+   * Finds already compiled class files in class roots without applying the session HotSwap timestamp filter.
+   * The {@link #CLASS_FILE_FINDER} of the process answers first; the module class roots answer for the names it leaves out.
+   */
   @ApiStatus.Internal
   public static @NotNull Map<String, HotSwapClassFile> findExistingClassesForHotSwap(@NotNull DebuggerSession session,
                                                                                      @NotNull Collection<String> qualifiedNames,
@@ -84,7 +117,21 @@ public final class HotSwapManager {
       return Collections.emptyMap();
     }
 
-    return HotSwapClassFileFinder.findExistingClasses(getClassRoots(session, qualifiedNames), qualifiedNames, progress);
+    ClassFileFinder finder = session.getProcess().getUserData(CLASS_FILE_FINDER);
+    if (finder == null) {
+      return HotSwapClassFileFinder.findExistingClasses(getClassRoots(session, qualifiedNames), qualifiedNames, progress);
+    }
+
+    Map<String, HotSwapClassFile> hostAnswer = finder.findClassFiles(qualifiedNames);
+    Map<String, HotSwapClassFile> result = new HashMap<>();
+    hostAnswer.forEach((name, classFile) -> {
+      if (classFile != null) result.put(name, classFile);
+    });
+    List<String> otherNames = ContainerUtil.filter(qualifiedNames, name -> !hostAnswer.containsKey(name));
+    if (!otherNames.isEmpty() && !progress.isCancelled()) {
+      result.putAll(HotSwapClassFileFinder.findExistingClasses(getClassRoots(session, otherNames), otherNames, progress));
+    }
+    return result;
   }
 
   private static @NotNull List<VirtualFile> getClassRoots(@NotNull DebuggerSession session, @NotNull Collection<String> qualifiedNames) {
@@ -194,6 +241,34 @@ public final class HotSwapManager {
     }
     progress.setDebuggerSession(session);
     new ReloadClassesWorker(session, progress).reloadClasses(classesToReload);
+  }
+
+  /**
+   * The message of a reload that failed with {@code e}, as the hot swap reports it: e.g. a redefine the VM refused. For a host that
+   * redefines classes itself.
+   */
+  @ApiStatus.Internal
+  public static @NotNull @Nls String reloadFailureMessage(@NotNull Throwable e) {
+    String reason = e.getLocalizedMessage();
+    if (e instanceof UnsupportedOperationException) {
+      return JavaDebuggerBundle.message("error.operation.not.supported.by.vm", reason);
+    }
+    if (e instanceof NoClassDefFoundError) {
+      return JavaDebuggerBundle.message("error.class.def.not.found", reason);
+    }
+    if (e instanceof VerifyError) {
+      return JavaDebuggerBundle.message("error.verification.error", reason);
+    }
+    if (e instanceof UnsupportedClassVersionError) {
+      return JavaDebuggerBundle.message("error.unsupported.class.version", reason);
+    }
+    if (e instanceof ClassFormatError) {
+      return JavaDebuggerBundle.message("error.class.format.error", reason);
+    }
+    if (e instanceof ClassCircularityError) {
+      return JavaDebuggerBundle.message("error.class.circularity.error", reason);
+    }
+    return JavaDebuggerBundle.message("error.exception.while.reloading", e.getClass().getName(), reason);
   }
 
   public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(

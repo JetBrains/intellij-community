@@ -55,32 +55,9 @@ class ReloadClassesWorker {
       return;
     }
 
-    String message;
-    String reason = e.getLocalizedMessage();
     HotSwapFailureReason failureReason = getFailureReason(e);
     HotSwapStatistics.logFailureReason(myProgress.getProject(), failureReason, myProgress.getHotSwapSource());
-    if (e instanceof UnsupportedOperationException) {
-      message = JavaDebuggerBundle.message("error.operation.not.supported.by.vm", reason);
-    }
-    else if (e instanceof NoClassDefFoundError) {
-      message = JavaDebuggerBundle.message("error.class.def.not.found", reason);
-    }
-    else if (e instanceof VerifyError) {
-      message = JavaDebuggerBundle.message("error.verification.error", reason);
-    }
-    else if (e instanceof UnsupportedClassVersionError) {
-      message = JavaDebuggerBundle.message("error.unsupported.class.version", reason);
-    }
-    else if (e instanceof ClassFormatError) {
-      message = JavaDebuggerBundle.message("error.class.format.error", reason);
-    }
-    else if (e instanceof ClassCircularityError) {
-      message = JavaDebuggerBundle.message("error.class.circularity.error", reason);
-    }
-    else {
-      message = JavaDebuggerBundle.message("error.exception.while.reloading", e.getClass().getName(), reason);
-    }
-
+    String message = HotSwapManager.reloadFailureMessage(e);
     myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, message);
   }
 

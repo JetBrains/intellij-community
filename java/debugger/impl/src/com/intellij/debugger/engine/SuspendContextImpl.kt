@@ -5,6 +5,7 @@ import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebuggerDiagnosticsUtil.needAnonymizedReports
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.requests.RequestManagerImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
@@ -14,6 +15,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -225,9 +227,21 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
     }
     DebuggerManagerThreadImpl.assertIsManagerThread()
     try {
-      // delay enable collection to speed up the resume
+      // delay enable collection to speed up the resume; a closed manager thread cancels the command, which enables it too
       for (r in myKeptReferences) {
-        managerThread.schedule(PrioritizedTask.Priority.LOWEST) { DebuggerUtilsEx.enableCollection(r) }
+        managerThread.schedule(object : DebuggerCommandImpl(PrioritizedTask.Priority.LOWEST) {
+          override fun action() = DebuggerUtilsEx.enableCollection(r)
+
+          override fun commandCancelled() {
+            try {
+              DebuggerUtilsEx.enableCollection(r)
+            }
+            catch (e: Throwable) {
+              rethrowControlFlowException(e)
+              LOG.debug(e)
+            }
+          }
+        })
       }
       myKeptReferences.clear()
 
