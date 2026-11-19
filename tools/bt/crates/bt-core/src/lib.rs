@@ -9,9 +9,10 @@
 //!
 //! # Areas
 //!
-//! This crate knows no path of any product. `bt.json` at the repository root names each area: a directory that
-//! resolution scans, and the lane table of that directory ([`Areas`]). A lane table can also name a suite catalog,
-//! which a flow or a suite selector reads.
+//! This crate knows no path of any product. `bt.json` at the repository root names each area: a directory, and the
+//! lane table of that directory ([`Areas`]). A lane table can also name a suite catalog, which a flow or a suite
+//! selector reads. A class name resolves in the whole repository through the pinned accio, and a module of an area
+//! runs without the migrated list.
 //!
 //! # A library with more than one consumer
 //!
@@ -36,7 +37,6 @@ pub mod os_runtime;
 pub mod paths;
 pub mod result;
 pub mod runtime;
-pub mod scan;
 pub mod selector;
 pub mod shard_plan;
 pub mod suites;
@@ -64,8 +64,7 @@ pub use modules::resolve_module;
 pub use os_runtime::{OsRuntime, Spawner};
 pub use refusal::Refusal;
 pub use runtime::{Platform, Runtime};
-pub use scan::ResolutionInputs;
-pub use selector::{Selector, SelectorKind, resolve_selector};
+pub use selector::{ResolutionInputs, Selector, SelectorKind, resolve_selector};
 pub use suites::{
     Affected, AffectedSuite, CHANGED_PATHS_SUBJECT, LaneCount, REASON_NO_SUITE_TESTS_FLOW, ScenarioFlows, UnmappedPath, VIA_MODULE,
     affected_text, choose_lane, classes_of_lane, counted_lane_names, describe_named, lane_counts, lane_counts_text, named_suites,

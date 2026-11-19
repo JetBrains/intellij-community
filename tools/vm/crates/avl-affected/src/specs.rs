@@ -12,7 +12,7 @@
 use bt_core::areas::Area;
 
 use bt_core::runtime::{Runtime, par_map};
-use bt_core::scan::{read_text_or_none, walk_dirs};
+use bt_core::runtime::{read_text_or_none, walk_dirs};
 use regex::Regex;
 
 use crate::regex;

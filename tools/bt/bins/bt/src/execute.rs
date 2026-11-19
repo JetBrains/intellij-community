@@ -5,7 +5,7 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use bt_core::areas::{Area, Areas};
-use bt_core::{Refusal, exit, fail_usage};
+use bt_core::{Refusal, ResolutionInputs, exit, fail_usage};
 use serde::{Deserialize, Serialize};
 
 use crate::build::execute_build;
@@ -25,7 +25,6 @@ use bt_core::lanes::{
 use bt_core::os_runtime::command_line;
 use bt_core::result::{FlakyRun, RunResult, RunStatus, ShardTimeout, TargetResult, TargetTiming, collect_results, is_verdict};
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
-use bt_core::scan::ResolutionInputs;
 use bt_core::selector::{Resolution, Selector, SelectorKind, as_filter_or_package, no_tests_hint, resolve_selector};
 use bt_core::shard_plan::{
     Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS, ShardPlan, TreeTargets,
@@ -426,6 +425,10 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             text: dry_run_text(runtime, &plan.resolution, &invocations, build_only.as_deref()),
             json: None,
         });
+    }
+
+    for note in &plan.resolution.notes {
+        runtime.write_error(&format!("note: {note}"));
     }
 
     // Compile what the lane excludes from its run, before the run, so a compile break is the answer rather than a
@@ -836,6 +839,7 @@ fn dry_run_text(runtime: &dyn Runtime, resolution: &Resolution, invocations: &[B
             .map(|suite| format!("suite   {} ({}, lane {})", suite.class, suite.suite, suite.lane)),
     );
     lines.push(format!("filter  {filter}"));
+    lines.extend(resolution.notes.iter().map(|note| format!("note    {note}")));
     lines.extend(
         invocations
             .iter()

@@ -40,12 +40,22 @@ pub struct SymbolHit {
     pub line: u32,
     pub kind: String,
     pub name: String,
+    /// The language of the file, such as `kotlin`, `java` or `python`.
+    #[serde(default)]
+    pub language: Option<String>,
     /// The FQN in the binary form of the runner, `a.b.Outer$Inner`. Only a Kotlin or a Java type has one.
     #[serde(default)]
     pub fqn: Option<String>,
     /// The FQN of the outermost type, `a.b.Outer`. Only a nested type has one.
     #[serde(default)]
     pub top_level: Option<String>,
+}
+
+impl SymbolHit {
+    /// Whether the hit is a Kotlin or a Java type, the only kind of class that a JUnit target runs.
+    pub fn is_jvm(&self) -> bool {
+        matches!(self.language.as_deref(), Some("kotlin" | "java"))
+    }
 }
 
 /// The answer of `accio modules --paths`.

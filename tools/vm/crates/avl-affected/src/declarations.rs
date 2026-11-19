@@ -65,8 +65,8 @@ use std::sync::OnceLock;
 use bt_core::areas::Area;
 use bt_core::catalog::{SuiteDocument, read_suite_documents};
 use bt_core::lanes::DeclarationReach;
+use bt_core::runtime::walk_dirs;
 use bt_core::runtime::{Runtime, par_map, repo_file};
-use bt_core::scan::walk_dirs;
 use serde_json::Value;
 
 use crate::regex;

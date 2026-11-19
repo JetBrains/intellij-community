@@ -4,7 +4,7 @@ use serde_json::json;
 use super::*;
 use bt_core::fake::{
     AttemptSpec, FakeRuntime, LANES_FILE, REPO_ROOT, area_files, attempt, bep_lines, build_bazel_text, case, failing, flow_catalog_tree,
-    lanes, loading_failure_events, module_build_bazel_text, refusal, suite, suite_xml, test_result_event,
+    lanes, loading_failure_events, refusal, suite, suite_xml, test_result_event,
 };
 use bt_core::runtime::SpawnResult;
 
@@ -1486,7 +1486,8 @@ fn fake_module_tree() -> FakeRuntime {
             "tests_test",
         ),
     ] {
-        fake.put(&format!("{dir}/BUILD.bazel"), &module_build_bazel_text(module, target));
+        let main = module.strip_suffix(".tests").unwrap_or(module);
+        fake.add_module(bt_core::fake::tests_module_json(dir, main, module, target));
     }
     fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.platform.util.tests\n");
     fake
@@ -1655,5 +1656,29 @@ fn a_wildcard_filter_that_runs_no_test_gets_the_hint_of_its_form() {
     assert_mentions(
         &outcome.text,
         &["\nhint      --filter takes no wildcard. To run every class of the package, pass --filter com.intellij.air.core"],
+    );
+}
+
+/// The note of a nested class goes into the dry run, and a run writes it to the stderr before bazel starts.
+#[test]
+fn the_note_of_a_nested_class_is_in_the_dry_run_and_on_the_stderr() {
+    let fake = fake_air_tree();
+    fake.add_class(
+        "plugins/air/shared/core/testSrc/AgentIdTest.kt",
+        "com.intellij.air.shared.core.AgentIdTest$Parsing",
+    );
+    let note = "com.intellij.air.shared.core.AgentIdTest$Parsing is a nested class, so the filter is its outer class \
+                com.intellij.air.shared.core.AgentIdTest: the runner finds an @Nested class only through its outer class";
+    let planned = run(&["Parsing", "--dry-run"], &fake);
+    assert_mentions(
+        &planned.text,
+        &["filter  com.intellij.air.shared.core.AgentIdTest", &format!("note    {note}")],
+    );
+    spawn_answers(&fake, 0, "");
+    run(&["Parsing"], &fake);
+    assert!(
+        fake.state().stderr.iter().any(|line| *line == format!("note: {note}")),
+        "{:?}",
+        fake.state().stderr
     );
 }

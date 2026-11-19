@@ -611,65 +611,6 @@ impl Runtime for FakeRuntime {
 
 // --- fixture builders ----------------------------------------------------------------------------------------
 
-pub fn iml_text(source_folders: &[&str]) -> String {
-    let indented: Vec<String> = source_folders.iter().map(|folder| format!("      {folder}")).collect();
-    format!(
-        r#"<?xml version="1.0" encoding="UTF-8"?>
-<module type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <exclude-output />
-    <content url="file://$MODULE_DIR$">
-{}
-    </content>
-    <orderEntry type="sourceFolder" forTests="false" />
-  </component>
-</module>"#,
-        indented.join("\n")
-    )
-}
-
-/// A BUILD.bazel of a tests module and its main module, in the shape of `plugins/air/frontend/loopback.proxy/BUILD.bazel`.
-///
-/// The `jps_test` comes first, followed by the `skip generation section` marker of the tests module. The main library is
-/// named after the last part of the main module, and it carries `module_name` of the main module. The `_test_lib` has
-/// `associates` and no `module_name`. Only its `build <module>` section names the tests module.
-pub fn module_build_bazel_text(module: &str, target_name: &str) -> String {
-    let main_module = module
-        .strip_suffix(".tests")
-        .unwrap_or_else(|| panic!("{module} is not a tests module"));
-    let main_library = main_module.rsplit('.').next().unwrap_or(main_module);
-    let test_library = format!("{}_test_lib", target_name.strip_suffix("_test").unwrap_or(target_name));
-    format!(
-        r#"load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
-jps_test(
-    name = "{target_name}",
-    runtime_deps = [":{test_library}"],
-)
-### skip generation section `test {module}`
-
-### auto-generated section `build {main_module}` start
-jvm_library(
-    name = "{main_library}",
-    srcs = glob(["src/**/*.kt"], allow_empty = True),
-    module_name = "{main_module}",
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `build {main_module}` end
-
-### auto-generated section `build {module}` start
-jvm_library(
-    name = "{test_library}",
-    testonly = True,
-    srcs = glob(["testSrc/**/*.kt"], allow_empty = True),
-    associates = [":{main_library}"],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `build {module}` end"#
-    )
-}
-
 pub fn build_bazel_text(target_name: &str) -> String {
     format!(
         r#"### auto-generated section `build` start
@@ -691,19 +632,10 @@ jps_test(
     )
 }
 
-/// The fixture every resolution test resolves against: three modules with runnable targets, one with a test root
-/// and no target, and one production-only module.
+/// The files of the fixture area: three modules with a test target, one with a test root and no target, and one
+/// production-only module. [`air_accio`] is what accio knows of them.
 pub fn air_tree() -> BTreeMap<String, String> {
-    let source_root = |prefix: &str| {
-        iml_text(&[&format!(
-            r#"<sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" packagePrefix="{prefix}" />"#
-        )])
-    };
     [
-        (
-            "plugins/air/shared/core/intellij.air.shared.core.tests.iml",
-            source_root("com.intellij.air.shared.core"),
-        ),
         ("plugins/air/shared/core/BUILD.bazel", build_bazel_text("ai-agent-core-tests_test")),
         (
             "plugins/air/shared/core/testSrc/AgentThreadIdentityTest.kt",
@@ -714,20 +646,12 @@ pub fn air_tree() -> BTreeMap<String, String> {
             "package com.intellij.air.shared.core\n\nclass AgentThreadCliTest {\n}\n".to_owned(),
         ),
         (
-            "plugins/air/backend/vcs/intellij.air.backend.vcs.tests.iml",
-            source_root("com.intellij.air.backend.vcs"),
-        ),
-        (
             "plugins/air/backend/vcs/BUILD.bazel",
             build_bazel_text("air-backend-vcs-tests_test"),
         ),
         (
             "plugins/air/backend/vcs/testSrc/context/AgentPromptChangesTreeContextContributorTest.kt",
             "package com.intellij.air.backend.vcs.context\n\nclass AgentPromptChangesTreeContextContributorTest {\n}\n".to_owned(),
-        ),
-        (
-            "plugins/air/frontend/prompt/vcs/intellij.air.frontend.prompt.vcs.tests.iml",
-            source_root("com.intellij.air.frontend.prompt.vcs"),
         ),
         (
             "plugins/air/frontend/prompt/vcs/BUILD.bazel",
@@ -737,19 +661,9 @@ pub fn air_tree() -> BTreeMap<String, String> {
             "plugins/air/frontend/prompt/vcs/testSrc/context/AgentPromptChangesTreeContextContributorTest.kt",
             "package com.intellij.air.frontend.prompt.vcs.context\n\nclass AgentPromptChangesTreeContextContributorTest {\n}\n".to_owned(),
         ),
-        // A module whose .iml declares a test root but which has no jps_test target at all.
-        (
-            "plugins/air/notest/intellij.air.notest.tests.iml",
-            iml_text(&[r#"<sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />"#]),
-        ),
         (
             "plugins/air/notest/testSrc/OrphanTest.kt",
             "package com.intellij.air.notest\n\nclass OrphanTest {\n}\n".to_owned(),
-        ),
-        // Production-only module: no test root, so nothing is indexed from it.
-        (
-            "plugins/air/shared/api/intellij.air.shared.api.iml",
-            iml_text(&[r#"<sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />"#]),
         ),
         (
             "plugins/air/shared/api/src/Api.kt",
@@ -761,8 +675,75 @@ pub fn air_tree() -> BTreeMap<String, String> {
     .collect()
 }
 
+/// What accio knows of [`air_tree`]: each class with its FQN, and each module root.
+pub fn air_accio() -> FakeAccio {
+    let classes = [
+        (
+            "plugins/air/shared/core/testSrc/AgentThreadIdentityTest.kt",
+            "com.intellij.air.shared.core.AgentThreadIdentityTest",
+        ),
+        (
+            "plugins/air/shared/core/testSrc/AgentThreadCliTest.kt",
+            "com.intellij.air.shared.core.AgentThreadCliTest",
+        ),
+        (
+            "plugins/air/backend/vcs/testSrc/context/AgentPromptChangesTreeContextContributorTest.kt",
+            "com.intellij.air.backend.vcs.context.AgentPromptChangesTreeContextContributorTest",
+        ),
+        (
+            "plugins/air/frontend/prompt/vcs/testSrc/context/AgentPromptChangesTreeContextContributorTest.kt",
+            "com.intellij.air.frontend.prompt.vcs.context.AgentPromptChangesTreeContextContributorTest",
+        ),
+        ("plugins/air/notest/testSrc/OrphanTest.kt", "com.intellij.air.notest.OrphanTest"),
+        ("plugins/air/shared/api/src/Api.kt", "com.intellij.air.shared.api.Api"),
+    ];
+    let notest = "plugins/air/notest";
+    let api = "plugins/air/shared/api";
+    FakeAccio {
+        classes: classes.iter().map(|(file, fqn)| ((*file).to_owned(), (*fqn).to_owned())).collect(),
+        modules: vec![
+            tests_module_json(
+                "plugins/air/shared/core",
+                "intellij.air.shared.core",
+                "intellij.air.shared.core.tests",
+                "ai-agent-core-tests_test",
+            ),
+            tests_module_json(
+                "plugins/air/backend/vcs",
+                "intellij.air.backend.vcs",
+                "intellij.air.backend.vcs.tests",
+                "air-backend-vcs-tests_test",
+            ),
+            tests_module_json(
+                "plugins/air/frontend/prompt/vcs",
+                "intellij.air.frontend.prompt.vcs",
+                "intellij.air.frontend.prompt.vcs.tests",
+                "air-frontend-prompt-vcs-tests_test",
+            ),
+            // A module with a test root and no `BUILD.bazel`.
+            module_entry_json(
+                notest,
+                Some(&jps_json("intellij.air.notest.tests", notest, &[("testSrc", true)], None)),
+                &[],
+                None,
+            ),
+            // A production-only module.
+            module_entry_json(
+                api,
+                Some(&jps_json("intellij.air.shared.api", api, &[("src", false)], None)),
+                &[],
+                Some(&[]),
+            ),
+        ],
+        ..FakeAccio::default()
+    }
+}
+
+/// [`air_tree`] with [`air_accio`].
 pub fn fake_air_tree() -> FakeRuntime {
-    FakeRuntime::with_tree(&air_tree())
+    let fake = FakeRuntime::with_tree(&air_tree());
+    fake.state().accio = air_accio();
+    fake
 }
 
 /// The refusal an operation raised, failing the test when it did not raise one.

@@ -65,7 +65,7 @@ pub struct CheckoutTree {
 /// Called with the elapsed milliseconds every 30 s while a child runs, so a long bazel run does not look hung.
 pub type Heartbeat<'a> = &'a (dyn Fn(u64) + Sync);
 
-/// The injection point. `Sync`, because the tree scan and the suite reads call it from worker threads.
+/// The injection point. `Sync`, because a directory walk and the suite reads call it from worker threads.
 pub trait Runtime: Sync {
     /// The checkout root. Every path this crate builds is relative to it, never to the process working directory:
     /// under the runfiles tree of a `bazel run` launcher the two differ, and a target pattern is repo-relative
@@ -180,15 +180,15 @@ pub trait Runtime: Sync {
     fn write_error(&self, text: &str);
 }
 
-/// The fan-out bound of the tree scan and the document reads.
+/// The fan-out bound of a directory walk and of the document reads.
 ///
-/// The Air tree holds ~1200 unpruned directories and ~180 .iml files; walking them one at a time is latency-bound,
-/// while an unbounded fan-out would want more descriptors at once than the default macOS `ulimit -n` of 256.
+/// Walking a tree one directory at a time is latency-bound, while an unbounded fan-out would want more descriptors at
+/// once than the default macOS `ulimit -n` of 256.
 const IO_CONCURRENCY: usize = 32;
 
 /// Maps `items` with bounded parallelism, answering results in input order.
 ///
-/// Order is restored by index rather than by completion, and that is load-bearing: the scan's listings are zipped
+/// Order is restored by index rather than by completion, and that is load-bearing: the listings of a walk are zipped
 /// back against the frontier that produced them, and a resolution that reads several files must not depend on
 /// which read finished first.
 pub fn par_map<T: Sync, R: Send>(items: &[T], transform: impl Fn(&T) -> R + Sync) -> Vec<R> {
@@ -224,6 +224,50 @@ pub fn par_map<T: Sync, R: Send>(items: &[T], transform: impl Fn(&T) -> R + Sync
 /// The file of a repo-relative path. `/` is a separator on every platform, Windows included.
 pub fn repo_file(runtime: &dyn Runtime, relative: &str) -> PathBuf {
     runtime.repo_root().join(relative)
+}
+
+/// The simple name of a Kotlin or Java source path.
+pub fn source_simple_name(path: &str) -> Option<&str> {
+    crate::regex!(r"([^/]+)\.(?:kt|java)$")
+        .captures(path)
+        .and_then(|found| found.get(1))
+        .map(|name| name.as_str())
+}
+
+/// A repo-relative directory's listing, or `None` when it cannot be read. An empty directory is a real listing,
+/// distinct from an unreadable one.
+pub fn read_dir_or_none(runtime: &dyn Runtime, dir: &str) -> Option<Vec<DirEntry>> {
+    runtime.read_dir(&repo_file(runtime, dir)).ok()
+}
+
+/// A repo-relative file that may legitimately not exist, saving the extra stat an `exists` probe would cost.
+pub fn read_text_or_none(runtime: &dyn Runtime, file: &str) -> Option<String> {
+    runtime.read_text_file(&repo_file(runtime, file)).ok()
+}
+
+/// A repo-relative file that must be readable.
+pub fn read_text(runtime: &dyn Runtime, file: &str) -> Result<String, Refusal> {
+    runtime
+        .read_text_file(&repo_file(runtime, file))
+        .map_err(|error| crate::exit::fail_infra(format!("{file} is unreadable: {error}")))
+}
+
+/// Walks the repo-relative directories breadth first, with one concurrent listing pass per level.
+///
+/// `visit` gets each readable directory with its entries, and pushes the subdirectories to walk into `next`. A
+/// directory that cannot be read is skipped.
+pub fn walk_dirs(runtime: &dyn Runtime, roots: Vec<String>, mut visit: impl FnMut(&str, Vec<DirEntry>, &mut Vec<String>)) {
+    let mut frontier = roots;
+    while !frontier.is_empty() {
+        let listings = par_map(&frontier, |dir| read_dir_or_none(runtime, dir));
+        let mut next = Vec::new();
+        for (dir, entries) in frontier.iter().zip(listings) {
+            if let Some(entries) = entries {
+                visit(dir, entries, &mut next);
+            }
+        }
+        frontier = next;
+    }
 }
 
 #[cfg(test)]
