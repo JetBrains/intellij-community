@@ -778,6 +778,10 @@ Untested: No focused test verifies Shift-selection across sections.
     `density variant selects 32 pixel icons`
   )
 
+- Plugin names must use regular font weight in both Plugins lists.
+
+Untested: No focused test verifies the font weight of plugin names.
+
 - A row refresh must preserve all customized tags.
   [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginRowRenderKeyTest.kt (
     `all tags are constructor presentation`

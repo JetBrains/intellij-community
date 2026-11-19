@@ -328,7 +328,7 @@ class ListPluginComponent private constructor(
     myLayout.setIconComponent(myIconComponent)
 
     myNameComponent.setText(myRenderKey.name)
-    myLayout.setNameComponent(RelativeFont.BOLD.install(myNameComponent))
+    myLayout.setNameComponent(myNameComponent)
 
     createTag()
 
