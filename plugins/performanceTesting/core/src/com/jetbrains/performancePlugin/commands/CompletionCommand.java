@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -138,6 +139,9 @@ public class CompletionCommand extends PerformanceCommand {
     ApplicationManager.getApplication().invokeLater(Context.current().wrap(() -> {
       Project project = context.getProject();
       Editor editor = getEditor(context);
+      // An autopopup started by typing would end the span when this completion cancels it, and would lend this completion
+      // its lookup, created before the span; close it while there is no span.
+      LookupManager.hideActiveLookup(project);
       span.set(startSpan(SPAN_NAME));
       scope.set(span.get().makeCurrent());
       completionTimeStarted.set(System.currentTimeMillis());
