@@ -28,6 +28,7 @@ import org.apache.commons.lang3.RandomStringUtils
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.ClassRule
@@ -81,6 +82,16 @@ class WorkspaceCacheTest {
 
     val modules = ModuleManager.getInstance(project2).modules
     assertEquals(initialModulesSize, modules.size)
+  }
+
+  @Test
+  fun `save a readable cache for a directory-based project`() {
+    val project = loadProject(prepareProject().projectDir)
+    val cache = checkNotNull(WorkspaceModelCache.getInstance(project))
+
+    cache.saveCacheNow()
+
+    assertNotNull("The workspace model cache must be readable after saving", cache.loadCache())
   }
 
   @Test
