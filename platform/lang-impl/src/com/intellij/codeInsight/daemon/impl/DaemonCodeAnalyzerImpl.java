@@ -1458,7 +1458,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
               }
             }
           });
-        }, ForkJoinPool.commonPool());
+        }, JobLauncher.getInstance());
         return null;
       }
       progress = createUpdateProgress(fileEditor);
