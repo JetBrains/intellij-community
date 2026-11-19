@@ -81,6 +81,8 @@
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
+    <extensionPoint name="workspaceService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
     <extensionPoint name="vfs.asyncListener" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
     <extensionPoint name="vfs.asyncListenerBackgroundable" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>

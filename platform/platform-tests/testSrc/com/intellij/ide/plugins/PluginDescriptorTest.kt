@@ -223,6 +223,30 @@ class PluginDescriptorTest {
   }
 
   @Test
+  fun `descriptor with workspace elements loads`() {
+    val pluginFile = pluginDirPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
+    pluginFile.write("""<idea-plugin>
+  <id>bar</id>
+  <extensions defaultExtensionNs="com.intellij">
+    <workspaceService serviceImplementation="a.Service"/>
+  </extensions>
+  <workspaceListeners>
+    <listener class="a.Listener" topic="a.Topic"/>
+  </workspaceListeners>
+  <extensionPoints>
+    <extensionPoint qualifiedName="a.point" interface="a.Point" area="IDEA_WORKSPACE"/>
+  </extensionPoints>
+</idea-plugin>""")
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    val workspace = descriptor.workspaceContainerDescriptor
+    assertThat(workspace.services.map { it.serviceImplementation }).containsExactly("a.Service")
+    assertThat(workspace.listeners.map { it.listenerClassName to it.topicClassName }).containsExactly("a.Listener" to "a.Topic")
+    assertThat(workspace.extensionPoints.map { it.name }).containsExactly("a.point")
+    assertThat(descriptor.projectContainerDescriptor.services).isEmpty()
+  }
+
+  @Test
   fun `descriptor with a v2 content module with a slash in its name loads if module descriptor file has a dot instead of a slash`() {
     val barPath = plugin("bar") {
       content {

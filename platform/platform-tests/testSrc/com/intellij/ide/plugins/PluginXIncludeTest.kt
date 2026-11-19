@@ -329,6 +329,30 @@ internal class PluginXIncludeTest {
   }
 
   @Test
+  fun `an include inside extensionPoints keeps a workspace extension point`() {
+    @Suppress("XmlPathReference")
+    pluginDirPath.resolve("META-INF/plugin.xml").writeXml("""
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>$pluginId</id>
+        <extensionPoints>
+          <xi:include href="a.xml"/>
+        </extensionPoints>
+      </idea-plugin>
+    """.trimIndent())
+    pluginDirPath.resolve("META-INF/a.xml").writeXml("""
+      <idea-plugin>
+        <extensionPoints>
+          <extensionPoint qualifiedName="included" interface="included" area="IDEA_WORKSPACE"/>
+        </extensionPoints>
+      </idea-plugin>
+    """.trimIndent())
+    val pluginSet: PluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins(pluginId)
+    Assertions.assertThat(pluginSet.getEnabledPlugin(pluginId).workspaceContainerDescriptor.extensionPoints.map { it.name })
+      .containsExactly("included")
+  }
+
+  @Test
   @SystemProperty(propertyKey = "plugin.include.enabled", propertyValue = "true")
   fun `includeIf attribute is ignored and warns`() {
     val pluginId = "org.jetbrains.kotlin"

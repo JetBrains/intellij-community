@@ -38,6 +38,7 @@ sealed class IdeaPluginDescriptorImpl(
   abstract val moduleDependencies: ModuleDependencies
 
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
+  val workspaceContainerDescriptor: ContainerDescriptor = raw.workspaceElementsContainer.convert()
   val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
   val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
 

@@ -118,6 +118,7 @@ private val CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
 private val EXTRA_STRINGS = Arrays.asList(
   "id", "order", "os", PluginManagerCore.VENDOR_JETBRAINS, PluginManagerCore.VENDOR_JETBRAINS_SRO,
   "com.intellij.applicationService",
+  "com.intellij.workspaceService",
   "com.intellij.projectService",
   "com.intellij.moduleService",
   "com.intellij.postStartupActivity",
