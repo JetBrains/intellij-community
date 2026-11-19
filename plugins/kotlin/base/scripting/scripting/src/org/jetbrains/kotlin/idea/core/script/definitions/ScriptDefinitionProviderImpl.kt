@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.core.script.definitions
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.edtWriteAction
@@ -96,6 +98,17 @@ class ScriptDefinitionProviderImpl(val project: Project, private val scope: Coro
 
     init {
         project.extensionArea.getExtensionPoint(ScriptDefinitionsProvider.EP_NAME).addChangeListener(scope) { scheduleLoading() }
+        // A provider loads the templates of the project only while the project is trusted.
+        val connection = ApplicationManager.getApplication().messageBus.connect(scope)
+        connection.subscribe(TrustedProjectsListener.TOPIC, object : TrustedProjectsListener {
+            override fun onProjectTrusted(project: Project) {
+                if (project == this@ScriptDefinitionProviderImpl.project) scheduleLoading()
+            }
+
+            override fun onProjectUntrusted(project: Project) {
+                if (project == this@ScriptDefinitionProviderImpl.project) scheduleLoading()
+            }
+        })
         // The StateFlow merges the requests, and the retry repeats a load that a disposed module or a cancellation stopped.
         // The pause keeps an error that repeats from a busy loop.
         scope.launch {

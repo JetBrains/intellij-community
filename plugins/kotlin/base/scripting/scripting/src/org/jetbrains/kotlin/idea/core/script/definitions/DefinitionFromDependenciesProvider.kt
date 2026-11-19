@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.definitions
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.application.runReadActionBlocking
@@ -68,6 +69,10 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
         loadedScriptDefinitions: List<ScriptDefinition>,
     ): List<ScriptDefinition> {
         templates = ScriptTemplateDiscovery.discover(project)
+
+        // Nothing in an untrusted project
+        if (!project.isDefault && !TrustedProjects.isProjectTrusted(project)) return emptyList()
+
         val fqns = definitionClasses()
         if (fqns.isEmpty()) return emptyList()
         return loadDefinitionsFromTemplates(fqns, templateClasspath(), baseHostConfiguration = baseHostConfiguration)

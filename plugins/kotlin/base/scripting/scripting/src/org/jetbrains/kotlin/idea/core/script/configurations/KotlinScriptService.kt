@@ -61,6 +61,7 @@ import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.idea.core.script.modules.modifyKotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.definition.BundledScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.definition.javaHomePath
 import org.jetbrains.kotlin.idea.core.script.definition.jdkSupplier
 import org.jetbrains.kotlin.idea.core.script.definition.moduleSupplier
@@ -102,28 +103,9 @@ import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.updateClasspath
 
-/**
- * Project-level service responsible for managing the full lifecycle of Kotlin script configurations.
- *
- * Responsibilities:
- * - Decides whether a script should be processed using [KotlinScriptProcessingFilter].
- * - Locates the appropriate [ScriptDefinition] for each script file.
- * - Resolves script configurations and writes workspace model entities.
- * - Invalidates entries when scripts are deleted or reloaded.
- * - Drops analysis caches and publishes modification events when entities change.
- *
- * Threading:
- * - Use [scheduleLoading] for fire-and-forget processing from listeners (e.g., VFS or editor events).
- *   If you are already inside a coroutine, prefer the suspend [load] overloads.
- * - External system initialization is awaited before processing begins, see [awaitExternalSystemInitialization].
- */
 @Service(Service.Level.PROJECT)
 class KotlinScriptService(val project: Project, val coroutineScope: CoroutineScope) {
 
-    /**
-     * Launches asynchronous processing for a single `.kts` file on [coroutineScope].
-     * Safe to call from any thread; awaits external system initialization.
-     */
     fun scheduleLoading(virtualFile: VirtualFile) {
         coroutineScope.launchTracked {
             project.awaitExternalSystemInitialization()
@@ -133,11 +115,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
     }
 
-    /**
-     * Resolves the script and updates its workspace model entity. An entity with an outdated definition loads again.
-     * Skips files rejected by [KotlinScriptProcessingFilter].
-     * Waits for the pending loads of the script definitions first, so that the entity gets the current definition.
-     */
+    /** Waits for the pending loads of the script definitions first, so that the entity gets the current definition. */
     suspend fun load(virtualFile: VirtualFile) {
         if (virtualFile is VirtualFileWithoutContent) return
         if (!KotlinScriptProcessingFilter.shouldProcessScript(project, virtualFile)) return
@@ -154,7 +132,6 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         load(virtualFile)
     }
 
-    /** Loads the open scripts that have no entity, for example after their owner removed the entities, and the outdated ones. */
     fun scheduleLoadOpenScripts(): Job = coroutineScope.launchTracked {
         for (openFile in collectOpenScriptFiles(project)) {
             load(openFile)
@@ -162,7 +139,6 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
     }
 
     /**
-     * Reloads the open scripts with an outdated definition, after the pending loads of the script definitions.
      * A closed script reloads when it opens.
      *
      * The returned job waits, but does not rethrow a failure.
@@ -175,8 +151,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
     }
 
     /**
-     * True when this service loaded the configuration of the script from another definition than the current one,
-     * or from the same definition before a build rewrote its template.
+     * Another fingerprint means that a build rewrote the template.
      * A script of another owner, such as a Gradle sync, is never outdated here, because its owner updates it.
      */
     internal fun hasOutdatedDefinition(virtualFile: VirtualFile): Boolean {
@@ -191,7 +166,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         get() = NotificationGroupManager.getInstance().getNotificationGroup("KotlinScriptNotificationGroup")
 
     private suspend fun update(virtualFile: VirtualFile, definition: ScriptDefinition) {
-        if (!TrustedFiles.isTrusted(virtualFile, project)) return
+        if (definition !is BundledScriptDefinition && !TrustedFiles.isTrusted(virtualFile, project)) return
         if (KotlinScriptEntityProvider.provide(project, virtualFile) != null) return
 
         val urlManager = project.workspaceModel.getVirtualFileUrlManager()
@@ -295,7 +270,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
     }
 
-    // Refresh VFS for any dependency JARs that may have been re-downloaded from the last VFS scan.
+    // A dependency JAR can be downloaded again after the last VFS scan.
     private fun ScriptCompilationConfiguration.refreshVfsDependencies() {
         ThreadingAssertions.assertNoReadAccess()
 
@@ -374,10 +349,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
     }
 
-    /**
-     * Sets the JDK of the script, and makes sure the SDK table holds that JDK.
-     * [sdkId] resolves the script SDK from that table, so a JDK that is absent from that table gives no SDK.
-     */
+    /** [sdkId] resolves the script SDK from the SDK table, so a JDK that is absent from that table gives no SDK. */
     fun ScriptCompilationConfiguration.Builder.configureJdkHome(virtualFile: VirtualFile) {
         val jdkHome = get(ide.jdkSupplier)?.invoke(virtualFile)?.absolutePath
             ?: project.javaHomePath?.absolutePath
@@ -449,9 +421,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
     }
 }
 
-// Mirrors MainKtsDependencyResolver from the compiler side: the configuration leaves the coordinates unresolved
-// (ScriptingHostConfiguration.resolveDependencies is off in the IDE) and we fetch them here, off the EDT and
-// under a cancellable progress, before the configuration reaches the workspace model.
+// The IDE turns off ScriptingHostConfiguration.resolveDependencies, so the configuration keeps the coordinates.
+// This function resolves them like MainKtsDependencyResolver of the compiler.
 private suspend fun ScriptCompilationConfiguration.resolveDependencies(
     project: Project,
     virtualFile: VirtualFile,
@@ -496,9 +467,7 @@ private suspend fun ScriptCompilationConfiguration.resolveDependencies(
     }
 }
 
-/**
- * suspendable version of [org.jetbrains.kotlin.utils.topologicalSort]
- */
+/** A suspend copy of [org.jetbrains.kotlin.utils.topologicalSort]. */
 private suspend fun <A> topologicalSort(
     nodes: Iterable<A>,
     reportCycle: (A) -> Nothing = { throw IllegalStateException("Cannot compute a topological sort: The node $it is in a cycle.") },
@@ -511,8 +480,6 @@ private suspend fun <A> topologicalSort(
         if (node in visited) return
         if (node in visiting) reportCycle(node)
 
-        // Keeping track of the nodes that are being visited allows the algorithm to throw an exception in case of a cycle. The input should
-        // never be cyclic, but this approach gives some additional safety in case of bugs.
         visiting.add(node)
         node.dependencies().forEach { visit(it) }
         visiting.remove(node)
@@ -522,8 +489,6 @@ private suspend fun <A> topologicalSort(
 
     nodes.forEach { visit(it) }
 
-    // The paper algorithm inserts nodes at the head of the result list. Because our `visited` set remembers elements in their order of
-    // insertion, the result needs to be reversed.
     return visited.toMutableList()
 }
 

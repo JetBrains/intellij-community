@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.definitions
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ProjectManager
@@ -13,12 +14,16 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestMetadata
 import kotlin.io.path.pathString
+import kotlin.script.experimental.annotations.KotlinScript
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 private const val IN_JAR: String = "testData/script/templatesFromDependencies/inJar/"
 private const val IN_PRODUCTION_RESOURCES: String = "testData/script/templatesFromDependencies/inProductionResources/"
@@ -84,6 +89,36 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
 
         assertTrue("An explicit FQN must be included", provider.definitionClasses().contains("com.example.Explicit"))
         assertNull("An explicit FQN with no marker must report no marker file", provider.markerOriginFor("com.example.Explicit"))
+    }
+
+    fun testUntrustedProjectLoadsNoTemplate() {
+        KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClassNames = TrustProbeScript::class.java.name) }
+        awaitDefinitions()
+        TrustedProjectsTestUtil.enableTrustedProjectsCheck(testRootDisposable)
+        TrustProbeConfiguration.constructed = false
+        val provider = DefinitionFromDependenciesProvider.getInstance(project)
+
+        assertEmpty(provider.provideDefinitions(defaultJvmScriptingHostConfiguration, emptyList()))
+        assertFalse("An untrusted project must not construct the template configuration", TrustProbeConfiguration.constructed)
+
+        TrustedProjects.setProjectTrusted(project, true)
+
+        assertNotEmpty(provider.provideDefinitions(defaultJvmScriptingHostConfiguration, emptyList()))
+        assertTrue("A trusted project must construct the template configuration", TrustProbeConfiguration.constructed)
+    }
+
+    fun testProjectTrustReloadsDefinitions() {
+        runTest(IN_JAR)
+        TrustedProjectsTestUtil.enableTrustedProjectsCheck(testRootDisposable)
+        val provider = DefinitionFromDependenciesProvider.getInstance(project)
+        val definitionsTracker = ScriptDefinitionsModificationTracker.getInstance(project)
+        val definitionsCount = definitionsTracker.modificationCount
+
+        TrustedProjects.setProjectTrusted(project, true)
+        awaitDefinitions()
+
+        assertTrue("The project trust must reload script definitions", definitionsTracker.modificationCount > definitionsCount)
+        assertEquals(listOf("MyTemplate1"), provider.definitionClasses())
     }
 
     fun testFqnPresentInBothSourcesAppearsOnceAndKeepsItsMarker() {
@@ -263,5 +298,19 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
     private fun reloadDefinitions() {
         ScriptDefinitionProviderImpl.getInstance(project).scheduleLoading()
         awaitDefinitions()
+    }
+}
+
+@KotlinScript(fileExtension = "trustprobe.kts", compilationConfiguration = TrustProbeConfiguration::class)
+abstract class TrustProbeScript
+
+class TrustProbeConfiguration : ScriptCompilationConfiguration() {
+    init {
+        constructed = true
+    }
+
+    companion object {
+        @Volatile
+        var constructed: Boolean = false
     }
 }
