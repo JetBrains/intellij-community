@@ -5,20 +5,25 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase
 import com.intellij.codeInsight.completion.CompletionPhase
+import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
+import com.intellij.codeInsight.completion.javaCompletionAutoPopupFixture
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -40,8 +45,18 @@ import kotlin.concurrent.thread
  * (`ApplicationManagerEx.isWriteActionPending`) at construction time, which is
  * exactly the case for a writer parked since the `Synchronous` window.
  */
-class CompletionWriteActionStarvationTest : JavaCompletionAutoPopupTestCase() {
+@TestApplication
+@IndexingModeTemplate
+class CompletionWriteActionStarvationTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
+  private val autoPopup by javaCompletionAutoPopupFixture(projectFixture)
+  private val myFixture get() = autoPopup.fixture
+  private val testRootDisposable get() = myFixture.testRootDisposable
+
+  @Test
   fun testBackgroundWriteActionNotStarvedDuringSynchronousPhase() {
     // Widen the synchronous phase so the background writer reliably announces itself (beforeWriteActionStart) while
     // the phase is still `Synchronous` and the contributor read lock is held, before the flip to `BgCalculation`.
@@ -63,19 +78,16 @@ class CompletionWriteActionStarvationTest : JavaCompletionAutoPopupTestCase() {
       // the write action runs (well under a second). Without the fix the writer is starved until the contributor
       // gives up on its own (the 20s safety cap in StarvingContributor), so this await times out.
       assertTrue(
-        "Background write action was starved for the whole completion pass (IJPL-247940)",
         writer.done.await(15, TimeUnit.SECONDS),
+        "Background write action was starved for the whole completion pass (IJPL-247940)",
       )
-      assertTrue("Background write action did not run", writer.executed.get())
+      assertTrue(writer.executed.get(), "Background write action did not run")
     }
     finally {
       writer.thread?.join(TimeUnit.SECONDS.toMillis(5))
       forceFinishCompletion()
     }
   }
-
-  // NB: keep all lambdas out of the `test*` method itself — Kotlin compiles them to synthetic `test…$lambda$N`
-  // methods that the JUnit3 runner picks up and rejects as "not public".
 
   private fun registerStarvingContributor(state: StarvingState) {
     StarvingContributor.sharedState = state
@@ -114,7 +126,7 @@ class CompletionWriteActionStarvationTest : JavaCompletionAutoPopupTestCase() {
     // The fix cancels the indicator and reschedules a fresh completion; quiesce it deterministically so the
     // restart churn does not leak past the test.
     ApplicationManager.getApplication().invokeAndWait {
-      LookupManager.getInstance(project).hideActiveLookup()
+      LookupManager.getInstance(myFixture.project).hideActiveLookup()
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion)
     }
   }
