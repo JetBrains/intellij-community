@@ -125,6 +125,7 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl"/>
     <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
     <workspaceModel.serializerHook implementation="com.intellij.workspaceModel.ide.impl.RemoveTransientJpsEntities"/>
+    <workspaceModel.serializerHook implementation="com.intellij.workspaceModel.ide.impl.RemoveProjectStoreDirectoryFromCache"/>
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ContentRootFileIndexContributor"/>
