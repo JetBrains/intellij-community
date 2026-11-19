@@ -66,6 +66,8 @@ class SimpleAlignedDiffModel(val viewer: SimpleDiffViewer): AlignedDiffModelBase
   override fun getDiffChanges(): List<AlignableChange> = viewer.diffChanges
 
   override fun needAlignChanges(): Boolean = viewer.isAligningViewModeSupported && super.needAlignChanges()
+
+  override fun isAlignedChangeColored(): Boolean = viewer.isAlignedChangeColored
 }
 
 @ApiStatus.Internal
@@ -127,6 +129,11 @@ abstract class AlignedDiffModelBase(
    */
   protected open val syncScrollSupport: SyncScrollSupport.Support?
     get() = null
+
+  /**
+   * Tells if the align inlay of an inserted or deleted change and its gutter highlighter use the color of the change.
+   */
+  protected open fun isAlignedChangeColored(): Boolean = true
 
   private inline fun withSyncScrollDisabled(block: () -> Unit) {
     val support = syncScrollSupport
@@ -287,7 +294,7 @@ abstract class AlignedDiffModelBase(
       .showAbove(!isLastLine)
       .priority(calcPriority(isLastLine, isTop))
 
-    val color = if (isTop) null else getAlignedChangeColor(diffType, editor)
+    val color = if (isTop || !isAlignedChangeColored()) null else getAlignedChangeColor(diffType, editor)
     val inlayPresentation = AlignDiffInlayRenderer(editor, color)
 
     return editor.inlayModel.addBlockElement(offset, properties, inlayPresentation)!!
@@ -296,7 +303,7 @@ abstract class AlignedDiffModelBase(
   private fun createGutterHighlighterIfNeeded(diffType: TextDiffType,
                                               side: Side,
                                               inlay: Inlay<AlignDiffInlayRenderer>) {
-    if (diffType == TextDiffType.MODIFIED) return
+    if (diffType == TextDiffType.MODIFIED || !isAlignedChangeColored()) return
     val highlighter = getEditor(side).markupModel
       .addRangeHighlighter(inlay.offset, inlay.offset, HighlighterLayer.SELECTION, TextAttributes(), HighlighterTargetArea.EXACT_RANGE)
     highlighter.lineMarkerRenderer = DiffInlayGutterMarkerRenderer(diffType, inlay)
