@@ -146,9 +146,14 @@ private fun PluginSpec.buildMultiJarDir(
     zip("${id!!}.jar") {
       buildMainDir(this, config)
     }
+    val (embedded, nonEmbedded) = content.filterNot { it.packageToMainJar }.partition { it.loadingRule == ModuleLoadingRuleValue.EMBEDDED }
+    for (module in embedded) {
+      zip(module.jarFilename) {
+        module.buildContentDir(this, config)
+      }
+    }
     dir("modules") {
-      for (module in content) {
-        if (module.packageToMainJar) continue
+      for (module in nonEmbedded) {
         zip(module.jarFilename) {
           module.buildContentDir(this, config)
         }
