@@ -32,6 +32,7 @@ import com.intellij.platform.lsp.common.nullResponse
 import com.intellij.platform.lsp.impl.features.documentSymbol.LspCrumb
 import com.intellij.platform.lsp.impl.features.documentSymbol.LspFileBreadcrumbsCollector
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.testFramework.PlatformTestUtil
@@ -188,11 +189,16 @@ internal class LspDocumentSymbolTest {
     else -> icon.toString()
   }
 
+  /**
+   * Types [text] at the end of [file] and commits the document.
+   * Without the commit, the background commit runs a write action later, which can cancel and restart the next read action.
+   */
   private suspend fun typeAtEnd(file: VirtualFile, text: String) {
     withContext(Dispatchers.EDT) {
       WriteCommandAction.runWriteCommandAction(project) {
         val document = FileDocumentManager.getInstance().getDocument(file)!!
         document.insertString(document.textLength, text)
+        PsiDocumentManager.getInstance(project).commitDocument(document)
       }
     }
   }
@@ -281,7 +287,11 @@ internal class LspDocumentSymbolTest {
       codeInsightFixture.crumbsAtCaret()
       val extraRequest = serverSession.expectExtraDocumentSymbolRequest()
 
+      // An edit opens the other file on the server in a write action. Wait for it, so that it does not restart the next request.
+      val otherFileUri = serverSession.fileUri(otherFile)
+      val otherFileOpened = serverSession.expectNotification(serverSession.DID_OPEN) { it.textDocument.uri == otherFileUri }
       typeAtEnd(otherFile, " text")
+      otherFileOpened.await()
       val crumbsAfterOtherEdit = codeInsightFixture.crumbsAtCaret()
 
       assertEquals(listOf("C", "foo"), crumbsAfterOtherEdit.map { it.text })
