@@ -137,6 +137,24 @@ class HeapAnalysisTest {
   }
 
   @Test
+  fun testFinalizerWinsOverPhantomReference() {
+    class TestFinalizer(val referent: Any)
+    class TestFinalizable
+
+    ReferenceStore().use { refStore ->
+      val scenario: HProfBuilder.() -> Unit = {
+        val finalizable = TestFinalizable()
+        addRootGlobalJNI(listOf(refStore.createPhantomReference(finalizable)))
+        addRootUnknown(TestFinalizer(finalizable))
+      }
+      object : HProfScenarioRunner(tmpFolder, remapInMemory) {
+        override fun mapClassName(clazz: Class<*>): String =
+          if (clazz == TestFinalizer::class.java) "java.lang.ref.Finalizer" else super.mapClassName(clazz)
+      }.run(scenario, "testFinalizerWinsOverPhantomReference.txt", listOf("TestFinalizable"))
+    }
+  }
+
+  @Test
   fun testClassNameClash() {
     class MyTestClass1
     class MyTestClass2

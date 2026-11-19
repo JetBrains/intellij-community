@@ -1,0 +1,29 @@
+==================== HISTOGRAM ====================
+Histogram. Top 2147483647 by instance count [All-objects] [Only-strong-ref]:
+    1: [   14/1.62KB] [   14/1.62KB] java.lang.Class
+    2: [    1/    8B] [    1/    8B] java.lang.ref.ReferenceQueue$Lock
+    3: [    1/   16B] [    0/    0B] java.lang.ref.Finalizer
+    4: [    1/   16B] [    1/   16B] java.util.Collections$SingletonList
+    5: [    1/    8B] [    1/    8B] java.lang.ref.PhantomReference
+    6: [    1/    8B] [    0/    0B] TestFinalizable
+    7: [    1/    8B] [    1/    8B] java.lang.ref.ReferenceQueue$Null
+Total -        All:    20 1.68KB 7 classes (Total instances: 20)
+Total - Strong-ref:    18 1.66KB 5 classes (Total instances: 18)
+Unreachable objects:     0      0B
+=================== HEAP SUMMARY ==================
+Class count: 14
+Finalizable size: 24B
+Soft-reachable size: 0B
+Weak-reachable size: 0B
+Phantom-reachable size: 0B
+Reachable only from disposer tree: 0
+======== INSTANCES OF EACH NOMINATED CLASS ========
+Nominated classes:
+ --> [1/8B] TestFinalizable
+
+CLASS: TestFinalizable (1 objects)
+Root 1:
+[    1/100%/    8B]    24B          1   ROOT: Unknown
+[    1/100%/    8B]    24B          1   (root): java.lang.ref.Finalizer
+[    1/100%/    8B]     8B          1 * referent: TestFinalizable
+

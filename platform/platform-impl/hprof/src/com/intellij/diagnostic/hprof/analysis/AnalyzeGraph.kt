@@ -229,8 +229,8 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     DisposerTree,
     SoftReferences,
     WeakReferences,
-    PhantomReferences,
     CleanerFinalizerReferences,
+    PhantomReferences,
     Finished
   }
 
