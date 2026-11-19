@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl
+package com.jetbrains.python.run
 
 import com.intellij.application.options.ModulesComboBox
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
@@ -20,13 +20,11 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.interpreter.PY_WORKSPACE_CONFIGURABLE_ID
-import com.jetbrains.python.run.AbstractPyCommonOptionsForm
-import com.jetbrains.python.run.PyCommonOptionsFormData
 import javax.swing.JCheckBox
 import com.intellij.python.sdk.common.PyInterpreterItem
 import javax.swing.JComboBox
 
-internal class PyIdeCommonOptionsPanel(data: PyCommonOptionsFormData, showModules: Boolean, interpreters: List<PyInterpreterItem?>) {
+internal class PyCommonOptionsPanel(data: PyCommonOptionsFormData, showModules: Boolean, interpreters: List<PyInterpreterItem?>) {
 
   @JvmField
   val moduleCombo = ModulesComboBox()

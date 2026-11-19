@@ -11,11 +11,11 @@ internal class SdkComboPresenter(
   private val hidePopup: () -> Unit,
   private val navToAllInterpreters: () -> Unit,
   private val toggleOtherProjects: () -> Unit,
-  private val propagate: (SdkComboItem?) -> Unit,
+  private val propagate: (SdkComboItem<*>?) -> Unit,
 ) {
 
   /** Routes [item] to the injected side effect that matches its variant. */
-  fun onSelectionChanged(item: SdkComboItem?): Unit = when (item) {
+  fun onSelectionChanged(item: SdkComboItem<*>?): Unit = when (item) {
     SdkComboItem.ShowAll -> {
       hidePopup()
       navToAllInterpreters()
@@ -26,8 +26,8 @@ internal class SdkComboPresenter(
     }
     // The popup does not select a caption, so this branch only keeps the selection as it is.
     is SdkComboItem.GroupHeader -> Unit
-    is SdkComboItem.Existing,
-    SdkComboItem.NoInterpreter,
+    is SdkComboItem.Existing<*>,
+    SdkComboItem.ModuleInterpreter,
     null,
       -> propagate(item)
   }

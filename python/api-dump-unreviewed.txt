@@ -1010,14 +1010,13 @@ com.jetbrains.python.run.configuration.PyInterpreterModeNotifier
 - a:addInterpreterModeListener(java.util.function.Consumer):V
 - a:isRemoteSelected():Z
 f:com.jetbrains.python.run.configuration.PySdkComboBox
-- com.intellij.openapi.ui.ComboBox
+- javax.swing.JPanel
 - com.jetbrains.python.run.configuration.PyInterpreterModeNotifier
 - addInterpreterModeListener(java.util.function.Consumer):V
 - f:apply(com.jetbrains.python.run.AbstractPythonRunConfigurationParams):V
-- f:initList():V
 - isRemoteSelected():Z
+- f:moduleChanged():V
 - f:reset(com.jetbrains.python.run.AbstractPythonRunConfigurationParams):V
-- f:setModule(com.intellij.openapi.module.Module):V
 f:com.jetbrains.python.run.runAnything.PyRunAnythingUtilKt
 - sf:getSearchScope(com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.search.GlobalSearchScope
 - sf:isProjectOrModuleContext(com.intellij.openapi.actionSystem.DataContext):Z

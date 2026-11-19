@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.jetbrains.python.sdk.asPyProjectAddingFacet
+import com.jetbrains.python.project.asPyProjectOrCandidate
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -48,7 +48,7 @@ class PythonAddLocalInterpreterPresenter(
       }
       is Result.Success -> {
         // The interpreter the module then has: the registry can adopt an existing SDK for it.
-        val set = moduleOrProject.moduleIfExists?.asPyProjectAddingFacet()?.setPythonInterpreter(r.result)?.getOr {
+        val set = moduleOrProject.moduleIfExists?.asPyProjectOrCandidate()?.setPythonInterpreter(r.result)?.getOr {
           errorSink.emit(it.error, moduleOrProject.project)
           return@withSdkConfigurationLock
         } ?: r.result

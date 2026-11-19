@@ -20,7 +20,7 @@ class SdkComboPresenterTest {
     var hideCalls: Int = 0
     var navCalls: Int = 0
     var toggleCalls: Int = 0
-    val propagated: MutableList<SdkComboItem?> = mutableListOf()
+    val propagated: MutableList<SdkComboItem<*>?> = mutableListOf()
 
     fun presenter(): SdkComboPresenter = SdkComboPresenter(
       hidePopup = { hideCalls++ },
@@ -41,23 +41,13 @@ class SdkComboPresenterTest {
   }
 
   @Test
-  fun `NoInterpreter propagates the value and skips navigation`() {
-    val r = Recorder()
-    r.presenter().onSelectionChanged(SdkComboItem.NoInterpreter)
-
-    assertEquals(0, r.hideCalls)
-    assertEquals(0, r.navCalls)
-    assertEquals(listOf<SdkComboItem?>(SdkComboItem.NoInterpreter), r.propagated)
-  }
-
-  @Test
   fun `null propagates the value and skips navigation`() {
     val r = Recorder()
     r.presenter().onSelectionChanged(null)
 
     assertEquals(0, r.hideCalls)
     assertEquals(0, r.navCalls)
-    assertEquals(listOf<SdkComboItem?>(null), r.propagated)
+    assertEquals(listOf<SdkComboItem<*>?>(null), r.propagated)
   }
 
   @Test

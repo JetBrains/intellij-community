@@ -8,7 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityStateListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.pycharm.community.ide.impl.PyIdeCommonOptionsForm
+import com.jetbrains.python.run.PyCommonOptionsForm
 import com.intellij.python.junit5Tests.framework.env.pyMockInterpreterFixture
 import com.intellij.python.junit5Tests.framework.env.pyMockInterpreterWithoutModuleFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
@@ -34,11 +34,11 @@ import kotlin.io.path.Path
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * [PyIdeCommonOptionsForm] lists the interpreters of the current snapshots of the Python projects and of the registry. It
+ * [PyCommonOptionsForm] lists the interpreters of the current snapshots of the Python projects and of the registry. It
  * starts no modal progress when it is built and when it reads the list again.
  */
 @TestApplication
-internal class PyIdeCommonOptionsFormTest {
+internal class PyCommonOptionsFormTest {
   private val projectFixture = projectFixture()
   private val pyProjectFixture = projectFixture.pyProjectFixture()
   private val interpreterFixture = pyProjectFixture.pyMockInterpreterFixture(tempPathFixture())
@@ -66,7 +66,7 @@ internal class PyIdeCommonOptionsFormTest {
       }
       ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(ModalityStateListener.TOPIC, modalityListener)
       withContext(Dispatchers.EDT) {
-        val form = PyIdeCommonOptionsForm(formData(project, listOf(module)))
+        val form = PyCommonOptionsForm(formData(project, listOf(module)))
         assertThat(form.offers(interpreter)).isTrue()
         form.updateSdkList(true)
         assertThat(form.offers(interpreter)).isTrue()
@@ -82,7 +82,7 @@ internal class PyIdeCommonOptionsFormTest {
     val module = pyProjectFixture.get().residesOnModule
     val interpreter = otherInterpreterFixture.get()
     withContext(Dispatchers.EDT) {
-      val form = PyIdeCommonOptionsForm(formData(project, listOf(module)))
+      val form = PyCommonOptionsForm(formData(project, listOf(module)))
       assertThat(form.offers(interpreter)).isFalse()
       form.pythonInterpreter = interpreter
       form.isUseModuleSdk = false
@@ -98,7 +98,7 @@ internal class PyIdeCommonOptionsFormTest {
     val module = pyProjectFixture.get().residesOnModule
     val interpreter = otherInterpreterFixture.get()
     withContext(Dispatchers.EDT) {
-      val form = PyIdeCommonOptionsForm(formData(project, listOf(module)))
+      val form = PyCommonOptionsForm(formData(project, listOf(module)))
       form.pythonInterpreter = interpreter
       assertThat(form.offers(interpreter)).isTrue()
       // The module combo reads the list again after a module change.
@@ -113,18 +113,18 @@ internal class PyIdeCommonOptionsFormTest {
   }
 
   /** Whether the interpreter combo of the form holds a row for [interpreter]. */
-  private fun PyIdeCommonOptionsForm.offers(interpreter: PythonInterpreter): Boolean =
+  private fun PyCommonOptionsForm.offers(interpreter: PythonInterpreter): Boolean =
     UIUtil.findComponentsOfType(mainPanel, JComboBox::class.java).any { combo ->
       (0 until combo.itemCount).any { (combo.getItemAt(it) as? PyInterpreterItem)?.ref == interpreter.ref }
     }
 }
 
 /**
- * A reset of [PyIdeCommonOptionsForm] in a project with two modules sets the interpreter, then the module. The module
+ * A reset of [PyCommonOptionsForm] in a project with two modules sets the interpreter, then the module. The module
  * combo then reads a new snapshot, and the form keeps the saved interpreter.
  */
 @TestApplication
-internal class PyIdeCommonOptionsFormResetTest {
+internal class PyCommonOptionsFormResetTest {
   private val projectFixture = projectFixture()
   private val firstFixture = projectFixture.pyProjectFixture(projectFixture.pathInProjectFixture(Path("first")))
   private val secondFixture = projectFixture.pyProjectFixture(projectFixture.pathInProjectFixture(Path("second")))
@@ -140,7 +140,7 @@ internal class PyIdeCommonOptionsFormResetTest {
     val second = secondFixture.get().residesOnModule
     val interpreter = otherInterpreterFixture.get()
     withContext(Dispatchers.EDT) {
-      val form = PyIdeCommonOptionsForm(formData(project, listOf(first, second)))
+      val form = PyCommonOptionsForm(formData(project, listOf(first, second)))
       // The order of `AbstractPythonRunConfiguration.copyParams`.
       form.pythonInterpreter = interpreter
       form.setModule(second)

@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.python.sdk.backend.PyInterpreterLibraryFlowKt;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
@@ -22,7 +23,9 @@ final class JavaPythonFacetConfiguration extends PythonFacetSettings implements 
   @Override
   public FacetEditorTab[] createEditorTabs(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
     return new FacetEditorTab[] {
-      new PythonSdkEditorTab(editorContext)
+      PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled()
+      ? new PythonInterpreterEditorTab(editorContext)
+      : new PythonSdkEditorTab(editorContext)
     };
   }
 

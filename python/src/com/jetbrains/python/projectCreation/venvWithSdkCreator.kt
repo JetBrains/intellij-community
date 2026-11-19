@@ -41,7 +41,7 @@ import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.jetbrains.python.sdk.asPyProjectAddingFacet
+import com.jetbrains.python.project.asPyProjectOrCandidate
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.moduleIfExists
@@ -126,8 +126,8 @@ suspend fun createVenvAndSdk(
     // generated files should be readable by VFS
     VfsUtil.markDirtyAndRefresh(false, true, true, vfsPath)
   }
-  // A module of another IDE, such as CLion, gets the Python facet here, so it becomes a PyProject.
-  val pyProject = module.asPyProjectAddingFacet() ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
+  // A module of another IDE, such as CLion, is a candidate here, and the interpreter makes it a PyProject.
+  val pyProject = module.asPyProjectOrCandidate() ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
   val interpreter = pyProject.setPythonInterpreter(sdk).getOr { return it } ?: return PyResult.localizedError(PyBundle.message("project.error.cant.venv"))
   return Result.success(interpreter)
 }

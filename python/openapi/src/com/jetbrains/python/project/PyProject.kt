@@ -9,6 +9,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.project.impl.PyProjectService
 import com.jetbrains.python.venvReader.Directory
 import org.jetbrains.annotations.ApiStatus
@@ -59,6 +60,27 @@ interface PyProject {
 @ApiStatus.Internal
 fun Project.getPyProjectsWithoutJpsSync(): List<PyProject> =
   ApplicationManager.getApplication().service<PyProjectService>().getPyProjectsWithoutJpsSync(this)
+
+/**
+ * This module as a [PyProject] at its content root, also when it is no Python project yet: [PyProject.asPyProject] is
+ * `null` then. For a UI that sets the first interpreter of the module, such as the root module of GoLand. It writes
+ * nothing: the module becomes a Python project when it gets an interpreter. `null` for a module without a content root.
+ * It reads the current workspace model and does not wait for the JPS model, so a modal dialog can call it.
+ */
+@ApiStatus.Internal
+fun Module.asPyProjectCandidate(): PyProject? =
+  ApplicationManager.getApplication().service<PyProjectService>().getPyProjectCandidate(this)
+
+/**
+ * The [PyProject] of this module for a caller that sets up its interpreter: [PyProject.asPyProject], else the module as
+ * a candidate, see [asPyProjectCandidate]. The interpreter that the caller sets makes the module a Python project, as
+ * the module then names it, so a module of GoLand needs no Python facet. `null` for a module without a content root.
+ *
+ * Other code, such as the status bar or an inspection, uses [PyProject.asPyProject]: a module without an interpreter
+ * is no Python project there.
+ */
+@ApiStatus.Internal
+suspend fun Module.asPyProjectOrCandidate(): PyProject? = asPyProject() ?: asPyProjectCandidate()
 
 /**
  * The machine this project lives on.
