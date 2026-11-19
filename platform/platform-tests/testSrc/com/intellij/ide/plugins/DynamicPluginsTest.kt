@@ -35,6 +35,8 @@ import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsLis
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsListenerService
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.foo.MyFooUISettingsListener
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.foo.MyFooUISettingsListenerService
+import com.intellij.ide.plugins.testPluginSrc.workspaceService.MyLightWorkspaceService
+import com.intellij.ide.plugins.testPluginSrc.workspaceService.MyWorkspaceService
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -863,6 +865,110 @@ class DynamicPluginsTest {
     finally {
       runWriteAction { moduleManager.disposeModule(module) }
     }
+  }
+
+  @Test
+  fun `workspace service loads and unloads`() {
+    val workspace = projectRule.project.workspace
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("plugin") {
+        extensions("""<workspaceService serviceImplementation="${MyWorkspaceService::class.java.name}"/>""")
+        includePackageClassFiles<MyWorkspaceService>()
+      }
+    }
+    val plugin = pluginSet.getEnabledPlugin("plugin")
+    val disposed = AtomicBoolean()
+    loadPluginInTest(plugin) {
+      val handle = workspace.getTestHandleService<MyWorkspaceService, _, _>(plugin)
+      assertThat(handle).isNotNull()
+      handle!!.test { disposed.set(true) }
+    }
+    assertThat(disposed.get()).isTrue()
+  }
+
+  @Test
+  fun `light workspace service unloads`() {
+    val workspace = projectRule.project.workspace
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("plugin") {
+        includePackageClassFiles<MyLightWorkspaceService>()
+      }
+    }
+    val plugin = pluginSet.getEnabledPlugin("plugin")
+    val disposed = AtomicBoolean()
+    loadPluginInTest(plugin) {
+      val handle = workspace.getTestHandleService<MyLightWorkspaceService, _, _>(plugin)
+      assertThat(handle).isNotNull()
+      handle!!.test { disposed.set(true) }
+    }
+    assertThat(disposed.get()).isTrue()
+  }
+
+  @Test
+  fun `workspace listener loads and unloads`() {
+    val workspace = projectRule.project.workspace
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("listeners") {
+        body = """
+          <workspaceListeners>
+            <listener class="${MyUISettingsListener::class.java.name}" topic="${UISettingsListener::class.java.name}"/>
+          </workspaceListeners>
+        """.trimIndent()
+        includePackageClassFiles<MyUISettingsListener>()
+      }
+    }
+    val plugin = pluginSet.getEnabledPlugin("listeners")
+    loadPluginInTestAndCheckClassLoaderCollected(plugin) {
+      val listenerTriggered = AtomicBoolean()
+      val handle = application.getTestHandleService<MyUISettingsListenerService, _, _>(plugin)!!
+      handle.test { listenerTriggered.set(true) }
+      workspace.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+      assertThat(listenerTriggered.get()).isTrue()
+      handle.test { error("supposed to be unloaded") }
+    }
+    workspace.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+  }
+
+  @Test
+  fun `extension of a point of the workspace area loads and unloads`() {
+    val workspace = projectRule.project.workspace
+    val wsEp = plugin("ws.ep") {
+      extensionPoints = """<extensionPoint qualifiedName="ws.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" area="IDEA_WORKSPACE" dynamic="true"/>"""
+    }
+    val wsImpl = plugin("ws.impl") {
+      dependencies { plugin("ws.ep") }
+      extensions("""<barExtension key="foo" implementationClass="y"/>""", "ws")
+    }
+    loadPluginWithText(wsEp).use {
+      val ep = workspace.extensionArea.getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("ws.barExtension")
+      assertThat(ep).isNotNull()
+      assertThat(ApplicationManager.getApplication().extensionArea.getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("ws.barExtension")).isNull()
+
+      loadPluginWithText(wsImpl).use {
+        assertThat(ep!!.extensionList).hasSize(1)
+      }
+
+      assertThat(ep!!.extensionList).isEmpty()
+    }
+    assertThat(workspace.extensionArea.getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("ws.barExtension")).isNull()
+  }
+
+  @Test
+  fun `plugin with workspace elements unloads without restart`() {
+    projectRule.project.workspace
+    val wsPlugin = plugin("ws.all") {
+      extensionPoints = """<extensionPoint qualifiedName="ws.all.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" area="IDEA_WORKSPACE" dynamic="true"/>"""
+      extensions("""<workspaceService serviceImplementation="${MyWorkspaceService::class.java.name}"/>""")
+      extensions("""<barExtension key="foo" implementationClass="y"/>""", "ws.all")
+      body = """
+        <workspaceListeners>
+          <listener class="${MyUISettingsListener::class.java.name}" topic="${UISettingsListener::class.java.name}"/>
+        </workspaceListeners>
+      """.trimIndent()
+      includePackageClassFiles<MyWorkspaceService>()
+      includePackageClassFiles<MyUISettingsListener>()
+    }
+    loadPluginWithText(wsPlugin).use {}
   }
 
   @Test

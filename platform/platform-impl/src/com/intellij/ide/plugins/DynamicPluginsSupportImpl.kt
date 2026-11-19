@@ -31,6 +31,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.trace
@@ -49,6 +50,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.workspace.ProjectWorkspace
+import com.intellij.openapi.workspace.ProjectWorkspaceManager
+import com.intellij.openapi.workspace.impl.ProjectWorkspaceManagerImpl
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
@@ -748,6 +752,8 @@ internal class DynamicPluginsSupportImpl(
     if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
       openedProjects.add(ProjectManagerEx.getInstanceEx().defaultProject)
     }
+    val workspaces = liveWorkspacesOrEmpty()
+    val workspaceAreas = workspaces.map { it.getComponentManagerImpl().extensionArea }
 
     val appExtensionArea = app.extensionArea
     val priorityUnloadListeners = mutableListOf<Runnable>()
@@ -756,6 +762,7 @@ internal class DynamicPluginsSupportImpl(
       extensionMap = module.extensions,
       pluginDescriptor = module,
       appExtensionArea = appExtensionArea,
+      workspaceAreas = workspaceAreas,
       openedProjects = openedProjects,
       priorityUnloadListeners = priorityUnloadListeners,
       unloadListeners = unloadListeners
@@ -769,17 +776,25 @@ internal class DynamicPluginsSupportImpl(
     }
 
     // first, reset all plugin extension points before unregistering, so that listeners don't see plugin in semi-torn-down state
-    processExtensionPoints(module, openedProjects) { points, area ->
+    processExtensionPoints(module, workspaceAreas, openedProjects) { points, area ->
       area.resetExtensionPoints(points, module)
     }
     // unregister plugin extension points
-    processExtensionPoints(module, openedProjects) { points, area ->
+    processExtensionPoints(module, workspaceAreas, openedProjects) { points, area ->
       area.unregisterExtensionPoints(points, module)
     }
 
     val appMessageBus = app.messageBus as MessageBusEx
     app.unloadServices(module, module.appContainerDescriptor.services)
     appMessageBus.unsubscribeLazyListeners(module, module.appContainerDescriptor.listeners)
+
+    for (workspace in workspaces) {
+      val container = workspace.getComponentManagerImpl()
+      val containerDescriptor = module.workspaceContainerDescriptor
+      container.unloadServices(module, containerDescriptor.services)
+      (container.messageBus as MessageBusEx).unsubscribeLazyListeners(module, containerDescriptor.listeners)
+      createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(workspace, it) }
+    }
 
     for (project in openedProjects) {
       (project as ComponentManagerEx).unloadServices(module, module.projectContainerDescriptor.services)
@@ -810,6 +825,7 @@ internal class DynamicPluginsSupportImpl(
     extensionMap: Map<String, List<ExtensionDescriptor>>,
     pluginDescriptor: IdeaPluginDescriptorImpl,
     appExtensionArea: ExtensionsAreaImpl,
+    workspaceAreas: List<ExtensionsAreaImpl>,
     openedProjects: List<Project>,
     priorityUnloadListeners: MutableList<Runnable>,
     unloadListeners: MutableList<Runnable>,
@@ -818,6 +834,13 @@ internal class DynamicPluginsSupportImpl(
       val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners,
                                                                unloadListeners)
       if (isAppLevelEp) {
+        continue
+      }
+
+      val isWorkspaceLevelEp = workspaceAreas.count { area ->
+        area.unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners, unloadListeners)
+      } > 0
+      if (isWorkspaceLevelEp) {
         continue
       }
 
@@ -837,11 +860,17 @@ internal class DynamicPluginsSupportImpl(
 
   internal fun processExtensionPoints(
     pluginDescriptor: IdeaPluginDescriptorImpl,
+    workspaceAreas: List<ExtensionsAreaImpl>,
     projects: List<Project>,
     processor: (points: List<ExtensionPointDescriptor>, area: ExtensionsAreaImpl) -> Unit,
   ) {
     pluginDescriptor.appContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let {
       processor(it, ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+    }
+    pluginDescriptor.workspaceContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let { extensionPoints ->
+      for (area in workspaceAreas) {
+        processor(extensionPoints, area)
+      }
     }
     pluginDescriptor.projectContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let { extensionPoints ->
       for (project in projects) {
@@ -864,6 +893,10 @@ internal class DynamicPluginsSupportImpl(
     listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>,
   ) {
     app.registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
+
+    for (workspace in liveWorkspacesOrEmpty()) {
+      workspace.getComponentManagerImpl().registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
+    }
 
     val openedProjects = ProjectUtil.getOpenProjects().toMutableList()
     @Suppress("TestOnlyProblems")
@@ -913,6 +946,12 @@ internal class DynamicPluginsSupportImpl(
     private const val DISREGARD_ISSUES_PROPERTY: String = "ide.plugins.disregard.dynamic.plugin.reconfiguration.issues"
 
     private val tracer: IJTracer by lazy { TelemetryManager.getInstance().getTracer(Scope("dynamicPluginsSupport", PlatformMetrics)) }
+
+    /** Gives the live workspaces. It does not create the manager: without the manager, no workspace exists. */
+    internal fun liveWorkspacesOrEmpty(): List<ProjectWorkspace> {
+      val manager = serviceIfCreated<ProjectWorkspaceManager>() as? ProjectWorkspaceManagerImpl
+      return manager?.liveWorkspaces() ?: emptyList()
+    }
   }
 
   private class DeferredLoadListeners {

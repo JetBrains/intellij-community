@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  * Constructors of workspace services, listeners, and extensions can take a [ProjectWorkspace], a `CoroutineScope`, or both in that order.
  *
  * When the last project closes, the platform disposes its project services before the workspace services.
+ * When a plugin unloads, the platform disposes its workspace services before its project services.
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable

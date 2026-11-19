@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.ui.IconDeferrer
+import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.ReflectionUtil
@@ -54,6 +55,9 @@ internal object DynamicPluginsCachesCleanup {
     (application as? ApplicationImpl)?.extensionArea?.clearUserCache()
     for (project in ProjectUtil.getOpenProjects()) {
       (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
+    }
+    for (workspace in DynamicPluginsSupportImpl.liveWorkspacesOrEmpty()) {
+      workspace.getComponentManagerImpl().extensionArea.clearUserCache()
     }
     clearCachedValues()
 
