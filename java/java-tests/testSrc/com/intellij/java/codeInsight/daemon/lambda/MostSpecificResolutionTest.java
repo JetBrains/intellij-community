@@ -157,6 +157,11 @@ class MostSpecificResolutionTest {
     doTest();
   }
 
+  @Test
+  void testInaccessibleConstructorInExactMethodReference() {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }
