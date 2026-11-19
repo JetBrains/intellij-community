@@ -42,6 +42,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PyStarArgument
+import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
@@ -70,6 +71,7 @@ import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyNeverType.Companion.convertNoReturnToNever
 import com.jetbrains.python.psi.types.PyOverloadType
 import com.jetbrains.python.psi.types.PyParamSpecType
+import com.jetbrains.python.psi.types.PyPositionalVariadicType
 import com.jetbrains.python.psi.types.PySelfType
 import com.jetbrains.python.psi.types.PyStructuralType
 import com.jetbrains.python.psi.types.PyTupleType
@@ -82,7 +84,6 @@ import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeMap
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
-import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAny
@@ -1637,7 +1638,8 @@ object PyCallExpressionHelper {
         }
         else {
           val expr: PsiElement? = PyPsiUtils.flattenParens(PsiTreeUtil.getChildOfType(argumentExpression, PyExpression::class.java))
-          if (expr is PySequenceExpression) {
+          // A display with a `*` element has no exact count, so it is a spread like any other.
+          if (expr is PySequenceExpression && expr.elements.none { it is PyStarExpression }) {
             val elements = expr.elements.map { PyCallableArgument(it) }
             (if (seenVariadicPositionalArgument) trailingPositionalArguments else allPositionalArguments).addAll(elements)
             componentsOfVariadicPositionalArguments.addAll(elements)
@@ -1680,10 +1682,15 @@ object PyCallExpressionHelper {
 
   /** Number of values a `*operand` spread contributes for a fixed-length tuple, or `-1` when the length is indeterminate. */
   @ApiStatus.Internal
-  fun knownFixedTupleSpreadLength(operand: PyExpression, context: TypeEvalContext): Int {
-    val type = context.getType(operand)
+  fun knownFixedTupleSpreadLength(operand: PyExpression, context: TypeEvalContext): Int =
+    knownFixedTupleLength(context.getType(operand))
+
+  /** Number of values of [type] when it is a tuple of fixed length, or `-1` when the length is indeterminate. */
+  @JvmStatic
+  @ApiStatus.Internal
+  fun knownFixedTupleLength(type: PyType?): Int {
     if (type !is PyTupleType || type.isHomogeneous) return -1
-    if (type.elementTypes.any { it is PyUnpackedTupleType }) return -1
+    if (type.elementTypes.any { it is PyPositionalVariadicType }) return -1
     return type.elementCount
   }
 
