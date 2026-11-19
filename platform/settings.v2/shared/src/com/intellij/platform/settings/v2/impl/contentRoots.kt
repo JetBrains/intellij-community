@@ -15,8 +15,8 @@ import org.jetbrains.annotations.ApiStatus
  * Returns the topmost content roots of this project, sorted by url. It drops every root that lies under another
  * one. See [collapseNestedRoots].
  *
- * `SettingsRootsCache` in the backend module holds the result. `BackendContentRootsApi` in the remote-dev backend
- * split module sends the same result to the frontend, so both sides anchor on the same roots.
+ * `SettingsRootsCache` in the backend module holds the urls of the result. `BackendContentRootsApi` in the remote-dev
+ * backend split module sends the same result to the frontend, so both sides anchor on the same roots.
  */
 @ApiStatus.Internal
 @RequiresReadLock
@@ -32,7 +32,7 @@ fun Project.topmostContentRoots(): List<VirtualFile> {
  * fallback builds the url from the base path, with no VFS access.
  *
  * @param project the project whose roots to return
- * @return the root urls, or an empty list when no provider answers and the project has no base path
+ * @return the root urls, or an empty list when the project has no roots
  */
 @RequiresReadLock
 internal fun fileContextRootUrls(project: Project): List<String> {

@@ -9,5 +9,5 @@ import com.intellij.openapi.project.Project
  */
 internal class DumpSettingsContextAction : SettingsContextDumpAction() {
   override fun rootUrls(project: Project): List<String> =
-    SettingsRootsCache.getInstance(project).roots().map { it.url }
+    SettingsRootsCache.getInstance(project).rootUrls()
 }

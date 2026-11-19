@@ -1,9 +1,3 @@
-a:com.intellij.platform.settings.v2.impl.BaseSettingsContextFactory
-- <init>():V
-- app():com.intellij.platform.settings.v2.SettingsContext
-- deserialize(java.lang.String):com.intellij.platform.settings.v2.SettingsContext
-- file(com.intellij.psi.PsiFile):com.intellij.platform.settings.v2.SettingsContext
-- project(com.intellij.openapi.project.Project):com.intellij.platform.settings.v2.SettingsContext
 f:com.intellij.platform.settings.v2.impl.ContentRootsKt
 - sf:collapseNestedRoots(java.util.Collection):java.util.List
 f:com.intellij.platform.settings.v2.impl.KotlinxSerializerKt
@@ -17,7 +11,6 @@ f:com.intellij.platform.settings.v2.impl.SettingsV2Bundle
 f:com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext
 - com.intellij.platform.settings.v2.ProjectAware
 - com.intellij.platform.settings.v2.SettingsContext
-- sf:Companion:com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext$Companion
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
 - equals(java.lang.Object):Z
 - getIdentity():java.lang.String
@@ -29,8 +22,6 @@ f:com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext
 - f:getRootUrl():java.lang.String
 - f:getUrl():java.lang.String
 - hashCode():I
-f:com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext$Companion
-- f:of(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext
 f:com.intellij.platform.settings.v2.impl.cache.SettingsCacheStorage
 - sf:INSTANCE:com.intellij.platform.settings.v2.impl.cache.SettingsCacheStorage
 - f:appCacheFile():java.nio.file.Path

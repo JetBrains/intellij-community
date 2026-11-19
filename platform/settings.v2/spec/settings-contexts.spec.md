@@ -8,9 +8,9 @@ targets:
   - ../src/com/intellij/platform/settings/v2/ContextFactory.kt
   - ../src/com/intellij/platform/settings/v2/ProjectAware.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsContexts.kt
-  - ../shared/src/com/intellij/platform/settings/v2/impl/BaseSettingsContextFactory.kt
+  - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsContextFactory.kt
+  - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsContentRootsProvider.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/contentRoots.kt
-  - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/BackendSettingsContextFactory.kt
   - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/SettingsRootsCache.kt
 ---
 
@@ -52,7 +52,8 @@ pins the slot of a multidimensional setting without changing the context.
 - A file under no content root must get the project context, with no file node.
   See [ADR 0125](../adr/0125-a-file-under-no-content-root-gets-the-project-context.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
-- A file inside a jar under the project must get the project context.
+- A file of an archive file system must get the project context. A file inside a jar under the project is such a
+  file. See [ADR 0179](../adr/0179-one-context-factory-serves-every-product-mode-and-an-extension-point-gives-it-the-content-roots.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
 - A non-persistent file must resolve to a persistent file before it gets a context. A persistent file is not a
   light file. Until the platform reaches one, it repeats these steps. See
@@ -72,6 +73,19 @@ pins the slot of a multidimensional setting without changing the context.
 
 ### Content roots
 
+- One context factory must build the contexts in every product mode. See
+  [ADR 0179](../adr/0179-one-context-factory-serves-every-product-mode-and-an-extension-point-gives-it-the-content-roots.md).
+- The factory must take the anchor roots of a project from the first content roots provider. The monolith and the
+  backend supply the roots of the project model.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsRootsProviderTest.kt
+- With no content roots provider, the base directory of the project must be the only anchor root. A light product
+  mode has no provider.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNoRootsProviderTest.kt
+- A file must match an anchor root by path: its path is the path of the root, or lies under it. The protocol of
+  the root url does not count, and the context must keep the root url as the provider gave it.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsRootsProviderTest.kt
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNoRootsProviderTest.kt
 - The anchor roots must be the project content roots with every nested root dropped, sorted.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsRootCollapsingTest.kt
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNestedRootsTest.kt
@@ -130,3 +144,9 @@ pins the slot of a multidimensional setting without changing the context.
   [ADR 0138](../adr/0138-named-scopes-are-postponed-and-their-place-in-the-chain-is-open.md).
 - A user context is postponed. See [ADR 0137](../adr/0137-a-user-context-is-postponed.md).
 - Symlinked directories and files are not designed.
+- Must a root that is the root of a file system match its files? It matches no file, so every file gets the
+  project context.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsRootsProviderTest.kt
+- The base directory answer of a light product mode compares the path of a file with the base path of the project
+  as it is, with its letter case. A project that is opened by a path with another letter case gets no file context
+  there on a file system that ignores the case.

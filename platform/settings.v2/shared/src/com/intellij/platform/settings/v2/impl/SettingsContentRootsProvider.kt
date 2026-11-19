@@ -11,6 +11,9 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Supplies the roots that a file context anchors on. Only the first extension answers. With no extension, the base
  * directory of the project is the only root. See [fileContextRootUrls].
+ *
+ * `ProjectModelContentRootsProvider` in `intellij.platform.settings.v2.backend.baseline` answers in the monolith and on
+ * the backend. `FrontendContentRootsProvider` in `intellij.platform.settings.v2.frontend.split` answers on the frontend.
  */
 @ApiStatus.Internal
 interface SettingsContentRootsProvider {

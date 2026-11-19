@@ -30,6 +30,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.platform.settings.v2.SettingsVault"
                         serviceImplementation="com.intellij.platform.settings.v2.impl.SettingsVaultImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.settings.v2.ContextFactory"
+                        serviceImplementation="com.intellij.platform.settings.v2.impl.SettingsContextFactory"/>
     <settings.v2.layerProvider id="settings.v2.appDefaults" order="first"
                                implementation="com.intellij.platform.settings.v2.impl.providers.AppDefaultsLayerProvider"/>
     <settings.v2.layerProvider id="settings.v2.appProvider" order="after settings.v2.appDefaults"
