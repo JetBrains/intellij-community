@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -36,6 +37,8 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
@@ -55,6 +58,9 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
   private val fillJobs = ConcurrentHashMap<VirtualFile, Job>()
 
   private val requests = Channel<Unit>(capacity = Channel.CONFLATED)
+
+  // A read of the files and the write of its records hold this lock. Without it, a late write of old records undoes a newer write.
+  private val updateLock = Mutex()
 
   // A change of the default lines in the settings. The default entities then get the new lines, see [syncDefaultsOnChanges].
   private val defaultLinesChanges = Channel<Unit>(capacity = Channel.CONFLATED)
@@ -116,12 +122,15 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
   @RequiresReadLockAbsence(generateAssertion = false)
   fun applyNow(file: VirtualFile) {
     ThreadingAssertions.assertNoReadAccess()
-    filesToRead.remove(file)
-    val model = WorkspaceModel.getInstance(project)
-    val record = readIfRelevant(file, model) ?: return
-    baseDirsToForget.remove(record.baseDir.url)
-    if (record.changes(model.currentSnapshot)) {
-      writeNow(model, records = listOf(record), forgottenBaseDirUrls = emptyList())
+    runBlockingMaybeCancellable {
+      updateLock.withLock {
+        filesToRead.remove(file)
+        val model = WorkspaceModel.getInstance(project)
+        val record = readIfRelevant(file, model) ?: return@withLock
+        if (record.changes(model.currentSnapshot)) {
+          model.update(UPDATE_DESCRIPTION, updater(records = listOf(record), forgottenBaseDirUrls = emptyList()))
+        }
+      }
     }
   }
 
@@ -130,7 +139,6 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
     filesToRead.remove(file)
     val model = WorkspaceModel.getInstance(project)
     val record = readIfRelevant(file, model) ?: return
-    baseDirsToForget.remove(record.baseDir.url)
     if (record.changes(model.currentSnapshot)) {
       model.updateProjectModel(UPDATE_DESCRIPTION, updater(records = listOf(record), forgottenBaseDirUrls = emptyList()))
     }
@@ -144,7 +152,11 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
     ThreadingAssertions.assertNoReadAccess()
     val model = WorkspaceModel.getInstance(project)
     if (model.currentSnapshot.findAnalysisIgnoreEntity(baseDirUrl) == null) return
-    writeNow(model, records = emptyList(), forgottenBaseDirUrls = listOf(baseDirUrl))
+    runBlockingMaybeCancellable {
+      updateLock.withLock {
+        model.update(UPDATE_DESCRIPTION, updater(records = emptyList(), forgottenBaseDirUrls = listOf(baseDirUrl)))
+      }
+    }
   }
 
   /**
@@ -166,11 +178,12 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
    */
   suspend fun processNow() {
     val model = project.serviceAsync<WorkspaceModel>()
-    if (!Registry.`is`(ANALYSIS_IGNORE_ENABLED_KEY, true)) {
-      removeEverything(model)
-      return
+    updateLock.withLock {
+      if (Registry.`is`(ANALYSIS_IGNORE_ENABLED_KEY, true)) processQueue(model) else removeEverything(model)
     }
+  }
 
+  private suspend fun processQueue(model: WorkspaceModel) {
     // A file that waits for its fill stays unread: an empty new file would otherwise remove the defaults of its project root, and its lines
     // would then add them back. The fill applies the file itself, or queues it again.
     val files = drain(filesToRead).filterNot { fillJobs.containsKey(it) }
@@ -179,7 +192,11 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
 
     val records = ArrayList<AnalysisIgnoreRecord>()
     withContext(Dispatchers.IO) {
-      for (file in files) {
+      // A forget can be older than the file in its directory. The queue then reads that file and keeps its entity.
+      val filesOfForgottenDirs = baseDirUrls.mapNotNull { url ->
+        VirtualFileManager.getInstance().findFileByUrl(url)?.findChild(ANALYSIS_IGNORE_FILE_NAME)?.takeUnless { fillJobs.containsKey(it) }
+      }
+      for (file in (files + filesOfForgottenDirs).distinct()) {
         val record = readIfRelevant(file, model) ?: continue
         baseDirUrls.remove(record.baseDir.url)
         if (record.changes(model.currentSnapshot)) {
@@ -250,11 +267,6 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
   private fun AnalysisIgnoreRecord.changes(snapshot: EntityStorage): Boolean {
     val entity = snapshot.findAnalysisIgnoreEntity(baseDir.url) ?: return true
     return patterns != entity.patterns
-  }
-
-  private fun writeNow(model: WorkspaceModel, records: List<AnalysisIgnoreRecord>, forgottenBaseDirUrls: List<String>) {
-    val updater = updater(records, forgottenBaseDirUrls)
-    runBlockingMaybeCancellable { model.update(UPDATE_DESCRIPTION, updater) }
   }
 
   private fun updater(records: List<AnalysisIgnoreRecord>, forgottenBaseDirUrls: List<String>): (MutableEntityStorage) -> Unit = { builder ->

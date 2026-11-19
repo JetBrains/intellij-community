@@ -1337,6 +1337,8 @@ class AnalysisIgnoreTest {
 
   /** Reads [files] and updates the entities at once, as the scanning of the project does. */
   private suspend fun discover(vararg files: VirtualFile) {
+    // A fill that ends later puts the file back into the queue, and the queue could then read it after a step of the test forgot it.
+    service.awaitPendingFills()
     for (file in files) {
       service.applyNow(file)
     }
