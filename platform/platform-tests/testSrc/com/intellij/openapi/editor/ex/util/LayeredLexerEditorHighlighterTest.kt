@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.highlighter.HighlighterClient
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
@@ -74,6 +76,26 @@ internal class LayeredLexerEditorHighlighterTest {
         runWriteAction { document.replaceString(start, end, replacement) }
         assertConsistent(highlighter, document, separator)
       }
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["", "|", "\n\n"])
+  fun `each changed layer gets one document edit`(separator: String): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val document = DocumentImpl("zz|aa|BB|cc|DD|zz", true)
+      val highlighter = highlighter(document, separator)
+      var edits = 0
+      for (layer in markers(highlighter).map { it.document }.distinct()) {
+        layer.addDocumentListener(object : DocumentListener {
+          override fun documentChanged(event: DocumentEvent) {
+            edits++
+          }
+        }, disposable)
+      }
+      runWriteAction { document.replaceString(3, 14, "ee|FF|gg|HH") }
+      assertThat(edits).isEqualTo(2)
+      assertConsistent(highlighter, document, separator)
     }
   }
 
