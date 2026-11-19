@@ -24,6 +24,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.workspace.ProjectWorkspace
+import com.intellij.openapi.workspace.workspace
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.reportSequentialProgress
@@ -59,6 +61,7 @@ internal class CreateAllServicesAndExtensionsAction : DumbAwareAction() {
 private fun checkLightServices(
   application: ComponentManagerEx,
   project: ComponentManagerImpl?,
+  workspace: ComponentManagerImpl?,
   errors: MutableList<Throwable>,
 ) {
   for (mainDescriptor in PluginManagerCore.getPluginSet().enabledPlugins) {
@@ -67,7 +70,7 @@ private fun checkLightServices(
                             ?: continue
     scanClassLoader(pluginClassLoader).use { scanResult ->
       for (classInfo in scanResult.getClassesWithAnnotation(Service::class.java.name)) {
-        checkLightServices(classInfo, mainDescriptor, application, project) {
+        checkLightServices(classInfo, mainDescriptor, application, project, workspace) {
           val error = when (it) {
             is ProcessCanceledException -> throw it
             is PluginException -> it
@@ -132,9 +135,15 @@ private fun createAllServicesAndExtensions2(): List<Throwable> {
       }
 
       val project = ProjectUtil.getOpenProjects().firstOrNull()?.getComponentManagerImpl()
+      val workspace = (project as Project?)?.workspace?.getComponentManagerImpl()
       if (project != null) {
         reporter.indeterminateStep {
           checkContainer2(project, "project", taskExecutor)
+        }
+        if (workspace != null) {
+          reporter.indeterminateStep {
+            checkContainer2(workspace, "workspace", taskExecutor)
+          }
         }
         val module = ModuleManager.getInstance(project as Project).modules.firstOrNull()?.getComponentManagerImpl()
         if (module != null) {
@@ -144,7 +153,7 @@ private fun createAllServicesAndExtensions2(): List<Throwable> {
         }
       }
       reporter.indeterminateStep("Checking light services...")
-      checkLightServices(application, project, errors)
+      checkLightServices(application, project, workspace, errors)
     }
   }
   return errors
@@ -244,6 +253,7 @@ private fun checkLightServices(
   mainDescriptor: PluginMainDescriptor,
   application: ComponentManagerEx,
   project: ComponentManagerImpl?,
+  workspace: ComponentManagerImpl?,
   onThrowable: (Throwable) -> Unit,
 ) {
   try {
@@ -256,7 +266,7 @@ private fun checkLightServices(
                               else -> loadLightServiceClass(className, mainDescriptor)
                             } ?: return
 
-    val (isAppLevel, isProjectLevel) = classInfo.getAnnotationInfo(Service::class.java.name)
+    val (isAppLevel, isProjectLevel, isWorkspaceLevel) = classInfo.getAnnotationInfo(Service::class.java.name)
                                          .parameterValues
                                          .find { it.name == "value" }
                                          ?.let { levelsByAnnotations(it) }
@@ -265,6 +275,7 @@ private fun checkLightServices(
     val components = listOfNotNull(
       if (isAppLevel) application else null,
       if (isProjectLevel) project else null,
+      if (isWorkspaceLevel) workspace else null,
     )
 
     for (component in components) {
@@ -284,6 +295,7 @@ private fun checkLightServices(
 private data class Levels(
   val isAppLevel: Boolean,
   val isProjectLevel: Boolean,
+  val isWorkspaceLevel: Boolean,
 )
 
 private fun levelsByConstructors(constructors: Array<Constructor<*>>): Levels {
@@ -292,6 +304,10 @@ private fun levelsByConstructors(constructors: Array<Constructor<*>>): Levels {
     isProjectLevel = constructors.any { constructor ->
       constructor.parameterCount == 1
       && constructor.parameterTypes.get(0) == Project::class.java
+    },
+    isWorkspaceLevel = constructors.any { constructor ->
+      constructor.parameterCount == 1
+      && constructor.parameterTypes.get(0) == ProjectWorkspace::class.java
     },
   )
 }
@@ -305,6 +321,7 @@ private fun levelsByAnnotations(annotationParameterValue: AnnotationParameterVal
   return Levels(
     isAppLevel = hasLevel(Service.Level.APP),
     isProjectLevel = hasLevel(Service.Level.PROJECT),
+    isWorkspaceLevel = hasLevel(Service.Level.WORKSPACE),
   )
 }
 
