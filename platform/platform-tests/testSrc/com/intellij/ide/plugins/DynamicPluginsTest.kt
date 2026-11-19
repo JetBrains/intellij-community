@@ -70,6 +70,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
+import com.intellij.openapi.workspace.workspace
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -862,6 +863,23 @@ class DynamicPluginsTest {
     finally {
       runWriteAction { moduleManager.disposeModule(module) }
     }
+  }
+
+  @Test
+  fun `workspace service override is declined`() {
+    projectRule.project.workspace
+    Registry.get("ide.plugins.allow.dynamic.services.overrides").setValue(false, testDisposable.disposable)
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("wsServiceOverride") {
+        extensions("""
+          <workspaceService serviceInterface="${ServiceInterface::class.qualifiedName}"
+                            serviceImplementation="${DefaultService::class.qualifiedName}"
+                            overrides="true"/>
+        """.trimIndent())
+      }
+    }
+    val validationIssue = DynamicPlugins.validateCanLoadWithoutRestart(pluginSet.getPlugin("wsServiceOverride"))
+    assertThat(validationIssue).contains("service override")
   }
 
   @Test

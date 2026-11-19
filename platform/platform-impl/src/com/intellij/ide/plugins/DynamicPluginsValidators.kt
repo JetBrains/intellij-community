@@ -304,6 +304,7 @@ internal object DynamicPluginsValidators {
     validateScope: IssueReporter.(ContainerDescriptor) -> Unit,
   ) {
     validateScope(descriptor.appContainerDescriptor)
+    validateScope(descriptor.workspaceContainerDescriptor)
     validateScope(descriptor.projectContainerDescriptor)
     validateScope(descriptor.moduleContainerDescriptor)
   }
@@ -315,6 +316,7 @@ internal object DynamicPluginsValidators {
  */
 internal class MutableAppElementsModel {
   private val appScope = ScopedContainer(hashMapOf())
+  private val workspaceScope = ScopedContainer(hashMapOf())
   private val projectScope = ScopedContainer(hashMapOf())
   private val moduleScope = ScopedContainer(hashMapOf())
 
@@ -376,12 +378,14 @@ internal class MutableAppElementsModel {
     body: IssueReporter.(ContainerDescriptor, ScopedContainer) -> Unit,
   ) {
     body(descriptor.appContainerDescriptor, appScope)
+    body(descriptor.workspaceContainerDescriptor, workspaceScope)
     body(descriptor.projectContainerDescriptor, projectScope)
     body(descriptor.moduleContainerDescriptor, moduleScope)
   }
 
   private fun <R> lookupInEveryScope(body: (ScopedContainer) -> R?): R? {
     body(appScope)?.let { return it }
+    body(workspaceScope)?.let { return it }
     body(projectScope)?.let { return it }
     body(moduleScope)?.let { return it }
     return null
