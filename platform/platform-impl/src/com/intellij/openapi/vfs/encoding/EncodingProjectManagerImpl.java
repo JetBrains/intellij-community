@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -57,6 +59,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,7 +75,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   private @Nullable Charset myDefaultConsoleCharset;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
   private BOMForNewUTF8Files myBomForNewUtf8Files = BOMForNewUTF8Files.NEVER;
-  private final Map<VirtualFilePointer, Charset> myMapping = ConcurrentCollectionFactory.createConcurrentMap(new HashingStrategy<>() {
+  private static final HashingStrategy<VirtualFilePointer> POINTER_URL_STRATEGY = new HashingStrategy<>() {
     @Override
     public int hashCode(VirtualFilePointer pointer) {
       // TODO !! hashCode is unstable - VirtualFilePointer URL can change
@@ -86,7 +89,14 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       String u2 = o2.getUrl();
       return Strings.areSameInstance(u1, u2) || (SystemInfoRt.isFileSystemCaseSensitive ? u1.equals(u2) : u1.equalsIgnoreCase(u2));
     }
-  });
+  };
+  private final Map<VirtualFilePointer, Charset> myMapping = ConcurrentCollectionFactory.createConcurrentMap(POINTER_URL_STRATEGY);
+  /**
+   * The parent disposable of each pointer that this manager creates, by the URL of the pointer.
+   * The manager disposes it when the URL leaves {@link #myMapping}. Guarded by itself.
+   */
+  private final Map<VirtualFilePointer, Disposable> myPointerDisposables =
+    ConcurrentCollectionFactory.createConcurrentMap(POINTER_URL_STRATEGY);
   private volatile Charset myProjectCharset;
 
   public EncodingProjectManagerImpl(@NotNull Project project) {
@@ -102,15 +112,18 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public Element getState() {
     Element element = new Element("x");
     if (!myMapping.isEmpty()) {
-      List<Map.Entry<VirtualFilePointer, Charset>> mappings = new ArrayList<>(myMapping.entrySet());
-      ContainerUtil.quickSort(mappings, Comparator.comparing(e -> e.getKey().getUrl()));
-      for (Map.Entry<VirtualFilePointer, Charset> mapping : mappings) {
-        VirtualFilePointer file = mapping.getKey();
-        Charset charset = mapping.getValue();
+      List<Pair<String, String>> mappings = new ArrayList<>();
+      synchronized (myPointerDisposables) {
+        for (Map.Entry<VirtualFilePointer, Charset> mapping : myMapping.entrySet()) {
+          mappings.add(Pair.create(mapping.getKey().getUrl(), mapping.getValue().name()));
+        }
+      }
+      ContainerUtil.quickSort(mappings, Comparator.comparing(mapping -> mapping.getFirst()));
+      for (Pair<String, String> mapping : mappings) {
         Element child = new Element("file");
         element.addContent(child);
-        child.setAttribute("url", file.getUrl());
-        child.setAttribute("charset", charset.name());
+        child.setAttribute("url", mapping.getFirst());
+        child.setAttribute("charset", mapping.getSecond());
       }
     }
     if (myProjectCharset != null) {
@@ -139,28 +152,30 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   @Override
   public void loadState(@NotNull Element element) {
-    myMapping.clear();
-    myProjectCharset = null;
-    List<Element> files = element.getChildren("file");
-    if (!files.isEmpty()) {
-      Map<VirtualFilePointer, Charset> mapping = new HashMap<>();
-      for (Element fileElement : files) {
-        String url = fileElement.getAttributeValue("url");
-        String charsetName = fileElement.getAttributeValue("charset");
-        Charset charset = CharsetToolkit.forName(charsetName);
-        if (charset == null) {
-          continue;
-        }
+    synchronized (myPointerDisposables) {
+      myMapping.clear();
+      myProjectCharset = null;
+      List<Element> files = element.getChildren("file");
+      if (!files.isEmpty()) {
+        Map<VirtualFilePointer, Charset> mapping = new HashMap<>();
+        for (Element fileElement : files) {
+          String url = fileElement.getAttributeValue("url");
+          String charsetName = fileElement.getAttributeValue("charset");
+          Charset charset = CharsetToolkit.forName(charsetName);
+          if (charset == null) {
+            continue;
+          }
 
-        if (PROJECT_URL.equals(url)) {
-          myProjectCharset = charset;
+          if (PROJECT_URL.equals(url)) {
+            myProjectCharset = charset;
+          }
+          else if (url != null) {
+            mapping.put(createPointer(url), charset);
+          }
         }
-        else if (url != null) {
-          VirtualFilePointer file = VirtualFilePointerManager.getInstance().create(url, this, null);
-          mapping.put(file, charset);
-        }
+        myMapping.putAll(mapping);
       }
-      myMapping.putAll(mapping);
+      releasePointersOutsideMapping();
     }
 
     myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
@@ -177,9 +192,12 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     }
 
     FileDocumentManagerImpl fileDocumentManager = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
-    for (VirtualFilePointer pointer : myMapping.keySet()) {
-      VirtualFile file = pointer.getFile();
-      Document cachedDocument = file == null ? null : fileDocumentManager.getCachedDocument(file);
+    List<VirtualFile> files;
+    synchronized (myPointerDisposables) {
+      files = ContainerUtil.mapNotNull(myMapping.keySet(), VirtualFilePointer::getFile);
+    }
+    for (VirtualFile file : files) {
+      Document cachedDocument = fileDocumentManager.getCachedDocument(file);
       if (cachedDocument != null) {
         // reload document in the right encoding if someone sneaky (you, BreakpointManager) managed to load the document before project opened
         reload(file, myProject, fileDocumentManager);
@@ -222,12 +240,21 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       myProjectCharset = charset;
     }
     else {
-      VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(virtualFileOrDir, this, null);
-      if (charset == null) {
-        oldCharset = myMapping.remove(pointer);
-      }
-      else {
-        oldCharset = myMapping.put(pointer, charset);
+      VirtualFilePointer key = new LightFilePointer(virtualFileOrDir.getUrl());
+      synchronized (myPointerDisposables) {
+        if (charset == null) {
+          oldCharset = myMapping.remove(key);
+          Disposable disposable = myPointerDisposables.remove(key);
+          if (disposable != null) {
+            Disposer.dispose(disposable);
+          }
+        }
+        else {
+          oldCharset = myMapping.replace(key, charset);
+          if (oldCharset == null) {
+            myMapping.put(createPointer(virtualFileOrDir), charset);
+          }
+        }
       }
     }
 
@@ -279,10 +306,12 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
    * @return readonly map of current mappings. to modify mappings use {@link #setMapping(Map)}
    */
   public @NotNull Map<? extends VirtualFile, ? extends Charset> getAllMappings() {
-    return myMapping.entrySet().stream()
-      .map(e -> Pair.create(e.getKey().getFile(), e.getValue()))
-      .filter(e -> e.getFirst() != null)
-      .collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond(), (c1, c2) -> c1));
+    synchronized (myPointerDisposables) {
+      return myMapping.entrySet().stream()
+        .map(e -> Pair.create(e.getKey().getFile(), e.getValue()))
+        .filter(e -> e.getFirst() != null)
+        .collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond(), (c1, c2) -> c1));
+    }
   }
 
   /**
@@ -297,7 +326,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
-    final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
+    final Map<String, Charset> newMap = new HashMap<>(mapping.size());
 
     // ChangeFileEncodingAction should not start progress "reload files..."
     suppressReloadDuring(() -> {
@@ -311,10 +340,9 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
         }
         else {
           if (!fileIndex.isInContent(virtualFile)) continue;
-          VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(virtualFile, this, null);
-
-          if (!fileEncodingChanged(virtualFile, myMapping.get(pointer), charset)) continue;
-          newMap.put(pointer, charset);
+          String url = virtualFile.getUrl();
+          if (!fileEncodingChanged(virtualFile, myMapping.get(new LightFilePointer(url)), charset)) continue;
+          newMap.put(url, charset);
         }
       }
     });
@@ -327,7 +355,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public void setPointerMapping(@NotNull Map<? extends VirtualFilePointer, ? extends Charset> mapping) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
-    final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
+    final Map<String, Charset> newMap = new HashMap<>(mapping.size());
 
     // ChangeFileEncodingAction should not start progress "reload files..."
     suppressReloadDuring(() -> {
@@ -340,12 +368,15 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
           myProjectCharset = charset;
         }
         else {
-          final VirtualFile virtualFile = filePointer.getFile();
+          // A disposed pointer has an empty URL.
+          String url = filePointer.getUrl();
+          if (url.isEmpty()) continue;
+          final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(url);
           if (virtualFile != null) {
             if (!fileIndex.isInContent(virtualFile)
-                || !fileEncodingChanged(virtualFile, myMapping.get(filePointer), charset)) continue;
+                || !fileEncodingChanged(virtualFile, myMapping.get(new LightFilePointer(url)), charset)) continue;
           }
-          newMap.put(filePointer, charset);
+          newMap.put(url, charset);
         }
       }
     });
@@ -353,39 +384,50 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     updateMapping(newMap);
   }
 
-  private void updateMapping(Map<VirtualFilePointer, Charset> newMap) {
-    Map<VirtualFilePointer, Charset> oldMap = new HashMap<>(myMapping);
-    myMapping.clear();
-    myMapping.putAll(newMap);
-
-    final Set<VirtualFilePointer> changed = new HashSet<>(oldMap.keySet());
-    for (Map.Entry<VirtualFilePointer, Charset> entry : newMap.entrySet()) {
-      VirtualFilePointer file = entry.getKey();
-      Charset charset = entry.getValue();
-      Charset oldCharset = oldMap.get(file);
-      if (Comparing.equal(oldCharset, charset)) {
-        changed.remove(file);
+  private void updateMapping(Map<String, Charset> newUrlMap) {
+    final Set<VirtualFilePointer> changed;
+    List<VirtualFile> changedFiles;
+    synchronized (myPointerDisposables) {
+      Map<VirtualFilePointer, Charset> newMap = new HashMap<>(newUrlMap.size());
+      for (Map.Entry<String, Charset> entry : newUrlMap.entrySet()) {
+        newMap.put(createPointer(entry.getKey()), entry.getValue());
       }
+      Map<VirtualFilePointer, Charset> oldMap = new HashMap<>(myMapping);
+      changed = new HashSet<>(oldMap.keySet());
+      for (Map.Entry<VirtualFilePointer, Charset> entry : newMap.entrySet()) {
+        VirtualFilePointer file = entry.getKey();
+        Charset charset = entry.getValue();
+        Charset oldCharset = oldMap.get(file);
+        if (Comparing.equal(oldCharset, charset)) {
+          changed.remove(file);
+        }
+      }
+
+      Set<VirtualFilePointer> added = new HashSet<>(newMap.keySet());
+      added.removeAll(oldMap.keySet());
+
+      Set<VirtualFilePointer> removed = new HashSet<>(oldMap.keySet());
+      removed.removeAll(newMap.keySet());
+
+      changed.addAll(added);
+      changed.addAll(removed);
+      changed.remove(null);
+
+      // Resolve the files before the release. The release can dispose the pointer of a removed file.
+      changedFiles = ContainerUtil.mapNotNull(changed, VirtualFilePointer::getFile);
+
+      myMapping.clear();
+      myMapping.putAll(newMap);
+      releasePointersOutsideMapping();
     }
-
-    Set<VirtualFilePointer> added = new HashSet<>(newMap.keySet());
-    added.removeAll(oldMap.keySet());
-
-    Set<VirtualFilePointer> removed = new HashSet<>(oldMap.keySet());
-    removed.removeAll(newMap.keySet());
-
-    changed.addAll(added);
-    changed.addAll(removed);
-    changed.remove(null);
 
     if (!changed.isEmpty()) {
       Processor<VirtualFile> reloadProcessor = createChangeCharsetProcessor(myProject);
       tryStartReloadWithProgress(() -> {
         Set<VirtualFile> processed = new HashSet<>();
         next:
-        for (VirtualFilePointer changedFilePointer : changed) {
-          VirtualFile changedFile = changedFilePointer.getFile();
-          if (changedFile == null) continue;
+        for (VirtualFile changedFile : changedFiles) {
+          if (!changedFile.isValid()) continue;
           for (VirtualFile processedFile : processed) {
             if (VfsUtilCore.isAncestor(processedFile, changedFile, false)) continue next;
           }
@@ -396,6 +438,46 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     }
 
     myModificationTracker.incModificationCount();
+  }
+
+  private @NotNull VirtualFilePointer createPointer(@NotNull VirtualFile file) {
+    Disposable disposable = createPointerDisposable();
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null);
+    rememberPointerDisposable(pointer, disposable);
+    return pointer;
+  }
+
+  private @NotNull VirtualFilePointer createPointer(@NotNull String url) {
+    Disposable disposable = createPointerDisposable();
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(url, disposable, null);
+    rememberPointerDisposable(pointer, disposable);
+    return pointer;
+  }
+
+  private @NotNull Disposable createPointerDisposable() {
+    return Disposer.newDisposable(this, "EncodingProjectManagerImpl pointer");
+  }
+
+  private void rememberPointerDisposable(@NotNull VirtualFilePointer pointer, @NotNull Disposable disposable) {
+    synchronized (myPointerDisposables) {
+      Disposable previous = myPointerDisposables.put(pointer, disposable);
+      if (previous != null) {
+        Disposer.dispose(previous);
+      }
+    }
+  }
+
+  private void releasePointersOutsideMapping() {
+    synchronized (myPointerDisposables) {
+      Iterator<Map.Entry<VirtualFilePointer, Disposable>> iterator = myPointerDisposables.entrySet().iterator();
+      while (iterator.hasNext()) {
+        Map.Entry<VirtualFilePointer, Disposable> entry = iterator.next();
+        if (!myMapping.containsKey(entry.getKey())) {
+          iterator.remove();
+          Disposer.dispose(entry.getValue());
+        }
+      }
+    }
   }
 
   private static boolean fileEncodingChanged(@NotNull VirtualFile virtualFile,
