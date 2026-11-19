@@ -42,7 +42,7 @@ internal class SettingsContextFactory : ContextFactory {
     val (rootUrl, relativePath) = fileContextRootUrls(project).firstNotNullOfOrNull { rootUrl ->
       path.pathUnder(rootUrl.urlPath())?.let { rootUrl to it }
     } ?: return project(project)
-    return VirtualFileSettingsContext(projectId = project.locationHash, rootUrl = rootUrl, relativePath = relativePath)
+    return FileSettingsContext(projectId = project.locationHash, rootUrl = rootUrl, relativePath = relativePath)
   }
 
   @RequiresReadLock
@@ -67,7 +67,7 @@ internal class SettingsContextFactory : ContextFactory {
       PROJECT_CONTEXT_ID -> if (parts.size != 2 || parts[1].isEmpty()) malformed(identity) else ProjectSettingsContext(projectId = parts[1])
       FILE_CONTEXT_ID -> {
         if (parts.size != 4 || parts[1].isEmpty() || parts[2].isEmpty()) return malformed(identity)
-        VirtualFileSettingsContext(projectId = parts[1],
+        FileSettingsContext(projectId = parts[1],
                                    rootUrl = parts[2],
                                    relativePath = parts[3])
       }
