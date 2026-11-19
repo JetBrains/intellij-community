@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
 import icons.MavenIcons;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,11 +40,6 @@ public final class RepositoryNode extends MavenSimpleNode {
   @Override
   public String getName() {
     return myId;
-  }
-
-  @Override
-  protected @NonNls String getMenuId() {
-    return "Maven.RepositoryMenu";
   }
 
   String getId() {
