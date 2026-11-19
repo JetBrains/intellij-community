@@ -40,11 +40,13 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.recordStartupSpan
 import com.intellij.ui.AppUIUtil
+import com.intellij.ui.installDeprecatedComponentsHighlighter
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.StartupUiGate
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
+import com.intellij.util.ui.UIUtil
 import com.intellij.openapi.wm.impl.EarlyProjectFrame
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
@@ -83,6 +85,15 @@ open class IdeStarter : ModernApplicationStarter() {
             withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
               UiInspectorUtil.initStacktraceSaving()
             }
+          }
+        }
+      }
+
+      launch {
+        serviceAsync<RegistryManager>()
+        if (UIUtil.isDeprecatedBackgroundEnabled()) {
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            installDeprecatedComponentsHighlighter()
           }
         }
       }
