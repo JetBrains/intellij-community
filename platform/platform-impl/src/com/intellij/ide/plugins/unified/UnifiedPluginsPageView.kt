@@ -84,7 +84,6 @@ import javax.swing.SwingUtilities
 import javax.swing.Timer
 import javax.swing.JToggleButton
 import javax.swing.KeyStroke
-import javax.swing.border.Border
 import javax.swing.event.DocumentEvent
 import org.jetbrains.annotations.Nls
 
@@ -147,6 +146,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
 
     sectionsPanel.apply {
       background = PluginManagerConfigurable.MAIN_BG_COLOR
+      border = JBUI.Borders.emptyBottom(SECTION_GAP)
     }
 
     scrollPane.apply {
@@ -663,18 +663,11 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       isFocusable = false
       isOpaque = false
     }
-    private val sectionButtonBorder = JBUI.Borders.empty(
-      SECTION_HEADER_TOP_INSET,
-      SECTION_HEADER_LEFT_INSET,
-      SECTION_HEADER_BOTTOM_INSET,
-      SECTION_HEADER_RIGHT_INSET,
-    )
     private val marketplaceLink = if (id == PluginSectionId.Suggested) createMarketplaceLink() else null
     private val marketplaceLinkPanel = marketplaceLink?.let { link ->
       SelectablePanel().apply {
-        configureSectionButton(this, link, sectionButtonBorder)
+        configureSectionButton(this, link, isFooter = true)
         isVisible = false
-        preferredHeight = JBUI.scale(SECTION_HEADER_HEIGHT)
       }
     }
     private val headerSlot = JPanel(BorderLayout()).apply {
@@ -714,6 +707,24 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       add(expansionChevronLabel)
     }
     private val dividerBorder = JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0)
+    private val showMoreRowLabel = JBLabel().apply {
+      foreground = UIUtil.getContextHelpForeground()
+      icon = AllIcons.General.ChevronDown
+      horizontalAlignment = SwingConstants.LEADING
+      horizontalTextPosition = SwingConstants.LEADING
+      iconTextGap = JBUI.scale(EXPANSION_CONTROL_GAP)
+    }
+    private val showMoreRow = SectionHeaderButton(isFooter = true) { onExpansionChanged(id, true) }.apply {
+      isVisible = false
+      addContent(showMoreRowLabel, BorderLayout.CENTER)
+      forwardMouseEventsFromChildren()
+    }
+    private val showMoreRowHost = JPanel(BorderLayout()).apply {
+      isOpaque = false
+      isVisible = false
+      border = JBUI.Borders.emptyTop(ROW_GAP)
+      add(showMoreRow, BorderLayout.CENTER)
+    }
 
     val component: JComponent
 
@@ -743,7 +754,6 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       }
 
       fullHeaderButton = SectionHeaderButton(
-        sectionButtonBorder,
         onHighlightChanged = { expansionControl.isHighlighted = it },
       ) { onExpansionChanged(id, !expanded) }.apply {
         addContent(titleAndStatus, BorderLayout.CENTER)
@@ -767,12 +777,12 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
           add(errorPanel, BorderLayout.SOUTH)
         }, BorderLayout.NORTH)
         add(if (realRows) rowsPanel else list, BorderLayout.CENTER)
-        val footer = if (marketplaceLinkPanel == null) unrealizedItemsSpacer else JPanel(BorderLayout()).apply {
+        add(JPanel(BorderLayout()).apply {
           isOpaque = false
           add(unrealizedItemsSpacer, BorderLayout.NORTH)
-          add(marketplaceLinkPanel, BorderLayout.CENTER)
-        }
-        add(footer, BorderLayout.SOUTH)
+          add(showMoreRowHost, BorderLayout.CENTER)
+          marketplaceLinkPanel?.let { add(it, BorderLayout.SOUTH) }
+        }, BorderLayout.SOUTH)
       }
     }
 
@@ -846,6 +856,18 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       expansionChevronLabel.apply {
         isVisible = section.canExpand
         icon = if (section.expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown
+      }
+      val showExpansionRow = section.canExpand && !section.expanded
+      showMoreRow.isVisible = showExpansionRow
+      showMoreRowHost.isVisible = showExpansionRow
+      if (showExpansionRow) {
+        showMoreRowLabel.text = if (count != null && !section.exceedsDisplayLimit) {
+          IdeBundle.message("plugins.configurable.show.hidden.row", count - visibleItems.size)
+        }
+        else {
+          IdeBundle.message("plugins.configurable.show.more")
+        }
+        showMoreRow.setPresentation(enabled = true, selected = false, accessibleName = showMoreRowLabel.text)
       }
 
       items = visibleItems
@@ -924,7 +946,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     }
 
     private class SectionHeaderButton(
-      contentBorder: Border,
+      isFooter: Boolean = false,
       onHighlightChanged: ((Boolean) -> Unit)? = null,
       private val onToggle: () -> Unit,
     ) : SelectablePanel() {
@@ -951,7 +973,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       init {
         toggleButton.layout = BorderLayout()
         toggleButton.addActionListener { onToggle() }
-        configureSectionButton(this, toggleButton, contentBorder, onHighlightChanged)
+        configureSectionButton(this, toggleButton, isFooter, onHighlightChanged)
       }
 
       override fun doLayout() {
@@ -1443,17 +1465,24 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     fun configureSectionButton(
       panel: SelectablePanel,
       button: AbstractButton,
-      contentBorder: Border,
+      isFooter: Boolean,
       onHighlightChanged: ((Boolean) -> Unit)? = null,
     ) {
       panel.layout = BorderLayout()
       panel.isOpaque = false
       panel.selectionArc = JBUI.scale(PLUGIN_CARD_SELECTION_ARC)
       panel.selectionInsets = JBUI.insets(
-        SECTION_HEADER_HOVER_TOP_INSET,
+        if (isFooter) 0 else SECTION_HEADER_HOVER_TOP_INSET,
         SECTION_HEADER_HOVER_HORIZONTAL_INSET,
-        SECTION_HEADER_HOVER_BOTTOM_INSET,
+        if (isFooter) 0 else SECTION_HEADER_HOVER_BOTTOM_INSET,
         SECTION_HEADER_HOVER_HORIZONTAL_INSET,
+      )
+      if (isFooter) panel.preferredHeight = JBUI.scale(SECTION_FOOTER_HEIGHT)
+      val contentBorder = JBUI.Borders.empty(
+        if (isFooter) 0 else SECTION_HEADER_TOP_INSET,
+        SECTION_HEADER_LEFT_INSET,
+        if (isFooter) 0 else SECTION_HEADER_BOTTOM_INSET,
+        SECTION_HEADER_RIGHT_INSET,
       )
       val focusBorder = createUnifiedPluginFocusBorder(button, contentBorder, panel.selectionInsets, panel.selectionArc)
       var focusVisible = false
@@ -1517,6 +1546,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     const val SEARCH_COMPONENT_WIDTH: Int = 340
     const val SEARCH_HISTORY_PROPERTY: String = "UnifiedPluginsSearchHistory"
     const val SECTION_GAP: Int = 8
+    const val SECTION_FOOTER_HEIGHT: Int = 24
     const val ROW_GAP: Int = 4
     const val SECTION_HEADER_BOTTOM_INSET: Int = 4
     const val EXPANSION_CONTROL_GAP: Int = 2

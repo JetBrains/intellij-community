@@ -503,6 +503,15 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `section header reveals Show more on hover and keyboard focus`
   )
 
+- A collapsed section with hidden plugins must offer an expansion row after the preview.
+- The expansion row must show the hidden count when the count is known and within the display limit.
+- The row must show “Show more” when the count is unavailable or exceeds the display limit.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
+    `collapsed preview ends with a Show more row`;
+    `loading icon replaces count while retaining items`;
+    `large section count shows the display limit`
+  )
+
 - Manual expansion must keep selected plugins and their details.
 - Manual collapse must keep selected plugins that remain visible and remove selections it hides.
 - Plugin details must follow the retained selection.
@@ -757,7 +766,8 @@ Untested: No focused test verifies Shift-selection across sections.
   The link requires a successful load, all Suggested plugin rows to be visible, and the default Marketplace to be active.
 - The link must show an external link arrow and open the Marketplace home page in the browser.
 - Enter and Space on the focused link must open the Marketplace home page.
-- The link must use muted text and the same rounded hover and keyboard focus outline as the section headers.
+- The link must use muted text and match the expansion row's height.
+- The link and the expansion row must use a rounded highlight on hover and a rounded outline on keyboard focus.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
     `Marketplace link follows Suggested rows in arrow order and stays outside Tab order`;
     `Marketplace link requires all Suggested results to be visible and loaded`

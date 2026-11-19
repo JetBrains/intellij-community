@@ -66,6 +66,7 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.RepaintManager
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.JToggleButton
 import javax.swing.KeyStroke
@@ -262,6 +263,8 @@ internal class UnifiedPluginsPageViewTest {
     assertThat(loadingLabel.text).isEmpty()
     assertThat(loadingLabel.accessibleContext.accessibleName)
       .isEqualTo(IdeBundle.message("plugins.configurable.section.loading", IdeBundle.message("plugin.manager.tab.installed")))
+    assertThat(componentsOfType(installedComponent, JToggleButton::class.java))
+      .anyMatch { it.accessibleContext.accessibleName == IdeBundle.message("plugins.configurable.show.more") }
   }
 
   @Test
@@ -279,6 +282,8 @@ internal class UnifiedPluginsPageViewTest {
     )
     val countLabel = componentsOfType(installedList.parent, JBLabel::class.java).single { it.text == expectedCount }
     assertThat(countLabel.accessibleContext.accessibleName).isEqualTo(expectedCount)
+    assertThat(componentsOfType(installedList.parent, JToggleButton::class.java))
+      .anyMatch { it.accessibleContext.accessibleName == IdeBundle.message("plugins.configurable.show.more") }
   }
 
   @Test
@@ -308,14 +313,15 @@ internal class UnifiedPluginsPageViewTest {
     val view = createView(onExpansionChanged = { id, expanded -> expansionChanges.add(id to expanded) })
     view.render(controller.state.value)
 
-    val installedList = sectionList(view, IdeBundle.message("plugin.manager.tab.installed"))
-    val headerButton = componentsOfType(installedList.parent, JToggleButton::class.java).single()
+    val title = IdeBundle.message("plugin.manager.tab.installed")
+    val installedList = sectionList(view, title)
+    val header = sectionHeader(view, title)
+    val headerButton = componentsOfType(header, JToggleButton::class.java).single()
     val expansionTextLabel = componentsOfType(headerButton, JBLabel::class.java)
       .single { it.text == IdeBundle.message("plugins.configurable.show.more") }
     val expansionChevronLabel = componentsOfType(headerButton, JBLabel::class.java)
       .single { it.icon === AllIcons.General.ChevronDown }
     val expansionControl = expansionTextLabel.parent as JComponent
-    val header = sectionHeader(view, IdeBundle.message("plugin.manager.tab.installed"))
     header.setSize(JBUI.scale(320), JBUI.scale(40))
     layoutRecursively(header)
     assertThat(installedList.model.size).isEqualTo(PluginSectionState.COLLAPSED_ITEM_LIMIT)
@@ -376,6 +382,36 @@ internal class UnifiedPluginsPageViewTest {
       controller.setSectionExpanded(PluginSectionId.Installed, true)
       view.render(controller.state.value)
       assertThat(expansionControlPainted()).isTrue()
+    }
+  }
+
+  @Test
+  fun `collapsed preview ends with a Show more row`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val expansionChanges = ArrayList<Pair<PluginSectionId, Boolean>>()
+    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 5)))
+    createView(onExpansionChanged = { id, expanded -> expansionChanges.add(id to expanded) }).use { view ->
+      view.render(controller.state.value)
+      val title = IdeBundle.message("plugin.manager.tab.installed")
+      val headerButton = componentsOfType(sectionHeader(view, title), JToggleButton::class.java).single()
+      val showMoreButton = componentsOfType(sectionList(view, title).parent, JToggleButton::class.java).single { it !== headerButton }
+      val showMoreRow = showMoreButton.parent as JComponent
+      assertThat(showMoreRow.isVisible).isTrue()
+      assertThat(showMoreRow.preferredSize.height).isEqualTo(JBUI.scale(24))
+      assertThat((showMoreRow.parent as JComponent).insets.top).isEqualTo(JBUI.scale(4))
+      assertThat(showMoreButton.accessibleContext.accessibleName)
+        .isEqualTo(IdeBundle.message("plugins.configurable.show.hidden.row", 2))
+      val label = componentsOfType(showMoreButton, JBLabel::class.java).single()
+      assertThat(label.foreground).isEqualTo(UIUtil.getContextHelpForeground())
+      assertThat(label.icon).isSameAs(AllIcons.General.ChevronDown)
+      assertThat(label.horizontalTextPosition).isEqualTo(SwingConstants.LEADING)
+
+      showMoreButton.doClick()
+      assertThat(expansionChanges).containsExactly(PluginSectionId.Installed to true)
+
+      controller.setSectionExpanded(PluginSectionId.Installed, true)
+      view.render(controller.state.value)
+      assertThat(showMoreRow.isVisible).isFalse()
+      assertThat(showMoreRow.parent.isVisible).isFalse()
     }
   }
 
@@ -482,16 +518,21 @@ internal class UnifiedPluginsPageViewTest {
     ApplicationManager.getApplication().replaceService(BrowserLauncher::class.java, launcher, disposable)
 
     timeoutRunBlocking(context = Dispatchers.UI) {
-      val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Suggested, itemCount = 5)))
+      val controller = UnifiedPluginsPageController(
+        listOf(section(PluginSectionId.Installed, itemCount = 5), section(PluginSectionId.Suggested, itemCount = 5))
+      )
       createView().use { view ->
         view.render(controller.state.value, showMarketplaceLink = true)
         prepareForScrolling(view)
 
         val link = componentsOfType(view.component, ActionLink::class.java).single()
         val footer = link.parent as SelectablePanel
-        val header = sectionHeader(view, IdeBundle.message("plugins.configurable.suggested")) as SelectablePanel
-        assertThat(footer.selectionArc).isEqualTo(header.selectionArc)
-        assertThat(footer.selectionInsets).isEqualTo(header.selectionInsets)
+        val expansionRow = componentsOfType(view.component, JToggleButton::class.java)
+          .single { it.accessibleContext.accessibleName == IdeBundle.message("plugins.configurable.show.hidden.row", 2) }
+          .parent as SelectablePanel
+        assertThat(footer.height).isEqualTo(expansionRow.height)
+        assertThat(footer.selectionArc).isEqualTo(expansionRow.selectionArc)
+        assertThat(footer.selectionInsets).isEqualTo(expansionRow.selectionInsets)
         assertThat(link.foreground).isEqualTo(UIUtil.getContextHelpForeground())
 
         val x = footer.width - JBUI.scale(20)
@@ -892,7 +933,7 @@ internal class UnifiedPluginsPageViewTest {
     val installedList = sectionList(view, installedTitle)
     val sectionsPanel = installedList.parent.parent as JComponent
     val expectedInsets = Insets(JBUI.scale(8), JBUI.scale(16), JBUI.scale(4), JBUI.scale(12))
-    assertThat(sectionsPanel.insets).isEqualTo(Insets(0, 0, 0, 0))
+    assertThat(sectionsPanel.insets).isEqualTo(Insets(0, 0, JBUI.scale(8), 0))
     assertThat(installedHeader.preferredSize.height).isEqualTo(JBUI.scale(40))
     assertThat(installedHeader.minimumSize.height).isEqualTo(JBUI.scale(40))
     assertThat(installedHeader.maximumSize.height).isEqualTo(JBUI.scale(40))
