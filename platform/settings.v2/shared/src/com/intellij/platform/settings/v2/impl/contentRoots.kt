@@ -6,6 +6,7 @@ package com.intellij.platform.settings.v2.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
@@ -23,6 +24,21 @@ fun Project.topmostContentRoots(): List<VirtualFile> {
   val contentRoots = ProjectRootManager.getInstance(this).contentRoots
   val topmost = collapseNestedRoots(contentRoots.map { it.url }).toSet()
   return contentRoots.filter { it.url in topmost }.sortedBy { it.url }
+}
+
+/**
+ * Returns the urls of the roots that a file context of [project] anchors on. The first [SettingsContentRootsProvider]
+ * answers. With no provider, as in a client light session, the base directory of the project is the only root. The
+ * fallback builds the url from the base path, with no VFS access.
+ *
+ * @param project the project whose roots to return
+ * @return the root urls, or an empty list when no provider answers and the project has no base path
+ */
+@RequiresReadLock
+internal fun fileContextRootUrls(project: Project): List<String> {
+  val provider = SettingsContentRootsProvider.EP_NAME.extensionList.firstOrNull()
+                 ?: return listOfNotNull(project.basePath?.let(VfsUtilCore::pathToUrl))
+  return provider.rootUrls(project)
 }
 
 /**
