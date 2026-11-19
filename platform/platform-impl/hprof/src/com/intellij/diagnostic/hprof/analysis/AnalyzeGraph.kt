@@ -553,6 +553,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     assert(cleanerObjects.isEmpty())
     assert(softReferenceIdToParentMap.isEmpty())
     assert(weakReferenceIdToParentMap.isEmpty())
+    assert(phantomReferenceIdToParentMap.isEmpty())
 
     // Histograms are accessible publicly after traversal is complete
     strongRefHistogram = Histogram(
