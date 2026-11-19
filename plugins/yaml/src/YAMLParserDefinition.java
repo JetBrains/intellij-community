@@ -7,7 +7,6 @@ import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
-import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,6 +32,7 @@ import org.jetbrains.yaml.psi.impl.YAMLScalarTextImpl;
 import org.jetbrains.yaml.psi.impl.YAMLSequenceItemImpl;
 import com.intellij.yaml.syntax.YamlSyntaxDefinition;
 
+import static com.intellij.platform.syntax.psi.lexer.RestartableLexerAdapterKt.createLexerAdapter;
 import static org.jetbrains.yaml.YamlElementTypeConverterKt.getYamlElementTypeConverter;
 import static org.jetbrains.yaml.YamlFileElementTypeKt.YAML_FILE;
 
@@ -56,7 +56,7 @@ public class YAMLParserDefinition implements ParserDefinition {
    */
   @Deprecated
   public static @NotNull Lexer createLexer() {
-    return new LexerAdapter(YamlSyntaxDefinition.INSTANCE.createLexer(), getYamlElementTypeConverter());
+    return createLexerAdapter(YamlSyntaxDefinition.INSTANCE.createLexer(), getYamlElementTypeConverter());
   }
 
   /**

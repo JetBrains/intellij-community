@@ -53,11 +53,41 @@ import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
 
   //-------------------------------------------------------------------------------------------------------------------
 
-  fun isCleanState(): Boolean = yystate() == YYINITIAL
-    && braceCount == 0
-    && prevElementIndent == 0
-    && !possiblePlainTextScalarContinue
-    && !hasUnclosedQuote
+  /**
+   * Returns the state at the start of the next token.
+   * At a line start, the state holds all the fields that the lexer needs to restart.
+   * See [YamlLexerStates].
+   * The lexical state is tested first, because a state that is never restartable needs no read of the buffer.
+   */
+  fun packState(): Int {
+    val lexicalState = yystate()
+    if (!YamlLexerStates.isLineStartState(lexicalState) || hasUnclosedQuote || !isAtLineStart()) {
+      return YamlLexerStates.notRestartable(lexicalState)
+    }
+    return YamlLexerStates.pack(
+      lexicalState = lexicalState,
+      indent = prevElementIndent,
+      braceCount = braceCount,
+      possiblePlainTextScalarContinue = possiblePlainTextScalarContinue,
+      isLiteralBlockScalar = blockScalarType === YamlSyntaxTokenTypes.SCALAR_LIST,
+      returnsToBlock = returnState == BLOCK_STATE,
+    )
+  }
+
+  /** Sets all the fields from a [YamlLexerStates.isRestartable] state that [packState] returned. */
+  fun restoreState(state: Int) {
+    cleanMyState()
+    yybegin(YamlLexerStates.lexicalState(state))
+    prevElementIndent = YamlLexerStates.indent(state)
+    braceCount = YamlLexerStates.braceCount(state)
+    possiblePlainTextScalarContinue = YamlLexerStates.possiblePlainTextScalarContinue(state)
+    if (yystate() == BS_BODY_STATE) {
+      blockScalarType = if (YamlLexerStates.isLiteralBlockScalar(state)) YamlSyntaxTokenTypes.SCALAR_LIST else YamlSyntaxTokenTypes.SCALAR_TEXT
+      returnState = if (YamlLexerStates.returnsToBlock(state)) BLOCK_STATE else FLOW_STATE
+    }
+  }
+
+  private fun isAtLineStart(): Boolean = zzMarkedPos == 0 || zzBuffer[zzMarkedPos - 1] == '\n'
 
   fun cleanMyState() {
     braceCount = 0

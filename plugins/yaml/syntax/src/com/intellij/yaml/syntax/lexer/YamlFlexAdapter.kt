@@ -3,28 +3,11 @@ package com.intellij.yaml.syntax.lexer
 
 import com.intellij.platform.syntax.util.lexer.FlexAdapter
 
-internal class YamlFlexAdapter(flex: _YamlLexer) : FlexAdapter(flex) {
-  private val yamlFlex get() = super.flex as _YamlLexer
-
+internal class YamlFlexAdapter(private val yamlFlex: YamlFlexLexer) : FlexAdapter(yamlFlex) {
   override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
-    val newInitialState = if (initialState != DIRTY_STATE) {
-      yamlFlex.cleanMyState()
-      initialState
+    if (!YamlLexerStates.isRestartable(initialState) && initialState != YamlLexerStates.DIRTY_STATE) {
+      yamlFlex.lexer.cleanMyState()
     }
-    else {
-      // That should not occur normally, but some complex lexers (e.g. black and white lexer)
-      // require "suspending" of the lexer to pass some template language. In these cases we
-      // believe that the same instance of the lexer would be restored (with its internal state)
-      0
-    }
-    super.start(buffer, startOffset, endOffset, newInitialState)
-  }
-
-  override fun getState(): Int {
-    val state = super.getState()
-    return if (state != 0 || yamlFlex.isCleanState()) state
-    else DIRTY_STATE
+    super.start(buffer, startOffset, endOffset, initialState)
   }
 }
-
-private const val DIRTY_STATE = 239
