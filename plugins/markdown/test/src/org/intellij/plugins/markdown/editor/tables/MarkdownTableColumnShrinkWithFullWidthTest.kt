@@ -30,6 +30,7 @@ class MarkdownTableColumnShrinkWithFullWidthTest {
   @BeforeEach
   fun enableTableReformatting() {
     setupTableReformatting(disposable)
+    setupTableCellsAlignedVisually(false, disposable)
   }
 
   @Test

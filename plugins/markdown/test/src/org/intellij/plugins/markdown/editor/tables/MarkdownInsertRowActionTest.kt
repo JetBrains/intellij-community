@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -10,6 +11,7 @@ import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsigh
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,6 +34,9 @@ class MarkdownInsertRowActionTest {
 
   private val myFixture by codeInsightModuleFixture(projectFixture)
 
+  @TestDisposable
+  lateinit var disposable: Disposable
+
   @Test
   fun `insert row below in ASCII table keeps pipes aligned`() {
     // language=Markdown
@@ -52,6 +57,7 @@ class MarkdownInsertRowActionTest {
 
   @Test
   fun `insert row below in CJK table keeps pipes aligned`() {
+    setupTableCellsAlignedVisually(false, disposable)
     // Cells " 张三 " have textLength 4 but display width 6 (each CJK char is 2 columns wide).
     // The inserted empty row must use display widths so pipes line up with the header/separator.
     // language=Markdown

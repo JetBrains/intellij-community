@@ -2,11 +2,13 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.markdown.frontend.actions.InsertEmptyTableAction
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ui.UIUtil
@@ -27,6 +29,9 @@ class MarkdownTableEnterTest {
   }
 
   private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @TestDisposable
+  lateinit var disposable: Disposable
 
   @Test
   fun `test single enter inside cell`() {
@@ -146,6 +151,7 @@ class MarkdownTableEnterTest {
 
   @Test
   fun `test shift enter at the row end with CJK header`() {
+    setupTableCellsAlignedVisually(false, disposable)
     // language=Markdown
     val before = """
     | 名字 | 年龄 |

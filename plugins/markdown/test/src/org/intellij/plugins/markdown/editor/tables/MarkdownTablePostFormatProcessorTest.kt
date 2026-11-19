@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
@@ -9,6 +10,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
@@ -34,11 +36,15 @@ class MarkdownTablePostFormatProcessorTest {
 
   private val myFixture by codeInsightModuleFixture(projectFixture)
 
+  @TestDisposable
+  lateinit var disposable: Disposable
+
   private lateinit var testName: String
 
   @BeforeEach
   fun setUp(testInfo: TestInfo) {
     testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true).trimStart().replace(' ', '_')
+    setupTableCellsAlignedVisually(false, disposable)
   }
 
   @Test
@@ -61,6 +67,27 @@ class MarkdownTablePostFormatProcessorTest {
 
   @Test
   fun `emoji sequence table`(): Unit = doTest()
+
+  @Test
+  @TestFor(issues = ["IJPL-252005"])
+  fun `cjk table is padded by characters when cells are aligned visually`() {
+    setupTableCellsAlignedVisually(true, disposable)
+    doStyleTest(
+      TableStyle.ALIGNED,
+      """
+      | 姓名 | 班级 | 分数 |
+      |---|---|---|
+      | 张三 | 中文班1 | 6 |
+      | John | International | 7 |
+      """.trimIndent(),
+      """
+      | 姓名   | 班级            | 分数 |
+      |------|---------------|----|
+      | 张三   | 中文班1          | 6  |
+      | John | International | 7  |
+      """.trimIndent()
+    )
+  }
 
   @Test
   fun `table inside list item`(): Unit = doTest()
