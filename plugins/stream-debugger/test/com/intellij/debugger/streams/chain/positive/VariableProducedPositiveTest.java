@@ -2,30 +2,39 @@
 package com.intellij.debugger.streams.chain.positive;
 
 import com.intellij.debugger.streams.core.wrapper.StreamChain;
+import com.intellij.debugger.streams.test.StreamChainBuilderFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static com.intellij.debugger.streams.test.StreamChainBuilderFixtureKt.streamChainBuilderFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class VariableProducedPositiveTest extends StreamChainBuilderPositiveTestBase {
+@TestApplication
+public class VariableProducedPositiveTest {
+  private final TestFixture<StreamChainBuilderFixture> builderFixture = streamChainBuilderFixture("chain/positive/variable");
+
+  @Test
   public void testWithIntermediate() {
     doTest();
   }
 
+  @Test
   public void testTerminationOnly() {
     doTest();
   }
 
-  @NotNull
-  @Override
-  protected String getDirectoryName() {
-    return "variable";
+  private void doTest() {
+    checkResultChains(builderFixture.get().buildChains());
   }
 
-  @Override
-  protected void checkResultChains(@NotNull List<StreamChain> chains) {
+  private static void checkResultChains(@NotNull List<StreamChain> chains) {
     assertFalse(chains.isEmpty());
   }
 }

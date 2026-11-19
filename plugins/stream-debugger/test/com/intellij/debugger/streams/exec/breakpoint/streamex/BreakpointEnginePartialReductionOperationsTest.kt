@@ -1,22 +1,26 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.exec.breakpoint.streamex
 
-import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper
-import com.intellij.debugger.streams.exec.streamex.PartialReductionOperationsTest
-import com.intellij.debugger.streams.exec.streamex.StreamExTestCase
-import com.intellij.idea.IgnoreJUnit3
-import com.intellij.xdebugger.XDebugSession
-import org.junit.Ignore
+import com.intellij.debugger.streams.exec.streamex.streamExFixture
+import com.intellij.debugger.streams.test.BreakpointBasedExecutionTestCaseHelper
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class BreakpointEnginePartialReductionOperationsTest : StreamExTestCase() {
-  override val packageName: String = "partialReduction"
+@TestApplication
+class BreakpointEnginePartialReductionOperationsTest {
+  private val streamEx by streamExFixture("partialReduction", ::BreakpointBasedExecutionTestCaseHelper)
 
-  override fun getHelper(session: XDebugSession): TraceExecutionTestHelper = breakpointEngineHelper(session)
+  @Test
+  fun testGroupRuns(): Unit = streamEx.doStreamExWithResultTest()
 
-  fun testGroupRuns() = doStreamExWithResultTest()
-  fun testCollapseNoExtraCalls() = doStreamExVoidTest()
-  fun testIntervalMapNoExtraCalls() = doStreamExVoidTest()
-  fun testCollapseKeys() = doStreamExWithResultTest()
+  @Test
+  fun testCollapseNoExtraCalls(): Unit = streamEx.doStreamExVoidTest()
 
-  fun ignoreTestRunLengths() = doStreamExWithResultTest() // for now fails with some odd unrelated exception
+  @Test
+  fun testIntervalMapNoExtraCalls(): Unit = streamEx.doStreamExVoidTest()
+
+  @Test
+  fun testCollapseKeys(): Unit = streamEx.doStreamExWithResultTest()
+
+  fun ignoreTestRunLengths() = streamEx.doStreamExWithResultTest() // for now fails with some odd unrelated exception
 }

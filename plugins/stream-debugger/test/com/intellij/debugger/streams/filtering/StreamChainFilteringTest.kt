@@ -1,8 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.filtering
 
-internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
-  fun testSingleChain() = doFilteringTest(
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
+
+@TestApplication
+internal class StreamChainFilteringTest {
+  private val filtering by streamChainFilteringFixture()
+
+  @Test
+  fun testSingleChain(): Unit = filtering.doFilteringTest(
     "SingleChain",
     BeforeInvoke("of"),
     AfterInvoke("of"),
@@ -13,7 +20,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     BeforeInvoke("sum"),
   )
 
-  fun testNoIntermediate() = doFilteringTest(
+  @Test
+  fun testNoIntermediate(): Unit = filtering.doFilteringTest(
     "NoIntermediate",
     BeforeInvoke("of"),
     AfterInvoke("of"),
@@ -21,7 +29,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     AfterInvoke("count"),
   )
 
-  fun testManyIntermediates() = doFilteringTest(
+  @Test
+  fun testManyIntermediates(): Unit = filtering.doFilteringTest(
     "ManyIntermediates",
     BeforeInvoke("of"),
     BeforeInvoke("map", occurrence = 0),
@@ -32,7 +41,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     BeforeInvoke("sum"),
   )
 
-  fun testTwoIndependentChains() = doFilteringTest(
+  @Test
+  fun testTwoIndependentChains(): Unit = filtering.doFilteringTest(
     "TwoIndependentChains",
     BeforeInvoke("of", occurrence = 0),
     AfterInvoke("of", occurrence = 0),
@@ -44,7 +54,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     BeforeInvoke("sum", occurrence = 1),
   )
 
-  fun testNestedInIntermediateArgument() = doFilteringTest(
+  @Test
+  fun testNestedInIntermediateArgument(): Unit = filtering.doFilteringTest(
     "NestedInIntermediateArgument",
     BeforeInvoke("of", occurrence = 0),
     AfterInvoke("of", occurrence = 0),
@@ -56,7 +67,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
   )
 
   // Linked chains: the result of the first is the qualifier of the second (`...toList().stream()...`).
-  fun testQualifierChain() = doFilteringTest(
+  @Test
+  fun testQualifierChain(): Unit = filtering.doFilteringTest(
     "QualifierChain",
     BeforeInvoke("of"),
     BeforeInvoke("map"),
@@ -68,7 +80,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     BeforeInvoke("toList", occurrence = 1),
   )
 
-  fun testMultiLineChain() = doFilteringTest(
+  @Test
+  fun testMultiLineChain(): Unit = filtering.doFilteringTest(
     "MultiLineChain",
     BeforeInvoke("of"),
     AfterInvoke("of"),
@@ -78,9 +91,11 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     BeforeInvoke("sum"),
   )
 
-  fun testStreamInsideLambda() = doFilteringTestAtBreakpoint("StreamInsideLambda")
+  @Test
+  fun testStreamInsideLambda(): Unit = filtering.doFilteringTestAtBreakpoint("StreamInsideLambda")
 
-  fun testStopInsideQualifier() = doFilteringTest(
+  @Test
+  fun testStopInsideQualifier(): Unit = filtering.doFilteringTest(
     "StopInsideQualifier",
     BeforeInvoke("makeArray"),
     AfterInvoke("makeArray"),
@@ -91,7 +106,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
   )
 
   // Positions during argument evaluation between calls: `combine(IntStream.of(...).sum(), IntStream.of(...).sum())`.
-  fun testArgEvalBetweenCalls() = doFilteringTest(
+  @Test
+  fun testArgEvalBetweenCalls(): Unit = filtering.doFilteringTest(
     "ArgEvalBetweenCalls",
     BeforeInvoke("of", occurrence = 0),
     AfterInvoke("sum", occurrence = 0),
@@ -100,7 +116,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     BeforeInvoke("combine"),
   )
 
-  fun testNestedInProducerArgument() = doFilteringTest(
+  @Test
+  fun testNestedInProducerArgument(): Unit = filtering.doFilteringTest(
     "NestedInProducerArgument",
     BeforeInvoke("of", occurrence = 0),
     AfterInvoke("toList", occurrence = 0),
@@ -114,7 +131,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
 
   // Two statements on one line
   // (future extension: detection currently only sees the first statement).
-  fun testTwoStatementsOneLine() = doFilteringTest(
+  @Test
+  fun testTwoStatementsOneLine(): Unit = filtering.doFilteringTest(
     "TwoStatementsOneLine",
     BeforeInvoke("of", occurrence = 0),
     AfterInvoke("toList", occurrence = 0),
@@ -122,7 +140,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     AfterInvoke("toList", occurrence = 1),
   )
 
-  fun testTwoIdenticalChainsSameLine() = doFilteringTest(
+  @Test
+  fun testTwoIdenticalChainsSameLine(): Unit = filtering.doFilteringTest(
     "TwoIdenticalChainsSameLine",
     BeforeInvoke("stream", occurrence = 0),
     AfterInvoke("toList", occurrence = 0),
@@ -130,7 +149,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     AfterInvoke("toList", occurrence = 1),
   )
 
-  fun testTwoIdenticalChainsMultiLine() = doFilteringTest(
+  @Test
+  fun testTwoIdenticalChainsMultiLine(): Unit = filtering.doFilteringTest(
     "TwoIdenticalChainsMultiLine",
     BeforeInvoke("stream", occurrence = 0),
     AfterInvoke("toList", occurrence = 0),
@@ -138,7 +158,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     AfterInvoke("toList", occurrence = 1),
   )
 
-  fun testDeeplyNestedStreams() = doFilteringTest(
+  @Test
+  fun testDeeplyNestedStreams(): Unit = filtering.doFilteringTest(
     "DeeplyNestedStreams",
     BeforeInvoke("stream"),
     BeforeInvoke("count", occurrence = 0),
@@ -151,17 +172,20 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
     BeforeInvoke("toList", occurrence = 1),
   )
 
-  fun testStopInsideBlockLambda() = doFilteringTestAtBreakpoint("StopInsideBlockLambda")
+  @Test
+  fun testStopInsideBlockLambda(): Unit = filtering.doFilteringTestAtBreakpoint("StopInsideBlockLambda")
 
   // Stop inside a lambda of a chain that is itself an argument of another chain: the inner chain is already running,
   // and the outer one is not traceable from the frame of that lambda even it has not reached `limit` yet.
-  fun testStopInsideNestedArgumentLambda() = doFilteringTestAtBreakpoint("StopInsideNestedArgumentLambda")
+  @Test
+  fun testStopInsideNestedArgumentLambda(): Unit = filtering.doFilteringTestAtBreakpoint("StopInsideNestedArgumentLambda")
 
   // A chain in a field initializer of an anonymous class. We stop in the synthetic `<init>` of the anonymous class,
   // and `DebuggerUtilsEx.getContainingMethod` returns the lexically enclosing `main` as the host,
   // and the traversal of its body never enters class bodies.
   // Nothing is matched against the bytecode, and every chain stays traceable.
-  fun testFieldInitializerInAnonymousClass() = doFilteringTest(
+  @Test
+  fun testFieldInitializerInAnonymousClass(): Unit = filtering.doFilteringTest(
     "FieldInitializerInAnonymousClass",
     BeforeInvoke("of"),
     AfterInvoke("of"),
@@ -172,7 +196,8 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
 
   // Several independent streams in one multi-line statement: the fast path alone (line comparison) already
   // filters the streams that are fully above the stop line, without any bytecode analysis.
-  fun testMultiLineStatement() = doFilteringTest(
+  @Test
+  fun testMultiLineStatement(): Unit = filtering.doFilteringTest(
     "MultiLineStatement",
     BeforeInvoke("sum", occurrence = 0),
     BeforeInvoke("sum", occurrence = 1),

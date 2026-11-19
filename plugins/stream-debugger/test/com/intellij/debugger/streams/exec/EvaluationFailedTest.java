@@ -6,39 +6,43 @@ import com.intellij.debugger.streams.core.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.core.trace.TracingResult;
 import com.intellij.debugger.streams.core.wrapper.StreamChain;
 import com.intellij.debugger.streams.test.ExecutionTestCaseHelper;
+import com.intellij.debugger.streams.test.TraceExecutionFixture;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluator;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assume.assumeTrue;
+import static com.intellij.debugger.streams.test.TraceExecutionFixtureKt.traceExecutionFixture;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * @author Vitaliy.Bibaev
  */
-@RunWith(JUnit4.class)
-public class EvaluationFailedTest extends FailEvaluationTestCase {
+@TestApplication
+public class EvaluationFailedTest {
+  private final TestFixture<TraceExecutionFixture> traceFixture = traceExecutionFixture(this::getHelper, EvaluationFailedTest::replaceAdditionalInOutput);
+
   @Test
   public void testEvaluationExceptionDetected() {
     assumeTrue("off".equals(Registry.get("debugger.evaluate.method.helper").getSelectedOption()));
-    doTest(true, "EvaluationExceptionDetected");
+    traceFixture.get().doTest(true, "EvaluationExceptionDetected");
   }
 
   @Test
   public void testEvaluationExceptionDetectedHelper() {
     assumeTrue("always".equals(Registry.get("debugger.evaluate.method.helper").getSelectedOption()));
-    doTest(true, "EvaluationExceptionDetected");
+    traceFixture.get().doTest(true, "EvaluationExceptionDetected");
   }
 
-  @Override
-  protected @NotNull TraceExecutionTestHelper getHelper(XDebugSession session) {
-    return new ExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG) {
+  private @NotNull TraceExecutionTestHelper getHelper(@NotNull TraceExecutionFixture trace, @NotNull XDebugSession session) {
+    return new ExecutionTestCaseHelper(trace, session) {
       @Override
       protected @NotNull TraceExpressionBuilder createExpressionBuilder() {
         final TraceExpressionBuilder builder = super.createExpressionBuilder();
@@ -62,10 +66,7 @@ public class EvaluationFailedTest extends FailEvaluationTestCase {
     };
   }
 
-  @NotNull
-  @Override
-  protected String replaceAdditionalInOutput(@NotNull String str) {
-    String output = super.replaceAdditionalInOutput(str);
+  private static @NotNull String replaceAdditionalInOutput(@NotNull String output) {
     String generatedClassName = CompilingEvaluator.getGeneratedClassName();
     StringBuilder builder = new StringBuilder();
     for (String line : StringUtil.splitByLinesKeepSeparators(output)) {

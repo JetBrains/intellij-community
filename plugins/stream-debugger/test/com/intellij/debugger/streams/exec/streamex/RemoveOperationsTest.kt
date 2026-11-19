@@ -1,16 +1,28 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.exec.streamex
 
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
+
 /**
  * @author Shumaf.Lovpache
  */
-open class RemoveOperationsTest : StreamExTestCase() {
-  override val packageName: String = "filtering"
+@TestApplication
+open class RemoveOperationsTest {
+  private val streamEx by streamExFixture("filtering")
 
-  fun testRemove() = doStreamExVoidTest()
-  fun testRemoveBy() = doStreamExVoidTest()
+  @Test
+  fun testRemove(): Unit = streamEx.doStreamExVoidTest()
 
-  fun testRemoveKeys() = doStreamExWithResultTest()
-  fun testRemoveValues() = doStreamExWithResultTest()
-  fun testRemoveKeyValue() = doStreamExWithResultTest()
+  @Test
+  fun testRemoveBy(): Unit = streamEx.doStreamExVoidTest()
+
+  @Test
+  fun testRemoveKeys(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testRemoveValues(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testRemoveKeyValue(): Unit = streamEx.doStreamExWithResultTest()
 }

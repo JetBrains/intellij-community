@@ -3,71 +3,93 @@ package com.intellij.debugger.streams.chain.negative;
 
 import com.intellij.debugger.streams.core.wrapper.StreamChain;
 import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder;
-import com.intellij.debugger.streams.test.StreamChainBuilderTestCase;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.debugger.streams.test.StreamChainBuilderFixture;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static com.intellij.debugger.streams.test.StreamChainBuilderFixtureKt.streamChainBuilderFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class StreamChainBuilderNegativeTest extends StreamChainBuilderTestCase {
+@TestApplication
+public class StreamChainBuilderNegativeTest {
+  private final TestFixture<StreamChainBuilderFixture> builderFixture = streamChainBuilderFixture("chain/negative");
 
+  @Test
   public void testFakeStream() {
     doTest();
   }
 
+  @Test
   public void testWithoutTerminalOperation() {
     doTest();
   }
 
+  @Test
   public void testNoBreakpoint() {
     doTest();
   }
 
+  @Test
   public void testBreakpointOnMethod() {
     doTest();
   }
 
+  @Test
   public void testBreakpointOnIfCondition() {
     doTest();
   }
 
+  @Test
   public void testBreakpointOnNewScope() {
     doTest();
   }
 
+  @Test
   public void testBreakpointOnElseBranch() {
     doTest();
   }
 
+  @Test
   public void testInLambda() {
     doTest();
   }
 
+  @Test
   public void testInLambdaWithBody() {
     doTest();
   }
 
+  @Test
   public void testInAnonymous() {
     doTest();
   }
 
+  @Test
   public void testAfterStatement() {
     doTest();
   }
 
+  @Test
   public void testInPreviousStatement() {
     doTest();
   }
 
+  @Test
   public void testInNextStatement() {
     doTest();
   }
 
+  @Test
   public void testIdea173415() {
     doTest();
   }
@@ -77,20 +99,14 @@ public class StreamChainBuilderNegativeTest extends StreamChainBuilderTestCase {
     assertTrue(chains.isEmpty());
   }
 
-  @Override
-  protected List<StreamChain> buildChains() {
-    return ApplicationManager.getApplication().runReadAction((Computable<List<StreamChain>>)() -> {
-      final PsiElement elementAtCaret = configureAndGetElementAtCaret();
-      assertNotNull(elementAtCaret);
-      final StreamChainBuilder builder = getChainBuilder();
+  private List<StreamChain> buildChains() {
+    final StreamChainBuilderFixture fixture = builderFixture.get();
+    final PsiElement elementAtCaret = fixture.configureAndGetElementAtCaret();
+    assertNotNull(elementAtCaret);
+    return ReadAction.computeBlocking(() -> {
+      final StreamChainBuilder builder = fixture.getChainBuilder();
       assertFalse(builder.isChainExists(elementAtCaret));
       return builder.build(elementAtCaret);
     });
-  }
-
-  @NotNull
-  @Override
-  protected String getRelativeTestPath() {
-    return "chain/negative";
   }
 }

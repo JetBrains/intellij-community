@@ -1,17 +1,35 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.exec.streamex
 
+import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper
+import com.intellij.debugger.streams.test.ExecutionTestCaseHelper
+import com.intellij.debugger.streams.test.TraceExecutionFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.xdebugger.XDebugSession
+import org.junit.jupiter.api.Test
+
 /**
  * @author Vitaliy.Bibaev
  */
-open class DistinctOperationsTest : StreamExTestCase() {
-  override val packageName: String = "distinct"
+@TestApplication
+open class DistinctOperationsTest {
+  protected val streamEx: StreamExFixture by streamExFixture("distinct", ::getHelper)
 
-  fun testDistinctAtLeast() = doStreamExWithResultTest()
+  protected open fun getHelper(trace: TraceExecutionFixture, session: XDebugSession): TraceExecutionTestHelper =
+    ExecutionTestCaseHelper(trace, session)
 
-  fun testDistinctWithKeyExtractor() = doStreamExWithResultTest()
-  fun testDistinctWithStatefulExtractor() = doStreamExWithResultTest()
+  @Test
+  fun testDistinctAtLeast(): Unit = streamEx.doStreamExWithResultTest()
 
-  fun testDistinctKeys() = doStreamExWithResultTest()
-  fun testDistinctValues() = doStreamExWithResultTest()
+  @Test
+  fun testDistinctWithKeyExtractor(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testDistinctWithStatefulExtractor(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testDistinctKeys(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testDistinctValues(): Unit = streamEx.doStreamExWithResultTest()
 }

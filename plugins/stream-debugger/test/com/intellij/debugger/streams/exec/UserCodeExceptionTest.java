@@ -5,34 +5,47 @@ import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper
 import com.intellij.debugger.streams.core.trace.TracingResult;
 import com.intellij.debugger.streams.core.wrapper.StreamChain;
 import com.intellij.debugger.streams.test.ExecutionTestCaseHelper;
-import com.intellij.debugger.streams.test.TraceExecutionTestCase;
+import com.intellij.debugger.streams.test.TraceExecutionFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.debugger.streams.test.TraceExecutionFixtureKt.traceExecutionFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class UserCodeExceptionTest extends TraceExecutionTestCase {
+@TestApplication
+public class UserCodeExceptionTest {
+  protected final TestFixture<TraceExecutionFixture> traceFixture = traceExecutionFixture(this::getHelper);
+
+  @Test
   public void testExceptionInProducerCall() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testExceptionInTerminatorCall() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testExceptionInIntermediateCall() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
+  @Test
   public void testExceptionInStreamWithPrimitiveResult() {
-    doTest(false);
+    traceFixture.get().doTest(false);
   }
 
-  @Override
-  protected @NotNull TraceExecutionTestHelper getHelper(XDebugSession session) {
-    return new ExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG) {
+  protected @NotNull TraceExecutionTestHelper getHelper(@NotNull TraceExecutionFixture trace, @NotNull XDebugSession session) {
+    return new ExecutionTestCaseHelper(trace, session) {
       @Override
       protected void handleSuccess(@Nullable StreamChain chain, @Nullable TracingResult result, @Nullable Boolean resultMustBeNull) {
         assertNotNull(result);

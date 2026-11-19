@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.filtering
 
-import com.intellij.debugger.DebuggerTestCase
+import com.intellij.debugger.DebuggerTestFixture
+import com.intellij.debugger.DebuggerTestOptions
+import com.intellij.debugger.debuggerTestFixture
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.OutputChecker
@@ -10,54 +12,59 @@ import com.intellij.debugger.streams.core.psi.impl.DebuggerPositionResolverImpl
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider
 import com.intellij.debugger.streams.test.StreamDebuggerTestUtil
+import com.intellij.execution.ExecutionTestOptions
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
+import com.intellij.util.ThrowableRunnable
 import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.Method
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Base class for tests of the stream-chain traceability filtering algorithm.
+ * Creates the fixture of the tests of the stream-chain traceability filtering algorithm.
  *
- * The harness launches a real debuggee under JDI, stops to obtain the live [com.sun.jdi.Method] and then,
+ * The fixture launches a real debuggee under JDI, stops to obtain the live [com.sun.jdi.Method] and then,
  * for each [BytecodePosition], simulates a debugger position at a chosen bytecode offset and runs filtering.
+ * The main module has the language level 16.
+ * Declare it as an instance field of a `@TestApplication` class.
  */
-abstract class StreamChainFilteringTestCase : DebuggerTestCase() {
-  @JvmField
-  protected val LOG: Logger = Logger.getInstance(javaClass)
+internal fun streamChainFilteringFixture(): TestFixture<StreamChainFilteringFixture> = testFixture("streamChainFilteringFixture") {
+  val execution = ExecutionTestOptions().withSetUpModule { module ->
+    IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_16)
+  }
+  val debugger = debuggerTestFixture(
+    StreamDebuggerTestUtil.getTestDataPath("filtering"),
+    { appPath, outputPath -> OutputChecker({ appPath }, { outputPath }) },
+    DebuggerTestOptions().withExecution(execution),
+  ).init()
+  initialized(StreamChainFilteringFixture(debugger)) {}
+}
 
+/** The state and the helpers of a test that [streamChainFilteringFixture] creates. */
+internal class StreamChainFilteringFixture(val debugger: DebuggerTestFixture) {
   private val positionResolver = DebuggerPositionResolverImpl()
 
-  override fun initOutputChecker(): OutputChecker = OutputChecker({ testAppPath }, { appOutputPath })
+  private fun getLibrarySupportProvider(): LibrarySupportProvider = StandardLibrarySupportProvider()
 
-  override fun setUpModule() {
-    super.setUpModule()
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_16)
-  }
-
-  override fun getTestAppPath(): String =
-    StreamDebuggerTestUtil.getTestDataPath("filtering")
-
-  protected open fun getLibrarySupportProvider(): LibrarySupportProvider = StandardLibrarySupportProvider()
-
-  protected open suspend fun findChains(position: XSourcePosition): List<StreamChain> = readAction {
-    val element = positionResolver.getNearestElementToBreakpoint(project, position) ?: return@readAction emptyList()
+  private suspend fun findChains(position: XSourcePosition): List<StreamChain> = readAction {
+    val element = positionResolver.getNearestElementToBreakpoint(debugger.project, position) ?: return@readAction emptyList()
     val builder = getLibrarySupportProvider().getChainBuilder()
     if (builder.isChainExists(element)) builder.build(element) else emptyList()
   }
 
-  protected open suspend fun filterTraceable(
+  private suspend fun filterTraceable(
     chains: List<StreamChain>,
     position: XSourcePosition,
     method: Method,
     bytecodeOffset: Long,
   ): List<StreamChain> {
-    val contextElement = readAction { positionResolver.getNearestElementToBreakpoint(project, position) } ?: return chains
+    val contextElement = readAction { positionResolver.getNearestElementToBreakpoint(debugger.project, position) } ?: return chains
     return filterTraceableStreams(chains, position, contextElement, method, bytecodeOffset)
   }
 
@@ -67,9 +74,9 @@ abstract class StreamChainFilteringTestCase : DebuggerTestCase() {
    * so all positions must lie inside that method - see [doFilteringTestAtBreakpoint] for a position in a different
    * method (e.g. a lambda body).
    */
-  protected fun doFilteringTest(className: String, vararg positions: BytecodePosition) {
-    createLocalProcess(className)
-    onBreakpoint { suspendContext ->
+  fun doFilteringTest(className: String, vararg positions: BytecodePosition): Unit = debugger.runTest(ThrowableRunnable {
+    debugger.createLocalProcess(className)
+    debugger.onBreakpoint { suspendContext ->
       DebuggerManagerThreadImpl.assertIsManagerThread()
 
       val method = suspendContext.frameProxy!!.location().method()
@@ -81,34 +88,34 @@ abstract class StreamChainFilteringTestCase : DebuggerTestCase() {
       timeoutRunBlocking(30.seconds) {
         resolved.forEach { reportPosition(it) }
       }
-      resume(suspendContext)
+      debugger.resume(suspendContext)
     }
-  }
+  })
 
   /**
    * Launches [className], stops at its single `// Breakpoint!` and prints the golden report at the *actual* stop
    * position (the top frame's real [com.sun.jdi.Location]). Use when the interesting position is not in the
    * launched `main` method - ex. inside a lambda body, which compiles to a separate synthetic method.
    */
-  protected fun doFilteringTestAtBreakpoint(className: String) {
-    createLocalProcess(className)
-    onBreakpoint { suspendContext ->
+  fun doFilteringTestAtBreakpoint(className: String): Unit = debugger.runTest(ThrowableRunnable {
+    debugger.createLocalProcess(className)
+    debugger.onBreakpoint { suspendContext ->
       val location = suspendContext.frameProxy!!.location()
       val position = DebuggerUtilsEx.toXSourcePosition(
-        runReadActionBlocking { debugProcess.positionManager.getSourcePosition(location) }
+        runReadActionBlocking { debugger.debugProcess!!.positionManager.getSourcePosition(location) }
       ) ?: error("No XSourcePosition at breakpoint")
       val resolved = ResolvedPosition("breakpoint", location.method(), location.codeIndex(), position)
       timeoutRunBlocking(30.seconds) {
         reportPosition(resolved)
       }
-      resume(suspendContext)
+      debugger.resume(suspendContext)
     }
-  }
+  })
 
   private fun sourcePositionAt(method: Method, offset: Long): XSourcePosition {
     val location = method.locationOfCodeIndex(offset) ?: error("No location for bytecode offset $offset")
     val sourcePosition = runReadActionBlocking {
-      debugProcess.positionManager.getSourcePosition(location)
+      debugger.debugProcess!!.positionManager.getSourcePosition(location)
     }
     return DebuggerUtilsEx.toXSourcePosition(sourcePosition) ?: error("No XSourcePosition for bytecode offset $offset")
   }
@@ -130,7 +137,7 @@ abstract class StreamChainFilteringTestCase : DebuggerTestCase() {
         }
       }
     }
-    println(report.trimEnd(), ProcessOutputTypes.SYSTEM)
+    debugger.println(report.trimEnd(), ProcessOutputTypes.SYSTEM)
   }
 
   private class ResolvedPosition(val label: String, val method: Method, val offset: Long, val position: XSourcePosition)

@@ -6,17 +6,22 @@ import com.intellij.debugger.streams.core.trace.PrimitiveValue
 import com.intellij.debugger.streams.core.trace.Value
 import com.intellij.debugger.streams.exec.PrimitiveTerminalOperationTest
 import com.intellij.debugger.streams.test.BreakpointBasedExecutionTestCaseHelper
+import com.intellij.debugger.streams.test.TraceExecutionFixture
 import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.xdebugger.XDebugSession
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 
+@TestApplication
 class BreakpointEnginePrimitiveTerminalOperationTest : PrimitiveTerminalOperationTest() {
-  override fun getHelper(session: XDebugSession): TraceExecutionTestHelper {
-    return object : BreakpointBasedExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG) {
+  override fun getHelper(trace: TraceExecutionFixture, session: XDebugSession): TraceExecutionTestHelper {
+    return object : BreakpointBasedExecutionTestCaseHelper(trace, session) {
       override fun handleResultValue(result: Value?, mustBeNull: Boolean) {
-        Assert.assertFalse(mustBeNull)
-        Assert.assertNotNull(result)
-        Assert.assertTrue(result is PrimitiveValue)
+        assertFalse(mustBeNull)
+        assertNotNull(result)
+        assertTrue(result is PrimitiveValue)
         println("Result type:" + result!!.typeName(), ProcessOutputTypes.SYSTEM)
         println("value = " + result.toString(), ProcessOutputTypes.SYSTEM)
       }

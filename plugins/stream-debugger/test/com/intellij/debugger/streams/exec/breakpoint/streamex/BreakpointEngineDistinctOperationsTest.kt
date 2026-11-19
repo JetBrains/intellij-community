@@ -3,12 +3,20 @@ package com.intellij.debugger.streams.exec.breakpoint.streamex
 
 import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper
 import com.intellij.debugger.streams.exec.streamex.DistinctOperationsTest
+import com.intellij.debugger.streams.test.BreakpointBasedExecutionTestCaseHelper
+import com.intellij.debugger.streams.test.TraceExecutionFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.xdebugger.XDebugSession
+import org.junit.jupiter.api.Test
 
+@TestApplication
 class BreakpointEngineDistinctOperationsTest : DistinctOperationsTest() {
-  override fun getHelper(session: XDebugSession): TraceExecutionTestHelper = breakpointEngineHelper(session)
+  override fun getHelper(trace: TraceExecutionFixture, session: XDebugSession): TraceExecutionTestHelper =
+    BreakpointBasedExecutionTestCaseHelper(trace, session)
 
-  fun testEntryWithSideEffectsDistinctKeys() = doStreamExWithResultTest()
+  @Test
+  fun testEntryWithSideEffectsDistinctKeys(): Unit = streamEx.doStreamExWithResultTest()
 
-  fun testEntryWithSideEffectsDistinctValues() = doStreamExWithResultTest()
+  @Test
+  fun testEntryWithSideEffectsDistinctValues(): Unit = streamEx.doStreamExWithResultTest()
 }
