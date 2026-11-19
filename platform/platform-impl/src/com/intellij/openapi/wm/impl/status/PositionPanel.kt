@@ -129,8 +129,9 @@ open class PositionPanel(
 
   override fun getClickConsumer(): (MouseEvent) -> Unit {
     return h@{
-      val project = helper.project
       val editor = (dataContext.currentFileEditor.value as? TextEditor)?.editor ?: return@h
+      // the editor can belong to a frame guest, see `StatusBarWidgetsManager.dataContext`
+      val project = editor.project ?: helper.project
       CommandProcessor.getInstance().executeCommand(
         project,
         {

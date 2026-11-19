@@ -29,6 +29,9 @@ import com.intellij.openapi.wm.StatusBarWidgetProvider
 import com.intellij.openapi.wm.WidgetPresentationDataContext
 import com.intellij.openapi.wm.WidgetPresentationFactory
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.ex.WindowManagerListener
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.status.ChildStatusBarWidget
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.createComponentByWidgetPresentation
@@ -37,13 +40,22 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
 
@@ -62,15 +74,31 @@ class StatusBarWidgetsManager(
     StatusBarActionManager.getInstance()
   }
 
-  internal val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
+  /**
+   * The data context of the widgets of the frame of [project]. The widgets keep [project] as their project, but the current
+   * editor is the selected editor of the active project of the frame, see `WindowManagerEx.getActiveProject`: a frame with
+   * guests shows the editors of one project at a time.
+   */
+  @get:ApiStatus.Internal
+  val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
     override val project: Project
       get() = this@StatusBarWidgetsManager.project
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override val currentFileEditor: StateFlow<FileEditor?> by lazy {
-      flow {
-        val manager = project.serviceAsync<FileEditorManager>()
-        emitAll(manager.selectedEditorFlow)
-      }.stateIn(parentScope, started = SharingStarted.Eagerly, initialValue = null)
+      frameActiveProjectFlow(project)
+        .flatMapLatest { active ->
+          flow {
+            // a guest that leaves gives the frame back to the owner, and its manager is gone once the guest is disposed
+            if (active !== project && active.isDisposed) {
+              emit(null)
+            }
+            else {
+              emitAll(active.serviceAsync<FileEditorManager>().selectedEditorFlow)
+            }
+          }
+        }
+        .stateIn(parentScope, started = SharingStarted.Eagerly, initialValue = null)
     }
   }
 
@@ -274,6 +302,39 @@ class StatusBarWidgetsManager(
  */
 internal fun StatusBarWidgetFactory.isAllowedByInternalMode(): Boolean {
   return !isInternal || ApplicationManager.getApplication().isInternal
+}
+
+/**
+ * The active project of the frame of [project], see `WindowManagerEx.getActiveProject`, and each change of it.
+ * A frame guest has no frame of its own, so it gives itself.
+ *
+ * The record is read as is, not through [IdeFrameGuests.activeProjectOf]: a guest that turns active while it still opens
+ * gets no second event once it is initialized, and the status bar would show the owner for good.
+ */
+private fun frameActiveProjectFlow(project: Project): Flow<Project> {
+  fun activeProject(): Project {
+    return if (IdeFrameGuests.isFrameGuest(project)) project else WindowManagerEx.getInstanceEx().getActiveProject(project)
+  }
+
+  // the callback only signals, and the collector reads the record: a stale read can't overwrite a newer one
+  return callbackFlow {
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(WindowManagerListener.TOPIC, object : WindowManagerListener {
+      override fun onFramesChanged() {
+      }
+
+      override fun onActiveProjectChanged(frameOwner: Project, activeProject: Project) {
+        if (frameOwner === project) {
+          trySend(Unit)
+        }
+      }
+    })
+    // signal after the subscription, so that no change is lost
+    trySend(Unit)
+    awaitClose()
+  }
+    .conflate()
+    .map { activeProject() }
+    .distinctUntilChanged { old, new -> old === new }
 }
 
 private fun createWidget(
