@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.parser
 
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -127,6 +128,54 @@ class YamlBlockReparseTest {
   fun `a tag that ends with a colon at the end of the file makes a full reparse`() =
     check("a:\n- !<selection>!</selection>\n\n", ":", block = false)
 
+  /**
+   * The inner mapping refuses the new key before the full check, because the key is below its indent.
+   * This refusal reads no leaves of the inner mapping, so it uses no budget, and the outer mapping is checked.
+   * The sibling key `g` keeps the outer mapping below half of the file.
+   */
+  @Test
+  fun `a large outer mapping after a cheap refusal of a large inner mapping reparses the outer mapping`() {
+    val keys = (1..12_000).joinToString("") { "    c$it: 1\n" }
+    val siblingKeys = (1..12_000).joinToString("") { "  c$it: 1\n" }
+    check("a:\n  b:\n    c0: 1<caret>\n$keys  e: 3\nf: 4\ng:\n$siblingKeys", "\n  g: 5", block = true, blockStart = 5)
+  }
+
+  /** The first key of the inner mapping becomes a plain scalar, so the full check refuses the inner mapping. */
+  @Test
+  fun `a text after the colon of the first inner key reparses the outer mapping`() =
+    check("a:\n  b:\n    c0:<caret> 1\n    c1: 1\n  e: 3\nf: 4\n", "x", block = true, blockStart = 5)
+
+  /**
+   * The full check of the inner mapping reads all of its node, and it refuses the change.
+   * The full checks of one change read at most half of the file and 64 KB, so the outer mapping is not checked.
+   */
+  @Test
+  fun `a large outer mapping after a refused full check of a large inner mapping makes a full reparse`() {
+    val keys = (1..12_000).joinToString("") { "    c$it: 1\n" }
+    check("a:\n  b:\n    c0:<caret> 1\n$keys  e: 3\nf: 4\n", "x", block = false)
+  }
+
+  /**
+   * The mapping under `en:` is almost all of the file.
+   * Its full check reads more than half of the file and 64 KB, so it is not checked, also as the first full check of the change.
+   */
+  @Test
+  fun `a key in a mapping of almost all of a big file makes a full reparse`() {
+    val keys = bigMappingKeys().replace("  key_10000:", "  key_10<caret>000:")
+    check("en:\n${keys}b: c\n", "x", block = false)
+  }
+
+  /** The pasted keys are longer than half of the file and 64 KB, so the full check does not run on the new text. */
+  @Test
+  fun `a paste of many keys into a small mapping of a small file makes a full reparse`() {
+    val keys = (0 until 10_000).joinToString("") { "\n  key_$it: v" }
+    check("a:\n  b: 1<caret>\n  c: 2\nd: 3\n", keys, block = false)
+  }
+
+  @Test
+  fun `a key in a small inner mapping of a big file reparses the mapping`() =
+    check("en:\n${bigMappingKeys()}  inner:\n    a: 1\n    b<caret>: 2\nz: c\n", "x", block = true)
+
   @Test
   fun `a key in the explicit key of a pair with an anchor keeps the tree of a full parse`() =
     check("&a ?\n k<caret>:", "a: ", block = null)
@@ -196,7 +245,7 @@ class YamlBlockReparseTest {
                         )
           for ((range, replacement) in changes) {
             total++
-            if (isBlockReparse(sample, range, replacement)) accepted++
+            if (findReparsedBlock(sample, range, replacement) != null) accepted++
             checkCommit(sample, range, replacement)
           }
         }
@@ -206,21 +255,27 @@ class YamlBlockReparseTest {
     }
   }
 
-  /** @param block the expected kind of the reparse: true for a block reparse, false for no block reparse, null for any */
-  private fun check(textWithMarkers: String, replacement: String, block: Boolean?) = timeoutRunBlocking {
+  /**
+   * @param block the expected kind of the reparse: true for a block reparse, false for no block reparse, null for any
+   * @param blockStart the expected start offset of the reparsed block in the old text, or null for any block
+   */
+  private fun check(textWithMarkers: String, replacement: String, block: Boolean?, blockStart: Int? = null) = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val (text, range) = parseMarkers(textWithMarkers)
-      if (block != null) assertEquals(block, isBlockReparse(text, range, replacement), "block reparse")
+      val reparsedBlock = findReparsedBlock(text, range, replacement)
+      if (block != null) assertEquals(block, reparsedBlock != null, "block reparse")
+      if (blockStart != null) assertEquals(blockStart, reparsedBlock?.startOffset, "start of the reparsed block")
       checkCommit(text, range, replacement)
     }
   }
 
-  private fun isBlockReparse(text: String, range: TextRange, replacement: String): Boolean {
+  /** Returns the old node of the block reparse, or null if the reparse is not a block reparse. */
+  private fun findReparsedBlock(text: String, range: TextRange, replacement: String): ASTNode? {
     val file = createFile(text) as PsiFileImpl
     val newText = range.replace(text, replacement)
-    val changedRange = ChangedPsiRangeUtil.getChangedPsiRange(file, file.treeElement!!, newText) ?: return false
-    val result = BlockSupportImpl.findReparseableNodeAndReparseIt(file, file.node, changedRange, newText)
-    return result?.first?.elementType is YamlBlockCollectionType
+    val changedRange = ChangedPsiRangeUtil.getChangedPsiRange(file, file.treeElement!!, newText) ?: return null
+    val oldNode = BlockSupportImpl.findReparseableNodeAndReparseIt(file, file.node, changedRange, newText)?.first ?: return null
+    return oldNode.takeIf { it.elementType is YamlBlockCollectionType }
   }
 
   private fun checkCommit(text: String, range: TextRange, replacement: String) {
@@ -258,6 +313,9 @@ class YamlBlockReparseTest {
     return text.replace("<selection>", "").replace("</selection>", "") to TextRange(start, end)
   }
 }
+
+/** 20,000 lines of keys with the indent of a mapping under a root key, about 280 KB. */
+private fun bigMappingKeys(): String = (0 until 20_000).joinToString("") { "  key_$it: v\n" }
 
 private val SAMPLES = listOf(
   """

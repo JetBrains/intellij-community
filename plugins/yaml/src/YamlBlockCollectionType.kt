@@ -16,8 +16,10 @@ import com.intellij.platform.syntax.psi.ElementTypeConverter
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
 import com.intellij.platform.syntax.psi.registerParse
 import com.intellij.platform.syntax.tree.SyntaxNode
+import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.impl.source.tree.LazyParseableElement
+import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.ICustomParsingType
 import com.intellij.psi.tree.IReparseableElementTypeBase
 import com.intellij.util.CharTable
@@ -27,6 +29,7 @@ import com.intellij.yaml.syntax.parseYamlBlock
 import com.intellij.yaml.syntax.prepareYamlBlockReparse
 import com.intellij.yaml.syntax.recreateYamlBlockReparse
 import org.jetbrains.annotations.ApiStatus
+import java.lang.ref.WeakReference
 
 /**
  * A block mapping or a block sequence that gets a new text without a reparse of the file.
@@ -46,10 +49,13 @@ class YamlBlockCollectionType(debugName: String, private val syntaxType: SyntaxE
     preparedReparse.remove()
     if (!RegistryManager.getInstance().`is`("yaml.reparse.collections")) return false
     if (!isInPlainYamlFile(currentNode)) return false
+    val checkedLength = maxOf(currentNode.textLength, newText.length)
+    if (isAboveCheckBudget(currentNode, checkedLength)) return false
 
     val cancellation = CancellationProvider { ProgressManager.checkCanceled() }
     val node = AstSyntaxNode(currentNode, getYamlElementTypeConverter())
-    val reparse = prepareYamlBlockReparse(node, newText, cancellation) ?: return false
+    val reparse = prepareYamlBlockReparse(node, newText, cancellation) { isInCheckBudget(currentNode, checkedLength) } ?: return false
+    lastRefusedCheck.remove()
     preparedReparse.set(PreparedReparse(newText, reparse))
     return true
   }
@@ -98,6 +104,59 @@ class YamlBlockCollectionType(debugName: String, private val syntaxType: SyntaxE
 private val BLOCK_REPARSE_KEY = Key.create<YamlBlockReparse>("YAML_BLOCK_REPARSE")
 
 private val LOG = logger<YamlBlockCollectionType>()
+
+/**
+ * The refused full checks of one change in a thread.
+ * `BlockSupportImpl` checks each block ancestor of the change, from the innermost one, up to the first accepted node.
+ * The next check is for the same change if the file has the same modification stamp and the node is an ancestor of [node].
+ *
+ * @property checkedLength the sum of the node lengths of the full checks that refused the nodes
+ */
+private class RefusedCheck(val modificationStamp: Long, val node: WeakReference<ASTNode>, val checkedLength: Long)
+
+private val lastRefusedCheck = ThreadLocal<RefusedCheck?>()
+
+/**
+ * Checks that the full check of [node] stays in the budget of its change.
+ * [nodeLength] is the larger of the old and the new length of the node.
+ * Each full check lexes all of the node two or three times and parses it twice.
+ * An accepted check of a node of the file size costs about 1.6 times a full reparse of the file.
+ * Each full check of one change, the first one included, adds [nodeLength] to the sum of the change.
+ * The sum stays at or below [checkBudget].
+ * A cheap refusal before the full check uses no budget.
+ * The cheap refusals read all of the node text, so [isAboveCheckBudget] refuses a node above the budget before them.
+ * This does not change the result: such a node always fails this check, and its ancestors are longer.
+ */
+private fun isInCheckBudget(node: ASTNode, nodeLength: Int): Boolean {
+  val fileElement = TreeUtil.getFileElement(node) ?: return true
+  val file = fileElement.psi as? PsiFile ?: return true
+  val stamp = file.modificationStamp
+  val last = lastRefusedCheck.get()
+  val spent = if (last != null && last.modificationStamp == stamp && isAncestor(node, last.node.get())) last.checkedLength else 0L
+  val checkedLength = spent + nodeLength
+  lastRefusedCheck.set(RefusedCheck(stamp, WeakReference(node), checkedLength))
+  return checkedLength <= checkBudget(fileElement)
+}
+
+/** Checks that [nodeLength] of [node] alone is above the budget of [isInCheckBudget]. */
+private fun isAboveCheckBudget(node: ASTNode, nodeLength: Int): Boolean {
+  val fileElement = TreeUtil.getFileElement(node) ?: return false
+  return nodeLength > checkBudget(fileElement)
+}
+
+/** The budget of the full checks of one change: half of the file length plus [MIN_CHECK_BUDGET]. */
+private fun checkBudget(fileElement: ASTNode): Int = fileElement.textLength / 2 + MIN_CHECK_BUDGET
+
+private const val MIN_CHECK_BUDGET = 64 * 1024
+
+private fun isAncestor(ancestor: ASTNode, node: ASTNode?): Boolean {
+  var current = node?.treeParent
+  while (current != null) {
+    if (current === ancestor) return true
+    current = current.treeParent
+  }
+  return false
+}
 
 /**
  * A [SyntaxNode] over a node of the YAML tree, for the check of [prepareYamlBlockReparse].

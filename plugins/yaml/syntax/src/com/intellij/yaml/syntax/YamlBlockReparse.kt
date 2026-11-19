@@ -126,9 +126,18 @@ private fun fallbackReparse(tokens: TokenList): YamlBlockReparse {
  * It must be outside of a flow collection and outside of the key of `?`.
  * It must start at a line start or after the indent of its line.
  * See the private check for the other conditions.
+ *
+ * @param beforeFullCheck runs once after the cheap refusals, before the walk over all leaves of the node.
+ * The full check lexes the node two or three times and parses it twice.
+ * A false result refuses the node.
  */
 @ApiStatus.Internal
-fun prepareYamlBlockReparse(node: SyntaxNode, newText: CharSequence, cancellationProvider: CancellationProvider?): YamlBlockReparse? {
+fun prepareYamlBlockReparse(
+  node: SyntaxNode,
+  newText: CharSequence,
+  cancellationProvider: CancellationProvider?,
+  beforeFullCheck: () -> Boolean = { true },
+): YamlBlockReparse? {
   val parent = node.parent() ?: return null
   val insideSequence = isInsideSequence(node) ?: return null
   if (!isInBlockContext(parent)) return null
@@ -145,6 +154,7 @@ fun prepareYamlBlockReparse(node: SyntaxNode, newText: CharSequence, cancellatio
   val firstToken = findFirstContentToken(head, linePrefix.length) ?: return null
   val indent = firstToken.blockIndent(insideSequence)
   if (!hasNoLineBelowIndent(newText, indent, insideSequence)) return null
+  if (!beforeFullCheck()) return null
 
   val oldTokens = collectTokens(linePrefix, oldNode, untilContent = false) ?: return null
   val tail = collectTail(oldNode) ?: return null
