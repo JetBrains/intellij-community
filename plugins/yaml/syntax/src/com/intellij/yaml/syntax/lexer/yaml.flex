@@ -101,6 +101,13 @@ import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
     yybegin(YYINITIAL)
   }
 
+  /** Resets the state for the next document. A quote without a closing quote stays, see [hasUnclosedQuote]. */
+  private fun cleanStateForNextDocument() {
+    val unclosedQuote = hasUnclosedQuote
+    cleanMyState()
+    hasUnclosedQuote = unclosedQuote
+  }
+
   private fun prepareForNewDocument() {
     prevElementIndent = 0
     possiblePlainTextScalarContinue = false
@@ -338,7 +345,7 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
   // Need to consider end of file after document range markers
   {EOL} /  ( "---" | "..." ) {NS_CHAR}  {  return YamlSyntaxTokenTypes.EOL }
   {EOL} / ( "---" | "..." ) {
-          cleanMyState()
+          cleanStateForNextDocument()
           return YamlSyntaxTokenTypes.EOL
           }
   {EOL} { return YamlSyntaxTokenTypes.EOL }

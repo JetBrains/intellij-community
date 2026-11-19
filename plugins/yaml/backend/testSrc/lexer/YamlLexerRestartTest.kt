@@ -84,6 +84,18 @@ class YamlLexerRestartTest {
     lexer.get().checkCorrectRestart(text)
   }
 
+  /** A line break before `---` in a flow collection resets the state for the next document, but the quote stays unclosed. */
+  @Test
+  fun `no restart after an unclosed quote in a flow collection before a document marker`() {
+    val text = UNCLOSED_QUOTE_IN_FLOW_TEXT
+    for ((offset, state) in lineStartTokenStates(text)) {
+      if (offset > text.indexOf('"')) {
+        assertFalse(isRestartable(state)) { "restart at offset $offset, state $state" }
+      }
+    }
+    lexer.get().checkCorrectRestart(text)
+  }
+
   @Test
   fun `deep indent`() {
     lexer.get().checkCorrectRestart(DEEP_INDENT_TEXT)
@@ -289,6 +301,8 @@ private const val MULTI_LINE_QUOTED_TEXT = """
 
 private const val UNCLOSED_QUOTE_TEXT = "a: \"b\nc: d\ne: f\n"
 
+private const val UNCLOSED_QUOTE_IN_FLOW_TEXT = "a: {\n  b: \"c\n---\nd: e\n"
+
 private val DEEP_INDENT_TEXT = buildString {
   for (depth in 0..140) {
     append(" ".repeat(depth)).append("k").append(depth).append(":\n")
@@ -333,6 +347,7 @@ private val CASE_TEXTS = listOf(
   KEY_AFTER_PLAIN_TEXT,
   MULTI_LINE_QUOTED_TEXT,
   UNCLOSED_QUOTE_TEXT,
+  UNCLOSED_QUOTE_IN_FLOW_TEXT,
   DEEP_INDENT_TEXT,
   DOCUMENT_MARKERS_TEXT,
   MIXED_TEXT,

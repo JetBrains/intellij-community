@@ -741,6 +741,13 @@ private class Bitset(
     yybegin(YYINITIAL)
   }
 
+  /** Resets the state for the next document. A quote without a closing quote stays, see [hasUnclosedQuote]. */
+  private fun cleanStateForNextDocument() {
+    val unclosedQuote = hasUnclosedQuote
+    cleanMyState()
+    hasUnclosedQuote = unclosedQuote
+  }
+
   private fun prepareForNewDocument() {
     prevElementIndent = 0
     possiblePlainTextScalarContinue = false
@@ -1564,7 +1571,7 @@ private class Bitset(
           43 -> {
             // lookahead expression with fixed base length
             zzMarkedPos = zzBufferL.offsetByCodePoints(zzStartRead, 1)
-            cleanMyState()
+            cleanStateForNextDocument()
           return YamlSyntaxTokenTypes.EOL
             }
           87 -> { /* do nothing */ }
