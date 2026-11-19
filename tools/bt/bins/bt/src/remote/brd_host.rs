@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::sync::OnceLock;
 
+use bt_core::os_runtime::isolated_command;
 use bt_core::runtime::Runtime;
 use serde::Deserialize;
 
@@ -89,7 +90,7 @@ impl HostLink for BrdHost<'_> {
             .prefix("bt-host-report-")
             .tempfile()
             .map_err(|error| HostRefusal::new(code::NO_REPORT, NOT_RUN, format!("cannot make the file of the report: {error}")))?;
-        let mut command = Command::new("/bin/sh");
+        let mut command = isolated_command("/bin/sh");
         command
             .arg("-c")
             .arg(WITH_REPORT_FD)

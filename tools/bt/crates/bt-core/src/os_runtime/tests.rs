@@ -75,6 +75,28 @@ fn child_process() {
             let read = OsRuntime::builder(repo).build().revision_text("HEAD", "module/Driver.kt");
             i32::from(read.ok().flatten().as_deref() != Some("first\n"))
         }
+        script if script.starts_with("spawn-probe:") => {
+            // The child and its own child run the same script. The marker file tells them apart: the first one makes
+            // it and spawns, the second one finds it and reports what it inherited.
+            let marker = Path::new(&script["spawn-probe:".len()..]);
+            if marker.exists() {
+                let _ = write!(
+                    stdout,
+                    "GIT_DIR {}",
+                    if std::env::var_os("GIT_DIR").is_some() {
+                        "inherited"
+                    } else {
+                        "removed"
+                    }
+                );
+                0
+            } else {
+                std::fs::write(marker, "").expect("the marker of the probe");
+                let ran = spawn_child(None, &child_argv(), None);
+                let _ = write!(stdout, "{}", ran.output);
+                ran.exit_code
+            }
+        }
         script => {
             if let Some(Ok(milliseconds)) = script.strip_prefix("sleep:").map(str::parse::<u64>) {
                 thread::sleep(Duration::from_millis(milliseconds));
@@ -700,4 +722,18 @@ fn an_inherited_git_dir_reaches_no_git_of_the_runtime_or_its_tests() {
         git_in(&own, &["branch", "--list", "published", "--format=%(refname)"], None),
         "refs/heads/published"
     );
+}
+
+/// bt runs under a parent git too, such as a `git rebase --exec` step. A child of the spawn, such as bazel, a test JVM
+/// or a `cargo test`, gets none of the variables of that git, so its own git calls stay in their own repository.
+#[test]
+fn a_spawned_child_inherits_no_git_dir_of_the_parent() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let mut command = child(None, &format!("spawn-probe:{}", dir.path().join("marker").display()));
+    command.env("GIT_DIR", dir.path().join("decoy.git"));
+    let ran = command.output().expect("the child runs");
+    assert!(ran.status.success(), "{ran:?}");
+    // The harness of each test binary prints its own header first, so only the end is the answer of the probe.
+    let stdout = String::from_utf8_lossy(&ran.stdout);
+    assert!(stdout.ends_with("GIT_DIR removed"), "{stdout}");
 }

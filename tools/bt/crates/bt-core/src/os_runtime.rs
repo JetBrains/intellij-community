@@ -8,7 +8,7 @@
 //!
 //! Portable on purpose, with no unix-only call anywhere below, because `bt.cmd` runs on Windows.
 
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
@@ -183,14 +183,23 @@ pub const GIT_LOCAL_ENV_VARS: [&str; 15] = [
     "GIT_COMMON_DIR",
 ];
 
-/// A `git` command without the inherited variables of [`GIT_LOCAL_ENV_VARS`], so its `-C` alone names its
-/// repository. Every git spawn of this crate starts from it, the tests included.
-pub fn git_command() -> Command {
-    let mut command = Command::new("git");
+/// A command of `program` without the inherited variables of [`GIT_LOCAL_ENV_VARS`].
+///
+/// Every child of bt starts from it: git, accio, bazel, `tests.cmd` and the shell of `brd-host`. A test JVM or a
+/// `cargo test` under such a child runs git too, and with an inherited `GIT_DIR` that git writes the repository of
+/// the parent git and not the one of its working directory.
+pub fn isolated_command(program: impl AsRef<OsStr>) -> Command {
+    let mut command = Command::new(program);
     for name in GIT_LOCAL_ENV_VARS {
         command.env_remove(name);
     }
     command
+}
+
+/// A `git` command without the inherited variables of [`GIT_LOCAL_ENV_VARS`], so its `-C` alone names its
+/// repository. Every git spawn of this crate starts from it, the tests included.
+pub fn git_command() -> Command {
+    isolated_command("git")
 }
 
 impl OsRuntime {
@@ -246,7 +255,7 @@ fn run_accio(repo_root: &Path, command: &[OsString]) -> Result<String, Refusal> 
     let Some((program, args)) = command.split_first() else {
         return Err(accio_failed("nothing to run: the accio command line is empty"));
     };
-    let ran = Command::new(program)
+    let ran = isolated_command(program)
         .args(args)
         .current_dir(repo_root)
         .stdin(Stdio::null())
@@ -336,7 +345,7 @@ fn stream_to_end(mut child: Command, error_line: &(dyn Fn(&str) + Sync)) -> Spaw
 
 fn command_for(dir: Option<&Path>, command: &[OsString]) -> Option<Command> {
     let (program, args) = command.split_first()?;
-    let mut child = Command::new(program);
+    let mut child = isolated_command(program);
     child.args(args).stdin(Stdio::null());
     if let Some(dir) = dir {
         child.current_dir(dir);
