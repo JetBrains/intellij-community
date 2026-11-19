@@ -471,8 +471,7 @@ private fun openStream(artifactCoordinates: String): InputStream? {
 val kotlinArtifactRepositoryCoordinates: List<String> by lazy(LazyThreadSafetyMode.PUBLICATION) {
     buildList {
         add("https://cache-redirector.jetbrains.com/maven/ultimate-public")
-        add("https://cache-redirector.jetbrains.com/intellij-dependencies")
-        add("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+        add("https://cache-redirector.jetbrains.com/maven-central")
 
         // This aims to cover tests when run both from sources and binaries, and the debug IDE in various configurations
         val isTestLikeRun = application.isUnitTestMode

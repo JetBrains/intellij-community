@@ -37,7 +37,7 @@ object GradleKotlinTestUtils {
         repositories.add("mavenLocal()")
         repositories.addUrl("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap")
-        repositories.addUrl("https://cache-redirector.jetbrains.com/intellij-dependencies")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/maven/ultimate-public")
         repositories.addUrl("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")
 
@@ -108,7 +108,7 @@ object GradleKotlinTestUtils {
                         "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap",
                         kotlinContentConstraint
                     )
-                    addMavenRepository("https://cache-redirector.jetbrains.com/intellij-dependencies", kotlinContentConstraint)
+                    addMavenRepository("https://cache-redirector.jetbrains.com/maven/ultimate-public", kotlinContentConstraint)
                 }
             }
 

@@ -218,8 +218,7 @@ object AnalyzerKotlincProvider {
         val artifactPath = "$KOTLIN_MAVEN_GROUP_PATH/$KOTLIN_DIST_FOR_IDE/${KotlinCompilerVersion.VERSION}/$kotlinDistForIdeJar"
         buildList {
             add("https://cache-redirector.jetbrains.com/maven/ultimate-public")
-            add("https://cache-redirector.jetbrains.com/intellij-dependencies")
-            add("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+            add("https://cache-redirector.jetbrains.com/maven-central")
 
             val isTestLikeRun = ApplicationManager.getApplication().isUnitTestMode
                     || AppMode.isRunningFromDevBuild()

@@ -135,7 +135,7 @@
   <repositories>
     <repository>
       <id>intellij-dependencies</id>
-      <url>https://cache-redirector.jetbrains.com/intellij-dependencies</url>
+      <url>https://cache-redirector.jetbrains.com/maven/ultimate-public</url>
     </repository>
     <repository>
       <id>teamcity-repository</id>

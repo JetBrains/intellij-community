@@ -12,7 +12,7 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.toPath
 
-private const val INTELLIJ_DEPENDENCIES_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/intellij-dependencies"
+private const val INTELLIJ_DEPENDENCIES_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/maven/ultimate-public"
 private const val ARTIFACT_GROUP_ID = "org.jetbrains.kotlin"
 private const val USE_MAVEN_LOCAL_PROPERTY = "kotlin.jps.use.maven.local"
 

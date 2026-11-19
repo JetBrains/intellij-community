@@ -13,7 +13,7 @@ version = "SNAPSHOT"
 repositories {
   maven { url = URI("https://cache-redirector.jetbrains.com/plugins.gradle.org") }
   maven { url = URI("https://cache-redirector.jetbrains.com/maven-central") }
-  maven { url = URI("https://cache-redirector.jetbrains.com/intellij-dependencies") }
+  maven { url = URI("https://cache-redirector.jetbrains.com/maven/ultimate-public") }
 }
 
 dependencies {

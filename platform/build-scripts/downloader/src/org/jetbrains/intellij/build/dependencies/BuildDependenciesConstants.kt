@@ -35,7 +35,7 @@ object BuildDependenciesConstants {
    */
   const val PRELOADED_DOWNLOADS_ONLY_PROPERTY: String = "intellij.build.download.preloaded.only"
 
-  const val INTELLIJ_DEPENDENCIES_URL: String = "https://cache-redirector.jetbrains.com/intellij-dependencies"
+  const val INTELLIJ_DEPENDENCIES_URL: String = "https://cache-redirector.jetbrains.com/maven/ultimate-public"
   const val MAVEN_CENTRAL_URL: String = "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2"
   const val JPS_AUTH_SPACE_USERNAME: String = "jps.auth.spaceUsername"
   const val JPS_AUTH_SPACE_PASSWORD: String = "jps.auth.spacePassword"

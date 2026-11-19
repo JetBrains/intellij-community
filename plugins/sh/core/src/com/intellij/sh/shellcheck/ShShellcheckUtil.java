@@ -69,7 +69,7 @@ public final class ShShellcheckUtil {
   private static final String SHELLCHECK_ARTIFACT_VERSION = SHELLCHECK_VERSION + "-1";
   private static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
   private static final String SHELLCHECK_URL =
-    "https://cache-redirector.jetbrains.com/intellij-dependencies/org/jetbrains/intellij/deps/shellcheck/shellcheck/";
+    "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/intellij/deps/shellcheck/shellcheck/";
 
   public static void download(@NotNull Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     download(project, onSuccess, onFailure, false);

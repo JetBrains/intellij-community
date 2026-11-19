@@ -47,7 +47,7 @@
 set -euo pipefail
 
 JFLEX_VERSION="1.9.1"
-JFLEX_URL="https://cache-redirector.jetbrains.com/intellij-dependencies/org/jetbrains/intellij/deps/jflex/jflex/$JFLEX_VERSION/jflex-$JFLEX_VERSION.jar"
+JFLEX_URL="https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/intellij/deps/jflex/jflex/$JFLEX_VERSION/jflex-$JFLEX_VERSION.jar"
 
 GRAMMAR_KIT_VERSION="2023.3.1"
 GRAMMAR_KIT_URL="https://github.com/JetBrains/Grammar-Kit/releases/download/$GRAMMAR_KIT_VERSION/grammar-kit-$GRAMMAR_KIT_VERSION.zip"

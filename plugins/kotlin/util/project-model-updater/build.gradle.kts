@@ -7,7 +7,7 @@ plugins {
 
 repositories {
     maven("https://cache-redirector.jetbrains.com/maven-central")
-    maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
+    maven("https://cache-redirector.jetbrains.com/maven/ultimate-public")
 }
 
 dependencies {
