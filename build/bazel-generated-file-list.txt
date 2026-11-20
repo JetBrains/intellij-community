@@ -2109,6 +2109,7 @@ python/python-source-roots
 python/python-spellchecker
 python/python-syntax
 python/python-syntax-core
+python/python-syntax-core/frontend
 python/python-syntax/lambdaTests
 python/python-syntax/lambdaTests/intellij.python.syntax.lambdaTests.plugin
 python/python-test-env/common

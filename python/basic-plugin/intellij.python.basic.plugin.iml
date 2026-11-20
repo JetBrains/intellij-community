@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.python.ast" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.syntax.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.syntax" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.syntax.core.frontend" scope="RUNTIME" />
   </component>
 </module>

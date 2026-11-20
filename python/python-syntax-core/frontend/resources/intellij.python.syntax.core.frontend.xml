@@ -1,0 +1,13 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.python.syntax.core"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- The two annotators need only the AST. A backend in split mode does not load this module, so the frontend alone runs them. -->
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDefinitionsHighlightingAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAstSyntaxAnnotator"/>
+  </extensions>
+</idea-plugin>

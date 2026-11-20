@@ -2363,6 +2363,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-spellchecker/intellij.python.spellchecker.iml" filepath="$PROJECT_DIR$/python/python-spellchecker/intellij.python.spellchecker.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax/intellij.python.syntax.iml" filepath="$PROJECT_DIR$/python/python-syntax/intellij.python.syntax.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax-core/intellij.python.syntax.core.iml" filepath="$PROJECT_DIR$/python/python-syntax-core/intellij.python.syntax.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-syntax-core/frontend/intellij.python.syntax.core.frontend.iml" filepath="$PROJECT_DIR$/python/python-syntax-core/frontend/intellij.python.syntax.core.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax/lambdaTests/intellij.python.syntax.lambdaTests.iml" filepath="$PROJECT_DIR$/python/python-syntax/lambdaTests/intellij.python.syntax.lambdaTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax/lambdaTests/intellij.python.syntax.lambdaTests.plugin/intellij.python.syntax.lambdaTests.plugin.iml" filepath="$PROJECT_DIR$/python/python-syntax/lambdaTests/intellij.python.syntax.lambdaTests.plugin/intellij.python.syntax.lambdaTests.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/terminal/backend/intellij.python.terminal.backend.iml" filepath="$PROJECT_DIR$/python/terminal/backend/intellij.python.terminal.backend.iml" />

@@ -9,6 +9,7 @@ dev_dist_plugin(
         "intellij.python.ast",
         "intellij.python.syntax.core",
         "intellij.python.syntax",
+        "intellij.python.syntax.core.frontend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
@@ -43,6 +44,7 @@ jvm_library(
         "//python/python-ast:ast",
         "//python/python-syntax-core:syntax-core",
         "//python/python-syntax:syntax",
+        "//python/python-syntax-core/frontend",
     ],
 )
 ### auto-generated section `build intellij.python.basic.plugin` end

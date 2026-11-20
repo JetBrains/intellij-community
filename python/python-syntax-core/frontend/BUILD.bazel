@@ -1,0 +1,37 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.syntax.core.frontend` start
+content_module_jar(module = ":frontend")
+### auto-generated section `dev intellij.python.syntax.core.frontend` end
+
+### auto-generated section `build intellij.python.syntax.core.frontend` start
+jvm_library(
+    name = "frontend",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.syntax.core.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-frontend:frontend",
+        "//python/python-syntax-core:syntax-core",
+    ],
+)
+### auto-generated section `build intellij.python.syntax.core.frontend` end
+
+### auto-generated section `iml intellij.python.syntax.core.frontend` start
+exports_files(
+    [
+        "intellij.python.syntax.core.frontend.iml",
+        "resources/intellij.python.syntax.core.frontend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.syntax.core.frontend` end

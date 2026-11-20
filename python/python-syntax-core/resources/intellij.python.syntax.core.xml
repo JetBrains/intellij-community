@@ -40,10 +40,6 @@
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyFromImportPostFormatProcessor"/>
 
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyKeywordHighlightingAnnotator"/>
-    <!--suppress SplitModeXmlApiUsage The annotator needs only the AST. The module is shared on purpose: the light mode of JetBrains Light loads no Python frontend module, because each one reaches intellij.platform.rpc. -->
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDefinitionsHighlightingAnnotator"/>
-    <!--suppress SplitModeXmlApiUsage The annotator needs only the AST. The module is shared on purpose: the light mode of JetBrains Light loads no Python frontend module, because each one reaches intellij.platform.rpc. -->
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAstSyntaxAnnotator"/>
     <highlightRangeExtension implementation="com.jetbrains.python.validation.PyKeywordHighlightingAnnotator"/>
     <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
     <lang.lineWrapStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyLineWrapPositionStrategy"/>
