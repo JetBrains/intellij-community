@@ -147,19 +147,36 @@ public final class IdeaTestUtil {
    * @see #getMockJdk11()
    */
   public static @NotNull Sdk getMockJdk(@NotNull JavaVersion version) {
-    int mockJdk = version.feature >= 25 ? 25 :
-                  version.feature >= 21 ? 21 :
-                  version.feature >= 11 ? 11 :
-                  version.feature >= 9 ? 9 :
-                  version.feature >= 7 ? version.feature :
-                  version.feature >= 5 ? 7 :
-                  4;
+    int mockJdk = getMockJdkFeature(version);
     String sdkName = getMockJdkName(version);
-    if (mockJdk > 9) {
+    File directory = getMockJdkDirectory(version);
+    if (directory == null) {
       return createMockJdkFromRepository(sdkName, mockJdk);
     }
-    String path = getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1." + mockJdk).getPath();
-    return createMockJdk(sdkName, path);
+    return createMockJdk(sdkName, directory.getPath());
+  }
+
+  /**
+   * Returns the feature version of the mock JDK that {@link #getMockJdk(JavaVersion)} uses for {@code version}.
+   * See {@link #getMockJdk(JavaVersion)} for the mapping.
+   */
+  public static int getMockJdkFeature(@NotNull JavaVersion version) {
+    return version.feature >= 25 ? 25 :
+           version.feature >= 21 ? 21 :
+           version.feature >= 11 ? 11 :
+           version.feature >= 9 ? 9 :
+           version.feature >= 7 ? version.feature :
+           version.feature >= 5 ? 7 :
+           4;
+  }
+
+  /**
+   * Returns the directory of the mock JDK for {@code version}, or {@code null} when the mock JDK comes from the Maven repository.
+   * The mock JDKs up to 9 are directories in the repository. The method needs no application.
+   */
+  public static @Nullable File getMockJdkDirectory(@NotNull JavaVersion version) {
+    int mockJdk = getMockJdkFeature(version);
+    return mockJdk > 9 ? null : getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1." + mockJdk);
   }
 
   public static @NotNull String getMockJdkName(@NotNull JavaVersion version) {
