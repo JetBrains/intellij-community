@@ -10,16 +10,18 @@ import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.SwingUtilities
+import com.intellij.driver.sdk.ui.UiRobot
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.Icon
+import com.intellij.driver.sdk.ui.components.elements.PopupMenuUiComponent.Companion.POPUP_MENU_CLASS
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import org.intellij.lang.annotations.Language
-import kotlin.time.Duration.Companion.seconds
+import javax.swing.JPopupMenu
 
 fun Finder.popup(@Language("xpath") xpath: String? = null) =
   x(xpath ?: "//div[@class='HeavyWeightWindow']", PopupUiComponent::class.java)
@@ -29,41 +31,54 @@ fun Finder.popupLux(@Language("xpath") xpath: String? = null) =
 
 fun Finder.popups(): UIComponentsList<UiComponent> = xx("//div[@class='HeavyWeightWindow']")
 
-fun Finder.popupMenu(locator: QueryBuilder.() -> String = { byClass("MyMenu") }) =
+@Deprecated("Search the menu from its owner window, from UiRobot or from the parent menu. " +
+            "Use WindowUiComponent.popupMenu, UiRobot.popupMenu or PopupMenuUiComponent.popupMenu.")
+fun Finder.popupMenu(locator: QueryBuilder.() -> String = { byClass("MyMenu") }): PopupMenuUiComponent =
+  onPopupMenu(locator)
+
+fun WindowUiComponent.popupMenu(locator: QueryBuilder.() -> String = { byType(POPUP_MENU_CLASS) }): PopupMenuUiComponent =
+  onPopupMenu(locator)
+
+fun UiRobot.popupMenu(locator: QueryBuilder.() -> String = { byType(POPUP_MENU_CLASS) }): PopupMenuUiComponent = onPopupMenu(locator)
+
+fun PopupMenuUiComponent.popupMenu(locator: QueryBuilder.() -> String = { byType(JPopupMenu::class.java) }): PopupMenuUiComponent =
+  onPopupMenu(locator)
+
+private fun Finder.onPopupMenu(locator: QueryBuilder.() -> String): PopupMenuUiComponent =
   x(xQuery(locator), PopupMenuUiComponent::class.java)
 
 class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
-  private val menuItems =
+  private val menuItems: UIComponentsList<PopupItemUiComponent> =
     xx("//div[@class='ActionMenuItem' or @class='ActionMenu']", PopupItemUiComponent::class.java)
 
   fun getMenuItems(): List<PopupItemUiComponent> = menuItems.list()
+
   fun getSelectedPath(): List<String> =
     driver.utility(MenuSelectionManager::class).defaultManager().getSelectedPath().mapNotNull {
       it.getComponent().getAccessibleContext()?.getAccessibleName()
     }
 
-  fun findMenuItemByText(text: String) = menuItems.list().firstOrNull { it.getText() == text }
-                                         ?: throw AssertionError("No item with text '$text' found in popup '${this.searchContext}'")
+  fun findMenuItemByText(text: String): PopupItemUiComponent =
+    getMenuItems().firstOrNull { it.getText() == text }
+    ?: throw AssertionError("No item with text '$text' found in popup '${this.searchContext}'")
 
   fun select(vararg items: String) {
-    items.forEach { item ->
-      waitForOne(message = "Find item: $item", timeout = 5.seconds,
-              getter = { menuItems.list() },
-              checker = { it.getText() == item })
-        .click()
-    }
+    doSelect(*items) { actualMenuItem, item -> actualMenuItem == item }
   }
 
   fun selectContains(vararg items: String) {
-    items.forEach { item ->
-      waitForOne(message = "Find item: $item", timeout = 5.seconds,
-                 getter = { menuItems.list() },
-                 checker = { it.getText().contains(item) })
-        .click()
-    }
+    doSelect(*items) { actualMenuItem, item -> actualMenuItem.contains(item) }
   }
 
   fun itemsList() = getMenuItems().map { it.getText() }
+
+  private fun doSelect(vararg items: String, predicate: (String, String) -> Boolean) {
+    var currentMenu = this
+    for (item in items) {
+      waitForOne("Find menu item '$item'", getter = { currentMenu.getMenuItems() }, checker = { predicate(it.getText(), item) }).click()
+      currentMenu = currentMenu.popupMenu()
+    }
+  }
 
   @Remote("javax.swing.MenuSelectionManager")
   private interface MenuSelectionManager {
@@ -74,6 +89,10 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
   @Remote("javax.swing.MenuElement")
   private interface MenuItem {
     fun getComponent(): Component
+  }
+
+  companion object {
+    internal const val POPUP_MENU_CLASS = "com.intellij.openapi.actionSystem.impl.ActionPopupMenuImpl\$MyMenu"
   }
 }
 
