@@ -16,7 +16,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.module.ModuleGroupTestsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -64,7 +64,6 @@ import org.jetbrains.plugins.groovy.util.Slow;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -94,7 +93,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     edt(() -> {
       ModuleGroupTestsKt.renameModule(getModule(), "mainModule");
 
-      Path communityHomePath = Paths.get(PathManager.getHomePathFor(GroovyCompilerTestCase.class), "community");
+      var communityHomePath = Path.of(PathManagerEx.getCommunityHomePath());
       Path javaHomePath = JdkDownloader.INSTANCE.getJdkHomeAndLog(new BuildDependenciesCommunityRoot(communityHomePath), null, null);
       String javaHome = javaHomePath.toAbsolutePath().toString();
       javaHome = StringUtil.trimEnd(StringUtil.trimEnd(javaHome, "/"), "/jre");

@@ -2,6 +2,7 @@
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.application.ArchivedCompilationContextUtil;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,11 +42,19 @@ public final class GroovyRtJarPaths {
         jpsPluginClassesRootCanonical = null;
       }
 
-      if (relevantJarsRoot != null && (jpsPluginClassesRoot.getAbsolutePath().startsWith(relevantJarsRoot)
-                                       || (jpsPluginClassesRootCanonical != null
-                                           && jpsPluginClassesRootCanonical.getAbsolutePath().startsWith(relevantJarsRoot)))) {
-        // running from archived compilation output
-        Map<String, String> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
+      boolean archivedOutput = relevantJarsRoot != null &&
+                               (jpsPluginClassesRoot.getAbsolutePath().startsWith(relevantJarsRoot) ||
+                                (jpsPluginClassesRootCanonical != null &&
+                                 jpsPluginClassesRootCanonical.getAbsolutePath().startsWith(relevantJarsRoot)));
+      Map<String, String> mapping = null;
+      if (archivedOutput || System.getProperty(ArchivedCompilationContextUtil.BAZEL_TARGETS_JSON_FILE_PROPERTY) != null) {
+        mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
+        if (!archivedOutput && mapping != null && jpsPluginClassesRootCanonical != null) {
+          var mappedPluginRoot = mapping.get("production/intellij.groovy.jps");
+          archivedOutput = mappedPluginRoot != null && FileUtil.filesEqual(jpsPluginClassesRootCanonical, new File(mappedPluginRoot));
+        }
+      }
+      if (archivedOutput) {
         if (mapping == null) {
           throw new IllegalStateException("Mapping cannot be null at this point. 'intellij.test.jars.location' is not null");
         }

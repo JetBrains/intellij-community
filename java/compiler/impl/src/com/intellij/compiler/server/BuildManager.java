@@ -31,6 +31,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilationStatusListener;
@@ -1688,6 +1689,10 @@ public final class BuildManager implements Disposable {
       if (value != null) {
         cmdLine.addPathParameter("-D" + name + "=", value);
       }
+    }
+    if (localProject && System.getProperty(ArchivedCompilationContextUtil.BAZEL_TARGETS_JSON_FILE_PROPERTY) != null) {
+      var targetsFile = ArchivedCompilationContextUtil.INSTANCE.getBazelTargetsJsonPath(PathManager.getHomeDir());
+      cmdLine.addPathParameter("-D" + ArchivedCompilationContextUtil.BAZEL_TARGETS_JSON_FILE_PROPERTY + "=", targetsFile);
     }
     var languageBundle = LocalizationUtil.INSTANCE.findLanguageBundle();
     if (languageBundle != null) {
