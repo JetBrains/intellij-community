@@ -108,7 +108,7 @@ public class JavaGenerateToStringActionHandler implements GenerateToStringAction
     doExecuteAction(project, clazz, null);
   }
 
-  private void doExecuteAction(final @NotNull Project project, final @NotNull PsiClass clazz, final Editor editor) {
+  private void doExecuteAction(final @NotNull Project project, final @NotNull PsiClass clazz, final @Nullable Editor editor) {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(clazz)) {
       return;
     }
@@ -119,7 +119,7 @@ public class JavaGenerateToStringActionHandler implements GenerateToStringAction
     }
 
     ReadAction.nonBlocking(() -> buildMembersToShow(clazz))
-      .expireWhen(() -> !clazz.isValid() || project.isDisposed() || editor.isDisposed())
+      .expireWhen(() -> !clazz.isValid() || project.isDisposed() || (editor != null && editor.isDisposed()))
       .finishOnUiThread(ModalityState.defaultModalityState(), dialogMembers -> showChooser(project, clazz, editor, dialogMembers))
       .submit(AppExecutorUtil.getAppExecutorService());
   }
