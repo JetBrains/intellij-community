@@ -52,7 +52,7 @@ public final class JavaVarTypeUtil {
 
   private static boolean isFromContainer(@NotNull NullabilitySource source) {
     if (source instanceof NullabilitySource.MultiSource) {
-      return ContainerUtil.and(((NullabilitySource.MultiSource)source).sources(), s -> s instanceof NullabilitySource.ContainerAnnotation);
+      return ContainerUtil.or(((NullabilitySource.MultiSource)source).sources(), s -> s instanceof NullabilitySource.ContainerAnnotation);
     }
     return source instanceof NullabilitySource.ContainerAnnotation;
   }
