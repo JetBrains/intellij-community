@@ -96,8 +96,8 @@ internal class PythonPackageManagerServiceImpl(
    * Called on each [structure] the model publishes, and after a new entry is cached, so whichever of the two runs last
    * leaves the entry right. A `null` [structure] is the moment before the first one lands, and the flow brings it.
    *
-   * Reads a set and registers a file listener, so it costs little. A cache hit does not call it: that would put the
-   * call on every read of [com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge.manager], which is a property.
+   * Reads a set and registers a file listener, so it costs little. A cache hit does not call it, because a cache hit
+   * happens on each read of a manager.
    */
   private fun syncWatchers(structure: EvoPyProjectModel.Snapshot?) {
     if (cache.isEmpty() || structure == null) return

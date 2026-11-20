@@ -33,7 +33,6 @@
     <projectStructureDetector implementation="com.intellij.python.community.plugin.java.facet.PyProjectStructureDetector"/>
     <moduleConfigurationEditorProvider implementation="com.intellij.python.community.plugin.java.facet.PythonModuleConfigurationEditorProvider"/>
     <completion.contributor language="Python" implementationClass="com.intellij.python.community.plugin.java.psi.impl.PyConstructorArgumentCompletionContributor"/>
-    <sdkEditorAdditionalOptionsProvider implementation="com.intellij.python.community.plugin.java.PythonSdkEditorAdditionalOptionsProvider"/>
 
   </extensions>
 

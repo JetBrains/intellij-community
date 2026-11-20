@@ -30,9 +30,6 @@
   </extensions>
 
   <actions resource-bundle="messages.PyBundle">
-    <action id="PyManagePackages" class="com.intellij.python.community.plugin.impl.packaging.PyManagePackagesAction">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
     <action id="RunPythonToolwindowAction" class="com.intellij.python.community.plugin.impl.RunPythonToolwindowAction">
     </action>
   </actions>
