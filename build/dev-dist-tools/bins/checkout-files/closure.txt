@@ -1,0 +1,16 @@
+aho_corasick
+anyhow
+bstr
+checkout_files
+cli
+crossbeam_deque
+crossbeam_epoch
+crossbeam_utils
+globset
+ignore
+log
+memchr
+regex_automata
+regex_syntax
+same_file
+walkdir
