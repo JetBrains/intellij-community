@@ -15,12 +15,12 @@
  */
 package com.jetbrains.python.psi.impl
 
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.OrderEntryUtil
+import com.intellij.openapi.util.Key
 import com.jetbrains.python.psi.resolve.mainPythonSdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -28,6 +28,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.psi.impl.source.resolve.FileContextUtil
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
@@ -38,6 +42,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache
+import com.jetbrains.python.psi.resolve.findModuleForPsiElementCached
 import com.jetbrains.python.psi.resolve.fromSdk
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.PyAnyType
@@ -212,6 +217,7 @@ class PyBuiltinCache private constructor(
     private const val EXCEPTIONS_MODULE = "exceptions"
 
     private val DUD_INSTANCE = PyBuiltinCache()
+    private val SDK_FOR_FILE_KEY = Key.create<CachedValue<Sdk?>>("Python.sdkForFile")
 
     /**
      * Returns an instance of builtin cache. Instances differ per module and are cached.
@@ -237,8 +243,15 @@ class PyBuiltinCache private constructor(
     @JvmStatic
     fun findSdkForFile(psiFile: PsiFileSystemItem?): Sdk? {
       psiFile ?: return null
-      val module = ModuleUtilCore.findModuleForPsiElement(psiFile)
-      return if (module != null) PythonSdkUtil.findPythonSdk(module) else findSdkForNonModuleFile(psiFile)
+      return CachedValuesManager.getCachedValue(psiFile, SDK_FOR_FILE_KEY) {
+        val module = findModuleForPsiElementCached(psiFile)
+        val sdk = if (module != null) PythonSdkUtil.findPythonSdk(module) else findSdkForNonModuleFile(psiFile)
+        CachedValueProvider.Result.create(
+          sdk,
+          PsiModificationTracker.MODIFICATION_COUNT,
+          ProjectRootManager.getInstance(psiFile.project),
+        )
+      }
     }
 
     fun findSdkForNonModuleFile(psiFile: PsiFileSystemItem): Sdk? {
