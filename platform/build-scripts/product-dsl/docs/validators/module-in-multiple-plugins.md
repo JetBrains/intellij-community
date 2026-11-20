@@ -79,13 +79,7 @@ The allowlist does not live in `platform/buildScripts/suppressions.json`, for th
 3. `SuppressionConfigGenerator` copies such a map without a change, so a stale entry of that file is never reported.
    The stale report is half of this rule.
 
-The allowlist holds two groups, and the group of a name says which guard first saw it.
-
-### The names the earlier guard held
-
-- `intellij.marketplace.statisticsCompat`, packed by `intellij.kmm.plugin` and `intellij.marketplace`
-- `intellij.libraries.kotlinc.kotlin.compiler.common`, packed by `intellij.kotlin.jsr223.plugin`,
-  `intellij.kotlin.plugin`
+The allowlist holds no name that the earlier guard held. Each of those names is now in one plugin only.
 
 ### The names outside the earlier guard's reach
 
