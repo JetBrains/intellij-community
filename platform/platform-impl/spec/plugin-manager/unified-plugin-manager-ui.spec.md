@@ -704,6 +704,16 @@ Untested: No focused test verifies Shift-selection across sections.
     `legacy plugin action buttons keep custom colors`
   )
 
+- Suggested must show a “More on JetBrains Marketplace” link after its plugin rows when the default Marketplace is active.
+- The link must show an external link arrow and open the Marketplace home page in the browser.
+- The link must be reachable by keyboard after the Suggested row controls.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `Marketplace link appears after Suggested rows and follows their controls in Tab order`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `Suggested links to the default Marketplace and hides the link for an override`
+  )
+
 - Unified rows and details must show visible plugin tags as accessible badges.
 - A plugin that requires an unavailable product edition must add the applicable Ultimate or Pro tag.
 - Paid, Ultimate, and Pro tags must use the blue secondary type.
