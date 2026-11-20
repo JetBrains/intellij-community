@@ -251,7 +251,7 @@ public final class GenerateMembersUtil {
     editor.getSelectionModel().removeSelection();
   }
 
-  public static void positionCaret(@NotNull ModNavigator updater, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
+  public static void positionCaret(@NotNull ModNavigator navigator, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
     LOG.assertTrue(firstMember.isValid());
     Project project = firstMember.getProject();
 
@@ -261,17 +261,17 @@ public final class GenerateMembersUtil {
       if (body != null) {
         PositionInfo info = getPositionInfo(body);
 
-        updater.moveCaretTo(Math.min(info.start(), info.end()));
+        navigator.moveCaretTo(Math.min(info.start(), info.end()));
         if (info.start() < info.end()) {
           //Not an empty body
-          updater.select(TextRange.create(info.start(), info.end()));
+          navigator.select(TextRange.create(info.start(), info.end()));
         } else if (info.adjustLineIndent()) {
           Document document = firstMember.getContainingFile().getViewProvider().getDocument();
           RangeMarker marker = document.createRangeMarker(info.start(), info.start());
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
           if (marker.isValid()) {
             int offset = CodeStyleManager.getInstance(project).adjustLineIndent(document, marker.getStartOffset());
-            updater.moveCaretTo(offset);
+            navigator.moveCaretTo(offset);
           }
         }
         return;
@@ -279,7 +279,7 @@ public final class GenerateMembersUtil {
     }
 
     int offset = getOffsetInMethod(firstMember);
-    updater.moveCaretTo(offset);
+    navigator.moveCaretTo(offset);
   }
 
   private static @NotNull PositionInfo getPositionInfo(PsiCodeBlock body) {

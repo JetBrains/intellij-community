@@ -55,10 +55,10 @@ public abstract class GenerationInfoBase implements GenerationInfo {
   }
 
   @Override
-  public void positionCaret(@NotNull ModNavigator updater, boolean toEditMethodBody) {
+  public void positionCaret(@NotNull ModNavigator navigator, boolean toEditMethodBody) {
     PsiMember member = getPsiMember();
     if (member != null) {
-      GenerateMembersUtil.positionCaret(updater, member, toEditMethodBody);
+      GenerateMembersUtil.positionCaret(navigator, member, toEditMethodBody);
     }
   }
 }
