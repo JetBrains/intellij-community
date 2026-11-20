@@ -210,7 +210,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
       if (installSource != null) {
         val pluginId: String = descriptor.pluginId.idString
-        installSource.logInstallPlugins(mutableListOf<String>(pluginId))
+        installSource.logInstallPlugins(mutableListOf(pluginId))
       }
 
       if (descriptor.isFromMarketplace) {
@@ -792,6 +792,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val session = PluginManagerSessionService.getInstance().getSession(sessionId) ?: return SetEnabledStateResult()
     val tempEnabled: MutableMap<PluginId, PluginEnabledState?> = session.pluginStates.toMutableMap()
     val descriptors = descriptorIds.toPluginDescriptors()
+    for (descriptor in descriptors) {
+      if (!descriptor.isImplementationDetail) continue
+      if (enable) session.implementationDetailsToDisable.remove(descriptor.pluginId)
+      else session.implementationDetailsToDisable.add(descriptor.pluginId)
+    }
 
     val action = if (enable) PluginEnableDisableAction.ENABLE_GLOBALLY else PluginEnableDisableAction.DISABLE_GLOBALLY
     setNewEnabled(descriptors, tempEnabled, action)
@@ -1122,12 +1127,14 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       val oldState = pair?.getSecond()
       val newState: PluginEnabledState = session.pluginStates[pluginId] ?: PluginEnabledState.ENABLED
 
-      if (session.uninstalledPlugins.contains(descriptor.pluginId) || (InstalledPluginsTableModel.isHiddenImplementationDetail(descriptor) && newState.isDisabled) || session.pluginStates[pluginId] == null /* if enableMap contains null for id => enable/disable checkbox don't touch */) {
+      if (session.uninstalledPlugins.contains(descriptor.pluginId)
+          || isImplicitImplementationDetailDisable(session, descriptor, newState)
+          || session.pluginStates[pluginId] == null /* if enableMap contains null for id => enable/disable checkbox don't touch */) {
         continue
       }
 
       if (oldState != newState || newState.isDisabled && session.errorPluginsToDisable.contains(pluginId)) {
-        descriptorsByAction.computeIfAbsent(pair?.getFirst()) { mutableListOf<IdeaPluginDescriptor>() }.add(descriptor)
+        descriptorsByAction.computeIfAbsent(pair?.getFirst()) { mutableListOf() }.add(descriptor)
       }
     }
 
@@ -1149,6 +1156,17 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       appliedWithoutRestart = appliedWithoutRestart and applied
     }
     return appliedWithoutRestart
+  }
+
+  /** Returns `true` when a dependency change, not the user, disables the implementation-detail [descriptor]. */
+  internal fun isImplicitImplementationDetailDisable(
+    session: PluginManagerSession,
+    descriptor: IdeaPluginDescriptor,
+    newState: PluginEnabledState,
+  ): Boolean {
+    return InstalledPluginsTableModel.isHiddenImplementationDetail(descriptor) &&
+           newState.isDisabled &&
+           descriptor.pluginId !in session.implementationDetailsToDisable
   }
 
   private fun enableDependencies(
@@ -1177,7 +1195,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val newState = pair.getSecond()
     if (oldState != newState) {
       val state = oldState ?: session.pluginStates[pluginId] ?: PluginEnabledState.ENABLED
-      session.statesDiff[descriptor] = Pair.create<PluginEnableDisableAction, PluginEnabledState>(pair.getFirst(), state)
+      session.statesDiff[descriptor] = Pair.create(pair.getFirst(), state)
     }
     else {
       session.statesDiff.remove(descriptor)
@@ -1208,7 +1226,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
       val newState = if (oldState == null) PluginEnabledState.DISABLED else action.apply(oldState)
       if (newState != null) {
-        beforeHandler(descriptor, Pair.create<PluginEnableDisableAction, PluginEnabledState>(action, newState))
+        beforeHandler(descriptor, Pair.create(action, newState))
         enabledMap[pluginId] = newState
         changedStates[pluginId] = newState.isEnabled
       }

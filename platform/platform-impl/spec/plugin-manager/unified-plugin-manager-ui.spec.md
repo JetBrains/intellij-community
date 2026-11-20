@@ -175,6 +175,16 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
     `built-in filter shows only implementation detail plugins`
   )
 
+- The user must be able to enable and disable an implementation-detail plugin that `/built-in` shows.
+- Apply must disable an implementation-detail plugin that the user disables directly.
+- Apply must keep an implementation-detail plugin enabled when only a dependency change disables it.
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/ImplementationDetailPluginEnablementTest.kt (
+    `implementation detail plugin allows disable`;
+    `apply disables implementation detail plugin that the user disables`;
+    `apply keeps implementation detail plugin that a dependency change disables`;
+    `enable of implementation detail plugin cancels its direct disable`
+  )
+
 - Several physical entries with one plugin ID must produce one inventory item.
 - That item must use local presentation and retain the bundled origin from every available side.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInventoryTest.kt (
