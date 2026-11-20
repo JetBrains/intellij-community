@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -228,6 +229,19 @@ internal class VisualLineFragmentsIteratorTest {
     assertEquals(foldRegionStartX, editor.offsetToPoint2D(2, false, false).x, "an offset inside the fold region")
     assertEquals(foldRegionStartX + 10, editor.visualPositionToPoint2D(VisualPosition(0, 2, false)).x)
     assertEquals(2, editor.xyToVisualPosition(Point2D.Double(foldRegionStartX + 12, y)).column)
+  }
+
+  @Test
+  fun `the position before a soft wrap uses the shift of its line`(): Unit = withEditor("abcd efg") { editor ->
+    EditorTestUtil.configureSoftWraps(editor, 5)
+    editor.alignRight()
+    val wrap = editor.softWrapModel.getSoftWrapsForRange(0, editor.document.textLength).first().start
+    val column = editor.offsetToVisualPosition(wrap, false, true).column
+    val firstLineStartX = editor.visualPositionToPoint2D(VisualPosition(0, 0)).x
+    val secondLineStartX = editor.visualPositionToPoint2D(VisualPosition(1, 0)).x
+    assertNotEquals(firstLineStartX, secondLineStartX, "the visual lines must have different shifts")
+    val firstLineEndX = editor.visualPositionToPoint2D(VisualPosition(0, column)).x
+    assertEquals(firstLineEndX, editor.offsetToPoint2D(wrap, false, true).x)
   }
 
   /**

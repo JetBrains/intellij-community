@@ -104,7 +104,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       startOrPrevWrapIndex
     );
     int startFoldingIndex = foldingModel.getLastCollapsedRegionBefore(visualLineStartOffset) + 1;
-    int visualLine = align ? view.offsetToVisualPosition(offset, false, false).line : -1;
+    boolean rightAligned = align && view.getEditor().isRightAligned();
+    int visualLine = rightAligned ? view.offsetToVisualPosition(offset, false, beforeSoftWrap).line : -1;
     int startLogicalLine = document.lineNumber(visualLineStartOffset);
     this(
       view,
@@ -115,7 +116,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       startOrPrevWrapIndex,
       startFoldingIndex,
       null,
-      align
+      rightAligned
     );
   }
 
@@ -127,6 +128,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     boolean align
   ) {
     assert !visualLinesIterator.atEnd();
+    boolean rightAligned = align && view.getEditor().isRightAligned();
     this(
       view,
       document,
@@ -136,7 +138,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       visualLinesIterator.getStartOrPrevWrapIndex(),
       visualLinesIterator.getStartFoldingIndex(),
       quickEvaluationListener,
-      align
+      rightAligned
     );
   }
 
@@ -149,7 +151,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     int startOrPrevWrapIndex,
     int startFoldingIndex,
     @Nullable Runnable quickEvaluationListener,
-    boolean align
+    boolean rightAligned
   ) {
     myView = view;
     myDocument = document;
@@ -157,7 +159,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     myTextLayoutCache = view.getTextLayoutCache();
     myQuickEvaluationListener = quickEvaluationListener;
     myScaleContext = ScaleContext.create(view.getEditor().getContentComponent());
-    myXOffset = calculateXOffset(view, visualLine, align);
+    myXOffset = calculateXOffset(view, visualLine, rightAligned);
     myFragment = new Fragment();
     myRegions = fetchTopLevelFoldings(view);
     myVisualLineStartOffset = visualLineStartOffset;
@@ -532,8 +534,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     return 0;
   }
 
-  private static float calculateXOffset(@NotNull EditorView view, int visualLine, boolean align) {
-    if (align && visualLine != -1 && view.getEditor().isRightAligned()) {
+  private static float calculateXOffset(@NotNull EditorView view, int visualLine, boolean rightAligned) {
+    if (rightAligned) {
       return view.getRightAlignmentLineStartX(visualLine) - view.getInsets().left;
     }
     return 0;
