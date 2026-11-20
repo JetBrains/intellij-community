@@ -45,6 +45,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.replaceService
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
+import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
 import com.intellij.toolWindow.ToolWindowProjectSelectorTabs
 import com.intellij.ui.content.Content
@@ -737,6 +738,29 @@ internal class FrameGuestToolWindowPresentationTest {
     managers.of(first).notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = ToolWindowId.DEBUG, type = MessageType.INFO, htmlBody = "Paused"))
 
     assertThat(shownBalloons).describedAs("the frame owner has the Run tool window that the user sees").containsExactly(owner.name)
+  }
+
+  @Test
+  fun `an entry of a frame guest does not bring back a stripe button that the user removed`() = onEdt {
+    val managers = createManagers()
+    managers.register(first)
+    val presenting = managers.owner.getEntry(ID)!!
+    assertThat(presenting.stripeButton).isNotNull()
+
+    // as the action of the user that removes a tool window from the sidebar
+    managers.owner.hideToolWindow(ID, removeFromStripe = true, source = ToolWindowEventSource.RemoveStripeButtonAction)
+    assertThat(presenting.stripeButton).isNull()
+
+    managers.register(second)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first, second)
+    assertThat(presenting.toolWindow.isAvailable).isTrue()
+    assertThat(presenting.stripeButton).describedAs("the frame owner keeps the choice of the user").isNull()
+    assertThat(managers.owner.layoutState.getInfo(ID)!!.isShowStripeButton).isFalse()
+
+    managers.owner.showToolWindow(ID)
+
+    assertThat(presenting.stripeButton).describedAs("a show brings the stripe button back, as in a frame with one project").isNotNull()
   }
 
   @Test

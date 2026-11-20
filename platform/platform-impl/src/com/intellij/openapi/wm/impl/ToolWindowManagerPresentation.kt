@@ -39,7 +39,8 @@ private val LOG = logger<ToolWindowManagerPresentation>()
  * is never an entry.
  *
  * The presenting tool window is available while the frame owner makes it available or a frame guest has an entry, see
- * [ToolWindowImpl.hasFrameGuestEntry]. It keeps its stripe button while a project has an entry.
+ * [ToolWindowImpl.hasFrameGuestEntry]. The code of the frame owner cannot take its stripe button away while a frame guest has
+ * an entry. The user can: the stored choice of the user decides the stripe button, as in a frame with one project.
  *
  * This class is the only writer of the visible state and the place of a presented tool window, see
  * [ToolWindowManagerImpl.applyPresented]. It does no work on a tool window pane. Every function runs on the EDT.
@@ -605,15 +606,20 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   }
 
   /**
-   * Gives the presenting tool window the state that the entries of the frame guests ask for. It is available and has its
-   * stripe button while a frame guest has an entry. Without such an entry, the frame owner decides both, as in a frame with
-   * one project. The tool window comes back when a frame guest gets an entry again, if the removal of the last entry hid it.
+   * Gives the presenting tool window the state that the entries of the frame guests ask for. It is available while a frame
+   * guest has an entry. Without such an entry, the frame owner decides, as in a frame with one project.
+   *
+   * The stored choice of the user decides the stripe button of an available tool window, as in a frame with one project:
+   * an entry does not bring back a stripe button that the user removed. A show, an activation and new content bring it back,
+   * each on its own path. This function brings back only what it took away: the tool window comes back when a frame guest
+   * gets an entry again, if the removal of the last entry hid it, and so does the stripe button.
    */
   private fun updatePresentingState(slot: PresentingSlot) {
     val presenting = slot.presenting
     if (slot.hasGuestEntry()) {
       presenting.setHasFrameGuestEntry(true)
-      if (!presenting.isShowStripeButton) {
+      if (slot.isOffStripeForNoEntry) {
+        slot.isOffStripeForNoEntry = false
         manager.setStripeButtonShown(presenting.id, true)
       }
       if (slot.isHiddenForNoEntry) {
@@ -630,6 +636,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
       if (presenting.isAvailable && !isFrameOwnerOnStripe && presenting.isShowStripeButton) {
         // the frame owner left the stripe before, and the last frame guest leaves it now
         manager.hideToolWindow(presenting.id, removeFromStripe = true)
+        slot.isOffStripeForNoEntry = true
       }
     }
   }
@@ -698,6 +705,9 @@ internal class PresentingSlot(
 
   /** The removal of the last entry hid [presenting]. */
   var isHiddenForNoEntry = false
+
+  /** The removal of the last entry took the stripe button of [presenting] away, so the next entry of a frame guest brings it back. */
+  var isOffStripeForNoEntry = false
 
   /** [presenting] was visible when it left, so the tool window that takes its place shows. */
   var wasVisibleBeforeUnbind = false
