@@ -377,6 +377,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
   /**
    * A function renders with its name: `def f(x: int) -> None`.
    * A lambda has no name, so it keeps the `(...) -> R` form.
+   * A parameter with a default value renders as `x: int = ...`.
    */
   @Nested
   inner class FunctionTypeRendering {
@@ -404,6 +405,39 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
     fun `lambda renders without a name`() = test("""
       expr = lambda x: int(x)
       #└ TYPE (x: Unknown) -> int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89078"])
+    fun `default values render as ellipsis`() = test("""
+      def f(a: int = 1, b: str = "s", c: None = None, d: tuple[int, ...] = ()): ...
+
+      expr = f
+      #└ TYPE def f(a: int = ..., b: str = ..., c: None = ..., d: tuple[int, ...] = ...) -> None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89078"])
+    fun `default value of a lambda parameter renders as ellipsis`() = test("""
+      expr = lambda a=1: None
+      #└ TYPE (a: Unknown = ...) -> None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89078"])
+    fun `default value of a bound method renders as ellipsis`() = test("""
+      class C:
+          def m(self, a: int = 1) -> None: ...
+
+      expr = C().m
+      #└ TYPE (a: int = ...) -> None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89078"])
+    fun `default value of an SDK function renders without parsing its stub`() = test("""
+      expr = input
+      #└ TYPE def input(prompt: object = ..., /) -> str
       """.trimIndent())
 
     @Test

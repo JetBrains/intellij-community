@@ -678,7 +678,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
         def f(param=x): ...
         expr = f
-        #└ TYPE def f(param: int) -> None
+        #└ TYPE def f(param: int = ...) -> None
         """.trimIndent())
     }
 
@@ -686,7 +686,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     fun `parameter with default literal widening to int`() = test("""
       def f(param=1): ...
       expr = f
-      #└ TYPE def f(param: int) -> None
+      #└ TYPE def f(param: int = ...) -> None
       """.trimIndent())
 
     @Test
@@ -697,7 +697,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def f(param: Literal[1] = x): ...
       expr = f
-      #└ TYPE def f(param: Literal[1]) -> None
+      #└ TYPE def f(param: Literal[1] = ...) -> None
       """.trimIndent())
 
     @Test
@@ -709,7 +709,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def f(param=E.A): ...
       expr = f
-      #└ TYPE def f(param: E) -> None
+      #└ TYPE def f(param: E = ...) -> None
       """.trimIndent())
 
     @Test

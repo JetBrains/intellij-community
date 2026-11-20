@@ -871,6 +871,10 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       }
       result.add(render(type));
     }
+    if (param.hasDefaultValue()) {
+      result.add(styled(" = ", PyHighlighter.PY_OPERATION_SIGN));
+      result.add(styled("...", PyHighlighter.PY_DOT));
+    }
     return PyTypeLayout.concat(result);
   }
 

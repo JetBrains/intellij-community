@@ -426,6 +426,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * In particular callables are rendered as {@code (p1: T1, p2: T2, ...) -> R}, not as {@code Callable[[T1, T2, ...], R]}.
    * The type of a function also shows the function name: {@code def f(p1: T1) -> R}.
    * A substitution can rebuild a function type as a plain callable type. That type shows no name, as in most bound methods.
+   * A parameter with a default value shows {@code = ...}: {@code (p1: T1 = ...) -> R}.
    * To render a type as a valid expression for a type annotation use {@link #getTypeHint(PyType, TypeEvalContext)}.
    *
    * @param type    the type to render

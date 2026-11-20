@@ -1618,7 +1618,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def f(a: int | str, b: int | str, c: int | str, d: int | str, e: int | str = 0) -> None: ...
 
       in_limit: Callable[[int | str, int | str, int | str, int | str], None] = f
-      above_limit: Callable[[int | str, int | str, int | str, int | str, int | str], None] = f # WARNING Expected type '(int | str, int | str, int | str, int | str, int | str) -> None', got 'Overload[def f(a: int, b: int | str, c: int | str, d: int | str, e: int | str) -> None, def f(a: str, b: int | str, c: int | str, d: int | str, e: int | str) -> None]' instead
+      above_limit: Callable[[int | str, int | str, int | str, int | str, int | str], None] = f # WARNING Expected type '(int | str, int | str, int | str, int | str, int | str) -> None', got 'Overload[def f(a: int, b: int | str, c: int | str, d: int | str, e: int | str = ...) -> None, def f(a: str, b: int | str, c: int | str, d: int | str, e: int | str = ...) -> None]' instead
       """.trimIndent())
   }
 }
