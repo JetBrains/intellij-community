@@ -557,6 +557,16 @@ private object ConstraintReducer {
       return
     }
 
+    // An overload reduces like an intersection of its items. A bound keeps the overload, so convert only here.
+    if (left is PyOverloadType) {
+      reduce(PyIntersectionType.intersectionOrUnknown(left.items), right, variance, cp)
+      return
+    }
+    if (right is PyOverloadType) {
+      reduce(left, PyIntersectionType.intersectionOrUnknown(right.items), variance, cp)
+      return
+    }
+
     if (left is PyCompositeType) {
       reduceCompositeType(right, left, !variance, cp)
       return
