@@ -10,6 +10,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -19,7 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
-import org.jetbrains.idea.devkit.run.loadProductInfo
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.name
@@ -31,6 +31,7 @@ private const val NO_DEPENDENCY_HINT =
   "Sync the Gradle project, then call the tool again."
 
 private const val NO_SOURCES_HINT =
+  "No IntelliJ Platform sources are attached. " +
   "The tool does not download sources. " +
   "Enable the download of sources in the Gradle settings of the IDE and sync the Gradle project, " +
   "or open an IntelliJ Platform class in the editor and download its sources. Then call the tool again."
@@ -48,66 +49,44 @@ private val PLATFORM_SOURCES_NAME = Regex("""(ideaIC|ideaIU|idea|pycharmPC)-.+-s
  * This function only reads the sources roots of these libraries. It does not download or attach sources.
  * It reads the root URLs and checks the files on the disk, so the result does not depend on the state of the VFS.
  *
- * @return The distinct sources roots that exist, and a hint when an IntelliJ Platform has no IntelliJ Platform sources.
+ * The hint tells only that the project has no IntelliJ Platform sources at all.
+ * The function does not check that each IntelliJ Platform of the project has its own sources.
+ *
+ * @return The distinct sources roots that exist, and a hint when none of them is an IntelliJ Platform sources archive.
  */
 @ApiStatus.Internal
 suspend fun resolveIntelliJPlatformSources(project: Project): IntelliJPlatformSources {
-  val libraries = readAction { collectIntelliJPlatformLibraries(project) }
-  if (libraries.isEmpty()) {
-    return IntelliJPlatformSources(archives = emptyList(), hint = NO_DEPENDENCY_HINT)
-  }
+  val sourcesRoots = readAction { collectSourcesRoots(project) }
+                     ?: return IntelliJPlatformSources(archives = emptyList(), hint = NO_DEPENDENCY_HINT)
 
-  val (platformVersions, existingRoots) = withContext(Dispatchers.IO) {
-    resolvePlatformVersions(libraries) to libraries.flatMap { it.sourcesRoots }.filterTo(HashSet()) { it.exists() }
-  }
-  val versionsPerArchive = sortedMapOf<Path, MutableSet<String>>()
-  for (library in libraries) {
-    for (sourcesRoot in library.sourcesRoots) {
-      if (sourcesRoot in existingRoots) {
-        versionsPerArchive.getOrPut(sourcesRoot) { sortedSetOf() }.add(platformVersions.getValue(library))
-      }
-    }
-  }
-
-  val archives = versionsPerArchive
-    .map { (path, versions) -> IntelliJPlatformSourceArchive(path.pathString, archiveKind(path), versions.toList()) }
+  val archives = withContext(Dispatchers.IO) { sourcesRoots.filter { it.exists() } }
+    .map { IntelliJPlatformSourceArchive(it.pathString, archiveKind(it)) }
     .sortedBy { it.kind }
-  val versionsWithSources = archives
-    .filter { it.kind == IntelliJPlatformSourceArchiveKind.PLATFORM }
-    .flatMapTo(HashSet()) { it.platformVersions }
-  val versionsWithoutSources = platformVersions.values.toSortedSet() - versionsWithSources
-  val hint = if (versionsWithoutSources.isEmpty()) {
-    null
-  }
-  else {
-    "No IntelliJ Platform sources are attached for: ${versionsWithoutSources.joinToString()}. $NO_SOURCES_HINT"
-  }
+  val hint = if (archives.any { it.kind == IntelliJPlatformSourceArchiveKind.PLATFORM }) null else NO_SOURCES_HINT
   return IntelliJPlatformSources(archives, hint)
 }
 
 /**
- * A library of an IntelliJ Platform dependency.
+ * Collects the local paths of the sources roots of the IntelliJ Platform libraries of [project].
  *
- * @param version The version from the Maven coordinates of the library.
- * @param classesRoot The local path of the first classes root.
- * @param sourcesRoots The local paths of the sources roots.
+ * @return The distinct paths in their natural order, or `null` when the project has no IntelliJ Platform library.
  */
-private class IntelliJPlatformLibrary(val version: String, val classesRoot: Path?, val sourcesRoots: List<Path>)
-
-private fun collectIntelliJPlatformLibraries(project: Project): List<IntelliJPlatformLibrary> {
-  val result = ArrayList<IntelliJPlatformLibrary>()
+private fun collectSourcesRoots(project: Project): Set<Path>? {
+  val libraries = HashSet<Library>()
+  val result = sortedSetOf<Path>()
+  var hasIntelliJPlatformLibrary = false
   OrderEnumerator.orderEntries(project).librariesOnly().forEachLibrary { library ->
-    val coordinates = library.getMavenCoordinates()
-    if (coordinates != null && isIntelliJPlatformDependency(coordinates)) {
-      result += IntelliJPlatformLibrary(
-        version = coordinates.version,
-        classesRoot = library.getUrls(OrderRootType.CLASSES).firstNotNullOfOrNull(::toLocalPath),
-        sourcesRoots = library.getUrls(OrderRootType.SOURCES).mapNotNull(::toLocalPath),
-      )
+    // the enumerator gives a library one time for each module that uses it
+    if (libraries.add(library)) {
+      val coordinates = library.getMavenCoordinates()
+      if (coordinates != null && isIntelliJPlatformDependency(coordinates)) {
+        hasIntelliJPlatformLibrary = true
+        library.getUrls(OrderRootType.SOURCES).mapNotNullTo(result, ::toLocalPath)
+      }
     }
     true
   }
-  return result
+  return result.takeIf { hasIntelliJPlatformLibrary }
 }
 
 /**
@@ -140,29 +119,6 @@ private fun toLocalPath(url: String): Path? {
   }
   return VfsUtilCore.urlToPath(url).substringBefore(URLUtil.JAR_SEPARATOR).toNioPathOrNull()
 }
-
-/**
- * Resolves the IntelliJ Platform version of every library in [libraries].
- *
- * The version is `<product code>-<build number>` from the `product-info.json` file of the IntelliJ Platform that holds the library.
- * The libraries of one IntelliJ Platform have coordinates with different version formats, and this version is the same for all of them.
- * When no directory above the library holds the file, the version is the one of the library coordinates.
- */
-private fun resolvePlatformVersions(libraries: List<IntelliJPlatformLibrary>): Map<IntelliJPlatformLibrary, String> {
-  val versionsPerDirectory = HashMap<Path, String>()
-  return libraries.associateWith { library ->
-    val version = library.classesRoot?.parent?.let { directory ->
-      versionsPerDirectory.getOrPut(directory) { readPlatformVersion(directory).orEmpty() }
-    }
-    if (version.isNullOrEmpty()) library.version else version
-  }
-}
-
-private fun readPlatformVersion(directory: Path): String? =
-  generateSequence(directory) { it.parent }
-    .takeWhile { it != it.root }
-    .firstNotNullOfOrNull { loadProductInfo(it.pathString) }
-    ?.let { "${it.productCode}-${it.buildNumber}" }
 
 /**
  * Returns the kind of the sources root in [path].

@@ -27,7 +27,6 @@ import kotlin.io.path.outputStream
 class IntelliJPlatformSourcesMcpToolTest : IntelliJPlatformSourcesImportingTestCase() {
 
   companion object {
-    private const val PLATFORM_VERSION = "IC-$BUILD_NUMBER"
     private const val API_ARCHIVE = "src_css-api.zip"
 
     @Parameterized.Parameters(name = "with Gradle-{0}")
@@ -55,7 +54,6 @@ class IntelliJPlatformSourcesMcpToolTest : IntelliJPlatformSourcesImportingTestC
     )
     for (archive in sources.archives) {
       assertTrue("The path must be absolute: ${archive.path}", Path.of(archive.path).isAbsolute)
-      assertEquals(listOf(PLATFORM_VERSION), archive.platformVersions)
     }
     assertNull(sources.hint)
   }
@@ -72,8 +70,6 @@ class IntelliJPlatformSourcesMcpToolTest : IntelliJPlatformSourcesImportingTestC
     val archive = sources.archives.single()
     assertEquals(SOURCES_JAR, Path.of(archive.path).name)
     assertEquals(IntelliJPlatformSourceArchiveKind.PLATFORM, archive.kind)
-    // The Maven repository of the test holds no `product-info.json` file, so the version is the one of the dependencies.
-    assertEquals(listOf(VERSION), archive.platformVersions)
     assertNull(sources.hint)
   }
 
@@ -105,9 +101,22 @@ class IntelliJPlatformSourcesMcpToolTest : IntelliJPlatformSourcesImportingTestC
     val sources = resolveSources()
 
     assertEmpty(sources.archives)
-    val hint = sources.hint
-    assertNotNull("The result must have a hint", hint)
-    assertTrue("The hint must name '$PLATFORM_VERSION': $hint", hint!!.contains(PLATFORM_VERSION))
+    assertNotNull("The result must have a hint", sources.hint)
+  }
+
+  @Test
+  fun `test library sources without the IntelliJ Platform sources give a hint`() {
+    createLocalIde("intellij.libraries.commons.cli" to listOf(COMMONS_CLI_METADATA), "app" to emptyList())
+    createArtifact(COMMONS_CLI_GROUP, "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
+    importProjectWithDependencies(LOCAL_IDE)
+
+    val sources = resolveSources()
+
+    assertEquals(
+      listOf(COMMONS_CLI_SOURCES_JAR to IntelliJPlatformSourceArchiveKind.LIBRARY),
+      sources.archives.map { Path.of(it.path).name to it.kind },
+    )
+    assertNotNull("The result must have a hint", sources.hint)
   }
 
   @Test
