@@ -1229,11 +1229,6 @@ The daemon's half and the IDE's half of supervision are in
   the agent has no locale, or one that is not UTF-8, the IDE gets `LC_ALL=C.UTF-8`.
   [@test] ../crates/avl-guest/src/supervisor/tests.rs
 
-- A Linux lane IDE starts no session bus of its own. A session bus of the agent's own environment stays as it is. When
-  the agent has none, the IDE gets `DBUS_SESSION_BUS_ADDRESS=disabled:`. A bus of the IDE can start the document
-  portal. Its mount in the home of the context outlives the run and breaks each later walk of the home.
-  [@test] ../crates/avl-guest/src/supervisor/tests.rs (`the_context_environment_of_linux_starts_no_session_bus`)
-
 - The run spec of the IDE records the environment policy and its context directory. It holds no variable value.
   A run spec without a policy inherits the environment of the agent, as the daemon run does.
   [@test] ../crates/avl-wire/src/supervisor/tests.rs

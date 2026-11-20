@@ -12,7 +12,7 @@ use super::identity::{classify_exit, normalized_exit_code};
 use super::launch::{CHANNEL_VARIABLES, LaunchHost, SuperviseLaunch, supervise_launch_for};
 use super::log::{last_complete_lines, read_log_suffix};
 use super::state::{ActivePointer, claim_active, read_active, write_json_atomic};
-use super::supervise::{CONTEXT_NO_SESSION_BUS, CONTEXT_UTF8_LOCALE, ENVIRONMENT_ALLOWLIST, child_environment, child_spawn_argv};
+use super::supervise::{CONTEXT_UTF8_LOCALE, ENVIRONMENT_ALLOWLIST, child_environment, child_spawn_argv};
 
 // --- the decisions of a supervised run --------------------------------------------------------------------------
 
@@ -835,7 +835,6 @@ fn the_context_environment_is_the_layout_and_the_allowlist() {
         ("HOME", "/data/ide/key-1/home"),
         ("PATH", "/data/ide/key-1/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"),
         ("IJ_PRIVATE_PACKAGES_AUTHORIZER_SKIP", "true"),
-        ("DBUS_SESSION_BUS_ADDRESS", CONTEXT_NO_SESSION_BUS),
     ]
     .into_iter()
     .map(|(name, value)| (OsString::from(name), OsString::from(value)))
@@ -844,27 +843,6 @@ fn the_context_environment_is_the_layout_and_the_allowlist() {
     for name in CHANNEL_VARIABLES {
         assert!(!ENVIRONMENT_ALLOWLIST.contains(&name), "{name}");
     }
-}
-
-/// The IDE of a context on Linux starts no session bus of its own: with no bus of the supervisor, it gets none. A bus of
-/// the supervisor stays. A macOS IDE gets no bus variable.
-#[test]
-fn the_context_environment_of_linux_starts_no_session_bus() {
-    let policy = EnvironmentPolicy::Context {
-        context_dir: "/data/ide/key-1".to_owned(),
-    };
-    let bus = |host: LaunchHost, inherited: &[(&str, &str)]| {
-        let inherited = inherited.iter().map(|(name, value)| (OsString::from(name), OsString::from(value)));
-        child_environment(host, inherited, &policy)
-            .get(&OsString::from("DBUS_SESSION_BUS_ADDRESS"))
-            .map(|value| value.to_string_lossy().into_owned())
-    };
-    assert_eq!(bus(LaunchHost::Linux, &[]).as_deref(), Some(CONTEXT_NO_SESSION_BUS));
-    assert_eq!(
-        bus(LaunchHost::Linux, &[("DBUS_SESSION_BUS_ADDRESS", "unix:path=/run/user/1000/bus")]).as_deref(),
-        Some("unix:path=/run/user/1000/bus")
-    );
-    assert_eq!(bus(LaunchHost::Macos, &[]), None);
 }
 
 /// The IDE of a context always runs under a UTF-8 locale, so it can read a non-ASCII file name. An inherited UTF-8
