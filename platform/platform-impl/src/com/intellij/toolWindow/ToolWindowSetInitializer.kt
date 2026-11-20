@@ -583,7 +583,7 @@ internal fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP
 }
 
 /**
- * The tool window factories that a project registers. A frame that shows several projects splits the factories between its projects.
+ * The tool window factories that a project registers. In a frame that shows several projects, each project registers a part of them.
  */
 internal enum class ToolWindowFactoryScope {
   /** Every factory: a project with a frame of its own, and a frame owner that shows its own content. */
@@ -608,12 +608,12 @@ internal enum class ToolWindowFactoryScope {
      * The switch of the legacy mode of a tool window. With it, a frame guest registers each tool window that shows one project,
      * and the tool window of the frame owner presents the tool window of the project that the user selects.
      */
-    val isSplitEnabled: Boolean
+    val isLegacyToolWindowModeEnabled: Boolean
       get() = Registry.`is`("ide.frame.guests.legacy.tool.windows", false)
 
     suspend fun of(project: Project): ToolWindowFactoryScope {
       return when {
-        !isSplitEnabled -> ALL
+        !isLegacyToolWindowModeEnabled -> ALL
         IdeFrameGuests.isFrameGuest(project) -> SINGLE_PROJECT
         serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_OWN_TOOL_WINDOW_CONTENT) -> MULTI_PROJECT
         else -> ALL
@@ -658,7 +658,6 @@ private fun beanToTask(
     contentFactory = factory,
     stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin),
     pluginDescriptor = plugin,
-    singleProject = factory !is MultiProjectToolWindowFactory,
   )
 }
 

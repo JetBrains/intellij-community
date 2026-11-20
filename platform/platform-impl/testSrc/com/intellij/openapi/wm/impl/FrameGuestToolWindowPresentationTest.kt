@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEve
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -48,6 +49,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 private const val ID = "FrameGuestPresentationTestToolWindow"
+private const val LEGACY_TOOL_WINDOWS_KEY = "ide.frame.guests.legacy.tool.windows"
 
 /**
  * How the tool window of a frame owner presents the tool windows of its frame guests, see [ToolWindowManagerPresentation].
@@ -390,6 +392,40 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `the data context of a tool window of the frame owner has the frame owner`() = onEdt {
+    val managers = createManagers()
+    // as Find and Run: the code of the frame owner registers the tool window, without a factory
+    val own = managers.owner.registerToolWindow(RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT), buttonManager(managers.owner)).toolWindow
+    managers.register(first)
+    setActive(first)
+
+    assertThat(own.dataContextProject).describedAs("the tool window shows the content of the frame owner").isSameAs(owner)
+  }
+
+  @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `the data context of a tool window with the marker has the active project`() = onEdt {
+    val managers = createManagers()
+    val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = MultiProjectFactory())
+    val own = managers.owner.registerToolWindow(task, buttonManager(managers.owner)).toolWindow
+    setActive(first)
+
+    assertThat(own.dataContextProject).describedAs("the data context keeps the active project").isNull()
+  }
+
+  @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `the data context of a tool window of a frame owner without content of its own has the active project`() = onEdt {
+    suppressOwnContentOfOwner()
+    val managers = createManagers()
+    val own = managers.owner.registerToolWindow(RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT), buttonManager(managers.owner)).toolWindow
+    setActive(first)
+
+    assertThat(own.dataContextProject).describedAs("the frame owner shows only its frame guests").isNull()
+  }
+
+  @Test
   fun `a title action of a presented tool window acts on the manager of the frame owner`() = onEdt {
     val managers = createManagers()
     val firstToolWindow = managers.register(first)
@@ -477,7 +513,7 @@ internal class FrameGuestToolWindowPresentationTest {
   @Test
   fun `a tool window that the frame owner registered from code presents the frame guests`() = onEdt {
     val managers = createManagers()
-    val own = managers.owner.registerToolWindow(task(singleProject = false), buttonManager(managers.owner)).toolWindow
+    val own = managers.owner.registerToolWindow(task(), buttonManager(managers.owner)).toolWindow
 
     val firstToolWindow = managers.register(first)
 
@@ -491,19 +527,9 @@ internal class FrameGuestToolWindowPresentationTest {
 
   @Test
   fun `a frame owner without content of its own is no entry of the tool window that it registered from code`() = onEdt {
-    ExtensionTestUtil.maskExtensions(
-      ProjectFrameCapabilitiesService.EP_NAME,
-      listOf(object : ProjectFrameCapabilitiesProvider {
-        override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
-          return if (project === owner) setOf(ProjectFrameCapability.SUPPRESS_OWN_TOOL_WINDOW_CONTENT) else emptySet()
-        }
-
-        override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? = null
-      }),
-      disposable,
-    )
+    suppressOwnContentOfOwner()
     val managers = createManagers()
-    val ownTask = task(singleProject = false).copy(shouldBeAvailable = false)
+    val ownTask = task().copy(shouldBeAvailable = false)
     val own = managers.owner.registerToolWindow(ownTask, buttonManager(managers.owner)).toolWindow
 
     val firstToolWindow = managers.register(first)
@@ -530,6 +556,21 @@ internal class FrameGuestToolWindowPresentationTest {
     val registered = managers.owner.registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT))
 
     assertThat(registered).isSameAs(presenting)
+  }
+
+  /** Makes [owner] a frame owner without tool window content of its own, as the host of a JetBrains Light workspace. */
+  private fun suppressOwnContentOfOwner() {
+    ExtensionTestUtil.maskExtensions(
+      ProjectFrameCapabilitiesService.EP_NAME,
+      listOf(object : ProjectFrameCapabilitiesProvider {
+        override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
+          return if (project === owner) setOf(ProjectFrameCapability.SUPPRESS_OWN_TOOL_WINDOW_CONTENT) else emptySet()
+        }
+
+        override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? = null
+      }),
+      disposable,
+    )
   }
 
   private fun addContent(toolWindow: ToolWindow): Content {
@@ -627,13 +668,13 @@ private fun buttonManager(manager: ToolWindowManagerImpl): ToolWindowButtonManag
   return manager.getButtonManager(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
 }
 
-private fun task(singleProject: Boolean = true): RegisterToolWindowTaskData {
+private fun task(): RegisterToolWindowTaskData {
   val contentFactory = object : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
       createdContent.add(project.name)
     }
   }
-  return RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = contentFactory, singleProject = singleProject)
+  return RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = contentFactory)
 }
 
 private class MultiProjectFactory : MultiProjectToolWindowFactory {

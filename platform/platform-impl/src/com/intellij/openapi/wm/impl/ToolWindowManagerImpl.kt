@@ -57,6 +57,8 @@ import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -185,7 +187,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   /**
    * The presentation of the frame owner, when this manager belongs to a frame guest and the frame owner presents its tool windows.
    * `null` for a project with a frame of its own, and for a frame guest without the legacy mode of a tool window,
-   * see [ToolWindowFactoryScope.isSplitEnabled].
+   * see [ToolWindowFactoryScope.isLegacyToolWindowModeEnabled].
    */
   @Volatile
   internal var frameOwnerPresentation: ToolWindowManagerPresentation? = null
@@ -539,7 +541,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * A tool window registration then works, and nothing is visible. [frame] is the frame that hosts the project,
    * and [frameOwner] is the project that owns it.
    *
-   * With the legacy mode of a tool window, see [ToolWindowFactoryScope.isSplitEnabled], the project registers each tool window
+   * With the legacy mode of a tool window, see [ToolWindowFactoryScope.isLegacyToolWindowModeEnabled], the project registers each tool window
    * of the extension point that shows one project, and the manager of [frameOwner] presents it. The registration runs after this
    * call returns, and a task that [invokeLater] queued runs after it.
    * Without the mode, the tool windows of the extension point are not registered, and such a task is dropped.
@@ -550,7 +552,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       ToolWindowPane.create(frame, coroutineScope, WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
     }
     detachedDefaultPane = pane
-    if (ToolWindowFactoryScope.isSplitEnabled) {
+    if (ToolWindowFactoryScope.isLegacyToolWindowModeEnabled) {
       (frameOwner.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl)?.let { initAsFrameGuest(it.presentation) }
     }
     doInit(
@@ -723,7 +725,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         contentFactory = factory,
         stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin),
         pluginDescriptor = plugin,
-        singleProject = factory !is MultiProjectToolWindowFactory,
       )
 
       val toolWindowPane = getDefaultToolWindowPaneIfInitialized()
@@ -1277,9 +1278,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     // a frame guest registered the id first, and this frame owner got the tool window that presents the frame guests
     presentation.registeredForGuests(task.id)?.let { return it }
-    val data = toCodeRegistration(task.data)
-    if (data.singleProject) {
-      return registerPresentedToolWindow(data)
+    if (isPresentedRegistration(task.data)) {
+      return registerPresentedToolWindow(task.data)
     }
 
     // try to get a previously saved tool window pane, if possible
@@ -1297,13 +1297,26 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   /**
-   * The task of a tool window that code registers, see [registerToolWindow]. The code of a frame guest knows one project, so
-   * its tool window shows one project, as a tool window of the extension point without the marker [MultiProjectToolWindowFactory].
-   * The frame owner then presents it. The task of a frame owner and of a project with a frame of its own does not change.
+   * Tells whether the tool window [task] of this manager is a presented one: this manager belongs to a frame guest, and the
+   * factory has no marker [MultiProjectToolWindowFactory]. The rule is the same for the extension point and for the code of
+   * a frame guest, which knows one project. A frame owner and a project with a frame of its own present no tool window of their own.
    */
-  internal fun toCodeRegistration(task: RegisterToolWindowTaskData): RegisterToolWindowTaskData {
-    val isSingleProject = frameOwnerPresentation != null && task.contentFactory !is MultiProjectToolWindowFactory
-    return if (isSingleProject) task.copy(singleProject = true) else task
+  private fun isPresentedRegistration(task: RegisterToolWindowTaskData): Boolean {
+    return frameOwnerPresentation != null && task.contentFactory !is MultiProjectToolWindowFactory
+  }
+
+  /**
+   * The tool windows of this manager show the project of the manager, not the active project of the frame: the legacy mode
+   * of a tool window is on, and the project shows tool window content of its own. So the data context of such a tool window
+   * has this project. A tool window with the marker [MultiProjectToolWindowFactory] is the exception, see
+   * [ToolWindowImpl.dataContextProject].
+   */
+  internal val showsOwnProject: Boolean
+    get() = ToolWindowFactoryScope.isLegacyToolWindowModeEnabled && !suppressesOwnContent
+
+  /** The frame of this project shows no tool window content of the project, see [ProjectFrameCapability.SUPPRESS_OWN_TOOL_WINDOW_CONTENT]. */
+  internal val suppressesOwnContent: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    service<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_OWN_TOOL_WINDOW_CONTENT)
   }
 
   /**
@@ -1353,7 +1366,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       contentFactory = if (guestTask.contentFactory == null) null else PresentingToolWindowFactory,
       // the tool window has no content of its own, and the entries of the frame guests decide when it leaves the stripe
       hideOnEmptyContent = false,
-      singleProject = false,
     )
     val paneId = layoutState.getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     val entry = registerToolWindow(task, getButtonManager(paneId))
@@ -1414,7 +1426,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * moved for it gets the new entry.
    */
   internal fun prepareRegisterToolWindowTask(task: RegisterToolWindowTaskData): PreparedRegisterToolWindowTask {
-    if (frameOwnerPresentation != null && task.singleProject) {
+    if (isPresentedRegistration(task)) {
       // the frame owner keeps the place, the stripe button and the visible state of a presented tool window
       return PreparedRegisterToolWindowTask(
         task = task,
@@ -1501,7 +1513,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         task.id
       },
       isPresented = preparedTask.isPresented,
-      isSingleProject = task.singleProject,
       isMultiProject = factory is MultiProjectToolWindowFactory,
     )
     toolWindow.stripeButtonVisibilityDefault = shouldShowStripeButtonByDefault(task.id, task.contentFactory, task.pluginDescriptor, isNewUi)

@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -12,8 +11,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
-import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowProjectSelector
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -265,7 +262,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
         return null
       }
       // the frame owner registered the tool window from code, but the frame must not show the content of the owner
-      service<ProjectFrameCapabilitiesService>().has(manager.project, ProjectFrameCapability.SUPPRESS_OWN_TOOL_WINDOW_CONTENT) -> {
+      manager.suppressesOwnContent -> {
         PresentingSlot(presenting = own, showsOwnerContent = false, isRegisteredForGuests = false)
       }
       else -> {

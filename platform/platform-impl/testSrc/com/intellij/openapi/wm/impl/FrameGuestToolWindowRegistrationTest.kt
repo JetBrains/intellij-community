@@ -42,7 +42,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 private const val ID = "FrameGuestTestToolWindow"
 private const val MULTI_PROJECT_ID = "FrameGuestTestMultiProjectToolWindow"
-private const val SPLIT_KEY = "ide.frame.guests.legacy.tool.windows"
+private const val LEGACY_TOOL_WINDOWS_KEY = "ide.frame.guests.legacy.tool.windows"
 
 /**
  * The tool windows that a frame guest registers, and how its manager registers one that the frame owner presents.
@@ -74,7 +74,7 @@ internal class FrameGuestToolWindowRegistrationTest {
   }
 
   @Test
-  @RegistryKey(key = SPLIT_KEY, value = "true")
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
   fun `a frame guest registers only the tool windows that show one project`(): Unit = timeoutRunBlocking {
     maskToolWindows()
     joinFrame()
@@ -82,12 +82,11 @@ internal class FrameGuestToolWindowRegistrationTest {
     val tasks = computeToolWindowBeans(guest)
 
     assertThat(tasks.map { it.id }).containsExactly(ID)
-    assertThat(tasks.single().singleProject).isTrue()
     assertThat(askedProjects).describedAs("a factory out of the scope is not asked whether it is applicable").containsExactly(ID to guest.name)
   }
 
   @Test
-  @RegistryKey(key = SPLIT_KEY, value = "true")
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
   fun `a frame owner without content of its own registers only the tool windows with the marker`(): Unit = timeoutRunBlocking {
     maskToolWindows()
     ExtensionTestUtil.maskExtensions(
@@ -105,12 +104,11 @@ internal class FrameGuestToolWindowRegistrationTest {
     val tasks = computeToolWindowBeans(owner)
 
     assertThat(tasks.map { it.id }).containsExactly(MULTI_PROJECT_ID)
-    assertThat(tasks.single().singleProject).isFalse()
     assertThat(askedProjects).containsExactly(MULTI_PROJECT_ID to owner.name)
   }
 
   @Test
-  @RegistryKey(key = SPLIT_KEY, value = "true")
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
   fun `a frame owner with content of its own registers every tool window`(): Unit = timeoutRunBlocking {
     maskToolWindows()
     joinFrame()
@@ -167,23 +165,28 @@ internal class FrameGuestToolWindowRegistrationTest {
   }
 
   @Test
-  fun `the marker keeps a tool window that code registers in a frame guest out of the presentation`(): Unit = timeoutRunBlocking {
+  fun `the marker keeps a tool window of a frame guest out of the presentation`(): Unit = timeoutRunBlocking {
     val guestManager = createManager(guest)
     guestManager.initAsFrameGuest(createManager(owner).presentation)
     val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT)
 
-    assertThat(guestManager.toCodeRegistration(task).singleProject).describedAs("no factory").isTrue()
-    assertThat(guestManager.toCodeRegistration(task.copy(contentFactory = SingleProjectTestFactory())).singleProject).isTrue()
-    assertThat(guestManager.toCodeRegistration(task.copy(contentFactory = MultiProjectTestFactory())).singleProject).isFalse()
+    withContext(Dispatchers.EDT) {
+      assertThat(guestManager.prepareRegisterToolWindowTask(task).isPresented).describedAs("no factory").isTrue()
+      assertThat(guestManager.prepareRegisterToolWindowTask(task.copy(contentFactory = SingleProjectTestFactory())).isPresented).isTrue()
+      assertThat(guestManager.prepareRegisterToolWindowTask(task.copy(contentFactory = MultiProjectTestFactory())).isPresented).isFalse()
+    }
   }
 
   @Test
-  fun `a tool window that code registers in a frame owner keeps its task`(): Unit = timeoutRunBlocking {
+  fun `a tool window that a frame owner registers is not presented`(): Unit = timeoutRunBlocking {
     val ownerManager = createManager(owner)
     createManager(guest).initAsFrameGuest(ownerManager.presentation)
     val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT)
 
-    assertThat(ownerManager.toCodeRegistration(task)).isSameAs(task)
+    withContext(Dispatchers.EDT) {
+      assertThat(ownerManager.prepareRegisterToolWindowTask(task).isPresented).isFalse()
+      assertThat(ownerManager.prepareRegisterToolWindowTask(task.copy(contentFactory = SingleProjectTestFactory())).isPresented).isFalse()
+    }
   }
 
   @Test
@@ -270,7 +273,6 @@ private fun singleProjectTask(): RegisterToolWindowTaskData {
     id = ID,
     anchor = ToolWindowAnchor.LEFT,
     contentFactory = SingleProjectTestFactory(),
-    singleProject = true,
   )
 }
 

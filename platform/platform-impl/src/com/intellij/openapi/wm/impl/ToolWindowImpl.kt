@@ -63,7 +63,6 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.FocusTask
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.toolWindow.ToolWindowFactoryScope
 import com.intellij.toolWindow.ToolWindowProperty
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
@@ -140,8 +139,6 @@ private val LOG = logger<ToolWindowManagerImpl>()
    * It never goes into a tool window pane, and it has no stripe button and no activation action of its own.
    */
   internal val isPresented: Boolean = false,
-  /** The tool window shows one project, see `RegisterToolWindowTaskData.singleProject`. */
-  internal val isSingleProject: Boolean = false,
   /** The factory of the tool window has the marker `MultiProjectToolWindowFactory`: the tool window presents every project itself. */
   internal val isMultiProject: Boolean = false,
 ) : ToolWindowEx {
@@ -201,8 +198,10 @@ private val LOG = logger<ToolWindowManagerImpl>()
     get() = when {
       // the tool window of a frame guest shows the content of its project
       isPresented -> project
-      // the tool window shows one project in a frame that can show several projects
-      isSingleProject && ToolWindowFactoryScope.isSplitEnabled -> project
+      // the tool window shows every project itself
+      isMultiProject -> null
+      // the legacy mode is on, and the project shows tool window content of its own
+      toolWindowManager.showsOwnProject -> project
       else -> null
     }
 
