@@ -31,8 +31,10 @@ import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -88,12 +90,15 @@ private class LspInlayHintItem(
   private val maxChars: Int,
   private val supportsResolve: Boolean,
 ) : LspInlayItem {
+  private val hintLock = Any()
   private var resolvedHint: InlayHint? = null
+  private var resolveRequest: Deferred<InlayHint?>? = null
 
   override val identity: Any = LspInlayHintIdentity(lspClient.descriptor, inlayHint.label, maxChars, supportsResolve)
 
   override fun buildPresentation(editor: Editor, factory: PresentationFactory): InlayPresentation {
-    val presentation = buildInlayPresentation(factory, inlayHint, maxChars, supportsResolve,
+    val hint = synchronized(hintLock) { inlayHint }
+    val presentation = buildInlayPresentation(factory, hint, maxChars, supportsResolve,
                                             tooltipListener = { partIndex -> TooltipListener(editor, factory, partIndex) }) { partIndex ->
       navigateToLabelPart(editor, partIndex)
     }
@@ -102,9 +107,45 @@ private class LspInlayHintItem(
 
   override fun updateFrom(newItem: LspInlayItem) {
     val newHint = (newItem as LspInlayHintItem).inlayHint
-    if (newHint !== inlayHint) {
-      inlayHint = newHint
-      resolvedHint = null
+    synchronized(hintLock) {
+      if (newHint !== inlayHint) {
+        inlayHint = newHint
+        resolvedHint = null
+        resolveRequest?.cancel()
+        resolveRequest = null
+      }
+    }
+  }
+
+  /** Finds the requested value, resolving the hint if needed. Reuses successful responses even when the value is absent. */
+  private suspend fun <T> getOrResolve(findValue: (InlayHint) -> T?): T? {
+    val request = synchronized(hintLock) {
+      resolvedHint?.let { return findValue(it) }
+      findValue(inlayHint)?.let { return it }
+      if (!supportsResolve) return null
+      resolveRequest?.takeUnless { it.isCancelled } ?: run {
+        val hint = inlayHint
+        LspCoroutineScopeService.getInstance(project).cs.async(Dispatchers.Default) {
+          val resolved = resolveInlayHint(lspClient, file, hint)
+          synchronized(hintLock) {
+            if (inlayHint === hint) {
+              resolvedHint = resolved
+              resolveRequest = null
+              resolved
+            }
+            else null
+          }
+        }.also { resolveRequest = it }
+      }
+    }
+    return request.await()?.let(findValue)
+  }
+
+  /** Returns the part tooltip, or the hint tooltip when the part has none. Empty text is a supplied tooltip. */
+  private suspend fun getInlayTooltip(partIndex: Int?): MarkupContent? {
+    return getOrResolve { hint ->
+      val tooltip = partIndex?.let { hint.label.right?.getOrNull(it)?.tooltip } ?: hint.tooltip ?: return@getOrResolve null
+      tooltip.right ?: MarkupContent(MarkupKind.PLAINTEXT, tooltip.left)
     }
   }
 
@@ -127,7 +168,6 @@ private class LspInlayHintItem(
       if (editor.isDisposed) return
       this.event = event
       if (shown?.isVisible == true || job?.isActive == true) return
-      val tooltip = getInlayHintTooltip(resolvedHint ?: inlayHint, partIndex) ?: return
       val hoveredInlay = inlay ?: editor.inlayModel.getElementAt(event.point)?.also {
         inlay = it
         Disposer.register(it) { onHoverFinished() }
@@ -135,7 +175,8 @@ private class LspInlayHintItem(
       if (!hoveredInlay.isValid) return
 
       job = LspCoroutineScopeService.getInstance(project).cs.launch {
-        val html = readAction { tooltipHtml(tooltip) }
+        val content = getInlayTooltip(partIndex) ?: return@launch
+        val html = readAction { tooltipHtml(content) }
         withContext(Dispatchers.EDT) {
           val lastEvent = this@TooltipListener.event ?: return@withContext
           if (!editor.isDisposed && hoveredInlay.isValid &&
@@ -156,34 +197,15 @@ private class LspInlayHintItem(
   }
 
   private fun navigateToLabelPart(editor: Editor, partIndex: Int) {
-    val hint = inlayHint
-    val resolved = resolvedHint
-    val location = (resolved ?: hint).label.right?.getOrNull(partIndex)?.location
-    if (location != null) {
-      navigateTo(lspClient.descriptor, project, location.uri, location.range)
-      return
-    }
-    if (resolved != null) return
-
     LspCoroutineScopeService.getInstance(project).cs.launch {
-      val newResolved = resolveInlayHint(lspClient, file, hint) ?: return@launch
+      val location = getOrResolve { it.label.right?.getOrNull(partIndex)?.location } ?: return@launch
       withContext(Dispatchers.EDT) {
-        if (inlayHint === hint) {
-          resolvedHint = newResolved
-        }
-        val resolvedLocation = newResolved.label.right?.getOrNull(partIndex)?.location
-        if (resolvedLocation != null && !editor.isDisposed) {
-          navigateTo(lspClient.descriptor, project, resolvedLocation.uri, resolvedLocation.range)
+        if (!editor.isDisposed) {
+          navigateTo(lspClient.descriptor, project, location.uri, location.range)
         }
       }
     }
   }
-}
-
-/** Returns the part tooltip, or the hint tooltip when the part has none. Empty text is a supplied tooltip. */
-internal fun getInlayHintTooltip(inlayHint: InlayHint, partIndex: Int?): MarkupContent? {
-  val tooltip = partIndex?.let { inlayHint.label.right?.getOrNull(it)?.tooltip } ?: inlayHint.tooltip ?: return null
-  return tooltip.right ?: MarkupContent(MarkupKind.PLAINTEXT, tooltip.left)
 }
 
 /**

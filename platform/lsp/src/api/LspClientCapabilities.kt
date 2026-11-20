@@ -126,7 +126,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       didSave = true
     }
     inlayHint = InlayHintCapabilities(true).apply {
-      resolveSupport = InlayHintResolveSupportCapabilities(listOf("label.location"))
+      resolveSupport = InlayHintResolveSupportCapabilities(listOf("label.location", "tooltip", "label.tooltip"))
     }
     documentHighlight = DocumentHighlightCapabilities(true)
     diagnostic = DiagnosticCapabilities(true)

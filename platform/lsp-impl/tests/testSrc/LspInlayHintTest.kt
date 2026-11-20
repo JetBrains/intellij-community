@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.codeInsight.hints.presentation.StaticDelegatePresentation
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,9 +17,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.common.FakeLspServerSession
+import com.intellij.platform.lsp.common.UnansweredRequest
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
-import com.intellij.platform.lsp.impl.features.inlayHint.getInlayHintTooltip
+import com.intellij.platform.lsp.impl.features.documentation.createLspDocumentationData
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.awaitPendingEditorOpen
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -54,7 +56,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotSame
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
@@ -82,68 +83,21 @@ internal class LspInlayHintTest {
   @Nested
   inner class TooltipContent {
     @Test
-    fun `string label uses the hint tooltip as plain text`() {
-      val hint = InlayHint(Position(0, 5), Either.forLeft(": String")).apply {
-        setTooltip("**plain** <text>")
-      }
+    fun `plain text tooltip escapes HTML without interpreting markdown`(): Unit = timeoutRunBlocking {
+      val tooltip = MarkupContent(MarkupKind.PLAINTEXT, "**plain** <pending> & <paid>")
+      val html = readAction { createLspDocumentationData(tooltip).toHtml(project) }
 
-      assertEquals(MarkupContent(MarkupKind.PLAINTEXT, "**plain** <text>"), getInlayHintTooltip(hint, null))
+      assertEquals("<div class='content'>**plain** &lt;pending&gt; &amp; &lt;paid&gt;</div>", html)
     }
 
     @Test
-    fun `selected part tooltip takes precedence over hint tooltip`() {
-      val hint = inlayHint("first", "second").apply { setTooltip("Whole hint") }
-      val tooltip = MarkupContent(MarkupKind.MARKDOWN, "**Second part**")
-      hint.label.right[0].setTooltip("First part")
-      hint.label.right[1].setTooltip(tooltip)
+    fun `markdown tooltip renders a leading code block and description`(): Unit = timeoutRunBlocking {
+      val tooltip = MarkupContent(MarkupKind.MARKDOWN, "```\nDecimal total\n```\n**Amount**")
+      val html = readAction { createLspDocumentationData(tooltip).toHtml(project) }
 
-      assertSame(tooltip, getInlayHintTooltip(hint, 1))
-    }
-
-    @Test
-    fun `part without a tooltip falls back to hint markup`() {
-      val tooltip = MarkupContent(MarkupKind.MARKDOWN, "**Whole hint**")
-      val hint = inlayHint("first", "second").apply { setTooltip(tooltip) }
-      hint.label.right[0].setTooltip("First part")
-
-      assertSame(tooltip, getInlayHintTooltip(hint, 1))
-    }
-
-    @Test
-    fun `whole hint lookup does not select a part tooltip`() {
-      val hint = inlayHint("first").apply { setTooltip("Whole hint") }
-      hint.label.right[0].setTooltip("First part")
-
-      assertEquals(MarkupContent(MarkupKind.PLAINTEXT, "Whole hint"), getInlayHintTooltip(hint, null))
-    }
-
-    @Test
-    fun `missing tooltip does not use another part`() {
-      val hint = inlayHint("first", "second")
-      hint.label.right[0].setTooltip("First part")
-
-      assertNull(getInlayHintTooltip(hint, 1))
-      assertNull(getInlayHintTooltip(hint, null))
-      assertNull(getInlayHintTooltip(InlayHint(Position(0, 5), Either.forLeft(": String")), null))
-    }
-
-    @Test
-    fun `empty and whitespace tooltips remain supplied content`() {
-      for (text in listOf("", " \t\n")) {
-        val tooltips = listOf<Either<String, MarkupContent>>(
-          Either.forLeft(text),
-          Either.forRight(MarkupContent(MarkupKind.PLAINTEXT, text)),
-          Either.forRight(MarkupContent(MarkupKind.MARKDOWN, text)),
-        )
-        for (tooltip in tooltips) {
-          val hint = inlayHint("part").apply { setTooltip("Whole hint") }
-          hint.label.right[0].tooltip = tooltip
-
-          assertEquals(text, getInlayHintTooltip(hint, 0)?.value)
-          hint.tooltip = tooltip
-          assertEquals(text, getInlayHintTooltip(hint, null)?.value)
-        }
-      }
+      assertTrue(html.contains("class='definition'"), html)
+      assertTrue(html.contains("Decimal"), html)
+      assertTrue(html.contains("<b>Amount</b>"), html)
     }
   }
 
@@ -449,7 +403,7 @@ internal class LspInlayHintTest {
           InlayHintLabelPart("clickable").apply {
             location = Location(serverSession.fileUri(virtualFile), Range(Position(0, 6), Position(0, 6)))
           },
-        ))))
+        ))).apply { setTooltip("Existing tooltip") })
       }
 
       assertNoResolveRequest(serverSession) {
@@ -473,7 +427,7 @@ internal class LspInlayHintTest {
     }
 
     @Test
-    fun `ellipsis hover uses the whole hint tooltip`(): Unit = timeoutRunBlocking {
+    fun `ellipsis hover starts tooltip work without resolving`(): Unit = timeoutRunBlocking {
       val hint = inlayHint("shown", "x".repeat(100)).apply { setTooltip("Whole hint") }
       checkTooltipHover(hint, 1, "hello/*<# [shown ...] #>*/ world", "ellipsisTooltip.txt")
     }
@@ -496,6 +450,9 @@ internal class LspInlayHintTest {
           (managedInlayAt(5).renderer as PresentationRenderer).presentation.mouseExited()
           assertTrue(tooltipJob.isCancelled, "Leaving the hint must cancel pending tooltip work")
         }
+        interactWithLabel(partIndex, modifiers = 0, click = false, exit = false)
+        awaitLspJobs()
+        withContext(Dispatchers.EDT) { (managedInlayAt(5).renderer as PresentationRenderer).presentation.mouseExited() }
       }
     }
 
@@ -520,6 +477,245 @@ internal class LspInlayHintTest {
     }
 
     @Test
+    fun `part hover uses the whole tooltip without resolving`(): Unit = timeoutRunBlocking {
+      val hint = inlayHint("first", "second").apply { setTooltip("Whole hint") }
+      hint.label.right[0].setTooltip("First part")
+      checkTooltipHover(hint, 1, "hello/*<# [first second] #>*/ world", "fallbackTooltip.txt")
+    }
+
+    @Test
+    fun `whitespace-only tooltips do not trigger resolve`(): Unit = timeoutRunBlocking {
+      val hint = inlayHint("a", "b", "c").apply { setTooltip("Whole hint") }
+      val whitespace = " \t\n"
+      hint.label.right[0].setTooltip(whitespace)
+      hint.label.right[1].setTooltip(MarkupContent(MarkupKind.PLAINTEXT, whitespace))
+      hint.label.right[2].setTooltip(MarkupContent(MarkupKind.MARKDOWN, whitespace))
+      val serverSession = inlayHintSession(hint, "blankPartTooltips.txt")
+      checkInlaysRetrying("hello world", "hello/*<# [a b c] #>*/ world")
+
+      assertNoResolveRequest(serverSession) {
+        for (partIndex in hint.label.right.indices) {
+          interactWithLabel(partIndex, modifiers = 0, click = false, exit = false)
+          awaitLspJobs()
+        }
+        withContext(Dispatchers.EDT) { (managedInlayAt(5).renderer as PresentationRenderer).presentation.mouseExited() }
+      }
+    }
+
+    @Test
+    fun `string label hover resolves a missing tooltip`(): Unit = timeoutRunBlocking {
+      val hint = InlayHint(Position(0, 5), Either.forLeft(": String")).apply { data = "string" }
+      checkHoverResolve(hint, 0, "hello/*<# : String #>*/ world", "resolvedStringTooltip.txt")
+    }
+
+    @Test
+    fun `part hover resolves despite another part having a tooltip`(): Unit = timeoutRunBlocking {
+      val hint = inlayHint("first", "second", data = "parts")
+      hint.label.right[0].setTooltip("First part")
+      checkHoverResolve(hint, 1, "hello/*<# [first second] #>*/ world", "resolvedPartTooltip.txt")
+    }
+
+    @Test
+    fun `ellipsis hover resolves a missing whole tooltip`(): Unit = timeoutRunBlocking {
+      val hint = inlayHint("shown", "x".repeat(100), data = "ellipsis")
+      hint.label.right[1].setTooltip("Hidden part")
+      checkHoverResolve(hint, 1, "hello/*<# [shown ...] #>*/ world", "resolvedEllipsisTooltip.txt")
+    }
+
+    private suspend fun checkHoverResolve(hint: InlayHint, partIndex: Int, expected: String, fileName: String) {
+      val serverSession = inlayHintSession(hint, fileName)
+      checkInlaysRetrying("hello world", expected)
+      val capabilities = serverSession.receivedRequests(serverSession.INITIALIZE).single().capabilities
+      assertEquals(setOf("label.location", "tooltip", "label.tooltip"),
+                   capabilities.textDocument.inlayHint.resolveSupport.properties.toSet())
+      val resolve = serverSession.expectRequest(serverSession.INLAY_HINT_RESOLVE, { it.position == hint.position }) {
+        assertEquals(hint.label, it.label)
+        assertEquals("\"${hint.data}\"", it.data.toString())
+        it.apply { setTooltip(MarkupContent(MarkupKind.MARKDOWN, "**Resolved tooltip**")) }
+      }
+
+      interactWithLabel(partIndex, modifiers = 0, click = false, exit = false)
+      resolve.await()
+      awaitLspJobs()
+
+      assertNoResolveRequest(serverSession) {
+        interactWithLabel(partIndex, modifiers = 0, click = false)
+        interactWithLabel(partIndex, modifiers = 0, click = false)
+      }
+      withContext(Dispatchers.EDT) { assertEquals(0, codeInsightFixture.editor.caretModel.offset) }
+    }
+
+    @Test
+    fun `hover and navigation share a pending resolve across parts`(): Unit = timeoutRunBlocking {
+      checkSharedResolve(hoverFirst = true)
+    }
+
+    @Test
+    fun `hover reuses a resolve started by navigation`(): Unit = timeoutRunBlocking {
+      checkSharedResolve(hoverFirst = false)
+    }
+
+    @Test
+    fun `existing location navigates while tooltip resolve is pending`(): Unit = timeoutRunBlocking {
+      (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+      val virtualFile = withContext(Dispatchers.EDT) {
+        codeInsightFixture.configureByText("locationWhileTooltipResolves.txt", "hello world").virtualFile
+      }
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+        listOf(inlayHint("target").apply {
+          label.right.single().location = Location(fileUri, Range(Position(0, 6), Position(0, 6)))
+        })
+      }
+      checkInlaysRetrying("hello world", "hello/*<# [target] #>*/ world")
+      val answer = CompletableDeferred<Unit>()
+      val resolve = serverSession.expectRequest(serverSession.INLAY_HINT_RESOLVE) {
+        answer.await()
+        it.apply { setTooltip("Resolved tooltip") }
+      }
+
+      try {
+        interactWithLabel(0, modifiers = 0, click = false, exit = false)
+        resolve.await()
+        interactWithLabel(0)
+        checkNavigation(6)
+        assertEquals(1, serverSession.receivedRequests(serverSession.INLAY_HINT_RESOLVE).size)
+      }
+      finally {
+        answer.complete(Unit)
+      }
+      awaitLspJobs()
+    }
+
+    private suspend fun checkSharedResolve(hoverFirst: Boolean) {
+      val hint = inlayHint("first", "second")
+      hint.label.right[1].setTooltip("Existing tooltip")
+      val serverSession = inlayHintSession(hint, "sharedResolve$hoverFirst.txt")
+      checkInlaysRetrying("hello world", "hello/*<# [first second] #>*/ world")
+      val fileUri = serverSession.fileUri(codeInsightFixture.file.virtualFile)
+      val answer = CompletableDeferred<Unit>()
+      val resolve = serverSession.expectRequest(serverSession.INLAY_HINT_RESOLVE) { hint ->
+        answer.await()
+        hint.apply {
+          label.right[0].setTooltip("First part")
+          label.right[1].setTooltip(MarkupContent(MarkupKind.MARKDOWN, "**Second part**"))
+          label.right[1].location = Location(fileUri, Range(Position(0, 8), Position(0, 8)))
+        }
+      }
+
+      try {
+        if (hoverFirst) interactWithLabel(0, modifiers = 0, click = false, exit = false)
+        else interactWithLabel(1)
+        resolve.await()
+
+        assertNoResolveRequest(serverSession) {
+          interactWithLabel(if (hoverFirst) 1 else 0, modifiers = 0, click = false, exit = false)
+          if (hoverFirst) interactWithLabel(1)
+          else withContext(Dispatchers.EDT) { (managedInlayAt(5).renderer as PresentationRenderer).presentation.mouseExited() }
+          answer.complete(Unit)
+          checkNavigation(8)
+        }
+        assertEquals(1, serverSession.receivedRequests(serverSession.INLAY_HINT_RESOLVE).size)
+      }
+      finally {
+        answer.complete(Unit)
+      }
+    }
+
+    @Test
+    fun `leaving hover still caches a successful resolve without tooltips`(): Unit = timeoutRunBlocking {
+      val serverSession = inlayHintSession(inlayHint("first", "second"), "resolvedWithoutTooltip.txt")
+      checkInlaysRetrying("hello world", "hello/*<# [first second] #>*/ world")
+      val answer = CompletableDeferred<Unit>()
+      val resolve = serverSession.expectRequest(serverSession.INLAY_HINT_RESOLVE) {
+        answer.await()
+        it
+      }
+      try {
+        interactWithLabel(0, modifiers = 0, click = false, exit = false)
+        resolve.await()
+        withContext(Dispatchers.EDT) { (managedInlayAt(5).renderer as PresentationRenderer).presentation.mouseExited() }
+        answer.complete(Unit)
+        awaitLspJobs()
+
+        assertNoResolveRequest(serverSession) {
+          interactWithLabel(0, modifiers = 0, click = false, exit = false)
+          awaitLspJobs()
+          interactWithLabel(1, modifiers = 0, click = false, exit = false)
+          awaitLspJobs()
+          interactWithLabel(1)
+        }
+        withContext(Dispatchers.EDT) { assertEquals(0, codeInsightFixture.editor.caretModel.offset) }
+      }
+      finally {
+        answer.complete(Unit)
+      }
+    }
+
+    @Test
+    fun `fresh hints cancel the old resolve and use the new data`(): Unit = timeoutRunBlocking {
+      val serverSession = inlayHintSession(inlayHint("target", data = "old"), "refreshPendingTooltip.txt")
+      checkInlaysRetrying("hello world", "hello/*<# [target] #>*/ world")
+      val inlay = withContext(Dispatchers.EDT) { managedInlayAt(5) }
+      val pending = UnansweredRequest()
+      val resolve = serverSession.expectRequest(serverSession.INLAY_HINT_RESOLVE) { pending.hold() }
+      interactWithLabel(0, modifiers = 0, click = false, exit = false)
+      resolve.await()
+      val fileUri = serverSession.fileUri(codeInsightFixture.file.virtualFile)
+      val freshHints = serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+        listOf(inlayHint("target", data = "new"))
+      }
+      serverSession.sendRequest(serverSession.INLAY_HINT_REFRESH) { }
+      freshHints.await()
+      awaitLspJobs()
+      waitUntilAssertSucceeds { assertTrue(pending.isCancelled, "A fresh hint must cancel the old resolve") }
+      withContext(Dispatchers.EDT) { assertSame(inlay, managedInlayAt(5)) }
+
+      val newResolve = serverSession.expectRequest(serverSession.INLAY_HINT_RESOLVE) { hint ->
+        assertEquals("\"new\"", hint.data.toString())
+        hint.apply {
+          setTooltip("Fresh tooltip")
+          label.right.single().location = Location(fileUri, Range(Position(0, 7), Position(0, 7)))
+        }
+      }
+      interactWithLabel(0, modifiers = 0, click = false, exit = false)
+      newResolve.await()
+      awaitLspJobs()
+      assertNoResolveRequest(serverSession) {
+        interactWithLabel(0)
+        checkNavigation(7)
+      }
+    }
+
+    @Test
+    fun `failed hover resolve can be retried`(): Unit = timeoutRunBlocking {
+      val serverSession = inlayHintSession(fileName = "retryTooltip.txt")
+      checkInlaysRetrying("hello world", "hello/*<# [target] #>*/ world")
+      val failure = serverSession.expectRequest(serverSession.INLAY_HINT_RESOLVE) {
+        throw ResponseErrorException(ResponseError(ResponseErrorCode.InternalError, "Resolve failed", null))
+      }
+      interactWithLabel(0, modifiers = 0, click = false, exit = false)
+      failure.await()
+      awaitLspJobs()
+
+      val fileUri = serverSession.fileUri(codeInsightFixture.file.virtualFile)
+      val retry = serverSession.expectRequest(serverSession.INLAY_HINT_RESOLVE) { hint ->
+        hint.apply {
+          setTooltip("Resolved tooltip")
+          label.right.single().location = Location(fileUri, Range(Position(0, 6), Position(0, 6)))
+        }
+      }
+      interactWithLabel(0, modifiers = 0, click = false, exit = false)
+      retry.await()
+      awaitLspJobs()
+      assertNoResolveRequest(serverSession) {
+        interactWithLabel(0)
+        checkNavigation(6)
+      }
+    }
+
+    @Test
     fun `control click resolves the selected label part`(): Unit = timeoutRunBlocking {
       checkNavigationGesture(MouseEvent.BUTTON1)
     }
@@ -530,7 +726,7 @@ internal class LspInlayHintTest {
     }
 
     private suspend fun checkNavigationGesture(button: Int) {
-      val serverSession = inlayHintSession(inlayHint("first", "second"))
+      val serverSession = inlayHintSession(inlayHint("first", "second").apply { setTooltip("Existing tooltip") })
       assertNoResolveRequest(serverSession) {
         checkInlaysRetrying("hello world", "hello/*<# [first second] #>*/ world")
         interactWithLabel(1, click = false)
@@ -855,7 +1051,8 @@ internal class LspInlayHintTest {
 
     @Test
     fun `string label does not resolve on click`(): Unit = timeoutRunBlocking {
-      val serverSession = inlayHintSession(InlayHint(Position(0, 5), Either.forLeft(": String")))
+      val hint = InlayHint(Position(0, 5), Either.forLeft(": String")).apply { setTooltip("Existing tooltip") }
+      val serverSession = inlayHintSession(hint)
       assertNoResolveRequest(serverSession) {
         checkInlaysRetrying("hello world", "hello/*<# : String #>*/ world")
         interactWithLabel(0)
@@ -865,7 +1062,7 @@ internal class LspInlayHintTest {
 
     @Test
     fun `truncation ellipsis does not resolve on click`(): Unit = timeoutRunBlocking {
-      val serverSession = inlayHintSession(inlayHint("shown", "x".repeat(100)))
+      val serverSession = inlayHintSession(inlayHint("shown", "x".repeat(100)).apply { setTooltip("Existing tooltip") })
       assertNoResolveRequest(serverSession) {
         checkInlaysRetrying("hello world", "hello/*<# [shown ...] #>*/ world")
         interactWithLabel(1)
