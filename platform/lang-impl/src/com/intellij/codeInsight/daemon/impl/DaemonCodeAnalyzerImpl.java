@@ -1752,6 +1752,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (ProjectManager.getInstance().getOpenProjects().length <= 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }
+    if (!ClientId.isLocal(ClientFileEditorManager.getClientId(editor))) {
+      return true;
+    }
     // optimization: in the case of two or more projects, ignore projects which are not active at the moment, e.g., inside minimized windows
     // see IDEA-314543 Don't run LineMarkersPass on non-active(opened) projects
     // Can't just check the editor's window, though, because the active window might be something else, e.g., a detached Project View,
