@@ -11,6 +11,7 @@
 
   <extensionPoints>
     <extensionPoint name="projectFrameCapabilitiesProvider" interface="com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider" dynamic="true"/>
+    <extensionPoint name="projectFrameProjectOrderProvider" interface="com.intellij.openapi.wm.ex.ProjectFrameProjectOrderProvider" dynamic="true"/>
     <extensionPoint name="projectFrameType" beanClass="com.intellij.openapi.wm.ex.ProjectFrameTypeBean" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

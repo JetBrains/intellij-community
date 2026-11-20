@@ -145,11 +145,34 @@ internal class ToolWindowProjectSelectionTest {
   }
 
   @Test
-  fun `the frame owner goes before the frame guests`() {
-    selection.add("guest")
-    selection.add("owner", first = true)
-    selection.add("guest")
+  fun `an entry is added once, after the other entries`() {
+    selection.add("first")
+    selection.add("second")
+    selection.add("first")
 
-    assertThat(selection.entries).containsExactly("owner", "guest")
+    assertThat(selection.entries).containsExactly("first", "second")
+  }
+
+  @Test
+  fun `a sort gives the entries the order of the frame and keeps the selection`() {
+    selection.add("second")
+    selection.add("first")
+    selection.add("owner")
+    selection.select("second")
+
+    selection.sort(compareBy { listOf("owner", "first", "second").indexOf(it) })
+
+    assertThat(selection.entries).containsExactly("owner", "first", "second")
+    assertThat(selection.selected).isEqualTo("second")
+  }
+
+  @Test
+  fun `a resolve without an active entry selects the first entry of the frame order`() {
+    active = "none"
+    selection.add("second")
+    selection.add("first")
+    selection.sort(naturalOrder())
+
+    assertThat(selection.resolve()).isEqualTo("first")
   }
 }

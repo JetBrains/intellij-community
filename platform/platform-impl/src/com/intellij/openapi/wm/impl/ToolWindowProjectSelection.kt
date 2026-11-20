@@ -12,7 +12,7 @@ package com.intellij.openapi.wm.impl
  * The class has no state of the UI and no lock. Its owner calls it on the EDT.
  */
 internal class ToolWindowProjectSelection<E : Any>(private val activeEntry: () -> E?) {
-  /** The frame owner first, when it is an entry, and then the frame guests in the order they joined. */
+  /** The entries in the order that the owner of the selection gave them with [sort]. A new entry is the last one until the next [sort]. */
   val entries: List<E>
     field = ArrayList<E>()
 
@@ -23,17 +23,16 @@ internal class ToolWindowProjectSelection<E : Any>(private val activeEntry: () -
   private var isProvisional = false
 
   /**
-   * Adds [entry]. With [first], the entry goes before every other entry, as the frame owner does.
-   * A provisional selection moves to the active project when that project has an entry now.
+   * Adds [entry]. A provisional selection moves to the active project when that project has an entry now.
    *
    * @return `true` when the selection changed
    */
-  fun add(entry: E, first: Boolean = false): Boolean {
+  fun add(entry: E): Boolean {
     if (entry in entries) {
       return false
     }
 
-    if (first) entries.add(0, entry) else entries.add(entry)
+    entries.add(entry)
     if (!isProvisional) {
       return false
     }
@@ -45,6 +44,14 @@ internal class ToolWindowProjectSelection<E : Any>(private val activeEntry: () -
     }
     selected = active
     return true
+  }
+
+  /**
+   * Puts the entries into the order of [order]: the order of the projects of the frame. The selection does not change.
+   * Two entries that [order] holds equal keep their order.
+   */
+  fun sort(order: Comparator<in E>) {
+    entries.sortWith(order)
   }
 
   /**

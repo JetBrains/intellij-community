@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.ProjectFrameProjectOrderProvider
 import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
@@ -297,8 +298,36 @@ internal class FrameGuestToolWindowPresentationTest {
 
     firstToolWindow.setAvailable(true)
 
-    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(second, first)
+    assertThat(managers.owner.presentation.entriesOf(ID))
+      .describedAs("the entry comes back to its place in the order of the frame")
+      .containsExactly(first, second)
     assertThat(managers.owner.presentation.selectedProjectOf(ID)).isSameAs(second)
+  }
+
+  @Test
+  fun `the entries follow the order that the frame gives its projects`() = onEdt {
+    // as a workspace that lists its projects in an order of its own: the frame guests joined as first, second
+    var order = listOf(second, owner, first)
+    ExtensionTestUtil.maskExtensions(
+      ProjectFrameProjectOrderProvider.EP_NAME,
+      listOf(object : ProjectFrameProjectOrderProvider {
+        override fun getProjectOrder(frameOwner: Project): List<Project>? = if (frameOwner === owner) order else null
+      }),
+      disposable,
+    )
+    val managers = createManagers()
+    managers.owner.registerToolWindow(task(), buttonManager(managers.owner))
+    managers.register(first)
+    managers.register(second).show()
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(second, owner, first)
+    assertThat(IdeFrameGuests.orderedProjectsOf(owner)).containsExactly(second, owner, first)
+
+    // the order changes, and the next update of the tool window asks for it
+    order = listOf(first)
+    managers.owner.presentation.select(ID, first)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).describedAs("a project that the order lacks goes last").containsExactly(first, owner, second)
   }
 
   @Test

@@ -33,6 +33,7 @@ private val LOG = logger<ToolWindowManagerPresentation>()
  *
  * The selector lists a project while its tool window is available and on the stripe of its project, see
  * [ToolWindowImpl.isOnProjectStripe]. So a project whose Find tool window lost its last content has no entry.
+ * The entries are in the order of the projects of the frame, see [IdeFrameGuests.orderedProjectsOf].
  * The rule is the same for a frame guest and for the frame owner. A frame owner without tool window content of its own
  * is never an entry.
  *
@@ -287,7 +288,8 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     // a tool window that hides without content left the stripe with its last content
     presenting.isOnProjectStripe = presenting.isShowStripeButton || !presenting.isToHideOnEmptyContent()
     if (isEntry(slot, presenting)) {
-      slot.selection.add(presenting, first = true)
+      slot.selection.add(presenting)
+      sortEntries(slot)
       if (presenting.isVisible) {
         // the tool window shows the content of the frame owner now, and the user sees it
         slot.selection.select(presenting)
@@ -523,7 +525,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   /** Makes [toolWindow] an entry of the selection or no entry, see [isEntry]. */
   private fun syncEntry(slot: PresentingSlot, toolWindow: ToolWindowImpl) {
     if (isEntry(slot, toolWindow)) {
-      slot.selection.add(toolWindow, first = toolWindow === slot.presenting)
+      slot.selection.add(toolWindow)
     }
     else {
       slot.selection.remove(toolWindow)
@@ -531,7 +533,20 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     refresh(slot)
   }
 
+  /**
+   * Puts the entries of [slot] into the order of the projects of the frame, see [IdeFrameGuests.orderedProjectsOf].
+   * The order can change without a change of the entries, so each update of the selection and of the UI asks for it again.
+   */
+  private fun sortEntries(slot: PresentingSlot) {
+    if (slot.selection.entries.size < 2) {
+      return
+    }
+    val projects = IdeFrameGuests.orderedProjectsOf(manager.project)
+    slot.selection.sort(compareBy { toolWindow -> projects.indexOf(toolWindow.project).let { if (it < 0) Int.MAX_VALUE else it } })
+  }
+
   private fun refresh(slot: PresentingSlot) {
+    sortEntries(slot)
     updatePresentingState(slot)
     if (slot.presenting.isVisible) {
       slot.selection.resolve()
@@ -593,6 +608,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
    */
   private fun updateUi(slot: PresentingSlot) {
     val decorator = slot.presenting.decorator ?: return
+    sortEntries(slot)
     val entries = slot.selection.entries
     if (entries.size > 1) {
       val selector = slot.selector ?: ToolWindowProjectSelector(manager.project, slot.presenting.disposable) { toolWindow ->

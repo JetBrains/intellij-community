@@ -7,6 +7,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ProjectFrameProjectOrderProvider
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import org.jetbrains.annotations.ApiStatus
 
@@ -43,6 +44,20 @@ object IdeFrameGuests {
   /** The frame guests of [frameOwner], in the order they joined. */
   @JvmStatic
   fun frameGuestsOf(frameOwner: Project): List<Project> = windowManager()?.getFrameGuests(frameOwner) ?: emptyList()
+
+  /**
+   * The projects that the frame of [frameOwner] shows, in the order to list them in the UI: [frameOwner] and its frame guests.
+   * A [ProjectFrameProjectOrderProvider] gives the order. Without one, [frameOwner] is first, and the frame guests follow
+   * in the order they joined.
+   */
+  @JvmStatic
+  fun orderedProjectsOf(frameOwner: Project): List<Project> {
+    val projects = listOf(frameOwner) + frameGuestsOf(frameOwner)
+    val order = ProjectFrameProjectOrderProvider.EP_NAME.extensionsIfPointIsRegistered.firstNotNullOfOrNull { it.getProjectOrder(frameOwner) }
+                ?: return projects
+    // a stable sort: the projects that the order lacks keep their order after the listed ones
+    return projects.sortedBy { project -> order.indexOf(project).let { if (it < 0) Int.MAX_VALUE else it } }
+  }
 
   /** The open projects that have a frame of their own: every open project except the frame guests. */
   @JvmStatic
