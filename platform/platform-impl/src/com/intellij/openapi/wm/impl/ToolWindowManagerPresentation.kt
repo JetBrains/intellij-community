@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.isClosingWithFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.MultiProjectToolWindowFactory
@@ -136,8 +135,10 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
 
   /**
    * Removes the presented tool window [toolWindow] of a frame guest: the guest unregisters it, or the guest closes.
-   * When the frame goes away with the guest, the presenting tool window keeps its state, so the next start restores it.
    * The tool window of the frame owner presents no frame guest after its last frame guest left, see [lastGuestLeft].
+   *
+   * The decorator of [toolWindow] leaves the frame now, before the guest disposes it. When [toolWindow] was the shown one,
+   * the tool window of the frame owner selects another project in a later event, see [resolveLater].
    */
   fun detach(toolWindow: ToolWindowImpl) {
     ThreadingAssertions.assertEventDispatchThread()
@@ -149,14 +150,34 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     slot.selection.remove(toolWindow)
     if (slot.guests.isEmpty()) {
       lastGuestLeft(slot)
+      return
     }
-    else if (toolWindow.project.isClosingWithFrame) {
-      // the decorator of the guest must leave the frame before the guest disposes it
-      updateUi(slot)
+
+    refresh(slot, resolves = false)
+    if (slot.presenting.isVisible && slot.selection.selected == null) {
+      resolveLater(slot)
     }
-    else {
-      refresh(slot)
+  }
+
+  /**
+   * Selects a project for the visible tool window of [slot] in a later event, when it has none then.
+   *
+   * The selection of a project shows its tool window, which creates the content of the tool window. The close of a frame
+   * and an exit close each project of the frame in one event. So the wait keeps a project that closes next from the creation
+   * of content that nobody sees. The event waits for the end of a modal state, because the save of a project that closes
+   * runs under a modal progress.
+   */
+  private fun resolveLater(slot: PresentingSlot) {
+    if (slot.isResolveScheduled) {
+      return
     }
+    slot.isResolveScheduled = true
+    ApplicationManager.getApplication().invokeLater({
+      slot.isResolveScheduled = false
+      if (!isDisposed && slots.get(slot.presenting.id) === slot) {
+        refresh(slot)
+      }
+    }, ModalityState.nonModal(), manager.project.disposed)
   }
 
   /**
@@ -562,10 +583,14 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     slot.selection.sort(compareBy { toolWindow -> projects.indexOf(toolWindow.project).let { if (it < 0) Int.MAX_VALUE else it } })
   }
 
-  private fun refresh(slot: PresentingSlot) {
+  /**
+   * Brings the tool window of [slot] in line with its entries. With [resolves], a visible tool window without a selected
+   * project selects one, see [ToolWindowProjectSelection.resolve].
+   */
+  private fun refresh(slot: PresentingSlot, resolves: Boolean = true) {
     sortEntries(slot)
     updatePresentingState(slot)
-    if (slot.presenting.isVisible) {
+    if (resolves && slot.presenting.isVisible) {
       slot.selection.resolve()
     }
     applySelection(slot)
@@ -668,6 +693,9 @@ internal class PresentingSlot(
 
   /** [presenting] was visible when it left, so the tool window that takes its place shows. */
   var wasVisibleBeforeUnbind = false
+
+  /** A later event selects a project for [presenting], see `ToolWindowManagerPresentation.resolveLater`. */
+  var isResolveScheduled = false
 
   /** The stripe title that a frame guest gave [presenting] last, for the time when no frame guest has the id, see [isPlaceholder]. */
   var lastGuestStripeTitle: @NlsContexts.TabTitle String? = null

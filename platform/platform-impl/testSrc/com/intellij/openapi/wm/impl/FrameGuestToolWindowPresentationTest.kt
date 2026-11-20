@@ -204,9 +204,30 @@ internal class FrameGuestToolWindowPresentationTest {
     managers.of(second).projectClosing()
 
     assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
+    assertThat(secondToolWindow.decorator!!.parent).describedAs("the decorator of the guest left the frame").isNull()
+    assertThat(managers.owner.presentation.selectedProjectOf(ID)).describedAs("a later event selects another project").isNull()
+
+    UIUtil.dispatchAllInvocationEvents()
+
     assertThat(managers.owner.presentation.selectedProjectOf(ID)).isSameAs(first)
     assertThat(firstToolWindow.isVisible).isTrue()
     assertThat(managers.owner.getToolWindow(ID)!!.isVisible).isTrue()
+  }
+
+  @Test
+  fun `the close of a frame creates no content for a project that closes next`() = onEdt {
+    val managers = createManagers()
+    managers.register(first)
+    managers.register(second).show()
+    assertThat(createdContent).containsExactly(second.name)
+
+    // as the close of the frame owner and as an exit: every project of the frame closes in one event
+    managers.of(second).projectClosing()
+    managers.of(first).projectClosing()
+    UIUtil.dispatchAllInvocationEvents()
+
+    assertThat(createdContent).describedAs("the tool window of the first project was never shown").containsExactly(second.name)
+    assertThat(managers.owner.getToolWindow(ID)).isNull()
   }
 
   @Test
@@ -218,6 +239,7 @@ internal class FrameGuestToolWindowPresentationTest {
 
     // the frame guest goes away without the close event
     Disposer.dispose(managers.of(second).getEntry(ID)!!.disposable)
+    UIUtil.dispatchAllInvocationEvents()
 
     assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
     assertThat(managers.owner.presentation.selectedProjectOf(ID)).isSameAs(first)
