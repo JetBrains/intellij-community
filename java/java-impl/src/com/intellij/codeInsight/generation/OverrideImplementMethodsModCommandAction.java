@@ -4,6 +4,7 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.options.OptMultiSelector;
+import com.intellij.codeInspection.options.OptMultiSelector.OptElement;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionContainer;
@@ -15,7 +16,6 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModEditOptions;
 import com.intellij.modcommand.Presentation;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -29,7 +29,6 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,10 +103,9 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
     Target target = findTarget(context);
     if (target == null) return ModCommand.nop();
     JavaOverrideImplementMemberChooserContainer container = target.container();
-    List<MethodElement> members = ContainerUtil.map(target.members(), MethodElement::new);
+    List<PsiMethodMember> members = target.members();
     ClassMember[] selectElements = container.selectElements();
-    List<ClassMember> selection = selectElements == null ? List.of() : Arrays.asList(selectElements);
-    List<MethodElement> preselection = ContainerUtil.filter(members, m -> selection.contains(m.member()));
+    List<ClassMember> preselection = selectElements == null ? List.of() : Arrays.asList(selectElements);
     boolean insertOverride = container.overrideVisible() &&
                              JavaCodeStyleSettings.getInstance(container.file()).INSERT_OVERRIDE_ANNOTATION;
     boolean javadocVisible = container.file().getLanguage().is(JavaLanguage.INSTANCE);
@@ -121,10 +119,10 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
   }
 
   private @NotNull ModCommand generate(@NotNull PsiElement element,
-                                       @NotNull List<MethodElement> allMembers,
+                                       @NotNull List<PsiMethodMember> allMembers,
                                        @NotNull OverrideImplementOptions options) {
     // Keep the order of the list, not the order of the selection.
-    List<PsiMethodMember> selected = ContainerUtil.map(ContainerUtil.filter(allMembers, options.members::contains), MethodElement::member);
+    List<PsiMethodMember> selected = ContainerUtil.filter(allMembers, options.members::contains);
     if (selected.isEmpty()) return ModCommand.nop();
     OverrideOrImplementOptions generationOptions = new OverrideOrImplementOptions()
       .copyJavadoc(options.copyJavadoc)
@@ -207,45 +205,25 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
   }
 
   /**
-   * A method in the member selector. The secondary text is the qualified name of the class that declares the method.
-   */
-  private record MethodElement(@NotNull PsiMethodMember member, @NotNull @NlsContexts.Label String text, @Nullable @Nls String secondaryText)
-    implements OptMultiSelector.OptElement {
-    MethodElement(@NotNull PsiMethodMember member) {
-      this(member, member.getText(), member.getParentNodeDelegate().getText());
-    }
-
-    @Override
-    public @NotNull String getText() {
-      return text;
-    }
-
-    @Override
-    public @Nullable String getSecondaryText() {
-      return secondaryText;
-    }
-  }
-
-  /**
    * The state of the form. The default option controller binds a control to the field with the name of its bind ID.
    * <p>
    * The constructor gets the data of the form from a read action.
    * Thus, {@link #getOptionsPane()} needs no PSI access, and the IDE can call it on the EDT.
    */
   private static final class OverrideImplementOptions implements OptionContainer {
-    private final @NotNull List<MethodElement> myAllMembers;
+    private final @NotNull List<? extends OptElement> myAllMembers;
     private final boolean myOverrideVisible;
     private final boolean myGenerateJavadocVisible;
 
-    @SuppressWarnings("FieldMayBeFinal") private @NotNull List<? extends OptMultiSelector.OptElement> members;
+    @SuppressWarnings("FieldMayBeFinal") private @NotNull List<? extends OptElement> members;
     @SuppressWarnings("FieldMayBeFinal") private boolean copyJavadoc;
     @SuppressWarnings("FieldMayBeFinal") private boolean generateJavadoc;
     @SuppressWarnings("FieldMayBeFinal") private boolean insertOverride;
 
-    private OverrideImplementOptions(@NotNull List<MethodElement> allMembers,
+    private OverrideImplementOptions(@NotNull List<? extends OptElement> allMembers,
                                      boolean overrideVisible,
                                      boolean generateJavadocVisible,
-                                     @NotNull List<MethodElement> members,
+                                     @NotNull List<? extends OptElement> members,
                                      boolean copyJavadoc,
                                      boolean generateJavadoc,
                                      boolean insertOverride) {
