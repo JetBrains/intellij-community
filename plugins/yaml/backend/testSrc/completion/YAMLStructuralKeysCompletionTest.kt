@@ -7,6 +7,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.icons.AllIcons
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.IconManager
@@ -172,7 +174,26 @@ class YAMLStructuralKeysCompletionTest : BasePlatformTestCase() {
         - foo<caret>: 1
     """.trimIndent())
     val lookupElements = myFixture.complete(CompletionType.BASIC).map(::render)
-    UsefulTestCase.assertEmpty(lookupElements)
+    assertEmpty(lookupElements)
+  }
+
+  fun testNotCompletingWhenStructuralCompletionContributorSuppressed() {
+    ExtensionTestUtil.maskExtensions(
+      YamlStructuralKeysCompletionContributor.Suppressor.EP_NAME,
+      listOf(object : YamlStructuralKeysCompletionContributor.Suppressor {
+        override fun isSuppressedIn(file: PsiFile): Boolean = true
+      }),
+      testRootDisposable
+    )
+    myFixture.configureByText("test.yaml", """
+      root:
+        - aaa:
+            ab: 1
+          aab: 2
+        - <caret>
+    """.trimIndent())
+    val lookupElements = myFixture.complete(CompletionType.BASIC).map(::render)
+    assertEmpty(lookupElements)
   }
 
   fun testNotCompletingInTheComments() {

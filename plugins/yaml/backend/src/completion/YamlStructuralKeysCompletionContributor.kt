@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
@@ -17,6 +18,7 @@ import com.intellij.ui.PlatformIcons
 import com.intellij.util.asSafely
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.yaml.YAMLElementTypes
 import org.jetbrains.yaml.meta.impl.YamlKeyInsertHandler
 import org.jetbrains.yaml.meta.model.Field
@@ -35,6 +37,7 @@ import org.jetbrains.yaml.psi.estimatedType
 import org.jetbrains.yaml.psi.findStructuralSiblings
 import org.jetbrains.yaml.psi.getKeysInBetween
 
+@ApiStatus.Internal
 class YamlStructuralKeysCompletionContributor : CompletionContributor() {
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -44,6 +47,10 @@ class YamlStructuralKeysCompletionContributor : CompletionContributor() {
 
     val value = position.parentOfType<YAMLValue>(true) ?: return
     if (value.references.isNotEmpty()) return
+
+    // IJPL-257641
+    if (Suppressor.isSuppressedIn(parameters.originalFile)) return
+
     val jsonSchemaService = JsonSchemaService.Impl.get(position.getProject());
     val jsonObject = jsonSchemaService.getSchemaObject(parameters.originalFile);
     if (jsonObject != null) return //We have schema for autocompletion
@@ -98,7 +105,7 @@ class YamlStructuralKeysCompletionContributor : CompletionContributor() {
       .withTypeText(typePresentation?.second?.description)
   }
 
-  inner class MetaModelBasedInsertHandler(
+  class MetaModelBasedInsertHandler(
     private val keyText: String,
     private val jsonSchemaType: JsonSchemaType?
   ) : YamlKeyInsertHandler(jsonSchemaType == JsonSchemaType._array) {
@@ -131,6 +138,17 @@ class YamlStructuralKeysCompletionContributor : CompletionContributor() {
 
     override fun getReplacement(): String = keyText
 
+  }
+
+  interface Suppressor {
+    fun isSuppressedIn(file: PsiFile): Boolean
+
+    companion object {
+      @JvmField
+      val EP_NAME: ExtensionPointName<Suppressor> = ExtensionPointName("com.intellij.yaml.structuralKeysCompletionSuppressor")
+
+      fun isSuppressedIn(file: PsiFile): Boolean = EP_NAME.extensionList.any { it.isSuppressedIn(file) }
+    }
   }
 
   private fun YamlMetaType.asJsonSchemaType(): JsonSchemaType? {

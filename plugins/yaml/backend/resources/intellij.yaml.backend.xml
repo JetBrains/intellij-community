@@ -176,5 +176,8 @@
                     interface="org.jetbrains.yaml.structureView.YAMLCustomStructureViewFactory"
                     dynamic="true">
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.yaml.structuralKeysCompletionSuppressor"
+                    interface="org.jetbrains.yaml.completion.YamlStructuralKeysCompletionContributor$Suppressor"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
