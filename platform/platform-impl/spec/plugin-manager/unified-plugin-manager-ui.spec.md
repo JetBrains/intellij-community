@@ -556,10 +556,21 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
     `Select All renders plugins from expanded related sections`
   )
+
+- Up and Down must visit the Marketplace link after the Suggested rows when the link is visible.
+- Moving to the link with an arrow key must clear the plugin selection.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `arrows move between Suggested rows the Marketplace link and the next section`
+  )
+
 - Tab must visit the active section and category actions, one plugin row, and that row's controls before it leaves the list for details.
 - The last selected row must be the list's row stop. Without a selection, the first rendered row must be that stop.
+- The Marketplace link must stay outside the Tab order.
+- When the Marketplace link is the only row, Tab must enter the list so Down can reach the link.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
-    `Tab order includes one plugin row and its controls`
+    `Tab order includes one plugin row and its controls`;
+    `Marketplace link follows Suggested rows in arrow order and stays outside Tab order`;
+    `Tab enters the list when the Marketplace link is the only row`
   )
 
 - Plugin rows and section headers must show an outline for keyboard focus.
@@ -724,10 +735,10 @@ Untested: No focused test verifies Shift-selection across sections.
 
 - Suggested must show a “More on JetBrains Marketplace” link after its plugin rows when the default Marketplace is active.
 - The link must show an external link arrow and open the Marketplace home page in the browser.
-- The link must be reachable by keyboard after the Suggested row controls.
+- Enter and Space on the focused link must open the Marketplace home page.
 - The link must use muted text and the same rounded hover and keyboard focus outline as the section headers.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
-    `Marketplace link appears after Suggested rows and follows their controls in Tab order`
+    `Marketplace link follows Suggested rows in arrow order and stays outside Tab order`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
     `Suggested links to the default Marketplace and hides the link for an override`

@@ -12,7 +12,10 @@ internal interface PluginRowFactory {
   fun createRow(occurrenceId: PluginOccurrenceId, item: PluginItemState, renderKey: Any): PluginRow
 
   @RequiresEdt
-  fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>)
+  fun rowsRendered(
+    bindings: List<PluginRowBinding<PluginRow>>,
+    keyboardOrder: List<JComponent> = bindings.map { it.row.component },
+  )
 
   @RequiresEdt
   fun createReconciler(

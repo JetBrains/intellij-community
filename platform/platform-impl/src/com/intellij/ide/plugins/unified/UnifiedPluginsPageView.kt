@@ -104,6 +104,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   private val noResultsText = IdeBundle.message("plugins.configurable.nothing.found")
   private val sectionsPanel = JBPanelWithEmptyText(ListLayout.vertical(SECTION_GAP)).apply {
     emptyText.text = noResultsText
+    isFocusable = false
   }
   private val scrollPane = object : JBScrollPane(sectionsPanel) {
     override fun doLayout() {
@@ -342,6 +343,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     rowReconciler?.close()
     rowFactory?.rowsRendered(emptyList())
     sectionViews.values.forEach { it.setRealRows(emptyList()) }
+    sectionsPanel.isFocusable = false
     renderedState = null
     pendingSelectionRevealRevision = null
   }
@@ -357,7 +359,16 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     sectionViews.values.forEach { sectionView ->
       sectionView.setRealRows(bindingsBySection[sectionView.id].orEmpty())
     }
-    factory.rowsRendered(bindings)
+    sectionsPanel.isFocusable = bindings.isEmpty() && sectionViews[PluginSectionId.Suggested]?.visibleMarketplaceLink() != null
+    if (sectionsPanel.isFocusable) sectionsPanel.accessibleContext.accessibleName = IdeBundle.message("title.plugins")
+    val keyboardOrder = buildList {
+      if (sectionsPanel.isFocusable) add(sectionsPanel)
+      for (section in state.sections) {
+        bindingsBySection[section.id].orEmpty().forEach { add(it.row.component) }
+        sectionViews[section.id]?.visibleMarketplaceLink()?.let(::add)
+      }
+    }
+    factory.rowsRendered(bindings, keyboardOrder)
     val selectedOccurrences = state.selectedOccurrences.toHashSet()
     bindings.forEach { binding -> binding.row.renderSelection(binding.occurrenceId in selectedOccurrences) }
     renderDetails(state, reconciler)
@@ -380,7 +391,10 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     val activeRow = selectedRow ?: sections.firstNotNullOfOrNull { section ->
       section.firstRealRowOccurrence()?.let { rowReconciler?.row(it) }
     }
-    return sections.flatMap { it.focusTraversalComponents(activeRow) }
+    return buildList {
+      if (sectionsPanel.isFocusable) add(sectionsPanel)
+      sections.forEach { addAll(it.focusTraversalComponents(activeRow)) }
+    }
   }
 
   private fun createStaticDetailsComponent(): JComponent {
@@ -1107,6 +1121,8 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
 
     fun firstRealRowOccurrence(): PluginOccurrenceId? = realRowComponents.keys.firstOrNull()
 
+    fun visibleMarketplaceLink(): JComponent? = marketplaceLink?.takeIf { marketplaceLinkPanel?.isVisible == true }
+
     fun focusTraversalComponents(activeRow: PluginRow?): List<Component> {
       val result = ArrayList<Component>()
       val activeOccurrence = realRowComponents.entries.firstOrNull { it.value === activeRow?.component }?.key
@@ -1121,7 +1137,6 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         result.add(checkNotNull(activeRow).component)
         result.addAll(activeRow.focusableComponents())
       }
-      if (marketplaceLinkPanel?.isVisible == true) marketplaceLink?.let(result::add)
       return result.filter { it.isFocusable && it.isEnabled && it.isVisible }
     }
 

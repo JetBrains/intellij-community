@@ -68,14 +68,12 @@ internal class LegacyPluginRowFactory @RequiresEdt constructor(
   }
 
   @RequiresEdt
-  override fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>) {
+  override fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>, keyboardOrder: List<JComponent>) {
     bindings.forEach { binding ->
       val row = binding.row as LegacyPluginRow
       row.renderInput(binding.item.rowInput)
     }
-    eventHandler.renderRows(
-      bindings.map { binding -> binding.occurrenceId to (binding.row as LegacyPluginRow).component },
-    )
+    eventHandler.renderRows(bindings.map { (it.row as LegacyPluginRow).component }, keyboardOrder)
   }
 
   private fun sectionContext(section: PluginSectionState): SectionContext {
