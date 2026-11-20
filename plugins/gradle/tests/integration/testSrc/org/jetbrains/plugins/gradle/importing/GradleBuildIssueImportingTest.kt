@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.build.FileNavigatable
-import com.intellij.build.FilePosition
-import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssue
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.processors.CsvCrossProductArgumentsProcessor
@@ -41,7 +39,6 @@ import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.support.ParameterDeclarations
-import java.util.function.Consumer
 
 @TestApplication
 @ParameterizedClass
@@ -73,7 +70,6 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
   @ParameterizedTest
   @ArgumentsSource(TestArgumentsProvider::class)
   fun `test build issue checker handles script exception`(gradleDsl: GradleDsl, brokenFile: BrokenFile): Unit = runBlocking {
-    registerIssueChecker(TestBuildOutputFailureMessageSuppressor(), asDisposable())
     registerIssueChecker(TestBuildIssueChecker(TEST_BUILD_ISSUE_TITLE, TEST_BUILD_ISSUE_DESCRIPTION), asDisposable())
 
     val projectInfo = simpleJavaProjectInfoWithBrokenScript(gradleVersion, gradleDsl, brokenFile)
@@ -85,9 +81,9 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
     assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
-        assertFilePositionNode(gradleVersion, gradleDsl, brokenFile) {
+        assertBuildFailureNodes(gradleVersion, gradleDsl, brokenFile) {
           assertNode(TEST_BUILD_ISSUE_TITLE) {
-            assertIsNodeSelected(true)
+            assertIsNodeSelected(false)
             assertConsoleText(TEST_BUILD_ISSUE_DESCRIPTION + "\n\n")
           }
         }
@@ -98,7 +94,6 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
   @ParameterizedTest
   @EnumSource(GradleDsl::class)
   fun `test build issue checker reports all issues for script exception`(gradleDsl: GradleDsl): Unit = runBlocking {
-    registerIssueChecker(TestBuildOutputFailureMessageSuppressor(), asDisposable())
     registerIssueChecker(TestBuildIssueChecker(TEST_BUILD_ISSUE_TITLE, TEST_BUILD_ISSUE_DESCRIPTION), asDisposable())
     registerIssueChecker(TestBuildIssueChecker(TEST_BUILD_ISSUE_TITLE_2, TEST_BUILD_ISSUE_DESCRIPTION_2), asDisposable())
 
@@ -111,9 +106,9 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
     assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
-        assertFilePositionNode(gradleVersion, gradleDsl, BrokenFile.BUILD_SCRIPT) {
+        assertBuildFailureNodes(gradleVersion, gradleDsl, BrokenFile.BUILD_SCRIPT) {
           assertNode(TEST_BUILD_ISSUE_TITLE) {
-            assertIsNodeSelected(true)
+            assertIsNodeSelected(false)
             assertConsoleText(TEST_BUILD_ISSUE_DESCRIPTION + "\n\n")
           }
           assertNode(TEST_BUILD_ISSUE_TITLE_2) {
@@ -122,22 +117,6 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
           }
         }
       }
-    }
-  }
-
-  private class TestBuildOutputFailureMessageSuppressor : GradleIssueChecker {
-
-    override fun check(issueData: GradleIssueData): BuildIssue? = null
-
-    override fun consumeBuildOutputFailureMessage(
-      message: String,
-      failureCause: String,
-      stacktrace: String?,
-      location: FilePosition?,
-      parentEventId: Any,
-      messageConsumer: Consumer<in BuildEvent>,
-    ): Boolean {
-      return TEST_BUILD_SCRIPT_EXCEPTION_MESSAGE in message
     }
   }
 
@@ -164,6 +143,7 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
     private const val TEST_BUILD_ISSUE_DESCRIPTION = "Build issue description from the IDEA-side test checker"
     private const val TEST_BUILD_ISSUE_TITLE_2 = "$TEST_BUILD_ISSUE_TITLE (2)"
     private const val TEST_BUILD_ISSUE_DESCRIPTION_2 = "$TEST_BUILD_ISSUE_DESCRIPTION (2)"
+    private const val BUILD_FAILURE_TITLE = "FAILURE: Build failed with an exception."
 
     private fun registerIssueChecker(checker: GradleIssueChecker, disposable: Disposable) {
       GradleIssueChecker.EP_NAME.point.registerExtension(checker, disposable)
@@ -186,6 +166,19 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
       }
     }
 
+    private fun getFailureTitle(gradleVersion: GradleVersion, gradleDsl: GradleDsl, brokenFile: BrokenFile): String =
+      when (gradleDsl) {
+        GradleDsl.GROOVY -> when (brokenFile) {
+          BrokenFile.SETTINGS_SCRIPT -> "A problem occurred evaluating settings 'project'."
+          BrokenFile.BUILD_SCRIPT -> "A problem occurred evaluating root project 'project'."
+        }
+        GradleDsl.KOTLIN -> when {
+          brokenFile == BrokenFile.BUILD_SCRIPT && !hasFilePosition(gradleVersion,
+                                                                    gradleDsl) -> "A problem occurred configuring root project 'project'."
+          else -> TEST_BUILD_SCRIPT_EXCEPTION_MESSAGE
+        }
+      }
+
     private fun GradleScriptElementBuilder.throwTestBuildScriptException(gradleDsl: GradleDsl) =
       throwException(gradleDsl, TEST_BUILD_SCRIPT_EXCEPTION_CLASS, TEST_BUILD_SCRIPT_EXCEPTION_MESSAGE)
 
@@ -195,27 +188,39 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
         GradleDsl.KOTLIN -> code("throw $className(\"$message\")")
       }
 
-    private fun BuildViewNodeAssertion.assertFilePositionNode(
+    private fun hasFilePosition(gradleVersion: GradleVersion, gradleDsl: GradleDsl): Boolean =
+      gradleDsl == GradleDsl.GROOVY || !GradleVersionUtil.isGradleOlderThan(gradleVersion, "4.10")
+
+    private fun BuildViewNodeAssertion.assertBuildFailureNodes(
       gradleVersion: GradleVersion,
       gradleDsl: GradleDsl,
       brokenFile: BrokenFile,
-      assert: BuildViewNodeAssertion.() -> Unit,
+      assertIssues: BuildViewNodeAssertion.() -> Unit,
     ) {
-      if (gradleDsl == GradleDsl.KOTLIN && GradleVersionUtil.isGradleOlderThan(gradleVersion, "4.10")) {
-        // For old Gradle versions there are no information about exception location with Kotlin scripts:
-        //   at Settings_gradle.<init>(Unknown Source)
-        //   at Build_gradle.<init>(Unknown Source)
-        assert()
+      val scriptName = when (brokenFile) {
+        BrokenFile.SETTINGS_SCRIPT -> gradleDsl.settingsScriptName
+        BrokenFile.BUILD_SCRIPT -> gradleDsl.buildScriptName
       }
-      else {
-        when (brokenFile) {
-          BrokenFile.SETTINGS_SCRIPT -> {
-            assertNode(gradleDsl.settingsScriptName, assert = assert)
-          }
-          BrokenFile.BUILD_SCRIPT -> {
-            assertNode(gradleDsl.buildScriptName, assert = assert)
+      val failureTitle = getFailureTitle(gradleVersion, gradleDsl, brokenFile)
+      if (hasFilePosition(gradleVersion, gradleDsl)) {
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertIsNodeSelected(true)
+          assertNode(scriptName) {
+            assertNode(failureTitle) {
+              assertIsNodeSelected(false)
+            }
+            assertIssues()
           }
         }
+      }
+      else {
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertIsNodeSelected(true)
+          assertNode(failureTitle) {
+            assertIsNodeSelected(false)
+          }
+        }
+        assertIssues()
       }
     }
   }

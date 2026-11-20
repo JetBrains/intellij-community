@@ -34,8 +34,10 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("build.gradle") {
-          assertNode("Could not find method ghostConf() for arguments [project ':api'] on object of type org.gradle.api.internal.artifacts.dsl.dependencies.DefaultDependencyHandler")
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertNode("build.gradle") {
+            assertNode("A problem occurred evaluating project ':impl'.")
+          }
         }
       }
     }
@@ -76,8 +78,10 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
           assertNode(":buildSrc:check")
           assertNode(":buildSrc:build")
         }
-        assertNode("build.gradle") {
-          assertNode("Something's wrong!")
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertNode("build.gradle") {
+            assertNode("A problem occurred evaluating root project 'project'.")
+          }
         }
       }
     }
@@ -113,9 +117,16 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       else ->
         """|Run with --stacktrace option to get the stack trace. Run with --debug option to get more log output. Run with --scan to get full insights."""
     }
-    assertBuildViewNode(syncView, "Something's wrong!") {
+    assertBuildViewNode(syncView, BUILD_FAILURE_TITLE) {
       assertTrue(it.isNodeSelected)
-      assertEquals("FAILURE: Build failed with an exception.\n", it.consoleText)
+    }
+    assertBuildViewNode(syncView, "A problem occurred evaluating root project 'project'.") {
+      assertEquals("""
+        |A problem occurred evaluating root project 'project'.
+        |> Failed to apply plugin $className
+        |   > Something's wrong!
+        |
+      """.trimMargin(), it.consoleText)
     }
     assertBuildViewNode(syncView, "failed") {
       assertThat(it.consoleText).contains("""
@@ -295,10 +306,13 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     importProject {
       addBuildScriptDependency("classpath 'junit:junit:4.12'")
     }
+    val failureTitle = "A problem occurred configuring root project 'project'."
     assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("Could Not Resolve junit:junit:4.12 because no repositories are defined")
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertNode(failureTitle)
+        }
       }
     }
     val projectQualifier = when {
@@ -306,19 +320,16 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       isGradleAtLeast("8.10") -> "root project :"
       else -> "project :"
     }
-    assertBuildViewNode(syncView, "Could Not Resolve junit:junit:4.12 because no repositories are defined") {
+    assertBuildViewNode(syncView, BUILD_FAILURE_TITLE) {
       assertTrue(it.isNodeSelected)
+    }
+    assertBuildViewNode(syncView, failureTitle) {
       assertEquals("""
-        |FAILURE: Build failed with an exception.
         |A problem occurred configuring root project 'project'.
         |> Could not resolve all $artifacts for configuration '$configurationName'.
         |   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
         |     Required by:
         |         $projectQualifier
-        |
-        |Possible solution:
-        | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
-        |
         |
       """.trimMargin(), it.consoleText)
     }
@@ -347,23 +358,22 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("Could Not Resolve junit:junit:99.99")
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertNode(failureTitle)
+        }
       }
     }
-    assertBuildViewNode(syncView, "Could Not Resolve junit:junit:99.99") {
+    assertBuildViewNode(syncView, BUILD_FAILURE_TITLE) {
       assertTrue(it.isNodeSelected)
+    }
+    assertBuildViewNode(syncView, failureTitle) {
       assertEquals("""
-        |FAILURE: Build failed with an exception.
         |A problem occurred configuring root project 'project'.
         |> Could not resolve all $artifacts for configuration '$configurationName'.
         |   > Could not resolve junit:junit:99.99.
         |     Required by:
         |         $projectQualifier
         |      > No cached version of junit:junit:99.99 available for offline mode.
-        |
-        |Possible solution:
-        | - Disable offline mode and rerun the build
-        |
         |
       """.trimMargin(), it.consoleText)
     }
@@ -381,24 +391,23 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("Could Not Resolve junit:junit:99.99")
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertNode(failureTitle)
+        }
       }
     }
-    assertBuildViewNode(syncView, "Could Not Resolve junit:junit:99.99") {
+    assertBuildViewNode(syncView, BUILD_FAILURE_TITLE) {
       assertTrue(it.isNodeSelected)
-      assertEquals("FAILURE: Build failed with an exception.\n"+
-                   "A problem occurred configuring root project 'project'.\n" +
+    }
+    assertBuildViewNode(syncView, failureTitle) {
+      assertEquals("A problem occurred configuring root project 'project'.\n" +
                    "> Could not resolve all $artifacts for configuration '$configurationName'.\n" +
                    "   > Could not find junit:junit:99.99.\n" +
                    "     Searched in the following locations:\n" +
                    "       $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +
                    "       $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar\n" +
                    "     Required by:\n" +
-                   "         $projectQualifier\n" +
-                   "\n" +
-                   "Possible solution:\n" +
-                   " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +
-                   "\n", it.consoleText)
+                   "         $projectQualifier\n", it.consoleText)
     }
   }
 
@@ -409,34 +418,12 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       addTestImplementationDependency(code("group: 'junit', name: 'junit', version: '4.12"))
     }
 
-    when {
-      isGradleOlderThan("7.0") -> {
-        assertBuildViewTree(syncView) {
-          assertNode("failed") {
-            assertNodeWithDeprecatedGradleWarning()
-            assertNode("build.gradle") {
-              assertNode("expecting ''', found '\\n'")
-            }
-          }
-        }
-      }
-      isGradleOlderThan("7.4") -> {
-        assertBuildViewTree(syncView) {
-          assertNode("failed") {
-            assertNodeWithDeprecatedGradleWarning()
-            assertNode("build.gradle") {
-              assertNode("Unexpected input: '{'")
-            }
-          }
-        }
-      }
-      else -> {
-        assertBuildViewTree(syncView) {
-          assertNode("failed") {
-            assertNodeWithDeprecatedGradleWarning()
-            assertNode("build.gradle") {
-              assertNode("Unexpected character: '\\''")
-            }
+    assertBuildViewTree(syncView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertNode("build.gradle") {
+            assertNode(getScriptCompilationErrorText())
           }
         }
       }
@@ -453,15 +440,10 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("build.gradle") {
-          assertNode("only buildscript {}" +
-                     (if (isGradleAtLeast("7.4")) {
-                       ", pluginManagement {}"
-                     }
-                     else {
-                       ""
-                     }) +
-                     " and other plugins {} script blocks are allowed before plugins {} blocks, no other statements are allowed")
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertNode("build.gradle") {
+            assertNode(getScriptCompilationErrorText())
+          }
         }
       }
     }
@@ -477,14 +459,16 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("build.gradle") {
-          assertNode("Cannot get property 'foo' on null object")
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertNode("build.gradle") {
+            assertNode("A problem occurred evaluating root project 'project'.")
+          }
         }
       }
     }
 
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
-    assertBuildViewNode(syncView, "Cannot get property 'foo' on null object") {
+    assertBuildViewNode(syncView, BUILD_FAILURE_TITLE) {
       assertTrue(it.isNodeSelected)
     }
     assertBuildViewNode(syncView, "failed") {
@@ -654,9 +638,12 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     }
     assertBuildViewTree(syncView) {
       assertNode("finished") {
+        if (isGradleAtLeast("8.10")) {
+          assertNode(BUILD_FAILURE_TITLE) {
+            assertNode("Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0")
+          }
+        }
         assertNode("Could not resolve next project dependencies")
-        if (isGradleAtLeast("8.10"))
-          assertNode("Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0")
       }
     }
 
@@ -730,8 +717,13 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       else -> "Dependency resolution is looking for a library compatible with JVM runtime version $javaSdkVersion, but JUnit 6 is only compatible with JVM runtime version 17 or newer."
     }
 
+    if (isGradleAtLeast("8.10")) {
+      assertBuildViewNode(syncView, BUILD_FAILURE_TITLE) {
+        assertTrue(it.isNodeSelected)
+      }
+    }
     assertBuildViewNode(syncView, "Could not resolve next project dependencies") {
-      assertTrue(it.isNodeSelected)
+      assertEquals(isGradleOlderThan("8.10"), it.isNodeSelected)
       assertThat(it.consoleText).contains("""
       project:test: ${expectedCauseDescription.lines().joinToString("\n      ")}
       
@@ -740,5 +732,16 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       
       """.trimIndent(), it.consoleText)
     }
+  }
+
+  private fun getScriptCompilationErrorText(): String =
+    when {
+      isGradleAtLeast("9.9") -> "Script compilation failed"
+      isGradleAtLeast("9.6") -> "Groovy DSL script compilation problem"
+      else -> "Could not compile build file '${FileUtil.toSystemDependentName(myProjectConfig.path)}'."
+    }
+
+  companion object {
+    private const val BUILD_FAILURE_TITLE = "FAILURE: Build failed with an exception."
   }
 }

@@ -2,30 +2,39 @@
 package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.FilePosition
-import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.DuplicateMessageAware
+import com.intellij.build.eventBuilders.MessageEventBuilder
 import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.OutputId
 import com.intellij.build.events.StartId
-import com.intellij.build.events.impl.BuildIssueEventImpl
-import com.intellij.build.events.impl.FileMessageEventImpl
-import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
 import com.intellij.build.output.BuildOutputMulticaster
 import com.intellij.build.output.BuildOutputReplayableLineReader
 import com.intellij.build.output.BuildOutputText
-import com.intellij.execution.filters.RegexpFilter
-import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
-import org.jetbrains.plugins.gradle.issue.UnresolvedDependencyBuildIssue
 import java.nio.file.Path
-import java.util.function.Consumer
-import java.util.regex.Pattern
+
+private const val SINGLE_FAILURE_HEADER = "FAILURE: Build failed with an exception."
+private const val WHERE = "* Where:"
+private const val WHAT_WENT_WRONG = "* What went wrong:"
+private const val BUILD_FAILED = "BUILD FAILED"
+private const val CONFIGURE_FAILED = "CONFIGURE FAILED"
+private const val MULTIPLE_FAILURES_SEPARATOR = "====="
+private const val GET_MORE_HELP = "> Get more help at https://help.gradle.org"
+private const val LEGACY_GET_MORE_HELP = "* Get more help at https://help.gradle.org"
+private const val EXCEPTION_IS = "* Exception is:"
+
+private val MULTIPLE_FAILURES_HEADER_REGEX = Regex("^FAILURE: Build completed with (\\d+) failures")
+private val SCRIPT_LOCATION_REGEX = Regex(
+  "(?:[Bb]uild file|[Ss]ettings file|Initialization script|Script) " +
+  "(^|[\\W])(?<file>(?:\\p{Alpha}:|/)[0-9 a-z_A-Z\\-\\\\./]+)'(?: line)?: (?<line>[0-9]+)"
+)
 
 /**
  * @author Vladislav.Soroka
  */
 class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
+
+  private class Failure(val lines: List<BuildOutputText>, val filePosition: FilePosition?) {
+    fun getTitle() = lines.first().text
+  }
 
   override suspend fun parse(
     line: BuildOutputText,
@@ -34,212 +43,121 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
     multicaster: BuildOutputMulticaster,
     isSingleFlow: Boolean,
   ): Boolean {
-    if (!line.text.startsWith("FAILURE: Build failed with an exception.")) return false
-    if (!reader.readLine()?.text.isNullOrBlank()) return false
-
-    val location: String?
-    val filePosition: FilePosition?
-    var whereOrWhatLine = reader.readLine()?.text
-    if (whereOrWhatLine == "* Where:") {
-      location = reader.readLine()?.text ?: return false
-      filePosition = parseScriptLocation(location) ?: return false
-      if (!reader.readLine()?.text.isNullOrBlank()) return false
-      whereOrWhatLine = reader.readLine()?.text
-    }
-    else {
-      location = null
-      filePosition = null
-    }
-
-    if (whereOrWhatLine != "* What went wrong:") return false
-
-    val description = StringBuilder()
-    if (location != null) {
-      description.appendLine(location).appendLine()
-    }
-    @NlsSafe var reason = reader.readLine()?.text ?: return false
-    val parentId: Any
-    if (reason.startsWith("Execution failed for task '")) {
-      val taskName = reason.substringAfter("Execution failed for task '").substringBefore("'.")
-        .substringBefore("' (registered in build file")
-        .substringBefore("' (registered by plugin class")
-      parentId = GradleOutputDispatcherFactory.TaskNameId(taskName)
-    }
-    else {
-      parentId = taskId
-    }
-
-    description.appendLine(reason)
-    loop@ while (true) {
-      val nextLine = reader.readLine()?.text ?: return false
-      if (nextLine.isBlank()) break
-      if (nextLine.isCompilationError()) {
-        return false
-      }
-      description.appendLine(nextLine)
-      val trimStart = nextLine.trimStart()
-      if (trimStart.startsWith("> ")) {
-        reason = trimStart.substringAfter("> ").trimEnd('.') //NON-NLS
-      }
-      when {
-        nextLine.isEmpty() -> break@loop
-        nextLine == "* Try:" -> {
-          reader.pushBack(1)
-          break@loop
-        }
-      }
-    }
-
-    var trySuggestions: StringBuilder? = null
-    var exception: StringBuilder? = null
-    while (true) {
-      val nextLine = reader.readLine()?.text ?: break
-      if (nextLine == "BUILD FAILED" || nextLine == "* Get more help at https://help.gradle.org" || nextLine.startsWith(
-          "CONFIGURE FAILED")) break
-      if (nextLine == "* Exception is:") {
-        exception = StringBuilder()
-      }
-      else if (nextLine == "* Try:") {
-        trySuggestions = StringBuilder()
-      }
-      else {
-        if (exception != null) {
-          exception.appendLine(nextLine)
-        }
-        else if (trySuggestions != null && nextLine.isNotBlank()) {
-          trySuggestions.appendLine(nextLine)
-        }
-      }
-    }
-
-    if (reason.isCompilationError()) {
+    if (!isReportStart(line.text)) {
       return false
     }
-
-    val errorText = description.toString()
-    for (issueChecker in GradleIssueChecker.getKnownIssuesCheckList()) {
-      if (issueChecker.consumeBuildOutputFailureMessage(errorText,
-                                                        reason,
-                                                        exception.toString(),
-                                                        filePosition,
-                                                        parentId,
-                                                        Consumer<BuildEvent> { t -> multicaster.notifyBuildEvent(t) })
-      ) {
-        return true
-      }
-    }
-
-    val buildEventDescription: String?
-    val outputIds: List<OutputId>
-    if (isSingleFlow) {
-      outputIds = line.ids
-      buildEventDescription = null
-    }
-    else {
-      outputIds = emptyList()
-
-      val detailedMessage = StringBuilder(errorText)
-      if (!trySuggestions.isNullOrBlank()) {
-        detailedMessage.append("\n* Try:\n$trySuggestions")
-      }
-      if (!exception.isNullOrBlank()) {
-        detailedMessage.append("\n* Exception is:\n$exception")
-      }
-      buildEventDescription = detailedMessage.toString()
-    }
-
-    if (filePosition != null) {
-      //TODO: Used english suggestions and exceptions:
-      multicaster.notifyBuildEvent(
-        object : FileMessageEventImpl(
-          /* id = */ null,
-          /* parentId = */ parentId,
-          /* time = */ null,
-          /* message = */ reason,
-          /* hint = */ null,
-          /* description = */ buildEventDescription,
-          /* kind = */ MessageEvent.Kind.ERROR,
-          /* group = */ null,
-          /* navigatable = */ null,
-          /* outputIds = */ outputIds,
-          /* filePosition = */ filePosition
-        ), DuplicateMessageAware {} //NON-NLS
-      )
-    }
-    else {
-      val unresolvedMessageEvent = checkUnresolvedDependencyError(reason, errorText, parentId, outputIds)
-      if (unresolvedMessageEvent != null) {
-        multicaster.notifyBuildEvent(unresolvedMessageEvent)
-      }
-      else {
-        //TODO: Used english suggestions and exceptions:
-        multicaster.notifyBuildEvent(
-          object : MessageEventImpl(
-            /* id = */ null,
-            /* parentId = */ parentId,
-            /* time = */ null,
-            /* message = */ reason,
-            /* hint = */ null,
-            /* description = */ buildEventDescription,
-            /* kind = */ MessageEvent.Kind.ERROR,
-            /* group = */ null,
-            /* navigatable = */ null,
-            /* outputIds = */ outputIds
-          ), DuplicateMessageAware {}
-        ) //NON-NLS
-      }
-    }
+    val reportLines = readEntireReport(line, reader)
+    val failures = parseFailures(reportLines)
+    report(reportLines, failures, taskId, multicaster, isSingleFlow)
     return true
   }
 
-  private fun parseScriptLocation(location: String): FilePosition? {
-    val matcher = SCRIPT_LOCATION_PATTERN.matcher(location)
-    if (!matcher.find()) {
-      return null
+  private fun isReportStart(text: String): Boolean =
+    text.startsWith(SINGLE_FAILURE_HEADER) || MULTIPLE_FAILURES_HEADER_REGEX.containsMatchIn(text)
+
+  private suspend fun readEntireReport(header: BuildOutputText, reader: BuildOutputReplayableLineReader): List<BuildOutputText> {
+    val multipleFailuresCountValue = MULTIPLE_FAILURES_HEADER_REGEX.find(header.text)?.groupValues?.get(1)?.toInt()
+    val multipleFailures = multipleFailuresCountValue != null
+    val failureCount = multipleFailuresCountValue ?: 1
+
+    val lines = mutableListOf(header)
+    repeat(failureCount) {
+      while (true) {
+        val line = reader.readLine() ?: return lines
+        if (line.text.startsWith(BUILD_FAILED) || line.text.startsWith(CONFIGURE_FAILED)) {
+          return lines
+        }
+        lines.add(line)
+        if (isFailureEnd(line.text, multipleFailures)) {
+          break
+        }
+      }
     }
-    val path = matcher.group(FILE_GROUP) ?: return null
-    val line = matcher.group(LINE_GROUP)?.toIntOrNull() ?: return null
+    if (!multipleFailures) {
+      lines.addAll(readExceptionIfPresent(reader))
+    }
+    return lines
+  }
+
+  private suspend fun readExceptionIfPresent(reader: BuildOutputReplayableLineReader): List<BuildOutputText> {
+    val blankLine = reader.readLine() ?: return emptyList()
+    val exceptionStart = reader.readLine()
+    if (blankLine.text.isNotBlank() || exceptionStart?.text != EXCEPTION_IS) {
+      val pushBack = if (exceptionStart == null) 1 else 2
+      reader.pushBack(pushBack)
+      return emptyList()
+    }
+    val lines = mutableListOf(blankLine, exceptionStart)
+    while (true) {
+      val line = reader.readLine() ?: break
+      if (line.text.isBlank()) {
+        reader.pushBack(1)
+        break
+      }
+      lines.add(line)
+    }
+    return lines
+  }
+
+  private fun isFailureEnd(text: String, multipleFailures: Boolean): Boolean = when (multipleFailures) {
+    true -> text.startsWith(MULTIPLE_FAILURES_SEPARATOR)
+    else -> text.startsWith(GET_MORE_HELP) || text.startsWith(LEGACY_GET_MORE_HELP)
+  }
+
+  private fun parseFailures(lines: List<BuildOutputText>): List<Failure> {
+    val failures = mutableListOf<Failure>()
+    var filePosition: FilePosition? = null
+    for ((index, line) in lines.withIndex()) {
+      if (line.text == WHERE) {
+        filePosition = lines.getOrNull(index + 1)?.let { parseScriptLocation(it.text) }
+      }
+      if (line.text == WHAT_WENT_WRONG) {
+        val failureLines = lines.drop(index + 1).takeWhile { it.text.isNotBlank() }
+        if (failureLines.isNotEmpty()) {
+          failures.add(Failure(failureLines, filePosition))
+        }
+        filePosition = null
+      }
+    }
+    return failures
+  }
+
+  private fun parseScriptLocation(location: String): FilePosition? {
+    val match = SCRIPT_LOCATION_REGEX.find(location) ?: return null
+    val path = match.groups["file"]?.value ?: return null
+    val line = match.groups["line"]?.value?.toIntOrNull() ?: return null
     return FilePosition(Path.of(path), line - 1, 0)
   }
 
-  private fun String.isCompilationError(): Boolean = contains("Compilation failed") ||
-                                                     this == "Compilation error. See log for more details" ||
-                                                     this == "Script compilation error:" ||
-                                                     this.contains("compiler failed")
-
-  private fun checkUnresolvedDependencyError(reason: String, description: String, parentId: Any, outputIds: List<OutputId>): BuildEvent? {
-    val noCachedVersionPrefix = "No cached version of "
-    val couldNotFindPrefix = "Could not find "
-    val cannotResolvePrefix = "Cannot resolve external dependency "
-    val cannotDownloadPrefix = "Could not download "
-    val prefix = when {
-                   reason.startsWith(noCachedVersionPrefix) -> noCachedVersionPrefix
-                   reason.startsWith(couldNotFindPrefix) -> couldNotFindPrefix
-                   reason.startsWith(cannotResolvePrefix) -> cannotResolvePrefix
-                   reason.startsWith(cannotDownloadPrefix) -> cannotDownloadPrefix
-                   else -> null
-                 } ?: return null
-    val indexOfSuffix = reason.indexOf(" available for offline mode")
-    val dependencyName = if (indexOfSuffix > 0) reason.substring(prefix.length, indexOfSuffix) else reason.substring(prefix.length)
-    val unresolvedDependencyIssue = UnresolvedDependencyBuildIssue(dependencyName, description, indexOfSuffix > 0)
-    return BuildIssueEventImpl(
-      /* id = */ null,
-      /* parentId = */ parentId,
-      /* time = */ null,
-      /* hint = */ null,
-      /* outputIds = */ outputIds,
-      /* buildIssue = */ unresolvedDependencyIssue,
-      /* kind = */ MessageEvent.Kind.ERROR
+  private fun report(
+    reportLines: List<BuildOutputText>,
+    failures: List<Failure>,
+    taskId: StartId,
+    multicaster: BuildOutputMulticaster,
+    isSingleFlow: Boolean,
+  ) {
+    val reportId = Any()
+    multicaster.notifyBuildEvent(
+      MessageEvent.builder(reportLines.first().text, MessageEvent.Kind.ERROR)
+        .withId(reportId)
+        .withParentId(taskId)
+        .withDescription(reportLines, isSingleFlow)
+        .build()
     )
+    for (failure in failures) {
+      multicaster.notifyBuildEvent(
+        MessageEvent.builder(failure.getTitle(), MessageEvent.Kind.ERROR)
+          .withParentId(reportId)
+          .withFilePosition(failure.filePosition)
+          .withDescription(failure.lines, isSingleFlow)
+          .build()
+      )
+    }
   }
 
-  private companion object {
-    private const val SCRIPT_LOCATION_EXPRESSION = "(?:[Bb]uild file|[Ss]ettings file|Initialization script|Script) " +
-                                                   "(^|[\\W])(?<file>(?:\\p{Alpha}\\:|/)[0-9 a-z_A-Z\\-\\\\./]+)'(?: line)?: (?<line>[0-9]+)"
-    private const val FILE_GROUP = "file"
-    private const val LINE_GROUP = "line"
-
-    private val SCRIPT_LOCATION_PATTERN = Pattern.compile(SCRIPT_LOCATION_EXPRESSION, Pattern.MULTILINE)
-  }
+  private fun MessageEventBuilder.withDescription(lines: List<BuildOutputText>, isSingleFlow: Boolean): MessageEventBuilder =
+    when (isSingleFlow) {
+      true -> withOutputIds(lines.flatMap { it.ids })
+      else -> withDescription(lines.joinToString("\n") { it.text }) //NON-NLS
+    }
 }
-

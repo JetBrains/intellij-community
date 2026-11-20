@@ -120,8 +120,9 @@ class GradleTestExecutionTest(private val singleConsole: Boolean) : GradleTestEx
                 }
               }
             }
-            // IDEA-334636 this node should have the same indention as the 'additionalTest' node
-            assertNode("There were failing tests. See the report at: .*".toRegex())
+          }
+          assertNode("FAILURE: Build failed with an exception.") {
+            assertNode("Execution failed for task ':additionalTest'.")
           }
         }
       }

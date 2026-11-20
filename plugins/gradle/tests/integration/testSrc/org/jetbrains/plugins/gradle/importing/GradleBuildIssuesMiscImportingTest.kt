@@ -79,8 +79,11 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
       assertBuildViewTree(syncView) {
         assertNode("failed") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
-          assertNode("build.gradle") {
-            assertNode("(Java heap space|GC overhead limit exceeded)".toRegex())
+          assertNode(BUILD_FAILURE_TITLE) {
+            assertNode("build.gradle") {
+              assertNode(FAILURE_TITLE)
+              assertNode("(Java heap space|GC overhead limit exceeded)".toRegex())
+            }
           }
         }
       }
@@ -88,13 +91,18 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
       assertBuildViewTree(syncView) {
         assertNode("failed") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
+          assertNode(BUILD_FAILURE_TITLE) {
+            assertNode(FAILURE_TITLE)
+          }
           assertNode("(Java heap space|GC overhead limit exceeded)".toRegex())
         }
       }
     })
 
-    assertBuildViewNode(syncView, "(Java heap space|GC overhead limit exceeded)".toRegex()) {
+    assertBuildViewNode(syncView, BUILD_FAILURE_TITLE) {
       assertTrue(it.isNodeSelected)
+    }
+    assertBuildViewNode(syncView, "(Java heap space|GC overhead limit exceeded)".toRegex()) {
       assertThat(it.consoleText).matches("""
         |(\* Where:
         |Build file '${Regex.escape(buildScriptPath.toString())}' line: \d
@@ -108,6 +116,11 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
         |[\s\S]*
       """.trimMargin().toRegex().toPattern())
     }
+  }
+
+  companion object {
+    private const val BUILD_FAILURE_TITLE = "FAILURE: Build failed with an exception."
+    private const val FAILURE_TITLE = "A problem occurred evaluating root project 'project'."
   }
 
   private fun assertAnyOf(vararg assertions: () -> Unit) {

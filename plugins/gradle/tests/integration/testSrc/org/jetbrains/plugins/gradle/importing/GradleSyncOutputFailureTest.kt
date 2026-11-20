@@ -110,23 +110,17 @@ class GradleSyncOutputFailureTest(
     assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
-        when {
-          !isTaskConfigurationAvoidanceSupported(gradleVersion) -> {
-            assertNode("Could not create task of type 'BrokenIdeaProjectTask'")
-          }
-          !isResilientSyncEnabled(gradleVersion) -> {
-            assertNode("Could not create task ':brokenIdeaProjectTask'.")
-          }
-          else -> {
-            if (showSuppressedFailures) {
-              assertNode("build.gradle.kts") {
-                assertNode("Could not create task ':brokenIdeaProjectTask'.")
-              }
-            }
+        val failureTitle = when {
+          !isTaskConfigurationAvoidanceSupported(gradleVersion) -> "Could not create task of type 'BrokenIdeaProjectTask'"
+          else -> "Could not create task ':brokenIdeaProjectTask'."
+        }
+        if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.7") && showSuppressedFailures) {
+          assertNode("build.gradle.kts") {
+            assertNode(failureTitle)
           }
         }
-        if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.7")) {
-          assertNode("Task initialization failure")
+        assertNode(BUILD_FAILURE_TITLE) {
+          assertNode(failureTitle)
         }
       }
     }
@@ -150,14 +144,16 @@ class GradleSyncOutputFailureTest(
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
         assertNode("build.gradle.kts") {
-          if (isResilientSyncEnabled(gradleVersion) && showSuppressedFailures) {
+          if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.7") && showSuppressedFailures) {
             assertNode("A problem occurred configuring root project 'project'.")
           }
           when {
             GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.9") -> assertNode("Syntax error: Expecting '}'.")
             else -> assertNode("Expecting '}'")
           }
+          assertNode("Script compilation error:")
         }
+        assertNode(BUILD_FAILURE_TITLE)
       }
     }
   }
@@ -216,8 +212,6 @@ class GradleSyncOutputFailureTest(
 
 
   companion object {
-
-    private fun isResilientSyncEnabled(gradleVersion: GradleVersion): Boolean =
-      GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.3")
+    private const val BUILD_FAILURE_TITLE = "FAILURE: Build failed with an exception."
   }
 }

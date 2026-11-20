@@ -31,134 +31,153 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource("true, false")
-  fun `test task execution output without failures`(gradleVersion: GradleVersion, singleConsole: Boolean) = withSingleConsole(singleConsole) {
-    testJavaProject(gradleVersion) {
-      writeText("build.gradle", buildScript(gradleVersion, GradleDsl.GROOVY) {
-        registerTask("task") {
-          call("doLast") {
-            call("println", "Task doLast")
+  fun `test task execution output without failures`(gradleVersion: GradleVersion, singleConsole: Boolean) =
+    withSingleConsole(singleConsole) {
+      testJavaProject(gradleVersion) {
+        writeText("build.gradle", buildScript(gradleVersion, GradleDsl.GROOVY) {
+          registerTask("task") {
+            call("doLast") {
+              call("println", "Task doLast")
+            }
+          }
+        })
+
+        executeTasks(":task")
+        assertBuildViewTree(runView) {
+          assertNode("successful") {
+            assertNodeWithDeprecatedGradleWarning(gradleVersion)
+            assertNode(":task")
           }
         }
-      })
-
-      executeTasks(":task")
-      assertBuildViewTree(runView) {
-        assertNode("successful") {
-          assertNodeWithDeprecatedGradleWarning(gradleVersion)
-          assertNode(":task")
-        }
-      }
-      assertBuildViewNode(runView, "successful") {
-        Assertions.assertThat(it.consoleText)
-          .containsOnlyOnce("Task doLast")
-      }
-      assertBuildViewNode(runView, ":task") {
-        if (isPerTaskOutputSupported()) {
+        assertBuildViewNode(runView, "successful") {
           Assertions.assertThat(it.consoleText)
             .containsOnlyOnce("Task doLast")
         }
+        assertBuildViewNode(runView, ":task") {
+          if (isPerTaskOutputSupported()) {
+            Assertions.assertThat(it.consoleText)
+              .containsOnlyOnce("Task doLast")
+          }
+        }
       }
     }
-  }
 
   @ParameterizedTest
   @AllGradleVersionsSource("true, false")
-  fun `test task execution output with one failure`(gradleVersion: GradleVersion, singleConsole: Boolean) = withSingleConsole(singleConsole) {
-    testJavaProject(gradleVersion) {
-      writeText("build.gradle", buildScript(gradleVersion, GradleDsl.GROOVY) {
-        registerTask("failingTask") {
-          call("doLast") {
-            call("println", "Task doLast")
-            code("throw new Exception('Task failure')")
+  fun `test task execution output with one failure`(gradleVersion: GradleVersion, singleConsole: Boolean) =
+    withSingleConsole(singleConsole) {
+      testJavaProject(gradleVersion) {
+        writeText("build.gradle", buildScript(gradleVersion, GradleDsl.GROOVY) {
+          registerTask("failingTask") {
+            call("doLast") {
+              call("println", "Task doLast")
+              code("throw new Exception('Task failure')")
+            }
           }
-        }
-      })
+        })
 
-      executeTasks(":failingTask")
-      assertBuildViewTree(runView) {
-        assertNode("failed") {
-          assertNodeWithDeprecatedGradleWarning(gradleVersion)
-          assertNode(":failingTask") {
-            assertNode("build.gradle") {
-              assertNode("java.lang.Exception: Task failure")
+        executeTasks(":failingTask")
+        val failureTitle = when (isGradleAtLeast("9.5")) {
+          true -> "Execution failed for task ':failingTask' (registered in build file 'build.gradle')."
+          else -> "Execution failed for task ':failingTask'."
+        }
+        assertBuildViewTree(runView) {
+          assertNode("failed") {
+            assertNodeWithDeprecatedGradleWarning(gradleVersion)
+            assertNode(":failingTask")
+            assertNode("FAILURE: Build failed with an exception.") {
+              assertNode("build.gradle") {
+                assertNode(failureTitle)
+              }
             }
           }
         }
-      }
-      assertBuildViewNode(runView, "failed") {
-        Assertions.assertThat(it.consoleText)
-          .containsOnlyOnce("Task doLast")
-          .contains("Task failure")
-      }
-      assertBuildViewNode(runView, ":failingTask") {
-        if (isPerTaskOutputSupported()) {
+        assertBuildViewNode(runView, "failed") {
           Assertions.assertThat(it.consoleText)
             .containsOnlyOnce("Task doLast")
-          //.contains("Task failure")
-        }
-      }
-      assertBuildViewNode(runView, "java.lang.Exception: Task failure") {
-        if (isPerTaskOutputSupported() && !singleConsole) {
-          Assertions.assertThat(it.consoleText)
             .contains("Task failure")
+        }
+        assertBuildViewNode(runView, ":failingTask") {
+          if (isPerTaskOutputSupported()) {
+            Assertions.assertThat(it.consoleText)
+              .containsOnlyOnce("Task doLast")
+            //.contains("Task failure")
+          }
+        }
+        assertBuildViewNode(runView, failureTitle) {
+          if (isPerTaskOutputSupported() && !singleConsole) {
+            Assertions.assertThat(it.consoleText)
+              .contains("Task failure")
+          }
         }
       }
     }
-  }
 
   @ParameterizedTest
   @AllGradleVersionsSource("true, false")
-  fun `test task execution output with two failures`(gradleVersion: GradleVersion, singleConsole: Boolean) = withSingleConsole(singleConsole) {
-    testJavaProject(gradleVersion) {
-      writeText("build.gradle", buildScript(gradleVersion, GradleDsl.GROOVY) {
-        registerTask("failingTask1") {
-          call("doLast") {
-            call("println", "Task 1 doLast")
-            code("throw new Exception('Task 1 failure')")
+  fun `test task execution output with two failures`(gradleVersion: GradleVersion, singleConsole: Boolean) =
+    withSingleConsole(singleConsole) {
+      testJavaProject(gradleVersion) {
+        writeText("build.gradle", buildScript(gradleVersion, GradleDsl.GROOVY) {
+          registerTask("failingTask1") {
+            call("doLast") {
+              call("println", "Task 1 doLast")
+              code("throw new Exception('Task 1 failure')")
+            }
           }
-        }
-        registerTask("failingTask2") {
-          call("doLast") {
-            call("println", "Task 2 doLast")
-            code("throw new Exception('Task 2 failure')")
+          registerTask("failingTask2") {
+            call("doLast") {
+              call("println", "Task 2 doLast")
+              code("throw new Exception('Task 2 failure')")
+            }
           }
-        }
-        registerTask("failingTasksGroup") {
-          call("dependsOn", "failingTask1", "failingTask2")
-        }
-      })
+          registerTask("failingTasksGroup") {
+            call("dependsOn", "failingTask1", "failingTask2")
+          }
+        })
 
-      executeTasks(":failingTasksGroup --continue")
-      assertBuildViewTree(runView) {
-        assertNode("failed") {
-          assertNodeWithDeprecatedGradleWarning(gradleVersion)
-          assertNode(":failingTask1")
-          assertNode(":failingTask2")
+        executeTasks(":failingTasksGroup --continue")
+
+        val failureSuffix = when (isGradleAtLeast("9.5")) {
+          true -> " (registered in build file 'build.gradle')."
+          else -> "."
         }
-      }
-      assertBuildViewNode(runView, "failed") {
-        Assertions.assertThat(it.consoleText)
-          .containsOnlyOnce("Task 1 doLast")
-          .contains("Task 1 failure")
-          .containsOnlyOnce("Task 2 doLast")
-          .contains("Task 2 failure")
-      }
-      assertBuildViewNode(runView, ":failingTask1") {
-        if (isPerTaskOutputSupported()) {
+        assertBuildViewTree(runView) {
+          assertNode("failed") {
+            assertNodeWithDeprecatedGradleWarning(gradleVersion)
+            assertNode(":failingTask1")
+            assertNode(":failingTask2")
+            assertNode("FAILURE: Build completed with 2 failures.") {
+              assertNode("build.gradle") {
+                assertNode("Execution failed for task ':failingTask1'$failureSuffix")
+                assertNode("Execution failed for task ':failingTask2'$failureSuffix")
+              }
+            }
+          }
+        }
+        assertBuildViewNode(runView, "failed") {
           Assertions.assertThat(it.consoleText)
             .containsOnlyOnce("Task 1 doLast")
-            //.contains("Task 1 failure")
-            .doesNotContain("Task 2 failure")
-        }
-      }
-      assertBuildViewNode(runView, ":failingTask2") {
-        if (isPerTaskOutputSupported()) {
-          Assertions.assertThat(it.consoleText)
+            .contains("Task 1 failure")
             .containsOnlyOnce("Task 2 doLast")
-            //.contains("Task 2 failure")
-            .doesNotContain("Task 1 failure")
+            .contains("Task 2 failure")
+        }
+        assertBuildViewNode(runView, ":failingTask1") {
+          if (isPerTaskOutputSupported()) {
+            Assertions.assertThat(it.consoleText)
+              .containsOnlyOnce("Task 1 doLast")
+              //.contains("Task 1 failure")
+              .doesNotContain("Task 2 failure")
+          }
+        }
+        assertBuildViewNode(runView, ":failingTask2") {
+          if (isPerTaskOutputSupported()) {
+            Assertions.assertThat(it.consoleText)
+              .containsOnlyOnce("Task 2 doLast")
+              //.contains("Task 2 failure")
+              .doesNotContain("Task 1 failure")
+          }
         }
       }
     }
-  }
 }

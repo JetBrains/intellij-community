@@ -152,6 +152,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:4.12")
     }
     compileModulesExpectingFailure("project.test")
+    val failureTitle = "Could not resolve all files for configuration ':testCompileClasspath'."
     assertBuildViewTree(buildView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
@@ -159,21 +160,20 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         assertNode(":processResources")
         assertNode(":classes")
         assertNode(":compileTestJava")
-        assertNode("Could Not Resolve junit:junit:4.12 because no repositories are defined")
+        assertNode("FAILURE: Build failed with an exception.") {
+          assertNode(failureTitle)
+        }
       }
     }
-    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:4.12 because no repositories are defined") {
+    assertBuildViewNode(buildView, "FAILURE: Build failed with an exception.") {
       assertTrue(it.isNodeSelected)
+    }
+    assertBuildViewNode(buildView, failureTitle) {
       assertEquals("""
-        |FAILURE: Build failed with an exception.
         |Could not resolve all files for configuration ':testCompileClasspath'.
         |> Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
         |  Required by:
         |      project :
-        |
-        |Possible solution:
-        | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
-        |
         |
       """.trimMargin(), it.consoleText)
     }
@@ -188,17 +188,6 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:4.12")
     }
     compileModulesExpectingFailure("project.test")
-    assertBuildViewTree(buildView) {
-      assertNode("failed") {
-        assertNodeWithDeprecatedGradleWarning()
-        assertNode(":compileJava")
-        assertNode(":processResources")
-        assertNode(":classes")
-        assertNode(":compileTestJava") {
-          assertNode("Could Not Resolve junit:junit:4.12 because no repositories are defined")
-        }
-      }
-    }
     val projectQualifier = when {
       isGradleAtLeast("9.0") -> "root project 'project'"
       isGradleAtLeast("8.10") -> "root project :"
@@ -208,19 +197,29 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       isGradleAtLeast("9.5.0") -> " (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin')"
       else -> ""
     }
-    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:4.12 because no repositories are defined") {
+    val failureTitle = "Execution failed for task ':compileTestJava'$taskSourceSuffix."
+    assertBuildViewTree(buildView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode("FAILURE: Build failed with an exception.") {
+          assertNode(failureTitle)
+        }
+      }
+    }
+    assertBuildViewNode(buildView, "FAILURE: Build failed with an exception.") {
       assertTrue(it.isNodeSelected)
+    }
+    assertBuildViewNode(buildView, failureTitle) {
       assertEquals("""
-        |FAILURE: Build failed with an exception.
         |Execution failed for task ':compileTestJava'$taskSourceSuffix.
         |> Could not resolve all files for configuration ':testCompileClasspath'.
         |   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
         |     Required by:
         |         $projectQualifier
-        |
-        |Possible solution:
-        | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
-        |
         |
       """.trimMargin(), it.consoleText)
     }
@@ -240,6 +239,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:99.99")
     }
     compileModulesExpectingFailure("project.test")
+    val failureTitle = "Could not resolve all files for configuration ':testCompileClasspath'."
     assertBuildViewTree(buildView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
@@ -247,13 +247,16 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         assertNode(":processResources")
         assertNode(":classes")
         assertNode(":compileTestJava")
-        assertNode("Could Not Resolve junit:junit:99.99")
+        assertNode("FAILURE: Build failed with an exception.") {
+          assertNode(failureTitle)
+        }
       }
     }
-    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
+    assertBuildViewNode(buildView, "FAILURE: Build failed with an exception.") {
       assertTrue(it.isNodeSelected)
+    }
+    assertBuildViewNode(buildView, failureTitle) {
       assertEquals("""
-        |FAILURE: Build failed with an exception.
         |Could not resolve all files for configuration ':testCompileClasspath'.
         |> Could not resolve junit:junit:99.99.
         |  Required by:
@@ -263,10 +266,6 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         |  Required by:
         |      project :
         |   > No cached version of junit:junit:99.99 available for offline mode.
-        |
-        |Possible solution:
-        | - Disable offline mode and rerun the build
-        |
         |
       """.trimMargin(), it.consoleText)
     }
@@ -285,17 +284,6 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:99.99")
     }
     compileModulesExpectingFailure("project.test")
-    assertBuildViewTree(buildView) {
-      assertNode("failed") {
-        assertNodeWithDeprecatedGradleWarning()
-        assertNode(":compileJava")
-        assertNode(":processResources")
-        assertNode(":classes")
-        assertNode(":compileTestJava") {
-          assertNode("Could Not Resolve junit:junit:99.99")
-        }
-      }
-    }
     val projectQualifier = when {
       isGradleAtLeast("9.0") -> "root project 'project'"
       isGradleAtLeast("8.10") -> "root project :"
@@ -305,20 +293,30 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       isGradleAtLeast("9.5.0") -> " (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin')"
       else -> ""
     }
-    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
+    val failureTitle = "Execution failed for task ':compileTestJava'$taskSourceSuffix."
+    assertBuildViewTree(buildView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode("FAILURE: Build failed with an exception.") {
+          assertNode(failureTitle)
+        }
+      }
+    }
+    assertBuildViewNode(buildView, "FAILURE: Build failed with an exception.") {
       assertTrue(it.isNodeSelected)
+    }
+    assertBuildViewNode(buildView, failureTitle) {
       assertEquals("""
-        |FAILURE: Build failed with an exception.
         |Execution failed for task ':compileTestJava'$taskSourceSuffix.
         |> Could not resolve all files for configuration ':testCompileClasspath'.
         |   > Could not resolve junit:junit:99.99.
         |     Required by:
         |         $projectQualifier
         |      > No cached version of junit:junit:99.99 available for offline mode.
-        |
-        |Possible solution:
-        | - Disable offline mode and rerun the build
-        |
         |
       """.trimMargin(), it.consoleText)
     }
@@ -337,6 +335,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:99.99")
     }
     compileModulesExpectingFailure("project.test")
+    val failureTitle = "Could not resolve all files for configuration ':testCompileClasspath'."
     assertBuildViewTree(buildView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
@@ -344,14 +343,17 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         assertNode(":processResources")
         assertNode(":classes")
         assertNode(":compileTestJava")
-        assertNode("Could Not Resolve junit:junit:99.99")
+        assertNode("FAILURE: Build failed with an exception.") {
+          assertNode(failureTitle)
+        }
       }
     }
-    val repositoryPrefix = if (isGradleOlderThan("4.8")) " " else "-"
-    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
+    assertBuildViewNode(buildView, "FAILURE: Build failed with an exception.") {
       assertTrue(it.isNodeSelected)
+    }
+    val repositoryPrefix = if (isGradleOlderThan("4.8")) " " else "-"
+    assertBuildViewNode(buildView, failureTitle) {
       assertEquals("""
-        |FAILURE: Build failed with an exception.
         |Could not resolve all files for configuration ':testCompileClasspath'.
         |> Could not find junit:junit:99.99.
         |  Searched in the following locations:
@@ -365,10 +367,6 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         |    $repositoryPrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar
         |  Required by:
         |      project :
-        |
-        |Possible solution:
-        | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
-        |
         |
       """.trimMargin(), it.consoleText)
     }
@@ -387,17 +385,6 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:99.99")
     }
     compileModulesExpectingFailure("project.test")
-    assertBuildViewTree(buildView) {
-      assertNode("failed") {
-        assertNodeWithDeprecatedGradleWarning()
-        assertNode(":compileJava")
-        assertNode(":processResources")
-        assertNode(":classes")
-        assertNode(":compileTestJava") {
-          assertNode("Could Not Resolve junit:junit:99.99")
-        }
-      }
-    }
     val projectQualifier = when {
       isGradleAtLeast("9.0") -> "root project 'project'"
       isGradleAtLeast("8.10") -> "root project :"
@@ -407,10 +394,24 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       isGradleAtLeast("9.5.0") -> " (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin')"
       else -> ""
     }
-    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
+    val failureTitle = "Execution failed for task ':compileTestJava'$taskSourceSuffix."
+    assertBuildViewTree(buildView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode("FAILURE: Build failed with an exception.") {
+          assertNode(failureTitle)
+        }
+      }
+    }
+    assertBuildViewNode(buildView, "FAILURE: Build failed with an exception.") {
       assertTrue(it.isNodeSelected)
+    }
+    assertBuildViewNode(buildView, failureTitle) {
       assertEquals("""
-        |FAILURE: Build failed with an exception.
         |Execution failed for task ':compileTestJava'$taskSourceSuffix.
         |> Could not resolve all files for configuration ':testCompileClasspath'.
         |   > Could not find junit:junit:99.99.
@@ -425,10 +426,6 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         |       - $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar
         |     Required by:
         |         $projectQualifier
-        |
-        |Possible solution:
-        | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
-        |
         |
       """.trimMargin(), it.consoleText)
     }
