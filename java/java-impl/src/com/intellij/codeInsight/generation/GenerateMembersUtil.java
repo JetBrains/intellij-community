@@ -98,6 +98,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.GenerationUtil;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
+import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.util.ArrayList;
@@ -858,7 +859,10 @@ public final class GenerateMembersUtil {
                                                       @NotNull TemplatesManager templatesManager) {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    String template = templatesManager.getDefaultTemplate().getTemplate();
+    boolean isGetter = templatesManager instanceof GetterTemplatesManager;
+    String templateName = isGetter ? options.getterTemplate() : options.setterTemplate();
+    TemplateResource chosenTemplate = templateName == null ? null : templatesManager.findTemplateByName(templateName);
+    String template = (chosenTemplate == null ? templatesManager.getDefaultTemplate() : chosenTemplate).getTemplate();
     Function<String, String> calculateTemplateText =
       currentTemplate ->
         GenerationUtil.velocityGenerateCode(psiClass, Collections.singletonList(field), new HashMap<>(), currentTemplate, 0, false);
@@ -876,7 +880,6 @@ public final class GenerateMembersUtil {
       }
     }
 
-    boolean isGetter = templatesManager instanceof GetterTemplatesManager;
     PsiMethod result;
     try {
       result = factory.createMethodFromText(methodText, psiClass);

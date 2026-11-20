@@ -37,14 +37,23 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
   @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
     if (aClass == null) return GenerationInfo.EMPTY_ARRAY;
+    return generateSetters(aClass, original, getOptions());
+  }
+
+  /**
+   * @return the setters of the member that the class does not have yet
+   */
+  static GenerationInfo @NotNull [] generateSetters(@NotNull PsiClass aClass,
+                                                    @NotNull ClassMember original,
+                                                    @NotNull GetterSetterGenerationOptions options) throws IncorrectOperationException {
     if (original instanceof PropertyClassMember propertyClassMember) {
-      final GenerationInfo[] getters = propertyClassMember.generateSetters(aClass, getOptions());
-      if (getters != null) {
-        return getters;
+      final GenerationInfo[] setters = propertyClassMember.generateSetters(aClass, options);
+      if (setters != null) {
+        return setters;
       }
     }
     else if (original instanceof EncapsulatableClassMember encapsulatableClassMember) {
-      final GenerationInfo setter = encapsulatableClassMember.generateSetter(getOptions());
+      final GenerationInfo setter = encapsulatableClassMember.generateSetter(options);
       if (setter != null) {
         return new GenerationInfo[]{setter};
       }
