@@ -27,6 +27,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
@@ -432,6 +433,69 @@ class GroupTabCollapseBehaviorTest {
   }
 
   @Test
+  fun `a collapse animates the group tab from the group width to its own width`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val tabs = makeTabsWithAlphaGroup()
+      tabs.doLayout()
+      val groupWidth = listOf("alpha1", "alpha2", "alpha3").sumOf { tabs.tabByText(it).tabLabel!!.width }
+      assertTrue(groupWidth > 0)
+
+      tabs.select(tabs.tabByText("beta1"), false)
+
+      val animation = tabs.collapseAnimationForTest()
+      val label = tabs.collapsedGroupTabForTest(isPinned = false, groupKey = "/project/Alpha")!!.tabLabel!!
+      assertTrue(animation.isRunning)
+      assertEquals(groupWidth, label.preferredSize.width)
+      animation.finishNow()
+      assertFalse(label.isPreferredSizeSet)
+      assertTrue(label.preferredSize.width < groupWidth)
+    }
+  }
+
+  @Test
+  fun `an expand animates the members from the width of the group tab to their own widths`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val tabs = makeTabsWithAlphaGroup()
+      val animation = tabs.collapseAnimationForTest()
+      tabs.select(tabs.tabByText("beta1"), false)
+      animation.finishNow()
+      tabs.doLayout()
+      val groupTab = tabs.collapsedGroupTabForTest(isPinned = false, groupKey = "/project/Alpha")!!
+      val groupTabWidth = groupTab.tabLabel!!.width
+      assertTrue(groupTabWidth > 0)
+
+      tabs.select(groupTab, false)
+
+      val labels = listOf("alpha1", "alpha2", "alpha3").map { tabs.tabByText(it).tabLabel!! }
+      assertTrue(animation.isRunning)
+      assertEquals(groupTabWidth, labels.sumOf { it.preferredSize.width })
+      animation.finishNow()
+      assertFalse(labels.any { it.isPreferredSizeSet })
+    }
+  }
+
+  @Test
+  fun `a file close has no animation`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val tabs = makeTabsWithAlphaGroup()
+      val animation = tabs.collapseAnimationForTest()
+      val beta2 = tabs.tabByText("beta2")
+      tabs.select(tabs.tabByText("beta1"), false)
+      animation.finishNow()
+      tabs.doLayout()
+      val manager = tabs.editorWindow.manager
+      val file = beta2.`object` as VirtualFile
+
+      project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileClosed(manager, file)
+      tabs.removeTab(beta2)
+      project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileClosed(manager, file)
+
+      assertEquals(listOf("Alpha (3)", "beta1"), tabs.visibleLabelTexts())
+      assertFalse(animation.isRunning)
+    }
+  }
+
+  @Test
   fun `a file close that moves the selection out of a group collapses the group after the removal`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val tabs = makeTabs()
@@ -443,6 +507,7 @@ class GroupTabCollapseBehaviorTest {
       tabs.awaitGroupResolution()
       // The selected tab is in the one group, so no group is collapsed when the close starts.
       tabs.select(alpha3, false)
+      tabs.doLayout()
       val manager = tabs.editorWindow.manager
       val file = alpha3.`object` as VirtualFile
       val hiddenStates = ArrayList<Boolean>()
@@ -459,6 +524,7 @@ class GroupTabCollapseBehaviorTest {
       // The selection moves before the removal. No tab may be hidden then, and the tab of the close is no group tab.
       assertEquals(listOf(false), hiddenStates)
       assertEquals(listOf("Alpha (2)", "gamma"), tabs.visibleLabelTexts())
+      assertFalse(tabs.collapseAnimationForTest().isRunning)
     }
   }
 

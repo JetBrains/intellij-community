@@ -95,6 +95,10 @@ internal open class GroupingJBEditorTabs(
   private var dragCandidate: VirtualFile? = null
 
   private val collapser = TabGroupCollapser(CollapseHost())
+  private val collapseAnimation = TabGroupCollapseAnimation(this, parentDisposable)
+
+  @TestOnly
+  internal fun collapseAnimationForTest(): TabGroupCollapseAnimation = collapseAnimation
 
   @TestOnly
   internal fun collapsedGroupTabForTest(isPinned: Boolean, groupKey: String): TabInfo? = collapser.groupTab(isPinned to groupKey)
@@ -544,11 +548,15 @@ internal open class GroupingJBEditorTabs(
 
     override fun applyOrder(order: List<TabInfo>) = sortTabsTo(order)
 
+    override fun groupChanging(groupTab: TabInfo, members: List<TabInfo>, collapsing: Boolean) =
+      collapseAnimation.groupChanging(groupTab, members, collapsing)
+
     override fun collapseChanged() {
       rebuildSnapshot()
       rearrangeTabsByGroup(rebuildCache = false)
       revalidate()
       repaint()
+      collapseAnimation.start()
     }
   }
 }

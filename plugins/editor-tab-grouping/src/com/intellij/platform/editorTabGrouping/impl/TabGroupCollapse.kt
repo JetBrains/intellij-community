@@ -16,6 +16,17 @@ internal typealias TabGroupKey = Pair<Boolean, String>
  */
 private class CollapsedTabGroup(val group: TabGroup, val members: MutableList<TabInfo>, var groupTab: TabInfo)
 
+/** The steps of a file close in the editor window. The window needs each tab visible until it removes the tab of the file. */
+private enum class FileClose {
+  NONE,
+
+  /** Each group is expanded, and no group collapses. */
+  EXPANDED,
+
+  /** The close needs the expanded groups no more. The next update collapses the groups again, and the user must not see it. */
+  RESTORING,
+}
+
 /** The part of the tab component that [TabGroupCollapser] needs. */
 internal interface TabGroupCollapseHost {
   /** True when the settings ask for collapsed groups. */
@@ -32,6 +43,13 @@ internal interface TabGroupCollapseHost {
 
   /** Puts the tabs in the [order]. */
   fun applyOrder(order: List<TabInfo>)
+
+  /**
+   * Reports that the group of [members] collapses into the [groupTab] or expands from it.
+   * The call comes before the change, so the host can read the layout that the user sees.
+   * A change that the user must not see, such as the expand for a file close, sends no report.
+   */
+  fun groupChanging(groupTab: TabInfo, members: List<TabInfo>, collapsing: Boolean)
 
   /** Brings the snapshot, the tab order and the layout up to date after a change of the hidden tabs. */
   fun collapseChanged()
@@ -50,7 +68,10 @@ internal class TabGroupCollapser(private val host: TabGroupCollapseHost) {
   /** The selection counter value of each tab that had the selection. A larger value is a later selection. */
   private val selectionOrder = IdentityHashMap<TabInfo, Long>()
   private var selectionCount = 0L
-  private var closingFile = false
+  private var fileClose = FileClose.NONE
+
+  /** True while a change runs that the user must not see. Such a change sends no group report to the host. */
+  private var silentChange = false
 
   /** True while one update changes the hidden state of many tabs. */
   var isUpdating: Boolean = false
@@ -69,8 +90,7 @@ internal class TabGroupCollapser(private val host: TabGroupCollapseHost) {
 
   fun tabRemoved(info: TabInfo) {
     selectionOrder.remove(info)
-    // The removal ends the part of a file close that needs each tab visible.
-    closingFile = false
+    if (fileClose == FileClose.EXPANDED) fileClose = FileClose.RESTORING
   }
 
   /** Expands each group and forgets the selection order. The component gets a new tab list after it. */
@@ -81,7 +101,9 @@ internal class TabGroupCollapser(private val host: TabGroupCollapseHost) {
 
   /** Collapses each shown group that does not hold the selected tab, and expands each other group. */
   fun update() {
-    if (isUpdating || closingFile || host.isDragging) return
+    if (isUpdating || fileClose == FileClose.EXPANDED || host.isDragging) return
+    val silent = fileClose == FileClose.RESTORING
+    fileClose = FileClose.NONE
     val enabled = host.isCollapseEnabled
     if (!enabled && collapsedGroups.isEmpty()) return
     val snapshot = host.snapshot
@@ -94,7 +116,7 @@ internal class TabGroupCollapser(private val host: TabGroupCollapseHost) {
     val upToDate = wanted.keys == collapsedGroups.keys &&
                    wanted.all { (key, members) -> collapsedGroups.getValue(key).holdsExactly(members) }
     if (upToDate) return
-    changeState {
+    changeState(silent) {
       // Each release runs before each hide, so a tab that moved to another collapsed group stays hidden.
       for (key in collapsedGroups.keys.toList()) {
         val members = wanted[key]
@@ -119,7 +141,7 @@ internal class TabGroupCollapser(private val host: TabGroupCollapseHost) {
   /** Expands the collapsed group that holds [info]. The caller selects [info] after it. */
   fun expandGroupOf(info: TabInfo) {
     val key = collapsedGroups.entries.firstOrNull { info in it.value.members }?.key ?: return
-    changeState { expand(key) }
+    changeState(silent = false) { expand(key) }
   }
 
   /**
@@ -129,33 +151,35 @@ internal class TabGroupCollapser(private val host: TabGroupCollapseHost) {
    * with an index of all tabs, and hidden tabs make them differ.
    */
   fun fileCloseStarted() {
-    // Without a collapsed group the flag still stops an update, so no group collapses around the tab that the close removes.
-    closingFile = true
+    // Without a collapsed group the state still stops an update, so no group collapses around the tab that the close removes.
+    fileClose = FileClose.EXPANDED
     expandAll()
   }
 
   /** Collapses the groups again when the close removed no tab of this component. */
   fun fileCloseFinished() {
-    if (!closingFile) return
-    closingFile = false
+    if (fileClose != FileClose.EXPANDED) return
+    fileClose = FileClose.RESTORING
     update()
   }
 
   private fun expandAll() {
     if (collapsedGroups.isEmpty()) return
-    changeState {
+    changeState(silent = true) {
       for (key in collapsedGroups.keys.toList()) expand(key)
     }
   }
 
-  /** Runs [change] and then lets the host bring the component up to date one time. */
-  private fun changeState(change: () -> Unit) {
+  /** Runs [change] and then lets the host bring the component up to date one time. A [silent] change sends no group report. */
+  private fun changeState(silent: Boolean, change: () -> Unit) {
     isUpdating = true
+    silentChange = silent
     try {
       change()
     }
     finally {
       isUpdating = false
+      silentChange = false
     }
     host.collapseChanged()
   }
@@ -167,6 +191,7 @@ internal class TabGroupCollapser(private val host: TabGroupCollapseHost) {
     val group = host.snapshot.groups[members.first()] ?: return
     val collapsed = CollapsedTabGroup(group, members.toMutableList(), lastUsedTab(members))
     collapsedGroups[key] = collapsed
+    if (!silentChange) host.groupChanging(collapsed.groupTab, collapsed.members, collapsing = true)
     hideAllButGroupTab(collapsed)
   }
 
@@ -198,6 +223,7 @@ internal class TabGroupCollapser(private val host: TabGroupCollapseHost) {
 
   private fun expand(key: TabGroupKey) {
     val collapsed = collapsedGroups.remove(key) ?: return
+    if (!silentChange) host.groupChanging(collapsed.groupTab, collapsed.members, collapsing = false)
     restoreLabel(collapsed.groupTab)
     val anchor = host.visibleTabs.indexOf(collapsed.groupTab)
     for (member in collapsed.members) member.isHidden = false
