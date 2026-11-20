@@ -1103,6 +1103,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
       return
     }
+    if (removeFromStripe && source == null && presentation.ownerLeavesStripe(entry.toolWindow)) {
+      // the request of the code, as after the removal of the last content: a frame guest still needs the stripe button
+      return
+    }
     var moveFocusAfter = moveFocus && entry.toolWindow.isActive
     if (!entry.readOnlyWindowInfo.isVisible) {
       moveFocusAfter = false
@@ -1363,9 +1367,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   /**
    * Registers a tool window that has no content of its own and presents the tool windows of the frame guests with the id of
-   * [guestTask], see [ToolWindowManagerPresentation]. The tool window takes its look, its default place and its available state
-   * from [guestTask]. It has a factory only when [guestTask] has one: a tool window without a factory gets a stripe button
-   * by default, and its registration does not restore a stored visible state.
+   * [guestTask], see [ToolWindowManagerPresentation]. The tool window takes its look and its default place from [guestTask].
+   * It has a factory only when [guestTask] has one: a tool window without a factory gets a stripe button by default.
+   * The tool window is not available at first. It shows with the stored visible state when a frame guest gets an entry.
    */
   internal fun registerPresentingToolWindow(guestTask: RegisterToolWindowTaskData): ToolWindowEntry {
     val task = guestTask.copy(
@@ -1373,8 +1377,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       // the dumb mode of the frame owner must not hide the tool window of a frame guest
       canWorkInDumbMode = true,
       contentFactory = if (guestTask.contentFactory == null) null else PresentingToolWindowFactory,
-      // the tool window has no content of its own, and the entries of the frame guests decide when it leaves the stripe
-      hideOnEmptyContent = false,
+      // only a frame guest or content of the frame owner makes the tool window available, see `ToolWindowImpl.isAvailable`
+      shouldBeAvailable = false,
+      // as Find and Run: the tool window is on the stripe for the frame owner only while it has content of the frame owner
+      hideOnEmptyContent = true,
     )
     val paneId = layoutState.getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     val entry = registerToolWindow(task, getButtonManager(paneId))
@@ -2344,7 +2350,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       fireStateChanged(ToolWindowManagerEventType.ToolWindowAvailable, toolWindow)
       return
     }
-    presentation.availabilityChanged(toolWindow)
 
     if (!toolWindow.isShowStripeButton) {
       return
@@ -2371,7 +2376,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       fireStateChanged(ToolWindowManagerEventType.ToolWindowUnavailable, toolWindow)
       return
     }
-    presentation.availabilityChanged(toolWindow)
 
     val entry = idToEntry.get(toolWindow.id)!!
     val moveFocusAfter = toolWindow.isActive && toolWindow.isVisible
@@ -2480,7 +2484,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   fun restoreStripeButton(id: String) {
     doSetShowStripeButton(id, true)
     // the frame owner has the stripe button of a presented tool window
-    forwardToFrameOwner(id) { presenting -> if (presenting.isAvailable) restoreStripeButton(id) }
+    forwardToFrameOwner(id) { presenting -> if (presenting.isAvailable) setStripeButtonShown(id, true) }
   }
 
   private fun doSetShowStripeButton(id: String, value: Boolean) {
@@ -2489,6 +2493,18 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       setOnProjectStripe(it, value)
       return
     }
+    val entry = idToEntry.get(id) ?: throw IllegalStateException("window with id=\"$id\" isn't registered")
+    if (value) {
+      presentation.ownerComesToStripe(entry.toolWindow)
+    }
+    setStripeButtonShown(id, value)
+  }
+
+  /**
+   * Shows or removes the stripe button of the tool window [id] of this manager. [ToolWindowManagerPresentation] calls it for
+   * a presenting tool window, whose stripe button is also for its frame guests.
+   */
+  internal fun setStripeButtonShown(id: String, value: Boolean) {
     val entry = idToEntry.get(id) ?: throw IllegalStateException("window with id=\"$id\" isn't registered")
     var info = layoutState.getInfo(id)
     if (info == null) {

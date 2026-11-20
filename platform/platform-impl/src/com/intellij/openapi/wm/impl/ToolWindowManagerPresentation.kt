@@ -27,8 +27,13 @@ private val LOG = logger<ToolWindowManagerPresentation>()
  * The presenting tool window shows the tool window of the project that its [ToolWindowProjectSelection] selects.
  * When the frame owner has no tool window with the id, this class registers one that has no content of its own.
  *
- * The selector lists a frame guest while its tool window is available and on the stripe of its project, see
+ * The selector lists a project while its tool window is available and on the stripe of its project, see
  * [ToolWindowImpl.isOnProjectStripe]. So a project whose Find tool window lost its last content has no entry.
+ * The rule is the same for a frame guest and for the frame owner. A frame owner without tool window content of its own
+ * is never an entry.
+ *
+ * The presenting tool window is available while the frame owner makes it available or a frame guest has an entry, see
+ * [ToolWindowImpl.hasFrameGuestEntry]. It keeps its stripe button while a project has an entry.
  *
  * This class is the only writer of the visible state and the place of a presented tool window, see
  * [ToolWindowManagerImpl.applyPresented]. It does no work on a tool window pane. Every function runs on the EDT.
@@ -153,12 +158,66 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   }
 
   /**
-   * A tool window of a frame guest, or the tool window of the frame owner, changed its `isAvailable` state.
-   * Or a tool window of a frame guest came to the stripe of its project or left it.
+   * A tool window of a frame guest changed its `isAvailable` state, or the frame owner changed the available state of its tool
+   * window, see [ToolWindowImpl.isOwnAvailable]. Or a tool window of a frame guest came to the stripe of its project or left it.
    */
   fun availabilityChanged(toolWindow: ToolWindowImpl) {
+    if (slots.isEmpty()) {
+      return
+    }
     ThreadingAssertions.assertEventDispatchThread()
     syncEntry(slotOf(toolWindow) ?: return, toolWindow)
+  }
+
+  /**
+   * The code of the frame owner takes its tool window [toolWindow] off the stripe, as after the removal of its last content.
+   * The frame owner then has no entry. The stripe button is also for the frame guests, so it stays while a frame guest has
+   * an entry, and the tool window hides only when it shows the content of the frame owner.
+   *
+   * @return `true` when the tool window keeps its stripe button: the caller must not remove it
+   */
+  fun ownerLeavesStripe(toolWindow: ToolWindowImpl): Boolean {
+    val slot = slots.get(toolWindow.id)?.takeIf { it.presenting === toolWindow } ?: return false
+    val wasShown = toolWindow.isVisible && slot.selection.selected.let { it == null || it === toolWindow }
+    toolWindow.isOnProjectStripe = false
+    slot.selection.remove(toolWindow)
+    if (!slot.hasGuestEntry()) {
+      return false
+    }
+
+    if (wasShown) {
+      // as in a frame with one project: the tool window hides with the last content of the project that it shows
+      manager.hideToolWindow(toolWindow.id)
+    }
+    else {
+      refresh(slot)
+    }
+    return true
+  }
+
+  /** The tool window [toolWindow] of the frame owner comes back to the stripe, as with new content. The frame owner can be an entry again. */
+  fun ownerComesToStripe(toolWindow: ToolWindowImpl) {
+    val slot = slots.get(toolWindow.id)?.takeIf { it.presenting === toolWindow } ?: return
+    if (!toolWindow.isOnProjectStripe) {
+      toolWindow.isOnProjectStripe = true
+      syncEntry(slot, toolWindow)
+    }
+  }
+
+  /**
+   * The code of the frame owner asks to show or to activate its tool window [toolWindow]. The request selects the frame owner
+   * when it has an entry, as a request of a frame guest selects the guest, see [show].
+   */
+  fun ownerShowRequested(toolWindow: ToolWindowImpl) {
+    val slot = slots.get(toolWindow.id)?.takeIf { it.presenting === toolWindow } ?: return
+    ThreadingAssertions.assertEventDispatchThread()
+    if (toolWindow.isOwnAvailable) {
+      // a show request brings the stripe button back
+      ownerComesToStripe(toolWindow)
+    }
+    if (toolWindow in slot.selection.entries && slot.selection.select(toolWindow) && toolWindow.isVisible) {
+      applySelection(slot)
+    }
   }
 
   /** The tool window [toolWindow] of the frame owner got a new window info: its visible state or its place can differ now. */
@@ -234,9 +293,9 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     )
   }
 
-  /** The slot that has [toolWindow]: as the presented tool window of a frame guest, or as the tool window of the frame owner with its content. */
+  /** The slot that has [toolWindow]: as the presented tool window of a frame guest, or as the presenting tool window of the frame owner. */
   private fun slotOf(toolWindow: ToolWindowImpl): PresentingSlot? {
-    return toolWindow.presentingSlot ?: slots.get(toolWindow.id)?.takeIf { it.showsOwnerContent && it.presenting === toolWindow }
+    return toolWindow.presentingSlot ?: slots.get(toolWindow.id)?.takeIf { it.presenting === toolWindow }
   }
 
   private fun selectFor(toolWindow: ToolWindowImpl): PresentingSlot? {
@@ -254,20 +313,18 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     val slot = when {
       own == null -> {
         val presenting = manager.registerPresentingToolWindow(task).toolWindow
-        PresentingSlot(presenting = presenting, showsOwnerContent = false, isRegisteredForGuests = true)
+        PresentingSlot(presenting = presenting, isRegisteredForGuests = true)
       }
       own.isMultiProject -> {
         LOG.warn("The tool window ${task.id} of ${manager.project.name} presents every project itself, " +
                  "so it cannot present the tool window of a frame guest")
         return null
       }
-      // the frame owner registered the tool window from code, but the frame must not show the content of the owner
-      manager.suppressesOwnContent -> {
-        PresentingSlot(presenting = own, showsOwnerContent = false, isRegisteredForGuests = false)
-      }
       else -> {
-        val slot = PresentingSlot(presenting = own, showsOwnerContent = true, isRegisteredForGuests = false)
-        if (own.isAvailable) {
+        // a tool window that hides without content left the stripe with its last content
+        own.isOnProjectStripe = own.isShowStripeButton || !own.isToHideOnEmptyContent()
+        val slot = PresentingSlot(presenting = own, isRegisteredForGuests = false)
+        if (isEntry(slot, own)) {
           slot.selection.add(own, first = true)
           if (own.isVisible) {
             // the tool window shows the content of the frame owner now, and the user sees it
@@ -282,11 +339,19 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   }
 
   /**
-   * Makes [toolWindow] an entry of the selection when it is available, and no entry otherwise.
-   * A tool window of a frame guest must also be on the stripe of its project.
+   * Tells whether the project of [toolWindow] has an entry: its tool window is available and on the stripe of the project.
+   * For the frame owner, only its own available state counts, and a frame owner without content of its own has no entry.
    */
+  private fun isEntry(slot: PresentingSlot, toolWindow: ToolWindowImpl): Boolean {
+    if (!toolWindow.isOnProjectStripe) {
+      return false
+    }
+    return if (toolWindow === slot.presenting) toolWindow.isOwnAvailable && !manager.suppressesOwnContent else toolWindow.isAvailable
+  }
+
+  /** Makes [toolWindow] an entry of the selection or no entry, see [isEntry]. */
   private fun syncEntry(slot: PresentingSlot, toolWindow: ToolWindowImpl) {
-    if (toolWindow.isAvailable && (!toolWindow.isPresented || toolWindow.isOnProjectStripe)) {
+    if (isEntry(slot, toolWindow)) {
       slot.selection.add(toolWindow, first = toolWindow === slot.presenting)
     }
     else {
@@ -296,9 +361,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   }
 
   private fun refresh(slot: PresentingSlot) {
-    if (!slot.showsOwnerContent) {
-      updateAvailability(slot)
-    }
+    updatePresentingState(slot)
     if (slot.presenting.isVisible) {
       slot.selection.resolve()
     }
@@ -306,18 +369,17 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   }
 
   /**
-   * A tool window that shows no content of the frame owner is available while a project has an entry.
-   * It comes back when a project gets an entry again, if the removal of the last entry hid it.
+   * Gives the presenting tool window the state that the entries of the frame guests ask for. It is available and has its
+   * stripe button while a frame guest has an entry. Without such an entry, the frame owner decides both, as in a frame with
+   * one project. The tool window comes back when a frame guest gets an entry again, if the removal of the last entry hid it.
    */
-  private fun updateAvailability(slot: PresentingSlot) {
+  private fun updatePresentingState(slot: PresentingSlot) {
     val presenting = slot.presenting
-    val isAvailable = slot.selection.entries.isNotEmpty()
-    if (presenting.isAvailable == isAvailable) {
-      return
-    }
-
-    if (isAvailable) {
-      presenting.setAvailable(true)
+    if (slot.hasGuestEntry()) {
+      presenting.setHasFrameGuestEntry(true)
+      if (!presenting.isShowStripeButton) {
+        manager.setStripeButtonShown(presenting.id, true)
+      }
       if (slot.isHiddenForNoEntry) {
         slot.isHiddenForNoEntry = false
         if (!presenting.isVisible) {
@@ -325,9 +387,14 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
         }
       }
     }
-    else {
-      slot.isHiddenForNoEntry = presenting.isVisible
-      presenting.setAvailable(false)
+    else if (presenting.hasFrameGuestEntry) {
+      val isFrameOwnerOnStripe = presenting.isOwnAvailable && presenting.isOnProjectStripe
+      slot.isHiddenForNoEntry = presenting.isVisible && !isFrameOwnerOnStripe
+      presenting.setHasFrameGuestEntry(false)
+      if (presenting.isAvailable && !isFrameOwnerOnStripe && presenting.isShowStripeButton) {
+        // the frame owner left the stripe before, and the last frame guest leaves it now
+        manager.hideToolWindow(presenting.id, removeFromStripe = true)
+      }
     }
   }
 
@@ -381,11 +448,6 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
 internal class PresentingSlot(
   /** The tool window of the frame owner. */
   val presenting: ToolWindowImpl,
-  /**
-   * [presenting] shows the content of the frame owner, so the frame owner can be an entry.
-   * Otherwise, [presenting] only presents the frame guests, and their entries decide its available state.
-   */
-  val showsOwnerContent: Boolean,
   /** [ToolWindowManagerPresentation] registered [presenting], because the frame owner had no tool window with the id. */
   val isRegisteredForGuests: Boolean,
 ) {
@@ -400,6 +462,9 @@ internal class PresentingSlot(
 
   /** The selector of the project. It exists from the first time [presenting] has a choice of projects. */
   var selector: ToolWindowProjectSelector? = null
+
+  /** A frame guest has an entry in the selector. */
+  fun hasGuestEntry(): Boolean = selection.entries.any { it !== presenting }
 
   /** The tool window of the active project of the frame, when the project has one with the id. */
   private fun activeToolWindow(): ToolWindowImpl? {
