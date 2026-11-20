@@ -62,6 +62,11 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   private final FoldRegion[] myRegions;
   private final SoftWrapEx myNextWrap;
   private final int myVisualLineStartOffset;
+  /**
+   * The x shift of a right-aligned visual line, or 0.
+   * The x coordinates of a {@link Fragment} include it. The x coordinates of a {@link LineVisualFragment} do not.
+   */
+  private final float myXOffset;
   private final Fragment myFragment;
   private final Runnable myQuickEvaluationListener;
 
@@ -152,7 +157,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     myTextLayoutCache = view.getTextLayoutCache();
     myQuickEvaluationListener = quickEvaluationListener;
     myScaleContext = ScaleContext.create(view.getEditor().getContentComponent());
-    myFragment = createFragment(view, visualLine, align);
+    myXOffset = calculateXOffset(view, visualLine, align);
+    myFragment = new Fragment();
     myRegions = fetchTopLevelFoldings(view);
     myVisualLineStartOffset = visualLineStartOffset;
     var softWraps = view.getSoftWrapModel().getRegisteredSoftWrapsEx();
@@ -282,14 +288,6 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       startX,
       startOrPrevWrap
     );
-  }
-
-  private @NotNull Fragment createFragment(@NotNull EditorView view, int visualLine, boolean align) {
-    if (align && visualLine != -1 && view.getEditor().isRightAligned()) {
-      float xOffset = view.getRightAlignmentLineStartX(visualLine) - view.getInsets().left;
-      return new RightAlignedFragment(xOffset);
-    }
-    return new Fragment();
   }
 
   private float calculateStartX(int visualLineStartOffset, @Nullable SoftWrapEx startOrPrevWrap) {
@@ -534,6 +532,13 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     return 0;
   }
 
+  private static float calculateXOffset(@NotNull EditorView view, int visualLine, boolean align) {
+    if (align && visualLine != -1 && view.getEditor().isRightAligned()) {
+      return view.getRightAlignmentLineStartX(visualLine) - view.getInsets().left;
+    }
+    return 0;
+  }
+
   private static @Nullable SoftWrapEx getSoftWrap(@NotNull List<? extends SoftWrapEx> softWraps, int index) {
     if (0 <= index && index < softWraps.size()) {
       return softWraps.get(index);
@@ -546,7 +551,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     return ObjectUtils.notNull(foldingModel.fetchTopLevel(), FoldRegion.EMPTY_ARRAY);
   }
 
-  class Fragment {
+  final class Fragment {
     int getVisualLineStartOffset() {
       return myVisualLineStartOffset;
     }
@@ -602,11 +607,14 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     }
 
     float getStartX() {
-      return myDelegate != null ? myDelegate.getStartX() : myPrevX;
+      if (myDelegate != null) {
+        return myDelegate.getStartX() + myXOffset;
+      }
+      return myPrevX + myXOffset;
     }
 
     float getEndX() {
-      return myCurrentX;
+      return myCurrentX + myXOffset;
     }
 
     // column is expected to be between minLogicalColumn and maxLogicalColumn for this fragment
@@ -636,7 +644,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
 
     VisualColumn xToVisualColumn(float x) {
       if (myDelegate != null) {
-        return myDelegate.xToVisualColumn(x);
+        return myDelegate.xToVisualColumn(x - myXOffset);
       } else if (myFoldRegion != null) {
         VisualColumn column = getVisualColumnForXInsideFoldRegion(x - getStartX());
         column.column += getStartVisualColumn();
@@ -649,7 +657,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
 
     float visualColumnToX(int column) {
       if (myDelegate != null) {
-        return myDelegate.visualColumnToX(column);
+        return myDelegate.visualColumnToX(column) + myXOffset;
       }
       if (myFoldRegion != null) {
         return getStartX() + getXForVisualColumnInsideFoldRegion(column - myCurrentVisualColumn + myFoldRegionColumns);
@@ -740,7 +748,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     // offset is absolute
     float offsetToX(int offset) {
       if (myDelegate != null) {
-        return myDelegate.offsetToX(offset - myCurrentStartLogicalLineStart);
+        return myDelegate.offsetToX(offset - myCurrentStartLogicalLineStart) + myXOffset;
       }
       if (myFoldRegion != null) {
         return getStartX() + getXForOffsetInsideFoldRegion(offset);
@@ -752,7 +760,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     float offsetToX(float startX, int startOffset, int offset) {
       assert myDelegate != null;
       int lineStartOffset = myCurrentStartLogicalLineStart;
-      return myDelegate.offsetToX(startX, startOffset - lineStartOffset, offset - lineStartOffset);
+      float x = myDelegate.offsetToX(startX - myXOffset, startOffset - lineStartOffset, offset - lineStartOffset);
+      return x + myXOffset;
     }
 
     boolean isRtl() {
@@ -794,44 +803,6 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
         };
       }
       return _ -> {};
-    }
-  }
-
-  final class RightAlignedFragment extends Fragment {
-    private final float xOffset;
-
-    RightAlignedFragment(float offset) {
-      xOffset = offset;
-    }
-
-    @Override
-    float offsetToX(int offset) {
-      return super.offsetToX(offset) + xOffset;
-    }
-
-    @Override
-    float offsetToX(float startX, int startOffset, int offset) {
-      return super.offsetToX(startX - xOffset, startOffset, offset) + xOffset;
-    }
-
-    @Override
-    float getEndX() {
-      return super.getEndX() + xOffset;
-    }
-
-    @Override
-    float getStartX() {
-      return super.getStartX() + xOffset;
-    }
-
-    @Override
-    float visualColumnToX(int column) {
-      return super.visualColumnToX(column) + xOffset;
-    }
-
-    @Override
-    VisualColumn xToVisualColumn(float x) {
-      return super.xToVisualColumn(x - xOffset);
     }
   }
 
