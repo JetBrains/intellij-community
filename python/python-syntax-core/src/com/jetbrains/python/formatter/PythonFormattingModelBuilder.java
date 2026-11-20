@@ -117,16 +117,8 @@ import static com.jetbrains.python.PyTokenTypes.YIELD_KEYWORD;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PythonFormattingModelBuilder implements FormattingModelBuilder, CustomFormattingModelBuilder {
   private static final boolean DUMP_FORMATTING_AST = false;
-
-  /**
-   * Holds the token sets that read {@link com.jetbrains.python.PyElementTypes}, apart from the builder class.
-   * The platform instantiates the builder to check that the Python language has one, also in a process without a Python PSI.
-   * The element types must not initialize there.
-   */
-  private static final class TokenSets {
-    static final TokenSet STAR_PATTERNS = TokenSet.create(SINGLE_STAR_PATTERN, DOUBLE_STAR_PATTERN);
-    static final TokenSet EXPRESSIONS_WITH_COLON = TokenSet.create(KEY_VALUE_EXPRESSION, KEY_VALUE_PATTERN, LAMBDA_EXPRESSION);
-  }
+  private static final TokenSet STAR_PATTERNS = TokenSet.create(SINGLE_STAR_PATTERN, DOUBLE_STAR_PATTERN);
+  private static final TokenSet EXPRESSIONS_WITH_COLON = TokenSet.create(KEY_VALUE_EXPRESSION, KEY_VALUE_PATTERN, LAMBDA_EXPRESSION);
 
   @Override
   public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
@@ -164,7 +156,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .spacing(0, Integer.MAX_VALUE, 1, false, commonSettings.KEEP_BLANK_LINES_IN_CODE)
 
       .between(COLON, STATEMENT_LIST).spacing(1, Integer.MAX_VALUE, 0, true, 0)
-      .afterInside(COLON, TokenSets.EXPRESSIONS_WITH_COLON).spaceIf(pySettings.SPACE_AFTER_PY_COLON)
+      .afterInside(COLON, EXPRESSIONS_WITH_COLON).spaceIf(pySettings.SPACE_AFTER_PY_COLON)
 
       .afterInside(GT, ANNOTATION).spaces(1)
       .betweenInside(MINUS, GT, ANNOTATION).none()
@@ -267,7 +259,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .around(AUG_ASSIGN_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
       .aroundInside(ADDITIVE_OPERATIONS, BINARY_EXPRESSION).spaceIf(commonSettings.SPACE_AROUND_ADDITIVE_OPERATORS)
       .aroundInside(STAR_OPERATORS, STAR_PARAMETERS).none()
-      .aroundInside(STAR_OPERATORS, TokenSets.STAR_PATTERNS).none()
+      .aroundInside(STAR_OPERATORS, STAR_PATTERNS).none()
       .aroundInside(STAR_OPERATORS, TYPE_PARAMETER).none()
       .between(EXCEPT_KEYWORD, MULT).none()
       .between(PERC, TokenSet.create(PERC, IDENTIFIER, EXPRESSION_STATEMENT)).none()

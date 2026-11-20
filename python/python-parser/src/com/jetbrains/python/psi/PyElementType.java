@@ -36,7 +36,7 @@ public class PyElementType extends IElementType implements PyPsiCreatingElementT
   }
 
   /**
-   * An element type whose PSI class comes from the {@link PyPsiElementFactory} of the process at call time.
+   * An element type that asks {@link PyPsiElementFactory#current()} for its PSI class each time it creates an element.
    * {@code constructor} picks the creator from the factory, for example {@code PyPsiElementFactory::getArgumentListConstructor}.
    */
   public static @NotNull PyElementType viaFactory(
