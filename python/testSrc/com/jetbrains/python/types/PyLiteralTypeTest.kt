@@ -318,20 +318,20 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       
       @overload
       def foo1() -> Literal[2]:
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: '() -> Literal[2]'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: 'def foo1() -> Literal[2]'
           pass
       
       @overload
       def foo1() -> bool:
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: '() -> bool'
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 2 are the same or broaderConflicting signature: '() -> bool'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: 'def foo1() -> bool'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 2 are the same or broaderConflicting signature: 'def foo1() -> bool'
           pass
       
       @overload
       def foo1() -> None:
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: '() -> None'
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 2 are the same or broaderConflicting signature: '() -> None'
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 3 are the same or broaderConflicting signature: '() -> None'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: 'def foo1() -> None'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 2 are the same or broaderConflicting signature: 'def foo1() -> None'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 3 are the same or broaderConflicting signature: 'def foo1() -> None'
           pass
       
       def foo1()
@@ -351,11 +351,11 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       
       @overload
       def foo(p1: Literal["a"]) -> str: ...
-      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: '(p1: Literal["a"]) -> str'
+      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: 'def foo(p1: Literal["a"]) -> str'
       
       @overload
       def foo(p1: Literal["b"]) -> bytes: ...
-      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: '(p1: Literal["b"]) -> bytes'
+      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: 'def foo(p1: Literal["b"]) -> bytes'
       
       @overload
       def foo(p1: str) -> int: ...
@@ -377,11 +377,11 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       
       @overload
       def foo(p1: Literal["a"]) -> str: ...
-      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: '(p1: Literal["a"]) -> str'
+      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: 'def foo(p1: Literal["a"]) -> str'
       
       @overload
       def foo(p1: Literal["b"]) -> bytes: ...
-      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: '(p1: Literal["b"]) -> bytes'
+      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: 'def foo(p1: Literal["b"]) -> bytes'
       
       @overload
       def foo(p1: str) -> int: ...
@@ -403,11 +403,11 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       
       @overload
       def foo(p1: Literal["a"]) -> str: ...
-      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: '(p1: Literal["a"]) -> str'
+      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: 'def foo(p1: Literal["a"]) -> str'
       
       @overload
       def foo(p1: Literal["b"]) -> bytes: ...
-      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: '(p1: Literal["b"]) -> bytes'
+      #   ^^^ WARNING This overload overlaps overload 3 with incompatible return typeConflicting signature: 'def foo(p1: Literal["b"]) -> bytes'
       
       @overload
       def foo(p1: str) -> int: ...

@@ -13,7 +13,7 @@ class Descriptor:
 
 class NotDescriptor:
     @overload
-    def <warning descr="This overload overlaps overload 2 with incompatible return typeConflicting signature: '(self: Self@NotDescriptor, __obj: None, __owner: Any) -> str'">foo</warning>(self, __obj: None, __owner: Any) -> str:
+    def <warning descr="This overload overlaps overload 2 with incompatible return typeConflicting signature: 'def foo(self: Self@NotDescriptor, __obj: None, __owner: Any) -> str'">foo</warning>(self, __obj: None, __owner: Any) -> str:
         ...
 
     @overload

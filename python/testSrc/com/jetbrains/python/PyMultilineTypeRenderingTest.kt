@@ -90,8 +90,8 @@ class PyMultilineTypeRenderingTest : PyCodeInsightTestCase() {
   fun `overloads go on separate lines`() {
     doTestMultilineTypeName("""
       Overload[
-          (x: int, y: Aaaaaaaaaaaaaaaaaaaa) -> Bbbbbbbbbbbbbbbbbbbb,
-          (x: str, y: Cccccccccccccccccccc) -> Dddddddddddddddddddd,
+          def g(x: int, y: Aaaaaaaaaaaaaaaaaaaa) -> Bbbbbbbbbbbbbbbbbbbb,
+          def g(x: str, y: Cccccccccccccccccccc) -> Dddddddddddddddddddd,
       ]
       """, """
       from typing import overload
@@ -109,7 +109,7 @@ class PyMultilineTypeRenderingTest : PyCodeInsightTestCase() {
   @Test
   fun `callable parameters go on separate lines`() {
     doTestMultilineTypeName("""
-      (
+      def g(
           first: Aaaaaaaaaaaaaaaaaaaa,
           second: Bbbbbbbbbbbbbbbbbbbb,
           third: Cccccccccccccccccccc,

@@ -48,7 +48,7 @@ class PyiTypeTest : PyCodeInsightTestCase() {
   @TestCaseOptions(testFileName = "FunctionType.py")
   fun `function type`() = test("""
     def f(x):
-    #   └ TYPE (x: int) -> dict[Unknown, Unknown]
+    #   └ TYPE def f(x: int) -> dict[Unknown, Unknown]
         pass
     """.trimIndent(),
     "FunctionType.pyi" to "def f(x: int) -> dict: ...",

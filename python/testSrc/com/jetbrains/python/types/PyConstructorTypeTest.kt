@@ -249,7 +249,7 @@ class PyConstructorTypeTest : PyInspectionTestCase() {
                    
       MyClass()
       MyClass[int]()
-      <warning descr="Invalid self argument 'MyClass[str]' to method 'MyClass.__init__' with type '(self: MyClass[int]) -> None'">MyClass[str]()</warning>
+      <warning descr="Invalid self argument 'MyClass[str]' to method 'MyClass.__init__' with type 'def __init__(self: MyClass[int]) -> None'">MyClass[str]()</warning>
       """.trimIndent())
   }
 

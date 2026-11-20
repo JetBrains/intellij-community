@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyLambdaExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyNumericLiteralExpression
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -21,6 +22,7 @@ import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeRendererFeature
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -203,12 +205,48 @@ class PythonDocumentationApiTest : PyCodeInsightTestCase() {
   }
 
   @Test
+  @TestFor(issues = ["PY-88620"])
   fun `a function type is rendered as a signature but hinted as a Callable`() {
     inFile("def f(a: int) -> str: pass") {
       val type = typeOf(function("f"))
-      assertEquals("(a: int) -> str", PythonDocumentationProvider.getTypeName(type, context))
+      assertEquals("def f(a: int) -> str", PythonDocumentationProvider.getTypeName(type, context))
       // `typing.Callable` cannot express named parameters, so the parameter list degrades to `...`.
       assertEquals("Callable[..., str]", PythonDocumentationProvider.getTypeHint(type, context))
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-88620"])
+  fun `a function type shows its qualified name when names are fully qualified`() {
+    inFile("""
+      def f(a: int) -> str: pass
+
+      class C:
+          @staticmethod
+          def s() -> int: pass
+    """) {
+      val functionType = typeOf(function("f"))
+      assertEquals("def f(a: int) -> str", PythonDocumentationProvider.getTypeName(functionType, context))
+      assertEquals("def aaa.f(a: builtins.int) -> builtins.str",
+                   PythonDocumentationProvider.getTypeName(functionType, context, PyTypeRendererFeature.USE_FQN))
+      assertEquals("def aaa.C.s() -> builtins.int",
+                   PythonDocumentationProvider.getTypeName(typeOf(function("C.s")), context, PyTypeRendererFeature.USE_FQN))
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-88620"])
+  fun `a local function keeps its own name and a lambda has no name when names are fully qualified`() {
+    inFile("""
+      def outer():
+          def inner() -> int: pass
+          return lambda: None
+    """) {
+      val inner = PsiTreeUtil.findChildOfType(function("outer"), PyFunction::class.java)!!
+      val lambda = PsiTreeUtil.findChildOfType(function("outer"), PyLambdaExpression::class.java)!!
+      assertEquals("def inner() -> builtins.int",
+                   PythonDocumentationProvider.getTypeName(typeOf(inner), context, PyTypeRendererFeature.USE_FQN))
+      assertEquals("() -> None", PythonDocumentationProvider.getTypeName(typeOf(lambda), context, PyTypeRendererFeature.USE_FQN))
     }
   }
 

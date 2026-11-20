@@ -1197,8 +1197,8 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       def err2(a: int, b: str) -> Tuple[str, str]: ...
       
       
-      foo(err1) # WARNING Expected type '(int, str, bool, list[int]) -> tuple[list[int], str, bool]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got '(a: int, b: str, c: bool, d: list[int]) -> tuple[list[int], str, str]' instead
-      foo(err2) # WARNING Expected type '(int, str) -> tuple[str]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got '(a: int, b: str) -> tuple[str, str]' instead
+      foo(err1) # WARNING Expected type '(int, str, bool, list[int]) -> tuple[list[int], str, bool]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got 'def err1(a: int, b: str, c: bool, d: list[int]) -> tuple[list[int], str, str]' instead
+      foo(err2) # WARNING Expected type '(int, str) -> tuple[str]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got 'def err2(a: int, b: str) -> tuple[str, str]' instead
       """.trimIndent())
 
     @Test

@@ -69,6 +69,6 @@ public class PyResolveCalleeTest extends PyTestCase {
     assertEquals(PyAstFunction.Modifier.STATICMETHOD, resolved.getModifier());
 
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-    assertEquals("(self: Unknown) -> None", PythonDocumentationProvider.getTypeName(resolved, context));
+    assertEquals("def foo(self: Unknown) -> None", PythonDocumentationProvider.getTypeName(resolved, context));
   }
 }

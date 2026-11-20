@@ -77,7 +77,7 @@ public final class PyTypeCachingTest extends PyTestCase {
         });  
       });
       PyFunction func = myFixture.findElementByText("func", PyFunction.class);
-      assertType("() -> str", func, TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile()));
+      assertType("def func() -> str", func, TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile()));
 
       myFixture.configureFromTempProjectFile("main.py");
       assertType("str",

@@ -11,7 +11,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 enum class PyTypeRendererFeature {
     /**
-     * Render fully qualified names of all classes and type forms, e.g. `typing.Callable[[mod.MyClass], typing.Any]`.
+     * Render fully qualified names of all classes, type forms and functions, e.g. `typing.Callable[[mod.MyClass], typing.Any]`
+     * or `def mod.func() -> builtins.int`.
      */
     USE_FQN,
 

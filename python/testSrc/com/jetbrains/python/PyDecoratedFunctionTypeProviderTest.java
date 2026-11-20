@@ -39,7 +39,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testNotAnnotatedDecoratorTurningFunctionIntoConstantIsIgnored() {
-    doTest("float", "() -> float",
+    doTest("float", "def func() -> float",
            """
              def dec(fun):
                  return 12
@@ -71,7 +71,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testNotAnnotatedDecoratorChangingFunctionSignatureIsIgnored() {
-    doTest("float", "() -> float",
+    doTest("float", "def func() -> float",
            """
              from typing import Callable
              
@@ -328,7 +328,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
 
   // PY-60104
   public void testImportedNotAnnotatedDecoratorChangingFunctionSignatureIsIgnored() {
-    doMultiFileTest("int", "(i: str) -> int");
+    doMultiFileTest("int", "def func(i: str) -> int");
   }
 
   // PY-60104

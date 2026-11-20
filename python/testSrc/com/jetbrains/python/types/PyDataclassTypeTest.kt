@@ -556,7 +556,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       def my_dataclass(cls): ...
       
       expr = my_dataclass
-      #└ TYPE (cls: Unknown) -> None
+      #└ TYPE def my_dataclass(cls: Unknown) -> None
       """.trimIndent())
 
     @Test

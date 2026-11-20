@@ -333,7 +333,7 @@ class PyTypeMismatchProseTest : PyCodeInsightTestCase() {
   @Test
   fun `an actual-side union keeps the member wrapper when the reason does not self-name end to end`() {
     // Two callables that differ only by a parameter name: the reason ("expected a parameter named 'a'") doesn't say
-    // which callable, so the "'(b: int) -> None' is not assignable to 'C'" wrapper is kept above each reason.
+    // which callable, so the "'def f3(b: int) -> None' is not assignable to 'C'" wrapper is kept above each reason.
     val prose = proseFor("""
       from typing import Protocol
       def f3(b: int): ...
@@ -344,10 +344,10 @@ class PyTypeMismatchProseTest : PyCodeInsightTestCase() {
       actual = f3 or f4
     """)
     assertEquals("""
-      Not all members of '((b: int) -> None) | ((c: int) -> None)' are assignable to 'C'
-        '(b: int) -> None' is not assignable to 'C'
+      Not all members of '(def f3(b: int) -> None) | (def f4(c: int) -> None)' are assignable to 'C'
+        'def f3(b: int) -> None' is not assignable to 'C'
           Expected a parameter named 'a', but found 'b'
-        '(c: int) -> None' is not assignable to 'C'
+        'def f4(c: int) -> None' is not assignable to 'C'
           Expected a parameter named 'a', but found 'c'
     """.trimIndent(), prose)
   }

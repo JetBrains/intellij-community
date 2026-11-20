@@ -1189,7 +1189,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
               return f(A(), b)
       #                ^^^ WARNING FIXME Expected 'T', got 'A' instead
           return a
-      #          └ WARNING Expected type '(T, bool) -> bool', got '(b: bool) -> bool' instead
+      #          └ WARNING Expected type '(T, bool) -> bool', got 'def a(b: bool) -> bool' instead
 
       class A:
           @dec
@@ -1784,7 +1784,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           print_a_callable_name(i_have_special_attributes)
           print_a_callable_doc(i_have_special_attributes)
           print_a_callable_unknown(i_have_special_attributes)
-      #                            ^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type '{unknown}', got '() -> None' instead
+      #                            ^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type '{unknown}', got 'def i_have_special_attributes() -> None' instead
       """.trimIndent())
 
     @Test
@@ -2132,7 +2132,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def foo(p):
           assert p
       expr = foo
-      #└ TYPE (p: Unknown) -> None
+      #└ TYPE def foo(p: Unknown) -> None
       """.trimIndent())
 
     @Test
@@ -2179,7 +2179,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           for entry in entries:
               yield entry
       expr = resort
-      #└ TYPE (entries: Unknown) -> Generator[Unknown, Unknown, None]
+      #└ TYPE def resort(entries: Unknown) -> Generator[Unknown, Unknown, None]
       """.trimIndent())
 
     @Test
