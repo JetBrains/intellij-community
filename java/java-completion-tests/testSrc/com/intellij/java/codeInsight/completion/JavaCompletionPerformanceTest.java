@@ -19,6 +19,8 @@ import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import java.lang.reflect.Method;
+
 import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionFixture;
 import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,6 +38,7 @@ public final class JavaCompletionPerformanceTest {
   @Test
   public void testPerformanceWithManyNonMatchingDeclarations(TestInfo testInfo) {
     LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    Method testMethod = testInfo.getTestMethod().orElseThrow();
     EdtTestUtil.runInEdtAndWait(() -> {
       for (int i = 0; i < 10; i++) {
         myFixture.addClass("class Foo" + i + " {\n" +
@@ -50,7 +53,7 @@ public final class JavaCompletionPerformanceTest {
                     "localV<caret>x }" +
                     "}";
       myFixture.configureByText("a.java", text);
-      Benchmark.newBenchmark(testInfo.getTestMethod().orElseThrow().getName(), () -> {
+      Benchmark.newBenchmark(testMethod.getName(), () -> {
         assertEquals(1, myFixture.completeBasic().length);
       }).setup(() -> {
         LookupImpl lookup = completion.get().getLookup();
@@ -58,13 +61,14 @@ public final class JavaCompletionPerformanceTest {
         myFixture.type("\bV");
         PsiManager.getInstance(myFixture.getProject()).dropPsiCaches();
         assertNull(completion.get().getLookup());
-      }).start();
+      }).start(testMethod, testMethod.getName());
     });
   }
 
   @Test
   public void testPerformanceWithManyMatchingStaticallyImportedDeclarations(TestInfo testInfo) {
     LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    Method testMethod = testInfo.getTestMethod().orElseThrow();
     var fieldCount = 7000;
 
     @Language("JAVA") String constantClass =
@@ -74,7 +78,7 @@ public final class JavaCompletionPerformanceTest {
     EdtTestUtil.runInEdtAndWait(() -> {
       myFixture.addClass(constantClass);
       myFixture.configureByText("a.java", "import static Constants.*; class C { { field<caret>x } }");
-      Benchmark.newBenchmark(testInfo.getTestMethod().orElseThrow().getName(), () -> {
+      Benchmark.newBenchmark(testMethod.getName(), () -> {
         int length = myFixture.completeBasic().length;
         assertTrue(length > 100, String.valueOf(length));
       }).setup(() -> {
@@ -83,15 +87,17 @@ public final class JavaCompletionPerformanceTest {
         myFixture.type("\bd");
         PsiManager.getInstance(myFixture.getProject()).dropPsiCaches();
         assertNull(completion.get().getLookup());
-      }).start();
+      }).start(testMethod, testMethod.getName());
     });
   }
 
   @Test
-  public void testChainingPerformance() {
+  public void testChainingPerformance(TestInfo testInfo) {
     LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    Method testMethod = testInfo.getTestMethod().orElseThrow();
+    String launchName = myFixture.getTestName(false);
     EdtTestUtil.runInEdtAndWait(() -> {
-      Benchmark.newBenchmark(myFixture.getTestName(false), (ThrowableRunnable<?>)() -> {
+      Benchmark.newBenchmark(launchName, (ThrowableRunnable<?>)() -> {
         myFixture.configureByText("Test.java", """
           class Foo extends javax.swing.JComponent {
         
@@ -104,7 +110,7 @@ public final class JavaCompletionPerformanceTest {
         completion.get().complete();
         assertNotNull(completion.get().getItems());
         LookupManager.getInstance(myFixture.getProject()).hideActiveLookup();
-      }).start();
+      }).start(testMethod, launchName);
 
     });
   }
