@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -15,6 +14,9 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
@@ -28,8 +30,6 @@ import javax.swing.Icon;
 
 /// @see <a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.9">JLS 8.8.9 Default Constructor</a>
 public class LightDefaultConstructor extends LightMethod implements SyntheticElement {
-
-  private static final Key<PsiMethod> DEFAULT_CONSTRUCTOR = new Key<>("default_constructor");
 
   private LightDefaultConstructor(@NotNull PsiMethod method, @NotNull PsiClass containingClass) {
     super(method.getManager(), method, containingClass);
@@ -50,9 +50,8 @@ public class LightDefaultConstructor extends LightMethod implements SyntheticEle
     return getNavigationElement().getTextOffset();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return getContainingClass();
   }
 
@@ -81,16 +80,17 @@ public class LightDefaultConstructor extends LightMethod implements SyntheticEle
     return "LightDefaultConstructor:" + getName();
   }
 
-  @Nullable
-  public static PsiMethod create(PsiClass aClass) {
-    PsiMethod constructor = aClass.getUserData(DEFAULT_CONSTRUCTOR);
-    if (constructor != null && constructor.getName().equals(aClass.getName())) return constructor;
+  public static @Nullable PsiMethod create(PsiClass aClass) {
+    return CachedValuesManager.getCachedValue(aClass, () -> 
+      CachedValueProvider.Result.create(createDefaultConstructor(aClass), PsiModificationTracker.MODIFICATION_COUNT));
+  }
 
+  private static @Nullable PsiMethod createDefaultConstructor(PsiClass aClass) {
     if (aClass.isInterface()
         || aClass.isRecord()
         || aClass instanceof PsiAnonymousClass
         || aClass instanceof PsiImplicitClass
-        || aClass instanceof PsiTypeParameter 
+        || aClass instanceof PsiTypeParameter
         || aClass instanceof PsiCompiledElement // default constructor is physically present in compiled classes already
         || aClass.getContainingFile() instanceof PsiCompiledElement) {
       return null;
@@ -103,15 +103,6 @@ public class LightDefaultConstructor extends LightMethod implements SyntheticEle
       String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(classModifierList));
       nonPhysical.getModifierList().setModifierProperty(modifier, true);
     }
-    LightDefaultConstructor defaultConstructor = new LightDefaultConstructor(nonPhysical, aClass);
-    aClass.putUserData(DEFAULT_CONSTRUCTOR, defaultConstructor);
-    return defaultConstructor;
-  }
-
-  public static void setName(@NotNull PsiClass aClass, @NotNull String newName) {
-    PsiMethod constructor = aClass.getUserData(DEFAULT_CONSTRUCTOR);
-    if (constructor != null) {
-      constructor.setName(newName);
-    }
+    return new LightDefaultConstructor(nonPhysical, aClass);
   }
 }

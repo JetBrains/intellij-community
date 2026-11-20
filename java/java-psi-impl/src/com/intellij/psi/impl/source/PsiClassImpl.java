@@ -46,7 +46,6 @@ import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
-import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -533,7 +532,6 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
         method.setName(newName);
       }
     }
-    LightDefaultConstructor.setName(this, newName);
 
     return this;
   }
