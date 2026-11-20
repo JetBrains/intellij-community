@@ -6,6 +6,9 @@ import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.annotations.McpToolHintValue.FALSE
+import com.intellij.mcpserver.annotations.McpToolHintValue.TRUE
+import com.intellij.mcpserver.annotations.McpToolHints
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
@@ -202,16 +205,19 @@ class DevKitMcpToolset : McpToolset {
     return ThreadingRequirements(reqs.map { ThreadingRequirementUsage(it.first, it.second) }, timeout)
   }
 
+  @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
   @McpTool
   @McpDescription(
     """
       |Resolves the source archives attached to the IntelliJ Platform dependencies of the project.
       |Use this tool to find the source code of the IntelliJ Platform and of its bundled plugins and libraries.
       |Supports a project that uses the IntelliJ Platform Gradle Plugin 2.x.
-      |Returns every distinct archive with its absolute path, its kind, and the IntelliJ Platform versions that use it.
+      |Returns every distinct archive with its absolute path and its kind.
       |Possible kinds are `PLATFORM`, `API`, and `LIBRARY`.
       |Note: the archives are ZIP files outside the project directory.
-      |Note: the tool does not download sources. When the IntelliJ Platform sources are not attached, the result has a hint.
+      |To read a source file, call `read_file` with an archive entry path, such as `<archive path>!/com/intellij/Foo.java`.
+      |Note: the tool does not download sources. When no `PLATFORM` archive is attached, the result has a hint.
+      |Note: the tool does not check that each IntelliJ Platform of the project has its own sources.
     """
   )
   @Suppress("unused", "FunctionName")
@@ -369,9 +375,7 @@ class DevKitMcpToolset : McpToolset {
   data class IntelliJPlatformSources(
     @property:McpDescription("Distinct source archives attached to the IntelliJ Platform dependencies of the project.")
     val archives: List<IntelliJPlatformSourceArchive>,
-    @property:McpDescription(
-      "Tells how to get the missing sources, or null when every IntelliJ Platform in the project has its IntelliJ Platform sources."
-    )
+    @property:McpDescription("Tells how to get the missing sources, or null when the result has a `PLATFORM` archive.")
     val hint: String?,
   )
 
@@ -385,10 +389,5 @@ class DevKitMcpToolset : McpToolset {
       "`LIBRARY` is any other sources, usually of a third-party library bundled with the IntelliJ Platform."
     )
     val kind: IntelliJPlatformSourceArchiveKind,
-    @property:McpDescription(
-      "IntelliJ Platform versions that use the archive, as `<product code>-<build number>` when the IntelliJ Platform is known, " +
-      "otherwise as the version of the dependency."
-    )
-    val platformVersions: List<String>,
   )
 }
