@@ -103,7 +103,8 @@ final class LineVisualFragment {
 
   // column is expected to be between minLogicalColumn and maxLogicalColumn for this fragment
   int logicalToVisualColumn(int column) {
-    int visualColumn = delegate.logicalToVisualColumn(startX, getMinLogicalColumn(), isRtl ? startLogicalColumn - column : column - startLogicalColumn);
+    int columnAdjustment = isRtl ? startLogicalColumn - column : column - startLogicalColumn;
+    int visualColumn = delegate.logicalToVisualColumn(startX, getMinLogicalColumn(), columnAdjustment);
     return startVisualColumn + visualColumn;
   }
 
