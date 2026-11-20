@@ -200,17 +200,30 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     int foldRegionColumns = FoldRegionFragment.calculateWidthInColumns(myView, foldRegion);
     float foldRegionWidth = FoldRegionFragment.calculateWidthInPixels(myView, foldRegion);
     int segmentStartOffset = foldRegion.getEndOffset();
-    enterSegment(
-      segmentStartOffset,
-      myDocument.lineNumber(segmentStartOffset),
-      myCurrentFoldRegionIndex + 1,
-      myCurrentVisualColumn + foldRegionColumns,
-      myCurrentX + foldRegionWidth,
-      null,
-      foldRegion instanceof CustomFoldRegion
-    );
+    int logicalLine = myDocument.lineNumber(segmentStartOffset);
+    int visualColumn = myCurrentVisualColumn + foldRegionColumns;
+    float x = myCurrentX + foldRegionWidth;
+    if (foldRegion instanceof CustomFoldRegion) {
+      endVisualLine(logicalLine, visualColumn, x);
+    } else {
+      enterSegment(
+        segmentStartOffset,
+        logicalLine,
+        myCurrentFoldRegionIndex + 1,
+        visualColumn,
+        x,
+        null
+      );
+    }
     myFoldRegionFragment.set(foldRegion, foldRegionColumns);
     return myFoldRegionFragment;
+  }
+
+  private void endVisualLine(int logicalLine, int visualColumn, float x) {
+    myCurrentEndLogicalLine = logicalLine;
+    myCurrentVisualColumn = visualColumn;
+    myCurrentX = x;
+    myNextStep = Step.END;
   }
 
   private @NotNull VisualLineFragment moveToInlay() {
@@ -282,8 +295,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
       startFoldingIndex,
       startVisualColumn,
       startX,
-      startOrPrevWrap,
-      false
+      startOrPrevWrap
     );
   }
 
@@ -304,8 +316,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     int foldRegionIndex,
     int visualColumn,
     float x,
-    @Nullable SoftWrapEx startWrap,
-    boolean afterCustomFoldRegion
+    @Nullable SoftWrapEx startWrap
   ) {
     int foldRegionStartOffset = getFoldRegionStartOffset(foldRegionIndex);
     if (foldRegionStartOffset < segmentStartOffset) {
@@ -333,9 +344,6 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
         );
         nextStep = fragmentIterator.hasNext() ? Step.TEXT_RUN : Step.END;
       }
-    }
-    if (afterCustomFoldRegion) {
-      nextStep = Step.END;
     }
     mySegmentStartOffset = segmentStartOffset;
     mySegmentEndOffset = segmentEndOffset;
