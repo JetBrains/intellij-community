@@ -1,0 +1,58 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.performanceTesting.lsp` start
+content_module_jar(module = ":lsp")
+### auto-generated section `dev intellij.performanceTesting.lsp` end
+
+### auto-generated section `build intellij.performanceTesting.lsp` start
+jvm_library(
+    name = "lsp",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.lsp",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//plugins/performanceTesting/core:performanceTesting",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/core-api:core",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/playback",
+        "//platform/lang-api:lang",
+        "//platform/lang-impl",
+        "//platform/usageView",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//libraries/opentelemetry",
+        "//platform/diagnostic/telemetry",
+        "//platform/core-ui",
+    ],
+)
+### auto-generated section `build intellij.performanceTesting.lsp` end
+
+### auto-generated section `iml intellij.performanceTesting.lsp` start
+exports_files(
+    [
+        "intellij.performanceTesting.lsp.iml",
+        "resources/intellij.performanceTesting.lsp.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.performanceTesting.lsp` end

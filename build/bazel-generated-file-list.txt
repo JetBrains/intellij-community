@@ -1865,6 +1865,7 @@ plugins/performanceTesting/execution
 plugins/performanceTesting/freezes
 plugins/performanceTesting/frontend
 plugins/performanceTesting/frontend-baseline
+plugins/performanceTesting/lsp
 plugins/performanceTesting/problemsView
 plugins/performanceTesting/rdct
 plugins/performanceTesting/remote-driver

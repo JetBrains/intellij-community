@@ -23,6 +23,7 @@ dist_plugin(
         "intellij.performanceTesting.execution",
         "intellij.performanceTesting.frontend",
         "intellij.performanceTesting.frontend.baseline",
+        "intellij.performanceTesting.lsp",
         "intellij.performanceTesting.problemsView",
         "intellij.performanceTesting.structureView",
         "intellij.performanceTesting.todo",

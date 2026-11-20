@@ -82,6 +82,7 @@
     <module name="intellij.performanceTesting.execution"/>
     <module name="intellij.performanceTesting.frontend"/>
     <module name="intellij.performanceTesting.frontend.baseline"/>
+    <module name="intellij.performanceTesting.lsp"/>
     <module name="intellij.performanceTesting.problemsView"/>
     <module name="intellij.performanceTesting.structureView"/>
     <module name="intellij.performanceTesting.todo"/>
