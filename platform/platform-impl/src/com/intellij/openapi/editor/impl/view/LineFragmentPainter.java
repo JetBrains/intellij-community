@@ -19,7 +19,7 @@ interface LineFragmentPainter {
   );
 
   void paint(
-    VisualLineFragmentsIterator.Fragment fragment,
+    VisualLineFragment fragment,
     int start,
     int end,
     TextAttributes attributes,

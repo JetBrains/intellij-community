@@ -598,7 +598,7 @@ final class EditorCoordinateMapper {
            : getInsets().left + (line == 0 ? getPrefixTextWidthInPixels() : 0);
   }
 
-  private @NotNull Iterable<VisualLineFragmentsIterator.Fragment> createVisualLineFragmentsIterator(
+  private @NotNull Iterable<VisualLineFragment> createVisualLineFragmentsIterator(
     @NotNull DocumentText document,
     int offset,
     boolean beforeSoftWrap,

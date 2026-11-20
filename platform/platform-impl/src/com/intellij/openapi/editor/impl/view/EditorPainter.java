@@ -641,7 +641,7 @@ public final class EditorPainter implements TextDrawingCallback {
           }
 
           @Override
-          public void paint(VisualLineFragmentsIterator.Fragment fragment, int start, int end,
+          public void paint(VisualLineFragment fragment, int start, int end,
                             TextAttributes attributes, List<BackgroundLayer> backgroundLayers, float xStart, float xEnd, int y) {
             if (!collectBackgrounds) {
               return;
@@ -1210,7 +1210,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
     private void paintWhitespace(float x, int y, int start, int end,
                                  LineWhitespacePaintingStrategy whitespacePaintingStrategy,
-                                 VisualLineFragmentsIterator.Fragment fragment, BasicStroke stroke, float scale) {
+                                 VisualLineFragment fragment, BasicStroke stroke, float scale) {
       if (!whitespacePaintingStrategy.showAnyWhitespace()) return;
 
       boolean restoreStroke = false;
@@ -1967,7 +1967,7 @@ public final class EditorPainter implements TextDrawingCallback {
      * One report per paint keeps the log readable.
      */
     private void reportBrokenFragmentRange(
-      VisualLineFragmentsIterator.Fragment fragment,
+      VisualLineFragment fragment,
       IterationState it,
       int fragmentStartOffset,
       int start,

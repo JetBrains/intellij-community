@@ -271,7 +271,7 @@ private enum class Kind {
 
 /**
  * A copy of the values of one fragment.
- * The iterator returns one [VisualLineFragmentsIterator.Fragment] object for each kind, so a test keeps copies.
+ * The iterator returns one [VisualLineFragment] object for all fragments of a kind, so a test keeps copies.
  * The x range is relative to the line start x of a left-aligned editor.
  */
 private data class FragmentState(
@@ -335,7 +335,7 @@ private fun EditorImpl.addCollapsedFoldRegion(startOffset: Int, endOffset: Int, 
   }
 }
 
-private fun VisualLineFragmentsIterator.Fragment.kind(): Kind {
+private fun VisualLineFragment.kind(): Kind {
   if (currentFoldRegion != null) {
     return Kind.FOLD_REGION
   } else if (currentInlay != null) {
@@ -345,7 +345,7 @@ private fun VisualLineFragmentsIterator.Fragment.kind(): Kind {
   }
 }
 
-private fun VisualLineFragmentsIterator.Fragment.state(originX: Float): FragmentState {
+private fun VisualLineFragment.state(originX: Float): FragmentState {
   return FragmentState(
     kind = kind(),
     offsets = startOffset..endOffset,
