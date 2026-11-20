@@ -200,7 +200,6 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   private val migrationRunner = SettingsMigrationRunner(scope, this)
 
   init {
-    checkCreatedByInitializer()
     scope.launch {
       for (layerData in incoming) processPendingPushes(layerData)
     }
@@ -226,20 +225,6 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
       reload(bootScope())
     }
     migrationRunner.watchExtensionPoints()
-  }
-
-  /**
-   * Checks that [SettingsVaultInitializer] runs before the vault is created. Otherwise, the start of the vault depends on
-   * another caller, and a broken initializer stays unnoticed. The check logs an error and sets
-   * [SettingsVaultStartCheck.vaultCreatedBeforeInitializer]. Outside the unit test mode, the vault then works anyway.
-   * In the unit test mode, the logged error fails the test, and the vault creation fails with it.
-   */
-  private fun checkCreatedByInitializer() {
-    if (SettingsVaultStartCheck.isInitializerStarted) return
-    SettingsVaultStartCheck.vaultCreatedBeforeInitializer = true
-    LOG.error("The settings vault is created before ${SettingsVaultInitializer::class.java.simpleName} runs. " +
-              "Probably the caller reads the settings too early. Do not use settings v2 from an application " +
-              "initialized listener or a preloaded service.")
   }
 
   /** Writes the application snapshot cache if it has pending changes. [SettingsAppLifecycleListener] calls it at the close. */

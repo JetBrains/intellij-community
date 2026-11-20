@@ -6,8 +6,6 @@ package com.intellij.platform.settings.v2.impl
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.settings.v2.SettingsVault
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Creates the vault at the application load. So the vault init reloads the application scope at startup in every
@@ -15,8 +13,8 @@ import org.jetbrains.annotations.VisibleForTesting
  *
  * The platform runs the starter, and so opens a project, only after this listener ends. The start waits only for the
  * creation, because the vault init runs the reload in the background. The preloaded services and the other initialized
- * listeners run at the same time as this listener. When one of them uses settings v2, it creates the vault first, and
- * the vault logs an error. See [SettingsVaultStartCheck].
+ * listeners run at the same time as this listener. When one of them uses settings v2 first, it creates the vault, and
+ * this listener only waits for that creation.
  *
  * The test application also runs this listener, in `preloadServicesAndCallAppInitializedListeners` of
  * `community/platform/testFramework/common/src/common/testApplication.kt`.
@@ -25,27 +23,6 @@ import org.jetbrains.annotations.VisibleForTesting
  */
 internal class SettingsVaultInitializer : ApplicationInitializedListener {
   override suspend fun execute() {
-    SettingsVaultStartCheck.isInitializerStarted = true
     serviceAsync<SettingsVault>()
   }
-}
-
-/**
- * Holds the state of the check that [SettingsVaultInitializer] creates the vault first. [SettingsVaultImpl] runs the
- * check when the vault is created.
- */
-@ApiStatus.Internal
-object SettingsVaultStartCheck {
-  /** Holds whether [SettingsVaultInitializer] started. */
-  @Volatile
-  internal var isInitializerStarted: Boolean = false
-
-  /**
-   * Holds whether something created the vault before [SettingsVaultInitializer] started. [SettingsVaultImpl] sets it,
-   * and logs an error. `SettingsVaultStartTest` in `remote-dev/settings/v2/lambdaTests/` checks it on each side.
-   */
-  @Volatile
-  @get:VisibleForTesting
-  var vaultCreatedBeforeInitializer: Boolean = false
-    internal set
 }
