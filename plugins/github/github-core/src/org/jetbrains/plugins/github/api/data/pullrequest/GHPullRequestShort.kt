@@ -28,7 +28,7 @@ open class GHPullRequestShort(
   @JsonProperty("assignees") assignees: GraphQLNodesDTO<GHUser>,
   @JsonProperty("labels") labels: GraphQLNodesDTO<GHLabel>?,
   @JsonProperty("reviewRequests") reviewRequests: GraphQLNodesDTO<GHPullRequestReviewRequest>?,
-  @JsonProperty("reviewThreads") reviewThreads: GraphQLNodesDTO<ReviewThreadDetails>,
+  @JsonProperty("reviewThreads") reviewThreads: GraphQLNodesDTO<ReviewThreadDetails?>,
   @JsonProperty("reviews") reviews: GraphQLNodesDTO<GHPullRequestReview>?,
   val mergeable: GHPullRequestMergeableState,
   val viewerCanUpdate: Boolean,
@@ -49,7 +49,7 @@ open class GHPullRequestShort(
   val reviewRequests = reviewRequests?.nodes.orEmpty()
 
   @JsonIgnore
-  val unresolvedReviewThreadsCount = reviewThreads.nodes.count { !it.isResolved && !it.isOutdated }
+  val unresolvedReviewThreadsCount = reviewThreads.nodes.count { it != null && !it.isResolved && !it.isOutdated }
 
   @JsonIgnore
   val reviews: List<GHPullRequestReview> = reviews?.nodes.orEmpty()
