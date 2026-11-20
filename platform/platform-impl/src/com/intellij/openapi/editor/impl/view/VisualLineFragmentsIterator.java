@@ -97,7 +97,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     int startFoldingIndex = foldingModel.getLastCollapsedRegionBefore(visualLineStartOffset) + 1;
     float xOffset = 0;
     if (align && view.getEditor().isRightAligned()) {
-      int visualLine = view.offsetToVisualPosition(offset, false, beforeSoftWrap).line;
+      int visualLine = view.offsetToVisualLine(offset, beforeSoftWrap);
       xOffset = calculateXOffset(view, visualLine);
     }
     int startLogicalLine = document.lineNumber(visualLineStartOffset);
