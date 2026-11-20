@@ -649,6 +649,21 @@ internal class UnifiedPluginsPageControllerTest {
   }
 
   @Test
+  fun `Suggested appends new project suggestions before Staff Picks on refresh`() {
+    val project = item("project.first")
+    val newProject = item("project.new")
+    val firstPick = item("staff.first").copy(isStaffPick = true)
+    val secondPick = item("staff.second").copy(isStaffPick = true)
+    val suggested = PluginSectionState(PluginSectionId.Suggested, items = listOf(project, firstPick, secondPick))
+    val controller = UnifiedPluginsPageController(listOf(suggested))
+
+    controller.updateSection(suggested.copy(items = listOf(newProject, project, secondPick, firstPick)))
+
+    assertThat(controller.state.value.section(PluginSectionId.Suggested).items)
+      .containsExactly(project, newProject, firstPick, secondPick)
+  }
+
+  @Test
   fun `expanded Bundled appends new plugins inside their category`() {
     val firstTool = categoryItem("first.tool", "Tools", enabled = false)
     val secondTool = categoryItem("second.tool", "Tools", enabled = false)

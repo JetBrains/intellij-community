@@ -41,6 +41,7 @@ internal data class PluginItemState(
   val searchVendor: String? = null,
   val searchTags: Set<String> = emptySet(),
   val updateSourceId: PluginUpdateSource? = null,
+  val isStaffPick: Boolean = false,
 ) {
   init {
     require(contentRevision >= 0) { "Plugin content revision must not be negative" }

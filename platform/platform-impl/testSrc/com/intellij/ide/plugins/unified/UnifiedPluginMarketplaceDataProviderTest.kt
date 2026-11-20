@@ -114,8 +114,8 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
 
     assertThat(projectSuggestionsLoaded).isTrue()
     assertThat(staffPicksLoaded).isTrue()
-    assertThat(results.last().models).containsExactly(staffPick)
-    assertThat(results.last().error).isNull()
+    assertThat(results.single().models).containsExactly(staffPick)
+    assertThat(results.single().error).isNull()
   }
 
   @Test
@@ -178,27 +178,32 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
   }
 
   @Test
-  fun `Staff Picks publish while project suggestions are still loading`() = runTest {
+  fun `project suggestions publish first even when Staff Picks load first`() = runTest {
     val projectSuggestions = CompletableDeferred<UnifiedPluginMarketplaceFetchResult>()
     val staffPick = plugin("staff.plugin", "Staff Pick")
     val projectSuggestion = plugin("project.plugin", "Project Suggestion")
     val results = ArrayList<UnifiedPluginMarketplaceFetchResult>()
+    var staffPicksLoaded = false
 
     backgroundScope.launch {
       loadMergedSuggestedPlugins(
         loadProjectSuggestions = { projectSuggestions.await() },
-        loadStaffPicks = { UnifiedPluginMarketplaceFetchResult(listOf(staffPick)) },
+        loadStaffPicks = {
+          staffPicksLoaded = true
+          UnifiedPluginMarketplaceFetchResult(listOf(staffPick))
+        },
       ).toList(results)
     }
     runCurrent()
 
-    assertThat(results).hasSize(1)
-    assertThat(results.single().models).containsExactly(staffPick)
+    assertThat(staffPicksLoaded).isTrue()
+    assertThat(results).isEmpty()
 
     projectSuggestions.complete(UnifiedPluginMarketplaceFetchResult(listOf(projectSuggestion)))
     runCurrent()
 
-    assertThat(results.last().models).containsExactly(projectSuggestion, staffPick)
+    assertThat(results.map(UnifiedPluginMarketplaceFetchResult::models))
+      .containsExactly(listOf(projectSuggestion), listOf(projectSuggestion, staffPick))
   }
 
   @Test
