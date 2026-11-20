@@ -37,7 +37,8 @@ internal class GithubNotificationIdsHolder : NotificationIdsHolder {
                   REBASE_REMOTE_ORIGIN_NOT_FOUND,
                   REBASE_ACCOUNT_NOT_FOUND,
                   REBASE_FAILED_TO_MATCH_REPO,
-                  GIST_CREATED)
+                  GIST_CREATED,
+                  LOGIN_FAILED)
   }
 
   companion object {
@@ -74,5 +75,6 @@ internal class GithubNotificationIdsHolder : NotificationIdsHolder {
     const val REBASE_ACCOUNT_NOT_FOUND = "github.rebase.account.not.found"
     const val REBASE_FAILED_TO_MATCH_REPO = "rebase.error.failed.to.match.gh.repo"
     const val GIST_CREATED = "github.gist.created"
+    const val LOGIN_FAILED = "github.login.failed"
   }
 }

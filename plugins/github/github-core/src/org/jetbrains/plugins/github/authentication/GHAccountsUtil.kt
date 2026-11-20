@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
@@ -21,6 +22,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.childScope
@@ -48,9 +50,11 @@ import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginDialog
 import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginViewModel
 import org.jetbrains.plugins.github.authentication.ui.LoginNotUniqueException
 import org.jetbrains.plugins.github.authentication.ui.UniqueLoginPredicate
+import org.jetbrains.plugins.github.authentication.ui.getLoginErrorMessage
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.GHPluginProjectScopeProvider
+import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import java.awt.Component
 import java.util.concurrent.CancellationException
 import javax.swing.JButton
@@ -456,6 +460,8 @@ private fun loginWithOAuth(model: GHLoginModel, project: Project?, parentCompone
     project != null -> ModalTaskOwner.project(project)
     else -> ModalTaskOwner.guess()
   }
+  val isModalContext = ModalityState.current() != ModalityState.nonModal()
+  var error: Exception? = null
   try {
     runWithModalProgressBlocking(modalTaskOwner, GithubBundle.message("login.to.github")) {
       try {
@@ -472,10 +478,26 @@ private fun loginWithOAuth(model: GHLoginModel, project: Project?, parentCompone
       catch (e: Exception) {
         rethrowControlFlowException(e)
         LOG.warn("GitHub OAuth login failed", e)
+        error = e
       }
     }
   }
   catch (_: CancellationException) {
+  }
+  error?.let { showOAuthLoginError(it, project, parentComponent, isModalContext) }
+}
+
+private fun showOAuthLoginError(error: Exception, project: Project?, parentComponent: Component?, isModalContext: Boolean) {
+  val message = getLoginErrorMessage(error)
+  if (isModalContext || project == null) {
+    val title = GithubBundle.message("login.to.github")
+    if (parentComponent != null) Messages.showErrorDialog(parentComponent, message, title)
+    else Messages.showErrorDialog(project, message, title)
+  }
+  else {
+    VcsNotifier.getInstance(project).notifyError(GithubNotificationIdsHolder.LOGIN_FAILED,
+                                                 GithubBundle.message("login.failed.notification.title"),
+                                                 message)
   }
 }
 

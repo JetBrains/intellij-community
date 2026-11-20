@@ -114,7 +114,7 @@ internal object GHTokenLoginPanelFactory {
   }
 }
 
-private fun getLoginErrorMessage(error: Throwable): @NlsContexts.DialogMessage String =
+internal fun getLoginErrorMessage(error: Throwable): @NlsContexts.DialogMessage String =
   when (error) {
     is GithubParseException -> error.message ?: message("credentials.invalid.server.path")
     is LoginNotUniqueException -> message("login.account.already.added", error.login)
