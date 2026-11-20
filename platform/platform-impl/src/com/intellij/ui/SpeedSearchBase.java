@@ -537,7 +537,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return null;
   }
 
-  private @Nullable Object findFirstElement(String s) {
+  @ApiStatus.Internal
+  protected @Nullable Object findFirstElement(String s) {
     final String _s = s.trim();
     for (ListIterator<?> it = getElementIterator(0); it.hasNext(); ) {
       final Object element = it.next();
@@ -546,7 +547,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return null;
   }
 
-  private @Nullable Object findLastElement(String s) {
+  @ApiStatus.Internal
+  protected @Nullable Object findLastElement(String s) {
     final String _s = s.trim();
     for (ListIterator<?> it = getElementIterator(getElementCount()); it.hasPrevious(); ) {
       final Object element = it.previous();

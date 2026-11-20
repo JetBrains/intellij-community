@@ -24,8 +24,8 @@ internal class FileHistorySpeedSearch(project: Project, index: VcsLogIndex, stor
 
   override fun isSpeedSearchEnabled(): Boolean = true
 
-  override fun getCommitMetadataById(commitId: VcsLogCommitStorageIndex): VcsCommitMetadata? {
-    return visiblePack.getUserData(COMMIT_METADATA)?.get(commitId) ?: super.getCommitMetadataById(commitId)
+  override fun getCachedCommitMetadataById(commitId: VcsLogCommitStorageIndex): VcsCommitMetadata? {
+    return visiblePack.getUserData(COMMIT_METADATA)?.get(commitId)
   }
 
   companion object {

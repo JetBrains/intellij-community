@@ -19,6 +19,7 @@ import com.intellij.vcs.log.VcsLogUserFilter
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserRegistry
 import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.ui.table.VcsLogAsyncRowSearch.Direction
@@ -32,13 +33,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
 import java.beans.PropertyChangeEvent
+import javax.swing.event.TableModelEvent
 
 internal open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, private val storage: VcsLogStorage, component: VcsLogGraphTable) :
   VcsLogSpeedSearch(component) {
 
   private val userRegistry: VcsUserRegistry = project.getService(VcsUserRegistry::class.java)
-  private var matchResult: MatchResult? = null
-  private var usersPattern: String? = null
+
+  /** Counts row changes of the table model, including graph changes within the same visible pack (expanding linear branches). */
+  private var rowsVersion: Int = 0
 
   private val asyncSearch: VcsLogAsyncRowSearch<SearchSnapshot> = VcsLogAsyncRowSearch(
     scope = project.service<VcsLogSpeedSearchScope>().cs.childScope("Vcs log speed search").also { it.coroutineContext.job.cancelOnDispose(component) },
@@ -47,35 +50,13 @@ internal open class IndexSpeedSearch(project: Project, private val index: VcsLog
   )
 
   init {
+    // updates of single columns (root column on scrolling, external columns) do not change rows or metadata columns
+    myComponent.model.addTableModelListener { e -> if (e.column == TableModelEvent.ALL_COLUMNS) rowsVersion++ }
     addChangeListener { evt: PropertyChangeEvent ->
-      if (evt.propertyName == ENTERED_PREFIX_PROPERTY_NAME) {
-        val newPattern = evt.newValue as? String
-        updateUsers(newPattern)
-        if (newPattern.isNullOrEmpty()) asyncSearch.reset()
+      if (evt.propertyName == ENTERED_PREFIX_PROPERTY_NAME && (evt.newValue as? String).isNullOrEmpty()) {
+        asyncSearch.reset()
       }
     }
-  }
-
-  private fun updateUsers(pattern: String?) {
-    if (pattern == usersPattern) return
-    matchResult = matchUsers(matchResult, pattern)
-    usersPattern = pattern
-  }
-
-  private fun matchUsers(oldMatchResult: MatchResult?, newPattern: String?): MatchResult? {
-    val dataGetter = index.dataGetter
-    if (newPattern.isNullOrEmpty() || dataGetter == null) {
-      return null
-    }
-
-    val oldPattern = oldMatchResult?.pattern
-    val usersToExamine = if (oldPattern != null && newPattern.contains(oldPattern)) oldMatchResult.matchingUsers else userRegistry.users
-    val matchedUsers = usersToExamine.filter { user -> compare(VcsUserUtil.getShortPresentation(user), newPattern) }
-    if (matchedUsers.isEmpty()) return null
-
-    val matchedByUserCommits = dataGetter.filter(listOf<VcsLogDetailsFilter>(SimpleVcsLogUserFilter(matchedUsers)))
-
-    return MatchResult(pattern = newPattern, commitsForUsers = matchedByUserCommits, matchingUsers = matchedUsers)
   }
 
   override fun isSpeedSearchEnabled(): Boolean {
@@ -101,76 +82,88 @@ internal open class IndexSpeedSearch(project: Project, private val index: VcsLog
     return findAsync(s, Direction.PREVIOUS)
   }
 
+  override fun findFirstElement(s: String): Any? {
+    if (index.dataGetter == null) return super.findFirstElement(s)
+    return findAsync(s, Direction.FIRST)
+  }
+
+  override fun findLastElement(s: String): Any? {
+    if (index.dataGetter == null) return super.findLastElement(s)
+    return findAsync(s, Direction.LAST)
+  }
+
   private fun findAsync(s: String, direction: Direction): Int? {
-    // the prefix listener runs after the first search for a new prefix, so match users here to search with the right ones
-    updateUsers(s)
-    return asyncSearch.find(s.trim(), selectedIndex, direction, UISettings.getInstance().cycleScrolling)
-  }
-
-  override fun isMatchingElement(row: Any, pattern: String): Boolean {
-    val commitId = getCommitId(row as VcsLogTableIndex) ?: return false
-    if (super.isMatchingElement(row, pattern)) return true
-    return matchResult?.run {
-      commitsForUsers.isNotEmpty() &&  // getting id from row takes time, so optimizing a little here
-      commitsForUsers.contains(commitId)
-    } ?: false
-  }
-
-  override fun isMatchingMetadata(pattern: String, metadata: VcsCommitMetadata?): Boolean {
-    if (metadata is IndexedDetails) {
-      // Author column is excluded here since authors are filtered separately in "matchUsers" due to performance reasons
-      return isMatchingMetadata(pattern, metadata, columnsForSpeedSearch - Author)
-    }
-    return super.isMatchingMetadata(pattern, metadata)
+    val pattern = s.trim()
+    // highlighting takes the pattern from the recent search text of the UI comparator,
+    // which is not set by the search when no row is in memory
+    comparator.matchingFragments(pattern, "")
+    return asyncSearch.find(pattern, selectedIndex, direction, UISettings.getInstance().cycleScrolling)
   }
 
   override fun getCommitMetadata(row: VcsLogTableIndex): VcsCommitMetadata? {
     val commitId = getCommitId(row) ?: return null
-    return getCommitMetadataById(commitId) ?: super.getCommitMetadata(row)
+    return getCachedCommitMetadataById(commitId) ?: super.getCommitMetadata(row)
   }
 
   /**
-   * Called on EDT and in the background.
-   * @return null when there is nothing better than the table model metadata
+   * In-memory metadata besides the table model cache. Called on EDT and in the background.
    */
-  protected open fun getCommitMetadataById(commitId: VcsLogCommitStorageIndex): VcsCommitMetadata? {
-    val dataGetter = index.dataGetter ?: return null
-    return IndexedDetails(dataGetter, storage, commitId)
-  }
+  protected open fun getCachedCommitMetadataById(commitId: VcsLogCommitStorageIndex): VcsCommitMetadata? = null
 
   protected fun getCommitId(row: VcsLogTableIndex): VcsLogCommitStorageIndex? = myComponent.model.getId(row)
 
   private class SearchSnapshot(
     @JvmField val model: GraphTableModel,
     @JvmField val columns: List<VcsLogMetadataColumn>,
-    @JvmField val commitsForUsers: IntSet,
+    @JvmField val dataGetter: IndexDataGetter?,
     @JvmField val comparator: SpeedSearchComparator,
+    @JvmField val commitsForUsers: IntSet = IntSets.emptySet(),
   )
 
   private inner class AsyncRows : VcsLogAsyncRowSearch.Rows<SearchSnapshot> {
-    override fun rowCount(): Int = elementCount
+    override fun getRowCount(): Int = elementCount
 
-    override fun commitIdAt(row: Int): VcsLogCommitStorageIndex? = getCommitId(row)
+    override fun getSelectedRow(): Int = selectedIndex
 
-    override fun contextKey(): Any = Pair(myComponent.model.visiblePack, columnsForSpeedSearch)
+    override fun getCommitIdAt(row: Int): VcsLogCommitStorageIndex? = getCommitId(row)
 
-    override fun snapshot(pattern: String): SearchSnapshot {
-      return SearchSnapshot(myComponent.model, columnsForSpeedSearch, matchResult?.commitsForUsers ?: IntSets.emptySet(),
+    override fun getContextKey(): Any = Triple(rowsVersion, myComponent.model.visiblePack, columnsForSpeedSearch)
+
+    override fun matchesInMemory(row: Int, pattern: String): Boolean? {
+      if (getCommitId(row) == null) return false
+      // the table model cache, does not load anything
+      val metadata = getCommitMetadata(row) ?: return null
+      // authors always match, even with the Author column hidden, like the users index in "prepare"
+      val columns = columnsForSpeedSearch.let { if (Author in it) it else it + Author }
+      return isMatchingMetadata(pattern, metadata, columns)
+    }
+
+    override fun createSnapshot(pattern: String): SearchSnapshot {
+      return SearchSnapshot(myComponent.model, columnsForSpeedSearch, index.dataGetter,
                             // SpeedSearchComparator caches its matcher and is not thread-safe, so the search gets its own one
                             SpeedSearchComparator(false))
     }
 
-    override fun matches(commitId: VcsLogCommitStorageIndex, pattern: String, snapshot: SearchSnapshot): Boolean {
-      val metadata = getCommitMetadataById(commitId)
-      if (metadata != null) {
-        // Author column is excluded for indexed details since authors are matched separately in "matchUsers"
-        val columns = if (metadata is IndexedDetails) snapshot.columns - Author else snapshot.columns
-        if (columns.any { snapshot.comparator.matchingFragments(pattern, it.getValue(snapshot.model, metadata)) != null }) return true
-      }
-      return snapshot.commitsForUsers.contains(commitId)
+    override suspend fun prepare(pattern: String, snapshot: SearchSnapshot): SearchSnapshot {
+      val dataGetter = snapshot.dataGetter ?: return snapshot
+      // authors are matched by the users index, it is faster than reading the author of each commit
+      val users = userRegistry.users.filter { snapshot.comparator.matchingFragments(pattern, VcsUserUtil.getShortPresentation(it)) != null }
+      if (users.isEmpty()) return snapshot
+      val commitsForUsers = dataGetter.filter(listOf<VcsLogDetailsFilter>(SimpleVcsLogUserFilter(users)))
+      return SearchSnapshot(snapshot.model, snapshot.columns, dataGetter, snapshot.comparator, commitsForUsers)
     }
 
-    override fun currentPattern(): String? = enteredPrefix?.trim()
+    override suspend fun matches(commitId: VcsLogCommitStorageIndex, pattern: String, snapshot: SearchSnapshot): Boolean {
+      if (snapshot.commitsForUsers.contains(commitId)) return true
+      val metadata = getCachedCommitMetadataById(commitId)
+                     ?: snapshot.dataGetter?.let { IndexedDetails(it, storage, commitId) }
+                     ?: return false
+      // Author column is excluded for indexed details since authors are matched in "prepare"
+      val columns = if (metadata is IndexedDetails) snapshot.columns - Author else snapshot.columns
+      return columns.any { snapshot.comparator.matchingFragments(pattern, it.getValue(snapshot.model, metadata)) != null }
+    }
+
+    override fun getCurrentPattern(): String? = enteredPrefix?.trim()
 
     override fun onFound(row: Int, pattern: String) {
       selectElement(row, pattern)
@@ -181,10 +174,6 @@ internal open class IndexSpeedSearch(project: Project, private val index: VcsLog
 
 @Service(Service.Level.PROJECT)
 internal class VcsLogSpeedSearchScope(@JvmField val cs: CoroutineScope)
-
-private data class MatchResult(@JvmField val pattern: String,
-                               @JvmField val commitsForUsers: IntSet = IntSets.emptySet(),
-                               @JvmField val matchingUsers: Collection<VcsUser> = emptySet())
 
 private class SimpleVcsLogUserFilter(private val users: Collection<VcsUser>) : VcsLogUserFilter {
   override fun getUsers(root: VirtualFile): Collection<VcsUser> = users
