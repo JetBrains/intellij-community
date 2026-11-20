@@ -33,6 +33,8 @@ public class FieldHidesSuperclassFieldInspectionTest {
   private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
     javaInspectionFixture(projectFixture, () -> new FieldHidesSuperclassFieldInspection());
 
+  // The language server does not finish the check in 5 minutes. LSP-2483 tracks the timeout.
+  @AnalysisHostTest(hosts = AnalysisHostTest.Host.IDE)
   @Test
   public void testFieldHidesSuperclassField() {
     inspectionFixture.get().doTest();

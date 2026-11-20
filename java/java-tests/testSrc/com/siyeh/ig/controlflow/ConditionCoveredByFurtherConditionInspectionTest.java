@@ -17,6 +17,8 @@ public class ConditionCoveredByFurtherConditionInspectionTest {
   private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
     javaInspectionFixture(projectFixture, () -> new ConditionCoveredByFurtherConditionInspection());
 
+  // The test expects a duplicate warning, and only the IDE reports it twice.
+  @AnalysisHostTest(hosts = AnalysisHostTest.Host.IDE)
   @Test
   public void testConditionCoveredByFurtherCondition() {
     ExpectedHighlightingData.expectedDuplicatedHighlighting(()->inspectionFixture.get().doTest());

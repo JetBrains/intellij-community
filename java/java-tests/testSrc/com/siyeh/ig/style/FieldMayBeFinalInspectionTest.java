@@ -19,6 +19,8 @@ public class FieldMayBeFinalInspectionTest {
     javaInspectionFixture(projectFixture, () -> new FieldMayBeFinalInspection(), ArrayUtilRt.EMPTY_STRING_ARRAY,
       INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/style/field_final");
 
+  // The language server gives other warnings. LSP-2483 tracks the difference.
+  @AnalysisHostTest(hosts = AnalysisHostTest.Host.IDE)
   @Test
   public void testFieldMayBeFinal() {
     inspectionFixture.get().doTest();

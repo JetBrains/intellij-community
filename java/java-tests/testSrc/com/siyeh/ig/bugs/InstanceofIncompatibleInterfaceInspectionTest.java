@@ -19,6 +19,8 @@ public class InstanceofIncompatibleInterfaceInspectionTest {
   private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
     javaInspectionFixture(projectFixture, () -> new InstanceofIncompatibleInterfaceInspection());
 
+  // The language server checks the expensive case, and the IDE skips it. LSP-2483 tracks the difference.
+  @AnalysisHostTest(hosts = AnalysisHostTest.Host.IDE)
   @Test
   public void testTooExpensiveToCheck() {
     inspectionFixture.get().doTest("""

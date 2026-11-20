@@ -19,6 +19,8 @@ public class LossyConversionCompoundAssignmentInspectionTest {
     javaInspectionFixture(projectFixture, () -> new LossyConversionCompoundAssignmentInspection(), ArrayUtilRt.EMPTY_STRING_ARRAY,
       INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/numeric/lossy_conversion");
 
+  // The language server gives other warnings. LSP-2483 tracks the difference.
+  @AnalysisHostTest(hosts = AnalysisHostTest.Host.IDE)
   @Test
   public void testLossyConversion() {
     inspectionFixture.get().doTest();

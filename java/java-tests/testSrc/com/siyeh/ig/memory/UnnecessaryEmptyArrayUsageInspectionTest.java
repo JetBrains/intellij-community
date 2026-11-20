@@ -16,6 +16,8 @@ public class UnnecessaryEmptyArrayUsageInspectionTest {
   private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
     javaInspectionFixture(projectFixture, () -> new UnnecessaryEmptyArrayUsageInspection());
 
+  // The language server gives other warnings. LSP-2483 tracks the difference.
+  @AnalysisHostTest(hosts = AnalysisHostTest.Host.IDE)
   @Test
   public void testUnnecessaryEmptyArrayUsage() { inspectionFixture.get().doTest(); }
 }

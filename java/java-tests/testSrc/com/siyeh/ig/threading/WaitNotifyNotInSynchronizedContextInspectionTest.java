@@ -30,6 +30,8 @@ public class WaitNotifyNotInSynchronizedContextInspectionTest {
   private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
     javaInspectionFixture(projectFixture, () -> new WaitNotifyNotInSynchronizedContextInspection());
 
+  // The language server gives other warnings. LSP-2483 tracks the difference.
+  @AnalysisHostTest(hosts = AnalysisHostTest.Host.IDE)
   @Test
   public void testWaitNotifyNotInSynchronizedContext() {
     inspectionFixture.get().doTest();
