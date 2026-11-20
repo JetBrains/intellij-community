@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import java.util.function.Function
@@ -35,24 +36,31 @@ class GridHookUpRegistry : Disposable {
    * Registers [hookUp] under [parent] and returns it.
    * Register a hookup once, and share it through [acquire].
    * A second registration gives it a second id and ties its disposal to the second parent.
+   * Under an already disposed [parent], it disposes [hookUp] and throws, as [Disposer.register] does.
    */
   fun <T : GridDataHookUp<GridRow, GridColumn>> registerHookUp(hookUp: T, parent: Disposable): T {
-    synchronized(lock) {
-      addReference(newReference(hookUp, null), parent)
+    val refused = synchronized(lock) {
+      val reference = newReference(hookUp, null)
+      if (addReference(reference, parent)) return hookUp
+      references.remove(reference.id)
+      reference
     }
-    return hookUp
+    Disposer.dispose(refused)
+    throw IncorrectOperationException("Cannot register $hookUp under the already disposed $parent")
   }
 
   /** Returns the id of [hookUp], or null if it isn't registered. */
   fun getId(hookUp: GridDataHookUp<GridRow, GridColumn>): GridHookUpId? =
     synchronized(lock) { references.values.find { it.hookUp === hookUp }?.id }
 
-  /** Adds [parent] to the holders of the hookup of [id] and returns it, or returns null if nothing holds it anymore. */
+  /**
+   * Adds [parent] to the holders of the hookup of [id] and returns it.
+   * Returns null if nothing holds it anymore or [parent] is already disposed.
+   */
   fun acquire(id: GridHookUpId, parent: Disposable): GridDataHookUp<GridRow, GridColumn>? {
     synchronized(lock) {
       val reference = references[id]
-      if (reference == null || reference.referenceCount <= 0) return null
-      addReference(reference, parent)
+      if (reference == null || reference.referenceCount <= 0 || !addReference(reference, parent)) return null
       return reference.hookUp
     }
   }
@@ -109,22 +117,43 @@ class GridHookUpRegistry : Disposable {
     return EditorOwner(reference, hookUp)
   }
 
-  /** Call under [lock]. */
-  private fun addReference(reference: HookUpReference, parent: Disposable) {
+  /** Call under [lock]. Returns false, with nothing changed, when [parent] is already disposed. */
+  private fun addReference(reference: HookUpReference, parent: Disposable): Boolean {
+    val release = ParentRelease(reference)
+    if (!Disposer.tryRegister(parent, release)) return false
     reference.referenceCount++
-    Disposer.register(parent) { releaseReference(reference, false) }
+    release.armed = true
+    return true
   }
 
+  /** Disposes outside [lock], as [registerHookUp] does: a hookup's dispose runs foreign code, such as closing its database session. */
   private fun releaseReference(reference: HookUpReference, keepForReopen: Boolean) {
-    synchronized(lock) {
-      if (--reference.referenceCount > 0) return
-      if (keepForReopen) {
-        reference.isKeptForReopen = true
-      }
-      else {
-        Disposer.dispose(reference)
-        references.remove(reference.id)
-      }
+    val released = synchronized(lock) { removeReference(reference, keepForReopen) } ?: return
+    Disposer.dispose(released)
+  }
+
+  /** Call under [lock]. Returns the reference to dispose once nothing holds it, or null. */
+  private fun removeReference(reference: HookUpReference, keepForReopen: Boolean): HookUpReference? {
+    if (--reference.referenceCount > 0) return null
+    if (keepForReopen) {
+      reference.isKeptForReopen = true
+      return null
+    }
+    references.remove(reference.id)
+    return reference
+  }
+
+  /**
+   * Releases a parent's reference when the parent is disposed.
+   * The Disposer may run it inside a failed [Disposer.tryRegister], before the reference is counted; [armed] makes that run do nothing.
+   */
+  private inner class ParentRelease(private val reference: HookUpReference) : Disposable {
+    /** Guarded by [lock]. */
+    var armed = false
+
+    override fun dispose() {
+      val released = synchronized(lock) { if (armed) removeReference(reference, false) else null } ?: return
+      Disposer.dispose(released)
     }
   }
 
