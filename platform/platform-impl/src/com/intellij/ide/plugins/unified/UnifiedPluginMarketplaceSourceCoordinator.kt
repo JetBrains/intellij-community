@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins.unified
 
 import com.intellij.diagnostic.rethrowControlFlowException
-import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
@@ -49,8 +48,7 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
   private var closed = false
 
   private var query = initialQuery
-  private var fetchedModels: List<PluginUiModel>? = null
-  private var fetchError: String? = null
+  private var fetchedResult: UnifiedPluginMarketplaceFetchResult? = null
   private var snapshot: UnifiedPluginMarketplaceSnapshot? = null
   private var suggestedFacetItems: List<PluginItemState> = emptyList()
   private var suggestedFacetsLoading = initialQuery.marketplaceSourceMode() == UnifiedPluginMarketplaceSourceMode.Suggested
@@ -129,7 +127,7 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
         is Command.MarketplaceVendorsFailed -> acceptMarketplaceVendorsFailed(command.cause)
         Command.RefreshEnrichment -> {
           sharedFactsRevision++
-          if (requestKind != RequestKind.Fetch) fetchedModels?.let(::startEnrichment)
+          if (requestKind != RequestKind.Fetch) fetchedResult?.let(::startEnrichment)
         }
         Command.Fetch -> startFetch(clearSnapshot = false)
         is Command.FetchProgress -> acceptFetchProgress(command)
@@ -155,7 +153,7 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
   private fun acceptUpdates(updates: PluginUpdatesEvent) {
     latestUpdates = updates
     updateRevision++
-    if (requestKind != RequestKind.Fetch) fetchedModels?.let(::startEnrichment)
+    if (requestKind != RequestKind.Fetch) fetchedResult?.let(::startEnrichment)
   }
 
   private fun acceptPopularTagsLoaded(tags: List<String>) {
@@ -188,8 +186,7 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
 
   private fun startFetch(clearSnapshot: Boolean) {
     requestJob?.cancel()
-    fetchedModels = null
-    fetchError = null
+    fetchedResult = null
     val requestedQuery = query
     val sourceMode = requestedQuery.marketplaceSourceMode()
     suggestedFacetsLoading = sourceMode == UnifiedPluginMarketplaceSourceMode.Suggested
@@ -217,9 +214,9 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
               null
             }
             else {
-              dataProvider.enrich(result.models, updates, revision)
+              enrich(result, updates, revision)
             }
-            commands.trySend(Command.FetchProgress(token, result.models, result.error, enriched))
+            commands.trySend(Command.FetchProgress(token, result, enriched))
           }
           commands.trySend(Command.FetchCompleted(token, updatesAtRequest, sharedFactsAtRequest))
           return@launch
@@ -232,7 +229,7 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
           return@launch
         }
         val enriched = dataProvider.enrich(result.models, updates, revision)
-        commands.trySend(Command.Loaded(token, result.models, result.error, enriched, updatesAtRequest, sharedFactsAtRequest))
+        commands.trySend(Command.Loaded(token, result, enriched, updatesAtRequest, sharedFactsAtRequest))
       }
       catch (c: CancellationException) {
         throw c
@@ -245,8 +242,7 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
 
   private fun acceptFetchProgress(command: Command.FetchProgress) {
     if (command.token != requestToken) return
-    fetchedModels = command.models
-    fetchError = command.error
+    fetchedResult = command.result
     command.snapshot?.let {
       snapshot = it
       suggestedFacetItems = it.items
@@ -259,25 +255,26 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
     requestJob = null
     requestKind = null
     suggestedFacetsLoading = false
-    val models = fetchedModels.orEmpty()
-    if (models.isNotEmpty() &&
+    val result = fetchedResult
+    val hasModels = !result?.models.isNullOrEmpty()
+    if (result != null && hasModels &&
         (command.updateRevision != updateRevision || command.sharedFactsRevision != sharedFactsRevision)) {
-      startEnrichment(models)
+      startEnrichment(result)
       return
     }
-    val error = fetchError
-    if (error != null && models.isEmpty()) {
+    val error = result?.error
+    if (error != null && !hasModels) {
       LOG.warn("Failed to load Suggested plugins for the unified Plugins page: $error")
     }
     val status = when {
       error == null -> PluginSectionStatus.Ready
-      models.isNotEmpty() || snapshot != null -> PluginSectionStatus.Degraded(PluginSectionError(loadErrorMessage, retryable = true))
+      hasModels || snapshot != null -> PluginSectionStatus.Degraded(PluginSectionError(loadErrorMessage, retryable = true))
       else -> PluginSectionStatus.Failed(PluginSectionError(loadErrorMessage, retryable = true))
     }
     publish(status)
   }
 
-  private fun startEnrichment(models: List<PluginUiModel>) {
+  private fun startEnrichment(result: UnifiedPluginMarketplaceFetchResult) {
     requestJob?.cancel()
     val token = ++requestToken
     val updatesAtRequest = updateRevision
@@ -288,8 +285,8 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
     publish(PluginSectionStatus.Loading(showingStaleContent = snapshot != null))
     requestJob = scope.launch {
       try {
-        val enriched = dataProvider.enrich(models, updates, revision)
-        commands.trySend(Command.Loaded(token, models, fetchError, enriched, updatesAtRequest, sharedFactsAtRequest))
+        val enriched = enrich(result, updates, revision)
+        commands.trySend(Command.Loaded(token, result, enriched, updatesAtRequest, sharedFactsAtRequest))
       }
       catch (c: CancellationException) {
         throw c
@@ -300,22 +297,33 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
     }
   }
 
+  private suspend fun enrich(
+    result: UnifiedPluginMarketplaceFetchResult,
+    updates: PluginUpdatesEvent?,
+    revision: Long,
+  ): UnifiedPluginMarketplaceSnapshot {
+    val snapshot = dataProvider.enrich(result.models, updates, revision)
+    if (result.suggestedGroups.isEmpty()) return snapshot
+    return snapshot.copy(items = snapshot.items.map { item ->
+      item.copy(suggestedGroup = result.suggestedGroups.getValue(item.pluginId))
+    })
+  }
+
   private fun acceptLoaded(command: Command.Loaded) {
     if (command.token != requestToken) return
     requestJob = null
     requestKind = null
-    fetchedModels = command.models
-    fetchError = command.error
+    fetchedResult = command.result
     snapshot = command.snapshot
     if (query.marketplaceSourceMode() == UnifiedPluginMarketplaceSourceMode.Suggested) {
       suggestedFacetItems = command.snapshot.items
     }
     if (command.updateRevision != updateRevision || command.sharedFactsRevision != sharedFactsRevision) {
-      startEnrichment(command.models)
+      startEnrichment(command.result)
       return
     }
     publish(
-      command.error?.let {
+      command.result.error?.let {
         PluginSectionStatus.Degraded(PluginSectionError(loadErrorMessage, retryable = true))
       } ?: PluginSectionStatus.Ready
     )
@@ -363,10 +371,9 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
     data object RefreshEnrichment : Command
     data object Fetch : Command
     data class FetchProgress(
-        val token: Long,
-        val models: List<PluginUiModel>,
-        val error: String?,
-        val snapshot: UnifiedPluginMarketplaceSnapshot?,
+      val token: Long,
+      val result: UnifiedPluginMarketplaceFetchResult,
+      val snapshot: UnifiedPluginMarketplaceSnapshot?,
     ) : Command
 
     data class FetchCompleted(
@@ -376,12 +383,11 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
     ) : Command
 
     data class Loaded(
-        val token: Long,
-        val models: List<PluginUiModel>,
-        val error: String?,
-        val snapshot: UnifiedPluginMarketplaceSnapshot,
-        val updateRevision: Long,
-        val sharedFactsRevision: Long,
+      val token: Long,
+      val result: UnifiedPluginMarketplaceFetchResult,
+      val snapshot: UnifiedPluginMarketplaceSnapshot,
+      val updateRevision: Long,
+      val sharedFactsRevision: Long,
     ) : Command
 
     data class Failed(val token: Long, val message: String?, val cause: Throwable?) : Command

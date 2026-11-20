@@ -277,10 +277,11 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
-  fun `local plugins are excluded from Suggested`() {
+  fun `Suggested limits results after excluding local plugins`() {
     val installed = item(plugin("installed.plugin", "Installed"))
     val bundled = item(plugin("bundled.plugin", "Bundled"))
     val suggestedOnly = item(plugin("suggested.plugin", "Suggested"))
+    val marketplace = (1..20).map { index -> item(plugin("marketplace.$index", "Marketplace $index")) }
 
     val state = composeUnifiedPluginsPageSourceState(
       query = PluginsQueryState(),
@@ -298,14 +299,14 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
             item(plugin(installed.pluginId.idString, "Suggested Installed")),
             item(plugin(bundled.pluginId.idString, "Suggested Bundled")),
             suggestedOnly,
-          ),
+          ) + marketplace,
         ),
         listModelData = PluginListModelData.EMPTY,
       ),
     )
 
     assertThat(state.sections.single { it.id == PluginSectionId.Suggested }.items.map(PluginItemState::pluginId))
-      .containsExactly(suggestedOnly.pluginId)
+      .containsExactlyElementsOf(listOf(suggestedOnly.pluginId) + marketplace.take(19).map(PluginItemState::pluginId))
   }
 
   @Test
