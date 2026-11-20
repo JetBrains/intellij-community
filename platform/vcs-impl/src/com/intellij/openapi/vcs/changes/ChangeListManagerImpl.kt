@@ -431,7 +431,7 @@ class ChangeListManagerImpl(
    *
    * @throws com.intellij.openapi.application.ThreadingSupport.LockAccessDisallowed if [operation] tries to take a read/write action.
    */
-  fun <T> executeUnderDataLock(operation: () -> T): T {
+  private fun <T> executeUnderDataLock(operation: () -> T): T {
     return synchronized(dataLock) {
       ApplicationManagerEx.getApplicationEx().withLocksProhibited(DEADLOCK_ADVICE) {
         operation()

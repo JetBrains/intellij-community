@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Holds the local change lists, and the index of every locally changed path.
  * <p>
  * Should work under the data lock of {@link ChangeListManagerImpl}.
- * Use {@link ChangeListManagerImpl#executeUnderDataLock} or {@link ChangeListManagerImpl#executeUnderReadActionDataLock}.
+ * Outside {@link ChangeListManagerImpl}, use {@link ChangeListManagerImpl#executeUnderReadActionDataLock}.
  */
 @ApiStatus.Internal
 public abstract sealed class ChangeListWorker {
