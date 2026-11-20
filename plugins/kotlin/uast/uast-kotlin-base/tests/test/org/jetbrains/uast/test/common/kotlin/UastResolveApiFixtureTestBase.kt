@@ -2982,10 +2982,10 @@ interface UastResolveApiFixtureTestBase {
             TestCase.assertEquals(
                 listOf(
                     "takeA" to "pkg.Foo.A",
-                    "unresolvedMethod" to "<ErrorType>",
-                    "overloaded" to "<ErrorType>",
-                    "takeMissing" to "<ErrorType>",
-                    "unconstrained" to "<ErrorType>",
+                    "unresolvedMethod" to "T",
+                    "overloaded" to "T",
+                    "takeMissing" to "T",
+                    "unconstrained" to "T",
                 ),
                 observed,
             )
