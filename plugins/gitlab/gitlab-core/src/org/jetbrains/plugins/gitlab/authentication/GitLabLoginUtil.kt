@@ -7,13 +7,16 @@ import com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -30,6 +33,7 @@ import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginDialogComp
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginOutcome
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 import org.jetbrains.plugins.gitlab.authentication.ui.YesNoCancelWithOptionsDialog
+import org.jetbrains.plugins.gitlab.notification.GitLabNotificationIds
 import org.jetbrains.plugins.gitlab.ui.util.GitLabPluginProjectScopeProvider
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Component
@@ -324,7 +328,9 @@ object GitLabLoginUtil {
     loginSource: GitLabLoginSource,
     accountId: String? = null,
   ): LoginResult {
-    return try {
+    val isModalContext = ModalityState.current() != ModalityState.nonModal()
+    var error: Exception? = null
+    val result = try {
       runWithModalProgressBlocking(project, title) {
         try {
           val rootNamespaceId = getStoredRootNamespaceId(project, GitLabServerPath.DEFAULT_SERVER.uri)
@@ -342,12 +348,33 @@ object GitLabLoginUtil {
         catch (e: Exception) {
           rethrowControlFlowException(e)
           LOG.warn("GitLab OAuth login failed", e)
+          error = e
           LoginResult.Failure
         }
       }
     }
     catch (_: CancellationException) {
       LoginResult.Failure
+    }
+    error?.let { showOAuthLoginError(project, it, title, isModalContext) }
+    return result
+  }
+
+  @RequiresEdt
+  private fun showOAuthLoginError(
+    project: Project,
+    error: Exception,
+    dialogTitle: @NlsContexts.DialogTitle String,
+    isModalContext: Boolean,
+  ) {
+    val message = getLoginErrorMessage(error)
+    if (isModalContext) {
+      Messages.showErrorDialog(project, message, dialogTitle)
+    }
+    else {
+      VcsNotifier.getInstance(project).notifyError(GitLabNotificationIds.GL_NOTIFICATION_LOGIN_FAILED,
+                                                   GitLabBundle.message("account.login.failed.notification.title"),
+                                                   message)
     }
   }
 

@@ -8,10 +8,12 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object GitLabNotificationIds {
   const val GL_NOTIFICATION_UPLOAD_FILE_ERROR: String = "gitlab.upload.file.action.error"
+  const val GL_NOTIFICATION_LOGIN_FAILED: String = "gitlab.login.failed"
 }
 
 class GitLabNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> = listOf(
     GitLabNotificationIds.GL_NOTIFICATION_UPLOAD_FILE_ERROR,
+    GitLabNotificationIds.GL_NOTIFICATION_LOGIN_FAILED,
   )
 }
