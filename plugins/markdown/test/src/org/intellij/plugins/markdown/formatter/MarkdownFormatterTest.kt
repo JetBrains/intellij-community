@@ -210,6 +210,9 @@ class MarkdownFormatterTest {
   fun `test blockquote with emphasis wrap`(): Unit = doTest(rightMargin = 80, insertQuoteArrows = true)
 
   @Test
+  fun `test blockquote with long link`(): Unit = doTest(rightMargin = 80, keepLineBreaks = true, insertQuoteArrows = true)
+
+  @Test
   fun `test do not wrap text inside block quotes`(): Unit = doTest(rightMargin = 80, wrapTextInsideBlockquotes = false)
 
   @Test
