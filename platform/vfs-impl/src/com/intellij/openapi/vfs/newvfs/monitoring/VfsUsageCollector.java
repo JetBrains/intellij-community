@@ -14,6 +14,8 @@ import com.intellij.internal.statistic.eventLog.events.StringListEventField;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.newvfs.RefreshScanPriority;
+import com.intellij.openapi.vfs.newvfs.RefreshScanStats;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,7 +29,7 @@ import java.util.stream.Stream;
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 19);
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 20);
 
   private static final LongEventField FIELD_WAIT_MS = EventFields.Long("wait_ms");  // -1 for synchronous refresh/events
 
@@ -51,11 +53,12 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final RoundedIntEventField FIELD_REFRESH_OTHER_ROOTS = EventFields.RoundedInt("roots_other");
   private static final BooleanEventField FIELD_REFRESH_CANCELLED = EventFields.Boolean("cancelled");
   private static final IntEventField FIELD_REFRESH_TRIES = EventFields.Int("tries");
+  private static final EnumEventField<RefreshScanPriority> FIELD_REFRESH_PRIORITY = EventFields.Enum("priority", RefreshScanPriority.class);
 
   private static final VarargEventId EVENT_REFRESH_SESSION = GROUP_VFS.registerVarargEvent(
     "refresh_session",
     FIELD_REFRESH_RECURSIVE, FIELD_REFRESH_LOCAL_ROOTS, FIELD_REFRESH_ARCHIVE_ROOTS, FIELD_REFRESH_OTHER_ROOTS,
-    FIELD_REFRESH_CANCELLED, FIELD_WAIT_MS, EventFields.DurationMs, FIELD_REFRESH_TRIES
+    FIELD_REFRESH_CANCELLED, FIELD_WAIT_MS, EventFields.DurationMs, FIELD_REFRESH_TRIES, FIELD_REFRESH_PRIORITY
   );
 
   /* ================== EVENT_REFRESH_SCAN: ====================================================== */
@@ -63,13 +66,19 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final IntEventField FIELD_REFRESH_FULL_SCANS = EventFields.Int("full_scans");
   private static final IntEventField FIELD_REFRESH_PARTIAL_SCANS = EventFields.Int("partial_scans");
   private static final IntEventField FIELD_REFRESH_RETRIES = EventFields.Int("retries");
-  private static final LongEventField FIELD_REFRESH_VFS_TIME_MS = EventFields.Long("vfs_time_ms");
-  private static final LongEventField FIELD_REFRESH_IO_TIME_MS = EventFields.Long("io_time_ms");
+
+  /** Utilization fields hold an integer percentage in the range 0..100 */
+  private static final IntEventField FIELD_REFRESH_THREAD_UTILIZATION = EventFields.Int("thread_utilization_percent");
+  private static final IntEventField FIELD_REFRESH_IO_UTILIZATION = EventFields.Int("io_utilization_percent");
+  private static final IntEventField FIELD_REFRESH_WASTED_UTILIZATION = EventFields.Int("wasted_utilization_percent");
+  private static final IntEventField FIELD_REFRESH_POOL_UTILIZATION = EventFields.Int("pool_utilization_percent");
+  private static final IntEventField FIELD_REFRESH_READ_LOCK_WAIT_UTILIZATION = EventFields.Int("read_lock_wait_utilization_percent");
 
   private static final VarargEventId EVENT_REFRESH_SCAN = GROUP_VFS.registerVarargEvent(
     "refresh_scan",
-    FIELD_REFRESH_FULL_SCANS, FIELD_REFRESH_PARTIAL_SCANS, FIELD_REFRESH_RETRIES, EventFields.DurationMs, FIELD_REFRESH_VFS_TIME_MS,
-    FIELD_REFRESH_IO_TIME_MS
+    FIELD_REFRESH_FULL_SCANS, FIELD_REFRESH_PARTIAL_SCANS, FIELD_REFRESH_RETRIES, EventFields.DurationMs,
+    FIELD_REFRESH_THREAD_UTILIZATION, FIELD_REFRESH_IO_UTILIZATION, FIELD_REFRESH_WASTED_UTILIZATION,
+    FIELD_REFRESH_POOL_UTILIZATION, FIELD_REFRESH_READ_LOCK_WAIT_UTILIZATION
   );
 
   /* ================== EVENT_EVENTS: ====================================================== */
@@ -220,7 +229,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   }
 
   public static void logRefreshSession(boolean recursive, int lfsRoots, int arcRoots, int otherRoots, boolean cancelled,
-                                       long wait, long duration, int tries) {
+                                       long wait, long duration, int tries, @NotNull RefreshScanPriority priority) {
     if (duration >= DURATION_THRESHOLD_MS) {
       EVENT_REFRESH_SESSION.log(
         FIELD_REFRESH_RECURSIVE.with(recursive),
@@ -230,20 +239,28 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_REFRESH_CANCELLED.with(cancelled),
         FIELD_WAIT_MS.with(wait),
         EventFields.DurationMs.with(duration),
-        FIELD_REFRESH_TRIES.with(tries));
+        FIELD_REFRESH_TRIES.with(tries),
+        FIELD_REFRESH_PRIORITY.with(priority));
     }
   }
 
-  public static void logRefreshScan(int fullScans, int partialScans, int retries, long duration, long vfsTime, long ioTime) {
-    if (duration >= DURATION_THRESHOLD_MS) {
+  public static void logRefreshScan(@NotNull RefreshScanStats stats) {
+    if (stats.durationMs() >= DURATION_THRESHOLD_MS) {
       EVENT_REFRESH_SCAN.log(
-        FIELD_REFRESH_FULL_SCANS.with(fullScans),
-        FIELD_REFRESH_PARTIAL_SCANS.with(partialScans),
-        FIELD_REFRESH_RETRIES.with(retries),
-        EventFields.DurationMs.with(duration),
-        FIELD_REFRESH_VFS_TIME_MS.with(vfsTime),
-        FIELD_REFRESH_IO_TIME_MS.with(ioTime));
+        FIELD_REFRESH_FULL_SCANS.with(stats.fullScans()),
+        FIELD_REFRESH_PARTIAL_SCANS.with(stats.partialScans()),
+        FIELD_REFRESH_RETRIES.with(stats.retries()),
+        EventFields.DurationMs.with(stats.durationMs()),
+        FIELD_REFRESH_THREAD_UTILIZATION.with(toPercent(stats.threadUtilization())),
+        FIELD_REFRESH_IO_UTILIZATION.with(toPercent(stats.ioUtilization())),
+        FIELD_REFRESH_WASTED_UTILIZATION.with(toPercent(stats.wastedUtilization())),
+        FIELD_REFRESH_POOL_UTILIZATION.with(toPercent(stats.threadPoolUtilization())),
+        FIELD_REFRESH_READ_LOCK_WAIT_UTILIZATION.with(toPercent(stats.readLockWaitingUtilization())));
     }
+  }
+
+  private static int toPercent(double fraction) {
+    return Math.clamp(Math.round(fraction * 100), 0, 100);
   }
 
   public static void logEventProcessing(long wait, long listenerTime, int listenerTries, long edtTime, int events) {

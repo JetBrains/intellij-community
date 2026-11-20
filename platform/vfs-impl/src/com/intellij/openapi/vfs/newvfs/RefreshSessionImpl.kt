@@ -42,6 +42,10 @@ private val RETRY_LIMIT = SystemProperties.getIntProperty("refresh.session.retry
 private val DURATION_REPORT_THRESHOLD_MS = SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", -1) * 1000L
 private const val PROGRESS_THRESHOLD_MILLIS = 5000
 
+internal enum class RefreshScanPriority { NORMAL, HIGH, EDT }
+
+internal data class ScanSessionStats(val timeInQueue: Long, val priority: RefreshScanPriority)
+
 @ConsistentCopyVisibility
 internal data class NewChildren internal constructor(
   val requestor: Any?,
@@ -188,7 +192,7 @@ internal class RefreshSessionImpl internal constructor(
   val isEventSession: Boolean
     get() = myWorkQueue.isEmpty() && myNewFilesCaseSensitive.isEmpty() && !myEvents.isEmpty()
 
-  fun scan(timeInQueue: Long): Collection<VFileEvent> {
+  fun scan(stats: ScanSessionStats): Collection<VFileEvent> {
     val workQueue = myWorkQueue
     myWorkQueue = mutableListOf()
     val newFilesCaseSensitive = myNewFilesCaseSensitive
@@ -280,7 +284,15 @@ internal class RefreshSessionImpl internal constructor(
       else if (file.getFileSystem() is ArchiveFileSystem) archiveRoots++
       else otherRoots++
     }
-    VfsUsageCollector.logRefreshSession(myIsRecursive, localRoots, archiveRoots, otherRoots, myCanceled, timeInQueue, t, count)
+    VfsUsageCollector.logRefreshSession(myIsRecursive,
+                                        localRoots,
+                                        archiveRoots,
+                                        otherRoots,
+                                        myCanceled,
+                                        stats.timeInQueue,
+                                        t,
+                                        count,
+                                        stats.priority)
     if (LOG.isTraceEnabled) {
       LOG.trace("${if (myCanceled) "cancelled" else "done"}, ${t} ms, tries ${count}, events ${events}")
     }

@@ -94,7 +94,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     }
     else if (EDT.isCurrentThreadEdt() || ApplicationManager.getApplication().isWriteAccessAllowed) {
       (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteSafeEnvironment()
-      val events = runRefreshSession(session, -1L)
+      val events = runRefreshSession(session, ScanSessionStats(-1, RefreshScanPriority.EDT))
       fireEvents(events, session)
     }
     else if (ApplicationManager.getApplication().holdsReadLock()) {
@@ -141,7 +141,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
   private fun queueSession(session: RefreshSessionImpl, modality: ModalityState) {
     if (LOG.isDebugEnabled()) LOG.debug("Queue session with id=" + session.hashCode())
     if (session.isEventSession && !session.isAsynchronous) {
-      processEvents(session, session.modality, runRefreshSession(session, -1L))
+      processEvents(session, session.modality, runRefreshSession(session, ScanSessionStats(-1, RefreshScanPriority.NORMAL)))
     }
     else {
       val queuedAt = System.nanoTime()
@@ -152,7 +152,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
         try {
           val title = IdeCoreBundle.message("progress.title.doing.file.refresh.0", session)
           HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, title, Runnable {
-            events.set(runRefreshSession(session, timeInQueue))
+            events.set(runRefreshSession(session, ScanSessionStats(timeInQueue, RefreshScanPriority.NORMAL)))
           })
         }
         finally {
@@ -168,13 +168,16 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     // suspending VFS refresh works in the context of the caller
     // however, we must maintain an invariant that no more than one scanning part of low-priority refresh is running
     // hence we limit ourselves with a semaphore
+    val queuedAt = TimeSource.Monotonic.markNow()
     val events = when {
       session.isEventSession -> session.events
       highPriority -> highPriorityEventScanSemaphore.withPermit {
-        collectEventsSuspending(session, -1L)
+        val timeInQueue = queuedAt.elapsedNow()
+        collectEventsSuspending(session, ScanSessionStats(timeInQueue.inWholeMilliseconds, RefreshScanPriority.HIGH))
       }
       else -> eventScanSemaphore.withPermit {
-        collectEventsSuspending(session, -1L)
+        val timeInQueue = queuedAt.elapsedNow()
+        collectEventsSuspending(session, ScanSessionStats(timeInQueue.inWholeMilliseconds, RefreshScanPriority.NORMAL))
       }
     }
     executeWithParallelizationGuard(session) {
@@ -182,7 +185,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     }
   }
 
-  private suspend fun collectEventsSuspending(session: RefreshSessionImpl, timeInQueue: Long): Collection<VFileEvent> {
+  private suspend fun collectEventsSuspending(session: RefreshSessionImpl, stats: ScanSessionStats): Collection<VFileEvent> {
     return withBackgroundProgress(BackgroundTaskOwner.allFrames(), IdeCoreBundle.message("file.synchronize.progress"), visibleInStatusBar = false, cancellation = TaskCancellation.nonCancellable()) {
       @OptIn(InternalCoroutinesApi::class)
       coroutineContext.job.invokeOnCompletion(onCancelling = true) { cause ->
@@ -190,7 +193,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
           session.cancel()
         }
       }
-      runRefreshSession(session, timeInQueue)
+      runRefreshSession(session, stats)
     }
   }
 
@@ -205,7 +208,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     val queuedAt = TimeSource.Monotonic.markNow()
     eventScanningScope.launchWithPermit(eventScanSemaphore) {
       val timeInQueue = queuedAt.elapsedNow()
-      val events = collectEventsSuspending(session, timeInQueue.inWholeNanoseconds)
+      val events = collectEventsSuspending(session, ScanSessionStats(timeInQueue.inWholeMilliseconds, RefreshScanPriority.NORMAL))
       eventProcessingScope.launch {
         executeWithParallelizationGuard(session) {
           processEventsSuspending(session, events)
@@ -346,10 +349,10 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     }
   }
 
-  private fun runRefreshSession(session: RefreshSessionImpl, timeInQueue: Long): Collection<VFileEvent> {
+  private fun runRefreshSession(session: RefreshSessionImpl, stats: ScanSessionStats): Collection<VFileEvent> {
     try {
       mySessions.add(session)
-      return session.scan(timeInQueue)
+      return session.scan(stats)
     }
     catch (e: Throwable) {
       // The events of a failed scan are never applied, so its files must not stay in flight
@@ -431,7 +434,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     @TestOnly
     @JvmStatic
     fun scanForTest(session: RefreshSession): Collection<VFileEvent> =
-      (session as RefreshSessionImpl).scan(-1)
+      (session as RefreshSessionImpl).scan(ScanSessionStats(-1, RefreshScanPriority.NORMAL))
 
     /** Ends the 'actualizing' state of the files that [scanForTest] has scanned, as if their events were applied */
     @TestOnly
