@@ -4,14 +4,13 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteSshProcess;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
 import com.jediterm.core.input.KeyEvent;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TerminalStarter;
@@ -28,30 +27,27 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public final class TerminalUtil {
-
   private static final Logger LOG = Logger.getInstance(TerminalUtil.class);
 
   public static final String TERMINAL_CONFIGURABLE_ID = "terminal";
 
-  private TerminalUtil() {}
+  private TerminalUtil() { }
 
-  /**
-   * Determines if any command is running in the terminal by checking if the shell has any child processes.
-   * This method may access the file system and launch external processes,
-   * so it is prohibited to call it on EDT or under read action.
-   */
-  @SuppressWarnings("UsagesOfObsoleteApi")  // Can't use just only annotations because they generate throwing assertions
+  /// Determines if any command is running in the terminal by checking if the shell has any child processes.
+  /// This method may access the file system and launch external processes,
+  /// so it is prohibited to call it on EDT or under read action.
   @RequiresReadLockAbsence(generateAssertion = false)
   @RequiresBackgroundThread(generateAssertion = false)
   public static boolean hasRunningCommands(@NotNull TtyConnector connector) throws IllegalStateException {
+    // Can't use just only annotations because they generate throwing assertions
     ThreadingAssertions.softAssertBackgroundThread();
     ThreadingAssertions.softAssertNoReadAccess();
 
     if (!connector.isConnected()) return false;
-    ProcessTtyConnector processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(connector);
+    var processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(connector);
     if (processTtyConnector == null) return true;
-    Process javaProcess = processTtyConnector.getProcess();
-    Boolean localResult = localProcessHasRunningCommands(javaProcess);
+    var javaProcess = processTtyConnector.getProcess();
+    var localResult = localProcessHasRunningCommands(javaProcess);
     if (localResult != null) return localResult;
     if (processTtyConnector instanceof LocalTerminalTtyConnector localConnector) {
       return TerminalEelProcessesKt.hasRunningCommandsBlocking(localConnector.getShellEelProcess());
@@ -62,7 +58,7 @@ public final class TerminalUtil {
       // `org.jetbrains.plugins.terminal.util.TerminalEelProcessesKt.hasRunningCommands`
       return true;
     }
-    LOG.warn("Cannot determine if there are running processes: " + SystemInfoRt.OS_NAME + ", " + javaProcess.getClass().getName());
+    LOG.warn("Cannot determine if there are running processes: " + OS.CURRENT + ", " + javaProcess.getClass().getName());
     return false;
   }
 
@@ -73,25 +69,19 @@ public final class TerminalUtil {
     }
     if (process instanceof WinPtyProcess winPty) {
       try {
-        String executable = FileUtil.toSystemIndependentName(StringUtil.notNullize(getExecutable(winPty)));
-        int consoleProcessCount = winPty.getConsoleProcessCount();
-        if (executable.endsWith("/Git/bin/bash.exe")) {
-          return consoleProcessCount > 3;
-        }
-        return consoleProcessCount > 2;
+        var executable = getExecutable(winPty.getCommandWrapper().toList());
+        var consoleProcessCount = winPty.getConsoleProcessCount();
+        return executable.endsWith("/Git/bin/bash.exe") ? consoleProcessCount > 3 : consoleProcessCount > 2;
       }
       catch (IOException e) {
         throw new IllegalStateException(e);
       }
     }
-    if (process instanceof WinConPtyProcess conPtyProcess) {
+    if (process instanceof WinConPtyProcess conPty) {
       try {
-        String executable = FileUtil.toSystemIndependentName(StringUtil.notNullize(ContainerUtil.getFirstItem(conPtyProcess.getCommand())));
-        int consoleProcessCount = conPtyProcess.getConsoleProcessCount();
-        if (executable.endsWith("/Git/bin/bash.exe")) {
-          return consoleProcessCount > 2;
-        }
-        return consoleProcessCount > 1;
+        var executable = getExecutable(conPty.getCommandWrapper().toList());
+        var consoleProcessCount = conPty.getConsoleProcessCount();
+        return executable.endsWith("/Git/bin/bash.exe") ? consoleProcessCount > 2 : consoleProcessCount > 1;
       }
       catch (IOException e) {
         throw new IllegalStateException(e);
@@ -100,20 +90,16 @@ public final class TerminalUtil {
     return null;
   }
 
-  private static @Nullable String getExecutable(@NotNull WinPtyProcess process) {
-    return ContainerUtil.getFirstItem(process.getCommand());
+  private static String getExecutable(List<String> command) {
+    return StringUtil.notNullize(ContainerUtil.getFirstItem(command)).replace('\\', '/');
   }
 
-  /**
-   * Add the item to the list.
-   * When the `parentDisposable` is disposed,
-   * then the item will be removed from the list.
-   *
-   * Used to register an item (i.e. listener) which depends on the `parentDisposable`.
-   */
+  /// Add the item to the list.
+  /// When the `parentDisposable` is disposed, then the item will be removed from the list.
+  /// Used to register an item (i.e., a listener) which depends on the `parentDisposable`.
   public static <T> void addItem(@NotNull List<T> items, @NotNull T item, @NotNull Disposable parentDisposable) {
     items.add(item);
-    boolean registered = Disposer.tryRegister(parentDisposable, () -> {
+    var registered = Disposer.tryRegister(parentDisposable, () -> {
       items.remove(item);
     });
     if (!registered) {
@@ -121,17 +107,15 @@ public final class TerminalUtil {
     }
   }
 
-  /**
-   * Sends command to TTY.
-   * Does not wait for running command to finish.
-   * Non-Blocking operation.
-   */
+  /// Sends a command to TTY.
+  /// Does not wait for running command to finish.
+  /// Non-blocking operation.
   public static void sendCommandToExecute(@NotNull String shellCommand, @NotNull TerminalStarter terminalStarter) {
-    StringBuilder result = new StringBuilder();
+    var result = new StringBuilder();
     if (terminalStarter.isLastSentByteEscape()) {
       result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
     }
-    String enterCode = new String(terminalStarter.getTerminal().getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
+    var enterCode = new String(terminalStarter.getTerminal().getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
     result.append(shellCommand).append(enterCode);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Sending " + shellCommand);
@@ -139,11 +123,8 @@ public final class TerminalUtil {
     terminalStarter.sendString(result.toString(), false);
   }
 
-  /**
-   * @deprecated use org.jetbrains.plugins.terminal.TerminalUtil#hasRunningCommands(com.jediterm.terminal.TtyConnector) instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  /// @deprecated use org.jetbrains.plugins.terminal.TerminalUtil#hasRunningCommands(com.jediterm.terminal.TtyConnector) instead
+  @Deprecated(forRemoval = true)
   public static boolean hasRunningCommands(@NotNull ProcessTtyConnector connector) throws IllegalStateException {
     return hasRunningCommands((TtyConnector)connector);
   }
