@@ -4,7 +4,6 @@ package com.jetbrains.python.psi.resolve;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
@@ -52,6 +51,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
+import static com.jetbrains.python.psi.resolve.PyFileModuleCacheKt.findModuleForPsiElementCached;
 
 public final class ResolveImportUtil {
 
@@ -220,7 +220,7 @@ public final class ResolveImportUtil {
 
   static @Nullable PythonPathCache getPathCache(PsiElement foothold) {
     PythonPathCache cache = null;
-    final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
+    final Module module = findModuleForPsiElementCached(foothold);
     if (module != null) {
       cache = PythonModulePathCache.getInstance(module);
     }
@@ -379,7 +379,7 @@ public final class ResolveImportUtil {
 
   @ApiStatus.Internal
   public static @Nullable PsiDirectory findCorrespondingSkeletonsDir(@NotNull PsiDirectory packageDir) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(packageDir);
+    Sdk sdk = PythonSdkUtil.findPythonSdk(findModuleForPsiElementCached(packageDir));
     if (sdk == null) return null;
 
     VirtualFile skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk);

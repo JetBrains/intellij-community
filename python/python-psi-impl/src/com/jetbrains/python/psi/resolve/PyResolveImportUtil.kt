@@ -164,7 +164,7 @@ fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQu
  * Creates a [PyQualifiedNameResolveContext] from a [foothold] element.
  */
 fun fromFoothold(foothold: PsiElement): PyQualifiedNameResolveContext {
-  val module = ModuleUtilCore.findModuleForPsiElement(foothold.containingFile ?: foothold)
+  val module = findModuleForPsiElementCached(foothold.containingFile ?: foothold)
   return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold,
                                            PythonSdkUtil.findPythonSdk(module))
 }
@@ -226,7 +226,7 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
       val containingName = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null)
       if (containingName != null && containingName.componentCount > 0) {
         val absoluteName = containingName.append(name)
-        val sdk = PythonSdkUtil.findPythonSdk(footholdFile) ?: return emptyList()
+        val sdk = PythonSdkUtil.findPythonSdk(findModuleForPsiElementCached(footholdFile)) ?: return emptyList()
         val skeletonsVirtualFile = PythonSdkUtil.findSkeletonsDir(sdk) ?: return emptyList()
         val skeletonsDir = context.psiManager.findDirectory(skeletonsVirtualFile)
         return resolveModuleAt(absoluteName, skeletonsDir, context.copyWithoutForeign())
@@ -478,7 +478,7 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?): Prior
 }
 
 fun isInSkeletons(element: PsiElement): Boolean {
-  val sdk = PythonSdkUtil.findPythonSdk(element) ?: return false
+  val sdk = PythonSdkUtil.findPythonSdk(findModuleForPsiElementCached(element)) ?: return false
   val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile?.virtualFile) ?: return false
   return PythonSdkUtil.isFileInSkeletons(vFile, sdk)
 }
