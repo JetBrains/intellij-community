@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowEmptyStateAction
 import com.intellij.ide.impl.ContentManagerWatcher
@@ -351,6 +352,45 @@ internal class FrameGuestToolWindowPresentationTest {
     assertThat((toolWindow as ToolWindowImpl).isPresented).isTrue()
     toolWindow.setStripeTitleProvider { "second title" }
     return GCWatcher.tracking(title)
+  }
+
+  @Test
+  fun `the tool window that presents only frame guests shows the icon of the project that it presents`() = onEdt {
+    val managers = createManagers()
+    val firstToolWindow = managers.register(first)
+    val presenting = managers.owner.getToolWindow(ID)!!
+
+    // as the mark of a running build: the tool window of the frame guest has no stripe button that shows it
+    firstToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowBuild)
+
+    assertThat(presenting.icon).isSameAs(AllIcons.Toolwindows.ToolWindowBuild)
+
+    val secondToolWindow = managers.register(second)
+    secondToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowRun)
+
+    assertThat(presenting.icon).describedAs("no project is selected, so the first entry gives the icon")
+      .isSameAs(AllIcons.Toolwindows.ToolWindowBuild)
+
+    managers.owner.presentation.select(ID, second)
+
+    assertThat(presenting.icon).describedAs("the stripe button shows the selected project").isSameAs(AllIcons.Toolwindows.ToolWindowRun)
+
+    firstToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowDebugger)
+
+    assertThat(presenting.icon).isSameAs(AllIcons.Toolwindows.ToolWindowRun)
+  }
+
+  @Test
+  fun `a tool window of the frame owner keeps its icon when a frame guest changes its icon`() = onEdt {
+    val managers = createManagers()
+    val own = managers.owner.registerToolWindow(task(), buttonManager(managers.owner)).toolWindow
+    own.setIcon(AllIcons.Toolwindows.ToolWindowBuild)
+    val firstToolWindow = managers.register(first)
+    firstToolWindow.show()
+
+    firstToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowRun)
+
+    assertThat(own.icon).isSameAs(AllIcons.Toolwindows.ToolWindowBuild)
   }
 
   @Test

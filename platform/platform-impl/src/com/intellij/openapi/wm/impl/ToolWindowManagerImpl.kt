@@ -2430,6 +2430,16 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * Spies on IdeToolWindow properties and applies them to the window state.
    */
   open fun toolWindowPropertyChanged(toolWindow: ToolWindow, property: ToolWindowProperty) {
+    if (toolWindow is ToolWindowImpl && toolWindow.isPresented) {
+      // a presented tool window has no stripe button and no activation action of its own: the frame owner has both
+      when (property) {
+        ToolWindowProperty.ICON -> frameOwnerPresentation?.iconChanged(toolWindow)
+        ToolWindowProperty.TITLE, ToolWindowProperty.AVAILABLE, ToolWindowProperty.STRIPE_TITLE -> {
+        }
+      }
+      return
+    }
+
     val stripeButton = idToEntry.get(toolWindow.id)?.stripeButton
     if (stripeButton != null) {
       if (property == ToolWindowProperty.ICON) {

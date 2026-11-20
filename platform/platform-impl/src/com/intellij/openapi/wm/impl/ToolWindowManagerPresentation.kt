@@ -655,7 +655,36 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     if (shown != null && shown !== presenting && shown.presentingSlot === slot) {
       shown.toolWindowManager.applyPresented(id = shown.id, visible = true, place = presenting.windowInfo)
     }
+    updatePlaceholderIcon(slot)
     updateUi(slot)
+  }
+
+  /** The presented tool window [toolWindow] of a frame guest has a new icon, see [updatePlaceholderIcon]. */
+  fun iconChanged(toolWindow: ToolWindowImpl) {
+    ThreadingAssertions.assertEventDispatchThread()
+    updatePlaceholderIcon(toolWindow.presentingSlot ?: return)
+  }
+
+  /**
+   * Gives the tool window that this class registered for the frame guests the icon of the project that it presents: the
+   * selected project, or else the first entry, or else the first frame guest. A presented tool window has no stripe button,
+   * so the stripe button of the frame owner shows a change of its icon, as the mark of a running build.
+   *
+   * The icon stays while the frame owner is the selected entry. A tool window that the frame owner registered itself keeps
+   * the icon of the frame owner.
+   */
+  private fun updatePlaceholderIcon(slot: PresentingSlot) {
+    if (!slot.isPlaceholder) {
+      return
+    }
+    val presenting = slot.presenting
+    val selected = slot.selection.selected
+    if (selected === presenting) {
+      return
+    }
+    val source = selected ?: slot.selection.entries.firstOrNull { it !== presenting } ?: slot.guests.firstOrNull()
+    val icon = source?.icon ?: return
+    presenting.setIcon(icon)
   }
 
   /**
