@@ -142,6 +142,8 @@ private val LOG = logger<ToolWindowManagerImpl>()
   internal val isPresented: Boolean = false,
   /** The tool window shows one project, see `RegisterToolWindowTaskData.singleProject`. */
   internal val isSingleProject: Boolean = false,
+  /** The factory of the tool window has the marker `MultiProjectToolWindowFactory`: the tool window presents every project itself. */
+  internal val isMultiProject: Boolean = false,
 ) : ToolWindowEx {
   private val toolWindowClientId = ClientId.current
   private val contentFactory: AtomicReference<ToolWindowFactory?> = AtomicReference(contentFactory)
@@ -175,6 +177,14 @@ private val LOG = logger<ToolWindowManagerImpl>()
    */
   internal val presentingToolWindow: ToolWindowImpl?
     get() = if (isPresented) toolWindowManager.presentingManager?.getEntry(id)?.toolWindow else null
+
+  /**
+   * This presented tool window is on the stripe of its project, so the project selector of the presenting tool window lists the project.
+   * A presented tool window has no stripe button of its own. The flag changes where the stripe button of a tool window with
+   * a frame of its own comes and goes: it leaves with the last content, and it comes back with the next content or the next show.
+   * Only the manager of the tool window writes it.
+   */
+  internal var isOnProjectStripe: Boolean = true
 
   /**
    * The project of the data context of this tool window, or `null`.
@@ -812,7 +822,13 @@ private val LOG = logger<ToolWindowManagerImpl>()
     }
   }
 
-  override fun isShowStripeButton(): Boolean = windowInfo.isShowStripeButton
+  override fun isShowStripeButton(): Boolean {
+    if (isPresented) {
+      // the frame owner keeps the stripe button
+      return isOnProjectStripe && presentingToolWindow?.isShowStripeButton != false
+    }
+    return windowInfo.isShowStripeButton
+  }
 
   override fun isDisposed(): Boolean = contentManager.isInitialized() && contentManager.value.isDisposed
 

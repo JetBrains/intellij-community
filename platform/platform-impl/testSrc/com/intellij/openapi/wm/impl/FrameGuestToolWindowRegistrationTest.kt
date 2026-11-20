@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.MultiProjectToolWindowFactory
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -137,16 +138,39 @@ internal class FrameGuestToolWindowRegistrationTest {
   }
 
   @Test
-  fun `a tool window that code registers in a frame guest is not presented`(): Unit = timeoutRunBlocking {
+  fun `a tool window that code registers in a frame guest is presented`(): Unit = timeoutRunBlocking {
+    val ownerManager = createManager(owner)
+    val guestManager = createManager(guest)
+    guestManager.presentThrough(ownerManager)
+    withContext(Dispatchers.EDT) {
+      val toolWindow = guestManager.registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT)) as ToolWindowImpl
+
+      assertThat(toolWindow.isPresented).isTrue()
+      assertThat(toolWindow.project).isSameAs(guest)
+      assertThat(guestManager.getToolWindow(ID)).isSameAs(toolWindow)
+      assertThat(guestManager.getEntry(ID)!!.stripeButton).isNull()
+      assertThat(ownerManager.getEntry(ID)!!.stripeButton).describedAs("the frame owner keeps the stripe button").isNotNull()
+    }
+  }
+
+  @Test
+  fun `the marker keeps a tool window that code registers in a frame guest out of the presentation`(): Unit = timeoutRunBlocking {
     val guestManager = createManager(guest)
     guestManager.presentThrough(createManager(owner))
-    withContext(Dispatchers.EDT) {
-      val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = SingleProjectTestFactory())
+    val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT)
 
-      val entry = guestManager.registerToolWindow(task, buttonManager(guestManager))
+    assertThat(guestManager.toCodeRegistration(task).singleProject).describedAs("no factory").isTrue()
+    assertThat(guestManager.toCodeRegistration(task.copy(contentFactory = SingleProjectTestFactory())).singleProject).isTrue()
+    assertThat(guestManager.toCodeRegistration(task.copy(contentFactory = MultiProjectTestFactory())).singleProject).isFalse()
+  }
 
-      assertThat(entry.toolWindow.isPresented).isFalse()
-    }
+  @Test
+  fun `a tool window that code registers in a frame owner keeps its task`(): Unit = timeoutRunBlocking {
+    val ownerManager = createManager(owner)
+    createManager(guest).presentThrough(ownerManager)
+    val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT)
+
+    assertThat(ownerManager.toCodeRegistration(task)).isSameAs(task)
   }
 
   @Test

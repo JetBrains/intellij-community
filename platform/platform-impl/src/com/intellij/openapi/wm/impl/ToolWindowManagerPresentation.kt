@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -8,6 +9,8 @@ import com.intellij.openapi.project.impl.isClosingWithFrame
 import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowProjectSelector
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -23,6 +26,9 @@ private val LOG = logger<ToolWindowManagerPresentation>()
  * The presenting tool window shows the tool window of the project that its [ToolWindowProjectSelection] selects.
  * When the frame owner has no tool window with the id, this class registers one that has no content of its own.
  *
+ * The selector lists a frame guest while its tool window is available and on the stripe of its project, see
+ * [ToolWindowImpl.isOnProjectStripe]. So a project whose Find tool window lost its last content has no entry.
+ *
  * This class is the only writer of the visible state and the place of a presented tool window, see
  * [ToolWindowManagerImpl.applyPresented]. It does no work on a tool window pane. Every function runs on the EDT.
  */
@@ -31,6 +37,12 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
 
   /** The projects that the selector of the tool window [id] lists. It is empty for a tool window that presents no frame guest. */
   fun entriesOf(id: String): List<Project> = slots.get(id)?.selection?.entries ?: emptyList()
+
+  /**
+   * The tool window [id] that this class registered for the frame guests, or `null`.
+   * The code of the frame owner that registers [id] after a frame guest gets this tool window.
+   */
+  fun registeredForGuests(id: String): ToolWindowImpl? = slots.get(id)?.takeIf { it.isRegisteredForGuests }?.presenting
 
   /** The project whose tool window the tool window [id] shows, or `null` when no project is selected. */
   fun selectedProjectOf(id: String): Project? = slots.get(id)?.selection?.selected
@@ -100,7 +112,10 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     slots.remove(id)
   }
 
-  /** A tool window of a frame guest, or the tool window of the frame owner, changed its `isAvailable` state. */
+  /**
+   * A tool window of a frame guest, or the tool window of the frame owner, changed its `isAvailable` state.
+   * Or a tool window of a frame guest came to the stripe of its project or left it.
+   */
   fun availabilityChanged(toolWindow: ToolWindowImpl) {
     ThreadingAssertions.assertEventDispatchThread()
     syncEntry(slotOf(toolWindow) ?: return, toolWindow.project)
@@ -193,9 +208,21 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     val activeProject = { IdeFrameGuests.activeProjectOf(manager.project) }
     val own = manager.getEntry(task.id)?.toolWindow
     val slot = when {
-      own == null -> Slot(presenting = manager.registerPresentingToolWindow(task).toolWindow, hasOwnContent = false, activeProject)
-      own.isSingleProject -> {
-        val slot = Slot(presenting = own, hasOwnContent = true, activeProject)
+      own == null -> {
+        val presenting = manager.registerPresentingToolWindow(task).toolWindow
+        Slot(presenting = presenting, showsOwnerContent = false, isRegisteredForGuests = true, activeProject)
+      }
+      own.isMultiProject -> {
+        LOG.warn("The tool window ${task.id} of ${manager.project.name} presents every project itself, " +
+                 "so it cannot present the tool window of a frame guest")
+        return null
+      }
+      // the frame owner registered the tool window from code, but the frame must not show the content of the owner
+      service<ProjectFrameCapabilitiesService>().has(manager.project, ProjectFrameCapability.SUPPRESS_OWN_TOOL_WINDOW_CONTENT) -> {
+        Slot(presenting = own, showsOwnerContent = false, isRegisteredForGuests = false, activeProject)
+      }
+      else -> {
+        val slot = Slot(presenting = own, showsOwnerContent = true, isRegisteredForGuests = false, activeProject)
         slot.toolWindows.put(manager.project, own)
         if (own.isAvailable) {
           slot.selection.add(manager.project, first = true)
@@ -206,19 +233,18 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
         }
         slot
       }
-      else -> {
-        LOG.warn("The tool window ${task.id} of ${manager.project.name} presents every project itself, " +
-                 "so it cannot present the tool window of a frame guest")
-        return null
-      }
     }
     slots.put(task.id, slot)
     return slot
   }
 
-  /** Makes [project] an entry of the selection when its tool window is available, and no entry otherwise. */
+  /**
+   * Makes [project] an entry of the selection when its tool window is available, and no entry otherwise.
+   * A tool window of a frame guest must also be on the stripe of its project.
+   */
   private fun syncEntry(slot: Slot, project: Project) {
-    if (slot.toolWindows.get(project)?.isAvailable == true) {
+    val toolWindow = slot.toolWindows.get(project)
+    if (toolWindow != null && toolWindow.isAvailable && (!toolWindow.isPresented || toolWindow.isOnProjectStripe)) {
       slot.selection.add(project, first = project === manager.project)
     }
     else {
@@ -228,7 +254,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   }
 
   private fun refresh(slot: Slot) {
-    if (!slot.hasOwnContent) {
+    if (!slot.showsOwnerContent) {
       updateAvailability(slot)
     }
     if (slot.presenting.isVisible) {
@@ -238,7 +264,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   }
 
   /**
-   * A tool window without content of its own is available while a project has an entry.
+   * A tool window that shows no content of the frame owner is available while a project has an entry.
    * It comes back when a project gets an entry again, if the removal of the last entry hid it.
    */
   private fun updateAvailability(slot: Slot) {
@@ -306,14 +332,19 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   private class Slot(
     /** The tool window of the frame owner. */
     @JvmField val presenting: ToolWindowImpl,
-    /** The frame owner registered [presenting] for its own content. Otherwise, [presenting] only presents the frame guests. */
-    @JvmField val hasOwnContent: Boolean,
+    /**
+     * [presenting] shows the content of the frame owner, so the frame owner can be an entry.
+     * Otherwise, [presenting] only presents the frame guests, and their entries decide its available state.
+     */
+    @JvmField val showsOwnerContent: Boolean,
+    /** This class registered [presenting], because the frame owner had no tool window with the id. */
+    @JvmField val isRegisteredForGuests: Boolean,
     activeProject: () -> Project?,
   ) {
     @JvmField
     val selection = ToolWindowProjectSelection(activeProject)
 
-    /** The tool window of each project of the frame that registered the id: [presenting] for the frame owner with content of its own. */
+    /** The tool window of each project of the frame that registered the id: [presenting] for a frame owner that shows its content. */
     @JvmField
     val toolWindows = LinkedHashMap<Project, ToolWindowImpl>()
 

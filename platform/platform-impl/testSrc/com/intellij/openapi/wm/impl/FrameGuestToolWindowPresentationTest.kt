@@ -13,15 +13,22 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.MultiProjectToolWindowFactory
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -30,10 +37,13 @@ import com.intellij.testFramework.replaceService
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
+import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import javax.swing.JPanel
 
 private const val ID = "FrameGuestPresentationTestToolWindow"
 
@@ -234,7 +244,8 @@ internal class FrameGuestToolWindowPresentationTest {
   @Test
   fun `a tool window that presents every project itself takes no frame guest`() = onEdt {
     val managers = createManagers()
-    managers.owner.registerToolWindow(task(singleProject = false), buttonManager(managers.owner))
+    val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = MultiProjectFactory())
+    managers.owner.registerToolWindow(task, buttonManager(managers.owner))
 
     val firstToolWindow = managers.register(first)
     firstToolWindow.show()
@@ -301,6 +312,145 @@ internal class FrameGuestToolWindowPresentationTest {
     val event = AnActionEvent.createEvent(context, null, ActionPlaces.TOOLWINDOW_TITLE, ActionUiKind.NONE, null)
 
     assertThat(getToolWindowManagerForEvent(event)).isSameAs(managers.owner)
+  }
+
+  @Test
+  fun `a tool window that hides on empty content has an entry only with content`() = onEdt {
+    val managers = createManagers()
+    // as Find: the registration is not available, and the first content makes the tool window available
+    val toolWindow = managers.of(first).registerToolWindow(ID) {
+      anchor = ToolWindowAnchor.LEFT
+      shouldBeAvailable = false
+    } as ToolWindowImpl
+    val presenting = managers.owner.getEntry(ID)!!
+    assertThat(toolWindow.isPresented).isTrue()
+    assertThat(presenting.toolWindow.isAvailable).isFalse()
+    assertThat(managers.owner.presentation.entriesOf(ID)).isEmpty()
+
+    val content = addContent(toolWindow)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
+    assertThat(presenting.toolWindow.isAvailable).isTrue()
+    assertThat(presenting.toolWindow.isVisible).describedAs("content does not show the tool window").isFalse()
+
+    toolWindow.show()
+    assertThat(toolWindow.isVisible).isTrue()
+
+    toolWindow.contentManager.removeContent(content, true)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).describedAs("the last content left").isEmpty()
+    assertThat(toolWindow.isVisible).isFalse()
+    assertThat(presenting.toolWindow.isVisible).isFalse()
+    assertThat(presenting.toolWindow.isAvailable).isFalse()
+    assertThat(presenting.stripeButton).isNull()
+
+    addContent(toolWindow)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
+    assertThat(presenting.toolWindow.isAvailable).isTrue()
+    assertThat(presenting.stripeButton).isNotNull()
+    assertThat(presenting.toolWindow.isVisible).describedAs("the tool window hid itself, so new content does not show it").isFalse()
+  }
+
+  @Test
+  fun `the last content of the selected project hides the tool window and removes the entry of the project`() = onEdt {
+    val managers = createManagers()
+    val firstToolWindow = managers.registerFromCode(first)
+    val secondToolWindow = managers.registerFromCode(second)
+    val firstContent = addContent(firstToolWindow)
+    addContent(secondToolWindow)
+    firstToolWindow.show()
+
+    firstToolWindow.contentManager.removeContent(firstContent, true)
+
+    val presenting = managers.owner.getToolWindow(ID)!!
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(second)
+    assertThat(presenting.isVisible).describedAs("the tool window hides with its last content, as in a frame with one project").isFalse()
+    assertThat(presenting.isAvailable).isTrue()
+
+    managers.owner.showToolWindow(ID)
+
+    assertThat(managers.owner.presentation.selectedProjectOf(ID)).isSameAs(second)
+    assertThat(secondToolWindow.isVisible).isTrue()
+    assertThat(firstToolWindow.isVisible).isFalse()
+  }
+
+  @Test
+  fun `a show request brings an empty tool window back to the selector`() = onEdt {
+    val managers = createManagers()
+    val toolWindow = managers.registerFromCode(first)
+    toolWindow.contentManager.removeContent(addContent(toolWindow), true)
+    assertThat(managers.owner.presentation.entriesOf(ID)).isEmpty()
+
+    // as the empty state action of Find and Run
+    toolWindow.show()
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
+    assertThat(toolWindow.isVisible).isTrue()
+  }
+
+  @Test
+  fun `a tool window that the frame owner registered from code presents the frame guests`() = onEdt {
+    val managers = createManagers()
+    val own = managers.owner.registerToolWindow(task(singleProject = false), buttonManager(managers.owner)).toolWindow
+
+    val firstToolWindow = managers.register(first)
+
+    assertThat(managers.owner.getToolWindow(ID)).isSameAs(own)
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(owner, first)
+
+    firstToolWindow.show()
+
+    assertThat(managers.owner.presentation.shownToolWindowOf(ID)).isSameAs(firstToolWindow)
+  }
+
+  @Test
+  fun `a frame owner without content of its own is no entry of the tool window that it registered from code`() = onEdt {
+    ExtensionTestUtil.maskExtensions(
+      ProjectFrameCapabilitiesService.EP_NAME,
+      listOf(object : ProjectFrameCapabilitiesProvider {
+        override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
+          return if (project === owner) setOf(ProjectFrameCapability.SUPPRESS_OWN_TOOL_WINDOW_CONTENT) else emptySet()
+        }
+
+        override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? = null
+      }),
+      disposable,
+    )
+    val managers = createManagers()
+    val ownTask = task(singleProject = false).copy(shouldBeAvailable = false)
+    val own = managers.owner.registerToolWindow(ownTask, buttonManager(managers.owner)).toolWindow
+
+    val firstToolWindow = managers.register(first)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
+    assertThat(own.isAvailable).describedAs("the entry of the frame guest makes the tool window available").isTrue()
+
+    managers.owner.showToolWindow(ID)
+
+    assertThat(managers.owner.presentation.shownToolWindowOf(ID)).isSameAs(firstToolWindow)
+
+    managers.of(first).doUnregisterToolWindow(ID)
+
+    assertThat(own.isAvailable).describedAs("no frame guest has the tool window").isFalse()
+  }
+
+  @Test
+  fun `the code of the frame owner gets the tool window that presents the frame guests`() = onEdt {
+    val managers = createManagers()
+    managers.registerFromCode(first)
+    val presenting = managers.owner.getToolWindow(ID)
+
+    // without it, a second registration of the id throws
+    val registered = managers.owner.registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT))
+
+    assertThat(registered).isSameAs(presenting)
+  }
+
+  private fun addContent(toolWindow: ToolWindow): Content {
+    val content = ContentFactory.getInstance().createContent(JPanel(), "content", false)
+    toolWindow.contentManager.addContent(content)
+    return content
   }
 
   private fun onEdt(test: suspend () -> Unit): Unit = timeoutRunBlocking {
@@ -374,6 +524,14 @@ internal class FrameGuestToolWindowPresentationTest {
       assertThat(toolWindow.isPresented).isTrue()
       return toolWindow
     }
+
+    /** Registers the tool window of [guest] as the code of Run does: no factory, and the tool window hides on empty content. */
+    fun registerFromCode(guest: Project): ToolWindowImpl {
+      val toolWindow = of(guest).registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT)) as ToolWindowImpl
+      assertThat(toolWindow.isPresented).isTrue()
+      toolWindow.setToHideOnEmptyContent(true)
+      return toolWindow
+    }
   }
 }
 
@@ -391,6 +549,11 @@ private fun task(singleProject: Boolean = true): RegisterToolWindowTaskData {
     }
   }
   return RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = contentFactory, singleProject = singleProject)
+}
+
+private class MultiProjectFactory : MultiProjectToolWindowFactory {
+  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+  }
 }
 
 private fun visibleInfo(): WindowInfoImpl {
