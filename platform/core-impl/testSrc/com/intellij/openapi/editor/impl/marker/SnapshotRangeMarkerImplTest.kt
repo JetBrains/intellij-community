@@ -95,6 +95,33 @@ internal class SnapshotRangeMarkerImplTest {
     assertEquals(firstRange, root.resolve(first.markerHandle))
   }
 
+  @Test
+  fun `getters reuse cached offsets after unrelated marker creation and disposal`() {
+    val document = DocumentImpl("abcdefgh", true)
+    val markers = List(3) { document.createRangeMarker(4, 6) as SnapshotRangeMarkerImpl }
+    for (marker in markers) assertEquals(TextRange(4, 6), marker.textRange)
+    val reference = markers.first().currentRootReference()
+    val before = document.core.snapshot().text()
+    val firstPatch = DocumentPatch.simple(0, 0, "x", newModStamp = 1, clearLineFlags = false)
+    val after = before.replace(0, 0, "x")
+    reference.set(reference.get().applyPatch(firstPatch, before, after))
+    document.createRangeMarker(0, 1).dispose()
+    val secondPatch = DocumentPatch.simple(0, 0, "x", newModStamp = 2, clearLineFlags = false)
+    val shifted = reference.get().applyPatch(secondPatch, after, after.replace(0, 0, "x"))
+    reference.set(object : PMarkerRoot by shifted {
+      override fun resolve(handle: SnapshotMarkerReference<*>): Long = error("The getters must reuse cached offsets")
+      override fun isValid(handle: SnapshotMarkerReference<*>): Boolean = error("Validity checks must reuse cached offsets")
+    })
+
+    for (marker in markers) {
+      assertTrue(marker.isValid)
+      assertEquals(6, marker.startOffset)
+      assertEquals(8, marker.endOffset)
+      assertEquals(TextRange(6, 8), marker.textRange)
+      assertTrue(marker.isValid)
+    }
+  }
+
   private fun resolutionMap(root: PMarkerRoot): Any? {
     val cache = checkNotNull(PMarkerDirectRoot::class.java.getDeclaredField("cachedResolutions")
                               .apply { isAccessible = true }.get(root))

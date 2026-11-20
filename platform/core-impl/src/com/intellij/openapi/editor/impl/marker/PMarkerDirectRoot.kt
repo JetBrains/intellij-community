@@ -129,7 +129,7 @@ class PMarkerDirectRoot private constructor(
   ): PMarkerDirectRoot = keepingRootAlive {
     val entry = MarkerEntry(handle, startOffset, endOffset, specMask, flavorFlags, measure, policy)
     val editor = Editor()
-    editor.finish(editor.insert(root, entry))
+    editor.finish(editor.insert(root, entry), resolutionUpdate = insertionResolutionUpdate())
   }
 
   override fun insertMany(entries: List<MarkerEntry>): PMarkerDirectRoot = keepingRootAlive {
@@ -141,8 +141,11 @@ class PMarkerDirectRoot private constructor(
       require(inserted.add(entry.handle)) { "The marker already exists" }
       result = editor.insert(result, entry)
     }
-    editor.finish(result)
+    editor.finish(result, resolutionUpdate = insertionResolutionUpdate())
   }
+
+  private fun insertionResolutionUpdate(): PMarkerResolutionUpdate =
+    PMarkerResolutionUpdate(resolutionCacheIdentity, Int.MAX_VALUE, Int.MAX_VALUE, 0, resolutionUpdate)
 
   /** Restores supplied offsets after removing their old states. The new snapshot starts with an empty resolution cache. */
   override fun restoreEntries(entries: List<MarkerEntry>): PMarkerDirectRoot {
@@ -213,7 +216,14 @@ class PMarkerDirectRoot private constructor(
     }
     else root
     editor.recordInvalid(handle, 0, 0)
-    editor.finish(result)
+    val resolutionUpdate = if (previous is PMarkerValidNode) {
+      PMarkerResolutionUpdate(
+        resolutionCacheIdentity, TextRangeScalarUtil.startOffset(offsets), TextRangeScalarUtil.endOffset(offsets), 0,
+        this@PMarkerDirectRoot.resolutionUpdate,
+      )
+    }
+    else null
+    editor.finish(result, resolutionUpdate = resolutionUpdate)
   }
 
   /** Removes each distinct handle in one version and discards its entry from [invalids]. */
@@ -283,7 +293,7 @@ class PMarkerDirectRoot private constructor(
         if (delta == 0) return@keepingRootAlive this
         val editor = Editor()
         return@keepingRootAlive editor.finish(
-          editor.shift(root, delta), resolutionUpdate = PMarkerResolutionUpdate(resolutionCacheIdentity, start, end, delta),
+          editor.shift(root, delta), resolutionUpdate = PMarkerResolutionUpdate(resolutionCacheIdentity, start, end, delta, resolutionUpdate),
         )
       }
     }
@@ -321,7 +331,9 @@ class PMarkerDirectRoot private constructor(
       }
     }
     val resolutionUpdate = if (!fullTraversal && patch.moveOffset() == start) {
-      PMarkerResolutionUpdate(resolutionCacheIdentity, minOf(start, editor.firstChangedEnd), end, length - (end - start))
+      PMarkerResolutionUpdate(
+        resolutionCacheIdentity, minOf(start, editor.firstChangedEnd), end, length - (end - start), this@PMarkerDirectRoot.resolutionUpdate,
+      )
     }
     else null
     editor.finish(result, resolutionUpdate = resolutionUpdate)

@@ -152,7 +152,9 @@ class VirtualFileMarkerRoot private constructor(
       return fileRoot
     }
 
-    private fun markerRoot(document: DocumentImpl): AtomicReference<PMarkerRoot> =
-      document.rangeMarkers.rootStore().rootReference(document.core.snapshot())
+    private fun markerRoot(document: DocumentImpl): AtomicReference<PMarkerRoot> {
+      val store = document.rangeMarkers.rootStore()
+      return store.currentRootCache.get()?.reference ?: store.rootReference(document.core.snapshot())
+    }
   }
 }

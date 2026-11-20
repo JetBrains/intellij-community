@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -219,6 +220,51 @@ internal class PMarkerDirectRootShiftTest {
     val withoutFirstRange = shifted.purgeMany(entries.take(3).map { it.handle })
     val nextBoundary = DocumentPatch.simple(40, 40, "xx", 1, false)
     assertShift(withoutFirstRange, apply(withoutFirstRange, nextBoundary), entries.drop(3).map { it.shifted(16) }, 2)
+  }
+
+  @Test
+  fun `cached offsets survive edits and unrelated marker creation and removal`() = withEntries { entries ->
+    val original = PMarkerDirectRoot.empty().insertMany(entries)
+    val edited = apply(original, DocumentPatch.simple(10, 10, "xx", 1, false))
+    val added = entries.first().copy(
+      handle = SnapshotMarkerReference.create(checkNotNull(entries.first().marker), true), nodeStart = 5, nodeEnd = 6,
+    )
+    val inserted = edited.insert(added.handle, added.nodeStart, added.nodeEnd, added.specMask, added.flavorFlags)
+    val removed = inserted.remove(entries[3].handle)
+    val latest = apply(removed, DocumentPatch.simple(15, 17, "x", 2, false))
+
+    assertNotSame(edited.resolutionCacheIdentity, inserted.resolutionCacheIdentity)
+    assertEquals(PMarkerResolution.ABSENT, original.resolve(added.handle))
+    assertEquals(added.range(), inserted.resolve(added.handle))
+    for (entry in listOf(entries.first(), entries.last())) {
+      val expected = TextRangeScalarUtil.shift(entry.range(), 1)
+      assertEquals(expected, latest.resolve(entry.handle))
+      assertEquals(expected, latest.advanceResolution(original.resolutionCacheIdentity, original.resolve(entry.handle)))
+      assertEquals(entry.range(), original.resolve(entry.handle))
+    }
+    assertEquals(PMarkerResolution.ABSENT, latest.resolve(entries[3].handle))
+    assertEquals(PMarkerResolution.UNRESOLVED,
+                 latest.advanceResolution(original.resolutionCacheIdentity, entries[3].range()))
+    val branch = apply(original, DocumentPatch.simple(0, 0, "x", 1, false))
+    assertEquals(PMarkerResolution.UNRESOLVED,
+                 latest.advanceResolution(branch.resolutionCacheIdentity, branch.resolve(entries.first().handle)))
+  }
+
+  @Test
+  fun `old cached offsets require resolution after many edits`() = withEntries { entries ->
+    val original = PMarkerDirectRoot.empty().insertMany(entries)
+    var previous = original
+    var current = original
+    repeat(64) {
+      previous = current
+      current = apply(current, DocumentPatch.simple(0, 0, "x", it + 1L, false))
+    }
+
+    val entry = entries.first()
+    assertEquals(TextRangeScalarUtil.shift(entry.range(), 64), current.resolve(entry.handle))
+    assertEquals(PMarkerResolution.UNRESOLVED, current.advanceResolution(original.resolutionCacheIdentity, entry.range()))
+    assertEquals(current.resolve(entry.handle), current.advanceResolution(previous.resolutionCacheIdentity, previous.resolve(entry.handle)))
+    assertEquals(entry.range(), original.resolve(entry.handle))
   }
 
   private fun apply(root: PMarkerDirectRoot, patch: DocumentPatch): PMarkerDirectRoot =

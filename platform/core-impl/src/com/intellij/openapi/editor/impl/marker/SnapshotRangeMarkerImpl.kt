@@ -125,8 +125,13 @@ open class SnapshotRangeMarkerImpl private constructor(
 
   protected open fun isValidInRoot(root: PMarkerRoot): Boolean {
     val cached = cachedResolution
-    if (cached != null && cached.identity === root.resolutionCacheIdentity) {
-      return PMarkerResolution.isValid(cached.resolution)
+    if (cached != null) {
+      if (cached.identity === root.resolutionCacheIdentity) return PMarkerResolution.isValid(cached.resolution)
+      val advanced = root.advanceResolution(cached.identity, cached.resolution)
+      if (advanced != PMarkerResolution.UNRESOLVED) {
+        cacheResolution(root, advanced)
+        return PMarkerResolution.isValid(advanced)
+      }
     }
     return root.isValid(markerHandle)
   }
@@ -235,7 +240,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   }
 
   /**
-   * Resolves offsets for a cache miss or disposal. Advances offsets across one direct edit or resolves them in [root].
+   * Resolves offsets for a cache miss or disposal. Advances offsets across recent edits or resolves them in [root].
    */
   private fun resolveCurrent(root: PMarkerRoot, cached: CachedResolution?, forRemoval: Boolean): Long {
     if (cached != null && cached.identity === root.resolutionCacheIdentity) {

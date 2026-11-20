@@ -34,7 +34,7 @@ object PMarkerResolution {
 }
 
 /**
- * Maps cached offsets across one edit without retaining the previous root.
+ * Maps cached offsets across recent edits without retaining previous roots.
  *
  * @property previousIdentity the resolution identity before the edit.
  * @property unchangedPrefixEnd ranges with an old end strictly below this offset remain unchanged.
@@ -46,17 +46,25 @@ internal class PMarkerResolutionUpdate(
   private val unchangedPrefixEnd: Int,
   private val editEnd: Int,
   private val delta: Int,
+  previousUpdate: PMarkerResolutionUpdate? = null,
 ) {
+  /** Bounds the retained identity tokens and the work of a cache miss. */
+  private val previousUpdate: PMarkerResolutionUpdate? = previousUpdate?.takeIf { it.depth < 32 }
+  private val depth: Int = (this.previousUpdate?.depth ?: 0) + 1
+
   /** Advances a valid resolution, or requests full resolution when the identity or range does not match this edit. */
   fun advance(previousIdentity: Any, resolution: Long): Long {
-    if (this.previousIdentity !== previousIdentity || !PMarkerResolution.isValid(resolution)) return PMarkerResolution.UNRESOLVED
-    val startOffset = PMarkerResolution.startOffset(resolution)
-    val endOffset = PMarkerResolution.endOffset(resolution)
+    if (!PMarkerResolution.isValid(resolution)) return PMarkerResolution.UNRESOLVED
+    val previous = if (this.previousIdentity === previousIdentity) resolution
+    else previousUpdate?.advance(previousIdentity, resolution) ?: PMarkerResolution.UNRESOLVED
+    if (!PMarkerResolution.isValid(previous)) return PMarkerResolution.UNRESOLVED
+    val startOffset = PMarkerResolution.startOffset(previous)
+    val endOffset = PMarkerResolution.endOffset(previous)
     return when {
-      endOffset < unchangedPrefixEnd -> resolution
+      endOffset < unchangedPrefixEnd -> previous
       startOffset > editEnd -> {
-        if (delta == 0) resolution
-        else TextRangeScalarUtil.shift(resolution, delta)
+        if (delta == 0) previous
+        else TextRangeScalarUtil.shift(previous, delta)
       }
       else -> PMarkerResolution.UNRESOLVED
     }

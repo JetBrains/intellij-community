@@ -205,7 +205,7 @@ internal class PMarkerDirectRootTest {
   }
 
   @Test
-  fun `metadata changes preserve advancement and membership changes discard it`() {
+  fun `metadata changes and unrelated membership changes preserve advancement`() {
     val first = entry(1, 3)
     val second = entry(12, 12)
     val root = empty.insertMany(listOf(first, second))
@@ -219,9 +219,12 @@ internal class PMarkerDirectRootTest {
       assertEquals(metadata.resolve(entry.handle), metadata.advanceResolution(root.resolutionCacheIdentity, root.resolve(entry.handle)))
     }
     val addition = entry(20, 22)
+    for (changedRoot in listOf(metadata.insertMany(listOf(addition)), metadata.remove(first.handle))) {
+      assertEquals(changedRoot.resolve(second.handle), changedRoot.advanceResolution(root.resolutionCacheIdentity, root.resolve(second.handle)))
+    }
+    assertEquals(PMarkerResolution.UNRESOLVED,
+                 metadata.remove(first.handle).advanceResolution(root.resolutionCacheIdentity, root.resolve(first.handle)))
     val changedRoots = listOf(
-      metadata.insertMany(listOf(addition)),
-      metadata.remove(first.handle),
       metadata.purgeMany(listOf(first.handle)),
       metadata.restoreEntries(listOf(second.copy(nodeStart = 30, nodeEnd = 32))),
       metadata.mergeValidMarkersFrom(metadata.insertMany(listOf(addition))),
@@ -244,7 +247,7 @@ internal class PMarkerDirectRootTest {
     assertEquals(TextRangeScalarUtil.toScalarRange(14, 16), edited.advanceResolution(root.resolutionCacheIdentity, previous))
     assertEquals(TextRangeScalarUtil.toScalarRange(11, 13), branch.advanceResolution(root.resolutionCacheIdentity, previous))
     assertEquals(PMarkerResolution.UNRESOLVED, edited.advanceResolution(branch.resolutionCacheIdentity, previous))
-    assertEquals(PMarkerResolution.UNRESOLVED, next.advanceResolution(root.resolutionCacheIdentity, previous))
+    assertEquals(next.resolve(entry.handle), next.advanceResolution(root.resolutionCacheIdentity, previous))
     assertEquals(next.resolve(entry.handle), next.advanceResolution(edited.resolutionCacheIdentity, edited.resolve(entry.handle)))
     for (resolution in listOf(PMarkerResolution.UNRESOLVED, PMarkerResolution.ABSENT, PMarkerResolution.invalid(previous))) {
       assertEquals(PMarkerResolution.UNRESOLVED, edited.advanceResolution(root.resolutionCacheIdentity, resolution))
