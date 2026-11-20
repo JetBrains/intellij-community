@@ -7,6 +7,7 @@ package com.intellij.platform.settings.v2.impl.providers
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.platform.settings.v2.LayerData
 import com.intellij.platform.settings.v2.LayerLocality
 import com.intellij.platform.settings.v2.LayerProvider
@@ -17,7 +18,9 @@ import com.intellij.platform.settings.v2.SettingsVault
 import com.intellij.platform.settings.v2.impl.SettingsDecodingException
 import com.intellij.platform.settings.v2.impl.layerData
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Implements the shared part of the service that backs a [LayerProvider]. The service is a persistence port over one
@@ -44,6 +47,12 @@ abstract class BaseLayerService(private val scope: CoroutineScope) : Disposable 
    * one. The localities that take a write come from [availableLocalities].
    */
   open val localities: List<LayerLocality> = LayerLocality.entries
+
+  /**
+   * Holds one refresher per storage unit, keyed by the identity of the storage context. Each channel is conflated, so
+   * repeated refresh signals coalesce.
+   */
+  private val refreshingChannels = ConcurrentHashMap<String, Channel<Unit>>()
 
   /**
    * Loads the whole persisted layer of [storageContext] for [locality].
@@ -145,12 +154,30 @@ abstract class BaseLayerService(private val scope: CoroutineScope) : Disposable 
    * Reads the stored config of [storageContext] again and pushes the layers to the vault as a spontaneous update. A
    * subclass calls it when it sees that its source changed on its own, however it detects that. [load], in contrast,
    * returns the layers for the vault to install. It uses [load], so it skips a malformed source the same way.
+   *
+   * The refreshes of one storage unit run one at a time and in order. So a refresh that read an older state never
+   * pushes after a refresh that read a newer state. A burst of calls for one unit collapses into at most one more
+   * refresh after the running one.
    */
   protected fun refresh(storageContext: SettingsContext) {
+    refreshingChannels.computeIfAbsent(storageContext.identity) { refresherChannel(storageContext) }.trySend(Unit)
+  }
+
+  private fun refresherChannel(storageContext: SettingsContext): Channel<Unit> {
+    val channel = Channel<Unit>(Channel.CONFLATED)
     scope.launch {
-      val vault = SettingsVault.getInstance()
-      for (data in load(storageContext)) vault.push(data)
+      while (channel.receiveCatching().isSuccess) {
+        try {
+          val vault = SettingsVault.getInstance()
+          for (data in load(storageContext)) vault.push(data)
+        }
+        catch (e: Exception) {
+          rethrowControlFlowException(e)
+          LOG.error("Failed to refresh settings for '${storageContext.identity}'", e)
+        }
+      }
     }
+    return channel
   }
 
   override fun dispose() {}

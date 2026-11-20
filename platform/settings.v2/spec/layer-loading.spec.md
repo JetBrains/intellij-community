@@ -102,6 +102,9 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
 
 - A provider can push a layer that changed in its store. An empty layer removes the entry.
   See [ADR 0057](../adr/0057-the-vault-is-the-source-of-truth-and-a-provider-is-a-persistence-port.md).
+- After several changes of one store, the vault must hold the last state of that store. A read of an older state
+  must not replace a read of a newer state. See [ADR 0180](../adr/0180-the-refreshes-of-one-storage-unit-run-one-at-a-time-through-a-conflated-queue.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/LayerRefreshOrderTest.kt
 - The vault must hold back a push while the context of its store is dirty. It must apply the held pushes in
   arrival order when the context of the store gets ready, also when the reload fails or is cancelled.
   See [ADR 0123](../adr/0123-a-push-during-a-reload-waits-until-the-reload-installs.md) and
@@ -147,6 +150,7 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
 ## Error Handling
 
 - A provider that throws during a load is logged and skipped. The other providers still load.
+- A read of a changed store that fails is logged. A later change of that store must still reach the vault.
 - A provider that throws from `storageContext` fails the operation that asks it. The vault does not catch it.
   See [ADR 0158](../adr/0158-a-failure-of-the-storage-context-mapping-of-a-provider-propagates.md).
 
