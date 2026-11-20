@@ -2,12 +2,14 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.actions.ActivateToolWindowAction
+import com.intellij.ide.actions.ToolWindowEmptyStateAction
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
@@ -43,6 +45,7 @@ import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
 import com.intellij.toolWindow.ToolWindowProjectSelectorTabs
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -571,6 +574,40 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  fun `the activation action of a tool window without content shows the empty state of the active frame guest`() = onEdt {
+    val managers = createManagers()
+    val firstToolWindow = managers.registerFromCode(first)
+    val content = addContent(firstToolWindow)
+    firstToolWindow.show()
+    // the frame guest closes its last result: the tool window hides, and no project has an entry
+    firstToolWindow.contentManager.removeContent(content, true)
+    assertThat(managers.owner.getToolWindow(ID)!!.isAvailable).isFalse()
+    setActive(first)
+
+    emptyStateAction().actionPerformed(activationEvent(first))
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).describedAs("the empty state is for the active project").containsExactly(first)
+    assertThat(managers.owner.getToolWindow(ID)!!.isVisible).isTrue()
+    assertThat(managers.owner.presentation.shownToolWindowOf(ID)).isSameAs(firstToolWindow)
+  }
+
+  @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `the activation action shows no empty state of a frame owner without content of its own`() = onEdt {
+    suppressOwnContentOfOwner()
+    val managers = createManagers()
+    val firstToolWindow = managers.registerFromCode(first)
+    firstToolWindow.contentManager.removeContent(addContent(firstToolWindow), true)
+    setActive(owner)
+
+    emptyStateAction().actionPerformed(activationEvent(owner))
+
+    val presenting = managers.owner.getToolWindow(ID)!!
+    assertThat(presenting.isAvailable).isFalse()
+    assertThat(presenting.isVisible).isFalse()
+  }
+
+  @Test
   fun `a tool window that hides on empty content has an entry only with content`() = onEdt {
     val managers = createManagers()
     // as Find: the registration is not available, and the first content makes the tool window available
@@ -896,6 +933,23 @@ internal class FrameGuestToolWindowPresentationTest {
     )
   }
 
+  /** The activation action of the test tool window, with an empty state as the action of Find has. */
+  private fun emptyStateAction(): ToolWindowEmptyStateAction {
+    return object : ToolWindowEmptyStateAction(ID, null) {
+      override fun setupEmptyText(project: Project, text: StatusText) {
+      }
+
+      override fun ensureToolWindowCreated(project: Project) {
+      }
+    }
+  }
+
+  /** The event of an activation action that the user starts while [project] is the project of the data context. */
+  private fun activationEvent(project: Project): AnActionEvent {
+    val context = DataContext { dataId -> if (CommonDataKeys.PROJECT.`is`(dataId)) project else null }
+    return AnActionEvent.createEvent(context, null, ActionPlaces.MAIN_MENU, ActionUiKind.NONE, null)
+  }
+
   /** The tabs of the project selector in the hierarchy of [decorator], or `null` when the decorator shows no selector. */
   private fun selectorIn(decorator: InternalDecoratorImpl): ToolWindowProjectSelectorTabs? {
     return UIUtil.findComponentOfType(decorator, ToolWindowProjectSelectorTabs::class.java)
@@ -957,6 +1011,8 @@ internal class FrameGuestToolWindowPresentationTest {
 
       override fun getButtonManager(paneId: String): ToolWindowButtonManager = buttonManager
     }
+    // an action finds the manager of a project through the service
+    project.replaceService(ToolWindowManager::class.java, manager, disposable)
     createdManagers.add(manager)
     Disposer.register(disposable) {
       val actionManager = ActionManager.getInstance()

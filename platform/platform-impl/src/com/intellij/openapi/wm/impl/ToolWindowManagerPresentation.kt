@@ -13,8 +13,10 @@ import com.intellij.openapi.wm.MultiProjectToolWindowFactory
 import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.toolWindow.ToolWindowEntry
 import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.toolWindow.ToolWindowFactoryScope
 import com.intellij.toolWindow.ToolWindowProjectSelector
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
@@ -64,6 +66,21 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
 
   /** The projects that the selector of the tool window [id] lists. It is empty for a tool window that presents no frame guest. */
   fun entriesOf(id: String): List<Project> = slots.get(id)?.selection?.entries?.map { it.project } ?: emptyList()
+
+  /**
+   * The project of this frame that shows the empty state of a tool window on a request of the user. The tool window has no
+   * content, so the request is for the active project of the frame. A frame guest whose tool windows this class presents
+   * shows the empty state itself. The frame owner shows it otherwise. `null` when the frame owner has no tool window
+   * content of its own: no project shows an empty state then.
+   */
+  fun emptyStateProject(): Project? {
+    val frameOwner = manager.project
+    val active = IdeFrameGuests.activeProjectOf(frameOwner)
+    if (active !== frameOwner && (ToolWindowManager.getInstance(active) as? ToolWindowManagerImpl)?.frameOwnerPresentation === this) {
+      return active
+    }
+    return if (ToolWindowFactoryScope.isLegacyToolWindowModeEnabled && manager.suppressesOwnContent) null else frameOwner
+  }
 
   /** The project whose tool window the tool window [id] shows, or `null` when no project is selected. */
   fun selectedProjectOf(id: String): Project? = slots.get(id)?.selection?.selected?.project

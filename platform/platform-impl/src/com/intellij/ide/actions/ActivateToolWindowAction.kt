@@ -156,19 +156,15 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
 
     if (toolWindowManager.isEditorComponentActive || toolWindowId != toolWindowManager.activeToolWindowId) {
       val toolWindow = toolWindowManager.getToolWindow(toolWindowId)
-      if (toolWindow != null) {
-        if (hasEmptyState(project) && !toolWindow.isAvailable) {
-          toolWindow.isAvailable = true
-        }
-        if (toolWindowManager is ToolWindowManagerImpl) {
-          toolWindowManager.activateToolWindow(id = toolWindowId, runnable = null, autoFocusContents = true, source = source)
-        }
-        else {
-          toolWindow.activate(null)
+      if (hasEmptyState(project) && (toolWindow == null || !toolWindow.isAvailable)) {
+        // The tool window has no content to show. In a frame with frame guests, the empty state is for the project where the user works.
+        val emptyStateProject = if (toolWindowManager is ToolWindowManagerImpl) toolWindowManager.presentation.emptyStateProject() else project
+        if (emptyStateProject != null) {
+          showEmptyState(emptyStateProject, source)
         }
       }
-      else if (hasEmptyState(project)) {
-        createEmptyState(project)
+      else if (toolWindow != null) {
+        activate(toolWindowManager, toolWindow, source)
       }
     }
     else if (toolWindowManager is ToolWindowManagerImpl) {
@@ -176,6 +172,27 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
     }
     else {
       toolWindowManager.getToolWindow(toolWindowId)?.hide(null)
+    }
+  }
+
+  /** Shows the tool window of [project], which has no content, with its empty state. [project] is a project of the frame of the action. */
+  private fun showEmptyState(project: Project, source: ToolWindowEventSource) {
+    val toolWindowManager = ToolWindowManager.getInstance(project)
+    val toolWindow = toolWindowManager.getToolWindow(toolWindowId)
+    if (toolWindow == null) {
+      createEmptyState(project)
+      return
+    }
+    toolWindow.isAvailable = true
+    activate(toolWindowManager, toolWindow, source)
+  }
+
+  private fun activate(toolWindowManager: ToolWindowManager, toolWindow: ToolWindow, source: ToolWindowEventSource) {
+    if (toolWindowManager is ToolWindowManagerImpl) {
+      toolWindowManager.activateToolWindow(id = toolWindowId, runnable = null, autoFocusContents = true, source = source)
+    }
+    else {
+      toolWindow.activate(null)
     }
   }
 
