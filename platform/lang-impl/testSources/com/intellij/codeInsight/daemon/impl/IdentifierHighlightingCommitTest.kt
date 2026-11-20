@@ -8,6 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
@@ -35,6 +36,8 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -47,6 +50,42 @@ internal class IdentifierHighlightingCommitTest {
   private val fileFixture: TestFixture<PsiFile> =
     sourceRoot.psiFileFixture("Test.java", "class Test { int value; void test() { val<caret>ue++; } }")
   private val editorFixture: TestFixture<Editor> = fileFixture.editorFixture()
+
+  @Test
+  @TestFor(issues = ["IJPL-262488"])
+  fun `document change disposes cached identifier markers`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val project = projectFixture.get()
+    suspendUntilIndexesAreReady(project)
+    val editor = editorFixture.get()
+    val document = editor.document
+    val manager = IdentifierHighlightingManager.getInstance(project)
+    val visibleRange = readAction { ProperTextRange(0, document.textLength) }
+    val result = manager.getMarkupData(editor, visibleRange)
+    assertEquals(2, result.occurrences.size)
+    assertSame(result, manager.getMarkupData(editor, visibleRange))
+    val markers = result.occurrences.map { it.range as RangeMarker } + result.targets.map { it as RangeMarker }
+    val otherMarker = readAction { document.createRangeMarker(0, 5) }
+
+    try {
+      withContext(Dispatchers.EDT) {
+        WriteCommandAction.runWriteCommandAction(project) {
+          document.insertString(document.textLength, "\n")
+        }
+      }
+      readAction {
+        assertTrue(markers.none { it.isValid })
+        assertTrue(otherMarker.isValid)
+      }
+
+      val updatedRange = readAction { ProperTextRange(0, document.textLength) }
+      val updatedResult = manager.getMarkupData(editor, updatedRange)
+      assertEquals(2, updatedResult.occurrences.size)
+      assertSame(updatedResult, manager.getMarkupData(editor, updatedRange))
+    }
+    finally {
+      otherMarker.dispose()
+    }
+  }
 
   @Test
   @TestFor(issues = ["IJPL-252880"])
