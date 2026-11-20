@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameGuests;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -157,7 +158,7 @@ final class SearchForUsagesRunnable implements Runnable {
         List<String> strings = new ArrayList<>(lines);
         strings.add(detailedMessage);
         //noinspection SSBasedInspection
-        ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, messageType, wrapInHtml(strings), AllIcons.Actions.Find, listener);
+        ToolWindowManager.getInstance(IdeFrameGuests.frameOwnerOf(myProject)).notifyByBalloon(ToolWindowId.FIND, messageType, wrapInHtml(strings), AllIcons.Actions.Find, listener);
       });
     }
 
@@ -178,7 +179,7 @@ final class SearchForUsagesRunnable implements Runnable {
     }
 
     //noinspection SSBasedInspection
-    ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, actualType, wrapInHtml(resultLines), AllIcons.Actions.Find, resultListener);
+    ToolWindowManager.getInstance(IdeFrameGuests.frameOwnerOf(myProject)).notifyByBalloon(ToolWindowId.FIND, actualType, wrapInHtml(resultLines), AllIcons.Actions.Find, resultListener);
   }
 
   @RequiresBackgroundThread

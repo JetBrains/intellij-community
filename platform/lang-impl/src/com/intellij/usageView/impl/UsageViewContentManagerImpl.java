@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameGuests;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
@@ -45,7 +46,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
   @SuppressWarnings("unused") // instantiated reflectively
   @RequiresEdt
   public UsageViewContentManagerImpl(@NotNull Project project) {
-    this(project, ToolWindowManager.getInstance(project));
+    this(project, ToolWindowManager.getInstance(IdeFrameGuests.frameOwnerOf(project)));
   }
 
   @RequiresEdt
