@@ -254,14 +254,18 @@ class InstalledPluginsTabSearchResultPanel(
      */
     fun computeSearchQueryRelevance(descriptor: PluginUiModel, searchQuery: String): Double? {
       val name = descriptor.name
-                 ?: return null
-      if (StringUtil.containsIgnoreCase(name, searchQuery)) {
+      if (name != null && StringUtil.containsIgnoreCase(name, searchQuery)) {
         return 100.0 + (searchQuery.length / name.length.coerceAtLeast(1).toDouble())
       }
 
       val description = descriptor.description
       if (description != null && StringUtil.containsIgnoreCase(description, searchQuery)) {
         return 50.0 + (searchQuery.length / description.length.coerceAtLeast(1).toDouble())
+      }
+
+      val pluginId = descriptor.pluginId.idString
+      if (StringUtil.containsIgnoreCase(pluginId, searchQuery)) {
+        return 20.0 + (searchQuery.length / pluginId.length.coerceAtLeast(1).toDouble())
       }
 
       return null

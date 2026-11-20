@@ -2,6 +2,7 @@
 name: Unified Plugin Manager UI
 description: Stable behavior for the unified Plugins page, its sources, and its navigation.
 targets:
+  - ../../src/com/intellij/ide/plugins/InstalledPluginsTabSearchResultPanel.kt
   - ../../src/com/intellij/ide/plugins/PluginCategoryPromotionProvider.kt
   - ../../src/com/intellij/ide/plugins/PluginManagerConfigurable.kt
   - ../../src/com/intellij/ide/plugins/PluginManagerConfigurableTreeRenderer.java
@@ -369,7 +370,10 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - Relevance must initially place local plugins with errors before healthy plugins.
 - Without text terms, Installed relevance must place enabled plugins before disabled plugins within each error group.
 - Without text terms, Bundled relevance must place enabled plugins before disabled plugins within each category and error group.
-- With text terms, relevance must use the existing match scores before enabled state within each error group.
+- Text search in Installed, Bundled, Internal, and custom repositories must match a case-insensitive substring in the plugin name, description, or ID.
+- Relevance must score name matches highest, followed by description matches and plugin ID matches.
+- Within each match type, relevance must favor the match that covers a larger fraction of the field.
+- With text terms, relevance must use match scores before enabled state within each error group.
 - Enabled plugins must win a match score tie.
 - Later results in the same query revision must retain the relative order of plugins that remain in a section.
 - A new plugin must append after existing plugins. A plugin that leaves and returns must resume its retained position.
@@ -382,7 +386,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
     `repeating a repository query restores its relevance order`;
     `local relevance prioritizes errors and enabled plugins while explicit sorts override priorities`;
     `text search ranks match scores before enabled state`;
-    `installed relevance uses legacy name and description match scores`;
+    `installed relevance ranks name, description, and plugin ID matches`;
     `sort controls primary Marketplace without suppressing cached filtering`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
