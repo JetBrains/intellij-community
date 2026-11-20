@@ -180,9 +180,6 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     fireInclusionChanged()
   }
 
-  /**
-   * Must be called outside [lock] to prevent deadlocks through [LineStatusTrackerManager.LOCK]
-   */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun computeTrackerExclusionStates(): Map<T, ExclusionState> {
     val result = CollectionFactory.createCustomHashingStrategyMap<T, ExclusionState>(hashingStrategy)
