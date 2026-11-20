@@ -770,7 +770,8 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       showMarketplaceLink: Boolean,
     ) {
       check(section.id == id)
-      marketplaceLinkPanel?.isVisible = showMarketplaceLink && section.expanded && when (section.status) {
+      val visibleItems = section.visibleItems
+      marketplaceLinkPanel?.isVisible = showMarketplaceLink && visibleItems.size == section.items.size && when (section.status) {
         PluginSectionStatus.Ready -> true
         is PluginSectionStatus.Loading, is PluginSectionStatus.Degraded, is PluginSectionStatus.Failed -> false
       }
@@ -816,7 +817,6 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         errorPanel.remove(retryLink)
       }
 
-      val visibleItems = section.visibleItems
       val preserveRealization = expanded &&
                                   section.expanded &&
                                   renderedQueryRevision == queryRevision &&

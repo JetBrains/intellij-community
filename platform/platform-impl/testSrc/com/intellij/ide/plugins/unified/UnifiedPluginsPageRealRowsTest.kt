@@ -523,7 +523,7 @@ internal class UnifiedPluginsPageRealRowsTest {
     }
 
   @Test
-  fun `Marketplace link requires expanded and fully loaded Suggested`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+  fun `Marketplace link requires all Suggested results to be visible and loaded`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val factory = RecordingRowFactory()
     val suggestedId = PluginSectionId.Suggested
     val ready = section(suggestedId, *(1..5).map { item("suggested.$it") }.toTypedArray())
@@ -545,6 +545,14 @@ internal class UnifiedPluginsPageRealRowsTest {
       assertLinkVisible(true)
 
       controller.setSectionExpanded(suggestedId, false)
+      assertLinkVisible(false)
+
+      val collapsedItems = ready.items.take(PluginSectionState.COLLAPSED_ITEM_LIMIT)
+      controller.updateSection(ready.copy(items = collapsedItems))
+      assertThat(controller.state.value.sections.single { it.id == suggestedId }.expanded).isFalse()
+      assertLinkVisible(true)
+
+      controller.updateSection(ready)
       assertLinkVisible(false)
       controller.setSectionExpanded(suggestedId, true)
       assertLinkVisible(true)
