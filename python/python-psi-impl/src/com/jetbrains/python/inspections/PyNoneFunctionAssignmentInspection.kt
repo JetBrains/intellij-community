@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.parents
@@ -60,9 +61,11 @@ class PyNoneFunctionAssignmentInspection : PyInspection() {
      when (val parent = call.parent) {
         is PyLambdaExpression -> return
         is PyAssignmentStatement -> {
+          // The statement text also holds a trailing comment or a semicolon, so the range ends at the call.
           registerProblem(
             parent, PyPsiBundle.problemMessage("INSP.none.function.assignment", callee.name),
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, PyRemoveAssignmentQuickFix()
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, PyRemoveAssignmentQuickFix(),
+            rangeInElement = TextRange(0, call.textRangeInParent.endOffset),
           )
         }
         else -> {
