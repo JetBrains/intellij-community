@@ -28,6 +28,10 @@ class IntelliJPlatformSourcesMcpToolTest : IntelliJPlatformSourcesImportingTestC
 
   companion object {
     private const val API_ARCHIVE = "src_css-api.zip"
+    private const val PLUGIN_VERSION = "1.2.3"
+    private const val PLUGIN = "com.jetbrains.plugins:IdeaVIM:$PLUGIN_VERSION"
+    private const val TEST_FRAMEWORK = "com.jetbrains.intellij.platform:test-framework:$BUILD_NUMBER"
+    private const val BUILD_SOURCES_JAR = "ideaIC-$BUILD_NUMBER-sources.jar"
 
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
@@ -87,6 +91,42 @@ class IntelliJPlatformSourcesMcpToolTest : IntelliJPlatformSourcesImportingTestC
         SOURCES_JAR to IntelliJPlatformSourceArchiveKind.PLATFORM,
         API_ARCHIVE to IntelliJPlatformSourceArchiveKind.API,
       ),
+      sources.archives.map { Path.of(it.path).name to it.kind },
+    )
+    assertNull(sources.hint)
+  }
+
+  @Test
+  fun `test library sources of a non-bundled plugin are resolved`() {
+    createLocalIde("app" to emptyList())
+    createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
+    // No IntelliJ Platform has the version of the plugin, so the sync attaches only the library sources to the plugin.
+    createArtifact("com.jetbrains.plugins", "IdeaVIM", "", SLF4J_METADATA, version = PLUGIN_VERSION)
+    createArtifact(SLF4J_GROUP, "slf4j-api", "-sources", version = SLF4J_VERSION)
+    importProjectWithDependencies(LOCAL_IDE, PLUGIN)
+
+    val sources = resolveSources()
+
+    assertEquals(
+      listOf(
+        SOURCES_JAR to IntelliJPlatformSourceArchiveKind.PLATFORM,
+        SLF4J_SOURCES_JAR to IntelliJPlatformSourceArchiveKind.LIBRARY,
+      ),
+      sources.archives.map { Path.of(it.path).name to it.kind },
+    )
+    assertNull(sources.hint)
+  }
+
+  @Test
+  fun `test sources of the test framework are resolved`() {
+    createArtifact("com.jetbrains.intellij.platform", "test-framework", "", version = BUILD_NUMBER)
+    createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources", version = BUILD_NUMBER)
+    importProjectWithDependencies(TEST_FRAMEWORK)
+
+    val sources = resolveSources()
+
+    assertEquals(
+      listOf(BUILD_SOURCES_JAR to IntelliJPlatformSourceArchiveKind.PLATFORM),
       sources.archives.map { Path.of(it.path).name to it.kind },
     )
     assertNull(sources.hint)
