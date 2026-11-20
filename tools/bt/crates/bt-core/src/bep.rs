@@ -46,6 +46,9 @@ pub struct BepSummary {
     /// patterns named no target: bazel exits 0 for a pattern under an ignored directory, and only warns.
     pub completed_targets: usize,
     pub aborted: Vec<String>,
+    /// The description of each loading or analysis failure, once. It names the cause in the words of bazel, such as
+    /// `no such package 'x': BUILD file not found`.
+    pub abort_causes: Vec<String>,
     pub action_stderr: Vec<String>,
     /// Bazel's own verdict, and `None` when the build never finished, which is exactly the case where a false
     /// `false` would look like an ordinary failure instead of a killed run.
@@ -53,6 +56,9 @@ pub struct BepSummary {
     /// Distinguishes an empty file from a file that was never written. Both mean the results are not usable, and
     /// neither may be read as green.
     pub saw_any_event: bool,
+    /// The analysis phase of bazel, from `buildMetrics.timingMetrics`, summed over the invocations of a run. Zero when
+    /// bazel reports none, such as when the analysis and the execution overlap.
+    pub analysis_ms: u64,
 }
 
 impl BepSummary {
@@ -66,12 +72,16 @@ impl BepSummary {
         self.failed_to_build.extend(other.failed_to_build);
         self.completed_targets += other.completed_targets;
         self.aborted.extend(other.aborted);
+        for error in other.abort_causes {
+            push_once(&mut self.abort_causes, error);
+        }
         self.action_stderr.extend(other.action_stderr);
         self.overall_success = match (self.overall_success, other.overall_success) {
             (Some(first), Some(second)) => Some(first && second),
             _ => None,
         };
         self.saw_any_event &= other.saw_any_event;
+        self.analysis_ms += other.analysis_ms;
     }
 }
 
@@ -195,6 +205,8 @@ struct Success {
 struct Aborted {
     #[serde(deserialize_with = "lenient_string")]
     reason: Option<String>,
+    #[serde(deserialize_with = "lenient_string")]
+    description: Option<String>,
 }
 
 #[derive(Deserialize, Default)]
@@ -210,6 +222,19 @@ struct Action {
 struct Finished {
     #[serde(deserialize_with = "is_true")]
     overall_success: bool,
+}
+
+#[derive(Deserialize, Default)]
+#[serde(default, rename_all = "camelCase")]
+struct BuildMetrics {
+    timing_metrics: Option<TimingMetrics>,
+}
+
+#[derive(Deserialize, Default)]
+#[serde(default, rename_all = "camelCase")]
+struct TimingMetrics {
+    #[serde(deserialize_with = "lenient_integer")]
+    analysis_phase_time_in_ms: Option<i64>,
 }
 
 #[derive(Deserialize, Default)]
@@ -295,7 +320,15 @@ pub fn parse_bep(lines: impl IntoIterator<Item = String>, platform: Platform) ->
         }
 
         if let Some(aborted) = object::<Aborted>(&event, "aborted") {
-            summary.aborted.push(aborted.reason.unwrap_or_else(|| "UNKNOWN".to_owned()));
+            let reason = aborted.reason.unwrap_or_else(|| "UNKNOWN".to_owned());
+            // Only the descriptions of these two name a cause in the tree. Another reason, such as `SKIPPED` for a
+            // target that is not compatible with the platform, has a description in a green run too.
+            if matches!(reason.as_str(), "LOADING_FAILURE" | "ANALYSIS_FAILURE")
+                && let Some(description) = aborted.description.filter(|description| !description.trim().is_empty())
+            {
+                push_once(&mut summary.abort_causes, description);
+            }
+            summary.aborted.push(reason);
             continue;
         }
 
@@ -315,6 +348,14 @@ pub fn parse_bep(lines: impl IntoIterator<Item = String>, platform: Platform) ->
             continue;
         }
 
+        if has_object(id, "buildMetrics")
+            && let Some(metrics) = object::<BuildMetrics>(&event, "buildMetrics")
+        {
+            let analysis = metrics.timing_metrics.and_then(|timing| timing.analysis_phase_time_in_ms);
+            summary.analysis_ms += analysis.map_or(0, |millis| u64::try_from(millis).unwrap_or(0));
+            continue;
+        }
+
         if has_object(id, "buildFinished")
             && let Some(finished) = object::<Finished>(&event, "finished")
         {
@@ -322,6 +363,14 @@ pub fn parse_bep(lines: impl IntoIterator<Item = String>, platform: Platform) ->
         }
     }
     summary
+}
+
+/// Adds a text that the list does not hold yet. Each invocation of a run reports the failure of a pattern that they
+/// share.
+fn push_once(list: &mut Vec<String>, text: String) {
+    if !list.contains(&text) {
+        list.push(text);
+    }
 }
 
 fn no_status() -> String {

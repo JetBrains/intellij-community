@@ -91,13 +91,18 @@ pub fn area_files() -> [(String, String); 2] {
     ]
 }
 
-/// The fake's state. Behind a mutex because the tree scan fans out over worker threads.
+/// The fake's state. Behind a mutex because a directory walk fans out over worker threads.
 #[derive(Default)]
 pub struct State {
     pub files: BTreeMap<String, String>,
     /// Every read attempted, in order, so a test can pin how much I/O a code path does.
     pub reads: Vec<String>,
     pub spawned: Vec<Vec<String>>,
+    /// The absolute paths whose [`Runtime::write_text_file`] fails.
+    pub write_failures: BTreeSet<String>,
+    /// Each spawn as `spawn <command line>` and each [`Runtime::checkout_tree`] as `tree`, in order, so a test can pin
+    /// which comes first.
+    pub order: Vec<String>,
     pub removed: Vec<String>,
     pub stdout: Vec<String>,
     pub stderr: Vec<String>,
@@ -105,18 +110,13 @@ pub struct State {
     /// The answers of the next spawns, in order. A spawn takes the first one, and answers [`State::spawn_result`]
     /// when none is left.
     pub spawn_results: VecDeque<SpawnResult>,
-    /// The stdin of each [`Runtime::spawn_with_input`], in order.
-    pub inputs: Vec<String>,
-    /// The idle limit of each [`Runtime::spawn_watched`], in order.
-    pub idle_limits: Vec<std::time::Duration>,
     /// Answers by command: a spawn whose argv, joined by spaces, holds the text of a rule answers the result of the
-    /// first such rule, before the queue of [`State::spawn_results`] is asked.
+    /// first such rule, before the queue of [`State::spawn_results`] is asked. A `bazel query` needs a rule: without
+    /// one the spawn panics, so a test cannot read a query that it did not script as a tree without targets.
     pub spawn_rules: Vec<(String, SpawnResult)>,
-    /// The answer of [`Runtime::confirm`]: `None` stands for a stdin that is not a terminal.
-    pub confirm_answer: Option<bool>,
-    /// The questions that [`Runtime::confirm`] was asked, in order.
-    pub questions: Vec<String>,
     pub clock: u64,
+    /// The answer of [`Runtime::self_build_ms`].
+    pub self_build_ms: Option<u64>,
     /// Makes every read fail loudly on top of being recorded. Both matter: the production helpers swallow a
     /// missing file, so a failure alone could be absorbed into an empty scan and read as success, while the
     /// recording alone would let a swallowed failure pass for laziness.
@@ -132,6 +132,139 @@ pub struct State {
     pub checkout_trees: VecDeque<CheckoutTree>,
     /// The tree of each commit, for [`Runtime::commit_tree`].
     pub commit_trees: BTreeMap<String, String>,
+    /// The model that [`Runtime::accio`] answers from.
+    pub accio: FakeAccio,
+    /// Each [`Runtime::accio`] call, as its arguments joined by spaces, in order.
+    pub accio_calls: Vec<String>,
+}
+
+/// The accio of the fake: a model of the class index and of the module roots. A test states the classes and the roots
+/// once, and every call shape answers from them, a batch `symbol` call included.
+///
+/// The model takes JSON text, not values: the Air UI-lane workspace links this crate with another build of
+/// `serde_json`.
+#[derive(Clone, Debug, Default)]
+pub struct FakeAccio {
+    /// The classes of the index, each as its file and its FQN in the binary form of the runner.
+    pub classes: Vec<(String, String)>,
+    /// The module roots, each as the JSON text of one entry of the `modules` answer.
+    pub modules: Vec<String>,
+    /// The scripted answers by the arguments of a call joined by spaces. The model answers only a call without one.
+    pub answers: BTreeMap<String, Result<String, Refusal>>,
+    /// The names whose `symbol` answer the limit cuts: `complete` is `false`.
+    pub incomplete: BTreeSet<String>,
+}
+
+impl FakeAccio {
+    /// The answer of one call, as accio prints it with `--format json`.
+    ///
+    /// # Panics
+    ///
+    /// On a command that the model does not know: a test must script it.
+    pub fn answer(&self, args: &[&str]) -> Result<String, Refusal> {
+        if let Some(answer) = self.answers.get(&args.join(" ")) {
+            return answer.clone();
+        }
+        let operands: Vec<&str> = args.iter().skip(1).copied().take_while(|arg| !arg.starts_with("--")).collect();
+        match args.first().copied() {
+            Some("symbol") => Ok(serde_json::Value::Array(operands.iter().map(|name| self.symbol(name)).collect()).to_string()),
+            Some("modules") => {
+                let paths: Vec<&str> = args
+                    .iter()
+                    .skip_while(|arg| **arg != "--paths")
+                    .skip(1)
+                    .copied()
+                    .take_while(|arg| !arg.starts_with("--"))
+                    .collect();
+                Ok(self.modules_of(&paths).to_string())
+            }
+            _ => panic!("the fake accio has no model of `accio {}`", args.join(" ")),
+        }
+    }
+
+    fn symbol(&self, query: &str) -> serde_json::Value {
+        let hits: Vec<serde_json::Value> = self
+            .classes
+            .iter()
+            .filter(|(_, fqn)| {
+                if query.contains('.') {
+                    fqn.replace('$', ".") == query
+                } else {
+                    simple_name_of(fqn) == query
+                }
+            })
+            .map(|(file, fqn)| class_hit(file, fqn))
+            .collect();
+        let mut answer = serde_json::json!({
+            "complete": !self.incomplete.contains(query),
+            "total": hits.len(),
+            "match": if hits.is_empty() { "none" } else { "exact" },
+            "quality": "exact",
+            "hits": hits,
+        });
+        if answer["hits"].as_array().is_some_and(Vec::is_empty) {
+            answer["note"] = serde_json::Value::from(format!("no declaration named {query}"));
+        }
+        answer
+    }
+
+    fn modules_of(&self, paths: &[&str]) -> serde_json::Value {
+        let entries: Vec<serde_json::Value> = self
+            .modules
+            .iter()
+            .map(|text| serde_json::from_str(text).expect("a fixture module entry is JSON"))
+            .collect();
+        let root_of = |entry: &serde_json::Value| entry["root"].as_str().unwrap_or_default().to_owned();
+        let mut matched: Vec<serde_json::Value> = Vec::new();
+        let mut named = Vec::new();
+        for path in paths {
+            let found = entries
+                .iter()
+                .filter(|entry| {
+                    let root = root_of(entry);
+                    root.is_empty() || *path == root || path.strip_prefix(&root).is_some_and(|rest| rest.starts_with('/'))
+                })
+                .max_by_key(|entry| root_of(entry).len());
+            let root = found.map_or_else(String::new, root_of);
+            named.push(serde_json::json!({ "path": path, "root": root }));
+            if let Some(found) = found
+                && !matched.contains(found)
+            {
+                matched.push(found.clone());
+            }
+        }
+        serde_json::json!({
+            "total": matched.len(),
+            "complete": true,
+            "quality": "exact",
+            "modules": matched,
+            "paths": named,
+        })
+    }
+}
+
+/// The simple name of an FQN in the binary form: the part after the last `.` and the last `$`.
+fn simple_name_of(fqn: &str) -> &str {
+    let tail = fqn.rsplit('.').next().unwrap_or(fqn);
+    tail.rsplit('$').next().unwrap_or(tail)
+}
+
+/// One `symbol` hit of a class, with `top_level` for a nested class.
+fn class_hit(file: &str, fqn: &str) -> serde_json::Value {
+    let language = if file.ends_with(".java") { "java" } else { "kotlin" };
+    let mut hit = serde_json::json!({
+        "file": file,
+        "line": 1,
+        "kind": "class",
+        "group": "class",
+        "language": language,
+        "name": simple_name_of(fqn),
+        "fqn": fqn,
+    });
+    if let Some((top_level, _)) = fqn.split_once('$') {
+        hit["top_level"] = serde_json::Value::from(top_level);
+    }
+    hit
 }
 
 pub struct FakeRuntime {
@@ -226,6 +359,26 @@ impl FakeRuntime {
         self.state().upstream_base = Some(revision.to_owned());
     }
 
+    /// Adds a class to the index of the fake accio: its repo-relative file and its FQN in the binary form.
+    pub fn add_class(&self, file: &str, fqn: &str) {
+        self.state().accio.classes.push((file.to_owned(), fqn.to_owned()));
+    }
+
+    /// Adds a module root to the fake accio, as the JSON text of one entry of the `modules` answer.
+    pub fn add_module(&self, entry: impl Into<String>) {
+        self.state().accio.modules.push(entry.into());
+    }
+
+    /// Scripts the answer of one accio call, by its arguments joined by spaces.
+    pub fn answer_accio(&self, args: &str, answer: Result<String, Refusal>) {
+        self.state().accio.answers.insert(args.to_owned(), answer);
+    }
+
+    /// Every accio call so far, as its arguments joined by spaces.
+    pub fn accio_calls(&self) -> Vec<String> {
+        self.state().accio_calls.clone()
+    }
+
     pub fn spawned(&self) -> Vec<Vec<String>> {
         self.state().spawned.clone()
     }
@@ -238,9 +391,11 @@ impl FakeRuntime {
             .push(command.iter().map(|part| part.to_string_lossy().into_owned()).collect());
         state.clock += 5000;
         let joined = crate::os_runtime::command_line(command);
+        state.order.push(format!("spawn {joined}"));
         if let Some((_, result)) = state.spawn_rules.iter().find(|(text, _)| joined.contains(text.as_str())) {
             return result.clone();
         }
+        assert!(!joined.contains(" query "), "a bazel query without a spawn rule: {joined}");
         match state.spawn_results.pop_front() {
             Some(result) => result,
             None => state.spawn_result.clone(),
@@ -277,7 +432,12 @@ impl Runtime for FakeRuntime {
     }
 
     fn write_text_file(&self, path: &Path, text: &str) -> io::Result<()> {
-        self.state().files.insert(key(path), text.to_owned());
+        let path = key(path);
+        let mut state = self.state();
+        if state.write_failures.contains(&path) {
+            return Err(io::Error::new(io::ErrorKind::PermissionDenied, format!("EACCES: {path}")));
+        }
+        state.files.insert(path, text.to_owned());
         Ok(())
     }
 
@@ -352,7 +512,9 @@ impl Runtime for FakeRuntime {
     }
 
     fn checkout_tree(&self) -> io::Result<Option<CheckoutTree>> {
-        Ok(self.state().checkout_trees.pop_front())
+        let mut state = self.state();
+        state.order.push("tree".to_owned());
+        Ok(state.checkout_trees.pop_front())
     }
 
     fn commit_tree(&self, commit: &str) -> io::Result<String> {
@@ -383,16 +545,14 @@ impl Runtime for FakeRuntime {
         self.scripted_spawn(command)
     }
 
-    /// Records the argv and the idle limit, and answers the scripted result.
-    fn spawn_watched(&self, command: &[OsString], idle: std::time::Duration) -> SpawnResult {
-        self.state().idle_limits.push(idle);
-        self.scripted_spawn(command)
-    }
-
-    /// Records the argv and the input, and answers the scripted result.
-    fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
-        self.state().inputs.push(input.to_owned());
-        self.scripted_spawn(command)
+    /// Records the call and answers it from [`State::accio`].
+    fn accio(&self, args: &[&str]) -> Result<String, Refusal> {
+        let accio = {
+            let mut state = self.state();
+            state.accio_calls.push(args.join(" "));
+            state.accio.clone()
+        };
+        accio.answer(args)
     }
 
     fn temp_file(&self, prefix: &str) -> PathBuf {
@@ -432,14 +592,12 @@ impl Runtime for FakeRuntime {
         Some(PathBuf::from(HOME_DIR))
     }
 
-    fn confirm(&self, question: &str) -> Option<bool> {
-        let mut state = self.state();
-        state.questions.push(question.to_owned());
-        state.confirm_answer
-    }
-
     fn now_ms(&self) -> u64 {
         self.state().clock
+    }
+
+    fn self_build_ms(&self) -> Option<u64> {
+        self.state().self_build_ms
     }
 
     fn write(&self, text: &str) {
@@ -452,65 +610,6 @@ impl Runtime for FakeRuntime {
 }
 
 // --- fixture builders ----------------------------------------------------------------------------------------
-
-pub fn iml_text(source_folders: &[&str]) -> String {
-    let indented: Vec<String> = source_folders.iter().map(|folder| format!("      {folder}")).collect();
-    format!(
-        r#"<?xml version="1.0" encoding="UTF-8"?>
-<module type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <exclude-output />
-    <content url="file://$MODULE_DIR$">
-{}
-    </content>
-    <orderEntry type="sourceFolder" forTests="false" />
-  </component>
-</module>"#,
-        indented.join("\n")
-    )
-}
-
-/// A BUILD.bazel of a tests module and its main module, in the shape of `plugins/air/frontend/loopback.proxy/BUILD.bazel`.
-///
-/// The `jps_test` comes first, followed by the `skip generation section` marker of the tests module. The main library is
-/// named after the last part of the main module, and it carries `module_name` of the main module. The `_test_lib` has
-/// `associates` and no `module_name`. Only its `build <module>` section names the tests module.
-pub fn module_build_bazel_text(module: &str, target_name: &str) -> String {
-    let main_module = module
-        .strip_suffix(".tests")
-        .unwrap_or_else(|| panic!("{module} is not a tests module"));
-    let main_library = main_module.rsplit('.').next().unwrap_or(main_module);
-    let test_library = format!("{}_test_lib", target_name.strip_suffix("_test").unwrap_or(target_name));
-    format!(
-        r#"load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
-jps_test(
-    name = "{target_name}",
-    runtime_deps = [":{test_library}"],
-)
-### skip generation section `test {module}`
-
-### auto-generated section `build {main_module}` start
-jvm_library(
-    name = "{main_library}",
-    srcs = glob(["src/**/*.kt"], allow_empty = True),
-    module_name = "{main_module}",
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `build {main_module}` end
-
-### auto-generated section `build {module}` start
-jvm_library(
-    name = "{test_library}",
-    testonly = True,
-    srcs = glob(["testSrc/**/*.kt"], allow_empty = True),
-    associates = [":{main_library}"],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `build {module}` end"#
-    )
-}
 
 pub fn build_bazel_text(target_name: &str) -> String {
     format!(
@@ -533,19 +632,10 @@ jps_test(
     )
 }
 
-/// The fixture every resolution test resolves against: three modules with runnable targets, one with a test root
-/// and no target, and one production-only module.
+/// The files of the fixture area: three modules with a test target, one with a test root and no target, and one
+/// production-only module. [`air_accio`] is what accio knows of them.
 pub fn air_tree() -> BTreeMap<String, String> {
-    let source_root = |prefix: &str| {
-        iml_text(&[&format!(
-            r#"<sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" packagePrefix="{prefix}" />"#
-        )])
-    };
     [
-        (
-            "plugins/air/shared/core/intellij.air.shared.core.tests.iml",
-            source_root("com.intellij.air.shared.core"),
-        ),
         ("plugins/air/shared/core/BUILD.bazel", build_bazel_text("ai-agent-core-tests_test")),
         (
             "plugins/air/shared/core/testSrc/AgentThreadIdentityTest.kt",
@@ -556,20 +646,12 @@ pub fn air_tree() -> BTreeMap<String, String> {
             "package com.intellij.air.shared.core\n\nclass AgentThreadCliTest {\n}\n".to_owned(),
         ),
         (
-            "plugins/air/backend/vcs/intellij.air.backend.vcs.tests.iml",
-            source_root("com.intellij.air.backend.vcs"),
-        ),
-        (
             "plugins/air/backend/vcs/BUILD.bazel",
             build_bazel_text("air-backend-vcs-tests_test"),
         ),
         (
             "plugins/air/backend/vcs/testSrc/context/AgentPromptChangesTreeContextContributorTest.kt",
             "package com.intellij.air.backend.vcs.context\n\nclass AgentPromptChangesTreeContextContributorTest {\n}\n".to_owned(),
-        ),
-        (
-            "plugins/air/frontend/prompt/vcs/intellij.air.frontend.prompt.vcs.tests.iml",
-            source_root("com.intellij.air.frontend.prompt.vcs"),
         ),
         (
             "plugins/air/frontend/prompt/vcs/BUILD.bazel",
@@ -579,19 +661,9 @@ pub fn air_tree() -> BTreeMap<String, String> {
             "plugins/air/frontend/prompt/vcs/testSrc/context/AgentPromptChangesTreeContextContributorTest.kt",
             "package com.intellij.air.frontend.prompt.vcs.context\n\nclass AgentPromptChangesTreeContextContributorTest {\n}\n".to_owned(),
         ),
-        // A module whose .iml declares a test root but which has no jps_test target at all.
-        (
-            "plugins/air/notest/intellij.air.notest.tests.iml",
-            iml_text(&[r#"<sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />"#]),
-        ),
         (
             "plugins/air/notest/testSrc/OrphanTest.kt",
             "package com.intellij.air.notest\n\nclass OrphanTest {\n}\n".to_owned(),
-        ),
-        // Production-only module: no test root, so nothing is indexed from it.
-        (
-            "plugins/air/shared/api/intellij.air.shared.api.iml",
-            iml_text(&[r#"<sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />"#]),
         ),
         (
             "plugins/air/shared/api/src/Api.kt",
@@ -603,8 +675,75 @@ pub fn air_tree() -> BTreeMap<String, String> {
     .collect()
 }
 
+/// What accio knows of [`air_tree`]: each class with its FQN, and each module root.
+pub fn air_accio() -> FakeAccio {
+    let classes = [
+        (
+            "plugins/air/shared/core/testSrc/AgentThreadIdentityTest.kt",
+            "com.intellij.air.shared.core.AgentThreadIdentityTest",
+        ),
+        (
+            "plugins/air/shared/core/testSrc/AgentThreadCliTest.kt",
+            "com.intellij.air.shared.core.AgentThreadCliTest",
+        ),
+        (
+            "plugins/air/backend/vcs/testSrc/context/AgentPromptChangesTreeContextContributorTest.kt",
+            "com.intellij.air.backend.vcs.context.AgentPromptChangesTreeContextContributorTest",
+        ),
+        (
+            "plugins/air/frontend/prompt/vcs/testSrc/context/AgentPromptChangesTreeContextContributorTest.kt",
+            "com.intellij.air.frontend.prompt.vcs.context.AgentPromptChangesTreeContextContributorTest",
+        ),
+        ("plugins/air/notest/testSrc/OrphanTest.kt", "com.intellij.air.notest.OrphanTest"),
+        ("plugins/air/shared/api/src/Api.kt", "com.intellij.air.shared.api.Api"),
+    ];
+    let notest = "plugins/air/notest";
+    let api = "plugins/air/shared/api";
+    FakeAccio {
+        classes: classes.iter().map(|(file, fqn)| ((*file).to_owned(), (*fqn).to_owned())).collect(),
+        modules: vec![
+            tests_module_json(
+                "plugins/air/shared/core",
+                "intellij.air.shared.core",
+                "intellij.air.shared.core.tests",
+                "ai-agent-core-tests_test",
+            ),
+            tests_module_json(
+                "plugins/air/backend/vcs",
+                "intellij.air.backend.vcs",
+                "intellij.air.backend.vcs.tests",
+                "air-backend-vcs-tests_test",
+            ),
+            tests_module_json(
+                "plugins/air/frontend/prompt/vcs",
+                "intellij.air.frontend.prompt.vcs",
+                "intellij.air.frontend.prompt.vcs.tests",
+                "air-frontend-prompt-vcs-tests_test",
+            ),
+            // A module with a test root and no `BUILD.bazel`.
+            module_entry_json(
+                notest,
+                Some(&jps_json("intellij.air.notest.tests", notest, &[("testSrc", true)], None)),
+                &[],
+                None,
+            ),
+            // A production-only module.
+            module_entry_json(
+                api,
+                Some(&jps_json("intellij.air.shared.api", api, &[("src", false)], None)),
+                &[],
+                Some(&[]),
+            ),
+        ],
+        ..FakeAccio::default()
+    }
+}
+
+/// [`air_tree`] with [`air_accio`].
 pub fn fake_air_tree() -> FakeRuntime {
-    FakeRuntime::with_tree(&air_tree())
+    let fake = FakeRuntime::with_tree(&air_tree());
+    fake.state().accio = air_accio();
+    fake
 }
 
 /// The refusal an operation raised, failing the test when it did not raise one.
@@ -777,6 +916,99 @@ pub fn flow_catalog_tree() -> BTreeMap<String, String> {
     tree
 }
 
+// --- the module roots of the fake accio ------------------------------------------------------------------------
+
+/// A JPS module of a `modules` entry, as JSON text. Each root is a path relative to `dir` and whether it is a test
+/// source root. `test` is the JSON text of the test module that the module names, if any.
+pub fn jps_json(name: &str, dir: &str, roots: &[(&str, bool)], test: Option<&str>) -> String {
+    let roots: Vec<serde_json::Value> = roots
+        .iter()
+        .map(|(path, test)| {
+            let mut root = serde_json::json!({ "path": format!("{dir}/{path}") });
+            if *test {
+                root["test"] = serde_json::Value::Bool(true);
+            }
+            root
+        })
+        .collect();
+    let mut module = serde_json::json!({
+        "name": name,
+        "manifest": format!("{dir}/{name}.iml"),
+        "roots": roots,
+    });
+    if let Some(test) = test {
+        module["test"] = serde_json::from_str(test).expect("a fixture test module is JSON");
+    }
+    module.to_string()
+}
+
+/// One rule of a `BUILD.bazel` in `root`, as JSON text. Each runtime dependency is a target name in the same root.
+pub fn target_json(root: &str, kind: &str, name: &str, module_name: Option<&str>, env_keys: &[&str], runtime_deps: &[&str]) -> String {
+    let deps: Vec<serde_json::Value> = runtime_deps
+        .iter()
+        .map(|dep| {
+            serde_json::json!({
+                "label": format!(":{dep}"),
+                "attr": "runtime_deps",
+                "scope": "test",
+                "targets": [{ "root": root, "name": dep }],
+            })
+        })
+        .collect();
+    let mut target = serde_json::json!({
+        "name": name,
+        "kind": kind,
+        "line": 1,
+        "test": kind != "jvm_library" || name.ends_with("_test_lib"),
+        "deps": deps,
+    });
+    if let Some(module_name) = module_name {
+        target["module_name"] = serde_json::Value::from(module_name);
+    }
+    if !env_keys.is_empty() {
+        target["env_keys"] = serde_json::json!(env_keys);
+    }
+    target.to_string()
+}
+
+/// One entry of the `modules` answer, as JSON text: the root, its JPS modules, and the targets of its `BUILD.bazel`.
+/// `targets` is `None` for a root without a `BUILD.bazel`.
+pub fn module_entry_json(root: &str, jps: Option<&str>, jps_more: &[&str], targets: Option<&[String]>) -> String {
+    let parse = |text: &str| -> serde_json::Value { serde_json::from_str(text).expect("a fixture part is JSON") };
+    let mut entry = serde_json::json!({ "root": root });
+    if let Some(jps) = jps {
+        entry["jps"] = parse(jps);
+    }
+    if !jps_more.is_empty() {
+        entry["jps_more"] = jps_more.iter().map(|text| parse(text)).collect();
+    }
+    if let Some(targets) = targets {
+        entry["bazel"] = serde_json::json!({
+            "build": format!("{root}/BUILD.bazel"),
+            "targets": targets.iter().map(|text| parse(text)).collect::<Vec<_>>(),
+        });
+    }
+    entry.to_string()
+}
+
+/// The usual module root, as JSON text: the main module with `src`, its test module with `testSrc`, the library of the
+/// main module, the `_test_lib` of the test module, and the `jps_test` that runs the `_test_lib`.
+pub fn tests_module_json(root: &str, main_module: &str, tests_module: &str, test_target: &str) -> String {
+    let test_library = format!("{}_test_lib", test_target.strip_suffix("_test").unwrap_or(test_target));
+    let main_library = main_module.rsplit('.').next().unwrap_or(main_module);
+    let tests = jps_json(tests_module, root, &[("testSrc", true)], None);
+    module_entry_json(
+        root,
+        Some(&jps_json(main_module, root, &[("src", false)], Some(&tests))),
+        &[],
+        Some(&[
+            target_json(root, "jps_test", test_target, None, &[], &[&test_library]),
+            target_json(root, "jvm_library", main_library, Some(main_module), &[], &[]),
+            target_json(root, "jvm_library", &test_library, Some(tests_module), &[], &[]),
+        ]),
+    )
+}
+
 // --- test.xml and BEP builders ---------------------------------------------------------------------------------
 
 /// The failure element of one case.
@@ -913,6 +1145,18 @@ pub const BUCKETING_XML: &str =
 /// Events as the NDJSON lines of a BEP file.
 pub fn bep_lines(events: &[serde_json::Value]) -> String {
     events.iter().map(serde_json::Value::to_string).collect::<Vec<_>>().join("\n")
+}
+
+/// The BEP of a build that failed to load the pattern, as bazel 9 writes it: the `aborted` event of the pattern with
+/// the description of the cause, and the end of the build with exit code 1.
+pub fn loading_failure_events(pattern: &str, description: &str) -> [serde_json::Value; 2] {
+    [
+        serde_json::json!({
+            "id": {"pattern": {"pattern": [pattern]}},
+            "aborted": {"reason": "LOADING_FAILURE", "description": description},
+        }),
+        serde_json::json!({"id": {"buildFinished": {}}, "finished": {"exitCode": {"name": "BUILD_FAILURE", "code": 1}}}),
+    ]
 }
 
 /// One attempt; zero and empty fields take the defaults a real passing attempt would have.

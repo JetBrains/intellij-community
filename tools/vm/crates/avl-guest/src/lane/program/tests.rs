@@ -1419,6 +1419,38 @@ fn an_authored_part_passes_its_values_and_reports_its_notes() {
     assert!(scenario.contains(r#"{"name":"testMethod","value":"gitScenarios"}"#), "{scenario}");
 }
 
+// The scope of a part is a `json` argument: the request carries it unchanged, and the label of the part leaves it out.
+#[test]
+fn an_authored_part_passes_its_scope_unread() {
+    let fake = Fake::new(Script {
+        answers: BTreeMap::from([(
+            "action/authored-step".to_owned(),
+            json!({"values": {}, "report": {"notes": [], "metrics": {}}}),
+        )]),
+        ..Script::default()
+    });
+    let scope = json!({"flags": ["air.acp.v2.enabled"], "stepBudgetMs": 180_000,
+        "agents": [{"key": "workflow-run", "fullAgentId": "acp.air-scenario-workflow-run", "displayName": "air-scenario-workflow-run",
+            "delivery": "local", "responsePrefix": null}]});
+    let mut actions = json!({"authored-step": authored_step("workflow-git", "commit", &["first"])});
+    actions["authored-step"]["params"]["scope"] = json!({"type": "json", "optional": false});
+    let profiles = json!([{"name": "a commit starts the workflow", "key": "commit", "method": "gitScenarios", "fixture": "authored",
+        "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
+        "program": [{"action": "authored-step", "args": {"part": "first", "scenario": "commit", "scope": scope, "suite": "workflow-git",
+            "timeoutMs": 300_000}, "uses": {"takes": [], "answers": []}}]}]);
+    let document = authored_document("workflow-git", "flow.workflows", "AgentWorkflowGitUiTest", &actions, &profiles);
+    let ran = run(&fake, &[suite_of(&document)], None);
+    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
+    assert_eq!(
+        fake.bodies("action/authored-step")[0],
+        json!({"type": "action/authored-step", "part": "first", "scenario": "commit", "scope": scope, "suite": "workflow-git",
+            "timeoutMs": 300_000, "values": {}})
+    );
+    let span = ran.trace.iter().find(|line| line.starts_with(r#"{"op":"span""#) && line.contains("[action] authored-step")).unwrap();
+    assert!(span.contains("authored-step(part=first,scenario=commit,suite=workflow-git,timeoutMs=300000)"), "{span}");
+    assert!(!span.contains("stepBudgetMs"), "{span}");
+}
+
 /// The authored document `lane-recycle-smoke`: the proof of the recycle, a restart, and one part that reads the driven
 /// project on the restarted IDE.
 fn recycle_smoke() -> Suite {

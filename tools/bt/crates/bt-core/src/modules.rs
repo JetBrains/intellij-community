@@ -1,28 +1,35 @@
-//! The `--module` selector: a JPS module name, resolved to the test target of its directory
-//! ([`crate::scan::TEST_RULE_KINDS`]).
+//! The `--module` selector: a JPS module name, resolved to the test target that runs the module ([`TEST_RULE_KINDS`]).
 //!
-//! Three files of the checkout answer it:
+//! Three sources answer it:
 //!
 //! - `.idea/modules.xml` at the checkout root gives the directory of the module's `.iml`.
-//! - The `BUILD.bazel` of that directory gives the test target that runs the tests of the module
-//!   ([`module_jps_test_name`]).
+//! - `accio modules --paths <dir>` gives the JPS modules of that directory and the targets of its `BUILD.bazel`, and
+//!   [`module_test_target`] picks the test target that runs the module.
 //! - The migrated list gives the modules whose tests run under Bazel. It is the list that `tests.cmd` reads, and
 //!   [`MigratedList`] reads it with the rules of `BazelMigratedTestModules.kt`.
 //!
 //! A module of the migrated list resolves, and so does a module inside an area. Every other module is refused with
 //! the `tests.cmd` command that runs it. When no target runs the module and the `BUILD.bazel` declares exactly one
-//! unfiltered `jps_test`, the refusal also names the label of that target and the bt command that runs it.
+//! unfiltered test target, the refusal also names the label of that target and the bt command that runs it. A class
+//! selector applies the same two rules to the module of its class.
 
 use refusal::Refusal;
 use serde_json::json;
 
+use crate::accio::{BazelTarget, ModuleEntry, parse_modules};
 use crate::areas::Areas;
 use crate::details::WithDetails;
 use crate::exit::{USAGE, fail_infra};
 use crate::regex;
-use crate::runtime::{Runtime, repo_file};
-use crate::scan::{module_jps_test_name, parse_jps_test_name, read_text, read_text_or_none};
+use crate::runtime::{Runtime, read_text, repo_file};
 use crate::selector::{Resolution, suggest_names};
+
+/// The rule kinds of a test target that runs one JPS module: `jps_test`, and the `starter_test` macro of
+/// `//build:starter_test.bzl`, which wraps `jps_test` for an IDE Starter test.
+///
+/// accio reads the kind from the text of a `BUILD.bazel`, never from `bazel query`, so a macro is known by its own
+/// name.
+pub const TEST_RULE_KINDS: &[&str] = &["jps_test", "starter_test"];
 
 /// The module list of the checkout, relative to the checkout root.
 pub const MODULES_FILE: &str = ".idea/modules.xml";
@@ -63,7 +70,7 @@ impl Layout {
         }
     }
 
-    const fn wrapper(self) -> &'static str {
+    pub(crate) const fn wrapper(self) -> &'static str {
         match self {
             Self::Ultimate => "./community/tools/bt.cmd",
             Self::Community => "./tools/bt.cmd",
@@ -71,7 +78,7 @@ impl Layout {
     }
 
     /// The label of a target in a repo-relative directory.
-    fn label(self, dir: &str, name: &str) -> String {
+    pub(crate) fn label(self, dir: &str, name: &str) -> String {
         let (repository, package) = self.package(dir);
         format!("{repository}//{package}:{name}")
     }
@@ -168,10 +175,102 @@ fn file_in(dir: &str, file: &str) -> String {
     if dir.is_empty() { file.to_owned() } else { format!("{dir}/{file}") }
 }
 
-/// Resolves a JPS module to its `jps_test` label, with no filter.
+/// The test target of a module root that runs the tests of `module`, or `None` when no target runs them.
 ///
-/// The module list and the `BUILD.bazel` of the module are read. The migrated list is read only for a module that no
-/// area owns.
+/// A target of [`TEST_RULE_KINDS`] runs the module when its `runtime_deps` name a rule of the root whose `module_name`
+/// is the module, or the `<rule>_test_lib` of such a rule. accio takes the module of a rule from its `module_name`, or
+/// from the `build <module>` section that the BUILD generator writes. One directory can hold several modules, and its
+/// `BUILD.bazel` then declares a target for each of them, or none.
+///
+/// A target that pins `JB_TEST_JUNIT5_FILTERS` runs a named subset of its test library. It counts too, because for
+/// some modules it is the only target. When the module has an unfiltered target too, the unfiltered target wins. Two
+/// targets that are left are refused with exit 6.
+pub fn module_test_target<'e>(entry: &'e ModuleEntry, module: &str) -> Result<Option<&'e str>, Refusal> {
+    let targets = entry.targets();
+    let named = |name: &str| targets.iter().find(|target| target.name.as_deref() == Some(name));
+    let of_module = |target: &BazelTarget| target.module_name.as_deref() == Some(module);
+    let runs_module = |target: &BazelTarget| {
+        target
+            .deps_of("runtime_deps")
+            .filter(|dependency| dependency.root == entry.root)
+            .any(|dependency| {
+                named(&dependency.name).is_some_and(of_module)
+                    || dependency.name.strip_suffix("_test_lib").and_then(named).is_some_and(of_module)
+            })
+    };
+    let running: Vec<&BazelTarget> = test_targets(entry).filter(|target| runs_module(target)).collect();
+    let unfiltered: Vec<&BazelTarget> = running.iter().copied().filter(|target| !target.is_filtered()).collect();
+    let chosen = if unfiltered.is_empty() { running } else { unfiltered };
+    match chosen.as_slice() {
+        [] => Ok(None),
+        [only] => Ok(only.name.as_deref()),
+        _ => Err(fail_infra(format!(
+            "Expected one test target of module {module} in {}, found {}: {}",
+            file_in(&entry.root, "BUILD.bazel"),
+            chosen.len(),
+            chosen
+                .iter()
+                .filter_map(|target| target.name.as_deref())
+                .collect::<Vec<_>>()
+                .join(", ")
+        ))),
+    }
+}
+
+/// The named targets of [`TEST_RULE_KINDS`] of a module root.
+fn test_targets(entry: &ModuleEntry) -> impl Iterator<Item = &BazelTarget> {
+    entry
+        .targets()
+        .iter()
+        .filter(|target| target.name.is_some() && TEST_RULE_KINDS.contains(&target.kind.as_str()))
+}
+
+/// The only unfiltered test target of a module root, or `None` when the root has none or several.
+fn only_unfiltered_test_target(entry: &ModuleEntry) -> Option<&str> {
+    let mut unfiltered = test_targets(entry).filter(|target| !target.is_filtered());
+    match (unfiltered.next(), unfiltered.next()) {
+        (Some(only), None) => only.name.as_deref(),
+        _ => None,
+    }
+}
+
+/// Refuses a module whose tests do not run under Bazel: no area owns its directory, and the migrated list does not
+/// name it. The refusal gives the `tests.cmd` command and the label of the target. `test` is the `--test` value of
+/// that command, the FQN of a class or `<FQN>`.
+///
+/// The migrated list is read only for a module that no area owns.
+pub(crate) fn check_migrated(
+    runtime: &dyn Runtime,
+    areas: &Areas,
+    module: &str,
+    dir: &str,
+    label: &str,
+    test: &str,
+) -> Result<(), Refusal> {
+    if areas.iter().any(|area| area.owns(dir)) {
+        return Ok(());
+    }
+    let layout = Layout::detect(runtime);
+    let list_file = layout.migrated_list_file();
+    let list = MigratedList::parse(&read_text(runtime, list_file)?, list_file)?;
+    if list.contains(module) {
+        return Ok(());
+    }
+    Err(Refusal::new(
+        MODULE_NOT_MIGRATED,
+        USAGE,
+        format!(
+            "the tests of module {module} do not run under Bazel yet ({list_file}). Run: ./tests.cmd --module {module} \
+             --test {test}. The label {label} still runs on its own: {} {label} --filter {test}",
+            layout.wrapper()
+        ),
+    )
+    .with_details(json!({ "module": module, "label": label, "migratedList": list_file })))
+}
+
+/// Resolves a JPS module to its test label, with no filter.
+///
+/// The module list, one `accio modules` call and, for a module that no area owns, the migrated list are read.
 pub fn resolve_module(runtime: &dyn Runtime, areas: &Areas, module: &str) -> Result<Resolution, Refusal> {
     let modules_xml = read_text(runtime, MODULES_FILE)?;
     let Some(dir) = listed_modules(&modules_xml).find_map(|(dir, name)| (name == module).then_some(dir)) else {
@@ -192,16 +291,17 @@ pub fn resolve_module(runtime: &dyn Runtime, areas: &Areas, module: &str) -> Res
             format!("module {module} has no test target: {reason}. Run: ./tests.cmd --module {module} --test <FQN>{hint}"),
         )
     };
-    let Some(build_text) = read_text_or_none(runtime, &build_file) else {
+    let answer = parse_modules(&runtime.accio(&["modules", "--paths", if dir.is_empty() { "." } else { dir }])?)?;
+    let Some(entry) = answer.modules.iter().find(|entry| entry.root == dir && entry.bazel.is_some()) else {
         return Err(without_target(format!("{build_file} does not exist"), ""));
     };
     let layout = Layout::detect(runtime);
-    let Some(name) = module_jps_test_name(&build_text, module)? else {
+    let Some(name) = module_test_target(entry, module)? else {
         let reason = format!("{build_file} declares no jps_test that runs the module");
-        let Ok(Some(only)) = parse_jps_test_name(&build_text) else {
+        let Some(only) = only_unfiltered_test_target(entry) else {
             return Err(without_target(reason, ""));
         };
-        let label = layout.label(dir, &only);
+        let label = layout.label(dir, only);
         let hint = format!(
             ". The only jps_test of {build_file} is {label}: {} {label} --filter <FQN>",
             layout.wrapper()
@@ -209,23 +309,8 @@ pub fn resolve_module(runtime: &dyn Runtime, areas: &Areas, module: &str) -> Res
         return Err(without_target(reason, &hint).with_details(json!({ "module": module, "label": label })));
     };
 
-    let label = layout.label(dir, &name);
-    if !areas.iter().any(|area| area.owns(dir)) {
-        let list_file = layout.migrated_list_file();
-        let list = MigratedList::parse(&read_text(runtime, list_file)?, list_file)?;
-        if !list.contains(module) {
-            return Err(Refusal::new(
-                MODULE_NOT_MIGRATED,
-                USAGE,
-                format!(
-                    "the tests of module {module} do not run under Bazel yet ({list_file}). Run: ./tests.cmd --module \
-                     {module} --test <FQN>. The label {label} still runs on its own: {} {label} --filter <FQN>",
-                    layout.wrapper()
-                ),
-            )
-            .with_details(json!({ "module": module, "label": label, "migratedList": list_file })));
-        }
-    }
+    let label = layout.label(dir, name);
+    check_migrated(runtime, areas, module, dir, &label, "<FQN>")?;
     Ok(Resolution {
         labels: vec![label],
         multi_target: false,

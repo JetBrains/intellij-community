@@ -28,18 +28,29 @@ use bt_core::os_runtime::{OsRuntime, Spawner};
 /// own path, which under Bazel is inside an output tree, and not `bt`, which is not a command anyone can run.
 pub(crate) const PROGRAM: &str = "./community/tools/bt.cmd";
 
+/// What the process got from its environment, which `main.rs` reads.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct Boundary<'a> {
+    /// The checkout root. An absent or empty one is a refusal, not a search: every selector, `.iml` and
+    /// `BUILD.bazel` resolves relative to the checkout root, and guessing it from the working directory would answer
+    /// "no such test" for a whole tree that is there.
+    pub(crate) repo_root: Option<&'a Path>,
+    /// The checkout is a host slot of `brd-host`, see [`bt_core::os_runtime::OsRuntimeBuilder::host_slot`].
+    pub(crate) host_slot: bool,
+    /// The time of the build of this binary, see [`bt_core::Runtime::self_build_ms`].
+    pub(crate) self_build_ms: Option<u64>,
+}
+
 /// The whole invocation; answers the status the process should leave with.
 ///
-/// `repo_root` is passed in rather than read here because it is one of the things a running process has that a test
-/// cannot be given, and `main.rs` is where those are read. An absent or empty one is a refusal, not a search: every
-/// selector, `.iml` and `BUILD.bazel` resolves relative to the checkout root, and guessing it from the working
-/// directory would answer "no such test" for a whole tree that is there.
-pub(crate) fn run<I, T>(argv: I, repo_root: Option<&Path>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8
+/// The boundary is passed in rather than read here because it holds the things a running process has that a test
+/// cannot be given, and `main.rs` is where those are read.
+pub(crate) fn run<I, T>(argv: I, boundary: &Boundary<'_>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
 {
-    report(execute_in(argv, repo_root), stdout, stderr)
+    report(execute_in(argv, boundary), stdout, stderr)
 }
 
 /// Builds the production runtime and runs one invocation.
@@ -47,12 +58,12 @@ where
 /// The spawn runs children in the checkout: bazel resolves a target pattern against the workspace it was started in,
 /// and this binary's own working directory under a `bazel run` launcher is somewhere in an output tree. The two sinks
 /// stay the process's own stdout and stderr; the lane controller is the consumer that routes them elsewhere.
-fn execute_in<I, T>(argv: I, repo_root: Option<&Path>) -> Result<Outcome, Refusal>
+fn execute_in<I, T>(argv: I, boundary: &Boundary<'_>) -> Result<Outcome, Refusal>
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
 {
-    let Some(repo_root) = repo_root.filter(|root| !root.as_os_str().is_empty()) else {
+    let Some(repo_root) = boundary.repo_root.filter(|root| !root.as_os_str().is_empty()) else {
         // `bt`'s usage code rather than its infrastructure one: nothing is broken, this binary was started without
         // the one fact the wrapper always exports. Reporting it as infrastructure would say bazel failed.
         return Err(Refusal::new(
@@ -63,6 +74,8 @@ where
     };
     let runtime = OsRuntime::builder(repo_root)
         .spawn(Spawner::ChildIn(repo_root.to_path_buf()))
+        .host_slot(boundary.host_slot)
+        .self_build_ms(boundary.self_build_ms)
         .build();
     execute(argv, &runtime)
 }

@@ -1,0 +1,15 @@
+load("//tools/vm:avl.bzl", "avl_crate")
+
+avl_crate(
+    closure = True,
+    portable = True,
+    test_data = [":testdata"],
+)
+
+# The goldens of the deterministic agent. Public, because a Kotlin test of the authored agents holds its texts to the
+# answers of the deterministic agent.
+filegroup(
+    name = "testdata",
+    srcs = glob(["testdata/**"]),
+    visibility = ["//visibility:public"],
+)

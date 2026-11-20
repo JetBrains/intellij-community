@@ -9,11 +9,11 @@
 
 use std::sync::{Mutex, MutexGuard};
 
+use avl_control::encoding::Base64;
 use serde::{Deserialize, Serialize};
 
 use self::spawner::Spawner;
 use super::control;
-use super::encoding::Base64;
 use super::http::{self, Request, Response};
 use super::{Handler, Service};
 use crate::reply::AgentRefusal;

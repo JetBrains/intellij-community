@@ -202,11 +202,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow resume ACP"
         }
@@ -225,11 +222,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI context first"
         }
@@ -248,11 +242,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI context second"
         }
@@ -271,11 +262,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow ACP event"
         }
@@ -343,11 +331,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow Mark Done ACP"
         }
@@ -366,11 +351,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow closed project ACP"
         }
@@ -389,11 +371,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow activity",
           "ACP_DEBUG_TEST_RESPONSE_DELAY_MS": "9000"
@@ -413,11 +392,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow activity ask",
           "ACP_DEBUG_TEST_RESPONSE_DELAY_MS": "9000",
@@ -454,11 +430,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow restart ACP"
         }
@@ -477,11 +450,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow restart reads ACP"
         }
@@ -500,11 +470,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow worktree session ACP"
         }
@@ -523,11 +490,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Workflow completed"
         }
@@ -541,11 +505,8 @@
       "controlled": true,
       "controlOwner": "IDE",
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {}
       }
     },
@@ -562,11 +523,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Session window seed response"
         }
@@ -580,11 +538,8 @@
       "controlled": true,
       "controlOwner": "IDE",
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {}
       }
     },
@@ -596,11 +551,8 @@
       "controlled": true,
       "controlOwner": "IDE",
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {}
       }
     },
@@ -617,11 +569,8 @@
         "loadsSessions": false
       },
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {
           "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "GenUI seed response"
         }
@@ -635,11 +584,8 @@
       "controlled": true,
       "controlOwner": "IDE",
       "acpJson": {
-        "command": "${java}",
-        "args": [
-          "-jar",
-          "${fakeAgentJar}"
-        ],
+        "command": "${fakeAgent}",
+        "args": [],
         "env": {}
       }
     }

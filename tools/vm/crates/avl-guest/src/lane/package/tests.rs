@@ -5,7 +5,7 @@ use expect_test::expect;
 use pretty_assertions::assert_eq;
 
 use super::*;
-use crate::lane::services::testing::{FIXTURE_JAVA, fixture_jar, fixture_packages};
+use crate::lane::services::testing::{FIXTURE_PLATFORM, fixture_agent, fixture_packages};
 
 /// The entries of `archive`: the name, whether it is stored, and the bytes, which the reader checks against the CRC.
 fn entries(archive: &[u8]) -> Vec<(String, bool, Vec<u8>)> {
@@ -25,26 +25,23 @@ fn entries(archive: &[u8]) -> Vec<(String, bool, Vec<u8>)> {
 }
 
 #[test]
-fn a_posix_archive_holds_the_launcher_and_the_jar_and_a_windows_archive_the_jar_only() {
+fn the_archive_holds_the_fake_agent_binary_for_the_one_platform() {
     let packages = fixture_packages();
-    let jar = fs::read(fixture_jar()).unwrap();
-    for platform in PLATFORMS {
-        let archive = packages.archive(platform).unwrap();
-        let mut want = Vec::new();
-        if !platform.starts_with("windows-") {
-            want.push(("bin/acp-scenario-agent".to_owned(), true, launcher(FIXTURE_JAVA).into_bytes()));
-        }
-        want.push(("lib/acp-scenario-agent.jar".to_owned(), true, jar.clone()));
-        assert_eq!(entries(archive), want, "{platform}");
-        assert_eq!(packages.sha256(platform), Some(sha256_hex(archive).as_str()), "{platform}");
-    }
+    let archive = packages.archive(FIXTURE_PLATFORM).unwrap();
+    assert_eq!(
+        entries(archive),
+        [("bin/acp-fake-agent".to_owned(), true, fs::read(fixture_agent()).unwrap())]
+    );
+    assert_eq!(packages.sha256(), sha256_hex(archive));
+    assert_eq!(packages.platform(), FIXTURE_PLATFORM);
+    assert!(packages.archive("linux-aarch64").is_none());
     assert!(packages.archive("solaris-sparc").is_none());
 }
 
 #[test]
 fn every_entry_has_the_time_zero_and_no_file_attributes() {
     let packages = fixture_packages();
-    let mut zip = zip::ZipArchive::new(Cursor::new(packages.archive("linux-x86_64").unwrap())).unwrap();
+    let mut zip = zip::ZipArchive::new(Cursor::new(packages.archive(FIXTURE_PLATFORM).unwrap())).unwrap();
     for index in 0..zip.len() {
         let entry = zip.by_index(index).unwrap();
         let time = entry.last_modified().unwrap();
@@ -58,61 +55,42 @@ fn every_entry_has_the_time_zero_and_no_file_attributes() {
     }
 }
 
+/// The installer of the IDE makes the command executable after the extraction, so the archive carries no mode.
 #[test]
-fn the_launcher_runs_the_java_of_the_distribution_by_its_absolute_path() {
-    expect![[r#"
-        #!/bin/sh
-        SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-        exec "/home/admin/air-lane/jbr/bin/java" -jar "$SCRIPT_DIR/../lib/acp-scenario-agent.jar" "$@"
-    "#]]
-    .assert_eq(&launcher(FIXTURE_JAVA));
+fn the_manifest_command_is_the_packaged_binary() {
+    assert_eq!(Packages::command(), "./bin/acp-fake-agent");
 }
 
 #[test]
-fn the_manifest_command_is_the_launcher_or_the_java_exe_beside_that_java() {
-    let packages = fixture_packages();
-    assert_eq!(packages.command("linux-aarch64"), "./bin/acp-scenario-agent");
-    assert_eq!(Packages::args("linux-aarch64"), Vec::<String>::new());
-    assert_eq!(packages.command("windows-x86_64"), "/home/admin/air-lane/jbr/bin/java.exe");
-    assert_eq!(Packages::args("windows-x86_64"), ["-jar", "./lib/acp-scenario-agent.jar"]);
+fn the_guest_platform_is_a_registry_key_of_this_os_and_cpu() {
+    let expected = match (std::env::consts::OS, std::env::consts::ARCH) {
+        ("macos", "aarch64") => "darwin-aarch64",
+        ("linux", "aarch64") => "linux-aarch64",
+        ("linux", "x86_64") => "linux-x86_64",
+        (os, arch) => panic!("no guest runs on {os} {arch}"),
+    };
+    assert_eq!(guest_platform(), expected);
 }
 
 #[test]
-fn the_packages_are_the_same_bytes_on_each_assembly() {
+fn the_package_is_the_same_bytes_on_each_assembly() {
     let (first, second) = (fixture_packages(), fixture_packages());
-    for platform in PLATFORMS {
-        assert_eq!(first.archive(platform), second.archive(platform), "{platform}");
-    }
+    assert_eq!(first.archive(FIXTURE_PLATFORM), second.archive(FIXTURE_PLATFORM));
+    expect!["ed202efe69e1aba91aab4823f8d19b6c805e4ce73e07ffa8ee96a555830f17d5"].assert_eq(first.sha256());
 }
 
 #[test]
-fn a_relative_java_and_a_missing_jar_are_refused_with_the_input() {
-    let relative = Packages::assemble(&fixture_jar(), Path::new("jbr/bin/java")).err().unwrap();
-    assert_eq!(relative.code, INPUT_CODE);
-    assert_eq!(relative.message, "the Java command jbr/bin/java is not an absolute UTF-8 path");
-
-    let missing = Path::new("/nonexistent/agent.jar");
-    let refusal = Packages::assemble(missing, Path::new(FIXTURE_JAVA)).err().unwrap();
+fn a_missing_binary_is_refused_with_the_input() {
+    let refusal = Packages::assemble(Path::new("/nonexistent/acp-fake-agent"), FIXTURE_PLATFORM)
+        .err()
+        .unwrap();
     assert_eq!(refusal.code, INPUT_CODE);
     assert!(
-        refusal.message.starts_with("cannot read the agent jar /nonexistent/agent.jar: "),
+        refusal
+            .message
+            .starts_with("cannot read the fake agent /nonexistent/acp-fake-agent: "),
         "{}",
         refusal.message
-    );
-}
-
-/// The checksums that `java.util.zip.ZipOutputStream` gives the same entries, with the code of the Java packer of the
-/// fake agent, in the time zones UTC, America/Los_Angeles and Asia/Tokyo.
-#[test]
-fn the_archives_are_the_bytes_of_the_java_packer() {
-    let packages = fixture_packages();
-    assert_eq!(
-        packages.sha256("linux-x86_64"),
-        Some("7f8dd9a99a3a55d8ff9b2e8b5fd67fac555c7df9529f7925566e6144334081c3")
-    );
-    assert_eq!(
-        packages.sha256("windows-x86_64"),
-        Some("85ae41b1615c5ed0285949ab81917081a6f5fa9e563a270a2e738281ddbd24b5")
     );
 }
 

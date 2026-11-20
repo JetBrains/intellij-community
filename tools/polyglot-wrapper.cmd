@@ -1,6 +1,6 @@
 @ECHO OFF
 REM The shared steps of the CMD half of a polyglot wrapper in this directory. polyglot-wrapper.sh lists the wrappers
-REM and holds the design. This file has two steps, and the first argument picks one:
+REM and holds the design. This file has three steps, and the first argument picks one:
 REM
 REM   call "%~dp0polyglot-wrapper.cmd"
 REM     sets four variables in the caller:
@@ -22,13 +22,20 @@ REM     `polyglot_build_binary` in polyglot-wrapper.sh: a `bazel build` and not 
 REM     deletion that the bash step names, and the path of the binary from the build event file, which
 REM     polyglot-built-file.ps1 reads.
 REM
+REM   call "%POLYGLOT_WRAPPER%" user-cache <folder>
+REM     sets USER_CACHE in the caller to <folder> in the cache of the monorepo tools of the user,
+REM     `%LOCALAPPDATA%\JetBrains\monorepo-tools`. tool-wrapper.cmd keeps each downloaded tool there, and every
+REM     checkout of the user reads it. Without LOCALAPPDATA, the folder is `out\<folder>` of the checkout. The step
+REM     is `polyglot_user_cache` of polyglot-wrapper.sh.
+REM
 REM No `setlocal` here, so the variables reach the caller. A caller runs the first step before its argument loop,
-REM because `shift` also moves %0. The `build` step needs ROOT and so runs after the first step.
+REM because `shift` also moves %0. The `build` and `user-cache` steps need ROOT and so run after the first step.
 REM `%~dp0` ends with a backslash, so `%~dp0..` is the parent of this directory, and `%%~fd` resolves the `..`, which
 REM makes the identity test comparable. A `goto` chain rather than a nested `if (...)` block: plain expansion reads a
 REM stale value inside a block.
 
 if /I "%~1"=="build" goto :BUILD
+if /I "%~1"=="user-cache" goto :USERCACHE
 
 set "POLYGLOT_WRAPPER=%~f0"
 for %%d in ("%~dp0..") do set "COMMUNITY_ROOT=%%~fd"
@@ -45,6 +52,11 @@ set "LABEL_PREFIX=@community//"
 :DONE
 set "POLYGLOT_PARENT="
 set "POLYGLOT_PARENT_COMMUNITY="
+exit /B 0
+
+:USERCACHE
+set "USER_CACHE=%ROOT%\out\%~2"
+if defined LOCALAPPDATA set "USER_CACHE=%LOCALAPPDATA%\JetBrains\monorepo-tools\%~2"
 exit /B 0
 
 :BUILD

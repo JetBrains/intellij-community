@@ -213,6 +213,29 @@ fn a_part_that_names_no_part_of_its_suite_is_refused() {
     );
 }
 
+/// A `json` argument takes any value, and the label of its instruction names only the scalar arguments.
+#[test]
+fn a_json_argument_takes_any_value_and_stays_out_of_the_label() {
+    let mut program = authored(&json!([part("seed", &[], &[])]));
+    let step = program.vocabulary.actions.get_mut("authored-step").unwrap();
+    step.params.insert("scope".to_owned(), serde_json::from_value(json!({"type": "json", "optional": false})).unwrap());
+    let scope = json!({"flags": ["air.acp.v2.enabled"], "agents": [{"key": "agent", "responsePrefix": null}], "stepBudgetMs": 180_000});
+    let instruction = &mut program.profiles[0].program[0];
+    instruction.args.insert("scope".to_owned(), scope.clone());
+    assert_eq!(program.refusals(), Vec::<String>::new());
+
+    let instruction = &program.profiles[0].program[0];
+    assert_eq!(instruction.args["scope"], scope);
+    assert_eq!(instruction.label(), "authored-step(part=seed,scenario=scenario,suite=authored,timeoutMs=1000)");
+}
+
+/// An instruction whose arguments are all objects or arrays is labelled by its id alone.
+#[test]
+fn an_instruction_with_only_json_arguments_is_labelled_by_its_id() {
+    let instruction: Instruction = serde_json::from_value(json!({"action": "authored-step", "args": {"scope": {"flags": []}}})).unwrap();
+    assert_eq!(instruction.label(), "authored-step");
+}
+
 /// The suite document `startup-class-loading` of a bare launch: one authored program of one IDE id, and `launch`. A
 /// `launch` of null leaves the field out.
 fn bare(authored: bool, launch: &Value, actions: &Value) -> Result<SuiteProgram, String> {

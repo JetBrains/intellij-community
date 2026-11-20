@@ -2,7 +2,7 @@
 
 use avl_affected::{air_areas, ui_lane, ui_lane_of_label, ui_lanes};
 use avl_base::{Config, Exit, Refusal, Reporter};
-use bt_core::{ResolutionInputs, Selector, resolve_selector};
+use bt_core::{ResolutionInputs, Runtime, Selector, resolve_selector};
 
 use crate::daemon::run::selector_to_run_request;
 use crate::lane::runtime::bt_runtime;
@@ -37,13 +37,18 @@ pub(crate) fn lane_selection(lane: &str) -> Result<Selection, Refusal> {
 
 /// Resolves a BT selector and refuses anything that is not one IDE UI target.
 ///
-/// The runtime it resolves through cannot spawn, so this reaches no Bazel and no VM: the refusal below is decided
-/// from the checkout alone.
+/// The runtime it resolves through spawns nothing but the pinned accio, so this reaches no Bazel and no VM: the
+/// refusal below is decided from the checkout and its accio index.
 pub(crate) fn resolve_selector_selection(settings: &Config, selector: &str, reporter: &Reporter) -> Result<Selection, Refusal> {
     let runtime = bt_runtime(settings.host_repo()?, reporter);
+    resolve_selector_selection_in(&runtime, selector)
+}
+
+/// [`resolve_selector_selection`] through a given runtime, which a test fakes.
+pub(crate) fn resolve_selector_selection_in(runtime: &dyn Runtime, selector: &str) -> Result<Selection, Refusal> {
     let classified = Selector::classify(selector).map_err(as_usage)?;
-    let inputs = ResolutionInputs::new(&runtime, air_areas());
-    let resolution = resolve_selector(&runtime, &classified, &inputs).map_err(as_usage)?;
+    let inputs = ResolutionInputs::new(runtime, air_areas());
+    let resolution = resolve_selector(runtime, &classified, &inputs).map_err(as_usage)?;
     let label = match resolution.labels.as_slice() {
         [label] if !resolution.multi_target && ui_lane_of_label(label).is_some() => label.clone(),
         labels => {

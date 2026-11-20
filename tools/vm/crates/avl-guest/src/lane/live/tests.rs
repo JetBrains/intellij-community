@@ -20,7 +20,7 @@ use super::*;
 use crate::lane::context::{ACP_JSON, BRIDGE_DIR, CLOUD_IDENTITY, CODEX_CONFIG, CONTROL_FILE, LANE_SERVICES_FILE, LaneContext};
 use crate::lane::identity::LaneIdentity;
 use crate::lane::services::codex;
-use crate::lane::services::testing::{FIXTURE_JAVA, fixture_jar};
+use crate::lane::services::testing::{FIXTURE_JAVA, fixture_agent, fixture_genui_jar};
 
 /// The one token of the fake login. No note may name it.
 const LOGIN_TOKEN: &str = "smoke0-s3ss10n-token-0123456789";
@@ -415,13 +415,14 @@ fn a_live_context_names_no_fake_registry_and_no_codex_mock() {
     }
     let identity = LaneIdentity::new("live-lane-key", 27_100);
     let java = Path::new(FIXTURE_JAVA);
-    let jar = fixture_jar();
+    let (agent, genui) = (fixture_agent(), fixture_genui_jar());
     let declared = &fixture.declared[..2];
     let context = |live| LaneContext {
         document: &document,
         identity: &identity,
         java,
-        fake_agent_jar: &jar,
+        fake_agent: &agent,
+        genui_fixture_jar: &genui,
         runtimes: declared,
         live,
     };

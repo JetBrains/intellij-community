@@ -1,9 +1,9 @@
 //! The areas `bt` resolves in: each is a directory and its lane table, and `bt.json` at the repository root lists
 //! them.
 //!
-//! An area is how a product tree joins `bt` without this crate naming any of its paths. A name selector scans every
-//! area's directory, `--lane` looks the lane up in every area's table, and a flow or a suite selector reads the one
-//! area whose table names a suite catalog.
+//! An area is how a product tree joins `bt` without this crate naming any of its paths. `--lane` looks the lane up in
+//! every area's table, a flow or a suite selector reads the one area whose table names a suite catalog, and a module
+//! inside an area runs without the migrated list ([`Area::owns`]).
 //!
 //! `bt.json` is a flat object with one key:
 //!
@@ -11,11 +11,10 @@
 //! { "areas": [ { "dir": "plugins/air", "lanes": "plugins/air/tests/integration/lanes.json" } ] }
 //! ```
 //!
-//! - `dir`: the repo-relative directory the area owns, which resolution scans.
+//! - `dir`: the repo-relative directory the area owns.
 //! - `lanes`: the repo-relative path of the area's lane table; [`Lanes`] gives its shape.
 //!
-//! A checkout without `bt.json` has no area. A label and a pattern still resolve there, since they name their
-//! targets themselves.
+//! A checkout without `bt.json` has no area. A label, a pattern, a directory, a class and a module still resolve there.
 
 use refusal::Refusal;
 use serde::Deserialize;
@@ -131,11 +130,6 @@ impl Areas {
 
     pub const fn is_empty(&self) -> bool {
         self.areas.is_empty()
-    }
-
-    /// Every area directory, in listed order.
-    pub fn dirs(&self) -> Vec<&str> {
-        self.areas.iter().map(Area::dir).collect()
     }
 
     /// The area that owns a repo-relative path. A nested area wins over the area around it.

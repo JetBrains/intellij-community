@@ -16,26 +16,26 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
 
-use super::encoding::{Base64, sha1};
+use crate::encoding::{Base64, sha1};
 
 #[cfg(test)]
 mod tests;
 
 /// The close code of a normal end.
-pub(crate) const NORMAL_CLOSURE: u16 = 1000;
+pub const NORMAL_CLOSURE: u16 = 1000;
 /// The close code of a peer that goes away, as an agent process that exits does.
-pub(crate) const GOING_AWAY: u16 = 1001;
+pub const GOING_AWAY: u16 = 1001;
 /// The close code of a frame that breaks the protocol.
-pub(crate) const PROTOCOL_ERROR: u16 = 1002;
+pub const PROTOCOL_ERROR: u16 = 1002;
 /// The close code of a failure on this side.
-pub(crate) const INTERNAL_ERROR: u16 = 1011;
+pub const INTERNAL_ERROR: u16 = 1011;
 
 /// The largest message that a peer reads.
-pub(crate) const MAX_MESSAGE_BYTES: usize = 16 << 20;
+pub const MAX_MESSAGE_BYTES: usize = 16 << 20;
 
 /// How long a peer that sent a close waits for the answer of the other peer, as the minimal server of the test process
 /// does.
-pub(crate) const CLOSE_GRACE: Duration = Duration::from_secs(2);
+pub const CLOSE_GRACE: Duration = Duration::from_secs(2);
 
 const GUID: &str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 const FIN: u8 = 0x80;
@@ -45,23 +45,23 @@ const MAX_CONTROL_PAYLOAD: u64 = 125;
 const MAX_HEAD_LINE: u64 = 16 << 10;
 
 /// The opcodes of RFC 6455, section 5.2.
-pub(crate) mod opcode {
-    pub(crate) const CONTINUATION: u8 = 0x0;
-    pub(crate) const TEXT: u8 = 0x1;
-    pub(crate) const BINARY: u8 = 0x2;
-    pub(crate) const CLOSE: u8 = 0x8;
-    pub(crate) const PING: u8 = 0x9;
-    pub(crate) const PONG: u8 = 0xa;
+pub mod opcode {
+    pub const CONTINUATION: u8 = 0x0;
+    pub const TEXT: u8 = 0x1;
+    pub const BINARY: u8 = 0x2;
+    pub const CLOSE: u8 = 0x8;
+    pub const PING: u8 = 0x9;
+    pub const PONG: u8 = 0xa;
 }
 
 /// The `Sec-WebSocket-Accept` value for the `Sec-WebSocket-Key` value `key`.
-pub(crate) fn accept_key(key: &str) -> String {
+pub fn accept_key(key: &str) -> String {
     Base64::Standard.encode(&sha1(format!("{key}{GUID}").as_bytes()))
 }
 
 /// The end of a connection that this side is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Role {
+pub enum Role {
     /// It reads masked frames and writes unmasked ones.
     Server,
     /// It reads unmasked frames and writes masked ones.
@@ -70,7 +70,7 @@ pub(crate) enum Role {
 
 /// One message of the other peer.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum Message {
+pub enum Message {
     /// A text message. A byte that is not UTF-8 becomes the replacement character.
     Text(String),
     /// A close frame, with its code when it has one.
@@ -79,14 +79,14 @@ pub(crate) enum Message {
 
 /// One frame, without its mask.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct Frame {
+pub struct Frame {
     pub fin: bool,
     pub opcode: u8,
     pub payload: Vec<u8>,
 }
 
 /// Reads one frame that the other peer of `role` sent. A frame that breaks the protocol is an `InvalidData` error.
-pub(crate) fn read_frame(reader: &mut impl Read, role: Role) -> io::Result<Frame> {
+pub fn read_frame(reader: &mut impl Read, role: Role) -> io::Result<Frame> {
     let mut head = [0; 2];
     reader.read_exact(&mut head)?;
     let [first, second] = head;
@@ -136,7 +136,7 @@ pub(crate) fn read_frame(reader: &mut impl Read, role: Role) -> io::Result<Frame
 
 /// The bytes of one final frame with `opcode` and `payload`, masked with `mask` when it is given. The length has its
 /// shortest form.
-pub(crate) fn encode_frame(opcode: u8, payload: &[u8], mask: Option<[u8; 4]>) -> Vec<u8> {
+pub fn encode_frame(opcode: u8, payload: &[u8], mask: Option<[u8; 4]>) -> Vec<u8> {
     let mut frame = Vec::with_capacity(payload.len() + 14);
     frame.push(FIN | opcode);
     let mask_bit = if mask.is_some() { MASK } else { 0 };
@@ -162,7 +162,7 @@ pub(crate) fn encode_frame(opcode: u8, payload: &[u8], mask: Option<[u8; 4]>) ->
 }
 
 /// The writing half of one connection.
-pub(crate) struct Sender {
+pub struct Sender {
     stream: Mutex<TcpStream>,
     role: Role,
     close_sent: AtomicBool,
@@ -170,7 +170,7 @@ pub(crate) struct Sender {
 
 impl Sender {
     /// The writing half of `stream`, for this side of `role`.
-    pub(crate) const fn new(stream: TcpStream, role: Role) -> Self {
+    pub const fn new(stream: TcpStream, role: Role) -> Self {
         Self {
             stream: Mutex::new(stream),
             role,
@@ -179,19 +179,19 @@ impl Sender {
     }
 
     /// Sends `text` as one text message. A sender that sent its close sends nothing more.
-    pub(crate) fn text(&self, text: &str) -> io::Result<()> {
+    pub fn text(&self, text: &str) -> io::Result<()> {
         self.frame(opcode::TEXT, text.as_bytes())
     }
 
     /// Answers a ping with a pong of the same payload.
-    pub(crate) fn pong(&self, payload: &[u8]) -> io::Result<()> {
+    pub fn pong(&self, payload: &[u8]) -> io::Result<()> {
         self.frame(opcode::PONG, payload)
     }
 
     /// Sends a close frame with `code`, once, and ends the writing direction. A later read of the other half waits at
     /// most [CLOSE_GRACE] for the answer of the other peer. A read that already waits keeps its bound, so its owner
     /// ends it with [Sender::shutdown]. It answers whether this call sent the close.
-    pub(crate) fn close(&self, code: u16) -> bool {
+    pub fn close(&self, code: u16) -> bool {
         let mut stream = self.stream.lock().unwrap_or_else(PoisonError::into_inner);
         if self.close_sent.swap(true, Ordering::SeqCst) {
             return false;
@@ -204,17 +204,17 @@ impl Sender {
     }
 
     /// A handle of the connection, which ends it with a shutdown from another thread.
-    pub(crate) fn try_clone_stream(&self) -> io::Result<TcpStream> {
+    pub fn try_clone_stream(&self) -> io::Result<TcpStream> {
         self.stream.lock().unwrap_or_else(PoisonError::into_inner).try_clone()
     }
 
     /// Whether this side sent its close.
-    pub(crate) fn close_sent(&self) -> bool {
+    pub fn close_sent(&self) -> bool {
         self.close_sent.load(Ordering::SeqCst)
     }
 
     /// Ends both directions of the connection at once, without a close frame. A read of the other half ends.
-    pub(crate) fn shutdown(&self) {
+    pub fn shutdown(&self) {
         self.close_sent.store(true, Ordering::SeqCst);
         let _ = self.stream.lock().unwrap_or_else(PoisonError::into_inner).shutdown(Shutdown::Both);
     }
@@ -234,25 +234,25 @@ impl Sender {
 }
 
 /// The reading half of one connection.
-pub(crate) struct Receiver {
+pub struct Receiver {
     reader: BufReader<TcpStream>,
     role: Role,
 }
 
 impl Receiver {
     /// The reading half of `reader`, for this side of `role`.
-    pub(crate) const fn new(reader: BufReader<TcpStream>, role: Role) -> Self {
+    pub const fn new(reader: BufReader<TcpStream>, role: Role) -> Self {
         Self { reader, role }
     }
 
     /// Bounds each read of the connection by `timeout`, or lets it wait without a bound for `None`.
-    pub(crate) fn set_read_timeout(&self, timeout: Option<Duration>) -> io::Result<()> {
+    pub fn set_read_timeout(&self, timeout: Option<Duration>) -> io::Result<()> {
         self.reader.get_ref().set_read_timeout(timeout)
     }
 
     /// The next text message or close of the other peer. It answers each ping through `sender`, and it skips a pong and
     /// a binary message. A frame that breaks the protocol is an `InvalidData` error.
-    pub(crate) fn next(&mut self, sender: &Sender) -> io::Result<Message> {
+    pub fn next(&mut self, sender: &Sender) -> io::Result<Message> {
         let mut message: Option<(bool, Vec<u8>)> = None;
         loop {
             let frame = read_frame(&mut self.reader, self.role)?;
@@ -291,15 +291,58 @@ const fn close_code(payload: &[u8]) -> Option<u16> {
 }
 
 /// Splits the stream of an accepted upgrade into its two halves, for the server side.
-pub(crate) fn accept(stream: TcpStream) -> io::Result<(Sender, Receiver)> {
+pub fn accept(stream: TcpStream) -> io::Result<(Sender, Receiver)> {
     let reader = BufReader::new(stream.try_clone()?);
     Ok((Sender::new(stream, Role::Server), Receiver::new(reader, Role::Server)))
+}
+
+/// Reads the head of an HTTP message on `stream`, with its line ends, for a peer without an HTTP layer. It reads byte
+/// by byte, so no byte of the first frame leaves the stream. A stream that ends early gives the bytes before its end.
+pub fn read_head(mut stream: &TcpStream) -> io::Result<String> {
+    let mut head = Vec::new();
+    while !head.ends_with(b"\r\n\r\n") && head.len() < usize::try_from(MAX_HEAD_LINE).unwrap_or(usize::MAX) {
+        let mut byte = [0];
+        if stream.read(&mut byte)? == 0 {
+            break;
+        }
+        head.push(byte[0]);
+    }
+    String::from_utf8(head).map_err(|_invalid| invalid("the head is not UTF-8"))
+}
+
+/// Completes the upgrade of the request on `stream` when its request line is `GET <target> HTTP/1.1`, as the control
+/// server checks the token of its URL. Another request gets `401` and answers `None`.
+pub fn accept_target(stream: TcpStream, target: &str) -> io::Result<Option<(Sender, Receiver)>> {
+    let head = read_head(&stream)?;
+    if head.lines().next() != Some(&format!("GET {target} HTTP/1.1")) {
+        (&stream).write_all(b"HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")?;
+        return Ok(None);
+    }
+    complete_upgrade(stream, &head).map(Some)
+}
+
+/// Answers the upgrade request `head` on `stream` with `101` and the accept key of its `Sec-WebSocket-Key`, and splits
+/// the stream for the server side. A head without the key is refused.
+pub fn complete_upgrade(stream: TcpStream, head: &str) -> io::Result<(Sender, Receiver)> {
+    let key = head
+        .lines()
+        .find_map(|line| {
+            let (name, value) = line.split_once(':')?;
+            name.trim().eq_ignore_ascii_case("Sec-WebSocket-Key").then(|| value.trim())
+        })
+        .ok_or_else(|| invalid("the upgrade request has no Sec-WebSocket-Key"))?;
+    let answer = format!(
+        "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {}\r\n\r\n",
+        accept_key(key)
+    );
+    (&stream).write_all(answer.as_bytes())?;
+    accept(stream)
 }
 
 /// Connects to `url`, `ws://<host>:<port><target>`, sends the upgrade with `headers`, and checks the answer. Each step
 /// waits at most `timeout`, and so does each later read until the caller sets another bound. A refusal names the
 /// address and the path of the URL, never its query, because the query of a control URL carries its token.
-pub(crate) fn connect(url: &str, headers: &[(&str, &str)], timeout: Duration) -> io::Result<(Sender, Receiver)> {
+pub fn connect(url: &str, headers: &[(&str, &str)], timeout: Duration) -> io::Result<(Sender, Receiver)> {
     let rest = url
         .strip_prefix("ws://")
         .ok_or_else(|| invalid("a WebSocket URL of the lane starts with ws://"))?;
@@ -310,6 +353,9 @@ pub(crate) fn connect(url: &str, headers: &[(&str, &str)], timeout: Duration) ->
         .next()
         .ok_or_else(|| invalid(&format!("{shown} names no address")))?;
     let stream = TcpStream::connect_timeout(&address, timeout)?;
+    // The proxy often sends two small frames in a row, such as an acknowledgement and a lifecycle frame. With Nagle,
+    // the second one waits for the delayed acknowledgement of the first one.
+    stream.set_nodelay(true)?;
     stream.set_read_timeout(Some(timeout))?;
     stream.set_write_timeout(Some(timeout))?;
     let key = Base64::Standard.encode(&random_bytes::<16>());

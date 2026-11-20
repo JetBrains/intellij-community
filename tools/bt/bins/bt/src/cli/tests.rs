@@ -7,7 +7,7 @@ use std::path::Path;
 use bt_core::Refusal;
 use pretty_assertions::assert_eq;
 
-use super::{PROGRAM, report, run};
+use super::{Boundary, PROGRAM, report, run};
 use crate::execute::{JsonFailure, JsonPayload, Outcome};
 use bt_core::exit;
 use bt_core::result::RunStatus;
@@ -25,7 +25,11 @@ struct Answer {
 fn invoke(repo_root: Option<&Path>, argv: &[&str]) -> Answer {
     let mut stdout = Vec::new();
     let mut stderr = Vec::new();
-    let exit_code = run(argv, repo_root, &mut stdout, &mut stderr);
+    let boundary = Boundary {
+        repo_root,
+        ..Boundary::default()
+    };
+    let exit_code = run(argv, &boundary, &mut stdout, &mut stderr);
     Answer {
         exit_code,
         stdout: String::from_utf8_lossy(&stdout).into_owned(),
@@ -163,12 +167,17 @@ fn help_is_written_to_stdout() {
 }
 
 /// A selector that resolves to nothing refuses without spawning anything, which is what makes an empty checkout root
-/// a usable fixture here: an unresolvable name never reaches bazel.
+/// a usable fixture here: a missing directory never reaches bazel. A class name in a checkout without the accio
+/// wrapper is refused with exit 6, and it never reaches bazel either.
 #[test]
 fn an_unresolvable_selector_refuses_without_reaching_bazel() {
     let dir = tempfile::tempdir().expect("a temporary directory");
-    let answer = invoke(Some(dir.path()), &["AgentThreadCliTest"]);
+    let answer = invoke(Some(dir.path()), &["plugins/air/no-such-dir"]);
     assert_eq!(answer.exit_code, exit::USAGE, "{answer:?}");
     assert_eq!(answer.stdout, "");
-    assert!(answer.stderr.contains("AgentThreadCliTest"), "{}", answer.stderr);
+    assert!(answer.stderr.contains("plugins/air/no-such-dir"), "{}", answer.stderr);
+
+    let class = invoke(Some(dir.path()), &["AgentThreadCliTest"]);
+    assert_eq!(class.exit_code, exit::INFRA, "{class:?}");
+    assert!(class.stderr.contains("has no accio wrapper"), "{}", class.stderr);
 }

@@ -585,10 +585,11 @@ async fn an_iteration_names_the_digests_of_the_lane_inputs() {
     report_of(&attempt);
     let digest = |index: usize| prep.lane_inputs[index].host.sha256[..12].to_owned();
     let expected = format!(
-        "lane inputs by digest: fakeAgentJar {}, laneDocuments {}, suiteDocuments {}",
+        "lane inputs by digest: fakeAgent {}, genuiFixtureJar {}, laneDocuments {}, suiteDocuments {}",
         digest(0),
         digest(1),
-        digest(2)
+        digest(2),
+        digest(3)
     );
     let notes = recorded.messages_of(Kind::Note);
     assert!(notes.contains(&expected), "{notes:?}");

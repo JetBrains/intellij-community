@@ -1,0 +1,3 @@
+#!/bin/sh
+# The fixture of the fake agent binary, which the package tests pack.
+exit 0

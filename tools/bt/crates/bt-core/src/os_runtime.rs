@@ -1,13 +1,14 @@
 //! [`Runtime`] over the real operating system, and the only production implementation of that seam.
 //!
 //! Three behaviours differ between the consumers, and those are injected rather than branched on: the spawn,
-//! because the lane controller resolves a selector from inside a held lease and must not start a subprocess while
-//! `bt`'s whole job is to run one; and the two output sinks, because the controller routes them into its own
-//! worker-tagged reporter while `bt` writes to the process's descriptors.
+//! because the lane controller resolves a selector from inside a held lease and must not start bazel while `bt`'s
+//! whole job is to run one; and the two output sinks, because the controller routes them into its own
+//! worker-tagged reporter while `bt` writes to the process's descriptors. The pinned accio is no injected spawn:
+//! the resolution of each consumer runs it ([`Runtime::accio`]).
 //!
 //! Portable on purpose, with no unix-only call anywhere below, because `bt.cmd` runs on Windows.
 
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
@@ -16,7 +17,10 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use crate::runtime::{CheckoutTree, DirEntry, Heartbeat, Platform, Runtime, STOPPED_IDLE, SpawnResult};
+use refusal::Refusal;
+
+use crate::accio::accio_failed;
+use crate::runtime::{CheckoutTree, DirEntry, Heartbeat, Platform, Runtime, SpawnResult};
 
 /// How much of a child's output is kept.
 ///
@@ -54,6 +58,8 @@ pub type Sink = Box<dyn Fn(&str) + Send + Sync>;
 pub struct OsRuntime {
     repo_root: PathBuf,
     spawner: Spawner,
+    host_slot: bool,
+    self_build_ms: Option<u64>,
     write: Sink,
     write_error: Sink,
 }
@@ -62,6 +68,8 @@ pub struct OsRuntime {
 pub struct OsRuntimeBuilder {
     repo_root: PathBuf,
     spawner: Spawner,
+    host_slot: bool,
+    self_build_ms: Option<u64>,
     write: Option<Sink>,
     write_error: Option<Sink>,
 }
@@ -74,6 +82,8 @@ impl OsRuntime {
         OsRuntimeBuilder {
             repo_root: repo_root.into(),
             spawner: Spawner::Refuse,
+            host_slot: false,
+            self_build_ms: None,
             write: None,
             write_error: None,
         }
@@ -82,8 +92,9 @@ impl OsRuntime {
     /// The runtime a caller resolves selectors and suites through without running anything: the controller and the
     /// trace planner.
     ///
-    /// It cannot spawn ([`Spawner::Refuse`]), because such a caller resolves from the checkout alone, and a
-    /// resolution that reached for bazel would start it from inside a held lease or a server request. Its digest
+    /// It spawns nothing but the pinned accio ([`Spawner::Refuse`]), because such a caller resolves from the checkout
+    /// and its accio index, and a resolution that reached for bazel would start it from inside a held lease or a
+    /// server request. Its digest
     /// goes nowhere, since a runtime that refuses to spawn bazel has no test run to digest, and its diagnostics go
     /// to `notes`, the caller's own reporter rather than the process's stderr.
     pub fn resolver(repo_root: impl Into<PathBuf>, notes: impl Fn(&str) + Send + Sync + 'static) -> Self {
@@ -99,6 +110,23 @@ impl OsRuntimeBuilder {
     #[must_use]
     pub fn spawn(mut self, spawner: Spawner) -> Self {
         self.spawner = spawner;
+        self
+    }
+
+    /// Whether the checkout is a host slot of `brd-host`. A host slot is a linked work tree too, but no `brd lease pick`
+    /// lands it: the `bt --host` client records the tree of the commit that the host ran. So the runtime of a host slot
+    /// answers no tree, and the run skips the two scans of the untracked files that a tree costs. The default is
+    /// `false`.
+    #[must_use]
+    pub const fn host_slot(mut self, host_slot: bool) -> Self {
+        self.host_slot = host_slot;
+        self
+    }
+
+    /// How long the wrapper built this binary, see [`Runtime::self_build_ms`]. The default is `None`.
+    #[must_use]
+    pub const fn self_build_ms(mut self, self_build_ms: Option<u64>) -> Self {
+        self.self_build_ms = self_build_ms;
         self
     }
 
@@ -121,6 +149,8 @@ impl OsRuntimeBuilder {
         OsRuntime {
             repo_root: self.repo_root,
             spawner: self.spawner,
+            host_slot: self.host_slot,
+            self_build_ms: self.self_build_ms,
             // A handle per call rather than a held lock: the heartbeat writes from its own thread while the run is
             // in progress.
             write: self.write.unwrap_or_else(|| Box::new(|text| write_line(&mut io::stdout(), text))),
@@ -131,13 +161,54 @@ impl OsRuntimeBuilder {
     }
 }
 
+/// The variables that tie a git process to one repository, as `git rev-parse --local-env-vars` lists them.
+///
+/// A parent git exports some of them to its children, such as `git rebase --exec` for each step. A child git that
+/// inherits them works on that repository and not on the one of its `-C`.
+pub const GIT_LOCAL_ENV_VARS: [&str; 15] = [
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_CONFIG",
+    "GIT_CONFIG_PARAMETERS",
+    "GIT_CONFIG_COUNT",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_IMPLICIT_WORK_TREE",
+    "GIT_GRAFT_FILE",
+    "GIT_INDEX_FILE",
+    "GIT_NO_REPLACE_OBJECTS",
+    "GIT_REPLACE_REF_BASE",
+    "GIT_PREFIX",
+    "GIT_SHALLOW_FILE",
+    "GIT_COMMON_DIR",
+];
+
+/// A command of `program` without the inherited variables of [`GIT_LOCAL_ENV_VARS`].
+///
+/// Every child of bt starts from it: git, accio, bazel, `tests.cmd` and the shell of `brd-host`. A test JVM or a
+/// `cargo test` under such a child runs git too, and with an inherited `GIT_DIR` that git writes the repository of
+/// the parent git and not the one of its working directory.
+pub fn isolated_command(program: impl AsRef<OsStr>) -> Command {
+    let mut command = Command::new(program);
+    for name in GIT_LOCAL_ENV_VARS {
+        command.env_remove(name);
+    }
+    command
+}
+
+/// A `git` command without the inherited variables of [`GIT_LOCAL_ENV_VARS`], so its `-C` alone names its
+/// repository. Every git spawn of this crate starts from it, the tests included.
+pub fn git_command() -> Command {
+    isolated_command("git")
+}
+
 impl OsRuntime {
     /// The stdout of one git command in the checkout, or an error with what git said.
     ///
     /// Not through the injected spawn, for the reason of [`Runtime::list_files`]: a read of the checkout is not a
     /// subprocess that the controller must keep out of a held lease.
     fn git(&self, args: &[&str]) -> io::Result<String> {
-        let ran = Command::new("git")
+        let ran = git_command()
             .arg("-C")
             .arg(&self.repo_root)
             .args(args)
@@ -161,10 +232,52 @@ pub(crate) fn write_line(out: &mut dyn Write, text: &str) {
     let _ = writeln!(out, "{text}");
 }
 
+/// The accio wrappers that [`Runtime::accio`] looks for, relative to the checkout root: the one of an ultimate checkout,
+/// then the one of a community checkout.
+pub const ACCIO_WRAPPERS: [&str; 2] = ["community/tools/accio.cmd", "tools/accio.cmd"];
+
+/// The command line of one accio call through the wrapper `wrapper`, a path relative to the checkout root, as
+/// [`crate::lanes::checkout_script_command`] runs it. The project and the format come after `args`.
+pub fn accio_command(repo_root: &Path, platform: Platform, wrapper: &str, args: &[&str]) -> Vec<OsString> {
+    let mut command = crate::lanes::checkout_script_command(repo_root, platform, wrapper);
+    command.extend(args.iter().map(OsString::from));
+    command.extend([OsString::from("--project"), repo_root.as_os_str().to_owned()]);
+    command.extend(["--format", "json"].map(OsString::from));
+    command
+}
+
+/// Runs one accio command line in the checkout root, and answers its stdout.
+///
+/// A command that cannot start, and a command that exits with another code than 0, is a refusal that names the tail
+/// of its stderr. accio builds or refreshes its index by itself, so the call has no retry.
+fn run_accio(repo_root: &Path, command: &[OsString]) -> Result<String, Refusal> {
+    const STDERR_LINES: usize = 20;
+    let Some((program, args)) = command.split_first() else {
+        return Err(accio_failed("nothing to run: the accio command line is empty"));
+    };
+    let ran = isolated_command(program)
+        .args(args)
+        .current_dir(repo_root)
+        .stdin(Stdio::null())
+        .output()
+        .map_err(|error| accio_failed(format!("cannot start {}: {error}", command_line(command))))?;
+    if !ran.status.success() {
+        let stderr = String::from_utf8_lossy(&ran.stderr);
+        let lines: Vec<&str> = stderr.lines().collect();
+        let tail = lines[lines.len().saturating_sub(STDERR_LINES)..].join("\n");
+        return Err(accio_failed(format!(
+            "{} exited with {}:\n{tail}",
+            command_line(command),
+            ran.status.code().map_or_else(|| "a signal".to_owned(), |code| code.to_string())
+        )));
+    }
+    Ok(String::from_utf8_lossy(&ran.stdout).into_owned())
+}
+
 /// The controller's spawn: exit 127 with the argv it was asked to run.
 ///
-/// A selector is resolved from the checkout alone, and a resolution that reached for bazel would start it from
-/// inside a held lease. [`Runtime::spawn`] cannot fail by contract, so the refusal arrives as the 127 the classifier
+/// A selector is resolved from the checkout and the pinned accio, and a resolution that reached for bazel would start
+/// it from inside a held lease. [`Runtime::spawn`] cannot fail by contract, so the refusal arrives as the 127 the classifier
 /// reads as infrastructure. A panic would be worse: the controller holds a lease and a worker lock.
 pub fn refuse_spawn(command: &[OsString]) -> SpawnResult {
     SpawnResult {
@@ -230,132 +343,9 @@ fn stream_to_end(mut child: Command, error_line: &(dyn Fn(&str) + Sync)) -> Spaw
     reaped(waited, output)
 }
 
-/// Runs a child to completion, in `dir` when one is given, with `input` on its stdin; see
-/// [`Runtime::spawn_with_input`]. Never fails, as [`spawn_child`].
-pub fn spawn_child_with_input(dir: Option<&Path>, command: &[OsString], input: &str) -> SpawnResult {
-    let Some(mut child) = command_for(dir, command) else {
-        return nothing_to_spawn();
-    };
-    let mut process = match spawn_piped(&mut child) {
-        Ok(process) => process,
-        Err(refusal) => return refusal,
-    };
-    let stdin = process.stdin.take();
-    // From a thread, so a child that writes before it reads to the end cannot block on a full pipe.
-    let finished = thread::scope(|scope| {
-        scope.spawn(move || {
-            if let Some(mut stdin) = stdin {
-                // A child that exits before it reads everything closes the pipe; its exit code tells the rest.
-                let _ = stdin.write_all(input.as_bytes());
-            }
-        });
-        process.wait_with_output()
-    });
-    match finished {
-        Ok(finished) => SpawnResult {
-            exit_code: finished.status.code().unwrap_or(-1),
-            output: format!(
-                "{}{}",
-                String::from_utf8_lossy(&finished.stdout),
-                String::from_utf8_lossy(&finished.stderr)
-            ),
-        },
-        Err(error) => SpawnResult {
-            exit_code: 127,
-            output: error.to_string(),
-        },
-    }
-}
-
-/// Runs a child to completion, in `dir` when one is given, and stops it with its process group when it writes nothing
-/// for `idle`; see [`Runtime::spawn_watched`]. Never fails, as [`spawn_child`].
-pub fn spawn_child_watched(dir: Option<&Path>, command: &[OsString], idle: Duration) -> SpawnResult {
-    command_for(dir, command).map_or_else(nothing_to_spawn, |child| watch_to_end(child, idle))
-}
-
-/// Runs a prepared command to completion, as [`run_to_end`] does, and stops it when it writes nothing for `idle`.
-///
-/// The child gets a process group of its own on Unix, because the stall is often in a grandchild: git waits for the
-/// ssh it started, and the ssh holds the pipe. Stopping the group closes the pipe, so the read ends too.
-fn watch_to_end(child: Command, idle: Duration) -> SpawnResult {
-    #[cfg(unix)]
-    let child = {
-        use std::os::unix::process::CommandExt;
-        let mut child = child;
-        child.process_group(0);
-        child
-    };
-    let (mut process, mut reader, program) = match spawn_on_pipe(child) {
-        Ok(spawned) => spawned,
-        Err(refusal) => return refusal,
-    };
-    let last_output = std::sync::Mutex::new(Instant::now());
-    let tail = std::sync::Mutex::new(Tail::new(MAX_RETAINED_OUTPUT));
-    let (waited, stopped) = thread::scope(|scope| {
-        scope.spawn(|| {
-            let mut chunk = vec![0u8; 64 * 1024];
-            loop {
-                match reader.read(&mut chunk) {
-                    Ok(0) => break,
-                    Ok(read) => {
-                        tail.lock().unwrap_or_else(std::sync::PoisonError::into_inner).push(&chunk[..read]);
-                        *last_output.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = Instant::now();
-                    }
-                    Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
-                    Err(_) => break,
-                }
-            }
-        });
-        let mut stopped = false;
-        let waited = loop {
-            match process.try_wait() {
-                Ok(Some(status)) => break Ok(status),
-                Ok(None) => {}
-                Err(error) => break Err(error),
-            }
-            let quiet = last_output.lock().unwrap_or_else(std::sync::PoisonError::into_inner).elapsed();
-            if quiet >= idle {
-                stop_group(&mut process);
-                stopped = true;
-                break process.wait();
-            }
-            thread::sleep(Duration::from_millis(100).min(idle));
-        };
-        // The scope joins the reader here: the child and its group are gone, so the pipe is closed.
-        (waited, stopped)
-    });
-    let output = tail.into_inner().unwrap_or_else(std::sync::PoisonError::into_inner).text();
-    if stopped {
-        return SpawnResult {
-            exit_code: STOPPED_IDLE,
-            output: format!(
-                "{output}\n{} wrote nothing for {} s, so it was stopped",
-                program.to_string_lossy(),
-                idle.as_secs()
-            ),
-        };
-    }
-    reaped(waited, output)
-}
-
-/// Stops a child and, on Unix, every process of its group.
-fn stop_group(process: &mut std::process::Child) {
-    #[cfg(unix)]
-    {
-        // `kill` of the group, not of the child alone: a grandchild that holds the pipe would keep the read open.
-        let _ = Command::new("kill")
-            .args(["-KILL", "--", &format!("-{}", process.id())])
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status();
-    }
-    let _ = process.kill();
-}
-
 fn command_for(dir: Option<&Path>, command: &[OsString]) -> Option<Command> {
     let (program, args) = command.split_first()?;
-    let mut child = Command::new(program);
+    let mut child = isolated_command(program);
     child.args(args).stdin(Stdio::null());
     if let Some(dir) = dir {
         child.current_dir(dir);
@@ -527,7 +517,7 @@ struct Git<'a> {
 /// `GIT_OPTIONAL_LOCKS=0` keeps `git status` from a refresh of the index, which would take `index.lock` from a commit
 /// that runs at the same time.
 fn git(root: &Path, args: &[&str], with: &Git<'_>) -> io::Result<Vec<u8>> {
-    let mut command = Command::new("git");
+    let mut command = git_command();
     command
         .arg("-C")
         .arg(root)
@@ -640,37 +630,30 @@ impl Runtime for OsRuntime {
             .collect()
     }
 
-    /// Asks git, because git alone knows which files under a directory the checkout ignores.
+    /// Reads the index and the ignore files of the checkout through `checkout_files`, which answers as
+    /// `git ls-files --cached --others --exclude-standard` does, without the git executable. The paths start with `dir`
+    /// as the caller spelled it.
     ///
     /// Not through the injected spawn. That spawn refuses for the lane controller, which must not start bazel from
-    /// inside a held lease. One `git ls-files` over a directory the caller named is a read of the checkout that
-    /// takes milliseconds, the same kind of call as a directory listing. `-z` keeps a name with a space or a quote
-    /// verbatim, and an unmerged file that the index holds three times is listed once.
+    /// inside a held lease. The listing of a directory the caller named is a read of the checkout, the same kind of
+    /// call as a directory listing. An unmerged file that the index holds three times is listed once.
     fn list_files(&self, dir: &Path) -> io::Result<Vec<PathBuf>> {
-        let listed = Command::new("git")
-            .arg("-C")
-            .arg(dir)
-            .args(["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
-            .stdin(Stdio::null())
-            .output();
-        let refused = |said: String| io::Error::other(format!("git cannot list the files under {}: {said}", dir.display()));
-        let listed = listed.map_err(|error| refused(error.to_string()))?;
-        if !listed.status.success() {
-            let stderr = String::from_utf8_lossy(&listed.stderr).trim().to_owned();
-            return Err(refused(if stderr.is_empty() { listed.status.to_string() } else { stderr }));
+        let refused = |said: String| io::Error::other(format!("cannot list the files under {}: {said}", dir.display()));
+        if !dir.is_dir() {
+            return Err(refused("it is not a directory".to_owned()));
         }
-        let stdout = String::from_utf8_lossy(&listed.stdout);
-        let mut names: Vec<&str> = stdout.split('\0').filter(|name| !name.is_empty()).collect();
-        names.sort_unstable();
-        names.dedup();
+        // The real path of the directory, as `git -C` reads it: a link or a `..` in `dir` does not change the answer.
+        let (checkout, root) = checkout_files::locate(dir).map_err(|error| refused(format!("{error:#}")))?;
+        let names = checkout_files::list(&checkout, &[&root]).map_err(|error| refused(format!("{error:#}")))?;
+        let prefix = if root.is_empty() { String::new() } else { format!("{root}/") };
         let mut files: Vec<PathBuf> = names
-            .into_iter()
+            .iter()
+            .filter_map(|name| name.strip_prefix(&prefix))
             .map(|name| {
                 let name = if cfg!(windows) { name.replace('/', "\\") } else { name.to_owned() };
                 dir.join(name)
             })
-            // A tracked file deleted from the disk is still in the index, and a nested checkout is listed as its
-            // directory. Neither is a file a caller can have edited.
+            // A symbolic link is listed as a path of its own. Only one to a file is a file a caller can have edited.
             .filter(|path| path.is_file())
             .collect();
         files.sort();
@@ -717,7 +700,7 @@ impl Runtime for OsRuntime {
     /// add a gitlink. A directory replaced by a symbolic link makes `update-index` fail, so the answer is an error.
     fn checkout_tree(&self) -> io::Result<Option<CheckoutTree>> {
         let root = &self.repo_root;
-        if !root.join(".git").is_file() {
+        if self.host_slot || !root.join(".git").is_file() {
             return Ok(None);
         }
         // `HEAD:` is the root tree of HEAD.
@@ -796,22 +779,6 @@ impl Runtime for OsRuntime {
         }
     }
 
-    fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
-        match &self.spawner {
-            Spawner::Refuse => refuse_spawn(command),
-            Spawner::Child => spawn_child_with_input(None, command, input),
-            Spawner::ChildIn(dir) => spawn_child_with_input(Some(dir), command, input),
-        }
-    }
-
-    fn spawn_watched(&self, command: &[OsString], idle: Duration) -> SpawnResult {
-        match &self.spawner {
-            Spawner::Refuse => refuse_spawn(command),
-            Spawner::Child => spawn_child_watched(None, command, idle),
-            Spawner::ChildIn(dir) => spawn_child_watched(Some(dir), command, idle),
-        }
-    }
-
     fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult {
         let error_line = |line: &str| (self.write_error)(line);
         match &self.spawner {
@@ -819,6 +786,18 @@ impl Runtime for OsRuntime {
             Spawner::Child => spawn_streaming_child(None, command, &error_line),
             Spawner::ChildIn(dir) => spawn_streaming_child(Some(dir), command, &error_line),
         }
+    }
+
+    /// Runs the first wrapper of [`ACCIO_WRAPPERS`] that the checkout holds, through [`accio_command`].
+    fn accio(&self, args: &[&str]) -> Result<String, Refusal> {
+        let Some(wrapper) = ACCIO_WRAPPERS.iter().find(|wrapper| self.repo_root.join(wrapper).is_file()) else {
+            return Err(accio_failed(format!(
+                "the checkout {} has no accio wrapper: {}",
+                self.repo_root.display(),
+                ACCIO_WRAPPERS.join(" or ")
+            )));
+        };
+        run_accio(&self.repo_root, &accio_command(&self.repo_root, Platform::current(), wrapper, args))
     }
 
     /// A fresh file in the system temporary directory, created so no second process can pick the same name.
@@ -867,21 +846,12 @@ impl Runtime for OsRuntime {
         std::env::home_dir()
     }
 
-    fn confirm(&self, question: &str) -> Option<bool> {
-        use std::io::IsTerminal;
-        if !io::stdin().is_terminal() {
-            return None;
-        }
-        let mut stderr = io::stderr();
-        let _ = write!(stderr, "{question} [y/N] ");
-        let _ = stderr.flush();
-        let mut answer = String::new();
-        io::stdin().read_line(&mut answer).ok()?;
-        Some(matches!(answer.trim(), "y" | "Y" | "yes" | "Yes"))
-    }
-
     fn now_ms(&self) -> u64 {
         SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, millis)
+    }
+
+    fn self_build_ms(&self) -> Option<u64> {
+        self.self_build_ms
     }
 
     fn write(&self, text: &str) {

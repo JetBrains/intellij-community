@@ -2,15 +2,15 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::exit;
-use std::collections::BTreeMap;
 
+use crate::accio::ACCIO_FAILED;
 use crate::areas::{Area, Areas};
 use crate::fake::{
-    AREA_DIR, FakeRuntime, LANES_FILE, LANES_TEXT, REPO_ROOT, air_tree, areas, build_bazel_text, document_path, fake_air_tree, iml_text,
-    refusal,
+    AREA_DIR, FakeRuntime, LANES_FILE, LANES_TEXT, REPO_ROOT, air_tree, areas, document_path, fake_air_tree, jps_json, module_entry_json,
+    refusal, target_json, tests_module_json,
 };
 use crate::lanes::Lanes;
-use crate::scan::ResolutionInputs;
+use crate::modules::{MODULE_NOT_MIGRATED, MODULE_WITHOUT_TEST_TARGET};
 
 fn classify(raw: &str) -> Selector {
     Selector::classify(raw).unwrap_or_else(|failure| panic!("{raw} refused: {failure}"))
@@ -29,7 +29,6 @@ fn classify_selector_reads_each_kind() {
         ("@community//platform/...", SelectorKind::Pattern),
         ("AgentThreadCliTest", SelectorKind::SimpleName),
         ("com.intellij.air.threads.AgentThreadCliTest", SelectorKind::Fqn),
-        ("com.intellij.air.threads", SelectorKind::Package),
         ("plugins/air/backend/vcs", SelectorKind::Dir),
         ("plugins/air/backend/vcs/...", SelectorKind::Dir),
         ("/abs/path/plugins/air", SelectorKind::Dir),
@@ -98,9 +97,31 @@ fn selector_method_split_rejects_empty_and_repeated_separators() {
 
 #[test]
 fn a_selector_that_cannot_carry_a_method_refuses_one() {
-    for raw in ["com.intellij.air.threads#foo", "plugins/air/backend/vcs#foo"] {
+    let failure = refusal(Selector::classify("plugins/air/backend/vcs#foo"));
+    assert!(failure.message.contains("cannot carry a #method"), "{}", failure.message);
+}
+
+/// A package and a JPS module name are both dotted lower-case words. bt takes neither as a selector, and the refusal
+/// gives the two forms that run them.
+#[test]
+fn a_package_or_a_module_name_is_refused_with_the_module_hints() {
+    for raw in [
+        "com.intellij.air.shared.core",
+        "intellij.air.plugin.tests",
+        "util",
+        "com.intellij.air.threads#foo",
+    ] {
         let failure = refusal(Selector::classify(raw));
-        assert!(failure.message.contains("cannot carry a #method"), "{raw}: {}", failure.message);
+        assert_eq!(failure.exit, exit::USAGE, "{raw}");
+        let head = raw.split('#').next().unwrap_or(raw);
+        assert_eq!(
+            failure.message,
+            format!(
+                "Cannot interpret selector: {raw}\nbt takes no package selector. For a JPS module, pass --module {head}. \
+                 For a package, pass --module <module> --filter {head}"
+            ),
+            "{raw}"
+        );
     }
 }
 
@@ -199,15 +220,29 @@ fn resolve_tree(raw: &str) -> Result<Resolution, Refusal> {
     resolve_in(&fake_air_tree(), raw)
 }
 
+/// The arguments of the `symbol` call for one name.
+fn symbol_call(name: &str) -> String {
+    format!("symbol {name} --kind class --limit 200")
+}
+
+/// One class name costs one `symbol` call and one `modules` call for the files of its hits.
 #[test]
 fn a_unique_simple_name_resolves_to_label_plus_fqn() {
+    let fake = fake_air_tree();
     assert_eq!(
-        resolve_tree("AgentThreadIdentityTest"),
+        resolve_in(&fake, "AgentThreadIdentityTest"),
         Ok(Resolution {
             labels: vec!["//plugins/air/shared/core:ai-agent-core-tests_test".to_owned()],
             filter: Some("com.intellij.air.shared.core.AgentThreadIdentityTest".to_owned()),
             ..Resolution::default()
         })
+    );
+    assert_eq!(
+        fake.accio_calls(),
+        [
+            symbol_call("AgentThreadIdentityTest"),
+            "modules --paths plugins/air/shared/core/testSrc/AgentThreadIdentityTest.kt".to_owned(),
+        ]
     );
 }
 
@@ -227,45 +262,331 @@ fn an_ambiguous_simple_name_names_every_candidate() {
     for expected in [
         "2 classes named",
         "com.intellij.air.backend.vcs.context",
+        "//plugins/air/backend/vcs:air-backend-vcs-tests_test",
         "com.intellij.air.frontend.prompt.vcs.context",
+        "//plugins/air/frontend/prompt/vcs:air-frontend-prompt-vcs-tests_test",
     ] {
         assert!(failure.message.contains(expected), "no {expected:?} in:\n{}", failure.message);
     }
 }
 
+/// The FQN is the query of accio, so it names one class.
 #[test]
 fn the_fully_qualified_form_disambiguates_a_colliding_name() {
-    let resolution =
-        resolve_tree("com.intellij.air.frontend.prompt.vcs.context.AgentPromptChangesTreeContextContributorTest").expect("resolves");
+    let fake = fake_air_tree();
+    let fqn = "com.intellij.air.frontend.prompt.vcs.context.AgentPromptChangesTreeContextContributorTest";
+    let resolution = resolve_in(&fake, fqn).expect("resolves");
     assert_eq!(
         resolution.labels,
         ["//plugins/air/frontend/prompt/vcs:air-frontend-prompt-vcs-tests_test"]
     );
+    assert_eq!(fake.accio_calls()[0], symbol_call(fqn));
 }
 
+/// A name without a class passes on the note of accio, which holds its `did you mean` text.
 #[test]
-fn an_unknown_name_suggests_the_nearest_one() {
-    let failure = refusal(resolve_tree("AgentThreadCliTst"));
-    assert!(
-        failure.message.contains("No test class named AgentThreadCliTst"),
-        "{}",
-        failure.message
+fn an_unknown_name_passes_on_the_note_of_accio() {
+    let fake = fake_air_tree();
+    fake.answer_accio(
+        &symbol_call("AgentThreadCliTst"),
+        Ok(r#"[{"complete": true, "hits": [], "match": "none", "note": "did you mean AgentThreadCliTest"}]"#.to_owned()),
     );
-    assert!(failure.message.contains("did you mean  AgentThreadCliTest"), "{}", failure.message);
+    let failure = refusal(resolve_in(&fake, "AgentThreadCliTst"));
+    assert_eq!(
+        (failure.exit, failure.message.as_str()),
+        (
+            exit::USAGE,
+            "No test class named AgentThreadCliTst\n  accio: did you mean AgentThreadCliTest"
+        )
+    );
 }
 
+/// A name with more classes than the limit is refused, never cut to the first ones.
 #[test]
-fn a_package_selector_resolves_through_the_declared_prefix() {
-    let resolution = resolve_tree("com.intellij.air.shared.core").expect("resolves");
-    assert_eq!(resolution.include_package.as_deref(), Some("com.intellij.air.shared.core"));
-    // A package goes through the JUnit5 filter, never `--test_filter`, which would match no class.
-    assert_eq!(resolution.filter, None);
+fn a_name_that_accio_cuts_is_refused_as_too_many_classes() {
+    let fake = fake_air_tree();
+    fake.state().accio.incomplete.insert("AgentThreadCliTest".to_owned());
+    let failure = refusal(resolve_in(&fake, "AgentThreadCliTest"));
+    assert_eq!(
+        (failure.exit, failure.message.as_str()),
+        (
+            exit::USAGE,
+            "accio finds more than 200 classes named AgentThreadCliTest; pass the fully-qualified name"
+        )
+    );
 }
 
+/// A class of a production root is no test class, and the refusal says where accio found it.
 #[test]
-fn a_package_spanning_several_targets_asks_for_an_explicit_one() {
-    let failure = refusal(resolve_tree("com.intellij.air"));
-    assert!(failure.message.contains("spans 3 test targets"), "{}", failure.message);
+fn a_class_outside_every_test_source_root_is_no_test_class() {
+    let failure = refusal(resolve_tree("Api"));
+    assert_eq!(
+        failure.message,
+        "No test class named Api\n  accio finds it only outside a test source root: plugins/air/shared/api/src/Api.kt"
+    );
+}
+
+/// A class in a module without a test target gets the refusal of `--module` with the class filled in.
+#[test]
+fn a_class_of_a_module_without_a_test_target_is_refused_with_the_tests_cmd_command() {
+    let failure = refusal(resolve_tree("OrphanTest"));
+    assert_eq!((failure.code.as_ref(), failure.exit), (MODULE_WITHOUT_TEST_TARGET, exit::USAGE));
+    assert_eq!(
+        failure.message,
+        "module intellij.air.notest.tests of com.intellij.air.notest.OrphanTest has no test target in \
+         plugins/air/notest/BUILD.bazel. Run: ./tests.cmd --module intellij.air.notest.tests --test \
+         com.intellij.air.notest.OrphanTest"
+    );
+}
+
+/// A class outside every area runs only when the migrated list names its module, as `--module` does.
+#[test]
+fn a_class_of_a_module_outside_the_migrated_list_is_refused_with_the_tests_cmd_command() {
+    let fake = fake_air_tree();
+    fake.put("community/MODULE.bazel", "");
+    fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.x.tests\n");
+    fake.add_class("goland/tests/testSrc/GoTest.kt", "com.goide.GoTest");
+    fake.add_module(tests_module_json(
+        "goland/tests",
+        "intellij.goland",
+        "intellij.goland.tests",
+        "go-tests_test",
+    ));
+    let failure = refusal(resolve_in(&fake, "GoTest"));
+    assert_eq!((failure.code.as_ref(), failure.exit), (MODULE_NOT_MIGRATED, exit::USAGE));
+    assert_eq!(
+        failure.message,
+        "the tests of module intellij.goland.tests do not run under Bazel yet \
+         (community/build/bazel-migrated-test-modules.txt). Run: ./tests.cmd --module intellij.goland.tests --test \
+         com.goide.GoTest. The label //goland/tests:go-tests_test still runs on its own: ./community/tools/bt.cmd \
+         //goland/tests:go-tests_test --filter com.goide.GoTest"
+    );
+    fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.goland.*\n");
+    assert_eq!(
+        resolve_in(&fake, "GoTest").map(|resolution| resolution.labels),
+        Ok(vec!["//goland/tests:go-tests_test".to_owned()])
+    );
+}
+
+/// `community/platform/util` holds three `.iml` files. The class belongs to the module whose test root holds its
+/// file, here a module of `jps_more`, and its target is the one that runs that module.
+#[test]
+fn a_class_of_a_root_with_several_iml_files_resolves_to_the_target_of_its_module() {
+    let root = "community/platform/util";
+    let fake = fake_air_tree();
+    fake.put("community/MODULE.bazel", "");
+    fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.platform.util.tests\n");
+    fake.add_class(
+        "community/platform/util/testSrc/com/intellij/openapi/util/io/FileUtilLightTest.java",
+        "com.intellij.openapi.util.io.FileUtilLightTest",
+    );
+    fake.add_module(module_entry_json(
+        root,
+        Some(&jps_json("intellij.platform.util", root, &[("src", false)], None)),
+        &[
+            &jps_json("intellij.platform.util.tests", root, &[("testSrc", true)], None),
+            &jps_json("intellij.platform.util.ui", root, &[("ui/src", false)], None),
+        ],
+        Some(&[
+            target_json(root, "jps_test", "util-tests_test", None, &[], &["util-tests_test_lib"]),
+            target_json(root, "jvm_library", "util", Some("intellij.platform.util"), &[], &[]),
+            target_json(
+                root,
+                "jvm_library",
+                "util-tests_test_lib",
+                Some("intellij.platform.util.tests"),
+                &[],
+                &[],
+            ),
+        ]),
+    ));
+    assert_eq!(
+        resolve_in(&fake, "FileUtilLightTest"),
+        Ok(Resolution {
+            labels: vec!["@community//platform/util:util-tests_test".to_owned()],
+            filter: Some("com.intellij.openapi.util.io.FileUtilLightTest".to_owned()),
+            ..Resolution::default()
+        })
+    );
+}
+
+/// `platform/daemon/lambdaTests` has no test module: the main module owns the test root, and a `starter_test` runs
+/// the `_test_lib` of the main module.
+#[test]
+fn a_class_of_a_main_module_with_a_test_root_resolves_to_its_starter_test() {
+    let root = "plugins/air/lambdaTests";
+    let fake = fake_air_tree();
+    fake.add_class("plugins/air/lambdaTests/tests/LambdaTest.kt", "com.intellij.lambda.LambdaTest");
+    fake.add_module(module_entry_json(
+        root,
+        Some(&jps_json("intellij.air.lambdaTests", root, &[("tests", true)], None)),
+        &[],
+        Some(&[
+            target_json(
+                root,
+                "jvm_library",
+                "lambdaTests_test_lib",
+                Some("intellij.air.lambdaTests"),
+                &[],
+                &[],
+            ),
+            target_json(root, "starter_test", "lambdaTests_test", None, &[], &["lambdaTests_test_lib"]),
+        ]),
+    ));
+    assert_eq!(
+        resolve_in(&fake, "LambdaTest").map(|resolution| resolution.labels),
+        Ok(vec!["//plugins/air/lambdaTests:lambdaTests_test".to_owned()])
+    );
+}
+
+/// A target that pins `JB_TEST_JUNIT5_FILTERS` runs a named subset of the same `_test_lib`, so the unfiltered target
+/// is the answer for every class of the module.
+#[test]
+fn the_unfiltered_target_wins_over_a_filtered_one_of_the_same_test_library() {
+    let root = "plugins/air/frontend/prompt/ui";
+    let tests = jps_json("intellij.air.frontend.prompt.ui.tests", root, &[("testSrc", true)], None);
+    let fake = fake_air_tree();
+    fake.add_class(
+        "plugins/air/frontend/prompt/ui/testSrc/BudgetTest.kt",
+        "com.intellij.air.ui.BudgetTest",
+    );
+    fake.add_module(module_entry_json(
+        root,
+        Some(&jps_json("intellij.air.frontend.prompt.ui", root, &[("src", false)], Some(&tests))),
+        &[],
+        Some(&[
+            target_json(
+                root,
+                "jps_test",
+                "ui-budget_test",
+                None,
+                &["JB_TEST_JUNIT5_FILTERS"],
+                &["ui-tests_test_lib"],
+            ),
+            target_json(root, "jps_test", "ui-tests_test", None, &[], &["ui-tests_test_lib"]),
+            target_json(
+                root,
+                "jvm_library",
+                "ui-tests_test_lib",
+                Some("intellij.air.frontend.prompt.ui.tests"),
+                &[],
+                &[],
+            ),
+        ]),
+    ));
+    assert_eq!(
+        resolve_in(&fake, "BudgetTest").map(|resolution| resolution.labels),
+        Ok(vec!["//plugins/air/frontend/prompt/ui:ui-tests_test".to_owned()])
+    );
+}
+
+/// The runner finds an `@Nested` class only through its outer class, so the filter of a nested class without a method
+/// is its outer class, and a note says so. With a method, the filter keeps the `$` form, which the runner selects.
+#[test]
+fn a_nested_class_runs_through_its_outer_class() {
+    let fake = fake_air_tree();
+    fake.add_class(
+        "plugins/air/shared/core/testSrc/AgentIdTest.kt",
+        "com.intellij.air.shared.core.AgentIdTest$Parsing",
+    );
+    let resolution = resolve_in(&fake, "Parsing").expect("resolves");
+    assert_eq!(resolution.filter.as_deref(), Some("com.intellij.air.shared.core.AgentIdTest"));
+    assert_eq!(
+        resolution.notes,
+        [
+            "com.intellij.air.shared.core.AgentIdTest$Parsing is a nested class, so the filter is its outer class \
+          com.intellij.air.shared.core.AgentIdTest: the runner finds an @Nested class only through its outer class"
+        ]
+    );
+    let method = resolve_in(&fake, "Parsing#readsTheId").expect("resolves");
+    assert_eq!(
+        method.filter.as_deref(),
+        Some("com.intellij.air.shared.core.AgentIdTest$Parsing#readsTheId")
+    );
+    assert_eq!(method.notes, Vec::<String>::new());
+}
+
+/// A secondary class of a file resolves by its own name: accio indexes declarations, not file names.
+#[test]
+fn a_class_whose_filename_differs_is_still_found() {
+    let fake = fake_air_tree();
+    fake.add_class(
+        "plugins/air/shared/core/testSrc/Fixtures.kt",
+        "com.intellij.air.shared.core.SecondaryTest",
+    );
+    let resolution = resolve_in(&fake, "SecondaryTest").expect("resolves");
+    assert_eq!(resolution.filter.as_deref(), Some("com.intellij.air.shared.core.SecondaryTest"));
+}
+
+/// A failed call is exit 6 with the words of accio, and an accio without `fqn` is refused the same way.
+#[test]
+fn a_failed_accio_call_is_infrastructure() {
+    let fake = fake_air_tree();
+    fake.answer_accio(
+        &symbol_call("AgentThreadCliTest"),
+        Err(accio_failed("accio exited with 1:\nno index")),
+    );
+    let failure = refusal(resolve_in(&fake, "AgentThreadCliTest"));
+    assert_eq!((failure.code.as_ref(), failure.exit), (ACCIO_FAILED, exit::INFRA));
+
+    let old = fake_air_tree();
+    old.answer_accio(
+        &symbol_call("AgentThreadCliTest"),
+        Ok(r#"[{"complete": true, "hits": [{"file": "a/A.kt", "line": 1, "kind": "class", "language": "kotlin", "name": "AgentThreadCliTest"}]}]"#.to_owned()),
+    );
+    let failure = refusal(resolve_in(&old, "AgentThreadCliTest"));
+    assert_eq!((failure.code.as_ref(), failure.exit), (ACCIO_FAILED, exit::INFRA));
+    assert!(failure.message.contains("names no fqn"), "{}", failure.message);
+}
+
+/// A class of the same name in another language is no candidate, and it needs no `fqn`: only a Kotlin or a Java hit
+/// can be a JUnit class.
+#[test]
+fn a_class_of_another_language_is_no_candidate() {
+    let fake = fake_air_tree();
+    fake.answer_accio(
+        &symbol_call("AgentThreadCliTest"),
+        Ok(r#"[{"complete": true, "hits": [
+            {"file": "python/testData/agent_thread_cli_test.py", "line": 1, "kind": "class", "language": "python", "name": "AgentThreadCliTest"},
+            {"file": "plugins/air/shared/core/testSrc/AgentThreadCliTest.kt", "line": 3, "kind": "class", "language": "kotlin", "name": "AgentThreadCliTest", "fqn": "com.intellij.air.shared.core.AgentThreadCliTest"}
+        ]}]"#
+            .to_owned()),
+    );
+    let resolution = resolve_in(&fake, "AgentThreadCliTest").unwrap_or_else(|failure| panic!("{failure}"));
+    assert_eq!(resolution.filter.as_deref(), Some("com.intellij.air.shared.core.AgentThreadCliTest"));
+}
+
+/// A planner prefetches its names in one call. A name that the batch answered makes no second call, and a failed
+/// batch is the refusal of each of its names, also without a second call.
+#[test]
+fn a_prefetch_asks_once_for_every_name_and_keeps_a_refusal() {
+    let fake = fake_air_tree();
+    let inputs = ResolutionInputs::new(&fake, areas());
+    inputs.prefetch_symbols(&["AgentThreadCliTest", "AgentThreadIdentityTest", "AgentThreadCliTest"]);
+    for name in ["AgentThreadCliTest", "AgentThreadIdentityTest"] {
+        resolve_selector(&fake, &classify(name), &inputs).unwrap_or_else(|failure| panic!("{name}: {failure}"));
+    }
+    let symbol_calls: Vec<String> = fake.accio_calls().into_iter().filter(|call| call.starts_with("symbol")).collect();
+    assert_eq!(
+        symbol_calls,
+        ["symbol AgentThreadCliTest AgentThreadIdentityTest --kind class --limit 200"]
+    );
+    // A prefetch of known names asks nothing.
+    inputs.prefetch_symbols(&["AgentThreadCliTest"]);
+    assert_eq!(fake.accio_calls().iter().filter(|call| call.starts_with("symbol")).count(), 1);
+
+    let failing = fake_air_tree();
+    failing.answer_accio(
+        "symbol OneTest TwoTest --kind class --limit 200",
+        Err(accio_failed("accio exited with 1")),
+    );
+    let inputs = ResolutionInputs::new(&failing, areas());
+    inputs.prefetch_symbols(&["OneTest", "TwoTest"]);
+    for name in ["OneTest", "TwoTest"] {
+        let failure = refusal(resolve_selector(&failing, &classify(name), &inputs));
+        assert_eq!(failure.code.as_ref(), ACCIO_FAILED, "{name}");
+    }
+    assert_eq!(failing.accio_calls(), ["symbol OneTest TwoTest --kind class --limit 200"]);
 }
 
 #[test]
@@ -280,8 +601,8 @@ fn a_label_and_a_pattern_bypass_resolution() {
     assert!(resolve_tree("//plugins/air/...").expect("resolves").multi_target);
 }
 
-/// The point of the lazy inputs: a label names its target already, so paying ~250 ms to scan plugins/air first is
-/// pure waste. A runtime that refuses all I/O is the only durable guard.
+/// A label names its target already, so it costs no read and no accio call. A runtime that refuses all I/O is the
+/// only durable guard.
 #[test]
 fn a_label_and_a_pattern_touch_no_filesystem() {
     let fake = fake_air_tree();
@@ -290,18 +611,7 @@ fn a_label_and_a_pattern_touch_no_filesystem() {
         resolve_in(&fake, raw).unwrap_or_else(|failure| panic!("{raw}: {failure}"));
     }
     assert_eq!(fake.reads(), Vec::<String>::new());
-}
-
-/// The @Nested and secondary-top-level-class fallback: the filename says nothing, so every indexed file is read.
-#[test]
-fn a_class_whose_filename_differs_is_still_found() {
-    let fake = fake_air_tree();
-    fake.put(
-        "plugins/air/shared/core/testSrc/Fixtures.kt",
-        "package com.intellij.air.shared.core\n\ninternal class SecondaryTest {\n}\n",
-    );
-    let resolution = resolve_in(&fake, "SecondaryTest").expect("resolves");
-    assert_eq!(resolution.filter.as_deref(), Some("com.intellij.air.shared.core.SecondaryTest"));
+    assert_eq!(fake.accio_calls(), Vec::<String>::new());
 }
 
 #[test]
@@ -473,11 +783,12 @@ fn a_file_path_says_so_rather_than_claiming_the_directory_is_missing() {
 }
 
 #[test]
-fn resolving_a_directory_never_scans_the_air_tree() {
+fn resolving_a_directory_asks_no_accio() {
     let fake = fake_air_tree();
     resolve_in(&fake, "plugins/air/shared/core").expect("resolves");
-    // One listing to prove the directory exists; the .iml and index passes never ran.
+    // One listing to prove the directory exists.
     assert_eq!(fake.reads(), [format!("readDir {REPO_ROOT}/plugins/air/shared/core")]);
+    assert_eq!(fake.accio_calls(), Vec::<String>::new());
 }
 
 /// A flow id and a suite id are lower-case words joined by hyphens, and the hyphen is what keeps them apart from
@@ -490,9 +801,6 @@ fn a_flow_id_and_a_suite_id_are_their_own_kinds() {
         ("rename-session", SelectorKind::Suite),
         ("add-to-agent-context-send", SelectorKind::Suite),
         ("new-session-native-chat", SelectorKind::Suite),
-        ("flow", SelectorKind::Package),
-        ("rename", SelectorKind::Package),
-        ("com.intellij.air", SelectorKind::Package),
         ("RenameSession", SelectorKind::SimpleName),
         ("a.b.RenameSession", SelectorKind::Fqn),
         ("//plugins/air/x:rename-session", SelectorKind::Label),
@@ -521,6 +829,9 @@ fn a_malformed_flow_or_suite_id_is_refused() {
         ("flow-", "Cannot interpret selector"),
         ("rename--session", "Cannot interpret selector"),
         ("com.example.rename-session", "Cannot interpret selector"),
+        // A single lower-case word reads as a package, which is no selector.
+        ("flow", "bt takes no package selector"),
+        ("rename", "bt takes no package selector"),
     ] {
         let failure = refusal(Selector::classify(raw));
         assert_eq!(failure.exit, exit::USAGE, "{raw}");
@@ -528,44 +839,28 @@ fn a_malformed_flow_or_suite_id_is_refused() {
     }
 }
 
-/// A name has nothing to resolve against in a checkout without an area, and the refusal says which selector it was.
+/// A class name resolves in the whole repository, also in a checkout without an area. Its module then runs only when
+/// the migrated list names it.
 #[test]
-fn a_name_selector_without_an_area_names_itself() {
+fn a_name_resolves_without_an_area() {
     let fake = fake_air_tree();
+    fake.put("build/bazel-migrated-test-modules.txt", "intellij.air.shared.core.tests\n");
     let empty = crate::Areas::default();
-    for raw in ["AgentThreadCliTest", "com.intellij.air.shared.core"] {
-        let failure = refusal(resolve_selector(
-            &fake,
-            &Selector::classify(raw).expect("classifies"),
-            &ResolutionInputs::new(&fake, &empty),
-        ));
-        assert_eq!(failure.exit, exit::USAGE, "{raw}");
-        assert!(failure.message.contains(raw), "{}", failure.message);
-        assert!(failure.message.contains("names no area"), "{}", failure.message);
-    }
-    assert!(fake.reads().is_empty(), "{:?}", fake.reads());
+    let resolution = resolve_selector(&fake, &classify("AgentThreadCliTest"), &ResolutionInputs::new(&fake, &empty))
+        .unwrap_or_else(|failure| panic!("{failure:?}"));
+    assert_eq!(resolution.labels, ["//plugins/air/shared/core:ai-agent-core-tests_test"]);
 }
 
-/// A module name reads as a package, so only `--module` makes a module selector.
+/// A module selector resolves from the module list and one `accio modules` call, with no area.
 #[test]
-fn a_module_name_classifies_as_a_package() {
-    assert_eq!(classify("intellij.platform.util.tests").kind, SelectorKind::Package);
-    assert_eq!(SelectorKind::Module.as_str(), "module");
-}
-
-/// A module selector resolves from the module list and one BUILD.bazel, before any tree scan, and with no area.
-#[test]
-fn a_module_selector_resolves_without_the_tree_scan() {
+fn a_module_selector_resolves_from_the_module_list_and_accio() {
     let fake = fake_air_tree();
     fake.put("community/MODULE.bazel", "");
     fake.put(
         ".idea/modules.xml",
         r#"<module fileurl="file://$PROJECT_DIR$/community/plugins/x/intellij.x.tests.iml" filepath="$PROJECT_DIR$/community/plugins/x/intellij.x.tests.iml" />"#,
     );
-    fake.put(
-        "community/plugins/x/BUILD.bazel",
-        &crate::fake::module_build_bazel_text("intellij.x.tests", "x_test"),
-    );
+    fake.add_module(tests_module_json("community/plugins/x", "intellij.x", "intellij.x.tests", "x_test"));
     fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.x.tests\n");
     let empty = crate::Areas::default();
     let resolution = resolve_selector(
@@ -576,6 +871,7 @@ fn a_module_selector_resolves_without_the_tree_scan() {
     .unwrap_or_else(|failure| panic!("{failure:?}"));
     assert_eq!(resolution.labels, ["@community//plugins/x:x_test"]);
     assert!(!resolution.multi_target);
+    assert_eq!(fake.accio_calls(), ["modules --paths community/plugins/x"]);
     assert!(fake.reads().iter().all(|read| !read.starts_with("readDir")), "{:?}", fake.reads());
 }
 
@@ -596,30 +892,26 @@ fn class_document(suite: &str, lane: &str, fqn: &str) -> String {
     )
 }
 
-/// The fixture tree with the suite documents `documents`, each a suite id, a catalog lane and a class FQN.
-fn with_documents(mut tree: BTreeMap<String, String>, documents: &[(&str, &str, &str)]) -> FakeRuntime {
+/// The fixture with the suite documents `documents`, each a suite id, a catalog lane and a class FQN.
+fn with_documents(fake: FakeRuntime, documents: &[(&str, &str, &str)]) -> FakeRuntime {
     for (suite, lane, fqn) in documents {
-        tree.insert(document_path(suite), class_document(suite, lane, fqn));
+        fake.put(&document_path(suite), &class_document(suite, lane, fqn));
     }
-    FakeRuntime::with_tree(&tree)
+    fake
 }
 
-/// The fixture tree with a module whose test root holds the class `fqn`, and whose test target is `shells_test`.
-fn with_shell_module(fqn: &str) -> BTreeMap<String, String> {
-    let (package, simple) = fqn.rsplit_once('.').expect("an FQN");
-    let mut tree = air_tree();
-    tree.insert(
-        "plugins/air/shells/intellij.air.shells.tests.iml".to_owned(),
-        iml_text(&[&format!(
-            r#"<sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" packagePrefix="{package}" />"#
-        )]),
-    );
-    tree.insert("plugins/air/shells/BUILD.bazel".to_owned(), build_bazel_text("shells_test"));
-    tree.insert(
-        format!("plugins/air/shells/testSrc/{simple}.kt"),
-        format!("package {package}\n\nclass {simple} {{\n}}\n"),
-    );
-    tree
+/// The fixture with a module whose test root holds the class `fqn`, and whose test target is `shells_test`.
+fn with_shell_module(fqn: &str) -> FakeRuntime {
+    let simple = fqn.rsplit('.').next().expect("an FQN");
+    let fake = fake_air_tree();
+    fake.add_class(&format!("plugins/air/shells/testSrc/{simple}.kt"), fqn);
+    fake.add_module(tests_module_json(
+        "plugins/air/shells",
+        "intellij.air.shells",
+        "intellij.air.shells.tests",
+        "shells_test",
+    ));
+    fake
 }
 
 // A class that a suite document names resolves to the test label of the lane of the document. No module of the tree
@@ -628,7 +920,7 @@ fn with_shell_module(fqn: &str) -> BTreeMap<String, String> {
 #[test]
 fn a_class_that_a_suite_document_names_resolves_to_the_test_label_of_its_lane() {
     let fake = with_documents(
-        air_tree(),
+        fake_air_tree(),
         &[
             ("rename-session", "UI", RENAME),
             (
@@ -672,7 +964,7 @@ fn a_documented_class_follows_the_test_label_of_its_lane_row() {
         LANES_FILE,
         Lanes::parse(&flipped).expect("the flipped table parses"),
     )]);
-    let fake = with_documents(air_tree(), &[("rename-session", "UI", RENAME)]);
+    let fake = with_documents(fake_air_tree(), &[("rename-session", "UI", RENAME)]);
     let resolve = |areas: &Areas| {
         resolve_selector(
             &fake,
@@ -697,7 +989,7 @@ fn a_documented_class_follows_the_test_label_of_its_lane_row() {
 // answers are one class, and it runs in the lane of the document. Without the document, the module answers.
 #[test]
 fn a_class_in_a_module_and_in_a_document_is_one_class_of_the_lane() {
-    let module_only = FakeRuntime::with_tree(&with_shell_module(RENAME));
+    let module_only = with_shell_module(RENAME);
     assert_eq!(
         resolve_in(&module_only, "AirRenameSessionGeneratedFlowUiTest").map(|resolution| resolution.labels),
         Ok(vec!["//plugins/air/shells:shells_test".to_owned()])

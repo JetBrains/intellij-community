@@ -1,4 +1,4 @@
-//! The fake ACP registry and package server of a lane: `/registry.json`, `/packages/acp-scenario-agent-<platform>.zip`,
+//! The fake ACP registry and package server of a lane: `/registry.json`, `/packages/acp-fake-agent-<platform>.zip`,
 //! one armed distribution fault, the hold of an answer, and the log of the answered requests.
 //!
 //! The registry publishes only the agents that the lane names. A request is logged when it is answered, so a held
@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use super::control;
 use super::http::{Request, Response};
 use super::{Handler, Service};
-use crate::lane::package::{self, PLATFORMS, Packages};
+use crate::lane::package::{self, Packages};
 use crate::reply::AgentRefusal;
 
 #[cfg(test)]
@@ -30,7 +30,7 @@ pub(crate) const STARTUP_TOKEN_ENV: &str = "ACP_FAKE_AGENT_STARTUP_TOKEN";
 const INVALID_ARCHIVE: &[u8] = b"not-a-zip-archive";
 const MALFORMED_REGISTRY: &str = "{this is not valid registry json";
 const BAD_CHECKSUM: &str = "0000000000000000000000000000000000000000000000000000000000000000";
-const PACKAGE_PREFIX: &str = "/packages/acp-scenario-agent-";
+const PACKAGE_PREFIX: &str = "/packages/acp-fake-agent-";
 
 const DEFAULT_REGISTRY_STATUS: u16 = 503;
 const DEFAULT_PACKAGE_STATUS: u16 = 404;
@@ -432,8 +432,9 @@ impl ArmRequest {
     }
 }
 
-/// The text of `registry.json`: every agent of `agents` with an archive per platform under `base_url`.
-/// `checksum_override` replaces the checksum of every archive.
+/// The text of `registry.json`: every agent of `agents` with the archive of the guest platform under `base_url`. The
+/// registry lists no other platform, so an IDE of another platform fails its install. `checksum_override` replaces the
+/// checksum of the archive.
 ///
 /// The text is composed by hand in the field order of the Java registry, so the IDE reads the same document.
 pub(crate) fn registry_json(base_url: &str, packages: &Packages, agents: &[RegistryAgent], checksum_override: Option<&str>) -> String {
@@ -448,26 +449,17 @@ pub(crate) fn registry_json(base_url: &str, packages: &Packages, agents: &[Regis
             quote(&agent.display_name),
             package::VERSION
         ));
-        for (index, platform) in PLATFORMS.iter().enumerate() {
-            if index > 0 {
-                json.push(',');
-            }
-            let checksum = checksum_override.or_else(|| packages.sha256(platform)).unwrap_or_default();
-            json.push_str(&format!(
-                "\"{platform}\":{{\"archive\":\"{base_url}packages/acp-scenario-agent-{platform}.zip\",\"sha256\":\"{checksum}\",\"cmd\":{}",
-                quote(&packages.command(platform))
-            ));
-            let args = Packages::args(platform);
-            if !args.is_empty() {
-                let args: Vec<String> = args.iter().map(|argument| quote(argument)).collect();
-                json.push_str(&format!(",\"args\":[{}]", args.join(",")));
-            }
-            let environment: Vec<String> = environment(agent)
-                .iter()
-                .map(|(name, value)| format!("{}:{}", quote(name), quote(value)))
-                .collect();
-            json.push_str(&format!(",\"env\":{{{}}}}}", environment.join(",")));
-        }
+        let platform = packages.platform();
+        let checksum = checksum_override.unwrap_or_else(|| packages.sha256());
+        json.push_str(&format!(
+            "\"{platform}\":{{\"archive\":\"{base_url}packages/acp-fake-agent-{platform}.zip\",\"sha256\":\"{checksum}\",\"cmd\":{}",
+            quote(&Packages::command())
+        ));
+        let environment: Vec<String> = environment(agent)
+            .iter()
+            .map(|(name, value)| format!("{}:{}", quote(name), quote(value)))
+            .collect();
+        json.push_str(&format!(",\"env\":{{{}}}}}", environment.join(",")));
         json.push_str("}}}");
     }
     json.push_str("]}");

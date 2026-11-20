@@ -5,7 +5,7 @@
 //! scenario, and a flow id, a scenario name or a step of a program is only answerable from the profiles. Routes,
 //! variants and the rest of the flow model stay `docs/scripts/flowCatalog.ts`'s, which wrote these files.
 
-use bt_core::OsRuntime;
+use bt_core::Runtime;
 use bt_core::catalog::{SuiteDocument, SuiteProfile, read_generated_suites};
 
 use crate::{Exit, Refusal, from_bt};
@@ -21,7 +21,7 @@ pub(crate) struct Catalog {
 ///
 /// A document that cannot be read is an error rather than a skipped suite, for the reason `bt` refuses one: a
 /// planner that silently drops a suite answers "no scenario covers this" for a scenario that exists.
-pub(crate) fn read_catalog(runtime: &OsRuntime) -> Result<Catalog, Refusal> {
+pub(crate) fn read_catalog(runtime: &dyn Runtime) -> Result<Catalog, Refusal> {
     let catalog = avl_affected::air_area().catalog().map_err(from_bt)?;
     let suites = read_generated_suites(runtime, &catalog).map_err(from_bt)?;
     for suite in &suites {

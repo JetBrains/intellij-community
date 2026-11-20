@@ -308,6 +308,7 @@ def rust_tool_crate(
         name,
         hub,
         lints,
+        clippy_config = None,
         bins_prefix = None,
         cross_module_crates = {},
         test_data = [],
@@ -363,6 +364,9 @@ def rust_tool_crate(
       name: the directory name. The hub names a local crate by its package label.
       hub: the crate hub, from `rust_tool_hub`.
       lints: the `rust_lints_as_errors` target of the workspace. Every target gets it as `lint_config`.
+      clippy_config: the `clippy.toml` copy of the workspace, for a workspace whose copy has the added bans of
+        `clippyAdditions` of `sync.mjs`. Every target gets it, so its clippy reads the bans that cargo reads. When
+        unset, the clippy aspect reads the `clippy.toml` that `.bazelrc` names.
       bins_prefix: the package prefix of the binaries, such as `"build/dev-dist-tools/bins/"`. When unset, every
         crate is a library.
       cross_module_crates: `{package name: label}` of the crates of another workspace that the crate links through a
@@ -448,6 +452,7 @@ def rust_tool_crate(
         is_binary = is_binary,
         crate_attrs = {"aliases": aliases, "crate_name": crate_name, "edition": hub.edition()},
         lints = lints,
+        clippy_config = clippy_config,
         deps = deps,
         test_deps = test_deps,
         integration_test_deps = integration_test_deps,
@@ -486,7 +491,7 @@ def rust_tool_sources(*dep_data):
     packages = {package: None for data in dep_data for package in data}
     return [Label("//{}:{}_sources".format(package, package.rsplit("/", 1)[-1])) for package in sorted(packages)]
 
-def rust_tool_binary(name, deps, lints, edition, test_deps = [], testdata_env = None):
+def rust_tool_binary(name, deps, lints, edition, test_deps = [], testdata_env = None, rustc_flags = None):
     """Declares one binary of a Rust tool workspace that Bazel builds without a crate hub, its unit test, and its clippy.
 
     Bazel does not read `Cargo.toml` of such a workspace, so `deps` repeats `[dependencies]` of the crate, and
@@ -501,11 +506,12 @@ def rust_tool_binary(name, deps, lints, edition, test_deps = [], testdata_env = 
       edition: the Rust edition of the crate.
       test_deps: the dependencies of the unit test only.
       testdata_env: the environment variable that gives the test the path of `testdata/`.
+      rustc_flags: the `rustc_flags` of the binary, such as a `select` of linker arguments for one OS.
     """
     _rust_tool_targets(
         name = name,
         is_binary = True,
-        crate_attrs = {"edition": edition},
+        crate_attrs = {"edition": edition} | ({"rustc_flags": rustc_flags} if rustc_flags != None else {}),
         lints = lints,
         deps = deps,
         test_deps = test_deps,
@@ -533,6 +539,7 @@ def _rust_tool_targets(
         closure,
         integration_tests,
         crate_target = None,
+        clippy_config = None,
         closure_platform = None,
         binaries = {},
         rustc_env = {},
@@ -564,7 +571,8 @@ def _rust_tool_targets(
     # An argument that the caller left unset stays out of the call, so that a target renders as it did before the
     # argument existed.
     srcs = native.glob(["src/**/*.rs"])
-    crate_extra = {}
+    clippy_attrs = {"clippy_config": clippy_config} if clippy_config != None else {}
+    crate_extra = dict(clippy_attrs)
     if binaries:
         srcs = [src for src in srcs if src not in binaries.values()]
     if rustc_env:
@@ -583,7 +591,7 @@ def _rust_tool_targets(
         **(crate_attrs | crate_extra)
     )
 
-    binary_attrs = {"target_compatible_with": target_compatible_with} if target_compatible_with != None else {}
+    binary_attrs = clippy_attrs | ({"target_compatible_with": target_compatible_with} if target_compatible_with != None else {})
     binary_names = []
     for binary, main in sorted(binaries.items()):
         binary_names.append(binary + "-bin")
@@ -633,7 +641,7 @@ def _rust_tool_targets(
     # A `rust_test` does not take `lint_config` from its `crate`, so it is passed again. With `test_sharding`, the
     # rules_rust wrapper splits the libtest cases across the shards. A lane that runs a test with
     # `--test_sharding_strategy=forced=2` fails a runner that does not report sharding.
-    test_extra = {}
+    test_extra = dict(clippy_attrs)
     if test_env_inherit != None:
         test_extra["env_inherit"] = test_env_inherit
     if test_size:

@@ -174,6 +174,18 @@ fn a_plan_that_cannot_be_made_says_why() {
 }
 
 #[test]
+fn a_macos_app_holds_the_build_file_in_its_resources_and_every_other_distribution_at_its_root() {
+    let app = Path::new("/out/idea.dist/Contents");
+    assert_eq!(build_txt(app, "darwin_aarch64"), app.join("Resources/build.txt"));
+    assert_eq!(build_txt(app, "darwin_x64"), app.join("Resources/build.txt"));
+    let language_server = Path::new("/out/kotlin-server.dist");
+    assert_eq!(build_txt(language_server, "darwin_aarch64"), language_server.join("build.txt"));
+    let linux = Path::new("/out/idea_linux.dist");
+    assert_eq!(build_txt(linux, "linux_aarch64"), linux.join("build.txt"));
+    assert_eq!(build_txt(linux, "linux_x64"), linux.join("build.txt"));
+}
+
+#[test]
 fn the_ide_build_of_a_build_file_drops_the_product_code_and_names_a_read_failure_and_an_empty_file() {
     let path = Path::new("/dist/build.txt");
     assert_eq!(ide_build(path, Ok("IU-271.1234\n".to_owned())), Ok("271.1234".to_owned()));
@@ -193,5 +205,109 @@ fn a_file_lies_below_its_artifact_path() {
     assert_eq!(
         file.path_below(Path::new("/out/performance")),
         Path::new("/out/performance/air-long-session/M/metrics.performance.json")
+    );
+}
+
+fn pass(name: &str, outcome: CaseOutcome, settled_ms: f64) -> StreamCase {
+    StreamCase {
+        class_name: "AirLongSessionPerformanceUiTest".to_owned(),
+        name: name.to_owned(),
+        started_at: String::new(),
+        duration_ms: 1,
+        outcome,
+        report: avl_wire::report::ScenarioReport {
+            notes: Vec::new(),
+            metrics: metrics(json!({ "answer.M.streamEndToSettledMs": settled_ms })),
+        },
+    }
+}
+
+fn failed() -> CaseOutcome {
+    CaseOutcome::Failed(crate::cases::CaseFailure {
+        kind: crate::cases::FailureOrigin::Test,
+        r#type: None,
+        message: "the open did not settle".to_owned(),
+        detail: String::new(),
+    })
+}
+
+fn settled(cases: &[StreamCase]) -> serde_json::Number {
+    median_of_passes(cases)["answer.M.streamEndToSettledMs"].clone()
+}
+
+fn ms(value: f64) -> serde_json::Number {
+    serde_json::Number::from_f64(value).unwrap()
+}
+
+#[test]
+fn the_median_of_the_passes_keeps_one_noisy_pass_out() {
+    let passes = [
+        pass("M", CaseOutcome::Passed, 410.0),
+        pass("M, pass 2 of 5", CaseOutcome::Passed, 402.0),
+        pass("M, pass 3 of 5", CaseOutcome::Passed, 557.0),
+        pass("M, pass 4 of 5", CaseOutcome::Passed, 398.0),
+        pass("M, pass 5 of 5", CaseOutcome::Passed, 415.0),
+    ];
+    assert_eq!(settled(&passes), ms(410.0));
+    assert_eq!(
+        settled(&passes[..2]),
+        ms(406.0),
+        "an even count takes the middle of the two middle values"
+    );
+}
+
+#[test]
+fn a_failed_pass_does_not_count_while_another_pass_passed() {
+    let passes = [
+        pass("M", CaseOutcome::Passed, 400.0),
+        pass("M, pass 2 of 3", failed(), 9000.0),
+        pass("M, pass 3 of 3", CaseOutcome::Passed, 420.0),
+    ];
+    assert_eq!(settled(&passes), ms(410.0));
+    assert_eq!(
+        settled(&[pass("M", failed(), 900.0)]),
+        ms(900.0),
+        "the one pass of a failed scenario still counts"
+    );
+}
+
+#[test]
+fn the_last_attempt_of_a_rerun_counts() {
+    let passes = [
+        pass("M", failed(), 900.0),
+        pass("M, pass 2 of 2", CaseOutcome::Passed, 400.0),
+        pass("M", CaseOutcome::Passed, 410.0),
+    ];
+    assert_eq!(settled(&passes), ms(405.0));
+}
+
+#[test]
+fn the_passes_of_a_scenario_write_one_file_with_their_median() {
+    let plan = Plan {
+        ide_build: "271.1".to_owned(),
+        series: ["M", "M, pass 2 of 3", "M, pass 3 of 3"]
+            .into_iter()
+            .map(|scenario| PerformanceSeries {
+                project: "air/long-session/M".to_owned(),
+                ..series("AirLongSessionPerformanceUiTest", scenario, "air-long-session/M")
+            })
+            .collect(),
+    };
+    let events: Vec<RunEvent> = [("M", 410), ("M, pass 2 of 3", 557), ("M, pass 3 of 3", 402)]
+        .into_iter()
+        .map(|(name, value)| {
+            let line = format!(
+                r#"{{"event":"testFinished","timestamp":"2026-11-19T03:00:00Z","id":"{name}","displayName":"{name}","className":"AirLongSessionPerformanceUiTest","status":"SUCCESSFUL","durationMs":5,"report":{{"metrics":{{"answer.M.streamEndToSettledMs":{value}}}}}}}"#
+            );
+            decode_run_event(line.as_bytes()).unwrap()
+        })
+        .collect();
+    let files = files(&plan, &events, GENERATED);
+    assert_eq!(files.len(), 1, "one file for the series of the three passes");
+    let document: Value = serde_json::from_str(&files[0].text).unwrap();
+    assert_eq!(document["project"], "air/long-session/M");
+    assert_eq!(
+        document["metrics"],
+        json!([{"n": "answer.M.streamEndToSettledMs", "d": 410, "v": 410}])
     );
 }
