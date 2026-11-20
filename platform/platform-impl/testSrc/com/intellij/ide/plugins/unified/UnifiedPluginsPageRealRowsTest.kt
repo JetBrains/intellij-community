@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.unified
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.ui.LafManager
@@ -10,6 +11,7 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -24,6 +26,7 @@ import java.awt.Dimension
 import java.awt.Font
 import java.awt.Point
 import java.awt.Rectangle
+import javax.accessibility.AccessibleRole
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -480,6 +483,39 @@ internal class UnifiedPluginsPageRealRowsTest {
       .containsExactly(firstRow.component)
     view.close()
   }
+
+  @Test
+  fun `Marketplace link appears after Suggested rows and follows their controls in Tab order`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UI) {
+      val factory = RecordingRowFactory()
+      val first = item("suggested.first")
+      val last = item("suggested.last")
+      val controller = UnifiedPluginsPageController(listOf(
+        section(PluginSectionId.Suggested, first, last),
+        section(PluginSectionId.Marketplace, item("marketplace.plugin")),
+      ))
+
+      createView(factory).use { view ->
+        view.render(controller.state.value, showMarketplaceLink = true)
+        prepareForScrolling(view)
+
+        val link = componentsOfType(view.component, BrowserLink::class.java).single()
+        val firstRow = factory.row(PluginSectionId.Suggested, first)
+        val lastRow = factory.row(PluginSectionId.Suggested, last).component
+        val linkTop = SwingUtilities.convertPoint(link, Point(), view.component).y
+        val lastRowBottom = SwingUtilities.convertPoint(lastRow, Point(0, lastRow.height), view.component).y
+        assertThat(linkTop).isGreaterThanOrEqualTo(lastRowBottom)
+        assertThat(link.accessibleContext.accessibleName).isEqualTo(IdeBundle.message("plugins.configurable.more.on.marketplace"))
+        assertThat(link.accessibleContext.accessibleRole).isEqualTo(AccessibleRole.HYPERLINK)
+        assertThat(link.icon).isSameAs(AllIcons.Ide.External_link_arrow)
+        assertThat(view.focusTraversalOrder()).endsWith(firstRow.component, firstRow.actionButton, link)
+
+        controller.setQuery(PluginsQueryState("plugin", "plugin", revision = 1))
+        view.render(controller.state.value, showMarketplaceLink = true)
+
+        assertThat(componentsOfType(view.component, BrowserLink::class.java)).isEmpty()
+      }
+    }
 
   @Test
   fun `inserting a real-row section preserves visible occurrence offset`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {

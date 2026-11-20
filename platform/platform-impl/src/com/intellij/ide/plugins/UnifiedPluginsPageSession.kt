@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.CopyProvider
 import com.intellij.ide.IdeBundle
@@ -9,6 +10,7 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.ide.plugins.marketplace.statistics.UnifiedPluginSearchStatistics
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchSourceKind
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.newui.LegacyPluginUiHost
 import com.intellij.ide.plugins.newui.PluginManagerCustomizer
 import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor
@@ -64,6 +66,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.ApplicationInfoImpl.DEFAULT_PLUGINS_HOST
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
@@ -93,6 +96,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.Dimension
@@ -234,6 +238,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
   private var pendingUnifiedSearch: PendingUnifiedSearch? = null
   private var renderedRepositoryContentRevision = -1L
   private var pageReadyReported = false
+  private var showMarketplaceLink = false
   private var reportedSourceFailures: Set<UnifiedPluginSourceFailure> = emptySet()
   private var spotlightSearchActive = false
   private var queryIntentRevision = 0L
@@ -319,6 +324,22 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     renderPageSourceState(pageSource.state.value)
     updateAllButton.render(updateAllController.state.value.presentation)
     pageSourceCollectionJob = contentComponent.launchOnShow("UnifiedPluginsPageSession.pageSource") {
+      launch {
+        val usesDefaultMarketplace = withContext(Dispatchers.IO) {
+          try {
+            MarketplaceUrls.getPluginManagerUrl().equals(DEFAULT_PLUGINS_HOST, ignoreCase = true)
+          }
+          catch (e: Exception) {
+            rethrowControlFlowException(e)
+            Logger.getInstance(UnifiedPluginsPageSession::class.java).warn("Cannot resolve the Marketplace URL", e)
+            false
+          }
+        }
+        if (!disposed && showMarketplaceLink != usesDefaultMarketplace) {
+          showMarketplaceLink = usesDefaultMarketplace
+          renderControllerState()
+        }
+      }
       pageSource.state.collect { state ->
         if (!disposed) renderPageSourceState(state)
       }
@@ -461,7 +482,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     if (disposed) return
     pendingSelectedPluginIds = pluginIds.toList()
     if (applyPendingSelection()) {
-      view.render(controller.state.value)
+      view.render(controller.state.value, showMarketplaceLink)
     }
   }
 
@@ -798,7 +819,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
   private fun renderControllerState() {
     applyPendingSelection()
     uiTracker.measure(PluginManagerUiMetric.UNIFIED_PAGE_RENDER) {
-      view.render(controller.state.value)
+      view.render(controller.state.value, showMarketplaceLink)
     }
   }
 

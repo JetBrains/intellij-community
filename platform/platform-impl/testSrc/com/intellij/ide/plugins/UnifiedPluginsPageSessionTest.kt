@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearch
 import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchQueryShape
 import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchSection
 import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchSourceKind
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.plugins.newui.CustomPluginRepository
 import com.intellij.ide.plugins.newui.CustomPluginRepositoryLoadResult
 import com.intellij.ide.plugins.newui.EventHandler.SelectionType
@@ -54,6 +55,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.impl.ApplicationInfoImpl.DEFAULT_PLUGINS_HOST
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.newEditor.SpotlightPainter
@@ -68,6 +70,7 @@ import com.intellij.openapi.util.ExpirableRunnable
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
@@ -78,6 +81,7 @@ import com.intellij.testFramework.replaceService
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.withForcedRespectIsShowingClientProperty
@@ -105,6 +109,7 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Window
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -1211,6 +1216,38 @@ internal class UnifiedPluginsPageSessionTest {
         assertThat(searchField(session).text).isEqualTo("Marketplace query")
         assertThat(marketplaceProvider.searchQueries).containsExactly("Marketplace query")
         assertThat(marketplaceProvider.suggestedLoadCount).isZero()
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `Suggested links to the default Marketplace and hides the link for an override`(@TestDisposable disposable: Disposable): Unit =
+    uiTest {
+      val marketplaceUrl = AtomicReference("$DEFAULT_PLUGINS_HOST/")
+      val customization = object : MarketplaceCustomizationService by MarketplaceCustomizationService.getInstance() {
+        override fun getPluginManagerUrl(): String = marketplaceUrl.get()
+      }
+      ExtensionTestUtil.maskExtensions(MarketplaceCustomizationService.EP, listOf(customization), disposable)
+
+      val suggested = PluginDto("Suggested Plugin", PluginId.getId("suggested.plugin"))
+      val session = createSession(null, marketplaceProvider = FixedMarketplaceDataProvider(suggested = listOf(suggested)))
+      try {
+        val content = session.getComponent()
+        waitUntilAssertSucceeds {
+          assertThat(componentsOfType(content, BrowserLink::class.java).filter(BrowserLink::isVisible).map(BrowserLink::url))
+            .containsExactly(DEFAULT_PLUGINS_HOST)
+        }
+
+        marketplaceUrl.set("$DEFAULT_PLUGINS_HOST/custom")
+        withShowingChanged { content.parent.remove(content) }
+        yield()
+        showComponent(content)
+
+        waitUntilAssertSucceeds {
+          assertThat(componentsOfType(content, BrowserLink::class.java)).noneMatch(BrowserLink::isVisible)
+        }
       }
       finally {
         Disposer.dispose(session)
