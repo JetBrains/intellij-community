@@ -1,0 +1,81 @@
+{
+  "pid": 4242,
+  "processes": [
+    {
+      "pid": 4242,
+      "parentPid": 4100,
+      "responsiblePid": 4242,
+      "name": "java",
+      "path": "/Users/agent/Library/Application Support/JetBrains/macos-vm-ui-tests/bench/generations/5f1c0d9e2b7a/idea.dist/jbr/Contents/Home/bin/java",
+      "footprintBytes": 1288490188,
+      "residentBytes": 1503238553
+    },
+    {
+      "pid": 4250,
+      "parentPid": 4242,
+      "responsiblePid": 4242,
+      "name": "fsnotifier",
+      "path": "/Users/agent/Library/Application Support/JetBrains/macos-vm-ui-tests/bench/generations/5f1c0d9e2b7a/idea.dist/bin/fsnotifier",
+      "footprintBytes": 1048576,
+      "residentBytes": 3145728
+    },
+    {
+      "pid": 4300,
+      "parentPid": 4242,
+      "responsiblePid": 4242,
+      "name": "cef_server",
+      "path": "/Users/agent/Library/Application Support/JetBrains/macos-vm-ui-tests/bench/generations/5f1c0d9e2b7a/idea.dist/plugins/jcef/jcef/Frameworks/cef_server.app/Contents/MacOS/cef_server",
+      "footprintBytes": 94371840,
+      "residentBytes": 157286400
+    },
+    {
+      "pid": 4301,
+      "parentPid": 4300,
+      "responsiblePid": 4242,
+      "name": "cef_server Helper (GPU)",
+      "footprintBytes": 31457280,
+      "residentBytes": 83886080
+    },
+    {
+      "pid": 4302,
+      "parentPid": 4300,
+      "responsiblePid": 4242,
+      "name": "cef_server Helper",
+      "footprintBytes": 20971520,
+      "residentBytes": 73400320
+    },
+    {
+      "pid": 4303,
+      "parentPid": 4300,
+      "responsiblePid": 4242,
+      "name": "cef_server Helper (Renderer)",
+      "footprintBytes": 62914560,
+      "residentBytes": 125829120
+    },
+    {
+      "pid": 5000,
+      "parentPid": 1,
+      "responsiblePid": 4242,
+      "name": "com.apple.WebKit.WebContent",
+      "path": "/System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent",
+      "footprintBytes": 52428800,
+      "residentBytes": 62914560
+    },
+    {
+      "pid": 5001,
+      "parentPid": 1,
+      "responsiblePid": 4242,
+      "name": "com.apple.WebKit.GPU",
+      "footprintBytes": 10485760,
+      "residentBytes": 15728640
+    },
+    {
+      "pid": 5002,
+      "parentPid": 1,
+      "responsiblePid": 4242,
+      "name": "com.apple.WebKit.Networking",
+      "footprintBytes": 5242880,
+      "residentBytes": 6291456
+    }
+  ]
+}

@@ -8,6 +8,7 @@ use jiff::Timestamp;
 use jiff::tz::TimeZone;
 
 use super::arm::ArmKind;
+use super::memory::{MEMORY_ALL, MEMORY_METRICS, PROCESS_METRICS};
 use super::profile::{FrameSamples, ProfileEvent, ProfileScope};
 use super::record::{
     CARGO_SYNC_LOG_MS, CARGO_SYNC_STARTED, CLASS_ANCHORS, CLASS_EDT_TIME, CLASS_REQUESTS, CLASS_TIME, CLASSES_HIDDEN, CLASSES_JAR,
@@ -139,7 +140,8 @@ fn header(text: &mut String, summary: &Summary, arms: &[&ArmSummary]) {
 /// welcome spans need an arm with the non-modal welcome screen, the modal spans need the modal arm, and the second
 /// project needs the open-project arm. The project arm finds its editor spans in the platform spans. The class group
 /// holds a row of [`named_at`] only for an anchor that an arm has. The cost of the plugin class log needs an arm with
-/// the metric, so a log without the trailer adds no `not measured` row. The span ends are on the clock of the anchors.
+/// the metric, so a log without the trailer adds no `not measured` row. The memory groups need an arm with a memory
+/// sample, so a session from before the sample adds no such row. The span ends are on the clock of the anchors.
 pub(crate) fn metric_groups(arms: &[&ArmSummary]) -> Vec<(&'static str, Vec<String>)> {
     let mut classes = CLASS_METRICS.map(str::to_owned).to_vec();
     classes.extend(
@@ -160,6 +162,10 @@ pub(crate) fn metric_groups(arms: &[&ArmSummary]) -> Vec<(&'static str, Vec<Stri
             "plugin class log cost (measured by the IDE)",
             PLUGIN_LOG_METRICS.map(str::to_owned).to_vec(),
         ));
+    }
+    if arms.iter().any(|arm| arm.summary.contains_key(MEMORY_ALL)) {
+        groups.push(("memory at the gate (MB)", MEMORY_METRICS.map(str::to_owned).to_vec()));
+        groups.push(("processes at the gate (count)", PROCESS_METRICS.map(str::to_owned).to_vec()));
     }
     if arms.iter().any(|arm| arm.arm.kind == ArmKind::Project) {
         groups.push(("editor", vec![EDITOR_HIGHLIGHTED.to_owned()]));

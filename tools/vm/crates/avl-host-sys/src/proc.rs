@@ -50,7 +50,9 @@ mod answer;
 pub(crate) mod group;
 mod identity;
 mod probe;
+mod responsibility;
 mod stream;
+mod usage;
 // The tests drive `/bin/sh`.
 #[cfg(test)]
 #[cfg(unix)]
@@ -60,7 +62,9 @@ pub use answer::{ProbeExit, ProbeOutput, probe_unanswered};
 pub use group::ChildGroup;
 pub use identity::ProcessIdentity;
 pub use probe::{ProcessTable, PsField};
+pub use responsibility::{Responsibility, responsible_pid};
 pub use stream::{GuestStream, PipedChild};
+pub use usage::{HostProcess, ProcessMemory, host_processes, process_memory, process_path};
 
 /// How much of a failed host command's output travels in the refusal, newest bytes last. Bounded because this text
 /// ends up inside a JSON envelope an agent reads, and a build failure's whole stderr is not a message.
@@ -169,6 +173,9 @@ pub struct SpawnOptions {
     /// A failure of the launcher that the same command answers differently a moment later, which
     /// [`Runner::capture`] runs again. `None` takes every answer as it is.
     pub transient_failure: Option<TransientFailure>,
+    /// The responsible process of the child on macOS. Honoured by [`Runner::capture`] and [`Runner::checked_to_file`].
+    /// [`Responsibility::Own`] needs an absolute program path, else the spawn fails with `EINVAL`.
+    pub responsibility: Responsibility,
 }
 
 /// A failure that belongs to the launcher of a command rather than to the command, and that a run a moment later does
@@ -200,6 +207,7 @@ impl SpawnOptions {
             keep_destination_on_failure: false,
             interruptible: Interruptible::Yes,
             transient_failure: None,
+            responsibility: Responsibility::Inherited,
         }
     }
 
@@ -367,7 +375,7 @@ impl Runner {
         options: &SpawnOptions,
         interruptible: Interruptible,
     ) -> Result<Captured, ProcError> {
-        let mut command = self.command(argv, options.dir.as_deref(), options.env.as_deref());
+        let mut command = self.command(argv, options.dir.as_deref(), options.env.as_deref(), options.responsibility);
         command
             .stdin(if options.stdin.is_some() { Stdio::piped() } else { Stdio::null() })
             .stdout(Stdio::piped())
@@ -473,7 +481,7 @@ impl Runner {
             let _ = std::fs::remove_file(destination);
         };
 
-        let mut command = self.command(argv, options.dir.as_deref(), options.env.as_deref());
+        let mut command = self.command(argv, options.dir.as_deref(), options.env.as_deref(), options.responsibility);
         command.stdin(Stdio::null());
         // The child's stderr either joins its stdout in the destination, or is captured so a refusal can quote it.
         // Never both, and never neither: a caller reading the destination must know whether the diagnostics are in
@@ -552,7 +560,7 @@ impl Runner {
     /// operator ends the session, and an interrupt reaches its group.
     pub async fn inherited(&self, ctx: &Ctx, argv: &[String], dir: Option<&Path>) -> Result<i32, ProcError> {
         check_argv(argv).map_err(ProcError::Other)?;
-        let mut command = self.command(argv, dir, None);
+        let mut command = self.command(argv, dir, None, Responsibility::Inherited);
         command.stdin(Stdio::inherit()).stdout(Stdio::inherit()).stderr(Stdio::inherit());
         let mut spawned = self.spawn(command, argv, Interruptible::Yes).map_err(ProcError::SpawnFailed)?;
         match spawned.wait(ctx, None, std::future::ready(())).await.0 {
@@ -563,13 +571,14 @@ impl Runner {
     }
 
     /// The child every spawn shape here shares: the runner's scrubbed environment unless the options name their
-    /// own, and its own process group.
-    fn command(&self, argv: &[String], dir: Option<&Path>, env: Option<&[(String, String)]>) -> Command {
+    /// own, its own process group, and its responsible process.
+    fn command(&self, argv: &[String], dir: Option<&Path>, env: Option<&[(String, String)]>, responsibility: Responsibility) -> Command {
         let mut command = Command::new(&argv[0]);
         command.args(&argv[1..]).env_clear();
         ProcessGroup::prepare(&mut command);
         let environment = env.unwrap_or(&self.environment);
         command.envs(environment.iter().map(|(name, value)| (name, value)));
+        responsibility::prepare(&mut command, responsibility, argv, environment);
         if let Some(dir) = dir {
             command.current_dir(dir);
         }

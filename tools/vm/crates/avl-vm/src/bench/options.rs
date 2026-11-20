@@ -24,6 +24,10 @@ welcome, open-project and project build the self-contained distribution --target
 stage it with its JBR as an immutable generation under the runtime root, keyed by its digest. Every IDE run starts \
 from that generation, never from bazel-out. The answer is the summary, also in <session>/summary.json, and a text digest.
 
+The IDE starts as its own responsible process of macOS. After the gate, a run writes <run>/memory.json: the physical \
+footprint and the resident size of the IDE, of its descendants, and of the WebKit processes whose responsible process \
+is the IDE. The digest shows them in the group `memory at the gate (MB)`. A failed sample is a note of the run.
+
 A session holds a lock from its build to its summary, so a second session or a gc on this host is refused with \
 bench_busy. When AIR_VM_BIN names the vm binary, a session notes its age. A source under crates/ that is newer is a \
 warning of the session.";

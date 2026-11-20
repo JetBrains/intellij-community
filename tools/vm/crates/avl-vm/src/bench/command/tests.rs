@@ -107,6 +107,8 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
         &[
             "bench_busy",
             "AIR_VM_BIN",
+            "memory.json",
+            "responsible process",
             "Exit codes:",
             "6   an arm has no run that passed the gate",
             "75  the host is busy, or a session runs",

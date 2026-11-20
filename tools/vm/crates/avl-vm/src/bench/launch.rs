@@ -6,6 +6,9 @@
 //! options of the run with the JVM class-load log, the `--add-opens` lines of `OpenedPackages.txt` for this OS, `-classpath` with the entries of
 //! `core-classpath.txt`, and the main class of the dist config. Every path in it is a path of the generation.
 //!
+//! The IDE is its own responsible process on macOS, as an app that Launch Services starts, so the WebKit processes of its
+//! web views name its pid, see [`super::memory`].
+//!
 //! A run starts the IDE under a child context, waits for the event of its gate, holds, reads the FUS log, and quits the IDE
 //! through a second JVM with the program argument `exit`. When the IDE does not exit, the run cancels the child
 //! context, which sends SIGTERM to its process group, and then drops the spawn, which sends SIGKILL. The spawn
@@ -19,12 +22,14 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, anyhow, bail};
 use avl_base::{Exit, Refusal};
+use avl_host_sys::proc::Responsibility;
 use avl_host_sys::{Ctx, ProcError, Runner, SpawnOptions};
 use serde::Deserialize;
 
 use super::arm::{Arm, ArmKind, Gate, Twin};
 use super::files;
 use super::fus;
+use super::memory::{self, MEMORY_FILE};
 use super::profile::{GATE_PROFILE, ProfileEvent, WHOLE_PROFILE};
 use super::record::{self, EDITOR_HIGHLIGHTED, LaunchFacts, RunKind, THREAD_DUMP_FILE};
 use super::session::{CLASS_LOAD_LOG, ProjectPaths, Sandbox, TRACE_FILE};
@@ -572,7 +577,10 @@ impl Launcher {
         };
         let child = Ctx::new(ctx.token().child_token());
         let log = run_dir.join("launch.log");
-        let spawn_options = self.logged(self.ceiling(), "bench_ide_ceiling");
+        let spawn_options = SpawnOptions {
+            responsibility: Responsibility::Own,
+            ..self.logged(self.ceiling(), "bench_ide_ceiling")
+        };
         let started = Instant::now();
         let mut ide = Box::pin(self.runner.checked_to_file(&child, &argv, &log, &spawn_options));
         let mut collector = fus::Collector::default();
@@ -585,6 +593,7 @@ impl Launcher {
         };
         facts.waited_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
         if exited.is_none() && facts.failure.is_none() {
+            facts.memory_failure = sample_memory(run_dir).err();
             facts.thread_dump_failure = self.dump_threads(ctx, run_dir).await.err();
         }
         if exited.is_none()
@@ -622,12 +631,7 @@ impl Launcher {
         if !jcmd.is_file() {
             return Err("the JBR of the generation has no bin/jcmd".to_owned());
         }
-        let log = files::read_optional(&run_dir.join("log").join("idea.log"))
-            .ok()
-            .flatten()
-            .unwrap_or_default();
-        let pid = idea_log_pid(&log).ok_or_else(|| "log/idea.log names no PID".to_owned())?;
-        Ok((jcmd, pid))
+        Ok((jcmd, ide_pid(run_dir)?))
     }
 
     /// Stops the profiler of the running IDE when the run passed its gate, so [`GATE_PROFILE`] holds the start-up and
@@ -779,6 +783,24 @@ impl Launcher {
         drop(ide);
         None
     }
+}
+
+/// The PID of the running IDE, which `log/idea.log` of `run_dir` names, see [`idea_log_pid`].
+fn ide_pid(run_dir: &Path) -> Result<u32, String> {
+    let log = files::read_optional(&run_dir.join("log").join("idea.log"))
+        .ok()
+        .flatten()
+        .unwrap_or_default();
+    idea_log_pid(&log).ok_or_else(|| "log/idea.log names no PID".to_owned())
+}
+
+/// Writes [`MEMORY_FILE`] with the memory of the IDE and of the processes that work for it, after the gate and before
+/// the thread dump, so the `jcmd` of the dump adds nothing to it. Answers why it could not: no PID, or a failed
+/// sample. The record makes that a note of the run.
+fn sample_memory(run_dir: &Path) -> Result<(), String> {
+    let pid = ide_pid(run_dir)?;
+    let sample = memory::take(pid).map_err(|error| format!("the memory sample of the IDE {pid} failed: {error:#}"))?;
+    files::write_json(&run_dir.join(MEMORY_FILE), &sample).map_err(|error| format!("{error:#}"))
 }
 
 fn interrupted_text() -> String {

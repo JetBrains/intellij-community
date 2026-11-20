@@ -13,6 +13,7 @@ use super::files;
 use super::fus;
 use super::idealog;
 use super::load::HostLoad;
+use super::memory::{self, MEMORY_FILE};
 use super::pluginlog::{self, Owner, PluginLog, Tally};
 use super::profile::{self, EdtProfile, ExcludedSamples, FrameSamples, GATE_PROFILE, ProfileScope, WHOLE_PROFILE};
 use super::session::{CLASS_LOAD_LOG, TRACE_FILE};
@@ -259,6 +260,10 @@ pub(crate) struct LaunchFacts {
     /// wrote one, has none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) thread_dump_failure: Option<String>,
+    /// Why the run wrote no memory sample after its gate, see [`MEMORY_FILE`]. A run before the sample, and a run that
+    /// wrote one, has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) memory_failure: Option<String>,
 }
 
 /// One run.
@@ -277,7 +282,7 @@ pub(crate) struct RunRecord {
     pub(crate) reason: Option<String>,
     /// What the run lacks without a failure: a missing file, a truncated trace.
     pub(crate) notes: Vec<String>,
-    /// Milliseconds, or a count for the class metrics.
+    /// Milliseconds, a count for the class metrics and the process counts, or MB for the memory metrics.
     pub(crate) metrics: BTreeMap<String, f64>,
     /// The names of the spans of the Air empty-state composer, see [`EMPTY_STATE_PREFIX`], in the order of their first
     /// span: by the start, and the longer span first at one start. So a span comes before the spans inside it, and the
@@ -605,7 +610,34 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
     });
     class_metrics(record, plugin_log.as_ref(), class_log.as_ref(), stats.as_ref(), quit_ms);
     profile_metrics(run_dir, record);
+    memory_metrics(run_dir, record);
     Ok(())
+}
+
+/// Reads the memory sample of a run, see [`memory`]. A run that wrote none has a note with the reason, and a run from
+/// before the sample has no note. A sample of another shape is a note too.
+fn memory_metrics(run_dir: &Path, record: &mut RunRecord) {
+    if let Some(failure) = &record.launch.memory_failure {
+        record.notes.push(format!("no {MEMORY_FILE}: {failure}"));
+        return;
+    }
+    let sample = match files::read_optional(&run_dir.join(MEMORY_FILE)) {
+        Ok(Some(text)) => memory::parse(&text),
+        Ok(None) => return,
+        Err(error) => Err(error),
+    };
+    match sample {
+        Ok(sample) => {
+            if let Some(responsible) = sample.foreign_responsible() {
+                record.notes.push(format!(
+                    "{MEMORY_FILE}: the IDE {} names the responsible process {responsible}, so the sample has no WebKit process",
+                    sample.pid
+                ));
+            }
+            record.metrics.extend(sample.metrics());
+        }
+        Err(error) => record.notes.push(format!("{MEMORY_FILE}: {error:#}")),
+    }
 }
 
 /// Reads the profile of a run: [`GATE_PROFILE`], else [`WHOLE_PROFILE`] with a note that names why the run did not stop

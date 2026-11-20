@@ -934,3 +934,63 @@ fn a_cargo_sync_run_without_the_line_is_invalid() {
         Some("no line \"CargoSyncTask started\" in log/idea.log: the IDE has no Rust plugin, or the project has no Cargo.toml")
     );
 }
+
+/// The memory sample of a run gives the memory metrics of its groups. A run whose sample failed has a note with the
+/// reason, a run from before the sample has neither, and a sample of another shape is a note. None of them fails the
+/// run.
+#[test]
+fn a_memory_sample_gives_the_memory_metrics_and_a_failed_one_is_a_note() {
+    use crate::bench::memory::{MEMORY_ALL, MEMORY_FILE, MEMORY_IDE, MEMORY_JCEF, MEMORY_WEBKIT, PROCESSES_JCEF};
+    let (_dir, session) = fixture_session();
+    let run = session.join("project-run-01");
+    let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
+    let metric = |name: &str| record.metrics.get(name).copied();
+    assert_eq!(
+        (
+            metric(MEMORY_IDE),
+            metric(MEMORY_JCEF),
+            metric(MEMORY_WEBKIT),
+            metric(MEMORY_ALL),
+            metric(PROCESSES_JCEF)
+        ),
+        (Some(1228.8), Some(200.0), Some(65.0), Some(1494.8), Some(4.0))
+    );
+    assert_eq!(record.notes, vec!["no fus.jsonl".to_owned()]);
+
+    let failed = LaunchFacts {
+        memory_failure: Some("log/idea.log names no PID".to_owned()),
+        ..LaunchFacts::default()
+    };
+    let record = collect(&run, &id(Arm::PROJECT), failed);
+    assert!(record.valid, "{:?}", record.reason);
+    assert_eq!(metric_of(&record, MEMORY_IDE), None);
+    assert!(
+        record.notes.contains(&format!("no {MEMORY_FILE}: log/idea.log names no PID")),
+        "{:?}",
+        record.notes
+    );
+
+    std::fs::write(run.join(MEMORY_FILE), "{}").expect("a broken sample");
+    let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
+    assert!(record.valid, "{:?}", record.reason);
+    assert_eq!(metric_of(&record, MEMORY_IDE), None);
+    assert!(
+        record
+            .notes
+            .iter()
+            .any(|note| note.starts_with(&format!("{MEMORY_FILE}: not a memory sample"))),
+        "{:?}",
+        record.notes
+    );
+
+    std::fs::remove_file(run.join(MEMORY_FILE)).expect("no sample");
+    let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
+    assert_eq!(
+        (metric_of(&record, MEMORY_IDE), record.notes),
+        (None, vec!["no fus.jsonl".to_owned()])
+    );
+}
+
+fn metric_of(record: &RunRecord, name: &str) -> Option<f64> {
+    record.metrics.get(name).copied()
+}
