@@ -214,12 +214,19 @@ class LineStatusTrackerManager(
       }
       forcedDocuments.clear()
 
-      for (data in trackers.values) {
-        unregisterTrackerInCLM(data.tracker)
-        data.tracker.release()
-      }
-      trackers.clear()
+      releaseAllTrackersSilently()
     }
+  }
+
+  /**
+   * Releases each tracker without a [TOPIC] event.
+   */
+  private fun releaseAllTrackersSilently() {
+    for (data in trackers.values) {
+      unregisterTrackerInCLM(data.tracker)
+      data.tracker.release()
+    }
+    trackers.clear()
   }
 
   override fun getLineStatusTracker(document: Document): LineStatusTracker<*>? {
@@ -1265,12 +1272,7 @@ class LineStatusTrackerManager(
   fun releaseAllTrackers() {
     synchronized(LOCK) {
       forcedDocuments.clear()
-
-      for (data in trackers.values) {
-        unregisterTrackerInCLM(data.tracker)
-        data.tracker.release()
-      }
-      trackers.clear()
+      releaseAllTrackersSilently()
     }
   }
 }
