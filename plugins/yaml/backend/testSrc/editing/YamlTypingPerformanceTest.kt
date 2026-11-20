@@ -14,7 +14,9 @@ import org.jetbrains.yaml.psi.YAMLFile
  * Each attempt types characters in the editor and commits the document after each character.
  * So it measures the editor highlighter update, the typed handlers and the reparse of the PSI.
  * The highlighter tests insert chars without a commit, so they measure only the editor highlighter update.
- * Each test types in the middle item of the file.
+ * Most tests type in the middle item of the file.
+ * The flat-mapping, flat-sequence and long-line tests type in the middle line of a file with one root key over all of the file.
+ * There, a block or leaf check costs more than a full reparse, so the reparse must fall back to a full reparse.
  */
 @PerformanceUnitTest
 class YamlTypingPerformanceTest : BasePlatformTestCase() {
@@ -53,6 +55,28 @@ class YamlTypingPerformanceTest : BasePlatformTestCase() {
     doTest("x-note: plain text of the item $SMALL_MIDDLE_ITEM", "\n".repeat(10), atLineEnd = true, items = SMALL_FILE_ITEMS)
 
   @PerformanceUnitTest
+  fun testTypingInKeyInFlatMapping() =
+    doTest("  key_$FLAT_MIDDLE_LINE", "x".repeat(10), text = flatMappingText(), markerStart = "en:\n", warmups = FLAT_WARMUPS)
+
+  @PerformanceUnitTest
+  fun testEnterInFlatMapping() =
+    doTest("  key_$FLAT_MIDDLE_LINE", "\n".repeat(10), atLineEnd = true, text = flatMappingText(), markerStart = "en:\n",
+           warmups = FLAT_WARMUPS)
+
+  @PerformanceUnitTest
+  fun testOpenBracketInFlatMappingValue() =
+    doTest("  key_$FLAT_MIDDLE_LINE: ", "[".repeat(10), text = flatMappingText(), markerStart = "en:\n", warmups = FLAT_WARMUPS)
+
+  @PerformanceUnitTest
+  fun testEnterInFlatSequence() =
+    doTest("  - item $FLAT_MIDDLE_LINE", "\n".repeat(10), atLineEnd = true, text = flatSequenceText(), markerStart = "items:\n",
+           warmups = FLAT_WARMUPS)
+
+  @PerformanceUnitTest
+  fun testTypingInLongPlainLine() =
+    doTest("word$LONG_LINE_MIDDLE_WORD", "x".repeat(10), text = longPlainLineText(), markerStart = "data: ", warmups = FLAT_WARMUPS)
+
+  @PerformanceUnitTest
   fun testHighlighterUpdateInDoubleQuotedScalar() = doHighlighterTest("description: \"Returns the item $MIDDLE_ITEM")
 
   @PerformanceUnitTest
@@ -76,19 +100,29 @@ class YamlTypingPerformanceTest : BasePlatformTestCase() {
         WriteCommandAction.runWriteCommandAction(project) { document.insertString(offset + i, "x") }
       }
     }.setup {
-      offset = markerEnd(document.charsSequence, caretMarker)
+      offset = markerEnd(document.charsSequence, caretMarker, itemStart(MIDDLE_ITEM))
     }.start()
   }
 
   /**
-   * Places the caret after [caretMarker] in the middle item and types [typedText], one char at a time.
+   * Places the caret after [caretMarker] and types [typedText], one char at a time.
    * With [atLineEnd], the caret goes to the end of the line of [caretMarker].
    * So the text of each attempt goes after the text of the previous attempts.
    * The document is committed after each char.
-   * [items] sets the size of the file.
+   * [items] sets the size of the OpenAPI file.
+   * [text] is the file text, and [caretMarker] is searched after the first match of [markerStart] in it.
+   * [warmups] is the number of warm-up attempts before the measured attempts.
    */
-  private fun doTest(caretMarker: String, typedText: String, atLineEnd: Boolean = false, items: Int = ITEMS) {
-    myFixture.configureByText("openapi.yaml", openApiText(items))
+  private fun doTest(
+    caretMarker: String,
+    typedText: String,
+    atLineEnd: Boolean = false,
+    items: Int = ITEMS,
+    text: String = openApiText(items),
+    markerStart: String = itemStart(items / 2),
+    warmups: Int = 1,
+  ) {
+    myFixture.configureByText("openapi.yaml", text)
     assertInstanceOf(myFixture.file, YAMLFile::class.java)
     val document = myFixture.editor.document
 
@@ -98,23 +132,42 @@ class YamlTypingPerformanceTest : BasePlatformTestCase() {
         PsiDocumentManager.getInstance(project).commitDocument(document)
       }
     }.setup {
-      val text = document.charsSequence
-      val markerEnd = markerEnd(text, caretMarker, items / 2)
-      myFixture.editor.caretModel.moveToOffset(if (atLineEnd) text.indexOf('\n', markerEnd) else markerEnd)
-    }.start()
+      val chars = document.charsSequence
+      val markerEnd = markerEnd(chars, caretMarker, markerStart)
+      myFixture.editor.caretModel.moveToOffset(if (atLineEnd) chars.indexOf('\n', markerEnd) else markerEnd)
+    }.warmupIterations(warmups).start()
   }
 }
 
-/** Returns the offset after [marker] in the item [middleItem]. */
-private fun markerEnd(text: CharSequence, marker: String, middleItem: Int = MIDDLE_ITEM): Int {
-  val itemStart = text.indexOf("  /items/$middleItem:\n")
-  val markerStart = text.indexOf(marker, itemStart)
-  check(itemStart >= 0 && markerStart >= 0) { "no '$marker' in the middle item" }
+/** Returns the offset after the first [marker] that follows the first match of [anchor]. */
+private fun markerEnd(text: CharSequence, marker: String, anchor: String): Int {
+  val anchorStart = text.indexOf(anchor)
+  val markerStart = text.indexOf(marker, anchorStart)
+  check(anchorStart >= 0 && markerStart >= 0) { "no '$marker' after '$anchor'" }
   return markerStart + marker.length
 }
 
+/** Returns the first line of the item [item] of the OpenAPI file. */
+private fun itemStart(item: Int): String = "  /items/$item:\n"
+
 private const val ITEMS = 5000
 private const val MIDDLE_ITEM = ITEMS / 2
+
+/** The lines of the flat mapping and of the flat sequence, about 1 MB and 400 KB. */
+private const val FLAT_LINES = 30_000
+private const val FLAT_MIDDLE_LINE = FLAT_LINES / 2
+
+/** The words of the long plain scalar line, about 490 KB. */
+private const val LONG_LINE_WORDS = 50_000
+private const val LONG_LINE_MIDDLE_WORD = LONG_LINE_WORDS / 2
+
+/**
+ * The warm-up attempts of the flat-mapping, flat-sequence and long-line tests.
+ * The earlier tests of the class warm the full reparse only with the reparse registry keys off.
+ * So with 1 warm-up attempt, these tests look slower with the keys on.
+ * The other tests keep 1 warm-up attempt, so their dashboard history stays comparable.
+ */
+private const val FLAT_WARMUPS = 4
 
 /** The items of a small file of about 4 KB. */
 private const val SMALL_FILE_ITEMS = 10
@@ -139,4 +192,27 @@ private fun openApiText(items: Int = ITEMS): String = buildString {
     append("        \"200\":\n")
     append("          description: OK\n")
   }
+}
+
+/** Builds a file with one root key over all of the file, such as a Rails i18n file. */
+private fun flatMappingText(): String = buildString {
+  append("en:\n")
+  for (i in 0 until FLAT_LINES) {
+    append("  key_$i: \"Value of the key $i\"\n")
+  }
+}
+
+/** Builds a file with one root key and a flat sequence over all of the file. */
+private fun flatSequenceText(): String = buildString {
+  append("items:\n")
+  for (i in 0 until FLAT_LINES) {
+    append("  - item $i\n")
+  }
+}
+
+/** Builds a file with one plain scalar line over all of the file. */
+private fun longPlainLineText(): String = buildString {
+  append("data: ")
+  (0 until LONG_LINE_WORDS).joinTo(this, " ") { "word$it" }
+  append("\n")
 }
