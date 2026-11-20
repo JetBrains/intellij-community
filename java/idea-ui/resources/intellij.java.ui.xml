@@ -111,9 +111,9 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
-      serviceInterface="com.intellij.codeInsight.options.JavaInspectionButtonProvider"
-      serviceImplementation="com.intellij.java.ui.inspections.JavaInspectionDialogButtonProvider"/>
-    <inspectionCustomComponent implementation="com.intellij.java.ui.inspections.JavaInspectionButtons"/>
+      serviceInterface="com.intellij.codeInsight.options.JavaConfigurationButtonProvider"
+      serviceImplementation="com.intellij.java.ui.inspections.JavaConfigurationDialogButtonProvider"/>
+    <inspectionCustomComponent implementation="com.intellij.java.ui.inspections.JavaConfigurationDialogs"/>
     <librarySourcesMismatchSuppressor implementation="com.intellij.codeInsight.daemon.impl.AndroidSdkSourcesMismatchSuppressor" />
   </extensions>
 </idea-plugin>

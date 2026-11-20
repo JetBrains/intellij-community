@@ -19,6 +19,8 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.options.JavaConfigurationDialogInfo;
+import com.intellij.codeInsight.options.JavaConfigurationDialogKind;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
@@ -29,10 +31,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -61,7 +59,6 @@ import org.jetbrains.java.generate.config.ConflictResolutionPolicy;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
-import org.jetbrains.java.generate.view.TemplatesPanel;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -69,10 +66,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -286,45 +280,25 @@ public class JavaGenerateToStringActionHandler implements GenerateToStringAction
           label.setForeground(JBColor.RED);
         }
       }));
-      settingsButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final TemplatesPanel ui = new TemplatesPanel(project, templatesManager);
-          Configurable composite = new TabbedConfigurable() {
-            @Override
-            protected @NotNull List<Configurable> createConfigurables() {
-              List<Configurable> res = new ArrayList<>();
-              res.add(new GenerateToStringConfigurable(project));
-              res.add(ui);
-              return res;
-            }
-
-            @Override
-            public String getDisplayName() {
-              return JavaBundle.message("generate.tostring.tab.title");
-            }
-
-            @Override
-            public String getHelpTopic() {
-              return "editing.altInsert.tostring.settings";
-            }
-
-            @Override
-            public void apply() throws ConfigurationException {
-              super.apply();
-              updateDialog(clazz, chooser);
-
-              comboBox.removeAllItems();
-              for (TemplateResource resource : templatesManager.getAllTemplates()) {
-                comboBox.addItem(resource);
-              }
-              comboBox.setSelectedItem(templatesManager.getDefaultTemplate());
-            }
-          };
-
-          ShowSettingsUtil.getInstance()
-            .editConfigurable(MemberChooserHeaderPanel.this, composite, () -> ui.selectItem(templatesManager.getDefaultTemplate()));
-          composite.disposeUIResources();
+      JavaConfigurationDialogInfo settingsInfo =
+        new JavaConfigurationDialogInfo(JavaConfigurationDialogKind.TO_STRING_TEMPLATE_SETTINGS, clazz.getLanguage());
+      settingsButton.setVisible(settingsInfo.isConfigurationUISupported());
+      settingsButton.addActionListener(_ -> {
+        Config configBefore = GenerateToStringContext.getConfig();
+        List<TemplateResource> templatesBefore = List.copyOf(templatesManager.getAllTemplates());
+        TemplateResource defaultTemplateBefore = templatesManager.getDefaultTemplate();
+        settingsInfo.showConfigurationDialog(this, project);
+        if (!configBefore.equals(GenerateToStringContext.getConfig())) {
+          updateDialog(clazz, chooser);
+        }
+        Collection<TemplateResource> templatesAfter = templatesManager.getAllTemplates();
+        TemplateResource defaultTemplateAfter = templatesManager.getDefaultTemplate();
+        if (!templatesBefore.equals(List.copyOf(templatesAfter)) || !defaultTemplateBefore.equals(defaultTemplateAfter)) {
+          comboBox.removeAllItems();
+          for (TemplateResource resource : templatesAfter) {
+            comboBox.addItem(resource);
+          }
+          comboBox.setSelectedItem(defaultTemplateAfter);
         }
       });
 

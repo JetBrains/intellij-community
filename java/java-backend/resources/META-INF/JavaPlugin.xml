@@ -81,6 +81,8 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>
     <applicationService serviceImplementation="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"/>
+    <generation.toStringTemplatesManager language="JAVA"
+                                         implementationClass="org.jetbrains.java.generate.template.toString.JavaToStringTemplatesManagerProvider"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory" open="true"/>
     <applicationService serviceImplementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
     <applicationService serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>

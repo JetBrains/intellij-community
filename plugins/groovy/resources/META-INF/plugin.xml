@@ -459,6 +459,8 @@
 
     <testCreator language="Groovy" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator id="groovyTestGenerator" language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>
+    <generation.toStringTemplatesManager language="Groovy"
+                                         implementationClass="org.jetbrains.plugins.groovy.actions.GroovyToStringTemplatesManagerProvider"/>
     <runLineMarkerContributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestLineMarkerContributor"/>
     <runLineMarkerContributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyAppLineMarkerContributor"/>
     <constructorBodyGenerator language="Groovy"

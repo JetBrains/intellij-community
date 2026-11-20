@@ -127,6 +127,10 @@
                     interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.generation.toStringClassFilter"
                     interface="org.jetbrains.generate.tostring.GenerateToStringClassFilter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.generation.toStringTemplatesManager" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.java.generate.template.toString.ToStringTemplatesManagerProvider"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.generateAccessorProvider" interface="com.intellij.util.NotNullFunction" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.overrideImplementsAnnotationsHandler"
                     interface="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler" dynamic="true"/>
