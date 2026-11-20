@@ -12,6 +12,7 @@ import com.intellij.psi.tree.TokenSet
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownTextUtil.isFormatterWhitespace
 import org.intellij.plugins.markdown.lang.formatter.blocks.special.EmphasisFormattingBlock
 import org.intellij.plugins.markdown.lang.formatter.blocks.special.MarkdownRangedFormattingBlock
 import org.intellij.plugins.markdown.lang.formatter.blocks.special.MarkdownWrappingFormattingBlock
@@ -50,6 +51,10 @@ internal object MarkdownBlocks {
         node, settings, spacing, align(node),
         wrap ?: Wrap.createWrap(if (shouldWrapText(node, settings)) WrapType.NORMAL else WrapType.NONE, false)
       )
+      in linkLikeElements -> MarkdownFormattingBlock(
+        node, settings, spacing, align(node),
+        wrap ?: if (shouldWrapLinkLikeElement(node, settings)) Wrap.createWrap(WrapType.NORMAL, false) else null
+      )
       in emphasisLikeElements -> EmphasisFormattingBlock(settings, spacing, node, align(node), wrap)
       MarkdownElementTypes.PARAGRAPH -> when {
         isInsideBlockquote(node) && !shouldWrapText(node, settings) -> MarkdownFormattingBlock(node, settings, spacing, align(node), wrap)
@@ -70,6 +75,22 @@ internal object MarkdownBlocks {
            && (customSettings.WRAP_TEXT_INSIDE_BLOCKQUOTES || !isInsideBlockquote(node))
   }
 
+  /**
+   * A link-like element gets a wrap only inside a paragraph, after a whitespace of the same paragraph.
+   * A link-like element inside another one gets no wrap.
+   * In a paragraph of a list item, it also needs at least two words before it in the same paragraph.
+   */
+  private fun shouldWrapLinkLikeElement(node: ASTNode, settings: CodeStyleSettings): Boolean {
+    if (!shouldWrapText(node, settings)) return false
+    if (node.parents(withSelf = false).any { it.elementType in linkLikeElements }) return false
+    val paragraph = node.parents(withSelf = false).firstOrNull { it.elementType == MarkdownElementTypes.PARAGRAPH } ?: return false
+    if (!node.isAfterWhitespaceInside(paragraph)) return false
+    if (paragraph.parents(withSelf = false).none { it.elementType == MarkdownElementTypes.LIST_ITEM }) return true
+
+    val textBefore = paragraph.chars.subSequence(0, node.startOffset - paragraph.startOffset).trim()
+    return textBefore.any { it.isFormatterWhitespace() }
+  }
+
   /** Filter out real whitespace blocks from sequence */
   fun filterFromWhitespaces(sequence: Sequence<ASTNode>) = sequence.filter {
     it.elementType !in MarkdownTokenTypeSets.WHITE_SPACES
@@ -83,4 +104,23 @@ internal object MarkdownBlocks {
     MarkdownElementTypes.STRIKETHROUGH,
     MarkdownElementTypes.HIGHLIGHT
   )
+
+  private val linkLikeElements = TokenSet.orSet(
+    MarkdownTokenTypeSets.LINKS,
+    MarkdownTokenTypeSets.REFERENCE_LINK_SET,
+    TokenSet.create(MarkdownElementTypes.IMAGE)
+  )
+}
+
+private fun ASTNode.isAfterWhitespaceInside(ancestor: ASTNode): Boolean {
+  var current = this
+  while (current.treePrev == null) {
+    current = current.treeParent ?: return false
+    if (current == ancestor) return false
+  }
+  var previous = current.treePrev
+  while (previous.lastChildNode != null) {
+    previous = previous.lastChildNode
+  }
+  return previous.chars.lastOrNull()?.isFormatterWhitespace() == true
 }

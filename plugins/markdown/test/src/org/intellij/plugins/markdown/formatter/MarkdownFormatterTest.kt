@@ -118,6 +118,12 @@ class MarkdownFormatterTest {
   fun `test reflow`(): Unit = doTest()
 
   @Test
+  fun `test reflow before inline elements`(): Unit = doTest(rightMargin = 100)
+
+  @Test
+  fun `test reflow before inline elements in blockquote`(): Unit = doTest(rightMargin = 100, insertQuoteArrows = true)
+
+  @Test
   fun `test long table`(): Unit = doTest()
 
   @Test

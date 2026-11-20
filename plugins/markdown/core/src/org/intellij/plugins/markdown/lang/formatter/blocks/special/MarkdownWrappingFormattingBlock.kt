@@ -14,6 +14,7 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownBlocks
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlock
+import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownTextUtil.isFormatterWhitespace
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownTextUtil.isPunctuation
 import org.intellij.plugins.markdown.lang.psi.util.children
 
@@ -139,8 +140,4 @@ private fun splitTextForWrapping(text: String): Sequence<TextRange> {
       yield(TextRange.from(start, length))
     }
   }
-}
-
-private fun Char.isFormatterWhitespace(): Boolean {
-  return this == ' ' || this == '\t' || this == '\n'
 }
