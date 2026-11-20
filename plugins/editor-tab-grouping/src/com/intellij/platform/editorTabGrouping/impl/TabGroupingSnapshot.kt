@@ -13,6 +13,15 @@ internal class TabGroupingSnapshot(
   val groups: Map<TabInfo, TabGroup?> = tabs.associateWith { (it.`object` as? VirtualFile)?.let(resolve) }
   val sizes: Map<Pair<Boolean, String>, Int> = tabs.mapNotNull { info -> groups[info]?.let { info.isPinned to it.key } }
     .groupingBy { it }.eachCount()
+  /** The tabs of each group by (isPinned, groupKey), in tab order. */
+  val members: Map<Pair<Boolean, String>, List<TabInfo>> by lazy(LazyThreadSafetyMode.NONE) {
+    val result = LinkedHashMap<Pair<Boolean, String>, MutableList<TabInfo>>()
+    for (info in tabs) {
+      val group = groups[info] ?: continue
+      result.getOrPut(info.isPinned to group.key) { ArrayList() }.add(info)
+    }
+    result
+  }
   val visibleGroupCount: Int = sizes.values.count { it > 1 }
   val largestGroupSize: Int = sizes.values.maxOrNull() ?: 0
   val tabGroups: List<Pair<Boolean, String?>> = tabs.map { it.isPinned to groups[it]?.key }
