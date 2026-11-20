@@ -5,14 +5,14 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileChooser.FileChooserFactory
-import com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory
-import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor
+import com.intellij.openapi.fileChooser.NioFileChooserBuilder
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.eel.impl.local.listWindowsLocalDriveRoots
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.TextAccessor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Component
@@ -34,55 +34,29 @@ fun browseWslPath(
   accessWindowsFs: Boolean = true,
   customFileDescriptor: FileChooserDescriptor? = null,
 ) {
-  val descriptor = customFileDescriptor ?: FileChooserDescriptorFactory.createAllButJarContentsDescriptor()
-  val project = ProjectManager.getInstance().defaultProject
-  val contributors = createWslContributors(distro, accessWindowsFs)
-  val factory = UniversalFileChooserFactory.getInstanceOrNull()
+  val descriptor = customFileDescriptor ?: FileChooserDescriptorFactory.multiFilesOrDirs()
+  val roots = createWslRoots(distro, accessWindowsFs)
+  if (roots.isEmpty()) {
+    JBPopupFactory.getInstance().createMessage(IdeBundle.message("wsl.no_path")).show(parent)
+    return
+  }
   val linuxPathText = linuxPathField.text
-  val chosen = if (factory == null || contributors.isEmpty()) {
-    // Fall back to default file chooser
-    val windowsPath = getBestWindowsPathFromLinuxPath(distro, linuxPathText)
-    if (windowsPath == null) {
-      JBPopupFactory.getInstance().createMessage(IdeBundle.message("wsl.no_path")).show(parent)
-    }
-    val dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project, parent)
-    val files = if (windowsPath != null) dialog.choose(null, windowsPath) else dialog.choose(null)
-    files.firstOrNull()?.toNioPath()
+  val toSelect = runWithModalProgressBlocking(ModalTaskOwner.component(parent), IdeBundle.message("wsl.path.browser.progress")) {
+    findNearestExistingWindowsPath(distro, linuxPathText) ?: distro.getUNCRootPath()
   }
-  else {
-    val dialog = factory.createNioFileChooser(project, parent, descriptor, contributors, preselectPath = {
-      findNearestExistingWindowsPath(distro, linuxPathText) ?: distro.getUNCRootPath()
-    })
-    dialog.choose().firstOrNull()
-  }
-  val linuxPath = chosen?.let { distro.getWslPath(it) } ?: return
+  val chosen = NioFileChooserBuilder(descriptor)
+    .withPathRoots(roots)
+    .chooseFiles(ProjectManager.getInstance().defaultProject, toSelect, parent)
+  val linuxPath = chosen.firstOrNull()?.let { distro.getWslPath(it) } ?: return
   linuxPathField.text = linuxPath
 }
 
-private fun createWslContributors(distro: WSLDistribution, accessWindowsFs: Boolean): List<UniversalFileChooserContributor> {
-  val allContributors = UniversalFileChooserContributor.EP_NAME.extensionList
-  val result = mutableListOf<UniversalFileChooserContributor>()
-
+/**
+ * Returns the roots to show: the root of [distro], and the local drives when [accessWindowsFs] is `true`.
+ * Returns an empty list when the WSL environment of [distro] is not available.
+ */
+private fun createWslRoots(distro: WSLDistribution, accessWindowsFs: Boolean): List<Path> {
   val distroRoot = distro.getUNCRootPath()
-  if (distroRoot.asEelPath().descriptor is LocalEelDescriptor) return emptyList() // Fall back to empty list if WslEelDescriptor is not available
-  val wslContributor = allContributors.firstOrNull { it.ownsPath(distroRoot) }
-  if (wslContributor != null) {
-    result.add(SingleWslDistroContributor(wslContributor, distroRoot))
-  }
-
-  if (accessWindowsFs) {
-    val localDriveRoot = listWindowsLocalDriveRoots().firstOrNull()
-    val localContributor = localDriveRoot?.let { drive -> allContributors.firstOrNull { it.ownsPath(drive) } }
-    if (localContributor != null) {
-      result.add(localContributor)
-    }
-  }
-  return result
-}
-
-private class SingleWslDistroContributor(
-  private val delegate: UniversalFileChooserContributor,
-  private val distroRootPath: Path,
-) : UniversalFileChooserContributor by delegate {
-  override suspend fun getRoots(): List<UniversalFileChooserContributor.Root> = delegate.getFilteredRoots(distroRootPath)
+  if (distroRoot.asEelPath().descriptor is LocalEelDescriptor) return emptyList()
+  return if (accessWindowsFs) listOf(distroRoot) + listWindowsLocalDriveRoots() else listOf(distroRoot)
 }
