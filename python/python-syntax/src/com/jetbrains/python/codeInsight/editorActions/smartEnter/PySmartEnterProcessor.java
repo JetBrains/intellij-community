@@ -44,6 +44,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Completes the current Python statement.
+ * <p>
+ * The processor and its fixers work on the {@code PyAst} interfaces.
+ * The basic plugin {@code com.intellij.python.basic} has no stub-based PSI, and the stub-based PSI also implements them.
+ */
 public final class PySmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance(PySmartEnterProcessor.class);
   private static final List<PyFixer> ourFixers = ImmutableList.<PyFixer>builder()

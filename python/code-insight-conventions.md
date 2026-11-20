@@ -18,6 +18,8 @@ Conventions for work in code-insight modules.
 - When doing PSI tree traversal, use the standard extension methods on `PsiElement` defined in
   `psiTreeUtil.kt`, as well as static helper methods from `PsiTreeUtil`. In some cases
   `SyntaxTraverser` can also come handy.
+- Put an editor feature with no resolve into `intellij.python.syntax` or `intellij.python.syntax.core`, on the `PyAst`
+  types. The basic plugin `com.intellij.python.basic` then has the feature.
 
 ## Types
 
