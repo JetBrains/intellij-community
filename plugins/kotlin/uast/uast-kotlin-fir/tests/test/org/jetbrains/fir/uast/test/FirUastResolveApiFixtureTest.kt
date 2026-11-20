@@ -340,6 +340,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveTopLevelInlineReifiedFromLibrary_recursiveTypeParameter(myFixture, isK2 = true)
     }
 
+    fun testResolveTopLevelInlineReifiedFromLibraryErrorTypeArgument() {
+        checkResolveTopLevelInlineReifiedFromLibrary_errorTypeArgument(myFixture)
+    }
+
     fun testResolveTopLevelInlineInFacadeFromLibrary() {
         checkResolveTopLevelInlineInFacadeFromLibrary(myFixture, isK2 = true)
     }

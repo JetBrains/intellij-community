@@ -2914,6 +2914,96 @@ interface UastResolveApiFixtureTestBase {
         }
     }
 
+    fun checkResolveTopLevelInlineReifiedFromLibrary_errorTypeArgument(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "Mocking.kt", """
+                package test
+
+                inline fun <reified T : Any> mock(): T = TODO()
+                inline fun <T : Any> nonReifiedMock(): T = TODO()
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+                package pkg;
+
+                public class Foo {
+                  public static class A {}
+                  public static class B {}
+
+                  public void takeA(A a) {}
+                  public void overloaded(A a) {}
+                  public void overloaded(B b) {}
+                  public void takeMissing(MissingType m) {}
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import pkg.Foo
+                import test.mock
+                import test.nonReifiedMock
+
+                fun test(foo: Foo) {
+                  foo.takeA(mock())
+                  foo.unresolvedMethod(mock())
+                  foo.overloaded(mock())
+                  foo.takeMissing(mock())
+                  val unconstrained = mock()
+
+                  foo.takeA(nonReifiedMock())
+                  foo.unresolvedMethod(nonReifiedMock())
+                  foo.overloaded(nonReifiedMock())
+                  foo.takeMissing(nonReifiedMock())
+                  val unconstrainedNonReified = nonReifiedMock()
+                }
+            """.trimIndent()
+        )
+
+        try {
+            val uFile = myFixture.file.toUElementOfType<UFile>()!!
+            val observed = mutableListOf<Pair<String, String?>>()
+            val observedNonReified = mutableListOf<Pair<String, String?>>()
+            uFile.accept(object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    if (node.methodName == "mock" || node.methodName == "nonReifiedMock") {
+                        val resolved = node.resolve()
+                        TestCase.assertNotNull(resolved)
+                        TestCase.assertEquals(node.methodName, resolved!!.name)
+                        val parentCall =
+                            (node.uastParent as? UCallExpression)?.methodIdentifier?.name ?: "unconstrained"
+                        val target = if (node.methodName == "mock") observed else observedNonReified
+                        target.add(parentCall to resolved.returnType?.canonicalText)
+                    }
+                    return super.visitCallExpression(node)
+                }
+            })
+
+            TestCase.assertEquals(
+                listOf(
+                    "takeA" to "pkg.Foo.A",
+                    "unresolvedMethod" to "<ErrorType>",
+                    "overloaded" to "<ErrorType>",
+                    "takeMissing" to "<ErrorType>",
+                    "unconstrained" to "<ErrorType>",
+                ),
+                observed,
+            )
+            TestCase.assertEquals(
+                listOf(
+                    "takeA" to "T",
+                    "unresolvedMethod" to "T",
+                    "overloaded" to "T",
+                    "takeMissing" to "T",
+                    "unconstrained" to "T",
+                ),
+                observedNonReified,
+            )
+        } finally {
+            mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
     fun checkResolveTopLevelInlineInFacadeFromLibrary(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
         val mockLibraryFacility = myFixture.configureLibraryByText(
             "MyStringJVM.kt", """
