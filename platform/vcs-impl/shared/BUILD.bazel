@@ -67,7 +67,6 @@ jvm_library(
         "//platform/core-impl",
         "//platform/diff-api:diff",
         "//platform/remote-topics/shared:rpc-topics",
-        "//libraries/guava",
         "//platform/util-ex",
     ],
 )

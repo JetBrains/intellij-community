@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
-import com.google.common.collect.Iterables;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -146,7 +145,7 @@ public final class PatchReader {
     if (myPatches.isEmpty()) {
       throw new NotAPatchException();
     }
-    myPatchFileInfo = PatchFileHeaderParser.parseHeader(Iterables.limit(myLines, headerLineNum).iterator());
+    myPatchFileInfo = PatchFileHeaderParser.parseHeader(myLines.subList(0, headerLineNum).iterator());
   }
 
   public @NotNull ThrowableComputable<Map<String, @Unmodifiable Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(@Nullable Set<String> paths) {
