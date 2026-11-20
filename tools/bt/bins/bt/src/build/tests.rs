@@ -2,7 +2,7 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::execute::execute;
-use bt_core::fake::{FakeRuntime, area_files, bep_lines, refusal};
+use bt_core::fake::{FakeRuntime, area_files, bep_lines, loading_failure_events, refusal};
 use bt_core::runtime::{CheckoutTree, SpawnResult};
 use serde_json::json;
 
@@ -105,6 +105,28 @@ fn a_failed_build_names_the_compile_errors_and_records_nothing() {
     );
     assert!(!fake.state().files.contains_key(RECORDS));
     assert_eq!(fake.state().checkout_trees.len(), 1, "the tree after a failed build was read");
+}
+
+/// A label that bazel cannot load fails the build with no compile error. The digest names the words of bazel from the
+/// BEP. A failed build without any build error says that the tail of bazel is the evidence.
+#[test]
+fn a_failed_build_names_a_loading_failure_or_points_at_the_tail_of_bazel() {
+    let fake = checkout();
+    let no_such_package = "no such package 'plugins/air/gone': BUILD file not found in any of the following directories.";
+    fake.put_absolute(
+        BEP_PATH,
+        &bep_lines(&loading_failure_events("//plugins/air/gone:t", no_such_package)),
+    );
+    let outcome = build(&["//plugins/air/..."], &fake, 1, "ERROR: Build did NOT complete successfully");
+    assert_eq!(outcome.exit_code, exit::BUILD_FAILED);
+    assert_eq!(outcome.text, format!("BUILD FAILED  //plugins/air/...  5.0s\n{no_such_package}"));
+
+    let fake = checkout();
+    let outcome = build(&["//plugins/air/..."], &fake, 1, "ERROR: Build did NOT complete successfully");
+    assert_eq!(
+        outcome.text,
+        "BUILD FAILED  //plugins/air/...  5.0s\ncause   bt recognised no build error; the tail of the bazel output is above"
+    );
 }
 
 /// Every exit code of bazel but 0 and 1 is bazel failing, which says nothing about the build.

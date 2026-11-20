@@ -18,10 +18,12 @@ avl_wire
 axum
 axum_core
 block_buffer
+bstr
 bt_core
 bt_junit
 bytes
 cfg_if
+checkout_files
 clap
 clap_builder
 clap_lex
@@ -29,6 +31,9 @@ colorchoice
 const_oid
 cpufeatures
 crc32fast
+crossbeam_deque
+crossbeam_epoch
+crossbeam_utils
 crypto_common
 digest
 distpath
@@ -47,6 +52,7 @@ futures_task
 futures_util
 getrandom
 glob
+globset
 hashbrown
 hex
 http
@@ -58,6 +64,7 @@ httpdate
 hybrid_array
 hyper
 hyper_util
+ignore
 indexmap
 inotify
 inotify_sys

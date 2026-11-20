@@ -11,7 +11,7 @@ const BRIDGE: &str = "air-integrationTests-bridge";
 const RESIDENT: &str = "air-integrationTests-bridge-resident";
 
 fn sha256(content: &str) -> String {
-    super::super::package::sha256_hex(content.as_bytes())
+    package::sha256_hex(content.as_bytes())
 }
 
 /// The relative path of every file under `root`, sorted.
@@ -250,13 +250,16 @@ fn a_restart_reports_each_part_that_it_ran_and_the_refusal_that_ended_one() {
     let bytes = fs::read(avl_testkit::crate_path!("testdata/lane-context/ui.json")).unwrap();
     let document = avl_wire::program::lane::parse_lane_document(&bytes).unwrap();
     let identity = LaneIdentity::new("air-ui-lane", 0);
-    let fake_agent_jar = root.path().join("fake-agent.jar");
+    let agent_files = AgentFiles {
+        fake_agent: root.path().join("acp-fake-agent"),
+        genui_fixture_jar: root.path().join("genui-fixture-app.jar"),
+    };
     let launch = LaneLaunch {
         document: &document,
         vocabulary_digest: "digest",
         identity: &identity,
         product_stamp: "stamp",
-        fake_agent_jar: &fake_agent_jar,
+        agent_files: &agent_files,
         // No context plugin, so the install refuses the launch.
         plugins: &[],
         live: None,

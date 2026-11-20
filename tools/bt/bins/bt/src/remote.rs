@@ -21,27 +21,19 @@ use std::path::{Path, PathBuf};
 
 use bt_core::WithDetails;
 use bt_core::evidence::RUNS_DIR;
-use bt_core::result::RunStatus;
 use bt_core::runtime::{Runtime, repo_file};
 use bt_core::{Refusal, exit};
 
 use crate::check::{Check, CheckCommand, record_host_run};
-use crate::execute::{JsonPayload, Outcome};
+use crate::execute::{JsonPayload, Outcome, infra_payload};
 
 pub(crate) mod brd_host;
-
-/// The main repository on the host for `--prepare` when `--host-repo` and `BT_HOST_REPO` name none. A run without
-/// them takes the repository of the host file, which `--prepare` writes.
-pub(crate) const DEFAULT_HOST_REPO: &str = "~/projects/idea-1";
 
 /// The command of the host run, in the root of the slot.
 const COMMAND: &str = "./community/tools/bt.cmd";
 
 /// The flags of this module with a value, which the host run does not get.
 const HOST_FLAGS: [&str; 2] = ["--host", "--host-repo"];
-
-/// The switches of this module, which the host run does not get.
-const HOST_SWITCHES: [&str; 2] = ["--prepare", "--yes"];
 
 /// The exit code of `brd-host` when the host did not run the command, so a caller can run it locally.
 pub(crate) const NOT_RUN: i32 = 75;
@@ -57,13 +49,11 @@ pub(crate) mod code {
     pub(crate) const NOT_INSTALLED: &str = "not_installed";
     /// A code of bt: `brd-host` ended without a report, or with a report that bt cannot read.
     pub(crate) const NO_REPORT: &str = "no_report";
-    /// A code of bt: `brd-host setup` exited with another code than 0.
-    pub(crate) const SETUP_FAILED: &str = "setup_failed";
 }
 
 /// Where a run goes, from the local command line.
 pub(crate) struct Host<'a> {
-    /// The alias of the host file, which is the ssh alias of `--prepare`.
+    /// The alias of the host file, which `brd-host setup` writes.
     pub(crate) alias: &'a str,
     /// `--host-repo`: the main repository on the host.
     pub(crate) repo: Option<&'a str>,
@@ -113,42 +103,9 @@ pub(crate) struct HostOutcome {
     pub(crate) fetched: Vec<String>,
 }
 
-/// The answer of `brd-host hello <alias> --json`.
-#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize)]
-pub(crate) struct HostHello {
-    /// The address that answered, such as `192.168.1.20:7742`.
-    pub(crate) address: String,
-    pub(crate) agent: HostAgent,
-    /// Whether `brd-host` here and the agent run the same build.
-    pub(crate) same_build: bool,
-}
-
-/// The agent of a hello.
-#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize)]
-pub(crate) struct HostAgent {
-    /// The version of Branch Deck.
-    pub(crate) version: String,
-    pub(crate) os: String,
-    pub(crate) arch: String,
-}
-
-/// What `brd-host setup <alias>` gets from bt.
-pub(crate) struct HostSetup<'a> {
-    pub(crate) alias: &'a str,
-    /// The main repository on the host, which the host file names.
-    pub(crate) repo: &'a str,
-    /// The name of this client in the allow list of the agent.
-    pub(crate) name: &'a str,
-}
-
 /// The calls of bt to `brd-host`: the child process in production, a script in the tests.
 pub(crate) trait HostLink {
     fn run(&self, alias: &str, request: &HostRun<'_>) -> Result<HostOutcome, HostRefusal>;
-
-    fn hello(&self, alias: &str) -> Result<HostHello, HostRefusal>;
-
-    /// Prepares the host over ssh, and answers the stdout of `brd-host setup`.
-    fn setup(&self, request: &HostSetup<'_>) -> Result<String, HostRefusal>;
 }
 
 /// One run on the host, given as the whole local command line. A green run records the tree of the commit that the
@@ -183,7 +140,7 @@ pub(crate) fn run_on_host(
             let refused = host_refusal(host.alias, &refusal);
             return Ok(Outcome {
                 exit_code: refused.exit,
-                json: Some(interrupted_payload(&refused.message)),
+                json: Some(infra_payload(&refused.message)),
                 text: refused.message,
             });
         }
@@ -201,25 +158,6 @@ pub(crate) fn run_on_host(
     Ok(answered)
 }
 
-/// The `--json` payload of a run that a second Ctrl+C stopped: an infrastructure outcome that says nothing about the
-/// tests, with the reason in `errors`. A caller that reads stdout still gets one payload.
-fn interrupted_payload(message: &str) -> JsonPayload {
-    JsonPayload {
-        status: RunStatus::Infra,
-        exit_code: exit::INFRA,
-        duration_ms: 0,
-        cached_targets: 0,
-        ran_targets: 0,
-        targets: Vec::new(),
-        failures: Vec::new(),
-        flaky: Vec::new(),
-        shard_timeouts: Vec::new(),
-        errors: vec![message.to_owned()],
-        class_time_budget_violations: Vec::new(),
-        degraded: false,
-    }
-}
-
 /// The command line of the host: the local one less the flags of this module. Everything after `--` is bazel's.
 pub(crate) fn host_args(argv: &[OsString]) -> Vec<String> {
     let mut forwarded = Vec::new();
@@ -232,9 +170,6 @@ pub(crate) fn host_args(argv: &[OsString]) -> Vec<String> {
         }
         if HOST_FLAGS.contains(&argument.as_str()) {
             arguments.next();
-            continue;
-        }
-        if HOST_SWITCHES.contains(&argument.as_str()) {
             continue;
         }
         let is_host_flag = HOST_FLAGS

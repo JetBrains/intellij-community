@@ -212,7 +212,8 @@ async fn the_run_request_body_carries_every_key_and_empty_lists() {
             "idePlugins": [{"destination": "bridge/lib/bridge.jar", "sha256": prep.plugin_files[0].host.sha256}],
             "lane": "ui",
             "laneInputs": {
-                "fakeAgentJar": digest("fakeAgentJar"),
+                "fakeAgent": digest("fakeAgent"),
+                "genuiFixtureJar": digest("genuiFixtureJar"),
                 "laneDocuments": digest("laneDocuments"),
                 "suiteDocuments": digest("suiteDocuments"),
             },
@@ -335,9 +336,10 @@ async fn push_jars_uploads_only_missing_digests() {
     let (fixture, prep, state) = executing().await;
     let ctx = Ctx::background();
     assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 0);
-    let documents = prep.lane_inputs[1].host.sha256.clone();
+    let documents = prep.lane_inputs[2].host.sha256.clone();
     let plugin = prep.plugin_files[0].host.sha256.clone();
     let agent = prep.lane_inputs[0].host.sha256.clone();
+    let genui = prep.lane_inputs[1].host.sha256.clone();
     fixture.daemon.script().missing = vec![documents.clone()];
     assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
     {
@@ -345,7 +347,7 @@ async fn push_jars_uploads_only_missing_digests() {
         assert_eq!(script.uploads.len(), 1);
         assert!(script.uploads[0].contains(&documents), "the upload names the digest");
         let body: Value = serde_json::from_slice(&script.jars_body).unwrap();
-        assert_eq!(body, json!({ "jars": [plugin, agent, documents] }));
+        assert_eq!(body, json!({ "jars": [plugin, agent, genui, documents] }));
     }
     fixture.daemon.script().missing = vec![plugin.clone()];
     assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
@@ -360,7 +362,7 @@ async fn push_jars_uploads_only_missing_digests() {
     assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
     assert!(
         fixture.daemon.script().uploads[2].contains(&agent),
-        "a changed fake agent jar travels by the same push"
+        "a changed fake agent travels by the same push"
     );
 }
 
@@ -369,9 +371,10 @@ async fn push_jars_uploads_only_missing_digests() {
 #[tokio::test]
 async fn a_digest_that_two_files_share_is_offered_once() {
     let (fixture, mut prep, state) = executing().await;
-    prep.plugin_files[0].host = prep.lane_inputs[1].host.clone();
-    prep.lane_inputs[0].host = prep.lane_inputs[1].host.clone();
-    let sha = prep.lane_inputs[1].host.sha256.clone();
+    prep.plugin_files[0].host = prep.lane_inputs[2].host.clone();
+    prep.lane_inputs[0].host = prep.lane_inputs[2].host.clone();
+    prep.lane_inputs[1].host = prep.lane_inputs[2].host.clone();
+    let sha = prep.lane_inputs[2].host.sha256.clone();
     fixture.daemon.script().missing = vec![sha.clone()];
     assert_eq!(
         push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep, &[])
@@ -1051,7 +1054,8 @@ async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
     assert_eq!(
         verb.lane_inputs,
         Some(LaneInputs {
-            fake_agent_jar: digest("fakeAgentJar"),
+            fake_agent: digest("fakeAgent"),
+            genui_fixture_jar: digest("genuiFixtureJar"),
             lane_documents: digest("laneDocuments"),
             suite_documents: digest("suiteDocuments"),
         })

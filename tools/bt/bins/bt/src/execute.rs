@@ -5,34 +5,31 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use bt_core::areas::{Area, Areas};
-use bt_core::{Refusal, affected_text, exit, fail_usage, resolve_module};
+use bt_core::{Refusal, ResolutionInputs, exit, fail_usage};
 use serde::{Deserialize, Serialize};
 
 use crate::build::execute_build;
 use crate::check::{Check, CheckCommand, record_green_run, tree_before_run};
 use crate::digest::{
-    DEFAULT_MAX_FRAMES, RenderOptions, failure_detail, failure_message, failure_type, format_duration, render_digest, rerun_selector,
-    tail_lines, trim_frames,
+    DEFAULT_MAX_FRAMES, RenderOptions, RunTime, failure_detail, failure_message, failure_type, format_duration, render_digest,
+    rerun_selector, tail_lines, trim_frames,
 };
 use crate::options::{Args, Invocation, parse_args};
-use crate::prepare::{Prepare, prepare_host};
 use crate::remote::brd_host::BrdHost;
 use crate::remote::{Host, HostLink, run_on_host};
 use bt_core::bep::{BepSummary, parse_bep};
-use bt_core::evidence::keep_failed_evidence;
+use bt_core::evidence::{keep_bazel_output, keep_failed_evidence};
 use bt_core::lanes::{
     BEP_FLAG, LaneSpec, RunPlan, bazel_command, bep_override, build_bazel_args, default_shards, uses_shard_plan, wildcard_guards,
 };
 use bt_core::os_runtime::command_line;
-use bt_core::result::{FlakyRun, RunResult, RunStatus, ShardTimeout, TargetResult, TargetTiming, collect_results};
+use bt_core::result::{FlakyRun, RunResult, RunStatus, ShardTimeout, TargetResult, TargetTiming, collect_results, is_verdict};
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
-use bt_core::scan::{ResolutionInputs, derive_package, read_text};
-use bt_core::selector::{
-    Resolution, Selector, SelectorKind, as_filter_or_package, checkout_label, directory_pattern, no_tests_hint, resolve_selector,
-    suggest_names, wanted_simple_name,
+use bt_core::selector::{Resolution, Selector, SelectorKind, as_filter_or_package, no_tests_hint, resolve_selector};
+use bt_core::shard_plan::{
+    Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS, ShardPlan, TreeTargets,
 };
-use bt_core::shard_plan::{HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS, ShardPlan};
-use bt_core::suites::{named_suites, resolve_suite_run};
+use bt_core::suites::resolve_suite_run;
 
 /// What one invocation answers.
 ///
@@ -81,7 +78,8 @@ pub(crate) struct JsonPayload {
     /// The shards that Bazel stopped at their timeout. Their interrupted tests are not in `failures`.
     #[serde(default)]
     pub(crate) shard_timeouts: Vec<ShardTimeout>,
-    /// Errors produced while collecting the run.
+    /// The build errors of the run, or the reason of an infrastructure outcome without a result. A build error is a
+    /// compile error, or the description of a loading or analysis failure in the BEP.
     #[serde(default)]
     pub(crate) errors: Vec<String>,
     /// Full-lane classes over their configured time budget and outside its baseline.
@@ -123,8 +121,28 @@ pub(crate) fn to_json(result: &RunResult) -> JsonPayload {
     }
 }
 
-/// How much of bazel's captured output an INFRA outcome shows. Enough to carry a stack trace or a startup refusal,
-/// and far short of the progress log the digest exists to suppress.
+/// The `--json` payload of a run that ended before a result, such as after a second Ctrl+C: an infrastructure outcome
+/// that says nothing about the tests, with the reason in `errors`. A caller that reads stdout still gets one payload.
+pub(crate) fn infra_payload(message: &str) -> JsonPayload {
+    JsonPayload {
+        status: RunStatus::Infra,
+        exit_code: exit::INFRA,
+        duration_ms: 0,
+        cached_targets: 0,
+        ran_targets: 0,
+        targets: Vec::new(),
+        failures: Vec::new(),
+        flaky: Vec::new(),
+        shard_timeouts: Vec::new(),
+        errors: vec![message.to_owned()],
+        class_time_budget_violations: Vec::new(),
+        degraded: false,
+    }
+}
+
+/// How much of bazel's captured output bt shows when it reads no structural result: an INFRA outcome, a BUILD FAILED
+/// run without a build error, and a query without an answer. Enough to carry a stack trace or a startup refusal, and
+/// far short of the progress log the digest exists to suppress.
 pub(crate) const DIGEST_TAIL_LINES: usize = 40;
 
 /// The command a rerun hint names.
@@ -159,35 +177,27 @@ where
             text,
             json: None,
         }),
-        Invocation::Build(args) => match &args.host {
+        Invocation::Build(args) => match &args.shared.host {
             Some(alias) => {
                 let host = Host {
                     alias,
-                    repo: args.host_repo.as_deref(),
+                    repo: args.shared.host_repo.as_deref(),
                 };
-                run_on_host(&host, CheckCommand::Build, args.json, &argv, runtime, link)
+                run_on_host(&host, CheckCommand::Build, args.shared.json, &argv, runtime, link)
             }
             None => execute_build(&args, runtime),
         },
-        Invocation::Run(args) => match &args.host {
+        Invocation::Run(args) => match &args.shared.host {
             Some(alias) => {
                 let host = Host {
                     alias,
-                    repo: args.host_repo.as_deref(),
+                    repo: args.shared.host_repo.as_deref(),
                 };
-                if args.prepare {
-                    let prepare = Prepare {
-                        change: !args.dry_run,
-                        yes: args.yes,
-                    };
-                    return Ok(prepare_host(&host, &prepare, runtime, link));
-                }
                 if args.selector.is_none() && args.module.is_none() && args.lane.is_none() {
                     return Err(fail_usage("Pass a selector, --module or --lane; see --help"));
                 }
-                run_on_host(&host, CheckCommand::Test, args.json, &argv, runtime, link)
+                run_on_host(&host, CheckCommand::Test, args.shared.json, &argv, runtime, link)
             }
-            None if args.prepare => Err(fail_usage("--prepare needs --host")),
             None => execute_args(&args, runtime, &areas),
         },
     }
@@ -253,13 +263,6 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
                 ));
             }
             let inputs = ResolutionInputs::new(runtime, areas);
-            if args.list {
-                return Ok(Outcome {
-                    exit_code: exit::GREEN,
-                    text: list_candidates(runtime, areas, selector, &inputs)?,
-                    json: None,
-                });
-            }
             let mut resolution = if selector.kind.names_suites() {
                 resolve_suite_run(runtime, areas.with_catalog()?, selector, lane_name)?
             } else {
@@ -313,7 +316,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     // The file is ours from the moment it is named, because the OS runtime creates it to reserve the name: it goes
     // away on every way out, a dry run, a failed excluded build and a panic included. A leaked BEP file is tens of
     // MB for a lane run.
-    let _bep_file = owns_bep_file.then(|| BepFile {
+    let _bep_file = owns_bep_file.then(|| TempFile {
         runtime,
         path: PathBuf::from(&bep_path),
     });
@@ -328,14 +331,38 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     } else {
         ShardPlan::default()
     };
-    let (heavy_targets, single_targets) = if planned && owns_bep_file {
-        (
-            recorded_plan.heavy_targets(&resolution.labels),
-            recorded_plan.single_targets(&resolution.labels),
-        )
+    // A green run records this tree only when the files are the same after it. bt reads it before the first bazel
+    // command of the run, such as the query of the groups. A dry run records nothing.
+    let record_started = runtime.now_ms();
+    let tree_before = if args.shared.dry_run { None } else { tree_before_run(runtime) };
+    let mut check_record_ms = runtime.now_ms().saturating_sub(record_started);
+    let groups = if !(planned && owns_bep_file) {
+        Groups::default()
+    } else if args.shared.dry_run {
+        // A dry run starts no bazel command, so it waits for the server lock of no other command and starts no server.
+        recorded_plan.unchecked_groups(&resolution.labels)
     } else {
-        (Vec::new(), Vec::new())
+        // As after an invocation without a verdict, the run starts no other bazel command.
+        match recorded_plan.groups(&resolution.labels, || tree_targets(runtime, &resolution.labels)) {
+            Ok(groups) => groups,
+            Err(QueryStopped { code }) => {
+                let message = format!("bazel query exited with {code}, so the run started no test");
+                return Ok(Outcome {
+                    exit_code: exit::INFRA,
+                    text: format!("INFRA  {message}"),
+                    json: args.shared.json.then(|| infra_payload(&message)),
+                });
+            }
+        }
     };
+    if !groups.gone.is_empty() {
+        runtime.write_error(&gone_targets_line(&groups.gone));
+    }
+    let Groups {
+        heavy: heavy_targets,
+        single: single_targets,
+        ..
+    } = groups;
     let mut plan = RunPlan {
         resolution,
         extra,
@@ -361,7 +388,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         profile: Some(path_text(&repo_file(runtime, HEAVY_PROFILE_FILE))),
         ..plan.clone()
     });
-    let _heavy_bep_file = heavy_plan.as_ref().map(|heavy| BepFile {
+    let _heavy_bep_file = heavy_plan.as_ref().map(|heavy| TempFile {
         runtime,
         path: PathBuf::from(&heavy.bep_path),
     });
@@ -375,7 +402,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         profile: Some(path_text(&repo_file(runtime, SINGLE_PROFILE_FILE))),
         ..plan.clone()
     });
-    let _single_bep_file = single_plan.as_ref().map(|single| BepFile {
+    let _single_bep_file = single_plan.as_ref().map(|single| TempFile {
         runtime,
         path: PathBuf::from(&single.bep_path),
     });
@@ -392,7 +419,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     }
     let build_only = lane.and_then(|(area, spec)| spec.build_only_args(area.lanes()));
 
-    if args.dry_run {
+    if args.shared.dry_run {
         return Ok(Outcome {
             exit_code: exit::GREEN,
             text: dry_run_text(runtime, &plan.resolution, &invocations, build_only.as_deref()),
@@ -400,8 +427,9 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         });
     }
 
-    // Before the first spawn: a green run records this tree only when the files are the same after it.
-    let tree_before = tree_before_run(runtime);
+    for note in &plan.resolution.notes {
+        runtime.write_error(&format!("note: {note}"));
+    }
 
     // Compile what the lane excludes from its run, before the run, so a compile break is the answer rather than a
     // long green lane that proved nothing about those targets.
@@ -457,11 +485,11 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         result.exit_code = exit::TEST_FAILED;
     }
 
-    if args.verbose {
+    // The words of bazel are the only evidence when bt reads nothing structural from the run: an INFRA run, and a
+    // failed build without a build error. `--verbose` shows all of them already.
+    if args.shared.verbose {
         runtime.write_error(&spawned.output);
-    }
-    if result.status == RunStatus::Infra {
-        // The only status where bazel's own words are the sole evidence: nothing structural was produced.
+    } else if result.status == RunStatus::Infra || (result.status == RunStatus::BuildFailed && result.build_errors.is_empty()) {
         runtime.write_error(&tail_lines(&spawned.output, DIGEST_TAIL_LINES));
     }
     if result.exit_code == exit::GREEN {
@@ -471,8 +499,16 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             patterns: &patterns,
             host: None,
         };
+        let record_started = runtime.now_ms();
         record_green_run(runtime, tree_before.as_ref(), &check);
+        check_record_ms += runtime.now_ms().saturating_sub(record_started);
     }
+    let time = RunTime {
+        self_build_ms: runtime.self_build_ms(),
+        check_record_ms,
+        bazel_ms: result.duration_ms,
+        analysis_ms: bep.analysis_ms,
+    };
 
     // The rerun selector rather than the test case id, and quoted rather than wrapped in bare single quotes: a
     // Kotlin backticked name holds apostrophes, and a display name is no selector at all.
@@ -480,7 +516,10 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         .failures
         .first()
         .map(|failure| format!("{WRAPPER} {}", posix_shell_quote(&rerun_selector(failure))));
-    let json = args.json.then(|| {
+    let bazel_log = (result.status == RunStatus::BuildFailed)
+        .then(|| keep_bazel_output(runtime, kept_run.as_deref(), &spawned.output))
+        .flatten();
+    let json = args.shared.json.then(|| {
         let mut payload = to_json(&result);
         payload.class_time_budget_violations = class_time_budget_violations.clone();
         payload
@@ -494,6 +533,8 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             no_tests_hint,
             kept_run,
             class_time_budget_violations,
+            time: Some(time),
+            bazel_log,
         },
     );
     Ok(Outcome {
@@ -585,14 +626,14 @@ pub(crate) fn run_bazel(runtime: &dyn Runtime, command: &[OsString], bazel_args:
 ///
 /// The invocations test disjoint targets, so their BEP files merge. The exit code of the run is the worst one, where
 /// 4 ("no test target") is the mildest: an invocation whose targets the tag filters leave out tests nothing, and the
-/// other invocations still give the answer. An exit code that is not a test verdict, such as 8 for an interrupted
-/// command, stops the run before the next invocation.
+/// other invocations still give the answer. An exit code that is no verdict ([`is_verdict`]), such as 8 for an
+/// interrupted command, stops the run before the next invocation.
 fn run_bazel_invocations(runtime: &dyn Runtime, invocations: &[BazelInvocation]) -> BazelRun {
     let started = runtime.now_ms();
     let mut merged: Option<(SpawnResult, BepSummary)> = None;
     for invocation in invocations {
         let (spawned, bep) = spawn_bazel(runtime, &invocation.command, &invocation.args, &invocation.bep_path);
-        let verdict = matches!(spawned.exit_code, 0 | 1 | 3 | 4);
+        let verdict = is_verdict(spawned.exit_code);
         merged = Some(match merged {
             None => (spawned, bep),
             Some((mut first, mut first_bep)) => {
@@ -688,18 +729,95 @@ fn update_shard_plan(runtime: &dyn Runtime, path: &Path, timings: &[TargetTiming
     }
 }
 
+/// The error of [`tree_targets`]: bazel exited with a code that is no verdict, so the run ends.
+struct QueryStopped {
+    code: i32,
+}
+
+/// The stderr line of the covered targets of the plan that the query does not find.
+fn gone_targets_line(gone: &[String]) -> String {
+    let more = match gone.len() {
+        0..=3 => String::new(),
+        count => format!(" (+{} more)", count - 3),
+    };
+    let shown: Vec<&str> = gone.iter().take(3).map(String::as_str).collect();
+    format!(
+        "the shard plan names targets that bazel query does not find, so no invocation names them: {}{more}",
+        shown.join(" ")
+    )
+}
+
+/// The test targets that the target patterns of a run name in the current tree, by `bazel query`.
+///
+/// The query reads its expression from a file and writes the labels to a file. So no shell quotes the expression, and
+/// no line of bazel mixes with a label. With `--keep_going`, bazel exits 3 and still answers the targets of each
+/// package that loads. So a broken BUILD file costs only its own targets, which the stderr line names as not found. A
+/// code that is no verdict ends the run, as after an invocation. A query file that bt cannot write is no answer:
+/// `None`. So is a verdict other than 0 and 3, which no query gives today. Then each target runs in the invocation of
+/// the patterns, which is slower and still correct.
+///
+/// The query gets no flag of the run, because most of them are flags of `bazel test` that a query refuses. So a run
+/// with `-- --override_repository=...` or `-- --config=...` queries the tree without that flag.
+fn tree_targets(runtime: &dyn Runtime, patterns: &[String]) -> Result<Option<TreeTargets>, QueryStopped> {
+    const NO_ANSWER: &str = "so no target of the shard plan runs in an invocation of its own";
+    let expression = TreeTargets::query(patterns);
+    let query_file = TempFile {
+        runtime,
+        path: runtime.temp_file("bt-tree-query"),
+    };
+    let answer_file = TempFile {
+        runtime,
+        path: runtime.temp_file("bt-tree-targets"),
+    };
+    if let Err(error) = runtime.write_text_file(&query_file.path, &expression) {
+        runtime.write_error(&format!(
+            "cannot write the query file {}: {error}, {NO_ANSWER}",
+            query_file.path.display()
+        ));
+        return Ok(None);
+    }
+    let args = [
+        "query".to_owned(),
+        format!("--query_file={}", query_file.path.to_string_lossy()),
+        format!("--output_file={}", answer_file.path.to_string_lossy()),
+        "--output=label".to_owned(),
+        "--keep_going".to_owned(),
+        "--noshow_progress".to_owned(),
+        "--curses=no".to_owned(),
+        "--color=no".to_owned(),
+    ];
+    runtime.write_error(&format!("> bazel query '{expression}'"));
+    // The query is the first bazel command of the run, so it can wait for the server lock of another command.
+    let heartbeat = |elapsed: u64| {
+        runtime.write_error(&format!("  … still querying, {} elapsed", format_duration(elapsed)));
+    };
+    let spawned = runtime.spawn(&bazel_command(runtime.repo_root(), runtime.platform(), &args), Some(&heartbeat));
+    match spawned.exit_code {
+        0 | 3 => Ok(Some(TreeTargets::parse(runtime.read_lines(&answer_file.path)))),
+        code if !is_verdict(code) => {
+            runtime.write_error(&tail_lines(&spawned.output, DIGEST_TAIL_LINES));
+            Err(QueryStopped { code })
+        }
+        code => {
+            runtime.write_error(&tail_lines(&spawned.output, DIGEST_TAIL_LINES));
+            runtime.write_error(&format!("bazel query exited with {code}, {NO_ANSWER}"));
+            Ok(None)
+        }
+    }
+}
+
 /// A value quoted for a POSIX shell, so a rerun hint can be pasted as it stands.
 pub(crate) fn posix_shell_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', r"'\''"))
 }
 
-/// Removes a BEP file this invocation asked bazel for, on every way out of the run.
-pub(crate) struct BepFile<'r> {
+/// Removes a temporary file that this invocation named, such as the BEP file of a bazel run, on every way out of the run.
+pub(crate) struct TempFile<'r> {
     pub(crate) runtime: &'r dyn Runtime,
     pub(crate) path: PathBuf,
 }
 
-impl Drop for BepFile<'_> {
+impl Drop for TempFile<'_> {
     fn drop(&mut self) {
         // Nothing to do about a file that cannot be removed: the answer is already decided, and it is a temp file.
         let _ = self.runtime.remove(&self.path);
@@ -721,6 +839,7 @@ fn dry_run_text(runtime: &dyn Runtime, resolution: &Resolution, invocations: &[B
             .map(|suite| format!("suite   {} ({}, lane {})", suite.class, suite.suite, suite.lane)),
     );
     lines.push(format!("filter  {filter}"));
+    lines.extend(resolution.notes.iter().map(|note| format!("note    {note}")));
     lines.extend(
         invocations
             .iter()
@@ -731,6 +850,14 @@ fn dry_run_text(runtime: &dyn Runtime, resolution: &Resolution, invocations: &[B
             "build   {}",
             command_line(&bazel_command(runtime.repo_root(), runtime.platform(), build_only))
         ));
+    }
+    if invocations
+        .iter()
+        .any(|invocation| !matches!(invocation.kind, InvocationKind::Planned))
+    {
+        lines.push(
+            "note    unchecked groups: the run keeps only the heavy and single targets that bazel query finds in the tree".to_owned(),
+        );
     }
     lines.join("\n")
 }
@@ -757,66 +884,6 @@ fn build_excluded_targets(runtime: &dyn Runtime, args: &[String]) -> Option<Outc
         ),
         json: None,
     })
-}
-
-/// What `--list` prints: everything resolution would have considered, without running anything. It is the escape
-/// hatch for an ambiguity the refusal text cannot fully explain.
-fn list_candidates(runtime: &dyn Runtime, areas: &Areas, selector: &Selector, inputs: &ResolutionInputs<'_>) -> Result<String, Refusal> {
-    match selector.kind {
-        SelectorKind::Label | SelectorKind::Pattern => {
-            return Ok(format!("label   {}", checkout_label(runtime, &selector.name)));
-        }
-        SelectorKind::Dir => {
-            return Ok(format!("label   {}", directory_pattern(runtime, &selector.name)?));
-        }
-        SelectorKind::Module => {
-            let resolution = resolve_module(runtime, areas, &selector.name)?;
-            return Ok(format!("label   {}", resolution.labels.join(" ")));
-        }
-        // Every lane the selector names, before `--lane` narrows it, so a two-lane refusal can be read in full.
-        SelectorKind::Flow | SelectorKind::Suite => {
-            return Ok(affected_text(&named_suites(runtime, areas.with_catalog()?, selector)?));
-        }
-        SelectorKind::Package => {
-            let lines: Vec<String> = inputs
-                .roots()?
-                .iter()
-                .filter(|root| {
-                    root.package_prefix.as_deref().is_some_and(|prefix| {
-                        selector.name == prefix || selector.name.strip_prefix(prefix).is_some_and(|rest| rest.starts_with('.'))
-                    })
-                })
-                .map(|root| format!("{}\n    {}", root.label, root.src_dir))
-                .collect();
-            if lines.is_empty() {
-                return Ok(format!("(no test root declares a prefix covering {})", selector.name));
-            }
-            return Ok(lines.join("\n"));
-        }
-        SelectorKind::SimpleName | SelectorKind::Fqn => {}
-    }
-
-    let index = inputs.index()?;
-    let simple_name = wanted_simple_name(selector);
-    let Some(candidates) = index.get(simple_name).filter(|found| !found.is_empty()) else {
-        let suggestions = suggest_names(simple_name, index.keys().map(String::as_str), 3);
-        if suggestions.is_empty() {
-            return Ok("(no candidates)".to_owned());
-        }
-        return Ok(format!("(no candidates)\nsimilar: {}", suggestions.join(", ")));
-    };
-    let mut lines = Vec::new();
-    for candidate in candidates {
-        let text = read_text(runtime, &candidate.file)?;
-        lines.push(format!(
-            "{}.{}\n    {}\n    {}",
-            derive_package(&text),
-            candidate.simple_name,
-            candidate.root.label,
-            candidate.file
-        ));
-    }
-    Ok(lines.join("\n"))
 }
 
 #[cfg(test)]

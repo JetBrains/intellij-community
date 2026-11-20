@@ -102,7 +102,7 @@ pub(crate) struct PluginFile {
     pub host: PathDigest,
 }
 
-/// One lane input of the descriptor: its key in the `ide` section, such as `fakeAgentJar`, and its bytes on the host by
+/// One lane input of the descriptor: its key in the `ide` section, such as `fakeAgent`, and its bytes on the host by
 /// path and content digest, as `/jars` is asked about them.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct LaneInput {
@@ -307,13 +307,14 @@ pub(crate) fn declared_input(
 }
 
 /// The build of the IDE of `descriptor`: the `build.txt` of its distribution without the product code, or why it cannot
-/// be read.
+/// be read. The IDE config names the home, and [`performance::build_txt`] states where the home holds the file.
 fn ide_build(runfiles: &HostRunfiles, descriptor: &RuntimeDescriptor) -> Result<String, String> {
-    let home = &descriptor.dev_dist.home.logical_path;
-    let path = runfiles
-        .host_path(home)
-        .ok_or_else(|| format!("the runfiles hold no distribution {home}"))?
-        .join(performance::BUILD_TXT);
+    let config = &descriptor.dev_dist.config.logical_path;
+    let config = runfiles
+        .host_path(config)
+        .ok_or_else(|| format!("the runfiles hold no IDE config {config}"))?;
+    let home = runtime::dev_dist_home(&config)?;
+    let path = performance::build_txt(&home, &descriptor.jbr.platform);
     performance::ide_build(&path, fs::read_to_string(&path))
 }
 

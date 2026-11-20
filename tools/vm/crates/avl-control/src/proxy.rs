@@ -1,29 +1,83 @@
 //! The proxy side of the fake-agent control protocol: one agent process on the control server in the IDE, as
-//! `AcpFakeAgentControlClient` of the agent jar is one.
+//! `AcpFakeAgentControlClient` of the test process is one.
 //!
 //! The proxy says `hello` and waits for the `helloAck`, which binds its identity: the connection id, the generation,
 //! the process id and the agent key. Every later envelope carries that identity, and every command must carry it too.
 //! A command with another identity, an unknown type or a missing field ends the connection.
 
 use std::io;
+use std::net::TcpStream;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Duration;
 
 use serde_json::{Map, Value, json};
 
-use super::ControlEndpoint;
-use crate::lane::services::encoding::Base64;
-use crate::lane::services::websocket::{self, Message, Receiver, Sender};
+use crate::encoding::Base64;
+use crate::json::raw_member;
+use crate::websocket::{self, Message, Receiver, Sender};
 
 /// The version of the control protocol that the proxy says and that the `helloAck` must answer.
-pub(super) const PROTOCOL_VERSION: u64 = 2;
+pub const PROTOCOL_VERSION: u64 = 2;
 
-/// Bounds the connection and the `hello`, as the control client of the agent jar does.
+/// The variable that gives an agent process the control URL. The URL carries the one-time token.
+pub const CONTROL_URL_ENV: &str = "ACP_FAKE_AGENT_CONTROL_URL";
+
+/// The variable that gives an agent process its agent key.
+pub const CONTROL_AGENT_KEY_ENV: &str = "ACP_FAKE_AGENT_CONTROL_KEY";
+
+/// The text that replaces the one-time token of a control URL in a diagnostic.
+pub const REDACTED_TOKEN: &str = "REDACTED";
+
+/// Where the control server in the IDE listens, with the token of the credential, and the agent key that a proxy
+/// connects as.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ControlEndpoint {
+    /// `ws://127.0.0.1:<port>/control?token=<token>`.
+    pub url: String,
+    pub agent_key: String,
+}
+
+/// The setting of an agent process that its environment lacks or leaves blank.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MissingSetting {
+    /// [CONTROL_URL_ENV].
+    Url,
+    /// [CONTROL_AGENT_KEY_ENV].
+    AgentKey,
+}
+
+impl ControlEndpoint {
+    /// The endpoint that [CONTROL_URL_ENV] and [CONTROL_AGENT_KEY_ENV] of `variable` name. A blank value is missing.
+    pub fn from_environment(variable: impl Fn(&str) -> Option<String>) -> Result<Self, MissingSetting> {
+        let setting = |name: &str| variable(name).filter(|value| !value.trim().is_empty());
+        Ok(Self {
+            url: setting(CONTROL_URL_ENV).ok_or(MissingSetting::Url)?,
+            agent_key: setting(CONTROL_AGENT_KEY_ENV).ok_or(MissingSetting::AgentKey)?,
+        })
+    }
+
+    /// The URL with the value of each `token` query parameter replaced by [REDACTED_TOKEN], for a diagnostic.
+    pub fn redacted_url(&self) -> String {
+        let Some((base, query)) = self.url.split_once('?') else {
+            return self.url.clone();
+        };
+        let parameters: Vec<String> = query
+            .split('&')
+            .map(|parameter| match parameter.split_once('=') {
+                Some(("token", _)) => format!("token={REDACTED_TOKEN}"),
+                _ => parameter.to_owned(),
+            })
+            .collect();
+        format!("{base}?{}", parameters.join("&"))
+    }
+}
+
+/// Bounds the connection and the `hello`, as `AcpFakeAgentControlClient` does.
 const HELLO_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// One `kind` of a `lifecycle` envelope.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum Lifecycle {
+pub enum Lifecycle {
     StdinEof,
     StdoutClosed,
     ProcessExit,
@@ -43,7 +97,7 @@ impl Lifecycle {
 
 /// One command of the control server.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(super) enum Command {
+pub enum Command {
     /// Sends the line to the IDE.
     Write { id: String, line: String },
     /// Sends the bytes to the IDE.
@@ -52,8 +106,18 @@ pub(super) enum Command {
     CloseStdout { id: String },
     /// Ends the agent process with the code.
     Exit { id: String, code: i64 },
-    /// Calls a tool, or lists the tools, of an MCP server of the session.
-    Mcp { id: String },
+    /// Calls a tool, or lists the tools, of an MCP server of the session. The proxy answers it with
+    /// [Proxy::mcp_result] and sends no `writeAck`.
+    Mcp { id: String, request: McpRequest },
+}
+
+/// What an MCP command asks of the MCP server `server` of the current session.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum McpRequest {
+    /// Calls `tool` with `arguments`, the text of one JSON object as the command spells it.
+    Call { server: String, tool: String, arguments: String },
+    /// Lists the tools.
+    ListTools { server: String },
 }
 
 /// The identity that the `helloAck` bound.
@@ -85,7 +149,7 @@ impl Identity {
 }
 
 /// The writing half of the proxy. Each method sends one envelope.
-pub(super) struct Proxy {
+pub struct Proxy {
     sender: Sender,
     identity: Identity,
     sequence: AtomicU64,
@@ -94,13 +158,26 @@ pub(super) struct Proxy {
 }
 
 /// The reading half of the proxy: the commands of the control server.
-pub(super) struct Commands {
+pub struct Commands {
     receiver: Receiver,
     identity: Identity,
 }
 
+/// The server side of the start of a connection, for a stand-in of the control server: the upgrade of the request for
+/// `target` with its token, and the `hello` of the proxy. A request for another target gets `401`, and a connection
+/// that ends before a `hello` that is a JSON object answers `None`.
+pub fn accept_hello(stream: TcpStream, target: &str) -> io::Result<Option<(Sender, Receiver, Value)>> {
+    let Some((sender, mut receiver)) = websocket::accept_target(stream, target)? else {
+        return Ok(None);
+    };
+    let Message::Text(hello) = receiver.next(&sender)? else {
+        return Ok(None);
+    };
+    Ok(serde_json::from_str::<Value>(&hello).ok().map(|hello| (sender, receiver, hello)))
+}
+
 /// Connects to the control server of `control` as the agent process `process_id`, and completes the `hello`.
-pub(super) fn connect(control: &ControlEndpoint, process_id: &str) -> io::Result<(Proxy, Commands)> {
+pub fn connect(control: &ControlEndpoint, process_id: &str) -> io::Result<(Proxy, Commands)> {
     let (sender, mut receiver) = websocket::connect(&control.url, &[], HELLO_TIMEOUT)?;
     let hello = json!({
         "type": "hello",
@@ -142,7 +219,7 @@ pub(super) fn connect(control: &ControlEndpoint, process_id: &str) -> io::Result
 
 impl Proxy {
     /// Forwards one line that the IDE sent, as the next `inbound` frame.
-    pub(super) fn inbound(&self, line: &str) -> io::Result<()> {
+    pub fn inbound(&self, line: &str) -> io::Result<()> {
         let frame = self.frames.fetch_add(1, Ordering::SeqCst) + 1;
         let sequence = self.sequence.fetch_add(1, Ordering::SeqCst) + 1;
         self.send(
@@ -152,18 +229,22 @@ impl Proxy {
     }
 
     /// Acknowledges the write, close or exit command `id`.
-    pub(super) fn ack(&self, id: &str) -> io::Result<()> {
+    pub fn ack(&self, id: &str) -> io::Result<()> {
         self.send("writeAck", json!({ "commandId": id }))
     }
 
-    /// Answers the MCP command `id` with an error result of `text`.
-    pub(super) fn mcp_error(&self, id: &str, text: &str) -> io::Result<()> {
-        self.send("mcpResult", json!({ "commandId": id, "isError": true, "text": text }))
+    /// Answers the MCP command `id` with `text`: the text of the tool, the JSON array of the tool names, or the error
+    /// text when `is_error`.
+    pub fn mcp_result(&self, id: &str, is_error: bool, text: &str) -> io::Result<()> {
+        self.send("mcpResult", json!({ "commandId": id, "isError": is_error, "text": text }))
     }
 
-    /// Reports one event of the agent process.
-    pub(super) fn lifecycle(&self, kind: Lifecycle, details: &str, exit_code: Option<i64>) -> io::Result<()> {
-        let mut fields = json!({ "kind": kind.wire(), "details": details });
+    /// Reports one event of the agent process. An event without `details` has no `details` field.
+    pub fn lifecycle(&self, kind: Lifecycle, details: Option<&str>, exit_code: Option<i64>) -> io::Result<()> {
+        let mut fields = json!({ "kind": kind.wire() });
+        if let Some(details) = details {
+            fields["details"] = json!(details);
+        }
         if let Some(code) = exit_code {
             fields["exitCode"] = json!(code);
         }
@@ -171,20 +252,20 @@ impl Proxy {
     }
 
     /// Closes the connection with a normal close, once. A later envelope is not sent.
-    pub(super) fn close(&self) {
+    pub fn close(&self) {
         if !self.closed.swap(true, Ordering::SeqCst) {
             self.sender.close(websocket::NORMAL_CLOSURE);
         }
     }
 
     /// Ends the connection at once, without a close frame.
-    pub(super) fn shutdown(&self) {
+    pub fn shutdown(&self) {
         self.closed.store(true, Ordering::SeqCst);
         self.sender.shutdown();
     }
 
     /// The sender of the connection, which answers a ping of the control server.
-    pub(super) const fn sender(&self) -> &Sender {
+    pub const fn sender(&self) -> &Sender {
         &self.sender
     }
 
@@ -205,7 +286,7 @@ impl Proxy {
 impl Commands {
     /// The next command of the control server. A ping gets its pong through `proxy`. The end of the connection, a
     /// close and a command that breaks the protocol are an error.
-    pub(super) fn next(&mut self, proxy: &Proxy) -> io::Result<Command> {
+    pub fn next(&mut self, proxy: &Proxy) -> io::Result<Command> {
         let text = match self.receiver.next(proxy.sender())? {
             Message::Text(text) => text,
             Message::Close(code) => return Err(broken(&format!("the control server closed with {code:?}"))),
@@ -236,8 +317,20 @@ impl Commands {
                 code: envelope["code"].as_i64().ok_or_else(|| missing("code"))?,
                 id,
             },
-            "mcpCall" if field("server").is_some() && field("tool").is_some() && envelope["arguments"].is_object() => Command::Mcp { id },
-            "mcpListTools" if field("server").is_some() => Command::Mcp { id },
+            "mcpCall" if field("server").is_some() && field("tool").is_some() && envelope["arguments"].is_object() => Command::Mcp {
+                request: McpRequest::Call {
+                    server: field("server").unwrap_or_default().to_owned(),
+                    tool: field("tool").unwrap_or_default().to_owned(),
+                    arguments: raw_member(&text, "arguments").ok_or_else(|| missing("arguments"))?,
+                },
+                id,
+            },
+            "mcpListTools" if field("server").is_some() => Command::Mcp {
+                request: McpRequest::ListTools {
+                    server: field("server").unwrap_or_default().to_owned(),
+                },
+                id,
+            },
             "mcpCall" => return Err(missing("server, tool or arguments")),
             "mcpListTools" => return Err(missing("server")),
             other => return Err(invalid(&format!("the command type {other:?} is unknown"))),
@@ -259,3 +352,6 @@ fn invalid(message: &str) -> io::Error {
 fn broken(message: &str) -> io::Error {
     io::Error::new(io::ErrorKind::ConnectionAborted, message.to_owned())
 }
+
+#[cfg(test)]
+mod tests;

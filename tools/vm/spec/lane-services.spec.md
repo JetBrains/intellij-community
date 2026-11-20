@@ -121,12 +121,12 @@ The registry serves these paths to the IDE:
 
 | path | answer |
 | --- | --- |
-| `/registry.json` | the agents of the lane, with one archive for each platform |
-| `/packages/acp-scenario-agent-<platform>.zip` | the archive of the platform |
+| `/registry.json` | the agents of the lane, with the archive of the platform of the guest |
+| `/packages/acp-fake-agent-<platform>.zip` | the archive of the platform of the guest |
 | any other path | 404 with an empty body |
 
-The platforms are `darwin-aarch64`, `darwin-x86_64`, `linux-aarch64`, `linux-x86_64`, `windows-aarch64` and
-`windows-x86_64`.
+The platform of the guest is `darwin-aarch64`, `linux-aarch64` or `linux-x86_64`. The registry lists no other platform,
+so an IDE of another platform finds no package, and its install fails.
 
 - The registry document of the fixture inputs is the golden `testdata/lane-services/registry.json`.
   [@test] ../crates/avl-guest/src/lane/services/registry/tests.rs
@@ -134,20 +134,14 @@ The platforms are `darwin-aarch64`, `darwin-x86_64`, `linux-aarch64`, `linux-x86
 - The `sha256` of an archive in the document is the lowercase hex SHA-256 of the archive bytes.
   [@test] ../crates/avl-guest/src/lane/services/registry/tests.rs
 
-- An archive holds the agent jar as `lib/acp-scenario-agent.jar`. A POSIX archive also holds `bin/acp-scenario-agent`.
+- The archive holds the fake agent of the guest as `bin/acp-fake-agent`. The manifest runs `./bin/acp-fake-agent` with
+  no argument, and the installer of the IDE makes it executable.
   [@test] ../crates/avl-guest/src/lane/package/tests.rs
+  [@test] ../crates/avl-guest/src/lane/services/registry/tests.rs
 
-- The POSIX launcher starts the `java` of the distribution's JBR by its absolute path with `exec`.
+- Every entry is stored without compression at the time 0, with no file attributes, so the same binary gives the same
+  bytes.
   [@test] ../crates/avl-guest/src/lane/package/tests.rs
-
-- A Windows manifest runs `java.exe` beside that `java`, with the arguments `-jar ./lib/acp-scenario-agent.jar`.
-  [@test] ../crates/avl-guest/src/lane/package/tests.rs
-
-- Every entry is stored without compression at the time 0, with no file attributes.
-  [@test] ../crates/avl-guest/src/lane/package/tests.rs
-
-- The archive bytes are the bytes that `AcpFakeAgentPackage` writes for the same jar and the same `java`.
-  [@test] ../crates/avl-guest/src/lane/package/tests.rs (`the_archives_are_the_bytes_of_the_java_packer`)
 
 - A relative `java` path or an unreadable jar is refused with the code `lane_package_input`.
   [@test] ../crates/avl-guest/src/lane/package/tests.rs
@@ -309,7 +303,7 @@ suite attaches the spawner to the Cloud agent of the suite, see [The UI-lane Con
 
 - The `101` answer has the accept key of RFC 6455. No extension or subprotocol is accepted.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
-  [@test] ../crates/avl-guest/src/lane/services/websocket/tests.rs
+  [@test] ../crates/avl-control/src/websocket/tests.rs
 
 - The spawner checks only that a bearer token is present. It does not check the value.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
@@ -353,11 +347,11 @@ A command of the control server acts on the dial in this way:
 
 - A ping of the dial gets a pong with the same payload. A message is at most 16 MiB.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
-  [@test] ../crates/avl-guest/src/lane/services/websocket/tests.rs
+  [@test] ../crates/avl-control/src/websocket/tests.rs
 
 - A frame that breaks the protocol closes the dial with 1002.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
-  [@test] ../crates/avl-guest/src/lane/services/websocket/tests.rs
+  [@test] ../crates/avl-control/src/websocket/tests.rs
 
 - A stopped emulator ends every open dial and its control connection.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs

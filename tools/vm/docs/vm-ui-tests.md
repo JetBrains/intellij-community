@@ -296,6 +296,11 @@ env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUi
   downloads the kernel, about 700 MB, and its log is `<runtime root>/container-system.log`.
 - **A foreign server.** A server of another install with another major version is refused
   `container_engine_foreign`. A server of another install with the same major version is used, with a note.
+- **A pin on another volume.** When `AIR_VM_BAZEL_USER_ROOT` or `--output_user_root` puts the Bazel root on another
+  volume than the runtime root, such as an external disk, the network plugin of the engine does not start from there.
+  The controller then runs a copy of the pinned install, `<runtime root>/apple-container/<pin>`, made once per pin
+  (about 420 MB) and checked with `codesign --verify --strict`. A failed copy or check is `container_copy_failed`
+  ([the pinned Apple container runs from the volume of the runtime root](decisions/2026-11-18-the-pinned-container-runs-from-the-volume-of-the-runtime-root.md)).
 - **The nameserver.** The DNS proxy of the engine does not answer on every host. So each build and each container
   gets `--dns`: `AIR_VM_DNS`, else the first nameserver of the host outside the loopback, else `1.1.1.1`. A guest
   that needs a name that only a VPN resolver knows needs `AIR_VM_DNS`.
@@ -997,7 +1002,7 @@ TeamCity without either, a warning says so and every test publishes. A warning c
 empties its output first. Once the archive is published, it removes the bundle directories that the archive holds from
 the testlogs, so `bazel.logs.zip` does not carry them twice. Off TeamCity, only `--remove-packed` asks for that. It
 never turns a build red: each problem is a warning in the build log, and the exit is 0. Only a usage error of the
-command line exits 2. No Air build configuration runs this step yet; it is one more step in `ultimate-teamcity-config`.
+command line exits 2. No Air build configuration runs this step yet; it is one more step in `.teamcity/`.
 
 When the site in `out/air-site` is missing, or older than `plugins/air/docs/src` or the `src`, `scripts` and
 `styles` of the kernel `community/tools/docs-site`, the server builds it once in the background:
@@ -1168,7 +1173,7 @@ under cargo's own feature resolution, the reference gates, and one live command:
 ./bazel.cmd test @community//tools/vm/... //plugins/air/tests/integration/vm-contract/... @community//tools/bt/...
 ./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-arm64 @community//tools/vm:air-trace-record-linux-arm64
 (cd community/tools/vm && cargo test)
-./community/tools/bt.cmd AirSpecReferencesTest
+./community/tools/bt.cmd //plugins/air:air-plugin-tests_test --filter com.intellij.air.plugin.AirSpecReferencesTest
 (cd plugins/air/docs && pnpm run check)
 ./community/tools/vm.cmd status
 ```

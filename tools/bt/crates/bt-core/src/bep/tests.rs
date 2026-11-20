@@ -159,6 +159,57 @@ fn an_analysis_abort_is_recorded() {
     assert_eq!(summary.aborted, ["ANALYSIS_FAILURE"]);
 }
 
+/// The description that bazel 9 gives the label of a package that the tree does not have.
+const NO_SUCH_PACKAGE: &str = "no such package 'p/gone': BUILD file not found in any of the following directories. Add a BUILD file to a directory to mark it as a package.\n - p/gone";
+
+/// The description of a loading or an analysis failure names the cause of a run that failed before its first test.
+#[test]
+fn the_description_of_a_loading_or_an_analysis_failure_is_kept_once() {
+    let summary = posix_bep(&[
+        json!({
+            "id": {"pattern": {"pattern": ["//p/gone:t"]}},
+            "aborted": {"reason": "LOADING_FAILURE", "description": NO_SUCH_PACKAGE},
+        }),
+        json!({
+            "id": {"pattern": {"pattern": ["-//p/gone:t"]}},
+            "aborted": {"reason": "LOADING_FAILURE", "description": NO_SUCH_PACKAGE},
+        }),
+        json!({
+            "id": {"targetCompleted": {"label": "//p:broken"}},
+            "aborted": {"reason": "ANALYSIS_FAILURE", "description": "Analysis of target '//p:broken' failed"},
+        }),
+        json!({
+            "id": {"targetCompleted": {"label": "//p:clippy"}},
+            "aborted": {"reason": "SKIPPED", "description": "Target //p:clippy build was skipped."},
+        }),
+        json!({
+            "id": {"targetCompleted": {"label": "//p:t"}},
+            "aborted": {"reason": "NO_BUILD"},
+        }),
+        json!({
+            "id": {"pattern": {"pattern": ["//q:t"]}},
+            "aborted": {"reason": "LOADING_FAILURE", "description": " "},
+        }),
+    ]);
+    assert_eq!(
+        summary.aborted,
+        [
+            "LOADING_FAILURE",
+            "LOADING_FAILURE",
+            "ANALYSIS_FAILURE",
+            "SKIPPED",
+            "NO_BUILD",
+            "LOADING_FAILURE"
+        ]
+    );
+    assert_eq!(summary.abort_causes, [NO_SUCH_PACKAGE, "Analysis of target '//p:broken' failed"]);
+
+    // each invocation of a planned run reports the failure of a pattern that they share
+    let mut first = summary.clone();
+    first.merge(summary);
+    assert_eq!(first.abort_causes, [NO_SUCH_PACKAGE, "Analysis of target '//p:broken' failed"]);
+}
+
 /// A truncated final line is expected when bazel is killed mid-write, and it says nothing about the events that
 /// were written whole. Failing on it would report infrastructure for a run that had results.
 #[test]
@@ -292,4 +343,19 @@ fn the_bep_of_a_second_invocation_merges_into_the_first() {
     seen.merge(BepSummary::default());
     assert!(!seen.saw_any_event, "an invocation without events degrades the run");
     assert_eq!(seen.overall_success, None);
+}
+
+/// The analysis time comes from the build metrics, quoted as proto3 writes an int64, and two invocations of a run add
+/// up. Build metrics without timing metrics, as bazel writes them when the analysis and the execution overlap, add
+/// nothing.
+#[test]
+fn the_analysis_time_of_the_build_metrics_adds_up_over_the_invocations() {
+    let metrics = |analysis: serde_json::Value| json!({"id": {"buildMetrics": {}}, "buildMetrics": {"timingMetrics": {"wallTimeInMs": "9000", "analysisPhaseTimeInMs": analysis}}});
+    let mut first = posix_bep(&[metrics(json!("1250"))]);
+    assert_eq!(first.analysis_ms, 1250);
+    first.merge(posix_bep(&[
+        metrics(json!(750)),
+        json!({"id": {"buildMetrics": {}}, "buildMetrics": {"actionSummary": {"actionsExecuted": "3"}}}),
+    ]));
+    assert_eq!(first.analysis_ms, 2000);
 }

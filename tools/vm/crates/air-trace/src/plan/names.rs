@@ -43,7 +43,7 @@ impl Planner<'_> {
             && matches!(selector.kind, SelectorKind::SimpleName | SelectorKind::Fqn)
             && selector.method.is_none()
         {
-            self.resolve_class(name, name);
+            self.pending_classes.push((name.to_owned(), name.to_owned()));
             return Ok(());
         }
         // A name with a directory in it is a path the checkout does not have - a deleted or mistyped file - and the
@@ -83,7 +83,7 @@ impl Planner<'_> {
     /// all.
     ///
     /// Resolved by `bt`'s selector through the runtime `vm.cmd run <Class>` uses, so the planner and the run agree
-    /// on which target a class is in. The target decides the lane: a target a UI lane runs is that lane's, and a
+    /// on which target a class is in. [`Planner::plan`] calls it for each queued class after the last input. The target decides the lane: a target a UI lane runs is that lane's, and a
     /// class in any other target runs no IDE and records no trace.
     pub(crate) fn resolve_class(&mut self, class_name: &str, given: &str) {
         let selector = match Selector::classify(class_name) {
@@ -192,7 +192,7 @@ impl Planner<'_> {
             let simple = simple_class_name(&entry.class_name);
             let Some(owner) = loaded.by_class(simple) else {
                 if resolved.insert(simple.to_owned()) {
-                    self.resolve_class(&entry.class_name, &entry.class_name);
+                    self.pending_classes.push((entry.class_name.clone(), entry.class_name.clone()));
                 }
                 continue;
             };

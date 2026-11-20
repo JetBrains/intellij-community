@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The bash half of the polyglot wrappers, without Bazel: the Git Bash hand-off, the roots in both checkout layouts,
-// the override, the build step against a stand-in `bazel.cmd`, and the jscpd paths that need no Bazel. The event file
-// reader of the CMD half runs when a PowerShell is on PATH.
+// the override, the user cache, the build step against a stand-in `bazel.cmd`, and the jscpd paths that need no Bazel.
+// The event file reader of the CMD half runs when a PowerShell is on PATH.
 // Run with `node --test community/tools/polyglot-wrapper.test.mjs`.
 
 import {after, before, describe, it} from "node:test"
@@ -133,6 +133,33 @@ describe("the override", () => {
   })
 })
 
+describe("the user cache", () => {
+  /**
+   * @param {Record<string, string | undefined>} variables the values of HOME and OSTYPE, undefined to unset one
+   */
+  function userCache(variables) {
+    const assignments = Object.entries(variables)
+      .map(([name, value]) => (value === undefined ? `unset ${name}` : `${name}="${value}"`))
+      .join("; ")
+    const script = `. "${toolsDir}/polyglot-wrapper.sh"; root=/checkout; ${assignments}; polyglot_user_cache openspec; printf "%s" "$user_cache"`
+    const result = bash(["-c", script])
+    equal(result.status, 0, result.stderr)
+    return result.stdout
+  }
+
+  it("is the cache of the monorepo tools on macOS, as tool-wrapper.sh has it", () => {
+    equal(userCache({HOME: "/home/u", OSTYPE: "darwin25"}), "/home/u/Library/Caches/JetBrains/monorepo-tools/openspec")
+  })
+
+  it("is the cache of the monorepo tools on Linux, as tool-wrapper.sh has it", () => {
+    equal(userCache({HOME: "/home/u", OSTYPE: "linux-gnu"}), "/home/u/.cache/JetBrains/monorepo-tools/openspec")
+  })
+
+  it("is the out folder of the checkout without HOME", () => {
+    equal(userCache({HOME: undefined, OSTYPE: "darwin25"}), "/checkout/out/openspec")
+  })
+})
+
 describe("jscpd without Bazel", () => {
   it("exits 78 when the pin file has no version line", async () => {
     const checkout = join(scratch, "no-version")
@@ -144,6 +171,30 @@ describe("jscpd without Bazel", () => {
     const result = bash([join(checkout, "tools", "jscpd.cmd"), "--version"], {cwd: checkout})
     equal(result.status, 78)
     match(result.stderr, /^jscpd: found no JSCPD_VERSION line in /)
+  })
+
+  it("runs the path that another checkout wrote to the user cache, with no Bazel", async () => {
+    const checkout = join(scratch, "user-cache-hit")
+    await mkdir(join(checkout, "tools"), {recursive: true})
+    for (const name of ["jscpd.cmd", "polyglot-wrapper.sh"]) {
+      await copyFile(join(toolsDir, name), join(checkout, "tools", name))
+    }
+    await writeFile(join(checkout, "tools", "jscpd.MODULE.bazel"), 'JSCPD_VERSION = "9.9.9"\n')
+    // The checkout has no `bazel.cmd`, so a run that asks Bazel fails.
+    const home = join(scratch, "user-cache-home")
+    const env = {HOME: home}
+    const locate = `. "${toolsDir}/polyglot-wrapper.sh"; root=/unused; polyglot_user_cache jscpd;` +
+      ` printf "%s/jscpd-9.9.9-%s-%s" "$user_cache" "$OSTYPE" "$HOSTTYPE"`
+    const located = bash(["-c", locate], {env})
+    equal(located.status, 0, located.stderr)
+    const binary = await writeExecutable(scratch, "cached-jscpd", 'for a in "$@"; do printf "%s\\n" "$a"; done')
+    await mkdir(dirname(located.stdout), {recursive: true})
+    await writeFile(located.stdout, `${binary}\n`)
+    const result = bash([join(checkout, "tools", "jscpd.cmd"), "x", "y z"], {cwd: checkout, env})
+    equal(result.status, 0, result.stderr)
+    deepEqual(result.stdout.split("\n").filter(Boolean), ["x", "y z"])
+    equal(result.stderr, "")
+    equal(existsSync(join(checkout, "out")), false)
   })
 })
 
@@ -214,6 +265,18 @@ describe("the build step", () => {
     equal(result.status, 0, result.stderr)
     deepEqual(result.stdout.split("\n").filter(Boolean), [root, "x", "y z"])
     equal(result.stderr, "bazel noise\n")
+  })
+
+  it("bt gets the wall time of its build from the build metrics, and an empty value without them", async () => {
+    const {tools} = await checkout("build-time", ["bt.cmd"])
+    const binary = await fakeBinary("build-time", "bt", 'printf "[%s]\\n" "$BT_SELF_BUILD_MS"')
+    const metrics = '{"id":{"buildMetrics":{}},"buildMetrics":{"timingMetrics":{"cpuTimeInMs":"700","wallTimeInMs":"2150"}}}'
+    const timed = bash([join(tools, "bt.cmd")], {env: {STUB_BAZEL_EVENTS: [namedSetOfFiles([binary]), metrics].join("\n")}})
+    equal(timed.status, 0, timed.stderr)
+    equal(timed.stdout, "[2150]\n")
+    const untimed = bash([join(tools, "bt.cmd")], {env: {STUB_BAZEL_EVENTS: namedSetOfFiles([binary])}})
+    equal(untimed.status, 0, untimed.stderr)
+    equal(untimed.stdout, "[]\n")
   })
 
   it("bt exits 6 when the build fails, and 6 when the event file names no binary", async () => {

@@ -1,10 +1,11 @@
 //! The IJ Perf files of a `lane-run` run, which the nightly TeamCity build of the performance lane collects.
 //!
 //! Before the run, `lane-run` makes the [`Plan`] of `avl_junit::performance` from the lane documents and the
-//! `build.txt` of the distribution in its runfiles. A plan that cannot be made is a note of the run, because a metric
-//! never decides a verdict. After the run, green or not, it writes one `metrics.performance.json` for each case that
-//! reported a metric and has a series, at `<directory>/<artifactPath>/`. The directory is
-//! `$TEST_UNDECLARED_OUTPUTS_DIR/performance` under a Bazel test, else `<root>/performance` ([`directory`]).
+//! `build.txt` of the distribution in its runfiles. [`performance::build_txt`] states the path of that file. A plan that
+//! cannot be made is a note of the run, because a metric never decides a verdict. After the run, green or not, it
+//! writes one `metrics.performance.json` for each case that reported a metric and has a series, at
+//! `<directory>/<artifactPath>/`. The directory is `$TEST_UNDECLARED_OUTPUTS_DIR/performance` under a Bazel test, else
+//! `<root>/performance` ([`directory`]).
 //!
 //! Beside each file go the result files of the authored parts of the case ([`PART_FILES`]), each only when a part wrote
 //! it. The runner moves the artifacts of a part to `<iterationDir>/authored-artifacts/<suite>/<scenario>/<part>/`, as the
@@ -22,7 +23,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use avl_junit::cases::{cases, simple_class_name};
-use avl_junit::performance::{self, BUILD_TXT, Plan};
+use avl_junit::performance::{self, Plan};
 use avl_junit::teamcity;
 use avl_wire::daemon::RunEvent;
 use avl_wire::program::{SuiteProgram, read_lane_documents};
@@ -57,11 +58,11 @@ pub(crate) struct Published {
 }
 
 /// The plan of `lane` from the lane documents at `lane_documents`, a directory or a jar, and the `build.txt` of the
-/// distribution at `dist_home`. When it cannot be made, `notes` gets the reason and the answer is `None`.
-pub(crate) fn plan_or_note(lane_documents: &Path, dist_home: &Path, lane: &str, notes: &mut Vec<String>) -> Option<Plan> {
-    let build_txt = dist_home.join(BUILD_TXT);
+/// distribution at `build_txt`, see [`performance::build_txt`]. When it cannot be made, `notes` gets the reason and the
+/// answer is `None`.
+pub(crate) fn plan_or_note(lane_documents: &Path, build_txt: &Path, lane: &str, notes: &mut Vec<String>) -> Option<Plan> {
     let made = read_lane_documents(lane_documents)
-        .and_then(|documents| performance::plan(&documents, lane, performance::ide_build(&build_txt, fs::read_to_string(&build_txt))));
+        .and_then(|documents| performance::plan(&documents, lane, performance::ide_build(build_txt, fs::read_to_string(build_txt))));
     match made {
         Ok(plan) => plan,
         Err(reason) => {

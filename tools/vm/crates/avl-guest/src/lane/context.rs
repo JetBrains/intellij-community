@@ -9,11 +9,18 @@
 //! | `config/air-ui-test/token` | the token of the UI-test bridge |
 //! | `config/air-ui-test/lane-services.json` | the lane-service token and the base URL of each lane service |
 //! | `config/air-ui-test/control.json` | the control server in the IDE and its credentials, when the IDE owns an agent |
-//! | `home/.air-lane/acp-scenario-agent.jar` | the copy of the fake agent jar |
+//! | `home/.air-lane/acp-fake-agent` | the copy of the fake agent binary, executable by the owner |
+//! | `home/.air-lane/genui-fixture-app.jar` | the copy of the jar of the GenUI fixture app server |
 //! | `home/.jetbrains/acp.json` | one entry for each local agent, when the lane has one |
 //! | `bin/<runtime>` | one launcher for each declared CLI runtime |
 //! | `home/.codex/config.toml` | the Codex mock model, when the lane serves it |
 //! | `project/<name>/.git`, `project/<name>-origin.git` | the Git remote of the project, when the lane has a Cloud agent |
+//!
+//! Before the files, the writer deletes each install of a registry agent of the lane that the context holds: its
+//! directories below `system/acp-agents` and its entry in `installed.json`. Every registry agent of a lane is the fake
+//! agent, and the IDE keeps an install of another version, so an install of an older fake agent would outlive the
+//! change. Only a launch writes the files. An IDE that a later generation adopts keeps its installs, because it runs
+//! its agents from them.
 //!
 //! A bare IDE gets the option files, the files of [`BARE_OPTION_FILES`] and the token of the bridge only, see
 //! [`write_bare`].
@@ -29,7 +36,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use avl_wire::ide::{ADVANCED_SETTINGS_FILE, IdePrepared, NO_README_SETTINGS};
-use avl_wire::program::lane::{Delivery, FAKE_AGENT_JAR_TOKEN, JAVA_TOKEN, LIVE_LANE, LaneAgent, LaneDocument, Requirement};
+use avl_wire::program::lane::{Delivery, FAKE_AGENT_TOKEN, LIVE_LANE, LaneAgent, LaneDocument, Requirement};
 use serde::Serialize;
 
 use super::identity::{BRIDGE_TOKEN_PURPOSE, LANE_SERVICES_PURPOSE, LaneIdentity, terminal_login_key};
@@ -74,8 +81,28 @@ pub(crate) const LANE_SERVICES_FILE: &str = "lane-services.json";
 )]
 pub(crate) const NEXT_START_CONTROL_FILE: &str = "control-next-start.json";
 
-/// The copy of the fake agent jar below the home of the context.
-pub(crate) const AGENT_JAR: &str = ".air-lane/acp-scenario-agent.jar";
+/// The copy of the fake agent binary below the home of the context.
+pub(crate) const FAKE_AGENT: &str = ".air-lane/acp-fake-agent";
+
+/// The copy of the jar of the GenUI fixture app server below the home of the context.
+pub(crate) const GENUI_FIXTURE_JAR: &str = ".air-lane/genui-fixture-app.jar";
+
+/// The directory of the ACP agent installs below the system directory of the context, `AcpPaths.AGENTS_DIR`. The Kotlin
+/// bridge test `AirLaneInstallsContractTest` holds this name and [AGENT_DOWNLOADS_DIR] to the constants of `AcpPaths`.
+const AGENT_INSTALLS_DIR: &str = "acp-agents";
+
+/// The directory of the downloaded agent archives below [AGENT_INSTALLS_DIR], `AcpPaths.DOWNLOADS_DIR`.
+const AGENT_DOWNLOADS_DIR: &str = ".downloads";
+
+/// The prefix of the full id of a registry agent, the key of its entry in `installed.json`.
+const REGISTRY_ID_PREFIX: &str = "acp.registry.";
+
+/// `installed.json` below the home of the context: `acp-agents/installed.json` in the common data directory of the
+/// JetBrains IDEs, `PathManager.getCommonDataPath`, of the guest OS.
+#[cfg(target_os = "macos")]
+const INSTALLED_FILE: &str = "Library/Application Support/JetBrains/acp-agents/installed.json";
+#[cfg(not(target_os = "macos"))]
+const INSTALLED_FILE: &str = ".local/share/JetBrains/acp-agents/installed.json";
 
 /// The ACP agent configuration below the home of the context.
 pub(crate) const ACP_JSON: &str = ".jetbrains/acp.json";
@@ -185,14 +212,16 @@ struct LaneServicesFile {
     codex: Option<String>,
 }
 
-/// `control.json`: the control server in the IDE, the `java` and the jar of a terminal launcher, and the credentials.
+/// `control.json`: the control server in the IDE, the fake agent binary of a terminal launcher, the `java` and the jar of
+/// the GenUI fixture app server, and the credentials.
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ControlFile {
     schema_version: u32,
     port: u16,
+    agent_binary: String,
     agent_java: String,
-    agent_jar: String,
+    genui_fixture_jar: String,
     credentials: Vec<Credential>,
 }
 
@@ -212,10 +241,13 @@ struct Credential {
 pub(crate) struct LaneContext<'a> {
     pub document: &'a LaneDocument,
     pub identity: &'a LaneIdentity,
-    /// The `java` that runs the fake agent: `bin/java` of the JBR that the lane IDE runs on, an absolute guest path.
+    /// The `java` that runs the GenUI fixture app server: `bin/java` of the JBR that the lane IDE runs on, an absolute
+    /// guest path.
     pub java: &'a Path,
-    /// The fake agent jar that the lane pushed.
-    pub fake_agent_jar: &'a Path,
+    /// The fake agent binary of the guest that the lane pushed.
+    pub fake_agent: &'a Path,
+    /// The jar of the GenUI fixture app server that the lane pushed.
+    pub genui_fixture_jar: &'a Path,
     /// The declared CLI runtimes. Their names are the `cliRuntimes` of the document.
     pub runtimes: &'a [CliRuntime],
     /// The live run of the iteration, for the live lane alone.
@@ -270,7 +302,7 @@ impl LaneContext<'_> {
         }
         if !self.java.is_absolute() {
             return Err(refused(format!(
-                "the java of the fake agent is not absolute: {}",
+                "the java of the GenUI fixture app server is not absolute: {}",
                 self.java.display()
             )));
         }
@@ -293,6 +325,7 @@ impl LaneContext<'_> {
         if self.document.agents.iter().any(|agent| agent.delivery == Delivery::Cloud) {
             prepare_cloud_remote(&real_path(project)?)?;
         }
+        forget_fake_agent_installs(paths, self.document)?;
         let bridge = write_options_and_token(paths, &self.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
         write_private(&bridge.join(LANE_SERVICES_FILE), &json_document(&self.lane_services(ports))?)?;
         let control = bridge.join(CONTROL_FILE);
@@ -300,16 +333,16 @@ impl LaneContext<'_> {
             Some(file) => write_private(&control, &json_document(&file)?)?,
             None => remove_file_if_present(&control)?,
         }
-        let jar = home.join(AGENT_JAR);
-        create_dirs(jar.parent().unwrap_or(home))?;
-        fs::copy(self.fake_agent_jar, &jar).map_err(|error| {
-            write_failure(format!(
-                "cannot copy the fake agent jar {} to {}: {error}",
-                self.fake_agent_jar.display(),
-                jar.display()
-            ))
-        })?;
-        if let Some(acp_json) = self.acp_json(&jar) {
+        let agent = home.join(FAKE_AGENT);
+        copy_input(self.fake_agent, &agent, "the fake agent")?;
+        fs::set_permissions(&agent, fs::Permissions::from_mode(0o755))
+            .map_err(|error| write_failure(format!("cannot make {} executable: {error}", agent.display())))?;
+        copy_input(
+            self.genui_fixture_jar,
+            &home.join(GENUI_FIXTURE_JAR),
+            "the jar of the GenUI fixture app server",
+        )?;
+        if let Some(acp_json) = self.acp_json(&agent) {
             write_file(&home.join(ACP_JSON), acp_json.as_bytes())?;
         }
         for runtime in self.runtimes {
@@ -357,16 +390,17 @@ impl LaneContext<'_> {
         (!credentials.is_empty()).then(|| ControlFile {
             schema_version: SCHEMA_VERSION,
             port: self.identity.control_port(),
+            agent_binary: home.join(FAKE_AGENT).display().to_string(),
             agent_java: self.java.display().to_string(),
-            agent_jar: home.join(AGENT_JAR).display().to_string(),
+            genui_fixture_jar: home.join(GENUI_FIXTURE_JAR).display().to_string(),
             credentials,
         })
     }
 
     /// `acp.json` with one `agent_servers` entry for each local agent, in document order, or `None` for a lane without
-    /// one. The tokens of an entry resolve to the `java` of the distribution's JBR and to the jar copy. A controlled
-    /// agent also gets the control environment of its owner.
-    fn acp_json(&self, jar: &Path) -> Option<String> {
+    /// one. The token of an entry resolves to the copy of the fake agent binary. A controlled agent also gets the
+    /// control environment of its owner.
+    fn acp_json(&self, agent_binary: &Path) -> Option<String> {
         let entries: Vec<String> = self
             .document
             .agents
@@ -374,10 +408,7 @@ impl LaneContext<'_> {
             .filter(|agent| agent.delivery == Delivery::Local)
             .filter_map(|agent| Some((agent, agent.config_name.as_deref()?, agent.acp_json.as_ref()?)))
             .map(|(agent, name, entry)| {
-                let resolve = |text: &str| {
-                    text.replace(JAVA_TOKEN, &self.java.display().to_string())
-                        .replace(FAKE_AGENT_JAR_TOKEN, &jar.display().to_string())
-                };
+                let resolve = |text: &str| text.replace(FAKE_AGENT_TOKEN, &agent_binary.display().to_string());
                 let args: Vec<String> = entry.args.iter().map(|arg| json_string(&resolve(arg))).collect();
                 let env: Vec<String> = entry
                     .env
@@ -405,6 +436,61 @@ impl LaneContext<'_> {
             Vec::new()
         }
     }
+}
+
+/// Copies the pushed lane input `input`, which `what` names, to `copy`.
+fn copy_input(input: &Path, copy: &Path, what: &str) -> Result<(), AgentRefusal> {
+    if let Some(parent) = copy.parent() {
+        create_dirs(parent)?;
+    }
+    fs::copy(input, copy)
+        .map(drop)
+        .map_err(|error| write_failure(format!("cannot copy {what} {} to {}: {error}", input.display(), copy.display())))
+}
+
+/// Deletes each install of a registry agent of `document` that the context of `paths` holds: the directory of its
+/// versions and the directory of its downloads below `system/acp-agents`, and its entry in `installed.json`. A file
+/// without the entry stays as it is.
+fn forget_fake_agent_installs(paths: &IdePrepared, document: &LaneDocument) -> Result<(), AgentRefusal> {
+    let registry_ids: Vec<&str> = document
+        .agents
+        .iter()
+        .filter(|agent| agent.delivery == Delivery::Registry)
+        .filter_map(|agent| agent.registry_id.as_deref())
+        .collect();
+    if registry_ids.is_empty() {
+        return Ok(());
+    }
+    let installs = Path::new(&paths.system_dir).join(AGENT_INSTALLS_DIR);
+    for id in &registry_ids {
+        for directory in [installs.join(id), installs.join(AGENT_DOWNLOADS_DIR).join(id)] {
+            match fs::remove_dir_all(&directory) {
+                Ok(()) => {}
+                Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+                Err(error) => return Err(write_failure(format!("cannot delete {}: {error}", directory.display()))),
+            }
+        }
+    }
+    let file = Path::new(&paths.home_dir).join(INSTALLED_FILE);
+    let text = match fs::read_to_string(&file) {
+        Ok(text) => text,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(write_failure(format!("cannot read {}: {error}", file.display()))),
+    };
+    let mut installed: serde_json::Value =
+        serde_json::from_str(&text).map_err(|error| write_failure(format!("cannot read {} as JSON: {error}", file.display())))?;
+    let Some(agents) = installed.get_mut("agents").and_then(serde_json::Value::as_object_mut) else {
+        return Ok(());
+    };
+    let before = agents.len();
+    agents.retain(|key, _| !registry_ids.iter().any(|id| key.strip_prefix(REGISTRY_ID_PREFIX) == Some(id)));
+    if agents.len() == before {
+        return Ok(());
+    }
+    let mut bytes =
+        serde_json::to_vec_pretty(&installed).map_err(|error| write_failure(format!("cannot write {}: {error}", file.display())))?;
+    bytes.push(b'\n');
+    write_file(&file, &bytes)
 }
 
 /// Writes the option files into `options`, and creates `new_projects`, an absolute path. `ide.general.xml` is written only when it is

@@ -12,11 +12,16 @@
 #   avl-trace-tools              the packer, the discovery of bundles and the viewer's URLs, over `avl-trace`
 #   avl-bridge                   the client of the IDE's bridge, over `avl-trace`, which the recorder and the guest
 #                                agent share
+#   avl-control                  the proxy side of the fake-agent control channel in the IDE: the WebSocket, base64
+#                                and SHA-1, and the control protocol, which the guest agent and the fake agent share;
+#                                it depends on no sibling
+#   avl-fake-agent               the fake ACP agent that the Air tests start as an agent process, `acp-fake-agent`; it
+#                                stands on avl-control alone
 #   avl-base                     refusals, the envelope, the settings and the journal: what every host program
 #                                stands on
 #   avl-guest                    what runs inside a worker VM, and the one binary the controller installs; it stands
-#                                on avl-wire, avl-junit, avl-trace, avl-trace-tools and avl-bridge alone, never on
-#                                avl-base
+#                                on avl-wire, avl-junit, avl-trace, avl-trace-tools, avl-bridge and avl-control alone,
+#                                never on avl-base
 #   avl-host-sys, avl-report, avl-vm
 #                                the controller itself, which runs on the host; `avl-vm` is the `vm` binary, run
 #                                through `community/tools/vm.cmd`, with the console, the runs, the lanes and
@@ -68,21 +73,23 @@ rust_lints_as_errors(
     visibility = ["//visibility:public"],
 )
 
-# `clippy-linux-arm64` and `clippy-linux-x86_64`: the two binaries that run inside a Linux guest.
+# `clippy-linux-arm64` and `clippy-linux-x86_64`: the three binaries that run inside a Linux guest.
 platform_clippy_tests(
     os = "linux",
     platforms = LINUX_MUSL_PLATFORMS,
     target_compatible_with = NOT_ON_WINDOWS,
     targets = [
+        "//tools/vm/crates/avl-fake-agent:acp-fake-agent",
         "//tools/vm/crates/avl-guest:vm-guest-agent-bin",
         "//tools/vm/crates/avl-record:air-trace-record",
     ],
 )
 
-# `clippy-windows-x86_64` and `clippy-windows-arm64`: the three binaries that run on a Windows host.
+# `clippy-windows-x86_64` and `clippy-windows-arm64`: the four binaries that run on a Windows host.
 windows_clippy_tests(
     targets = [
         "//tools/vm/crates/air-trace:air-trace-bin",
+        "//tools/vm/crates/avl-fake-agent:acp-fake-agent",
         "//tools/vm/crates/avl-record:air-trace-record",
         "//tools/vm/crates/avl-vm:vm-bin",
     ],
@@ -167,6 +174,29 @@ avl_binary(
 avl_binary(
     name = "air-trace-record-linux-x86_64",
     binary = "//tools/vm/crates/avl-record:air-trace-record",
+    platform = "@rules_rs//rs/platforms:x86_64-unknown-linux-musl",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+# The fake ACP agent: on the host for the JUnit registry tests and a lane on the host, and in each Linux guest.
+avl_binary(
+    name = "acp-fake-agent",
+    binary = "//tools/vm/crates/avl-fake-agent:acp-fake-agent",
+    visibility = ["//visibility:public"],
+)
+
+avl_binary(
+    name = "acp-fake-agent-linux-arm64",
+    binary = "//tools/vm/crates/avl-fake-agent:acp-fake-agent",
+    platform = "@rules_rs//rs/platforms:aarch64-unknown-linux-musl",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+avl_binary(
+    name = "acp-fake-agent-linux-x86_64",
+    binary = "//tools/vm/crates/avl-fake-agent:acp-fake-agent",
     platform = "@rules_rs//rs/platforms:x86_64-unknown-linux-musl",
     tags = ["manual"],
     visibility = ["//visibility:public"],

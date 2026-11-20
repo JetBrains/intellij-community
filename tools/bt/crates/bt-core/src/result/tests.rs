@@ -4,7 +4,8 @@ use serde_json::json;
 use super::*;
 use crate::bep::parse_bep;
 use crate::fake::{
-    AttemptSpec, BUCKETING_XML, FakeRuntime, attempt, bep_lines, case, failing, suite, suite_xml, test_result_event, wrapper_xml,
+    AttemptSpec, BUCKETING_XML, FakeRuntime, attempt, bep_lines, case, failing, loading_failure_events, suite, suite_xml,
+    test_result_event, wrapper_xml,
 };
 
 #[test]
@@ -166,10 +167,18 @@ fn classify_run_maps_every_outcome_to_its_status_and_exit() {
     for (what, got, want) in cases {
         assert_eq!(got, want, "{what}");
     }
+    // An exit code that is no verdict is INFRA, also with a test result or a build error.
+    for code in [2, 7, 8, 33, 36, 37, 127, -1, 130] {
+        assert_eq!(
+            classified(code, &empty_bep(), &[plain_target()], &["a.kt:1:1: error: nope".to_owned()], false),
+            (RunStatus::Infra, exit::INFRA),
+            "{code}"
+        );
+    }
 }
 
-/// 8 is bazel's own command failure, 33 out of memory, 127 a wrapper that is not there. None of them says anything
-/// about the tests.
+/// 8 is an interrupt of bazel, 33 out of memory, 127 a wrapper that is not there. None of them says anything about the
+/// tests.
 #[test]
 fn bazels_own_failure_exits_are_infrastructure() {
     for bazel_exit in [8, 33, 127] {
@@ -520,6 +529,27 @@ fn the_action_stderr_file_is_the_fallback() {
     );
 }
 
+/// A label that bazel cannot load fails the run before its first test, with no compile error and no test result. The
+/// words of bazel in the BEP are then the build error.
+#[test]
+fn a_loading_failure_is_a_build_error_after_the_compile_errors() {
+    let fake = FakeRuntime::new([]);
+    let no_such_package = "no such package 'p/gone': BUILD file not found in any of the following directories.\n - p/gone";
+    let bep = bep_of(&fake, &loading_failure_events("//p/gone:t", no_such_package));
+    let result = collect_results(&fake, &bep, 5000, 1, "");
+    assert_eq!((result.status, result.exit_code), (RunStatus::BuildFailed, exit::BUILD_FAILED));
+    assert_eq!(result.build_errors, [no_such_package]);
+
+    let output = "plugins/air/x/testSrc/FooTest.kt:41:15: error: unresolved reference: nope\n";
+    assert_eq!(
+        collect_results(&fake, &bep, 5000, 1, output).build_errors,
+        [
+            "plugins/air/x/testSrc/FooTest.kt:41:15: error: unresolved reference: nope",
+            no_such_package
+        ]
+    );
+}
+
 /// A failed attempt with no report means the counts are a guess, and a guess must never be reported as green.
 #[test]
 fn a_missing_test_xml_on_a_failed_attempt_degrades_rather_than_reporting_green() {
@@ -597,6 +627,73 @@ fn parse_compile_errors_reads_the_worker_and_the_inline_forms() {
 
     assert_eq!(
         parse_compile_errors("INFO: Build completed successfully, 2 total actions\n"),
+        Vec::<String>::new()
+    );
+}
+
+/// A compiler that crashed reports no located diagnostic: the build error is the failed action, its target and its kind,
+/// with the message of the crash. The fixture is the output of bazel of a real crash on the Studio, 2026-11-19, with the
+/// paths of the slot and the cache replaced.
+#[test]
+fn a_compiler_crash_is_named_by_its_failed_action_and_its_message() {
+    let output = include_str!("../../testdata/bazel-output-compiler-crash.txt");
+    assert_eq!(
+        parse_compile_errors(output),
+        Vec::<String>::new(),
+        "the crash has no located diagnostic"
+    );
+    let failures = parse_action_failures(output, "/repo");
+    assert_eq!(failures.len(), 1, "{failures:?}");
+    let failure = &failures[0];
+    assert!(
+        failure.starts_with(
+            "plugins/air/tests/integration/bridge/BUILD.bazel:74:12: compile //plugins/air/tests/integration/bridge:bridge_test_lib \
+             (kt: 463, java: 0) failed: (Exit -1): [Internal Error] java.lang.RuntimeException: Error generating class file \
+             com/intellij/air/integration/bridge/authored/AirAuthoredBodies.class (compiled from \
+             [plugins/air/tests/integration/bridge/testGen/AirAuthoredBodies.generated.kt]): Method too large: "
+        ),
+        "{failure}"
+    );
+    assert!(failure.ends_with('…'), "the message is cut: {failure}");
+
+    // A build that failed with that output is BUILD FAILED, with the action as its error.
+    let fake = FakeRuntime::new([]);
+    let bep = BepSummary {
+        failed_to_build: vec!["//plugins/air/tests/integration/contract:contract_test".to_owned()],
+        saw_any_event: true,
+        ..BepSummary::default()
+    };
+    let result = collect_results(
+        &fake,
+        &bep,
+        1000,
+        1,
+        &output.replace("/repo/", &format!("{}/", fake.repo_root().display())),
+    );
+    assert_eq!(result.status, RunStatus::BuildFailed);
+    assert_eq!(result.build_errors.len(), 1, "{:?}", result.build_errors);
+    assert!(
+        result.build_errors[0].starts_with("plugins/air/tests/integration/bridge/BUILD.bazel:74:12: compile "),
+        "{:?}",
+        result.build_errors
+    );
+}
+
+/// An action line without its message, a later `ERROR:` line that ends the action, and a run without a failed action.
+#[test]
+fn a_failed_action_takes_only_its_own_message() {
+    let output = [
+        "ERROR: /repo/a/BUILD.bazel:3:14: Clippy //a:a failed: (Exit 1): process_wrapper failed: error executing Clippy command",
+        "ERROR: Build did NOT complete successfully",
+        "error: this message belongs to no action",
+    ]
+    .join("\n");
+    assert_eq!(
+        parse_action_failures(&output, "/repo"),
+        ["a/BUILD.bazel:3:14: Clippy //a:a failed: (Exit 1)"]
+    );
+    assert_eq!(
+        parse_action_failures("INFO: Build completed successfully\n", "/repo"),
         Vec::<String>::new()
     );
 }

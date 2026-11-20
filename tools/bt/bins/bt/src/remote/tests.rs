@@ -6,6 +6,7 @@ use super::fake::{FakeLink, RecordedRun, host_refused};
 use super::*;
 use crate::execute::execute_with;
 use bt_core::fake::{FakeRuntime, REPO_ROOT, area_files, refusal};
+use bt_core::result::RunStatus;
 
 const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 

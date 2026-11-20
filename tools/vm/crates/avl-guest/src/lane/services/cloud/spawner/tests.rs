@@ -1,20 +1,20 @@
 //! The Agent Spawner over real sockets: a dial of the IDE as the codec client writes it, and a fake control server in
 //! the IDE that answers the `hello` and records every envelope of the proxy.
 
-use std::io::{ErrorKind, Read, Write};
+use std::io::{ErrorKind, Write};
 use std::net::{SocketAddr, TcpListener};
 use std::sync::{Arc, mpsc};
 use std::time::{Duration, Instant};
 
+use avl_control::encoding::Base64;
+use avl_control::websocket::{Role, encode_frame, opcode, read_frame};
 use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
 
 use super::*;
 use crate::lane::services::Service;
 use crate::lane::services::cloud::{self, Cloud, Organization};
-use crate::lane::services::encoding::Base64;
 use crate::lane::services::testing::{self, TOKEN};
-use crate::lane::services::websocket::{Role, encode_frame, opcode, read_frame};
 
 /// The token of the one credential of the fake control server.
 const CONTROL_TOKEN: &str = "control-test-token";
@@ -105,39 +105,11 @@ impl FakeControl {
     }
 }
 
-/// Reads an HTTP head byte by byte, so no byte after it leaves the stream.
-fn read_head(mut stream: &TcpStream) -> String {
-    let mut head = Vec::new();
-    while !head.ends_with(b"\r\n\r\n") {
-        let mut byte = [0];
-        if stream.read(&mut byte).unwrap_or_default() == 0 {
-            break;
-        }
-        head.push(byte[0]);
-    }
-    String::from_utf8(head).unwrap()
-}
-
 fn serve_control(stream: TcpStream, connection: u64, envelopes: &mpsc::Sender<Value>, sessions: &mpsc::Sender<Session>) {
-    let head = read_head(&stream);
-    if head.lines().next() != Some(&format!("GET /control?token={CONTROL_TOKEN} HTTP/1.1")) {
-        let _ = (&stream).write_all(b"HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+    let Ok(Some((sender, mut receiver, hello))) = proxy::accept_hello(stream, &format!("/control?token={CONTROL_TOKEN}")) else {
         return;
-    }
-    let key = head
-        .lines()
-        .find_map(|line| line.strip_prefix("Sec-WebSocket-Key: "))
-        .unwrap()
-        .to_owned();
-    let accept = format!(
-        "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {}\r\n\r\n",
-        websocket::accept_key(&key)
-    );
-    (&stream).write_all(accept.as_bytes()).unwrap();
-    let (sender, mut receiver) = websocket::accept(stream).unwrap();
+    };
     let sender = Arc::new(sender);
-    let Ok(Message::Text(hello)) = receiver.next(&sender) else { return };
-    let hello: Value = serde_json::from_str(&hello).unwrap();
     let process_id = hello["processId"].as_str().unwrap().to_owned();
     let ack = json!({
         "type": "helloAck", "processId": process_id, "agentKey": hello["agentKey"], "protocolVersion": 2,
@@ -473,7 +445,7 @@ fn raw_dial(address: SocketAddr) -> (TcpStream, String) {
             .as_bytes(),
         )
         .unwrap();
-    let head = read_head(&stream);
+    let head = websocket::read_head(&stream).unwrap();
     (stream, head)
 }
 

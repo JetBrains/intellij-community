@@ -5,11 +5,15 @@
 //! run has up to three groups of targets, and each group has its own `bazel test` invocation with a constant forced count:
 //!
 //! - A heavy target is a target whose recorded seconds want more than [`PLANNED_SHARDS`] shards. The first invocation
-//!   names the heavy targets of the run ([`ShardPlan::heavy_targets`]) and forces [`HEAVY_SHARDS`].
+//!   names the heavy targets of the run ([`Groups::heavy`]) and forces [`HEAVY_SHARDS`].
 //! - The second invocation runs the patterns of the run less the heavy and single-shard targets, and forces
 //!   [`PLANNED_SHARDS`]. A target without a record stays here.
 //! - A target whose recorded seconds want one shard is a single-shard target. The third invocation names these targets
-//!   ([`ShardPlan::single_targets`]) and forces [`SINGLE_SHARDS`].
+//!   ([`Groups::single`]) and forces [`SINGLE_SHARDS`].
+//!
+//! A plan entry is a hint, because the plan keeps the targets of each branch that ran in the checkout. A target that the
+//! current tree does not have fails each invocation that names it, also as a negative pattern. So
+//! [`ShardPlan::groups`] names only the targets that `bazel query` finds for the patterns of the run ([`TreeTargets`]).
 //!
 //! Each invocation passes the plan file to each test in [`SHARD_PLAN_ENV`]. The JUnit runner (`ShardFilter` of
 //! `community/platform/testFramework/bootstrap`) reads the line of its own target. A shard at or above the planned
@@ -35,7 +39,7 @@
 //! checkout or an earlier run, and a concurrent bt can rewrite the file during a run. So each shard writes the digest
 //! of the plan it read into its test.xml. A target whose shards report different digests makes the run INFRA.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use crate::result::TargetTiming;
@@ -87,6 +91,59 @@ const SECONDS_PER_SHARD: f64 = 90.0;
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ShardPlan {
     targets: BTreeMap<String, BTreeMap<String, f64>>,
+}
+
+/// The targets of a planned run that run in an invocation of their own, each group in the order of the labels.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Groups {
+    /// The targets that want more than [`PLANNED_SHARDS`] shards.
+    pub heavy: Vec<String>,
+    /// The targets that want one shard.
+    pub single: Vec<String>,
+    /// The covered heavy and single-shard targets of the plan that the query of the current tree does not find. No
+    /// invocation names them. A query without an answer leaves this list empty.
+    pub gone: Vec<String>,
+}
+
+/// The test targets that the target patterns of a run name in the current tree, as `bazel query` answers them.
+///
+/// A query names a target of another repository by the apparent name of the repository, such as `@community//x:t`. The
+/// BEP, and so the plan, names it by the canonical name, such as `@@community+//x:t`. Both spellings are one target here.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct TreeTargets {
+    /// The repository, the package and the name of each target.
+    targets: BTreeSet<(String, String, String)>,
+}
+
+impl TreeTargets {
+    /// The query expression of the test targets that the target patterns name, in their order. A negative pattern
+    /// removes what the patterns before it name, as in `bazel test`. Each pattern is in quotes, because the canonical
+    /// name of a repository holds the operator `+`.
+    pub fn query(patterns: &[String]) -> String {
+        let mut expression = String::from("set()");
+        for pattern in patterns {
+            let (operator, pattern) = match pattern.strip_prefix('-') {
+                Some(rest) => ('-', rest),
+                None => ('+', pattern.as_str()),
+            };
+            let _ = write!(expression, " {operator} \"{pattern}\"");
+        }
+        format!("tests({expression})")
+    }
+
+    /// Reads the answer of the query, one label a line. A line that is no label is skipped.
+    pub fn parse(lines: impl IntoIterator<Item = String>) -> Self {
+        let targets = lines
+            .into_iter()
+            .filter_map(|line| split_label(line.trim()).map(|label| label.key()))
+            .collect();
+        Self { targets }
+    }
+
+    /// Whether the tree has the target with this label.
+    pub fn has(&self, label: &str) -> bool {
+        split_label(label).is_some_and(|label| self.targets.contains(&label.key()))
+    }
 }
 
 impl ShardPlan {
@@ -141,13 +198,50 @@ impl ShardPlan {
             .map_or(DEFAULT_SHARDS, |classes| shards_for(classes.values().sum()))
     }
 
+    /// The heavy and the single-shard targets of the plan that the target patterns of a run cover and that the current
+    /// tree has.
+    ///
+    /// `tree` gives the test targets of the patterns in the current tree, `None` for a query without an answer, or the
+    /// error that stops the run. This function calls it only when the plan names a covered heavy or single-shard target,
+    /// so a run without such a target costs no query. Without an answer, no target is in a group or gone.
+    pub fn groups<E>(&self, patterns: &[String], tree: impl FnOnce() -> Result<Option<TreeTargets>, E>) -> Result<Groups, E> {
+        let unchecked = self.unchecked_groups(patterns);
+        if unchecked.heavy.is_empty() && unchecked.single.is_empty() {
+            return Ok(unchecked);
+        }
+        let Some(tree) = tree()? else {
+            return Ok(Groups::default());
+        };
+        let mut groups = Groups::default();
+        for (labels, kept) in [(unchecked.heavy, &mut groups.heavy), (unchecked.single, &mut groups.single)] {
+            for label in labels {
+                if tree.has(&label) {
+                    kept.push(label);
+                } else {
+                    groups.gone.push(label);
+                }
+            }
+        }
+        Ok(groups)
+    }
+
+    /// The heavy and the single-shard targets of the plan that the target patterns of a run cover, without a check
+    /// against the current tree. A dry run shows them, because it starts no bazel command.
+    pub fn unchecked_groups(&self, patterns: &[String]) -> Groups {
+        Groups {
+            heavy: self.heavy_targets(patterns),
+            single: self.single_targets(patterns),
+            gone: Vec::new(),
+        }
+    }
+
     /// The heavy targets of the plan that the target patterns of a run cover, in the order of their labels.
     ///
     /// A pattern covers a target as Bazel resolves it: `//pkg/...`, `//pkg:all`, `//pkg:*`, `//pkg:name` and `//pkg`,
     /// each with an optional repository. A later negative pattern (`-//pkg/...`) removes what it covers. bt reads no
     /// tag, so a covered target can still be one that the tag filters of the run leave out. The first invocation then
     /// runs no test of it.
-    pub fn heavy_targets(&self, patterns: &[String]) -> Vec<String> {
+    fn heavy_targets(&self, patterns: &[String]) -> Vec<String> {
         self.targets
             .keys()
             .filter(|label| self.shards_of(label) > PLANNED_SHARDS && covered(patterns, label))
@@ -156,7 +250,7 @@ impl ShardPlan {
     }
 
     /// The single-shard targets of the plan that the target patterns of a run cover, in the order of their labels.
-    pub fn single_targets(&self, patterns: &[String]) -> Vec<String> {
+    fn single_targets(&self, patterns: &[String]) -> Vec<String> {
         self.targets
             .keys()
             .filter(|label| self.shards_of(label) == SINGLE_SHARDS && covered(patterns, label))
@@ -218,6 +312,12 @@ struct Label<'a> {
     repository: &'a str,
     package: &'a str,
     name: &'a str,
+}
+
+impl Label<'_> {
+    fn key(&self) -> (String, String, String) {
+        (self.repository.to_owned(), self.package.to_owned(), self.name.to_owned())
+    }
 }
 
 fn split_label(label: &str) -> Option<Label<'_>> {

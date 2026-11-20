@@ -96,6 +96,8 @@ vocabulary! {
         Boolean = "boolean",
         /// A string of [`ParamSpec::values`].
         Enum = "enum",
+        /// Any JSON value. The runner passes it to the IDE unread, and [`Instruction::label`] leaves it out.
+        Json = "json",
     }
 }
 
@@ -367,21 +369,23 @@ impl Instruction {
         }
     }
 
-    /// The label that names the instruction in a trace and in a failure: the id, and its arguments in key order, as
-    /// `instructionKey` of the generator spells it. A string argument is written without its quotes.
+    /// The label that names the instruction in a trace and in a failure: the id, and its scalar arguments in key order,
+    /// as `instructionKey` of the generator spells it. A string argument is written without its quotes. An object or an
+    /// array argument, such as the scope of an authored part, is data for the IDE and does not name the instruction.
     pub fn label(&self) -> String {
         let id = self.id().map_or("", |(_, id)| id);
-        if self.args.is_empty() {
-            return id.to_owned();
-        }
         let args: Vec<String> = self
             .args
             .iter()
-            .map(|(key, value)| match value {
-                Value::String(text) => format!("{key}={text}"),
-                other => format!("{key}={other}"),
+            .filter_map(|(key, value)| match value {
+                Value::String(text) => Some(format!("{key}={text}")),
+                Value::Object(_) | Value::Array(_) => None,
+                other => Some(format!("{key}={other}")),
             })
             .collect();
+        if args.is_empty() {
+            return id.to_owned();
+        }
         format!("{id}({})", args.join(","))
     }
 }
@@ -546,6 +550,7 @@ impl ParamSpec {
             ParamType::Enum => value
                 .as_str()
                 .is_some_and(|text| self.values.iter().any(|candidate| candidate == text)),
+            ParamType::Json => true,
         }
     }
 }

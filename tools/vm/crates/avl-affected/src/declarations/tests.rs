@@ -10,7 +10,8 @@ const BRIDGE: &str = "plugins/air/tests/integration/bridge";
 const MODULE: &str = "intellij.air.integrationTests.bridge";
 const DRIVER: &str = "plugins/air/tests/integration/bridge/tests/Driver.kt";
 const SHARED: &str = "plugins/air/tests/integration/bridge/tests/Resets.kt";
-const BODIES: &str = "plugins/air/tests/integration/bridge/testGen/Bodies.generated.kt";
+const SUITES: &str = "plugins/air/tests/integration/bridge/tests/authored/Suites.kt";
+const PRESET_SUITE: &str = "plugins/air/tests/integration/bridge/tests/authored/PresetSuite.kt";
 const VOCABULARY: &str = "plugins/air/tests/integration/bridge/resources/flow-vocabulary.json";
 const BASE: &str = "base";
 
@@ -57,8 +58,9 @@ fn document(suite: &'static str, actions: &[&str], authored: bool) -> String {
 }
 
 /// A bridge with a sealed request type, a reset that every suite runs, two flow requests for two drivers, the authored
-/// step with its dispatcher, and the descriptors. The quick start opens the preset, the authored preset suite runs one
-/// part that opens the preset too, and the terminal suite opens the terminal.
+/// step with the list of the suite objects, one suite object with the dispatcher of its parts, and the descriptors. The
+/// quick start opens the preset, the authored preset suite runs one part that opens the preset too, and the terminal
+/// suite opens the terminal.
 fn bridge_tree() -> FakeRuntime {
     let mut tree = flow_catalog_tree();
     tree.insert(
@@ -144,18 +146,22 @@ data class AirFlowActionOpenTerminal(val timeoutMs: Long) : AirUiTestRequest<Uni
   override fun run(bridges: Bridges) = Driver().openTerminal()
 }
 
+"#
+            .to_owned(),
+        ),
+        (
+            format!("{BRIDGE}/tests/AirFlowActionAuthoredStep.kt"),
+            r#"package com.intellij.air.integration.bridge
+
 @SerialName("action/authored-step")
-data class AirFlowActionAuthoredStep(val suite: String) : AirUiTestRequest<Unit> {
-  override fun run(bridges: Bridges) = Bodies.run(suite)
+data class AirFlowActionAuthoredStep(val suite: String, val key: String) : AirUiTestRequest<Unit> {
+  override fun run(bridges: Bridges) = Suites.run(suite, key)
 }
 "#
             .to_owned(),
         ),
-        (BODIES.to_owned(), bodies(&[("manage-launch-preset", "PresetBody")])),
-        (
-            format!("{BRIDGE}/tests/authored/PresetBody.kt"),
-            "package com.intellij.air.integration.bridge\n\nobject PresetBody {\n  fun part() = Driver().openPreset()\n}\n".to_owned(),
-        ),
+        (SUITES.to_owned(), suites(&["PresetSuite"])),
+        (PRESET_SUITE.to_owned(), suite_object("PresetSuite", "manage-launch-preset", &["manage-launch-preset/scenario/part"])),
     ];
     for (path, text) in files {
         tree.insert(path, text);
@@ -170,15 +176,25 @@ data class AirFlowActionAuthoredStep(val suite: String) : AirUiTestRequest<Unit>
     fake
 }
 
-/// The dispatcher of the authored parts, one branch for each suite and its body object.
-fn bodies(branches: &[(&str, &str)]) -> String {
-    let mut text = "package com.intellij.air.integration.bridge\n\nobject Bodies {\n  fun run(suite: String) = when (suite) {\n".to_owned();
-    for (suite, body) in branches {
-        text.push_str(&format!(
-            "    \"{suite}/scenario/part\" -> {{\n      with({body}) {{ part() }}\n    }}\n"
-        ));
+/// The list of the suite objects `objects`, and the run of one part through the dispatcher of its suite object.
+fn suites(objects: &[&str]) -> String {
+    format!(
+        "package com.intellij.air.integration.bridge\n\nabstract class Suite(val suite: String) {{\n  abstract fun partOf(key: String): Any?\n}}\n\n\
+         object Suites {{\n  val all: List<Suite> = listOf({})\n\n  fun run(suite: String, key: String) = all.first {{ it.suite == suite }}.partOf(key)\n}}\n",
+        objects.join(", ")
+    )
+}
+
+/// The suite object `name` of the suite `suite`: its dispatcher holds one branch block for each part key of `keys`, and
+/// each branch runs the body `part`.
+fn suite_object(name: &str, suite: &str, keys: &[&str]) -> String {
+    let mut text = format!(
+        "package com.intellij.air.integration.bridge\n\nobject {name} : Suite(\"{suite}\") {{\n  override fun partOf(key: String): Any? = when (key) {{\n"
+    );
+    for key in keys {
+        text.push_str(&format!("    \"{key}\" -> {{ part() }}\n"));
     }
-    text.push_str("    else -> error(suite)\n  }\n}\n");
+    text.push_str("    else -> null\n  }\n\n  private fun part() = Driver().openPreset()\n}\n");
     text
 }
 
@@ -315,19 +331,18 @@ fn a_suite_with_an_unknown_request_reaches_every_changed_declaration() {
     assert_eq!(classes_of(&affected), format!("{QUICK_START},{TERMINAL}"));
 }
 
-/// The branch of a suite in the dispatcher is a root of that suite alone. A change of a body reaches only its suite, and
-/// a new branch of another suite changes only that suite.
+/// The branch of a part in the dispatcher of its suite object is a root of that suite alone. A change of a body reaches
+/// only its suite, and a new branch of one suite changes only that suite.
 #[test]
 fn an_authored_body_reaches_only_its_suite() {
     let fake = bridge_tree();
-    let body = format!("{BRIDGE}/tests/authored/PresetBody.kt");
     fake.put(
-        &body,
-        &text_of(&fake, &body).replace("openPreset()", "openPreset().also { println() }"),
+        PRESET_SUITE,
+        &text_of(&fake, PRESET_SUITE).replace("openPreset()", "openPreset().also { println() }"),
     );
-    let affected = affected_of(&fake, &body);
+    let affected = affected_of(&fake, PRESET_SUITE);
     assert_eq!(classes_of(&affected), PRESET);
-    assert_eq!(vias(&affected), [["declaration:PresetBody.part"]]);
+    assert_eq!(vias(&affected), [["declaration:PresetSuite.part"]]);
 
     let fake = bridge_tree();
     fake.put(
@@ -335,12 +350,16 @@ fn an_authored_body_reaches_only_its_suite() {
         &document("new-session-terminal", &["open-terminal", "authored-step"], true),
     );
     fake.put(
-        BODIES,
-        &bodies(&[("manage-launch-preset", "PresetBody"), ("new-session-terminal", "TerminalBody")]),
+        PRESET_SUITE,
+        &suite_object(
+            "PresetSuite",
+            "manage-launch-preset",
+            &["manage-launch-preset/scenario/part", "new-session-terminal/scenario/part"],
+        ),
     );
-    let affected = affected_of(&fake, BODIES);
+    let affected = affected_of(&fake, PRESET_SUITE);
     assert_eq!(classes_of(&affected), TERMINAL);
-    assert_eq!(vias(&affected), [["declaration:Bodies.run"]]);
+    assert_eq!(vias(&affected), [["declaration:PresetSuite.partOf"]]);
 }
 
 /// A suite with authored parts that reaches the dispatcher without a branch of its own runs a body that the reach
@@ -348,9 +367,9 @@ fn an_authored_body_reaches_only_its_suite() {
 #[test]
 fn an_authored_suite_without_a_branch_reaches_every_changed_declaration() {
     let fake = bridge_tree();
-    let other_suite_only = bodies(&[("new-session-terminal", "PresetBody")]);
-    fake.put(BODIES, &other_suite_only);
-    fake.put_revision(BASE, BODIES, &other_suite_only);
+    let other_suite_only = suite_object("PresetSuite", "manage-launch-preset", &["new-session-terminal/scenario/part"]);
+    fake.put(PRESET_SUITE, &other_suite_only);
+    fake.put_revision(BASE, PRESET_SUITE, &other_suite_only);
     fake.put(DRIVER, &DRIVER_TEXT.replace(r#"click("terminal")"#, r#"click("terminal-tab")"#));
     let affected = affected_of(&fake, DRIVER);
     assert_eq!(classes_of(&affected), format!("{PRESET},{TERMINAL}"));

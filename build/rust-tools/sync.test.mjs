@@ -6,10 +6,12 @@ import {mkdtemp, rm} from "node:fs/promises"
 import {tmpdir} from "node:os"
 import {dirname, join} from "node:path"
 import {describe, it} from "node:test"
+import {fileURLToPath} from "node:url"
 import {
   applyBlock,
   beginMarker,
   checkFailedExitCode,
+  clippyAdditions,
   configFiles,
   copyHeader,
   detectRoots,
@@ -21,6 +23,7 @@ import {
   runCli,
   skippedCopies,
   usageExitCode,
+  workspaceCopy,
 } from "./sync.mjs"
 
 const lintsToml = [
@@ -37,10 +40,16 @@ const lintsToml = [
 
 const block = renderBlock(lintsToml)
 
+const bans = "# The bans.\ndisallowed-methods = [\n  { path = \"std::f\" },\n]\n"
+
 const sources = {
   "rustfmt.toml": "# The format.\nmax_width = 140\n",
-  "clippy.toml": "# The bans.\ndisallowed-methods = []\n",
+  "clippy.toml": bans,
 }
+
+// An added clippy source of the community workspace, so that the tests cover one whatever `clippyAdditions` holds.
+const added = {"more.toml": "# More.\ndisallowed-methods = [\n  { path = \"more::h\" },\n]\n"}
+const communityAdditions = {"community/build/dev-dist-tools/Cargo.toml": ["more.toml"]}
 
 function manifestWith(inner) {
   const head = ["[workspace]", "members = [\"crates/*\"]", ""]
@@ -94,6 +103,75 @@ describe("renderCopy", () => {
   it("covers the format and the clippy configuration", () => {
     deepEqual(configFiles, ["rustfmt.toml", "clippy.toml"])
   })
+
+  it("puts the entries of each added source after the entries of the source, inside the array", () => {
+    const additions = [
+      {name: "a.toml", text: "# A.\ndisallowed-methods = [\n  # Why a.\n  { path = \"a::f\" },\n]\n"},
+      {name: "b.toml", text: "disallowed-methods = [\n  { path = \"b::g\" },\n]\n"},
+    ]
+    equal(
+      renderCopy("clippy.toml", bans, additions),
+      [
+        "# Generated from community/build/rust-tools/clippy.toml, a.toml and b.toml by sync.mjs. Edit those files.",
+        "# The bans.",
+        "disallowed-methods = [",
+        "  { path = \"std::f\" },",
+        "  # Why a.",
+        "  { path = \"a::f\" },",
+        "  { path = \"b::g\" },",
+        "]",
+        "",
+      ].join("\n"),
+    )
+    equal(
+      copyHeader("clippy.toml", ["a.toml"]),
+      "# Generated from community/build/rust-tools/clippy.toml and a.toml by sync.mjs. Edit those files.",
+    )
+  })
+
+  it("refuses an added source without the array lines", () => {
+    const withoutLines = [{name: "a.toml", text: "disallowed-methods = []\n"}]
+    throws(() => renderCopy("clippy.toml", bans, withoutLines), /a.toml has no line `disallowed-methods = \[`/)
+  })
+
+  it("refuses an added source with a key outside its array, and takes comments and blank lines there", () => {
+    const withKey = "disallowed-methods = [\n  { path = \"a::f\" },\n]\n\ndisallowed-types = [\"a::T\"]\n"
+    throws(
+      () => renderCopy("clippy.toml", bans, [{name: "a.toml", text: withKey}]),
+      /a.toml has the line `disallowed-types = \["a::T"\]` outside its/,
+    )
+    const withComments = "# A.\n\n  # Indented.\ndisallowed-methods = [\n  { path = \"a::f\" },\n]\n# After.\n"
+    match(renderCopy("clippy.toml", bans, [{name: "a.toml", text: withComments}]), /std::f" },\n {2}\{ path = "a::f" },\n\]\n$/)
+  })
+})
+
+describe("workspaceCopy", () => {
+  const readSource = (name) => ({...sources, ...added})[name]
+
+  it("gives the added sources of a manifest to its clippy.toml only", () => {
+    const path = "community/build/dev-dist-tools/Cargo.toml"
+    equal(
+      workspaceCopy(path, "clippy.toml", readSource, communityAdditions),
+      renderCopy("clippy.toml", bans, [{name: "more.toml", text: added["more.toml"]}]),
+    )
+    equal(workspaceCopy(path, "rustfmt.toml", readSource, communityAdditions), renderCopy("rustfmt.toml", sources["rustfmt.toml"]))
+    equal(workspaceCopy("community/tools/bt/Cargo.toml", "clippy.toml", readSource, communityAdditions), renderCopy("clippy.toml", bans))
+  })
+})
+
+describe("clippyAdditions", () => {
+  it("names a manifest of manifestPaths and a TOML source here with the array lines and only comments outside", () => {
+    const sourceDir = dirname(fileURLToPath(import.meta.url))
+    for (const [path, names] of Object.entries(clippyAdditions)) {
+      equal(manifestPaths.includes(path), true)
+      for (const name of names) {
+        // `copy_sources` of `BUILD.bazel` gives Bazel every `*.toml` file here.
+        match(name, /^[^/]+\.toml$/)
+        const text = readFileSync(join(sourceDir, name), "utf8")
+        match(renderCopy("clippy.toml", bans, [{name, text}]), /^# Generated from /)
+      }
+    }
+  })
 })
 
 describe("skippedCopies", () => {
@@ -140,7 +218,7 @@ describe("runCli", () => {
       writeFile(join(root, "bazel.cmd"), "")
       const sourceDir = join(community, "build/rust-tools")
       writeFile(join(sourceDir, "lints.toml"), lintsToml)
-      for (const [name, text] of Object.entries(sources)) {
+      for (const [name, text] of Object.entries({...sources, ...added})) {
         writeFile(join(sourceDir, name), text)
       }
       // The community workspace has a stale table, a drifted rustfmt.toml and no clippy.toml. The ultimate one is in sync.
@@ -206,6 +284,55 @@ describe("runCli", () => {
       equal(existsSync(ultimateManifest), true)
       equal(runCli(["--check"], {io: createIo().io, roots, sourceDir, skippedCopies}), 0)
     })
+  })
+
+  it("write gives a workspace of clippyAdditions the bans of its added sources, then check is clean", async () => {
+    await withCheckout(({roots, sourceDir, skippedCopies, communityDir}) => {
+      const options = {roots, sourceDir, skippedCopies, clippyAdditions: communityAdditions}
+      equal(runCli([], {io: createIo().io, ...options}), 0)
+      const copy = readFileSync(join(communityDir, "clippy.toml"), "utf8")
+      equal(copy, renderCopy("clippy.toml", bans, [{name: "more.toml", text: added["more.toml"]}]))
+      match(copy, /std::f" },\n {2}\{ path = "more::h" },\n\]\n$/)
+      equal(readFileSync(join(communityDir, "rustfmt.toml"), "utf8"), renderCopy("rustfmt.toml", sources["rustfmt.toml"]))
+      equal(runCli(["--check"], {io: createIo().io, ...options}), 0)
+      // Without the added source, the copy differs from `clippy.toml`.
+      const {io, err} = createIo()
+      equal(runCli(["--check"], {io, ...options, clippyAdditions: {}}), checkFailedExitCode)
+      match(err.join("\n"), /community\/build\/dev-dist-tools\/clippy.toml differs from clippy.toml/)
+    })
+  })
+
+  it("render writes the copy that write gives the workspace, and writes nothing else", async () => {
+    await withCheckout(async ({roots, sourceDir, skippedCopies, communityDir, communityManifest}) => {
+      const options = {roots, sourceDir, skippedCopies, clippyAdditions: communityAdditions}
+      const outDir = await mkdtemp(join(tmpdir(), "rust-tools-render-test-"))
+      try {
+        const out = join(outDir, "clippy.toml")
+        const {io, out: printed, err} = createIo()
+        equal(runCli(["--render", "community/build/dev-dist-tools/Cargo.toml", "clippy.toml", out], {io, ...options}), 0)
+        deepEqual([printed, err], [[], []])
+        equal(existsSync(join(communityDir, "clippy.toml")), false)
+        equal(readFileSync(communityManifest, "utf8"), manifestWith(["stale = \"allow\""]))
+        equal(runCli([], {io: createIo().io, ...options}), 0)
+        equal(readFileSync(out, "utf8"), readFileSync(join(communityDir, "clippy.toml"), "utf8"))
+      } finally {
+        await rm(outDir, {recursive: true, force: true})
+      }
+    })
+  })
+
+  it("render refuses a manifest outside manifestPaths, a file outside configFiles and a wrong count of arguments", () => {
+    const options = {roots: {community: "/none", ultimate: null}, sourceDir: "/none"}
+    for (const args of [
+      ["other/Cargo.toml", "clippy.toml", "/none/out"],
+      ["plugins/air/native/Cargo.toml", "lints.toml", "/none/out"],
+      ["plugins/air/native/Cargo.toml", "clippy.toml"],
+      ["plugins/air/native/Cargo.toml", "clippy.toml", "/none/out", "--check"],
+    ]) {
+      const {io, err} = createIo()
+      equal(runCli(["--render", ...args], {io, ...options}), usageExitCode)
+      match(err[0], /^--render takes a path of manifestPaths/)
+    }
   })
 
   it("rejects an unknown argument", () => {

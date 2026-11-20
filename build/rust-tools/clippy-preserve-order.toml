@@ -1,0 +1,16 @@
+# The bans of a workspace that turns on the feature `preserve_order` of `serde_json`. `sync.mjs` adds these entries to
+# the copy of `clippy.toml` in each workspace that `clippyAdditions` names. Edit here, then run
+# `bun community/build/rust-tools/sync.mjs`.
+#
+# Without the feature, `serde_json::Map` has no `shift_remove` and no `swap_remove`, so such a workspace does not take
+# this file.
+
+disallowed-methods = [
+  # With the feature `preserve_order`, a `serde_json::Map` keeps its keys in the order of insertion. These calls then
+  # move the last key into the place of the removed key, and they give no error. The Bazel clippy aspect reads these
+  # bans only from a copy that a crate gives it as `clippy_config`.
+  { path = "serde_json::Map::remove", reason = "with preserve_order it is swap_remove: use shift_remove, or swap_remove where no reader sees the order" },
+  { path = "serde_json::Map::remove_entry", reason = "with preserve_order it is swap_remove_entry: use shift_remove_entry, or swap_remove_entry where no reader sees the order" },
+  { path = "serde_json::map::OccupiedEntry::remove", reason = "with preserve_order it is swap_remove: use shift_remove, or swap_remove where no reader sees the order" },
+  { path = "serde_json::map::OccupiedEntry::remove_entry", reason = "with preserve_order it is swap_remove_entry: use shift_remove_entry, or swap_remove_entry where no reader sees the order" },
+]

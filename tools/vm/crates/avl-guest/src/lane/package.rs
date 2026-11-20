@@ -1,8 +1,9 @@
-//! The fake ACP agent package that the lane's registry serves: one archive per platform and its checksum.
+//! The fake ACP agent package that the lane's registry serves: one archive for the platform of the guest, and its
+//! checksum.
 //!
-//! Each archive holds the agent jar as `lib/acp-scenario-agent.jar`. A POSIX archive also holds the launcher
-//! `bin/acp-scenario-agent`, which runs the `java` of the distribution's JBR by its absolute path. A Windows archive has
-//! no launcher, because its manifest command is `java.exe` itself.
+//! The archive holds the fake agent binary of the guest as `bin/acp-fake-agent`, which the manifest names as its
+//! command with no argument. The registry lists the platform of the guest alone, so an IDE of another platform finds no
+//! package, and its install fails.
 
 use std::fs;
 use std::path::Path;
@@ -14,16 +15,6 @@ use crate::reply::{AgentRefusal, AgentRefusalExt};
 #[cfg(test)]
 mod tests;
 
-/// The platform keys of the registry, in the order that `registry.json` lists them.
-pub(crate) const PLATFORMS: [&str; 6] = [
-    "darwin-aarch64",
-    "darwin-x86_64",
-    "linux-aarch64",
-    "linux-x86_64",
-    "windows-aarch64",
-    "windows-x86_64",
-];
-
 /// The version that `registry.json` gives every agent.
 pub(crate) const VERSION: &str = "1.0.0+air-fixture-1";
 
@@ -33,102 +24,59 @@ pub(crate) const PACKAGE_TOKEN: &str = "air-scenario-package-v1";
 /// The refusal code of an input that the package cannot use.
 pub(crate) const INPUT_CODE: &str = "lane_package_input";
 
-const JAR_ENTRY: &str = "lib/acp-scenario-agent.jar";
-const LAUNCHER_ENTRY: &str = "bin/acp-scenario-agent";
+/// The entry of the fake agent binary in the archive, and the manifest command.
+pub(crate) const BINARY_ENTRY: &str = "bin/acp-fake-agent";
 
-/// The six archives and the two Java commands that their manifests name.
+/// The archive of the guest platform.
 pub(crate) struct Packages {
-    archives: Vec<Archive>,
-    windows_java: String,
-}
-
-struct Archive {
     platform: &'static str,
     bytes: Vec<u8>,
     sha256: String,
 }
 
 impl Packages {
-    /// Packs the agent jar at `agent_jar` for every platform. `java` is the absolute path of `bin/java` of the
-    /// distribution's JBR, which the POSIX launcher runs. The Windows command is `java.exe` beside it.
-    pub(crate) fn assemble(agent_jar: &Path, java: &Path) -> Result<Self, AgentRefusal> {
-        let posix_java = absolute_text(java)?;
-        let windows_java = absolute_text(&java.with_file_name("java.exe"))?;
-        let jar = fs::read(agent_jar)
-            .map_err(|error| AgentRefusal::failure(INPUT_CODE, format!("cannot read the agent jar {}: {error}", agent_jar.display())))?;
-        let launcher = launcher(&posix_java);
-        let archives = PLATFORMS
-            .iter()
-            .map(|&platform| {
-                let mut entries: Vec<(&str, &[u8])> = Vec::new();
-                if !is_windows(platform) {
-                    entries.push((LAUNCHER_ENTRY, launcher.as_bytes()));
-                }
-                entries.push((JAR_ENTRY, &jar));
-                let bytes = stored_zip(&entries).map_err(|message| {
-                    AgentRefusal::failure(INPUT_CODE, format!("cannot pack the agent jar {}: {message}", agent_jar.display()))
-                })?;
-                let sha256 = sha256_hex(&bytes);
-                Ok(Archive { platform, bytes, sha256 })
-            })
-            .collect::<Result<_, AgentRefusal>>()?;
-        Ok(Self { archives, windows_java })
+    /// Packs the fake agent binary at `agent` for the registry key `platform`, which [guest_platform] answers for a
+    /// lane.
+    pub(crate) fn assemble(agent: &Path, platform: &'static str) -> Result<Self, AgentRefusal> {
+        let binary = fs::read(agent)
+            .map_err(|error| AgentRefusal::failure(INPUT_CODE, format!("cannot read the fake agent {}: {error}", agent.display())))?;
+        let bytes = stored_zip(&[(BINARY_ENTRY, &binary)])
+            .map_err(|message| AgentRefusal::failure(INPUT_CODE, format!("cannot pack the fake agent {}: {message}", agent.display())))?;
+        let sha256 = sha256_hex(&bytes);
+        Ok(Self { platform, bytes, sha256 })
     }
 
-    /// The archive of `platform`, or `None` for a key that [PLATFORMS] does not list.
+    /// The registry key of the one archive, the platform of this guest, such as `linux-aarch64`.
+    pub(crate) const fn platform(&self) -> &'static str {
+        self.platform
+    }
+
+    /// The archive of `platform`, or `None` for another platform than [Self::platform].
     pub(crate) fn archive(&self, platform: &str) -> Option<&[u8]> {
-        self.find(platform).map(|archive| archive.bytes.as_slice())
+        (platform == self.platform).then_some(self.bytes.as_slice())
     }
 
-    /// The lowercase hex SHA-256 of the archive of `platform`.
-    pub(crate) fn sha256(&self, platform: &str) -> Option<&str> {
-        self.find(platform).map(|archive| archive.sha256.as_str())
+    /// The lowercase hex SHA-256 of the archive.
+    pub(crate) fn sha256(&self) -> &str {
+        &self.sha256
     }
 
-    /// The manifest `cmd` of `platform`: the packaged launcher, or `java.exe` itself on Windows.
-    pub(crate) fn command(&self, platform: &str) -> String {
-        if is_windows(platform) {
-            self.windows_java.clone()
-        } else {
-            format!("./{LAUNCHER_ENTRY}")
-        }
-    }
-
-    /// The manifest `args` of `platform`: what the Windows `java.exe` command needs, and nothing otherwise.
-    pub(crate) fn args(platform: &str) -> Vec<String> {
-        if is_windows(platform) {
-            vec!["-jar".to_owned(), format!("./{JAR_ENTRY}")]
-        } else {
-            Vec::new()
-        }
-    }
-
-    fn find(&self, platform: &str) -> Option<&Archive> {
-        self.archives.iter().find(|archive| archive.platform == platform)
+    /// The manifest `cmd` of the archive: the packaged binary.
+    pub(crate) fn command() -> String {
+        format!("./{BINARY_ENTRY}")
     }
 }
 
-fn is_windows(platform: &str) -> bool {
-    platform.starts_with("windows-")
-}
-
-/// The text of an absolute path, which a launcher and a manifest spell verbatim.
-fn absolute_text(path: &Path) -> Result<String, AgentRefusal> {
-    match path.to_str() {
-        Some(text) if path.is_absolute() => Ok(text.to_owned()),
-        _ => Err(AgentRefusal::failure(
-            INPUT_CODE,
-            format!("the Java command {} is not an absolute UTF-8 path", path.display()),
-        )),
+/// The registry key of the platform that this guest agent runs on: the OS as the registry names it, and the CPU.
+pub(crate) fn guest_platform() -> &'static str {
+    match (std::env::consts::OS, std::env::consts::ARCH) {
+        ("macos", "aarch64") => "darwin-aarch64",
+        ("macos", _) => "darwin-x86_64",
+        ("windows", "aarch64") => "windows-aarch64",
+        ("windows", _) => "windows-x86_64",
+        (_, "aarch64") => "linux-aarch64",
+        _ => "linux-x86_64",
     }
-}
-
-/// The POSIX launcher. It keeps `exec`, so the agent owns its stdout and a reader in the IDE sees EOF when the agent
-/// closes it.
-pub(crate) fn launcher(java: &str) -> String {
-    format!(
-        "#!/bin/sh\nSCRIPT_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)\nexec \"{java}\" -jar \"$SCRIPT_DIR/../lib/acp-scenario-agent.jar\" \"$@\"\n"
-    )
 }
 
 /// The lowercase hex SHA-256 of `bytes`, as the registry `sha256` field states it.
