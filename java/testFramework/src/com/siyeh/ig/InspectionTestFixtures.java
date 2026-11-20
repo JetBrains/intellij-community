@@ -40,7 +40,75 @@ public final class InspectionTestFixtures {
     @NotNull Supplier<? extends InspectionProfileEntry> inspection,
     @Language("JAVA") String @NotNull [] environmentClasses
   ) {
-    return javaInspectionFixtureByTestName(project, _ -> inspection.get(), environmentClasses, null, null, null);
+    return javaInspectionFixture(project, inspection, environmentClasses, null, null, null);
+  }
+
+  public static @NotNull TestFixture<? extends JavaInspectionFixture> javaInspectionFixture(
+    @NotNull TestFixture<? extends JavaTestProject> project,
+    @NotNull Supplier<? extends InspectionProfileEntry> inspection,
+    @Language("JAVA") String @NotNull [] environmentClasses,
+    @Nullable String basePath
+  ) {
+    return javaInspectionFixture(project, inspection, environmentClasses, basePath, null, null);
+  }
+
+  public static @NotNull TestFixture<? extends JavaInspectionFixture> javaInspectionFixture(
+    @NotNull TestFixture<? extends JavaTestProject> project,
+    @NotNull Supplier<? extends InspectionProfileEntry> inspection,
+    @Language("JAVA") String @NotNull [] environmentClasses,
+    @Nullable String basePath,
+    @Nullable Class<? extends InspectionProfileEntry> inspectionClass
+  ) {
+    return javaInspectionFixture(project, inspection, environmentClasses, basePath, inspectionClass, null);
+  }
+
+  /**
+   * See {@link JavaHostFixtures.InspectionSpec} for the parameters.
+   */
+  public static @NotNull TestFixture<? extends JavaInspectionFixture> javaInspectionFixture(
+    @NotNull TestFixture<? extends JavaTestProject> project,
+    @NotNull Supplier<? extends InspectionProfileEntry> inspection,
+    @Language("JAVA") String @NotNull [] environmentClasses,
+    @Nullable String basePath,
+    @Nullable Class<? extends InspectionProfileEntry> inspectionClass,
+    @Nullable String testDataPath
+  ) {
+    return javaInspectionFixtureByTestName(project, _ -> inspection.get(), environmentClasses, basePath, inspectionClass, testDataPath);
+  }
+
+  public static @NotNull TestFixture<? extends JavaInspectionFixture> javaInspectionFixtureByTestName(
+    @NotNull TestFixture<? extends JavaTestProject> project,
+    @NotNull Function<String, ? extends InspectionProfileEntry> inspection
+  ) {
+    //noinspection LanguageMismatch
+    return javaInspectionFixtureByTestName(project, inspection, ArrayUtil.EMPTY_STRING_ARRAY, null, null, null);
+  }
+
+  public static @NotNull TestFixture<? extends JavaInspectionFixture> javaInspectionFixtureByTestName(
+    @NotNull TestFixture<? extends JavaTestProject> project,
+    @NotNull Function<String, ? extends InspectionProfileEntry> inspection,
+    @Language("JAVA") String @NotNull [] environmentClasses
+  ) {
+    return javaInspectionFixtureByTestName(project, inspection, environmentClasses, null, null, null);
+  }
+
+  public static @NotNull TestFixture<? extends JavaInspectionFixture> javaInspectionFixtureByTestName(
+    @NotNull TestFixture<? extends JavaTestProject> project,
+    @NotNull Function<String, ? extends InspectionProfileEntry> inspection,
+    @Language("JAVA") String @NotNull [] environmentClasses,
+    @Nullable String basePath
+  ) {
+    return javaInspectionFixtureByTestName(project, inspection, environmentClasses, basePath, null, null);
+  }
+
+  public static @NotNull TestFixture<? extends JavaInspectionFixture> javaInspectionFixtureByTestName(
+    @NotNull TestFixture<? extends JavaTestProject> project,
+    @NotNull Function<String, ? extends InspectionProfileEntry> inspection,
+    @Language("JAVA") String @NotNull [] environmentClasses,
+    @Nullable String basePath,
+    @Nullable Class<? extends InspectionProfileEntry> inspectionClass
+  ) {
+    return javaInspectionFixtureByTestName(project, inspection, environmentClasses, basePath, inspectionClass, null);
   }
 
   /**
