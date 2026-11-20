@@ -28,12 +28,12 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
       myProject,
       myOperationTitle,
       action = myRunnable::run,
-      saveAndBlock = {
+      enter = {
         invokeAndWaitIfNeeded {
           saveAndBlock(myProject)
         }
       },
-      unblock = {
+      exit = {
         invokeAndWaitIfNeeded {
           unblock(myProject)
         }
@@ -58,12 +58,12 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
         project,
         title,
         action = { action() },
-        saveAndBlock = {
+        enter = {
           withContext(Dispatchers.EDT) {
             saveAndBlock(project)
           }
         },
-        unblock = {
+        exit = {
           withContext(Dispatchers.EDT) {
             unblock(project)
           }
@@ -71,13 +71,13 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
       )
     }
 
-    private inline fun runFreezingInternal(project: Project, title: String, action: () -> Unit, saveAndBlock: () -> Unit, unblock: () -> Unit) {
+    private inline fun runFreezingInternal(project: Project, title: String, action: () -> Unit, enter: () -> Unit, exit: () -> Unit) {
       val changeListManager = ChangeListManagerEx.getInstanceEx(project)
 
       LOG.debug("starting")
       try {
         LOG.debug("saving documents, blocking project autosync")
-        saveAndBlock()
+        enter()
         try {
           LOG.debug("freezing the ChangeListManager")
           freeze(project, changeListManager, title)
@@ -92,7 +92,7 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
       }
       finally {
         LOG.debug("unblocking project autosync")
-        unblock()
+        exit()
       }
       LOG.debug("finished.")
     }
