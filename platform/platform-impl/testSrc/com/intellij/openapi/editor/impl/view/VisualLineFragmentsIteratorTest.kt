@@ -336,9 +336,9 @@ private fun EditorImpl.addCollapsedFoldRegion(startOffset: Int, endOffset: Int, 
 }
 
 private fun VisualLineFragment.kind(): Kind {
-  if (currentFoldRegion != null) {
+  if (foldRegion != null) {
     return Kind.FOLD_REGION
-  } else if (currentInlay != null) {
+  } else if (inlay != null) {
     return Kind.INLAY
   } else {
     return Kind.TEXT

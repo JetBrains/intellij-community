@@ -150,11 +150,11 @@ abstract sealed class VisualLineFragment {
     return false;
   }
 
-  FoldRegion getCurrentFoldRegion() {
+  FoldRegion getFoldRegion() {
     return null;
   }
 
-  Inlay<?> getCurrentInlay() {
+  Inlay<?> getInlay() {
     return null;
   }
 
@@ -376,7 +376,7 @@ abstract sealed class VisualLineFragment {
     }
 
     @Override
-    Inlay<?> getCurrentInlay() {
+    Inlay<?> getInlay() {
       return inlay;
     }
 
@@ -497,7 +497,7 @@ abstract sealed class VisualLineFragment {
     }
 
     @Override
-    FoldRegion getCurrentFoldRegion() {
+    FoldRegion getFoldRegion() {
       return region;
     }
 

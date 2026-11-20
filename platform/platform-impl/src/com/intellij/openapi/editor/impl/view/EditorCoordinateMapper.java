@@ -153,7 +153,7 @@ final class EditorCoordinateMapper {
       }
       endLogicalLine = fragment.getEndLogicalLine();
       maxVisualColumn = fragment.getEndVisualColumn();
-      FoldRegion foldRegion = fragment.getCurrentFoldRegion();
+      FoldRegion foldRegion = fragment.getFoldRegion();
       if (foldRegion != null) {
         if (foldRegion instanceof CustomFoldRegion) {
           return new VisualPosition(visualLine, 0);
@@ -171,7 +171,7 @@ final class EditorCoordinateMapper {
         maxLogicalColumn = startLogicalLine == endLogicalLine
                            ? Math.max(maxLogicalColumn, endLogicalColumn)
                            : endLogicalColumn;
-      } else if (fragment.getCurrentInlay() == null) {
+      } else if (fragment.getInlay() == null) {
         int minColumn = fragment.getMinLogicalColumn();
         int maxColumn = fragment.getMaxLogicalColumn();
         if (line == fragment.getStartLogicalLine() &&
@@ -213,7 +213,7 @@ final class EditorCoordinateMapper {
     LogicalPosition delayedResult = null;
     boolean delayedInlay = false;
     for (var fragment : createVisualLineFragmentsIterator(document, offset, false, false)) {
-      FoldRegion foldRegion = fragment.getCurrentFoldRegion();
+      FoldRegion foldRegion = fragment.getFoldRegion();
       if (foldRegion instanceof CustomFoldRegion) {
         return new LogicalPosition(fragment.getStartLogicalLine(), fragment.getStartLogicalColumn());
       }
@@ -221,7 +221,7 @@ final class EditorCoordinateMapper {
       int maxColumn = fragment.getEndVisualColumn();
       if (delayedResult != null) {
         LogicalPosition possibleResult = delayedInlay
-                                         ? delayedResult.leanForward(fragment.getCurrentInlay() == null)
+                                         ? delayedResult.leanForward(fragment.getInlay() == null)
                                          : delayedResult;
         if (minColumn != maxColumn) {
           return possibleResult;
@@ -240,7 +240,7 @@ final class EditorCoordinateMapper {
           column == minColumn ||
           column == maxColumn && !pos.leansRight) {
         // for visual positions between adjacent inlays, we return same result as for visual position before the first one
-        delayedInlay = fragment.getCurrentInlay() != null;
+        delayedInlay = fragment.getInlay() != null;
         delayedResult = new LogicalPosition(
           column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(),
           fragment.visualToLogicalColumn(column),
@@ -366,7 +366,7 @@ final class EditorCoordinateMapper {
       int maxOffset = 0;
       int visualLineStartOffset = visualLineToOffset(document, visualLine);
       for (var fragment : createVisualLineFragmentsIterator(document, visualLineStartOffset, false, true)) {
-        if (fragment.getCurrentFoldRegion() instanceof CustomFoldRegion) {
+        if (fragment.getFoldRegion() instanceof CustomFoldRegion) {
           return new VisualPosition(visualLine, 0);
         }
         if (px <= fragment.getStartX()) {
@@ -461,7 +461,7 @@ final class EditorCoordinateMapper {
       int maxOffset = 0;
       int visualLineStartOffset = visualLineToOffset(document, visualLine);
       for (var fragment : createVisualLineFragmentsIterator(document, visualLineStartOffset, false, true)) {
-        if (fragment.getCurrentFoldRegion() instanceof CustomFoldRegion) {
+        if (fragment.getFoldRegion() instanceof CustomFoldRegion) {
           return new Point2D.Double(fragment.getStartX(), y);
         }
         int startVisualColumn = fragment.getStartVisualColumn();
@@ -515,14 +515,14 @@ final class EditorCoordinateMapper {
     boolean firstFragment = true;
     for (var fragment : createVisualLineFragmentsIterator(document, offset, beforeSoftWrap, true)) {
       if (firstFragment && offset == visualLineStartOffset && !leanTowardsLargerOffsets ||
-          fragment.getCurrentFoldRegion() instanceof CustomFoldRegion) {
+          fragment.getFoldRegion() instanceof CustomFoldRegion) {
         x = fragment.getStartX();
         break;
       }
       firstFragment = false;
       int minOffset = fragment.getMinOffset();
       int maxOffset = fragment.getMaxOffset();
-      if (fragment.getCurrentInlay() == null &&
+      if (fragment.getInlay() == null &&
           (offset > minOffset && offset < maxOffset ||
           offset == minOffset && leanTowardsLargerOffsets ||
           offset == maxOffset && !leanTowardsLargerOffsets)) {

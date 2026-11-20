@@ -194,7 +194,7 @@ public final class EditorCaretPainter {
           Color withedOpacity = withOpacity(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK, opacity);
           int targetVisualColumn = caret.getVisualPosition().column - (isRtl ? 1 : 0);
           for (var fragment : VisualLineFragmentsIterator.create(myView, myDocument, caret.getVisualLineStart(), false, false)) {
-            if (fragment.getCurrentInlay() != null) {
+            if (fragment.getInlay() != null) {
               continue;
             }
             int startVisualColumn = fragment.getStartVisualColumn();

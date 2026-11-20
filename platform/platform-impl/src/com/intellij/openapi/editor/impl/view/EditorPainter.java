@@ -646,7 +646,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (!collectBackgrounds) {
               return;
             }
-            FoldRegion foldRegion = fragment.getCurrentFoldRegion();
+            FoldRegion foldRegion = fragment.getFoldRegion();
             TextAttributes foldRegionInnerAttributes =
               foldRegion == null || !myRegistry.isFoldingHighlighted() ? null : getInnerHighlighterAttributes(foldRegion);
             if (foldRegionInnerAttributes == null ||
@@ -656,7 +656,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (dryRun) {
               return;
             }
-            Inlay<?> inlay = fragment.getCurrentInlay();
+            Inlay<?> inlay = fragment.getInlay();
             if (inlay != null) {
               TextAttributes attrs = attributes.clone();
               myTextDrawingTasks.add(g -> {
@@ -1631,7 +1631,7 @@ public final class EditorPainter implements TextDrawingCallback {
           int maxOffset = fragment.getMaxOffset();
           if (startOffset == endOffset) {
             lastX = fragment.getEndX();
-            Inlay<?> inlay = fragment.getCurrentInlay();
+            Inlay<?> inlay = fragment.getInlay();
             if (inlay != null) {
               if (startOffset == minOffset && inlay.isRelatedToPrecedingText()) {
                 float x = fragment.getStartX();
@@ -1848,7 +1848,7 @@ public final class EditorPainter implements TextDrawingCallback {
             }
           }
         }
-        FoldRegion foldRegion = fragment.getCurrentFoldRegion();
+        FoldRegion foldRegion = fragment.getFoldRegion();
         if (foldRegion == null) {
           if (start != prevEndOffset) {
             it = new IterationState(myEditor, start, fragment.isRtl() ? offset : visualLineEndOffset,
