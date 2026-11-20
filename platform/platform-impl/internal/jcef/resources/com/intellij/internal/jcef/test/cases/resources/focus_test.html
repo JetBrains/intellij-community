@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JCEF Focus Test</title>
+  <style>
+    body {
+      margin: 16px;
+      background: #f1f1f1;
+      color: #222;
+      color-scheme: light;
+      font: 14px sans-serif;
+    }
+
+    #focusStatus {
+      font: bold 18px monospace;
+    }
+
+    #focusStatus[data-focused="true"] { color: #188038; }
+    #focusStatus[data-focused="false"] { color: #b3261e; }
+
+    #stage {
+      position: relative;
+      width: 320px;
+      height: 180px;
+      margin-top: 12px;
+      border: 1px solid #777;
+      background-color: #fff;
+      background-image: linear-gradient(#ddd 1px, transparent 1px), linear-gradient(90deg, #ddd 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    #marker {
+      position: absolute;
+      top: 72px;
+      left: 144px;
+      width: 32px;
+      height: 32px;
+      background: #3574f0;
+    }
+
+    #eventLog {
+      max-height: 180px;
+      overflow: auto;
+      white-space: pre-wrap;
+      font: 12px/1.4 monospace;
+    }
+  </style>
+</head>
+<body>
+<div id="focusStatus" data-focused="false">document.hasFocus: false</div>
+<p>Click an empty area, then press W, A, S, or D.</p>
+<button id="copy">Copy test text</button>
+<span id="copyStatus"></span>
+<div id="stage" aria-label="Use WASD to move the blue square">
+  <div id="marker"></div>
+</div>
+<h3>Page events</h3>
+<pre id="eventLog"></pre>
+
+<script>
+  const focusStatus = document.getElementById('focusStatus');
+  const copyStatus = document.getElementById('copyStatus');
+  const eventLog = document.getElementById('eventLog');
+  const stage = document.getElementById('stage');
+  const marker = document.getElementById('marker');
+  const position = {x: 144, y: 72};
+
+  function log(message) {
+    eventLog.textContent += `${new Date().toLocaleTimeString()} ${message}\n`;
+    eventLog.scrollTop = eventLog.scrollHeight;
+  }
+
+  function updateFocus() {
+    const focused = document.hasFocus();
+    focusStatus.dataset.focused = focused;
+    focusStatus.textContent = `document.hasFocus: ${focused}`;
+  }
+
+  window.addEventListener('focus', () => {
+    log('window focus');
+    updateFocus();
+  });
+  window.addEventListener('blur', () => {
+    log('window blur');
+    updateFocus();
+  });
+  document.addEventListener('pointerdown', event => log(`pointerdown: ${event.target.tagName}`));
+
+  window.addEventListener('keydown', event => {
+    const key = event.key.toLowerCase();
+    log(`keydown: ${event.key}`);
+    const step = 10;
+    if (key === 'w') position.y -= step;
+    else if (key === 's') position.y += step;
+    else if (key === 'a') position.x -= step;
+    else if (key === 'd') position.x += step;
+    else return;
+
+    event.preventDefault();
+    position.x = Math.max(0, Math.min(stage.clientWidth - marker.offsetWidth, position.x));
+    position.y = Math.max(0, Math.min(stage.clientHeight - marker.offsetHeight, position.y));
+    marker.style.left = `${position.x}px`;
+    marker.style.top = `${position.y}px`;
+  });
+
+  document.getElementById('copy').addEventListener('click', () => {
+    if (!navigator.clipboard) {
+      copyStatus.textContent = 'Clipboard API is not available.';
+      log('clipboard API is not available');
+      return;
+    }
+    navigator.clipboard.writeText('JCEF focus demo clipboard text').then(() => {
+      copyStatus.textContent = 'Copied.';
+      log('clipboard write succeeded');
+    }).catch(error => {
+      copyStatus.textContent = `Copy failed: ${error.message}`;
+      log(`clipboard write failed: ${error.message}`);
+    });
+  });
+
+  setInterval(updateFocus, 100);
+  updateFocus();
+</script>
+</body>
+</html>

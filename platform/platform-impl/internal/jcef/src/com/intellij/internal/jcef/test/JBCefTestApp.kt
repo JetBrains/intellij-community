@@ -8,6 +8,7 @@ import com.intellij.internal.jcef.test.cases.BadSslCertificateTest
 import com.intellij.internal.jcef.test.cases.ClipboardTest
 import com.intellij.internal.jcef.test.cases.DetailedFrame
 import com.intellij.internal.jcef.test.cases.DevToolsTest
+import com.intellij.internal.jcef.test.cases.FocusTest
 import com.intellij.internal.jcef.test.cases.FullscreenDemo
 import com.intellij.internal.jcef.test.cases.KeyboardEvents
 import com.intellij.internal.jcef.test.cases.MessageRouterTests
@@ -124,6 +125,7 @@ internal class JBCefTestAppFrame : JFrame() {
     AggressiveRouterTest(),
     ScrollbarsDemo(),
     FullscreenDemo(),
+    FocusTest(),
     DevToolsTest(),
     BadSslCertificateTest())
 
