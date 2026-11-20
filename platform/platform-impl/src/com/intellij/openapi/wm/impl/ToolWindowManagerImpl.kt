@@ -1620,12 +1620,20 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     fireStateChanged(ToolWindowManagerEventType.UnregisterToolWindow, toolWindow)
   }
 
-  internal fun doUnregisterToolWindow(id: String) {
+  /**
+   * Unregisters the tool window [id] that [registerForFrameGuest] registered. Its activation action stays: the action is one
+   * for the application, and a plugin can declare it. The close of a project in a frame of its own keeps the action too.
+   */
+  internal fun unregisterForFrameGuest(id: String) {
+    doUnregisterToolWindow(id, keepsActivationAction = true)
+  }
+
+  internal fun doUnregisterToolWindow(id: String, keepsActivationAction: Boolean = false) {
     LOG.debug { "unregisterToolWindow($id)" }
 
     ThreadingAssertions.assertEventDispatchThread()
     // the activation action of a presented tool window belongs to the tool window of the frame owner
-    if (idToEntry.get(id)?.toolWindow?.isPresented != true) {
+    if (!keepsActivationAction && idToEntry.get(id)?.toolWindow?.isPresented != true) {
       ActivateToolWindowAction.Manager.unregister(id)
     }
 

@@ -190,7 +190,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     val presenting = slot.presenting
     if (slot.isPlaceholder && presenting.contentManagerIfCreated?.isEmpty != false) {
       unbind(slot)
-      manager.doUnregisterToolWindow(presenting.id)
+      manager.unregisterForFrameGuest(presenting.id)
       return
     }
 
@@ -250,7 +250,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     placeholderWithOwnerContent(id)?.let { return it }
 
     unbind(slot)
-    manager.doUnregisterToolWindow(id)
+    manager.unregisterForFrameGuest(id)
     val entry = try {
       register()
     }

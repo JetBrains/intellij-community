@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -275,6 +276,30 @@ internal class FrameGuestToolWindowPresentationTest {
     assertThat(presenting.stripeButton).isNotNull()
     assertThat(presenting.toolWindow.isVisible).describedAs("the layout of the frame owner keeps the visible state").isTrue()
     assertThat(secondToolWindow.isVisible).isTrue()
+  }
+
+  @Test
+  fun `the tool window that presents only frame guests leaves its activation action when it leaves`() = onEdt {
+    val managers = createManagers()
+    val declared = declareActivationAction()
+    managers.register(first)
+
+    managers.of(first).doUnregisterToolWindow(ID)
+
+    assertThat(managers.owner.getEntry(ID)).isNull()
+    assertThat(ActionManager.getInstance().getAction(activationActionId())).describedAs("the action is one for the application").isSameAs(declared)
+  }
+
+  @Test
+  fun `the tool window of the frame owner keeps the activation action of the tool window that a frame guest registered first`() = onEdt {
+    val managers = createManagers()
+    val declared = declareActivationAction()
+    val placeholder = managers.register(first).presentedBy
+
+    val own = managers.owner.registerToolWindow(task(), buttonManager(managers.owner)).toolWindow
+
+    assertThat(own).isNotSameAs(placeholder)
+    assertThat(ActionManager.getInstance().getAction(activationActionId())).isSameAs(declared)
   }
 
   @Test
@@ -980,6 +1005,13 @@ internal class FrameGuestToolWindowPresentationTest {
     }
   }
 
+  /** Registers the activation action of the test tool window before the tool window, as a plugin that declares the action does. */
+  private fun declareActivationAction(): AnAction {
+    val action = emptyStateAction()
+    ActionManager.getInstance().registerAction(activationActionId(), action)
+    return action
+  }
+
   /** The event of an activation action that the user starts while [project] is the project of the data context. */
   private fun activationEvent(project: Project): AnActionEvent {
     val context = DataContext { dataId -> if (CommonDataKeys.PROJECT.`is`(dataId)) project else null }
@@ -1063,9 +1095,8 @@ internal class FrameGuestToolWindowPresentationTest {
     createdManagers.add(manager)
     Disposer.register(disposable) {
       val actionManager = ActionManager.getInstance()
-      val actionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(ID)
-      if (actionManager.getAction(actionId) != null) {
-        actionManager.unregisterAction(actionId)
+      if (actionManager.getAction(activationActionId()) != null) {
+        actionManager.unregisterAction(activationActionId())
       }
     }
     return manager
@@ -1103,6 +1134,8 @@ private val createdContent = ArrayList<String>()
 
 /** The name of each project whose manager got a request to show a balloon in its frame. */
 private val shownBalloons = ArrayList<String>()
+
+private fun activationActionId(): String = ActivateToolWindowAction.Manager.getActionIdForToolWindow(ID)
 
 private fun buttonManager(manager: ToolWindowManagerImpl): ToolWindowButtonManager {
   return manager.getButtonManager(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
