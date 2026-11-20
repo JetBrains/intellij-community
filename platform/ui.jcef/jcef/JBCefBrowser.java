@@ -8,10 +8,13 @@ import com.intellij.ui.jcef.menu.CefContextMenuRunner;
 import com.intellij.util.messages.MessageBusConnection;
 import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
+import org.cef.browser.CefFrame;
 import org.cef.handler.CefDisplayHandler;
 import org.cef.handler.CefDisplayHandlerAdapter;
 import org.cef.handler.CefFocusHandler;
 import org.cef.handler.CefFocusHandlerAdapter;
+import org.cef.handler.CefLoadHandler;
+import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.misc.CefLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,6 +126,19 @@ public class JBCefBrowser extends JBCefBrowserBase {
       CefContextMenuRunner contextMenuRunner = new CefContextMenuRunner(getClipboardBridge());
       myCefClient.addContextMenuHandler(contextMenuRunner, myCefBrowser);
 
+      myCefClient.addLoadHandler(myCefLoadHandler = new CefLoadHandlerAdapter() {
+        @Override
+        public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+          if (!frame.isMain()) return;
+
+          SwingUtilities.invokeLater(() -> {
+            if (!isDisposed() && myCefBrowser.getUIComponent().isFocusOwner()) {
+              myCefBrowser.setFocus(true);
+            }
+          });
+        }
+      }, myCefBrowser);
+
       myCefBrowser.getUIComponent().addFocusListener(new FocusAdapter() {
         @Override
         public void focusGained(FocusEvent e) {
@@ -146,6 +162,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
   private final @NotNull JPanel myComponent;
   private final @NotNull CefFocusHandler myCefFocusHandler;
   private final @NotNull CefDisplayHandler myCefDisplayHandler;
+  private @Nullable CefLoadHandler myCefLoadHandler;
   private volatile boolean myFirstShow = true;
   private MessageBusConnection myMsgBusConnection;
   private @Nullable JFrame myFullscreenFrame;
@@ -412,6 +429,9 @@ public class JBCefBrowser extends JBCefBrowserBase {
     super.dispose(() -> {
       myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
       myCefClient.removeDisplayHandler(myCefDisplayHandler, myCefBrowser);
+      if (myCefLoadHandler != null) {
+        myCefClient.removeLoadHandler(myCefLoadHandler, myCefBrowser);
+      }
     });
   }
 
