@@ -231,6 +231,11 @@ internal class PMarkerNodeHistory<T : Any> {
    */
   @Synchronized
   fun put(version: PMarkerNodeVersion, value: T) {
+    val published = latest
+    if (published != null && published.branch === version.branch && published.get() === value) {
+      check(published.number <= version.number)
+      return
+    }
     val reference = HistoryReference(value, this, references, version)
     val histories = branches
     val indexed = singleBranch
