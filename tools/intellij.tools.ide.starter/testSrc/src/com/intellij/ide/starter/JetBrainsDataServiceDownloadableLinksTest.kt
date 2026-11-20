@@ -50,18 +50,6 @@ class JetBrainsDataServiceDownloadableLinksTest {
   }
 
   @Test
-  fun `get latest preview releases of Fleet`() {
-    // TODO: if/when Fleet will make a public release - switch the code to use release channel
-    val latestReleases = JetBrainsDataServiceClient
-                           .getReleases(ProductInfoRequestParameters(type = "FL", snapshot = "preview"))
-                           .values
-                           .firstOrNull() ?: listOf()
-
-    latestReleases.shouldNotBeEmpty()
-    latestReleases.verifyTheLatestRelease()
-  }
-
-  @Test
   fun `get DotTrace releases`() {
     val latestReleases = JetBrainsDataServiceClient
                            .getReleases(ProductInfoRequestParameters(type = "DP", snapshot = "release"))
