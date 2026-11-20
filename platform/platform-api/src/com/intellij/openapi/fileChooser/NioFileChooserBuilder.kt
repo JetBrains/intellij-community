@@ -16,7 +16,8 @@ import java.nio.file.Path
  * Builds and shows a file or folder selection dialogue that works with [Path] instead of [com.intellij.openapi.vfs.VirtualFile].
  * Internally creates `UniversalFileChooser` instead of legacy `FileChooserDialogImpl`.
  *
- * The builder starts with the options of [FileChooserDescriptorFactory.singleFile].
+ * The no-argument constructor starts with the options of [FileChooserDescriptorFactory.singleFile].
+ * The constructor with a [FileChooserDescriptor] starts with a copy of the options of that descriptor.
  * Change the options only with the `with*` methods.
  * These methods mirror the methods of [FileChooserDescriptor] that do not use [com.intellij.openapi.vfs.VirtualFile].
  *
@@ -32,8 +33,22 @@ import java.nio.file.Path
 @Suppress("unused")
 @ApiStatus.Experimental
 class NioFileChooserBuilder {
-  private var descriptor: FileChooserDescriptor = FileChooserDescriptorFactory.singleFile()
+  private var descriptor: FileChooserDescriptor
   private var pathValidator: ThrowableConsumer<List<Path>, Exception>? = null
+
+  /** Creates a builder with the options of [FileChooserDescriptorFactory.singleFile]. */
+  constructor() {
+    descriptor = FileChooserDescriptorFactory.singleFile()
+  }
+
+  /**
+   * Creates a builder with a copy of the options of [descriptor].
+   * The builder does not change [descriptor].
+   * The copy keeps the overridden methods of [descriptor], for example [FileChooserDescriptor.validateSelectedFiles].
+   */
+  constructor(descriptor: FileChooserDescriptor) {
+    this.descriptor = FileChooserDescriptor(descriptor)
+  }
 
   /** @see FileChooserDescriptor.isChooseFiles */
   fun withChooseFiles(chooseFiles: Boolean): NioFileChooserBuilder = withKind(chooseFiles = chooseFiles)

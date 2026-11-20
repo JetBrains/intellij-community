@@ -161,6 +161,7 @@ a:com.intellij.openapi.fileChooser.FileChooserFactory
 - *:createNioFileChooser(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,java.awt.Component):com.intellij.openapi.fileChooser.NioFileChooserDialog
 *f:com.intellij.openapi.fileChooser.NioFileChooserBuilder
 - <init>():V
+- <init>(com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - f:chooseFile(com.intellij.openapi.project.Project,java.nio.file.Path):java.nio.file.Path
 - f:chooseFile(com.intellij.openapi.project.Project,java.nio.file.Path,java.awt.Component):java.nio.file.Path
 - bs:chooseFile$default(com.intellij.openapi.fileChooser.NioFileChooserBuilder,com.intellij.openapi.project.Project,java.nio.file.Path,java.awt.Component,I,java.lang.Object):java.nio.file.Path
