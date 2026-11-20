@@ -34,11 +34,14 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Shows the notifications of the tool windows of [manager]. Each function takes the id of the tool window that shows
+ * the notification, see [resolveNotificationTarget]. The manager resolves the id before the call.
+ */
 internal class ToolWindowManagerNotifications(
   private val manager: ToolWindowManagerImpl,
 ) {
-  fun canShowNotification(requestedId: String): Boolean {
-    val toolWindowId = resolveNotificationTarget(requestedId)
+  fun canShowNotification(toolWindowId: String): Boolean {
     val readOnlyWindowInfo = manager.idToEntry[toolWindowId]?.readOnlyWindowInfo
     val anchor = readOnlyWindowInfo?.anchor ?: return false
     val isSplit = readOnlyWindowInfo.isSplit
@@ -47,8 +50,7 @@ internal class ToolWindowManagerNotifications(
     } != null
   }
 
-  fun notifyByBalloon(requestedOptions: ToolWindowBalloonShowOptions) {
-    val options = requestedOptions.copy(toolWindowId = resolveNotificationTarget(requestedOptions.toolWindowId))
+  fun notifyByBalloon(options: ToolWindowBalloonShowOptions) {
     if (manager.isNewUi) {
       notifySquareButtonByBalloon(options)
       return
@@ -121,8 +123,7 @@ internal class ToolWindowManagerNotifications(
     }
   }
 
-  fun getToolWindowButton(requestedId: String): JComponent? {
-    val toolWindowId = resolveNotificationTarget(requestedId)
+  fun getToolWindowButton(toolWindowId: String): JComponent? {
     val entry = manager.idToEntry[toolWindowId] ?: return null
     return findBallonAlignment(entry, toolWindowId).first
   }
@@ -133,14 +134,14 @@ internal class ToolWindowManagerNotifications(
     }
   }
 
-  fun getToolWindowBalloon(id: String): Balloon? = manager.idToEntry[resolveNotificationTarget(id)]?.balloon
+  fun getToolWindowBalloon(id: String): Balloon? = manager.idToEntry[id]?.balloon
 
   /**
    * Returns the tool window that shows the notifications for [toolWindowId].
    * When `run.toolwindow.merge.debug` is on, the Debug tool window is not registered,
    * and the Run tool window shows the debugger notifications.
    */
-  private fun resolveNotificationTarget(toolWindowId: String): String {
+  fun resolveNotificationTarget(toolWindowId: String): String {
     if (toolWindowId == ToolWindowId.DEBUG && Registry.`is`("run.toolwindow.merge.debug", false)) {
       return ToolWindowId.RUN
     }

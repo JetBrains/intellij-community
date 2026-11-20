@@ -1950,28 +1950,32 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     get() = IdeFocusManager.getGlobalInstance()
 
   override fun canShowNotification(toolWindowId: String): Boolean {
+    val targetId = notifications.resolveNotificationTarget(toolWindowId)
     var canFrameOwnerShow = false
-    if (forwardToFrameOwner(toolWindowId) { canFrameOwnerShow = canShowNotification(toolWindowId) }) {
+    if (forwardToFrameOwner(targetId) { canFrameOwnerShow = canShowNotification(targetId) }) {
       return canFrameOwnerShow
     }
-    return notifications.canShowNotification(toolWindowId)
+    return notifications.canShowNotification(targetId)
   }
 
   override fun notifyByBalloon(options: ToolWindowBalloonShowOptions) {
+    // The target comes first: a frame guest can have the target and no tool window with the requested id.
+    val target = options.copy(toolWindowId = notifications.resolveNotificationTarget(options.toolWindowId))
     // The frame owner has the stripe button and the pane of a presented tool window. The pane of a frame guest is in no frame,
     // so a balloon there shows nothing to the user.
-    if (forwardToFrameOwner(options.toolWindowId) { notifyByBalloon(options) }) {
+    if (forwardToFrameOwner(target.toolWindowId) { notifyByBalloon(target) }) {
       return
     }
-    notifications.notifyByBalloon(options)
+    notifications.notifyByBalloon(target)
   }
 
   fun getToolWindowButton(toolWindowId: String): JComponent? {
+    val targetId = notifications.resolveNotificationTarget(toolWindowId)
     var frameOwnerButton: JComponent? = null
-    if (forwardToFrameOwner(toolWindowId) { frameOwnerButton = getToolWindowButton(toolWindowId) }) {
+    if (forwardToFrameOwner(targetId) { frameOwnerButton = getToolWindowButton(targetId) }) {
       return frameOwnerButton
     }
-    return notifications.getToolWindowButton(toolWindowId)
+    return notifications.getToolWindowButton(targetId)
   }
 
   @RequiresEdt
@@ -1980,11 +1984,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   override fun getToolWindowBalloon(id: String): Balloon? {
+    val targetId = notifications.resolveNotificationTarget(id)
     var frameOwnerBalloon: Balloon? = null
-    if (forwardToFrameOwner(id) { frameOwnerBalloon = getToolWindowBalloon(id) }) {
+    if (forwardToFrameOwner(targetId) { frameOwnerBalloon = getToolWindowBalloon(targetId) }) {
       return frameOwnerBalloon
     }
-    return notifications.getToolWindowBalloon(id)
+    return notifications.getToolWindowBalloon(targetId)
   }
 
   override val isEditorComponentActive: Boolean

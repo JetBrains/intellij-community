@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowBalloonShowOptions
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
@@ -695,6 +696,25 @@ internal class FrameGuestToolWindowPresentationTest {
     managers.of(first).notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = ID, type = MessageType.INFO, htmlBody = "No results"))
 
     assertThat(shownBalloons).describedAs("the pane of a frame guest is in no frame").containsExactly(owner.name)
+  }
+
+  @Test
+  @RegistryKey(key = "run.toolwindow.merge.debug", value = "true")
+  fun `a debugger notification of a frame guest goes to the Run tool window of the frame owner`() = onEdt {
+    val managers = createManagers()
+    val actionManager = ActionManager.getInstance()
+    val runActionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(ToolWindowId.RUN)
+    if (actionManager.getAction(runActionId) == null) {
+      // no plugin of the test declares the action, so the registration of the tool window creates it
+      Disposer.register(disposable) { actionManager.unregisterAction(runActionId) }
+    }
+    // as JetBrains Light: the Run tool window shows the debugger, and no project has a Debug tool window
+    val run = managers.of(first).registerToolWindow(RegisterToolWindowTask(id = ToolWindowId.RUN, anchor = ToolWindowAnchor.BOTTOM))
+    assertThat((run as ToolWindowImpl).isPresented).isTrue()
+
+    managers.of(first).notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = ToolWindowId.DEBUG, type = MessageType.INFO, htmlBody = "Paused"))
+
+    assertThat(shownBalloons).describedAs("the frame owner has the Run tool window that the user sees").containsExactly(owner.name)
   }
 
   @Test
