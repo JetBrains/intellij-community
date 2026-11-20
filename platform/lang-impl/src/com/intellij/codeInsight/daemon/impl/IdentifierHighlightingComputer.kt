@@ -11,6 +11,8 @@ import com.intellij.codeInsight.highlighting.getUsageRanges
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindManagerImpl
+import com.intellij.injected.editor.DocumentWindow
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.inlinePrompt.isInlinePromptShown
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
@@ -41,16 +43,18 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Computes identifier highlighting ranges by doing find usages/calling [com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase.computeUsages]
- * @param myPsiFile may be injected fragment, in which case the `editor` must be corresponding injected editor and  `visibleRange` must have consistent offsets inside the injected document.
- * In both cases, [computeRanges] will produce and apply HighlightInfos to the host file.
+ * [myPsiFile] and [myEditor] can describe an injected fragment.
+ * The caret offset, visible range, and result use offsets in the host document.
  */
 @ApiStatus.Internal
 class IdentifierHighlightingComputer(
   private val myPsiFile: PsiFile,
   private val myEditor: Editor,
-  private val myVisibleRange: ProperTextRange,
-  private val myCaretOffset: Int,
+  private val myHostVisibleRange: ProperTextRange,
+  private val myHostCaretOffset: Int,
 ) {
+  private val myDocumentWindow: DocumentWindow? = myEditor.document as? DocumentWindow
+  private val myCaretOffset: Int = myDocumentWindow?.hostToInjected(myHostCaretOffset) ?: myHostCaretOffset
   private val myEnabled: Boolean
 
   /** Computing this editor also caches injected documents for the host token. */
@@ -71,7 +75,7 @@ class IdentifierHighlightingComputer(
     ThreadingAssertions.assertBackgroundThread()
     ThreadingAssertions.assertReadAccess()
     val inlinePromptShown = isInlinePromptShown(myEditor)
-    if (myCaretOffset < 0 || !myEnabled || inlinePromptShown) {
+    if (myHostCaretOffset < 0 || !myEnabled || inlinePromptShown) {
       if (LOG.isDebugEnabled) {
         val uncommited = PsiDocumentManager.getInstance(myPsiFile.project).isUncommited(myEditor.document)
         LOG.debug("IdentifierHighlightingComputer.computeRanges empty $myCaretOffset $myEnabled $inlinePromptShown $uncommited")
@@ -81,7 +85,10 @@ class IdentifierHighlightingComputer(
     val myInfos: MutableCollection<IdentifierOccurrence> = LinkedHashSet()
     val myTargets: MutableCollection<Segment> = LinkedHashSet()
 
-    val highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler<PsiElement?>(myEditor, myPsiFile, myVisibleRange)
+    val visibleRange = myDocumentWindow?.let {
+      ProperTextRange(it.hostToInjected(myHostVisibleRange.startOffset), it.hostToInjected(myHostVisibleRange.endOffset))
+    } ?: myHostVisibleRange
+    val highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler<PsiElement?>(myEditor, myPsiFile, visibleRange)
     val runFindUsages: Boolean
     if (highlightUsagesHandler != null) {
       val targets = highlightUsagesHandler.getTargets()
@@ -106,7 +113,7 @@ class IdentifierHighlightingComputer(
       })
       val target: PsiElement? = findTarget(myEditor, myPsiFile, myCaretOffset)
       if (target != null && isCacheableTarget(target)) {
-        myTargets.add(target.getTextRange())
+        myTargets.add(InjectedLanguageManager.getInstance(myPsiFile.project).injectedToHost(target, target.textRange))
       }
       runFindUsages = highlightUsagesHandler.highlightReferences()
     }
@@ -129,19 +136,24 @@ class IdentifierHighlightingComputer(
         // We can't show a warning because this usage search is triggered automatically and user does not control it.
       }
     }
-    if (!myTargets.any { it.contains(myCaretOffset) }) {
+    if (myDocumentWindow != null) {
+      myTargets.removeIf { !myDocumentWindow.containsRange(it.startOffset, it.endOffset) }
+    }
+    if (!myTargets.any { it.contains(myHostCaretOffset) }) {
       // no target contains our real caret offset, because there's nothing interesting at that offset;
       // instead, computed targets are slightly off, typically at the previous/next caret offset, e.g. when we are standing at the space char, and the previous char is ')'
       // in this case, we should not store these adjusted targets for this offset, because
       // the next time whenever caret happened to be inside one of those targets it would not mean we should use this result computed for this offset because it would be incorrect
       myTargets.clear()
-      myTargets.add(TextRange(myCaretOffset, myCaretOffset))
+      myTargets.add(TextRange(myHostCaretOffset, myHostCaretOffset))
     }
     val result = IdentifierHighlightingResult(myInfos, myTargets)
     if (LOG.isDebugEnabled) {
       LOG.debug("IdentifierHighlightingComputer.computeRanges($myPsiFile, $myCaretOffset) = $result")
     }
-    assert(IdentifierHighlightingManagerImpl.containsTargetOffset(result, myCaretOffset)) { "$result, caret offset:$myCaretOffset" }
+    assert(IdentifierHighlightingManagerImpl.containsTargetOffset(result, myHostCaretOffset)) {
+      "$result, host caret offset:$myHostCaretOffset"
+    }
     return result
   }
 
@@ -154,10 +166,10 @@ class IdentifierHighlightingComputer(
   ) {
     val contextElement = myPsiFile.findElementAt(TargetElementUtil.adjustOffset(myPsiFile, myEditor.getDocument(), myCaretOffset))
     if (contextElement != null) {
-      if (isCacheableTarget(contextElement)) {
-        myTargets.add(contextElement.getTextRange())
-      }
       val manager = InjectedLanguageManager.getInstance(myPsiFile.getProject())
+      if (isCacheableTarget(contextElement)) {
+        myTargets.add(manager.injectedToHost(contextElement, contextElement.textRange))
+      }
       for (range in CodeBlockSupportHandler.findMarkersRanges(contextElement)) {
         myMarkupInfos.add(IdentifierOccurrence(manager.injectedToHost(contextElement, range), HighlightInfoType.ELEMENT_UNDER_CARET_STRUCTURAL))
       }
@@ -290,7 +302,7 @@ class IdentifierHighlightingComputer(
     if (injectedFile == null || injectedFile === myPsiFile) {
       return listOf()
     }
-    val injectedOffset = injectedEditor.getCaretModel().offset
+    val injectedOffset = (injectedEditor as? EditorWindow)?.document?.hostToInjected(myHostCaretOffset) ?: injectedEditor.caretModel.offset
     return targetSymbols(injectedFile, injectedOffset)
   }
 

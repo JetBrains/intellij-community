@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactory
 import com.intellij.idea.TestFor
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
@@ -17,9 +18,11 @@ import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.suspendUntilIndexesAreReady
@@ -36,6 +39,8 @@ import com.intellij.util.Consumer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -88,6 +93,31 @@ internal class InjectedIdentifierHighlightingCacheTest {
     assertEquals(emptyList<TextRange>(), markup(editor, text.indexOf("int first")))
     assertEquals(ranges(text, "first"), markup(editor, text.indexOf("first") + 2))
     assertEquals(ranges(text, "second"), markup(editor, text.indexOf("second") + 2))
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-207019"])
+  fun `injected editor uses host ranges for caching`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val hostEditor = configureInjection()
+    val text = readAction { hostEditor.document.text }
+    val offset = text.indexOf("first", text.indexOf("int sum")) + 1
+    val project = projectFixture.get()
+    val editor = readAction {
+      val file = requireNotNull(PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.document))
+      assertInstanceOf(EditorWindow::class.java, InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, file, offset))
+    }
+    val manager = IdentifierHighlightingManager.getInstance(project)
+    val visibleRange = ProperTextRange(0, text.length)
+    withContext(Dispatchers.EDT) {
+      hostEditor.caretModel.moveToOffset(offset)
+    }
+    val result = manager.getMarkupData(editor, visibleRange)
+    assertEquals(ranges(text, "first"), readAction { result.occurrences.map { TextRange.create(it.range) }.sortedBy { it.startOffset } })
+
+    withContext(Dispatchers.EDT) {
+      hostEditor.caretModel.moveToOffset(offset + 1)
+    }
+    assertSame(result, manager.getMarkupData(editor, visibleRange))
   }
 
   @Test

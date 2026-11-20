@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface IdentifierHighlightingAccessor {
+  /** [visibleRange], [offset], and the result use offsets in the host document. */
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   suspend fun getMarkupData(psiFile: PsiFile, editor: Editor, visibleRange: ProperTextRange, offset: Int): IdentifierHighlightingResult
 

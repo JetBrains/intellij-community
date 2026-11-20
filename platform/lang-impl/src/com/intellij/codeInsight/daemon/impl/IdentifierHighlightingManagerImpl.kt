@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManagerImpl.Co
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
@@ -33,7 +34,6 @@ import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
-import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.Processor
@@ -136,13 +136,14 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
   override suspend fun getMarkupData(editor: Editor, visibleRange: ProperTextRange): IdentifierHighlightingResult {
     ThreadingAssertions.assertBackgroundThread()
     val start = System.currentTimeMillis()
-    val document = editor.getDocument()
-    val modStamp = (document as DocumentEx).modificationSequence
+    val hostEditor = (editor as? EditorWindow)?.delegate ?: editor
+    val document = hostEditor.document as DocumentEx
+    val modStamp = document.modificationSequence
     var result: IdentifierHighlightingResult? = null
     var bestMarker: RangeMarker? = null
     var offset = 0
     readAction {
-      offset = editor.getCaretModel().offset
+      offset = hostEditor.caretModel.offset
       // find the range marker marked by "IDENT_MARKUP" user data, the smallest overlapping with "offset"
       // to resolve ambiguities e.g. between exit point highlighting "return xxx" and the reference highlighting "xxx"
       document.processRangeMarkersOverlappingWith(offset, offset, Processor { marker: RangeMarker ->
@@ -181,22 +182,21 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
             if (document.modificationSequence != modStamp) {
               throw ProcessCanceledException(RuntimeException("document changed during RPC call. modStamp before=$modStamp; mod stamp after=${document.modificationSequence}"))
             }
-            val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
             val occurrenceRangeMarkers = ArrayList<RangeMarker>(hostRes.occurrences.size)
             val cache = mutableMapOf<TextRange, RangeMarker>()
             val rangeMarkerOccurrences = hostRes.occurrences.map { o: IdentifierOccurrence ->
-              val marker = createMarker(hostDocument, o.range, cache)
+              val marker = createMarker(document, o.range, cache)
               occurrenceRangeMarkers.add(marker)
               IdentifierOccurrence(marker, o.highlightInfoType)
             }
             val rangeMarkerTargets = hostRes.targets.map { r ->
-              createMarker(hostDocument, r, cache)
+              createMarker(document, r, cache)
             }
             val rangeMarkerResult = IdentifierHighlightingResult(rangeMarkerOccurrences, rangeMarkerTargets)
             for (marker in cache.values) {
               marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
             }
-            val editorResults = ConcurrencyUtil.computeIfAbsent(editor, EDITOR_IDENT_RESULTS) {
+            val editorResults = ConcurrencyUtil.computeIfAbsent(hostEditor, EDITOR_IDENT_RESULTS) {
               ConcurrentCollectionFactory.createConcurrentSet()
             }
             editorResults.add(rangeMarkerResult)
