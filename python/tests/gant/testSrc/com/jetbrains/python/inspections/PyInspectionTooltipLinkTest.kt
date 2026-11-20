@@ -234,7 +234,7 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
       """.trimIndent(),
       "Expected type"
     )
-    assertEquals("Expected type 'int', got '() -> NoReturn' instead", info.description)
+    assertEquals("Expected type 'int', got 'def stop() -> NoReturn' instead", info.description)
     assertTrue("""<a href="#element/typing.NoReturn">NoReturn</a>""" in info.toolTip!!, info.toolTip!!)
     assertResolvesToModuleAttribute("typing.NoReturn")
   }

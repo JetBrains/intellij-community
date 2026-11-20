@@ -1463,7 +1463,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       cir.apply(fCircle)
       cir.apply(fShape)
-      sh.apply(fCircle) # WARNING Expected type '(Shape) -> None', got '(c: Circle) -> None' instead
+      sh.apply(fCircle) # WARNING Expected type '(Shape) -> None', got 'def fCircle(c: Circle) -> None' instead
       sh.apply(fShape)
       """.trimIndent())
 
@@ -1563,14 +1563,14 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       A[int]().foo()
       A[str]().foo()
-      #^^^^^^^^^^^ WARNING Invalid self argument 'A[str]' to method 'A.foo' with type '(x: A[int]) -> None'
+      #^^^^^^^^^^^ WARNING Invalid self argument 'A[str]' to method 'A.foo' with type 'def foo(x: A[int]) -> None'
 
       A[int].bar()
       A[int]().bar()
       A[str].bar()
-      #^^^^^^^^^ WARNING Invalid self argument 'type[A[str]]' to method 'A.bar' with type '(x: type[A[int]]) -> None'
+      #^^^^^^^^^ WARNING Invalid self argument 'type[A[str]]' to method 'A.bar' with type 'def bar(x: type[A[int]]) -> None'
       A[str]().bar()
-      #^^^^^^^^^^^ WARNING Invalid self argument 'type[A[str]]' to method 'A.bar' with type '(x: type[A[int]]) -> None'
+      #^^^^^^^^^^^ WARNING Invalid self argument 'type[A[str]]' to method 'A.bar' with type 'def bar(x: type[A[int]]) -> None'
       """.trimIndent())
 
     @Test
@@ -1588,7 +1588,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       def f(x: A | B, y: A | B | C[str]):
           x.foo()
           y.foo()
-      #   ^^^^^ WARNING Invalid self argument 'C[str]' to method 'C.foo' with type '(self: C[int]) -> None'
+      #   ^^^^^ WARNING Invalid self argument 'C[str]' to method 'C.foo' with type 'def foo(self: C[int]) -> None'
       """.trimIndent())
 
     @Test

@@ -989,7 +989,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           x.foo
 
       expr = f
-      #└ TYPE (x: {foo}) -> None
+      #└ TYPE def f(x: {foo}) -> None
       """.trimIndent())
 
     @Test
@@ -1391,7 +1391,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       def main() -> None:
           assert isinstance(g_b, B)
           expr = g_b
-      #   └ TYPE (() -> None) & B
+      #   └ TYPE (def g_b() -> None) & B
       """.trimIndent())
 
     @Test
@@ -1911,7 +1911,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
               p = "foo"
           x = p.lower()
       expr = f
-      #└ TYPE (p: Unknown) -> None
+      #└ TYPE def f(p: Unknown) -> None
       """.trimIndent())
 
     @Test
@@ -1923,7 +1923,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
                   p.upper()
           p.attr
       expr = patmat
-      #└ TYPE (p: {attr}) -> None
+      #└ TYPE def patmat(p: {attr}) -> None
       """.trimIndent())
 
     @Test
@@ -1933,7 +1933,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           x = p.upper() if isinstance(p, str) else "bar"
           p.attr
       expr = conditional
-      #└ TYPE (p: {attr}) -> None
+      #└ TYPE def conditional(p: {attr}) -> None
       """.trimIndent())
 
     @Test
@@ -2173,7 +2173,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
 
       def func1(val: List[object]):
           expr = is_str_list(val)
-      #       └ TYPE (val: list[object]) -> None FIXME TypeGuard[list[str]]
+      #       └ TYPE def func1(val: list[object]) -> None FIXME TypeGuard[list[str]]
       """.trimIndent())
 
     @Test
@@ -2187,7 +2187,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
 
       def func1(val: List[object]):
           expr = is_str_list(val)
-      #       └ TYPE (val: list[object]) -> None FIXME TypeIs[list[str]]
+      #       └ TYPE def func1(val: list[object]) -> None FIXME TypeIs[list[str]]
       """.trimIndent())
 
     @Test

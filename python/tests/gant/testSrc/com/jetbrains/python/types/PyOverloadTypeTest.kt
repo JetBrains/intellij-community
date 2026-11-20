@@ -332,7 +332,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
 
       A[str]().foo()
       A[float]().foo()
-      #^^^^^^^^^^^^^ WARNING Invalid self argument 'A[float | int]' to method 'A.foo' with type '(self: A[int]) -> None'
+      #^^^^^^^^^^^^^ WARNING Invalid self argument 'A[float | int]' to method 'A.foo' with type 'def foo(self: A[int]) -> None'
       """.trimIndent())
 
     @Test
@@ -370,7 +370,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       upper_first(takes, "")
       lower_first("", takes)
       lower_first(b"", takes)
-      #                ^^^^^ WARNING Expected type '(bytes) -> None' (matched generic type '(T) -> None'), got 'Overload[(x: int) -> None, (x: str) -> None]' instead
+      #                ^^^^^ WARNING Expected type '(bytes) -> None' (matched generic type '(T) -> None'), got 'Overload[def takes(x: int) -> None, def takes(x: str) -> None]' instead
       """.trimIndent())
 
     @Test
@@ -472,22 +472,22 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       @overload
       def foo1() -> Literal[2]:
       #   │     └ ERROR Return type annotations are unsupported in Python 2
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: '() -> Literal[2]'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: 'def foo1() -> Literal[2]'
           pass
 
       @overload
       def foo1() -> bool:
       #   │     └ ERROR Return type annotations are unsupported in Python 2
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: '() -> bool'
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 2 are the same or broaderConflicting signature: '() -> bool'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: 'def foo1() -> bool'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 2 are the same or broaderConflicting signature: 'def foo1() -> bool'
           pass
 
       @overload
       def foo1() -> None:
       #   │     └ ERROR Return type annotations are unsupported in Python 2
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: '() -> None'
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 2 are the same or broaderConflicting signature: '() -> None'
-      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 3 are the same or broaderConflicting signature: '() -> None'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 1 are the same or broaderConflicting signature: 'def foo1() -> None'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 2 are the same or broaderConflicting signature: 'def foo1() -> None'
+      #   ^^^^ WARNING This overload will never be matched as parameter types(s) of overload 3 are the same or broaderConflicting signature: 'def foo1() -> None'
           pass
 
       def foo1()
@@ -773,7 +773,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def foo(x): ...
 
       expr = foo
-      #└ TYPE Overload[(x: int) -> str, (x: str) -> int]
+      #└ TYPE Overload[def foo(x: int) -> str, def foo(x: str) -> int]
       """.trimIndent())
 
     @Test
@@ -781,7 +781,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       from stub import foo
 
       expr = foo
-      #└ TYPE Overload[(x: int) -> str, (x: str) -> int]
+      #└ TYPE Overload[def foo(x: int) -> str, def foo(x: str) -> int]
       """.trimIndent(),
       "stub.pyi" to """
         from typing import overload
@@ -808,7 +808,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
 
       _: Callable[[int], int] = foo  # ok
       _: Callable[[str], str] = foo  # ok
-      _: Callable[[int], str] = foo # WARNING Expected type '(int) -> str', got 'Overload[(x: int) -> int, (x: str) -> str]' instead
+      _: Callable[[int], str] = foo # WARNING Expected type '(int) -> str', got 'Overload[def foo(x: int) -> int, def foo(x: str) -> str]' instead
       """.trimIndent())
 
     @Test
@@ -845,8 +845,8 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       l = [foo]
       l.append(foo)  # ok
       l.append(foo2)  # ok
-      l.append(bar) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str]', got 'Overload[(x: int) -> int, (x: str) -> int]' instead
-      l.append(baz) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str]', got '(x: int) -> int' instead
+      l.append(bar) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str]', got 'Overload[def bar(x: int) -> int, def bar(x: str) -> int]' instead
+      l.append(baz) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str]', got 'def baz(x: int) -> int' instead
       """.trimIndent())
 
     @Test
@@ -900,7 +900,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       c2: ConverterProtocol = IncompatibleCallable() # WARNING Expected type 'ConverterProtocol', got 'IncompatibleCallable' instead
       c3: ConverterProtocol = converter_func  # ok
       c3: ConverterProtocol = bad_converter_func
-      #                       ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'ConverterProtocol', got 'Overload[(x: str) -> str, (x: int) -> int]' instead
+      #                       ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'ConverterProtocol', got 'Overload[def bad_converter_func(x: str) -> str, def bad_converter_func(x: int) -> int]' instead
 
       def t(c: ConverterProtocol):
           l3 = [converter_func]
@@ -940,7 +940,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       l1.append(many_overloads)  # ok
 
       l2 = [many_overloads]
-      l2.append(few_overloads) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str, (x: float | int) -> float | int]', got 'Overload[(x: str) -> str, (x: int) -> int]' instead
+      l2.append(few_overloads) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str, (x: float | int) -> float | int]', got 'Overload[def few_overloads(x: str) -> str, def few_overloads(x: int) -> int]' instead
       """.trimIndent())
 
     @Test
@@ -1009,7 +1009,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def f(x: int) -> Any:
           return x
 
-      cb: Proto = f # WARNING Expected type 'Proto', got '(x: int) -> Any' instead
+      cb: Proto = f # WARNING Expected type 'Proto', got 'def f(x: int) -> Any' instead
       """.trimIndent())
 
     @Test
@@ -1070,7 +1070,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def f(x: Any) -> Any:
           return x
 
-      cb: Proto = f # WARNING Expected type 'Proto', got 'Overload[(x: str) -> str, (x: A) -> A]' instead
+      cb: Proto = f # WARNING Expected type 'Proto', got 'Overload[def f(x: str) -> str, def f(x: A) -> A]' instead
       """.trimIndent())
 
     @Test

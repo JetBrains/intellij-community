@@ -847,7 +847,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `yielded tuple type after the type of the generator function`() = test("""
       def g(line):
-      #   └ TYPE (line: {find, startswith}) -> Generator[tuple[Literal[0], Literal["def"]] | tuple[Unknown, Literal["if"]], Unknown, None]
+      #   └ TYPE def g(line: {find, startswith}) -> Generator[tuple[Literal[0], Literal["def"]] | tuple[Unknown, Literal["if"]], Unknown, None]
           found = line.find(":")
           while -1 < found:
               if line.startswith("def"):
@@ -1396,7 +1396,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 42
       async def asyncusage():
           expr = await asyncgen().__anext__()
-      #       └ TYPE () -> CoroutineType[Unknown, Unknown, None] FIXME int
+      #       └ TYPE def asyncusage() -> CoroutineType[Unknown, Unknown, None] FIXME int
       """.trimIndent())
 
     @TestFor(issues = ["PY-20770"])
@@ -1415,7 +1415,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 42
       async def asyncusage():
           expr = await asyncgen().asend("hello")
-      #       └ TYPE () -> CoroutineType[Unknown, Unknown, None] FIXME int
+      #       └ TYPE def asyncusage() -> CoroutineType[Unknown, Unknown, None] FIXME int
       """.trimIndent())
 
     @TestFor(issues = ["PY-20770"])
@@ -1512,7 +1512,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 10
       async def run():
           expr = [await z for z in [asyncgen().__anext__()]]
-      #       └ TYPE () -> CoroutineType[Unknown, Unknown, None] FIXME list[int]
+      #       └ TYPE def run() -> CoroutineType[Unknown, Unknown, None] FIXME list[int]
       """.trimIndent())
 
     @TestFor(issues = ["PY-20770"])
@@ -1524,7 +1524,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield asyncgen().__anext__()
       async def run():
           expr = [await z async for z in asyncgen2()]
-      #       └ TYPE () -> CoroutineType[Unknown, Unknown, None] FIXME list[int]
+      #       └ TYPE def run() -> CoroutineType[Unknown, Unknown, None] FIXME list[int]
       """.trimIndent())
 
     @TestFor(issues = ["PY-22181"])

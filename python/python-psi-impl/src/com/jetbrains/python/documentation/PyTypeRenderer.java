@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyConcatenateType;
+import com.jetbrains.python.psi.types.PyFunctionType;
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment;
 import com.jetbrains.python.psi.types.PyIntersectionType;
 import com.jetbrains.python.psi.types.PyLiteralType;
@@ -221,6 +222,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     @Override
     protected boolean maxDepthExceeded() {
       return false;
+    }
+
+    @Override
+    public @NotNull HtmlChunk visitPyFunctionType(@NotNull PyFunctionType functionType) {
+      return visitPyCallableType(functionType);
     }
 
     @Override
@@ -800,6 +806,21 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
         .append(styled(kind.name(), PyHighlighter.PY_ANNOTATION)); //NON-NLS
     }
     return result.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyFunctionType(@NotNull PyFunctionType functionType) {
+    var callable = functionType.getCallable();
+    var name = isRenderingFqn() ? callable.getQualifiedName() : null;
+    if (name == null) {
+      name = callable.getName();
+    }
+    if (name == null) {
+      return visitPyCallableType(functionType);
+    }
+    return PyTypeLayout.concat(styled("def ", PyHighlighter.PY_KEYWORD), //NON-NLS
+                               styled(name, PyHighlighter.PY_FUNC_DEFINITION),
+                               visitPyCallableType(functionType));
   }
 
   @Override

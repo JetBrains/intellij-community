@@ -1278,7 +1278,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       #              ^^^ WARNING Default type of TypeVar is not a subtype of the bound
 
       expr = f
-      #└ TYPE [T: int = str, *Ts = *tuple[int], **P = [str]](t: T) -> T
+      #└ TYPE def f[T: int = str, *Ts = *tuple[int], **P = [str]](t: T) -> T
       """.trimIndent())
 
     @Test
@@ -1347,7 +1347,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
       lower_first(1, takes_int)
       lower_first("", takes_object)
-      lower_first("", takes_int) # WARNING Expected type '(str) -> None' (matched generic type '(T) -> None'), got '(x: int) -> None' instead
+      lower_first("", takes_int) # WARNING Expected type '(str) -> None' (matched generic type '(T) -> None'), got 'def takes_int(x: int) -> None' instead
       upper_first(takes_object, "")
       upper_first(takes_int, "") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal[""]' instead
       """.trimIndent())
@@ -1396,7 +1396,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
       lower_first("", takes_str)
       lower_first("", takes_bytes)
-      #               ^^^^^^^^^^^ WARNING Expected type '(str) -> None' (matched generic type '(S ≤: str | bytes) -> None'), got '(x: bytes) -> None' instead
+      #               ^^^^^^^^^^^ WARNING Expected type '(str) -> None' (matched generic type '(S ≤: str | bytes) -> None'), got 'def takes_bytes(x: bytes) -> None' instead
       """.trimIndent())
 
     @Test

@@ -52,7 +52,7 @@ class PyNewTypeTypeTest : PyCodeInsightTestCase() {
       #                        └ ERROR ':' expected
           pass
       expr = foo
-      #└ TYPE (a: UserId) -> str
+      #└ TYPE def foo(a: UserId) -> str
       """.trimIndent())
 
   @Test

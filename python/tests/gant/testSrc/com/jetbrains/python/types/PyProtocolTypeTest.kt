@@ -752,7 +752,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       graph.add_node(node)
       graph.add_node("named", node)
       graph.add_node(plain_node)
-      #              ^^^^^^^^^^ WARNING No overload of 'add_node' matches the arguments. Argument types: ((state: Plain) -> object). Expected one of: [NodeStateT: TypedDictLikeV1 | TypedDictLikeV2](node: (NodeStateT) -> object), [NodeStateT: TypedDictLikeV1 | TypedDictLikeV2](name: str, node: (NodeStateT) -> object)
+      #              ^^^^^^^^^^ WARNING No overload of 'add_node' matches the arguments. Argument types: (def plain_node(state: Plain) -> object). Expected one of: [NodeStateT: TypedDictLikeV1 | TypedDictLikeV2](node: (NodeStateT) -> object), [NodeStateT: TypedDictLikeV1 | TypedDictLikeV2](name: str, node: (NodeStateT) -> object)
       plain_graph = Graph(Plain)
       #                   ^^^^^ WARNING Expected type 'type[StateT ≤: TypedDictLikeV1 | TypedDictLikeV2]', got 'type[Plain]' instead
       """.trimIndent())
@@ -2198,7 +2198,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           pass
 
 
-      v: Proto = f # WARNING Expected type 'Proto', got '(x: int) -> None' instead
+      v: Proto = f # WARNING Expected type 'Proto', got 'def f(x: int) -> None' instead
       """.trimIndent())
 
     @Test

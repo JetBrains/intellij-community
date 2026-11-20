@@ -215,7 +215,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     def callback(p: str, /) -> int : ...
 
     r = f2(callback)
-    #\ TYPE (p: str, /) -> int
+    #\ TYPE def callback(p: str, /) -> int
     """.trimIndent())
 
   @Test
@@ -371,7 +371,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
         pass
 
     res = func(accepts_str)
-    # │        ^^^^^^^^^^^ WARNING Expected type '(T ≤: A) -> None', got '(x: B) -> None' instead
+    # │        ^^^^^^^^^^^ WARNING Expected type '(T ≤: A) -> None', got 'def accepts_str(x: B) -> None' instead
     # └ TYPE Unknown
     """.trimIndent())
 

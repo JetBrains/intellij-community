@@ -180,7 +180,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       def foo(a: MyType1) -> MyType2:
           pass
       expr = foo
-      #└ TYPE (a: MyType1) -> MyType2
+      #└ TYPE def foo(a: MyType1) -> MyType2
       """.trimIndent())
 
     @Test
