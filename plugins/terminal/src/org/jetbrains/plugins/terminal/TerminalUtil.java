@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -13,7 +12,6 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.jediterm.core.input.KeyEvent;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TerminalStarter;
@@ -28,7 +26,6 @@ import org.jetbrains.plugins.terminal.util.TerminalEelProcessesKt;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.StringTokenizer;
 
 public final class TerminalUtil {
 
@@ -69,22 +66,10 @@ public final class TerminalUtil {
     return false;
   }
 
-  /**
-   * Kept as a safe implementation in 2025.3.x.
-   * To be merged into {@link TerminalEelProcessesKt#hasRunningCommands} in 2026.1
-   */
+  /// Replace with [TerminalEelProcessesKt#hasRunningCommands] once it supports Windows.
   private static @Nullable Boolean localProcessHasRunningCommands(@NotNull Process process) throws IllegalStateException {
     if (process instanceof UnixPtyProcess) {
-      int shellPid = (int)process.pid();
-      MultiMap<Integer, Integer> pidToChildPidsMap = MultiMap.create();
-      UnixProcessManager.processPSOutput(UnixProcessManager.getPSCmd(false, false), s -> {
-        StringTokenizer st = new StringTokenizer(s, " ");
-        int parentPid = Integer.parseInt(st.nextToken());
-        int pid = Integer.parseInt(st.nextToken());
-        pidToChildPidsMap.putValue(parentPid, pid);
-        return false;
-      });
-      return !pidToChildPidsMap.get(shellPid).isEmpty();
+      return ProcessHandle.of(process.pid()).map(handle -> handle.children().findAny().isPresent()).orElse(false);
     }
     if (process instanceof WinPtyProcess winPty) {
       try {
