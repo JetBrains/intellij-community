@@ -10,7 +10,9 @@ import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertTextContentIs
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.util.ui.UIUtil
 
 class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   private val FILE_1 = "file1.txt"
@@ -111,6 +113,46 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
     lstm.releaseTrackerFor(document1, requester1)
     assertNull(lstm.getLineStatusTracker(document1))
+  }
+
+  fun `test partial tracker lifecycle - file is deleted`() {
+    createChangelist("Test")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
+    refreshCLM()
+
+    val document = file.document
+    val requester = Any()
+    lstm.requestTrackerFor(document, requester)
+    val tracker = lstm.getLineStatusTracker(document)
+    assertTrue(tracker is PartialLocalLineStatusTracker)
+
+    removeLocalFile(FILE_1)
+    UIUtil.dispatchAllInvocationEvents()
+    assertNull(lstm.getLineStatusTracker(document))
+    assertTrue(tracker!!.isReleased)
+
+    lstm.releaseTrackerFor(document, requester)
+    assertNull(lstm.getLineStatusTracker(document))
+  }
+
+  fun `test simple tracker lifecycle - file is deleted`() {
+    arePartialChangelistsSupported = false
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
+    refreshCLM()
+
+    val document = file.document
+    val requester = Any()
+    lstm.requestTrackerFor(document, requester)
+    val tracker = lstm.getLineStatusTracker(document)
+    assertTrue(tracker is SimpleLocalLineStatusTracker)
+
+    removeLocalFile(FILE_1)
+    UIUtil.dispatchAllInvocationEvents()
+    assertNull(lstm.getLineStatusTracker(document))
+    assertTrue(tracker!!.isReleased)
+
+    lstm.releaseTrackerFor(document, requester)
+    assertNull(lstm.getLineStatusTracker(document))
   }
 
   fun `test partial tracker lifecycle - with partial changes without editor`() {
