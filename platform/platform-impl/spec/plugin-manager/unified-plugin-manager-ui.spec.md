@@ -144,11 +144,14 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
     `default ready sections are hidden`
   )
 
-- Custom repository content must stay hidden for an empty query.
+- The page must show custom repository results and loading states when the query is empty.
 - A custom repository or repository catalog failure must remain visible without a query.
 - An active Repository filter must keep each selected repository visible after a successful empty result.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `session shows repository rows with and without a query`
+  )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
-    `failed custom repository remains visible without a query until retry`;
+    `custom repository shows loading and failure without a query`;
     `repository filter keeps its empty selected repository visible`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (

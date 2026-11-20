@@ -1219,7 +1219,7 @@ internal class UnifiedPluginsPageSessionTest {
     }
 
   @Test
-  fun `session renders and filters ordered repository rows`(): Unit =
+  fun `session shows repository rows with and without a query`(): Unit =
     uiTest {
       val first = CustomPluginRepository("first", PluginSource.LOCAL)
       val second = CustomPluginRepository("second", PluginSource.LOCAL)
@@ -1233,12 +1233,14 @@ internal class UnifiedPluginsPageSessionTest {
       val session = createSession(null, repositoryProvider = repositoryProvider)
       try {
         val content = session.getComponent()
-        session.enableSearch("Plugin")!!.run()
         waitForPluginIds(content, setOf("alpha.plugin", "beta.plugin"))
 
         session.enableSearch("Beta")!!.run()
-
         waitForPluginIds(content, setOf("beta.plugin"))
+
+        session.enableSearch("")!!.run()
+        waitForPluginIds(content, setOf("alpha.plugin", "beta.plugin"))
+
         assertThat(repositoryProvider.repositoryLoadCount).isEqualTo(2)
       }
       finally {
