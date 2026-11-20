@@ -297,7 +297,7 @@ download_and_cache() {
     die "No URL defined for platform: $platform"
   fi
 
-  target_dir="$cache_dir/$TOOL_NAME/$TOOL_VERSION"
+  target_dir="$cache_dir/$TOOL_NAME/$TOOL_VERSION-$platform"
   flag_file="$target_dir/.complete"
 
   # Try to acquire lock
@@ -470,7 +470,7 @@ verify_all_platforms() {
 is_cached() {
   local cache_dir="$1"
   local platform="$2"
-  local target_dir="$cache_dir/$TOOL_NAME/$TOOL_VERSION"
+  local target_dir="$cache_dir/$TOOL_NAME/$TOOL_VERSION-$platform"
   local flag_file="$target_dir/.complete"
   local expected_checksum
 
@@ -528,7 +528,7 @@ main() {
   # Get binary path and execute
   local platform_binary
   platform_binary=$(get_binary_for_platform "$platform")
-  binary_path="$cache_dir/$TOOL_NAME/$TOOL_VERSION/$platform_binary"
+  binary_path="$cache_dir/$TOOL_NAME/$TOOL_VERSION-$platform/$platform_binary"
 
   if [ ! -x "$binary_path" ]; then
     die "Binary not found or not executable: $binary_path"

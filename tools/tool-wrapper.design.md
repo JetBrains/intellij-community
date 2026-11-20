@@ -79,14 +79,18 @@ TOOL_VERIFY_ALL_PLATFORMS=1 ./community/tools/npx.cmd
 
 ```
 # Linux
-~/.cache/JetBrains/monorepo-tools/<tool>/<version>/<extracted-contents>
+~/.cache/JetBrains/monorepo-tools/<tool>/<version>-<PLATFORM>/<extracted-contents>
 
 # macOS
-~/Library/Caches/JetBrains/monorepo-tools/<tool>/<version>/<extracted-contents>
+~/Library/Caches/JetBrains/monorepo-tools/<tool>/<version>-<PLATFORM>/<extracted-contents>
 
 # Windows
-%LOCALAPPDATA%\JetBrains\monorepo-tools\<tool>\<version>\<extracted-contents>
+%LOCALAPPDATA%\JetBrains\monorepo-tools\<tool>\<version>-<PLATFORM>\<extracted-contents>
 ```
+
+`<PLATFORM>` is the platform ID of `TOOL_CHECKSUM_<PLATFORM>`, such as `MACOS_ARM64`. One machine can need two platforms: on
+Windows ARM64, the x64 Git Bash runs `tool-wrapper.sh` as `WINDOWS_X64`, and `tool-wrapper.cmd` runs as
+`WINDOWS_ARM64`. Each platform has its own folder, so neither one overwrites the other.
 
 ## Adding a New Tool
 
@@ -149,7 +153,7 @@ uv-0.9.24-x86_64-unknown-linux-gnu/
 
 Then `TOOL_BINARY="uv"` and after extraction the cache will contain:
 ```
-~/.cache/JetBrains/monorepo-tools/uv/0.9.24/
+~/.cache/JetBrains/monorepo-tools/uv/0.9.24-LINUX_X64/
 ├── uv
 └── README.md
 ```
@@ -168,7 +172,7 @@ uvx.exe
 
 Then `TOOL_BINARY="uv.exe"` (on Windows) and the cache will contain:
 ```
-%LOCALAPPDATA%\JetBrains\monorepo-tools\uv\0.9.24\
+%LOCALAPPDATA%\JetBrains\monorepo-tools\uv\0.9.24-WINDOWS_X64\
 ├── uv.exe
 ├── uvw.exe
 └── uvx.exe

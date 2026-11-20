@@ -32,7 +32,8 @@ if "%ARCH%"=="ARM64" (
 
 REM Set cache directory
 set "CACHE_DIR=%LOCALAPPDATA%\JetBrains\monorepo-tools"
-set "TARGET_DIR=%CACHE_DIR%\%TOOL_NAME%\%TOOL_VERSION%"
+REM The platform is part of the folder name. An x64 shell under emulation on ARM64 gets its own folder.
+set "TARGET_DIR=%CACHE_DIR%\%TOOL_NAME%\%TOOL_VERSION%-%PLATFORM%"
 set "FLAG_FILE=%TARGET_DIR%\.complete"
 
 REM Check for verification mode
