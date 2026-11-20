@@ -182,13 +182,15 @@ internal class UnifiedPluginMarketplaceSourceCoordinatorTest {
   }
 
   @Test
-  fun `Suggested shows project suggestions while Staff Picks load`() = runTest {
+  fun `Suggested shows project suggestions Staff Picks and Marketplace results in order`() = runTest {
     val staffPicks = CompletableDeferred<UnifiedPluginMarketplaceFetchResult>()
+    val marketplaceResults = CompletableDeferred<UnifiedPluginMarketplaceFetchResult>()
     val provider = FakeMarketplaceDataProvider(
       loadSuggested = {
         loadMergedSuggestedPlugins(
           loadProjectSuggestions = { fetch("project.suggestion") },
           loadStaffPicks = { staffPicks.await() },
+          loadMarketplaceResults = { marketplaceResults.await() },
         )
       }
     )
@@ -204,7 +206,20 @@ internal class UnifiedPluginMarketplaceSourceCoordinatorTest {
 
     assertThat(coordinator.state.value.section.items.map { it.pluginId.idString })
       .containsExactly("project.suggestion", "staff.pick")
+    assertThat(coordinator.state.value.section.status).isEqualTo(PluginSectionStatus.Loading(showingStaleContent = true))
+
+    marketplaceResults.complete(fetch("marketplace.plugin"))
+    runCurrent()
+
+    assertThat(coordinator.state.value.section.items.map { it.pluginId.idString })
+      .containsExactly("project.suggestion", "staff.pick", "marketplace.plugin")
     assertThat(coordinator.state.value.section.status).isEqualTo(PluginSectionStatus.Ready)
+
+    coordinator.refreshEnrichment()
+    runCurrent()
+
+    assertThat(coordinator.state.value.section.items.map(PluginItemState::suggestedGroup))
+      .containsExactly(SuggestedPluginGroup.Project, SuggestedPluginGroup.StaffPicks, SuggestedPluginGroup.Marketplace)
     coordinator.close()
   }
 

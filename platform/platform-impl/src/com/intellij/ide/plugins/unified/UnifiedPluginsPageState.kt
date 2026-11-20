@@ -41,7 +41,7 @@ internal data class PluginItemState(
   val searchVendor: String? = null,
   val searchTags: Set<String> = emptySet(),
   val updateSourceId: PluginUpdateSource? = null,
-  val isStaffPick: Boolean = false,
+  val suggestedGroup: SuggestedPluginGroup = SuggestedPluginGroup.Project,
 ) {
   init {
     require(contentRevision >= 0) { "Plugin content revision must not be negative" }
@@ -50,6 +50,12 @@ internal data class PluginItemState(
     }
     require(rowInput == null || modelHandle != null) { "Plugin row input requires a model handle" }
   }
+}
+
+internal enum class SuggestedPluginGroup {
+  Project,
+  StaffPicks,
+  Marketplace,
 }
 
 internal enum class BundledPluginCategoryAction {
