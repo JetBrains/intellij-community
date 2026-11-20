@@ -2100,6 +2100,24 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-92848"])
+  fun `typing Self return type accepts a class with an Any base`() = test("""
+    from typing import Self
+
+    class C:
+        def __add__(self, other: object) -> Self:
+            return NotImplemented
+
+        def __sub__(self, other: object) -> Self | None:
+            return NotImplemented
+
+        @classmethod
+        def make(cls) -> type[Self]:
+            return NotImplemented
+    #              ^^^^^^^^^^^^^^ WARNING Expected type 'type[Self@C]', got 'NotImplementedType' instead
+    """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-53104"])
   fun `typing Self in static method body`() = test("""
     from typing import Self
