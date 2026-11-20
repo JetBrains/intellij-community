@@ -8,7 +8,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandlerFunctions;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -114,48 +113,14 @@ public abstract class GitTextHandler extends GitHandler {
           ProgressManager.checkCanceled();
         }
         catch (ProcessCanceledException pce) {
-          tryKillProcess();
+          GitProcessTerminator.terminate(this, myTerminationTimeoutMs,
+                                         myHandler::destroyProcess,
+                                         myHandler::waitFor,
+                                         () -> ProcessHandlerFunctions.initiateProcessTermination(myHandler));
           throw pce;
         }
       }
     }
-  }
-
-  private void tryKillProcess() {
-    ProgressManager.getInstance().executeNonCancelableSection(() -> {
-      myHandler.destroyProcess();
-    });
-
-    if (ApplicationManager.getApplication().isReadAccessAllowed() ||
-        shouldSuppressReadLocks()) {
-      // Some Git operations are called while holding the global locks.
-      // Ex: access to the 'GitIndexVirtualFile' or 'GitDirectoryVirtualFile'.
-      // In this case, we should not delay the current thread cancellation.
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        waitAndHardKillProcess();
-      });
-    }
-    else {
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        waitAndHardKillProcess();
-      });
-    }
-  }
-
-  private void waitAndHardKillProcess() {
-    // The signal was sent, but we still need to wait for the process to finish its dark deeds
-    if (myHandler.waitFor(myTerminationTimeoutMs)) {
-      return;
-    }
-
-    LOG.warn("Soft-kill failed for [" + printableCommandLine() + "].");
-
-    ProcessHandlerFunctions.initiateProcessTermination(myHandler);
-    if (myHandler.waitFor(myTerminationTimeoutMs)) {
-      return;
-    }
-
-    LOG.warn("Could not terminate [" + printableCommandLine() + "].");
   }
 
   protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
