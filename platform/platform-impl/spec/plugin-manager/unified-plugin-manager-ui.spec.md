@@ -187,14 +187,19 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 
 - Suggested must combine project suggestions before Staff Picks.
 - Suggested must keep one result per plugin ID and prefer the project suggestion.
-- Suggested must publish a completed source before the other source completes.
+- Suggested must show available project suggestions while Staff Picks load.
+- Suggested must wait for project suggestions to finish loading before it shows Staff Picks from the same request.
 - Suggested must keep successful results when one suggestion source fails.
 - Suggested must not report custom repository errors as Suggested errors.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceDataProviderTest.kt (
     `merged suggestions keep project priority and partial errors`;
-    `Staff Picks publish while project suggestions are still loading`;
+    `project suggestions publish first even when Staff Picks load first`;
+    `merged suggestions load Staff Picks when project suggestions are empty`;
     `merged suggestions isolate a failed source`;
     `merged suggestions omit only custom repository errors`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceSourceCoordinatorTest.kt (
+    `Suggested shows project suggestions while Staff Picks load`
   )
 
 - Marketplace must keep one stable occurrence for each plugin ID.
@@ -350,6 +355,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - Enabled plugins must win a match score tie.
 - Later results in the same query revision must retain the relative order of plugins that remain in a section.
 - A new plugin must append after existing plugins. A plugin that leaves and returns must resume its retained position.
+- In Suggested, these rules apply separately to project suggestions and Staff Picks.
 - In expanded Bundled, a new plugin must append in its category. A new category must append after existing categories.
 - The first collapsed and expanded Bundled results may set separate orders to keep categories together.
 - An explicit sort must override both local priorities and control Marketplace ordering. Custom repositories must retain their source order.
@@ -364,6 +370,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
     `query revision keeps local row order across repeated refreshes`;
     `new plugins append, returning plugins resume, and a new query resets order`;
+    `Suggested appends new project suggestions before Staff Picks on refresh`;
     `expanded Bundled appends new plugins inside their category`
   )
 
