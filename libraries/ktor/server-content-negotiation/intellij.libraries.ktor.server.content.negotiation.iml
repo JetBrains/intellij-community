@@ -43,7 +43,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.ktor.server.cio" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.server.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" scope="RUNTIME" />
   </component>
 </module>

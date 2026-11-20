@@ -15,7 +15,11 @@ ij_plugin_module(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm"],
-    runtime_deps = ["@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm",
+        "//libraries/ktor/server-core:libraries-ktor-server-core",
+    ],
 )
 ### auto-generated section `build intellij.libraries.ktor.server.sse` end
 

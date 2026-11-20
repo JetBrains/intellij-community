@@ -21,8 +21,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"],
-    runtime_deps = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-ktor-server-cio-ktor-server-cio-internal",
+        "//libraries/ktor/server-core:libraries-ktor-server-core",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-ktor-server-cio-ktor-server-cio-internal",
+        "//libraries/ktor/server-core:libraries-ktor-server-core",
+    ],
 )
 ### auto-generated section `build intellij.libraries.ktor.server.cio` end
 

@@ -629,6 +629,7 @@ libraries/ktor/network-tls
 libraries/ktor/serialization-gson
 libraries/ktor/server-cio
 libraries/ktor/server-content-negotiation
+libraries/ktor/server-core
 libraries/ktor/server-sse
 libraries/ktor/utils
 libraries/kxml2

@@ -9801,38 +9801,10 @@ http_file(
 )
 
 http_file(
-    name = "io_ktor-ktor-server-core-jvm-3_6_0_http",
-    downloaded_file_path = "ktor-server-core-jvm-3.6.0.jar",
-    sha256 = "2838b5d739cb659947ab11b0b220581ad077da8adf62a0248e30c0cdbb93192e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-core-jvm/3.6.0/ktor-server-core-jvm-3.6.0.jar",
-)
-
-http_file(
-    name = "com_typesafe-config-1_4_9_http",
-    downloaded_file_path = "config-1.4.9.jar",
-    sha256 = "47d13e3196c84f2a8ccd014ae563738c3da5b7406b38e03505ec0601a2f4fc37",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/typesafe/config/1.4.9/config-1.4.9.jar",
-)
-
-http_file(
     name = "io_ktor-ktor-server-cio-jvm-3_6_0-sources_http",
     downloaded_file_path = "ktor-server-cio-jvm-3.6.0-sources.jar",
     sha256 = "911b590d894ac93d8d5151d9b0b1d597150aa3c24435b0b7bdf32244a23eabbb",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-cio-jvm/3.6.0/ktor-server-cio-jvm-3.6.0-sources.jar",
-)
-
-http_file(
-    name = "io_ktor-ktor-server-core-jvm-3_6_0-sources_http",
-    downloaded_file_path = "ktor-server-core-jvm-3.6.0-sources.jar",
-    sha256 = "426bd8e6e80a5ded84796663223d7dd42a928bb3719dc7ee5d5887d6bef4b70b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-core-jvm/3.6.0/ktor-server-core-jvm-3.6.0-sources.jar",
-)
-
-http_file(
-    name = "com_typesafe-config-1_4_9-sources_http",
-    downloaded_file_path = "config-1.4.9-sources.jar",
-    sha256 = "e7e7853b6db6056eb6affc33579502d81f266dfe4f0fdc9f62a1a3fca5f4423c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/typesafe/config/1.4.9/config-1.4.9-sources.jar",
 )
 
 http_file(
@@ -9861,6 +9833,34 @@ http_file(
     downloaded_file_path = "ktor-server-routing-openapi-jvm-3.6.0-sources.jar",
     sha256 = "70e0484fade076cbb82a10b6cd914623a6e445632b354b36c64433afeeb89523",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-routing-openapi-jvm/3.6.0/ktor-server-routing-openapi-jvm-3.6.0-sources.jar",
+)
+
+http_file(
+    name = "io_ktor-ktor-server-core-jvm-3_6_0_http",
+    downloaded_file_path = "ktor-server-core-jvm-3.6.0.jar",
+    sha256 = "2838b5d739cb659947ab11b0b220581ad077da8adf62a0248e30c0cdbb93192e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-core-jvm/3.6.0/ktor-server-core-jvm-3.6.0.jar",
+)
+
+http_file(
+    name = "com_typesafe-config-1_4_9_http",
+    downloaded_file_path = "config-1.4.9.jar",
+    sha256 = "47d13e3196c84f2a8ccd014ae563738c3da5b7406b38e03505ec0601a2f4fc37",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/typesafe/config/1.4.9/config-1.4.9.jar",
+)
+
+http_file(
+    name = "io_ktor-ktor-server-core-jvm-3_6_0-sources_http",
+    downloaded_file_path = "ktor-server-core-jvm-3.6.0-sources.jar",
+    sha256 = "426bd8e6e80a5ded84796663223d7dd42a928bb3719dc7ee5d5887d6bef4b70b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-core-jvm/3.6.0/ktor-server-core-jvm-3.6.0-sources.jar",
+)
+
+http_file(
+    name = "com_typesafe-config-1_4_9-sources_http",
+    downloaded_file_path = "config-1.4.9-sources.jar",
+    sha256 = "e7e7853b6db6056eb6affc33579502d81f266dfe4f0fdc9f62a1a3fca5f4423c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/typesafe/config/1.4.9/config-1.4.9-sources.jar",
 )
 
 http_file(

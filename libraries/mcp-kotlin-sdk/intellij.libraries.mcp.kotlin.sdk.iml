@@ -60,5 +60,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.kotlin.logging" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.server.core" scope="RUNTIME" />
   </component>
 </module>

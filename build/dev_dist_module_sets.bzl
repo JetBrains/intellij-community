@@ -1148,6 +1148,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.ktor.network.tls",
             "intellij.libraries.ktor.client",
             "intellij.libraries.ktor.client.cio",
+            "intellij.libraries.ktor.server.core",
             "intellij.libraries.ktor.server.cio",
         ],
         nested = [
@@ -1166,11 +1167,13 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.ktor.io": "//libraries/ktor/io:io_content_module_jar",
             "intellij.libraries.ktor.network.tls": "//libraries/ktor/network-tls:libraries-ktor-network-tls_content_module_jar",
             "intellij.libraries.ktor.server.cio": "//libraries/ktor/server-cio:libraries-ktor-server-cio_content_module_jar",
+            "intellij.libraries.ktor.server.core": "//libraries/ktor/server-core:libraries-ktor-server-core_content_module_jar",
             "intellij.libraries.ktor.utils": "//libraries/ktor/utils:utils_content_module_jar",
         },
         module_system_loaded = [
             "intellij.libraries.ktor.client.cio",
             "intellij.libraries.ktor.server.cio",
+            "intellij.libraries.ktor.server.core",
         ],
     ),
     "intellij.moduleSets.libraries.lsp4j": struct(

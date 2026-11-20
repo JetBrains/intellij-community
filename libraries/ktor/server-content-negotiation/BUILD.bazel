@@ -27,7 +27,7 @@ ij_plugin_module(
         # do not sort,
         "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
         "@lib//:libraries-ktor-server-content-negotiation-ktor-server-routing-openapi",
-        "//libraries/ktor/server-cio:libraries-ktor-server-cio",
+        "//libraries/ktor/server-core:libraries-ktor-server-core",
         "//libraries/ktor/client",
     ],
 )
