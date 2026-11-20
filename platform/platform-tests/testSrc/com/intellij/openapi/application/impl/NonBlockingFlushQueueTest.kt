@@ -1,16 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -22,6 +27,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.SwingUtilities
 import kotlin.test.assertEquals
@@ -86,6 +93,41 @@ class NonBlockingFlushQueueTest {
         cont.resume(Unit, {_, _, _->})
       }
     }
+  }
+
+  @Test
+  fun `flush posting allows concurrent producers`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val postingStarted = CompletableDeferred<Unit>()
+    val releasePosting = CountDownLatch(1)
+    val completed = CompletableDeferred<List<Int>>()
+    val order = ArrayList<Int>()
+    IdeEventQueue.getInstance().addPostEventListener({ event ->
+      val runnable = InvocationUtil.extractRunnable(event)
+      if (runnable != null && flushQueue.isFlushNow(runnable)) {
+        postingStarted.complete(Unit)
+        assertTrue(releasePosting.await(10, TimeUnit.SECONDS))
+      }
+      false
+    }, disposable)
+
+    val firstProducer = async(Dispatchers.IO) {
+      pushNonModalUI { order.add(1) }
+    }
+    try {
+      postingStarted.await()
+      val secondProducer = async(Dispatchers.IO) {
+        pushNonModalUI {
+          order.add(2)
+          completed.complete(order.toList())
+        }
+      }
+      secondProducer.await()
+    }
+    finally {
+      releasePosting.countDown()
+    }
+    firstProducer.await()
+    assertEquals(listOf(1, 2), completed.await())
   }
 
   @Test

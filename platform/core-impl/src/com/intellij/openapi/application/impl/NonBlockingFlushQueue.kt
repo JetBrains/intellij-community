@@ -68,7 +68,7 @@ import javax.swing.SwingUtilities
 class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
 
   companion object {
-    private val LOG = Logger.getInstance(NonBlockingFlushQueue::class.java)
+    private val LOG: Logger = Logger.getInstance(NonBlockingFlushQueue::class.java)
     private val THROTTLED_LOG: ThrottledLogger = ThrottledLogger(LOG, TimeUnit.MINUTES.toMillis(1))
   }
 
@@ -99,7 +99,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
   /**
    * A monitor for interaction with [writeIntentQueue], [uiQueue] and [FLUSH_SCHEDULED].
    */
-  private val lockObject = Any()
+  private val lockObject: Any = Any()
 
   /**
    * We want to have as good latency guarantees for the executed events as possible.
@@ -107,7 +107,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
    * If event A has a smaller associated counter than event B, and both A and B are allowed to be executed, then A will be executed first.
    * This ensures that some late UI-only runnable does not run before all earlier WI runnables
    */
-  private val timeCounter = AtomicLong()
+  private val timeCounter: AtomicLong = AtomicLong()
 
   /**
    * Protection against too frequent scheduling requests.
@@ -266,18 +266,20 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
         result = ObjectArrayList(100)
       }
     }
-    requestFlush()
     return result
   }
 
   private fun requestFlush() {
     synchronized(lockObject) {
-      if (!FLUSH_SCHEDULED && (!uiQueue.isEmpty || currentWriteIntentLockMode != WriteIntentLockMode.UI_ONLY && !writeIntentQueue.isEmpty)) {
-        // so the queue is effectively non-empty
-        FLUSH_SCHEDULED = true
-        SwingUtilities.invokeLater(FLUSH_NOW)
+      if (FLUSH_SCHEDULED) {
+        return
       }
+      if (uiQueue.isEmpty && (currentWriteIntentLockMode == WriteIntentLockMode.UI_ONLY || writeIntentQueue.isEmpty)) {
+        return
+      }
+      FLUSH_SCHEDULED = true
     }
+    SwingUtilities.invokeLater(FLUSH_NOW)
   }
 
   @RequiresEdt(generateAssertion = false/*already asserted*/)
@@ -367,8 +369,8 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
     threadingSupport.runWhenWriteActionIsCompleted {
       synchronized(lockObject) {
         uiQueue.addLast(WriteActionFinished(timeCounter.getAndIncrement()))
-        requestFlush()
       }
+      requestFlush()
     }
   }
 
@@ -420,6 +422,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
         skippedWriteIntentQueue = resultWI
       }
     }
+    requestFlush()
   }
 
   fun purgeExpiredItems() {
@@ -429,8 +432,8 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
       skippedWriteIntentQueue.removeAll { it.isExpired.value(null) }
       writeIntentQueue.removeAll { it.isExpired.value(null) }
       uiQueue.removeAll { it is RunnableInfo && it.isExpired.value(null) }
-      requestFlush()
     }
+    requestFlush()
   }
 
   /**
@@ -447,8 +450,8 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
       } else {
         uiQueue.addLast(info)
       }
-      requestFlush()
     }
+    requestFlush()
   }
 
   override fun toString(): String {
