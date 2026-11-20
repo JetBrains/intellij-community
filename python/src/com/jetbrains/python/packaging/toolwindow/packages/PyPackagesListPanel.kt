@@ -48,10 +48,6 @@ internal class PyPackagesListPanel(
     emptyText.text = message("python.sdk.no.interpreter.selected")
   }
 
-  private val noPackagesPanel = JBPanelWithEmptyText().apply {
-    emptyText.text = message("python.toolwindow.packages.no.packages.installed")
-  }
-
   /** Filled in by [showPackagesUnavailableMessage], which knows what failed and what would put it right. */
   private val packagesUnavailablePanel = JBPanelWithEmptyText()
 
