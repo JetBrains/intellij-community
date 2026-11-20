@@ -21,7 +21,7 @@ Write every user-visible artifact in [ASD-STE100 Simplified Technical English](h
 - Make an aside its own sentence. Do not put it between dashes.
 - Keep the articles. Write "the session", not "session".
 - One term per concept. Never introduce a synonym for a term the area already defines.
-- Say what you left out and why. Do not pad a report to look complete.
+- In a report to the user, say what you left out and why. Do not pad the report to look complete.
 
 Each kind of text has one home. Rationale and evidence for a change go in the commit message, not in a code comment. Document a declaration in KDoc on it, not in a `README.md`.
 

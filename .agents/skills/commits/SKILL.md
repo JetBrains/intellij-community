@@ -35,7 +35,8 @@ Write a body unless the change is mechanical (a typo, an import, a format pass).
 - The diff shows what changed. The body says why.
 - The first paragraph is the lead: the new state and its cause, in 1-3 sentences.
 - Then one paragraph per decision: what you chose, what you did not choose, and why. Write code names in backticks.
-- Then `Tests:`, `Evidence:` and `Left out:`, each on its own line right before its list.
+- Do not report a test run, a build, or a test that fails also without the change. A commit in master compiles and
+  passes its tests. Give a measurement that caused the change in the lead or in its decision.
 
 ## Passing the message
 
@@ -80,10 +81,6 @@ QD-16701 added -Dqodana.build.date=<yyyyMMddHHmm> to the qodana command of the p
 The model now states the token @@build_date@@, next to @@build_number@@. product-files replaces it with the date
 of --build-date-seconds, which the action already receives. A test exclusion would hide a real difference
 of the dev dist qodana command, so the tool writes the argument as production does.
-
-Tests:
-- `DevDistProductLaunchModelTest` passed both tests.
-- ./build/dev-dist.cmd jars passed.
 ```
 
 Other cases, such as isolated commits and `misc` triage: [2_Commits.md](../../../../docs/IntelliJ-Platform/0_Intro/2_Commits.md). To push, use the `safe-push` skill.
