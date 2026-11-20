@@ -100,9 +100,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     float startX,
     @Nullable Runnable quickEvaluationListener
   ) {
-    if (startOffset > endOffset) {
-      view.getEditor().throwEditorInvariantBroken("startOffset must be less or equal to endOffset");
-    }
+    assert startOffset <= endOffset;
     int lineStartOffset = document.lineStartOffset(line);
     assert !DocumentTextUtil.isInsideSurrogatePair(document, lineStartOffset + startOffset);
     assert !DocumentTextUtil.isInsideSurrogatePair(document, lineStartOffset + endOffset);
