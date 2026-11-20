@@ -15,26 +15,26 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.testFramework.fixtures.JavaTestProject;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.fixtures.LightJavaProject;
-import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.AnalysisHostTest;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import com.siyeh.ig.LightJavaInspectionFixture;
+import com.siyeh.ig.JavaInspectionFixture;
 import com.siyeh.ig.testFrameworks.SimplifiableAssertionInspection;
 import org.junit.jupiter.api.Test;
 
-import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.JavaTestFixtures.javaTestProjectFixture;
+import static com.siyeh.ig.InspectionTestFixtures.javaInspectionFixture;
 import static com.siyeh.ig.LightJavaInspectionFixture.INSPECTION_GADGETS_TEST_DATA_PATH;
-import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-@TestApplication
+@AnalysisHostTest
 public class SimplifiableJUnitAssertionInspectionTest {
-  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
-  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
-    lightJavaInspectionFixture(projectFixture, () -> new SimplifiableAssertionInspection(), getEnvironmentClasses(),
+  private static final TestFixture<? extends JavaTestProject> projectFixture = javaTestProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
+    javaInspectionFixture(projectFixture, () -> new SimplifiableAssertionInspection(), getEnvironmentClasses(),
       INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/junit/simplifiable_junit_assertion");
 
   @Test

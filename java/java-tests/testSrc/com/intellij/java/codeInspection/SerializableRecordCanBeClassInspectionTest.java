@@ -2,20 +2,20 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.RecordCanBeClassInspection;
-import com.intellij.testFramework.fixtures.LightJavaProject;
-import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.fixtures.JavaTestProject;
+import com.intellij.testFramework.junit5.AnalysisHostTest;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import com.siyeh.ig.LightJavaInspectionFixture;
+import com.siyeh.ig.JavaInspectionFixture;
 import org.junit.jupiter.api.Test;
 
-import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static com.intellij.testFramework.fixtures.JavaTestFixtures.javaTestProjectFixture;
+import static com.siyeh.ig.InspectionTestFixtures.javaInspectionFixture;
 
-@TestApplication
+@AnalysisHostTest
 public class SerializableRecordCanBeClassInspectionTest {
-  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
-  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
-    lightJavaInspectionFixture(projectFixture, () -> new RecordCanBeClassInspection(), getEnvironmentClasses());
+  private static final TestFixture<? extends JavaTestProject> projectFixture = javaTestProjectFixture();
+  private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
+    javaInspectionFixture(projectFixture, () -> new RecordCanBeClassInspection(), getEnvironmentClasses());
 
   @Test
   public void testSerializableVersionUIDWithoutSerial() {

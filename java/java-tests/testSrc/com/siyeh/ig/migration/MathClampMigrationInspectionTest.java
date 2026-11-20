@@ -2,20 +2,20 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.fixtures.LightJavaProject;
-import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.fixtures.JavaTestProject;
+import com.intellij.testFramework.junit5.AnalysisHostTest;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import com.siyeh.ig.LightJavaInspectionFixture;
+import com.siyeh.ig.JavaInspectionFixture;
 import org.junit.jupiter.api.Test;
 
-import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixtureByTestName;
+import static com.intellij.testFramework.fixtures.JavaTestFixtures.javaTestProjectFixture;
+import static com.siyeh.ig.InspectionTestFixtures.javaInspectionFixtureByTestName;
 
-@TestApplication
+@AnalysisHostTest
 public final class MathClampMigrationInspectionTest {
-  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
-  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
-    lightJavaInspectionFixtureByTestName(projectFixture, testName -> getInspection(testName));
+  private static final TestFixture<? extends JavaTestProject> projectFixture = javaTestProjectFixture();
+  private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
+    javaInspectionFixtureByTestName(projectFixture, testName -> getInspection(testName));
 
   @Test
   public void testMathClampMigration() {

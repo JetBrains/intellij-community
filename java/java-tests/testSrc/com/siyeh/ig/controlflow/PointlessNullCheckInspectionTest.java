@@ -1,13 +1,13 @@
 package com.siyeh.ig.controlflow;
 
-import com.intellij.testFramework.fixtures.LightJavaProject;
-import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.fixtures.JavaTestProject;
+import com.intellij.testFramework.junit5.AnalysisHostTest;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import com.siyeh.ig.LightJavaInspectionFixture;
+import com.siyeh.ig.JavaInspectionFixture;
 import org.junit.jupiter.api.Test;
 
-import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static com.intellij.testFramework.fixtures.JavaTestFixtures.javaTestProjectFixture;
+import static com.siyeh.ig.InspectionTestFixtures.javaInspectionFixture;
 
 /**
  * Unit test for PointlessNullCheckInspection.
@@ -16,11 +16,11 @@ import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixtu
  * @author Etienne Studer
  * @author Hamlet D'Arcy
  */
-@TestApplication
+@AnalysisHostTest
 public class PointlessNullCheckInspectionTest {
-  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
-  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
-    lightJavaInspectionFixture(projectFixture, () -> new PointlessNullCheckInspection());
+  private static final TestFixture<? extends JavaTestProject> projectFixture = javaTestProjectFixture();
+  private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
+    javaInspectionFixture(projectFixture, () -> new PointlessNullCheckInspection());
 
   @Test
   public void testPointlessNullCheck() {

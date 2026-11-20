@@ -16,24 +16,24 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.fixtures.LightJavaProject;
-import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.fixtures.JavaTestProject;
+import com.intellij.testFramework.junit5.AnalysisHostTest;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ArrayUtilRt;
-import com.siyeh.ig.LightJavaInspectionFixture;
+import com.siyeh.ig.JavaInspectionFixture;
 import org.junit.jupiter.api.Test;
 
-import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static com.intellij.testFramework.fixtures.JavaTestFixtures.javaTestProjectFixture;
+import static com.siyeh.ig.InspectionTestFixtures.javaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-@TestApplication
+@AnalysisHostTest
 public class InstanceMethodNamingConventionInspectionTest {
-  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
-  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
-    lightJavaInspectionFixture(projectFixture, () -> getInspection(), ArrayUtilRt.EMPTY_STRING_ARRAY, null, NewMethodNamingConventionInspection.class);
+  private static final TestFixture<? extends JavaTestProject> projectFixture = javaTestProjectFixture();
+  private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
+    javaInspectionFixture(projectFixture, () -> getInspection(), ArrayUtilRt.EMPTY_STRING_ARRAY, null, NewMethodNamingConventionInspection.class);
 
   private static InspectionProfileEntry getInspection() {
     NewMethodNamingConventionInspection inspection = new NewMethodNamingConventionInspection();

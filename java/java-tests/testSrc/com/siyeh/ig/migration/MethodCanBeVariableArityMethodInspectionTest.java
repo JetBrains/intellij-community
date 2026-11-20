@@ -7,18 +7,18 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.fixtures.JavaTestProject;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.ProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaProject;
-import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.AnalysisHostTest;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import com.siyeh.ig.LightJavaInspectionFixture;
+import com.siyeh.ig.JavaInspectionFixture;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static com.intellij.testFramework.fixtures.JavaTestFixtures.javaTestProjectFixture;
+import static com.siyeh.ig.InspectionTestFixtures.javaInspectionFixture;
 
-@TestApplication
+@AnalysisHostTest
 public class MethodCanBeVariableArityMethodInspectionTest {
 
   private static final ProjectDescriptor JAVA_HIGHEST_WITH_OLD_ANNOTATIONS = new ProjectDescriptor(LanguageLevel.HIGHEST) {
@@ -29,9 +29,9 @@ public class MethodCanBeVariableArityMethodInspectionTest {
     }
   };
 
-  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JAVA_HIGHEST_WITH_OLD_ANNOTATIONS);
-  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
-    lightJavaInspectionFixture(projectFixture, () -> getInspection());
+  private static final TestFixture<? extends JavaTestProject> projectFixture = javaTestProjectFixture(JAVA_HIGHEST_WITH_OLD_ANNOTATIONS);
+  private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
+    javaInspectionFixture(projectFixture, () -> getInspection());
 
   @Test
   public void testMethodCanBeVariableArity() {
