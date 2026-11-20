@@ -318,12 +318,12 @@ class LineChunk {
       FontInfo fontInfo = ffi.getFontInfo();
       if (start0 < end0) {
         assert fontInfo != null;
-        createTextFragments(text, start0, end0, isRtl, fontInfo, view);
+        createGlyphFragments(text, start0, end0, isRtl, fontInfo, view);
       }
     }
   }
 
-  private void createTextFragments(
+  private void createGlyphFragments(
     char[] lineChars,
     int start,
     int end,
@@ -335,7 +335,7 @@ class LineChunk {
     CharacterGridSpec gridSpec = viewSnapshot.gridSpec();
     if (gridSpec != null) {
       // The grid owns the geometry of the text, so one fragment covers each run, also a run of plain ASCII
-      fragments.add(new GridTextFragment(lineChars, start, end, isRtl, fontInfo, gridSpec, viewSnapshot.gridCellWidth()));
+      fragments.add(new GridGlyphFragment(lineChars, start, end, isRtl, fontInfo, gridSpec, viewSnapshot.gridCellWidth()));
       return;
     }
     boolean needsLayout = isRtl || fontInfo.getFont().hasLayoutAttributes();
@@ -348,7 +348,7 @@ class LineChunk {
       }
     }
     if (!needsLayout) {
-      LineFragment fragment = new SimpleTextFragment(lineChars, start, end, fontInfo);
+      LineFragment fragment = new SimpleGlyphFragment(lineChars, start, end, fontInfo);
       fragments.add(fragment);
       return;
     }
@@ -369,7 +369,7 @@ class LineChunk {
             script != Character.UnicodeScript.INHERITED &&
             script != Character.UnicodeScript.UNKNOWN) {
           if (lastScript != script && lastScript != Character.UnicodeScript.COMMON) {
-            LineFragment fragment = new ComplexTextFragment(lineChars, lastOffset, i, isRtl, fontInfo);
+            LineFragment fragment = new ComplexGlyphFragment(lineChars, lastOffset, i, isRtl, fontInfo);
             fragments.add(fragment);
             lastOffset = i;
           }
@@ -377,7 +377,7 @@ class LineChunk {
         }
       }
     }
-    LineFragment fragment = new ComplexTextFragment(lineChars, lastOffset, end, isRtl, fontInfo);
+    LineFragment fragment = new ComplexGlyphFragment(lineChars, lastOffset, end, isRtl, fontInfo);
     fragments.add(fragment);
   }
 

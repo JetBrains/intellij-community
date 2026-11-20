@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Graphics2D;
 import java.util.function.Consumer;
 
-record TextFragmentWindow(
-  @NotNull TextFragment myParent,
+record GlyphSubFragment(
+  @NotNull GlyphFragment myParent,
   int myStartOffset,
   int myEndOffset,
   int myStartColumn,

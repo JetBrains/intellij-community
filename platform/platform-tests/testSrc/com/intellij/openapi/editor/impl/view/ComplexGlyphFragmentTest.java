@@ -32,7 +32,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
-public class ComplexTextFragmentTest {
+public class ComplexGlyphFragmentTest {
   @Test
   public void testSimpleText() {
     assertCaretPositionsForGlyphVector(
@@ -204,7 +204,7 @@ public class ComplexTextFragmentTest {
     });
     try {
       char[] text = {'a', '\u0301', 'b'};
-      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, text.length, false, createFontInfo(2));
+      ComplexGlyphFragment fragment = new ComplexGlyphFragment(text, 0, text.length, false, createFontInfo(2));
       assertEquals(24, fragment.visualColumnToX(0, 3), 0);
       assertGlyphPositions(gv, 1, 11, 13, 24);
     }
@@ -233,7 +233,7 @@ public class ComplexTextFragmentTest {
     var graphics = new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB).createGraphics();
     try {
       var fontInfo = createFontInfo();
-      var fragment = new ComplexTextFragment(new char[]{'a'}, 0, 1, false, fontInfo);
+      var fragment = new ComplexGlyphFragment(new char[]{'a'}, 0, 1, false, fontInfo);
       var failingGraphics = new Graphics2DDelegate(graphics) {
         @Override
         public void drawGlyphVector(GlyphVector glyphVector, float x, float y) {
@@ -241,11 +241,11 @@ public class ComplexTextFragmentTest {
         }
       };
       fragment.draw(0, 0, 0, 1).accept(failingGraphics);
-      assertThrows(IllegalStateException.class, () -> ComplexTextFragment.flushDrawingCache(failingGraphics));
-      ComplexTextFragment.flushDrawingCache(graphics);
+      assertThrows(IllegalStateException.class, () -> ComplexGlyphFragment.flushDrawingCache(failingGraphics));
+      ComplexGlyphFragment.flushDrawingCache(graphics);
     }
     finally {
-      ComplexTextFragment.flushDrawingCache(new NullGraphics2D(new Rectangle(20, 20)));
+      ComplexGlyphFragment.flushDrawingCache(new NullGraphics2D(new Rectangle(20, 20)));
       graphics.dispose();
       FontLayoutService.setInstance(fontLayoutService);
     }
@@ -283,8 +283,8 @@ public class ComplexTextFragmentTest {
     });
     try {
       int length = text.length;
-      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
-                                                             fontInfo);
+      ComplexGlyphFragment fragment = new ComplexGlyphFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
+                                                               fontInfo);
       int[] charPositions = new int[length];
       for (int i = 0; i < length; i++) {
         charPositions[i] = (int)fragment.visualColumnToX(0, i + 1);
@@ -329,8 +329,8 @@ public class ComplexTextFragmentTest {
       int length = gv.getNumChars();
       char[] text = new char[length];
       FontInfo fontInfo = createFontInfo();
-      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
-                                                             fontInfo);
+      ComplexGlyphFragment fragment = new ComplexGlyphFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
+                                                               fontInfo);
       VisualColumn column = fragment.xToVisualColumn(0, x);
       assertEquals(length, column.column);
       assertEquals(expectedLeansRight, column.leansRight);
@@ -353,8 +353,8 @@ public class ComplexTextFragmentTest {
       // logical text "a<surrogate pair>b", one glyph per code point
       char[] text = {'a', '\uD83D', '\uDE00', 'b'};
       FontInfo fontInfo = createFontInfo();
-      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, text.length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
-                                                             fontInfo);
+      ComplexGlyphFragment fragment = new ComplexGlyphFragment(text, 0, text.length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
+                                                               fontInfo);
       LineFragment window = fragment.subFragment(3, 4); // the trailing 'b'
       assertEquals(1, window.getLength());
       assertEquals(0, window.visualColumnToOffset(0, 0));

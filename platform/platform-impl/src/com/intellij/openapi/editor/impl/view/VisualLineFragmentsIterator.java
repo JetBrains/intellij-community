@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.impl.softwrap.CustomWrapToSoftWrapAdapter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapEx;
 import com.intellij.openapi.editor.impl.view.VisualLineFragment.FoldRegionFragment;
 import com.intellij.openapi.editor.impl.view.VisualLineFragment.InlayFragment;
-import com.intellij.openapi.editor.impl.view.VisualLineFragment.TextRunFragment;
+import com.intellij.openapi.editor.impl.view.VisualLineFragment.TextFragment;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ObjectUtils;
@@ -62,7 +62,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
   private final FoldRegion[] myRegions;
   private final @Nullable SoftWrapEx myNextWrap;
   private final @Nullable Runnable myQuickEvaluationListener;
-  private final TextRunFragment myTextRunFragment;
+  private final TextFragment myTextFragment;
   private final InlayFragment myInlayFragment;
   private final FoldRegionFragment myFoldRegionFragment;
 
@@ -71,7 +71,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
   private float myCurrentX;
   private int myCurrentVisualColumn;
   private int myCurrentEndLogicalLine;
-  private Iterator<LineVisualFragment> myFragmentIterator;
+  private Iterator<PositionedLineFragment> myFragmentIterator;
   private List<Inlay<?>> myInlays;
   private int myCurrentInlayIndex;
   private int myCurrentFoldRegionIndex;
@@ -153,7 +153,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     myTextLayoutCache = view.getTextLayoutCache();
     myQuickEvaluationListener = quickEvaluationListener;
     myScaleContext = ScaleContext.create(view.getEditor().getContentComponent());
-    myTextRunFragment = new TextRunFragment(view, visualLineStartOffset, xOffset);
+    myTextFragment = new TextFragment(view, visualLineStartOffset, xOffset);
     myInlayFragment = new InlayFragment(view, visualLineStartOffset, xOffset);
     myFoldRegionFragment = new FoldRegionFragment(view, visualLineStartOffset, xOffset);
     myRegions = fetchTopLevelFoldings(view);
@@ -180,7 +180,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     } else if (myNextStep == Step.INLAY) {
       fragment = moveToInlay();
     } else {
-      fragment = moveToTextRun();
+      fragment = moveToText();
     }
     fragment.setBounds(
       startX,
@@ -229,7 +229,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     float x = (float)(myCurrentX + alignToInt(inlay.getWidthInPixels()));
     int visualColumn = myCurrentVisualColumn + 1;
     int inlayIndex = myCurrentInlayIndex + 1;
-    Iterator<LineVisualFragment> fragmentIterator = Collections.emptyIterator();
+    Iterator<PositionedLineFragment> fragmentIterator = Collections.emptyIterator();
     Step nextStep = Step.INLAY;
     if (inlayIndex >= myInlays.size() ||
         myInlays.get(inlayIndex).getOffset() > inlay.getOffset()) {
@@ -243,7 +243,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
         visualColumn,
         x
       );
-      nextStep = fragmentIterator.hasNext() ? Step.TEXT_RUN : Step.END;
+      nextStep = fragmentIterator.hasNext() ? Step.TEXT : Step.END;
     }
     myCurrentX = x;
     myCurrentVisualColumn = visualColumn;
@@ -254,12 +254,12 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     return myInlayFragment;
   }
 
-  private @NotNull VisualLineFragment moveToTextRun() {
-    LineVisualFragment delegate = myFragmentIterator.next();
+  private @NotNull VisualLineFragment moveToText() {
+    PositionedLineFragment delegate = myFragmentIterator.next();
     float x = delegate.getEndX();
     int visualColumn = delegate.getEndVisualColumn();
     int lineStartOffset = myDocument.lineStartOffset(myCurrentEndLogicalLine);
-    Step nextStep = Step.TEXT_RUN;
+    Step nextStep = Step.TEXT;
     if (!myFragmentIterator.hasNext()) {
       if (myCurrentInlayIndex < myInlays.size()) {
         nextStep = Step.INLAY;
@@ -272,8 +272,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     myCurrentX = x;
     myCurrentVisualColumn = visualColumn;
     myNextStep = nextStep;
-    myTextRunFragment.set(delegate, lineStartOffset);
-    return myTextRunFragment;
+    myTextFragment.set(delegate, lineStartOffset);
+    return myTextFragment;
   }
 
   private void init(
@@ -320,7 +320,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     }
     int segmentEndOffset = foldRegionStartOffset;
     List<Inlay<?>> inlays = List.of();
-    Iterator<LineVisualFragment> fragmentIterator = Collections.emptyIterator();
+    Iterator<PositionedLineFragment> fragmentIterator = Collections.emptyIterator();
     Step nextStep = Step.FOLD_REGION;
     if (segmentStartOffset < foldRegionStartOffset) {
       segmentEndOffset = calculateSegmentEndOffset(logicalLine, foldRegionStartOffset);
@@ -337,7 +337,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
           visualColumn,
           x
         );
-        nextStep = fragmentIterator.hasNext() ? Step.TEXT_RUN : Step.END;
+        nextStep = fragmentIterator.hasNext() ? Step.TEXT : Step.END;
       }
     }
     mySegmentStartOffset = segmentStartOffset;
@@ -396,7 +396,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     return inlays;
   }
 
-  private @NotNull Iterator<LineVisualFragment> createFragmentIterator(
+  private @NotNull Iterator<PositionedLineFragment> createFragmentIterator(
     int segmentStartOffset,
     int segmentEndOffset,
     int logicalLine,
@@ -508,7 +508,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
    * The kind of the fragment that {@link #next()} returns, or {@link #END} when the visual line has no more fragments.
    */
   private enum Step {
-    TEXT_RUN,
+    TEXT,
     INLAY,
     FOLD_REGION,
     END

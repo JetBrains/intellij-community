@@ -19,7 +19,7 @@ abstract sealed class VisualLineFragment {
   private final int visualLineStartOffset;
   /**
    * The x shift of a right-aligned visual line, or 0.
-   * The x coordinates of a fragment include it. The x coordinates of a {@link LineVisualFragment} do not.
+   * The x coordinates of a fragment include it. The x coordinates of a {@link PositionedLineFragment} do not.
    */
   private final float xOffset;
   private float startX;
@@ -178,19 +178,19 @@ abstract sealed class VisualLineFragment {
   /**
    * A part of a logical line with one font and one direction.
    */
-  static final class TextRunFragment extends VisualLineFragment {
-    private LineVisualFragment delegate;
+  static final class TextFragment extends VisualLineFragment {
+    private PositionedLineFragment delegate;
     /**
      * The start offset of the logical line. The offsets of {@link #delegate} are relative to it.
      */
     private int lineStartOffset;
 
-    TextRunFragment(EditorView view, int visualLineStartOffset, float xOffset) {
+    TextFragment(EditorView view, int visualLineStartOffset, float xOffset) {
       super(view, visualLineStartOffset, xOffset);
     }
 
-    void set(LineVisualFragment lineVisualFragment, int logicalLineStartOffset) {
-      delegate = lineVisualFragment;
+    void set(PositionedLineFragment positionedLineFragment, int logicalLineStartOffset) {
+      delegate = positionedLineFragment;
       lineStartOffset = logicalLineStartOffset;
     }
 
@@ -537,7 +537,7 @@ abstract sealed class VisualLineFragment {
 
     private float getXForVisualColumnInsideFoldRegion(int column) {
       LineLayout layout = getFoldRegionLayout();
-      for (LineVisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
+      for (PositionedLineFragment fragment : layout.getFragmentsInVisualOrder(0)) {
         if (column <= fragment.getEndVisualColumn()) {
           return fragment.visualColumnToX(column);
         }

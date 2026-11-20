@@ -8256,7 +8256,7 @@ com.intellij.openapi.editor.impl.view.animation.EditorPixelGrid
 com.intellij.openapi.editor.impl.view.animation.EditorPixelGrid$Companion
 com.intellij.openapi.editor.impl.view.EditorPainter$Session
 it.unimi.dsi.fastutil.floats.FloatList
-com.intellij.openapi.editor.impl.view.LineFragmentPainter
+com.intellij.openapi.editor.impl.view.VisualLineFragmentPainter
 com.intellij.openapi.editor.impl.view.XCorrector
 com.intellij.openapi.editor.impl.view.XCorrector$LeftAligned
 com.intellij.openapi.editor.impl.ClipDetector
@@ -8270,7 +8270,7 @@ com.intellij.openapi.actionSystem.impl.FloatingToolbar$Companion
 com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar$Companion
 com.intellij.openapi.editor.LineExtensionInfo
 com.intellij.openapi.editor.EditorLinePainter
-com.intellij.openapi.editor.impl.view.ComplexTextFragment
+com.intellij.openapi.editor.impl.view.ComplexGlyphFragment
 com.intellij.openapi.editor.impl.EditorGutterColor
 it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap$ValueIterator
 com.intellij.ui.paint.RectanglePainter

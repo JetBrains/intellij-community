@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-final class VisualOrderIterator implements Iterator<LineVisualFragment> {
+final class VisualOrderIterator implements Iterator<PositionedLineFragment> {
   // optional params
   private final @Nullable EditorView view;
   private final @Nullable DocumentText document;
@@ -19,7 +19,7 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
   // mandatory param
   private final LineBidiRun[] runs;
 
-  private final LineVisualFragment current;
+  private final PositionedLineFragment current;
   private int runIndex;
   private int chunkIndex;
   private int fragmentIndex;
@@ -41,7 +41,7 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
     this.line = line;
     this.lineStartOffset = document == null ? 0 : document.lineStartOffset(line);
     this.runs = runsInVisualOrder;
-    this.current = new LineVisualFragment(startOffset, startVisualColumn, startX);
+    this.current = new PositionedLineFragment(startOffset, startVisualColumn, startX);
   }
 
   @Override
@@ -51,7 +51,7 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
   }
 
   @Override
-  public LineVisualFragment next() {
+  public PositionedLineFragment next() {
     LineChunk chunk = currentChunk();
     if (chunk == null || fragmentIndex >= chunk.fragmentCount()) {
       throw new NoSuchElementException();

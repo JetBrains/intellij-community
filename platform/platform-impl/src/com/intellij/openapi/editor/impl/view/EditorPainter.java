@@ -612,7 +612,7 @@ public final class EditorPainter implements TextDrawingCallback {
         boolean paintSoftWraps = paintAllSoftWraps ||
                                  myCaretModel.getLogicalPosition().line == visLinesIterator.getDisplayedLogicalLine();
         int[] currentLogicalLine = new int[]{-1};
-        paintLineFragments(visLinesIterator, y, new LineFragmentPainter() {
+        paintLineFragments(visLinesIterator, y, new VisualLineFragmentPainter() {
           @Override
           public void paintBeforeLineStart(IterationState it, List<BackgroundLayer> backgroundLayers, SoftWrapEx softWrap, int columnEnd,
                                            float xEnd, int y) {
@@ -1109,7 +1109,7 @@ public final class EditorPainter implements TextDrawingCallback {
       for (int i = 0, size = tasks.size(); i < size; i++) {
         tasks.get(i).accept(myGraphics);
       }
-      ComplexTextFragment.flushDrawingCache(myGraphics);
+      ComplexGlyphFragment.flushDrawingCache(myGraphics);
     }
 
     private @Nullable TextAttributes getInnerHighlighterAttributes(@NotNull FoldRegion region) {
@@ -1159,7 +1159,7 @@ public final class EditorPainter implements TextDrawingCallback {
                                             @Nullable Color effectColor, @Nullable EffectType effectType) {
       paintTextEffect(x, x + layout.getWidth(), (int)y, effectColor, effectType, false);
       myGraphics.setColor(color);
-      for (LineVisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
+      for (PositionedLineFragment fragment : layout.getFragmentsInVisualOrder(x)) {
         fragment.draw(myGraphics, fragment.getStartX(), y);
         x = fragment.getEndX();
       }
@@ -1805,7 +1805,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
     private void paintLineFragments(VisualLinesIterator visLineIterator,
                                     int y,
-                                    LineFragmentPainter painter,
+                                    VisualLineFragmentPainter painter,
                                     MarginWidthConsumer marginWidthConsumer) {
       int visualLine = visLineIterator.getVisualLine();
       float x = myCorrector.startX(visualLine) + (visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0);
@@ -1960,7 +1960,7 @@ public final class EditorPainter implements TextDrawingCallback {
      * <p>
      * A fragment offset comes from {@link VisualLineFragmentsIterator}, and an attribute offset comes from
      * {@link IterationState}. The two agree only while every editor model matches the document. A model that
-     * updates late makes the range invalid. A fragment such as {@code SimpleTextFragment} then draws a negative
+     * updates late makes the range invalid. A fragment such as {@code SimpleGlyphFragment} then draws a negative
      * number of characters, and the graphics rejects the range. The caller drops the rest of the fragment instead.
      * <p>
      * The report holds the editor state, because this state has no known reproduction.

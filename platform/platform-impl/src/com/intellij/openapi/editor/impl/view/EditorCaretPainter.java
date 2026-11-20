@@ -210,7 +210,7 @@ public final class EditorCaretPainter {
               break;
             }
           }
-          ComplexTextFragment.flushDrawingCache(g);
+          ComplexGlyphFragment.flushDrawingCache(g);
         } finally {
           config.restore();
         }

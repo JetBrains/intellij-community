@@ -25,7 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 
-public class SimpleTextFragmentTest {
+public class SimpleGlyphFragmentTest {
   private final BufferedImage image = new BufferedImage(200, 20, BufferedImage.TYPE_INT_RGB);
   private Graphics2D graphics;
 
@@ -43,14 +43,14 @@ public class SimpleTextFragmentTest {
 
   @Test
   public void testLetterSpacingFollowsEachChar() {
-    SimpleTextFragment fragment = new SimpleTextFragment("abc".toCharArray(), 0, 3, createFontInfo(2));
+    SimpleGlyphFragment fragment = new SimpleGlyphFragment("abc".toCharArray(), 0, 3, createFontInfo(2));
     assertEquals(12, fragment.visualColumnToX(0, 1), 0);
     assertEquals(36, fragment.visualColumnToX(0, 3), 0);
   }
 
   @Test
   public void testLetterSpacingDrawsEachGlyphAtItsPosition() {
-    SimpleTextFragment fragment = new SimpleTextFragment("abcd".toCharArray(), 0, 4, createFontInfo(2));
+    SimpleGlyphFragment fragment = new SimpleGlyphFragment("abcd".toCharArray(), 0, 4, createFontInfo(2));
     List<Double> positions = new ArrayList<>();
     fragment.draw(5, 15, 1, 4).accept(new Graphics2DDelegate(graphics) {
       @Override
@@ -66,7 +66,7 @@ public class SimpleTextFragmentTest {
 
   @Test
   public void testRepaintOfTheSameRangeReusesTheGlyphs() {
-    SimpleTextFragment fragment = new SimpleTextFragment("abcd".toCharArray(), 0, 4, createFontInfo(2));
+    SimpleGlyphFragment fragment = new SimpleGlyphFragment("abcd".toCharArray(), 0, 4, createFontInfo(2));
     List<GlyphVector> drawn = new ArrayList<>();
     Graphics2DDelegate capturing = new Graphics2DDelegate(graphics) {
       @Override
@@ -84,7 +84,7 @@ public class SimpleTextFragmentTest {
 
   @Test
   public void testNoLetterSpacingDrawsTheChars() {
-    SimpleTextFragment fragment = new SimpleTextFragment("abc".toCharArray(), 0, 3, createFontInfo(0));
+    SimpleGlyphFragment fragment = new SimpleGlyphFragment("abc".toCharArray(), 0, 3, createFontInfo(0));
     List<String> drawn = new ArrayList<>();
     fragment.draw(0, 15, 0, 3).accept(new Graphics2DDelegate(graphics) {
       @Override

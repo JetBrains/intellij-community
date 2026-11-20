@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-interface LineFragmentPainter {
+interface VisualLineFragmentPainter {
 
   void paintBeforeLineStart(
     IterationState iterationState,

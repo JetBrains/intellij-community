@@ -17,14 +17,14 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 /**
- * The text fragment of an editor in the character grid mode, see {@link CharacterGridSpec}.
+ * The glyph fragment of an editor in the character grid mode, see {@link CharacterGridSpec}.
  * <p>
  * The fragment puts the text on the cells of the grid. A code point takes the cells of
  * {@link CharacterGridSpec#cells}, and a glyph cluster takes the sum of the cells of its code points. Every caret edge
  * is a cell edge, so the caret x of an offset grows with the offset. The cells stay in logical order, also in RTL text.
  * <p>
  * The fragment centers the glyphs of each cluster in the cells of the cluster, so a glyph that is wider than its cells
- * reaches over them on both sides. The known limits, which {@link ComplexTextFragment} has too:
+ * reaches over them on both sides. The known limits, which {@link ComplexGlyphFragment} has too:
  * <ul>
  *   <li>A column spacing above 1.0 puts a gap between glyphs that the font joins, such as box drawing.</li>
  *   <li>A tab, the virtual space, a special character and an inline inlay keep the geometry of the font. They take the
@@ -37,9 +37,9 @@ import java.util.function.Consumer;
  * gets its glyphs without the text layout, see {@link FontLayoutService#createGlyphVector}.
  */
 @ApiStatus.Internal
-public final class GridTextFragment extends TextFragment {
+public final class GridGlyphFragment extends GlyphFragment {
   private static final char FIRST_MARK = '\u0300'; // no char before it is a mark, a format char or a surrogate
-  private static final double CLIP_MARGIN = 1e4; // the reach of a glyph out of the cells, as ComplexTextFragment assumes
+  private static final double CLIP_MARGIN = 1e4; // the reach of a glyph out of the cells, as ComplexGlyphFragment assumes
   private final char @NotNull [] myText;
   private final @NotNull Font myFont;
   /** The text needs the text layout: a right-to-left run, a font with ligatures, a surrogate pair or a complex script. */
@@ -59,7 +59,7 @@ public final class GridTextFragment extends TextFragment {
    *                  column spacing of {@code gridSpec} already
    */
   @VisibleForTesting
-  public GridTextFragment(
+  public GridGlyphFragment(
     char @NotNull [] lineChars,
     int start,
     int end,

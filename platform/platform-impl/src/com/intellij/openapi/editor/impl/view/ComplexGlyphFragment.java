@@ -19,17 +19,17 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 /**
- * GlyphVector-based text fragment. Used for non-Latin text or when ligatures are enabled
+ * GlyphVector-based glyph fragment. Used for non-Latin text or when ligatures are enabled
  */
 @ApiStatus.Internal
-public final class ComplexTextFragment extends TextFragment {
-  private static final Logger LOG = Logger.getInstance(ComplexTextFragment.class);
+public final class ComplexGlyphFragment extends GlyphFragment {
+  private static final Logger LOG = Logger.getInstance(ComplexGlyphFragment.class);
   private static final double CLIP_MARGIN = 1e4;
 
   private final @NotNull GlyphVector myGlyphVector;
 
   @VisibleForTesting
-  public ComplexTextFragment(
+  public ComplexGlyphFragment(
     char @NotNull [] lineChars,
     int start,
     int end,
@@ -49,7 +49,7 @@ public final class ComplexTextFragment extends TextFragment {
     assert start < end             : assertMessage(lineChars, start, end, isRtl, fontInfo);
   }
 
-  private ComplexTextFragment(
+  private ComplexGlyphFragment(
     char @NotNull [] lineChars,
     int start,
     int end,
@@ -74,7 +74,7 @@ public final class ComplexTextFragment extends TextFragment {
     float lastX = isRtl ? totalWidth : 0;
     float prevX = lastX;
     // Here we determine coordinates for boundaries between characters.
-    // They will be used to place caret, last boundary coordinate is also defining the width of text fragment.
+    // They will be used to place caret, last boundary coordinate is also defining the width of the fragment.
     //
     // We expect these positions to be ordered, so that when caret moves through text characters in some direction, corresponding text
     // offsets change monotonously (within the same-directionality fragment).
@@ -292,7 +292,7 @@ public final class ComplexTextFragment extends TextFragment {
   // (we still pass all glyphs to the rendering code, and filtering by clipping might occur late in the processing,
   // on OS X larger number of glyphs passed for processing is known to slow down rendering significantly).
   // So we try to merge drawing of adjacent glyph vector fragments, if possible.
-  private static ComplexTextFragment lastFragment;
+  private static ComplexGlyphFragment lastFragment;
   private static int lastStartColumn;
   private static int lastEndColumn;
   private static Color lastColor;

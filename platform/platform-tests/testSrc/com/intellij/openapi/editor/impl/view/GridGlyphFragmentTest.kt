@@ -26,10 +26,10 @@ private const val LINE_HEIGHT = 10
 private const val DESCENT = 2
 
 /**
- * The cell layout of [GridTextFragment]: the cells of each char, the glyphs of each cluster, and the caret edges.
+ * The cell layout of [GridGlyphFragment]: the cells of each char, the glyphs of each cluster, and the caret edges.
  * A case reads the glyphs of a draw, because the fragment lays them out at the first draw.
  */
-class GridTextFragmentTest {
+class GridGlyphFragmentTest {
   private val image = BufferedImage(200, 20, BufferedImage.TYPE_INT_RGB)
   private val graphics: Graphics2D = image.createGraphics()
 
@@ -275,7 +275,7 @@ class GridTextFragmentTest {
     val font = Font(Font.MONOSPACED, Font.PLAIN, 1)
     val fontInfo = FontInfo(font, 1f, false, 0f, setOf(), FontRenderContext(null, false, false))
     val gridSpec = CharacterGridSpec(1f, DoubleWidthCharacterStrategy { wide.contains(it) })
-    val fragment = GridTextFragment(text.toCharArray(), 0, text.length, rtl, fontInfo, gridSpec, cellWidth)
+    val fragment = GridGlyphFragment(text.toCharArray(), 0, text.length, rtl, fontInfo, gridSpec, cellWidth)
     return Layout(fragment, graphics, service)
   }
 }
@@ -286,7 +286,7 @@ private fun glyph(charIndex: Int, advance: Double): TestGlyph = TestGlyph(charIn
  * The layout of one fragment: the x of each visual column edge, and the glyphs of a draw.
  */
 private class Layout(
-  private val fragment: GridTextFragment,
+  private val fragment: GridGlyphFragment,
   private val graphics: Graphics2D,
   private val service: TestFontLayoutService,
 ) {

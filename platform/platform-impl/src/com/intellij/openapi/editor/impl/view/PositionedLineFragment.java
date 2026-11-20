@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Graphics2D;
 import java.util.function.Consumer;
 
-final class LineVisualFragment {
+final class PositionedLineFragment {
   private LineFragment delegate;
   private int startOffset;
   private int startLogicalColumn;
@@ -14,7 +14,7 @@ final class LineVisualFragment {
   private float startX;
   private boolean isRtl;
 
-  LineVisualFragment(int startOffset, int startVisualColumn, float startX) {
+  PositionedLineFragment(int startOffset, int startVisualColumn, float startX) {
     this.startOffset = startOffset;
     this.startVisualColumn = startVisualColumn;
     this.startX = startX;

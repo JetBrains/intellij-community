@@ -17,7 +17,7 @@ import java.util.Objects;
  * Fragment of text using a common font
  */
 @ApiStatus.Internal
-public abstract sealed class TextFragment implements LineFragment permits SimpleTextFragment, ComplexTextFragment, GridTextFragment {
+public abstract sealed class GlyphFragment implements LineFragment permits SimpleGlyphFragment, ComplexGlyphFragment, GridGlyphFragment {
   protected final float @NotNull [] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
 
   /**
@@ -29,7 +29,7 @@ public abstract sealed class TextFragment implements LineFragment permits Simple
 
   private final boolean myIsRtl;
 
-  TextFragment(int charCount, boolean isRtl, short @Nullable [] codePoint2Offset) {
+  GlyphFragment(int charCount, boolean isRtl, short @Nullable [] codePoint2Offset) {
     assert charCount > 0;
     this.myCharPositions = new float[charCount]; // populated by subclasses' constructors
     this.myCodePoint2Offset = codePoint2Offset;
@@ -166,7 +166,7 @@ public abstract sealed class TextFragment implements LineFragment permits Simple
     if (startOffset == 0 && endOffset == myCharPositions.length) {
       return this;
     }
-    return new TextFragmentWindow(
+    return new GlyphSubFragment(
       this,
       startOffset,
       endOffset,

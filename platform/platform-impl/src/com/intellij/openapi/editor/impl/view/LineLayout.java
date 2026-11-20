@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Layout of a single line of document text. Consists of a series of BidiRuns, which, in turn, consist of TextFragments.
- * TextFragments within BidiRun are grouped into Chunks for performance reasons, glyph layout is performed per-Chunk, and only
+ * Layout of a single line of document text. Consists of a series of BidiRuns, which, in turn, consist of LineFragments.
+ * LineFragments within BidiRun are grouped into Chunks for performance reasons, glyph layout is performed per-Chunk, and only
  * for required Chunks.
  */
 sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, LineLayoutWithSize {
@@ -82,7 +82,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     throw new RuntimeException("This LineLayout instance doesn't have precalculated width");
   }
 
-  Iterable<LineVisualFragment> getFragmentsInVisualOrder(float startX) {
+  Iterable<PositionedLineFragment> getFragmentsInVisualOrder(float startX) {
     return () -> new VisualOrderIterator(null, null, 0, 0, 0, startX, getRunsInVisualOrder());
   }
 
@@ -90,7 +90,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
    * If {@code quickEvaluationListener} is provided, quick approximate iteration becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
-  Iterator<LineVisualFragment> getFragmentsInVisualOrder(
+  Iterator<PositionedLineFragment> getFragmentsInVisualOrder(
     @NotNull EditorView view,
     @NotNull DocumentText document,
     int line,

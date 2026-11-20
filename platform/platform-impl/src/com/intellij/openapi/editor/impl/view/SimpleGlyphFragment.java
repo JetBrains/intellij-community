@@ -20,7 +20,7 @@ import java.util.function.Consumer;
  * Fragment of text for which complex layout is not required. Rendering is the same as if each character would be rendered on its own.
  */
 @ApiStatus.Internal
-public final class SimpleTextFragment extends TextFragment {
+public final class SimpleGlyphFragment extends GlyphFragment {
   private final char @NotNull [] myText;
   private final @NotNull Font myFont;
   private final float myLetterSpacing;
@@ -28,13 +28,13 @@ public final class SimpleTextFragment extends TextFragment {
   private volatile @Nullable SpacedGlyphs mySpacedGlyphs; // the glyphs of the last drawSpaced
 
   @VisibleForTesting
-  public SimpleTextFragment(
+  public SimpleGlyphFragment(
     char @NotNull [] lineChars,
     int start,
     int end,
     @NotNull FontInfo fontInfo
   ) {
-    super(end - start, false, null); // SimpleTextFragment only handles BMP characters, so each code point takes one char
+    super(end - start, false, null); // SimpleGlyphFragment only handles BMP characters, so each code point takes one char
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
     myLetterSpacing = fontInfo.getLetterSpacingPixels();
@@ -44,7 +44,7 @@ public final class SimpleTextFragment extends TextFragment {
     FontMetrics fm = fontInfo.fontMetrics();
     FontLayoutService fontService = FontLayoutService.getInstance();
     for (int i = 0; i < text.length; i++) {
-      int codePoint = text[i]; // SimpleTextFragment only handles BMP characters, so no need for codePointAt here
+      int codePoint = text[i]; // SimpleGlyphFragment only handles BMP characters, so no need for codePointAt here
       float charWidth;
       if (myLetterSpacing == 0) {
         // inlined fontInfo.charWidth2D for performance

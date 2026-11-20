@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * call, and [EditorImpl.getCharacterGrid] gives the facade of the grid for as long as the spec is set.
  *
  * The cell rule: a code point takes the cells of [cells], and a cluster takes the sum of the cells of its code points.
- * The grid counts code points, so the low surrogate of a pair takes no cell of its own. [GridTextFragment] puts the
+ * The grid counts code points, so the low surrogate of a pair takes no cell of its own. [GridGlyphFragment] puts the
  * text on these cells.
  *
  * Two specs are equal when they have the same column spacing and the same strategy instance. A caller that builds a
