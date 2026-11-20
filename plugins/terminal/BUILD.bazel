@@ -23,6 +23,7 @@ dev_dist_plugin(
         "intellij.terminal.sh",
         "intellij.terminal.completion",
         "intellij.terminal.completion.ml",
+        "intellij.libraries.ketraterm",
         "intellij.libraries.completion.ranking.sh",
         "intellij.terminal.libraries.completionDbWithExtensions",
     ],
@@ -32,6 +33,7 @@ dev_dist_plugin(
 dev_dist_complex_plugin(
     artifact_inputs = {
         "//plugins/terminal/completion:completion.jar": "intellij.terminal.completion",
+        "//libraries/ketraterm:ketraterm.jar": "intellij.libraries.ketraterm",
         "//libraries/completion-ranking-sh:completion-ranking-sh.jar": "intellij.libraries.completion.ranking.sh",
         "//plugins/terminal/libraries:libraries-completionDbWithExtensions.jar": "intellij.terminal.libraries.completionDbWithExtensions",
         "//plugins/terminal:terminal.jar": "intellij.terminal",
@@ -49,6 +51,11 @@ dev_dist_complex_plugin(
     ],
     libraries = {
         "@lib//:terminal-completion-terminal-completion-spec": "@lib//:terminal-completion-terminal-completion-spec",
+        "@lib//:libraries-ketraterm-ketraterm-swing": "@lib//:libraries-ketraterm-ketraterm-swing",
+        "@lib//:libraries-ketraterm-ketraterm-ui-swing-host": "@lib//:libraries-ketraterm-ketraterm-ui-swing-host",
+        "@lib//:libraries-ketraterm-kotlinx-coroutines-swing": "@lib//:libraries-ketraterm-kotlinx-coroutines-swing",
+        "@lib//:libraries-ketraterm-ketraterm-shell-launch": "@lib//:libraries-ketraterm-ketraterm-shell-launch",
+        "@lib//:libraries-ketraterm-ketraterm-completion-host": "@lib//:libraries-ketraterm-ketraterm-completion-host",
         "@lib//:libraries-completion-ranking-sh-completion-ranking-sh": "@lib//:libraries-completion-ranking-sh-completion-ranking-sh",
         "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions": "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions",
     },
@@ -89,6 +96,7 @@ dev_dist_complex_plugin(
     ],
     remainder_files = {
         "lib/intellij.terminal.completion.jar": ["intellij.terminal.completion"],
+        "lib/intellij.libraries.ketraterm.jar": ["intellij.libraries.ketraterm"],
         "lib/modules/intellij.libraries.completion.ranking.sh.jar": ["intellij.libraries.completion.ranking.sh"],
         "lib/intellij.terminal.libraries.completionDbWithExtensions.jar": ["intellij.terminal.libraries.completionDbWithExtensions"],
         "lib/terminal.jar": ["intellij.terminal"],

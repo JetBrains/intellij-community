@@ -13,7 +13,6 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.session.ShellName
@@ -25,16 +24,16 @@ import java.nio.file.Path
  * followed by commands executed during the current session as they happen.
  */
 internal class ShellCommandHistoryManager(private val coroutineScope: CoroutineScope) {
-  private var historyLoadingJob: Job? = null
-  private var commandHistory: ArrayDeque<String>? = null
+  private var historyFileRequested = false
+  private val commandHistory = ArrayDeque<String>()
 
   @RequiresEdt
   fun loadHistoryFile(historyPath: String?, eelDescriptor: EelDescriptor?, shellName: ShellName?) {
-    if (commandHistory != null || historyLoadingJob != null) return
+    if (historyFileRequested) return
+    historyFileRequested = true
 
     if (historyPath == null || eelDescriptor == null || shellName == null) {
       LOG.warn("Failed to initialize shell history manager: required arguments are not initialized yet")
-      commandHistory = ArrayDeque(HISTORY_COMMAND_LIMIT)
       return
     }
 
@@ -46,13 +45,12 @@ internal class ShellCommandHistoryManager(private val coroutineScope: CoroutineS
       null
     }
 
-    historyLoadingJob = coroutineScope.launch(Dispatchers.Default) {
+    coroutineScope.launch(Dispatchers.Default) {
       val history = loadHistory(historyFile, shellName)
       withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
-        if (commandHistory == null) {
-          commandHistory = ArrayDeque<String>(HISTORY_COMMAND_LIMIT).apply {
-            addAll(history)
-          }
+        val retainedCount = minOf(history.size, HISTORY_COMMAND_LIMIT - commandHistory.size)
+        for (index in history.lastIndex downTo history.size - retainedCount) {
+          commandHistory.addFirst(history[index])
         }
       }
     }
@@ -84,16 +82,15 @@ internal class ShellCommandHistoryManager(private val coroutineScope: CoroutineS
 
   @RequiresEdt
   fun addCommand(command: String) {
-    val history = commandHistory ?: return
     val normalizedCommand = ShellHistoryParsingUtils.normalizeHistoryCommand(command) ?: return
-    if (history.size == HISTORY_COMMAND_LIMIT) {
-      history.removeFirst()
+    if (commandHistory.size == HISTORY_COMMAND_LIMIT) {
+      commandHistory.removeFirst()
     }
-    history.addLast(normalizedCommand)
+    commandHistory.addLast(normalizedCommand)
   }
 
   @RequiresEdt
-  fun getHistory(): List<String> = commandHistory.orEmpty()
+  fun getHistory(): List<String> = commandHistory
 
   private fun createParser(shellName: ShellName): ShellCommandHistoryParser? {
     return when (shellName) {

@@ -5,7 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.session.ghostty.createGhosttyTerminalSession
 import com.intellij.terminal.frontend.session.jediterm.createJediTerminalSession
+import com.intellij.terminal.frontend.session.ketraterm.createKetraTermTerminalSession
 import com.jediterm.terminal.TtyConnector
+import io.github.ketraterm.shell.launch.TerminalShellLaunch
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -16,13 +18,27 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 fun startTerminalProcess(
   project: Project,
   options: ShellStartupOptions,
-): Pair<TtyConnector, ShellStartupOptions> {
+): TerminalProcessStartResult {
   val runner = ReworkedLocalTerminalRunner(project)
-  val configuredOptions = runner.configureStartupOptions(options)
-  val connector = runner.createTtyConnector(configuredOptions)
-
-  return connector to configuredOptions
+  var started = false
+  try {
+    val configuredOptions = runner.configureStartupOptions(options)
+    val connector = runner.createTtyConnector(configuredOptions)
+    started = true
+    return TerminalProcessStartResult(connector, configuredOptions, runner.shellLaunch)
+  }
+  finally {
+    if (!started) runner.shellLaunch?.close()
+  }
 }
+
+/** The caller owns the connector and shell launch until session creation succeeds. */
+@ApiStatus.Internal
+data class TerminalProcessStartResult(
+  val ttyConnector: TtyConnector,
+  val options: ShellStartupOptions,
+  val shellLaunch: TerminalShellLaunch?,
+)
 
 /**
  * The created session lifecycle is bound to the [coroutineScope].
@@ -37,11 +53,15 @@ fun createTerminalSession(
   options: ShellStartupOptions,
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
+  shellLaunch: TerminalShellLaunch? = null,
 ): TerminalSession {
   val emulatorType = options.emulatorType ?: TerminalEmulatorType.default
   return when (emulatorType) {
     TerminalEmulatorType.JediTerm -> {
       createJediTerminalSession(project, ttyConnector, options, settings, coroutineScope)
+    }
+    TerminalEmulatorType.KetraTerm -> {
+      createKetraTermTerminalSession(project, ttyConnector, options, settings, coroutineScope, shellLaunch = shellLaunch)
     }
     TerminalEmulatorType.Ghostty -> {
       createGhosttyTerminalSession(project, ttyConnector, options, settings, coroutineScope)

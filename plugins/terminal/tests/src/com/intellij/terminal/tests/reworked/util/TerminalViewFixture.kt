@@ -68,7 +68,9 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
     get() = if (view.isAlternateScreenBuffer) checkNotNull(view.alternateBufferEditorDeferred.getNow()) else view.outputEditor
 
   init {
-    val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(project, scope, emulatorType)
+    val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
+      project, scope, emulatorType,
+    )
     this.session = session
     this.connector = connector
 

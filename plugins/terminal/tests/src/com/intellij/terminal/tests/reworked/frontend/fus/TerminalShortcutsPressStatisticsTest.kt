@@ -6,11 +6,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.terminal.frontend.fus.TerminalShortcutsPressStatistics
 import com.intellij.terminal.frontend.view.TerminalKeyEventImpl
+import com.intellij.terminal.frontend.view.TerminalShellLifecycle
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
@@ -20,6 +22,7 @@ import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
@@ -153,9 +156,20 @@ internal class TerminalShortcutsPressStatisticsTest {
       CompletableDeferred(shellIntegration)
     }
     else CompletableDeferred()
+    val command = (shellIntegration?.blocksModel?.activeBlock as? TerminalCommandBlock)?.executedCommand
+    val status = when {
+      shellIntegration == null -> null
+      command != null -> TerminalOutputStatus.ExecutingCommand
+      else -> TerminalOutputStatus.TypingCommand
+    }
+    val lifecycle = mock<TerminalShellLifecycle> {
+      on { outputStatus } doReturn MutableStateFlow<TerminalOutputStatus?>(status)
+      on { runningCommand } doReturn command
+    }
     return mock<TerminalView> {
       on { startupOptionsDeferred } doReturn CompletableDeferred(startupOptions)
       on { this.shellIntegrationDeferred } doReturn shellIntegrationDeferred
+      on { shellLifecycle } doReturn lifecycle
     }
   }
 

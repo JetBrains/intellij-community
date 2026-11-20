@@ -22,7 +22,6 @@ import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.getNow
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 
 /**
  * Creates the new terminal tab in the Terminal Tool Window.
@@ -81,9 +80,8 @@ internal fun TerminalView.getRunningProcessExecutableForFus(): String? {
   }
   else {
     // If it is a shell process, we need to get the current running command via shell integration
-    val shellIntegration = shellIntegrationDeferred.getNow() ?: return TerminalCommandUsageStatistics.UNKNOWN_EXECUTABLE
-    val currentBlock = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return null
-    currentBlock.executedCommand ?: return null
+    if (shellLifecycle.outputStatus.value == null) return TerminalCommandUsageStatistics.UNKNOWN_EXECUTABLE
+    shellLifecycle.runningCommand ?: return null
   }
   return TerminalCommandUsageStatistics.getLoggableCommandData(commandLine, expandAbsoluteOrRelativePath = true).command
 }

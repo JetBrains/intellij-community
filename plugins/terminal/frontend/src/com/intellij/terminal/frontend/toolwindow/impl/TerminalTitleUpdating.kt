@@ -5,7 +5,6 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,10 +13,9 @@ import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
@@ -27,8 +25,6 @@ import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAware
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
 import org.jetbrains.plugins.terminal.util.getNow
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 
 internal fun TerminalView.getTitleText(): @NlsSafe String {
@@ -41,7 +37,7 @@ internal fun TerminalView.getFullTitleText(): @NlsSafe String {
 
 private fun isCommandRunning(view: TerminalView): Boolean {
   val isNonShellProcess = view.startupOptionsDeferred.getNow()?.processType == TerminalProcessType.NON_SHELL
-  val isExecutingShellCommand = view.shellIntegrationDeferred.getNow()?.outputStatus?.value == TerminalOutputStatus.ExecutingCommand
+  val isExecutingShellCommand = view.shellLifecycle.outputStatus.value == TerminalOutputStatus.ExecutingCommand
   return isNonShellProcess || isExecutingShellCommand
 }
 
@@ -84,24 +80,14 @@ internal fun TerminalView.titleStateFlow(): Flow<TitleData> {
     buildFullTitle = { terminalView.getFullTitleText() }
   )
 
-  val titleOnCommandFinishFlow: Flow<TitleData> = channelFlow {
-    val shellIntegration = terminalView.shellIntegrationDeferred.await()
-
-    val disposable = Disposer.newDisposable()
-    shellIntegration.addCommandExecutionListener(disposable, object : TerminalCommandExecutionListener {
-      override fun commandFinished(event: TerminalCommandFinishedEvent) {
-        val data = TitleData(
-          croppedText = terminalView.getTitleText(),
-          fullText = terminalView.getFullTitleText(),
-          defaultName = terminalView.title.defaultTitle,
-          userDefinedName = terminalView.title.userDefinedTitle,
-        )
-        trySend(data)
-      }
-    })
-
-    awaitClose { Disposer.dispose(disposable) }
+  val shellStateTitleFlow = shellLifecycle.outputStatus.map {
+    TitleData(
+      croppedText = terminalView.getTitleText(),
+      fullText = terminalView.getFullTitleText(),
+      defaultName = terminalView.title.defaultTitle,
+      userDefinedName = terminalView.title.userDefinedTitle,
+    )
   }
 
-  return merge(titleStateFlow, titleOnCommandFinishFlow).distinctUntilChanged()
+  return merge(titleStateFlow, shellStateTitleFlow).distinctUntilChanged()
 }

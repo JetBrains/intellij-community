@@ -4,4 +4,6 @@ package org.jetbrains.plugins.terminal
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface TerminalPanelMarker
+interface TerminalPanelMarker {
+  interface KetraTerm : TerminalPanelMarker
+}

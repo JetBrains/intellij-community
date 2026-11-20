@@ -4,9 +4,11 @@ package com.intellij.terminal.frontend.session
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.session.ketraterm.KetraTermTerminalSession
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -33,7 +35,7 @@ fun startStandardTerminalSession(
     TermSize(80, 24)
   }
   val optionsWithSize = options.builder().initialTermSize(termSize).build()
-  val (ttyConnector, configuredOptions) = startTerminalProcess(project, optionsWithSize)
+  val (ttyConnector, configuredOptions, shellLaunch) = startTerminalProcess(project, optionsWithSize)
   val observableTtyConnector = ObservableTtyConnector(ttyConnector)
 
   val originalSession = scope.childScope("original session")
@@ -44,12 +46,16 @@ fun startStandardTerminalSession(
       options = configuredOptions,
       settings = JBTerminalSystemSettingsProvider(),
       coroutineScope = originalSession,
+      shellLaunch = shellLaunch,
     )
   }
   catch (e: Throwable) {
     runCatching { observableTtyConnector.close() }.onFailure(e::addSuppressed)
     originalSession.cancel()
     throw e
+  }
+  if (delegate is KetraTermTerminalSession) {
+    delegate.coroutineScope.coroutineContext.job.invokeOnCompletion { scope.cancel() }
   }
   val startupOptions = TerminalStartupOptionsImpl(
     shellCommand = configuredOptions.shellCommand!!,
@@ -60,7 +66,7 @@ fun startStandardTerminalSession(
   )
   return StandardTerminalSessionStartResult(
     configuredOptions = configuredOptions,
-    session = createStandardStateAwareTerminalSession(delegate, startupOptions, scope),
+    session = if (delegate is KetraTermTerminalSession) delegate else createStandardStateAwareTerminalSession(delegate, startupOptions, scope),
     ttyConnector = observableTtyConnector,
   )
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
 import com.intellij.terminal.frontend.view.activeOutputModel
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionService
+import com.intellij.terminal.frontend.view.ketraterm.KetraTermTerminalView
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
@@ -23,8 +24,12 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(), ActionPromoter {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val editor = e.terminalEditor ?: return
     val view = e.terminalView ?: return
+    if (view is KetraTermTerminalView) {
+      view.invokeCompletion()
+      return
+    }
+    val editor = e.terminalEditor ?: return
     val shellIntegration = view.shellIntegrationDeferred.getNow() ?: return
 
     if (!editor.isSuppressCompletion) {
@@ -45,6 +50,11 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
   }
 
   override fun update(e: AnActionEvent) {
+    val nativeView = e.terminalView as? KetraTermTerminalView
+    if (nativeView != null) {
+      e.presentation.isEnabledAndVisible = e.project != null && nativeView.isCompletionAvailable()
+      return
+    }
     super.update(e)
     val project = e.project
     val terminalView = e.terminalView

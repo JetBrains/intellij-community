@@ -3,19 +3,33 @@ package org.jetbrains.plugins.terminal.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.terminal.TerminalPanelMarker
+import org.jetbrains.plugins.terminal.TerminalSelectAllProvider
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal class TerminalSelectAllAction : TerminalPromotedDumbAwareAction() {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.terminalEditor?.isReworkedTerminalEditor == true
+    e.presentation.isEnabled = e.terminalEditor?.isReworkedTerminalEditor == true || getSelectAllProvider(e) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.terminalEditor ?: return
+    val editor = e.terminalEditor
+    if (editor == null) {
+      getSelectAllProvider(e)?.selectAll()
+      return
+    }
     editor.selectionModel.setSelection(0, editor.document.textLength)
+  }
+
+  private fun getSelectAllProvider(e: AnActionEvent): TerminalSelectAllProvider? {
+    val component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return null
+    if (UIUtil.getParentOfType(TerminalPanelMarker.KetraTerm::class.java, component) == null) return null
+    return e.getData(TerminalSelectAllProvider.DATA_KEY)
   }
 }

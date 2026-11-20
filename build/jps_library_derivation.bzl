@@ -302,7 +302,8 @@ def _parse_library_element(lib_el, lib_xml_path):
                     fail("<root> missing required 'url' attribute in CLASSES in library '%s' (%s)" %
                          (lib_name, lib_xml_path))
                 if "$MAVEN_REPOSITORY$" in url:
-                    maven_urls.append(url)
+                    if not url.endswith(".pom"):
+                        maven_urls.append(url)
                 elif "$PROJECT_DIR$" in url:
                     local_urls.append(url)
                 else:
@@ -441,10 +442,11 @@ def derive_library_target_index(
         own = by_module.setdefault(iml_data.module_name, {})
 
         for module_lib in iml_data.parsed_iml.module_libraries:
-            maven_urls = [u for u in module_lib.jar_urls if "$MAVEN_REPOSITORY$" in u]
+            jar_urls = [url for url in module_lib.jar_urls if not ("$MAVEN_REPOSITORY$" in url and url.endswith(".pom"))]
+            maven_urls = [u for u in jar_urls if "$MAVEN_REPOSITORY$" in u]
             is_snapshot_outside_of_tree = is_snapshot_version(maven_urls)
             is_kotlin_dev_version_as_snapshot_outside_of_tree = is_kotlin_dev_version_as_snapshot(maven_urls, kotlin_dev_snapshot_version)
-            for url in module_lib.jar_urls:
+            for url in jar_urls:
                 if "$MAVEN_REPOSITORY$" in url:
                     target = maven_url_to_jar_target(url, module_repo, is_snapshot_outside_of_tree or is_kotlin_dev_version_as_snapshot_outside_of_tree)
                 elif "$PROJECT_DIR$" in url:

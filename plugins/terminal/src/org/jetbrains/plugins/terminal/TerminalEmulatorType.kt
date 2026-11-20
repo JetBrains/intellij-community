@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -14,19 +15,25 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 enum class TerminalEmulatorType {
-  /** JediTerm, driven through its own `com.jediterm.terminal.emulator.JediEmulator`; the default pipeline. */
+  /** JediTerm, driven through `com.jediterm.terminal.emulator.JediEmulator`. */
   JediTerm,
 
   /** Ghostty (`libghostty-vt`), driven through the `TerminalEmulator` API. */
   Ghostty,
+
+  /** KetraTerm's session pipeline and Swing renderer. */
+  KetraTerm,
   ;
 
   companion object {
     /**
-     * The emulator used when not specified explicitly: chosen by the `terminal.use.ghostty.emulator`
-     * registry key, whose default is `true` — [Ghostty].
+     * Selects the configured backend. An empty override preserves the existing Ghostty registry setting.
      */
     val default: TerminalEmulatorType
-      get() = if (Registry.`is`("terminal.use.ghostty.emulator")) Ghostty else JediTerm
+      get() {
+        val selected = RegistryManager.getInstance().get("terminal.emulator").asString()
+        return entries.firstOrNull { it.name.equals(selected, ignoreCase = true) }
+               ?: if (Registry.`is`("terminal.use.ghostty.emulator")) Ghostty else JediTerm
+      }
   }
 }

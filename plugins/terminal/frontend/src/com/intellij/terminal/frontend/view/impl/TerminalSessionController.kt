@@ -49,7 +49,7 @@ internal class TerminalSessionController(
     coroutineScope.launch(CoroutineName("Output flow collection")) {
       // Get output flow again even if it was terminated.
       // It can happen in case of RemDev if there were any connection problems and backend decided to terminate the flow.
-      while (!session.isClosed) {
+      do {
         // Wrap the flow collection into `durable` call to retry in case of connection issues.
         durable {
           session.getOutputFlow().collect { events ->
@@ -58,7 +58,7 @@ internal class TerminalSessionController(
             }
           }
         }
-      }
+      } while (!session.isClosed)
     }
   }
 

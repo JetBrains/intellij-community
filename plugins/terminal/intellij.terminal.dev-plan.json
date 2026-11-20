@@ -45,6 +45,46 @@
             "module": "intellij.terminal.completion.ml"
         },
         {
+            "destination": "lib/intellij.libraries.ketraterm.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.ketraterm",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-ketraterm-ketraterm-swing",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-ketraterm-ketraterm-ui-swing-host",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-ketraterm-kotlinx-coroutines-swing",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-ketraterm-ketraterm-shell-launch",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-ketraterm-ketraterm-completion-host",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
             "destination": "lib/modules/intellij.libraries.completion.ranking.sh.jar",
             "recipe": {
                 "sources": [

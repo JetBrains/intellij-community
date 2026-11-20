@@ -27,9 +27,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalUtil
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
+import com.intellij.terminal.frontend.view.TerminalShellLifecycle
 import java.awt.AWTEvent
 import java.awt.Toolkit
 import java.awt.event.AWTEventListener
@@ -40,20 +38,19 @@ import kotlin.time.Duration.Companion.seconds
  * Waits until the user runs a command in [view] and then goes idle and returns to the terminal.
  */
 internal suspend fun awaitCommandExecutedAndIdle(view: TerminalView) {
-  val shellIntegration = view.shellIntegrationDeferred.await()
 
   // Wait for command executed - user started working in the terminal.
-  shellIntegration.awaitCommandExecuted()
+  withContext(Dispatchers.UI) { view.shellLifecycle.awaitCommandExecuted() }
   // Wait for a user stopped working, was idle, and returned
   awaitUserIdleAndReturned()
 }
 
-private suspend fun TerminalShellIntegration.awaitCommandExecuted() {
+private suspend fun TerminalShellLifecycle.awaitCommandExecuted() {
   suspendCancellableCoroutine { continuation ->
     val disposable = Disposer.newDisposable()
     continuation.invokeOnCancellation { Disposer.dispose(disposable) }
-    addCommandExecutionListener(disposable, object : TerminalCommandExecutionListener {
-      override fun commandFinished(event: TerminalCommandFinishedEvent) {
+    addListener(disposable, object : TerminalShellLifecycle.Listener {
+      override fun commandFinished(command: String?, exitCode: Int) {
         Disposer.dispose(disposable)
         continuation.resume(Unit)
       }

@@ -88,7 +88,7 @@ internal fun addWorkingDirectoryListener(
  * So, the listener can be triggered with a delay after the actual directory change.
  */
 @OptIn(FlowPreview::class)
-private fun addHeuristicBasedCwdListener(
+internal fun addHeuristicBasedCwdListener(
   ttyConnector: ObservableTtyConnector,
   localTtyConnector: LocalTerminalTtyConnector,
   coroutineScope: CoroutineScope,
@@ -99,7 +99,7 @@ private fun addHeuristicBasedCwdListener(
   ttyConnector.addListener(coroutineScope.asDisposable(), object : TtyConnectorListener {
     override fun bytesWritten(bytes: ByteArray) {
       // Trigger working directory updating after pressing user press Enter.
-      if (bytes.firstOrNull()?.toInt() == '\r'.code) {
+      if ('\r'.code.toByte() in bytes) {
         workingDirectoryUpdateRequests.tryEmit(Unit)
       }
     }

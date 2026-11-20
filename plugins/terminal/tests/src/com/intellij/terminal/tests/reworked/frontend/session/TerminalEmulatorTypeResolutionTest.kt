@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend.session
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.session.ghostty.GhosttyTerminalSession
 import com.intellij.terminal.frontend.session.jediterm.JediTerminalSession
+import com.intellij.terminal.frontend.session.ketraterm.KetraTermTerminalSession
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
@@ -59,6 +61,46 @@ internal class TerminalEmulatorTypeResolutionTest {
     assertSessionUsesEmulator(requested = null, expected = TerminalEmulatorType.JediTerm)
   }
 
+  @Test
+  fun `the string override selects KetraTerm`() {
+    Registry.get("terminal.use.ghostty.emulator").setValue(true, disposableRule.disposable)
+    TerminalEmulatorType.KetraTerm.setDefault(disposableRule.disposable)
+    assertSessionUsesEmulator(requested = null, expected = TerminalEmulatorType.KetraTerm)
+  }
+
+  @Test
+  fun `an explicit emulator wins over the KetraTerm override`() {
+    TerminalEmulatorType.KetraTerm.setDefault(disposableRule.disposable)
+    assertSessionUsesEmulator(requested = TerminalEmulatorType.JediTerm, expected = TerminalEmulatorType.JediTerm)
+  }
+
+  @Test
+  fun `an empty override preserves Ghostty selection`() {
+    Registry.get("terminal.emulator").setValue("", disposableRule.disposable)
+    Registry.get("terminal.use.ghostty.emulator").setValue(true, disposableRule.disposable)
+    assertThat(TerminalEmulatorType.default).isEqualTo(TerminalEmulatorType.Ghostty)
+  }
+
+  @Test
+  fun `an empty override preserves JediTerm selection`() {
+    Registry.get("terminal.emulator").setValue("", disposableRule.disposable)
+    Registry.get("terminal.use.ghostty.emulator").setValue(false, disposableRule.disposable)
+    assertThat(TerminalEmulatorType.default).isEqualTo(TerminalEmulatorType.JediTerm)
+  }
+
+  @Test
+  fun `the override ignores case`() {
+    Registry.get("terminal.emulator").setValue("ketraterm", disposableRule.disposable)
+    assertThat(TerminalEmulatorType.default).isEqualTo(TerminalEmulatorType.KetraTerm)
+  }
+
+  @Test
+  fun `an unknown override retains the existing backend selection`() {
+    Registry.get("terminal.emulator").setValue("unknown", disposableRule.disposable)
+    Registry.get("terminal.use.ghostty.emulator").setValue(true, disposableRule.disposable)
+    assertThat(TerminalEmulatorType.default).isEqualTo(TerminalEmulatorType.Ghostty)
+  }
+
   /** Starts a loopback session with [requested] in its startup options and asserts the [expected] emulator is behind it. */
   private fun assertSessionUsesEmulator(requested: TerminalEmulatorType?, expected: TerminalEmulatorType) {
     timeoutRunBlocking(20.seconds) {
@@ -73,6 +115,7 @@ internal class TerminalEmulatorTypeResolutionTest {
         val expectedClass = when (expected) {
           TerminalEmulatorType.JediTerm -> JediTerminalSession::class
           TerminalEmulatorType.Ghostty -> GhosttyTerminalSession::class
+          TerminalEmulatorType.KetraTerm -> KetraTermTerminalSession::class
         }
         assertThat(session::class).isEqualTo(expectedClass)
       }

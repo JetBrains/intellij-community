@@ -106,6 +106,7 @@
     <module name="intellij.terminal.completion" loading="embedded"/>
     <module name="intellij.terminal.completion.ml"/>
     <module name="intellij.terminal.agentsProvider"/>
+    <module name="intellij.libraries.ketraterm" loading="embedded"/>
   </content>
   <content>
     <module name="intellij.libraries.completion.ranking.sh"/>

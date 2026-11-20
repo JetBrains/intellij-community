@@ -9,7 +9,6 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.intellij.terminal.frontend.view.impl.dnd.TerminalViewDropHandler
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -29,12 +28,11 @@ import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextBuilderImpl
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.verify
 import java.nio.file.Path
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 import kotlin.io.path.createFile
 
 private val TEST_SHELL = ShellName.BASH
@@ -70,26 +68,29 @@ internal class TerminalViewDropHandlerTest {
   fun `a drop scrolls to the cursor`() {
     timeoutRunBlocking(context = Dispatchers.EDT) {
       val file = tempDir.resolve("script.sh").createFile()
-      val scrollingModel = mock<TerminalOutputScrollingModel>()
+      var scrollCalls = 0
 
-      drop(ideDrag(file), scrollingModel = scrollingModel)
+      drop(ideDrag(file), scrollToCursor = {
+        assertThat(SwingUtilities.isEventDispatchThread()).isTrue()
+        scrollCalls++
+      })
 
-      verify(scrollingModel).scrollToCursor(true)
+      assertThat(scrollCalls).isEqualTo(1)
     }
   }
 
   @Test
   fun `a drop that sends nothing does not scroll to the cursor`() {
     timeoutRunBlocking(context = Dispatchers.EDT) {
-      val scrollingModel = mock<TerminalOutputScrollingModel>()
+      var scrollCalls = 0
 
       val sent = drop(
         nativeTextDrag("   \n  "),
-        scrollingModel = scrollingModel,
+        scrollToCursor = { scrollCalls++ },
       )
 
       assertThat(sent).isEmpty()
-      verifyNoInteractions(scrollingModel)
+      assertThat(scrollCalls).isZero()
     }
   }
 
@@ -143,7 +144,7 @@ internal class TerminalViewDropHandlerTest {
       TerminalViewDropHandler(
         project = project,
         terminalView = recordingView(viewScope, sent, sessionStarted = true),
-        scrollingModel = mock(),
+        scrollToCursor = {},
       ).drop(ideDrag(file))
 
       assertThat(sent).isEmpty()
@@ -161,7 +162,7 @@ internal class TerminalViewDropHandlerTest {
   private suspend fun CoroutineScope.drop(
     event: DnDEvent,
     sessionStarted: Boolean = true,
-    scrollingModel: TerminalOutputScrollingModel = mock(),
+    scrollToCursor: () -> Unit = {},
   ): List<TerminalSendTextOptions> {
     val sent = mutableListOf<TerminalSendTextOptions>()
     val viewScope = childScope("view scope")
@@ -170,7 +171,7 @@ internal class TerminalViewDropHandlerTest {
       TerminalViewDropHandler(
         project = project,
         terminalView = recordingView(viewScope, sent, sessionStarted),
-        scrollingModel = scrollingModel,
+        scrollToCursor = scrollToCursor,
       ).drop(event)
 
       viewScope.coroutineContext.job.children.forEach { it.join() }

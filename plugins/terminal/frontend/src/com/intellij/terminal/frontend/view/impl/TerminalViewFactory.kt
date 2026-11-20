@@ -9,6 +9,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.session.TerminalSessionsManager
 import com.intellij.terminal.frontend.toolwindow.TerminalRequestedProcessOptions
 import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.ketraterm.KetraTermTerminalView
 import com.intellij.terminal.frontend.view.portForwarding.installPortForwarding
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
@@ -21,6 +22,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalEmulatorType
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
 import org.jetbrains.plugins.terminal.session.toTermSize
@@ -36,45 +39,55 @@ internal fun createTerminalView(
   options: TerminalViewBuilderOptions,
   coroutineScope: CoroutineScope,
 ): TerminalView {
+  val emulatorType = options.processOptions.emulatorType ?: TerminalEmulatorType.default
+  if (emulatorType == TerminalEmulatorType.KetraTerm) {
+    val view = KetraTermTerminalView(project, JBTerminalSystemSettingsProvider(), coroutineScope)
+    scheduleSessionStart(project, view, options, emulatorType, view::connectToSession)
+    return view
+  }
   val terminalView = TerminalViewImpl(
     project = project,
     settings = JBTerminalSystemSettingsProvider(),
     startupFusInfo = options.startupFusInfo,
     coroutineScope = coroutineScope,
   )
-  scheduleSessionStart(project, terminalView, options)
+  scheduleSessionStart(project, terminalView, options, emulatorType, terminalView::connectToSession)
   return terminalView
 }
 
 private fun scheduleSessionStart(
   project: Project,
-  terminal: TerminalViewImpl,
+  terminal: TerminalView,
   options: TerminalViewBuilderOptions,
+  emulatorType: TerminalEmulatorType,
+  connect: suspend (TerminalSession) -> Unit,
 ) = terminal.coroutineScope.launch {
   if (options.deferSessionStartUntilUiShown) {
     withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       // Non-cancellable because we expect it to be called only once even if the component was hidden immediately.
       terminal.component.initOnShow("Terminal Session start", context = NonCancellable) {
-        doScheduleSessionStart(project, terminal, options.processOptions, calculateSizeFromComponent = true)
+        doScheduleSessionStart(project, terminal, options.processOptions, emulatorType, connect, calculateSizeFromComponent = true)
       }
     }
   }
   else {
-    doScheduleSessionStart(project, terminal, options.processOptions, calculateSizeFromComponent = false)
+    doScheduleSessionStart(project, terminal, options.processOptions, emulatorType, connect, calculateSizeFromComponent = false)
   }
 }
 
 private fun doScheduleSessionStart(
   project: Project,
-  terminal: TerminalViewImpl,
+  terminal: TerminalView,
   processOptions: TerminalRequestedProcessOptions,
+  emulatorType: TerminalEmulatorType,
+  connect: suspend (TerminalSession) -> Unit,
   calculateSizeFromComponent: Boolean,
 ) = terminal.coroutineScope.launch(CoroutineName("Terminal Session start")) {
-  val options = prepareStartupOptions(terminal, processOptions, calculateSizeFromComponent)
+  val options = prepareStartupOptions(terminal, processOptions, emulatorType, calculateSizeFromComponent)
 
   val sessionScope = terminal.coroutineScope.childScope("TerminalSession")
   val session = TerminalSessionsManager.getInstance(project).startSession(options, sessionScope).session
-  terminal.connectToSession(session)
+  connect(session)
 
   installPortForwarding(terminal, terminal.coroutineScope.childScope("PortForwarding"))
 }
@@ -82,6 +95,7 @@ private fun doScheduleSessionStart(
 private suspend fun prepareStartupOptions(
   terminal: TerminalView,
   processOptions: TerminalRequestedProcessOptions,
+  emulatorType: TerminalEmulatorType,
   calculateSizeFromComponent: Boolean,
 ): ShellStartupOptions {
   val baseOptions = ShellStartupOptions.Builder()
@@ -89,7 +103,7 @@ private suspend fun prepareStartupOptions(
     .workingDirectory(processOptions.workingDirectory)
     .envVariables(processOptions.envVariables)
     .processType(processOptions.processType)
-    .emulatorType(processOptions.emulatorType)
+    .emulatorType(emulatorType)
 
   return if (calculateSizeFromComponent) {
     baseOptions.initialGridGeometry(terminal.awaitLaidOutGridGeometry()).build()

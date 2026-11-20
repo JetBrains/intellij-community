@@ -5,13 +5,13 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.TerminalShellLifecycle
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
+import kotlinx.coroutines.flow.first
 
 private val LOG = fileLogger()
 
@@ -33,18 +33,17 @@ internal fun refreshVfsOnCommandFinish(
     }
   )
 
+  terminalView.shellLifecycle.addListener(disposable, object : TerminalShellLifecycle.Listener {
+    override fun commandFinished(command: String?, exitCode: Int) {
+      SaveAndSyncHandler.getInstance().scheduleRefresh()
+    }
+  })
   coroutineScope.launch(CoroutineName("Shell integration awaiting")) {
-    val shellIntegration = terminalView.shellIntegrationDeferred.await()
+    terminalView.shellLifecycle.outputStatus.first { it != null }
 
     // If we have events from the shell integration, we no more need heuristic-based refresher.
     heuristicBasedRefresherScope.cancel()
     LOG.debug { "Shell integration initialized, cancel heuristic-based VFS refresher." }
 
-    shellIntegration.addCommandExecutionListener(disposable, object : TerminalCommandExecutionListener {
-      override fun commandFinished(event: TerminalCommandFinishedEvent) {
-        LOG.debug { "Command finished, schedule VFS refresh." }
-        SaveAndSyncHandler.getInstance().scheduleRefresh()
-      }
-    })
   }
 }

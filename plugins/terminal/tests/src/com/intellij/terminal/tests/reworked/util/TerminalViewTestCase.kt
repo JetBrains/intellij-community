@@ -33,7 +33,7 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 @Timeout(30)
 @ParameterizedClass
-@EnumSource(TerminalEmulatorType::class)
+@EnumSource(TerminalEmulatorType::class, names = ["JediTerm", "Ghostty"])
 internal abstract class TerminalViewTestCase(protected val emulatorType: TerminalEmulatorType) {
 
   protected val project get() = projectFixture.get()

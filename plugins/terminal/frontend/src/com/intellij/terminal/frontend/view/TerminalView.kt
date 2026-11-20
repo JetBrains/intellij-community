@@ -18,6 +18,10 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
+import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
+import org.jetbrains.plugins.terminal.util.getNow
 import java.nio.file.Path
 import javax.swing.JComponent
 
@@ -128,6 +132,24 @@ interface TerminalView {
    * @see TerminalShellIntegration
    */
   val shellIntegrationDeferred: Deferred<TerminalShellIntegration>
+
+  /** Shell activity that does not require an output document. */
+  @get:ApiStatus.Internal
+  val shellLifecycle: TerminalShellLifecycle
+
+  /** Whether this view exposes document-based output APIs. */
+  @get:ApiStatus.Internal
+  val supportsOutputModel: Boolean get() = true
+
+  /** The command at the prompt, or null when unavailable. Read on the EDT. */
+  @get:ApiStatus.Internal
+  val typedCommand: String?
+    get() {
+      val integration = shellIntegrationDeferred.getNow() ?: return null
+      if (integration.outputStatus.value != TerminalOutputStatus.TypingCommand) return null
+      val block = integration.blocksModel.activeBlock as? TerminalCommandBlock ?: return null
+      return block.getTypedCommandText(outputModels.regular)
+    }
 
   /**
    * Options used to start the shell process.

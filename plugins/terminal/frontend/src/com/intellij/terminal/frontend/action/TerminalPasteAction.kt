@@ -26,8 +26,13 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.termin
 internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val editor = e.terminalEditor as? EditorEx ?: return
     val terminalView = e.terminalView
+    if (terminalView != null) {
+      TerminalClipboard.pasteClipboardContent(project, terminalView, preferSystemSelection = false)
+      e.terminalEditor?.getUserData(TerminalOutputScrollingModel.KEY)?.scrollToCursor(force = true)
+      return
+    }
+    val editor = e.terminalEditor as? EditorEx ?: return
     when {
       editor.isPromptEditor -> pasteIntoPrompt(e, e.dataContext)
       editor.isAlternateBufferEditor -> pasteIntoTerminalSession(e)
@@ -40,23 +45,15 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
           pasteIntoPrompt(e, dataContext = null)
         }
       }
-      terminalView != null -> {
-        TerminalClipboard.pasteClipboardContent(project, terminalView, preferSystemSelection = false)
-
-        // Scroll to the cursor if the scrolling model is available in this editor.
-        // It can be absent if it is the alternate buffer editor.
-        val scrollingModel = editor.getUserData(TerminalOutputScrollingModel.KEY)
-        scrollingModel?.scrollToCursor(force = true)
-      }
     }
   }
 
   override fun update(e: AnActionEvent) {
     val editor = e.terminalEditor
-    e.presentation.isEnabledAndVisible = editor != null && (
+    e.presentation.isEnabledAndVisible = e.terminalView != null || editor != null && (
       editor.isPromptEditor || editor.isOutputEditor || editor.isAlternateBufferEditor || // gen1
       editor.isOutputModelEditor || editor.isAlternateBufferModelEditor // gen2
-                                                           )
+    )
   }
 
   private fun pasteIntoPrompt(e: AnActionEvent, dataContext: DataContext?) {
@@ -85,5 +82,5 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
     }
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }

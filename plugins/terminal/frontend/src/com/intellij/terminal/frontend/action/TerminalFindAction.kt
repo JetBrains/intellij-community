@@ -8,7 +8,9 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalSearchController
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
 import com.intellij.terminal.frontend.view.impl.TerminalSearchController
+import com.intellij.terminal.frontend.view.ketraterm.KetraTermTerminalView
 import org.jetbrains.plugins.terminal.block.BlockTerminalController
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.blockTerminalController
@@ -26,12 +28,21 @@ internal class TerminalFindAction : TerminalPromotedDumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT // yes, that's what EditorAction defaults to as well!
 
   override fun update(e: AnActionEvent) {
+    if (e.terminalView is KetraTermTerminalView) {
+      e.presentation.isEnabled = true
+      return
+    }
     val editor = e.terminalEditor
     val caret = editor?.caretModel?.currentCaret
     e.presentation.isEnabled = editor != null && caret != null && handler.isEnabled(editor, caret, e.dataContext)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    val view = e.terminalView
+    if (view is KetraTermTerminalView) {
+      view.showSearch()
+      return
+    }
     val editor = e.terminalEditor ?: return
     val caret = editor.caretModel.currentCaret
     handler.executeForTerminal(editor, caret, e.dataContext)

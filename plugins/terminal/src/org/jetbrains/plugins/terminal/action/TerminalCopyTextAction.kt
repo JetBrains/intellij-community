@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.terminal.action
 
 import com.intellij.codeInsight.editorActions.CopyHandler
+import com.intellij.ide.CopyProvider
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCopyPasteHelper
@@ -11,6 +13,8 @@ import com.intellij.openapi.editor.EditorCopyPasteHelper.CopyPasteOptions
 import com.intellij.openapi.editor.actions.CopyAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
@@ -21,15 +25,25 @@ import java.awt.datatransfer.Transferable
 
 internal class TerminalCopyTextAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.terminalEditor ?: return
+    val editor = e.terminalEditor
+    if (editor == null) {
+      val provider = getTerminalCopyProvider(e) ?: return
+      if (provider.isCopyEnabled(e.dataContext)) provider.performCopy(e.dataContext)
+      return
+    }
     val selectionToCopy = CopyAction.SelectionToCopy(CopyPasteOptions.DEFAULT, null)
     CopyAction.copyToClipboard(editor, TerminalTransferableProvider(), selectionToCopy)
   }
 
   override fun update(e: AnActionEvent) {
     val editor = e.terminalEditor
+    if (editor == null) {
+      val provider = getTerminalCopyProvider(e)
+      e.presentation.isVisible = provider?.isCopyVisible(e.dataContext) == true
+      e.presentation.isEnabled = provider?.isCopyEnabled(e.dataContext) == true
+      return
+    }
     val isVisible =
-      editor != null &&
       (
         editor.isPromptEditor || editor.isOutputEditor || editor.isAlternateBufferEditor || // gen1
         editor.isOutputModelEditor || editor.isAlternateBufferModelEditor // gen2
@@ -40,6 +54,12 @@ internal class TerminalCopyTextAction : DumbAwareAction(), ActionRemoteBehaviorS
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  private fun getTerminalCopyProvider(e: AnActionEvent): CopyProvider? {
+    val component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return null
+    if (UIUtil.getParentOfType(TerminalPanelMarker.KetraTerm::class.java, component) == null) return null
+    return e.getData(PlatformDataKeys.COPY_PROVIDER)
+  }
 }
 
 private class TerminalTransferableProvider : CopyAction.TransferableProvider {

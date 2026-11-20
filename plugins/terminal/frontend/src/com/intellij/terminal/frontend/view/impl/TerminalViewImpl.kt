@@ -4,12 +4,10 @@ import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.execution.impl.createEditorTextDecorationApplier
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.actions.ToolWindowTabLocationFusUtil
-import com.intellij.ide.dnd.DnDSupport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
@@ -47,7 +45,7 @@ import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionT
 import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.terminal.frontend.view.hyperlinks.installHyperlinksProcessing
 import com.intellij.terminal.frontend.view.hyperlinks.installOsc8HyperlinksProcessing
-import com.intellij.terminal.frontend.view.impl.dnd.TerminalViewDropHandler
+import com.intellij.terminal.frontend.view.impl.dnd.installTerminalDropHandler
 import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionController
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelControllerV1
@@ -189,6 +187,8 @@ class TerminalViewImpl(
   override val gridGeometry: TerminalGridGeometryDto?
     get() = getCurEditor()?.calculateGridGeometry()
   override val title: TerminalTitle = TerminalTitle()
+  private val shellLifecycleModel = TerminalShellLifecycleModel()
+  override val shellLifecycle: com.intellij.terminal.frontend.view.TerminalShellLifecycle get() = shellLifecycleModel
 
   private val mutableOutputModels: TerminalOutputModelsSetImpl
   override val outputModels: TerminalOutputModelsSet
@@ -329,6 +329,7 @@ class TerminalViewImpl(
       startupOptionsDeferred,
       coroutineScope.childScope("TerminalShellIntegrationEventsHandler"),
     )
+    controller.addEventsHandler(shellLifecycleModel)
     controller.addEventsHandler(shellIntegrationEventsHandler)
     controller.addTerminationCallback(coroutineScope.asDisposable()) {
       mutableSessionState.value = TerminalViewSessionState.Terminated
@@ -424,7 +425,7 @@ class TerminalViewImpl(
     }
 
     addKeyEventsListener(coroutineScope.asDisposable(), TerminalShortcutsPressStatistics(project, this))
-    installDropHandler()
+    installTerminalDropHandler(project) { scrollingModel.scrollToCursor(true) }
   }
 
   fun connectToSession(session: TerminalSession) {
@@ -760,25 +761,6 @@ class TerminalViewImpl(
       coroutineScope = inlineCompletionScope
     )
     inlineCompletionController.install()
-  }
-
-  private fun installDropHandler() {
-    // Drag-and-drop and docking rely on the tool window decorator (real UI), which is absent in a headless environment.
-    // Skip them there so the tool window can still be initialized in tests.
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) return
-
-    DnDSupport.createBuilder(component)
-      .setDropHandler(
-        TerminalViewDropHandler(
-          project = project,
-          terminalView = this,
-          scrollingModel = scrollingModel,
-        )
-      )
-      .setDisposableParent(coroutineScope.asDisposable())
-      .enableAsNativeTarget()
-      .disableAsSource()
-      .install()
   }
 
   override fun toString(): String {

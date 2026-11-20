@@ -294,6 +294,28 @@ def _module_library_mixed_snapshot_test_impl(ctx):
 
 module_library_mixed_snapshot_test = unittest.make(_module_library_mixed_snapshot_test_impl)
 
+def _maven_pom_roots_test_impl(ctx):
+    env = unittest.begin(ctx)
+
+    module_root = _maven_root("com/example", "module", "1.0", "module-1.0.jar")
+    module_pom = "file://$MAVEN_REPOSITORY$/com/example/module-bundle/1.0/module-bundle-1.0.pom"
+    project_root = _maven_root("com/example", "project", "1.0", "project-1.0.jar")
+    project_pom = "file://$MAVEN_REPOSITORY$/com/example/project-bundle/1.0/project-bundle-1.0.pom"
+    iml = _iml_xml(project_libraries = ["published"], module_library_roots = [[module_pom, module_root]])
+    iml_data = _iml_data("intellij.test", "plugins/test/intellij.test.iml", iml)
+    project_xml = _project_library_xml("published", maven_roots = [project_pom, project_root])
+    library_xml = _library_xml_struct("published", project_xml)
+
+    result = _derive(library_xmls = [library_xml], iml_data_list = [iml_data])
+
+    asserts.equals(env, [
+        "@lib//:com.example/module-1.0.jar",
+        "@lib//:com.example/project-1.0.jar",
+    ], result)
+    return unittest.end(env)
+
+_maven_pom_roots_test = unittest.make(_maven_pom_roots_test_impl)
+
 # --- Test 9: dedup_and_sorting_test ---
 
 def _dedup_and_sorting_test_impl(ctx):
@@ -533,6 +555,7 @@ def jps_library_derivation_pipeline_test_suite(name):
         module_library_uses_kotlin_dev_snapshot_env_test,
         module_library_project_and_module_dir_resolution_test,
         module_library_mixed_snapshot_test,
+        _maven_pom_roots_test,
         dedup_and_sorting_test,
         module_library_ultimate_repo_test,
         ultimate_mode_local_path_routing_test,
