@@ -44,6 +44,17 @@ class PyNoneFunctionAssignmentInspectionTest : PyInspectionTestCase() {
     doTest()
   }
 
+  @TestFor(issues = ["PY-87677"])
+  fun testTrailingCommentOutsideOfRange() {
+    doTestByText("""
+      def f() -> None: ...
+
+      <weak_warning descr="Function 'f' doesn't return anything">a = f()</weak_warning>  # comment
+      <weak_warning descr="Function 'f' doesn't return anything">b = f()</weak_warning>; c = 1
+      <weak_warning descr="Function 'f' doesn't return anything">d = f()</weak_warning>  # type: None
+    """.trimIndent())
+  }
+
   // PY-10883
   fun testMethodWithInheritors() {
     doTest()
@@ -111,7 +122,7 @@ class PyNoneFunctionAssignmentInspectionTest : PyInspectionTestCase() {
              def f() -> None:
                  return None
              
-             <weak_warning descr="Function 'f' doesn't return anything">y = f() # comment</weak_warning>
+             <weak_warning descr="Function 'f' doesn't return anything">y = f()</weak_warning> # comment
              print(<weak_warning descr="Function 'f' doesn't return anything">f()</weak_warning>)
              f"{<weak_warning descr="Function 'f' doesn't return anything">f()</weak_warning>}"
              [<weak_warning descr="Function 'f' doesn't return anything">f()</weak_warning>]
