@@ -771,6 +771,16 @@ impl Runtime for OsRuntime {
         Ok(self.repo_root.join(path))
     }
 
+    /// A checkout root without `.git` is outside git, and it costs one stat.
+    fn git_common_path(&self, name: &str) -> io::Result<Option<PathBuf>> {
+        if !self.repo_root.join(".git").exists() {
+            return Ok(None);
+        }
+        let dir = git_text(&self.repo_root, &["rev-parse", "--git-common-dir"], &Git::default())?;
+        // Relative to the checkout root in a main checkout, absolute in a linked work tree.
+        Ok(Some(self.repo_root.join(dir).join(name)))
+    }
+
     fn spawn(&self, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
         match &self.spawner {
             Spawner::Refuse => refuse_spawn(command),

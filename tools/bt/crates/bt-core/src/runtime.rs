@@ -124,6 +124,10 @@ pub trait Runtime: Sync {
     /// tree gives its own directory under `.git/worktrees/`.
     fn git_path(&self, name: &str) -> io::Result<PathBuf>;
 
+    /// The path of a file in the common git directory of the checkout, as `git rev-parse --git-common-dir` gives it, or
+    /// `None` for a checkout outside git. The main checkout and each of its linked work trees give the same path.
+    fn git_common_path(&self, name: &str) -> io::Result<Option<PathBuf>>;
+
     /// Runs a child to completion and never fails: a command that could not start is a [`SpawnResult`] with exit
     /// code 127, a run outcome the classifier can reason about rather than an error to re-classify.
     fn spawn(&self, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult;

@@ -929,6 +929,141 @@ fn a_dry_run_writes_no_shard_plan() {
     let fake = fake_air_tree();
     run(&["--lane", "fast", "--dry-run"], &fake);
     assert!(!fake.state().files.contains_key(SHARD_PLAN));
+
+    let fake = heavy_work_tree(SHARED_PLAN);
+    let text = run(&["--lane", "fast", "--dry-run"], &fake).text;
+    assert_mentions(&line_of(&text, "heavy   "), &["--test_sharding_strategy=forced=8", CORE_LABEL]);
+    assert!(!fake.state().files.contains_key(SHARD_PLAN));
+}
+
+/// A target that only the plan of a checkout from before the shared plan names.
+const OLD_LABEL: &str = "//plugins/air/stale:stale_test";
+
+/// The common git directory of a linked work tree in the fake.
+const COMMON_GIT_DIR: &str = "/main/.git";
+/// The plan of the repository in [`COMMON_GIT_DIR`].
+const SHARED_PLAN: &str = "/main/.git/bt/shard-plan.tsv";
+
+/// Makes the fake checkout a linked work tree of git with the common git directory [`COMMON_GIT_DIR`].
+fn work_tree(fake: FakeRuntime) -> FakeRuntime {
+    fake.state().git_common_dir = Some(COMMON_GIT_DIR.to_owned());
+    fake
+}
+
+/// The text of a plan where the core target wants six shards and the other target two.
+fn heavy_plan_text() -> String {
+    format!("default\t2\nclass\t{CORE_LABEL}\tcom.A\t530.000\nclass\t{OTHER_LABEL}\tcom.B\t120.000\n")
+}
+
+/// A linked work tree whose plan file `plan` holds [`heavy_plan_text`], and whose tree has the core and the other target.
+fn heavy_work_tree(plan: &str) -> FakeRuntime {
+    let fake = work_tree(fake_air_tree());
+    fake.put_absolute(plan, &heavy_plan_text());
+    tree_has(&fake, &[CORE_LABEL, OTHER_LABEL]);
+    fake
+}
+
+/// Runs the fast lane, checks that its first `bazel test` invocation runs the core target with the heavy count, and
+/// answers the `bazel test` command lines.
+#[track_caller]
+fn run_with_heavy_core(fake: &FakeRuntime) -> Vec<String> {
+    run(&["--lane", "fast"], fake);
+    let tests = test_commands(fake);
+    assert!(tests[0].contains("forced=8") && tests[0].ends_with(CORE_LABEL), "{tests:#?}");
+    tests
+}
+
+/// A new lease has no `out/`, so it has no checkout copy. The plan of the repository still gives the heavy count.
+#[test]
+fn a_work_tree_without_a_checkout_copy_takes_the_heavy_count_from_the_shared_plan() {
+    let tests = run_with_heavy_core(&heavy_work_tree(SHARED_PLAN));
+    assert_mentions(&tests[0], &["--test_env=JB_TEST_SHARD_PLAN=out/bt/shard-plan.tsv"]);
+    assert!(
+        tests[1].contains("forced=2") && tests[1].ends_with(&format!("-- -{CORE_LABEL}")),
+        "{tests:#?}"
+    );
+}
+
+/// The tests read the checkout copy, so a planned run writes the text of the shared plan there before it starts bazel. A
+/// filtered run records nothing, so the copy keeps that text after the run. For a target that both files name, the
+/// shared plan wins.
+#[test]
+fn a_planned_run_copies_the_shared_plan_into_the_checkout() {
+    let fake = heavy_work_tree(SHARED_PLAN);
+    fake.put_absolute(SHARD_PLAN, &format!("default\t2\nclass\t{CORE_LABEL}\tcom.Old\t1.000\n"));
+    run(&["--lane", "fast", "--", "--test_filter=com.A"], &fake);
+
+    let state = fake.state();
+    assert_eq!(state.files.get(SHARD_PLAN), Some(&heavy_plan_text()));
+    assert_eq!(state.files.get(SHARED_PLAN), Some(&heavy_plan_text()));
+}
+
+/// The update reads the shared plan again, and it writes the shared plan and the checkout copy. A target that only the
+/// checkout copy names joins the shared plan. For a target that both files name, the shared plan wins.
+#[test]
+fn a_run_records_the_class_times_in_the_shared_plan_and_in_the_checkout_copy() {
+    let fake = work_tree(fake_air_tree());
+    fake.put_absolute(SHARED_PLAN, &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.B\t120.000\n"));
+    fake.put_absolute(
+        SHARD_PLAN,
+        &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.B\t5.000\nclass\t{OLD_LABEL}\tcom.Old\t7.000\n"),
+    );
+    // The old target is a single-shard target that the current tree does not have.
+    tree_has(&fake, &[CORE_LABEL, OTHER_LABEL]);
+    let xml = r#"<testsuites><testsuite name="com.air.RecordedTest" tests="1" time="40.0"/></testsuites>"#;
+    one_attempt(&fake, "PASSED", xml);
+    let outcome = run(&["--lane", "fast"], &fake);
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+
+    let expected = [
+        "# The shard plan of bt. bt rewrites this file after each multi-target run.",
+        "default\t2",
+        &format!("target\t{OTHER_LABEL}\t2"),
+        &format!("class\t{OTHER_LABEL}\tcom.B\t120.000"),
+        &format!("target\t{CORE_LABEL}\t1"),
+        &format!("class\t{CORE_LABEL}\tcom.air.RecordedTest\t40.000"),
+        &format!("target\t{OLD_LABEL}\t1"),
+        &format!("class\t{OLD_LABEL}\tcom.Old\t7.000"),
+        "",
+    ]
+    .join("\n");
+    let state = fake.state();
+    assert_eq!(state.files.get(SHARED_PLAN), Some(&expected));
+    assert_eq!(state.files.get(SHARD_PLAN), Some(&expected));
+}
+
+/// A checkout outside git reads and writes only the checkout copy.
+#[test]
+fn a_checkout_outside_git_keeps_the_plan_in_the_checkout_only() {
+    let fake = heavy_plan_tree();
+    run_with_heavy_core(&fake);
+    let plans: Vec<String> = fake
+        .state()
+        .files
+        .keys()
+        .filter(|path| path.ends_with("shard-plan.tsv"))
+        .cloned()
+        .collect();
+    assert_eq!(plans, [SHARD_PLAN]);
+    let reads: Vec<String> = fake.reads().into_iter().filter(|read| read.ends_with("shard-plan.tsv")).collect();
+    assert_eq!(reads, [format!("read {SHARD_PLAN}"), format!("read {SHARD_PLAN}")]);
+}
+
+/// The checkout copy of a checkout that ran before the plan was shared gives the plan when the shared plan is missing.
+/// The run then writes the shared plan.
+#[test]
+fn a_work_tree_without_a_shared_plan_reads_its_checkout_copy_and_shares_it() {
+    let fake = heavy_work_tree(SHARD_PLAN);
+    run_with_heavy_core(&fake);
+    let shared = fake.state().files.get(SHARED_PLAN).cloned().unwrap_or_default();
+    assert_mentions(
+        &shared,
+        &[
+            &format!("target\t{CORE_LABEL}\t6\n"),
+            &format!("class\t{CORE_LABEL}\tcom.A\t530.000\n"),
+        ],
+    );
+    assert_eq!(fake.state().files.get(SHARD_PLAN), Some(&shared));
 }
 
 #[test]
@@ -1315,6 +1450,9 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         }
         fn git_path(&self, name: &str) -> std::io::Result<PathBuf> {
             self.0.git_path(name)
+        }
+        fn git_common_path(&self, name: &str) -> std::io::Result<Option<PathBuf>> {
+            self.0.git_common_path(name)
         }
         fn spawn(&self, command: &[OsString], heartbeat: Option<bt_core::runtime::Heartbeat<'_>>) -> SpawnResult {
             self.0.spawn(command, heartbeat)

@@ -132,6 +132,9 @@ pub struct State {
     pub checkout_trees: VecDeque<CheckoutTree>,
     /// The tree of each commit, for [`Runtime::commit_tree`].
     pub commit_trees: BTreeMap<String, String>,
+    /// The absolute common git directory of [`Runtime::git_common_path`]. `None` stands for a checkout outside git, so
+    /// a test that names none keeps the shard plan in the checkout only.
+    pub git_common_dir: Option<String>,
     /// The model that [`Runtime::accio`] answers from.
     pub accio: FakeAccio,
     /// Each [`Runtime::accio`] call, as its arguments joined by spaces, in order.
@@ -528,6 +531,11 @@ impl Runtime for FakeRuntime {
     /// The spelling of a main checkout: the git directory is `.git` of the root.
     fn git_path(&self, name: &str) -> io::Result<PathBuf> {
         Ok(self.root.join(".git").join(name))
+    }
+
+    /// The file in [`State::git_common_dir`], or `None` when the test named no common git directory.
+    fn git_common_path(&self, name: &str) -> io::Result<Option<PathBuf>> {
+        Ok(self.state().git_common_dir.as_ref().map(|dir| PathBuf::from(dir).join(name)))
     }
 
     /// Records the argv, beats once as a 30 s run would, and answers the scripted result.

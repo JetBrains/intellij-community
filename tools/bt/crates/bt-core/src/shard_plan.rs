@@ -11,8 +11,8 @@
 //! - A target whose recorded seconds want one shard is a single-shard target. The third invocation names these targets
 //!   ([`Groups::single`]) and forces [`SINGLE_SHARDS`].
 //!
-//! A plan entry is a hint, because the plan keeps the targets of each branch that ran in the checkout. A target that the
-//! current tree does not have fails each invocation that names it, also as a negative pattern. So
+//! A plan entry is a hint, because the plan keeps the targets of each branch that ran in the repository. A target that
+//! the current tree does not have fails each invocation that names it, also as a negative pattern. So
 //! [`ShardPlan::groups`] names only the targets that `bazel query` finds for the patterns of the run ([`TreeTargets`]).
 //!
 //! Each invocation passes the plan file to each test in [`SHARD_PLAN_ENV`]. The JUnit runner (`ShardFilter` of
@@ -31,9 +31,18 @@
 //! [`ShardPlan::record_lower_bound`] raises its record. A run with a test filter records nothing, because it times
 //! only some classes of a target.
 //!
+//! The plan of the repository is [`SHARED_SHARD_PLAN_FILE`] in the common git directory. The main checkout and each
+//! linked work tree read and write this one file. A lease of Branch Deck starts without `out/`, and the file stays
+//! after the lease is returned. So a new lease does not run its heavy targets with two shards into the Bazel timeout.
+//! A checkout outside git has only the checkout file. A run takes the shared plan, and adds each target of the checkout
+//! file that the shared plan does not name ([`ShardPlan::add_missing_targets`]).
+//!
+//! The tests read the checkout copy [`SHARD_PLAN_FILE`]. Before its first test invocation, a planned run writes the
+//! text of the plan it read to that copy. After the run, bt writes the updated plan to the shared file and to the copy.
+//!
 //! The file is not a Bazel input: the plan decides how the tests of a target split, never which tests run, and an input
-//! would rerun every test after each update. bt passes the path relative to the checkout. So the key of a test action
-//! is the same in every checkout, and the checkouts share their cached test results.
+//! would rerun every test after each update. bt passes the path of the copy relative to the checkout. So the key of a
+//! test action is the same in every checkout, and the checkouts share their cached test results.
 //!
 //! The shards of one target can still read different versions of the plan. A cached shard can come from another
 //! checkout or an earlier run, and a concurrent bt can rewrite the file during a run. So each shard writes the digest
@@ -47,8 +56,11 @@ use crate::result::TargetTiming;
 /// The variable that names the plan file to the JUnit runner.
 pub const SHARD_PLAN_ENV: &str = "JB_TEST_SHARD_PLAN";
 
-/// The plan file, relative to the checkout root.
+/// The checkout copy of the plan that the tests read, relative to the checkout root.
 pub const SHARD_PLAN_FILE: &str = "out/bt/shard-plan.tsv";
+
+/// The plan of the repository, relative to the common git directory.
+pub const SHARED_SHARD_PLAN_FILE: &str = "bt/shard-plan.tsv";
 
 /// The Bazel profile of the last multi-target run, relative to the checkout root. It shows the compile and the tests
 /// apart: `bazel analyze-profile out/bt/profile.json.gz`.
@@ -160,6 +172,21 @@ impl ShardPlan {
             }
         }
         plan
+    }
+
+    /// Adds each target of `other` that this plan has no record of, and answers whether it added one.
+    ///
+    /// The plan of the repository only gains targets. So a target that only a checkout copy names comes from a plan
+    /// that the checkout kept before the plan was shared, and the shared plan takes it.
+    pub fn add_missing_targets(&mut self, other: &Self) -> bool {
+        let mut added = false;
+        for (label, classes) in &other.targets {
+            if !self.targets.contains_key(label) {
+                self.targets.insert(label.clone(), classes.clone());
+                added = true;
+            }
+        }
+        added
     }
 
     /// Replaces the class times of the target of a finished run.

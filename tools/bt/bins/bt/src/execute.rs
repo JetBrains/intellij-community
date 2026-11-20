@@ -27,7 +27,8 @@ use bt_core::result::{FlakyRun, RunResult, RunStatus, ShardTimeout, TargetResult
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
 use bt_core::selector::{Resolution, Selector, SelectorKind, as_filter_or_package, no_tests_hint, resolve_selector};
 use bt_core::shard_plan::{
-    Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS, ShardPlan, TreeTargets,
+    Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SHARED_SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS,
+    ShardPlan, TreeTargets,
 };
 use bt_core::suites::resolve_suite_run;
 
@@ -303,7 +304,6 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     let lane_spec = lane.map(|(_, spec)| spec);
     let shards = args.shards.unwrap_or_else(|| default_shards(&resolution, lane_spec));
     let planned = args.shards.is_none() && uses_shard_plan(&resolution, lane_spec);
-    let shard_plan_path = repo_file(runtime, SHARD_PLAN_FILE);
     let path_text = |path: &PathBuf| path.to_string_lossy().into_owned();
     let profile = resolution.multi_target.then(|| path_text(&repo_file(runtime, PROFILE_FILE)));
     let class_time_budget_config = if resolution.multi_target {
@@ -322,20 +322,24 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     });
     let method_filtered = resolution.filter.as_deref().is_some_and(|filter| filter.contains('#'));
     let no_tests_hint = no_tests_hint(explicit_filter);
-    // A BEP path of the caller would take the events of all invocations, so such a run keeps one invocation.
-    let recorded_plan = if planned || class_time_budget_config.is_some() {
-        runtime
-            .read_text_file(&shard_plan_path)
-            .map(|text| ShardPlan::parse(&text))
-            .unwrap_or_default()
-    } else {
-        ShardPlan::default()
-    };
+    let plan_files = (planned || class_time_budget_config.is_some()).then(|| PlanFiles::locate(runtime));
+    let recorded_text = plan_files.as_ref().and_then(|files| files.read(runtime));
+    let recorded_plan = recorded_text.as_deref().map_or_else(ShardPlan::default, ShardPlan::parse);
+    // The tests read the checkout copy, so a planned run writes it before its first bazel command. A run before the
+    // first record splits each target into the default count, by class. A dry run writes nothing.
+    if planned
+        && !args.shared.dry_run
+        && let Some(files) = &plan_files
+    {
+        let text = recorded_text.unwrap_or_else(|| ShardPlan::default().render());
+        files.write_copy(runtime, &text);
+    }
     // A green run records this tree only when the files are the same after it. bt reads it before the first bazel
     // command of the run, such as the query of the groups. A dry run records nothing.
     let record_started = runtime.now_ms();
     let tree_before = if args.shared.dry_run { None } else { tree_before_run(runtime) };
     let mut check_record_ms = runtime.now_ms().saturating_sub(record_started);
+    // A BEP path of the caller would take the events of all invocations, so such a run keeps one invocation.
     let groups = if !(planned && owns_bep_file) {
         Groups::default()
     } else if args.shared.dry_run {
@@ -441,10 +445,12 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
 
     let class_time_budget_baseline = class_time_budget.map(|budget| budget.load_baseline(runtime)).transpose()?;
 
-    // The directory of the profile, and the plan the tests read. A run before the first record splits each target
-    // into the default count, by class.
-    if plan.profile.is_some() && !runtime.exists(&shard_plan_path) {
-        update_shard_plan(runtime, &shard_plan_path, &[], &[]);
+    // Bazel writes the profile into `out/bt/`. A planned run made the directory when it wrote the plan copy.
+    if !planned
+        && let Some(dir) = plan.profile.as_deref().and_then(|profile| Path::new(profile).parent())
+        && let Err(error) = runtime.create_dir_all(dir)
+    {
+        runtime.write_error(&format!("cannot create the directory of the profile {}: {error}", dir.display()));
     }
 
     let BazelRun { spawned, bep, mut result } = run_bazel_invocations(runtime, &invocations);
@@ -452,13 +458,12 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     // Before anything else reads the run: the next run of a failed target overwrites its logs.
     let kept_run = keep_failed_evidence(runtime, &bep);
 
-    if planned {
-        // A filtered run times only some classes of a target, and they must not replace its record.
-        if runs_all_classes(&plan) {
-            update_shard_plan(runtime, &shard_plan_path, &result.timings, &result.lower_bounds);
-        } else {
-            update_shard_plan(runtime, &shard_plan_path, &[], &[]);
-        }
+    // A filtered run times only some classes of a target, and they must not replace its record.
+    if planned
+        && runs_all_classes(&plan)
+        && let Some(files) = &plan_files
+    {
+        update_shard_plan(runtime, files, &result.timings, &result.lower_bounds);
     }
 
     let class_time_budget_violations = if let (Some(budget), Some(baseline)) = (class_time_budget, class_time_budget_baseline.as_ref()) {
@@ -706,12 +711,76 @@ fn runs_all_classes(plan: &RunPlan) -> bool {
             .any(|argument| argument.starts_with("--test_filter") || argument.contains("JB_TEST_JUNIT5_FILTERS"))
 }
 
-/// Records the class times of a run in the shard plan file.
+/// The files of the shard plan: the plan of the repository, and the checkout copy that the tests read.
 ///
-/// A plan that cannot be written is a warning, not a refusal: the plan steers the speed of the next run, and the
-/// verdict of this one is already decided.
-fn update_shard_plan(runtime: &dyn Runtime, path: &Path, timings: &[TargetTiming], lower_bounds: &[TargetTiming]) {
-    let mut plan = runtime.read_text_file(path).map(|text| ShardPlan::parse(&text)).unwrap_or_default();
+/// A file that cannot be written is a warning, not a refusal: the plan steers the speed of a run, never its verdict.
+struct PlanFiles {
+    /// [`SHARED_SHARD_PLAN_FILE`] in the common git directory, or `None` for a checkout outside git.
+    shared: Option<PathBuf>,
+    /// [`SHARD_PLAN_FILE`] of the checkout.
+    copy: PathBuf,
+}
+
+impl PlanFiles {
+    /// A git that names no common git directory is a warning, and the run keeps the plan in the checkout only.
+    fn locate(runtime: &dyn Runtime) -> Self {
+        let shared = runtime.git_common_path(SHARED_SHARD_PLAN_FILE).unwrap_or_else(|error| {
+            runtime.write_error(&format!(
+                "git names no common git directory, so the shard plan stays in the checkout: {error}"
+            ));
+            None
+        });
+        Self {
+            shared,
+            copy: repo_file(runtime, SHARD_PLAN_FILE),
+        }
+    }
+
+    /// The text of the plan, or `None` when neither file is there.
+    ///
+    /// It is the text of the shared file, with each target of the checkout copy that the shared file does not name. Such
+    /// a target comes from a checkout that ran before the plan was shared. Without such a target, the text is the text
+    /// of the shared file as it is.
+    fn read(&self, runtime: &dyn Runtime) -> Option<String> {
+        let copy = runtime.read_text_file(&self.copy).ok();
+        let shared = self.shared.as_ref().and_then(|path| runtime.read_text_file(path).ok());
+        match (shared, copy) {
+            (Some(shared), Some(copy)) => {
+                let mut plan = ShardPlan::parse(&shared);
+                if plan.add_missing_targets(&ShardPlan::parse(&copy)) {
+                    Some(plan.render())
+                } else {
+                    Some(shared)
+                }
+            }
+            (shared, copy) => shared.or(copy),
+        }
+    }
+
+    fn write_copy(&self, runtime: &dyn Runtime, text: &str) {
+        write_plan(runtime, &self.copy, text);
+    }
+
+    /// Writes the shared file and the checkout copy, each in one step.
+    fn write_all(&self, runtime: &dyn Runtime, text: &str) {
+        for path in self.shared.iter().chain([&self.copy]) {
+            write_plan(runtime, path, text);
+        }
+    }
+}
+
+fn write_plan(runtime: &dyn Runtime, path: &Path, text: &str) {
+    if let Err(error) = runtime.write_text_file(path, text) {
+        runtime.write_error(&format!("cannot write the shard plan {}: {error}", path.display()));
+    }
+}
+
+/// Records the class times and the lower bounds of a run in the shard plan.
+///
+/// It reads the plan again just before it writes, so an update of a run in another work tree since the start of this
+/// run stays. Two runs that update the plan at the same time can lose one update. That costs only speed.
+fn update_shard_plan(runtime: &dyn Runtime, files: &PlanFiles, timings: &[TargetTiming], lower_bounds: &[TargetTiming]) {
+    let mut plan = files.read(runtime).map_or_else(ShardPlan::default, |text| ShardPlan::parse(&text));
     for timing in timings {
         plan.record(timing);
     }
@@ -724,9 +793,7 @@ fn update_shard_plan(runtime: &dyn Runtime, path: &Path, timings: &[TargetTiming
             ));
         }
     }
-    if let Err(error) = runtime.write_text_file(path, &plan.render()) {
-        runtime.write_error(&format!("cannot write the shard plan {}: {error}", path.display()));
-    }
+    files.write_all(runtime, &plan.render());
 }
 
 /// The error of [`tree_targets`]: bazel exited with a code that is no verdict, so the run ends.

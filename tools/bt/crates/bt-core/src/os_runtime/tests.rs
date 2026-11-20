@@ -498,6 +498,7 @@ fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
         write_in(&main, path, text);
     }
     assert_eq!(main_runtime.checkout_tree().expect("no git is no error"), None);
+    assert_eq!(main_runtime.git_common_path("bt/plan").expect("no git is no error"), None);
 
     git_in(&main, &["init", "-q"], None);
     git_in(&main, &["add", "-A"], None);
@@ -526,6 +527,18 @@ fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
     assert_eq!(host_slot.checkout_tree().expect("a host slot is no error"), None);
     let records = runtime.git_path("bd-checks.jsonl").expect("a git path");
     assert!(records.ends_with(".git/worktrees/lease/bd-checks.jsonl"), "{}", records.display());
+    // The main checkout and its linked work tree name one file in the common git directory.
+    let main_plan = main_runtime
+        .git_common_path("bt/plan")
+        .expect("git names the common git directory")
+        .expect("a main checkout");
+    let lease_plan = runtime
+        .git_common_path("bt/plan")
+        .expect("git names the common git directory")
+        .expect("a linked work tree");
+    assert!(main_plan.ends_with(".git/bt/plan"), "{}", main_plan.display());
+    write_in(&main, ".git/bt/plan", "shared");
+    assert_eq!(std::fs::read_to_string(&lease_plan).expect("the same file"), "shared");
 
     for (path, text) in [
         ("src/Changed.kt", "after"),
