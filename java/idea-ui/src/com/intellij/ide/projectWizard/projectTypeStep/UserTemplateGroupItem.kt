@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.projectTypeStep
 
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup
+import com.intellij.ide.wizard.impl.ProjectTypeListSection
 import com.intellij.platform.templates.ArchivedProjectTemplate
 
 internal class UserTemplateGroupItem(
   val template: ArchivedProjectTemplate
 ) : TemplateGroupItem(createTemplateGroup(template)) {
+
+  override val section: ProjectTypeListSection
+    get() = ProjectTypeListSection.TEMPLATES
 
   companion object {
 

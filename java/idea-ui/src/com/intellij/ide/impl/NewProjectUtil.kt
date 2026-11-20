@@ -1,41 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
-import com.intellij.configurationStore.saveSettings
 import com.intellij.featureStatistics.fusCollectors.WslUsagesCollector
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
-import com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
+import com.intellij.ide.wizard.impl.NewProjectCreationHooks
+import com.intellij.ide.wizard.impl.createProjectFromBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.TimeoutUtil
@@ -45,11 +32,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
-
-private val LOG = logger<NewProjectUtil>()
 
 /**
  * Shows [wizard] and creates its project. The new project attaches to [attachTo] with no question about the window,
@@ -165,138 +148,41 @@ suspend fun createProjectFromWizardImpl(
   projectToClose: Project?,
   attachTo: Project? = null,
 ): Project? {
-  val projectManager = (serviceAsync<ProjectManager>() as ProjectManagerEx)
-  for (p in projectManager.getOpenProjects()) {
-    if (ProjectUtil.isSameProject(projectFile, p)) {
-      focusProjectWindow(project = p, stealFocusIfAppInactive = false)
-      return null
-    }
-  }
-
   val projectBuilder = wizard.projectBuilder
-  LOG.debug { "builder $projectBuilder" }
-  try {
-    val projectDir = if (wizard.storageScheme == StorageScheme.DEFAULT) {
-      projectFile.parent ?: throw IOException("Cannot create project in '$projectFile': no parent file exists")
-    }
-    else {
-      projectFile
-    }
-    Files.createDirectories(projectDir)
-    val newProject: Project? = if (projectBuilder == null || !projectBuilder.isUpdate) {
-      val name = wizard.projectName
-      if (projectBuilder == null) {
-        projectManager.newProject(projectFile, OpenProjectTask {
-          isNewProject = true
-          useDefaultProjectAsTemplate = true
-          projectName = name
-        })
-      }
-      else {
-        try {
-          projectBuilder.createProject(name, projectFile.toString())
+  return createProjectFromBuilder(
+    projectBuilder = projectBuilder,
+    projectName = wizard.projectName,
+    projectFile = projectFile,
+    storageScheme = wizard.storageScheme,
+    projectToClose = projectToClose,
+    attachTo = attachTo,
+    hooks = object : NewProjectCreationHooks {
+      override suspend fun beforeCommit(project: Project) {
+        val compileOutput = wizard.newCompileOutput
+        val javaCompilerExtension = CompilerProjectExtension.getInstance(project) ?: return
+        val canonicalPath = try {
+          FileUtil.resolveShortWindowsName(compileOutput)
         }
-        catch (e: CancellationException) {
-          throw e
+        catch (_: IOException) {
+          compileOutput
         }
-        catch (e: Throwable) {
-          LOG.error(e)
-          null
-        }
-      }
-    }
-    else {
-      projectToClose
-    }
-
-    if (newProject == null) {
-      return projectToClose
-    }
-
-    val compileOutput = wizard.newCompileOutput
-    val javaCompilerExtension = CompilerProjectExtension.getInstance(newProject)
-    if (javaCompilerExtension != null) {
-      val canonicalPath = try {
-        FileUtil.resolveShortWindowsName(compileOutput)
-      }
-      catch (_: IOException) {
-        compileOutput
-      }
-
-      backgroundWriteAction {
-        javaCompilerExtension.compilerOutputUrl = VfsUtilCore.pathToUrl(canonicalPath)
-      }
-    }
-
-    if (projectBuilder != null) {
-      // validate can require a project on disk
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        SaveAndSyncHandler.getInstance().withDisabledAutoSave {
-          saveSettings(componentManager = newProject, forceSavingAllSettings = true)
-        }
-      }
-      if (!projectBuilder.validate(projectToClose, newProject)) {
-        return projectToClose
-      }
-
-      withContext(Dispatchers.EDT) {
-        projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
-      }
-    }
-
-    val jdk = wizard.newProjectJdk
-    if (jdk != null) {
-      backgroundWriteAction {
-        JavaSdkUtil.applyJdkToProject(newProject, jdk)
-      }
-    }
-
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      val needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter
-      newProject.serviceAsync<StartupManager>().runAfterOpened {
-        // ensure the dialog is shown after all startup activities are done
-        ApplicationManager.getApplication().invokeLater({
-            if (needToOpenProjectStructure) {
-              ModulesConfigurator.showDialog(newProject, null, null)
-            }
-            ApplicationManager.getApplication().invokeLater(
-              {
-                ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
-              }, ModalityState.nonModal(), newProject.disposed)
-          }, ModalityState.nonModal(), newProject.disposed)
-      }
-    }
-
-    if (newProject !== projectToClose) {
-      updateLastProjectLocation(projectFile)
-      val options = OpenProjectTask {
-        project = newProject
-        projectName = projectFile.fileName.toString()
-        projectRootDir = projectDir
-        // the wizard can outlive the frame that started it
-        if (attachTo != null && !attachTo.isDisposed) {
-          projectToAttach = attachTo
-        }
-        callback = ProjectOpenedCallback { openedProject, _ ->
-          if (openedProject != newProject) { // project attached to workspace
-            VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectDir)?.let { dir ->
-              ApplicationManager.getApplication().invokeLater {
-                projectBuilder.postCommit(openedProject, dir)
-              }
-            }
-          }
+        backgroundWriteAction {
+          javaCompilerExtension.compilerOutputUrl = VfsUtilCore.pathToUrl(canonicalPath)
         }
       }
 
-      serviceAsync<TrustedPaths>().setProjectPathTrusted(projectDir, true)
-      (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(projectIdentityFile = projectDir, options = options)
-    }
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      serviceAsync<SaveAndSyncHandler>().scheduleProjectSave(newProject)
-    }
-    return newProject
-  }
-  finally {
-    projectBuilder?.cleanup()
-  }
+      override suspend fun afterCommit(project: Project) {
+        val jdk = wizard.newProjectJdk ?: return
+        backgroundWriteAction {
+          JavaSdkUtil.applyJdkToProject(project, jdk)
+        }
+      }
+
+      override fun afterOpened(project: Project) {
+        if (projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter) {
+          ModulesConfigurator.showDialog(project, null, null)
+        }
+      }
+    },
+  )
 }

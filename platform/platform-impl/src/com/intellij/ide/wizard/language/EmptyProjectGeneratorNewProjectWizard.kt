@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard.language
 
 import com.intellij.icons.AllIcons
@@ -39,7 +39,9 @@ class EmptyProjectGeneratorNewProjectWizard : GeneratorNewProjectWizard {
 
   private class Step(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
     override fun setupProject(project: Project) {
-      val moduleType = ModuleTypeManager.getInstance().findByID(GeneralModuleType.TYPE_ID)
+      // A product without the Java plugin has no registered general module type
+      val moduleType = ModuleTypeManager.getInstance().registeredTypes.find { it.id == GeneralModuleType.TYPE_ID }
+                       ?: GeneralModuleType.INSTANCE
       val builder = moduleType.createModuleBuilder()
       setupProjectFromBuilder(project, builder)
     }

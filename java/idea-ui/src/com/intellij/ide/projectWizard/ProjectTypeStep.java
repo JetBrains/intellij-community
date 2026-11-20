@@ -1,12 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.projectWizard.projectTypeStep.LanguageGeneratorItem;
-import com.intellij.ide.projectWizard.projectTypeStep.ProjectTypeList;
-import com.intellij.ide.projectWizard.projectTypeStep.ProjectTypeListKt;
 import com.intellij.ide.projectWizard.projectTypeStep.TemplateGroupItem;
 import com.intellij.ide.projectWizard.projectTypeStep.UserTemplateGroupItem;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
@@ -23,18 +21,17 @@ import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.GeneratorNewProjectWizard;
-import com.intellij.ide.wizard.LanguageNewProjectWizard;
 import com.intellij.ide.wizard.NewProjectWizardStep;
 import com.intellij.ide.wizard.Step;
-import com.intellij.ide.wizard.language.BaseLanguageGeneratorNewProjectWizard;
-import com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard;
-import com.intellij.ide.wizard.language.LegacyLanguageGeneratorNewProjectWizard;
+import com.intellij.ide.wizard.impl.LanguageGeneratorListener;
+import com.intellij.ide.wizard.impl.NewProjectWizardGenerators;
+import com.intellij.ide.wizard.impl.ProjectTypeList;
+import com.intellij.ide.wizard.impl.ProjectTypeListKt;
+import com.intellij.ide.wizard.impl.ProjectTypeListSection;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.WebModuleTypeBase;
@@ -94,7 +91,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -140,7 +136,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private @Nullable ModuleWizardStep mySettingsStep;
   private String myCurrentCard;
 
-  private final ProjectTypeList myProjectTypeList;
+  private final ProjectTypeList<TemplateGroupItem> myProjectTypeList;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
@@ -190,7 +186,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       public void switchToRequested(@NotNull String placeId, @NotNull Consumer<? super Step> configure) {
         TemplatesGroup groupToSelect = ContainerUtil.find(myTemplatesMap.keySet(), group -> group.getId().equals(placeId));
         if (groupToSelect != null) {
-          myProjectTypeList.setSelectedTemplateGroup(groupToSelect);
+          myProjectTypeList.setSelectedItem(groupToSelect.getName());
           try {
             configure.accept(getCustomStep());
           }
@@ -205,12 +201,12 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
     myTemplatesMap = MultiMap.createLinked();
 
-    myProjectTypeList = new ProjectTypeList(context);
+    myProjectTypeList = new ProjectTypeList<>(context, TemplateGroupItem.COMPARATOR);
     myProjectTypeList.installFilteringListModel(getNamer(), getEmptyStatusPresenter());
     // These "fill" methods are stateful. The "fillGroupTemplateMap" method reads and modifies the "myTemplatesMap".
-    myProjectTypeList.setTemplateGroupItems(fillGroupTemplateMap(context));
-    myProjectTypeList.setLanguageGeneratorItems(fillLanguageGeneratorTemplateMap(context));
-    myProjectTypeList.setUserTemplateGroupItems(fillUserTemplateMap(context));
+    myProjectTypeList.setItems(ProjectTypeListSection.GENERATORS, fillGroupTemplateMap(context));
+    myProjectTypeList.setItems(ProjectTypeListSection.NEW_PROJECT, fillLanguageGeneratorTemplateMap(context));
+    myProjectTypeList.setItems(ProjectTypeListSection.TEMPLATES, fillUserTemplateMap(context));
     installLanguageGeneratorWatcher(context);
 
     GridLayoutManager layout = (GridLayoutManager)myPanel.getLayout();
@@ -270,8 +266,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       }
     };
 
-    myProjectTypeList.whenProjectTemplateGroupSelected(group -> {
-      projectTypeChanged(group);
+    myProjectTypeList.whenItemSelected(item -> {
+      projectTypeChanged(item.getGroup());
     });
 
     myTemplatesList.addListSelectionListener(event -> {
@@ -507,20 +503,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   private @NotNull List<LanguageGeneratorItem> fillLanguageGeneratorTemplateMap(@NotNull WizardContext context) {
     var generators = new ArrayList<GeneratorNewProjectWizard>();
-    //noinspection deprecation
-    LanguageNewProjectWizard.EP_NAME.forEachExtensionSafe(wizard -> {
-      generators.add(new LegacyLanguageGeneratorNewProjectWizard(context, wizard));
-    });
-    LanguageGeneratorNewProjectWizard.EP_NAME.forEachExtensionSafe(wizard -> {
-      generators.add(new BaseLanguageGeneratorNewProjectWizard(context, wizard));
-    });
-    generators.removeIf(it -> !it.isEnabled());
-    generators.sort(Comparator.comparing(it -> it.getOrdinal()));
-    if (context.isCreatingNewProject()) {
-      GeneratorNewProjectWizard.EP_NAME.forEachExtensionSafe(wizard -> {
-        generators.add(wizard);
-      });
-    }
+    generators.addAll(NewProjectWizardGenerators.collectLanguageGeneratorNewProjectWizards(context));
+    generators.addAll(NewProjectWizardGenerators.collectGeneratorNewProjectWizards(context));
     var generatorItems = ContainerUtil.map(generators, it -> new LanguageGeneratorItem(it));
     for (var generatorItem : generatorItems) {
       myTemplatesMap.put(generatorItem.getGroup(), new ArrayList<>());
@@ -529,33 +513,17 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   private void installLanguageGeneratorWatcher(@NotNull WizardContext context) {
-    //noinspection deprecation
-    LanguageNewProjectWizard.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+    NewProjectWizardGenerators.installLanguageGeneratorListener(context, new LanguageGeneratorListener() {
       @Override
-      public void extensionAdded(LanguageNewProjectWizard extension, @NotNull PluginDescriptor pluginDescriptor) {
-        var generator = new LegacyLanguageGeneratorNewProjectWizard(context, extension);
-        var generatorItem = new LanguageGeneratorItem(generator);
-        myProjectTypeList.addLanguageGeneratorItem(generatorItem);
+      public void generatorAdded(@NotNull GeneratorNewProjectWizard generator) {
+        myProjectTypeList.addItem(new LanguageGeneratorItem(generator));
       }
 
       @Override
-      public void extensionRemoved(LanguageNewProjectWizard extension, @NotNull PluginDescriptor pluginDescriptor) {
-        myProjectTypeList.removeLanguageGeneratorItem(extension.getName());
+      public void generatorRemoved(@NotNull String name) {
+        myProjectTypeList.removeItem(ProjectTypeListSection.NEW_PROJECT, name);
       }
-    }, context.getDisposable());
-    LanguageGeneratorNewProjectWizard.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(LanguageGeneratorNewProjectWizard extension, @NotNull PluginDescriptor pluginDescriptor) {
-        var generator = new BaseLanguageGeneratorNewProjectWizard(context, extension);
-        var generatorItem = new LanguageGeneratorItem(generator);
-        myProjectTypeList.addLanguageGeneratorItem(generatorItem);
-      }
-
-      @Override
-      public void extensionRemoved(LanguageGeneratorNewProjectWizard extension, @NotNull PluginDescriptor pluginDescriptor) {
-        myProjectTypeList.removeLanguageGeneratorItem(extension.getName());
-      }
-    }, context.getDisposable());
+    });
   }
 
   private @NotNull List<UserTemplateGroupItem> fillUserTemplateMap(@NotNull WizardContext context) {
@@ -727,10 +695,15 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     if (template != null) {
       return myBuilders.get(template);
     }
-    TemplatesGroup group = myProjectTypeList.getSelectedTemplateGroup();
+    TemplatesGroup group = getSelectedTemplateGroup();
     if (group == null) return null;
 
     return group.getModuleBuilder();
+  }
+
+  private @Nullable TemplatesGroup getSelectedTemplateGroup() {
+    TemplateGroupItem item = myProjectTypeList.getSelectedItem();
+    return item == null ? null : item.getGroup();
   }
 
   @Override
@@ -842,7 +815,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     ModuleBuilder builder = getSelectedBuilder();
-    LOG.debug("builder=" + builder + "; template=" + template + "; group=" + myProjectTypeList.getSelectedTemplateGroup());
+    LOG.debug("builder=" + builder + "; template=" + template + "; group=" + getSelectedTemplateGroup());
 
     myContext.setProjectBuilder(builder);
     if (builder != null) {
@@ -858,13 +831,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @TestOnly
   public String availableTemplateGroupsToString() {
-    return myProjectTypeList.getAvailableTemplateGroups();
+    return myProjectTypeList.getAvailableItems();
   }
 
   @TestOnly
   public boolean setSelectedTemplate(@NotNull String groupName, @Nullable String name) {
-    myProjectTypeList.setSelectedTemplateGroup(groupName);
-    var selectedGroup = myProjectTypeList.getSelectedTemplateGroup();
+    myProjectTypeList.setSelectedItem(groupName);
+    var selectedGroup = getSelectedTemplateGroup();
     if (selectedGroup == null || !groupName.equals(selectedGroup.getName())) {
       return false;
     }
@@ -877,7 +850,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @TestOnly
   public static void resetGroupForTests() {
-    ProjectTypeListKt.resetStoredSelectionForTests();
+    ProjectTypeListKt.resetStoredProjectTypeSelectionForTests();
   }
 
   @Override

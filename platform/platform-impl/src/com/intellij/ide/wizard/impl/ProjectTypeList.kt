@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.projectWizard.projectTypeStep
+package com.intellij.ide.wizard.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
@@ -10,7 +10,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.logInstallPlugin
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.logSearchChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.ide.util.newProjectWizard.TemplatesGroup
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -39,6 +38,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
 import java.awt.Graphics
@@ -51,90 +51,126 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 
-internal class ProjectTypeList(
-  private val context: WizardContext
+/**
+ * The section of [ProjectTypeList] that holds an item. The list shows the sections in the order of this enum.
+ */
+@ApiStatus.Internal
+enum class ProjectTypeListSection {
+  /** The language generators and the other generator-based wizards. */
+  NEW_PROJECT,
+
+  /** The module builders and the project templates of the plugins. */
+  GENERATORS,
+
+  /** The project templates that the user saved. */
+  TEMPLATES,
+}
+
+/**
+ * An item of [ProjectTypeList].
+ */
+@ApiStatus.Internal
+interface ProjectTypeListItem {
+  /** The id that the list stores to restore the selection in the next wizard, or `null` when the item has no id. */
+  val id: String?
+
+  val name: @NlsSafe String
+
+  val icon: Icon?
+
+  /** A promo item shows a lock icon. */
+  val isPromo: Boolean
+    get() = false
+
+  val section: ProjectTypeListSection
+}
+
+/**
+ * The project type tray of the new project wizard: a search field, the item list and the link that suggests language plugins.
+ *
+ * The list sorts the items of each section with [comparator].
+ */
+@ApiStatus.Internal
+class ProjectTypeList<T : ProjectTypeListItem>(
+  private val context: WizardContext,
+  comparator: Comparator<in T>,
 ) {
   private val searchTextField: SearchTextField
-  private val list: JBList<TemplateGroupItem>
-  private val model: ProjectTypeListModel
+  private val list: JBList<T>
+  private val model: ProjectTypeListModel<T> = ProjectTypeListModel(comparator)
   private val languagePluginFooterLink: JComponent
 
   val component: JComponent
 
-  fun getSelectedTemplateGroup(): TemplatesGroup? {
-    return list.getSelectedValue()?.group
+  val items: List<T>
+    get() = model.items
+
+  fun getSelectedItem(): T? {
+    return list.getSelectedValue()
   }
 
-  fun setSelectedTemplateGroup(groupName: String) {
-    val groupItem = model.items.find { it.group.name == groupName } ?: return
-    list.setSelectedValue(groupItem, true)
-  }
-
-  fun setSelectedTemplateGroup(group: TemplatesGroup) {
-    setSelectedTemplateGroup(group.name)
+  fun setSelectedItem(name: String) {
+    val item = model.items.find { it.name == name } ?: return
+    list.setSelectedValue(item, true)
   }
 
   @TestOnly
-  fun getAvailableTemplateGroups(): String {
-    return model.items.joinToString { it.group.name }
+  fun getAvailableItems(): String {
+    return model.items.joinToString { it.name }
   }
 
-  fun setLanguageGeneratorItems(items: List<LanguageGeneratorItem>) {
-    LOG.debug("Language generator items: $items")
-    model.setLanguageGeneratorItems(items)
+  fun setItems(section: ProjectTypeListSection, items: List<T>) {
+    LOG.debug("Project type items of $section: $items")
+    model.setItems(section, items)
   }
 
-  fun addLanguageGeneratorItem(item: LanguageGeneratorItem) {
-    LOG.debug("Language generator added: $item")
-    val index = model.addLanguageGeneratorItem(item)
-    list.selectedIndex = index
+  /**
+   * Adds [item] to its section and selects it.
+   */
+  fun addItem(item: T) {
+    LOG.debug("Project type item added: $item")
+    list.selectedIndex = model.addItem(item)
   }
 
-  fun removeLanguageGeneratorItem(languageName: String) {
-    LOG.debug("Language generator removed: $languageName")
-    model.removeLanguageGeneratorItem(languageName)
+  fun removeItem(section: ProjectTypeListSection, name: String) {
+    LOG.debug("Project type item removed: $name")
+    model.removeItem(section, name)
     list.selectedIndex = 0
   }
 
-  fun setTemplateGroupItems(items: List<TemplateGroupItem>) {
-    LOG.debug("Template group items: $items")
-    model.setTemplateGroupItems(items)
-  }
-
-  fun setUserTemplateGroupItems(items: List<UserTemplateGroupItem>) {
-    LOG.debug("User template items: $items")
-    model.setUserTemplateGroupItems(items)
-  }
-
-  fun whenProjectTemplateGroupSelected(action: Consumer<TemplatesGroup>) {
+  fun whenItemSelected(action: Consumer<in T>) {
     list.addListSelectionListener { event ->
       if (!event.valueIsAdjusting) {
-        val group = getSelectedTemplateGroup()
-        if (group != null) {
-          action.accept(group)
+        val item = getSelectedItem()
+        if (item != null) {
+          action.accept(item)
         }
       }
     }
   }
 
+  /**
+   * Selects the item that the user selected in the previous wizard, or the first item.
+   * Then it stores each new selection for the next wizard.
+   */
   fun restoreSelection() {
-    whenProjectTemplateGroupSelected { group ->
-      PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.id)
-      LOG.debug("Stored selection groupId=${group.id}", Throwable())
+    whenItemSelected { item ->
+      PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, item.id)
+      LOG.debug("Stored selection groupId=${item.id}", Throwable())
     }
-    val groupId = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP)
-    LOG.debug("Restored selection groupId=$groupId")
+    val id = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP)
+    LOG.debug("Restored selection groupId=$id")
 
-    val groupItem = model.items.find { it.group.id == groupId }
-    if (groupItem != null) {
-      list.setSelectedValue(groupItem, true)
+    val item = model.items.find { it.id == id }
+    if (item != null) {
+      list.setSelectedValue(item, true)
     }
     else {
       list.selectedIndex = 0
     }
   }
 
-  fun installFilteringListModel(namer: Function<TemplateGroupItem, String>, showEmptyStatus: Runnable) {
+  fun installFilteringListModel(namer: Function<in T, String>, showEmptyStatus: Runnable) {
     val speedSearch = SpeedSearch()
     val filteringListModel = NameFilteringListModel(list.model, namer::apply, speedSearch::shouldBeShowing, speedSearch::getFilter)
 
@@ -206,8 +242,6 @@ internal class ProjectTypeList(
   }
 
   init {
-    model = ProjectTypeListModel()
-
     list = JBList(model)
     list.setSelectionModel(SingleSelectionModel())
     list.setCellRenderer(ProjectTypeListRenderer(context, model))
@@ -243,84 +277,72 @@ internal class ProjectTypeList(
     component.add(languagePluginFooterLink, BorderLayout.SOUTH)
   }
 
-  private class ProjectTypeListModel : AbstractListModel<TemplateGroupItem>() {
+  private class ProjectTypeListModel<T : ProjectTypeListItem>(
+    private val comparator: Comparator<in T>,
+  ) : AbstractListModel<T>() {
 
-    private val languageGeneratorItems = ArrayList<LanguageGeneratorItem>()
-    private val templateGroupItems = ArrayList<TemplateGroupItem>()
-    private val userTemplateGroupItems = ArrayList<UserTemplateGroupItem>()
+    private val sections: Map<ProjectTypeListSection, MutableList<T>> = ProjectTypeListSection.entries.associateWith { ArrayList() }
 
-    val items: List<TemplateGroupItem>
-      get() = languageGeneratorItems + templateGroupItems + userTemplateGroupItems
+    val items: List<T>
+      get() = ProjectTypeListSection.entries.flatMap { sections.getValue(it) }
 
     override fun getSize(): Int {
       return items.size
     }
 
-    override fun getElementAt(index: Int): TemplateGroupItem {
+    override fun getElementAt(index: Int): T {
       return items[index]
     }
 
-    fun getLanguageGeneratorItems(): List<LanguageGeneratorItem> {
-      return languageGeneratorItems
-    }
-
-    fun setLanguageGeneratorItems(items: List<LanguageGeneratorItem>) {
-      setItems(languageGeneratorItems, 0, items)
-    }
-
-    fun addLanguageGeneratorItem(item: LanguageGeneratorItem): Int {
-      return addItem(languageGeneratorItems, 0, item)
-    }
-
-    fun removeLanguageGeneratorItem(languageName: String) {
-      removeItem(languageGeneratorItems, 0, languageName)
-    }
-
-    fun setTemplateGroupItems(items: List<TemplateGroupItem>) {
-      setItems(templateGroupItems, languageGeneratorItems.size, items)
-    }
-
-    fun setUserTemplateGroupItems(items: List<UserTemplateGroupItem>) {
-      setItems(userTemplateGroupItems, languageGeneratorItems.size + templateGroupItems.size, items)
-    }
-
-    private fun <T : TemplateGroupItem> setItems(collection: MutableList<T>, offset: Int, items: List<T>) {
+    fun setItems(section: ProjectTypeListSection, items: List<T>) {
+      val collection = sections.getValue(section)
+      val offset = getOffset(section)
       collection.clear()
       collection.addAll(items)
-      collection.sortBy { it.group }
+      collection.sortWith(comparator)
       fireContentsChanged(this, offset, offset + collection.size - 1)
     }
 
-    private fun <T : TemplateGroupItem> addItem(collection: MutableList<T>, offset: Int, item: T): Int {
-      var index = collection.indexOfFirst { it.group >= item.group }
+    fun addItem(item: T): Int {
+      val collection = sections.getValue(item.section)
+      val offset = getOffset(item.section)
+      var index = collection.indexOfFirst { comparator.compare(it, item) >= 0 }
       if (index < 0) index = 0
       collection.add(index, item)
       fireIntervalAdded(this, offset + index, offset + index)
       return offset + index
     }
 
-    private fun <T : TemplateGroupItem> removeItem(collection: MutableList<T>, offset: Int, name: String) {
-      val index = collection.indexOfFirst { name == it.group.name }
+    fun removeItem(section: ProjectTypeListSection, name: String) {
+      val collection = sections.getValue(section)
+      val offset = getOffset(section)
+      val index = collection.indexOfFirst { name == it.name }
       if (index >= 0) {
         collection.removeAt(index)
         fireIntervalRemoved(this, offset + index, offset + index)
       }
     }
+
+    private fun getOffset(section: ProjectTypeListSection): Int {
+      return ProjectTypeListSection.entries
+        .takeWhile { it != section }
+        .sumOf { sections.getValue(it).size }
+    }
   }
 
-  private class ProjectTypeListRenderer(
+  private class ProjectTypeListRenderer<T : ProjectTypeListItem>(
     context: WizardContext,
-    model: ProjectTypeListModel
-  ) : GroupedItemsListRenderer<TemplateGroupItem>(
+    model: ProjectTypeListModel<T>,
+  ) : GroupedItemsListRenderer<T>(
     ProjectTypeListItemDescriptor(context, model)
   ) {
 
     override fun customizeComponent(
-      list: JList<out TemplateGroupItem>,
-      value: TemplateGroupItem,
+      list: JList<out T>,
+      value: T,
       index: Int,
       isSelected: Boolean,
-      cellHasFocus: Boolean
+      cellHasFocus: Boolean,
     ) {
       mySeparatorComponent.border = when (index == 0) {
         true -> JBUI.Borders.empty(5, 8, 5, 0)
@@ -329,7 +351,7 @@ internal class ProjectTypeList(
       mySeparatorComponent.setCaptionCentered(false)
       mySeparatorComponent.font = JBFont.label().deriveFont(JBUI.scale(12))
 
-      myNextStepLabel.icon = when (value.group.isPromo) {
+      myNextStepLabel.icon = when (value.isPromo) {
         true -> AllIcons.Ultimate.Lock
         else -> null
       }
@@ -345,42 +367,33 @@ internal class ProjectTypeList(
     }
   }
 
-  private class ProjectTypeListItemDescriptor(
+  private class ProjectTypeListItemDescriptor<T : ProjectTypeListItem>(
     private val context: WizardContext,
-    private val model: ProjectTypeListModel
-  ) : ListItemDescriptorAdapter<TemplateGroupItem>() {
+    private val model: ProjectTypeListModel<T>,
+  ) : ListItemDescriptorAdapter<T>() {
 
-    override fun getTextFor(value: TemplateGroupItem): String? {
-      return value.group.name
+    override fun getTextFor(value: T): String {
+      return value.name
     }
 
-    override fun getIconFor(value: TemplateGroupItem): Icon {
-      return value.group.icon ?: EmptyIcon.ICON_16
+    override fun getIconFor(value: T): Icon {
+      return value.icon ?: EmptyIcon.ICON_16
     }
 
-    override fun getCaptionAboveOf(value: TemplateGroupItem): String {
-      return when (value) {
-        is LanguageGeneratorItem ->
-          UIBundle.message("list.caption.group.newProject", context.isCreatingNewProjectInt())
-        is UserTemplateGroupItem ->
-          UIBundle.message("list.caption.group.templates")
-        else ->
-          UIBundle.message("list.caption.group.generators")
+    override fun getCaptionAboveOf(value: T): String {
+      return when (value.section) {
+        ProjectTypeListSection.NEW_PROJECT -> UIBundle.message("list.caption.group.newProject", context.isCreatingNewProjectInt())
+        ProjectTypeListSection.GENERATORS -> UIBundle.message("list.caption.group.generators")
+        ProjectTypeListSection.TEMPLATES -> UIBundle.message("list.caption.group.templates")
       }
     }
 
-    override fun hasSeparatorAboveOf(value: TemplateGroupItem): Boolean {
-      val index = model.items.indexOf(value)
+    override fun hasSeparatorAboveOf(value: T): Boolean {
+      val items = model.items
+      val index = items.indexOf(value)
       if (index < 0) return false
       if (index == 0) return true
-      val upperItem = model.items[index - 1]
-      if (value !is LanguageGeneratorItem && upperItem is LanguageGeneratorItem) {
-        return true
-      }
-      if (value is UserTemplateGroupItem && upperItem !is UserTemplateGroupItem) {
-        return true
-      }
-      return false
+      return items[index - 1].section != value.section
     }
   }
 
@@ -391,7 +404,7 @@ internal class ProjectTypeList(
       value: WizardPlugin,
       index: Int,
       isSelected: Boolean,
-      cellHasFocus: Boolean
+      cellHasFocus: Boolean,
     ) {
       myTextLabel.border = JBUI.Borders.empty(5, 0)
     }
@@ -409,7 +422,7 @@ internal class ProjectTypeList(
 private class WizardPlugin(
   val id: String,
   val name: @NlsSafe String,
-  val icon: Icon
+  val icon: Icon,
 )
 
 private const val PROJECT_WIZARD_GROUP = "project.wizard.group"
@@ -432,7 +445,8 @@ private fun getAdditionalWizardPlugins(): List<WizardPlugin> = buildList {
   }
 }
 
+@ApiStatus.Internal
 @TestOnly
-fun resetStoredSelectionForTests() {
+fun resetStoredProjectTypeSelectionForTests() {
   PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, null)
 }

@@ -1,16 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.ide.util.projectWizard.AbstractNewProjectDialog
-import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * It takes the action [WELCOME_SCREEN_NEW_PROJECT_ACTION_ID], which IDEA registers.
  * It takes the leaf action of the group [NEW_PROJECT_OR_MODULE_GROUP_ID] with an id from [NEW_PROJECT_ACTION_IDS].
- * It shows the generator based dialog of the platform.
+ * It shows the new project wizard of the platform, see [DefaultNewProjectAction].
  */
 @ApiStatus.Internal
 class NewProjectEntryPointImpl : NewProjectEntryPoint {
@@ -38,17 +38,15 @@ class NewProjectEntryPointImpl : NewProjectEntryPoint {
   override fun performNewProjectAction(dataContext: DataContext) {
     val action = findNewProjectAction()
     if (action == null) {
-      showDefaultNewProjectDialog()
+      service<DefaultNewProjectWizardService>().showWizard(
+        project = CommonDataKeys.PROJECT.getData(dataContext),
+        location = NewProjectEntryPoint.PROJECT_LOCATION.getData(dataContext),
+        attachTo = NewProjectEntryPoint.ATTACH_TO_PROJECT.getData(dataContext),
+      )
       return
     }
     val event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null)
     ActionUtil.performAction(action, event)
-  }
-
-  private fun showDefaultNewProjectDialog() {
-    object : AbstractNewProjectDialog() {
-      override fun createNewProjectStep(): AbstractNewProjectStep<*> = DefaultNewProjectStep()
-    }.show()
   }
 
   private fun collectActionIds(
