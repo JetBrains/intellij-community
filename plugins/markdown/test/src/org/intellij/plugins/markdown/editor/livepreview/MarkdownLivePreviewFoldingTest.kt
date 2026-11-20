@@ -2546,7 +2546,7 @@ class MarkdownLivePreviewFoldingTest {
       configure((1..items).joinToString("\n") { "- item $it" } + "\n\ntail<caret>")
       val editor = myFixture.editor
       val reconciler = MarkdownLivePreviewReconciler.getExisting(editor)!!
-      val specs = computeLivePreviewSpecs(myFixture.file, editor)
+      val specs = computeLivePreviewSpecs(myFixture.file, editor, configuration)
       assertEquals(items, bulletInlays().size)
       var batches = 0
       editor.inlayModel.addListener(object : InlayModel.Listener {
