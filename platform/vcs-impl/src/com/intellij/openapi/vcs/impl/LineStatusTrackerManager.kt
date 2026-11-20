@@ -962,12 +962,15 @@ class LineStatusTrackerManager(
   private inner class MyApplicationListener : ApplicationListener {
     override fun afterWriteActionFinished(action: Any) {
       documentsInDefaultChangeList.clear()
+      releaseUnneededTrackers()
+    }
+  }
 
-      synchronized(LOCK) {
-        val documents = trackers.values.map { it.tracker.document }
-        for (document in documents) {
-          checkIfTrackerCanBeReleased(document)
-        }
+  private fun releaseUnneededTrackers() {
+    synchronized(LOCK) {
+      val documents = trackers.values.map { it.tracker.document }
+      for (document in documents) {
+        checkIfTrackerCanBeReleased(document)
       }
     }
   }
