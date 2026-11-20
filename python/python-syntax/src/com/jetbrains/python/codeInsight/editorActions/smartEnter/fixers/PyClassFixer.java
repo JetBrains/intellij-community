@@ -6,24 +6,24 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstArgumentList;
+import com.jetbrains.python.ast.PyAstClass;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.psi.PyUtil.sure;
+import static com.jetbrains.python.ast.impl.PyUtilCore.sure;
 
-public class PyClassFixer extends PyFixer<PyClass> {
+public class PyClassFixer extends PyFixer<PyAstClass> {
   public PyClassFixer() {
-    super(PyClass.class);
+    super(PyAstClass.class);
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyClass pyClass) throws IncorrectOperationException {
-    final PsiElement colon = PyPsiUtils.getFirstChildOfType(pyClass, PyTokenTypes.COLON);
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstClass pyClass) throws IncorrectOperationException {
+    final PsiElement colon = PyPsiUtilsCore.getFirstChildOfType(pyClass, PyTokenTypes.COLON);
     if (colon == null) {
-      final PyArgumentList argList = PsiTreeUtil.getChildOfType(pyClass, PyArgumentList.class);
+      final PyAstArgumentList argList = PsiTreeUtil.getChildOfType(pyClass, PyAstArgumentList.class);
       final int colonOffset = sure(argList).getTextRange().getEndOffset();
       String textToInsert = ":";
       if (pyClass.getNameNode() == null) {

@@ -14,6 +14,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.ast.PyAstFile;
+import com.jetbrains.python.ast.PyAstStatement;
+import com.jetbrains.python.ast.PyAstStatementList;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessors.EnterProcessor;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessors.PyCommentBreakerEnterProcessor;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessors.PyPlainEnterProcessor;
@@ -34,10 +38,6 @@ import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyParent
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyStringLiteralFixer;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyUnconditionalStatementPartFixer;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyWithFixer;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +81,7 @@ public final class PySmartEnterProcessor extends SmartEnterProcessor {
 
     final PsiElement[] children = element.getChildren();
     for (final PsiElement child : children) {
-      if (element instanceof PyStatement && child instanceof PyStatement) {
+      if (element instanceof PyAstStatement && child instanceof PyAstStatement) {
         continue;
       }
       collectAllElements(child, result, recurse);
@@ -89,7 +89,7 @@ public final class PySmartEnterProcessor extends SmartEnterProcessor {
   }
 
   private static boolean doNotStep(final PsiElement element) {
-    return (element instanceof PyStatementList) || (element instanceof PyStatement);
+    return (element instanceof PyAstStatementList) || (element instanceof PyAstStatement);
   }
 
   private static boolean isModified(final @NotNull Editor editor) {
@@ -154,7 +154,7 @@ public final class PySmartEnterProcessor extends SmartEnterProcessor {
           if (LookupManager.getInstance(project).getActiveLookup() != null) {
             return;
           }
-          PyPsiUtils.assertValid(element);
+          PyPsiUtilsCore.assertValid(element);
           if (isUncommited(project) || !element.isValid()) {
             process(project, editor, psiFile, attempt + 1);
             return;
@@ -206,18 +206,18 @@ public final class PySmartEnterProcessor extends SmartEnterProcessor {
       return null;
     }
 
-    final PyStatementList statementList = PsiTreeUtil.getParentOfType(statementAtCaret, PyStatementList.class, false);
+    final PyAstStatementList statementList = PsiTreeUtil.getParentOfType(statementAtCaret, PyAstStatementList.class, false);
     if (statementList != null) {
-      for (PyStatement statement : statementList.getStatements()) {
+      for (PyAstStatement statement : statementList.getStatements()) {
         if (PsiTreeUtil.isAncestor(statement, statementAtCaret, true)) {
           return statement;
         }
       }
     }
     else {
-      final PyFile file = PsiTreeUtil.getParentOfType(statementAtCaret, PyFile.class, false);
+      final PyAstFile file = PsiTreeUtil.getParentOfType(statementAtCaret, PyAstFile.class, false);
       if (file != null) {
-        for (PyStatement statement : file.getStatements()) {
+        for (PyAstStatement statement : file.getStatements()) {
           if (PsiTreeUtil.isAncestor(statement, statementAtCaret, true)) {
             return statement;
           }

@@ -18,32 +18,32 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.ast.PyAstDictLiteralExpression;
+import com.jetbrains.python.ast.PyAstElement;
+import com.jetbrains.python.ast.PyAstListLiteralExpression;
+import com.jetbrains.python.ast.PyAstSetLiteralExpression;
+import com.jetbrains.python.ast.PyAstSubscriptionExpression;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyDictLiteralExpression;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyListLiteralExpression;
-import com.jetbrains.python.psi.PySetLiteralExpression;
-import com.jetbrains.python.psi.PySubscriptionExpression;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class PyMissingBracesFixer extends PyFixer<PyElement> {
+public class PyMissingBracesFixer extends PyFixer<PyAstElement> {
   public PyMissingBracesFixer() {
-    super(PyElement.class);
+    super(PyAstElement.class);
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyElement psiElement)
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstElement psiElement)
     throws IncorrectOperationException {
-    if (psiElement instanceof PySetLiteralExpression || psiElement instanceof PyDictLiteralExpression) {
-      final PsiElement lastChild = PyPsiUtils.getPrevNonCommentSibling(psiElement.getLastChild(), false);
+    if (psiElement instanceof PyAstSetLiteralExpression || psiElement instanceof PyAstDictLiteralExpression) {
+      final PsiElement lastChild = PyPsiUtilsCore.getPrevNonCommentSibling(psiElement.getLastChild(), false);
       if (lastChild != null && !"}".equals(lastChild.getText())) {
         editor.getDocument().insertString(lastChild.getTextRange().getEndOffset(), "}");
       }
     }
-    else if (psiElement instanceof PyListLiteralExpression ||
-             psiElement instanceof PySubscriptionExpression) {
-      final PsiElement lastChild = PyPsiUtils.getPrevNonCommentSibling(psiElement.getLastChild(), false);
+    else if (psiElement instanceof PyAstListLiteralExpression ||
+             psiElement instanceof PyAstSubscriptionExpression) {
+      final PsiElement lastChild = PyPsiUtilsCore.getPrevNonCommentSibling(psiElement.getLastChild(), false);
       if (lastChild != null && !"]".equals(lastChild.getText())) {
         editor.getDocument().insertString(lastChild.getTextRange().getEndOffset(), "]");
       }

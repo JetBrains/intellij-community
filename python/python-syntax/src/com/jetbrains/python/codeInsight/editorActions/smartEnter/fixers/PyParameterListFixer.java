@@ -22,25 +22,24 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.PyAstParameterList;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameterList;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.psi.PyUtil.as;
+import static com.intellij.util.ObjectUtils.tryCast;
 
-public class PyParameterListFixer extends PyFixer<PyParameterList> {
+public class PyParameterListFixer extends PyFixer<PyAstParameterList> {
   public PyParameterListFixer() {
-    super(PyParameterList.class);
+    super(PyAstParameterList.class);
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyParameterList parameters)
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstParameterList parameters)
     throws IncorrectOperationException {
-    final PsiElement lBrace = PyPsiUtils.getChildByFilter(parameters, PyTokenTypes.OPEN_BRACES, 0);
-    final PsiElement rBrace = PyPsiUtils.getChildByFilter(parameters, PyTokenTypes.CLOSE_BRACES, 0);
-    final PyFunction pyFunction = as(parameters.getParent(), PyFunction.class);
+    final PsiElement lBrace = PyPsiUtilsCore.getChildByFilter(parameters, PyTokenTypes.OPEN_BRACES, 0);
+    final PsiElement rBrace = PyPsiUtilsCore.getChildByFilter(parameters, PyTokenTypes.CLOSE_BRACES, 0);
+    final PyAstFunction pyFunction = tryCast(parameters.getParent(), PyAstFunction.class);
     if (pyFunction != null && !PyFunctionFixer.isFakeFunction(pyFunction) && (lBrace == null || rBrace == null)) {
       final Document document = editor.getDocument();
       if (lBrace == null) {
@@ -59,9 +58,9 @@ public class PyParameterListFixer extends PyFixer<PyParameterList> {
     }
   }
 
-  private static int insertParametersForMethod(@NotNull PyFunction pyFunction, @NotNull Document document, int offset) {
+  private static int insertParametersForMethod(@NotNull PyAstFunction pyFunction, @NotNull Document document, int offset) {
     if (pyFunction.getContainingClass() != null) {
-      final PyFunction.Modifier modifier = pyFunction.getModifier();
+      final PyAstFunction.Modifier modifier = pyFunction.getModifier();
       String parameterName = null;
       if (modifier == null) parameterName = PyNames.CANONICAL_SELF;
       else if (modifier == PyAstFunction.Modifier.CLASSMETHOD) parameterName = PyNames.CANONICAL_CLS;

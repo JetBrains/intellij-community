@@ -23,29 +23,29 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstWithItem;
+import com.jetbrains.python.ast.PyAstWithStatement;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyWithItem;
-import com.jetbrains.python.psi.PyWithStatement;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
-public class PyWithFixer extends PyFixer<PyWithStatement> {
+public class PyWithFixer extends PyFixer<PyAstWithStatement> {
   public PyWithFixer() {
-    super(PyWithStatement.class);
+    super(PyAstWithStatement.class);
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyWithStatement withStatement) throws IncorrectOperationException {
-    final PsiElement withToken = PyPsiUtils.getFirstChildOfType(withStatement, PyTokenTypes.WITH_KEYWORD);
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstWithStatement withStatement) throws IncorrectOperationException {
+    final PsiElement withToken = PyPsiUtilsCore.getFirstChildOfType(withStatement, PyTokenTypes.WITH_KEYWORD);
     assert withToken != null;
     final Document document = editor.getDocument();
-    final PsiElement colonToken = PyPsiUtils.getFirstChildOfType(withStatement, PyTokenTypes.COLON);
+    final PsiElement colonToken = PyPsiUtilsCore.getFirstChildOfType(withStatement, PyTokenTypes.COLON);
     if (colonToken == null) {
-      PsiElement closingParenthesis = PyPsiUtils.getFirstChildOfType(withStatement, PyTokenTypes.RPAR);
-      PyWithItem lastWithItem = ArrayUtil.getLastElement(withStatement.getWithItems());
+      PsiElement closingParenthesis = PyPsiUtilsCore.getFirstChildOfType(withStatement, PyTokenTypes.RPAR);
+      PyAstWithItem lastWithItem = ArrayUtil.getLastElement(withStatement.getWithItems());
       PsiElement rightmostElement = closingParenthesis != null ? closingParenthesis :
                                     lastWithItem != null ? lastWithItem :
                                     withToken;
@@ -53,8 +53,8 @@ public class PyWithFixer extends PyFixer<PyWithStatement> {
     }
 
     if (withStatement.getWithItems().length != 0) {
-      for (PyWithItem withItem : withStatement.getWithItems()) {
-        final PsiElement asToken = PyPsiUtils.getFirstChildOfType(withItem, PyTokenTypes.AS_KEYWORD);
+      for (PyAstWithItem withItem : withStatement.getWithItems()) {
+        final PsiElement asToken = PyPsiUtilsCore.getFirstChildOfType(withItem, PyTokenTypes.AS_KEYWORD);
         if (asToken != null && withItem.getTarget() == null) {
           int asKeywordEndOffset = asToken.getTextRange().getEndOffset();
           if (!(PsiTreeUtil.nextLeaf(asToken, true) instanceof PsiWhiteSpace)) {

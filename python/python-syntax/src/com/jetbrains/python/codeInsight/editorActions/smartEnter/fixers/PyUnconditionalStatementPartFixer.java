@@ -7,29 +7,29 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstElement;
+import com.jetbrains.python.ast.PyAstElsePart;
+import com.jetbrains.python.ast.PyAstFinallyPart;
+import com.jetbrains.python.ast.PyAstTryPart;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyElsePart;
-import com.jetbrains.python.psi.PyFinallyPart;
-import com.jetbrains.python.psi.PyTryPart;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.psi.PyUtil.sure;
+import static com.jetbrains.python.ast.impl.PyUtilCore.sure;
 
-public class PyUnconditionalStatementPartFixer extends PyFixer<PyElement> {
+public class PyUnconditionalStatementPartFixer extends PyFixer<PyAstElement> {
   public PyUnconditionalStatementPartFixer() {
-    super(PyElement.class);
+    super(PyAstElement.class);
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyElement psiElement)
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstElement psiElement)
     throws IncorrectOperationException {
-    if (PsiTreeUtil.instanceOf(psiElement, PyElsePart.class, PyTryPart.class, PyFinallyPart.class)) {
-      final PsiElement colon = PyPsiUtils.getFirstChildOfType(psiElement, PyTokenTypes.COLON);
+    if (PsiTreeUtil.instanceOf(psiElement, PyAstElsePart.class, PyAstTryPart.class, PyAstFinallyPart.class)) {
+      final PsiElement colon = PyPsiUtilsCore.getFirstChildOfType(psiElement, PyTokenTypes.COLON);
       if (colon == null) {
         final TokenSet keywords = TokenSet.create(PyTokenTypes.ELSE_KEYWORD, PyTokenTypes.TRY_KEYWORD, PyTokenTypes.FINALLY_KEYWORD);
-        final PsiElement keywordToken = PyPsiUtils.getChildByFilter(psiElement, keywords, 0);
+        final PsiElement keywordToken = PyPsiUtilsCore.getChildByFilter(psiElement, keywords, 0);
         editor.getDocument().insertString(sure(keywordToken).getTextRange().getEndOffset(), ":");
       }
     }

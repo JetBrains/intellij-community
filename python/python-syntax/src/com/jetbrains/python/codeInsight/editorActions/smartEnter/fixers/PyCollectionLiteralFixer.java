@@ -10,53 +10,52 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyParsingBundle;
+import com.jetbrains.python.ast.PyAstDictLiteralExpression;
+import com.jetbrains.python.ast.PyAstDoubleStarExpression;
+import com.jetbrains.python.ast.PyAstExpression;
+import com.jetbrains.python.ast.PyAstKeyValueExpression;
+import com.jetbrains.python.ast.PyAstSequenceExpression;
+import com.jetbrains.python.ast.PyAstTupleExpression;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.SmartEnterUtil;
-import com.jetbrains.python.psi.PyDictLiteralExpression;
-import com.jetbrains.python.psi.PyDoubleStarExpression;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyKeyValueExpression;
-import com.jetbrains.python.psi.PySequenceExpression;
-import com.jetbrains.python.psi.PyTupleExpression;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.psi.PyUtil.as;
+import static com.intellij.util.ObjectUtils.tryCast;
 
-public class PyCollectionLiteralFixer extends PyFixer<PySequenceExpression> {
+public class PyCollectionLiteralFixer extends PyFixer<PyAstSequenceExpression> {
   public PyCollectionLiteralFixer() {
-    super(PySequenceExpression.class);
+    super(PyAstSequenceExpression.class);
   }
 
   @Override
-  protected boolean isApplicable(@NotNull Editor editor, @NotNull PySequenceExpression element) {
+  protected boolean isApplicable(@NotNull Editor editor, @NotNull PyAstSequenceExpression element) {
     return true;
   }
 
   @Override
-  protected void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PySequenceExpression collection) {
+  protected void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstSequenceExpression collection) {
     int caretOffset = editor.getCaretModel().getOffset();
     PsiElement collectionItemAnchor = collection.getContainingFile().findElementAt(caretOffset);
     if (collectionItemAnchor == null) {
       return;
     }
     if (collectionItemAnchor instanceof PsiWhiteSpace) {
-      collectionItemAnchor = PyPsiUtils.getPrevNonWhitespaceSiblingOnSameLine(collectionItemAnchor);
+      collectionItemAnchor = PyPsiUtilsCore.getPrevNonWhitespaceSiblingOnSameLine(collectionItemAnchor);
     }
     if (collectionItemAnchor != null && isMissingColonError(collectionItemAnchor)) {
       collectionItemAnchor = collectionItemAnchor.getPrevSibling();
     }
-    // Since surrounding parentheses don't belong to PyTupleExpression expression,
+    // Since surrounding parentheses don't belong to PyAstTupleExpression expression,
     // whitespace after its last element is a sibling of the tuple itself
-    if (collection instanceof PyTupleExpression && collectionItemAnchor == collection) {
+    if (collection instanceof PyAstTupleExpression && collectionItemAnchor == collection) {
       collectionItemAnchor = ArrayUtil.getLastElement(collection.getElements());
     }
     if (collectionItemAnchor == null) {
       return;
     }
-    PsiElement collectionItem = PyPsiUtils.getParentRightBefore(collectionItemAnchor, collection);
-    if (!(collectionItem instanceof PyExpression)) {
+    PsiElement collectionItem = PyPsiUtilsCore.getParentRightBefore(collectionItemAnchor, collection);
+    if (!(collectionItem instanceof PyAstExpression)) {
       return;
     }
 
@@ -73,8 +72,8 @@ public class PyCollectionLiteralFixer extends PyFixer<PySequenceExpression> {
     }
     if (nextOnSameLine == null || nextOnSameLine instanceof PsiComment) {
       int separatorOffset = collectionItem.getTextRange().getEndOffset();
-      PyKeyValueExpression keyValuePair = as(collectionItem, PyKeyValueExpression.class);
-      if (collection instanceof PyDictLiteralExpression && keyValuePair == null && !(collectionItem instanceof PyDoubleStarExpression)) {
+      PyAstKeyValueExpression keyValuePair = tryCast(collectionItem, PyAstKeyValueExpression.class);
+      if (collection instanceof PyAstDictLiteralExpression && keyValuePair == null && !(collectionItem instanceof PyAstDoubleStarExpression)) {
         document.insertString(separatorOffset, ": ");
         processor.registerUnresolvedError(separatorOffset + 2);
       }
@@ -92,7 +91,7 @@ public class PyCollectionLiteralFixer extends PyFixer<PySequenceExpression> {
   }
 
   private static boolean isMissingColonError(@NotNull PsiElement element) {
-    PsiErrorElement errorElement = as(element, PsiErrorElement.class);
+    PsiErrorElement errorElement = tryCast(element, PsiErrorElement.class);
     return errorElement != null && PyParsingBundle.message("PARSE.expected.colon").equals(errorElement.getErrorDescription());
   }
 }

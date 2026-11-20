@@ -18,17 +18,17 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class PyStringLiteralFixer extends PyFixer<PyStringLiteralExpression> {
+public class PyStringLiteralFixer extends PyFixer<PyAstStringLiteralExpression> {
   public PyStringLiteralFixer() {
-    super(PyStringLiteralExpression.class);
+    super(PyAstStringLiteralExpression.class);
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyStringLiteralExpression psiElement)
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstStringLiteralExpression psiElement)
     throws IncorrectOperationException {
     final String text = psiElement.getText();
     if (StringUtil.startsWith(text, "\"\"\"")) {

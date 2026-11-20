@@ -19,30 +19,30 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstExceptPart;
+import com.jetbrains.python.ast.PyAstExpression;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyExceptPart;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.psi.PyUtil.sure;
+import static com.jetbrains.python.ast.impl.PyUtilCore.sure;
 
-public class PyExceptFixer extends PyFixer<PyExceptPart> {
+public class PyExceptFixer extends PyFixer<PyAstExceptPart> {
   public PyExceptFixer() {
-    super(PyExceptPart.class);
+    super(PyAstExceptPart.class);
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyExceptPart exceptPart) throws IncorrectOperationException {
-    final PsiElement colon = PyPsiUtils.getFirstChildOfType(exceptPart, PyTokenTypes.COLON);
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstExceptPart exceptPart) throws IncorrectOperationException {
+    final PsiElement colon = PyPsiUtilsCore.getFirstChildOfType(exceptPart, PyTokenTypes.COLON);
     if (colon == null) {
-      final PsiElement exceptToken = PyPsiUtils.getFirstChildOfType(exceptPart, PyTokenTypes.EXCEPT_KEYWORD);
+      final PsiElement exceptToken = PyPsiUtilsCore.getFirstChildOfType(exceptPart, PyTokenTypes.EXCEPT_KEYWORD);
       int offset = sure(exceptToken).getTextRange().getEndOffset();
-      final PyExpression exceptClass = exceptPart.getExceptClass();
+      final PyAstExpression exceptClass = exceptPart.getExceptClass();
       if (exceptClass != null) {
         offset = exceptClass.getTextRange().getEndOffset();
       }
-      final PyExpression target = exceptPart.getTarget();
+      final PyAstExpression target = exceptPart.getTarget();
       if (target != null) {
         offset = target.getTextRange().getEndOffset();
       }

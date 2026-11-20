@@ -48,6 +48,19 @@ object PyPsiUtilsCore {
   }
 
   /**
+   * Finds first sibling that is neither comment, nor whitespace before given element.
+   *
+   * @param strict prohibit returning element itself
+   */
+  @JvmStatic
+  fun getPrevNonCommentSibling(start: PsiElement?, strict: Boolean): PsiElement? {
+    if (!strict && !(start is PsiWhiteSpace || start is PsiComment)) {
+      return start
+    }
+    return PsiTreeUtil.skipWhitespacesAndCommentsBackward(start)
+  }
+
+  /**
    * Returns first child psi element with specified element type or `null` if no such element exists.
    * Semantically it's the same as `getChildByFilter(element, TokenSet.create(type), 0)`.
    *
@@ -93,6 +106,24 @@ object PyPsiUtilsCore {
         break
       }
       cur = cur.nextSibling
+    }
+    return null
+  }
+
+  /**
+   * Returns the first non-whitespace sibling preceding the given element but within its line boundaries.
+   */
+  @JvmStatic
+  fun getPrevNonWhitespaceSiblingOnSameLine(element: PsiElement): PsiElement? {
+    var cur = element.prevSibling
+    while (cur != null) {
+      if (cur !is PsiWhiteSpace) {
+        return cur
+      }
+      else if (cur.textContains('\n')) {
+        break
+      }
+      cur = cur.prevSibling
     }
     return null
   }

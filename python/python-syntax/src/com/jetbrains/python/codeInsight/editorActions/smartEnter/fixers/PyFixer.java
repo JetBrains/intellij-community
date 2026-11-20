@@ -18,21 +18,28 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.ast.PyAstElement;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyParenthesizedExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class PyParenthesizedFixer extends PyFixer<PyParenthesizedExpression> {
-  public PyParenthesizedFixer() {
-    super(PyParenthesizedExpression.class);
+public abstract class PyFixer<T extends PyAstElement> {
+  private final Class<T> myClass;
+
+  public PyFixer(@NotNull Class<T> aClass) {
+    myClass = aClass;
   }
 
-  @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyParenthesizedExpression expression)
+  @SuppressWarnings("unchecked")
+  public final void apply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PsiElement element)
     throws IncorrectOperationException {
-    final PsiElement lastChild = expression.getLastChild();
-    if (lastChild != null && !")".equals(lastChild.getText())) {
-      editor.getDocument().insertString(expression.getTextRange().getEndOffset(), ")");
+    if (myClass.isInstance(element) && isApplicable(editor, (T)element)) {
+      doApply(editor, processor, (T)element);
     }
   }
+  
+  protected boolean isApplicable(@NotNull Editor editor, @NotNull T element) {
+    return myClass.isInstance(element);
+  }
+
+  protected abstract void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull T element);
 }

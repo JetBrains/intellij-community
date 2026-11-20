@@ -19,32 +19,32 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
+import com.jetbrains.python.ast.docstring.DocStringUtilCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringParser;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.GoogleCodeStyleDocStringBuilder;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString;
 import com.jetbrains.python.psi.PyIndentUtil;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
-public class GoogleDocStringSectionFixer extends PyFixer<PyStringLiteralExpression> {
+public class GoogleDocStringSectionFixer extends PyFixer<PyAstStringLiteralExpression> {
   public GoogleDocStringSectionFixer() {
-    super(PyStringLiteralExpression.class);
+    super(PyAstStringLiteralExpression.class);
   }
 
   @Override
-  protected boolean isApplicable(@NotNull Editor editor, @NotNull PyStringLiteralExpression pyString) {
-    return DocStringUtil.getParentDefinitionDocString(pyString) == pyString &&
+  protected boolean isApplicable(@NotNull Editor editor, @NotNull PyAstStringLiteralExpression pyString) {
+    return DocStringUtilCore.getParentDefinitionDocString(pyString) == pyString &&
            DocStringParser.guessDocStringFormat(pyString.getText(), pyString) == DocStringFormat.GOOGLE;
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyStringLiteralExpression pyString) {
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstStringLiteralExpression pyString) {
     final int offset = editor.getCaretModel().getOffset();
     final Document document = editor.getDocument();
     final int lineNum = document.getLineNumber(offset);

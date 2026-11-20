@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.IncorrectOperationException
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.ast.PyAstAssignmentStatement
 import com.jetbrains.python.ast.PyAstBreakStatement
@@ -97,6 +98,28 @@ object PyUtilCore {
   @JvmStatic
   fun flattenedParensAndStars(vararg targets: PyAstExpression?): MutableList<PyAstExpression?> {
     return unfoldParentheses(targets, ArrayList(targets.size), false, true)
+  }
+
+  /**
+   * Makes sure that 'thing' is not null; else throws an [IncorrectOperationException].
+   *
+   * @param thing what we check.
+   * @return thing, if not null.
+   */
+  @JvmStatic
+  fun <T : Any> sure(thing: T?): T {
+    if (thing == null) throw IncorrectOperationException()
+    return thing
+  }
+
+  /**
+   * Makes sure that the 'thing' is true; else throws an [IncorrectOperationException].
+   *
+   * @param thing what we check.
+   */
+  @JvmStatic
+  fun sure(thing: Boolean) {
+    if (!thing) throw IncorrectOperationException()
   }
 
   @JvmStatic

@@ -10,32 +10,31 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstAnnotation;
+import com.jetbrains.python.ast.PyAstExpressionStatement;
+import com.jetbrains.python.ast.PyAstMatchStatement;
+import com.jetbrains.python.ast.PyAstStatement;
+import com.jetbrains.python.ast.PyAstTypeDeclarationStatement;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyAnnotation;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyAstElementGenerator;
 import com.jetbrains.python.psi.PyIndentUtil;
-import com.jetbrains.python.psi.PyMatchStatement;
-import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyTypeDeclarationStatement;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.psi.PyUtil.as;
+import static com.intellij.util.ObjectUtils.tryCast;
 
-public final class PyMatchStatementFixer extends PyFixer<PyStatement> {
+public final class PyMatchStatementFixer extends PyFixer<PyAstStatement> {
   public PyMatchStatementFixer() {
-    super(PyStatement.class);
+    super(PyAstStatement.class);
   }
 
   @Override
-  protected void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyStatement element) {
+  protected void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstStatement element) {
     Document document = editor.getDocument();
-    PyMatchStatement matchStatement = as(element, PyMatchStatement.class);
+    PyAstMatchStatement matchStatement = tryCast(element, PyAstMatchStatement.class);
     if (matchStatement != null) {
-      PsiElement colon = PyPsiUtils.getFirstChildOfType(element, PyTokenTypes.COLON);
+      PsiElement colon = PyPsiUtilsCore.getFirstChildOfType(element, PyTokenTypes.COLON);
       assert colon != null;
       int colonEndOffset = colon.getTextRange().getEndOffset();
       // It's not enough to check matchStatement.getCaseClauses().isEmpty()
@@ -50,10 +49,10 @@ public final class PyMatchStatementFixer extends PyFixer<PyStatement> {
       return;
     }
 
-    PyTypeDeclarationStatement typeDeclaration = as(element, PyTypeDeclarationStatement.class);
+    PyAstTypeDeclarationStatement typeDeclaration = tryCast(element, PyAstTypeDeclarationStatement.class);
     // "match:" case
     if (typeDeclaration != null && isMatchIdentifier(typeDeclaration.getTarget())) {
-      PyAnnotation annotation = typeDeclaration.getAnnotation();
+      PyAstAnnotation annotation = typeDeclaration.getAnnotation();
       if (annotation != null && annotation.getValue() == null) {
         processor.registerUnresolvedError(annotation.getTextRange().getStartOffset());
         return;
@@ -81,17 +80,17 @@ public final class PyMatchStatementFixer extends PyFixer<PyStatement> {
     }
   }
 
-  private static @NotNull Couple<PsiElement> findMatchKeywordAndSubjectInExpressionStatement(@NotNull PyStatement statement) {
-    if (!(statement instanceof PyExpressionStatement)) return Couple.getEmpty();
+  private static @NotNull Couple<PsiElement> findMatchKeywordAndSubjectInExpressionStatement(@NotNull PyAstStatement statement) {
+    if (!(statement instanceof PyAstExpressionStatement)) return Couple.getEmpty();
     // "match <caret>expr" case
-    PsiElement prevSibling = PyPsiUtils.getPrevNonWhitespaceSiblingOnSameLine(statement);
-    if (prevSibling instanceof PyExpressionStatement && isMatchIdentifier(prevSibling)) {
+    PsiElement prevSibling = PyPsiUtilsCore.getPrevNonWhitespaceSiblingOnSameLine(statement);
+    if (prevSibling instanceof PyAstExpressionStatement && isMatchIdentifier(prevSibling)) {
       return Couple.of(prevSibling, statement);
     }
     if (isMatchIdentifier(statement)) {
       // "<caret>match expr"
       PsiElement nextSibling = PyPsiUtilsCore.getNextNonWhitespaceSiblingOnSameLine(statement);
-      if (nextSibling instanceof PyExpressionStatement) {
+      if (nextSibling instanceof PyAstExpressionStatement) {
         return Couple.of(statement, nextSibling);
       }
       // "match" case
@@ -102,7 +101,7 @@ public final class PyMatchStatementFixer extends PyFixer<PyStatement> {
     // "match + x" or "match [x]" case
     if (isMatchIdentifier(PsiTreeUtil.getDeepestFirst(statement))) {
       LanguageLevel languageLevel = LanguageLevel.forElement(statement);
-      PyElementGenerator generator = PyElementGenerator.getInstance(statement.getProject());
+      PyAstElementGenerator generator = PyAstElementGenerator.getInstance(statement.getProject());
       String subjectSuspect = StringUtil.trimStart(statement.getText(), PyNames.MATCH);
       try {
         generator.createExpressionFromText(languageLevel, subjectSuspect.trim());

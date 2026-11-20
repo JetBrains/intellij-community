@@ -71,10 +71,7 @@ object PyPsiUtils {
    */
   @JvmStatic
   fun getPrevNonCommentSibling(start: PsiElement?, strict: Boolean): PsiElement? {
-    if (!strict && !(start is PsiWhiteSpace || start is PsiComment)) {
-      return start
-    }
-    return PsiTreeUtil.skipWhitespacesAndCommentsBackward(start)
+    return PyPsiUtilsCore.getPrevNonCommentSibling(start, strict)
   }
 
   /**
@@ -99,17 +96,7 @@ object PyPsiUtils {
    */
   @JvmStatic
   fun getPrevNonWhitespaceSiblingOnSameLine(element: PsiElement): PsiElement? {
-    var cur = element.prevSibling
-    while (cur != null) {
-      if (cur !is PsiWhiteSpace) {
-        return cur
-      }
-      else if (cur.textContains('\n')) {
-        break
-      }
-      cur = cur.prevSibling
-    }
-    return null
+    return PyPsiUtilsCore.getPrevNonWhitespaceSiblingOnSameLine(element)
   }
 
   /**

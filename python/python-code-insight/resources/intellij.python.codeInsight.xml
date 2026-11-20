@@ -162,9 +162,6 @@
 
     <listSplitJoinContext language="Python" implementationClass="com.jetbrains.python.codeInsight.editorActions.PyListSplitJoinContext"/>
 
-    <lang.smartEnterProcessor language="Python"
-                              implementationClass="com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor"/>
-
     <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
     <lang.unwrapDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.unwrap.PyUnwrapDescriptor"/>
     <lang.emacs language="Python" implementationClass="com.jetbrains.python.editor.PyEmacsHandler"/>

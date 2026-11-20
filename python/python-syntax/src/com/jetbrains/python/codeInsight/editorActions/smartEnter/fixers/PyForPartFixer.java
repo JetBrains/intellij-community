@@ -19,30 +19,30 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstForPart;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyForPart;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.psi.PyUtil.sure;
+import static com.jetbrains.python.ast.impl.PyUtilCore.sure;
 
-public class PyForPartFixer extends PyFixer<PyForPart> {
+public class PyForPartFixer extends PyFixer<PyAstForPart> {
   public PyForPartFixer() {
-    super(PyForPart.class);
+    super(PyAstForPart.class);
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyForPart forPart) {
-    final PsiElement colon = PyPsiUtils.getFirstChildOfType(forPart, PyTokenTypes.COLON);
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstForPart forPart) {
+    final PsiElement colon = PyPsiUtilsCore.getFirstChildOfType(forPart, PyTokenTypes.COLON);
     final Document document = editor.getDocument();
-    final PsiElement forToken = PyPsiUtils.getFirstChildOfType(forPart, PyTokenTypes.FOR_KEYWORD);
+    final PsiElement forToken = PyPsiUtilsCore.getFirstChildOfType(forPart, PyTokenTypes.FOR_KEYWORD);
     if (colon == null) {
       String textToInsert = ":";
       PsiElement sourceOrTarget = forPart.getSource();
       PsiElement positionToInsert = sourceOrTarget;
       if (sourceOrTarget == null) {
         sourceOrTarget = forPart.getTarget();
-        final PsiElement inToken = PyPsiUtils.getFirstChildOfType(forPart, PyTokenTypes.IN_KEYWORD);
+        final PsiElement inToken = PyPsiUtilsCore.getFirstChildOfType(forPart, PyTokenTypes.IN_KEYWORD);
         if (inToken == null) {
           if (sourceOrTarget == null) {
             positionToInsert = sure(forToken);

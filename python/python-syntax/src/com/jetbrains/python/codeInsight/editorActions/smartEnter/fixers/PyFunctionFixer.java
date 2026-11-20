@@ -19,29 +19,29 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstAnnotation;
+import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.PyAstParameterList;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyAnnotation;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameterList;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class PyFunctionFixer extends PyFixer<PyFunction> {
+public class PyFunctionFixer extends PyFixer<PyAstFunction> {
   public PyFunctionFixer() {
-    super(PyFunction.class);
+    super(PyAstFunction.class);
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyFunction function)
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstFunction function)
     throws IncorrectOperationException {
-    final PsiElement colon = PyPsiUtils.getFirstChildOfType(function, PyTokenTypes.COLON);
+    final PsiElement colon = PyPsiUtilsCore.getFirstChildOfType(function, PyTokenTypes.COLON);
     if (!isFakeFunction(function) && colon == null) {
-      final PyParameterList parameterList = function.getParameterList();
+      final PyAstParameterList parameterList = function.getParameterList();
       if (function.getNameNode() == null) {
         processor.registerUnresolvedError(parameterList.getTextOffset());
       }
       final int colonOffset;
-      final PyAnnotation annotation = function.getAnnotation();
+      final PyAstAnnotation annotation = function.getAnnotation();
       if (annotation != null) {
         colonOffset = annotation.getTextRange().getEndOffset();
       }
@@ -53,13 +53,13 @@ public class PyFunctionFixer extends PyFixer<PyFunction> {
   }
 
   /**
-   * Python parser can create empty function element without header and body solely to enclose {@link com.jetbrains.python.psi.PyDecoratorList}.
+   * Python parser can create empty function element without header and body solely to enclose {@link com.jetbrains.python.ast.PyAstDecoratorList}.
    * Attempting to operate in the context of such "fake" function definition may lead to various kinds of malformed code and we want to
    * avoid it.
    *
    * @return whether it's more or less proper function definition, i.e. it contains at least {@code def} keyword
    */
-  static boolean isFakeFunction(@NotNull PyFunction function) {
+  static boolean isFakeFunction(@NotNull PyAstFunction function) {
     return function.getNode().findChildByType(PyTokenTypes.DEF_KEYWORD) == null;
   }
 }

@@ -20,23 +20,23 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstArgumentList;
+import com.jetbrains.python.ast.PyAstClass;
+import com.jetbrains.python.ast.PyAstDecorator;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class PyArgumentListFixer extends PyFixer<PyArgumentList> {
+public class PyArgumentListFixer extends PyFixer<PyAstArgumentList> {
   public PyArgumentListFixer() {
-    super(PyArgumentList.class);
+    super(PyAstArgumentList.class);
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyArgumentList arguments) throws IncorrectOperationException {
-    final PsiElement rBrace = PyPsiUtils.getChildByFilter(arguments, PyTokenTypes.CLOSE_BRACES, 0);
-    if (arguments.getParent() instanceof PyClass || arguments.getParent() instanceof PyDecorator) {
-      final PsiElement lBrace = PyPsiUtils.getChildByFilter(arguments, PyTokenTypes.OPEN_BRACES, 0);
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyAstArgumentList arguments) throws IncorrectOperationException {
+    final PsiElement rBrace = PyPsiUtilsCore.getChildByFilter(arguments, PyTokenTypes.CLOSE_BRACES, 0);
+    if (arguments.getParent() instanceof PyAstClass || arguments.getParent() instanceof PyAstDecorator) {
+      final PsiElement lBrace = PyPsiUtilsCore.getChildByFilter(arguments, PyTokenTypes.OPEN_BRACES, 0);
       if (lBrace != null && rBrace == null) {
         final Document document = editor.getDocument();
         document.insertString(arguments.getTextRange().getEndOffset(), ")");
