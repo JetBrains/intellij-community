@@ -40,8 +40,10 @@ import com.intellij.testFramework.replaceService
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
+import com.intellij.toolWindow.ToolWindowProjectSelectorTabs
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
@@ -49,6 +51,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.util.function.Supplier
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 private const val ID = "FrameGuestPresentationTestToolWindow"
@@ -470,6 +473,33 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  fun `the project selector stays when the content of the frame owner is split`() = onEdt {
+    val managers = createManagers()
+    val own = managers.owner.registerToolWindow(task(), buttonManager(managers.owner)).toolWindow
+    addContent(own)
+    val splitContent = addContent(own)
+    managers.owner.showToolWindow(ID)
+    managers.register(first)
+    val decorator = own.decorator!!
+    assertThat(selectorIn(decorator)).describedAs("the frame owner and a frame guest have an entry").isNotNull()
+
+    decorator.splitWithContent(splitContent, SwingConstants.RIGHT, -1)
+
+    assertThat(decorator.mode.isSplit).isTrue()
+    assertThat(selectorIn(decorator)).describedAs("the user can still select the frame guest").isNotNull()
+
+    managers.owner.presentation.select(ID, first)
+    assertThat(selectorIn(decorator)).isNotNull()
+
+    managers.owner.presentation.select(ID, owner)
+    assertThat(decorator.mode.isSplit).isTrue()
+    assertThat(selectorIn(decorator)).isNotNull()
+
+    managers.of(first).doUnregisterToolWindow(ID)
+    assertThat(selectorIn(decorator)).describedAs("one project needs no selector").isNull()
+  }
+
+  @Test
   fun `the presenting tool window has the border around the project selector and the shown tool window`() = onEdt {
     val managers = createManagers()
     val firstToolWindow = managers.register(first)
@@ -864,6 +894,11 @@ internal class FrameGuestToolWindowPresentationTest {
       }),
       disposable,
     )
+  }
+
+  /** The tabs of the project selector in the hierarchy of [decorator], or `null` when the decorator shows no selector. */
+  private fun selectorIn(decorator: InternalDecoratorImpl): ToolWindowProjectSelectorTabs? {
+    return UIUtil.findComponentOfType(decorator, ToolWindowProjectSelectorTabs::class.java)
   }
 
   private fun addContent(toolWindow: ToolWindow): Content {

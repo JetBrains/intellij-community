@@ -287,7 +287,8 @@ class InternalDecoratorImpl internal constructor(
   private var isWindowHovered = false
   private var divider: JPanel? = null
   private val dividerAndHeader = JPanel(BorderLayout())
-  private val headerPanel: JComponent
+  /** The header and the notification below it. `null` until the decorator has its header. */
+  private var headerPanel: JComponent? = null
 
   /** The root decorator of the tool window of a frame guest that this decorator shows in place of its own header and content. */
   private var presentedDecorator: InternalDecoratorImpl? = null
@@ -319,7 +320,8 @@ class InternalDecoratorImpl internal constructor(
     enableEvents(AWTEvent.COMPONENT_EVENT_MASK)
     installFocusTraversalPolicy(this, LayoutFocusTraversalPolicy())
     dividerAndHeader.isOpaque = false
-    headerPanel = JBUI.Panels.simplePanel(header).addToBottom(notificationHeader)
+    val headerPanel = JBUI.Panels.simplePanel(header).addToBottom(notificationHeader)
+    this.headerPanel = headerPanel
     dividerAndHeader.add(headerPanel, BorderLayout.SOUTH)
     if (SystemInfoRt.isMac) {
       background = JBColor(Gray._200, Gray._90)
@@ -374,7 +376,6 @@ class InternalDecoratorImpl internal constructor(
     // the holder of the old decorator leaves this decorator, but it keeps its child
     presentedDecorator?.let { it.parent?.remove(it) }
     presentedDecorator = decorator
-    headerPanel.isVisible = decorator == null
     doUpdateMode(mode)
     applyWindowInfo(toolWindow.windowInfo)
     revalidate()
@@ -384,6 +385,7 @@ class InternalDecoratorImpl internal constructor(
   /**
    * Puts [selector] above the header: the component that selects the project whose tool window this decorator shows.
    * The selector is inside the border or the island of this decorator, also above a presented decorator, see [present].
+   * When the content of this decorator is split, each cell has its header, and the selector is above the cells.
    */
   internal fun setProjectSelector(selector: JComponent?) {
     if (projectSelector === selector) {
@@ -394,6 +396,17 @@ class InternalDecoratorImpl internal constructor(
     if (selector != null) {
       dividerAndHeader.add(selector, BorderLayout.CENTER)
     }
+    if (mode.isSplit && presentedDecorator == null) {
+      // the split content shows only the cells, see `doUpdateMode`: the selector comes above them and leaves with no rebuild of the cells
+      if (selector != null) {
+        add(dividerAndHeader, BorderLayout.NORTH)
+      }
+      else {
+        remove(dividerAndHeader)
+      }
+      revalidate()
+      repaint()
+    }
     dividerAndHeader.revalidate()
     dividerAndHeader.repaint()
   }
@@ -403,6 +416,8 @@ class InternalDecoratorImpl internal constructor(
     removeAll()
     border = null
     val presentedDecorator = presentedDecorator
+    // the presented decorator has its header, and each cell of split content has one
+    headerPanel?.isVisible = presentedDecorator == null && !mode.isSplit
     if (presentedDecorator != null) {
       // the child has the header, and this decorator keeps the divider, the project selector, the border and the island
       layout = BorderLayout()
@@ -434,6 +449,10 @@ class InternalDecoratorImpl internal constructor(
         splitter.setSecondComponent(decorators.second)
         this.splitter = splitter
         layout = BorderLayout()
+        if (projectSelector != null) {
+          // the user selects the project also when this decorator shows split content of the frame owner
+          add(dividerAndHeader, BorderLayout.NORTH)
+        }
         add(splitter, BorderLayout.CENTER)
       }
     }
