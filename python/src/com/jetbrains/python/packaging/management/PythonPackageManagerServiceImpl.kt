@@ -4,7 +4,6 @@ package com.jetbrains.python.packaging.management
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.PythonEnvironmentKey
@@ -12,7 +11,6 @@ import com.intellij.python.sdk.backend.PythonEnvironmentWatchers
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.isDisposed
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.IncorrectOperationException
@@ -64,21 +62,23 @@ internal class PythonPackageManagerServiceImpl(
 
   /** One cached manager, and the watcher of the interpreter paths that it has while the project uses the interpreter. */
   private class CachedManager(val interpreter: PythonInterpreter, val manager: PythonPackageManager) {
+    /**
+     * The lifetime of [interpreter] when this entry was made, see [PyInterpreterLibrary.lifetime]. The registry can
+     * replace the environment behind the key later. That ends this lifetime, and a newer entry takes the next one.
+     */
+    val lifetime: Disposable? = manager.library.lifetime
+
     var watcher: Disposable? = null
 
     /** Whether [watcher] has its subscription. The key of the environment can come later, see [watchInterpreterPaths]. */
     @Volatile
     var subscribed: Boolean = false
 
-    /** Removes this entry when its SDK goes, see [removeOnSdkDisposal]. A dropped entry disposes it, so none piles up. */
+    /** Removes this entry when its [lifetime] ends, see [removeWhenLifetimeEnds]. A dropped entry disposes it, so none piles up. */
     var removal: Disposable? = null
 
-    /** Whether the manager of this entry still matches its SDK, see [PythonPackageManager.matchesSdk]. */
-    fun isCurrent(): Boolean = manager.matchesSdk()
-
-    /** The SDK of [interpreter], for the watcher and the SDK updater, which still take one. */
-    @Suppress("DEPRECATION")
-    val sdk: Sdk get() = interpreter.getSdkAPI()
+    /** Whether the manager of this entry still matches its interpreter, see [PythonPackageManager.matchesInterpreter]. */
+    fun isCurrent(): Boolean = manager.matchesInterpreter()
   }
 
   /**
@@ -110,7 +110,7 @@ internal class PythonPackageManagerServiceImpl(
           watchInterpreterPaths(key, entry)
         }
         else if (!inUse && watched) {
-          logger.info("The project does not use '${entry.sdk.name}' any more, so its paths are not watched")
+          logger.info("The project does not use ${entry.interpreter} any more, so its paths are not watched")
           entry.watcher?.let { Disposer.dispose(it) }
           entry.watcher = null
           entry.subscribed = false
@@ -121,13 +121,14 @@ internal class PythonPackageManagerServiceImpl(
 
   /** Always call under [watchersLock]. */
   private fun watchInterpreterPaths(key: PythonInterpreter, entry: CachedManager) {
-    val watcher = Disposer.newDisposable("VFS listener for ${entry.sdk.name} in scope of ${project.name}")
+    val watcher = Disposer.newDisposable("VFS listener for ${entry.interpreter} in scope of ${project.name}")
     try {
-      // Under the interpreter, so the watch goes with it. The manager outlives the interpreter, so it cannot be that parent.
-      Disposer.register(entry.sdk as? Disposable ?: entry.manager, watcher)
+      // Under the lifetime of the interpreter, so the watch goes with it. The manager outlives the interpreter, so it cannot
+      // be that parent.
+      Disposer.register(entry.lifetime ?: entry.manager, watcher)
     }
     catch (e: IncorrectOperationException) {
-      logger.info("The interpreter '${entry.sdk.name}' is gone, dropping its manager", e)
+      logger.info("The interpreter ${entry.interpreter} is gone, dropping its manager", e)
       cache.remove(key, entry)
       return
     }
@@ -136,8 +137,8 @@ internal class PythonPackageManagerServiceImpl(
     // WSL or Docker environment needs its machine resolved, as the facts that the listener reads are stored under that
     // key, so the watch starts when the key is known. A watcher that goes before that watches nothing.
     scope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-      // An SDK that names no binary has no paths to watch.
-      val environment = PythonEnvironmentKey.of(entry.sdk) ?: return@launch
+      // An interpreter on an Eel machine that is not available has no paths to watch.
+      val environment = PythonEnvironmentKey.of(entry.interpreter) ?: return@launch
       watchersLock.withLock {
         if (entry.watcher !== watcher) return@launch
         PythonEnvironmentWatchers.getInstance().watch(environment, watcher) {
@@ -160,7 +161,7 @@ internal class PythonPackageManagerServiceImpl(
    * In practice the first call happens during project/SDK setup on a background thread,
    * so subsequent EDT callers always get a cached instance.
    *
-   * A cached manager that no longer [PythonPackageManager.matchesSdk] is replaced. Its watcher and the manager are
+   * A cached manager that no longer [PythonPackageManager.matchesInterpreter] is replaced. Its watcher and the manager are
    * disposed, and a new manager is built. The check runs on every call and never inside the build.
    *
    * The interpreter paths are watched only while a module of the project uses [interpreter]; see [syncWatchers].
@@ -176,7 +177,7 @@ internal class PythonPackageManagerServiceImpl(
         if (cached != null && cached.isCurrent()) return@compute cached
         newEntry = true
         if (cached != null) dropEntry(cached)
-        CachedManager(interpreter, createManager(project, interpreter)).also(::removeOnSdkDisposal)
+        CachedManager(interpreter, createManager(project, interpreter)).also(::removeWhenLifetimeEnds)
       }!!
     }
     // Only a new entry needs one: an entry that is already cached gets its watcher from the next structure that moves
@@ -196,9 +197,9 @@ internal class PythonPackageManagerServiceImpl(
     }
   }
 
-  /** Always call under [watchersLock]. Disposes the watcher of [entry], whose parent is the SDK, and then its manager. */
+  /** Always call under [watchersLock]. Disposes the watcher of [entry], whose parent is its lifetime, and then its manager. */
   private fun dropEntry(entry: CachedManager) {
-    logger.info("The manager of '${entry.sdk.name}' is not the current one, so it is rebuilt")
+    logger.info("The manager of ${entry.interpreter} is not the current one, so it is rebuilt")
     entry.watcher?.let { Disposer.dispose(it) }
     entry.watcher = null
     entry.subscribed = false
@@ -208,19 +209,19 @@ internal class PythonPackageManagerServiceImpl(
   }
 
   /**
-   * Removes [entry] when its SDK goes. It removes only [entry], so the disposal of an old SDK keeps the entry of a newer
-   * SDK of the same interpreter.
+   * Removes [entry] when its lifetime ends. It removes only [entry], so the end of an old lifetime keeps the entry of a
+   * newer environment of the same interpreter.
    */
-  private fun removeOnSdkDisposal(entry: CachedManager) {
-    val sdk = entry.sdk as? Disposable ?: return
+  private fun removeWhenLifetimeEnds(entry: CachedManager) {
+    val lifetime = entry.lifetime ?: return
     val localCache = cache
     val removal = Disposable { localCache.remove(entry.interpreter, entry) }
     try {
-      Disposer.register(sdk, removal)
+      Disposer.register(lifetime, removal)
     }
     catch (e: IncorrectOperationException) {
       Disposer.dispose(entry.manager)
-      throw AlreadyDisposedException("Requesting a package manager for an already disposed SDK $sdk, ${e.localizedMessage}")
+      throw AlreadyDisposedException("Requesting a package manager for the interpreter ${entry.interpreter}, which is gone, ${e.localizedMessage}")
     }
     entry.removal = removal
   }
@@ -234,8 +235,7 @@ internal class PythonPackageManagerServiceImpl(
       throw AlreadyDisposedException("Requesting a package manager for an already disposed Project $project, ${e.localizedMessage}")
     }
     // I don't think it should be here
-    @Suppress("DEPRECATION")
-    PythonRequirementTxtSdkUtils.migrateRequirementsTxtPathFromModuleToSdk(project, interpreter.getSdkAPI())
+    PythonRequirementTxtSdkUtils.migrateRequirementsTxtPathFromModule(manager.library)
     return manager
   }
 
@@ -243,9 +243,9 @@ internal class PythonPackageManagerServiceImpl(
   @TestOnly
   internal fun interpreterPathsWatcher(interpreter: PythonInterpreter): Disposable? = cache[interpreter]?.watcher
 
-  /** The disposable that removes the entry of [interpreter] when its SDK goes, see [removeOnSdkDisposal], or `null`. */
+  /** The disposable that removes the entry of [interpreter] when its lifetime ends, see [removeWhenLifetimeEnds], or `null`. */
   @TestOnly
-  internal fun sdkRemoval(interpreter: PythonInterpreter): Disposable? = cache[interpreter]?.removal
+  internal fun lifetimeRemoval(interpreter: PythonInterpreter): Disposable? = cache[interpreter]?.removal
 
   /** Whether the paths of [interpreter] are watched: its watcher has its subscription. */
   @TestOnly

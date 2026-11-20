@@ -2,8 +2,6 @@
 package com.jetbrains.python.packaging.requirementsTxt
 
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.associatedModuleDir
-import com.intellij.python.sdk.backend.requirementsPath
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
@@ -18,12 +16,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.toNioPathOrNull
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.PyInterpreterLibrary
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.associatedModuleNioPath
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.pySdkAdditionalData
@@ -48,16 +44,13 @@ object PythonRequirementTxtSdkUtils {
     return VirtualFileManager.getInstance().findFileByNioPath(requirementsPath)
   }
 
-  /** [resolvePersistedRequirementsFile] for [interpreter]. */
-  fun resolvePersistedRequirementsFile(interpreter: PythonInterpreter): VirtualFile? {
-    val requirementsPath = interpreter.requirementsPath ?: return null
+  /**
+   * The requirements file stored for [library], see [PyInterpreterLibrary.requirementsPath]. `null` when no file is
+   * stored, or when the stored file does not exist.
+   */
+  fun resolvePersistedRequirementsFile(library: PyInterpreterLibrary): VirtualFile? {
+    val requirementsPath = library.requirementsPath ?: return null
     return VirtualFileManager.getInstance().findFileByNioPath(requirementsPath)
-  }
-
-  /** [saveRequirementsTxtPath] for [interpreter]. It writes to the SDK additional data, so it reads the SDK. */
-  fun saveRequirementsTxtPath(project: Project, interpreter: PythonInterpreter, path: Path?) {
-    @Suppress("DEPRECATION")
-    saveRequirementsTxtPath(project, interpreter.getSdkAPI(), path)
   }
 
   @JvmStatic
@@ -88,22 +81,27 @@ object PythonRequirementTxtSdkUtils {
   }
 
   @RequiresWriteLock
-  fun createRequirementsTxtPath(module: Module, interpreter: PythonInterpreter): VirtualFile? {
-    val basePath = interpreter.associatedModuleDir ?: module.baseDir ?: return null
+  fun createRequirementsTxtPath(module: Module, library: PyInterpreterLibrary): VirtualFile? {
+    val basePath = VirtualFileManager.getInstance().findFileByNioPath(library.interpreter.ownerDir) ?: module.baseDir ?: return null
     val requirementsFile = basePath.findOrCreateFile(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.toString())
 
     //Need to pass test, because TempFS doesn't support getNioPath()
     val requirementFilePath = requirementsFile.toNioPathOrNull() ?: Path.of(requirementsFile.path)
-    saveRequirementsTxtPath(module.project, interpreter, requirementFilePath)
+    // A write action cannot suspend, so the store writes asynchronously.
+    PyPackageCoroutine.launch(module.project) { library.writeRequirementsPath(requirementFilePath) }
 
     return requirementsFile
   }
 
 
-  fun migrateRequirementsTxtPathFromModuleToSdk(project: Project, sdk: Sdk) {
-    val newPath = sdk.pySdkAdditionalData.requirementsFile
-    if (newPath != null)
+  /**
+   * Moves the requirements file of the module setting of an older build to [library], when [library] stores none. The
+   * write runs asynchronously.
+   */
+  fun migrateRequirementsTxtPathFromModule(library: PyInterpreterLibrary) {
+    if (library.requirementsPath != null)
       return
+    val project = library.project
 
     val originalPath = project.modules.firstNotNullOfOrNull {
       getRequirementsTxtFromModule(it)
@@ -117,7 +115,7 @@ object PythonRequirementTxtSdkUtils {
       return
     }
 
-    saveRequirementsTxtPath(project, sdk, path)
+    PyPackageCoroutine.launch(project) { library.writeRequirementsPath(path) }
   }
 
   /**

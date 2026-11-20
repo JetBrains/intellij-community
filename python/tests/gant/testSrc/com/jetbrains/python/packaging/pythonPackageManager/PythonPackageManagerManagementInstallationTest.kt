@@ -65,7 +65,7 @@ open class PythonPackageManagerManagementInstallationTask(private val pkgToInsta
 
     val sdk = existingSdk
     val manager = PythonPackageManager.forPythonInterpreter(myFixture.project, sdk.pythonInterpreterResult().orThrow())
-    val managementInstaller = PipManagementInstaller(sdk, manager)
+    val managementInstaller = PipManagementInstaller(manager)
 
     runBlocking {
       manager.reloadPackages()

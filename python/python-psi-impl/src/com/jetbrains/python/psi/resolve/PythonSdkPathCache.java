@@ -13,7 +13,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.PythonPluginDisposable;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.common.PythonPackageManagementListener;
+import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,9 +69,12 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
         }
       }
     });
-    connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, eventSdk -> {
-      if (eventSdk == sdk) {
-        clearCache();
+    connection.subscribe(PythonPackageManager.Companion.getPACKAGE_MANAGEMENT_TOPIC(), new PythonPackageManagementListener() {
+      @Override
+      public void packagesChanged(@NotNull PythonInterpreter changed) {
+        if (changed.equals(myInterpreter)) {
+          clearCache();
+        }
       }
     });
     sdk.getRootProvider().addRootSetChangedListener(wrapper -> onRootsChanged(), this);

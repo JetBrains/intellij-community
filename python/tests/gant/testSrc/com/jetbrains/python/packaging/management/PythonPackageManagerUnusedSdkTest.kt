@@ -193,7 +193,7 @@ internal class PythonPackageManagerUnusedSdkTest {
     service.forPythonInterpreter(project, interpreter)
 
     val removalGone = AtomicBoolean()
-    Disposer.register(service.impl().sdkRemoval(interpreter)!!, Disposable { removalGone.set(true) })
+    Disposer.register(service.impl().lifetimeRemoval(interpreter)!!, Disposable { removalGone.set(true) })
     Disposer.dispose(service.impl())
 
     assertThat(removalGone.get()).describedAs("The removal outlived the project that owns it").isTrue()

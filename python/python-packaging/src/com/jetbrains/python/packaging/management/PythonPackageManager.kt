@@ -5,7 +5,6 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.isModalAwareContext
@@ -14,7 +13,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -29,15 +27,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.PyInterpreterLibrary
 import com.intellij.python.sdk.backend.PythonEnvironmentKey
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.python.sdk.backend.readOnlyErrorMessage
 import com.intellij.python.sdk.backend.refreshPaths
-import com.intellij.python.sdk.backend.requirementsPath
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -47,7 +44,6 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.InstalledPackage
-import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PythonInstalledPackagesCache
@@ -64,8 +60,6 @@ import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.requirements.PyDependenciesFileProvider
-import com.jetbrains.python.sdk.associatedModuleDir
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -106,10 +100,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   val interpreter: PythonInterpreter,
 ) : Disposable {
-  /** The SDK of [interpreter], for the subclasses that still call an SDK API. */
-  @Suppress("DEPRECATION")
-  protected val sdk: Sdk get() = interpreter.getSdkAPI()
-
+  /** [interpreter] as [project] uses it. */
+  @get:ApiStatus.Internal
+  val library: PyInterpreterLibrary = PyInterpreterLibrary(project, interpreter)
   /**
    * Whether this manager has an explicit list of top-level dependencies (e.g. from pyproject.toml).
    * When true, only packages from [listDeclaredPackagesCached] are treated as "declared" in the UI,
@@ -120,11 +113,12 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   open val installedPackagesIncludeTransitive: Boolean = false
 
   /**
-   * Whether this manager is still the one for its [sdk]. [PythonPackageManager.forPythonInterpreter] replaces a manager that says no.
-   * The default is yes. A manager whose class the stored data of the SDK selects answers from that data.
+   * Whether this manager is still the one for its [interpreter]. [PythonPackageManager.forPythonInterpreter] replaces a
+   * manager that says no. The default is yes. A manager whose class the stored dependency file selects answers from that
+   * file, see [PyInterpreterLibrary.requirementsPath].
    */
   @ApiStatus.Internal
-  open fun matchesSdk(): Boolean = true
+  open fun matchesInterpreter(): Boolean = true
 
   @get:ApiStatus.Internal
   protected abstract val dependenciesFilesRelativePaths: List<Path>
@@ -133,7 +127,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    * Lifetime of every coroutine this manager starts. A child of the packaging scope of the project.
    */
   @ApiStatus.Internal
-  protected val managerScope: CoroutineScope = PyPackageCoroutine.getScope(project).childScope("PythonPackageManager for ${sdk.name}")
+  protected val managerScope: CoroutineScope = PyPackageCoroutine.getScope(project).childScope("PythonPackageManager for $interpreter")
 
   private val isInited = AtomicBoolean(false)
 
@@ -330,7 +324,6 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       }
 
       project.messageBus.syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(interpreter)
-      ApplicationManager.getApplication().messageBus.syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
 
       outdatedPending.set(fromCache)
       if (!fromCache) startOutdatedPackagesLoad()
@@ -366,7 +359,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       is NativePythonInterpreter -> Unit
       is TargetPythonInterpreter -> return null
     }
-    val environment = PythonEnvironmentKey.of(sdk) ?: return null
+    val environment = PythonEnvironmentKey.of(interpreter) ?: return null
     val sysPath = PythonInterpreterDetails.getInstance(project).facts(interpreter).sysPath
     val fingerprint = withContext(Dispatchers.IO) { PythonInstalledPackagesCache.fingerprintOf(sysPath) } ?: return null
     return environment to fingerprint
@@ -488,7 +481,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   private suspend fun loadMetadata(packages: List<PythonPackage>): Map<PyPackageName, PythonPackageMetadata> {
     if (packages.isEmpty()) return emptyMap()
 
-    return sdk.loadInstalledPackagesMetadata().onFailure {
+    return interpreter.loadInstalledPackagesMetadata().onFailure {
       thisLogger().warn("Failed to load installed package metadata $it")
     }.getOrNull() ?: emptyMap()
   }
@@ -596,13 +589,13 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   suspend fun getRootDependenciesFile(): PyDependenciesFile? {
-    val requirementsPath = sdk.pySdkAdditionalData.requirementsPath
+    val requirementsPath = library.requirementsPath
     val virtualFile = if (requirementsPath != null) {
       // An explicitly stored path wins over (and does not fall back to) the manager-specific defaults.
       VirtualFileManager.getInstance().findFileByNioPath(requirementsPath)
     }
     else {
-      sdk.associatedModuleDir?.let { baseDir ->
+      VirtualFileManager.getInstance().findFileByNioPath(interpreter.ownerDir)?.let { baseDir ->
         dependenciesFilesRelativePaths.firstNotNullOfOrNull { path ->
           baseDir.findFileByRelativePath(FileUtil.toSystemIndependentName(path.toString()))
         }
@@ -657,13 +650,13 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       throw t
     }
     catch (t: ExecutionException) {
-      thisLogger().warn("Failed to initialize PythonPackageManager for $sdk", t)
+      thisLogger().warn("Failed to initialize PythonPackageManager for $interpreter", t)
     }
   }
 
   /** Loads the declared packages into their snapshot, see [listDeclaredPackagesSnapshot]. */
   private suspend fun loadDeclaredPackages() {
-    dependencyCache.awaitLatest()?.onFailure { thisLogger().warn("Failed to read the declared packages of $sdk: $it") }
+    dependencyCache.awaitLatest()?.onFailure { thisLogger().warn("Failed to read the declared packages of $interpreter: $it") }
   }
 
   /** Starts a check of the outdated packages when a dependency file changed one of its [outdatedPackagesInputs]. */
@@ -732,7 +725,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     /** The names that a dependency file of this manager can have: the [dependenciesFilesRelativePaths] and the stored requirements path. */
     private fun dependencyFileNames(): Set<String> = buildSet {
       dependenciesFilesRelativePaths.mapTo(this) { it.fileName.toString() }
-      interpreter.requirementsPath?.let { add(it.fileName.toString()) }
+      library.requirementsPath?.let { add(it.fileName.toString()) }
     }
 
     /** The name of the file that [this] adds at a path, or `null` when [this] adds no file. */

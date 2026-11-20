@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.pipenv
 
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.community.execService.EnvVarVal
@@ -9,9 +8,9 @@ import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.intellij.python.community.impl.pipenv.PyPipenvBundle
 import com.intellij.python.pytools.runTool
-import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.toFileSystem
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
@@ -21,7 +20,6 @@ import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.toFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toFileSystem
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -69,36 +67,26 @@ suspend fun <T> runPipEnv(dirPath: EelOrJustPath, vararg args: String, transform
   )
 
 
-/** [runPipEnvWithSdk] in the environment of [interpreter]. */
+/**
+ * Runs `pipenv [args]` in the environment of [interpreter], in the directory of the PyProject that owns it. The
+ * environment is the active one, see `VIRTUAL_ENV`.
+ */
 @Internal
-suspend fun runPipEnvWithInterpreter(interpreter: PythonInterpreter, vararg args: String): PyResult<String> {
-  // Pipenv reads the working directory and the target from the SDK data, which has no interpreter API yet.
-  @Suppress("DEPRECATION")
-  return runPipEnvWithSdk(interpreter.getSdkAPI(), *args)
-}
-
-internal suspend fun runPipEnvWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
-  val data = sdk.pySdkAdditionalData
-  val workingDirectory = data.workingDirectory.takeIf { data.hasValidWorkingDirectory() }
-                         ?: return PyResult.localizedError(PyPipenvBundle.message("python.sdk.project.working.directory.not.found"))
-  val sdkHomePath = sdk.homePath
-                    ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", sdk.name))
-
-  return runPipEnvWithSdk(
-    fileSystem = sdk.toFileSystem(),
-    workingDirectory = workingDirectory,
-    sdkHomePath = sdkHomePath,
+suspend fun runPipEnvWithInterpreter(interpreter: PythonInterpreter, vararg args: String): PyResult<String> =
+  runPipEnvInEnv(
+    fileSystem = interpreter.toFileSystem(),
+    workingDirectory = interpreter.ownerDir,
+    pythonBinary = interpreter.binaryPathString,
     args = args,
   )
-}
 
-private suspend fun <P : PathHolder> runPipEnvWithSdk(
+private suspend fun <P : PathHolder> runPipEnvInEnv(
   fileSystem: FileSystem<P>,
   workingDirectory: Path,
-  sdkHomePath: String,
+  pythonBinary: String,
   vararg args: String,
 ): PyResult<String> {
-  val pythonPath = fileSystem.parsePath(sdkHomePath).getOr { return it }
+  val pythonPath = fileSystem.parsePath(pythonBinary).getOr { return it }
   val pythonHomePath = fileSystem.resolvePythonHome(pythonPath)
   return runPipEnv(
     fileSystem = fileSystem,

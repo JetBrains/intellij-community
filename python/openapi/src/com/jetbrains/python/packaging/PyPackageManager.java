@@ -4,7 +4,6 @@ package com.jetbrains.python.packaging;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,9 +15,6 @@ import java.util.List;
  */
 @Deprecated(forRemoval = true)
 public abstract class PyPackageManager implements Disposable {
-
-  @Topic.AppLevel
-  public static final Topic<Listener> PACKAGE_MANAGER_TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**
    * @param sdk must not be disposed if {@link Disposable}
@@ -59,10 +55,6 @@ public abstract class PyPackageManager implements Disposable {
   public abstract @Nullable List<PyPackage> getPackages();
 
   public abstract @NotNull List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException;
-
-  public interface Listener {
-    void packagesRefreshed(@NotNull Sdk sdk);
-  }
 
   @Override
   public void dispose() {

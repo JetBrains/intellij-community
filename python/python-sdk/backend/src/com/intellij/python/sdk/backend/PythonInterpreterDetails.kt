@@ -4,6 +4,7 @@ package com.intellij.python.sdk.backend
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * The facts of the interpreters of this project, see [PythonInterpreterFacts]: what the SDK updater measures and what
@@ -130,6 +132,43 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
   /** Writes [paths] as the paths that the user excluded from [interpreter], and keeps its other facts, see [writeFacts]. */
   suspend fun writeExcludedPaths(interpreter: PythonInterpreter, paths: Set<Path>): Boolean =
     writeFacts(interpreter, facts(interpreter).copy(excludedPaths = paths))
+
+  /**
+   * The dependency file stored for [interpreter], such as its `requirements.txt` or its `pyproject.toml`, or `null`
+   * when none is stored. The default of the package manager applies then. The interpreter library flow keeps the file
+   * in the record, relative to the owner directory. The legacy flow keeps it in the SDK data. Read it with
+   * [PyInterpreterLibrary.requirementsPath].
+   */
+  internal fun requirementsPath(interpreter: PythonInterpreter): Path? =
+    if (isInterpreterLibraryFlowEnabled()) {
+      PythonInterpreterRecords.getInstance(project).recordOf(interpreter.key)?.requirementsFile?.let { interpreter.ownerDir.resolve(it) }
+    }
+    else {
+      (interpreter.sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.requirementsPath
+    }
+
+  /**
+   * Stores [path] as the dependency file of [interpreter], see [requirementsPath]. `null` removes the stored file. A
+   * relative [path] is relative to the owner directory of [interpreter].
+   */
+  internal suspend fun writeRequirementsPath(interpreter: PythonInterpreter, path: Path?) {
+    if (isInterpreterLibraryFlowEnabled()) {
+      val records = PythonInterpreterRecords.getInstance(project)
+      val record = records.recordOf(interpreter.key) ?: return
+      val file = path?.let { requirementsFileOf(interpreter.ownerDir, it) }
+      if (record.requirementsFile == file) return
+      records.put(interpreter.key, record.withRequirementsFile(file))
+      // The SDK keeps a copy of the record for the code that still reads the dependency file from an SDK, see [applyRecord].
+      commitAsync(interpreter.sdk) { modificator ->
+        (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.requirementsFile = file
+      }
+    }
+    else {
+      commitAsync(interpreter.sdk) { modificator ->
+        (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.requirementsPath = path?.let { interpreter.ownerDir.resolve(it) }
+      }
+    }
+  }
 
   /** The facts that the record of [interpreter] saves. No record gives no fact. */
   private fun recordFacts(interpreter: PythonInterpreter): PythonInterpreterFacts {
@@ -303,6 +342,16 @@ private fun commit(sdk: Sdk, change: (SdkModificator) -> Unit) {
   PythonInterpreterSdks.sdkChangedInOpenProjects(sdk)
 }
 
+/** [commit] for a caller that can suspend: the write action does not block a thread that holds a read lock. */
+private suspend fun commitAsync(sdk: Sdk, change: (SdkModificator) -> Unit) {
+  edtWriteAction {
+    val modificator = sdk.sdkModificator
+    change(modificator)
+    modificator.commitChanges()
+  }
+  PythonInterpreterSdks.sdkChangedInOpenProjects(sdk)
+}
+
 /** These facts, with the version of [current] when they have none: a probe that could not answer. */
 private fun PythonInterpreterFacts.withVersionOf(current: PythonInterpreterFacts): PythonInterpreterFacts =
   if (version == null) copy(version = current.version) else this
@@ -322,6 +371,33 @@ private fun PythonInterpreterRecords.StoredInterpreter.copyWith(facts: PythonInt
     version = facts.version
     sysPath += facts.sysPath.map { it.toString() }.distinct()
   }
+}
+
+/** A copy of this record with [requirementsFile] as its dependency file. The record keeps all else. */
+private fun PythonInterpreterRecords.StoredInterpreter.withRequirementsFile(requirementsFile: String?): PythonInterpreterRecords.StoredInterpreter {
+  val source = this
+  return PythonInterpreterRecords.StoredInterpreter().apply {
+    ownerDir = source.ownerDir
+    ref = source.ref
+    uuid = source.uuid
+    this.requirementsFile = requirementsFile
+    addedPaths += source.addedPaths
+    excludedPaths += source.excludedPaths
+    excludedFolders += source.excludedFolders
+    pathMappings += source.pathMappings
+    version = source.version
+    sysPath += source.sysPath
+  }
+}
+
+/**
+ * The form of the dependency file [path] that a record stores: relative to [ownerDir], with `/` separators, when it is
+ * inside [ownerDir], else absolute. A relative [path] is relative to [ownerDir].
+ */
+private fun requirementsFileOf(ownerDir: Path, path: Path): String {
+  val absolute = ownerDir.resolve(path).normalize()
+  val base = ownerDir.normalize()
+  return if (absolute.startsWith(base)) base.relativize(absolute).invariantSeparatorsPathString else absolute.toString()
 }
 
 private fun PythonInterpreterRecords.StoredInterpreter.sameAsRecord(other: PythonInterpreterRecords.StoredInterpreter): Boolean =

@@ -3,15 +3,14 @@ package com.jetbrains.python.hatch.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.hatch.HatchService
+import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.impl.sdk.HatchSdkFlavorData
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.toFileSystem
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pySdkAdditionalData
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -22,10 +21,9 @@ import org.jetbrains.annotations.ApiStatus
 val Sdk.isHatch: Boolean
   get() = hatchFlavorData != null
 
-/** Whether this interpreter is a Hatch environment. */
+/** Whether Hatch manages the environment of this interpreter, see [com.intellij.python.sdk.common.PyInterpreterRef.manager]. */
 internal val PythonInterpreter.isHatch: Boolean
-  @Suppress("DEPRECATION") // The Hatch flavor data lives in the SDK additional data.
-  get() = getSdkAPI().isHatch
+  get() = ref.manager == HatchPyTool.getInstance().fusId
 
 private val Sdk.hatchFlavorData: HatchSdkFlavorData?
   get() {
@@ -36,24 +34,14 @@ private val Sdk.hatchFlavorData: HatchSdkFlavorData?
     return pySdkAdditionalData.flavorAndData.data as? HatchSdkFlavorData
   }
 
-/** The Hatch service of this interpreter, started lazily in [scope], or `null` when it is no Hatch environment. */
-internal fun PythonInterpreter.createHatchServiceAsync(scope: CoroutineScope): Deferred<PyResult<HatchService<*>>>? {
-  // The flavor data and the working directory live in the SDK additional data.
-  @Suppress("DEPRECATION")
-  val sdk = getSdkAPI()
-  val data = sdk.pySdkAdditionalData
-  val flavorData = sdk.hatchFlavorData ?: return null
-  val workingDirectory = data.workingDirectory.takeIf { data.hasValidWorkingDirectory() } ?: return null
-
-  return when (data) {
-    is HatchSdkAdditionalData, is PyTargetAwareAdditionalData -> {
-      scope.async(start = CoroutineStart.LAZY) {
-        workingDirectory.getHatchService(
-          fileSystem = sdk.toFileSystem(),
-          hatchEnvironmentName = flavorData.hatchEnvironmentName,
-        )
-      }
-    }
-    else -> null
+/**
+ * The Hatch service of this interpreter, started lazily in [scope]. Hatch runs in the directory of the PyProject that
+ * owns the interpreter, for the Hatch environment that its ref names.
+ */
+internal fun PythonInterpreter.createHatchServiceAsync(scope: CoroutineScope): Deferred<PyResult<HatchService<*>>> =
+  scope.async(start = CoroutineStart.LAZY) {
+    ownerDir.getHatchService(
+      fileSystem = toFileSystem(),
+      hatchEnvironmentName = ref.envRef.value,
+    )
   }
-}

@@ -3,13 +3,12 @@ package com.jetbrains.python.packaging.pip
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPIPackageUtil
@@ -21,7 +20,6 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.utils.PyProxyUtils
-import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.executeHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,12 +29,12 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PipPackageManagerEngine(
   private val project: Project,
-  private val sdk: Sdk,
+  private val interpreter: PythonInterpreter,
 ) : PythonPackageManagerEngine {
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    val manager = PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterResultAsync().getOr { return it })
+    val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
 
-    PipManagementInstaller(sdk, manager).installManagementIfNeeded().getOr { return it }
+    PipManagementInstaller(manager).installManagementIfNeeded().getOr { return it }
 
     val argumentsGroups = partitionPackagesBySource(installRequest, options)
     return performInstall(argumentsGroups)
@@ -55,7 +53,7 @@ class PipPackageManagerEngine(
   suspend fun syncProject(): PyResult<Unit> {
     return runPackagingTool(
       operation = "install",
-      arguments = listOf(sdk.associatedModulePath ?: ".")
+      arguments = listOf(interpreter.ownerDir.toString())
     ).mapSuccess { }
   }
 
@@ -94,11 +92,7 @@ class PipPackageManagerEngine(
     parameters.add(arguments)
 
     thisLogger().debug("Running python packaging tool. Operation: $operation")
-    ExecService().executeHelper(
-      sdk.pythonInterpreterResultAsync().getOr { return@withContext it },
-      PyHelper(PACKAGING_TOOL_NAME),
-      parameters,
-    )
+    ExecService().executeHelper(interpreter, PyHelper(PACKAGING_TOOL_NAME), parameters)
   }
 
   private suspend fun runPackagingTool(operation: String, arguments: List<String>): PyResult<String> =

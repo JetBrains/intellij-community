@@ -25,7 +25,8 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
-import com.intellij.python.pyproject.model.evolution.getInterpreter
+import com.intellij.python.pyproject.model.evolution.getInterpreterLibrary
+import com.intellij.python.sdk.backend.PyInterpreterLibrary
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.requirementsPath
@@ -45,6 +46,7 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PyRequirementsSyncService
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
@@ -120,8 +122,8 @@ internal class PyRequirementsSyncServiceImpl : PyRequirementsSyncService {
 internal suspend fun syncWithImports(module: Module) {
   val project = module.project
   val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Sync Python requirements")
-  val interpreter = module.asPyProject()?.getInterpreter()
-  if (interpreter == null) {
+  val library = module.asPyProject()?.getInterpreterLibrary()
+  if (library == null) {
     val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
       PySdkPopupFactory.createAndShow(module)
     }
@@ -138,13 +140,13 @@ internal suspend fun syncWithImports(module: Module) {
   val settings = PyPackageRequirementsSettings.getInstance(module)
 
   if (!ApplicationManager.getApplication().isUnitTestMode) {
-    val initialPath = readAction { resolveSyncDialogInitialPath(module, interpreter) }
-    val proceed = withContext(Dispatchers.EDT) { showSyncSettingsDialog(module, settings, interpreter, initialPath) }
+    val initialPath = readAction { resolveSyncDialogInitialPath(module, library) }
+    val proceed = withContext(Dispatchers.EDT) { showSyncSettingsDialog(module, settings, library, initialPath) }
     if (!proceed) return
   }
 
   val requirementsFile = PyPackageUtil.findRequirementsTxt(module) ?: edtWriteAction {
-    PythonRequirementTxtSdkUtils.createRequirementsTxtPath(module, interpreter)
+    PythonRequirementTxtSdkUtils.createRequirementsTxtPath(module, library)
   }
 
   if (requirementsFile == null) {
@@ -159,7 +161,7 @@ internal suspend fun syncWithImports(module: Module) {
   }
 
   val matchResult = withBackgroundProgress(project, PyBundle.message("python.requirements.analyzing.imports.title")) {
-    prepareRequirementsText(module, interpreter, settings)
+    prepareRequirementsText(module, library.interpreter, settings)
   }
 
   writeCommandAction(project, PyBundle.message("python.requirements.action.name")) {
@@ -247,15 +249,15 @@ private suspend fun prepareRequirementsText(
 @PyInternalExecApi
 @RequiresBackgroundThread
 @RequiresReadLock
-fun resolveSyncDialogInitialPath(module: Module, interpreter: PythonInterpreter): Path? =
-  interpreter.requirementsPath
+fun resolveSyncDialogInitialPath(module: Module, library: PyInterpreterLibrary): Path? =
+  library.requirementsPath
   ?: PyPackageUtil.findRequirementsTxt(module)?.toNioPathOrNull()
 
 @RequiresEdt
 private fun showSyncSettingsDialog(
   module: Module,
   settings: PyPackageRequirementsSettings,
-  interpreter: PythonInterpreter,
+  library: PyInterpreterLibrary,
   initialPath: Path?,
 ): Boolean {
   val initialPathString = initialPath?.toString().orEmpty()
@@ -272,9 +274,7 @@ private fun showSyncSettingsDialog(
                     // pre-filled value would clear the SDK path on the next open (PY-84976).
                     val normalized = stringPath.ifBlank { null }?.toNioPathOrNull()
                     if (normalized == initialPath) return@bindText
-                    // Goes through a modificator rather than writing to the committed data: an in-place edit leaves the
-                    // stored entity behind the bridge, which the workspace model reports as a mismatch (PY-82614).
-                    PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(project, interpreter, normalized)
+                    PyPackageCoroutine.launch(project) { library.writeRequirementsPath(normalized) }
                   })
         .align(AlignX.FILL)
         .focused()

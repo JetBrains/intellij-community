@@ -32,7 +32,7 @@ internal class PipSetDefaultRequirementsAction() : PipPackageManagerAction() {
     val project = e.project ?: return PyResult.success(Unit)
 
     val newFilePath = envFile.toNioPath()
-    PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(project, manager.interpreter, newFilePath)
+    manager.library.writeRequirementsPath(newFilePath)
     return PyResult.success(Unit)
   }
 
@@ -41,7 +41,7 @@ internal class PipSetDefaultRequirementsAction() : PipPackageManagerAction() {
     if (!e.presentation.isEnabledAndVisible)
       return
     val manager = e.getPythonPackageManager<PipPythonPackageManager>() ?: return
-    val savedFile = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(manager.interpreter)
+    val savedFile = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(manager.library)
     val currentFile = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return
 
     if (savedFile == currentFile) {

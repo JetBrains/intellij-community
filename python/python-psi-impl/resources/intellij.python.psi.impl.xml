@@ -37,6 +37,7 @@
     <module name="intellij.platform.workspace.storage"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.helpersLocator"/>
+    <module name="intellij.python.packaging"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.requirements.backend"/>

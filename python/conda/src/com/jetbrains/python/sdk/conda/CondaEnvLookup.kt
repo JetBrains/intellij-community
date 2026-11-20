@@ -25,6 +25,25 @@ fun condaIdentityOf(envRef: PyEnvRef): PyCondaEnvIdentity =
   else PyCondaEnvIdentity.NamedEnv(envRef.value)
 
 /**
+ * The identity of the conda env of [pythonBinary] that [envRef] names, on the machine of [fileSystem]. A name gives a
+ * named env. A path gives an env created with `-p` at the home of [pythonBinary], which is the base env at the root of
+ * a conda installation.
+ */
+internal suspend fun <P : PathHolder> condaIdentityOf(fileSystem: FileSystem<P>, envRef: PyEnvRef, pythonBinary: P): PyCondaEnvIdentity {
+  val home = fileSystem.resolvePythonHome(pythonBinary)
+  return if (isCondaPathEnvRef(envRef)) PyCondaEnvIdentity.UnnamedEnv(home, isBase = isCondaRoot(fileSystem, home))
+  else PyCondaEnvIdentity.NamedEnv(envRef.value, home.toStringOnRemoteMachine())
+}
+
+/**
+ * Whether [home] is the root of a conda installation, which is its base env. Only the root has `condabin` and `envs`,
+ * the same rule as `CondaEnvironment.isBase`. The base env is always unnamed in conda's list, so only an unnamed env
+ * can be it.
+ */
+private suspend fun <P : PathHolder> isCondaRoot(fileSystem: FileSystem<P>, home: P): Boolean =
+  fileSystem.directoryExists(fileSystem.resolveChild(home, "condabin")) || fileSystem.directoryExists(fileSystem.resolveChild(home, "envs"))
+
+/**
  * The Python binary of the conda env at [envRef] on the machine of [fileSystem], as conda reports it. conda finds the
  * env itself, so an env that was created a moment ago is found too. When there is no such env, the conda error is the
  * result.

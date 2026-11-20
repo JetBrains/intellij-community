@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
+import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -19,8 +20,10 @@ import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.FileSystemFactory
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toFileSystem
+import com.jetbrains.python.sdk.targetEnvConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -137,11 +140,14 @@ val PythonInterpreter.isDetectedActivatable: Boolean
 /** An interpreter on a legacy target, such as SSH or a Docker target. Its environment is not detected. */
 class TargetPythonInterpreter internal constructor(
   sdk: Sdk,
-  targetId: @NonNls String,
+  /** The id of [targetConfiguration], as the ref names it. */
+  val targetId: @NonNls String,
   env: PyEnvId,
   override val ownerDir: Path,
   /** The Python binary of this interpreter on the target. */
   val pythonBinary: PathHolder.Target,
+  /** The target that this interpreter runs on. It is the same for each project that uses the interpreter. */
+  val targetConfiguration: TargetEnvironmentConfiguration,
 ) : PythonInterpreter(sdk) {
   override val ref: PyInterpreterRef = PyInterpreterRef(PyInterpreterRef.Mode.Target(targetId), env)
 }
@@ -177,7 +183,10 @@ private fun Sdk.buildPythonInterpreter(forceRefresh: Boolean): PyResult<PythonIn
   // working directory of the module that uses it, see [projectDirOf].
   val ownerDir = projectDirOf(data) ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
   val interpreter = when (val mode = ref.mode) {
-    is PyInterpreterRef.Mode.Target -> TargetPythonInterpreter(this, mode.targetId, ref.env, ownerDir, PathHolder.Target(homePath))
+    is PyInterpreterRef.Mode.Target -> {
+      val target = targetEnvConfiguration ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
+      TargetPythonInterpreter(this, mode.targetId, ref.env, ownerDir, PathHolder.Target(homePath), target)
+    }
     PyInterpreterRef.Mode.Native -> {
       val binary = homePath.toNioPathOrNull()
                    ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
@@ -200,7 +209,11 @@ internal suspend fun Sdk.pythonInterpreterOfKey(key: PythonInterpreterKey): PyRe
   val sdk = this@pythonInterpreterOfKey
   val homePath = pathEnvRef(sdk) ?: return@withContext PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
   val interpreter = when (val mode = key.ref.mode) {
-    is PyInterpreterRef.Mode.Target -> TargetPythonInterpreter(sdk, mode.targetId, key.ref.env, key.ownerDir, PathHolder.Target(homePath))
+    is PyInterpreterRef.Mode.Target -> {
+      val target = sdk.targetEnvConfiguration
+                   ?: return@withContext PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
+      TargetPythonInterpreter(sdk, mode.targetId, key.ref.env, key.ownerDir, PathHolder.Target(homePath), target)
+    }
     PyInterpreterRef.Mode.Native -> {
       val binary = homePath.toNioPathOrNull()
                    ?: return@withContext PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
@@ -225,8 +238,15 @@ suspend fun Sdk.pythonInterpreterResultAsync(forceRefresh: Boolean = false): PyR
 }
 
 
+/**
+ * The [FileSystem] of the machine that this interpreter runs on: the Eel machine of [NativePythonInterpreter.pythonBinary],
+ * or [TargetPythonInterpreter.targetConfiguration].
+ */
 @ApiStatus.Internal
-suspend fun PythonInterpreter.toFileSystem(): FileSystem<*> = sdk.toFileSystem()
+suspend fun PythonInterpreter.toFileSystem(): FileSystem<*> = when (this) {
+  is NativePythonInterpreter -> pythonBinary.toFileSystem()
+  is TargetPythonInterpreter -> FileSystemFactory.getInstance().create(targetConfiguration)
+}
 
 /**
  * Creates the [PyRemotePathMapper] of this interpreter with the user-defined [console] mappings.

@@ -77,7 +77,7 @@ internal class HatchPackageManagerProvider : PythonPackageManagerProvider {
       return null
     }
 
-    val hatchService = interpreter.createHatchServiceAsync(PyPackageCoroutine.getScope(project)) ?: return null
+    val hatchService = interpreter.createHatchServiceAsync(PyPackageCoroutine.getScope(project))
     return HatchPackageManager(project, interpreter, hatchService)
   }
 }

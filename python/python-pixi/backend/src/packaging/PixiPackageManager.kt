@@ -445,7 +445,7 @@ internal class PixiPackageManager(project: Project, interpreter: PythonInterpret
       }
       is TargetPythonInterpreter -> readPixiCondaPackagesFromInterpreter(python)
     }.getOr { return it }
-    val metadata = sdk.loadInstalledPackagesMetadata().getOr { return it }
+    val metadata = interpreter.loadInstalledPackagesMetadata().getOr { return it }
     val resolved = if (hasLockFile()) listResolvedPackages(explicit = false).getOrNull().orEmpty() else emptyList()
     return PyResult.success(mergeInstalledPixiPackages(native, metadata, resolved))
   }

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.sdk.backend.PyInterpreterLibrary
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
@@ -140,6 +141,50 @@ internal class PythonInterpreterDetailsTest {
       assertThat(readAction { PythonLanguageLevelPusher.getEffectiveLanguageLevel(project, file) }).isEqualTo(expected)
     }
   }
+
+  @Test
+  fun `a requirements file inside the owner directory reads back from the record`(): Unit = timeoutRunBlocking {
+    withMockInterpreter { interpreter ->
+      val file = interpreter.ownerDir.resolve("deps").resolve("requirements-dev.txt")
+
+      library(interpreter).writeRequirementsPath(file)
+
+      assertThat(library(interpreter).requirementsPath).isEqualTo(file)
+    }
+  }
+
+  @Test
+  fun `a relative requirements file is relative to the owner directory`(): Unit = timeoutRunBlocking {
+    withMockInterpreter { interpreter ->
+      library(interpreter).writeRequirementsPath(Path.of("deps", "requirements.txt"))
+
+      assertThat(library(interpreter).requirementsPath).isEqualTo(interpreter.ownerDir.resolve("deps").resolve("requirements.txt"))
+    }
+  }
+
+  @Test
+  fun `a requirements file outside the owner directory keeps its absolute path`(): Unit = timeoutRunBlocking {
+    withMockInterpreter { interpreter ->
+      val file = tempDir.get().resolve("elsewhere").resolve("requirements.txt")
+
+      library(interpreter).writeRequirementsPath(file)
+
+      assertThat(library(interpreter).requirementsPath).isEqualTo(file.normalize())
+    }
+  }
+
+  @Test
+  fun `no requirements file removes the stored one`(): Unit = timeoutRunBlocking {
+    withMockInterpreter { interpreter ->
+      library(interpreter).writeRequirementsPath(interpreter.ownerDir.resolve("requirements.txt"))
+
+      library(interpreter).writeRequirementsPath(null)
+
+      assertThat(library(interpreter).requirementsPath).isNull()
+    }
+  }
+
+  private fun library(interpreter: PythonInterpreter) = PyInterpreterLibrary(projectFixture.get(), interpreter)
 
   /** Waits until the roots follow the facts. A writer does not wait for them, see [PythonInterpreterRoots.requestDerive]. */
   private suspend fun awaitRoots() = PythonInterpreterRoots.getInstance(projectFixture.get()).awaitCommittedForTests()

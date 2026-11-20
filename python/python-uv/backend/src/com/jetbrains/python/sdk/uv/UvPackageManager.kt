@@ -81,7 +81,7 @@ class UvPackageManager internal constructor(
     get() = listOf(Path.of(PY_PROJECT_TOML))
 
   /** Project mode only. A stored requirements file selects [UvPipPackageManager]. */
-  override fun matchesSdk(): Boolean = when (sdk.uvMode) {
+  override fun matchesInterpreter(): Boolean = when (library.uvMode()) {
     UvMode.Project -> true
     is UvMode.Pip -> false
   }
@@ -273,7 +273,7 @@ class UvPackageManager internal constructor(
     val rootFile = getRootDependenciesFile() ?: return emptyList()
     val rootPyProjectToml = (rootFile as? PyProjectTomlFile) ?: return listOf(rootFile)
 
-    val uvWorkingDirectory = uvExecutionContextDeferred.await().workingDir
+    val uvWorkingDirectory = interpreter.ownerDir
     val memberModules = readAction {
       val rootModule = ModuleManager.getInstance(project).modules.firstOrNull { module ->
         ModuleRootManager.getInstance(module).contentRoots.any { it.toNioPath() == uvWorkingDirectory }

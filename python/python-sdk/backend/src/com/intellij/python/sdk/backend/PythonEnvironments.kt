@@ -50,6 +50,15 @@ sealed interface PythonEnvironmentKey {
   data class Target(val targetId: String, val path: FullPathOnTarget) : PythonEnvironmentKey
 
   companion object {
+    /**
+     * The key of the environment of [interpreter]: the Eel machine and the path of its binary, or its target and the path
+     * on the target. `null` when the Eel machine of a native interpreter is not available.
+     */
+    suspend fun of(interpreter: PythonInterpreter): PythonEnvironmentKey? = when (interpreter) {
+      is NativePythonInterpreter -> nativeOf(interpreter.pythonBinary.normalize())
+      is TargetPythonInterpreter -> Target(interpreter.targetId, interpreter.pythonBinary.pathString)
+    }
+
     /** The key of the environment of [sdk], or `null` when [sdk] names no binary. */
     suspend fun of(sdk: Sdk): PythonEnvironmentKey? {
       val homePath = sdk.homePath ?: return null
@@ -60,8 +69,9 @@ sealed interface PythonEnvironmentKey {
       }
     }
 
-    private suspend fun nativeOf(homePath: @OsPath String): Native? {
-      val binary = binaryOf(homePath) ?: return null
+    private suspend fun nativeOf(homePath: @OsPath String): Native? = binaryOf(homePath)?.let { nativeOf(it) }
+
+    private suspend fun nativeOf(binary: Path): Native? {
       val machine = try {
         binary.getEelDescriptor().resolveEelMachine().internalName
       }

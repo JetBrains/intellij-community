@@ -72,5 +72,6 @@
     <orderEntry type="module" module-name="intellij.toml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.toml.core" />
     <orderEntry type="module" module-name="intellij.libraries.markdown" />
+    <orderEntry type="module" module-name="intellij.python.packaging" />
   </component>
 </module>

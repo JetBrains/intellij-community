@@ -50,7 +50,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 
 class CondaPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
-  override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk).also {
+  override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project).also {
     Disposer.register(this, it)
   }
   override val dependenciesFilesRelativePaths: List<Path>
@@ -59,8 +59,8 @@ class CondaPackageManager(project: Project, interpreter: PythonInterpreter) : Py
       Path.of(ENV_YAML_FILE_NAME),
     )
 
-  private val condaPackageEngine = CondaPackageManagerEngine(sdk)
-  private val pipPackageEngine = PipPackageManagerEngine(project, sdk)
+  private val condaPackageEngine = CondaPackageManagerEngine(interpreter)
+  private val pipPackageEngine = PipPackageManagerEngine(project, interpreter)
 
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
     PythonManagerCliSpec("conda", { loadPythonCondaPath(eelApi.descriptor) }),

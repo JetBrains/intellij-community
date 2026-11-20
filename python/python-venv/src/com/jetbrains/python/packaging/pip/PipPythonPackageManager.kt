@@ -4,7 +4,6 @@ package com.jetbrains.python.packaging.pip
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
 import com.intellij.psi.PsiFile
@@ -12,7 +11,10 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.languageLevel
 import com.intellij.python.venv.MINIMUM_SUPPORTED_VENV_PYTHON_VERSION
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.errorProcessing.PyResult
@@ -34,10 +36,8 @@ import com.jetbrains.python.packaging.requirementsTxt.addRequirement
 import com.jetbrains.python.packaging.requirementsTxt.readDeclaredPackages
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.executeHelper
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -49,9 +49,15 @@ import java.nio.file.Path
 open class PipPythonPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> =
-    listOf(PythonManagerCliSpec("pip", { sdk.homePath?.let { Path.of(it) } }, runAsModule = true))
+    listOf(PythonManagerCliSpec("pip", { localPythonBinary() }, runAsModule = true))
 
-  private val engine = PipPackageManagerEngine(project, sdk)
+  private val engine = PipPackageManagerEngine(project, interpreter)
+
+  /** The Python binary of a native interpreter. A CLI on an Eel machine cannot run the binary of a target. */
+  private fun localPythonBinary(): Path? = when (val interpreter = interpreter) {
+    is NativePythonInterpreter -> interpreter.pythonBinary
+    is TargetPythonInterpreter -> null
+  }
 
   override val dependenciesExporter: DependenciesExporter?
     get() = object : DependenciesExporter {
@@ -112,14 +118,17 @@ open class PipPythonPackageManager(project: Project, interpreter: PythonInterpre
 }
 
 @ApiStatus.Internal
-class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPackageManager) {
-  private val languageLevel: LanguageLevel = PySdkUtil.getLanguageLevelForSdk(sdk)
+class PipManagementInstaller(private val manager: PythonPackageManager) {
+  private val languageLevel: LanguageLevel = manager.interpreter.languageLevel(manager.project)
 
   /**
-   * This method is for local SDK only. It does nothing for remote SDK.
+   * This method is for a native interpreter only. It does nothing for an interpreter on a target.
    */
   internal suspend fun installManagementIfNeeded(): PyResult<Unit> {
-    if (PythonSdkUtil.isRemote(sdk)) return PyResult.success(Unit)
+    when (manager.interpreter) {
+      is NativePythonInterpreter -> Unit
+      is TargetPythonInterpreter -> return PyResult.success(Unit)
+    }
     // The bundled pip and setuptools wheels require MINIMUM_SUPPORTED_VENV_PYTHON_VERSION+. For older
     // interpreters we never attempt to install them (the install would fail anyway) and rely on the
     // management tools already present.

@@ -1,12 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.sdk.executeHelper
@@ -92,14 +91,14 @@ internal object PythonPackageMetadataParser {
 }
 
 /**
- * Runs the [PythonPackageMetadataParser.HELPER_SCRIPT] helper against this SDK and
+ * Runs the [PythonPackageMetadataParser.HELPER_SCRIPT] helper against this interpreter and
  * returns the parsed METADATA map. Single entry point so callers don't have to spell out the
  * exec-service plumbing or remember to pipe stdout through the parser.
  */
 @ApiStatus.Internal
-suspend fun Sdk.loadInstalledPackagesMetadata(): PyResult<Map<PyPackageName, PythonPackageMetadata>> {
+suspend fun PythonInterpreter.loadInstalledPackagesMetadata(): PyResult<Map<PyPackageName, PythonPackageMetadata>> {
   val output = ExecService()
-    .executeHelper(this.pythonInterpreterResultAsync().getOr { return it }, PyHelper(PythonPackageMetadataParser.HELPER_SCRIPT), Args())
+    .executeHelper(this, PyHelper(PythonPackageMetadataParser.HELPER_SCRIPT), Args())
     .getOr { return it }
   return PythonPackageMetadataParser.parse(output)
 }

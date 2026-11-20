@@ -5,6 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.sdk.backend.PyInterpreterLibrary
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.venv.PY_REQ_TOOL_ID
 import com.jetbrains.python.PyBundle
@@ -12,7 +13,6 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers.SETUP_PY
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
@@ -60,7 +60,7 @@ internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigur
     val isRequirements = requirementsTxtOrSetupPyFile.name != SETUP_PY
 
     if (isRequirements) {
-      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(project, pythonInterpreter, requirementsTxtOrSetupPyFile.toNioPath())
+      PyInterpreterLibrary(project, pythonInterpreter).writeRequirementsPath(requirementsTxtOrSetupPyFile.toNioPath())
     }
 
     return PythonPackageManager.forPythonInterpreter(project, pythonInterpreter).syncLocked().mapSuccess { pythonInterpreter }

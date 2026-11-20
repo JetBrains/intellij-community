@@ -36,6 +36,7 @@ import com.intellij.python.pyproject.model.internal.pyProject.getPyProjectsWithC
 import com.intellij.python.pyproject.model.internal.pyProject.getPyProjectsWithStorage
 import com.intellij.python.pyproject.model.internal.workspaceBridge.affectsWorkspaceLayout
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getWorkspaceLayout
+import com.intellij.python.sdk.backend.PyInterpreterLibrary
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
@@ -588,6 +589,14 @@ suspend fun Project.findPythonInterpreter(file: VirtualFile, mainForOrphans: Boo
  * before it returns, so a caller that reads this after such a function sees the new interpreter.
  */
 @ApiStatus.Internal
-suspend fun PyProject.getInterpreter(): PythonInterpreter? =
-  EvoPyProjectModel.getInstance(project).snapshot().forPyProject(this)?.interpreter
+suspend fun PyProject.getInterpreter(): PythonInterpreter? = getInterpreterLibrary()?.interpreter
+
+/**
+ * The interpreter of this project as this project uses it, with what the project keeps about it, see
+ * [PyInterpreterLibrary]. A caller that needs only the interpreter calls [getInterpreter]. Waits for the first
+ * snapshot, as [getInterpreter] does.
+ */
+@ApiStatus.Internal
+suspend fun PyProject.getInterpreterLibrary(): PyInterpreterLibrary? =
+  EvoPyProjectModel.getInstance(project).snapshot().forPyProject(this)?.library
 

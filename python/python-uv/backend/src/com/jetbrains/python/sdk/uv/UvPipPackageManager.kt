@@ -48,7 +48,7 @@ class UvPipPackageManager internal constructor(
     get() = listOf(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT)
 
   /** Pip mode only. A stored `pyproject.toml` selects [UvPackageManager]. */
-  override fun matchesSdk(): Boolean = when (sdk.uvMode) {
+  override fun matchesInterpreter(): Boolean = when (library.uvMode()) {
     UvMode.Project -> false
     is UvMode.Pip -> true
   }
@@ -99,10 +99,9 @@ class UvPipPackageManager internal constructor(
 
   override fun updateLockedActionName(): @Nls String = message("python.uv.pip.install.requirements")
 
-  /** Runs `uv init --bare --no-project` in the working directory when it has no `pyproject.toml`. */
+  /** Runs `uv init --bare --no-project` in the owner directory when it has no `pyproject.toml`. */
   suspend fun initProjectIfNeeded(): PyResult<Unit> {
-    val workingDir = uvExecutionContextDeferred.await().workingDir
-    if (!UvMode.Project.needsInit(workingDir)) return PyResult.success(Unit)
+    if (!UvMode.Project.needsInit(interpreter.ownerDir)) return PyResult.success(Unit)
     return withUv { uv -> uv.initProject(version = null) }
   }
 

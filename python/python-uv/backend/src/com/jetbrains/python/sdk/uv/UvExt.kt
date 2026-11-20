@@ -7,7 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.toFileSystem
 import com.intellij.python.sdk.backend.resolvePythonHome
 import com.intellij.python.uv.backend.PyUvBundle
 import com.intellij.python.uv.backend.UvPyTool
@@ -22,11 +23,9 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toFileSystem
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -71,27 +70,14 @@ private suspend fun <P : PathHolder> createUvExecutionContext(
   )
 }
 
-/** The uv execution context of this interpreter, started lazily in [scope], or `null` when it is no uv environment. */
-internal fun PythonInterpreter.getUvExecutionContextAsync(scope: CoroutineScope, project: Project? = null): Deferred<UvExecutionContext<*>>? {
-  // The uv flavor data, the working directory and the home path live in the SDK.
-  @Suppress("DEPRECATION")
-  val sdk = getSdkAPI()
-  val data = sdk.sdkAdditionalData
-  val pyData = sdk.pySdkAdditionalData
-  val uvWorkingDirectory = pyData.workingDirectory.takeIf { pyData.hasValidWorkingDirectory() }
-  val uvPathString = sdk.uvFlavorData?.uvPath
-  val pythonBinaryPath = sdk.homePath ?: return null
-
-  val cwd = when (data) {
-    is UvSdkAdditionalData -> uvWorkingDirectory ?: project?.basePath?.let { Path.of(it) }
-    is PyTargetAwareAdditionalData -> uvWorkingDirectory
-    else -> null
-  } ?: return null
-
-  return scope.async(start = CoroutineStart.LAZY) {
-    createUvExecutionContext(sdk.toFileSystem(), cwd, pythonBinaryPath, uvPathString)
+/**
+ * The uv execution context of this interpreter, started lazily in [scope]. uv runs in the directory of the PyProject
+ * that owns the interpreter, and the uv of the machine of the interpreter runs, see [UvPyTool].
+ */
+internal fun PythonInterpreter.getUvExecutionContextAsync(scope: CoroutineScope): Deferred<UvExecutionContext<*>> =
+  scope.async(start = CoroutineStart.LAZY) {
+    createUvExecutionContext(toFileSystem(), ownerDir, binaryPathString, uvPathString = null)
   }
-}
 
 @ApiStatus.Internal
 suspend fun setupNewUvSdkAndEnv(
