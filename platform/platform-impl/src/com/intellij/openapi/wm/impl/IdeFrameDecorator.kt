@@ -96,7 +96,7 @@ internal abstract class IdeFrameDecorator protected constructor(
   }
 
   fun setProject() {
-    tabsHandler.setProject()
+    tabsHandler.setProject(frame)
   }
 
   val isTabbedWindow: Boolean

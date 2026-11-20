@@ -25,10 +25,11 @@ object ProjectTabsManager {
     if (SystemInfoRt.isMac) {
       return if (MacWinTabsHandler.isVersion2()) MacWinTabsHandlerV2(frame, coroutineScope) else MacWinTabsHandler(frame, coroutineScope)
     }
+    if (WindowTabsManager.enabled) {
+      WindowTabsManager.addFrame(frame, coroutineScope)
+      return WindowTabsManager
+    }
     return object : ProjectTabsHandler {
-      override fun setProject() {
-      }
-
       override fun appClosing() {
       }
     }
@@ -45,6 +46,9 @@ object ProjectTabsManager {
       }
       return null
     }
+    if (WindowTabsManager.enabled) {
+      return WindowTabsManager.createAndInstallHandlerComponent(rootPane)
+    }
     return null
   }
 
@@ -58,12 +62,21 @@ object ProjectTabsManager {
    * Returns `true` when [frame] shares the project tabs with one or more other frames.
    */
   fun isTabbedWindow(frame: JFrame): Boolean {
-    return SystemInfoRt.isMac && MacWinTabsHandler.isTabbedWindow(frame)
+    if (SystemInfoRt.isMac) {
+      return MacWinTabsHandler.isTabbedWindow(frame)
+    }
+    if (WindowTabsManager.enabled) {
+      return WindowTabsManager.isTabbedWindow(frame)
+    }
+    return false
   }
 
   fun switchFrameIfPossible(frame: JFrame, next: Boolean) {
     if (SystemInfoRt.isMac) {
       MacWinTabsHandler.switchFrameIfPossible(frame, next)
+    }
+    else if (WindowTabsManager.enabled) {
+      WindowTabsManager.switchFrameIfPossible(frame, next)
     }
   }
 }
