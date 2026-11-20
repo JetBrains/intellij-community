@@ -4,12 +4,15 @@ package org.jetbrains.java.generate;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
+import com.intellij.codeInsight.options.JavaConfigurationDialogInfo;
+import com.intellij.codeInsight.options.JavaConfigurationDialogKind;
 import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.Language;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
@@ -91,7 +94,8 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
     SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.createPointer(psiClass);
     return new ModEditOptions<>(
       getFamilyName(),
-      () -> new ToStringOptions(members, templateOptions, annotationsAvailable, preselection, defaultTemplate, insertOverride),
+      () -> new ToStringOptions(members, templateOptions, annotationsAvailable, psiClass.getLanguage(), preselection, defaultTemplate,
+                                insertOverride),
       true,
       options -> {
         PsiClass cls = pointer.getElement();
@@ -234,6 +238,7 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
     private final @NotNull List<? extends OptMultiSelector.OptElement> myAllMembers;
     private final @NotNull List<OptDropdown.Option> myTemplateOptions;
     private final boolean myAnnotationsAvailable;
+    private final @NotNull Language myLanguage;
 
     @SuppressWarnings("FieldMayBeFinal") private @NotNull List<? extends PsiElementClassMember<?>> members;
     @SuppressWarnings("FieldMayBeFinal") private @NotNull String template;
@@ -241,13 +246,14 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
 
     private ToStringOptions(@NotNull List<PsiElementClassMember<?>> allMembers,
                             @NotNull List<OptDropdown.Option> templateOptions,
-                            boolean annotationsAvailable,
+                            boolean annotationsAvailable, @NotNull Language language,
                             @NotNull List<PsiElementClassMember<?>> members,
                             @NotNull String template,
                             boolean insertOverride) {
       myAllMembers = allMembers;
       myTemplateOptions = templateOptions;
       myAnnotationsAvailable = annotationsAvailable;
+      myLanguage = language;
       this.members = new ArrayList<>(members);
       this.template = template;
       this.insertOverride = insertOverride;
@@ -259,12 +265,16 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
       if (!myAllMembers.isEmpty()) {
         components.add(OptPane.multiSelector("members", myAllMembers, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY));
       }
-      components.add(OptPane.dropdown("template", JavaBundle.message("generate.tostring.template.label"),
-                                      myTemplateOptions.toArray(OptDropdown.Option[]::new)));
+      components.add(
+        OptPane.horizontalStack(
+          OptPane.dropdown("template", JavaBundle.message("generate.tostring.template.label"),
+                           myTemplateOptions.toArray(OptDropdown.Option[]::new)),
+          new JavaConfigurationDialogInfo(JavaConfigurationDialogKind.TO_STRING_TEMPLATE_SETTINGS, myLanguage).button()
+        ));
       if (myAnnotationsAvailable) {
         components.add(OptPane.checkbox("insertOverride", JavaBundle.message("insert.override.annotation")));
       }
-      return new OptPane(components);
+      return new OptPane(components, "editing.altInsert.tostring");
     }
   }
 

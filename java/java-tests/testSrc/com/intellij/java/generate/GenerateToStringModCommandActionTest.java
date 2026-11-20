@@ -3,6 +3,7 @@ package com.intellij.java.generate;
 
 import com.intellij.codeInspection.options.OptCheckbox;
 import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptHorizontalStack;
 import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.modcommand.ActionContext;
@@ -58,7 +59,8 @@ public final class GenerateToStringModCommandActionTest {
       assertEquals(3, components.size());
       OptMultiSelector selector = assertInstanceOf(OptMultiSelector.class, components.get(0));
       assertEquals(List.of("x: int", "y: int"), ContainerUtil.map(selector.elements(), OptMultiSelector.OptElement::getText));
-      OptDropdown dropdown = assertInstanceOf(OptDropdown.class, components.get(1));
+      OptHorizontalStack stack = assertInstanceOf(OptHorizontalStack.class, components.get(1));
+      OptDropdown dropdown = assertInstanceOf(OptDropdown.class, stack.children().getFirst());
       Map<String, String> labels = ContainerUtil.map2Map(dropdown.options(), option -> Pair.create(option.key(), option.label().label()));
       assertEquals(CONCAT_TEMPLATE, labels.get(CONCAT_TEMPLATE));
       assertEquals("MoreObjects.toStringHelper (Guava 18+) (incompatible)", labels.get("MoreObjects.toStringHelper (Guava 18+)"));
