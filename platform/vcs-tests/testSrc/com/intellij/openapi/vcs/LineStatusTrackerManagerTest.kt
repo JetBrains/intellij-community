@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
@@ -220,6 +221,40 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
    */
   private fun withoutWriteIntentLock(task: () -> Unit) {
     TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack { task() }
+  }
+
+  fun `test tracker provider fails to create a tracker`() {
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
+    refreshCLM()
+    val provider = object : LocalLineStatusTrackerProvider {
+      override fun isTrackedFile(project: Project, file: VirtualFile): Boolean = true
+      override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = false
+      override fun createTracker(project: Project, file: VirtualFile, document: Document): LocalLineStatusTracker<*> {
+        throw IllegalStateException("The provider fails")
+      }
+    }
+    ExtensionPointName<LocalLineStatusTrackerProvider>("com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider")
+      .point.registerExtension(provider, testRootDisposable)
+
+    val document = file.document
+    val requester = Any()
+    val errors = mutableListOf<Throwable?>()
+    val errorCollector = object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+        errors.add(t)
+        return Action.NONE
+      }
+    }
+    LoggedErrorProcessor.executeWith(errorCollector).use {
+      // The manager logs the exception of the provider, and the file gets no tracker.
+      lstm.requestTrackerFor(document, requester)
+      assertNull(lstm.getLineStatusTracker(document))
+
+      lstm.releaseTrackerFor(document, requester)
+      assertNull(lstm.getLineStatusTracker(document))
+    }
+    assertTrue(errors.isNotEmpty())
+    assertTrue(errors.all { it is IllegalStateException })
   }
 
   fun `test tracker provider implements only the deprecated createTracker`() {

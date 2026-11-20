@@ -9,6 +9,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.ThreadDumper
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -462,7 +463,7 @@ class LineStatusTrackerManager(
     if (trackers[document] != null) return null
 
     val tracker = SlowOperations.startSection("vcs.line-status-tracker-provider").use {
-      provider.createTracker(project, virtualFile, document) ?: return null
+      createTrackerSafely(provider, virtualFile, document) ?: return null
     }
     tracker.mode = getTrackingMode()
 
@@ -514,6 +515,25 @@ class LineStatusTrackerManager(
       return listOf(ChangelistsLocalStatusTrackerProvider, DefaultLocalStatusTrackerProvider).find {
         it.isTrackedFile(project, virtualFile)
       }
+    }
+  }
+
+  /**
+   * Logs an exception of the [provider], as [com.intellij.openapi.extensions.ExtensionPointName.findFirstSafe] does for
+   * [LocalLineStatusTrackerProvider.isTrackedFile]. The file then gets no tracker.
+   */
+  private fun createTrackerSafely(
+    provider: LocalLineStatusTrackerProvider,
+    virtualFile: VirtualFile,
+    document: Document,
+  ): LocalLineStatusTracker<*>? {
+    try {
+      return provider.createTracker(project, virtualFile, document)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.error("${provider.javaClass.name} failed to create a tracker for $virtualFile", e)
+      return null
     }
   }
 
