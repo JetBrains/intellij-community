@@ -136,6 +136,8 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
             &[
                 "--suppress-plugin <ID>",
                 "idea.suppressed.plugins.id",
+                "--with-property <NAME=VALUE>",
+                "-D<NAME>=<VALUE>",
                 "--profile-event <EVENT>",
                 "async-profiler",
             ],
@@ -149,6 +151,7 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
         );
     }
     assert!(!open_project.contains("--suppress-plugin"), "{open_project}");
+    assert!(!open_project.contains("--with-property"), "{open_project}");
     assert_contains(&open_project, &["<PROJECT>", &format!("[default: {DEFAULT_OPEN_PROJECT_RUNS}]")]);
     assert_contains(
         &project,

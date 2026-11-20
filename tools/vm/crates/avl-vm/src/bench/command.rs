@@ -65,8 +65,10 @@ struct Plan {
     profile: bool,
     profile_event: ProfileEvent,
     project: Option<PlannedProject>,
-    /// The plugin that the twin arms suppress.
+    /// The plugin that the twin arms of `--suppress-plugin` suppress.
     suppressed_plugin: Option<String>,
+    /// The property `<name>=<value>` that the twin arms of `--with-property` set.
+    with_property: Option<String>,
 }
 
 /// The project of a session.
@@ -110,7 +112,8 @@ impl Bench<'_> {
                     profile: args.measure.profile,
                     profile_event: args.measure.profile_event,
                     project: None,
-                    suppressed_plugin: args.measure.suppress.plugin.clone(),
+                    suppressed_plugin: args.measure.twins.plugin.clone(),
+                    with_property: args.measure.twins.property.as_ref().map(ToString::to_string),
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -128,6 +131,7 @@ impl Bench<'_> {
                     profile_event: ProfileEvent::Cpu,
                     project: Some(PlannedProject::Open(project)),
                     suppressed_plugin: None,
+                    with_property: None,
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -140,7 +144,8 @@ impl Bench<'_> {
                     profile: args.measure.profile,
                     profile_event: args.measure.profile_event,
                     project: Some(PlannedProject::Start(project_source(&args.project, &working_dir()?)?)),
-                    suppressed_plugin: args.measure.suppress.plugin.clone(),
+                    suppressed_plugin: args.measure.twins.plugin.clone(),
+                    with_property: args.measure.twins.property.as_ref().map(ToString::to_string),
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -345,6 +350,7 @@ impl Bench<'_> {
             additional_modules: generation.config.additional_modules.clone(),
             max_load,
             suppressed_plugin: plan.suppressed_plugin.clone(),
+            with_property: plan.with_property.clone(),
             warnings,
         };
         files::write_json(&session.join(SESSION_FILE), &info).map_err(|error| session_failed(format!("{error:#}")))?;

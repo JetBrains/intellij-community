@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use clap::{Subcommand, ValueEnum};
 
-use super::arm::{Arm, ArmKind, check_plugin_id, parse_arm};
+use super::arm::{Arm, ArmKind, Property, Twin, check_plugin_id, parse_arm};
 use super::gc::DEFAULT_KEEP;
 use super::profile::ProfileEvent;
 use super::record::CLASS_ANCHORS;
@@ -140,7 +140,8 @@ pub(crate) struct RunSelection {
     #[arg(long, value_name = "DIR")]
     pub(crate) run: Option<String>,
     /// The arm whose median run the verb reads. A run that --run names must be a run of this arm. An arm is modal,
-    /// non-modal, open-project, project or empty-editor, or the twin `<arm>-without-<plugin id>` of --suppress-plugin.
+    /// non-modal, open-project, project or empty-editor, or a twin: `<arm>-without-<plugin id>` of --suppress-plugin, or
+    /// `<arm>-with-<name>=<value>` of --with-property.
     #[arg(long, value_name = "ARM", value_parser = parse_arm)]
     pub(crate) arm: Option<Arm>,
 }
@@ -196,8 +197,8 @@ pub(crate) struct ClassesArgs {
     #[arg(value_name = "SESSION", help = format!("The session: {SESSION_FORMS}"))]
     pub(crate) session: String,
     /// The arm. The default is the first arm that is not modal and has a valid run, else the modal arm. An arm is
-    /// modal, non-modal, open-project, project or empty-editor, or the twin `<arm>-without-<plugin id>` of
-    /// --suppress-plugin.
+    /// modal, non-modal, open-project, project or empty-editor, or a twin: `<arm>-without-<plugin id>` of
+    /// --suppress-plugin, or `<arm>-with-<name>=<value>` of --with-property.
     #[arg(long, value_name = "ARM", value_parser = parse_arm)]
     pub(crate) arm: Option<Arm>,
     /// The rows of each table at most. With --plugin, the plugin table holds each named plugin.
@@ -344,15 +345,15 @@ pub(crate) struct WelcomeArgs {
 }
 
 impl WelcomeArgs {
-    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
-    /// --suppress-plugin.
+    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twins of
+    /// --suppress-plugin and --with-property.
     pub(crate) fn arms(&self) -> Vec<Arm> {
-        self.measure.suppress.with_twins(self.arm.arms())
+        self.measure.twins.with_twins(self.arm.arms())
     }
 }
 
-/// The options of each measured run of a session of arms: the start from the template, the profile and the suppressed
-/// plugin. A verb can replace the help of an option with its own text, which names its arms.
+/// The options of each measured run of a session of arms: the start from the template, the profile and the twins. A
+/// verb can replace the help of an option with its own text, which names its arms.
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
 pub(crate) struct MeasureArgs {
     /// Starts each measured run from a fresh copy of the unprimed template, and skips the prime runs.
@@ -367,7 +368,7 @@ pub(crate) struct MeasureArgs {
     #[arg(long, value_name = "EVENT", value_enum, default_value_t = ProfileEvent::Cpu, requires = "profile")]
     pub(crate) profile_event: ProfileEvent,
     #[command(flatten)]
-    pub(crate) suppress: SuppressArgs,
+    pub(crate) twins: TwinArgs,
 }
 
 /// The help of `--cold` of `bench project`, which names the arms that take it.
@@ -381,26 +382,36 @@ const PROJECT_PROFILE_HELP: &str = "Samples with async-profiler from the JVM sta
     of a sample, so it covers the whole start-up to the gate, not one span. A run whose JBR has no jcmd keeps the profile of \
     the whole run.";
 
-/// The plugin that the twin arms of a session suppress.
+/// The twins of each arm of a session: the arm without a plugin, and the arm with a system property.
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
-pub(crate) struct SuppressArgs {
+pub(crate) struct TwinArgs {
     /// Adds a twin to each arm: the arm `<arm>-without-<ID>`, whose runs pass `-Didea.suppressed.plugins.id=<ID>`, so the
     /// IDE loads no plugin of that id. A twin has its own prime run and its own sandbox, and its runs interleave with
     /// the runs of its arm.
     #[arg(long = "suppress-plugin", value_name = "ID", value_parser = plugin_id)]
     pub(crate) plugin: Option<String>,
+    /// Adds a twin to each arm: the arm `<arm>-with-<NAME>=<VALUE>`, whose runs pass `-D<NAME>=<VALUE>` after the
+    /// properties of the bench, so the property wins over a property of the same name. The twin has its own prime run
+    /// and its own sandbox, and its runs interleave with the runs of its arm, as a twin of --suppress-plugin.
+    #[arg(long = "with-property", value_name = "NAME=VALUE", value_parser = Property::parse)]
+    pub(crate) property: Option<Property>,
 }
 
-impl SuppressArgs {
-    /// The arms, each one followed by its twin when a plugin is suppressed.
+impl TwinArgs {
+    /// The change of each twin, in the order of the twins of an arm: the suppressed plugin, then the property.
+    fn twins(&self) -> Vec<Twin> {
+        let without = self.plugin.clone().map(Twin::Without);
+        let with = self.property.clone().map(Twin::With);
+        without.into_iter().chain(with).collect()
+    }
+
+    /// The arms, each one followed by its twins.
     pub(crate) fn with_twins(&self, arms: Vec<Arm>) -> Vec<Arm> {
-        let Some(plugin) = &self.plugin else {
-            return arms;
-        };
+        let twins = self.twins();
         arms.into_iter()
             .flat_map(|arm| {
-                let twin = arm.without(plugin);
-                [arm, twin]
+                let arm_twins: Vec<Arm> = twins.iter().map(|twin| arm.twin(twin.clone())).collect();
+                std::iter::once(arm).chain(arm_twins)
             })
             .collect()
     }
@@ -450,11 +461,12 @@ impl ProjectArgs {
         self.measure.cold || self.arm == ProjectArmChoice::CargoSync
     }
 
-    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
-    /// --suppress-plugin. A cold session of the project arm is refused: without a prime run, no editor state is there
-    /// to restore. A twin of the empty-editor arm without Air is refused too: its gate is a span of the Air composer.
+    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twins of
+    /// --suppress-plugin and --with-property. A cold session of the project arm is refused: without a prime run, no
+    /// editor state is there to restore. A twin of the empty-editor arm without Air is refused too: its gate is a span
+    /// of the Air composer.
     pub(crate) fn arms(&self) -> Result<Vec<Arm>, String> {
-        let arms = self.measure.suppress.with_twins(self.arm.arms());
+        let arms = self.measure.twins.with_twins(self.arm.arms());
         if self.measure.cold && arms.iter().any(|arm| arm.kind == ArmKind::Project) {
             return Err(
                 "--cold needs --arm empty-editor: the project arm restores the editor that its prime run saved, and a cold session has no prime run"
@@ -463,7 +475,7 @@ impl ProjectArgs {
         }
         if arms
             .iter()
-            .any(|arm| arm.kind == ArmKind::EmptyEditor && arm.suppressed.as_deref() == Some(AIR_PLUGIN_ID))
+            .any(|arm| arm.kind == ArmKind::EmptyEditor && arm.suppressed_plugin() == Some(AIR_PLUGIN_ID))
         {
             return Err(format!(
                 "--suppress-plugin {AIR_PLUGIN_ID} needs --arm project: the gate of the empty-editor arm is the span of the Air composer, so a run without Air never passes it"

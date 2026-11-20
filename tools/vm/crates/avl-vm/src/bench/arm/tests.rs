@@ -1,6 +1,6 @@
 use pretty_assertions::assert_eq;
 
-use super::{Arm, ArmKind, Gate, check_plugin_id, parse_arm};
+use super::{Arm, ArmKind, Gate, Property, Twin, check_plugin_id, parse_arm};
 use crate::bench::record::{
     CARGO_SYNC_LOG_LINE, CARGO_SYNC_LOG_MS, CARGO_SYNC_STARTED, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPAN, OPEN_HIGHLIGHTED,
     WELCOME_BECAME_VISIBLE,
@@ -116,4 +116,60 @@ fn a_twin_refuses_a_plugin_id_that_it_cannot_name() {
     assert_eq!(Arm::from_label("projects-without-a"), None);
     let refusal = parse_arm("project-with-air").expect_err("a refusal");
     assert!(refusal.ends_with("got: project-with-air"), "{refusal}");
+}
+
+/// A twin of a property keeps the gate and the metrics of its kind. Its key and its label name the property, and both
+/// read back, also with a value that holds `-without-` or `=`. It sorts after the twin without a plugin.
+#[test]
+fn a_twin_is_the_arm_of_its_kind_with_one_property() {
+    let property = Property::parse("air.apps.native.webview=true").expect("a property");
+    assert_eq!(
+        property,
+        Property {
+            name: "air.apps.native.webview".to_owned(),
+            value: "true".to_owned()
+        }
+    );
+    let twin = Arm::EMPTY_EDITOR.with(&property);
+    assert_eq!(twin.twin, Some(Twin::With(property)));
+    assert_eq!(twin.gate(), Arm::EMPTY_EDITOR.gate());
+    assert_eq!(twin.main_metric(), EMPTY_STATE_BUILT);
+    assert_eq!(twin.suppressed_plugin(), None);
+    assert_eq!(
+        (twin.key(), twin.label()),
+        (
+            "emptyEditor-with-air.apps.native.webview=true".to_owned(),
+            "empty-editor-with-air.apps.native.webview=true".to_owned()
+        )
+    );
+    assert_eq!(Arm::from_label(&twin.label()), Some(twin.clone()));
+    assert_eq!(Arm::from_key(&twin.key()), Some(twin.clone()));
+    let json = serde_json::to_string(&twin).expect("a key");
+    assert_eq!(serde_json::from_str::<Arm>(&json).expect("an arm"), twin);
+
+    let odd = Arm::PROJECT.with(&Property::parse("a.b=x-without-y=z").expect("a property"));
+    assert_eq!(odd.label(), "project-with-a.b=x-without-y=z");
+    assert_eq!(Arm::from_label(&odd.label()), Some(odd));
+    let empty = Arm::PROJECT.with(&Property::parse("flag=").expect("an empty value"));
+    assert_eq!(Arm::from_label("project-with-flag="), Some(empty));
+
+    let without = Arm::EMPTY_EDITOR.without("com.intellij.air");
+    let mut arms = vec![twin.clone(), Arm::EMPTY_EDITOR, without.clone()];
+    arms.sort();
+    assert_eq!(arms, [Arm::EMPTY_EDITOR, without, twin]);
+}
+
+#[test]
+fn a_twin_refuses_a_property_that_it_cannot_name() {
+    for text in ["", "flag", "=true", " a=b", "a=b ", "a/b=c", "a=b:c", "a=b\\c", "a\tb=c"] {
+        assert!(Property::parse(text).is_err(), "{text:?}");
+    }
+    assert_eq!(
+        Property::parse("flag"),
+        Err("the property `flag` has no `=`; write <name>=<value>".to_owned())
+    );
+    assert_eq!(Arm::from_label("project-with-flag"), None);
+    assert_eq!(Arm::from_label("project-with-a=b:c"), None);
+    let refusal = parse_arm("project-with-a").expect_err("a refusal");
+    assert!(refusal.contains("<arm>-with-<name>=<value>"), "{refusal}");
 }

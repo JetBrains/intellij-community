@@ -22,7 +22,7 @@ use avl_base::{Exit, Refusal};
 use avl_host_sys::{Ctx, ProcError, Runner, SpawnOptions};
 use serde::Deserialize;
 
-use super::arm::{Arm, ArmKind, Gate};
+use super::arm::{Arm, ArmKind, Gate, Twin};
 use super::files;
 use super::fus;
 use super::profile::{GATE_PROFILE, ProfileEvent, WHOLE_PROFILE};
@@ -100,8 +100,8 @@ pub(crate) const CARGO_SYNC_PROPERTIES: [&str; 2] = [
     "org.rust.external.linter.on.the.fly=false",
 ];
 
-/// The property of a twin arm, see [`Arm::suppressed`]. The IDE reads it as a list of plugin ids at the start and loads
-/// none of them.
+/// The property of a twin arm without a plugin, see [`Twin::Without`]. The IDE reads it as a list of plugin ids at the
+/// start and loads none of them.
 pub(crate) const SUPPRESSED_PLUGINS_PROPERTY: &str = "idea.suppressed.plugins.id";
 
 /// The file of the opened packages in a generation, a copy of
@@ -144,8 +144,8 @@ pub(crate) fn class_load_option(run_dir: &Path) -> Result<String, String> {
 }
 
 /// The options of a measured start, in order: the sandbox, the files of the run, the asynchronous log, see
-/// [`ASYNC_LOG_OPTIONS`], the class-load log, the properties, the arm, the suppressed plugin of a twin and the
-/// profiler. A run directory that the class-load log cannot name is an error, see [`class_load_option`]. The profiler
+/// [`ASYNC_LOG_OPTIONS`], the class-load log, the properties, the arm, the change of a twin and the profiler. The
+/// property of a twin comes after the properties of the bench, so it wins over a property of the same name. A run directory that the class-load log cannot name is an error, see [`class_load_option`]. The profiler
 /// starts with the JVM and writes [`WHOLE_PROFILE`] at the exit, unless the run stops it at the gate.
 pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: &Arm, profiler: Option<&Profiler>) -> Result<Vec<String>, String> {
     let mut options = sandbox_options(sandbox);
@@ -168,8 +168,10 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: &Arm, prof
         }
         ArmKind::NonModal | ArmKind::OpenProject => {}
     }
-    if let Some(plugin) = &arm.suppressed {
-        options.push(format!("-D{SUPPRESSED_PLUGINS_PROPERTY}={plugin}"));
+    match &arm.twin {
+        Some(Twin::Without(plugin)) => options.push(format!("-D{SUPPRESSED_PLUGINS_PROPERTY}={plugin}")),
+        Some(Twin::With(property)) => options.push(format!("-D{property}")),
+        None => {}
     }
     if let Some(profiler) = profiler {
         options.push(DYNAMIC_AGENT_OPTION.to_owned());

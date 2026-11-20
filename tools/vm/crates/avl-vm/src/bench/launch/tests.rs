@@ -8,7 +8,7 @@ use super::{
     measure_options, product_info_file, profile_stop_argv, quote_argument, sandbox_options, scheme_arguments, span_ended, thread_dump_argv,
     vm_options_file,
 };
-use crate::bench::arm::{Arm, ArmKind};
+use crate::bench::arm::{Arm, ArmKind, Property};
 use crate::bench::profile::ProfileEvent;
 use crate::bench::record::RunKind;
 use crate::bench::session::{Project, Sandbox};
@@ -79,6 +79,27 @@ fn a_twin_arm_suppresses_its_plugin_and_keeps_the_options_of_its_kind() {
     let mut expected = plain;
     expected.push(suppressed);
     assert_eq!(twin, expected);
+}
+
+/// A twin of a property starts as the arm of its kind and adds the property last of the properties, so it wins over a
+/// property of the bench with the same name.
+#[test]
+fn a_twin_arm_with_a_property_passes_it_after_the_properties_of_the_bench() {
+    let sandbox = Sandbox::new("/s/sandbox");
+    let run = Path::new("/s/run");
+    let plain = measure_options(run, &sandbox, &Arm::EMPTY_EDITOR, None).expect("the options");
+    let property = Property::parse("air.apps.native.webview=true").expect("a property");
+    let twin = measure_options(run, &sandbox, &Arm::EMPTY_EDITOR.with(&property), None).expect("the options");
+    let mut expected = plain;
+    expected.push("-Dair.apps.native.webview=true".to_owned());
+    assert_eq!(twin, expected);
+    let integration = Property::parse("idea.is.integration.test=false").expect("a property");
+    let options = measure_options(run, &sandbox, &Arm::PROJECT.with(&integration), None).expect("the options");
+    let position = |option: &str| options.iter().rposition(|candidate| candidate == option);
+    assert!(
+        position("-Didea.is.integration.test=false") > position(&format!("-D{INTEGRATION_TEST_PROPERTY}")),
+        "{options:?}"
+    );
 }
 
 /// Every arm writes the class-load log, from the thread of the asynchronous log, which stalls on a full buffer and

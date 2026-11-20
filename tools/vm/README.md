@@ -194,9 +194,11 @@ the record reads it after the quit. Its `totalDuration` is negative or missing, 
 metric.
 
 `--suppress-plugin <id>` of `welcome` and `project` adds a twin after each arm, such as `project-without-<id>`. A
-run of a twin passes `-Didea.suppressed.plugins.id=<id>`, so the IDE loads no plugin of that id. The twin has its own
-prime run and sandbox, and its runs interleave with the runs of its arm. Every verb that reads a session takes the
-twin as an arm, and the noise check of `compare` uses the plain arms only.
+run of a twin passes `-Didea.suppressed.plugins.id=<id>`, so the IDE loads no plugin of that id. `--with-property
+<name>=<value>` adds a twin such as `empty-editor-with-<name>=<value>`, whose runs pass `-D<name>=<value>` after the
+properties of the bench. A twin has its own prime run and sandbox, and its runs interleave with the runs of its arm.
+With both options, each arm has two twins. Every verb that reads a session takes a twin as an arm, and the noise check
+of `compare` uses the plain arms only.
 
 A module is the main module or a content module of a plugin, and each module has its own class loader. The debug log
 `plugin-classes.txt` names the module and the `findClass` nanos of each class. With the first class of a module, it
@@ -271,7 +273,7 @@ A session directory holds:
 | file | what it holds |
 | --- | --- |
 | `events.ndjson` | the run journal |
-| `session.json` | the inputs, with the generation, its digest, the measurement model `measureModel`, which `compare` notes when two sessions differ in it, and the `suppressedPlugin` of the twin arms |
+| `session.json` | the inputs, with the generation, its digest, the measurement model `measureModel`, which `compare` notes when two sessions differ in it, and the `suppressedPlugin` and the `withProperty` of the twin arms |
 | `build.log`, `template/`, `template-log/` | the host build, the sandbox template with the FUS test scheme, and its headless run |
 | `<arm>-prime/`, `<arm>-run-NN/` | one run, by the label of its arm, such as `project-without-<id>-run-01` for a twin: `sandbox/`, `log/`, `launch.args`, `launch.log`, the files the IDE writes, `class-load.log` of the JVM, `threads.txt`, `plugin-classes.txt`, `fus.jsonl`, `result.json` with the class maps by plugin and by module and the activation of each module, and with `--profile` the profile `cpu-gate.collapsed` and the log `profile-stop.log` of its stop |
 | `<arm>-sandbox/` | the sandbox of the run that is running now, at one path per arm |

@@ -144,6 +144,10 @@ pub(crate) struct SessionInfo {
     /// twin, and a session from before the option, has none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) suppressed_plugin: Option<String>,
+    /// The property `<name>=<value>` that the twin arms of `--with-property` set. Each twin is in `arms` too. A session
+    /// without such a twin, and a session from before the option, has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) with_property: Option<String>,
     /// What the session changed or dropped, such as the agent of the profile.
     pub(crate) warnings: Vec<String>,
 }
