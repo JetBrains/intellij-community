@@ -147,35 +147,13 @@ fn hint_of(filter: &str) -> String {
     no_tests_hint(Some(filter)).unwrap_or_else(|| panic!("no hint for {filter}"))
 }
 
-/// The agents gave `pkg.*`, `pkg.(A|B)`, a simple `Class#method` and `Outer.Inner`. Each ran no test, and the digest
-/// named no fix.
+/// A NO TESTS run with a filter in the form of the runner: the hint names what the filter selects.
 #[test]
-fn a_no_tests_hint_names_the_form_of_the_filter_that_works() {
-    assert_eq!(
-        hint_of("com.intellij.air.backend.worktree.*"),
-        "--filter takes no wildcard. To run every class of the package, pass --filter com.intellij.air.backend.worktree"
-    );
-    for regex in ["com.intellij.air.(ATest|BTest)", "a.ATest,a.BTest", "a.*Test"] {
-        assert!(hint_of(regex).contains("no wildcard, no regex and no list"), "{regex}");
-    }
+fn a_no_tests_hint_names_what_the_filter_selects() {
     assert!(
         hint_of("FooTest#testBar").starts_with("a Class#method needs the FQN of the class"),
         "{}",
         hint_of("FooTest#testBar")
-    );
-    assert_eq!(
-        hint_of("a.b.Outer$Inner"),
-        "the runner finds an @Nested class only through its outer class. To run it, pass --filter a.b.Outer"
-    );
-    assert_eq!(
-        hint_of("a.b.Outer.Inner#test"),
-        "a nested class takes $ after its outer class. If a.b.Outer.Inner is a nested class, pass --filter 'a.b.Outer$Inner#test'"
-    );
-    // The prefix `a.b.Outer$Inner` runs no @Nested test either, so the hint names the outer class.
-    assert_eq!(
-        hint_of("a.b.Outer.Inner"),
-        "the runner finds an @Nested class only through its outer class. If a.b.Outer.Inner is a nested class, pass \
-         --filter a.b.Outer"
     );
     // A package segment of a Spring test starts with an upper-case letter and has no lower-case letter.
     assert!(hint_of("a.IDEA_355419.FooTest").starts_with("a class filter is a prefix"));
@@ -553,7 +531,10 @@ fn a_class_of_another_language_is_no_candidate() {
             .to_owned()),
     );
     let resolution = resolve_in(&fake, "AgentThreadCliTest").unwrap_or_else(|failure| panic!("{failure}"));
-    assert_eq!(resolution.filter.as_deref(), Some("com.intellij.air.shared.core.AgentThreadCliTest"));
+    assert_eq!(
+        resolution.filter.as_deref(),
+        Some("com.intellij.air.shared.core.AgentThreadCliTest")
+    );
 }
 
 /// A planner prefetches its names in one call. A name that the batch answered makes no second call, and a failed
@@ -1023,5 +1004,183 @@ fn a_documented_class_and_another_class_of_its_simple_name_are_refused_by_the_si
     assert_eq!(
         resolve_in(&fake, other).map(|resolution| resolution.labels),
         Ok(vec!["//plugins/air/shells:shells_test".to_owned()])
+    );
+}
+
+fn filter_of(fake: &FakeRuntime, raw: &str) -> Result<FilterForm, Refusal> {
+    canonical_filter(raw, &ResolutionInputs::new(fake, areas()))
+}
+
+fn changed(value: &str, note: &str) -> FilterForm {
+    FilterForm {
+        value: value.to_owned(),
+        note: Some(note.to_owned()),
+    }
+}
+
+/// An agent gave `pkg.Class.method`. bt built the target for 1 min 27 s, and then the runner threw on the value.
+#[test]
+fn a_filter_with_a_clear_meaning_takes_the_form_of_the_runner_before_the_build() {
+    let fake = fake_air_tree();
+    let identity = "com.intellij.air.shared.core.AgentThreadIdentityTest#builds";
+    for (raw, expected) in [
+        (
+            "a.b.FooTest.testBar",
+            changed(
+                "a.b.FooTest#testBar",
+                "--filter a.b.FooTest.testBar runs as a.b.FooTest#testBar: the runner reads a method after #, not after a dot",
+            ),
+        ),
+        (
+            "AgentThreadIdentityTest#builds",
+            changed(
+                identity,
+                &format!(
+                    "--filter AgentThreadIdentityTest#builds runs as {identity}: the runner loads the class of a \
+                     Class#method by its FQN"
+                ),
+            ),
+        ),
+        (
+            "AgentThreadIdentityTest.builds",
+            changed(
+                identity,
+                &format!("--filter AgentThreadIdentityTest.builds runs as {identity}: the runner reads a method after #, not after a dot"),
+            ),
+        ),
+        (
+            "a.b.Outer.Inner#test",
+            changed(
+                "a.b.Outer$Inner#test",
+                "--filter a.b.Outer.Inner#test runs as a.b.Outer$Inner#test: the runner names a nested class with $ after its \
+                 outer class",
+            ),
+        ),
+        (
+            "a.b.Outer.Inner.test",
+            changed(
+                "a.b.Outer$Inner#test",
+                "--filter a.b.Outer.Inner.test runs as a.b.Outer$Inner#test: the runner names a nested class with $ after its \
+                 outer class",
+            ),
+        ),
+        (
+            "a.b.Outer.Inner",
+            changed(
+                "a.b.Outer",
+                "--filter a.b.Outer.Inner runs as a.b.Outer: the runner finds an @Nested class only through its outer class",
+            ),
+        ),
+        (
+            "a.b.Outer$Inner",
+            changed(
+                "a.b.Outer",
+                "--filter a.b.Outer$Inner runs as a.b.Outer: the runner finds an @Nested class only through its outer class",
+            ),
+        ),
+        (
+            "com.intellij.air.worktree.*",
+            changed(
+                "com.intellij.air.worktree",
+                "--filter com.intellij.air.worktree.* runs as com.intellij.air.worktree: --filter takes no wildcard, and a \
+                 package runs every class of it",
+            ),
+        ),
+    ] {
+        assert_eq!(
+            filter_of(&fake, raw).unwrap_or_else(|failure| panic!("{raw} refused: {failure}")),
+            expected,
+            "{raw}"
+        );
+    }
+    // Each call of the test has its own memo, and only a simple name with a method asks accio.
+    assert_eq!(
+        fake.accio_calls(),
+        [symbol_call("AgentThreadIdentityTest"), symbol_call("AgentThreadIdentityTest")]
+    );
+}
+
+#[test]
+fn a_filter_in_the_form_of_the_runner_stays_and_asks_no_accio() {
+    let fake = fake_air_tree();
+    for raw in [
+        "a.b.FooTest",
+        "a.b.FooTest#testBar",
+        "a.b.Outer$Inner#test",
+        "a.b",
+        "FooTest",
+        "a.IDEA_355419.FooTest",
+        "a.b.FooTest#a test name",
+    ] {
+        assert_eq!(
+            filter_of(&fake, raw).unwrap_or_else(|failure| panic!("{raw} refused: {failure}")),
+            FilterForm {
+                value: raw.to_owned(),
+                note: None
+            },
+            "{raw}"
+        );
+    }
+    assert_eq!(fake.accio_calls(), Vec::<String>::new());
+}
+
+#[test]
+fn a_filter_that_no_form_can_express_is_refused_before_the_build() {
+    let fake = fake_air_tree();
+    for raw in [
+        "com.intellij.air.(ATest|BTest)",
+        "a.ATest,a.BTest",
+        "a.*Test",
+        "a.b.FooTest#",
+        "*Test",
+    ] {
+        let failure = refusal(filter_of(&fake, raw));
+        assert_eq!(failure.exit, exit::USAGE, "{raw}");
+        assert!(
+            failure.message.contains("no wildcard, no regex and no list"),
+            "{raw}: {}",
+            failure.message
+        );
+    }
+}
+
+#[test]
+fn a_simple_name_of_two_classes_is_refused_and_of_no_class_runs_as_given() {
+    let fake = fake_air_tree();
+    let failure = refusal(filter_of(&fake, "AgentPromptChangesTreeContextContributorTest#test"));
+    assert_eq!(failure.exit, exit::USAGE);
+    assert!(
+        failure
+            .message
+            .starts_with("2 classes named AgentPromptChangesTreeContextContributorTest; pass the FQN in --filter"),
+        "{}",
+        failure.message
+    );
+    assert_eq!(
+        filter_of(&fake, "NoSuchTest#test").expect("runs as given"),
+        changed(
+            "NoSuchTest#test",
+            "--filter NoSuchTest#test: accio gave no class, so the runner gets the simple name and can find no test"
+        )
+    );
+}
+
+#[test]
+fn a_method_after_a_dot_is_the_method_of_the_class() {
+    assert_eq!(
+        classify("FooTest.testBar"),
+        Selector {
+            kind: SelectorKind::SimpleName,
+            name: "FooTest".to_owned(),
+            method: Some("testBar".to_owned()),
+        }
+    );
+    assert_eq!(
+        classify("a.b.FooTest.testBar"),
+        Selector {
+            kind: SelectorKind::Fqn,
+            name: "a.b.FooTest".to_owned(),
+            method: Some("testBar".to_owned()),
+        }
     );
 }

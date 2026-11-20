@@ -25,7 +25,7 @@ use bt_core::lanes::{
 use bt_core::os_runtime::command_line;
 use bt_core::result::{FlakyRun, RunResult, RunStatus, ShardTimeout, TargetResult, TargetTiming, collect_results, is_verdict};
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
-use bt_core::selector::{Resolution, Selector, SelectorKind, as_filter_or_package, no_tests_hint, resolve_selector};
+use bt_core::selector::{Resolution, Selector, SelectorKind, as_filter_or_package, canonical_filter, no_tests_hint, resolve_selector};
 use bt_core::shard_plan::{
     Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SHARED_SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS,
     ShardPlan, TreeTargets,
@@ -228,11 +228,14 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         ),
         None => None,
     };
-    let explicit_filter = args.filter.as_deref();
+    let inputs = ResolutionInputs::new(runtime, areas);
+    // The runner reads the value at the start of the test JVM, after the build. So bt reads its form first.
+    let filter_form = args.filter.as_deref().map(|raw| canonical_filter(raw, &inputs)).transpose()?;
+    let explicit_filter = filter_form.as_ref().map(|form| form.value.as_str());
 
     let mut lane: Option<(&Area, &LaneSpec)> = None;
     let mut extra: Vec<String> = Vec::new();
-    let resolution = match &selector {
+    let mut resolution = match &selector {
         None => {
             // Checked above: a run without a selector names a lane an area declares.
             let Some((area, spec)) = named_lane else {
@@ -263,7 +266,6 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
                     "--filter is only valid with an explicit label (//pkg:target or @repo//pkg:target) or --module; a name selector already implies a filter",
                 ));
             }
-            let inputs = ResolutionInputs::new(runtime, areas);
             let mut resolution = if selector.kind.names_suites() {
                 resolve_suite_run(runtime, areas.with_catalog()?, selector, lane_name)?
             } else {
@@ -299,6 +301,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             resolution
         }
     };
+    resolution.notes.extend(filter_form.as_ref().and_then(|form| form.note.clone()));
 
     let overridden_bep = bep_override(&args.passthrough);
     let lane_spec = lane.map(|(_, spec)| spec);

@@ -121,10 +121,12 @@ label for an explicit run. A module without a target of its own gets the code `m
 label of that target for an explicit run.
 
 `--filter` takes an FQN, `FQN#method` or a package, as for a label. A package is a dotted name whose segments start
-with a lower-case letter. bt gives every other value to bazel too. The JUnit runner reads `--test_filter` as one class
-name prefix or one `Class#method`, so a wildcard, a regex and a list run no test. For a NO TESTS run with `--filter`,
-the `hint` line of the digest names the form that works, see `no_tests_hint` in `bt-core`. The hint does not change the
-status or the exit code.
+with a lower-case letter. The JUnit runner reads `--test_filter` as one class name prefix or one `Class#method`, and it
+reads the value only when the test JVM starts, after the build. So bt reads the value first, in `canonical_filter` of
+`bt-core`. It changes a value with a clear meaning into the form of the runner, and a `note` line names the change:
+`pkg.Class.method`, a simple `Class#method` (accio gives the FQN), `pkg.Outer.Inner`, and `pkg.*`. It refuses a regex, a
+list and another wildcard with exit 2. For a NO TESTS run with `--filter`, the `hint` line of the digest names what the
+filter selects, see `no_tests_hint`. The hint does not change the status or the exit code.
 
 ## Builds
 

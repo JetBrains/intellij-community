@@ -139,6 +139,11 @@ impl Selector {
             return Ok(Self::new(kind, head));
         }
 
+        // `Foo.bar` and `a.Foo.bar` name the method `bar`, as `Foo#bar` does.
+        let (head, method) = match (&method, member_after_class(head)) {
+            (None, Some((class, member))) if regex!(r"^[A-Za-z0-9_]+$").is_match(member) => (class, Some(member.to_owned())),
+            _ => (head, method),
+        };
         if regex!(r"^[A-Z][A-Za-z0-9_]*$").is_match(head) {
             return Ok(Self {
                 kind: SelectorKind::SimpleName,
@@ -246,54 +251,170 @@ pub fn as_filter_or_package(value: Option<&str>) -> (Option<String>, Option<Stri
     }
 }
 
-/// The hint of a run that found no test, from the `--filter` value of the caller. It names the form of the filter that
-/// the JUnit runner reads. It changes nothing of the run. `None` for a run without `--filter`, and for an FQN
-/// `Class#method`, because the cause line of the digest already names the `#method` part.
+/// The hint of a run that found no test, from the `--filter` value after [`canonical_filter`]. It names the form of the
+/// filter that the JUnit runner reads. It changes nothing of the run. `None` for a run without `--filter`, and for an
+/// FQN `Class#method`, because the cause line of the digest already names the `#method` part.
 ///
-/// The runner reads `--test_filter` as a class name prefix whose last segment starts with an upper-case letter, or as
-/// one `Class#method`. It throws on a wildcard and a regex, and a list matches no class. It loads the class of a
-/// `Class#method` by its name, so the class needs its FQN. Jupiter finds an `@Nested` class only through its outer
-/// class, so the prefix `a.Outer$Inner` runs no test, but `a.Outer$Inner#method` runs. The runner names a nested
-/// class `a.Outer$Inner`, so `a.Outer.Inner` matches no class. A package filter also runs the subpackages.
+/// The runner reads `--test_filter` as a class name prefix, or as one `Class#method` whose class it loads by its name.
+/// A package filter also runs the subpackages. [`canonical_filter`] already gave every other value one of these forms.
 pub fn no_tests_hint(filter: Option<&str>) -> Option<String> {
     const PACKAGE_LINE: &str = "take the package from the package line of the file, not from its directory";
-    const OUTER_CLASS: &str = "the runner finds an @Nested class only through its outer class";
     let value = filter?;
     if is_package_name(value) {
         return Some(format!(
             "a package filter runs the classes of that package and its subpackages: {PACKAGE_LINE}"
         ));
     }
-    let (class, method) = value.split_once('#').map_or((value, None), |(class, method)| (class, Some(method)));
-    if !regex!(r"^(?:[A-Za-z_][A-Za-z0-9_]*\.)*[A-Z][A-Za-z0-9_$]*$").is_match(class) {
-        if let Some(package) = value.strip_suffix(".*").filter(|package| is_package_name(package)) {
-            return Some(format!(
-                "--filter takes no wildcard. To run every class of the package, pass --filter {package}"
-            ));
-        }
-        return Some(
-            "--filter takes a class, a Class#method or a package. It takes no wildcard, no regex and no list. Run each \
-             class in its own call, or pass the package of the classes"
-                .to_owned(),
-        );
-    }
-    let nested = nested_class_with_dots(class);
-    match method {
-        Some(_) if !class.contains('.') => Some(format!(
+    match value.split_once('#') {
+        Some((class, _)) if !class.contains('.') => Some(format!(
             "a Class#method needs the FQN of the class, because the runner loads the class by its name: {PACKAGE_LINE}"
         )),
-        Some(method) => nested.map(|nested| {
-            format!("a nested class takes $ after its outer class. If {class} is a nested class, pass --filter '{nested}#{method}'")
-        }),
-        None => {
-            if let Some((outer, _)) = class.split_once('$') {
-                return Some(format!("{OUTER_CLASS}. To run it, pass --filter {outer}"));
-            }
-            if let Some((outer, _)) = nested.as_deref().and_then(|nested| nested.split_once('$')) {
-                return Some(format!("{OUTER_CLASS}. If {class} is a nested class, pass --filter {outer}"));
-            }
-            Some(format!("a class filter is a prefix of the class names: {PACKAGE_LINE}"))
+        Some(_) => None,
+        None => Some(format!("a class filter is a prefix of the class names: {PACKAGE_LINE}")),
+    }
+}
+
+/// An explicit `--filter` value in the form that the JUnit runner reads, and the note that names a change of it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FilterForm {
+    pub value: String,
+    /// One line for the caller when the value is not the given one: the given value, the used one, and why.
+    pub note: Option<String>,
+}
+
+/// Reads an explicit `--filter` value before the first Bazel command, so that a form the runner cannot read costs no
+/// build.
+///
+/// The runner reads a class name prefix, an FQN `Class#method`, or a package ([`no_tests_hint`] names its rules). A
+/// value whose meaning is clear but whose form is not that one becomes that form, and the note says so:
+/// - `a.Foo.bar` and `Foo.bar`: a segment after a class that starts with a lower-case letter is a method, `#bar`.
+/// - `Foo#bar`: the runner loads the class by its name, so accio gives the FQN.
+/// - `a.Outer.Inner#bar` and `a.Outer$Inner#bar`: the `$` form. Without a method, the outer class, because the runner
+///   finds an `@Nested` class only through it.
+/// - `a.b.*`: the package `a.b`.
+///
+/// A value that no form can express, such as a regex or a list, is a usage refusal. An accio failure proves nothing
+/// about the class, so the value then stays as given, and the note names the cause.
+pub fn canonical_filter(raw: &str, inputs: &ResolutionInputs<'_>) -> Result<FilterForm, Refusal> {
+    if is_package_name(raw) {
+        return Ok(FilterForm {
+            value: raw.to_owned(),
+            note: None,
+        });
+    }
+    if let Some(package) = raw.strip_suffix(".*").filter(|package| is_package_name(package)) {
+        return Ok(changed_filter(
+            raw,
+            package.to_owned(),
+            "--filter takes no wildcard, and a package runs every class of it",
+        ));
+    }
+    let (class, method, method_with_dot) = match raw.split_once('#') {
+        Some((class, method)) => (class, Some(method), false),
+        None => match member_after_class(raw) {
+            Some((class, method)) => (class, Some(method), true),
+            None => (raw, None, false),
+        },
+    };
+    let bad_form = || {
+        fail_usage(format!(
+            "Cannot interpret --filter {raw}\n\
+             --filter takes a class, an FQN Class#method or a package. It takes no wildcard, no regex and no list. Run \
+             each class in its own call, or pass the package of the classes"
+        ))
+    };
+    if !regex!(r"^(?:[A-Za-z_][A-Za-z0-9_]*\.)*[A-Z][A-Za-z0-9_$]*$").is_match(class) {
+        return Err(bad_form());
+    }
+    if let Some(method) = method
+        && !regex!(r"^[A-Za-z_$][A-Za-z0-9_$ '`,.()\[\]-]*$").is_match(method)
+    {
+        return Err(bad_form());
+    }
+    let dot_reason = method_with_dot.then_some("the runner reads a method after #, not after a dot");
+
+    // A simple name with a method: the runner loads the class by its name.
+    if !class.contains('.')
+        && let Some(method) = method
+    {
+        return match unique_fqn(class, inputs)? {
+            Some(fqn) => Ok(changed_filter(
+                raw,
+                format!("{fqn}#{method}"),
+                dot_reason.unwrap_or("the runner loads the class of a Class#method by its FQN"),
+            )),
+            None => Ok(FilterForm {
+                value: format!("{class}#{method}"),
+                note: Some(format!(
+                    "--filter {raw}: accio gave no class, so the runner gets the simple name and can find no test"
+                )),
+            }),
+        };
+    }
+
+    let binary_class = nested_class_with_dots(class).unwrap_or_else(|| class.to_owned());
+    match method {
+        Some(method) => {
+            let value = format!("{binary_class}#{method}");
+            let reason = if binary_class == class {
+                dot_reason
+            } else {
+                Some("the runner names a nested class with $ after its outer class")
+            };
+            Ok(match reason {
+                Some(reason) => changed_filter(raw, value, reason),
+                None => FilterForm { value, note: None },
+            })
         }
+        None => Ok(match binary_class.split_once('$') {
+            Some((outer, _)) => changed_filter(
+                raw,
+                outer.to_owned(),
+                "the runner finds an @Nested class only through its outer class",
+            ),
+            None => FilterForm {
+                value: raw.to_owned(),
+                note: None,
+            },
+        }),
+    }
+}
+
+fn changed_filter(raw: &str, value: String, reason: &str) -> FilterForm {
+    let note = Some(format!("--filter {raw} runs as {value}: {reason}"));
+    FilterForm { value, note }
+}
+
+/// The class and the method of `a.Foo.bar` or `Foo.bar`: a last segment that starts with a lower-case letter, after a
+/// segment that [`nested_class_with_dots`] reads as a class.
+fn member_after_class(raw: &str) -> Option<(&str, &str)> {
+    let (class, member) = raw.rsplit_once('.')?;
+    let last_class_segment = class.rsplit('.').next()?;
+    let is_class = last_class_segment.starts_with(|first: char| first.is_ascii_uppercase())
+        && last_class_segment.contains(|letter: char| letter.is_ascii_lowercase());
+    (is_class && member.starts_with(|first: char| first.is_ascii_lowercase())).then_some((class, member))
+}
+
+/// The FQN of the one JVM class that accio names `simple_name`. `None` when accio names no class or fails. Two or more
+/// classes are a usage refusal that lists them.
+fn unique_fqn(simple_name: &str, inputs: &ResolutionInputs<'_>) -> Result<Option<String>, Refusal> {
+    let Ok(symbols) = inputs.symbols(simple_name) else {
+        return Ok(None);
+    };
+    let mut fqns: Vec<&str> = Vec::new();
+    for fqn in symbols.hits.iter().filter(|hit| hit.is_jvm()).filter_map(|hit| hit.fqn.as_deref()) {
+        if !fqns.contains(&fqn) {
+            fqns.push(fqn);
+        }
+    }
+    match fqns.as_slice() {
+        [] => Ok(None),
+        [fqn] => Ok(Some((*fqn).to_owned())),
+        _ => Err(fail_usage(format!(
+            "{} classes named {simple_name}; pass the FQN in --filter:\n  {}",
+            fqns.len(),
+            fqns.join("\n  ")
+        ))),
     }
 }
 

@@ -1633,22 +1633,48 @@ fn fake_module_tree() -> FakeRuntime {
 
 const UTIL_LABEL: &str = "@community//platform/util:util-tests_test";
 
-/// bt gives a filter that the runner cannot read to bazel as before. Only the NO TESTS digest names the form that
-/// works, see `no_tests_hint`.
+/// An agent gave `--filter pkg.Class.method`. bt built the target, and then the runner threw on the value. Now the dry
+/// run shows the form of the runner and the note, and a value that no form expresses is refused before bazel starts.
 #[test]
-fn a_wildcard_filter_still_goes_to_bazel() {
+fn a_filter_takes_the_form_of_the_runner_before_bazel_starts() {
     let fake = fake_module_tree();
-    let wildcard = run(
+    let dry_run = |filter: &str| {
+        run(
+            &["--module", "intellij.platform.util.tests", "--filter", filter, "--dry-run"],
+            &fake,
+        )
+    };
+    let method = dry_run("com.intellij.openapi.util.io.FileUtilLightTest.isAncestor");
+    assert_mentions(
+        &method.text,
         &[
+            "filter  com.intellij.openapi.util.io.FileUtilLightTest#isAncestor",
+            "note    --filter com.intellij.openapi.util.io.FileUtilLightTest.isAncestor runs as \
+             com.intellij.openapi.util.io.FileUtilLightTest#isAncestor: the runner reads a method after #, not after a dot",
+            "--test_filter=com.intellij.openapi.util.io.FileUtilLightTest#isAncestor",
+        ],
+    );
+    let wildcard = dry_run("com.intellij.openapi.util.io.*");
+    assert_mentions(
+        &wildcard.text,
+        &[
+            "filter  com.intellij.openapi.util.io",
+            "--test_env=JB_TEST_JUNIT5_FILTERS=include-package=com.intellij.openapi.util.io",
+        ],
+    );
+    assert!(!wildcard.text.contains("--test_filter"), "{}", wildcard.text);
+    let regex = refusal(execute(
+        [
             "--module",
             "intellij.platform.util.tests",
             "--filter",
-            "com.intellij.openapi.util.io.*",
-            "--dry-run",
+            "com.intellij.openapi.util.io.(ATest|BTest)",
         ],
         &fake,
-    );
-    assert_mentions(&wildcard.text, &["--test_filter=com.intellij.openapi.util.io.*"]);
+    ));
+    assert_eq!(regex.exit, exit::USAGE, "{}", regex.message);
+    assert!(regex.message.contains("no wildcard, no regex and no list"), "{}", regex.message);
+    assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
 #[test]
@@ -1781,20 +1807,6 @@ fn a_class_selector_that_runs_no_test_gets_no_filter_hint() {
     let outcome = run(&["AgentThreadIdentityTest"], &fake);
     assert_eq!(outcome.exit_code, exit::NO_TESTS, "{}", outcome.text);
     assert!(!outcome.text.contains("\nhint "), "{}", outcome.text);
-}
-
-/// The agents gave `--filter 'pkg.*'`. The run found no test, and the digest named no fix.
-#[test]
-fn a_wildcard_filter_that_runs_no_test_gets_the_hint_of_its_form() {
-    let fake = fake_air_tree();
-    one_attempt(&fake, "FAILED", &suite_xml(&suite("AgentThreadIdentityTest", Vec::new())));
-    spawn_answers(&fake, 3, "");
-    let outcome = run(&[CORE_LABEL, "--filter", "com.intellij.air.core.*"], &fake);
-    assert_eq!(outcome.exit_code, exit::NO_TESTS, "{}", outcome.text);
-    assert_mentions(
-        &outcome.text,
-        &["\nhint      --filter takes no wildcard. To run every class of the package, pass --filter com.intellij.air.core"],
-    );
 }
 
 /// The note of a nested class goes into the dry run, and a run writes it to the stderr before bazel starts.
