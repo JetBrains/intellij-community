@@ -59,27 +59,14 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
     return SHOW_LINKED_FILES;
   }
 
-  public static class UIImpl extends JPanel implements SearchableConfigurable {
-    private final JCheckBox myShowLinkedFiles;
-
+  public static class UIImpl implements SearchableConfigurable {
     private final XsltConfigImpl myConfig;
+
+    private JPanel myPanel;
+    private JCheckBox myShowLinkedFiles;
 
     public UIImpl() {
       myConfig = (XsltConfigImpl)XsltConfig.getInstance();
-      setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-
-      myShowLinkedFiles = new JBCheckBox(XPathBundle.message("checkbox.show.associated.files.in.project.view"));
-      myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
-
-      add(myShowLinkedFiles);
-
-      final JPanel jPanel = new JPanel(new BorderLayout());
-      jPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
-
-      final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-      jPanel.add(panel, BorderLayout.SOUTH);
-      jPanel.setAlignmentX(0);
-      add(jPanel);
     }
 
     @Override
@@ -94,16 +81,33 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
 
     @Override
     public JComponent createComponent() {
-      return this;
+      myPanel = new JPanel();
+      myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
+
+      myShowLinkedFiles = new JBCheckBox(XPathBundle.message("checkbox.show.associated.files.in.project.view"));
+      myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
+
+      myPanel.add(myShowLinkedFiles);
+
+      final JPanel jPanel = new JPanel(new BorderLayout());
+      jPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
+
+      final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+      jPanel.add(panel, BorderLayout.SOUTH);
+      jPanel.setAlignmentX(0);
+      myPanel.add(jPanel);
+      return myPanel;
     }
 
     @Override
     public boolean isModified() {
-      return myConfig.SHOW_LINKED_FILES != myShowLinkedFiles.isSelected();
+      return myShowLinkedFiles != null && myConfig.SHOW_LINKED_FILES != myShowLinkedFiles.isSelected();
     }
 
     @Override
     public void apply() {
+      if (myShowLinkedFiles == null) return;
+
       boolean oldValue = myConfig.SHOW_LINKED_FILES;
 
       myConfig.SHOW_LINKED_FILES = myShowLinkedFiles.isSelected();
@@ -119,7 +123,15 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
 
     @Override
     public void reset() {
+      if (myShowLinkedFiles == null) return;
+
       myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
+    }
+
+    @Override
+    public void disposeUIResources() {
+      myPanel = null;
+      myShowLinkedFiles = null;
     }
 
     @Override
