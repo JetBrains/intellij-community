@@ -293,7 +293,7 @@ final class RefreshWorker {
         }
 
         if (roots.contains(file)) {
-          var attributes = computeAttributesForFile(fs, file);
+          var attributes = computeRootAttributes(fs, file);
           if (attributes == null) {
             scheduleDeletion(events, file);
             markScanned(file);
@@ -623,6 +623,23 @@ final class RefreshWorker {
       ioTime.addAndGet(System.nanoTime() - t);
     }
     return attributes;
+  }
+
+  /**
+   * Looks a refresh root up by its path. `PersistentFSImpl.renameFile` and `moveFile` change the file in its file system before they change
+   * the `VirtualFile`, with the listeners of the event in between, so a lookup without a lock can use the path that the file has just left.
+   * A path that has changed when it is read again under a read action, which waits for such a change, is looked up again (IJPL-262431)
+   */
+  private static @Nullable FileAttributes computeRootAttributes(NewVirtualFileSystem fs, NewVirtualFile file)
+    throws FileStateUnknownException {
+    String path = file.getPath();
+    while (true) {
+      FileAttributes attributes = computeAttributesForFile(fs, file);
+      if (attributes != null) return attributes;
+      String current = ReadAction.computeBlocking(() -> file.isValid() ? file.getPath() : null);
+      if (current == null || current.equals(path)) return null;
+      path = current;
+    }
   }
 
   /**
