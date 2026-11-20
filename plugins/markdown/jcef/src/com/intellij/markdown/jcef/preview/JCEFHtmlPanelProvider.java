@@ -35,6 +35,7 @@ public final class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
     if (!canBeUsed()) {
       return;
     }
+    // TODO IJPL-262437 remove the guard when JBCefApp.getInstance() is safe to cancel.
     // A cancellation inside the JCEF startup fails a class initializer, and JCEF stays broken until the IDE restarts.
     Cancellation.executeInNonCancelableSection(() -> {
       try {
