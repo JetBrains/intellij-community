@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.isClosingWithFrame
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -17,6 +18,7 @@ import com.intellij.toolWindow.ToolWindowProjectSelector
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import java.awt.Component
+import java.util.function.Supplier
 
 private val LOG = logger<ToolWindowManagerPresentation>()
 
@@ -107,12 +109,16 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     val slot = slots.get(toolWindow.id) ?: createSlot(task) ?: return
     slot.guests.add(toolWindow)
     toolWindow.presentingSlot = slot
+    if (slot.isPlaceholder && slot.lastGuestStripeTitle == null) {
+      slot.lastGuestStripeTitle = toolWindow.stripeTitle
+    }
     syncEntry(slot, toolWindow)
   }
 
   /**
    * Removes the presented tool window [toolWindow] of a frame guest: the guest unregisters it, or the guest closes.
    * When the frame goes away with the guest, the presenting tool window keeps its state, so the next start restores it.
+   * The tool window of the frame owner presents no frame guest after its last frame guest left, see [lastGuestLeft].
    */
   fun detach(toolWindow: ToolWindowImpl) {
     ThreadingAssertions.assertEventDispatchThread()
@@ -122,13 +128,40 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
       return
     }
     slot.selection.remove(toolWindow)
-    if (toolWindow.project.isClosingWithFrame) {
+    if (slot.guests.isEmpty()) {
+      lastGuestLeft(slot)
+    }
+    else if (toolWindow.project.isClosingWithFrame) {
       // the decorator of the guest must leave the frame before the guest disposes it
       updateUi(slot)
     }
     else {
       refresh(slot)
     }
+  }
+
+  /**
+   * The last frame guest left [slot], so this class forgets the slot and everything that came from a frame guest.
+   * A tool window that this class registered for the frame guests leaves with them, unless it has content of the frame owner.
+   * The layout of the frame owner keeps its place and its visible state, so it shows again with the next frame guest
+   * and after a restart. Another tool window is a tool window of the frame owner alone from now on.
+   */
+  private fun lastGuestLeft(slot: PresentingSlot) {
+    val presenting = slot.presenting
+    if (slot.isPlaceholder && presenting.contentManagerIfCreated?.isEmpty != false) {
+      unbind(slot)
+      manager.doUnregisterToolWindow(presenting.id)
+      return
+    }
+
+    if (slot.isPlaceholder && slot.placeholderTask.stripeTitle != null) {
+      // the title came from a frame guest, see `placeholderTaskOf`, and it stays as the last frame guest gave it
+      @Suppress("HardCodedStringLiteral")
+      val title = slot.lastGuestStripeTitle ?: presenting.id
+      presenting.setStripeTitleProvider { title }
+    }
+    refresh(slot)
+    slots.remove(presenting.id)
   }
 
   /** The tool window [toolWindow] of the frame owner has its decorator now, so it can show the tool window of a frame guest. */
@@ -437,7 +470,21 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
       shouldBeAvailable = false,
       // as Find and Run: the tool window is on the stripe for the frame owner only while it has content of the frame owner
       hideOnEmptyContent = true,
+      // The supplier of a frame guest can hold the guest, and this tool window can live longer than the guest.
+      // So the title comes from a frame guest that still has the id.
+      stripeTitle = guestTask.stripeTitle?.let { Supplier { guestStripeTitleOf(guestTask.id) } },
     )
+  }
+
+  /** The stripe title that a frame guest gives the tool window [id], which this class registered for the frame guests. */
+  private fun guestStripeTitleOf(id: String): @NlsContexts.TabTitle String {
+    val slot = slots.get(id)
+    val title = slot?.guests?.firstOrNull()?.stripeTitle
+    if (title != null) {
+      slot.lastGuestStripeTitle = title
+    }
+    @Suppress("HardCodedStringLiteral")
+    return title ?: slot?.lastGuestStripeTitle ?: id
   }
 
   /**
@@ -566,6 +613,9 @@ internal class PresentingSlot(
 
   /** [presenting] was visible when it left, so the tool window that takes its place shows. */
   var wasVisibleBeforeUnbind = false
+
+  /** The stripe title that a frame guest gave [presenting] last, for the time when no frame guest has the id, see [isPlaceholder]. */
+  var lastGuestStripeTitle: @NlsContexts.TabTitle String? = null
 
   /** The selector of the project. It exists from the first time [presenting] has a choice of projects. */
   var selector: ToolWindowProjectSelector? = null

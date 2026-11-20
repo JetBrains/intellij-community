@@ -46,6 +46,7 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import java.util.function.Supplier
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
@@ -228,22 +229,57 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
-  fun `the presenting tool window leaves with the last entry and comes back with the next one`() = onEdt {
+  fun `the tool window that presents only frame guests leaves with the last one and comes back with the next one`() = onEdt {
     val managers = createManagers()
     managers.register(first).show()
-    val presenting = managers.owner.getEntry(ID)!!
 
     managers.of(first).doUnregisterToolWindow(ID)
 
-    assertThat(presenting.toolWindow.isAvailable).isFalse()
-    assertThat(presenting.toolWindow.isVisible).isFalse()
-    assertThat(presenting.stripeButton).isNull()
+    assertThat(managers.owner.getEntry(ID)).describedAs("the tool window has no content of the frame owner").isNull()
 
     val secondToolWindow = managers.register(second)
 
+    val presenting = managers.owner.getEntry(ID)!!
     assertThat(presenting.toolWindow.isAvailable).isTrue()
-    assertThat(presenting.toolWindow.isVisible).describedAs("the removal of the last entry hid the tool window").isTrue()
+    assertThat(presenting.stripeButton).isNotNull()
+    assertThat(presenting.toolWindow.isVisible).describedAs("the layout of the frame owner keeps the visible state").isTrue()
     assertThat(secondToolWindow.isVisible).isTrue()
+  }
+
+  @Test
+  fun `the tool window that presents only frame guests has the title of a frame guest that has the id`() = onEdt {
+    val managers = createManagers()
+    var titleRequests = 0
+    val firstTitle = Supplier {
+      titleRequests++
+      "first title"
+    }
+    managers.of(first).registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT, stripeTitle = firstTitle))
+    managers.of(second).registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT, stripeTitle = Supplier { "second title" }))
+    val presenting = managers.owner.getToolWindow(ID) as ToolWindowImpl
+    assertThat(presenting.stripeTitle).isEqualTo("first title")
+
+    managers.of(first).doUnregisterToolWindow(ID)
+    val requestsAfterDetach = titleRequests
+
+    assertThat(presenting.stripeTitle).isEqualTo("second title")
+    assertThat(titleRequests).describedAs("the frame owner holds no supplier of a frame guest that left").isEqualTo(requestsAfterDetach)
+  }
+
+  @Test
+  fun `the tool window with content of the frame owner stays when its last frame guest leaves`() = onEdt {
+    val managers = createManagers()
+    managers.of(first).registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT, stripeTitle = Supplier { "first title" }))
+    val presenting = managers.owner.getToolWindow(ID) as ToolWindowImpl
+    assertThat(presenting.stripeTitle).isEqualTo("first title")
+    addContent(presenting)
+
+    managers.of(first).doUnregisterToolWindow(ID)
+
+    assertThat(managers.owner.getToolWindow(ID)).isSameAs(presenting)
+    assertThat(presenting.isAvailable).isTrue()
+    assertThat(presenting.stripeTitle).isEqualTo("first title")
+    assertThat(managers.owner.presentation.entriesOf(ID)).isEmpty()
   }
 
   @Test
