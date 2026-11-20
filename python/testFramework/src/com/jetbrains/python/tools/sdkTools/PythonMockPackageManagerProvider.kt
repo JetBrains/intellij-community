@@ -2,13 +2,13 @@
 package com.jetbrains.python.tools.sdkTools
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.requirements.PyPackageVersion
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -34,10 +34,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 @TestOnly
 class PythonMockPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager? {
-    if (project.getUserData(OWN_MANAGER) == true) return null
+  override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager? {
+    if (interpreter.project.getUserData(OWN_MANAGER) == true) return null
     @Suppress("DEPRECATION") // The keys of a mock are user data of its SDK.
-    return if (PythonMockSdkKeys.isMock(interpreter.getSdkAPI())) PythonMockPackageManager(project, interpreter) else null
+    return if (PythonMockSdkKeys.isMock(interpreter.getSdkAPI())) PythonMockPackageManager(interpreter) else null
   }
 
   companion object {
@@ -62,7 +62,7 @@ class PythonMockPackageManagerProvider : PythonPackageManagerProvider {
 
 /** A package manager with no packages that runs no process, see [PythonMockPackageManagerProvider]. */
 @TestOnly
-private class PythonMockPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
+private class PythonMockPackageManager(interpreter: PythonInterpreter) : PythonPackageManager(interpreter) {
   override val repositoryManager: PythonRepositoryManager = EmptyRepositoryManager(project)
   override val dependenciesFilesRelativePaths: List<Path> = emptyList()
 

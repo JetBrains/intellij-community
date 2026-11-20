@@ -1,6 +1,8 @@
 package com.jetbrains.python.fixtures
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.python.sdk.backend.classRoots
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
@@ -30,9 +32,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
-import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.skeletonsPath
 import com.intellij.testFramework.IndexingTestUtil
@@ -701,7 +701,7 @@ abstract class PyCodeInsightTestCase {
       logger.warn("The interpreter is null. assertSdkRootsNotParsed is skipped")
       return
     }
-    for (root in interpreter.classRoots(myFixture.project)) {
+    for (root in interpreter.classRoots) {
       assertRootNotParsed(currentFile, root)
     }
   }

@@ -2,6 +2,9 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Lists;
+import com.jetbrains.python.sdk.skeletons.PyTargetsSkeletonGeneratorKt;
+import com.intellij.python.sdk.backend.PythonInterpreterKt;
+import com.intellij.python.community.execService.BinaryToExec;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.execution.ExecutionException;
@@ -120,7 +123,8 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
         indicator.setIndeterminate(true);
 
         try {
-          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, mySdk, null, null, folder);
+          final BinaryToExec binary = PyTargetsSkeletonGeneratorKt.skeletonBinaryOf(PythonInterpreterKt.pythonInterpreterOrThrow(mySdk, project, false));
+          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, mySdk, binary, null, null, folder);
 
           if (isFromGiRepository(myQualifiedName)) {
             if (!generateSkeletonsForGiRepository(refresher, indicator, folder)) return;

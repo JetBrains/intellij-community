@@ -24,7 +24,7 @@ internal class CondaSdkDataProvider : PySdkDataProvider {
     fileSystem: FileSystem<P>,
     requirementsFile: Path?,
   ): PythonSdkAdditionalData {
-    val identity = condaIdentityOf(fileSystem, envRef, pythonBinary)
+    val identity = condaIdentityOf(fileSystem, envRef)
     // conda is found before this runs: the env was listed with it, and its binary was found with it.
     val condaPath = fileSystem.resolveExecutable(CondaPyTool.getInstance())?.toStringOnRemoteMachine().orEmpty()
     return condaSdkDataOf(PyCondaEnv(identity, condaPath), pyProject.baseDir).also { it.requirementsPath = requirementsFile }

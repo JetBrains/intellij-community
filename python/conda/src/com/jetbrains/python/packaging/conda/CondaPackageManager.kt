@@ -2,9 +2,9 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
@@ -14,7 +14,6 @@ import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentY
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils.ENV_YML_FILE_NAME
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.intellij.python.community.impl.conda.environmentYml.format.EnvironmentYmlModifier
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.community.impl.conda.PyCondaBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -48,8 +47,7 @@ import java.nio.file.Path
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-
-class CondaPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
+class CondaPackageManager(interpreter: PythonInterpreter) : PythonPackageManager(interpreter) {
   override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project).also {
     Disposer.register(this, it)
   }

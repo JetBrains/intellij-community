@@ -2,6 +2,7 @@
 package com.jetbrains.python.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
@@ -32,7 +33,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.intellij.python.pyproject.model.evolution.PyRunConfigurationInterpreter;
-import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreterSdkBoundaryKt;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
@@ -270,13 +270,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return myPythonInterpreter;
   }
 
-  /** The SDK of {@link #getStoredInterpreter}. */
-  private @Nullable Sdk getStoredSdk() {
-    final PythonInterpreter interpreter = getStoredInterpreter();
-    //noinspection deprecation
-    return interpreter != null ? PythonInterpreterExtKt.getSdkAPI(interpreter) : null;
-  }
-
   private @NotNull List<String> myEnvFiles = Collections.emptyList();
 
   @Override
@@ -347,13 +340,13 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     // An older build reads the SDK by these fields. The legacy flow writes the SDK it holds, and an interpreter that does
     // not resolve yet keeps the values that were read. The interpreter library flow writes back only what it read, so an
     // older build keeps its interpreter and this build reads the INTERPRETER field.
-    final Sdk sdk = PyRunConfigurationInterpreter.isLegacySdkWriteEnabled() ? getStoredSdk() : null;
-    final String sdkHome = sdk != null ? sdk.getHomePath() : null;
+    final PythonInterpreter legacyInterpreter = PyRunConfigurationInterpreter.isLegacySdkWriteEnabled() ? getStoredInterpreter() : null;
+    final String sdkHome = legacyInterpreter != null ? PythonInterpreterExtKt.getLegacyTableSdkHome(legacyInterpreter) : null;
     final String storedSdkHome = sdkHome != null ? sdkHome : mySdkHome;
     if (!StringUtil.isEmpty(storedSdkHome)) {
       JDOMExternalizerUtil.writeField(element, "SDK_HOME", storedSdkHome);
     }
-    final String sdkName = sdk != null ? sdk.getName() : myLegacySdkName;
+    final String sdkName = legacyInterpreter != null ? PythonInterpreterExtKt.getLegacyTableSdkName(legacyInterpreter) : myLegacySdkName;
     if (sdkName != null) {
       JDOMExternalizerUtil.writeField(element, "SDK_NAME", sdkName);
     }
@@ -494,10 +487,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @ApiStatus.Internal
   public void patchCommandLine(GeneralCommandLine commandLine) {
     final String interpreterPath = getInterpreterPath();
-    Sdk sdk = getSdk();
-    if (sdk != null && interpreterPath != null) {
+    PythonInterpreter interpreter = getPythonInterpreter();
+    if (interpreter != null && interpreterPath != null) {
       patchCommandLineFirst(commandLine, interpreterPath);
-      patchCommandLineForVirtualenv(commandLine, sdk);
+      patchCommandLineForVirtualenv(commandLine, interpreter);
     }
   }
 
@@ -513,8 +506,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   /**
    * Alters PATH so that a virtualenv is activated, if present.
    */
-  protected void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
-    PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk);
+  @ApiStatus.Internal
+  protected void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull PythonInterpreter interpreter) {
+    PythonSdkType.applyActivationEnvironment(commandLine.getEnvironment(),
+                                             PythonInterpreterExtKt.activationEnvironmentBlocking(interpreter).getSuccessOrNull());
   }
 
   protected void setUnbufferedEnv() {

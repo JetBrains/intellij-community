@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.pythonPackageManager
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
@@ -29,25 +30,27 @@ import java.nio.file.Path
 @Layers.Functional
 @TestApplication
 internal class PythonPackageManagerNullAdditionalDataTest {
+  private val projectFixture = projectFixture()
+
   @Test
   fun `an SDK with null additional data names no interpreter`(@TempDir home: Path): Unit = timeoutRunBlocking {
     val sdk = pythonSdk(home, data = null)
 
-    assertBrokenConfiguration(sdk.pythonInterpreterResultAsync(), sdk.name)
+    assertBrokenConfiguration(sdk.pythonInterpreterResultAsync(projectFixture.get()), sdk.name)
   }
 
   @Test
   fun `an SDK with no home path names no interpreter`(@TempDir home: Path): Unit = timeoutRunBlocking {
     val sdk = pythonSdk(homePath = null, data = venvData(home))
 
-    assertBrokenConfiguration(sdk.pythonInterpreterResultAsync(), sdk.name)
+    assertBrokenConfiguration(sdk.pythonInterpreterResultAsync(projectFixture.get()), sdk.name)
   }
 
   @Test
   fun `an SDK with a home path and data names an interpreter`(@TempDir home: Path): Unit = timeoutRunBlocking {
     val sdk = pythonSdk(home, venvData(home))
 
-    val interpreter = sdk.pythonInterpreterResultAsync().orThrow()
+    val interpreter = sdk.pythonInterpreterResultAsync(projectFixture.get()).orThrow()
 
     assertThat(interpreter.ownerDir).isEqualTo(home)
   }

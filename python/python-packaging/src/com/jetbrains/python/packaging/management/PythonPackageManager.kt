@@ -4,6 +4,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.execution.ExecutionException
+import com.intellij.python.sdk.backend.requirementsPath
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -27,9 +28,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.sdk.backend.NativePythonInterpreter
-import com.intellij.python.sdk.backend.PyInterpreterLibrary
-import com.intellij.python.sdk.backend.PythonEnvironmentKey
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonEnvironmentKey
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.isReadOnly
@@ -95,14 +95,19 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @ApiStatus.Experimental
 abstract class PythonPackageManager @ApiStatus.Internal constructor(
-  val project: Project,
   /** The interpreter whose environment this manager manages. It is detected, so its environment is known. */
-  @ApiStatus.Internal
+  @get:ApiStatus.Internal
   val interpreter: PythonInterpreter,
 ) : Disposable {
-  /** [interpreter] as [project] uses it. */
-  @get:ApiStatus.Internal
-  val library: PyInterpreterLibrary = PyInterpreterLibrary(project, interpreter)
+  /** For the subclasses outside the Python plugin. The interpreter gives the project. */
+  @ApiStatus.Internal
+  @Deprecated("Pass only the interpreter", ReplaceWith("PythonPackageManager(interpreter)"))
+  @Suppress("UNUSED_PARAMETER")
+  constructor(project: Project, interpreter: PythonInterpreter) : this(interpreter)
+
+  /** The project of [interpreter]. */
+  val project: Project
+    get() = interpreter.project
   /**
    * Whether this manager has an explicit list of top-level dependencies (e.g. from pyproject.toml).
    * When true, only packages from [listDeclaredPackagesCached] are treated as "declared" in the UI,
@@ -115,7 +120,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   /**
    * Whether this manager is still the one for its [interpreter]. [PythonPackageManager.forPythonInterpreter] replaces a
    * manager that says no. The default is yes. A manager whose class the stored dependency file selects answers from that
-   * file, see [PyInterpreterLibrary.requirementsPath].
+   * file, see [PythonInterpreter.requirementsPath].
    */
   @ApiStatus.Internal
   open fun matchesInterpreter(): Boolean = true
@@ -295,7 +300,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     if (!isInit) {
       withContext(NonCancellable) {
         // The suspending refresh does not accept ModalityState.any(): the refresh then runs async, without a wait.
-        refreshPaths(project, interpreter, async = !isModalAwareContext())
+        refreshPaths(interpreter, async = !isModalAwareContext())
       }
     }
 
@@ -589,7 +594,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   suspend fun getRootDependenciesFile(): PyDependenciesFile? {
-    val requirementsPath = library.requirementsPath
+    val requirementsPath = interpreter.requirementsPath
     val virtualFile = if (requirementsPath != null) {
       // An explicitly stored path wins over (and does not fall back to) the manager-specific defaults.
       VirtualFileManager.getInstance().findFileByNioPath(requirementsPath)
@@ -725,7 +730,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     /** The names that a dependency file of this manager can have: the [dependenciesFilesRelativePaths] and the stored requirements path. */
     private fun dependencyFileNames(): Set<String> = buildSet {
       dependenciesFilesRelativePaths.mapTo(this) { it.fileName.toString() }
-      library.requirementsPath?.let { add(it.fileName.toString()) }
+      interpreter.requirementsPath?.let { add(it.fileName.toString()) }
     }
 
     /** The name of the file that [this] adds at a path, or `null` when [this] adds no file. */
@@ -819,8 +824,8 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     /** The manager of the environment [interpreter] runs in. */
     @ApiStatus.Internal
     @Throws(AlreadyDisposedException::class)
-    fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager =
-      project.service<PythonPackageManagerService>().forPythonInterpreter(project, interpreter)
+    fun forPythonInterpreter(interpreter: PythonInterpreter): PythonPackageManager =
+      interpreter.project.service<PythonPackageManagerService>().forPythonInterpreter(interpreter)
 
 
     /** The changes of the packages of the interpreters of a project. The manager publishes them on the bus of its project. */

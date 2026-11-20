@@ -173,7 +173,7 @@ class PythonInterpreterUpdater(private val project: Project, private val corouti
 
   private suspend fun update(waiting: Waiting) {
     val sdk = waiting.sdk
-    val interpreter = sdk.pythonInterpreterResultAsync(forceRefresh = true).getOr {
+    val interpreter = sdk.pythonInterpreterResultAsync(project, forceRefresh = true).getOr {
       LOG.warn("No update of ${sdk.name}: ${it.error.message}")
       return
     }

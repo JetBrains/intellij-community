@@ -105,7 +105,7 @@ internal class PixiRunAnythingProvider : RunAnythingCommandLineProvider() {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
     val interpreter = project.findMainEvoPyProjectIfReady()?.interpreter ?: return null
     if (interpreter.ref.manager != PixiPyTool.getInstance().fusId) return null
-    return PythonPackageManager.forPythonInterpreter(project, interpreter) as? PixiPackageManager
+    return PythonPackageManager.forPythonInterpreter(interpreter) as? PixiPackageManager
   }
 }
 

@@ -183,7 +183,7 @@ class DependenciesInspectionTest : PythonDependencyTestCase() {
   }
 
   private fun packageManager(): PythonPackageManager =
-    PythonPackageManager.forPythonInterpreter(myFixture.project, findPythonInterpreterForTests(myFixture.module)!!)
+    PythonPackageManager.forPythonInterpreter(findPythonInterpreterForTests(myFixture.module)!!)
 
   /** The same reload a package operation and a background SDK update perform. */
   private fun reloadPackages() {

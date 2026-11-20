@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.env.tests.conda
 
 import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -68,7 +69,7 @@ internal class CondaOutdatedWithoutPipTest {
       val env = PyCondaEnv(PyCondaEnvIdentity.UnnamedEnv(envPath, false), conda)
       val condaSdk = env.createSdkFromThisEnv(project, null, project.basePath?.toNioPathOrNull()!!).getOrThrow().getSdkAPI()
       sdk = condaSdk
-      val manager = CondaPackageManager(project, condaSdk.pythonInterpreterAsync()).also { Disposer.register(project, it) }
+      val manager = CondaPackageManager(condaSdk.pythonInterpreterAsync(project)).also { Disposer.register(project, it) }
       manager.waitForInit()
       assertFalse(manager.listInstalledPackages().any { it.name == PyPackageNames.PIP }, "pip must be removed before the check")
 

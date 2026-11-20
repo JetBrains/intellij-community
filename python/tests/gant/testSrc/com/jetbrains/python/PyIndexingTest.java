@@ -72,7 +72,7 @@ public class PyIndexingTest extends PyTestCase {
         final PythonInterpreter interpreter = getPythonInterpreter();
         assertNotNull(interpreter);
 
-        final VirtualFile libDir = PythonInterpreterExtKt.stdlibLibDirectory(interpreter, myFixture.getProject());
+        final VirtualFile libDir = PythonInterpreterExtKt.stdlibLibDirectory(interpreter);
 
         ModuleRootModificationUtil.addContentRoot(module, libDir);
         try {

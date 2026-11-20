@@ -13,7 +13,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 internal class PyDependencyCollector : DependencyCollector {
   override suspend fun collectDependencies(project: Project): Collection<DependencyInformation> {
     return project.pythonInterpreters().flatMap { interpreter ->
-      val pyPackageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+      val pyPackageManager = PythonPackageManager.forPythonInterpreter(interpreter)
       pyPackageManager.listInstalledPackages().asSequence().map { DependencyInformation(it.name) }
     }.toSet()
   }

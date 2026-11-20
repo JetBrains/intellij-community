@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.env.pixi
 
 import com.intellij.idea.TestFor
+import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.Executor
 import com.intellij.execution.ui.RunContentDescriptor
@@ -36,7 +37,6 @@ import com.intellij.python.pyproject.model.api.configureSdkIfNeeded
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.PyProjectManager
-import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pytools.backend.getCustomExecutablePath
 import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.requirements.pyRequirementVersionSpec
@@ -1139,7 +1139,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
       assertThat(popupDetails.name).isEqualTo("pixi_native_probe")
       assertThat(popupDetails.availableVersions).containsExactly("1.2.3")
       val defaultInterpreter = checkNotNull(pyProjectFixture.get().getInterpreter())
-      val defaultManager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), defaultInterpreter)
+      val defaultManager = PythonPackageManager.forPythonInterpreter(defaultInterpreter)
       val defaultSearch = defaultManager.repositoryManager.searchPackages(CondaPackageRepository, "pixi_native_probe")
       assertThat(defaultSearch.pages.flatMap { it.contents().getOrThrow() }).isEmpty()
     }
@@ -1651,7 +1651,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
       assertThat(declared?.isSuccess).isTrue()
       assertThat(declared?.getOrThrow()?.map { it.name }).doesNotContain(pkg.name)
 
-      val updated = PythonPackageManagerUI.forPythonInterpreter(projectFixture.get(), interpreter, errorSink.get())
+      val updated = PythonPackageManagerUI.forPythonInterpreter(interpreter, errorSink.get())
         .updatePackagesBackground(listOf(PythonRepositoryPackageSpecification(pkg.defaultRepository, pkg.name, "4.14.1")))
 
       assertThat(errorSink.get().errors).isEmpty()
@@ -1679,7 +1679,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
       assertThat(manager.repositoryManager.getVersions("typing-extensions", nativeRepository)).contains("4.15.0")
       val specification = details.getOrThrow().toPackageSpecification("4.15.0")
       assertThat(specification).isNotNull()
-      val updated = PythonPackageManagerUI.forPythonInterpreter(projectFixture.get(), interpreter, errorSink.get())
+      val updated = PythonPackageManagerUI.forPythonInterpreter(interpreter, errorSink.get())
         .updatePackagesBackground(listOf(checkNotNull(specification)))
       assertThat(errorSink.get().errors).isEmpty()
       assertThat(updated).isNotNull()
@@ -1699,7 +1699,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
       defaultEnvironmentDefinition = "{ features = ['tools'], no-default-feature = true }",
       extraManifest = "[${prefix}feature.tools.dependencies]\npython = '3.13.*'\n",
     ) { interpreter, _ ->
-      val installed = PythonPackageManagerUI.forPythonInterpreter(projectFixture.get(), interpreter, errorSink.get())
+      val installed = PythonPackageManagerUI.forPythonInterpreter(interpreter, errorSink.get())
         .installPackageBackground("six", pyRequirementVersionSpec("1.17.0"))
       assertThat(errorSink.get().errors).isEmpty()
       assertThat(installed).isNotNull()
@@ -1775,7 +1775,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
       val nativePackage = installed.getOrThrow().single { it.name == "typing-extensions" }
       assertThat(nativePackage.defaultRepository).isSameAs(nativeRepository)
 
-      val ui = PythonPackageManagerUI.forPythonInterpreter(projectFixture.get(), interpreter, errorSink.get())
+      val ui = PythonPackageManagerUI.forPythonInterpreter(interpreter, errorSink.get())
       val result = when (change) {
         DependencyChange.UPDATE -> ui.updatePackagesBackground(
           listOf(PythonRepositoryPackageSpecification(nativeRepository, nativePackage.name, "4.15.0")),
@@ -1825,7 +1825,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
       assertThat(before.isSuccess).isTrue()
       assertThat(before.getOrThrow().filter { it.name == "six" }).singleElement()
         .extracting { it.version }.isEqualTo("1.16.0")
-      val ui = PythonPackageManagerUI.forPythonInterpreter(projectFixture.get(), interpreter, errorSink.get())
+      val ui = PythonPackageManagerUI.forPythonInterpreter(interpreter, errorSink.get())
       val result = when (change) {
         DependencyChange.UPDATE -> ui.updatePackagesBackground(
           listOf(PythonRepositoryPackageSpecification(PyPiPackageRepository, "six", "1.17.0")),
@@ -1918,7 +1918,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
       val errors = errorSink.get()
       assertThat(manager.listInstalledPackages().map { it.name }).doesNotContain("six")
 
-      val packages = PythonPackageManagerUI.forPythonInterpreter(projectFixture.get(), interpreter, errors)
+      val packages = PythonPackageManagerUI.forPythonInterpreter(interpreter, errors)
         .installPackageBackground("six", pyRequirementVersionSpec("1.17.0"))
 
       assertThat(errors.errors).isEmpty()
@@ -1945,7 +1945,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
     manifestName: String, factory: PyEnvironmentFactory,
   ): Unit = timeoutRunBlocking(5.minutes) {
     withWorkspace(manifestName, factory) { interpreter, manager ->
-      val ui = PythonPackageManagerUI.forPythonInterpreter(projectFixture.get(), interpreter, errorSink.get())
+      val ui = PythonPackageManagerUI.forPythonInterpreter(interpreter, errorSink.get())
       val installed = ui.installPackageBackground("six", pyRequirementVersionSpec("1.16.0"))
       assertThat(installed.orEmpty().filter { it.name == "six" }).singleElement().extracting { it.version }.isEqualTo("1.16.0")
 
@@ -2039,7 +2039,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
     manifestName: String, factory: PyEnvironmentFactory,
   ): Unit = timeoutRunBlocking(5.minutes) {
     withWorkspace(manifestName, factory, environmentName = "analysis") { interpreter, _ ->
-      val packages = PythonPackageManagerUI.forPythonInterpreter(projectFixture.get(), interpreter, errorSink.get())
+      val packages = PythonPackageManagerUI.forPythonInterpreter(interpreter, errorSink.get())
         .installPackageBackground("six", pyRequirementVersionSpec("1.17.0"))
       assertThat(errorSink.get().errors).isEmpty()
       assertThat(packages.orEmpty().filter { it.name == "six" }).singleElement().extracting { it.version }.isEqualTo("1.17.0")
@@ -2049,7 +2049,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
       assertThat(imported.getOrThrow().trim()).isEqualTo("1.17.0")
       assertThat(declaredPackages(manifestName)).isEmpty()
       val defaultInterpreter = checkNotNull(pyProjectFixture.get().getInterpreter())
-      val defaultManager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), defaultInterpreter)
+      val defaultManager = PythonPackageManager.forPythonInterpreter(defaultInterpreter)
       val defaultPackages = defaultManager.reloadPackages()
       assertThat(defaultPackages.isSuccess).isTrue()
       assertThat(defaultPackages.getOrThrow().map { it.name }).doesNotContain("six")
@@ -2131,7 +2131,7 @@ internal class PixiPackageManagerTest(private val environmentFactory: PyEnvironm
         registry.register(created.getOrThrow())
       }
       beforeManager(manifest)
-      val manager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), interpreter)
+      val manager = PythonPackageManager.forPythonInterpreter(interpreter)
       assertThat(manager).isInstanceOf(PixiPackageManager::class.java)
       action(interpreter, manager)
     }

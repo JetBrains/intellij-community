@@ -101,12 +101,3 @@ fun PythonInterpreter.asBinToExecute(): Result<BinaryToExec, MessageError> = sdk
 fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
   pySdkAdditionalData.flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
 }
-
-/**
- * Configures [targetCommandLineBuilder] (sets a binary path and other stuff) so it could run this interpreter on its target
- */
-@Internal
-@RequiresBackgroundThread
-fun PythonInterpreter.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
-  sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder)
-}

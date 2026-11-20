@@ -49,9 +49,11 @@ keeps one flow.
 
 ## Rules
 
-- **Read** an interpreter with `PyProject.getInterpreter()`. It reads the `EvoPyProjectModel` snapshot. Two
-  projects can share one `PythonInterpreter`, so what one project keeps about it, such as the requirements file, is on
-  `PyInterpreterLibrary`: read it with `PyProject.getInterpreterLibrary()` or `EvoPyProject.library`.
+- **Read** an interpreter with `PyProject.getInterpreter()`. It reads the `EvoPyProjectModel` snapshot.
+- **An interpreter belongs to one project.** The registry of `PythonInterpreter.project` builds it, and that project
+  holds its SDK. Read what the project keeps about it, such as the requirements file, the language level and the
+  class roots, with the extensions in `PythonInterpreterExt.kt`. Do not pass a `Project` next to an interpreter. Two
+  projects share only the environment, see `PythonEnvironments`.
 - **Set** an interpreter only with `PyProject.setPythonInterpreter(...)`. It is the only write path and the only way
   to add an interpreter to the registry.
 - **Do not read the SDK table.** `ProjectJdkTable`, `PythonSdkUtil.findPythonSdk` and the SDK of a module find nothing

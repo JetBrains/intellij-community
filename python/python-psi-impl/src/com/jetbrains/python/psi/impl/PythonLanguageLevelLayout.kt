@@ -2,13 +2,13 @@
 package com.jetbrains.python.psi.impl
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.classRoots
+import com.intellij.python.sdk.backend.languageLevel
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.isDisposed
-import com.intellij.python.sdk.backend.languageLevel
 import com.jetbrains.python.psi.LanguageLevel
 
 /**
@@ -39,14 +39,14 @@ internal data class PythonLanguageLevelLayout(
 
     /** The layout of [snapshot]. An interpreter whose SDK is disposed has no roots and no version, so it is not here. */
     fun of(project: Project, snapshot: EvoPyProjectModel.Snapshot): PythonLanguageLevelLayout {
-      val interpreterLevels = snapshot.interpreters.filterNot { it.isDisposed }.associateWith { it.languageLevel(project) }
+      val interpreterLevels = snapshot.interpreters.filterNot { it.isDisposed }.associateWith { it.languageLevel }
       val moduleLevels = snapshot.evoPyProjects
         .filterNot { it.pyProject.residesOnModule.isDisposed }
         .mapNotNull { evoPyProject -> evoPyProject.interpreter?.let(interpreterLevels::get)?.let { evoPyProject.pyProject.residesOnModule to it } }
         .toMap()
       val rootLevels = HashMap<VirtualFile, LanguageLevel>()
       for ((interpreter, level) in interpreterLevels) {
-        for (root in interpreter.classRoots(project)) rootLevels.putIfAbsent(root, level)
+        for (root in interpreter.classRoots) rootLevels.putIfAbsent(root, level)
       }
       return PythonLanguageLevelLayout(moduleLevels, interpreterLevels, rootLevels)
     }

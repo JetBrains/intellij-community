@@ -3,8 +3,6 @@ package com.jetbrains.env
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.project.Project
-import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.python.sdk.backend.addTestInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentFactory
@@ -31,7 +29,7 @@ private class ProviderTestEnvironment(private val factory: PyEnvironmentFactory,
 
   // This old environment has no PyProject: it adds its SDK to the table itself, owned by the env dir.
   override fun prepareSdk(project: Project): Sdk = runBlocking(Dispatchers.IO) {
-    PythonInterpreterRegistry.getInstance(project).addTestInterpreter(factory.createEnvironment(spec).prepareSdk()).getSdkAPI()
+    factory.createEnvironment(spec).prepareInterpreter(project).getSdkAPI()
   }
 
   override fun close() {

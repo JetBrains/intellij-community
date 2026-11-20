@@ -50,22 +50,6 @@ public final class PySkeletonUtil {
   }
 
   /**
-   * Returns the "site-packages" directory that is going to be used for installing new packages with {@code pip}.
-   * <p>
-   * Note that on a virtual env there might be two such directories in {@code sys.path} depending on whether
-   * the option "--system-site-packages" was given during its creation. Then the one inside the actual virtual
-   * env tree will be returned, as it's the one used to install new packages.
-   * Also, on some systems, first of all in system distributions of Python on Linux, there might be no
-   * "site-packages" at all, and this method returns {@code null} accordingly in this case.
-   */
-  @RequiresBackgroundThread
-  // External plugins reach this through `PythonSdkUtil.getSitePackagesDirectory`, and their threads are unknown.
-  @RequiresReadLockAbsence(generateAssertion = false)
-  public static @Nullable VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
-    return PythonInterpreterExtKt.sitePackagesDirectory(pythonSdk);
-  }
-
-  /**
    * Whether {@code vFile} belongs to the standard library of {@code interpreter}.
    * <p>
    * Code insight calls it under a read action, so it reads no file outside the VFS.

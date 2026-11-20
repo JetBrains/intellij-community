@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.env.pixi
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.execution.Platform
 import com.intellij.execution.target.BaseTargetEnvironmentRequest
 import com.intellij.execution.target.LanguageRuntimeType
@@ -91,6 +92,7 @@ import kotlin.time.Duration.Companion.minutes
 @ExtendWith(PythonFactoryExtension::class, LeakedProcessReporterExtension::class)
 internal class PixiTargetRuntimeTest {
   private val disposable = disposableFixture()
+  private val projectFixture = projectFixture()
 
   @ParameterizedTest
   @EnumSource(Platform::class)
@@ -235,7 +237,7 @@ internal class PixiTargetRuntimeTest {
         commitChanges()
       }
     }
-    val interpreter = sdk.pythonInterpreterResultAsync().getOrThrow()
+    val interpreter = sdk.pythonInterpreterResultAsync(projectFixture.get()).getOrThrow()
     assertThat(interpreter).isInstanceOf(TargetPythonInterpreter::class.java)
     val links = temporaryDirectory.resolve("private target wheels").createDirectories()
     val arguments = if (useFindLinks) {

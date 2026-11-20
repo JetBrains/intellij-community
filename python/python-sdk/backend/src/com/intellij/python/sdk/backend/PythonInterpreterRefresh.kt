@@ -13,19 +13,20 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-suspend fun refreshPaths(project: Project, interpreter: PythonInterpreter, async: Boolean = false): Unit = withContext(Dispatchers.IO) {
+suspend fun refreshPaths(interpreter: PythonInterpreter, async: Boolean = false): Unit = withContext(Dispatchers.IO) {
+  val project = interpreter.project
   // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
   // Temporary folders can't be deleted on Windows due to that.
   // That breaks tests.
   // This code should be deleted, but disabled temporary to fix tests
   if (!(ApplicationManager.getApplication().isUnitTestMode && SystemInfoRt.isWindows)) {
-    val files = interpreter.classRoots(project)
+    val files = interpreter.classRoots
     VfsUtil.markDirty(true, true, *files)
     refreshFiles(files.toList(), recursive = true, async = async)
     refreshFiles(listOfNotNull(interpreter.associatedModuleDir), recursive = false, async = async)
   }
   else {
-    refreshFiles(listOfNotNull(interpreter.sitePackagesDirectory(project), interpreter.associatedModuleDir), recursive = true, async = async)
+    refreshFiles(listOfNotNull(interpreter.sitePackagesDirectory(), interpreter.associatedModuleDir), recursive = true, async = async)
   }
 
   PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = false, background = false))

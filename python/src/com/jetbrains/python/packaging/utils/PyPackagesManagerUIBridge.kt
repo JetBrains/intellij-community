@@ -19,8 +19,8 @@ internal object PyPackagesManagerUIBridge {
   @JvmStatic
   fun runInstallInBackground(project: Project, sdk: Sdk, requirements: List<PyRequirement>?, extraArgs: List<String>, listener: PyPackageManagerUI.Listener?) {
     PyPackageCoroutine.launch(project) {
-      val interpreter = sdk.pythonInterpreterResultAsync().getOr { return@launch listener.reportBrokenSdk(it.error) }
-      val manager = PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
+      val interpreter = sdk.pythonInterpreterResultAsync(project).getOr { return@launch listener.reportBrokenSdk(it.error) }
+      val manager = PythonPackageManagerUI.forPythonInterpreter(interpreter)
       listener?.started()
       manager.installPyRequirementsBackground(requirements?.toList() ?: emptyList(), extraArgs)
       listener?.finished(emptyList())
@@ -30,8 +30,8 @@ internal object PyPackagesManagerUIBridge {
   @JvmStatic
   fun runUninstallInBackground(project: Project, sdk: Sdk, packages: List<PyPackage>, listener: PyPackageManagerUI.Listener?) {
     PyPackageCoroutine.getScope(project).launch {
-      val interpreter = sdk.pythonInterpreterResultAsync().getOr { return@launch listener.reportBrokenSdk(it.error) }
-      val manager = PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
+      val interpreter = sdk.pythonInterpreterResultAsync(project).getOr { return@launch listener.reportBrokenSdk(it.error) }
+      val manager = PythonPackageManagerUI.forPythonInterpreter(interpreter)
       listener?.started()
       manager.uninstallPackagesBackground(packages.map { it.name })
       listener?.finished(emptyList())

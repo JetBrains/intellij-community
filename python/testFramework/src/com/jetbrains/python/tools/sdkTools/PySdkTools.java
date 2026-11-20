@@ -2,6 +2,7 @@
 package com.jetbrains.python.tools.sdkTools;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -119,7 +120,7 @@ public final class PySdkTools {
 
     final SdkModificator modificator = sdk.getSdkModificator();
 
-    for (final String path : PyTargetsIntrospectionFacade.create(sdk, project).getInterpreterPaths()) {
+    for (final String path : PyTargetsIntrospectionFacade.create(PythonInterpreterKt.pythonInterpreterOrThrow(sdk, project, false)).getInterpreterPaths()) {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {
@@ -133,7 +134,7 @@ public final class PySdkTools {
     commitChangesObeyWriteAction(modificator);
 
     PySkeletonRefresher
-      .refreshSkeletonsOfSdk(project, Path.of(skeletonsPath), sdk);
+      .refreshSkeletonsInProject(project, Path.of(skeletonsPath), sdk);
   }
 
   /**

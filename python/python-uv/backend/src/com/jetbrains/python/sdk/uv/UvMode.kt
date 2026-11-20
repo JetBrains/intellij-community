@@ -2,8 +2,10 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.python.sdk.backend.requirementsPath
+import com.intellij.python.sdk.backend.writeRequirementsPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.sdk.backend.PyInterpreterLibrary
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +17,7 @@ import kotlin.io.path.exists
 /**
  * How uv manages the packages of an interpreter.
  *
- * The root dependency file that the interpreter stores selects the mode, see [PyInterpreterLibrary.requirementsPath].
+ * The root dependency file that the interpreter stores selects the mode, see [PythonInterpreter.requirementsPath].
  * The file `pyproject.toml` selects [Project]. Any other file selects [Pip].
  *
  * A new uv interpreter always stores its file, in pip mode too. A stored file is a decision. An interpreter without a
@@ -39,14 +41,14 @@ sealed interface UvMode {
 }
 
 /**
- * The mode of this library, read from its stored dependency file, see [PyInterpreterLibrary.requirementsPath]. This
+ * The mode of this library, read from its stored dependency file, see [PythonInterpreter.requirementsPath]. This
  * function does no I/O.
  *
  * No stored file reads as [UvMode.Pip]. An interpreter saved before the mode existed reads the same way until
  * [pinLegacyUvMode] has run for it.
  */
 @ApiStatus.Internal
-fun PyInterpreterLibrary.uvMode(): UvMode {
+fun PythonInterpreter.uvMode(): UvMode {
   val path = requirementsPath ?: return UvMode.Pip()
   return if (path.fileName?.toString() == PY_PROJECT_TOML) UvMode.Project else UvMode.Pip(path)
 }
@@ -79,10 +81,10 @@ internal suspend fun UvMode.needsInit(workingDir: Path): Boolean = when (this) {
  * as absent. [migrateLegacyUvMode] refreshes the file first. The store writes asynchronously. A caller that needs the
  * mode at once uses the returned value.
  */
-internal fun pinLegacyUvMode(library: PyInterpreterLibrary): UvMode {
-  val pyProjectToml = legacyPyProjectToml(library) ?: return library.uvMode()
+internal fun pinLegacyUvMode(interpreter: PythonInterpreter): UvMode {
+  val pyProjectToml = legacyPyProjectToml(interpreter) ?: return interpreter.uvMode()
   if (VirtualFileManager.getInstance().findFileByNioPath(pyProjectToml) == null) return UvMode.Pip()
-  PyPackageCoroutine.launch(library.project) { library.writeRequirementsPath(UvMode.Project.requirementsFile) }
+  PyPackageCoroutine.launch(interpreter.project) { interpreter.writeRequirementsPath(UvMode.Project.requirementsFile) }
   return UvMode.Project
 }
 
@@ -91,18 +93,18 @@ internal fun pinLegacyUvMode(library: PyInterpreterLibrary): UvMode {
  * The VFS is current at that point, so the answer is final.
  */
 @ApiStatus.Internal
-suspend fun migrateLegacyUvMode(library: PyInterpreterLibrary): UvMode {
-  legacyPyProjectToml(library)?.let { path ->
+suspend fun migrateLegacyUvMode(interpreter: PythonInterpreter): UvMode {
+  legacyPyProjectToml(interpreter)?.let { path ->
     withContext(Dispatchers.IO) { VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path) }
   }
-  return pinLegacyUvMode(library)
+  return pinLegacyUvMode(interpreter)
 }
 
 /**
  * The `pyproject.toml` path that decides the mode of a legacy interpreter: the one in its owner directory. Returns
  * `null` when the interpreter stores a file.
  */
-private fun legacyPyProjectToml(library: PyInterpreterLibrary): Path? {
-  if (library.requirementsPath != null) return null
-  return library.interpreter.ownerDir.resolve(PY_PROJECT_TOML)
+private fun legacyPyProjectToml(interpreter: PythonInterpreter): Path? {
+  if (interpreter.requirementsPath != null) return null
+  return interpreter.ownerDir.resolve(PY_PROJECT_TOML)
 }

@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.Maps;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -34,7 +35,6 @@ import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
-import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.evolution.EvoPyProject;
 import com.intellij.testFramework.LightVirtualFile;
@@ -262,7 +262,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       final PythonInterpreter interpreter = interpreterLevel.getKey();
       if (PythonInterpreterExtKt.isDisposed(interpreter)) continue;
 
-      for (VirtualFile root : PythonInterpreterExtKt.classRoots(interpreter, project)) {
+      for (VirtualFile root : PythonInterpreterExtKt.getClassRoots(interpreter)) {
         if (!root.isValid() || PyTypeShed.INSTANCE.isInside(root)) {
           continue;
         }

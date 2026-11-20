@@ -84,7 +84,7 @@ internal fun updateTransferredRoots(project: Project, sdk: Sdk, oldPaths: Set<Vi
 /** Excludes the environment of [sdk] from this module, when the environment is inside it. */
 @ApiStatus.Internal
 fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
-  val root = sdk.pythonInterpreterResult().successOrNull?.detectedEnvironment?.pythonHomePath?.let {
+  val root = sdk.pythonInterpreterResult(project).successOrNull?.detectedEnvironment?.pythonHomePath?.let {
     VirtualFileManager.getInstance().findFileByNioPath(it)
   } ?: return
 

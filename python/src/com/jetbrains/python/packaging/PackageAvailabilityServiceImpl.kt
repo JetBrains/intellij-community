@@ -86,12 +86,12 @@ internal class PackageAvailabilityServiceImpl : PackageAvailabilityService {
 
   override fun installedPackageVersion(project: Project, interpreter: PythonInterpreter, packageName: String): String? {
     val normalizedName = PyPackageName.from(packageName)
-    return PythonPackageManager.forPythonInterpreter(project, interpreter).listInstalledPackagesSnapshot()
+    return PythonPackageManager.forPythonInterpreter(interpreter).listInstalledPackagesSnapshot()
       .firstOrNull { it.normalizedName == normalizedName }?.version
   }
 
   private fun isPackageInstalledInPackageManager(project: Project, interpreter: PythonInterpreter, packageName: String): Boolean {
-    val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+    val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
     val normalizedName = PyPackageName.from(packageName)
     return packageManager.listInstalledPackagesSnapshot()
       .any { it.normalizedName == normalizedName }

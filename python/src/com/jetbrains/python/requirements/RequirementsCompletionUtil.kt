@@ -21,7 +21,7 @@ private const val UNDERSCORE_DELIMITER = '_'
 
 @ApiStatus.Internal
 fun completePackageNames(project: Project, interpreter: PythonInterpreter, result: CompletionResultSet) {
-  val repositoryManager = PythonPackageManager.forPythonInterpreter(project, interpreter).repositoryManager
+  val repositoryManager = PythonPackageManager.forPythonInterpreter(interpreter).repositoryManager
   val typedPrefix = result.prefixMatcher.prefix
   val normalizedPrefix = PyPackageName.normalizePackageName(typedPrefix)
   val packages =
@@ -58,7 +58,7 @@ fun completePackageNames(project: Project, interpreter: PythonInterpreter, resul
 
 @ApiStatus.Internal
 fun completeVersions(name: String, project: Project, interpreter: PythonInterpreter, result: CompletionResultSet, addQuotes: Boolean) {
-  val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+  val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
   val repositoryManager = packageManager.repositoryManager
 
   val versions = ApplicationUtil.runWithCheckCanceled({

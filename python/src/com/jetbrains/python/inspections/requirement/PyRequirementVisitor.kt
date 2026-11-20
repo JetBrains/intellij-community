@@ -61,7 +61,7 @@ internal class PyRequirementVisitor(
     }
 
     val interpreter = evoPyProject.interpreter ?: return
-    val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+    val manager = PythonPackageManager.forPythonInterpreter(interpreter)
     val declared = manager.listDeclaredPackagesSnapshot() ?: return
 
     val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, declared)
@@ -90,7 +90,7 @@ internal class PyRequirementVisitor(
     if (file.project.isSdkConfigurationInProgress.value)
       return
     val interpreter = evoPyProject.interpreter ?: return
-    val manager = PythonPackageManager.forPythonInterpreter(file.project, interpreter)
+    val manager = PythonPackageManager.forPythonInterpreter(interpreter)
 
     val declaredNotInstalledChecker = DeclaredButNotInstalledPackagesChecker(ignoredPackages)
     val unsatisfied = declaredNotInstalledChecker.findUnsatisfiedRequirements(evoPyProject.pyProject.residesOnModule, manager)

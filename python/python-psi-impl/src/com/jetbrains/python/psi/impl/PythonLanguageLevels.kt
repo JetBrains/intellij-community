@@ -2,14 +2,14 @@
 package com.jetbrains.python.psi.impl
 
 import com.intellij.openapi.application.EDT
+import com.intellij.python.sdk.backend.languageLevel
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
-import com.intellij.python.sdk.backend.languageLevel
 import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -110,7 +110,7 @@ internal class PythonLanguageLevels(private val project: Project, private val co
      */
     @JvmStatic
     fun levelOf(project: Project, interpreter: PythonInterpreter): LanguageLevel =
-      layoutOf(project).interpreterLevels[interpreter] ?: interpreter.languageLevel(project)
+      layoutOf(project).interpreterLevels[interpreter] ?: interpreter.languageLevel
   }
 }
 

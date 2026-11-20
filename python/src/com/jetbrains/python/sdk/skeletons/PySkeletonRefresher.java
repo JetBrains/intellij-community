@@ -2,6 +2,8 @@
 package com.jetbrains.python.sdk.skeletons;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.python.sdk.backend.PythonInterpreterKt;
+import com.intellij.python.community.execService.BinaryToExec;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -99,11 +101,13 @@ public final class PySkeletonRefresher {
    * Creates a new object that refreshes skeletons of given SDK.
    *
    * @param sdk           a Python SDK
+   * @param binary        the Python of the environment, which the generator runs
    * @param skeletonsPath if known; null means 'determine and create as needed'.
    * @param indicator     to report progress of long operations
    */
   public PySkeletonRefresher(@Nullable Project project,
                              @NotNull Sdk sdk,
+                             @NotNull BinaryToExec binary,
                              @Nullable Path skeletonsPath,
                              @Nullable ProgressIndicator indicator,
                              @Nullable String folder)
@@ -112,7 +116,7 @@ public final class PySkeletonRefresher {
     myIndicator = indicator;
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
-    mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), mySdk, folder, myProject);
+    mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), mySdk, folder, myProject, binary);
   }
 
   /**
@@ -187,7 +191,8 @@ public final class PySkeletonRefresher {
   @RequiresBackgroundThread(generateAssertion = false)
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
                                            @Nullable Path skeletonsPath,
-                                           @NotNull Sdk sdk)
+                                           @NotNull Sdk sdk,
+                                           @NotNull BinaryToExec binary)
     throws InvalidSdkException, ExecutionException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final String homePath = sdk.getHomePath();
@@ -196,17 +201,29 @@ public final class PySkeletonRefresher {
     }
     else {
       // An update runs one generation for each environment at a time, see PythonEnvironments.
-      generateSkeletons(project, skeletonsPath, sdk, indicator);
+      generateSkeletons(project, skeletonsPath, sdk, binary, indicator);
     }
+  }
+
+  /**
+   * {@link #refreshSkeletonsOfSdk} for a caller that has a project. The interpreter of {@code sdk} in {@code project} gives
+   * the Python to run.
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static void refreshSkeletonsInProject(@NotNull Project project, @Nullable Path skeletonsPath, @NotNull Sdk sdk)
+    throws InvalidSdkException, ExecutionException {
+    final BinaryToExec binary = PyTargetsSkeletonGeneratorKt.skeletonBinaryOf(PythonInterpreterKt.pythonInterpreterOrThrow(sdk, project, false));
+    refreshSkeletonsOfSdk(project, skeletonsPath, sdk, binary);
   }
 
   private static void generateSkeletons(@Nullable Project project,
                                         @NotNull Path skeletonsPath,
                                         @NotNull Sdk sdk,
+                                        @NotNull BinaryToExec binary,
                                         @Nullable ProgressIndicator indicator)
     throws InvalidSdkException, ExecutionException {
     LOG.info("Refreshing skeletons for " + sdk.getHomePath());
-    final PySkeletonRefresher refresher = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator, null);
+    final PySkeletonRefresher refresher = new PySkeletonRefresher(project, sdk, binary, skeletonsPath, indicator, null);
 
     changeGeneratingSkeletons(1);
     try {

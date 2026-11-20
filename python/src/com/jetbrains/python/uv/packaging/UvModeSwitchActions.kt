@@ -2,6 +2,7 @@
 package com.jetbrains.python.uv.packaging
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.python.sdk.backend.writeRequirementsPath
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
@@ -29,7 +30,7 @@ internal class UvSwitchToProjectModeAction : PythonPackageManagerAction<UvPipPac
   override suspend fun execute(e: AnActionEvent, manager: UvPipPackageManager): PyResult<Unit> {
     val project = e.project ?: return PyResult.success(Unit)
     manager.initProjectIfNeeded().getOr { return it }
-    manager.library.writeRequirementsPath(UvMode.Project.requirementsFile)
+    manager.interpreter.writeRequirementsPath(UvMode.Project.requirementsFile)
     return PyResult.success(Unit)
   }
 }
@@ -53,10 +54,10 @@ internal class UvSwitchToPipModeAction : PythonPackageManagerAction<UvPackageMan
     if (!e.presentation.isEnabledAndVisible) return
     val manager = getManager(e) ?: return
     val file = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return
-    when (manager.library.uvMode()) {
+    when (manager.interpreter.uvMode()) {
       UvMode.Project -> e.presentation.text = message("action.UvSwitchToPipModeAction.text")
       is UvMode.Pip -> {
-        val storedFile = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(manager.library)
+        val storedFile = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(manager.interpreter)
         e.presentation.isEnabledAndVisible = file.fileType is RequirementsFileType && file != storedFile
         e.presentation.text = message("python.uv.pip.set.default.requirements")
       }
@@ -67,7 +68,7 @@ internal class UvSwitchToPipModeAction : PythonPackageManagerAction<UvPackageMan
     val project = e.project ?: return PyResult.success(Unit)
     val file = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return PyResult.success(Unit)
     val path = if (file.fileType is RequirementsFileType) file.toNioPath() else UvMode.Pip().requirementsFile
-    manager.library.writeRequirementsPath(path)
+    manager.interpreter.writeRequirementsPath(path)
     return PyResult.success(Unit)
   }
 }

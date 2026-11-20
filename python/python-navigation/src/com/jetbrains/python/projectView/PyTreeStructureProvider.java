@@ -52,19 +52,19 @@ public final class PyTreeStructureProvider implements SelectableTreeStructurePro
     final PythonInterpreter interpreter = project != null ? getPythonInterpreter(project, parent) : null;
     if (interpreter != null) {
       final Collection<AbstractTreeNode<?>> newChildren = hideSkeletons(children);
-      final PySkeletonsNode skeletonsNode = PySkeletonsNode.create(project, interpreter, settings);
+      final PySkeletonsNode skeletonsNode = PySkeletonsNode.create(interpreter, settings);
       if (skeletonsNode != null) {
         newChildren.add(skeletonsNode);
       }
-      final PyRemoteLibrariesNode remoteLibrariesNode = PyRemoteLibrariesNode.create(project, interpreter, settings);
+      final PyRemoteLibrariesNode remoteLibrariesNode = PyRemoteLibrariesNode.create(interpreter, settings);
       if (remoteLibrariesNode != null) {
         newChildren.add(remoteLibrariesNode);
       }
-      final PyTypeShedNode typeShedNode = PyTypeShedNode.Companion.create(project, interpreter, settings);
+      final PyTypeShedNode typeShedNode = PyTypeShedNode.Companion.create(interpreter, settings);
       if (typeShedNode != null) {
         newChildren.add(typeShedNode);
       }
-      final PyBundledStubsNode bundledStubsNode = PyBundledStubsNode.Companion.create(project, interpreter, settings);
+      final PyBundledStubsNode bundledStubsNode = PyBundledStubsNode.Companion.create(interpreter, settings);
       if (bundledStubsNode != null) {
         newChildren.add(bundledStubsNode);
       }

@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.env.tests.conda
 
 import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -68,7 +69,7 @@ internal class CondaPipBootstrapTest {
         val condaSdk = env.createSdkFromThisEnv(project, null, project.basePath?.toNioPathOrNull()!!).getOrThrow().getSdkAPI()
         sdk = condaSdk
         val manager =
-          CondaPackageManager(project, condaSdk.pythonInterpreterResultAsync().orThrow()).also { Disposer.register(project, it) }
+          CondaPackageManager(condaSdk.pythonInterpreterResultAsync(project).orThrow()).also { Disposer.register(project, it) }
 
         val spec = PythonRepositoryPackageSpecification(PyPiPackageRepository, "yandex-book-api", "0.1.0")
         manager.installPackage(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))).getOrThrow()

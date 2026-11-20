@@ -48,7 +48,8 @@ public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
-  public static @Nullable PyRemoteLibrariesNode create(@NotNull Project project, @NotNull PythonInterpreter interpreter, ViewSettings settings) {
+  public static @Nullable PyRemoteLibrariesNode create(@NotNull PythonInterpreter interpreter, ViewSettings settings) {
+    final Project project = interpreter.getProject();
     PyTargetAwareAdditionalData targetData = PythonInterpreterExtKt.getTargetAdditionalData(interpreter);
     if (interpreter instanceof TargetPythonInterpreter targetInterpreter && targetData != null) {
       final VirtualFile remoteLibraries = PythonInterpreterExtKt.remoteSourcesDirectory(targetInterpreter);

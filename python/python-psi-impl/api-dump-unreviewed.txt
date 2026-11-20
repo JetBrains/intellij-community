@@ -2959,13 +2959,10 @@ f:com.jetbrains.python.sdk.PythonSdkUtil
 - s:findSkeletonsDir(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.vfs.VirtualFile
 - s:getAllSdks():java.util.List
 - s:getPythonExecutable(java.lang.String):java.lang.String
-- s:getSitePackagesDirectory(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.vfs.VirtualFile
 - s:getUserSite():java.lang.String
-- s:isCondaVirtualEnv(com.intellij.openapi.projectRoots.Sdk):Z
 - s:isDisposed(com.intellij.openapi.projectRoots.Sdk):Z
 - s:isPythonSdk(com.intellij.openapi.projectRoots.Sdk):Z
 - s:isRemote(com.intellij.openapi.projectRoots.Sdk):Z
-- s:isVirtualEnv(com.intellij.openapi.projectRoots.Sdk):Z
 f:com.jetbrains.python.testing.PythonUnitTestDetectorsKt
 - sf:isTestClass(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.types.TypeEvalContext):Z
 c:com.jetbrains.python.validation.UnsupportedFeatures

@@ -1,6 +1,7 @@
 package com.intellij.python.junit5Tests.env.tests.conda
 
 import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
+import com.intellij.python.sdk.backend.PythonInterpreter
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
@@ -53,9 +54,9 @@ internal class CondaPackageManagerTest {
       condaEnv.createSdkFromThisEnv(projectFixture.get(), null, projectFixture.get().basePath?.toNioPathOrNull()!!).getOrThrow().getSdkAPI()
     }
     assertTrue(condaSdk.pySdkAdditionalData.flavor is CondaEnvSdkFlavor, "$condaSdk must be a conda SDK")
-    val interpreter = condaSdk.pythonInterpreterResultAsync().orThrow()
+    val interpreter = condaSdk.pythonInterpreterResultAsync(projectFixture.get()).orThrow()
     assertNotNull(interpreter.getPythonInfo().successOrNull, "$condaSdk must be usable")
-    packageManager = CondaPackageManager(projectFixture.get(), interpreter).also {
+    packageManager = CondaPackageManager(interpreter).also {
       Disposer.register(projectFixture.get(), it)
     }
 

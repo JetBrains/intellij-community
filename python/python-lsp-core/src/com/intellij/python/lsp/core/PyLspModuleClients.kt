@@ -437,7 +437,7 @@ private fun sharesTreeWith(one: String, other: String): Boolean =
  */
 @ApiStatus.Internal
 fun pyLspToolVersionOf(interpreter: PythonInterpreter, project: Project, pyTool: PyTool): String? =
-  PythonPackageManager.forPythonInterpreter(project, interpreter).getInstalledToolPackage(pyTool)?.version
+  PythonPackageManager.forPythonInterpreter(interpreter).getInstalledToolPackage(pyTool)?.version
 
 /**
  * The content roots of [pyProjects], with no duplicate, ordered by path.

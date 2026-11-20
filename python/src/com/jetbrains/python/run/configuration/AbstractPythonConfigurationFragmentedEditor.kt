@@ -2,6 +2,7 @@
 package com.jetbrains.python.run.configuration
 
 import com.intellij.execution.ui.BeforeRunComponent
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.execution.ui.BeforeRunFragment
 import com.intellij.execution.ui.CommonParameterFragments
 import com.intellij.execution.ui.CommonTags
@@ -9,7 +10,6 @@ import com.intellij.execution.ui.RunConfigurationFragmentedEditor
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.openapi.components.service
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.TextComponentEmptyText
 import com.jetbrains.python.PyBundle
@@ -39,7 +39,7 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
 
     addDebuggerOptions(fragments)
 
-    runConfiguration.sdk?.takeIf { enableRunTool }
+    runConfiguration.pythonInterpreter?.takeIf { enableRunTool }
       ?.let { createRunToolTag(it) }
       ?.let { fragments.add(it) }
 
@@ -56,14 +56,14 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
 
   abstract fun customizeFragments(fragments: MutableList<SettingsEditorFragment<T, *>>)
 
-  private fun createRunToolTag(sdk: Sdk): SettingsEditorFragment<T, *>? {
-    val provider = PyRunToolProvider.forSdk(sdk) ?: return null
+  private fun createRunToolTag(interpreter: PythonInterpreter): SettingsEditorFragment<T, *>? {
+    val provider = PyRunToolProvider.forInterpreter(interpreter) ?: return null
     val toolData = provider.runToolData
     return SettingsEditorFragment.createTag(
       toolData.id.value,
       PyBundle.message("python.run.configuration.fragments.run.with.tool", toolData.name),
       toolData.group,
-      { runConfiguration.useRunTool(sdk) },
+      { runConfiguration.useRunTool(interpreter) },
       { config, value -> config.useRunTool = value }
     )
   }

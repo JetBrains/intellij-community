@@ -40,7 +40,7 @@ internal class PyRepositoriesPresenter(
    */
   fun loadBuiltInRepositories(project: Project): List<PyPackageRepository> {
     val interpreter = project.findMainEvoPyProjectIfReady()?.interpreter
-    return interpreter?.let { PythonPackageManager.forPythonInterpreter(project, it).repositoryManager.builtInRepositories }
+    return interpreter?.let { PythonPackageManager.forPythonInterpreter(it).repositoryManager.builtInRepositories }
            ?: PythonRepositoryManager.DEFAULT_BUILT_IN_REPOSITORIES
   }
 

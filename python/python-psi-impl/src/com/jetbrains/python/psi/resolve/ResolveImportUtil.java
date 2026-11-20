@@ -2,6 +2,8 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Lists;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.python.sdk.backend.PythonInterpreter;
@@ -383,7 +385,7 @@ public final class ResolveImportUtil {
     final PythonInterpreter moduleInterpreter = module != null ? MainPythonSdkKt.pythonInterpreterIfReady(module) : null;
     if (moduleInterpreter == null) return null;
 
-    VirtualFile skeletonsDir = PythonInterpreterExtKt.skeletonsDirectory(moduleInterpreter, module.getProject());
+    VirtualFile skeletonsDir = PythonInterpreterExtKt.skeletonsDirectory(moduleInterpreter);
     if (skeletonsDir == null) return null;
 
     boolean isInSkeletons = VfsUtilCore.isAncestor(skeletonsDir, packageDir.getVirtualFile(), false);

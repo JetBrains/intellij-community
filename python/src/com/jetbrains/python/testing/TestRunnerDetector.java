@@ -62,7 +62,7 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     //check if installed in sdk
     final PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(module);
     if (interpreter != null) {
-      PythonPackageManager packageManager = PythonPackageManager.Companion.forPythonInterpreter(module.getProject(), interpreter);
+      PythonPackageManager packageManager = PythonPackageManager.Companion.forPythonInterpreter(interpreter);
       PythonPackageManagerExt.waitInitBlocking(packageManager);
       var factories = PythonTestConfigurationType.getInstance().getTypedFactories();
       var factory = factories.stream().filter(o -> o.isFrameworkInstalled(module.getProject(), interpreter)).findFirst();

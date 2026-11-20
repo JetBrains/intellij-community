@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.env.venv.showCase
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.project.Project
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
@@ -37,20 +38,20 @@ internal class PyVenvCreationManuallyShowCaseTest {
     val additionalData = createVenvAdditionalData(venvDir.parent)
     val interpreter = createSdk(ModuleOrProject.ProjectOnly(projectFixture.get()), PathHolder.Eel(venvPython), additionalData).getOrThrow()
     val sdk = interpreter.getSdkAPI()
-    assertTrue(sdkIsValid(sdk),
+    assertTrue(sdkIsValid(projectFixture.get(), sdk),
                "Sdk not valid after creation")
     venvPython.deleteExisting()
-    assertFalse(sdkIsValid(sdk),
+    assertFalse(sdkIsValid(projectFixture.get(), sdk),
                 "Broken SDK is valid?")
 
     createVenv(python, venvDir).getOrThrow()
-    assertTrue(sdkIsValid(sdk),
+    assertTrue(sdkIsValid(projectFixture.get(), sdk),
                "Sdk not valid after creation")
 
   }
 }
 
-private suspend fun sdkIsValid(sdk: Sdk): Boolean {
-  val interpreter = sdk.pythonInterpreterResultAsync(forceRefresh = true).successOrNull ?: return false
+private suspend fun sdkIsValid(project: Project, sdk: Sdk): Boolean {
+  val interpreter = sdk.pythonInterpreterResultAsync(project, forceRefresh = true).successOrNull ?: return false
   return ExecService().execGetStdout(interpreter, Args("-c", "print(1)")).isSuccess
 }

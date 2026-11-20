@@ -122,7 +122,7 @@ public final class RootVisitorHost {
   /** Visits the class roots of [interpreter] in [project]. Returns whether the visitor stopped. */
   public static boolean visitInterpreterRoots(@NotNull Project project, @NotNull PythonInterpreter interpreter, @NotNull RootVisitor visitor) {
     final Sdk sdk = MainPythonSdkKt.resolveSdk(interpreter);
-    for (VirtualFile root : PythonInterpreterExtKt.classRoots(interpreter, project)) {
+    for (VirtualFile root : PythonInterpreterExtKt.getClassRoots(interpreter)) {
       if (!visitor.visitRoot(root, null, sdk, false)) {
         return true;
       }

@@ -2,6 +2,9 @@
 package com.jetbrains.python.debugger
 
 import com.intellij.execution.ProgramRunnerUtil
+import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.isOnTarget
 import com.intellij.execution.RunManager
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.icons.AllIcons
@@ -28,7 +31,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.NlsSafe
@@ -41,7 +43,6 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.python.pyproject.model.evolution.evoPyProjects
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
@@ -52,8 +53,6 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.mainPythonInterpreterIfReady
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -320,13 +319,12 @@ private fun isPythonDebugTab(e: AnActionEvent): Boolean {
 }
 
 /**
- * Returns the SDK of the currently selected run configuration, falling back to the interpreter of the main Python
+ * Returns the interpreter of the currently selected run configuration, falling back to the interpreter of the main Python
  * project. The debugger settings and actions ask this after startup, when the project structure has loaded.
  */
-@Suppress("DEPRECATION") // The debugger backends still take an SDK.
-internal fun getEffectiveSdk(project: Project): Sdk? =
-  (RunManager.getInstance(project).selectedConfiguration?.configuration as? AbstractPythonRunConfiguration<*>)?.sdk
-  ?: project.mainPythonInterpreterIfReady()?.getSdkAPI()
+internal fun getEffectiveInterpreter(project: Project): PythonInterpreter? =
+  (RunManager.getInstance(project).selectedConfiguration?.configuration as? AbstractPythonRunConfiguration<*>)?.pythonInterpreter
+  ?: project.findMainEvoPyProjectIfReady()?.interpreter
 
 @ApiStatus.Internal
 fun installPythonDapPlugin(project: Project, onLoaded: Runnable? = null) {
@@ -385,8 +383,8 @@ private fun promptUserToSwitchToDebugpy(openProject: Project) {
 private fun findDebugpyEligibleSessions(project: Project): List<XDebugSession> {
   return XDebuggerManager.getInstance(project).debugSessions.filter { session ->
     val config = session.runProfile as? AbstractPythonRunConfiguration<*> ?: return@filter false
-    val sdk = config.sdk ?: return@filter false
-    isDebugpyAvailableForSdk(sdk, project)
+    val interpreter = config.pythonInterpreter ?: return@filter false
+    isDebugpyAvailable(interpreter)
   }
 }
 
@@ -450,13 +448,12 @@ internal fun pyDebuggerBackendDisplayName(backend: PyDebuggerBackend): String = 
 }
 
 /**
- * Handler-aware per-SDK rule used by the backend-switcher UI.
+ * Handler-aware per-interpreter rule used by the backend-switcher UI.
  *
- * SDKs are accepted when at least one [PyDebuggerBackendSwitchHandler] extension
- * whitelists them.
+ * An interpreter is accepted when at least one [PyDebuggerBackendSwitchHandler] extension whitelists it.
  */
-internal fun isDebugpyAvailableForSdk(sdk: Sdk, project: Project): Boolean {
-  return PyDebuggerBackendSwitchHandler.EP_NAME.extensionList.any { it.isDebugpyAvailableForSdk(project, sdk) }
+internal fun isDebugpyAvailable(interpreter: PythonInterpreter): Boolean {
+  return PyDebuggerBackendSwitchHandler.EP_NAME.extensionList.any { it.isDebugpyAvailable(interpreter) }
 }
 
 /**
@@ -470,8 +467,8 @@ fun debugpyDisabledMessage(project: Project): @Nls String = when {
   isPythonDapPluginInstalledButDisabled() -> PyBundle.message("debugger.backend.debugpy.disabled.not.enabled.tooltip")
   !isPythonDapPluginInstalledAndEnabled() -> PyBundle.message("debugger.backend.debugpy.disabled.not.installed.tooltip")
   else -> {
-    val sdk = getEffectiveSdk(project)
-    if (sdk != null && PythonSdkUtil.isRemote(sdk)) PyBundle.message("debugger.backend.debugpy.disabled.remote.tooltip")
+    val interpreter = getEffectiveInterpreter(project)
+    if (interpreter != null && interpreter.isOnTarget) PyBundle.message("debugger.backend.debugpy.disabled.remote.tooltip")
     else PyBundle.message("debugger.backend.debugpy.disabled.tooltip")
   }
 }
@@ -533,12 +530,12 @@ internal object PyDebuggerBackendSwitcherVisibilityPin {
 
 @ApiStatus.Internal
 fun isDebugpyAvailableInProject(project: Project): Boolean {
-  val configSdk = (RunManager.getInstance(project).selectedConfiguration?.configuration as? AbstractPythonRunConfiguration<*>)?.sdk
-  if (configSdk != null) return isDebugpyAvailableForSdk(configSdk, project)
+  val configLibrary = (RunManager.getInstance(project).selectedConfiguration?.configuration as? AbstractPythonRunConfiguration<*>)
+    ?.pythonInterpreter
+  if (configLibrary != null) return isDebugpyAvailable(configLibrary)
 
   // Every interpreter belongs to a Python project, so the interpreters of the snapshot cover them all.
-  @Suppress("DEPRECATION") // The debugpy check still takes an SDK.
   return runBlockingCancellable {
-    project.evoPyProjects().any { it.interpreter?.let { interpreter -> isDebugpyAvailableForSdk(interpreter.getSdkAPI(), project) } ?: false }
+    project.evoPyProjects().any { it.interpreter?.let(::isDebugpyAvailable) ?: false }
   }
 }

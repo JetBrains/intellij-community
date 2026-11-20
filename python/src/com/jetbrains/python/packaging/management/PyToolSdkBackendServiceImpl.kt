@@ -30,7 +30,7 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
 
   override suspend fun getDependencyGroups(project: Project, request: PyToolSdkRequest): List<PyToolDependencyGroupDto> {
     val (interpreter, _) = requireInterpreter(project, request.sdk)
-    return PythonPackageManager.forPythonInterpreter(project, interpreter).workspaceSupport
+    return PythonPackageManager.forPythonInterpreter(interpreter).workspaceSupport
       ?.getDependencyGroups(ProjectName(project.name))
       ?.values?.flatten()?.distinct().orEmpty().map { it.toDto() }
   }
@@ -41,7 +41,7 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
     request: PyToolSdkInstallRequest,
   ): PyToolSdkOperationResultDto {
     val (interpreter, item) = requireInterpreter(project, request.target.sdk)
-    return when (val result = PythonPackageManager.forPythonInterpreter(project, interpreter).installPackages(
+    return when (val result = PythonPackageManager.forPythonInterpreter(interpreter).installPackages(
       tool.packageName.name,
       dependencyGroup = request.dependencyGroup?.toModel(),
     )) {

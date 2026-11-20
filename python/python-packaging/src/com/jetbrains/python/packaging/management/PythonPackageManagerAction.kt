@@ -130,7 +130,7 @@ private fun refreshAfterToolRun(dir: VirtualFile) {
 inline fun <reified T : PythonPackageManager> AnActionEvent.getPythonPackageManager(): T? {
   val psiFile = getData(PSI_FILE) ?: return null
   val interpreter = psiFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return null
-  return PythonPackageManager.forPythonInterpreter(psiFile.project, interpreter) as? T
+  return PythonPackageManager.forPythonInterpreter(interpreter) as? T
 }
 
 

@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.EelApi
@@ -13,7 +14,6 @@ import com.intellij.python.pyproject.model.api.getPyProjectTomlFile
 import com.intellij.python.pyproject.model.evolution.findModuleFor
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pytools.resolveExecutable
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPackageName
@@ -50,7 +50,7 @@ import java.nio.file.Path
 import kotlin.io.path.readText
 
 @ApiStatus.Internal
-class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
+class PoetryPackageManager(interpreter: PythonInterpreter) : PythonPackageManager(interpreter) {
   override val workspaceSupport: PythonWorkspaceSupport = PoetryWorkspaceSupport(project, interpreter)
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)

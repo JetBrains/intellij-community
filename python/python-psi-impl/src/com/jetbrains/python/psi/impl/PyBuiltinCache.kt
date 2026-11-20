@@ -2,6 +2,8 @@
 package com.jetbrains.python.psi.impl
 
 import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
+import com.intellij.python.sdk.backend.languageLevel
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.isIgnoredInterpreterEntry
 import com.intellij.python.sdk.backend.isInterpreterLibraryCarrier
 import com.intellij.openapi.project.Project
@@ -22,9 +24,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.QualifiedName
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.python.sdk.backend.languageLevel
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.LanguageLevel
@@ -306,7 +306,7 @@ class PyBuiltinCache private constructor(
 
     @JvmStatic
     fun getBuiltinsForInterpreter(project: Project, interpreter: PythonInterpreter): PyFile? {
-      val moduleName = getBuiltinsModuleName(interpreter.languageLevel(project))
+      val moduleName = getBuiltinsModuleName(interpreter.languageLevel)
       return getFileForInterpreter(project, interpreter, QualifiedName.fromDottedString(moduleName))
     }
 

@@ -5,6 +5,8 @@
 package com.jetbrains.python.psi.resolve
 
 import com.google.common.base.Preconditions
+import com.intellij.python.sdk.backend.skeletonsDirectory
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -20,8 +22,6 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.skeletonsDirectory
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
@@ -227,7 +227,7 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
       if (containingName != null && containingName.componentCount > 0) {
         val absoluteName = containingName.append(name)
         val interpreter = findModuleForPsiElementCached(footholdFile)?.pythonInterpreterIfReady() ?: return emptyList()
-        val skeletonsVirtualFile = interpreter.skeletonsDirectory(context.project) ?: return emptyList()
+        val skeletonsVirtualFile = interpreter.skeletonsDirectory() ?: return emptyList()
         val skeletonsDir = context.psiManager.findDirectory(skeletonsVirtualFile)
         return resolveModuleAt(absoluteName, skeletonsDir, context.copyWithoutForeign())
       }
@@ -482,7 +482,7 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?): Prior
 fun isInSkeletons(element: PsiElement): Boolean {
   val interpreter = findModuleForPsiElementCached(element)?.pythonInterpreterIfReady() ?: return false
   val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile?.virtualFile) ?: return false
-  val skeletons = interpreter.skeletonsDirectory(element.project) ?: return false
+  val skeletons = interpreter.skeletonsDirectory() ?: return false
   return VfsUtilCore.isAncestor(skeletons, vFile, false)
 }
 

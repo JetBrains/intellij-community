@@ -486,7 +486,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
 
     interpreterContext = InterpreterContext(
       interpreter = interpreter,
-      managerUI = PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
+      managerUI = PythonPackageManagerUI.forPythonInterpreter(interpreter)
     )
 
     withContext(Dispatchers.EDT) {
@@ -566,7 +566,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   /** Binds this view to the current manager of the interpreter of [context], while [context] is still the bound one. */
   private suspend fun rebind(context: InterpreterContext) {
     if (project.isDisposed || interpreterContext !== context) return
-    interpreterContext = InterpreterContext(context.interpreter, PythonPackageManagerUI.forPythonInterpreter(project, context.interpreter))
+    interpreterContext = InterpreterContext(context.interpreter, PythonPackageManagerUI.forPythonInterpreter(context.interpreter))
     refreshInstalledPackages()
   }
 

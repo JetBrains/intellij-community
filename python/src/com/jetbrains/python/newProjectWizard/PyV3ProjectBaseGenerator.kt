@@ -144,7 +144,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       typeSpecificSettings.generateProject(module, baseDir, interpreter.getSdkAPI()).onFailure {
         uiServices.errorSink.emit(it, project)
       }
-      refreshPaths(project, interpreter)
+      refreshPaths(interpreter)
     }
     uiServices.expandProjectTreeView(project)
   }

@@ -145,7 +145,7 @@ internal class CondaEnvWithoutImplicitPipTest {
     val project = projectFixture.get()
     val sdk = env.createSdkFromThisEnv(project, null, project.basePath?.toNioPathOrNull()!!).getOrThrow().getSdkAPI()
     sdks += sdk
-    return CondaPackageManager(project, sdk.pythonInterpreterResultAsync().orThrow()).also {
+    return CondaPackageManager(sdk.pythonInterpreterResultAsync(project).orThrow()).also {
       Disposer.register(project, it)
       it.waitForInit()
     }

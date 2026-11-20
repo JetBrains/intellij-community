@@ -64,7 +64,7 @@ open class PythonPackageManagerManagementInstallationTask(private val pkgToInsta
     requireNotNull(existingSdk) { "Sdk should be not bull" }
 
     val sdk = existingSdk
-    val manager = PythonPackageManager.forPythonInterpreter(myFixture.project, sdk.pythonInterpreterResult().orThrow())
+    val manager = PythonPackageManager.forPythonInterpreter(sdk.pythonInterpreterResult(myFixture.project).orThrow())
     val managementInstaller = PipManagementInstaller(manager)
 
     runBlocking {

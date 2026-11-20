@@ -101,7 +101,7 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
       // no package event comes before the removal.
       val pyrefly = PyreflyPyTool.getInstance()
       val action = project.service<PyreflyPackageState>().record(interpreter) {
-        PythonPackageManager.forPythonInterpreter(project, interpreter).getInstalledToolPackage(pyrefly) != null
+        PythonPackageManager.forPythonInterpreter(interpreter).getInstalledToolPackage(pyrefly) != null
       }
       if (action != LspPackageAction.STOP) return@launch
 
@@ -111,7 +111,7 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
       // Ask every served interpreter, not only the one that changed. One module of a multi-module
       // project that loses pyrefly must not turn the engine off for the modules that still hold it.
       val isInstalledSomewhere = servedInterpreters.any { served ->
-        PythonPackageManager.forPythonInterpreter(project, served).getInstalledToolPackage(pyrefly) != null
+        PythonPackageManager.forPythonInterpreter(served).getInstalledToolPackage(pyrefly) != null
       }
       if (isInstalledSomewhere) {
         return@launch
@@ -142,7 +142,7 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
         val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
         pyLspServedProjects(snapshot).forEach { pyProject ->
           val interpreter = snapshot.forPyProject(pyProject)?.interpreter ?: return@forEach
-          val managerUI = PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
+          val managerUI = PythonPackageManagerUI.forPythonInterpreter(interpreter)
 
           val pythonPackage = managerUI.manager.getInstalledToolPackage(PyreflyPyTool.getInstance())
           val version = pythonPackage?.version?.let { PythonVersionValue.parse(it) }?.successOrNull

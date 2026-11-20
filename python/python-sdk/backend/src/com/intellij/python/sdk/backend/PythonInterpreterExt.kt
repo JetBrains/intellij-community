@@ -1,11 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
+import com.intellij.execution.target.RunConfigurationTargetEnvironmentAdjuster
+import com.intellij.util.PathMappingSettings
+import com.intellij.openapi.Disposable
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.EelOsFamily
@@ -16,8 +23,10 @@ import com.intellij.python.sdk.backend.impl.associationProblem
 import com.intellij.python.sdk.backend.impl.buildItem
 import com.intellij.python.sdk.backend.impl.buildUnavailableItem
 import com.intellij.python.sdk.backend.impl.recordedPythonInfo
+import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonInfo
@@ -26,6 +35,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.associatedModuleDir
+import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.createSkeletonsRootDirectory
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.isTargetBased
@@ -112,6 +122,97 @@ fun PythonInterpreter.getPythonInfo(): PyResult<PythonInfo> {
 }
 
 /**
+ * The dependency file stored for this interpreter in its [project][PythonInterpreter.project], such as its `requirements.txt` or its
+ * `pyproject.toml`, or `null` when none is stored. The default of the package manager applies then. The file is
+ * relative to [PythonInterpreter.ownerDir] when it is inside it.
+ */
+@get:Internal
+val PythonInterpreter.requirementsPath: Path?
+  get() = PythonInterpreterDetails.getInstance(project).requirementsPath(this)
+
+/** Stores [path] as the dependency file, see [requirementsPath]. A relative [path] is relative to [PythonInterpreter.ownerDir]. `null` removes it. */
+@Internal
+suspend fun PythonInterpreter.writeRequirementsPath(path: Path?) {
+  PythonInterpreterDetails.getInstance(project).writeRequirementsPath(this, path)
+}
+
+/**
+ * The path mappings of the target of this interpreter, from a local root to a root on the target, or `null` for an
+ * interpreter that has none, such as a native one.
+ */
+@get:Internal
+val PythonInterpreter.pathMappings: PathMappingSettings?
+  get() = PythonInterpreterDetails.getInstance(project).pathMappings(this)
+
+/** Stores [mappings] as the path mappings of the target of this interpreter, see [pathMappings]. */
+@Internal
+suspend fun PythonInterpreter.writePathMappings(mappings: PathMappingSettings) {
+  PythonInterpreterDetails.getInstance(project).writePathMappings(this, mappings)
+}
+
+/**
+ * The language level of this interpreter, from its version, see [PythonInterpreterDetails.version]. The default
+ * level when no version is recorded. It never starts the interpreter, so resolve and the language level pusher can
+ * read it.
+ */
+@get:Internal
+val PythonInterpreter.languageLevel: LanguageLevel
+  get() = PythonInterpreterDetails.getInstance(project).version(this)?.let { LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(it) }
+          ?: LanguageLevel.getDefault()
+
+/**
+ * The class roots of this interpreter: the directories its `sys.path` holds, the skeletons and the bundled stubs,
+ * see [PythonInterpreterRoots.classRoots].
+ */
+@get:Internal
+val PythonInterpreter.classRoots: Array<VirtualFile>
+  get() = PythonInterpreterRoots.getInstance(project).classRoots(this).toTypedArray()
+
+/**
+ * The standard library directory of this interpreter, or `null` when none of its class roots looks like one.
+ *
+ * Class roots are scanned for `__future__.py`/`__future__.pyc` plus `xml/` and `email/`; under unit-test mode a folder
+ * named `Lib` also qualifies to support mock SDKs. Independent of environment kind: for a virtual environment this
+ * still returns the *base* interpreter's stdlib (which is included in the venv's class roots), not the venv's own
+ * (mostly empty) lib.
+ */
+@Internal
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? = findStdlibIn(classRoots)
+
+/**
+ * The `site-packages/` directory of this interpreter: inside the library directory of its environment, else inside
+ * its standard library. `null` when either the directory or its `site-packages` child cannot be located.
+ *
+ * For a virtual env that was created with `--system-site-packages`, the venv's own `site-packages` is returned (as
+ * opposed to the interpreter's), since that's the one `pip` writes new packages to. Some system Python distributions
+ * (notably on Linux) ship without a `site-packages` directory at all, in which case this returns `null`.
+ */
+@Internal
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+fun PythonInterpreter.sitePackagesDirectory(): VirtualFile? {
+  val libDirectory = if (venvLibRoot() != null) venvLibDirectory() else stdlibLibDirectory()
+  return libDirectory?.findChild(PyNames.SITE_PACKAGES)
+}
+
+/**
+ * The directory of the generated skeletons of this interpreter, or `null` when it has none: the class root named
+ * `python_stubs`. A mock interpreter of a test keeps it next to its other roots, so this scans the roots.
+ */
+@Internal
+fun PythonInterpreter.skeletonsDirectory(): VirtualFile? =
+  classRoots.firstOrNull { it.isValid && it.path.contains(PythonSdkUtil.SKELETON_DIR_NAME) }
+
+/**
+ * The lifetime of this interpreter in its [project][PythonInterpreter.project], for a cache that holds something for it. It ends when the registry
+ * removes this interpreter, when the registry replaces the environment behind its key, or when its project closes.
+ * `null` when this interpreter has no lifetime of its own, so it lives as long as the caller.
+ */
+@get:Internal
+val PythonInterpreter.lifetime: Disposable?
+  get() = sdk as? Disposable
+
+/**
  * This interpreter as a UI list holds it.
  *
  * Reads only what the interpreter and its SDK already record, including whether it can be used — so the `[invalid]`
@@ -133,13 +234,8 @@ fun PythonInterpreterKey.asUnavailableItem(): PyInterpreterItem = buildUnavailab
  * This is how a list of interpreters is built. The work is detecting each environment, which is local file reads that
  * [Sdk.pythonInterpreterAsync] caches per SDK — so the first list pays for it and later ones do not.
  */
-suspend fun Iterable<Sdk>.pyInterpreterItems(): List<PyInterpreterItem> = mapNotNull { it.interpreterItem() }
-
-/**
- * This SDK as a UI list holds it, or `null` for a broken SDK that has no ref: no row stands for it. For a caller
- * that the platform hands an [Sdk], such as the status bar or a run configuration.
- */
-suspend fun Sdk.interpreterItem(): PyInterpreterItem? = pythonInterpreterResultAsync().successOrNull?.asItem()
+suspend fun Iterable<Sdk>.pyInterpreterItems(project: Project): List<PyInterpreterItem> =
+  mapNotNull { it.pythonInterpreterResultAsync(project).successOrNull?.asItem() }
 
 /** The flavor this interpreter was set up with. */
 val PythonInterpreter.flavor: PythonSdkFlavor<*>
@@ -152,10 +248,6 @@ val PythonInterpreter.targetAdditionalData: PyTargetAwareAdditionalData?
 /** Whether this interpreter runs on a target, such as WSL, SSH or Docker. */
 val PythonInterpreter.isTargetBased: Boolean
   get() = sdk.isTargetBased()
-
-/** The requirements file path stored for this interpreter, or `null` when none is stored. */
-val PythonInterpreter.requirementsPath: Path?
-  get() = sdk.pySdkAdditionalData.requirementsPath
 
 /** The paths the user added to the `sys.path` of this interpreter in the interpreter settings. */
 val PythonInterpreter.addedPathFiles: Set<VirtualFile>
@@ -181,50 +273,11 @@ fun PythonInterpreter.isFor(sdk: Sdk): Boolean = this.sdk == sdk
  * standard library directory, through [stdlibLibDirectory].
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-private fun PythonInterpreter.libDirectory(project: Project): VirtualFile? =
-  if (venvLibRoot() != null) venvLibDirectory() else stdlibLibDirectory(project)
-
 /** The library root of the environment of a native interpreter, or `null` for a target or an environment without one. */
-private fun PythonInterpreter.venvLibRoot(): Path? = when (this) {
+internal fun PythonInterpreter.venvLibRoot(): Path? = when (this) {
   is NativePythonInterpreter -> pythonEnvironment?.libRoot
   is TargetPythonInterpreter -> null
 }
-
-/**
- * The `site-packages/` directory inside this SDK's [libDirectory], or `null` when either the lib
- * directory or its `site-packages` child cannot be located.
- *
- * For a virtual env that was created with `--system-site-packages`, the venv's own `site-packages`
- * is returned (as opposed to the interpreter's), since that's the one `pip` writes new packages to.
- * Some system Python distributions (notably on Linux) ship without a `site-packages` directory at
- * all, in which case this returns `null`.
- */
-@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-fun PythonInterpreter.sitePackagesDirectory(project: Project): VirtualFile? = libDirectory(project)?.findChild(PyNames.SITE_PACKAGES)
-
-/**
- * [sitePackagesDirectory] for a caller that has an SDK and no project. A base interpreter without a library directory
- * of its own then finds its standard library in the roots of the SDK.
- */
-@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-// External plugins reach this through `PythonSdkUtil.getSitePackagesDirectory`, and their threads are unknown.
-@RequiresReadLockAbsence(generateAssertion = false)
-fun Sdk.sitePackagesDirectory(): VirtualFile? {
-  val interpreter = pythonInterpreterResult().successOrNull
-  val libDirectory = if (interpreter?.venvLibRoot() != null) interpreter.venvLibDirectory() else stdlibLibDirectory()
-  return libDirectory?.findChild(PyNames.SITE_PACKAGES)
-}
-
-/**
- * The interpreter's standard library directory in [project], or `null` when none of its class roots looks like one.
- *
- * Class roots are scanned for `__future__.py`/`__future__.pyc` plus `xml/` and `email/`; under
- * unit-test mode a folder named `Lib` also qualifies to support mock SDKs. Independent of
- * environment kind: for a virtual environment this still returns the *base* interpreter's
- * stdlib (which is included in the venv's class roots), not the venv's own (mostly empty) lib.
- */
-@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-fun PythonInterpreter.stdlibLibDirectory(project: Project): VirtualFile? = findStdlibIn(classRoots(project))
 
 /**
  * [PythonInterpreter.stdlibLibDirectory] for an SDK that has no interpreter yet, such as an SDK without an owner.
@@ -234,7 +287,7 @@ fun PythonInterpreter.stdlibLibDirectory(project: Project): VirtualFile? = findS
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun Sdk.stdlibLibDirectory(): VirtualFile? = findStdlibIn(PythonSdkUtil.getPythonClassRoots(this))
 
-private fun findStdlibIn(classRoots: Array<VirtualFile>): VirtualFile? {
+internal fun findStdlibIn(classRoots: Array<VirtualFile>): VirtualFile? {
   for (file in classRoots) {
     if (!file.isValid) continue
     if ((file.findChild("__future__.py") != null || file.findChild("__future__.pyc") != null) &&
@@ -258,15 +311,6 @@ private fun findStdlibIn(classRoots: Array<VirtualFile>): VirtualFile? {
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonInterpreter.venvLibDirectory(): VirtualFile? =
   venvLibRoot()?.let { VirtualFileManager.getInstance().findFileByNioPath(it) }
-
-/**
- * The language level of this interpreter in [project], from its version, see [PythonInterpreterDetails.version]. The
- * default level when no version is recorded. It never starts the interpreter, so resolve and the language level pusher
- * can read it.
- */
-fun PythonInterpreter.languageLevel(project: Project): LanguageLevel =
-  PythonInterpreterDetails.getInstance(project).version(this)?.let { LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(it) }
-  ?: LanguageLevel.getDefault()
 
 /** The root of the binary skeletons of this interpreter, on the disk of the IDE, or `null` when it has no home path. */
 @get:Internal
@@ -299,27 +343,29 @@ val PythonInterpreter.isDisposed: Boolean
   get() = PythonSdkUtil.isDisposed(sdk)
 
 /**
- * The class roots of this interpreter in [project]: the directories its `sys.path` holds, the skeletons and the bundled
- * stubs, see [PythonInterpreterRoots.classRoots].
- */
-fun PythonInterpreter.classRoots(project: Project): Array<VirtualFile> =
-  PythonInterpreterRoots.getInstance(project).classRoots(this).toTypedArray()
-
-/**
- * The directory of the generated skeletons of this interpreter in [project], or `null` when it has none: the class root
- * named `python_stubs`. A mock interpreter of a test keeps it next to its other roots, so this scans the roots.
- */
-fun PythonInterpreter.skeletonsDirectory(project: Project): VirtualFile? =
-  classRoots(project).firstOrNull { it.isValid && it.path.contains(PythonSdkUtil.SKELETON_DIR_NAME) }
-
-/**
  * The directory that holds the sources copied from the target of this interpreter, one subdirectory for each remote
  * root, or `null` when no sources are copied yet.
  */
 fun TargetPythonInterpreter.remoteSourcesDirectory(): VirtualFile? {
-  val data = targetAdditionalData ?: return null
-  return VirtualFileManager.getInstance().findFileByNioPath(remoteSourcesLocalPath(data))
+  val path = remoteSourcesLocalPath ?: return null
+  return VirtualFileManager.getInstance().findFileByNioPath(path)
 }
+
+/**
+ * Where the sources copied from the target of this interpreter are stored on this machine, or `null` for an interpreter
+ * without target data. The sync of the sources copies them there, see [remoteSourcesDirectory].
+ */
+@get:Internal
+val TargetPythonInterpreter.remoteSourcesLocalPath: Path?
+  get() = targetAdditionalData?.let(::remoteSourcesLocalPath)
+
+/**
+ * The request that uploads the PyCharm helpers to the target of this interpreter, or `null` when no loaded plugin
+ * supports the target, see [PythonInterpreterTargetEnvironmentFactory].
+ */
+@Internal
+fun TargetPythonInterpreter.targetEnvironmentRequestOrNull(): HelpersAwareTargetEnvironmentRequest? =
+  targetAdditionalData?.let { PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(it, project) }
 
 /**
  * Where the sources copied from the target of [data] are stored on this machine. The updater copies them there, and
@@ -335,8 +381,56 @@ fun remoteSourcesLocalPath(data: PyTargetAwareAdditionalData): Path =
  * A local interpreter answers too: the request then describes the local machine.
  */
 @Internal
-fun PythonInterpreter.targetEnvironmentRequest(project: Project): HelpersAwareTargetEnvironmentRequest =
+fun PythonInterpreter.targetEnvironmentRequest(): HelpersAwareTargetEnvironmentRequest =
   PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
+
+/**
+ * The name of the SDK of the table that this interpreter wraps, for the `SDK_NAME` field that an older build reads to
+ * find the SDK. Only the legacy flow writes that field, see [isInterpreterLibraryFlowEnabled].
+ */
+@get:Internal
+val PythonInterpreter.legacyTableSdkName: @NlsSafe String
+  get() = sdk.name
+
+/** The home path of the SDK of the table that this interpreter wraps, for the `SDK_HOME` field, see [legacyTableSdkName]. */
+@get:Internal
+val PythonInterpreter.legacyTableSdkHome: String?
+  get() = sdk.homePath
+
+/**
+ * The adjuster that the platform gives for the target of this interpreter, such as Docker or SSH, or `null` when none
+ * applies. The platform API takes an [Sdk], so this is the one place that hands it one.
+ */
+@Internal
+fun PythonInterpreter.runConfigurationTargetAdjuster(): RunConfigurationTargetEnvironmentAdjuster? =
+  RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk)
+
+/**
+ * Sets the Python binary of this interpreter, and what its flavor needs, such as a conda activation, on
+ * [targetCommandLineBuilder].
+ */
+@Internal
+@RequiresBackgroundThread
+fun PythonInterpreter.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
+  sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder)
+}
+
+/**
+ * The variables that the activation of the environment of this interpreter sets, such as `VIRTUAL_ENV`. A target
+ * interpreter has no detected environment, so it has none.
+ */
+@Internal
+suspend fun PythonInterpreter.activationEnvironment(): PyResult<Map<String, String>> = when (this) {
+  is NativePythonInterpreter -> service<ActivatableEnvironmentService>().activationEnvironment(pythonBinary)
+  is TargetPythonInterpreter -> PyResult.success(emptyMap())
+}
+
+/** [activationEnvironment] for a Java caller that cannot suspend. Call it off the EDT. */
+@Internal
+@RequiresBackgroundThread
+@RequiresBlockingContext
+fun PythonInterpreter.activationEnvironmentBlocking(): PyResult<Map<String, String>> =
+  runBlockingMaybeCancellable { activationEnvironment() }
 
 /**
  * The path of the Python binary of this interpreter, as the command line runs it: a local path for a native interpreter,

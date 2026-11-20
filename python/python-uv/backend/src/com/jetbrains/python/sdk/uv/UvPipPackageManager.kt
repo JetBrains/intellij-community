@@ -2,10 +2,10 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.uv.backend.PyUvBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
@@ -35,10 +35,9 @@ import java.nio.file.Path
  */
 @ApiStatus.Internal
 class UvPipPackageManager internal constructor(
-  project: Project,
   interpreter: PythonInterpreter,
   uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>,
-) : UvPackageManagerBase(project, interpreter, uvExecutionContextDeferred) {
+) : UvPackageManagerBase(interpreter, uvExecutionContextDeferred) {
   /** What the environment holds, as `uv pip tree` prints it. The requirements file alone keys the cache. */
   override val treeProvider = cachedDependencyTree(dependencyFiles = { resolveDependencyFilesTree() }) {
     withUv { uv -> uv.listAllPackagesTree() }
@@ -48,7 +47,7 @@ class UvPipPackageManager internal constructor(
     get() = listOf(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT)
 
   /** Pip mode only. A stored `pyproject.toml` selects [UvPackageManager]. */
-  override fun matchesInterpreter(): Boolean = when (library.uvMode()) {
+  override fun matchesInterpreter(): Boolean = when (interpreter.uvMode()) {
     UvMode.Project -> false
     is UvMode.Pip -> true
   }

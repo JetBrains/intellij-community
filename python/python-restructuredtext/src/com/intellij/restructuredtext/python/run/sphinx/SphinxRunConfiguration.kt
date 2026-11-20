@@ -37,7 +37,7 @@ class SphinxRunConfiguration(
     if (!model.contains("pdf") && sdk != null) {
       PyPackageCoroutine.launch(project) {
         val interpreter = project.findPythonInterpreter(sdk) ?: return@launch
-        val isInstalled = PythonPackageManager.forPythonInterpreter(project, interpreter).hasInstalledPackageSnapshot("rst2pdf")
+        val isInstalled = PythonPackageManager.forPythonInterpreter(interpreter).hasInstalledPackageSnapshot("rst2pdf")
         if (isInstalled) {
           withContext(Dispatchers.EDT) { if (!model.contains("pdf")) model.add(13, "pdf") }
         }

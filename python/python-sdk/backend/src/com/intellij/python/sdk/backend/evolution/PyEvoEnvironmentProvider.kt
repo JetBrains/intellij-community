@@ -26,7 +26,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.sdk.backend.PySdkBundle
-import com.intellij.python.sdk.backend.PyInterpreterLibrary
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.sdk.common.EvoRowAction
@@ -120,11 +119,11 @@ class EvoWorkspace(
 class EvoPyProject(
   /** The project this entry describes. */
   val pyProject: PyProject,
-  /** The interpreter this project uses, see [library]. */
+  /** The interpreter this project uses, see [interpreter]. */
   interpreter: PythonInterpreter?,
   /**
    * The key that the interpreter library entry of this project names, or `null` when it has none, or the legacy flow
-   * names the interpreter by its SDK. With a `null` [library] the project names an interpreter that is unavailable:
+   * names the interpreter by its SDK. With a `null` [interpreter] the project names an interpreter that is unavailable:
    * its environment is gone.
    */
   val entryKey: PythonInterpreterKey? = null,
@@ -148,14 +147,10 @@ class EvoPyProject(
    * `null` while the SDK table is still loading, and a surface then states that a project with an interpreter has none
    * (PY-91871); the snapshot waits instead, once.
    *
-   * A [PyInterpreterLibrary] and not an `Sdk`, so a caller asks the interpreter what it is. A caller that still needs the
+   * A [PythonInterpreter] and not an `Sdk`, so a caller asks the interpreter what it is. A caller that still needs the
    * `Sdk` API calls [com.intellij.python.sdk.backend.getSdkAPI], whose deprecation marks the work left to do.
    */
-  val library: PyInterpreterLibrary? = interpreter?.let { PyInterpreterLibrary(pyProject.project, it) }
-
-  /** The interpreter of [library], for a caller that needs no fact that the project keeps about it. */
-  val interpreter: PythonInterpreter?
-    get() = library?.interpreter
+  val interpreter: PythonInterpreter? = interpreter
 }
 
 /**

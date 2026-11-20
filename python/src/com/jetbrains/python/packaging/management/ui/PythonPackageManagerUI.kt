@@ -195,8 +195,8 @@ class PythonPackageManagerUI private constructor(
 
   companion object {
     @ApiStatus.Internal
-    fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter, sink: ErrorSink = ErrorSink()): PythonPackageManagerUI =
-      PythonPackageManagerUI(PythonPackageManager.forPythonInterpreter(project, interpreter), sink)
+    fun forPythonInterpreter(interpreter: PythonInterpreter, sink: ErrorSink = ErrorSink()): PythonPackageManagerUI =
+      PythonPackageManagerUI(PythonPackageManager.forPythonInterpreter(interpreter), sink)
 
     @ApiStatus.Experimental
     fun forPackageManager(
@@ -212,11 +212,11 @@ class PythonPackageManagerUI private constructor(
     @RequiresEdt
     fun installPackagesWithModalProgressBlocking(project: Project, sdk: Sdk, vararg packages: String): List<PythonPackage>? {
       val interpreter = runWithModalProgressBlocking(project, PyBundle.message("python.packaging.installing.packages")) {
-        val result = sdk.pythonInterpreterResultAsync()
+        val result = sdk.pythonInterpreterResultAsync(project)
         result.errorOrNull?.let { ErrorSink().emit(it, project) }
         result.successOrNull
       } ?: return null
-      return forPythonInterpreter(project, interpreter).installPackagesWithModalProgressBlocking(*packages)
+      return forPythonInterpreter(interpreter).installPackagesWithModalProgressBlocking(*packages)
     }
   }
 }

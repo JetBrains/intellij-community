@@ -2,6 +2,8 @@
 package com.jetbrains.env.python
 
 import com.intellij.execution.target.TargetProgressIndicator
+import com.jetbrains.python.getOrThrow
+import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.projectRoots.Sdk
@@ -64,7 +66,7 @@ internal class PyPathGeneratorTest : PyEnvTestCase() {
 
         // New (target) API
         val env = LocalTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY)
-        paths = collectPythonPath(myFixture.project, module, sdk, null, true, true)
+        paths = collectPythonPath(myFixture.project, module, sdk.pythonInterpreterResult(myFixture.project).getOrThrow(), null, true, true)
           .map { it.apply(env) }
         assertContains(expected = false, paths = paths, file = myFile)
         assertContains(paths = paths, file = myDir)

@@ -929,7 +929,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       @Override
       public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException, ExecutionException {
         Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
-        PyEnvTestPackages.reloadInstalledPackages(myFixture.getProject(), PythonInterpreterKt.pythonInterpreterOrThrow(sdk, false));
+        PyEnvTestPackages.reloadInstalledPackages(myFixture.getProject(), PythonInterpreterKt.pythonInterpreterOrThrow(sdk, myFixture.getProject(), false));
         var runnerService = TestRunnerService.getInstance(myFixture.getModule());
         runnerService.setSelectedFactory(PythonTestConfigurationType.getInstance().getAutoDetectFactory());
         ApplicationManager.getApplication().invokeAndWait(() -> PyTestFixtureAndParametrizedTest.Companion.testInspectionStatic(myFixture));

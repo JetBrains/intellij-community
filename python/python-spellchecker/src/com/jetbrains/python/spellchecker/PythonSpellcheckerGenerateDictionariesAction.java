@@ -2,6 +2,8 @@
 package com.jetbrains.python.spellchecker;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -9,8 +11,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
-import com.intellij.python.sdk.backend.PythonInterpreter;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.evolution.EvoPyProject;
 import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +36,7 @@ public class PythonSpellcheckerGenerateDictionariesAction extends AnAction {
     final PythonSpellcheckerDictionaryGenerator generator = new PythonSpellcheckerDictionaryGenerator(module.getProject(),
                                                                                                       contentRoots[0].getPath() + "/dicts");
 
-    VirtualFile[] roots = PythonInterpreterExtKt.classRoots(interpreter, module.getProject());
+    VirtualFile[] roots = PythonInterpreterExtKt.getClassRoots(interpreter);
     for (VirtualFile root : roots) {
       if (root.getName().equals("Lib")) {
         generator.addFolder("python", root);

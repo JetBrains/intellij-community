@@ -96,7 +96,7 @@ suspend fun PythonInterpreterRegistry.putTestSdk(sdk: Sdk, ownerDir: Path): Pyth
     (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath = ownerDir.toString()
     modificator.commitChanges()
   }
-  val key = sdk.pythonInterpreterResultAsync().successOrNull?.key ?: return null
+  val key = sdk.pythonInterpreterResultAsync(store.project).successOrNull?.key ?: return null
   store.holdSdkForTests(key, sdk)
   return key
 }

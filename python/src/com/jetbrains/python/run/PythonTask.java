@@ -2,6 +2,8 @@
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Output;
 import com.intellij.execution.OutputListener;
@@ -287,8 +289,11 @@ public class PythonTask {
 
   protected static void setupPythonPath(@NotNull Module module, @NotNull Sdk sdk, @NotNull TargetEnvironmentRequest request,
                                         @NotNull PythonExecution pythonExecution, boolean addContent, boolean addSource) {
-    PythonCommandLineState.buildPythonPath(module.getProject(), module, pythonExecution, sdk, null, false, addContent,
-                                           addSource, false, request);
+    // This task still holds an SDK, so it takes the interpreter of the SDK here. A broken SDK adds no paths.
+    PythonInterpreter interpreter = PythonInterpreterKt.pythonInterpreterResult(sdk, module.getProject(), false).getSuccessOrNull();
+    if (interpreter == null) return;
+    PythonCommandLineState.buildPythonPath(module, pythonExecution, interpreter, null, false,
+                                           addContent, addSource, false, request);
   }
 
   protected void customizePythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution,

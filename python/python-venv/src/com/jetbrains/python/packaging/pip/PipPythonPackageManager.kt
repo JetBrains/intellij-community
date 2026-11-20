@@ -2,6 +2,8 @@
 package com.jetbrains.python.packaging.pip
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.languageLevel
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,9 +14,7 @@ import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.sdk.backend.NativePythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
-import com.intellij.python.sdk.backend.languageLevel
 import com.intellij.python.venv.MINIMUM_SUPPORTED_VENV_PYTHON_VERSION
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.errorProcessing.PyResult
@@ -46,7 +46,7 @@ import java.nio.file.Path
  */
 @ApiStatus.Internal
 @PyInternalExecApi
-open class PipPythonPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
+open class PipPythonPackageManager(interpreter: PythonInterpreter) : PythonPackageManager(interpreter) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> =
     listOf(PythonManagerCliSpec("pip", { localPythonBinary() }, runAsModule = true))
@@ -119,7 +119,7 @@ open class PipPythonPackageManager(project: Project, interpreter: PythonInterpre
 
 @ApiStatus.Internal
 class PipManagementInstaller(private val manager: PythonPackageManager) {
-  private val languageLevel: LanguageLevel = manager.interpreter.languageLevel(manager.project)
+  private val languageLevel: LanguageLevel = manager.interpreter.languageLevel
 
   /**
    * This method is for a native interpreter only. It does nothing for an interpreter on a target.

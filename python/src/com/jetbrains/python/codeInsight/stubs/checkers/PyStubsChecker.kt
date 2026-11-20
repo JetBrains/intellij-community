@@ -22,7 +22,7 @@ internal abstract class PyStubsChecker(val project: Project) : Disposable.Defaul
     project.messageBus.connect(this).subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
       override fun packagesChanged(interpreter: PythonInterpreter) {
         PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-          check(PythonPackageManager.forPythonInterpreter(project, interpreter))
+          check(PythonPackageManager.forPythonInterpreter(interpreter))
         }
       }
 
@@ -43,12 +43,12 @@ internal abstract class PyStubsChecker(val project: Project) : Disposable.Defaul
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
       runBlockingMaybeCancellable {
-        check(PythonPackageManager.forPythonInterpreter(project, interpreter))
+        check(PythonPackageManager.forPythonInterpreter(interpreter))
       }
     }
     else {
       PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-        check(PythonPackageManager.forPythonInterpreter(project, interpreter))
+        check(PythonPackageManager.forPythonInterpreter(interpreter))
       }
     }
   }

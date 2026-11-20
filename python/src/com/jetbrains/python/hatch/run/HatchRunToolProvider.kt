@@ -2,34 +2,33 @@
 package com.jetbrains.python.hatch.run
 
 import com.intellij.python.hatch.HatchExecutableNotFoundHatchError
+import com.jetbrains.python.run.features.PyInterpreterRunToolProvider
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
-import com.intellij.python.hatch.impl.sdk.HatchSdkFlavorData
 import com.intellij.python.hatch.runtime.HatchConstants
 import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.features.PyRunToolData
 import com.jetbrains.python.run.features.PyRunToolId
 import com.jetbrains.python.run.features.PyRunToolParameters
-import com.jetbrains.python.run.features.PySdkRunToolProvider
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import java.nio.file.Path
 
-internal class HatchRunToolProvider : PySdkRunToolProvider<HatchSdkFlavorData, HatchSdkFlavor>(HatchSdkFlavor::class.java) {
+internal class HatchRunToolProvider : PyInterpreterRunToolProvider() {
+  override val manager: FusId get() = HatchPyTool.getInstance().fusId
 
   override suspend fun <P : PathHolder> getRunToolParameters(
-    sdkHome: String,
-    flavorData: HatchSdkFlavorData,
+    interpreter: PythonInterpreter,
     fileSystem: FileSystem<P>,
     inlineScriptTarget: Path?,
   ): PyRunToolParameters {
     val hatchPath = HatchPyTool.getInstance().resolveExecutable(fileSystem)
                     ?: throw AssertionError(HatchExecutableNotFoundHatchError(null))
-    val env = mutableMapOf<String, String>()
-    flavorData.hatchEnvironmentName?.let {
-      env += HatchConstants.AppEnvVars.ENV to it
-    }
+    // The ref names the Hatch environment, see HatchSdkFlavor.toolEnvRefOf.
+    val env = mapOf(HatchConstants.AppEnvVars.ENV to interpreter.ref.envRef.value)
     return PyRunToolParameters(hatchPath, listOf("run", "python"), env, includeOriginalExe = false)
   }
 

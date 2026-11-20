@@ -2,6 +2,8 @@
 package com.jetbrains.python.extensions
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.languageLevel
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
@@ -12,9 +14,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
-import com.intellij.python.sdk.backend.languageLevel
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.LanguageLevel
@@ -125,7 +125,7 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
   var psiDirectory: PsiDirectory? = null
 
   var resolveContext = context.contextAnchor.qualifiedNameResolveContext?.copyWithMembers() ?: return null
-  val languageLevel = context.interpreter?.languageLevel(context.contextAnchor.project) ?: LanguageLevel.getDefault()
+  val languageLevel = context.interpreter?.languageLevel ?: LanguageLevel.getDefault()
   if (languageLevel.isPy3K || context.allowInaccurateResult) {
     resolveContext = resolveContext.copyWithPlainDirectories()
   }

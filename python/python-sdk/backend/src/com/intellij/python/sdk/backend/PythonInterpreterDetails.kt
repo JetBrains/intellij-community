@@ -2,6 +2,7 @@
 package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.application.ApplicationManager
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.edtWriteAction
@@ -21,13 +22,16 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.util.annotations.paths.OsPath
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.python.community.helpersLocator.PythonBundledPyiStubsLocator
+import com.intellij.remote.RemoteSdkProperties
+import com.intellij.util.PathMappingSettings
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.getPathsToTransfer
-import com.jetbrains.python.sdk.updateTransferredRoots
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.updateTransferredRoots
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +41,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
-import com.intellij.platform.util.annotations.paths.OsPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.InvalidPathException
@@ -137,7 +140,7 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
    * The dependency file stored for [interpreter], such as its `requirements.txt` or its `pyproject.toml`, or `null`
    * when none is stored. The default of the package manager applies then. The interpreter library flow keeps the file
    * in the record, relative to the owner directory. The legacy flow keeps it in the SDK data. Read it with
-   * [PyInterpreterLibrary.requirementsPath].
+   * [PythonInterpreter.requirementsPath].
    */
   internal fun requirementsPath(interpreter: PythonInterpreter): Path? =
     if (isInterpreterLibraryFlowEnabled()) {
@@ -166,6 +169,49 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
     else {
       commitAsync(interpreter.sdk) { modificator ->
         (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.requirementsPath = path?.let { interpreter.ownerDir.resolve(it) }
+      }
+    }
+  }
+
+  /**
+   * The path mappings of the target of [interpreter], from a local root to a root on the target, or `null` for an
+   * interpreter that has none. The interpreter library flow keeps them in the record. The legacy flow keeps them in
+   * the SDK data. Read them with [PythonInterpreter.pathMappings].
+   */
+  internal fun pathMappings(interpreter: PythonInterpreter): PathMappingSettings? =
+    if (isInterpreterLibraryFlowEnabled()) {
+      PythonInterpreterRecords.getInstance(project).recordOf(interpreter.key)?.pathMappings
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { mappings -> PathMappingSettings(mappings.map { PathMappingSettings.PathMapping(it.local, it.remote) }) }
+    }
+    else {
+      (interpreter.sdk.sdkAdditionalData as? RemoteSdkProperties)?.pathMappings
+    }
+
+  /**
+   * Stores [mappings] as the path mappings of the target of [interpreter], see [pathMappings]. The interpreter library
+   * flow keeps them in the record. The legacy flow keeps them in the SDK data.
+   */
+  internal suspend fun writePathMappings(interpreter: PythonInterpreter, mappings: PathMappingSettings) {
+    if (isInterpreterLibraryFlowEnabled()) {
+      val records = PythonInterpreterRecords.getInstance(project)
+      val record = records.recordOf(interpreter.key) ?: return
+      val stored = mappings.pathMappings.map { mapping ->
+        PythonInterpreterRecords.StoredPathMapping().apply {
+          local = mapping.localRoot
+          remote = mapping.remoteRoot
+        }
+      }
+      if (record.pathMappings.map { it.local to it.remote } == stored.map { it.local to it.remote }) return
+      records.put(interpreter.key, record.withPathMappings(stored))
+      // The SDK keeps a copy of the record for the code that still reads the mappings from an SDK, see [applyRecord].
+      commitAsync(interpreter.sdk) { modificator ->
+        (modificator.sdkAdditionalData as? PyTargetAwareAdditionalData)?.setPathMappings(mappings)
+      }
+    }
+    else {
+      commitAsync(interpreter.sdk) { modificator ->
+        (modificator.sdkAdditionalData as? PyTargetAwareAdditionalData)?.setPathMappings(mappings)
       }
     }
   }
@@ -370,6 +416,25 @@ private fun PythonInterpreterRecords.StoredInterpreter.copyWith(facts: PythonInt
     pathMappings += source.pathMappings
     version = facts.version
     sysPath += facts.sysPath.map { it.toString() }.distinct()
+  }
+}
+
+/** A copy of this record with [pathMappings] as its path mappings. The record keeps all else. */
+private fun PythonInterpreterRecords.StoredInterpreter.withPathMappings(
+  pathMappings: List<PythonInterpreterRecords.StoredPathMapping>,
+): PythonInterpreterRecords.StoredInterpreter {
+  val source = this
+  return PythonInterpreterRecords.StoredInterpreter().apply {
+    ownerDir = source.ownerDir
+    ref = source.ref
+    uuid = source.uuid
+    requirementsFile = source.requirementsFile
+    addedPaths += source.addedPaths
+    excludedPaths += source.excludedPaths
+    excludedFolders += source.excludedFolders
+    this.pathMappings += pathMappings
+    version = source.version
+    sysPath += source.sysPath
   }
 }
 

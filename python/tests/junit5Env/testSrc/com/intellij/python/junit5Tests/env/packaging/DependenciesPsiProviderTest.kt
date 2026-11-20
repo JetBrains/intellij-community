@@ -255,7 +255,7 @@ internal class DependenciesPsiProviderTest {
       built.getSdkAPI().putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, requirementsProviderType)
       withContext(Dispatchers.EDT) { beforePackageManager() }
       val interpreter = checkNotNull(pyProject.setPythonInterpreter(built).orThrow())
-      PythonPackageManager.forPythonInterpreter(project, interpreter).waitForInit()
+      PythonPackageManager.forPythonInterpreter(interpreter).waitForInit()
 
       fixture.configureFromTempProjectFile(requirementsProviderType.filename)
 

@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.pip.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.python.sdk.backend.writeRequirementsPath
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,7 +33,7 @@ internal class PipSetDefaultRequirementsAction() : PipPackageManagerAction() {
     val project = e.project ?: return PyResult.success(Unit)
 
     val newFilePath = envFile.toNioPath()
-    manager.library.writeRequirementsPath(newFilePath)
+    manager.interpreter.writeRequirementsPath(newFilePath)
     return PyResult.success(Unit)
   }
 
@@ -41,7 +42,7 @@ internal class PipSetDefaultRequirementsAction() : PipPackageManagerAction() {
     if (!e.presentation.isEnabledAndVisible)
       return
     val manager = e.getPythonPackageManager<PipPythonPackageManager>() ?: return
-    val savedFile = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(manager.library)
+    val savedFile = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(manager.interpreter)
     val currentFile = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return
 
     if (savedFile == currentFile) {

@@ -57,7 +57,7 @@ class PyUndeclaredPackagesGroupTest : PythonDependencyTestCase() {
       setDependencyRoot(providerType)
     }
     val project = myFixture.project
-    val manager = PythonPackageManager.forPythonInterpreter(project, findPythonInterpreterForTests(myFixture.module)!!)
+    val manager = PythonPackageManager.forPythonInterpreter(findPythonInterpreterForTests(myFixture.module)!!)
     val index = PyBuilderPackageIndex(installedByName = mapOf(UNDECLARED to PythonPackage(UNDECLARED, "1.0", false)),
                                       outdated = emptyMap())
     val packages = runWithModalProgressBlocking(project, "Building the packages") {

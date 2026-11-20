@@ -88,7 +88,7 @@ abstract class PyEnvCodeInsightTestCase : PyCodeInsightTestCase() {
      */
     @JvmStatic
     protected fun installPackages(vararg requirements: String): Unit = timeoutRunBlocking(timeout = 10.minutes) {
-      val packageManager = PythonPackageManager.forPythonInterpreter(project, venv)
+      val packageManager = PythonPackageManager.forPythonInterpreter(venv)
       for (requirement in requirements) {
         val specification = PythonRepositoryPackageSpecification(PyPiPackageRepository, PyRequirementParser.fromLine(requirement)!!)
         val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(specification))

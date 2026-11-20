@@ -2,6 +2,9 @@
 package com.jetbrains.python.debugger
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.python.sdk.backend.languageLevel
+import com.intellij.python.sdk.backend.classRoots
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionManager
@@ -34,12 +37,16 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.flavor
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.ui.content.Content
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
@@ -47,6 +54,7 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XSessionStartedResult
+import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.actions.requestFocus
@@ -79,15 +87,9 @@ import com.jetbrains.python.run.extendEnvs
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.prepareHelperScriptViaToolExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.sdk.getOrCreateAdditionalDataOld
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.intellij.python.sdk.backend.classRoots
-import com.intellij.python.sdk.backend.getPythonInfo
-import com.jetbrains.python.PYTHONPATH
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.EmptyCoroutineContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -103,6 +105,7 @@ import java.net.ServerSocket
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Function
+import kotlin.coroutines.EmptyCoroutineContext
 
 open class PyDebugRunner : AsyncProgramRunner<RunnerSettings>() {
 
@@ -183,8 +186,8 @@ open class PyDebugRunner : AsyncProgramRunner<RunnerSettings>() {
           try {
             val serverLocalPort = serverSocket.localPort
             val localPortBinding = TargetEnvironment.LocalPortBinding(serverLocalPort, null)
-            // The local environment does not forward ports, but an SDK without a target can run pydevd on a remote eel
-            val eelTunnel = pyState.sdk?.remoteEelOrNull()?.let {
+            // The local environment does not forward ports, but a native interpreter can run pydevd on a remote eel
+            val eelTunnel = pyState.pythonInterpreter?.remoteEelOrNull()?.let {
               PyEelDebuggerTunnel.open(it, InetSocketAddress(serverSocket.inetAddress, serverLocalPort))
             }
             val builder = PythonDebuggerClientModeTargetedCommandLineBuilder(
@@ -595,8 +598,8 @@ open class PyDebugRunner : AsyncProgramRunner<RunnerSettings>() {
     @ApiStatus.ScheduledForRemoval
     @Deprecated("The part of the legacy implementation based on GeneralCommandLine.")
     @JvmStatic
-    fun disableBuiltinBreakpoint(sdk: Sdk?, env: MutableMap<String, String>) {
-      if (sdk != null && languageLevelOf(sdk) == LanguageLevel.PYTHON37) {
+    fun disableBuiltinBreakpoint(interpreter: PythonInterpreter?, env: MutableMap<String, String>) {
+      if (interpreter != null && interpreter.languageLevel == LanguageLevel.PYTHON37) {
         env["PYTHONBREAKPOINT"] = "0"
       }
     }
@@ -636,7 +639,7 @@ open class PyDebugRunner : AsyncProgramRunner<RunnerSettings>() {
     private fun addSdkRootsToEnv(environmentController: EnvironmentController, runConfiguration: AbstractPythonRunConfiguration<*>) {
       val interpreter = runConfiguration.pythonInterpreter
       if (interpreter != null) {
-        val roots = interpreter.classRoots(runConfiguration.project).map { it.path }
+        val roots = interpreter.classRoots.map { it.path }
         // Assume that libraries are located on the target machine
         environmentController.putFixedValue(LIBRARY_ROOTS, StringUtil.join(roots, pathSeparator))
       }
@@ -870,19 +873,21 @@ private class PythonDebuggerClientModeTargetedCommandLineBuilder(
   private fun createInterpreterParametersToPreventPycGenerationInHelpersDir(
     existingInterpreterParameters: List<String>,
   ): List<String> {
-    val sdk = pyState.sdk ?: return emptyList()
-    // The cache directory is on the IDE machine, so an interpreter on a remote eel cannot use it
-    if (PythonSdkUtil.isRemote(sdk) || sdk.remoteEelOrNull() != null) return emptyList()
+    val interpreter = pyState.pythonInterpreter ?: return emptyList()
+    // The cache directory is on the IDE machine, so an interpreter on a target or on a remote eel cannot use it
+    when (interpreter) {
+      is NativePythonInterpreter -> if (interpreter.remoteEelOrNull() != null) return emptyList()
+      is TargetPythonInterpreter -> return emptyList()
+    }
 
-    sdk.versionString ?: return emptyList()
+    PythonInterpreterDetails.getInstance(project).version(interpreter) ?: return emptyList()
 
-    val pythonSdkFlavor = getOrCreateAdditionalDataOld(sdk).flavor
-    if (pythonSdkFlavor !is CPythonSdkFlavor) return emptyList()
+    if (interpreter.flavor !is CPythonSdkFlavor) return emptyList()
 
     // Note that we don't modify the parameters if the user already sets the options.
     if (existingInterpreterParameters.contains(PYTHON_DONT_WRITE_PYC_FLAG)) return emptyList()
 
-    if (languageLevelOf(sdk).isOlderThan(LanguageLevel.PYTHON38)) {
+    if (interpreter.languageLevel.isOlderThan(LanguageLevel.PYTHON38)) {
       // There is no option for defining a custom directory for .pyc files in Python 3.7 and older, thus disable cache generation entirely.
       return listOf(PYTHON_DONT_WRITE_PYC_FLAG)
     }
@@ -916,12 +921,6 @@ fun hasPycachePrefixOption(interpreterParameters: List<String>): Boolean =
 private val pathSeparator: String get() = File.pathSeparator
 
 private val LOG = Logger.getInstance(PyDebugRunner::class.java)
-
-private fun languageLevelOf(sdk: Sdk): LanguageLevel {
-  val version = sdk.versionString
-  val level = version?.let { LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(it) }
-  return level ?: LanguageLevel.getDefault()
-}
 
 private fun prepareAndGetPycacheDirectory(): Path {
   val pycacheDir = PathManager.getSystemDir().resolve("cpython-cache")

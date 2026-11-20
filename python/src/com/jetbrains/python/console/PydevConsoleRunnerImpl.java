@@ -2,6 +2,7 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.execution.console.ConsoleHistoryController;
@@ -54,7 +55,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -110,10 +110,8 @@ import com.jetbrains.python.run.PythonRunParams;
 import com.jetbrains.python.run.PythonScripts;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
-import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterRegistryKt;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -319,11 +317,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       @Override
       public void run(final @NotNull ProgressIndicator indicator) {
         try {
-          Sdk sdk = getSdk();
-          if (sdk == null) {
+          PythonInterpreter interpreter = myInterpreter;
+          if (interpreter == null) {
             throw new ExecutionException(PyBundle.message("pydev.console.python.interpreter.is.not.selected"));
           }
-          initAndRun(sdk);
+          initAndRun(interpreter);
           indicator.setText(PyBundle.message("connecting.to.console.progress"));
           connect(getStatementsToExecute());
           if (requestEditorFocus) {
@@ -363,11 +361,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         public void run(final @NotNull ProgressIndicator indicator) {
           indicator.setText(PyBundle.message("connecting.to.console.progress"));
           try {
-            Sdk sdk = getSdk();
-            if (sdk == null) {
+            PythonInterpreter interpreter = myInterpreter;
+            if (interpreter == null) {
               throw new ExecutionException(PyBundle.message("pydev.console.python.interpreter.is.not.selected"));
             }
-            initAndRun(sdk);
+            initAndRun(interpreter);
             connect(getStatementsToExecute());
             if (requestEditorFocus) {
               myConsoleView.requestFocus();
@@ -437,7 +435,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       PydevConsoleCli.createPythonConsoleScriptInClientMode(ideServerPort, helpersAwareTargetRequest);
 
     PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, helpersAwareTargetRequest, null,
-                                           getSdk());
+                                           myInterpreter);
 
     if (myWorkingDirFunction != null) {
       pythonConsoleScriptExecution.setWorkingDir(myWorkingDirFunction);
@@ -446,8 +444,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return pythonConsoleScriptExecution;
   }
 
-  private @NotNull PythonConsoleView createConsoleView(@NotNull Sdk sdk) {
-    PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, sdk, false);
+  private @NotNull PythonConsoleView createConsoleView(@NotNull PythonInterpreter interpreter) {
+    PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, interpreter, false);
     myPydevConsoleCommunication.setConsoleFile(consoleView.getVirtualFile());
     consoleView.addMessageFilter(new PythonTracebackFilter(myProject));
     consoleView.addMessageFilter(new PythonImportErrorFilter(myProject));
@@ -464,7 +462,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
    *   client mode.</li>
    * </ol>
    */
-  private @NotNull ConsoleProcessCreationResult createProcessUsingTargetsAPI(@NotNull Sdk sdk) throws ExecutionException {
+  private @NotNull ConsoleProcessCreationResult createProcessUsingTargetsAPI(@NotNull PythonInterpreter interpreter) throws ExecutionException {
     int ideServerPort;
     try {
       ideServerPort = NetUtils.findAvailableSocketPort();
@@ -473,17 +471,18 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       throw new ExecutionException(e);
     }
 
-    HelpersAwareTargetEnvironmentRequest helpersAwareRequest = PythonCommandLineState.getPythonTargetInterpreter(myProject, sdk);
+    HelpersAwareTargetEnvironmentRequest helpersAwareRequest = PythonInterpreterExtKt.targetEnvironmentRequest(interpreter);
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(ideServerPort, null);
     targetEnvironmentRequest.getLocalPortBindings().add(ideServerPortBinding);
     // The local environment does not forward ports, but an SDK without a target can run the console on a remote eel
-    EelDescriptor eel = targetEnvironmentRequest instanceof LocalTargetEnvironmentRequest ? PyEelSdkKt.remoteEelOrNull(sdk) : null;
+    EelDescriptor eel = targetEnvironmentRequest instanceof LocalTargetEnvironmentRequest ? PyEelSdkKt.remoteEelOrNull(interpreter) : null;
     // The local environment resolves the console server to the loopback, see the server start below
     PyEelDebuggerTunnel eelTunnel =
       eel != null ? PyEelDebuggerTunnel.open(eel, new InetSocketAddress(InetAddress.getLoopbackAddress(), ideServerPort)) : null;
     try {
-      ConsoleProcessCreationResult result = createProcessUsingTargetsAPI(sdk, helpersAwareRequest, ideServerPort, ideServerPortBinding, eelTunnel);
+      ConsoleProcessCreationResult result =
+        createProcessUsingTargetsAPI(interpreter, helpersAwareRequest, ideServerPort, ideServerPortBinding, eelTunnel);
       if (eelTunnel != null) {
         result.myProcess.onExit().whenComplete((ignoredProcess, ignoredError) -> eelTunnel.close());
       }
@@ -498,7 +497,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   @RequiresBackgroundThread
-  private @NotNull ConsoleProcessCreationResult createProcessUsingTargetsAPI(@NotNull Sdk sdk,
+  private @NotNull ConsoleProcessCreationResult createProcessUsingTargetsAPI(@NotNull PythonInterpreter interpreter,
                                                                              @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest,
                                                                              int ideServerPort,
                                                                              @NotNull TargetEnvironment.LocalPortBinding ideServerPortBinding,
@@ -531,10 +530,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     // extra debug options are defined at least for IronPython
-    PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
-    if (flavor != null) {
-      interpreterOptions.addAll(flavor.getExtraDebugOptions());
-    }
+    interpreterOptions.addAll(PythonInterpreterExtKt.getFlavor(interpreter).getExtraDebugOptions());
 
     // TODO [Targets API] We should pass the proper progress indicator here
     TargetEnvironment targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY);
@@ -548,7 +544,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     boolean usePty = PtyCommandLine.isEnabled() && !SystemInfo.isWindows;
     TargetedCommandLine targetedCommandLine = PythonScripts.buildTargetedCommandLine(pythonConsoleExecution,
                                                                                      targetEnvironment,
-                                                                                     sdk,
+                                                                                     interpreter,
                                                                                      interpreterOptions
     );
 
@@ -576,7 +572,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     communicationServer.setPythonConsoleProcess(process);
     String commandLineString = StringUtil.join(targetedCommandLine.getCommandPresentation(targetEnvironment), " ");
     var pathMapper =
-      PydevConsoleRunnerUtil.createTargetEnvironmentPathMapper(myProject, sdk, myConsoleSettings, targetEnvironment);
+      PydevConsoleRunnerUtil.createTargetEnvironmentPathMapper(myProject, interpreter, myConsoleSettings, targetEnvironment);
     boolean isMostlySilentProcess = true;
     ProcessHandler processHandler = ProcessHandlerWithPyPositionConverterKt.createPyProcessHandler(process, targetEnvironment,
                                                                                                    commandLineString,
@@ -711,15 +707,15 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
   }
 
-  private void initAndRun(@NotNull Sdk sdk) throws ExecutionException {
+  private void initAndRun(@NotNull PythonInterpreter interpreter) throws ExecutionException {
     // Create Server process
     ConsoleProcessCreationResult processCreationResult;
-    processCreationResult = createProcessUsingTargetsAPI(sdk);
+    processCreationResult = createProcessUsingTargetsAPI(interpreter);
     TargetEnvironment targetEnvironment = processCreationResult.getTargetEnvironment();
     UIUtil.invokeAndWaitIfNeeded(() -> {
       // Init console view
       ApplicationManager.getApplication().runWriteIntentReadAction(() -> {
-        myConsoleView = createConsoleView(sdk);
+        myConsoleView = createConsoleView(interpreter);
         myConsoleView.setRunner(this);
         myConsoleView.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
         myPydevConsoleCommunication.setConsoleView(myConsoleView);
@@ -1110,13 +1106,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return myInterpreter;
   }
 
-  /** The SDK of {@link #getPythonInterpreter()}. The code that starts the console process still runs on an SDK. */
-  @Override
-  @SuppressWarnings("deprecation")
-  public @Nullable Sdk getSdk() {
-    return myInterpreter != null ? PythonInterpreterExtKt.getSdkAPI(myInterpreter) : null;
-  }
-
   private class ConnectDebuggerAction extends ToggleAction implements DumbAware {
     private boolean mySelected = false;
     private XDebugSession mySession = null;
@@ -1173,7 +1162,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     XDebugProcessStarter starter = new XDebugProcessStarter() {
       @Override
       public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
-        PythonDebugLanguageConsoleView debugConsoleView = new PythonDebugLanguageConsoleView(myProject, getSdk());
+        PythonDebugLanguageConsoleView debugConsoleView = new PythonDebugLanguageConsoleView(myProject, myInterpreter != null ? myInterpreter : null);
 
         PyConsoleDebugProcessHandler consoleDebugProcessHandler =
           new PyConsoleDebugProcessHandler(myProcessHandler);

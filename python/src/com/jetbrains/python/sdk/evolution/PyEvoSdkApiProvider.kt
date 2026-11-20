@@ -551,7 +551,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // any other. Nothing below reads the interpreter's machine — the presentation is the label the classic widget
     // shows, and the dependency file is resolved from the module.
     val item = interpreter.asItem()
-    val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+    val manager = PythonPackageManager.forPythonInterpreter(interpreter)
     return PyInterpreterDto(
       title = item.shortName,
       description = item.description,
@@ -1151,7 +1151,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   private suspend fun EvoTarget.dependencyFileContext(): DataContext? {
     val project = workspace.project
     val interpreter = pyProject.interpreter ?: return null
-    val file = PythonPackageManager.forPythonInterpreter(project, interpreter).getRootDependenciesFile()?.virtualFile ?: return null
+    val file = PythonPackageManager.forPythonInterpreter(interpreter).getRootDependenciesFile()?.virtualFile ?: return null
     return readAction {
       // PythonPackageManagerAction.actionPerformed bails out without a PSI file (it restarts the daemon on it).
       val psiFile = PsiManager.getInstance(project).findFile(file)

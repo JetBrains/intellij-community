@@ -31,7 +31,7 @@ internal class PythonPackageManagersStartupActivity : ProjectActivity, DumbAware
 suspend fun awaitDerivedRootsForTests(project: Project) {
   // An interpreter whose SDK is gone has no manager, see PythonPackageManagerServiceImpl.startManagers.
   for (interpreter in EvoPyProjectModel.getInstance(project).snapshot().interpreters.filterNot { it.isDisposed }) {
-    val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+    val manager = PythonPackageManager.forPythonInterpreter(interpreter)
     manager.waitForInit()
     // The init does not wait for the declared packages, and a test reads them, as an inspection does.
     manager.listDeclaredPackagesCached()

@@ -7,7 +7,6 @@ import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.community.impl.conda.PyCondaBundle
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.binaryPathString
 import com.intellij.python.sdk.backend.evolution.toolMissing
 import com.intellij.python.sdk.backend.resolveExecutable
 import com.intellij.python.sdk.backend.toFileSystem
@@ -71,15 +70,14 @@ internal class CondaPackageManagerEngine(private val interpreter: PythonInterpre
     return CondaExecutor.listPackages(conda, env)
   }
 
-  /** The conda binary and the env of [interpreter], from its ref and its Python binary, see [condaIdentityOf]. */
+  /** The conda binary and the env of [interpreter], from its ref, see [condaIdentityOf]. */
   private suspend fun condaEnvExecution(): PyResult<CondaEnvExecution> =
     condaEnvExecutionOn(interpreter.toFileSystem())
 
   private suspend fun <P : PathHolder> condaEnvExecutionOn(fileSystem: FileSystem<P>): PyResult<CondaEnvExecution> {
     val tool = CondaPyTool.getInstance()
     val conda = fileSystem.resolveExecutable(tool) ?: return toolMissing(tool)
-    val pythonBinary = fileSystem.parsePath(interpreter.binaryPathString).getOr { return it }
-    val env = condaIdentityOf(fileSystem, interpreter.ref.envRef, pythonBinary)
+    val env = condaIdentityOf(fileSystem, interpreter.ref.envRef)
     return PyResult.success(CondaEnvExecution(fileSystem.getBinaryToExec(conda), env))
   }
 }

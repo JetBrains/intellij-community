@@ -69,7 +69,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
       final ConsoleView testsOutputConsoleView = SMTestRunnerConnectionUtil.createConsole(frameworkName, consoleProperties);
       customizeConsoleView(testsOutputConsoleView);
       final ConsoleView consoleView =
-        new PythonDebugLanguageConsoleView(project, myConfiguration.getSdk(),
+        new PythonDebugLanguageConsoleView(project, getPythonInterpreter(),
                                            testsOutputConsoleView, true);
       consoleView.attachToProcess(processHandler);
       addTracebackFilter(project, consoleView, processHandler);

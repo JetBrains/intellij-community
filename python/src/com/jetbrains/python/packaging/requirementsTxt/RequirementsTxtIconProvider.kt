@@ -18,8 +18,8 @@ internal class RequirementsTxtIconProvider : IconProvider() {
     if (psiFile.fileType !is RequirementsFileType) return null
     val vFile = psiFile.virtualFile ?: return null
     // An icon provider cannot suspend, so it peeks at the snapshot. Before the first one, the icon is the default one.
-    val library = psiFile.findEvoPyProjectIfReady(mainForOrphans = false)?.library ?: return null
-    val saved = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(library)
+    val interpreter = psiFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return null
+    val saved = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(interpreter)
     return if (saved == vFile) {
       PythonIcons.Python.ReferencedFile
     } else {

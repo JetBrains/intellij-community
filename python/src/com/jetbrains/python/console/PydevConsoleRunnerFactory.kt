@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
@@ -84,7 +83,7 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
     val (interpreter, target) = findPythonSdkAndModule(moduleOrProject)
     val project = target.project
     val settingsProvider = PyConsoleOptions.getInstance(project).pythonConsoleSettings
-    val pathMapper = interpreter?.createMapper(project, settingsProvider.mappingSettings) ?: PyRemotePathMapper()
+    val pathMapper = interpreter?.createMapper(settingsProvider.mappingSettings) ?: PyRemotePathMapper()
     val envs = settingsProvider.envs.toMutableMap()
     putIPythonEnvFlag(project, envs)
     // Both read the module's content and source roots, and this now runs on a background thread rather than on the
@@ -216,9 +215,7 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
                                           settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String> {
       val customStartScript = makeStartWithEmptyLine(settingsProvider.myCustomStartScript)
       val (project, module) = moduleOrProject.destructured
-      // The run machinery collects the paths of the module, and it reads an SDK.
-      @Suppress("DEPRECATION")
-      val pythonPathFuns = collectPythonPath(project, module, interpreter?.getSdkAPI(), pathMapper,
+      val pythonPathFuns = collectPythonPath(project, module, interpreter, pathMapper,
                                              settingsProvider.shouldAddContentRoots(), settingsProvider.shouldAddSourceRoots()
       ).toMutableSet()
       return constructPyPathAndWorkingDirCommand(pythonPathFuns, workingDir, customStartScript)
@@ -231,7 +228,7 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
       val paths = ArrayList<Function<TargetEnvironment, String>>()
       paths.add(getTargetEnvironmentValueForLocalPath(Path.of(projectRoot)))
 
-      val targetEnvironmentRequest = interpreter.targetEnvironmentRequest(project)
+      val targetEnvironmentRequest = interpreter.targetEnvironmentRequest()
       val communityHelpers = targetEnvironmentRequest.preparePyCharmHelpers().helpers.find { it.localPath.endsWith("helpers") }
       if (communityHelpers != null) {
         for (helper in listOf("pycharm", "pydev")) {

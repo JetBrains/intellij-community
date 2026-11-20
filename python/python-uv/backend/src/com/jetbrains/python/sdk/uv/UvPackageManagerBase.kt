@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
-import com.intellij.python.sdk.backend.PyInterpreterLibrary
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.resolveExecutable
 import com.intellij.python.uv.backend.UvPyTool
@@ -31,10 +30,9 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 abstract class UvPackageManagerBase(
-  project: Project,
   interpreter: PythonInterpreter,
   uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>,
-) : PythonPackageManager(project, interpreter) {
+) : PythonPackageManager(interpreter) {
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
@@ -71,15 +69,15 @@ abstract class UvPackageManagerBase(
 
 /** Picks the manager for the [UvMode] of the interpreter. It pins a legacy interpreter first. */
 internal class UvPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager? {
+  override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager? {
     if (!interpreter.isUv) {
       return null
     }
-    val mode = pinLegacyUvMode(PyInterpreterLibrary(project, interpreter))
-    val uvExecutionContext = interpreter.getUvExecutionContextAsync(PyPackageCoroutine.getScope(project))
+    val mode = pinLegacyUvMode(interpreter)
+    val uvExecutionContext = interpreter.getUvExecutionContextAsync(PyPackageCoroutine.getScope(interpreter.project))
     return when (mode) {
-      UvMode.Project -> UvPackageManager(project, interpreter, uvExecutionContext)
-      is UvMode.Pip -> UvPipPackageManager(project, interpreter, uvExecutionContext)
+      UvMode.Project -> UvPackageManager(interpreter, uvExecutionContext)
+      is UvMode.Pip -> UvPipPackageManager(interpreter, uvExecutionContext)
     }
   }
 }

@@ -4,7 +4,6 @@ package com.jetbrains.python.console;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -53,6 +52,4 @@ public interface PydevConsoleRunner {
   @ApiStatus.Internal
   @Nullable PythonInterpreter getPythonInterpreter();
 
-  @TestOnly
-  @Nullable Sdk getSdk();
 }

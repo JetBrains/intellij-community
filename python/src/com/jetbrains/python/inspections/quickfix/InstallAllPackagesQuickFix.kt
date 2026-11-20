@@ -24,7 +24,7 @@ class InstallAllPackagesQuickFix(private val packageNames: List<String>) : Local
     PyPackageCoroutine.launch(project) {
       val evoPyProject = project.findEvoPyProject(file, mainForOrphans = false) ?: return@launch
       val interpreter = evoPyProject.interpreter ?: return@launch
-      PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
+      PythonPackageManagerUI.forPythonInterpreter(interpreter)
         .installWithConfirmation(normalizedPackageNames, evoPyProject.pyProject.residesOnModule)
     }
   }

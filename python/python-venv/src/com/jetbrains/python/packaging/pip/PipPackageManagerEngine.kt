@@ -32,7 +32,7 @@ class PipPackageManagerEngine(
   private val interpreter: PythonInterpreter,
 ) : PythonPackageManagerEngine {
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+    val manager = PythonPackageManager.forPythonInterpreter(interpreter)
 
     PipManagementInstaller(manager).installManagementIfNeeded().getOr { return it }
 

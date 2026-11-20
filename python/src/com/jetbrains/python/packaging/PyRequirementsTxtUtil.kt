@@ -2,6 +2,8 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.notification.NotificationAction
+import com.intellij.python.sdk.backend.writeRequirementsPath
+import com.intellij.python.sdk.backend.requirementsPath
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -25,11 +27,9 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
-import com.intellij.python.pyproject.model.evolution.getInterpreterLibrary
-import com.intellij.python.sdk.backend.PyInterpreterLibrary
-import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.requirementsPath
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindItem
@@ -122,8 +122,8 @@ internal class PyRequirementsSyncServiceImpl : PyRequirementsSyncService {
 internal suspend fun syncWithImports(module: Module) {
   val project = module.project
   val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Sync Python requirements")
-  val library = module.asPyProject()?.getInterpreterLibrary()
-  if (library == null) {
+  val interpreter = module.asPyProject()?.getInterpreter()
+  if (interpreter == null) {
     val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
       PySdkPopupFactory.createAndShow(module)
     }
@@ -140,13 +140,13 @@ internal suspend fun syncWithImports(module: Module) {
   val settings = PyPackageRequirementsSettings.getInstance(module)
 
   if (!ApplicationManager.getApplication().isUnitTestMode) {
-    val initialPath = readAction { resolveSyncDialogInitialPath(module, library) }
-    val proceed = withContext(Dispatchers.EDT) { showSyncSettingsDialog(module, settings, library, initialPath) }
+    val initialPath = readAction { resolveSyncDialogInitialPath(module, interpreter) }
+    val proceed = withContext(Dispatchers.EDT) { showSyncSettingsDialog(module, settings, interpreter, initialPath) }
     if (!proceed) return
   }
 
   val requirementsFile = PyPackageUtil.findRequirementsTxt(module) ?: edtWriteAction {
-    PythonRequirementTxtSdkUtils.createRequirementsTxtPath(module, library)
+    PythonRequirementTxtSdkUtils.createRequirementsTxtPath(module, interpreter)
   }
 
   if (requirementsFile == null) {
@@ -161,7 +161,7 @@ internal suspend fun syncWithImports(module: Module) {
   }
 
   val matchResult = withBackgroundProgress(project, PyBundle.message("python.requirements.analyzing.imports.title")) {
-    prepareRequirementsText(module, library.interpreter, settings)
+    prepareRequirementsText(module, interpreter, settings)
   }
 
   writeCommandAction(project, PyBundle.message("python.requirements.action.name")) {
@@ -215,7 +215,7 @@ private suspend fun prepareRequirementsText(
   interpreter: PythonInterpreter,
   settings: PyPackageRequirementsSettings,
 ): PyRequirementsAnalysisResult {
-  val packageManager = PythonPackageManager.forPythonInterpreter(module.project, interpreter)
+  val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
   val psiManager = PsiManager.getInstance(module.project)
   val imports = collectImports(module, psiManager)
   val installedPackages = packageManager.listInstalledPackages()
@@ -249,15 +249,15 @@ private suspend fun prepareRequirementsText(
 @PyInternalExecApi
 @RequiresBackgroundThread
 @RequiresReadLock
-fun resolveSyncDialogInitialPath(module: Module, library: PyInterpreterLibrary): Path? =
-  library.requirementsPath
+fun resolveSyncDialogInitialPath(module: Module, interpreter: PythonInterpreter): Path? =
+  interpreter.requirementsPath
   ?: PyPackageUtil.findRequirementsTxt(module)?.toNioPathOrNull()
 
 @RequiresEdt
 private fun showSyncSettingsDialog(
   module: Module,
   settings: PyPackageRequirementsSettings,
-  library: PyInterpreterLibrary,
+  interpreter: PythonInterpreter,
   initialPath: Path?,
 ): Boolean {
   val initialPathString = initialPath?.toString().orEmpty()
@@ -274,7 +274,7 @@ private fun showSyncSettingsDialog(
                     // pre-filled value would clear the SDK path on the next open (PY-84976).
                     val normalized = stringPath.ifBlank { null }?.toNioPathOrNull()
                     if (normalized == initialPath) return@bindText
-                    PyPackageCoroutine.launch(project) { library.writeRequirementsPath(normalized) }
+                    PyPackageCoroutine.launch(project) { interpreter.writeRequirementsPath(normalized) }
                   })
         .align(AlignX.FILL)
         .focused()

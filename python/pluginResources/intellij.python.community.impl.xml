@@ -696,8 +696,6 @@
     <extensionPoint qualifiedName="Pythonid.pep8ProblemSuppressor"
                     interface="com.jetbrains.python.validation.Pep8ProblemSuppressor"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonDebugBackendRunner" interface="com.jetbrains.python.debugger.PyDebugBackendRunner"
                     dynamic="true"/>
 

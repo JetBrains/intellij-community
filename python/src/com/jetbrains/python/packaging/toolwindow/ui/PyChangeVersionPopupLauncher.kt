@@ -48,7 +48,7 @@ object PyChangeVersionPopupLauncher {
     workspaceMember: PyWorkspaceMember? = null,
   ) {
     PyPackageCoroutine.launch(project, Dispatchers.Default) {
-      val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+      val manager = PythonPackageManager.forPythonInterpreter(interpreter)
       val trace = TraceContext(PyBundle.message("trace.context.packaging.tool.window.change.version", packageName), null)
       val details = manager.repositoryManager.getPackageDetails(packageName, null).getOrNull()
       if (details == null) {

@@ -38,7 +38,7 @@ class UvPackageManagerTest {
       ]
     """.trimIndent())
 
-    val manager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), sdkFixture.get())
+    val manager = PythonPackageManager.forPythonInterpreter(sdkFixture.get())
 
     val httpxOutdated = CompletableDeferred<Unit>()
     val connection = projectFixture.get().messageBus.connect()

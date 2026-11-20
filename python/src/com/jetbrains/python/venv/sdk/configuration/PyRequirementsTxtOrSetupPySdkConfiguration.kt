@@ -2,10 +2,10 @@
 package com.jetbrains.python.venv.sdk.configuration
 
 import com.intellij.openapi.application.readAction
+import com.intellij.python.sdk.backend.writeRequirementsPath
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.sdk.backend.PyInterpreterLibrary
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.venv.PY_REQ_TOOL_ID
 import com.jetbrains.python.PyBundle
@@ -60,10 +60,10 @@ internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigur
     val isRequirements = requirementsTxtOrSetupPyFile.name != SETUP_PY
 
     if (isRequirements) {
-      PyInterpreterLibrary(project, pythonInterpreter).writeRequirementsPath(requirementsTxtOrSetupPyFile.toNioPath())
+      pythonInterpreter.writeRequirementsPath(requirementsTxtOrSetupPyFile.toNioPath())
     }
 
-    return PythonPackageManager.forPythonInterpreter(project, pythonInterpreter).syncLocked().mapSuccess { pythonInterpreter }
+    return PythonPackageManager.forPythonInterpreter(pythonInterpreter).syncLocked().mapSuccess { pythonInterpreter }
   }
 
   // Reads the module and not the project: both finders walk the module's source roots, which a base dir does not state.

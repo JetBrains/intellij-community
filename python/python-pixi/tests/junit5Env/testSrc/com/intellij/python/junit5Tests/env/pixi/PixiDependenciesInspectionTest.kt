@@ -101,7 +101,7 @@ internal class PixiDependenciesInspectionTest {
     val interpreter = registry.build(pyProject, PyInterpreterRef.native(tool.fusId, PyEnvRef("default"))).getOrThrow()
     try {
       pyProject.setPythonInterpreter(interpreter).getOrThrow()
-      val manager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), interpreter)
+      val manager = PythonPackageManager.forPythonInterpreter(interpreter)
       manager.listInstalledPackages()
       manager.listDeclaredPackagesCached()
       val declared = checkNotNull(manager.listDeclaredPackages()).getOrThrow().map { it.name }
@@ -183,7 +183,7 @@ internal class PixiDependenciesInspectionTest {
     val interpreter = registry.build(pyProject, PyInterpreterRef.native(tool.fusId, PyEnvRef("docs"))).getOrThrow()
     try {
       pyProject.setPythonInterpreter(interpreter).getOrThrow()
-      val manager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), interpreter)
+      val manager = PythonPackageManager.forPythonInterpreter(interpreter)
       manager.listInstalledPackages()
       val activePlatform = if (SystemInfo.isWindows) "win" else "unix"
       val inactivePlatform = if (SystemInfo.isWindows) "unix" else "win"

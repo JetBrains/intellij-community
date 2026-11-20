@@ -33,8 +33,8 @@ import java.nio.file.Path
 @RequiresBackgroundThread
 internal fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String {
   val project = config.project
-  val sdk = config.sdk
-  val pathMapper = sdk?.let { getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings) }
+  val interpreter = config.pythonInterpreter
+  val pathMapper = interpreter?.let { getPathMapper(project, it, PyConsoleOptions.getInstance(project).pythonConsoleSettings) }
   return buildScriptFunctionWithConsoleRun(
     config,
     ::StringScriptBuilder,
@@ -60,7 +60,7 @@ internal fun buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration): 
     config,
     ::TargetEnvironmentFunctionScriptBuilder,
     t = ::constant,
-    toTargetPath = { getTargetPathForPythonConsoleExecution(config.project, config.sdk, null, Path.of(it)) },
+    toTargetPath = { getTargetPathForPythonConsoleExecution(config.project, config.pythonInterpreter, null, Path.of(it)) },
     toStringLiteral = TargetEnvironmentFunction<String>::toStringLiteral
   )
 

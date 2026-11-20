@@ -366,7 +366,7 @@ internal class PyPackagesTreePane(
     applyUiState(PackageTreeUiState.loading())
 
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+      val manager = PythonPackageManager.forPythonInterpreter(interpreter)
       if (invalidateCache) manager.treeProvider?.invalidateCache()
       val stillCurrent = withContext(Dispatchers.EDT) {
         if (currentInterpreter != interpreter) return@withContext false
@@ -713,7 +713,7 @@ internal class PyPackagesTreePane(
     val pkgName = pkg.name.name
     val member = workspaceMemberName?.let { PyWorkspaceMember(it) }
     PyPackageCoroutine.launch(project) {
-      PythonPackageManagerUI.forPythonInterpreter(project, interpreter).uninstallPackagesBackground(listOf(pkgName), workspaceMember = member)
+      PythonPackageManagerUI.forPythonInterpreter(interpreter).uninstallPackagesBackground(listOf(pkgName), workspaceMember = member)
       withContext(Dispatchers.EDT) {
         if (currentInterpreter == interpreter) reloadCurrentInterpreter()
       }

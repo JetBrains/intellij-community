@@ -31,7 +31,7 @@ class PyTensorFlowTest : PyEnvTestCase() {
   private class TensorFlowModulesTask : PyExecutionFixtureTestTask("packages/tensorflow") {
     override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
       val sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS)
-      val packages = reloadInstalledPackages(myFixture.project, sdk.pythonInterpreterResult().getOrThrow())
+      val packages = reloadInstalledPackages(myFixture.project, sdk.pythonInterpreterResult(myFixture.project).getOrThrow())
       assertNotNull(packages.find { it.name.equals("tensorflow", ignoreCase = true) })
 
       ApplicationManager.getApplication().invokeAndWait(Runnable {

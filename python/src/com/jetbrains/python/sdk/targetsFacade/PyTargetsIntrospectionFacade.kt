@@ -2,50 +2,45 @@
 package com.jetbrains.python.sdk.targetsFacade
 
 import com.intellij.execution.ExecutionException
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.util.annotations.paths.OsPath
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper.Constants.SYSPATH_PY
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.executeHelper
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Gets information about a Python SDK through the Targets API.
- * Supports local SDKs and remote SDKs (SDKs with [PyTargetAwareAdditionalData]).
- * Use [create] to get an instance, and use the instance polymorphically: for a local SDK, some methods do nothing.
- * To check if the SDK is local, use [isLocalTarget].
+ * Gets information about a Python interpreter through the Targets API.
+ * Supports a native interpreter and an interpreter on a target.
+ * Use [create] to get an instance, and use the instance polymorphically: for a native interpreter, some methods do
+ * nothing. To check if the interpreter is local, use [isLocalTarget].
  */
 @ApiStatus.Internal
-sealed class PyTargetsIntrospectionFacade(
-  protected val sdk: Sdk,
-  protected val project: Project,
-) {
+sealed class PyTargetsIntrospectionFacade(protected val interpreter: PythonInterpreter) {
+  protected val project: Project
+    get() = interpreter.project
+
   companion object {
     /**
-     * @throws com.jetbrains.python.sdk.InvalidSdkException if [sdk] is remote and the plugin for its target is not loaded
+     * @throws com.jetbrains.python.sdk.InvalidSdkException if [interpreter] is on a target and the plugin for its target is not loaded
      */
     @Throws(InvalidSdkException::class)
     @JvmStatic
-    fun create(sdk: Sdk, project: Project): PyTargetsIntrospectionFacade {
-      val targetData = sdk.sdkAdditionalData as? PyTargetAwareAdditionalData
-      return if (targetData != null) {
-        PyTargetsIntrospectionFacadeRemote.create(sdk, targetData, project)
-        ?: throw InvalidSdkException(PyBundle.message("python.sdk.target.no.plugin", targetData::class.java.name))
-      }
-      else {
-        PyTargetsIntrospectionFacadeLocal(sdk, project)
-      }
+    fun create(interpreter: PythonInterpreter): PyTargetsIntrospectionFacade = when (interpreter) {
+      is NativePythonInterpreter -> PyTargetsIntrospectionFacadeLocal(interpreter)
+      is TargetPythonInterpreter -> PyTargetsIntrospectionFacadeRemote.create(interpreter)
+                                    ?: throw InvalidSdkException(PyBundle.message("python.sdk.target.no.plugin",
+                                                                                  interpreter.targetConfiguration::class.java.name))
     }
 
     @JvmStatic
@@ -53,16 +48,12 @@ sealed class PyTargetsIntrospectionFacade(
     protected fun <T> PyResult<T>.orThrowExecException(): T = getOr { throw ExecutionException(it.error.message) }
   }
 
-  @Throws(ExecutionException::class)
-  protected suspend fun interpreter(): PythonInterpreter = sdk.pythonInterpreterResultAsync().orThrowExecException()
-
-
   abstract val isLocalTarget: Boolean
 
   @RequiresBackgroundThread(generateAssertion = false)
   @kotlin.jvm.Throws(ExecutionException::class)
   open fun getInterpreterPaths(): List<@OsPath String> = runBlockingMaybeCancellable {
-    ExecService().executeHelper(interpreter(), PyHelper(SYSPATH_PY)).orThrowExecException()
+    ExecService().executeHelper(interpreter, PyHelper(SYSPATH_PY)).orThrowExecException()
   }.lines().filter { it.isNotBlank() }
 
 

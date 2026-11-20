@@ -2,10 +2,10 @@
 package com.intellij.python.test.env.junit5
 
 import com.intellij.python.junit5Tests.framework.env.PyInterpreterFixture
-import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.sitePackagesDirectory
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.uv.getOrDownloadUvExecutable
 import com.intellij.testFramework.junit5.fixture.TestFixture
@@ -80,7 +80,7 @@ private suspend fun TestFixtureInitializer.R<PythonInterpreter>.initUvVenvInterp
     setupExistingEnvAndSdk(moduleOrProject = ModuleOrProject.ModuleAndProject(pyProject), pythonBinary = venvPython, envWorkingDir = baseDirPath, mode = mode).getOrThrow()
   pyProject.setPythonInterpreter(interpreter)
   // workaround interesting behavior of VFS_STRUCTURAL_MODIFICATIONS
-  interpreter.sitePackagesDirectory(pyProject.project)?.getChildren()
+  interpreter.sitePackagesDirectory()?.getChildren()
   awaitPythonInterpreterReady(interpreter, pyProject.project)
 
   return initialized(interpreter) {

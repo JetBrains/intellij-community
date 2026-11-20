@@ -84,7 +84,7 @@ private class PyDependenciesFileWidget(private val context: WidgetPresentationDa
     val virtualFile = context.currentFileEditor.value?.file
     val evoPyProject = (if (virtualFile == null) project.findMainEvoPyProject() else project.findEvoPyProject(virtualFile)) ?: return null
     val interpreter = evoPyProject.interpreter ?: return null
-    val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+    val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
     val depFile = packageManager.getRootDependenciesFile() ?: return null
     return State(evoPyProject.pyProject.residesOnModule, depFile)
   }

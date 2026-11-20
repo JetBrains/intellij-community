@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.readAction
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -11,7 +12,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.requirements.parser.PyRequirementParser
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.associatedModuleDir
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.errorProcessing.PyResult
@@ -31,8 +31,8 @@ import org.toml.lang.psi.TomlFile
 import java.nio.file.Path
 
 @TestOnly
-class TestPythonPackageManager(project: Project, interpreter: PythonInterpreter) :
-  PythonPackageManager(project, interpreter) {
+class TestPythonPackageManager(interpreter: PythonInterpreter) :
+  PythonPackageManager(interpreter) {
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
   private var packageVersions: Map<String, List<String>> = emptyMap()

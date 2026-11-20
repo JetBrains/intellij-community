@@ -2,6 +2,7 @@
 package com.intellij.python.pyproject.model.evolution
 
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.python.sdk.backend.classRoots
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceIfCreated
@@ -37,7 +38,6 @@ import com.jetbrains.python.sdk.internal.PYTHON_FACET_ID
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
 import com.intellij.python.sdk.backend.PyInterpreterLibraryProperties
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
-import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.python.sdk.backend.pyInterpreterDependency
@@ -155,7 +155,7 @@ class PyInterpreterLibrarySync(private val project: Project, private val scope: 
     for (evoPyProject in evoPyProjects) {
       val interpreter = evoPyProject.interpreter ?: continue
       val name = evoPyProject.pyProject.residesOnModule.findModuleEntity(storage)?.dependencies?.pyInterpreterDependency?.library?.name ?: continue
-      classRoots[name] = interpreter.classRoots(project).map { urlManager.storeAndGet(it) }
+      classRoots[name] = interpreter.classRoots.map { urlManager.storeAndGet(it) }
       interpreters[name] = interpreter
     }
     // The exclusion is the same for the whole project, so a directory that any interpreter here needs stays.

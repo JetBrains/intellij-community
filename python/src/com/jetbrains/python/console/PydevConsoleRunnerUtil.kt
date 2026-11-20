@@ -3,8 +3,6 @@
 
 package com.jetbrains.python.console
 
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.addedPathFiles
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.value.TargetEnvironmentFunction
@@ -17,13 +15,17 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.python.pyproject.model.evolution.getInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.createMapper
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.console.completion.PydevConsoleElement
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.parsing.console.PythonConsoleData
+import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.toStringLiteral
@@ -31,10 +33,6 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.asModuleOrProject
 import com.jetbrains.python.sdk.findPyProject
-import com.intellij.python.pyproject.model.evolution.getInterpreter
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.sdk.add.v2.toFileSystem
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
@@ -42,17 +40,17 @@ import java.util.function.Function
  * Creates [PyRemotePathMapper] for Python Console execution on a target.
  *
  * @param project the project Python Console is started for
- * @param sdk Python SDK that Python Console is started with
+ * @param interpreter the interpreter that Python Console is started with
  * @param consoleSettings Python Console settings
  * @param targetEnvironment the target environment to add upload volumes to the result path mapper
  */
 
 @RequiresBackgroundThread
 internal fun createTargetEnvironmentPathMapper(project: Project,
-                                      sdk: Sdk,
+                                      interpreter: PythonInterpreter,
                                       consoleSettings: PyConsoleSettings,
                                       targetEnvironment: TargetEnvironment): PyRemotePathMapper {
-  val pathMapper = getPathMapper(project, sdk, consoleSettings)
+  val pathMapper = getPathMapper(project, interpreter, consoleSettings)
   for (volume in targetEnvironment.uploadVolumes.values) {
     pathMapper.addMapping(volume.localRoot.toString(), volume.targetRoot, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
   }
@@ -61,11 +59,9 @@ internal fun createTargetEnvironmentPathMapper(project: Project,
 
 @RequiresBackgroundThread
 internal fun getPathMapper(project: Project,
-                  sdk: Sdk,
+                  interpreter: PythonInterpreter,
                   consoleSettings: PyConsoleSettings): PyRemotePathMapper =
-  runBlockingMaybeCancellable {
-    sdk.toFileSystem()
-  }.createMapper(project, consoleSettings.mappingSettings, sdk)
+  runBlockingMaybeCancellable { interpreter.createMapper(consoleSettings.mappingSettings) }
 
 /**
  * The interpreter a console starts on, and the [ModuleOrProject] it runs for. The interpreter is `null` when the
@@ -121,18 +117,14 @@ internal class ReplaceSubstringsFunction(private val s: String,
   override fun toString(): String = "ReplaceSubstringsFunction(s='$s', oldValues=${replaces.map { it.first }}, newValues=${replaces.map { it.second }})"
 }
 
-fun addDefaultEnvironments(sdk: Sdk,
-                           envs: Map<String, String>): Map<String, String> {
-  setCorrectStdOutEncoding(envs)
-  PythonEnvUtil.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk))
-  return envs
-}
-
-/** [addDefaultEnvironments] for [interpreter]. */
+/**
+ * Sets the stdout encoding of a console process, and puts the paths that the user added to the interpreter of [interpreter]
+ * on its `PYTHONPATH`.
+ */
 @ApiStatus.Internal
 fun addDefaultEnvironments(interpreter: PythonInterpreter, envs: Map<String, String>): Map<String, String> {
   setCorrectStdOutEncoding(envs)
-  PythonEnvUtil.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(interpreter.addedPathFiles))
+  PythonEnvUtil.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(interpreter))
   return envs
 }
 

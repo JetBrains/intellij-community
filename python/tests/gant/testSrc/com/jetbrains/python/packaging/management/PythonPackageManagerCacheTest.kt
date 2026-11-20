@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -11,7 +12,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiManager
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
@@ -62,10 +62,10 @@ internal class PythonPackageManagerCacheTest {
     val lists = AtomicInteger()
 
     val outdated = AtomicInteger()
-    val first = CountingManager(project, interpreter, lists)
+    val first = CountingManager(interpreter, lists)
     first.waitForInit()
     Disposer.dispose(first)
-    val second = CountingManager(project, interpreter, lists, outdated)
+    val second = CountingManager(interpreter, lists, outdated)
     second.waitForInit()
 
     assertThat(lists.get()).describedAs("Only the first manager lists the packages").isEqualTo(1)
@@ -81,12 +81,12 @@ internal class PythonPackageManagerCacheTest {
     sitePackages.resolve("requests-2.31.0.dist-info").createDirectories()
     val interpreter = registerInterpreter(project, home, sitePackages)
     val lists = AtomicInteger()
-    val first = CountingManager(project, interpreter, lists)
+    val first = CountingManager(interpreter, lists)
     first.waitForInit()
     Disposer.dispose(first)
 
     sitePackages.resolve("idna-3.6.dist-info").createDirectories()
-    val second = CountingManager(project, interpreter, lists)
+    val second = CountingManager(interpreter, lists)
     second.waitForInit()
 
     assertThat(lists.get()).isEqualTo(2)
@@ -100,11 +100,11 @@ internal class PythonPackageManagerCacheTest {
     val interpreter = registerInterpreter(project, home, sitePackages)
     val lists = AtomicInteger()
     val withSubclass = listOf(object : PythonPackage("conda-only", "1.0", false) {})
-    val first = CountingManager(project, interpreter, lists, packages = withSubclass)
+    val first = CountingManager(interpreter, lists, packages = withSubclass)
     first.waitForInit()
     Disposer.dispose(first)
 
-    val second = CountingManager(project, interpreter, lists, packages = withSubclass)
+    val second = CountingManager(interpreter, lists, packages = withSubclass)
     second.waitForInit()
 
     assertThat(lists.get()).describedAs("A list that the cache cannot keep is listed again").isEqualTo(2)
@@ -117,7 +117,7 @@ internal class PythonPackageManagerCacheTest {
     val sitePackages = home.resolve("lib/python3.12/site-packages").createDirectories()
     val requirements = modulePathFixture.get().resolve("requirements.txt")
     val interpreter = registerInterpreter(project, home, sitePackages, requirementsPath = requirements)
-    val manager = CountingManager(project, interpreter, AtomicInteger())
+    val manager = CountingManager(interpreter, AtomicInteger())
     manager.waitForInit()
     manager.listDeclaredPackagesCached()
 
@@ -151,13 +151,12 @@ internal class PythonPackageManagerCacheTest {
 
   /** A manager whose list reads one package and counts the lists in [lists]. */
   private class CountingManager(
-    project: Project,
     interpreter: PythonInterpreter,
     private val lists: AtomicInteger,
     private val outdated: AtomicInteger = AtomicInteger(),
     private val packages: List<PythonPackage> = listOf(PythonPackage("requests", "2.31.0", false)),
   ) :
-    PythonPackageManager(project, interpreter) {
+    PythonPackageManager(interpreter) {
     override val repositoryManager: PythonRepositoryManager = TestPythonRepositoryManager(project)
     override val dependenciesFilesRelativePaths: List<Path> = emptyList()
 

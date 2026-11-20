@@ -2,9 +2,9 @@
 package com.jetbrains.python.packaging.pipenv
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.project.Project
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -27,7 +27,7 @@ import java.nio.file.Path
 import com.jetbrains.python.sdk.pipenv.PipEnvParser as SdkPipEnvParser
 
 @ApiStatus.Internal
-class PipEnvPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
+class PipEnvPackageManager(interpreter: PythonInterpreter) : PythonPackageManager(interpreter) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
 
   override val treeProvider: DependencyTreeProvider = cachedDependencyTree(

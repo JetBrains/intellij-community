@@ -145,7 +145,7 @@ private fun state(project: Project, snapshot: EvoPyProjectModel.Snapshot): PyTyp
     when (type) {
       PyTypeEngineId.PYCHARM -> true
       else -> snapshot.interpreters.any { interpreter ->
-        PythonPackageManager.forPythonInterpreter(project, interpreter).hasInstalledPackageSnapshot(type.packageName)
+        PythonPackageManager.forPythonInterpreter(interpreter).hasInstalledPackageSnapshot(type.packageName)
       }
     }
   }

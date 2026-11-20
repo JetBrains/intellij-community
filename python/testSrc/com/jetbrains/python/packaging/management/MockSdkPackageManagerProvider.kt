@@ -2,8 +2,8 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.extensions.LoadingOrder
-import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.tools.sdkTools.PythonMockPackageManagerProvider
 import com.jetbrains.python.tools.sdkTools.PythonMockSdkKeys
@@ -16,8 +16,8 @@ import org.jetbrains.annotations.TestOnly
  */
 @TestOnly
 internal class MockSdkPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager? =
-    if (PythonMockSdkKeys.isMock(interpreter.getSdkAPI())) TestPythonPackageManager(project, interpreter) else null
+  override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager? =
+    if (PythonMockSdkKeys.isMock(interpreter.getSdkAPI())) TestPythonPackageManager(interpreter) else null
 
   companion object {
     /**

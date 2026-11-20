@@ -2,6 +2,7 @@
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.google.common.collect.Lists;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -41,7 +42,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.python.community.testFramework.PyFixmeKt;
-import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterDetails;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -193,7 +193,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       LOG.warn("The interpreter is null. assertSdkRootsNotParsed is skipped");
       return;
     }
-    for (VirtualFile root : PythonInterpreterExtKt.classRoots(interpreter, myFixture.getProject())) {
+    for (VirtualFile root : PythonInterpreterExtKt.getClassRoots(interpreter)) {
       assertRootNotParsed(currentFile, root, null);
     }
   }
@@ -242,7 +242,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                                @NotNull String text,
                                                @NotNull Consumer<VirtualFile> fileConsumer) {
     final PythonInterpreter interpreter = getPythonInterpreter();
-    final VirtualFile libDir = interpreter == null ? null : PythonInterpreterExtKt.stdlibLibDirectory(interpreter, myFixture.getProject());
+    final VirtualFile libDir = interpreter == null ? null : PythonInterpreterExtKt.stdlibLibDirectory(interpreter);
     if (libDir != null) {
       runWithAdditionalFileIn(relativePath, text, libDir, fileConsumer);
     }

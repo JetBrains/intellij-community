@@ -2,6 +2,8 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.idea.TestFor
+import com.intellij.python.sdk.backend.classRoots
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.projectRoots.Sdk
@@ -11,12 +13,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.model.evolution.PyInterpreterLibrarySync
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.addMockPythonInterpreter
-import com.intellij.python.sdk.backend.classRoots
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -53,7 +53,7 @@ internal abstract class PythonInterpreterModuleRootsTest {
 
       assertThat(updateInterpreterFacts(interpreter, project).successOrNull).isNotNull()
 
-      assertThat(interpreter.classRoots(project)).contains(sitePackages).doesNotContain(projectRoot)
+      assertThat(interpreter.classRoots).contains(sitePackages).doesNotContain(projectRoot)
       assertThat(sdkClassRoots(interpreter)).contains(sitePackages).doesNotContain(projectRoot)
       assertThat(getPathsToTransfer(sdk)).doesNotContain(projectRoot)
     }
@@ -68,7 +68,7 @@ internal abstract class PythonInterpreterModuleRootsTest {
       assertThat(updateInterpreterFacts(interpreter, project).successOrNull).isNotNull()
 
       assertThat(PythonInterpreterRoots.getInstance(project).sourceRoots(interpreter)).containsExactly(src)
-      assertThat(interpreter.classRoots(project)).doesNotContain(src)
+      assertThat(interpreter.classRoots).doesNotContain(src)
       assertThat(sdkClassRoots(interpreter)).doesNotContain(src)
       // The legacy flow transfers the roots on the EDT, and the interpreter library flow gives them with its sync.
       withContext(Dispatchers.EDT) { }

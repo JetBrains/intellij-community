@@ -70,7 +70,7 @@ internal class PackageDaemonTaskExecutor(private val project: Project, private v
         // A mock SDK has no additional data, and the package manager cannot be built for it.
         val packages2Versions = if (interpreter == null || sdk?.sdkAdditionalData == null) emptyMap()
         else {
-          PythonPackageManager.forPythonInterpreter(project, interpreter).listInstalledPackagesSnapshot().associate { it.name to it.version }
+          PythonPackageManager.forPythonInterpreter(interpreter).listInstalledPackagesSnapshot().associate { it.name to it.version }
         }
 
         pyPsiFile.children.filterIsInstance<PyImportStatementBase>().mapNotNull { import ->

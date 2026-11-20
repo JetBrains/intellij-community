@@ -167,7 +167,7 @@ internal class PythonInterpreterStore(val project: Project, scope: CoroutineScop
    * table and no store yet. A failure when [data] names no interpreter.
    */
   private suspend fun build(homePath: String, data: PythonSdkAdditionalData, suggestedName: String?): PyResult<PythonInterpreter> =
-    newSdk(homePath, data, suggestedName, knownVersion = null).pythonInterpreterResultAsync()
+    newSdk(homePath, data, suggestedName, knownVersion = null).pythonInterpreterResultAsync(project)
 
   /**
    * A new interpreter of [pythonBinary] with the data [data], for the [PyProject] at [ownerDir]. It is not registered.
@@ -324,7 +324,7 @@ internal class PythonInterpreterStore(val project: Project, scope: CoroutineScop
   private suspend fun addSdk(sdk: Sdk): PythonInterpreter {
     if (isInterpreterLibraryFlowEnabled()) {
       // The store built [sdk] with an owner and a home path, so it names an interpreter.
-      val key = checkNotNull(sdk.pythonInterpreterResultAsync().successOrNull) { "$sdk names no interpreter" }.key
+      val key = checkNotNull(sdk.pythonInterpreterResultAsync(project).successOrNull) { "$sdk names no interpreter" }.key
       holdSdk(key, sdk)
       return awaitInterpreter(sdk)
     }
@@ -430,12 +430,12 @@ internal class PythonInterpreterStore(val project: Project, scope: CoroutineScop
       val sdks = PythonInterpreterSdks.getInstance(project)
       return records.keys().mapNotNull { key ->
         val sdk = sdks.sdkOf(key) ?: buildSdk(key, records.recordOf(key) ?: return@mapNotNull null) ?: return@mapNotNull null
-        sdk.pythonInterpreterOfKey(key).successOrNull
+        sdk.pythonInterpreterOfKey(project, key).successOrNull
       }
     }
     // The computation writes nothing, so a caller under a modal progress can wait for it (PY-93821). An SDK of an older
     // build gets its owner from PythonSdkAdditionalDataMigrationActivity, and the commit of that owner recomputes the list.
-    return PythonSdkTable.pythonSdks().mapNotNull { it.pythonInterpreterResultAsync().successOrNull }
+    return PythonSdkTable.pythonSdks().mapNotNull { it.pythonInterpreterResultAsync(project).successOrNull }
   }
 
   /**
@@ -564,7 +564,7 @@ internal class PythonInterpreterStore(val project: Project, scope: CoroutineScop
    * project that it can use. An SDK that names no interpreter is not listed.
    */
   suspend fun allInterpreters(): List<PythonInterpreter> =
-    ModuleOrProject.ProjectOnly(project).filterAssignablePythonSdks(projectSdks()).mapNotNull { it.pythonInterpreterResultAsync().successOrNull }
+    ModuleOrProject.ProjectOnly(project).filterAssignablePythonSdks(projectSdks()).mapNotNull { it.pythonInterpreterResultAsync(project).successOrNull }
 
   /**
    * The Python SDKs of the SDK table that name no interpreter, see [interpreterRefOf]: an SDK without the SDK data, without

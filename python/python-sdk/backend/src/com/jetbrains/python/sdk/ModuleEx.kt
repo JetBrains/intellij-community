@@ -23,7 +23,7 @@ import com.intellij.python.sdk.backend.pythonInterpreter
 @RequiresBackgroundThread(generateAssertion = false)
 fun Module.writePythonSdk(newSdk: Sdk?) {
   thisLogger.info("Setting PythonSDK $newSdk to module $this")
-  newSdk?.pythonInterpreter(forceRefresh = true)
+  newSdk?.pythonInterpreter(project, forceRefresh = true)
   // The daemon restarts when the snapshot holds the new interpreter. See EvoPyProjectModel.
   ApplicationManager.getApplication().invokeAndWait {
     WriteAction.runAndWait<Throwable> {

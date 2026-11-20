@@ -25,14 +25,14 @@ fun condaIdentityOf(envRef: PyEnvRef): PyCondaEnvIdentity =
   else PyCondaEnvIdentity.NamedEnv(envRef.value)
 
 /**
- * The identity of the conda env of [pythonBinary] that [envRef] names, on the machine of [fileSystem]. A name gives a
- * named env. A path gives an env created with `-p` at the home of [pythonBinary], which is the base env at the root of
- * a conda installation.
+ * The identity of the conda env that [envRef] names, on the machine of [fileSystem]. A name gives a named env, which
+ * conda finds by its name. A path is the prefix of an env created with `-p`, or of the base env at the root of a conda
+ * installation. The ref states the env, so nothing is derived from the Python binary.
  */
-internal suspend fun <P : PathHolder> condaIdentityOf(fileSystem: FileSystem<P>, envRef: PyEnvRef, pythonBinary: P): PyCondaEnvIdentity {
-  val home = fileSystem.resolvePythonHome(pythonBinary)
-  return if (isCondaPathEnvRef(envRef)) PyCondaEnvIdentity.UnnamedEnv(home, isBase = isCondaRoot(fileSystem, home))
-  else PyCondaEnvIdentity.NamedEnv(envRef.value, home.toStringOnRemoteMachine())
+internal suspend fun <P : PathHolder> condaIdentityOf(fileSystem: FileSystem<P>, envRef: PyEnvRef): PyCondaEnvIdentity {
+  if (!isCondaPathEnvRef(envRef)) return PyCondaEnvIdentity.NamedEnv(envRef.value)
+  val prefix = fileSystem.parsePath(envRef.value).successOrNull ?: return PyCondaEnvIdentity.UnnamedEnv(envRef.value, isBase = false)
+  return PyCondaEnvIdentity.UnnamedEnv(prefix, isBase = isCondaRoot(fileSystem, prefix))
 }
 
 /**

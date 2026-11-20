@@ -2,9 +2,10 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.DumbAware
+import com.intellij.python.sdk.backend.requirementsPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.python.sdk.backend.PyInterpreterLibrary
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 
 /**
@@ -19,10 +20,10 @@ internal class UvModeMigrationActivity : ProjectActivity, DumbAware {
   override suspend fun execute(project: Project) {
     val legacy = PythonInterpreterRegistry.getInstance(project).allInterpreters()
       .filter { it.isUv }
-      .map { PyInterpreterLibrary(project, it) }
+      .map { it }
       .filter { it.requirementsPath == null }
-    for (library in legacy) {
-      migrateLegacyUvMode(library)
+    for (interpreter in legacy) {
+      migrateLegacyUvMode(interpreter)
     }
   }
 }

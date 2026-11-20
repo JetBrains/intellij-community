@@ -2,13 +2,14 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.Disposable
+import com.intellij.python.sdk.backend.lifetime
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.PythonEnvironmentKey
 import com.intellij.python.sdk.backend.PythonEnvironmentWatchers
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.python.sdk.backend.isDisposed
@@ -34,6 +35,12 @@ internal class PythonPackageManagerServiceImpl(
   /** Guards the watcher of every entry, because a root change and a first call can reconcile at the same moment. */
   private val watchersLock = ReentrantLock()
 
+  /**
+   * Whether [dispose] ran. Always read and write it under [watchersLock]. A call that comes after it builds no entry: the
+   * removal of a new entry would hold the project under an SDK that can live as long as the application.
+   */
+  private var disposed = false
+
   init {
     // A provider that comes or goes can build another manager for an interpreter, so the managers it replaces go.
     PythonPackageManagerProvider.EP_NAME.addChangeListener(scope) { dropAllManagers() }
@@ -56,17 +63,17 @@ internal class PythonPackageManagerServiceImpl(
   private fun startManagers(snapshot: EvoPyProjectModel.Snapshot) {
     // A snapshot can still hold an interpreter whose SDK is gone, and such an interpreter gets no manager.
     for (interpreter in snapshot.interpreters.filterNot { it.isDisposed }) {
-      forPythonInterpreter(project, interpreter).startInit()
+      forPythonInterpreter(interpreter).startInit()
     }
   }
 
   /** One cached manager, and the watcher of the interpreter paths that it has while the project uses the interpreter. */
   private class CachedManager(val interpreter: PythonInterpreter, val manager: PythonPackageManager) {
     /**
-     * The lifetime of [interpreter] when this entry was made, see [PyInterpreterLibrary.lifetime]. The registry can
+     * The lifetime of [interpreter] when this entry was made, see [PythonInterpreter.lifetime]. The registry can
      * replace the environment behind the key later. That ends this lifetime, and a newer entry takes the next one.
      */
-    val lifetime: Disposable? = manager.library.lifetime
+    val lifetime: Disposable? = manager.interpreter.lifetime
 
     var watcher: Disposable? = null
 
@@ -129,6 +136,9 @@ internal class PythonPackageManagerServiceImpl(
     }
     catch (e: IncorrectOperationException) {
       logger.info("The interpreter ${entry.interpreter} is gone, dropping its manager", e)
+      // The removal holds the entry with its manager, so it goes with the entry.
+      entry.removal?.let { Disposer.dispose(it) }
+      entry.removal = null
       cache.remove(key, entry)
       return
     }
@@ -168,21 +178,22 @@ internal class PythonPackageManagerServiceImpl(
    *
    * Requires the SDK of [interpreter] to be a Python SDK with [com.jetbrains.python.sdk.PythonSdkAdditionalData].
    */
-  override fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
+  override fun forPythonInterpreter(interpreter: PythonInterpreter): PythonPackageManager {
     cache[interpreter]?.takeIf { it.isCurrent() }?.let { return it.manager }
 
     var newEntry = false
     val entry = watchersLock.withLock {
+      if (disposed) throw AlreadyDisposedException("The package managers of ${project.name} are disposed, so $interpreter gets none")
       cache.compute(interpreter) { _, cached ->
         if (cached != null && cached.isCurrent()) return@compute cached
         newEntry = true
         if (cached != null) dropEntry(cached)
-        CachedManager(interpreter, createManager(project, interpreter)).also(::removeWhenLifetimeEnds)
+        CachedManager(interpreter, createManager(interpreter)).also(::removeWhenLifetimeEnds)
       }!!
     }
     // Only a new entry needs one: an entry that is already cached gets its watcher from the next structure that moves
     // its interpreter into use or out of it. A structure that has not landed yet arrives on the flow shortly.
-    if (newEntry) syncWatchers(EvoPyProjectModel.getInstance(project).snapshotOrNull())
+    if (newEntry) syncWatchers(EvoPyProjectModel.getInstance(interpreter.project).snapshotOrNull())
     return entry.manager
   }
 
@@ -226,8 +237,9 @@ internal class PythonPackageManagerServiceImpl(
     entry.removal = removal
   }
 
-  private fun createManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
-    val manager = PythonPackageManagerProvider.EP_NAME.extensionList.firstNotNullOf { it.createPackageManager(project, interpreter) }
+  private fun createManager(interpreter: PythonInterpreter): PythonPackageManager {
+    val project = interpreter.project
+    val manager = PythonPackageManagerProvider.EP_NAME.extensionList.firstNotNullOf { it.createPackageManager(interpreter) }
     try {
       Disposer.register(PyPackageCoroutine.getInstance(project), manager)
     }
@@ -235,7 +247,7 @@ internal class PythonPackageManagerServiceImpl(
       throw AlreadyDisposedException("Requesting a package manager for an already disposed Project $project, ${e.localizedMessage}")
     }
     // I don't think it should be here
-    PythonRequirementTxtSdkUtils.migrateRequirementsTxtPathFromModule(manager.library)
+    PythonRequirementTxtSdkUtils.migrateRequirementsTxtPathFromModule(manager.interpreter)
     return manager
   }
 
@@ -262,6 +274,7 @@ internal class PythonPackageManagerServiceImpl(
    */
   override fun dispose() {
     watchersLock.withLock {
+      disposed = true
       for (entry in cache.values) {
         entry.watcher?.let { Disposer.dispose(it) }
         entry.watcher = null

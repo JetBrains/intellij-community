@@ -118,7 +118,7 @@ class PythonEnvironmentContext(
   val binary: BinaryToExec,
   /**
    * The SDK of an interpreter that runs the environment, from the project that asked first. Only the skeleton generator
-   * needs it, until that generator runs a binary.
+   * needs it, for the skeletons path and the request of a target. It runs [binary].
    */
   val sdk: Sdk,
 )

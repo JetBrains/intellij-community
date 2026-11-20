@@ -94,13 +94,13 @@ open class PyUnresolvedReferenceQuickFixesImpl(private val suggestInstallingPack
     }
     val packageName = PyPsiPackageUtil.moduleToPackageName(components[0])
 
-    val interpreter = node.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter
+    val interpreter = node.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return emptyList()
     @Suppress("DEPRECATION")
-    if (interpreter == null || !PyPackageUtil.packageManagementEnabled(interpreter.getSdkAPI(), false, true)) {
+    if (!PyPackageUtil.packageManagementEnabled(interpreter.getSdkAPI(), false, true)) {
       return emptyList()
     }
 
-    val packageManager = PythonPackageManager.forPythonInterpreter(node.project, interpreter)
+    val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
 
     val shouldBeSuggest = !interpreter.isReadOnly && runBlockingCancellable { packageManager.isNotInstalledAndCanBeInstalled(packageName) }
     if (!shouldBeSuggest)
@@ -266,7 +266,7 @@ open class PyUnresolvedReferenceQuickFixesImpl(private val suggestInstallingPack
     val packageName = PyPsiPackageUtil.moduleToPackageName(importedModuleName)
     val canBeInstalled = !interpreter.isReadOnly &&
                          runBlockingCancellable {
-                           PythonPackageManager.forPythonInterpreter(project, interpreter).isNotInstalledAndCanBeInstalled(packageName)
+                           PythonPackageManager.forPythonInterpreter(interpreter).isNotInstalledAndCanBeInstalled(packageName)
                          }
     return if (canBeInstalled)
         InstallAndImportPackageQuickFix(importedModuleName, asName)

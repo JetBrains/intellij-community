@@ -15,5 +15,5 @@ import kotlinx.coroutines.runBlocking
  * [PythonPackageManager], such as the detection of a test framework, then sees them.
  */
 fun reloadInstalledPackages(project: Project, interpreter: PythonInterpreter): List<PythonPackage> = runBlocking {
-  PythonPackageManager.forPythonInterpreter(project, interpreter).reloadPackages().getOrThrow()
+  PythonPackageManager.forPythonInterpreter(interpreter).reloadPackages().getOrThrow()
 }

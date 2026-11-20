@@ -527,7 +527,7 @@ internal class PySdkPathsTest {
 
   private fun interpreterOf(sdk: Sdk): PythonInterpreter {
     awaitPythonInterpreters(projectModel.project)
-    return checkNotNull(runBlockingMaybeCancellable { sdk.pythonInterpreterResultAsync() }.successOrNull) { "$sdk names no interpreter" }
+    return checkNotNull(runBlockingMaybeCancellable { sdk.pythonInterpreterResultAsync(projectModel.project) }.successOrNull) { "$sdk names no interpreter" }
   }
 
   /**

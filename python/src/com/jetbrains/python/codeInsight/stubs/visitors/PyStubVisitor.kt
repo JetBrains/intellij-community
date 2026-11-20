@@ -19,7 +19,7 @@ internal abstract class PyStubVisitor(
     if (interpreter.isReadOnly)
       return
     val importedPackages = loadImportedPackages(file).ifEmpty { null } ?: return
-    val packageManager = PythonPackageManager.forPythonInterpreter(file.project, interpreter)
+    val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
 
     checkImports(file, importedPackages, packageManager)
   }

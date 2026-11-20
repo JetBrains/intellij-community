@@ -52,7 +52,7 @@ internal class PixiDependenciesPsiProvider : DependenciesPsiProvider<TomlFile>(T
       features.forEach { add(prefix + listOf("feature", it)) }
       add(prefix + listOf("environments", environment))
     }
-    val targetSelectors = interpreter?.let { PythonPackageManager.forPythonInterpreter(file.project, it) }
+    val targetSelectors = interpreter?.let { PythonPackageManager.forPythonInterpreter(it) }
       ?.let { it as? PixiPackageManager }?.resolvedPlatformSelectors.orEmpty()
     val containers = scopes.flatMap { scope ->
       (listOf(scope) + targetSelectors.map { scope + listOf("target", it) }).flatMap {

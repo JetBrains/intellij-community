@@ -2,6 +2,8 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -26,7 +28,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -48,7 +49,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
@@ -78,8 +78,6 @@ import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +113,6 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
   private XStandaloneVariablesView mySplitView;
   private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
-  private @Nullable String mySdkHomePath;
   private PydevConsoleRunner myRunner;
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
@@ -151,7 +148,8 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
   /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
-  public PythonConsoleView(final Project project, final String title, final @Nullable Sdk sdk, final boolean testMode) {
+  @ApiStatus.Internal
+  public PythonConsoleView(final Project project, final String title, final @Nullable PythonInterpreter interpreter, final boolean testMode) {
     super(createHelper(project, title));
     try {
       myHistoryPsiFile = new PyExpressionCodeFragmentImpl(project, "dummy.py", "", true);
@@ -163,7 +161,8 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
       myTestMode = testMode;
       isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
       VirtualFile virtualFile = getVirtualFile();
-      PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PySdkUtil.getLanguageLevelForSdk(sdk));
+      LanguageLevel languageLevel = interpreter != null ? PythonInterpreterExtKt.getLanguageLevel(interpreter) : LanguageLevel.getDefault();
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, languageLevel);
       virtualFile.putUserData(CONSOLE_KEY, true);
       // Mark editor as console one, to prevent autopopup completion if runtime completion is enabled
       if (PyConsoleOptions.getInstance(getProject()).isRuntimeCodeCompletion()) {
@@ -173,14 +172,6 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
       getHistoryViewer().putUserData(COUNTER_LINE_NUMBER, new HashMap<>());
       super.setPrompt(null);
       setUpdateFoldingsEnabled(false);
-      LanguageLevel languageLevel = LanguageLevel.getDefault();
-      if (sdk != null) {
-        final PythonSdkFlavor<?> sdkFlavor = PythonSdkFlavor.getFlavor(sdk);
-        if (sdkFlavor != null) {
-          languageLevel = sdkFlavor.getLanguageLevel(sdk);
-        }
-        mySdkHomePath = sdk.getHomePath();
-      }
       myPyHighlighter = new PyHighlighter(languageLevel);
       addToolwindowPositionListener(project);
     }
@@ -741,10 +732,6 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
       validate();
       repaint();
     }
-  }
-
-  public @Nullable String getSdkHomePath() {
-    return mySdkHomePath;
   }
 
   public boolean isInitialized() {

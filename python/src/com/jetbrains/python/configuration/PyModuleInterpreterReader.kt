@@ -4,6 +4,7 @@
 package com.jetbrains.python.configuration
 
 import com.intellij.psi.PsiElement
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -11,7 +12,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.pythonInterpretersIfReady
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import org.jetbrains.annotations.ApiStatus
 

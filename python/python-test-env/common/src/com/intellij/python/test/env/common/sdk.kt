@@ -36,7 +36,7 @@ suspend fun PyEnvironmentFactory.createSdk(project: Project, request: SdkCreatio
   when (request) {
     is SdkCreationRequest.LocalPython -> {
       val environment = createEnvironment(PredefinedPyEnvironments.VENV_3_12)
-      val interpreter = registry.addTestInterpreter(environment.prepareSdk())
+      val interpreter = environment.prepareInterpreter(project)
       Pair(interpreter, AutoCloseable {
         runBlocking { registry.removeTestInterpreter(interpreter) }
         environment.close()
