@@ -111,11 +111,6 @@ import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
     while (i > stop) {
       val c = zzBuffer[i - 1]
       if (isColumnReset(c)) return storeColumn(pos, pos - i)
-      if (c.isLowSurrogate() && i - 2 >= stop && zzBuffer[i - 2].isHighSurrogate()) {
-        // JFlex tests the low 16 bits of a supplementary code point against the line breaks.
-        if (isColumnReset(Character.toCodePoint(zzBuffer[i - 2], c).toChar())) return storeColumn(pos, pos - i)
-        i--
-      }
       i--
     }
     return storeColumn(pos, (if (useBase) columnBase else 0) + pos - stop)
