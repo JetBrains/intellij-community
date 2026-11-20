@@ -33,7 +33,7 @@ the paths are these:
 
 ## The gate
 
-Run `./community/tools/bt.cmd AirSpecReferencesTest` from the ultimate root after a change of a spec. The test scans
+Run `./community/tools/bt.cmd //plugins/air:air-plugin-tests_test --filter com.intellij.air.plugin.AirSpecReferencesTest` from the ultimate root after a change of a spec. The test scans
 this directory and `plugins/air/spec`. It checks the targets, the test links, the Markdown links, the style tag, the
 sentence budget and the section names.
 

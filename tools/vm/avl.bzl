@@ -30,13 +30,14 @@ _TEST_ENV_INHERIT = select({
 _LINTS = Label("//tools/vm:lints")
 
 # The crates of another workspace that a crate here links through a path dependency, by Cargo package name: BT's, and
-# `distpath` and `fscopy` of the dev-dist tools. rules_rs names such a crate `@avl//:<name>-<version>` and would
-# build it a second time, without the lint policy. The community module builds it already, so the crate links that
-# target instead.
+# `checkout-files`, `distpath`, `fscopy` and `dev-launch` of the dev-dist tools. rules_rs names such a crate
+# `@avl//:<name>-<version>` and would build it a second time, without the lint policy. The community module builds it
+# already, so the crate links that target instead.
 _CROSS_MODULE_CRATES = {
     "bt-core": "//tools/bt/crates/bt-core",
     "bt-junit": "//tools/bt/crates/bt-junit",
     "refusal": "//tools/bt/crates/refusal",
+    "checkout-files": "//build/dev-dist-tools/crates/checkout-files",
     "distpath": "//build/dev-dist-tools/crates/distpath",
     "fscopy": "//build/dev-dist-tools/crates/fscopy",
     "dev-launch": "//build/dev-dist-tools/crates/dev-launch",

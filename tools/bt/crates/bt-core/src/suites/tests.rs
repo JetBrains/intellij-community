@@ -4,8 +4,7 @@ use super::*;
 use crate::exit;
 use crate::fake::{FakeRuntime, area, areas, classes_of, flow_catalog_tree, lanes, reaching, refusal};
 use crate::lanes::{RunPlan, build_bazel_args, default_shards};
-use crate::scan::ResolutionInputs;
-use crate::selector::resolve_selector;
+use crate::selector::{ResolutionInputs, resolve_selector};
 
 fn catalog() -> FakeRuntime {
     FakeRuntime::with_tree(&flow_catalog_tree())

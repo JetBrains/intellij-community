@@ -12,6 +12,7 @@ workspace = true
 [dependencies]
 avl-base.workspace = true
 bt-core.workspace = true
+checkout-files.workspace = true
 distpath.workspace = true
 refusal.workspace = true
 regex.workspace = true

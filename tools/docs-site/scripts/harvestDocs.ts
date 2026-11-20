@@ -10,7 +10,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { assertRunOf, type CheckRun, createCheckRun } from './checkRun.ts'
-import { addCodeSpanPaths } from './codeSpans.ts'
+import { resolveCodeSpanPaths } from './codeSpans.ts'
 import { type AirDiagram, DIAGRAM_FILE_SUFFIX, type HarvestedDiagram, type HarvestedDiagramNode, type HarvestedDiagramStep } from './diagram.ts'
 import type { DiagramFiles } from './diagramFiles.ts'
 import { collectPictureReferences } from './docAssets.ts'
@@ -158,8 +158,6 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
   const docs: HarvestedDoc[] = []
   const bodies = new Map<string, string>()
   const pictures = new Set<string>()
-  const codeSpanPaths = new Map<string, Map<string, string | null>>()
-
   const harvestDoc = (docPath: string, defaultKind: DocKind): void => {
     const absolute = join(content, docPath)
     if (!existsSync(absolute)) {
@@ -205,7 +203,6 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
     docs.push(doc)
     bodies.set(docPath, body)
     collectDocPictures(config, docPath, source, body, pictures, root)
-    addCodeSpanPaths(codeSpanPaths, config.contentRoot, docPath, body, root)
     options.onDoc?.(docPath, source)
   }
 
@@ -249,6 +246,7 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
   checks.prose()
   // the terms of the site vocabulary, shared with the gate and the check script (vocabulary.ts)
   checks.vocabulary()
+  const codeSpanPaths = resolveCodeSpanPaths(config.contentRoot, bodies, root)
   return { docs, bodies, pictures, diagrams, codeSpanPaths }
 }
 

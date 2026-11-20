@@ -15,6 +15,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use avl_control::proxy::ControlEndpoint;
 use avl_trace::protocol;
 use avl_wire::daemon::{LaneClass, LaneInputs, PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, WatchdogState};
 use avl_wire::program::lane::{LaneDocument, parse_lane_document};
@@ -25,7 +26,7 @@ use serde_json::{Value, json};
 use super::channel::{Daemon, log};
 use super::context::option_files_digest;
 use super::evidence;
-use super::ide::{ContextPlugin, KillTarget, LaneLaunch, Records, Relaunch, RelaunchParts};
+use super::ide::{AgentFiles, ContextPlugin, KillTarget, LaneLaunch, Records, Relaunch, RelaunchParts};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
 use super::inputs::TraceInputs;
 use super::live::LiveRun;
@@ -33,7 +34,6 @@ use super::package::sha256_hex;
 use super::program::{Failure, IdeProcess, Lane, Runner, Suite, case_identity, class_label, kind};
 use super::readiness::{self, Bridge, READY_TIMEOUT, request};
 use super::rerun::Rerun;
-use super::services::cloud::spawner::ControlEndpoint;
 use super::session_logs;
 use super::split::RunnerSplit;
 use super::stream::Stream;
@@ -400,7 +400,10 @@ fn execute(
     let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
         return Err("the run request names no lane and no lane inputs, which the lane daemon needs".to_owned());
     };
-    let fake_agent_jar = daemon.stored(&lane_inputs.fake_agent_jar)?;
+    let agent_files = AgentFiles {
+        fake_agent: daemon.stored(&lane_inputs.fake_agent)?,
+        genui_fixture_jar: daemon.stored(&lane_inputs.genui_fixture_jar)?,
+    };
     let selection = selection_of(daemon, lane, lane_inputs, request, split)?;
     if let Some(note) = &selection.split_note {
         stream.note(note.clone());
@@ -412,7 +415,7 @@ fn execute(
         stream,
         iteration_dir,
         iteration_id,
-        &fake_agent_jar,
+        &agent_files,
         &selection,
         live.as_ref(),
         rerun,
@@ -479,7 +482,7 @@ fn execute_selection(
     stream: &Stream<'_>,
     iteration_dir: &Path,
     iteration_id: &str,
-    fake_agent_jar: &Path,
+    agent_files: &AgentFiles,
     selection: &Selection,
     live: Option<&LiveRun>,
     rerun: Option<&Rerun>,
@@ -512,7 +515,7 @@ fn execute_selection(
         vocabulary_digest: &selection.vocabulary_digest,
         identity: &identity,
         product_stamp: &request.product_stamp,
-        fake_agent_jar,
+        agent_files,
         plugins: &plugins,
         live,
     };

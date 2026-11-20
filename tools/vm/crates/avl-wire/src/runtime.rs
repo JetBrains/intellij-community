@@ -12,7 +12,8 @@
 
 use std::collections::HashSet;
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::fs;
+use std::path::{Component, Path, PathBuf};
 
 use serde::de::{self, Deserializer, MapAccess, Visitor};
 use serde::{Deserialize, Serialize};
@@ -25,7 +26,7 @@ mod tests;
 
 /// The version of the descriptor this controller reads. Unrelated to [`crate::daemon::PROTOCOL_VERSION`]: one
 /// describes a build artifact, the other a running process. Bump it with `_SCHEMA_VERSION` in the `.bzl`.
-pub const SCHEMA_VERSION: u32 = 10;
+pub const SCHEMA_VERSION: u32 = 11;
 
 /// What the descriptor must declare itself to be.
 ///
@@ -136,9 +137,10 @@ pub const JBR_SECTION_FIELDS: [&str; 1] = ["platform"];
 
 /// The keys of the `ide` section, as the descriptor spells them. The descriptor writer test of the Air lanes holds the
 /// Starlark rule to them.
-pub const IDE_SECTION_FIELDS: [&str; 7] = [
-    "fakeAgentJar",
+pub const IDE_SECTION_FIELDS: [&str; 8] = [
+    "fakeAgent",
     "flagsFile",
+    "genuiFixtureJar",
     "laneDocuments",
     "plugins",
     "projectArchive",
@@ -155,15 +157,18 @@ pub const IDE_SECTION_FIELDS: [&str; 7] = [
 /// files that the daemon installs into the plugin directory of the IDE context. They travel by the jar push and not
 /// by a share, so neither the product identity nor the mount identity reads them.
 ///
-/// The lane inputs are [`Self::lane_inputs`]: the fake agent jar and the two jars of the documents. They travel by
+/// The lane inputs are [`Self::lane_inputs`]: the fake agent binary of the guest, the jar of the GenUI fixture app server,
+/// and the two jars of the documents. They travel by
 /// the jar push only, so no identity of the daemon or of the IDE reads them.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdeSection {
-    /// The deploy jar of the fake ACP agent. The lane runs it with `-jar`, and the fake registry packs it into its
-    /// agent archives.
-    pub fake_agent_jar: RuntimeFile,
+    /// The fake ACP agent binary of the guest platform. The lane runs it for each local agent, and the fake registry
+    /// packs it into its agent archives.
+    pub fake_agent: RuntimeFile,
     pub flags_file: RuntimeFile,
+    /// The deploy jar of the GenUI fixture app server, which a GenUI scenario runs on the JBR of the distribution.
+    pub genui_fixture_jar: RuntimeFile,
     /// The jar that holds the lane documents below `lanes/`, and the flow vocabulary file at its root.
     pub lane_documents: RuntimeFile,
     pub plugins: Vec<IdePluginFile>,
@@ -177,9 +182,10 @@ pub struct IdeSection {
 impl IdeSection {
     /// The lane inputs with the key of each in the `ide` section, in key order. The two jars of the documents can be
     /// one file.
-    pub const fn lane_inputs(&self) -> [(&'static str, &RuntimeFile); 3] {
+    pub const fn lane_inputs(&self) -> [(&'static str, &RuntimeFile); 4] {
         [
-            ("fakeAgentJar", &self.fake_agent_jar),
+            ("fakeAgent", &self.fake_agent),
+            ("genuiFixtureJar", &self.genui_fixture_jar),
             ("laneDocuments", &self.lane_documents),
             ("suiteDocuments", &self.suite_documents),
         ]
@@ -522,4 +528,46 @@ pub fn runfiles_root(descriptor_path: &Path) -> PathBuf {
 /// Where one declared runfile actually is on the host.
 pub fn runtime_file_path(runfiles_root: &Path, file: &RuntimeFile) -> PathBuf {
     runfiles_root.join(&file.logical_path)
+}
+
+/// The key of the `DevIdeConfig` file that names the home of the distribution, `DevIdeConfig.HOME_PATH_KEY`.
+pub const HOME_PATH_KEY: &str = "home.path";
+
+/// The home of the distribution: [`HOME_PATH_KEY`] of the `DevIdeConfig` file `ide_config`, relative to the directory
+/// of the file when it is relative. The error says why the home is unknown: the file cannot be read, or it has no
+/// [`HOME_PATH_KEY`].
+///
+/// The home is the `.dist` directory, or its `Contents` child for a macOS app. The file is a properties file that the
+/// dev distribution rule writes, one `key=value` line each and no escape. So it is read by hand: a crate for it would
+/// grow the closure of the guest agent.
+pub fn dev_dist_home(ide_config: &Path) -> Result<PathBuf, String> {
+    let text = fs::read_to_string(ide_config).map_err(|error| format!("cannot read the IDE config {}: {error}", ide_config.display()))?;
+    let home = text
+        .lines()
+        .filter_map(|line| line.split_once('='))
+        .find(|(key, _)| key.trim() == HOME_PATH_KEY)
+        .map(|(_, value)| value.trim())
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| format!("'{HOME_PATH_KEY}' is missing from {}", ide_config.display()))?;
+    let home = Path::new(home);
+    if home.is_absolute() {
+        return Ok(normalize_path(home));
+    }
+    let directory = ide_config.parent().unwrap_or_else(|| Path::new("/"));
+    Ok(normalize_path(&directory.join(home)))
+}
+
+/// `path` with its `.` components dropped and each `..` folded into its parent, as `Path.normalize` of the JDK does.
+pub fn normalize_path(path: &Path) -> PathBuf {
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                normalized.pop();
+            }
+            other => normalized.push(other.as_os_str()),
+        }
+    }
+    normalized
 }

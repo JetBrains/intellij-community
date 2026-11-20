@@ -43,7 +43,7 @@ use super::context::editors::clear_restored_editors;
 use super::context::{LaneContext, ServicePorts};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, LANE_SERVICES_PURPOSE, LaneIdentity};
 use super::inputs::LaunchInputs;
-use super::package::Packages;
+use super::package::{self, Packages};
 use super::readiness::{self, Bridge, Ready};
 use super::reload::{self, PluginChange};
 use super::services::Service;
@@ -221,7 +221,7 @@ impl LaneServices {
         let token = identity.secret(LANE_SERVICES_PURPOSE);
         let registry = match ports.registry {
             Some(port) => {
-                let packages = Packages::assemble(context.fake_agent_jar, context.java)?;
+                let packages = Packages::assemble(context.fake_agent, package::guest_platform())?;
                 Some(registry::start(port, &token, packages, registry_agents(context))?)
             }
             None => None,
@@ -305,6 +305,14 @@ impl Records<'_> {
     }
 }
 
+/// The two process files that the lane pushed beside the documents, by their path in the store of the daemon.
+pub(crate) struct AgentFiles {
+    /// The fake agent binary of the guest.
+    pub fake_agent: PathBuf,
+    /// The jar of the GenUI fixture app server.
+    pub genui_fixture_jar: PathBuf,
+}
+
 /// What one iteration asks of the IDE: the lane, its vocabulary, its identity, and the context plugins.
 pub(crate) struct LaneLaunch<'a> {
     pub document: &'a LaneDocument,
@@ -312,7 +320,7 @@ pub(crate) struct LaneLaunch<'a> {
     pub vocabulary_digest: &'a str,
     pub identity: &'a LaneIdentity,
     pub product_stamp: &'a str,
-    pub fake_agent_jar: &'a Path,
+    pub agent_files: &'a AgentFiles,
     pub plugins: &'a [ContextPlugin],
     /// The live run of the iteration, for the live lane alone. The context writer seeds the lane home with it.
     pub live: Option<&'a super::live::LiveRun>,
@@ -425,7 +433,8 @@ impl IdeOwner {
             document: launch.document,
             identity: launch.identity,
             java: &java,
-            fake_agent_jar: launch.fake_agent_jar,
+            fake_agent: &launch.agent_files.fake_agent,
+            genui_fixture_jar: &launch.agent_files.genui_fixture_jar,
             runtimes: &runtimes,
             live: launch.live,
         };

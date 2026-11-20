@@ -4,7 +4,7 @@ use serde_json::json;
 use super::*;
 use bt_core::fake::{
     AttemptSpec, FakeRuntime, LANES_FILE, REPO_ROOT, area_files, attempt, bep_lines, build_bazel_text, case, failing, flow_catalog_tree,
-    lanes, module_build_bazel_text, refusal, suite, suite_xml, test_result_event,
+    lanes, loading_failure_events, refusal, suite, suite_xml, test_result_event,
 };
 use bt_core::runtime::SpawnResult;
 
@@ -154,6 +154,82 @@ fn a_failed_excluded_build_stops_the_lane_and_reports_build_failed() {
     );
 }
 
+/// A run that bazel failed before its first test names the cause in the words of bazel, in the digest and in the
+/// payload, not only "0 tests ran".
+#[test]
+fn a_run_that_failed_to_load_a_label_names_the_bazel_error() {
+    let fake = fake_air_tree();
+    let no_such_package =
+        "no such package 'plugins/air/gone': BUILD file not found in any of the following directories.\n - plugins/air/gone";
+    fake.put_absolute(
+        BEP_PATH,
+        &bep_lines(&loading_failure_events("//plugins/air/gone:gone_test", no_such_package)),
+    );
+    let answer = |exit_code| SpawnResult {
+        exit_code,
+        output: "ERROR: Build did NOT complete successfully".to_owned(),
+    };
+    fake.state().spawn_results = [answer(0), answer(1)].into();
+    let outcome = run(&["--lane", "fast", "--json"], &fake);
+
+    assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
+    assert_mentions(&outcome.text, &["BUILD FAILED  0 tests ran", no_such_package]);
+    assert_eq!(outcome.json.map(|payload| payload.errors), Some(vec![no_such_package.to_owned()]));
+    assert!(
+        !fake.state().stderr.join("\n").contains("Build did NOT complete"),
+        "a named error needs no tail of bazel"
+    );
+}
+
+/// A lane run whose excluded build passes and whose `bazel test` fails with `output` and no BEP error.
+fn failed_build_tree(output: &str) -> FakeRuntime {
+    let fake = fake_air_tree();
+    fake.put_absolute(
+        BEP_PATH,
+        &bep_lines(&[json!({"id": {"buildFinished": {}}, "finished": {"exitCode": {"name": "BUILD_FAILURE", "code": 1}}})]),
+    );
+    let answer = |exit_code, output: &str| SpawnResult {
+        exit_code,
+        output: output.to_owned(),
+    };
+    fake.state().spawn_results = [answer(0, ""), answer(1, output)].into();
+    fake
+}
+
+/// A failed build with no error that bt recognises shows the tail of bazel, as an INFRA run does, and keeps the whole
+/// output of bazel in a file that the digest names.
+#[test]
+fn a_failed_build_without_a_known_error_shows_the_tail_of_bazel() {
+    let output = "ERROR: a genrule failed\nERROR: Build did NOT complete successfully";
+    let fake = failed_build_tree(output);
+    let outcome = run(&["--lane", "fast"], &fake);
+
+    assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
+    let log = outcome
+        .text
+        .lines()
+        .find_map(|line| line.strip_prefix("bazel  ")?.split_once("  ").map(|(path, _)| path.to_owned()))
+        .unwrap_or_else(|| panic!("no bazel line in:\n{}", outcome.text));
+    assert!(log.starts_with("out/bt-runs/") && log.ends_with("/bazel-output.log"), "{log}");
+    assert_mentions(
+        &outcome.text,
+        &[
+            &format!("cause  bt recognised no build error; the output of bazel is in {log}"),
+            &format!("bazel  {log}  (the output of bazel, where the build failed)"),
+        ],
+    );
+    assert_eq!(
+        fake.state().files.get(&format!("{REPO_ROOT}/{log}")).map(String::as_str),
+        Some(output)
+    );
+    assert_mentions(&fake.state().stderr.join("\n"), &["ERROR: a genrule failed"]);
+
+    // `--verbose` shows the whole output of bazel once, and no tail after it
+    let fake = failed_build_tree("ERROR: a genrule failed");
+    run(&["--lane", "fast", "--verbose"], &fake);
+    assert_eq!(fake.state().stderr.join("\n").matches("ERROR: a genrule failed").count(), 1);
+}
+
 /// The OS runtime creates the BEP file to reserve its name, so the early answers must remove it too, not only a run.
 #[test]
 fn the_bep_file_is_deleted_after_a_dry_run_and_after_a_failed_excluded_build() {
@@ -205,6 +281,7 @@ fn a_lane_run_records_the_class_times_of_the_targets_that_passed() {
         SHARD_PLAN,
         &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.Old\t7.000\nclass\t{CORE_LABEL}\tcom.Stale\t1.000\n"),
     );
+    tree_has(&fake, &[OTHER_LABEL, CORE_LABEL]);
     let xml = |suites: &str| format!("<testsuites>{suites}</testsuites>");
     fake.put_absolute(
         "/exec/testlogs/core/shard_1/test.xml",
@@ -373,6 +450,36 @@ fn a_filtered_lane_skips_the_class_time_budget_baseline() {
 
 const HEAVY_BEP_PATH: &str = "/tmp/air-bazel-test-bep-heavy.json";
 
+/// The query file and the answer file of the query of the current test targets.
+const TREE_QUERY_PATH: &str = "/tmp/bt-tree-query.json";
+const TREE_TARGETS_PATH: &str = "/tmp/bt-tree-targets.json";
+
+/// The current tree has these test targets: `bazel query` answers them for the patterns of the run.
+fn tree_has(fake: &FakeRuntime, labels: &[&str]) {
+    query_answers(fake, 0, labels);
+}
+
+/// `bazel query` exits with `exit_code` and writes these labels.
+fn query_answers(fake: &FakeRuntime, exit_code: i32, labels: &[&str]) {
+    fake.state().spawn_rules.push((
+        " query ".to_owned(),
+        SpawnResult {
+            exit_code,
+            output: String::new(),
+        },
+    ));
+    fake.put_absolute(TREE_TARGETS_PATH, &labels.join("\n"));
+}
+
+/// The `bazel test` command lines of a run, in their order.
+fn test_commands(fake: &FakeRuntime) -> Vec<String> {
+    fake.spawned()
+        .iter()
+        .map(|argv| argv.join(" "))
+        .filter(|command| command.contains(" test "))
+        .collect()
+}
+
 /// A plan where the core target wants six shards and the other target two.
 fn heavy_plan_tree() -> FakeRuntime {
     let fake = fake_air_tree();
@@ -380,6 +487,7 @@ fn heavy_plan_tree() -> FakeRuntime {
         SHARD_PLAN,
         &format!("default\t2\nclass\t{CORE_LABEL}\tcom.A\t530.000\nclass\t{OTHER_LABEL}\tcom.B\t120.000\n"),
     );
+    tree_has(&fake, &[CORE_LABEL, OTHER_LABEL]);
     fake
 }
 
@@ -391,6 +499,7 @@ fn three_group_plan_tree() -> FakeRuntime {
             "default\t2\nclass\t{CORE_LABEL}\tcom.A\t530.000\nclass\t{OTHER_LABEL}\tcom.B\t120.000\nclass\t{SINGLE_LABEL}\tcom.S\t7.000\n"
         ),
     );
+    tree_has(&fake, &[CORE_LABEL, OTHER_LABEL, SINGLE_LABEL]);
     fake
 }
 
@@ -467,6 +576,221 @@ fn a_single_shard_target_runs_in_an_invocation_of_its_own() {
     assert!(!single.contains(OTHER_LABEL), "{single}");
 }
 
+const GONE_HEAVY_LABEL: &str = "//plugins/air/gone:gone_test";
+const GONE_SINGLE_LABEL: &str = "@@community+//tools/bt/gone:gone_test";
+/// A single-shard target of another repository, which the plan names by the canonical name of the repository.
+const COMMUNITY_SINGLE_LABEL: &str = "@@community+//tools/bt/crates/bt-core:bt-core_test";
+
+/// A plan with a heavy and two single-shard targets that the current tree has, and one of each that another branch
+/// recorded.
+fn stale_plan_tree() -> FakeRuntime {
+    let fake = fake_air_tree();
+    fake.put_absolute(
+        SHARD_PLAN,
+        &format!(
+            "default\t2\nclass\t{CORE_LABEL}\tcom.A\t530.000\nclass\t{GONE_HEAVY_LABEL}\tcom.G\t400.000\n\
+             class\t{SINGLE_LABEL}\tcom.S\t7.000\nclass\t{GONE_SINGLE_LABEL}\tcom.H\t3.000\n\
+             class\t{COMMUNITY_SINGLE_LABEL}\tcom.C\t2.000\n"
+        ),
+    );
+    fake
+}
+
+/// The plan keeps the targets of each branch that ran in the checkout. Bazel fails each invocation that names a target
+/// that the tree does not have, also as a negative pattern. So the run names only the targets that the query finds.
+#[test]
+fn a_plan_target_that_the_tree_does_not_have_runs_in_no_invocation() {
+    let fake = stale_plan_tree();
+    // a query names a target of another repository by the apparent name of the repository
+    tree_has(
+        &fake,
+        &[CORE_LABEL, SINGLE_LABEL, "@community//tools/bt/crates/bt-core:bt-core_test"],
+    );
+    run(&["--lane", "fast"], &fake);
+
+    let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
+    assert!(spawned[0].contains(" query "), "the query runs first: {spawned:#?}");
+    assert_mentions(
+        &spawned[0],
+        &[
+            &format!("--query_file={TREE_QUERY_PATH}"),
+            &format!("--output_file={TREE_TARGETS_PATH}"),
+            "--output=label",
+            "--keep_going",
+        ],
+    );
+    assert_eq!(
+        fake.state().files.get(TREE_QUERY_PATH).map(String::as_str),
+        Some(r#"tests(set() + "//plugins/air/..." + "@community//tools/bt/..." + "@community//tools/vm/...")"#)
+    );
+    let tests = test_commands(&fake);
+    assert_eq!(tests.len(), 3, "{tests:#?}");
+    assert!(!tests.iter().any(|command| command.contains("/gone:")), "{tests:#?}");
+    assert!(tests[0].contains("forced=8") && tests[0].ends_with(CORE_LABEL), "{}", tests[0]);
+    assert!(
+        tests[1].ends_with(&format!("-- -{CORE_LABEL} -{SINGLE_LABEL} -{COMMUNITY_SINGLE_LABEL}")),
+        "{}",
+        tests[1]
+    );
+    assert!(
+        tests[2].contains("forced=1") && tests[2].ends_with(&format!("{SINGLE_LABEL} {COMMUNITY_SINGLE_LABEL}")),
+        "{}",
+        tests[2]
+    );
+    let removed = fake.state().removed.clone();
+    assert!(
+        removed.contains(&TREE_QUERY_PATH.to_owned()) && removed.contains(&TREE_TARGETS_PATH.to_owned()),
+        "{removed:?}"
+    );
+    assert_mentions(
+        &fake.state().stderr.join("\n"),
+        &[&format!(
+            "the shard plan names targets that bazel query does not find, so no invocation names them: {GONE_HEAVY_LABEL} \
+             {GONE_SINGLE_LABEL}"
+        )],
+    );
+    // the check record compares the tree after the run with the tree before the first bazel command
+    let order = fake.state().order.clone();
+    assert!(order[0] == "tree" && order[1].contains(" query "), "{order:#?}");
+}
+
+/// Exit codes of bazel that are no verdict: an interrupt (8), a refused command line (2), an analysis failure without
+/// `--keep_going` (7), no memory (33), a failure of the local machine (36), an internal error (37), no wrapper (127),
+/// and a signal (-1 from the runtime, 130 from a shell).
+const NO_VERDICT_CODES: [i32; 9] = [8, 2, 7, 33, 36, 37, 127, -1, 130];
+
+/// A query whose exit code is no verdict ends the run before the next bazel command, as an invocation does.
+#[test]
+fn a_query_without_a_verdict_starts_no_other_bazel_command() {
+    for code in NO_VERDICT_CODES {
+        let fake = stale_plan_tree();
+        query_answers(&fake, code, &[]);
+        let outcome = run(&["--lane", "fast", "--json"], &fake);
+        let message = format!("bazel query exited with {code}, so the run started no test");
+        assert_eq!(outcome.exit_code, exit::INFRA, "{code}: {}", outcome.text);
+        assert_eq!(outcome.text, format!("INFRA  {message}"));
+        let payload = outcome.json.expect("--json builds a payload");
+        assert_eq!(payload.status, RunStatus::Infra);
+        assert_eq!(payload.errors, [message]);
+        assert_eq!(fake.spawned().len(), 1, "{code}: {:#?}", fake.spawned());
+    }
+}
+
+/// A test invocation whose exit code is no verdict is INFRA, with the tail of bazel on the stderr, as the query is.
+#[test]
+fn a_test_invocation_without_a_verdict_is_infra_with_the_tail_of_bazel() {
+    for code in NO_VERDICT_CODES {
+        let fake = fake_air_tree();
+        fake.put_absolute(BEP_PATH, &bep_lines(&[json!({"id": {"started": {}}, "started": {}})]));
+        let answer = |exit_code, output: &str| SpawnResult {
+            exit_code,
+            output: output.to_owned(),
+        };
+        fake.state().spawn_results = [answer(0, ""), answer(code, "ERROR: the server crashed")].into();
+        let outcome = run(&["--lane", "fast"], &fake);
+        assert_eq!(outcome.exit_code, exit::INFRA, "{code}: {}", outcome.text);
+        assert_mentions(&fake.state().stderr.join("\n"), &["ERROR: the server crashed"]);
+    }
+}
+
+/// The fake panics for a query without a script, so no test reads it as a tree without targets.
+#[test]
+#[should_panic(expected = "a bazel query without a spawn rule")]
+fn an_unscripted_query_fails_the_test() {
+    run(&["--lane", "fast"], &stale_plan_tree());
+}
+
+/// A plan whose heavy and single-shard targets are all gone from the tree leaves one invocation, with no exclusion.
+#[test]
+fn a_plan_of_gone_targets_only_leaves_one_invocation() {
+    let fake = stale_plan_tree();
+    tree_has(&fake, &[OTHER_LABEL]);
+    run(&["--lane", "fast"], &fake);
+    let tests = test_commands(&fake);
+    assert_eq!(tests.len(), 1, "{tests:#?}");
+    assert!(tests[0].contains("forced=2") && !tests[0].contains(" -- -"), "{}", tests[0]);
+}
+
+/// With `--keep_going`, a package that does not load makes the query exit 3, and the labels of the other packages are
+/// still the answer.
+#[test]
+fn a_partial_answer_of_the_query_still_gives_the_groups() {
+    let fake = stale_plan_tree();
+    query_answers(&fake, 3, &[CORE_LABEL]);
+    run(&["--lane", "fast"], &fake);
+    let tests = test_commands(&fake);
+    assert_eq!(tests.len(), 2, "{tests:#?}");
+    assert!(tests[0].contains("forced=8") && tests[0].ends_with(CORE_LABEL), "{}", tests[0]);
+    assert!(tests[1].ends_with(&format!("-- -{CORE_LABEL}")), "{}", tests[1]);
+}
+
+/// A query file that bt cannot write is no answer, and bt says why on the stderr. The run puts each target in the
+/// invocation of the patterns, which is slower and still correct.
+#[test]
+fn a_query_without_an_answer_leaves_each_target_in_the_invocation_of_the_patterns() {
+    let fake = stale_plan_tree();
+    fake.state().write_failures.insert(TREE_QUERY_PATH.to_owned());
+    run(&["--lane", "fast"], &fake);
+    let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
+    assert!(!spawned.iter().any(|command| command.contains(" query ")), "{spawned:#?}");
+    let tests = test_commands(&fake);
+    assert_eq!(tests.len(), 1, "{tests:#?}");
+    assert!(!tests[0].contains(" -- -"), "{}", tests[0]);
+    let stderr = fake.state().stderr.join("\n");
+    assert_mentions(
+        &stderr,
+        &[&format!(
+            "cannot write the query file {TREE_QUERY_PATH}: EACCES: {TREE_QUERY_PATH}, so no target of the shard plan runs \
+             in an invocation of its own"
+        )],
+    );
+    // a query without an answer says nothing about the targets of the plan
+    assert!(!stderr.contains("the shard plan names targets"), "{stderr}");
+}
+
+/// The stderr line of the gone targets names three and counts the rest.
+#[test]
+fn the_line_of_the_gone_targets_names_three_and_counts_the_rest() {
+    let gone: Vec<String> = (1..=5).map(|index| format!("//p:t{index}")).collect();
+    assert_eq!(
+        gone_targets_line(&gone),
+        "the shard plan names targets that bazel query does not find, so no invocation names them: //p:t1 //p:t2 //p:t3 (+2 more)"
+    );
+    assert_eq!(
+        gone_targets_line(&gone[..1]),
+        "the shard plan names targets that bazel query does not find, so no invocation names them: //p:t1"
+    );
+}
+
+/// A dry run starts no bazel command: it waits for the server lock of no other command and starts no server. So it
+/// shows the groups of the plan unchecked, and says so.
+#[test]
+fn a_dry_run_runs_no_query_and_marks_its_groups_unchecked() {
+    let fake = stale_plan_tree();
+    let text = run(&["--lane", "fast", "--dry-run"], &fake).text;
+    assert!(fake.spawned().is_empty(), "{:#?}", fake.spawned());
+    assert_mentions(&line_of(&text, "heavy   "), &[CORE_LABEL, GONE_HEAVY_LABEL]);
+    assert_mentions(&line_of(&text, "single  "), &[SINGLE_LABEL, GONE_SINGLE_LABEL]);
+    assert_eq!(
+        line_of(&text, "note    "),
+        "note    unchecked groups: the run keeps only the heavy and single targets that bazel query finds in the tree"
+    );
+    assert!(
+        !dry_run(&["--lane", "fast"]).contains("note    "),
+        "a run without groups has no note"
+    );
+}
+
+/// The query runs only for a plan that names a covered heavy or single-shard target.
+#[test]
+fn a_plan_without_a_heavy_or_a_single_shard_target_runs_no_query() {
+    let fake = fake_air_tree();
+    fake.put_absolute(SHARD_PLAN, &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.B\t120.000\n"));
+    run(&["--lane", "fast"], &fake);
+    let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
+    assert!(!spawned.iter().any(|command| command.contains(" query ")), "{spawned:#?}");
+}
+
 /// The invocations read as one run: disjoint targets, one verdict, one plan update.
 #[test]
 fn the_heavy_planned_and_single_invocations_read_as_one_run() {
@@ -507,21 +831,23 @@ fn the_heavy_planned_and_single_invocations_read_as_one_run() {
     assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
     assert_mentions(&outcome.text, &["PASS  4 tests  3 targets"]);
     let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
-    assert_eq!(spawned.len(), 4, "{spawned:#?}");
+    // the query of the current test targets, the build of the excluded targets, and the three invocations
+    assert_eq!(spawned.len(), 5, "{spawned:#?}");
+    assert!(spawned[0].contains(" query "), "{}", spawned[0]);
     assert!(
-        spawned[1].contains("forced=8") && spawned[1].ends_with(CORE_LABEL),
-        "{}",
-        spawned[1]
-    );
-    assert!(
-        spawned[2].contains("forced=2") && spawned[2].ends_with(&format!("-- -{CORE_LABEL} -{SINGLE_LABEL}")),
+        spawned[2].contains("forced=8") && spawned[2].ends_with(CORE_LABEL),
         "{}",
         spawned[2]
     );
     assert!(
-        spawned[3].contains("forced=1") && spawned[3].ends_with(SINGLE_LABEL),
+        spawned[3].contains("forced=2") && spawned[3].ends_with(&format!("-- -{CORE_LABEL} -{SINGLE_LABEL}")),
         "{}",
         spawned[3]
+    );
+    assert!(
+        spawned[4].contains("forced=1") && spawned[4].ends_with(SINGLE_LABEL),
+        "{}",
+        spawned[4]
     );
     let plan = fake.state().files.get(SHARD_PLAN).cloned().unwrap_or_default();
     assert_mentions(
@@ -555,7 +881,8 @@ fn an_interrupted_heavy_invocation_starts_no_lane_invocation() {
     fake.state().spawn_results = [answer(0), answer(8)].into();
     let outcome = run(&["--lane", "fast"], &fake);
     assert_eq!(outcome.exit_code, exit::INFRA, "{}", outcome.text);
-    assert_eq!(fake.spawned().len(), 2, "{:#?}", fake.spawned());
+    // the query, the build of the excluded targets, and the heavy invocation
+    assert_eq!(fake.spawned().len(), 3, "{:#?}", fake.spawned());
 }
 
 /// The tag filters of a lane can leave out every heavy target, and then the heavy invocation exits 4 with no test.
@@ -670,35 +997,7 @@ fn a_flow_selector_dry_runs_as_its_lane_and_lane_settles_it() {
     assert!(!settled.text.contains("--test_filter"), "{}", settled.text);
     let ambiguous = refusal(execute(["flow-manage-launch-preset", "--dry-run"], &fake));
     assert_eq!(ambiguous.code, "affected_lanes_ambiguous");
-    // `--list` shows every lane before `--lane` narrows it.
-    let listed = run(&["flow-manage-launch-preset", "--list"], &fake);
-    assert_mentions(
-        &listed.text,
-        &[
-            "gui-chat AirManageLaunchPresetGeneratedFlowUiTest (manage-launch-preset)",
-            "ui AirManageLaunchPresetQuickStartGeneratedFlowUiTest (manage-launch-preset-quick-start)",
-        ],
-    );
     assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
-}
-
-#[test]
-fn list_prints_candidates_without_running_bazel() {
-    let fake = fake_air_tree();
-    let outcome = run(&["AgentPromptChangesTreeContextContributorTest", "--list"], &fake);
-    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
-    assert_mentions(
-        &outcome.text,
-        &[
-            "com.intellij.air.backend.vcs.context.AgentPromptChangesTreeContextContributorTest",
-            "//plugins/air/backend/vcs:air-backend-vcs-tests_test",
-            "//plugins/air/frontend/prompt/vcs:air-frontend-prompt-vcs-tests_test",
-        ],
-    );
-    let near = run(&["AgentThreadCliTst", "--list"], &fake);
-    assert_eq!(near.text, "(no candidates)\nsimilar: AgentThreadCliTest");
-    let package = run(&["com.intellij.air.shared.core", "--list"], &fake);
-    assert_mentions(&package.text, &[CORE_LABEL]);
 }
 
 /// A label outside plugins/air is not resolved at all, which is what makes the wrapper usable for any target.
@@ -749,26 +1048,28 @@ fn a_directory_inside_the_integration_tree_keeps_its_tags() {
     assert!(!text.contains("--test_tag_filters"), "{text}");
 }
 
-/// A run and its candidate list name one pattern for a directory under `community/` of the ultimate root.
+/// A run names one pattern for a directory under `community/` of the ultimate root.
 #[test]
 fn a_directory_under_community_runs_in_the_community_repository() {
     let fake = fake_air_tree();
     fake.put("community/MODULE.bazel", "");
     fake.put("community/tools/vm/BUILD.bazel", "");
-    for argv in [["community/tools/vm", "--dry-run"], ["community/tools/vm", "--list"]] {
-        assert_mentions(&run(&argv, &fake).text, &["label   @community//tools/vm/..."]);
-    }
+    assert_mentions(
+        &run(&["community/tools/vm", "--dry-run"], &fake).text,
+        &["label   @community//tools/vm/..."],
+    );
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
-/// A run and its candidate list name the `@community` label for a label under `community/` of the ultimate root.
+/// A run names the `@community` label for a label under `community/` of the ultimate root.
 #[test]
 fn a_label_under_community_runs_in_the_community_repository() {
     let fake = fake_air_tree();
     fake.put("community/MODULE.bazel", "");
-    for argv in [["//community/tools/bt/...", "--dry-run"], ["//community/tools/bt/...", "--list"]] {
-        assert_mentions(&run(&argv, &fake).text, &["label   @community//tools/bt/..."]);
-    }
+    assert_mentions(
+        &run(&["//community/tools/bt/...", "--dry-run"], &fake).text,
+        &["label   @community//tools/bt/..."],
+    );
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
@@ -819,7 +1120,8 @@ fn a_full_run_spawns_bazel_once_digests_the_result_and_deletes_the_bep_file() {
         spawned[0]
     );
     assert_eq!(outcome.exit_code, exit::GREEN);
-    assert_eq!(outcome.text, format!("PASS  2 tests  5.0s  {CORE_LABEL}"));
+    // The fake bazel takes 5 s; the fake wrapper names no build time, and the fake checkout is no linked work tree.
+    assert_eq!(outcome.text, format!("PASS  2 tests  5.0s  {CORE_LABEL}\ntime   bazel 5.0s"));
     // No payload without --json: stdout stays untouched for a caller that did not ask for one.
     assert_eq!(outcome.json, None);
     assert_eq!(fake.state().removed, [BEP_PATH]);
@@ -1020,17 +1322,11 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult {
             self.0.spawn_streaming(command)
         }
-        fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
-            self.0.spawn_with_input(command, input)
-        }
-        fn spawn_watched(&self, command: &[OsString], idle: std::time::Duration) -> SpawnResult {
-            self.0.spawn_watched(command, idle)
-        }
         fn home_dir(&self) -> Option<PathBuf> {
             self.0.home_dir()
         }
-        fn confirm(&self, question: &str) -> Option<bool> {
-            self.0.confirm(question)
+        fn accio(&self, args: &[&str]) -> Result<String, Refusal> {
+            self.0.accio(args)
         }
         fn temp_file(&self, prefix: &str) -> PathBuf {
             self.0.temp_file(prefix)
@@ -1190,7 +1486,8 @@ fn fake_module_tree() -> FakeRuntime {
             "tests_test",
         ),
     ] {
-        fake.put(&format!("{dir}/BUILD.bazel"), &module_build_bazel_text(module, target));
+        let main = module.strip_suffix(".tests").unwrap_or(module);
+        fake.add_module(bt_core::fake::tests_module_json(dir, main, module, target));
     }
     fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.platform.util.tests\n");
     fake
@@ -1257,8 +1554,6 @@ fn a_module_runs_its_jps_test_with_the_filter() {
     assert!(!package.text.contains("--test_filter"), "{}", package.text);
     let unfiltered = run(&["--module", "intellij.platform.util.tests", "--dry-run"], &fake);
     assert_mentions(&unfiltered.text, &[&format!("label   {UTIL_LABEL}"), "filter  (none)"]);
-    let listed = run(&["--module", "intellij.platform.util.tests", "--list"], &fake);
-    assert_eq!(listed.text, format!("label   {UTIL_LABEL}"));
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
@@ -1361,5 +1656,29 @@ fn a_wildcard_filter_that_runs_no_test_gets_the_hint_of_its_form() {
     assert_mentions(
         &outcome.text,
         &["\nhint      --filter takes no wildcard. To run every class of the package, pass --filter com.intellij.air.core"],
+    );
+}
+
+/// The note of a nested class goes into the dry run, and a run writes it to the stderr before bazel starts.
+#[test]
+fn the_note_of_a_nested_class_is_in_the_dry_run_and_on_the_stderr() {
+    let fake = fake_air_tree();
+    fake.add_class(
+        "plugins/air/shared/core/testSrc/AgentIdTest.kt",
+        "com.intellij.air.shared.core.AgentIdTest$Parsing",
+    );
+    let note = "com.intellij.air.shared.core.AgentIdTest$Parsing is a nested class, so the filter is its outer class \
+                com.intellij.air.shared.core.AgentIdTest: the runner finds an @Nested class only through its outer class";
+    let planned = run(&["Parsing", "--dry-run"], &fake);
+    assert_mentions(
+        &planned.text,
+        &["filter  com.intellij.air.shared.core.AgentIdTest", &format!("note    {note}")],
+    );
+    spawn_answers(&fake, 0, "");
+    run(&["Parsing"], &fake);
+    assert!(
+        fake.state().stderr.iter().any(|line| *line == format!("note: {note}")),
+        "{:?}",
+        fake.state().stderr
     );
 }

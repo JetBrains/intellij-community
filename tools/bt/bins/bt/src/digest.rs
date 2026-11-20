@@ -108,10 +108,14 @@ pub(crate) fn failure_detail(case: &TestCase) -> &str {
 ///
 /// An identifier and not a selector; see [`rerun_selector`] for the selector, and for why the two differ.
 pub(crate) fn test_case_id(case: &TestCase) -> String {
-    let simple_class = case
-        .class_name
-        .rsplit_once('.')
-        .map_or(case.class_name.as_str(), |(_, simple)| simple);
+    let simple_class = if case.class_name.is_empty() {
+        // `Class Configuration` names no class; its suite starts with the class.
+        suite_class_name(&case.suite_name)
+    } else {
+        case.class_name
+            .rsplit_once('.')
+            .map_or(case.class_name.as_str(), |(_, simple)| simple)
+    };
     if simple_class.is_empty() {
         return case.name.clone();
     }
@@ -125,22 +129,34 @@ const JVM_FORBIDDEN_METHOD_CHARACTERS: &[char] = &['.', ';', '[', ']', '/', '<',
 /// alone otherwise.
 ///
 /// The class alone is a real answer rather than a degradation, because a class rerun works.
-/// `community/platform/testFramework/bootstrap/src/com/intellij/tests/bazel/TestCaseXmlRenderer.java` writes the
-/// display name for a dynamic test, truncates a legacy reporting name at the first `(`, and prefixes a
-/// test-template child with its parent name and a dot. So the name in test.xml is not always a method name, and a
-/// `#` selector built from one reaches the runner as a method it cannot find. The run then reports NO TESTS for a
-/// class that plainly failed.
+/// `community/platform/testFramework/bootstrap/src/com/intellij/tests/bazel/TeamCityTestNames.java` writes the name
+/// of a test as TeamCity shows it: `test()`, `test(TestInfo)`, `test()[MONOLITH]`, `parameterized[FIRST]`. The method
+/// ends at the first `[`, and the runner selects `test()`, `test(TestInfo)` and every method of a name. A name with
+/// no method, such as a `@DisplayName` that starts with the method name, reaches the runner as a method it cannot
+/// find. The run then reports NO TESTS for a class that plainly failed.
 ///
-/// The method survives two checks. It must round-trip through [`Selector::classify`], the parser this tool already
-/// owns, so the hint grows no second grammar. It must also hold no character a JVM method name forbids.
+/// The method survives three checks. Its class must be a top-level class, because the selector of an `@Nested` class is
+/// its outer class (see [`rerun_class_name`]). It must round-trip through [`Selector::classify`], the parser this tool
+/// already owns, so the hint grows no second grammar. It must also hold no character a JVM method name forbids.
+///
+/// A case with no class name, such as `Class Configuration`, reruns the class at the start of its suite name.
 pub(crate) fn rerun_selector(case: &TestCase) -> String {
-    let simple_class = rerun_class_name(&case.class_name);
-    if simple_class.is_empty() {
-        // No class to fall back to. The name is all there is, and a caller at least reads what failed.
-        return case.name.clone();
+    if case.class_name.is_empty() {
+        let suite_class = suite_class_name(&case.suite_name);
+        if suite_class.is_empty() {
+            // No class to fall back to. The name is all there is, and a caller at least reads what failed.
+            return case.name.clone();
+        }
+        return suite_class.to_owned();
     }
-    let candidate = format!("{simple_class}#{}", case.name);
-    if !case.name.contains(JVM_FORBIDDEN_METHOD_CHARACTERS)
+    let simple_class = rerun_class_name(&case.class_name);
+    if case.class_name.contains('$') {
+        return simple_class.to_owned();
+    }
+    let method = method_name(&case.name);
+    let candidate = format!("{simple_class}#{method}");
+    if !method.is_empty()
+        && !method.contains(JVM_FORBIDDEN_METHOD_CHARACTERS)
         && Selector::classify(&candidate).is_ok_and(|selector| selector.method.is_some())
     {
         return candidate;
@@ -148,13 +164,41 @@ pub(crate) fn rerun_selector(case: &TestCase) -> String {
     simple_class.to_owned()
 }
 
+/// The test name up to the first `[` outside the parameter types: `test(String[])[1]` gives `test(String[])`.
+fn method_name(name: &str) -> &str {
+    let mut depth = 0usize;
+    for (index, char) in name.char_indices() {
+        match char {
+            '(' => depth += 1,
+            ')' => depth = depth.saturating_sub(1),
+            '[' if depth == 0 => return &name[..index],
+            _ => {}
+        }
+    }
+    name
+}
+
 /// The class part of a rerun selector: the last dotted segment, and the outer half of a nested pair.
 ///
 /// A `@Nested` class reaches test.xml as `Outer$Nested`, which the selector parser refuses. `Outer` is a selector
-/// it accepts, and it runs the nested class too, because the runner's class filter matches a prefix.
+/// it accepts, and it runs the nested class too, because the runner's class filter matches a prefix. `Outer#method`
+/// is no such selector: the runner looks for the method in `Outer` only. It then finds no test, or it runs a method of
+/// the same name in `Outer`. So [`rerun_selector`] gives the class of a nested test without its method.
 fn rerun_class_name(class_name: &str) -> &str {
     let simple = class_name.rsplit_once('.').map_or(class_name, |(_, simple)| simple);
     simple.split_once('$').map_or(simple, |(outer, _)| outer)
+}
+
+/// The simple name of the class at the start of a suite name: the first dotted segment with an upper-case first
+/// letter, up to a `$`, `[` or `(`. The innermost suite comes last, after the last `: `.
+///
+/// `com.x.FooTest$Inner[MONOLITH].SPLIT`, `com.x.FooTest.factory()` and `S: com.x.FooTest` all give `FooTest`.
+fn suite_class_name(suite_name: &str) -> &str {
+    let innermost = suite_name.rsplit_once(": ").map_or(suite_name, |(_, innermost)| innermost);
+    innermost
+        .split('.')
+        .find(|segment| segment.starts_with(|first: char| first.is_ascii_uppercase()))
+        .map_or("", |segment| segment.split(['$', '[', '(']).next().unwrap_or_default())
 }
 
 /// One failure: its id, its headline, and its trimmed stack.
@@ -229,6 +273,76 @@ pub(crate) struct RenderOptions {
     pub(crate) kept_run: Option<String>,
     /// Full-lane classes over their time limit and outside the baseline.
     pub(crate) class_time_budget_violations: Vec<String>,
+    /// Where the time of the run went: the `time` line, and a `note` for a part that is slow for a known reason.
+    pub(crate) time: Option<RunTime>,
+    /// The repo-relative file that keeps the output of bazel of a run whose build failed.
+    pub(crate) bazel_log: Option<String>,
+}
+
+/// How many targets that did not build the digest names one by one.
+const MAX_UNBUILT_TARGETS: usize = 6;
+
+/// Where the time of a run went, beside the tests: the build of bt, the check record and the bazel commands. A narrow
+/// run of one cached class is all of that and almost no test, so the line shows an agent what to fix without a
+/// profile.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct RunTime {
+    /// The build of bt by its wrapper, when the wrapper named its time.
+    pub(crate) self_build_ms: Option<u64>,
+    /// The two scans of the checkout for the check record: before the run and after a green result.
+    pub(crate) check_record_ms: u64,
+    /// The bazel commands of the run, from the first spawn to the end of the last one.
+    pub(crate) bazel_ms: u64,
+    /// The analysis phase that bazel reported, a part of [`RunTime::bazel_ms`].
+    pub(crate) analysis_ms: u64,
+}
+
+/// A part of a run that takes at least this long gets a `note` with its cause and its fix.
+const SLOW_PART_MS: u64 = 10_000;
+
+/// The `time` line of a run, and a `note` for each part that is slow for a known reason.
+fn render_time(time: &RunTime) -> Vec<String> {
+    let mut parts = Vec::new();
+    if let Some(build) = time.self_build_ms {
+        parts.push(format!("bt build {}", format_duration(build)));
+    }
+    if time.check_record_ms > 0 {
+        parts.push(format!("check record {}", format_duration(time.check_record_ms)));
+    }
+    if time.analysis_ms > 0 {
+        parts.push(format!(
+            "bazel {} (analysis {})",
+            format_duration(time.bazel_ms),
+            format_duration(time.analysis_ms)
+        ));
+    } else {
+        parts.push(format!("bazel {}", format_duration(time.bazel_ms)));
+    }
+    let mut lines = vec![format!("time   {}", parts.join(" · "))];
+    if let Some(build) = time.self_build_ms.filter(|build| *build >= SLOW_PART_MS) {
+        lines.push(format!(
+            "note   bt built itself for {}: its sources changed, or the Bazel server of this checkout started cold. \
+             The next run reuses the build",
+            format_duration(build)
+        ));
+    }
+    if time.check_record_ms >= SLOW_PART_MS {
+        lines.push(format!(
+            "note   the check record scanned the untracked files of the checkout for {}. \
+             `git config status.showUntrackedFiles all` in this repository lets git keep its untracked cache for that \
+             scan, so the next scans take seconds",
+            format_duration(time.check_record_ms)
+        ));
+    }
+    if time.analysis_ms >= SLOW_PART_MS && time.analysis_ms * 2 >= time.bazel_ms {
+        lines.push(format!(
+            "note   bazel spent {} of {} in analysis: a cold server or other flags analyze the graph again. \
+             The next run of this checkout with the same flags reuses the analysis",
+            format_duration(time.analysis_ms),
+            format_duration(time.bazel_ms)
+        ));
+    }
+    lines
 }
 
 impl Default for RenderOptions {
@@ -240,6 +354,8 @@ impl Default for RenderOptions {
             no_tests_hint: None,
             kept_run: None,
             class_time_budget_violations: Vec::new(),
+            time: None,
+            bazel_log: None,
         }
     }
 }
@@ -369,11 +485,38 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
             }
         }
         RunStatus::BuildFailed => {
-            out.push(format!("BUILD FAILED  0 tests ran{single}"));
+            // A target that failed to build reported no shard, see `collect_results`. The other invocations of a lane
+            // still ran their tests, and the count says so.
+            let unbuilt: Vec<&str> = result
+                .targets
+                .iter()
+                .filter(|target| target.shards == 0)
+                .map(|target| target.label.as_str())
+                .collect();
+            let unbuilt_count = if unbuilt.is_empty() {
+                String::new()
+            } else {
+                format!(", {} did not build", plural(unbuilt.len() as u64, "target"))
+            };
+            out.push(format!("BUILD FAILED  {} ran{unbuilt_count}{single}", plural(sum.tests, "test")));
             out.push(String::new());
             out.extend(result.build_errors.iter().take(6).cloned());
             if result.build_errors.len() > 6 {
                 out.push(format!("+ {} more errors", result.build_errors.len() - 6));
+            }
+            if result.targets.len() > 1 {
+                for label in unbuilt.iter().take(MAX_UNBUILT_TARGETS) {
+                    out.push(format!("did not build  {label}"));
+                }
+                if unbuilt.len() > MAX_UNBUILT_TARGETS {
+                    out.push(format!("+ {} more targets that did not build", unbuilt.len() - MAX_UNBUILT_TARGETS));
+                }
+            }
+            if result.build_errors.is_empty() {
+                out.push(match &options.bazel_log {
+                    Some(log) => format!("cause  bt recognised no build error; the output of bazel is in {log}"),
+                    None => "cause  bt recognised no build error; the tail of the bazel output is above".to_owned(),
+                });
             }
         }
         RunStatus::NoTests => {
@@ -391,8 +534,8 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
                 } else if sum.skipped > 0 {
                     "cause     every matched test was skipped (assumeTrue / @Disabled) — a required *_BIN may be absent"
                 } else if options.method_filtered {
-                    // The `#method` half of the filter is the suspect the reader can act on. A display name and a
-                    // method that takes a parameter both land here, and the class-level rerun runs either.
+                    // The `#method` half of the filter is the suspect the reader can act on. A display name lands
+                    // here, and the class-level rerun runs it.
                     "cause     the #method filter matched no method — rerun the class alone, without the #"
                 } else {
                     "cause     no test target matched, or every shard was filtered out"
@@ -450,6 +593,11 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
             out.push(format!("       (+{} more target logs)", logs.len() - 1));
         }
     }
+    if let Some(log) = &options.bazel_log
+        && result.status == RunStatus::BuildFailed
+    {
+        out.push(format!("bazel  {log}  (the output of bazel, where the build failed)"));
+    }
     if let Some(kept) = &options.kept_run
         && result.status != RunStatus::Pass
     {
@@ -465,14 +613,17 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
     if let Some(cost) = render_cost(&result.targets) {
         out.push(cost);
     }
+    if let Some(time) = &options.time {
+        out.extend(render_time(time));
+    }
     if result.degraded {
         out.push("note   result details were incomplete; the digest may be partial".to_owned());
     }
     out.join("\n")
 }
 
-/// The last lines of captured output, which is all that is ever shown of it, and only when the run was classified
-/// as infrastructure, where bazel's own words are the only evidence there is.
+/// The last `max_lines` lines of the captured output of bazel. Without `--verbose`, bt shows no more of the output
+/// than such a tail.
 pub(crate) fn tail_lines(text: &str, max_lines: usize) -> String {
     let lines: Vec<&str> = text.split('\n').collect();
     if lines.len() <= max_lines {

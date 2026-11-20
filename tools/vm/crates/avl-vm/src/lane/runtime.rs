@@ -5,9 +5,9 @@ use std::path::Path;
 use avl_base::Reporter;
 use bt_core::OsRuntime;
 
-/// [`OsRuntime::resolver`] over the real checkout: it cannot spawn, because a selector is resolved from the checkout
-/// alone and a resolution that reached for bazel would start it from inside a held lease, minutes into a step where
-/// every other one spends seconds.
+/// [`OsRuntime::resolver`] over the real checkout: it spawns nothing but the pinned accio, because a selector is
+/// resolved from the checkout and its accio index, and a resolution that reached for bazel would start it from inside
+/// a held lease, minutes into a step where every other one spends seconds.
 ///
 /// Its diagnostics go to the reporter rather than the process's descriptors, because `shard` runs several workers
 /// at once and a progress line has to say which one it came from.

@@ -161,3 +161,18 @@ fn only_the_last_runs_stay_and_a_foreign_directory_is_kept() {
         runs[..2].iter().map(|run| format!("/repo/{run}")).collect::<Vec<_>>()
     );
 }
+
+/// The output of bazel of a failed build goes into the run directory that the run kept, or into a new one.
+#[test]
+fn the_output_of_a_failed_build_is_kept_beside_the_logs_or_in_a_run_directory_of_its_own() {
+    let fake = FakeRuntime::new([]);
+    let alone = keep_bazel_output(&fake, None, "ERROR: Build did NOT complete successfully\n").expect("a kept file");
+    assert_eq!(alone, format!("{RUNS_DIR}/0000000001000/{BAZEL_OUTPUT_FILE}"));
+    assert_eq!(
+        fake.read_text_file(&repo_file(&fake, &alone)).expect("the kept output"),
+        "ERROR: Build did NOT complete successfully\n"
+    );
+
+    let beside = keep_bazel_output(&fake, Some("out/bt-runs/0000000000500"), "output").expect("a kept file");
+    assert_eq!(beside, format!("out/bt-runs/0000000000500/{BAZEL_OUTPUT_FILE}"));
+}

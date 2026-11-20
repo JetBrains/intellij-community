@@ -7,7 +7,7 @@ mod tests;
 
 /// One alphabet of base64, RFC 4648.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Base64 {
+pub enum Base64 {
     /// The standard alphabet with the `=` padding, which the WebSocket handshake and the control protocol use.
     Standard,
     /// The URL alphabet without padding, which a JSON Web Token uses.
@@ -27,7 +27,7 @@ impl Base64 {
     }
 
     /// The base64 text of `bytes`.
-    pub(crate) fn encode(self, bytes: &[u8]) -> String {
+    pub fn encode(self, bytes: &[u8]) -> String {
         let alphabet = self.alphabet();
         let mut text = String::with_capacity(bytes.len().div_ceil(3) * 4);
         for chunk in bytes.chunks(3) {
@@ -47,7 +47,7 @@ impl Base64 {
     }
 
     /// The bytes of the base64 text `text`, or `None` for a character outside the alphabet or a misplaced padding.
-    pub(crate) fn decode(self, text: &str) -> Option<Vec<u8>> {
+    pub fn decode(self, text: &str) -> Option<Vec<u8>> {
         let body = if self.padded() {
             if !text.len().is_multiple_of(4) {
                 return None;
@@ -76,7 +76,7 @@ impl Base64 {
 /// The SHA-1 digest of `bytes`, FIPS 180-4. The WebSocket handshake names this digest, and it needs no collision
 /// resistance.
 #[expect(clippy::many_single_char_names, reason = "the five working variables have the names of FIPS 180-4")]
-pub(crate) fn sha1(bytes: &[u8]) -> [u8; 20] {
+pub fn sha1(bytes: &[u8]) -> [u8; 20] {
     let mut state: [u32; 5] = [0x6745_2301, 0xEFCD_AB89, 0x98BA_DCFE, 0x1032_5476, 0xC3D2_E1F0];
     let mut message = bytes.to_vec();
     message.push(0x80);

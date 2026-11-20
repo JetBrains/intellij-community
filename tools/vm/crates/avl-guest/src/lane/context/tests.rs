@@ -8,11 +8,11 @@ use std::process::Command;
 use avl_wire::ide::IdePrepared;
 use avl_wire::program::lane::{ControlOwner, Delivery, LaneAgent, LaneDocument, parse_lane_document};
 use pretty_assertions::assert_eq;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 use super::*;
 use crate::lane::identity::{KeyInputs, LaneIdentity};
-use crate::lane::services::testing::{FIXTURE_JAVA, fixture_jar};
+use crate::lane::services::testing::{FIXTURE_JAVA, fixture_agent, fixture_genui_jar};
 use crate::lane::testing::lane_context_testdata;
 
 /// The daemon port of the default lane daemon, `AIR_VM_DAEMON_PORT`.
@@ -162,7 +162,8 @@ fn written(document: &LaneDocument) -> (Prepared, LaneIdentity, ServicePorts) {
         document,
         identity: &identity,
         java: Path::new(FIXTURE_JAVA),
-        fake_agent_jar: &fixture_jar(),
+        fake_agent: &fixture_agent(),
+        genui_fixture_jar: &fixture_genui_jar(),
         runtimes: &runtimes,
         live: None,
     }
@@ -231,8 +232,9 @@ fn the_context_of_the_ui_lane_is_the_golden() {
     expect_test::expect_file![lane_context_testdata("ui-context.txt")].assert_eq(&tree(&prepared.context));
 }
 
-/// `ui-acp-json.dump` holds the `acp.json` lines of the lane `UI` from a recorded launch dump, with its masks:
-/// `<ctx>` for the context, `<java>` for each command, `<key-derived>` for the control environment.
+/// `ui-acp-json.dump` holds the `acp.json` lines of the lane `UI` from a recorded launch dump, with its masks: `<ctx>`
+/// for the context and `<key-derived>` for the control environment. The command of each entry is the copy of the fake
+/// agent binary.
 #[test]
 fn acp_json_equals_the_recorded_dump_except_the_key_derived_values() {
     let (prepared, _, _) = written(&document());
@@ -243,7 +245,6 @@ fn acp_json_equals_the_recorded_dump_except_the_key_derived_values() {
         .replace(&prepared.context.display().to_string(), "<ctx>");
     let mut masked: Value = serde_json::from_str(&masked).unwrap();
     for entry in masked["agent_servers"].as_object_mut().unwrap().values_mut() {
-        entry["command"] = Value::from("<java>");
         let env = entry["env"].as_object_mut().unwrap();
         for name in [CONTROL_URL_ENV_NAME, CONTROL_AGENT_KEY_ENV_NAME] {
             if let Some(value) = env.get_mut(name) {
@@ -292,12 +293,13 @@ fn a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a
     let (owned, none, runtimes) = (document(), document_without_controlled_agents(), runtimes());
     let identity = identity(&none, &runtimes);
     let prepared = prepared();
-    let jar = fixture_jar();
+    let (agent, genui) = (fixture_agent(), fixture_genui_jar());
     let context = |document| LaneContext {
         document,
         identity: &identity,
         java: Path::new(FIXTURE_JAVA),
-        fake_agent_jar: &jar,
+        fake_agent: &agent,
+        genui_fixture_jar: &genui,
         runtimes: &runtimes,
         live: None,
     };
@@ -425,12 +427,13 @@ fn a_lane_with_a_cloud_agent_makes_its_project_a_repository_with_an_origin() {
     fs::write(project.join("README.md"), "plain\n").unwrap();
     fs::create_dir_all(project.join("src")).unwrap();
     fs::write(project.join("src/Main.kt"), "fun main() {}\n").unwrap();
-    let jar = fixture_jar();
+    let (agent, genui) = (fixture_agent(), fixture_genui_jar());
     let context = LaneContext {
         document: &cloud,
         identity: &identity,
         java: Path::new(FIXTURE_JAVA),
-        fake_agent_jar: &jar,
+        fake_agent: &agent,
+        genui_fixture_jar: &genui,
         runtimes: &runtimes,
         live: None,
     };
@@ -488,13 +491,14 @@ fn a_lane_with_a_cloud_agent_makes_its_project_a_repository_with_an_origin() {
 fn a_document_that_the_daemon_cannot_launch_as_it_states_is_refused() {
     let (document, runtimes) = (document(), runtimes());
     let identity = identity(&document, &runtimes);
-    let jar = fixture_jar();
+    let (agent, genui) = (fixture_agent(), fixture_genui_jar());
     let refusal = |document: &LaneDocument, runtimes: &[CliRuntime], java: &str| {
         let refusal = LaneContext {
             document,
             identity: &identity,
             java: Path::new(java),
-            fake_agent_jar: &jar,
+            fake_agent: &agent,
+            genui_fixture_jar: &genui,
             runtimes,
             live: None,
         }
@@ -511,4 +515,55 @@ fn a_document_that_the_daemon_cannot_launch_as_it_states_is_refused() {
     services.services.remove("codexModel");
     assert!(refusal(&services, &runtimes, FIXTURE_JAVA).contains("services"));
     assert!(refusal(&document, &runtimes, "jbr/bin/java").contains("not absolute"));
+}
+
+/// A write deletes the installs of the registry agents of the lane, so the IDE installs the fake agent of this build.
+/// The install of an agent that the lane does not name, the accepted terms and every other field stay.
+#[test]
+fn a_write_deletes_the_installs_of_the_registry_agents_of_the_lane() {
+    let (document, runtimes) = (document(), runtimes());
+    let identity = identity(&document, &runtimes);
+    let prepared = prepared();
+    let installs = Path::new(&prepared.paths.system_dir).join("acp-agents");
+    for directory in [
+        "junie/1.0.0+air-fixture-1",
+        ".downloads/junie/1.0.0+air-fixture-1",
+        "codex/2.0.0",
+        ".downloads/codex/2.0.0",
+    ] {
+        fs::create_dir_all(installs.join(directory)).unwrap();
+    }
+    let installed = Path::new(&prepared.paths.home_dir).join(INSTALLED_FILE);
+    fs::create_dir_all(installed.parent().unwrap()).unwrap();
+    let before = json!({
+        "acceptedTermsOfServiceVersions": {"acp.registry.junie": "1"},
+        "agents": {"acp.registry.junie": {"installedAt": 1}, "acp.registry.gemini": {"installedAt": 2}, "acp.registry.codex": {"installedAt": 3}},
+        "disabledAgents": [],
+    });
+    fs::write(&installed, before.to_string()).unwrap();
+    let (agent, genui) = (fixture_agent(), fixture_genui_jar());
+    LaneContext {
+        document: &document,
+        identity: &identity,
+        java: Path::new(FIXTURE_JAVA),
+        fake_agent: &agent,
+        genui_fixture_jar: &genui,
+        runtimes: &runtimes,
+        live: None,
+    }
+    .write(&prepared.paths)
+    .unwrap();
+    assert!(!installs.join("junie").exists());
+    assert!(!installs.join(".downloads/junie").exists());
+    assert!(installs.join("codex/2.0.0").is_dir());
+    assert!(installs.join(".downloads/codex/2.0.0").is_dir());
+    let after: Value = serde_json::from_str(&fs::read_to_string(&installed).unwrap()).unwrap();
+    let mut expected = before;
+    expected["agents"] = json!({"acp.registry.codex": {"installedAt": 3}});
+    assert_eq!(after, expected);
+    let mode = fs::metadata(Path::new(&prepared.paths.home_dir).join(FAKE_AGENT))
+        .unwrap()
+        .permissions()
+        .mode();
+    assert_eq!(mode & 0o777, 0o755);
 }

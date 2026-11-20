@@ -98,8 +98,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 
 use bt_core::areas::Area;
 use bt_core::catalog::{SuiteDocument, read_suite_documents};
+use bt_core::runtime::source_simple_name;
 use bt_core::runtime::{Platform, Runtime, par_map, repo_file};
-use bt_core::scan::source_simple_name;
 use bt_core::suites::{Affected, UnmappedPath, VIA_MODULE, Via, affected_answer, note_via, suites_by_flow, suites_by_id};
 use bt_core::{Refusal, fail_usage, paths};
 

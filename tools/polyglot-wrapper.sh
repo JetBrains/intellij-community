@@ -1,7 +1,8 @@
 # The shared bash half of a polyglot `.cmd` wrapper in this directory: `bt.cmd`, `vm.cmd`, `trace.cmd`,
-# `bazel-build-run.cmd` and `jscpd.cmd`. Each wrapper starts a binary that Bazel provides, and each file holds a bash
-# half and a CMD half. This file holds the five steps the bash halves share. `polyglot-wrapper.cmd` holds the two steps
-# the CMD halves share. A wrapper sources this file after its bash pin:
+# `bazel-build-run.cmd` and `jscpd.cmd`, and `tools/openspec.cmd` of the Ultimate root. Each wrapper starts a binary
+# that Bazel provides, and each file holds a bash half and a CMD half. This file holds the six steps the bash halves
+# share. `polyglot-wrapper.cmd` holds the three steps the CMD halves share. A wrapper sources this file after its bash
+# pin:
 #
 #   case "$0" in */*) self_dir="${0%/*}" ;; *) self_dir="." ;; esac
 #   . "$self_dir/polyglot-wrapper.sh"
@@ -12,6 +13,7 @@
 #   exec "$resolved" "$@"
 #
 # `polyglot_real_path` is the fifth step. `polyglot_build_binary` calls it, and `jscpd.cmd` calls it on its own.
+# `polyglot_user_cache` is the sixth step, for a wrapper that keeps a resolved path for all checkouts of the user.
 #
 # The pin stays in the wrapper. It must run first, and it is the one line that every shell must accept.
 # This file sets no shell option. The wrapper owns `set -eu`.
@@ -65,6 +67,22 @@ polyglot_find_roots() {
   fi
 }
 
+# Sets `user_cache` to the folder `$1` in the cache of the monorepo tools of the user. `tool-wrapper.sh` keeps each
+# downloaded tool in the same cache, and every checkout of the user reads it. Thus a new worktree finds a path that
+# another checkout resolved, and spawns no Bazel. The paths are those of `get_cache_dir` in `tool-wrapper.sh`.
+# Without HOME, the folder is `out/$1` of the checkout, so call this step after `polyglot_find_roots`. `$OSTYPE`
+# selects the path, so the step starts no process.
+polyglot_user_cache() {
+  if [ -z "${HOME:-}" ]; then
+    user_cache="$root/out/$1"
+    return 0
+  fi
+  case "${OSTYPE:-}" in
+    darwin*) user_cache="$HOME/Library/Caches/JetBrains/monorepo-tools/$1" ;;
+    *) user_cache="$HOME/.cache/JetBrains/monorepo-tools/$1" ;;
+  esac
+}
+
 # A path under the output base is a symlink to the real file, and the real file stays valid after
 # `bazel clean --expunge`. Where `readlink -f` is unavailable, the unresolved path still works.
 polyglot_real_path() {
@@ -88,7 +106,8 @@ polyglot_built_file() {
 }
 
 # Builds `$2`, the Bazel target of the wrapper `$1`, and sets `resolved` to the executable it made, whose base name is
-# `$4`. A failed build or a missing executable prints its message and exits with `$3`, the infrastructure code of the
+# `$4`. It sets `built_wall_ms` to the wall time of the build in milliseconds, as the build event file names it in
+# `buildMetrics`, or to the empty string when the file names none. A failed build or a missing executable prints its message and exits with `$3`, the infrastructure code of the
 # wrapper. `$5` says where the build output goes: `stderr` (the default) sends it to stderr as it comes, and `log`
 # keeps it in a file while stderr is a pipe and shows it only when the build fails. Note 6 of vm.cmd says why.
 #
@@ -119,6 +138,12 @@ polyglot_build_binary() {
     exit "$code"
   fi
   resolved="$(polyglot_built_file "$events" "$basename")"
+  built_wall_ms="$(awk 'match($0, /"wallTimeInMs":"?[0-9]+/) {
+    millis = substr($0, RSTART, RLENGTH)
+    gsub(/[^0-9]/, "", millis)
+    print millis
+    exit
+  }' "$events")"
   rm -f "$events"
   resolved="$(polyglot_real_path "$resolved")"
   if [ ! -x "$resolved" ]; then
