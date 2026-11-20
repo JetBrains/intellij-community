@@ -67,13 +67,19 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   fun entriesOf(id: String): List<Project> = slots.get(id)?.selection?.entries?.map { it.project } ?: emptyList()
 
   /**
-   * The project of this frame that shows the empty state of a tool window on a request of the user. The tool window has no
-   * content, so the request is for the active project of the frame. A frame guest whose tool windows this class presents
-   * shows the empty state itself. The frame owner shows it otherwise. `null` when the frame owner has no tool window
-   * content of its own: no project shows an empty state then.
+   * The project of this frame that shows the empty state of the tool window [id] on a request of the user. The tool window
+   * has no content, so the request is for the active project of the frame. A frame guest whose tool windows this class
+   * presents shows the empty state itself. The frame owner shows it otherwise. `null` when the frame owner has no tool
+   * window content of its own: no project shows an empty state then.
+   *
+   * A tool window of the whole frame is the exception, see [MultiProjectToolWindowFactory]. Only the frame owner has it,
+   * so the frame owner shows its empty state for every active project.
    */
-  fun emptyStateProject(): Project? {
+  fun emptyStateProject(id: String): Project? {
     val frameOwner = manager.project
+    if (manager.getEntry(id)?.toolWindow?.isMultiProject == true) {
+      return frameOwner
+    }
     val active = IdeFrameGuests.activeProjectOf(frameOwner)
     if (active !== frameOwner && (ToolWindowManager.getInstance(active) as? ToolWindowManagerImpl)?.frameOwnerPresentation === this) {
       return active

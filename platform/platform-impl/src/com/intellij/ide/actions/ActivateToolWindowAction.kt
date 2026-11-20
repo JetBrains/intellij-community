@@ -158,7 +158,13 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
       val toolWindow = toolWindowManager.getToolWindow(toolWindowId)
       if (hasEmptyState(project) && (toolWindow == null || !toolWindow.isAvailable)) {
         // The tool window has no content to show. In a frame with frame guests, the empty state is for the project where the user works.
-        val emptyStateProject = if (toolWindowManager is ToolWindowManagerImpl) toolWindowManager.presentation.emptyStateProject() else project
+        // The frame owner shows the empty state of a tool window of the whole frame.
+        val emptyStateProject = if (toolWindowManager is ToolWindowManagerImpl) {
+          toolWindowManager.presentation.emptyStateProject(toolWindowId)
+        }
+        else {
+          project
+        }
         if (emptyStateProject != null) {
           showEmptyState(emptyStateProject, source)
         }

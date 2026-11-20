@@ -687,6 +687,28 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `the activation action shows the empty state of a tool window of the whole frame in the frame owner`() = onEdt {
+    suppressOwnContentOfOwner()
+    val managers = createManagers()
+    // as Commit in a workspace without a VCS mapping: only the frame owner has the tool window, and it is not available
+    val task = RegisterToolWindowTaskData(
+      id = ID,
+      anchor = ToolWindowAnchor.LEFT,
+      shouldBeAvailable = false,
+      contentFactory = MultiProjectFactory(),
+    )
+    val own = managers.owner.registerToolWindow(task, buttonManager(managers.owner)).toolWindow
+    setActive(first)
+
+    emptyStateAction().actionPerformed(activationEvent(first))
+
+    assertThat(managers.of(first).getToolWindow(ID)).describedAs("the frame guest has no tool window of the whole frame").isNull()
+    assertThat(own.isAvailable).isTrue()
+    assertThat(own.isVisible).isTrue()
+  }
+
+  @Test
   fun `a notification of a presented tool window goes to the tool window of the frame owner`() = onEdt {
     val managers = createManagers()
     // as Find without a result: the tool window of the frame guest has no content, so no project has an entry
