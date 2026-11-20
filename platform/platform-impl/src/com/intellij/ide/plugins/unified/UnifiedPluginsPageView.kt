@@ -104,7 +104,6 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   private val noResultsText = IdeBundle.message("plugins.configurable.nothing.found")
   private val sectionsPanel = JBPanelWithEmptyText(ListLayout.vertical(SECTION_GAP)).apply {
     emptyText.text = noResultsText
-    isFocusable = false
   }
   private val scrollPane = object : JBScrollPane(sectionsPanel) {
     override fun doLayout() {
@@ -343,7 +342,6 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     rowReconciler?.close()
     rowFactory?.rowsRendered(emptyList())
     sectionViews.values.forEach { it.setRealRows(emptyList()) }
-    sectionsPanel.isFocusable = false
     renderedState = null
     pendingSelectionRevealRevision = null
   }
@@ -359,10 +357,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     sectionViews.values.forEach { sectionView ->
       sectionView.setRealRows(bindingsBySection[sectionView.id].orEmpty())
     }
-    sectionsPanel.isFocusable = bindings.isEmpty() && sectionViews[PluginSectionId.Suggested]?.visibleMarketplaceLink() != null
-    if (sectionsPanel.isFocusable) sectionsPanel.accessibleContext.accessibleName = IdeBundle.message("title.plugins")
     val keyboardOrder = buildList {
-      if (sectionsPanel.isFocusable) add(sectionsPanel)
       for (section in state.sections) {
         bindingsBySection[section.id].orEmpty().forEach { add(it.row.component) }
         sectionViews[section.id]?.visibleMarketplaceLink()?.let(::add)
@@ -391,10 +386,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     val activeRow = selectedRow ?: sections.firstNotNullOfOrNull { section ->
       section.firstRealRowOccurrence()?.let { rowReconciler?.row(it) }
     }
-    return buildList {
-      if (sectionsPanel.isFocusable) add(sectionsPanel)
-      sections.forEach { addAll(it.focusTraversalComponents(activeRow)) }
-    }
+    return sections.flatMap { it.focusTraversalComponents(activeRow) }
   }
 
   private fun createStaticDetailsComponent(): JComponent {
@@ -778,7 +770,10 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       showMarketplaceLink: Boolean,
     ) {
       check(section.id == id)
-      marketplaceLinkPanel?.isVisible = showMarketplaceLink
+      marketplaceLinkPanel?.isVisible = showMarketplaceLink && section.expanded && when (section.status) {
+        PluginSectionStatus.Ready -> true
+        is PluginSectionStatus.Loading, is PluginSectionStatus.Degraded, is PluginSectionStatus.Failed -> false
+      }
 
       val title = pluginSectionTitle(section)
       fullTitle = title
