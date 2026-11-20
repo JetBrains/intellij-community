@@ -60,15 +60,17 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   private final ScaleContext myScaleContext;
   private final TextLayoutCache myTextLayoutCache;
   private final FoldRegion[] myRegions;
-  private final SoftWrapEx myNextWrap;
+  private final @Nullable SoftWrapEx myNextWrap;
   private final int myVisualLineStartOffset;
   /**
    * The x shift of a right-aligned visual line, or 0.
    * The x coordinates of a {@link Fragment} include it. The x coordinates of a {@link LineVisualFragment} do not.
    */
   private final float myXOffset;
-  private final Fragment myFragment;
-  private final Runnable myQuickEvaluationListener;
+  private final @Nullable Runnable myQuickEvaluationListener;
+  private final TextRunFragment myTextRunFragment;
+  private final InlayFragment myInlayFragment;
+  private final FoldRegionFragment myFoldRegionFragment;
 
   private int mySegmentStartOffset;
   private int mySegmentEndOffset;
@@ -78,13 +80,11 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   private int myCurrentStartLogicalLine;
   private int myCurrentStartLogicalLineStart;
   private int myCurrentEndLogicalLine;
-  private Iterator<LineVisualFragment> myFragmentIterator;
-  private LineVisualFragment myDelegate;
+  private @Nullable Iterator<LineVisualFragment> myFragmentIterator;
   private List<Inlay<?>> myInlays;
   private int myCurrentInlayIndex;
-  private FoldRegion myFoldRegion;
   private int myCurrentFoldRegionIndex;
-  private int myFoldRegionColumns;
+  private Step myNextStep;
 
   private VisualLineFragmentsIterator(
     @NotNull EditorView view,
@@ -104,19 +104,21 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       startOrPrevWrapIndex
     );
     int startFoldingIndex = foldingModel.getLastCollapsedRegionBefore(visualLineStartOffset) + 1;
-    boolean rightAligned = align && view.getEditor().isRightAligned();
-    int visualLine = rightAligned ? view.offsetToVisualPosition(offset, false, beforeSoftWrap).line : -1;
+    float xOffset = 0;
+    if (align && view.getEditor().isRightAligned()) {
+      int visualLine = view.offsetToVisualPosition(offset, false, beforeSoftWrap).line;
+      xOffset = calculateXOffset(view, visualLine);
+    }
     int startLogicalLine = document.lineNumber(visualLineStartOffset);
     this(
       view,
       document,
-      visualLine,
       visualLineStartOffset,
       startLogicalLine,
       startOrPrevWrapIndex,
       startFoldingIndex,
       null,
-      rightAligned
+      xOffset
     );
   }
 
@@ -128,30 +130,31 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     boolean align
   ) {
     assert !visualLinesIterator.atEnd();
-    boolean rightAligned = align && view.getEditor().isRightAligned();
+    float xOffset = 0;
+    if (align && view.getEditor().isRightAligned()) {
+      xOffset = calculateXOffset(view, visualLinesIterator.getVisualLine());
+    }
     this(
       view,
       document,
-      visualLinesIterator.getVisualLine(),
       visualLinesIterator.getVisualLineStartOffset(),
       visualLinesIterator.getStartLogicalLine(),
       visualLinesIterator.getStartOrPrevWrapIndex(),
       visualLinesIterator.getStartFoldingIndex(),
       quickEvaluationListener,
-      rightAligned
+      xOffset
     );
   }
 
   private VisualLineFragmentsIterator(
     @NotNull EditorView view,
     @NotNull DocumentText document,
-    int visualLine,
     int visualLineStartOffset,
     int startLogicalLine,
     int startOrPrevWrapIndex,
     int startFoldingIndex,
     @Nullable Runnable quickEvaluationListener,
-    boolean rightAligned
+    float xOffset
   ) {
     myView = view;
     myDocument = document;
@@ -159,8 +162,10 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     myTextLayoutCache = view.getTextLayoutCache();
     myQuickEvaluationListener = quickEvaluationListener;
     myScaleContext = ScaleContext.create(view.getEditor().getContentComponent());
-    myXOffset = calculateXOffset(view, visualLine, rightAligned);
-    myFragment = new Fragment();
+    myXOffset = xOffset;
+    myTextRunFragment = new TextRunFragment();
+    myInlayFragment = new InlayFragment();
+    myFoldRegionFragment = new FoldRegionFragment();
     myRegions = fetchTopLevelFoldings(view);
     myVisualLineStartOffset = visualLineStartOffset;
     var softWraps = view.getSoftWrapModel().getRegisteredSoftWrapsEx();
@@ -170,15 +175,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
 
   @Override
   public boolean hasNext() {
-    if (myFoldRegion instanceof CustomFoldRegion) {
-      return false;
-    }
-    if (mySegmentStartOffset == getCurrentFoldRegionStartOffset() ||
-        myFragmentIterator == null ||
-        myFragmentIterator.hasNext()) {
-      return true;
-    }
-    return false;
+    return myNextStep != Step.END;
   }
 
   @Override
@@ -189,25 +186,21 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     float prevX = myCurrentX;
     int startLogicalLine = myCurrentEndLogicalLine;
     int startLogicalLineStart = myDocument.lineStartOffset(startLogicalLine);
-    if (mySegmentStartOffset == getCurrentFoldRegionStartOffset()) {
-      moveToFoldRegion();
-    } else if (myFragmentIterator == null) {
-      moveToInlay();
+    Fragment fragment;
+    if (myNextStep == Step.FOLD_REGION) {
+      fragment = moveToFoldRegion();
+    } else if (myNextStep == Step.INLAY) {
+      fragment = moveToInlay();
     } else {
-      moveToLineFragment();
+      fragment = moveToTextRun();
     }
     myPrevX = prevX;
     myCurrentStartLogicalLine = startLogicalLine;
     myCurrentStartLogicalLineStart = startLogicalLineStart;
-    return myFragment;
+    return fragment;
   }
 
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException();
-  }
-
-  private void moveToFoldRegion() {
+  private @NotNull Fragment moveToFoldRegion() {
     FoldRegion foldRegion = myRegions[myCurrentFoldRegionIndex];
     assert foldRegion.isValid();
     int foldRegionColumns = getFoldRegionWidthInColumns(foldRegion);
@@ -219,19 +212,20 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       myCurrentFoldRegionIndex + 1,
       myCurrentVisualColumn + foldRegionColumns,
       myCurrentX + foldRegionWidth,
-      null
+      null,
+      foldRegion instanceof CustomFoldRegion
     );
-    myDelegate = null;
-    myFoldRegion = foldRegion;
-    myFoldRegionColumns = foldRegionColumns;
+    myFoldRegionFragment.set(foldRegion, foldRegionColumns);
+    return myFoldRegionFragment;
   }
 
-  private void moveToInlay() {
+  private @NotNull Fragment moveToInlay() {
     Inlay<?> inlay = myInlays.get(myCurrentInlayIndex);
     float x = (float)(myCurrentX + alignToInt(inlay.getWidthInPixels()));
     int visualColumn = myCurrentVisualColumn + 1;
     int inlayIndex = myCurrentInlayIndex + 1;
     Iterator<LineVisualFragment> fragmentIterator = null;
+    Step nextStep = Step.INLAY;
     if (inlayIndex >= myInlays.size() ||
         myInlays.get(inlayIndex).getOffset() > inlay.getOffset()) {
       fragmentIterator = createFragmentIterator(
@@ -244,34 +238,40 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
         visualColumn,
         x
       );
+      nextStep = fragmentIterator.hasNext() ? Step.TEXT_RUN : Step.END;
     }
-    myDelegate = null;
-    myFoldRegion = null;
     myCurrentX = x;
     myCurrentVisualColumn = visualColumn;
     myCurrentInlayIndex = inlayIndex;
     myFragmentIterator = fragmentIterator;
+    myNextStep = nextStep;
+    myInlayFragment.set(inlay);
+    return myInlayFragment;
   }
 
-  private void moveToLineFragment() {
-    LineVisualFragment delegate = myFragmentIterator.next();
+  private @NotNull Fragment moveToTextRun() {
+    Iterator<LineVisualFragment> fragmentIterator = myFragmentIterator;
+    assert fragmentIterator != null;
+    LineVisualFragment delegate = fragmentIterator.next();
     float x = delegate.getEndX();
     int visualColumn = delegate.getEndVisualColumn();
-    Iterator<LineVisualFragment> fragmentIterator = myFragmentIterator;
-    int segmentStartOffset = mySegmentStartOffset;
-    if (!myFragmentIterator.hasNext()) {
+    Step nextStep = Step.TEXT_RUN;
+    if (!fragmentIterator.hasNext()) {
       if (myCurrentInlayIndex < myInlays.size()) {
         fragmentIterator = null;
+        nextStep = Step.INLAY;
+      } else if (mySegmentEndOffset == getFoldRegionStartOffset(myCurrentFoldRegionIndex)) {
+        nextStep = Step.FOLD_REGION;
       } else {
-        segmentStartOffset = mySegmentEndOffset;
+        nextStep = Step.END;
       }
     }
-    myDelegate = delegate;
-    myFoldRegion = null;
     myCurrentX = x;
     myCurrentVisualColumn = visualColumn;
     myFragmentIterator = fragmentIterator;
-    mySegmentStartOffset = segmentStartOffset;
+    myNextStep = nextStep;
+    myTextRunFragment.set(delegate);
+    return myTextRunFragment;
   }
 
   private void init(
@@ -288,7 +288,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       startFoldingIndex,
       startVisualColumn,
       startX,
-      startOrPrevWrap
+      startOrPrevWrap,
+      false
     );
   }
 
@@ -309,7 +310,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     int foldRegionIndex,
     int visualColumn,
     float x,
-    @Nullable SoftWrapEx startWrap
+    @Nullable SoftWrapEx startWrap,
+    boolean afterCustomFoldRegion
   ) {
     int foldRegionStartOffset = getFoldRegionStartOffset(foldRegionIndex);
     if (foldRegionStartOffset < segmentStartOffset) {
@@ -319,9 +321,11 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     int segmentEndOffset = foldRegionStartOffset;
     List<Inlay<?>> inlays = List.of();
     Iterator<LineVisualFragment> fragmentIterator = null;
+    Step nextStep = Step.FOLD_REGION;
     if (segmentStartOffset < foldRegionStartOffset) {
       segmentEndOffset = calculateSegmentEndOffset(logicalLine, foldRegionStartOffset);
       inlays = calculateInlays(segmentStartOffset, segmentEndOffset, foldRegionStartOffset, startWrap);
+      nextStep = Step.INLAY;
       if (inlays.isEmpty() || inlays.getFirst().getOffset() > segmentStartOffset) {
         fragmentIterator = createFragmentIterator(
           segmentStartOffset,
@@ -333,7 +337,11 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
           visualColumn,
           x
         );
+        nextStep = fragmentIterator.hasNext() ? Step.TEXT_RUN : Step.END;
       }
+    }
+    if (afterCustomFoldRegion) {
+      nextStep = Step.END;
     }
     mySegmentStartOffset = segmentStartOffset;
     mySegmentEndOffset = segmentEndOffset;
@@ -344,6 +352,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     myInlays = inlays;
     myCurrentInlayIndex = 0;
     myFragmentIterator = fragmentIterator;
+    myNextStep = nextStep;
   }
 
   private int calculateSegmentEndOffset(int logicalLine, int foldRegionStartOffset) {
@@ -424,10 +433,6 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     );
   }
 
-  private int getCurrentFoldRegionStartOffset() {
-    return getFoldRegionStartOffset(myCurrentFoldRegionIndex);
-  }
-
   private int getFoldRegionStartOffset(int foldRegionIndex) {
     if (foldRegionIndex >= myRegions.length) {
       return Integer.MAX_VALUE;
@@ -452,35 +457,6 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       maxVisualColumn = fragment.getEndVisualColumn();
     }
     return maxVisualColumn;
-  }
-
-  private @NotNull VisualColumn getVisualColumnForXInsideFoldRegion(float x) {
-    LineLayout layout = getFoldRegionLayout();
-    for (var fragment : layout.getFragmentsInVisualOrder(0)) {
-      if (x <= fragment.getEndX()) {
-        return fragment.xToVisualColumn(x);
-      }
-    }
-    return new VisualColumn(myFoldRegionColumns, true);
-  }
-
-  private float getXForVisualColumnInsideFoldRegion(int column) {
-    LineLayout layout = getFoldRegionLayout();
-    for (LineVisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
-      if (column <= fragment.getEndVisualColumn()) {
-        return fragment.visualColumnToX(column);
-      }
-    }
-    return getFoldRegionWidthInPixels(myFoldRegion);
-  }
-
-  // offset is absolute
-  private float getXForOffsetInsideFoldRegion(int offset) {
-    return offset < myFoldRegion.getEndOffset() ? 0 : getFoldRegionWidthInPixels(myFoldRegion);
-  }
-
-  private @NotNull LineLayout getFoldRegionLayout() {
-    return myView.getFoldRegionLayout(myFoldRegion);
   }
 
   private @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
@@ -534,11 +510,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     return 0;
   }
 
-  private static float calculateXOffset(@NotNull EditorView view, int visualLine, boolean rightAligned) {
-    if (rightAligned) {
-      return view.getRightAlignmentLineStartX(visualLine) - view.getInsets().left;
-    }
-    return 0;
+  private static float calculateXOffset(@NotNull EditorView view, int visualLine) {
+    return view.getRightAlignmentLineStartX(visualLine) - view.getInsets().left;
   }
 
   private static @Nullable SoftWrapEx getSoftWrap(@NotNull List<? extends SoftWrapEx> softWraps, int index) {
@@ -553,48 +526,43 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     return ObjectUtils.notNull(foldingModel.fetchTopLevel(), FoldRegion.EMPTY_ARRAY);
   }
 
-  final class Fragment {
+  /**
+   * The kind of the fragment that {@link #next()} returns, or {@link #END} when the visual line has no more fragments.
+   */
+  private enum Step {
+    TEXT_RUN,
+    INLAY,
+    FOLD_REGION,
+    END
+  }
+
+  /**
+   * A fragment of a visual line: a text run, an inline inlay or a collapsed fold region.
+   * The iterator returns one object for all fragments of a kind.
+   * So the values of a fragment change at the next call of {@link #next()}.
+   */
+  abstract sealed class Fragment permits TextRunFragment, InlayFragment, FoldRegionFragment {
     int getVisualLineStartOffset() {
       return myVisualLineStartOffset;
     }
 
     int getMinLogicalColumn() {
-      if (myDelegate == null) {
-        return offsetToLogicalPosition(getMinOffset()).column;
-      }
-      return myDelegate.getMinLogicalColumn();
+      return offsetToLogicalPosition(getMinOffset()).column;
     }
 
     int getMaxLogicalColumn() {
-      if (myDelegate == null) {
-        return offsetToLogicalPosition(getMaxOffset()).column;
-      }
-      return myDelegate.getMaxLogicalColumn();
+      return offsetToLogicalPosition(getMaxOffset()).column;
     }
 
     int getStartLogicalColumn() {
-      if (myDelegate == null) {
-        return offsetToLogicalPosition(getStartOffset()).column;
-      }
-      return myDelegate.getStartLogicalColumn();
+      return offsetToLogicalPosition(getStartOffset()).column;
     }
 
     int getEndLogicalColumn() {
-      if (myDelegate == null) {
-        return offsetToLogicalPosition(getEndOffset()).column;
-      }
-      return myDelegate.getEndLogicalColumn();
+      return offsetToLogicalPosition(getEndOffset()).column;
     }
 
-    int getStartVisualColumn() {
-      if (myDelegate != null) {
-        return myDelegate.getStartVisualColumn();
-      }
-      if (myFoldRegion != null) {
-        return myCurrentVisualColumn - myFoldRegionColumns;
-      }
-      return myCurrentVisualColumn - 1;
-    }
+    abstract int getStartVisualColumn();
 
     int getEndVisualColumn() {
       return myCurrentVisualColumn;
@@ -609,9 +577,6 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     }
 
     float getStartX() {
-      if (myDelegate != null) {
-        return myDelegate.getStartX() + myXOffset;
-      }
       return myPrevX + myXOffset;
     }
 
@@ -619,192 +584,421 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       return myCurrentX + myXOffset;
     }
 
-    // column is expected to be between minLogicalColumn and maxLogicalColumn for this fragment
+    /**
+     * The column must be between the min and the max logical column of this fragment.
+     */
+    abstract int logicalToVisualColumn(int column);
+
+    /**
+     * The column must be between the start and the end visual column of this fragment.
+     */
+    abstract int visualToLogicalColumn(int column);
+
+    abstract VisualColumn xToVisualColumn(float x);
+
+    abstract float visualColumnToX(int column);
+
+    abstract int getVisualLength();
+
+    /**
+     * Returns a visual offset, relative to the start of this fragment.
+     */
+    abstract int visualColumnToOffset(int relativeVisualColumn);
+
+    /**
+     * Returns an absolute offset.
+     */
+    abstract int getStartOffset();
+
+    /**
+     * Returns an absolute offset.
+     */
+    abstract int getEndOffset();
+
+    /**
+     * Returns an absolute offset.
+     */
+    abstract int getMinOffset();
+
+    /**
+     * Returns an absolute offset.
+     */
+    abstract int getMaxOffset();
+
+    /**
+     * The offset is absolute.
+     */
+    abstract float offsetToX(int offset);
+
+    /**
+     * The offsets are absolute. Only a text run supports this method.
+     */
+    float offsetToX(float startX, int startOffset, int offset) {
+      throw new UnsupportedOperationException();
+    }
+
+    boolean isRtl() {
+      return false;
+    }
+
+    FoldRegion getCurrentFoldRegion() {
+      return null;
+    }
+
+    Inlay<?> getCurrentInlay() {
+      return null;
+    }
+
+    /**
+     * The offsets are visual, relative to the start of this fragment.
+     */
+    abstract @NotNull Consumer<Graphics2D> draw(float x, float y, int startRelativeOffset, int endRelativeOffset);
+  }
+
+  /**
+   * A part of a logical line with one font and one direction.
+   */
+  final class TextRunFragment extends Fragment {
+    private LineVisualFragment delegate;
+
+    void set(LineVisualFragment lineVisualFragment) {
+      delegate = lineVisualFragment;
+    }
+
+    @Override
+    int getMinLogicalColumn() {
+      return delegate.getMinLogicalColumn();
+    }
+
+    @Override
+    int getMaxLogicalColumn() {
+      return delegate.getMaxLogicalColumn();
+    }
+
+    @Override
+    int getStartLogicalColumn() {
+      return delegate.getStartLogicalColumn();
+    }
+
+    @Override
+    int getEndLogicalColumn() {
+      return delegate.getEndLogicalColumn();
+    }
+
+    @Override
+    int getStartVisualColumn() {
+      return delegate.getStartVisualColumn();
+    }
+
+    @Override
+    float getStartX() {
+      return delegate.getStartX() + myXOffset;
+    }
+
+    @Override
     int logicalToVisualColumn(int column) {
-      if (myDelegate != null) {
-        return myDelegate.logicalToVisualColumn(column);
-      }
-      if (myFoldRegion != null) {
-        return myCurrentVisualColumn - myFoldRegionColumns;
-      }
+      return delegate.logicalToVisualColumn(column);
+    }
+
+    @Override
+    int visualToLogicalColumn(int column) {
+      return delegate.visualToLogicalColumn(column);
+    }
+
+    @Override
+    VisualColumn xToVisualColumn(float x) {
+      return delegate.xToVisualColumn(x - myXOffset);
+    }
+
+    @Override
+    float visualColumnToX(int column) {
+      return delegate.visualColumnToX(column) + myXOffset;
+    }
+
+    @Override
+    int getVisualLength() {
+      return delegate.getLength();
+    }
+
+    @Override
+    int visualColumnToOffset(int relativeVisualColumn) {
+      return delegate.visualColumnToOffset(relativeVisualColumn);
+    }
+
+    @Override
+    int getStartOffset() {
+      return delegate.getStartOffset() + myCurrentStartLogicalLineStart;
+    }
+
+    @Override
+    int getEndOffset() {
+      return delegate.getEndOffset() + myCurrentStartLogicalLineStart;
+    }
+
+    @Override
+    int getMinOffset() {
+      return delegate.getMinOffset() + myCurrentStartLogicalLineStart;
+    }
+
+    @Override
+    int getMaxOffset() {
+      return delegate.getMaxOffset() + myCurrentStartLogicalLineStart;
+    }
+
+    @Override
+    float offsetToX(int offset) {
+      return delegate.offsetToX(offset - myCurrentStartLogicalLineStart) + myXOffset;
+    }
+
+    @Override
+    float offsetToX(float startX, int startOffset, int offset) {
+      int lineStartOffset = myCurrentStartLogicalLineStart;
+      float x = delegate.offsetToX(startX - myXOffset, startOffset - lineStartOffset, offset - lineStartOffset);
+      return x + myXOffset;
+    }
+
+    @Override
+    boolean isRtl() {
+      return delegate.isRtl();
+    }
+
+    @Override
+    @NotNull
+    Consumer<Graphics2D> draw(float x, float y, int startRelativeOffset, int endRelativeOffset) {
+      return delegate.draw(x, y, startRelativeOffset, endRelativeOffset);
+    }
+  }
+
+  /**
+   * An inline inlay. It takes one visual column.
+   */
+  final class InlayFragment extends Fragment {
+    private Inlay<?> inlay;
+
+    void set(Inlay<?> currentInlay) {
+      inlay = currentInlay;
+    }
+
+    @Override
+    int getStartVisualColumn() {
+      return myCurrentVisualColumn - 1;
+    }
+
+    @Override
+    int logicalToVisualColumn(int column) {
       return getEndVisualColumn();
     }
 
-    // column is expected to be between startVisualColumn and endVisualColumn for this fragment
+    @Override
     int visualToLogicalColumn(int column) {
-      if (myDelegate != null) {
-        return myDelegate.visualToLogicalColumn(column);
-      }
-      if (myFoldRegion != null) {
-        if (column == myCurrentVisualColumn) {
-          return getEndLogicalColumn();
-        }
-        return getStartLogicalColumn();
-      }
       return getEndLogicalColumn();
     }
 
+    @Override
     VisualColumn xToVisualColumn(float x) {
-      if (myDelegate != null) {
-        return myDelegate.xToVisualColumn(x - myXOffset);
-      } else if (myFoldRegion != null) {
-        VisualColumn column = getVisualColumnForXInsideFoldRegion(x - getStartX());
-        column.column += getStartVisualColumn();
-        return column;
-      } else {
-        boolean closerToStart = ((getStartX() + getEndX()) / 2) > x;
-        return new VisualColumn(myCurrentVisualColumn - (closerToStart ? 1 : 0), !closerToStart);
-      }
+      boolean closerToStart = x < (getStartX() + getEndX()) / 2;
+      return new VisualColumn(myCurrentVisualColumn - (closerToStart ? 1 : 0), !closerToStart);
     }
 
+    @Override
     float visualColumnToX(int column) {
-      if (myDelegate != null) {
-        return myDelegate.visualColumnToX(column) + myXOffset;
-      }
-      if (myFoldRegion != null) {
-        return getStartX() + getXForVisualColumnInsideFoldRegion(column - myCurrentVisualColumn + myFoldRegionColumns);
-      }
       if (column == myCurrentVisualColumn) {
         return getEndX();
       }
       return getStartX();
     }
 
+    @Override
     int getVisualLength() {
-      if (myDelegate != null) {
-        return myDelegate.getLength();
-      }
-      if (myFoldRegion != null) {
-        int length = 0;
-        for (var fragment : getFoldRegionLayout().getFragmentsInVisualOrder(0)) {
-          length += fragment.getLength();
-        }
-        return length;
-      }
       return 0;
     }
 
-    // returned offset is visual and relative (counted from fragment's start)
+    @Override
     int visualColumnToOffset(int relativeVisualColumn) {
-      if (myDelegate != null) {
-        return myDelegate.visualColumnToOffset(relativeVisualColumn);
-      }
-      if (myFoldRegion != null) {
-        int relativeOffset = 0;
-        for (var fragment : getFoldRegionLayout().getFragmentsInVisualOrder(0)) {
-          if (relativeVisualColumn >= fragment.getStartVisualColumn() &&
-              relativeVisualColumn <= fragment.getEndVisualColumn()) {
-            int visualOffset = fragment.visualColumnToOffset(relativeVisualColumn - fragment.getStartVisualColumn());
-            return visualOffset + relativeOffset;
-          }
-          relativeOffset += fragment.getLength();
-        }
-      }
       return 0;
     }
 
-    // absolute
+    @Override
     int getStartOffset() {
-      if (myDelegate != null) {
-        return myDelegate.getStartOffset() + myCurrentStartLogicalLineStart;
-      }
-      if (myFoldRegion != null) {
-        return myFoldRegion.getStartOffset();
-      }
-      return getCurrentInlay().getOffset();
+      return inlay.getOffset();
     }
 
-    // absolute
+    @Override
     int getEndOffset() {
-      if (myDelegate != null) {
-        return myDelegate.getEndOffset() + myCurrentStartLogicalLineStart;
-      }
-      if (myFoldRegion != null) {
-        return myFoldRegion.getEndOffset();
-      }
-      return getCurrentInlay().getOffset();
+      return inlay.getOffset();
     }
 
-    // absolute
+    @Override
     int getMinOffset() {
-      if (myDelegate != null) {
-        return myDelegate.getMinOffset() + myCurrentStartLogicalLineStart;
-      }
-      if (myFoldRegion != null) {
-        return myFoldRegion.getStartOffset();
-      }
-      return getCurrentInlay().getOffset();
+      return inlay.getOffset();
     }
 
-    // absolute
+    @Override
     int getMaxOffset() {
-      if (myDelegate != null) {
-        return myDelegate.getMaxOffset() + myCurrentStartLogicalLineStart;
-      }
-      if (myFoldRegion != null) {
-        return myFoldRegion.getEndOffset();
-      }
-      return getCurrentInlay().getOffset();
+      return inlay.getOffset();
     }
 
-    // offset is absolute
+    @Override
     float offsetToX(int offset) {
-      if (myDelegate != null) {
-        return myDelegate.offsetToX(offset - myCurrentStartLogicalLineStart) + myXOffset;
-      }
-      if (myFoldRegion != null) {
-        return getStartX() + getXForOffsetInsideFoldRegion(offset);
-      }
       return getEndX();
     }
 
-    // offsets are absolute
-    float offsetToX(float startX, int startOffset, int offset) {
-      assert myDelegate != null;
-      int lineStartOffset = myCurrentStartLogicalLineStart;
-      float x = myDelegate.offsetToX(startX - myXOffset, startOffset - lineStartOffset, offset - lineStartOffset);
-      return x + myXOffset;
-    }
-
-    boolean isRtl() {
-      return myDelegate != null && myDelegate.isRtl();
-    }
-
-    FoldRegion getCurrentFoldRegion() {
-      return myFoldRegion;
-    }
-
+    @Override
     Inlay<?> getCurrentInlay() {
-      if (myDelegate != null || myFoldRegion != null) {
-        return null;
-      }
-      return myInlays.get(myCurrentInlayIndex - 1);
+      return inlay;
     }
 
-    // offsets are visual (relative to fragment's start)
+    @Override
     @NotNull
     Consumer<Graphics2D> draw(float x, float y, int startRelativeOffset, int endRelativeOffset) {
-      if (myDelegate != null) {
-        return myDelegate.draw(x, y, startRelativeOffset, endRelativeOffset);
-      }
-      else if (myFoldRegion != null) {
-        LineLayout foldRegionLayout = getFoldRegionLayout();
-        return g -> {
-          int relativeOffset = 0;
-          for (var fragment : foldRegionLayout.getFragmentsInVisualOrder(x)) {
-            int relativeOffsetEnd = relativeOffset + fragment.getLength();
-            if (relativeOffset < endRelativeOffset && relativeOffsetEnd > startRelativeOffset) {
-              fragment.draw(
-                fragment.getStartX(), y,
-                Math.max(0, startRelativeOffset - relativeOffset),
-                Math.min(relativeOffsetEnd, endRelativeOffset) - relativeOffset
-              ).accept(g);
-            }
-            relativeOffset = relativeOffsetEnd;
-          }
-        };
-      }
       return _ -> {};
+    }
+  }
+
+  /**
+   * A collapsed fold region. Its placeholder takes the visual columns of its text.
+   */
+  final class FoldRegionFragment extends Fragment {
+    private FoldRegion region;
+    private int columns;
+
+    void set(FoldRegion foldRegion, int foldRegionColumns) {
+      region = foldRegion;
+      columns = foldRegionColumns;
+    }
+
+    @Override
+    int getStartVisualColumn() {
+      return myCurrentVisualColumn - columns;
+    }
+
+    @Override
+    int logicalToVisualColumn(int column) {
+      return myCurrentVisualColumn - columns;
+    }
+
+    @Override
+    int visualToLogicalColumn(int column) {
+      if (column == myCurrentVisualColumn) {
+        return getEndLogicalColumn();
+      }
+      return getStartLogicalColumn();
+    }
+
+    @Override
+    VisualColumn xToVisualColumn(float x) {
+      VisualColumn column = getVisualColumnForXInsideFoldRegion(x - getStartX());
+      column.column += getStartVisualColumn();
+      return column;
+    }
+
+    @Override
+    float visualColumnToX(int column) {
+      return getStartX() + getXForVisualColumnInsideFoldRegion(column - myCurrentVisualColumn + columns);
+    }
+
+    @Override
+    int getVisualLength() {
+      int length = 0;
+      for (var fragment : getFoldRegionLayout().getFragmentsInVisualOrder(0)) {
+        length += fragment.getLength();
+      }
+      return length;
+    }
+
+    @Override
+    int visualColumnToOffset(int relativeVisualColumn) {
+      int relativeOffset = 0;
+      for (var fragment : getFoldRegionLayout().getFragmentsInVisualOrder(0)) {
+        if (relativeVisualColumn >= fragment.getStartVisualColumn() &&
+            relativeVisualColumn <= fragment.getEndVisualColumn()) {
+          int visualOffset = fragment.visualColumnToOffset(relativeVisualColumn - fragment.getStartVisualColumn());
+          return visualOffset + relativeOffset;
+        }
+        relativeOffset += fragment.getLength();
+      }
+      return 0;
+    }
+
+    @Override
+    int getStartOffset() {
+      return region.getStartOffset();
+    }
+
+    @Override
+    int getEndOffset() {
+      return region.getEndOffset();
+    }
+
+    @Override
+    int getMinOffset() {
+      return region.getStartOffset();
+    }
+
+    @Override
+    int getMaxOffset() {
+      return region.getEndOffset();
+    }
+
+    @Override
+    float offsetToX(int offset) {
+      return getStartX() + getXForOffsetInsideFoldRegion(offset);
+    }
+
+    @Override
+    FoldRegion getCurrentFoldRegion() {
+      return region;
+    }
+
+    @Override
+    @NotNull
+    Consumer<Graphics2D> draw(float x, float y, int startRelativeOffset, int endRelativeOffset) {
+      LineLayout foldRegionLayout = getFoldRegionLayout();
+      return g -> {
+        int relativeOffset = 0;
+        for (var fragment : foldRegionLayout.getFragmentsInVisualOrder(x)) {
+          int relativeOffsetEnd = relativeOffset + fragment.getLength();
+          if (relativeOffset < endRelativeOffset && relativeOffsetEnd > startRelativeOffset) {
+            fragment.draw(
+              fragment.getStartX(), y,
+              Math.max(0, startRelativeOffset - relativeOffset),
+              Math.min(relativeOffsetEnd, endRelativeOffset) - relativeOffset
+            ).accept(g);
+          }
+          relativeOffset = relativeOffsetEnd;
+        }
+      };
+    }
+
+    private @NotNull LineLayout getFoldRegionLayout() {
+      return myView.getFoldRegionLayout(region);
+    }
+
+    private @NotNull VisualColumn getVisualColumnForXInsideFoldRegion(float x) {
+      LineLayout layout = getFoldRegionLayout();
+      for (var fragment : layout.getFragmentsInVisualOrder(0)) {
+        if (x <= fragment.getEndX()) {
+          return fragment.xToVisualColumn(x);
+        }
+      }
+      return new VisualColumn(columns, true);
+    }
+
+    private float getXForVisualColumnInsideFoldRegion(int column) {
+      LineLayout layout = getFoldRegionLayout();
+      for (LineVisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
+        if (column <= fragment.getEndVisualColumn()) {
+          return fragment.visualColumnToX(column);
+        }
+      }
+      return getFoldRegionWidthInPixels(region);
+    }
+
+    /**
+     * The offset is absolute.
+     */
+    private float getXForOffsetInsideFoldRegion(int offset) {
+      return offset < region.getEndOffset() ? 0 : getFoldRegionWidthInPixels(region);
     }
   }
 
@@ -824,7 +1018,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       "endOffset: " + segmentEndOffset,
       "foldIndex: " + foldRegionIndex,
       "foldCount: " + myRegions.length,
-      "fold" + foldRegion,
+      "fold: " + foldRegion,
       "inlayIndex: " + inlayIndex,
       "inlayCount: " + inlayCount,
       "inlay: " + inlay,

@@ -271,7 +271,7 @@ private enum class Kind {
 
 /**
  * A copy of the values of one fragment.
- * The iterator returns the same [VisualLineFragmentsIterator.Fragment] object for each step, so a test keeps copies.
+ * The iterator returns one [VisualLineFragmentsIterator.Fragment] object for each kind, so a test keeps copies.
  * The x range is relative to the line start x of a left-aligned editor.
  */
 private data class FragmentState(

@@ -361,7 +361,11 @@ com.intellij.openapi.editor.impl.view.TextFonts$Companion
 com.intellij.openapi.editor.impl.view.TextFonts$WidthCaches
 com.intellij.openapi.editor.impl.view.TextFragment
 com.intellij.openapi.editor.impl.view.VisualLineFragmentsIterator
+com.intellij.openapi.editor.impl.view.VisualLineFragmentsIterator$FoldRegionFragment
 com.intellij.openapi.editor.impl.view.VisualLineFragmentsIterator$Fragment
+com.intellij.openapi.editor.impl.view.VisualLineFragmentsIterator$InlayFragment
+com.intellij.openapi.editor.impl.view.VisualLineFragmentsIterator$Step
+com.intellij.openapi.editor.impl.view.VisualLineFragmentsIterator$TextRunFragment
 com.intellij.openapi.editor.impl.view.VisualLinesIterator
 com.intellij.openapi.editor.impl.view.VisualLinesIterator$Location
 com.intellij.openapi.editor.impl.view.VisualOrderIterator
