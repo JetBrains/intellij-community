@@ -964,6 +964,12 @@
                          replace-all="true"/>
     </action>
 
+    <action id="PyDebugger.StepOutOfBlock" class="com.jetbrains.python.debugger.PyStepOutOfBlockAction"
+            icon="AllIcons.Actions.StepOutCodeBlock">
+      <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="StepOut"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra" anchor="after" relative-to-action="SmartStepInto"/>
+    </action>
+
     <action id="SetNextStatement" class="com.jetbrains.python.debugger.PySetNextStatementAction">
       <add-to-group group-id="DebugMainMenu" relative-to-action="ForceRunToCursor" anchor="after"/>
       <add-to-group group-id="EditorPopupMenuDebug" relative-to-action="ForceRunToCursor" anchor="after"/>

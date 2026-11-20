@@ -37,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.remote.RemoteSdkException;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugProcess;
@@ -68,6 +69,7 @@ import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
+import com.jetbrains.python.debugger.pydev.AbstractCommand;
 import com.jetbrains.python.debugger.pydev.ClientModeMultiProcessDebugger;
 import com.jetbrains.python.debugger.pydev.MultiProcessDebugger;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
@@ -113,7 +115,8 @@ import static com.jetbrains.python.debugger.variablesview.usertyperenderers.Conf
 import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
 import static com.jetbrains.python.statistics.PythonDebuggerIdsHolder.CONNECTION_FAILED;
 
-public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener, PyDebugProcessWithConsole, PyStepIntoSupport {
+public class PyDebugProcess extends XDebugProcess
+  implements IPyDebugProcess, ProcessListener, PyDebugProcessWithConsole, PyStepIntoSupport, PyStepOutOfBlockSupport {
   private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
   private static final int CONNECTION_TIMEOUT = 60000;
 
@@ -138,6 +141,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private final List<BreakpointHitContext> myBreakpointHits = new LinkedList<>();
+
+  private final PyCodeBlockStepper<String> myBlockStepper = new PyCodeBlockStepper<>();
 
   private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newConcurrentMap();
   private final Object myFrameCacheObject = new Object();
@@ -176,7 +181,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                         final @NotNull ExecutionConsole executionConsole,
                         final @Nullable ProcessHandler processHandler,
                         @NotNull String serverHost, int serverPort) {
-    //noinspection deprecation
     this(session, process -> new ClientModeMultiProcessDebugger(process, serverHost, serverPort), executionConsole, processHandler);
   }
 
@@ -645,9 +649,68 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_OUT);
   }
 
+  @ApiStatus.Internal
+  @Override
+  public void performStepOutOfBlock() {
+    if (!checkCanPerformCommands()) return;
+    XSuspendContext context = getSession().getSuspendContext();
+    if (!(context instanceof PySuspendContext suspendContext)) return;
+    PyExecutionStack stack = suspendContext.getActiveExecutionStack();
+    List<PyStackFrameInfo> frames = stack.getThreadInfo().getFrames();
+    PyStackFrame topFrame = stack.getTopFrame();
+    XSourcePosition position = topFrame != null ? topFrame.getSourcePosition() : null;
+    if (frames == null || position == null) {
+      stepOutOfBlock(suspendContext, null);
+      return;
+    }
+    // the PSI of the paused file can be unloaded, so the block is found off the EDT
+    ReadAction.nonBlocking(() -> PyCodeBlockStepping.find(getProject(), position, frames.size()))
+      .submit(AppExecutorUtil.getAppExecutorService())
+      .onSuccess(block -> stepOutOfBlock(suspendContext, block));
+  }
+
+  private void stepOutOfBlock(@NotNull PySuspendContext context, @Nullable PyCodeBlockStepping block) {
+    // the user can resume or step while the block is found
+    if (getSession().getSuspendContext() != context) return;
+    getSession().sessionResumed();
+    PyCodeBlockStepper.Command command = myBlockStepper.start(context.getActiveExecutionStack().getThreadId(), block);
+    if (command instanceof PyCodeBlockStepper.Command.RunTo runTo) {
+      runToPosition(runTo.getExit(), context);
+    }
+    else if (command instanceof PyCodeBlockStepper.Command.StepOver) {
+      // passToCurrentThread would cancel the steps that start has just set
+      sendToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_OVER);
+    }
+    else {
+      passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_OUT);
+    }
+  }
+
+  /** Steps over again when the step out of the code block is still in its block. The session then does not see the stop. */
+  private boolean continueBlockStepping(@NotNull PyThreadInfo threadInfo) {
+    if (!myBlockStepper.isActive()) return false;
+    List<PyStackFrameInfo> frames = threadInfo.getFrames();
+    PyStackFrameInfo topFrame = frames != null && !frames.isEmpty() ? frames.getFirst() : null;
+    XSourcePosition position = topFrame != null ? getPositionConverter().convertFromPython(topFrame.getPosition(), topFrame.getName()) : null;
+    // pydevd reports a step stop on a line with a breakpoint as a step, so the breakpoint must end the steps here
+    boolean isStepStop = threadInfo.getStopReason() == AbstractCommand.STEP_OVER && topFrame != null &&
+                         !myRegisteredBreakpoints.containsKey(myPositionConverter.convertFrameToPython(topFrame.getPosition()));
+    PyCodeBlockStepper.Stop stop = new PyCodeBlockStepper.Stop(position != null ? position.getFile() : null,
+                                                               position != null ? position.getLine() : -1,
+                                                               frames != null ? frames.size() : 0, isStepStop);
+    // pydevd keeps a temporary breakpoint until a stop on it, so a stop elsewhere must remove it
+    boolean continues = myBlockStepper.onStop(threadInfo.getId(), stop, target -> {
+      PySourcePosition pyTarget = myPositionConverter.convertToPython(target);
+      myDebugger.removeTempBreakpoint(pyTarget.getFile(), pyTarget.getLine());
+    });
+    if (continues) myDebugger.resumeOrStep(threadInfo.getId(), ResumeOrStepCommand.Mode.STEP_OVER);
+    return continues;
+  }
+
   public void startSmartStepInto(@NotNull PySmartStepIntoVariant variant) {
     String threadId = variant.getContext().getFrame().getThreadId();
     String frameId = variant.getContext().getFrame().getFrameId();
+    myBlockStepper.cancel();
     if (isConnected()) {
       dropFrameCaches();
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
@@ -739,6 +802,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void passResumeToAllThreads() {
+    myBlockStepper.cancel();
     dropFrameCaches();
     myInlayForFailedTestIsAlreadyShownSentinel.set(false);
     if (isConnected()) {
@@ -749,6 +813,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void passToCurrentThread(@Nullable XSuspendContext context, final ResumeOrStepCommand.Mode mode) {
+    myBlockStepper.cancel();
+    sendToCurrentThread(context, mode);
+  }
+
+  private void sendToCurrentThread(@Nullable XSuspendContext context, final ResumeOrStepCommand.Mode mode) {
     dropFrameCaches();
     myBreakpointHits.clear();
     if (isConnected()) {
@@ -1190,6 +1259,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void threadSuspended(final PyThreadInfo threadInfo, boolean updateSourcePosition) {
     if (!mySuspendedThreads.contains(threadInfo)) {
+      if (continueBlockStepping(threadInfo)) return;
       mySuspendedThreads.add(threadInfo);
 
       final List<PyStackFrameInfo> frames = threadInfo.getFrames();
