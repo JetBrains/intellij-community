@@ -48,6 +48,7 @@ import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
 import com.intellij.toolWindow.ToolWindowProjectSelectorTabs
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.util.ref.GCWatcher
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
@@ -320,6 +321,34 @@ internal class FrameGuestToolWindowPresentationTest {
 
     assertThat(presenting.stripeTitle).isEqualTo("second title")
     assertThat(titleRequests).describedAs("the frame owner holds no supplier of a frame guest that left").isEqualTo(requestsAfterDetach)
+  }
+
+  @Test
+  fun `the tool window that presents only frame guests holds no registration of a frame guest`() = onEdt {
+    val managers = createManagers()
+
+    val registrationTitle = registerAndReplaceTitle(managers.of(first))
+
+    assertThat(managers.owner.getToolWindow(ID)!!.stripeTitle).isEqualTo("second title")
+    // the supplier of a registration can hold a dialog and its project
+    registrationTitle.ensureCollected()
+  }
+
+  /**
+   * Registers the tool window of a frame guest with a title supplier, and then gives the tool window another supplier.
+   * So the tool window of the frame guest does not hold the first supplier after the call, and no variable of the test does.
+   *
+   * @return the watcher of the first supplier
+   */
+  private fun registerAndReplaceTitle(manager: ToolWindowManagerImpl): GCWatcher {
+    // an object: a lambda that captures nothing is one instance for the whole run
+    val title = object : Supplier<String> {
+      override fun get(): String = "first title"
+    }
+    val toolWindow = manager.registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT, stripeTitle = title))
+    assertThat((toolWindow as ToolWindowImpl).isPresented).isTrue()
+    toolWindow.setStripeTitleProvider { "second title" }
+    return GCWatcher.tracking(title)
   }
 
   @Test

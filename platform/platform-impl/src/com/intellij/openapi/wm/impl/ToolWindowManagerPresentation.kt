@@ -523,6 +523,8 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
    * at first. It shows with the stored visible state when a frame guest gets an entry.
    */
   private fun placeholderTaskOf(guestTask: RegisterToolWindowTaskData): RegisterToolWindowTaskData {
+    // the supplier of the title must hold only the id: `guestTask` holds the supplier of the frame guest
+    val id = guestTask.id
     return guestTask.copy(
       component = null,
       // the dumb mode of the frame owner must not hide the tool window of a frame guest
@@ -534,7 +536,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
       hideOnEmptyContent = true,
       // The supplier of a frame guest can hold the guest, and this tool window can live longer than the guest.
       // So the title comes from a frame guest that still has the id.
-      stripeTitle = guestTask.stripeTitle?.let { Supplier { guestStripeTitleOf(guestTask.id) } },
+      stripeTitle = guestTask.stripeTitle?.let { Supplier { guestStripeTitleOf(id) } },
     )
   }
 
