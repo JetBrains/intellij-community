@@ -39,6 +39,8 @@
 - f:isModified():Z
 - f:reset():V
 - setValue(java.lang.Object):V
+*f:com.intellij.platform.compose.swing.WidthBasedLayoutKt
+- *sf:widthBasedLayout(org.jetbrains.compose.swing.foundation.layout.ConstrainedScope,org.jetbrains.compose.swing.modifier.SwingModifier):org.jetbrains.compose.swing.modifier.SwingModifier
 *f:com.intellij.platform.compose.swing.components.ActionLinkKt
 - *sf:ActionLink(java.lang.String,kotlin.jvm.functions.Function0,org.jetbrains.compose.swing.modifier.SwingModifier,org.jetbrains.compose.swing.style.SwingStyle,androidx.compose.runtime.Composer,I,I):V
 *f:com.intellij.platform.compose.swing.components.BrowserLinkKt
