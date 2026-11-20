@@ -13,7 +13,8 @@ import org.jetbrains.annotations.TestOnly;
  * The project takes a {@link LightProjectDescriptor}, as a light test of the IDE does.
  * Each host shares the data of equal descriptors.
  * The language server supports {@link LightJavaCodeInsightFixtureTestCase.ProjectDescriptor} and {@link LightJavaCodeInsightFixtureTestCase#JAVA_LATEST}.
- * It takes only the language level of the descriptor, and it uses the JDK that runs the test.
+ * It takes the language level and the mock JDK of the descriptor.
+ * For a mock JDK from the Maven repository, it uses the JDK that runs the test, and it adds no JetBrains annotations yet.
  */
 @TestOnly
 public final class JavaTestFixtures {
