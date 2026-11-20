@@ -37,6 +37,7 @@ internal class UnifiedPluginRowEventHandler(
   private val rowFocusBorders = IdentityHashMap<ListPluginComponent, Border>()
   private val rowsWithKeyboardFocus = Collections.newSetFromMap(IdentityHashMap<ListPluginComponent, Boolean>())
   private var orderedRows: List<ListPluginComponent> = emptyList()
+  private var keyboardOrder: List<JComponent> = emptyList()
   private var hoveredRow: ListPluginComponent? = null
   private var selectionAnchor: ListPluginComponent? = null
 
@@ -86,8 +87,13 @@ internal class UnifiedPluginRowEventHandler(
       val selectAllShortcut = event.keyCode == KeyEvent.VK_A && (event.isMetaDown || event.isControlDown)
       val handleFromSwitch = event.component is OnOffButton &&
                              (event.keyCode == KeyEvent.VK_UP || event.keyCode == KeyEvent.VK_DOWN || selectAllShortcut)
+      val row = findRow(event.component)
+      if (row == null) {
+        navigateWithArrows(event, event.component)
+        return
+      }
       if (isPluginRowActionControl(event.component) && !handleFromSwitch) return
-      val row = findRow(event.component) ?: return
+      if (!event.isShiftDown && navigateWithArrows(event, row)) return
       val index = orderedRows.indexOf(row)
       if (index < 0) return
 
@@ -204,9 +210,40 @@ internal class UnifiedPluginRowEventHandler(
     }
   }
 
-  fun renderRows(bindings: List<Pair<PluginOccurrenceId, ListPluginComponent>>) {
-    orderedRows = bindings.map { it.second }
+  fun renderRows(rows: List<ListPluginComponent>, keyboardOrder: List<JComponent>) {
+    this.keyboardOrder.forEach { component ->
+      if (component !is ListPluginComponent && component !in keyboardOrder) component.removeKeyListener(keyListener)
+    }
+    keyboardOrder.forEach { component ->
+      if (component !is ListPluginComponent && component !in this.keyboardOrder) component.addKeyListener(keyListener)
+    }
+    this.keyboardOrder = keyboardOrder
+    orderedRows = rows
     if (selectionAnchor !in orderedRows) selectionAnchor = null
+  }
+
+  private fun navigateWithArrows(event: KeyEvent, source: Component): Boolean {
+    val step = when (event.keyCode) {
+      KeyEvent.VK_UP -> -1
+      KeyEvent.VK_DOWN -> 1
+      else -> return false
+    }
+    val index = keyboardOrder.indexOf(source)
+    if (index < 0) return false
+
+    event.consume()
+    val target = keyboardOrder[(index + step).coerceIn(0, keyboardOrder.lastIndex)]
+    if (target is ListPluginComponent) {
+      selectExclusive(target, requestFocus = true, focusCause = FocusEvent.Cause.TRAVERSAL)
+    }
+    else if (target !== source) {
+      selectionAnchor = null
+      updateSelection(emptyList(), null, FocusEvent.Cause.TRAVERSAL)
+      SwingUtilities.invokeLater {
+        if (target in keyboardOrder) target.requestFocus(FocusEvent.Cause.TRAVERSAL)
+      }
+    }
+    return true
   }
 
   fun selectionChanged(row: ListPluginComponent) {
