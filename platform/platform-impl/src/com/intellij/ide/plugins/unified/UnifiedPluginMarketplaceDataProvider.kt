@@ -23,10 +23,8 @@ import org.jetbrains.annotations.Nls
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import java.util.HashSet
 import java.util.LinkedHashMap
 import java.util.LinkedHashSet
@@ -295,33 +293,15 @@ internal fun loadMergedSuggestedPlugins(
   onFailure: (sourceName: String, cause: Throwable) -> Unit = { _, _ -> },
 ): Flow<UnifiedPluginMarketplaceFetchResult> = flow {
   coroutineScope {
-    val sourceResults = Channel<SuggestedSourceResult>(capacity = 2)
-    launch {
-      sourceResults.send(
-        SuggestedSourceResult.Project(loadSuggestedSource("project suggestions", loadProjectSuggestions, onFailure))
-      )
+    val staffPicks = async {
+      loadSuggestedSource("Staff Picks", loadStaffPicks, onFailure)
     }
-    launch {
-      sourceResults.send(SuggestedSourceResult.StaffPicks(loadSuggestedSource("Staff Picks", loadStaffPicks, onFailure)))
+    val projectSuggestions = loadSuggestedSource("project suggestions", loadProjectSuggestions, onFailure)
+    if (projectSuggestions.models.isNotEmpty()) {
+      emit(combineSuggestedPluginResults(projectSuggestions, UnifiedPluginMarketplaceFetchResult(emptyList())))
     }
-
-    var projectSuggestions = UnifiedPluginMarketplaceFetchResult(emptyList())
-    var staffPicks = UnifiedPluginMarketplaceFetchResult(emptyList())
-    repeat(2) {
-      when (val result = sourceResults.receive()) {
-        is SuggestedSourceResult.Project -> projectSuggestions = result.value
-        is SuggestedSourceResult.StaffPicks -> staffPicks = result.value
-      }
-      emit(combineSuggestedPluginResults(projectSuggestions, staffPicks))
-    }
+    emit(combineSuggestedPluginResults(projectSuggestions, staffPicks.await()))
   }
-}
-
-private sealed interface SuggestedSourceResult {
-  val value: UnifiedPluginMarketplaceFetchResult
-
-  data class Project(override val value: UnifiedPluginMarketplaceFetchResult) : SuggestedSourceResult
-  data class StaffPicks(override val value: UnifiedPluginMarketplaceFetchResult) : SuggestedSourceResult
 }
 
 private suspend fun loadSuggestedSource(
@@ -405,6 +385,7 @@ internal fun buildMarketplaceSnapshot(
       searchCategory = model.displayCategory,
       searchVendor = model.vendor,
       searchTags = model.tags.orEmpty().toSet(),
+      isStaffPick = model.installSource == FUSEventSource.PLUGINS_STAFF_PICKS_GROUP,
     )
   }
 

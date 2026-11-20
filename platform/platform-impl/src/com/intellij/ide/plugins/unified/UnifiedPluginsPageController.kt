@@ -329,7 +329,8 @@ internal class UnifiedPluginsPageController(
     else {
       previousOrder.pluginIds + newItems.map(PluginItemState::pluginId)
     }
-    val orderedItems = updatedPluginIds.mapNotNull(itemsById::get)
+    val stableItems = updatedPluginIds.mapNotNull(itemsById::get)
+    val orderedItems = if (section.id == PluginSectionId.Suggested) stableItems.sortedBy(PluginItemState::isStaffPick) else stableItems
     sectionItemOrders[orderKey] = PluginSectionItemOrder(
       pluginIds = updatedPluginIds,
       bundledCategories = updatedCategories,
