@@ -274,7 +274,6 @@ ID =                            [^\n\-\ {}\[\]#][^\n{}\[\]>:#]*
 
 KEY_flow = {NS_PLAIN_ONE_LINE_flow}
 KEY_block = {NS_PLAIN_ONE_LINE_block}
-KEY_SUFIX = {WHITE_SPACE_CHAR}* ":"
 
 INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
@@ -487,7 +486,11 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
         return blockScalarType
       }
 
-  {STRING_SINGLE_LINE} | {DSTRING_SINGLE_LINE} / {KEY_SUFIX} {
+  {STRING_SINGLE_LINE} | {DSTRING_SINGLE_LINE} / ":" {
+        return processScalarKey()
+      }
+
+  {STRING_SINGLE_LINE} | {DSTRING_SINGLE_LINE} / {WHITE_SPACE} ":" {
         return processScalarKey()
       }
 
@@ -507,7 +510,11 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
 }
 
 <BLOCK_STATE> {
-  {KEY_block} / {KEY_SUFIX} {
+  {KEY_block} / ":" {
+        return processScalarKey()
+      }
+
+  {KEY_block} / {WHITE_SPACE} ":" {
         return processScalarKey()
       }
 
@@ -520,7 +527,11 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
 }
 
 <FLOW_STATE> {
-  {KEY_flow} / {KEY_SUFIX} {
+  {KEY_flow} / ":" {
+        return processScalarKey()
+      }
+
+  {KEY_flow} / {WHITE_SPACE} ":" {
         return processScalarKey()
       }
 
@@ -545,13 +556,23 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
   // Better do not use suffix here because of possible EOF after the COLON
   ":" { goToState(BLOCK_STATE) }
 
-  {STRING_SINGLE_LINE} | {DSTRING_SINGLE_LINE} / {KEY_SUFIX} {
+  {STRING_SINGLE_LINE} | {DSTRING_SINGLE_LINE} / ":" {
         return processScalarKey(BLOCK_STATE)
       }
 
-  {KEY_block} / {KEY_SUFIX} {NS_PLAIN_SAFE_block} { return YamlSyntaxTokenTypes.TEXT }
+  {STRING_SINGLE_LINE} | {DSTRING_SINGLE_LINE} / {WHITE_SPACE} ":" {
+        return processScalarKey(BLOCK_STATE)
+      }
 
-  {KEY_block} / {KEY_SUFIX} {
+  {KEY_block} / ":" {NS_PLAIN_SAFE_block} { return YamlSyntaxTokenTypes.TEXT }
+
+  {KEY_block} / {WHITE_SPACE} ":" {NS_PLAIN_SAFE_block} { return YamlSyntaxTokenTypes.TEXT }
+
+  {KEY_block} / ":" {
+        return processScalarKey(BLOCK_STATE)
+      }
+
+  {KEY_block} / {WHITE_SPACE} ":" {
         return processScalarKey(BLOCK_STATE)
       }
 

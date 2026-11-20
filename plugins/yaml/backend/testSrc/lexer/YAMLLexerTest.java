@@ -341,6 +341,9 @@ public class YAMLLexerTest {
   @Test
   public void testCommentJustAfterSymbol() { doTest(); }
 
+  @Test
+  public void testKeySpaceBeforeColon() { doTest(); }
+
   private void doTest() {
     lexer.get().doFileTest("yml");
   }

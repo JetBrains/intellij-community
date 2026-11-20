@@ -1,0 +1,17 @@
+key : value
+a:b : value
+a :b: value
+'quoted' : value
+"dquoted"  : value
+parent:
+  child   : value
+  - item : value
+flow: {key : value, a:b : c, 'q' : d}
+seq: [key : value]
+plain
+  text : more
+other
+  a :b
+plain3
+  "q" : value
+tab	: value
