@@ -1,25 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.util.ElementsChooser
 import com.intellij.ide.util.MultiStateElementsChooser
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.NioFileChooserBuilder
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.FieldPanel
 import com.intellij.util.containers.CollectionFactory
 import java.awt.Component
 import java.awt.event.ActionEvent
-import java.io.File
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.AbstractAction
@@ -28,6 +25,8 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 private const val DEFAULT_FILE_NAME = "settings.zip"
 private val DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath() + "/") + DEFAULT_FILE_NAME
@@ -71,22 +70,28 @@ private fun addToExistingListElement(item: ExportableItem,
   return file != null
 }
 
-internal fun chooseSettingsFile(descriptor: FileChooserDescriptor,
-                                initialPath: String?,
-                                parent: Component?,
-                                onFileChosen: (VirtualFile) -> Unit) {
-  FileChooser.chooseFile(descriptor, null, parent, getFileOrParent(initialPath), onFileChosen)
+/**
+ * Shows the [chooser] with the filter of settings archives.
+ * The [initialPath] or its parent is selected when the dialogue opens.
+ *
+ * @return the path that the user chose, or `null` if the user cancelled the dialogue.
+ */
+internal fun chooseSettingsFile(chooser: NioFileChooserBuilder, initialPath: String?, parent: Component?): Path? {
+  return chooser
+    .withHideIgnored(false)
+    .withExtensionFilter(BootstrapBundle.message("import.settings.filter"), "zip", "jar")
+    .chooseFile(null, getPathOrParent(initialPath), parent)
 }
 
-private fun getFileOrParent(path: String?): VirtualFile? {
-  if (path != null) {
-    val oldFile = File(path)
-    val initialDir = StandardFileSystems.local().findFileByPath(oldFile.absolutePath)
-    return initialDir ?: oldFile.parentFile?.let {
-      StandardFileSystems.local().findFileByPath(it.absolutePath)
-    }
+private fun getPathOrParent(path: String?): Path? {
+  if (path.isNullOrBlank()) return null
+  val file = try {
+    Path.of(path).toAbsolutePath()
   }
-  return null
+  catch (_: InvalidPathException) {
+    return null
+  }
+  return if (file.exists()) file else file.parent?.takeIf { it.exists() }
 }
 
 internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, List<ExportableItem>>,
@@ -137,16 +142,13 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, Li
   }
 
   private fun browse() {
-    val descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().apply {
-      title = ConfigurationStoreBundle.message("title.export.file.location")
-      description = ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path")
-      isHideIgnored = false
-      ConfigImportHelper.setSettingsFilter(this)
-    }
-    chooseSettingsFile(descriptor, pathPanel.text, window) { file ->
-      val path = if (file.isDirectory) "${file.path}/${DEFAULT_FILE_NAME}" else file.path
-      pathPanel.text = FileUtil.toSystemDependentName(path)
-    }
+    val chooser = NioFileChooserBuilder()
+      .withChooseFolders(true)
+      .withTitle(ConfigurationStoreBundle.message("title.export.file.location"))
+      .withDescription(ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path"))
+    val chosen = chooseSettingsFile(chooser, pathPanel.text, window) ?: return
+    @NlsSafe val exportPath = (if (chosen.isDirectory()) chosen.resolve(DEFAULT_FILE_NAME) else chosen).toString()
+    pathPanel.text = exportPath
   }
 
   private fun updateControls() {
