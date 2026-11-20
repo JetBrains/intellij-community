@@ -40,6 +40,11 @@ import kotlin.io.path.readText
  *   `--content_module` argument specifies it; the module is also removed from `plugin.xml`. Without this option, such a module causes an error;
  * * `--non_classpath_data relative_output_path:mode:input_path`: copies a file or directory to the relative path in the plugin distribution;
  *   `mode` is the octal mode of the copied file, or of each regular file of the copied directory, for example `0644`;
+ * * `--renamed_library_entry module_name:source_path:target_path:path_to_jar[,path_to_jar...]`: gives the entry `source_path` of the
+ *   specified library JARs of the module the path `target_path` in the output JAR; the `packed_deps_entry_renaming` attribute of
+ *   `ij_plugin_module` gives these arguments. The packager reports an error if none of the JARs contains `source_path`;
+ * * `--skipped_library_entry module_name:source_path:path_to_jar[,path_to_jar...]`: does not pack the entry `source_path` of the specified
+ *   library JARs of the module. The packager reports an error if none of the JARs contains `source_path`;
  * * `--packed_modules path`: enables generation of the `packed-modules.yaml` file, which names each jar in the distribution and the modules packed into it;
  * * `--file_attributes path`: enables generation of the `file-attributes.txt` file, which states each mode other than `0644`, see [FileAttributesWriter];
  * * `--plugin_version version`: updates `<version>` tag in `plugin.xml` with the provided version;
@@ -70,6 +75,7 @@ object IjPluginPackager {
     var fileAttributesPath: Path? = null
     val contentModuleArguments = HashMap<String, ModuleArgument>()
     val nonClasspathData = ArrayList<NonClasspathDataArgument>()
+    val libraryEntryRenamings = HashMap<String, LibraryEntryRenaming>()
     var pluginVersion: String? = null
     var sinceBuild: String? = null
     var untilBuild: String? = null
@@ -104,6 +110,8 @@ object IjPluginPackager {
           fileAttributesPath = baseDir.resolve(args[index + 1])
         }
         "--non_classpath_data" -> nonClasspathData.add(parseNonClasspathDataArgument(args[index + 1], baseDir))
+        "--renamed_library_entry" -> addRenamedLibraryEntryRule(args[index + 1], libraryEntryRenamings, baseDir)
+        "--skipped_library_entry" -> addSkippedLibraryEntryRule(args[index + 1], libraryEntryRenamings, baseDir)
         "--plugin_version" -> {
           require(pluginVersion == null) { "--plugin_version must be specified only once" }
           pluginVersion = args[index + 1]
@@ -129,6 +137,11 @@ object IjPluginPackager {
     val libDirectory = outputDirectory.resolve("lib")
     Files.createDirectories(libDirectory)
     val descriptorModuleArgument = requireNotNull(descriptorModule) { "--descriptor_module must be specified" }
+    for (moduleName in libraryEntryRenamings.keys) {
+      require(moduleName == descriptorModuleArgument.name || contentModuleArguments.containsKey(moduleName)) {
+        "--renamed_library_entry or --skipped_library_entry specifies an unknown module '$moduleName'"
+      }
+    }
     val descriptorJar = descriptorModuleArgument.jars.first()
     val originalPluginXmlContent = readEntryFromZip(descriptorJar, PLUGIN_DESCRIPTOR_ENTRY_NAME)
                                    ?: throw IjPluginPackagingException("$PLUGIN_DESCRIPTOR_ENTRY_NAME is not found in $descriptorJar")
@@ -152,6 +165,7 @@ object IjPluginPackager {
       contentModules = contentModulesToPackSeparately,
       libDirectory = libDirectory,
       packedModulesWriter = packedModulesWriter,
+      libraryEntryRenamings = libraryEntryRenamings,
     )
 
     val buildNumberFromFile = lazy {
@@ -208,8 +222,10 @@ object IjPluginPackager {
       libDirectory = libDirectory,
       pluginDescriptorJarName = pluginDescriptorJarName,
       pluginDescriptorModuleName = descriptorModuleArgument.name,
-      packedModulesWriter = packedModulesWriter
+      packedModulesWriter = packedModulesWriter,
+      libraryEntryRenaming = libraryEntryRenamings.get(descriptorModuleArgument.name),
     )
+    libraryEntryRenamings.values.forEach { it.checkAllRulesApplied() }
     packedModulesWriter?.write()
   }
 
@@ -218,7 +234,8 @@ object IjPluginPackager {
     libDirectory: Path,
     pluginDescriptorJarName: String,
     pluginDescriptorModuleName: String,
-    packedModulesWriter: PackedModulesWriter?
+    packedModulesWriter: PackedModulesWriter?,
+    libraryEntryRenaming: LibraryEntryRenaming?,
   ) {
     val existingJarNames = HashMap<String, String>()
     existingJarNames[pluginDescriptorJarName] = "plugin descriptor module JAR"
@@ -230,7 +247,7 @@ object IjPluginPackager {
         throw IjPluginPackagingException("Duplicate JAR name: both $old and ${jar.pathString} are put to ${targetJar.pathString}")
       }
       PluginJarPackager(targetJar).use {
-        it.addEntriesFromJar(jar) { filePath, dataFetcher ->
+        it.addEntriesFromJar(jar, entryPath = libraryEntryPathFunction(libraryEntryRenaming, jar)) { filePath, dataFetcher ->
           if (isSkippedFromLibraries(filePath)) {
             return@addEntriesFromJar null
           }
@@ -267,9 +284,11 @@ object IjPluginPackager {
     contentModules: List<ContentModuleData>,
     libDirectory: Path,
     packedModulesWriter: PackedModulesWriter?,
+    libraryEntryRenamings: Map<String, LibraryEntryRenaming>,
   ) {
     for (contentModule in contentModules) {
       val contentModuleElement = contentModule.moduleElement
+      val libraryEntryRenaming = libraryEntryRenamings.get(contentModuleElement.name)
       val destinationDirectory = if (contentModuleElement.loadingRule == ModuleLoadingRuleValue.EMBEDDED) libDirectory else libDirectory.resolve("modules")
       Files.createDirectories(destinationDirectory)
       val outputJar = destinationDirectory.resolve("${contentModuleElement.name}.jar")
@@ -277,7 +296,8 @@ object IjPluginPackager {
         val containMultipleLibraries = contentModule.jars.size > 2
         for ((index, jar) in contentModule.jars.withIndex()) {
           val first = index == 0
-          it.addEntriesFromJar(jar) { filePath, dataFetcher ->
+          val entryPath = libraryEntryPathFunction(if (first) null else libraryEntryRenaming, jar)
+          it.addEntriesFromJar(jar, entryPath) { filePath, dataFetcher ->
             if (!isIncludedFromModuleOutput(filePath)) {
               return@addEntriesFromJar null
             }
@@ -302,6 +322,29 @@ object IjPluginPackager {
         }
       }
     }
+  }
+
+  private fun libraryEntryPathFunction(libraryEntryRenaming: LibraryEntryRenaming?, jar: Path): (String) -> String? {
+    if (libraryEntryRenaming == null) {
+      return { it }
+    }
+    return { libraryEntryRenaming.entryPath(jar, it) }
+  }
+
+  private fun addRenamedLibraryEntryRule(argument: String, libraryEntryRenamings: MutableMap<String, LibraryEntryRenaming>, baseDir: Path) {
+    val (moduleName, sourcePath, targetPath, jars) = requireNotNull(RENAMED_LIBRARY_ENTRY_PATTERN.matchEntire(argument)) {
+      "Expected a library entry argument in the form module_name:source_path:target_path:path_to_jar[,path_to_jar...]. Got: $argument"
+    }.destructured
+    libraryEntryRenamings.getOrPut(moduleName) { LibraryEntryRenaming(moduleName) }
+      .addRule(sourcePath, targetPath, jars.split(',').map { baseDir.resolve(it) })
+  }
+
+  private fun addSkippedLibraryEntryRule(argument: String, libraryEntryRenamings: MutableMap<String, LibraryEntryRenaming>, baseDir: Path) {
+    val (moduleName, sourcePath, jars) = requireNotNull(SKIPPED_LIBRARY_ENTRY_PATTERN.matchEntire(argument)) {
+      "Expected a library entry argument in the form module_name:source_path:path_to_jar[,path_to_jar...]. Got: $argument"
+    }.destructured
+    libraryEntryRenamings.getOrPut(moduleName) { LibraryEntryRenaming(moduleName) }
+      .addRule(sourcePath, targetPath = null, jars = jars.split(',').map { baseDir.resolve(it) })
   }
 
   private fun isOptionalLoadingRule(loadingRule: ModuleLoadingRuleValue): Boolean {
@@ -419,6 +462,10 @@ private fun substituteBuildNumber(string: String?, buildNumberFromFile: Lazy<Str
 private val JAR_NAME_WITH_VERSION_PATTERN = Regex("(.*)-\\d+(?:\\.\\d+)*\\.jar")
 
 private val NON_CLASSPATH_DATA_ARGUMENT_PATTERN = Regex("([^:]+):([^:]+):(.+)")
+
+private val RENAMED_LIBRARY_ENTRY_PATTERN = Regex("([^:]+):([^:]+):([^:]+):([^:,]+(?:,[^:,]+)*)")
+
+private val SKIPPED_LIBRARY_ENTRY_PATTERN = Regex("([^:]+):([^:]+):([^:,]+(?:,[^:,]+)*)")
 
 private fun removeVersionFromJar(fileName: String): String {
   val matcher = JAR_NAME_WITH_VERSION_PATTERN.matchEntire(fileName)

@@ -66,6 +66,7 @@ def _ij_plugin_impl(ctx):
         join_with = ",",
     )
     _add_non_classpath_data(args, inputs, plugin_descriptor_module_info)
+    _add_entry_renamings(args, plugin_descriptor_module_info)
     for content_module in ctx.attr.content_modules:
         content_module_info = _plugin_module_info(content_module)
         content_module_jars = content_module_info.all_output_jars
@@ -76,6 +77,7 @@ def _ij_plugin_impl(ctx):
             join_with = ",",
         )
         inputs.extend(content_module_jars)
+        _add_entry_renamings(args, content_module_info)
         _add_non_classpath_data(
             args,
             inputs,
@@ -122,6 +124,7 @@ def _plugin_module_info(target):
         module_name = kt_jvm_info.module_name,
         all_output_jars = [module_jar],
         non_classpath_data = [],
+        packed_jar_entry_renamings = [],
     )
 
 def _add_non_classpath_data(args, inputs, module_info, root_output_directory = ""):
@@ -134,6 +137,15 @@ def _add_non_classpath_data(args, inputs, module_info, root_output_directory = "
         # A directory is one argument: the packager copies its tree and gives the mode to each regular file of it.
         args.add_all([data.file], expand_directories = False, format_each = relative_path + ":" + data.mode + ":%s")
         inputs.append(data.file)
+
+def _add_entry_renamings(args, module_info):
+    for renaming in module_info.packed_jar_entry_renamings:
+        for source_path, target_path in renaming.renamed.items():
+            prefix = "%s:%s:%s:" % (module_info.module_name, source_path, target_path)
+            args.add_joined("--renamed_library_entry", renaming.jars, format_joined = prefix.replace("%", "%%") + "%s", join_with = ",")
+        for source_path in renaming.skipped:
+            prefix = "%s:%s:" % (module_info.module_name, source_path)
+            args.add_joined("--skipped_library_entry", renaming.jars, format_joined = prefix.replace("%", "%%") + "%s", join_with = ",")
 
 # The suffix that the rule adds to the target name to get the name of the dist directory.
 # The dist directory is in the package of the target, and holds the plugin directory, `packed-modules.yaml` and `file-attributes.txt`.

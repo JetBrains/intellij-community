@@ -24,6 +24,11 @@ internal class ManuallyWrittenAttributesTest {
               "file.txt": "bin/file.txt",
           },
           data = ["data2.txt"],
+          packed_deps_entry_renaming = {
+              "//libs:library": {
+                  "META-INF/LICENSE": "META-INF/LICENSE-library",
+              },
+          },
       )
 
       ij_plugin(
@@ -31,6 +36,7 @@ internal class ManuallyWrittenAttributesTest {
           # manually written attribute
           directory_name = "custom-directory",
           non_classpath_data = "not-kept",
+          packed_deps_entry_renaming = "not-kept",
       )
 
       jvm_test(
@@ -49,6 +55,7 @@ internal class ManuallyWrittenAttributesTest {
         "jvm_library module data = [\"data.txt\"]",
         "ij_plugin_module module2 non_classpath_data = {\n        \"file.txt\": \"bin/file.txt\",\n    }",
         "ij_plugin_module module2 data = [\"data2.txt\"]",
+        "ij_plugin_module module2 packed_deps_entry_renaming = {\n        \"//libs:library\": {\n            \"META-INF/LICENSE\": \"META-INF/LICENSE-library\",\n        },\n    }",
         "ij_plugin plugin_plugin directory_name = \"custom-directory\"",
       ).joinToString("\n"),
       parsed.attributes.joinToString("\n") { "${it.targetType} ${it.targetName} ${it.attributeName} = ${it.attributeValue}" },

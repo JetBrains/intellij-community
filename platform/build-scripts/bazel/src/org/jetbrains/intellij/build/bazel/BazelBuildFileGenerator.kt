@@ -912,6 +912,10 @@ internal class BazelBuildFileGenerator(
         option("packed_deps", deps.packedDeps.unsorted())
       }
 
+      if (useIjPluginModule) {
+        insertManuallyWrittenAttributes(manuallyWrittenAttributes.getManuallyWrittenAttributes(moduleDescriptor, PACKED_DEPS_ENTRY_RENAMING_ATTRIBUTE))
+      }
+
       if (deps != null && deps.plugins.isNotEmpty()) {
         option("plugins", deps.plugins.sorted())
       }

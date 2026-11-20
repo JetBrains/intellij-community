@@ -250,6 +250,201 @@ internal class IjPluginPackagerTest {
   }
 
   @Test
+  fun renamesAndSkipsEntriesOfContentModuleLibraries(@TempDir tempDirectory: Path) {
+    createContentModuleWithConflictingLibraries(tempDirectory.resolve("input"))
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--content_module",
+        "content.module:input/content-module.jar,input/first.jar,input/second.jar,input/third.jar",
+        "--renamed_library_entry",
+        "content.module:META-INF/LICENSE:META-INF/LICENSE-second:input/second.jar",
+        // the group has two JARs, and only one of them contains the entry
+        "--skipped_library_entry",
+        "content.module:META-INF/NOTICE:input/second.jar,input/third.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    outputDirectory.resolve("lib/modules").assertMatches(directoryContent {
+      zip("content.module.jar") {
+        file("__index__")
+        dir("META-INF") {
+          file("LICENSE", "first license")
+          file("LICENSE-second", "second license")
+          file("NOTICE", "first notice")
+        }
+        file("content.module.xml", "<idea-plugin></idea-plugin>")
+        file("First.class", "first")
+        file("Second.class", "second")
+        file("Third.class", "third")
+      }
+    })
+  }
+
+  @Test
+  fun reportsErrorWithAttributeNameIfLibrariesOfContentModuleHaveTheSameEntry(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createContentModuleWithConflictingLibraries(inputDirectory)
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--content_module",
+          "content.module:input/content-module.jar,input/first.jar,input/second.jar,input/third.jar",
+          "--skipped_library_entry",
+          "content.module:META-INF/NOTICE:input/second.jar",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertEquals(
+      "File META-INF/LICENSE was added twice to ${tempDirectory.resolve("output/lib/modules/content.module.jar")}: " +
+      "from ${inputDirectory.resolve("first.jar")} and from ${inputDirectory.resolve("second.jar")}. " +
+      "If it comes from 'packed_deps', rename or skip one entry with the 'packed_deps_entry_renaming' attribute of 'ij_plugin_module'.",
+      error.message,
+    )
+  }
+
+  @Test
+  fun reportsErrorIfRenamedEntryIsNotFound(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createContentModuleWithConflictingLibraries(inputDirectory)
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--content_module",
+          "content.module:input/content-module.jar,input/first.jar,input/second.jar,input/third.jar",
+          "--renamed_library_entry",
+          "content.module:META-INF/LICENSE:META-INF/LICENSE-second:input/second.jar",
+          "--skipped_library_entry",
+          "content.module:META-INF/NOTICE:input/second.jar",
+          "--skipped_library_entry",
+          "content.module:META-INF/MISSING:input/second.jar,input/third.jar",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertEquals(
+      "'packed_deps_entry_renaming' of 'content.module' specifies entries that are not found in the JARs: " +
+      "'META-INF/MISSING' in ${inputDirectory.resolve("second.jar")}, ${inputDirectory.resolve("third.jar")}",
+      error.message,
+    )
+  }
+
+  @Test
+  fun reportsErrorIfLibraryEntryRuleSpecifiesUnknownModule(@TempDir tempDirectory: Path) {
+    createContentModuleWithConflictingLibraries(tempDirectory.resolve("input"))
+
+    val error = assertThrows(IllegalArgumentException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--skipped_library_entry",
+          "unknown.module:META-INF/NOTICE:input/second.jar",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertEquals("--renamed_library_entry or --skipped_library_entry specifies an unknown module 'unknown.module'", error.message)
+  }
+
+  @Test
+  fun renamesEntryOfDescriptorModuleLibrary(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    directoryContent {
+      zip("library.jar") {
+        dir("META-INF") {
+          file("LICENSE", "library license")
+          file("NOTICE", "library notice")
+        }
+        file("Library.class", "library")
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar,input/library.jar",
+        "--renamed_library_entry",
+        "descriptor:META-INF/LICENSE:META-INF/LICENSE-library:input/library.jar",
+        "--skipped_library_entry",
+        "descriptor:META-INF/NOTICE:input/library.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    outputDirectory.resolve("lib").assertMatches(directoryContent {
+      zip("descriptor.jar") {
+        file("__index__")
+        dir("META-INF") {
+          file("plugin.xml", """
+            <idea-plugin>
+              <id>my.plugin</id>
+            </idea-plugin>
+          """.trimIndent())
+        }
+      }
+      zip("library.jar") {
+        file("__index__")
+        dir("META-INF") {
+          file("LICENSE-library", "library license")
+        }
+        file("Library.class", "library")
+      }
+    })
+  }
+
+  private fun createContentModuleWithConflictingLibraries(inputDirectory: Path) {
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", "<idea-plugin><content><module name=\"content.module\"/></content></idea-plugin>")
+        }
+      }
+      zip("content-module.jar") {
+        file("content.module.xml", "<idea-plugin></idea-plugin>")
+      }
+      zip("first.jar") {
+        dir("META-INF") {
+          file("LICENSE", "first license")
+          file("NOTICE", "first notice")
+        }
+        file("First.class", "first")
+      }
+      zip("second.jar") {
+        dir("META-INF") {
+          file("LICENSE", "second license")
+          file("NOTICE", "second notice")
+        }
+        file("Second.class", "second")
+      }
+      zip("third.jar") {
+        file("Third.class", "third")
+      }
+    }.generate(inputDirectory)
+  }
+
+  @Test
   fun skipsUnresolvedOptionalModulesIfOptionIsSpecified(@TempDir tempDirectory: Path) {
     createDescriptorJarWithContentModules(tempDirectory.resolve("input"), requiredModuleLoadingRule = "required")
 

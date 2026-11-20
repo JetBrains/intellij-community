@@ -104,6 +104,7 @@ test_suite(
         "//platform/build-scripts/bazel-rules/dev-plugin-tests:dev_plugin_tests",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests:ij-plugin-packager-tests",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:non-classpath-data-attributes-tests",
+        "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:packed-deps-entry-renaming-tests",
         "@jps_to_bazel//:bazel-generator-integration-tests",
         "@jps_to_bazel//:kotlinc-project-defaults-tests",
     ],

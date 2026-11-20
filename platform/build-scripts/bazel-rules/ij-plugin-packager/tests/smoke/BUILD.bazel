@@ -7,6 +7,7 @@ load("//platform/build-scripts/bazel-rules:unpack_archive.bzl", "unpack_zip_arch
 load(":build_settings_test.bzl", "ij_plugin_settings_test_target")
 load(":directory_name_test.bzl", "directory_name_tests")
 load(":non_classpath_data_test.bzl", "non_classpath_data_attribute_tests")
+load(":packed_deps_entry_renaming_test.bzl", "packed_deps_entry_renaming_tests")
 load(":plugin_output_file.bzl", "plugin_output_file")
 
 # A minimal plugin used to check that `ij_plugin` rule and the packager worker actually work.
@@ -133,6 +134,12 @@ ij_plugin_module(
         "@lib//:libraries-asm-tools-asm-tools",  # java_library
         "@lib//:libraries-assertj-core-assert_j",  # jvm_import
     ],
+    packed_deps_entry_renaming = {
+        "@lib//:libraries-assertj-core-assert_j": {
+            "META-INF/maven/org.assertj/assertj-core/pom.properties": "$skip",
+            "META-INF/maven/org.assertj/assertj-core/pom.xml": "META-INF/maven/org.assertj/assertj-core/renamed-pom.xml",
+        },
+    },
     resource_strip_prefix = "library/resources",
     resources = glob(["library/resources/**/*"]),
 )
@@ -214,6 +221,8 @@ ij_plugin_settings_test_target(
 )
 
 non_classpath_data_attribute_tests(name = "non-classpath-data-attributes-tests")
+
+packed_deps_entry_renaming_tests(name = "packed-deps-entry-renaming-tests")
 
 directory_name_tests(
     name = "directory-name-tests",

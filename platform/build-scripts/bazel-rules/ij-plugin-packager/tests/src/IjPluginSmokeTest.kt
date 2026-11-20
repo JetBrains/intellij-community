@@ -4,6 +4,7 @@ import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContent
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.FileSystems
@@ -84,8 +85,12 @@ internal class IjPluginSmokeTest {
           "org/objectweb/asm/tree/ClassNode.class",
           "org/objectweb/asm/tree/analysis/Analyzer.class",
           "org/assertj/core/api/Assertions.class",
+          "META-INF/maven/org.assertj/assertj-core/renamed-pom.xml",
         ),
       )
+      for (relativePath in listOf("META-INF/maven/org.assertj/assertj-core/pom.xml", "META-INF/maven/org.assertj/assertj-core/pom.properties")) {
+        assertFalse(Files.exists(zipFileSystem.getPath("/", relativePath)), "$relativePath is not renamed or skipped in $libraryJar")
+      }
     }
   }
 

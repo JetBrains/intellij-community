@@ -68,8 +68,9 @@ internal class ManuallyWrittenAttributeDefinition(
 
 internal val DATA_ATTRIBUTE = ManuallyWrittenAttributeDefinition("data", ruleNames = setOf(JVM_LIBRARY_RULE, IJ_PLUGIN_MODULE_RULE))
 internal val NON_CLASSPATH_DATA_ATTRIBUTE = ManuallyWrittenAttributeDefinition("non_classpath_data", ruleNames = setOf(IJ_PLUGIN_MODULE_RULE))
+internal val PACKED_DEPS_ENTRY_RENAMING_ATTRIBUTE = ManuallyWrittenAttributeDefinition("packed_deps_entry_renaming", ruleNames = setOf(IJ_PLUGIN_MODULE_RULE))
 internal val DIRECTORY_NAME_ATTRIBUTE = ManuallyWrittenAttributeDefinition("directory_name", ruleNames = setOf(IJ_PLUGIN_RULE))
-private val MANUALLY_WRITTEN_ATTRIBUTES = listOf(DATA_ATTRIBUTE, NON_CLASSPATH_DATA_ATTRIBUTE, DIRECTORY_NAME_ATTRIBUTE)
+private val MANUALLY_WRITTEN_ATTRIBUTES = listOf(DATA_ATTRIBUTE, NON_CLASSPATH_DATA_ATTRIBUTE, PACKED_DEPS_ENTRY_RENAMING_ATTRIBUTE, DIRECTORY_NAME_ATTRIBUTE)
 
 private val FUNCTION_CALL_REGEX = Regex("""([a-zA-Z_][a-zA-Z0-9_]*)\(""")
 private val ATTRIBUTE_ASSIGNMENT_REGEX = Regex(""" *([a-zA-Z_][a-zA-Z0-9_]*) = (.*)""")

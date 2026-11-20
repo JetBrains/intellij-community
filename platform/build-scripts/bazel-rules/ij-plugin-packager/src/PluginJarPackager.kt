@@ -35,11 +35,17 @@ internal class PluginJarPackager(private val outputJarPath: Path) : AutoCloseabl
     zipWriter.uncompressedData(relativePath, content)
   }
 
-  fun addEntriesFromJar(inputJar: Path, entryPatcher: ZipEntryPatcher) {
-    readZipFile(inputJar) { filePath, dataFetcher ->
+  /**
+   * Adds the entries of [inputJar]. [entryPath] gives the path of an entry in the output JAR, or `null` to skip the entry.
+   * [entryPatcher] gets the path in the output JAR.
+   */
+  fun addEntriesFromJar(inputJar: Path, entryPath: (String) -> String? = { it }, entryPatcher: ZipEntryPatcher) {
+    readZipFile(inputJar) { sourcePath, dataFetcher ->
+      val filePath = entryPath(sourcePath) ?: return@readZipFile ZipEntryProcessorResult.CONTINUE
       val patchedData = entryPatcher.patchEntry(filePath, dataFetcher)
       if (patchedData != null) {
-        checkAddedFile(filePath, inputJar.pathString)
+        val origin = if (filePath == sourcePath) inputJar.pathString else "${inputJar.pathString} (renamed from $sourcePath)"
+        checkAddedFile(filePath, origin)
         packageIndexBuilder.addFile(filePath)
         zipWriter.uncompressedData(filePath, patchedData)
       }
@@ -50,7 +56,10 @@ internal class PluginJarPackager(private val outputJarPath: Path) : AutoCloseabl
   private fun checkAddedFile(relativePath: String, presentableOrigin: String) {
     val oldOrigin = addedFilePaths.put(relativePath, presentableOrigin)
     if (oldOrigin != null) {
-      throw IjPluginPackagingException("File $relativePath was added twice to $outputJarPath: from $oldOrigin and from $presentableOrigin")
+      throw IjPluginPackagingException(
+        "File $relativePath was added twice to $outputJarPath: from $oldOrigin and from $presentableOrigin. " +
+        "If it comes from 'packed_deps', rename or skip one entry with the 'packed_deps_entry_renaming' attribute of 'ij_plugin_module'."
+      )
     }
   }
 
