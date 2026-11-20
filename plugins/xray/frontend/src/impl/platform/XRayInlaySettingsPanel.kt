@@ -16,6 +16,7 @@ import com.intellij.codeInsight.hints.settings.InlayGroupSettingProvider
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.codeInsight.hints.settings.language.createEditor
+import com.intellij.ide.setToolTipText
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider
 import com.intellij.lang.IdeLanguageCustomization
@@ -32,6 +33,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.JBSplitter
@@ -40,6 +42,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBSlider
+import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
@@ -63,6 +66,7 @@ import java.util.function.Predicate
 import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.ScrollPaneConstants
+import javax.swing.ToolTipManager
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -162,6 +166,9 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
         }
       }
     }
+
+    TreeHoverListener.DEFAULT.addTo(tree)
+
     tree.addTreeSelectionListener(
       TreeSelectionListener { updateRightPanel(it?.newLeadSelectionPath?.lastPathComponent as? CheckedTreeNode) })
     if (nodeToSelect == null) {
@@ -806,7 +813,6 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
       row: Int,
       hasFocus: Boolean,
     ) {
-
       val ui = (checkbox.ui as? XRayStageCheckBoxUI) ?: XRayStageCheckBoxUI().also { checkbox.ui = it }
       ui.stage = (value as? XRayTreeNode)?.takeIf { it.stageKey != null }?.stage
       ui.isInconsistent = ui.stage?.let { stage -> !checkConsistency(value as CheckedTreeNode, stage) } ?: false
@@ -815,6 +821,13 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
 
       val name = getName(value, value.parent as? DefaultMutableTreeNode)
       textRenderer.appendHTML(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+
+      if (ui.stage != null && row == TreeHoverListener.getHoveredRow(tree)) {
+        textRenderer.append(" ${
+          stageName(ui.stage!!)
+        }${if (ui.isInconsistent) " (" + XRayBundle.message("xray.inlay.stage.settings.tree.mixed") + ")" else ""}",
+                            SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      }
     }
 
     override fun getUiInspectorContext(tree: JTree, value: Any?, row: Int): List<PropertyBean> {

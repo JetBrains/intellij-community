@@ -26,10 +26,7 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
-                        serviceImplementation="com.intellij.python.community.plugin.impl.run.PyPluginCommonOptionsFormFactory"/>
-    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
-                        serviceImplementation="com.intellij.python.community.plugin.impl.run.PyPluginCommonFragmentsBuilder"/>
+    <facetType implementation="com.intellij.python.community.plugin.impl.facet.PythonFacetType"/>
   </extensions>
 
   <actions resource-bundle="messages.PyBundle">

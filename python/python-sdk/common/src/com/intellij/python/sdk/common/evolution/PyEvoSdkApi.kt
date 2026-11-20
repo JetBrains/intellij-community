@@ -278,10 +278,6 @@ suspend fun requestEvoResolveVersion(projectId: ProjectId, pyProjectKey: String,
   PyEvoSdkApi().resolveInterpreterVersion(projectId, pyProjectKey, nodeId, homePath, traceId)
 
 @ApiStatus.Internal
-suspend fun requestEvoAddInterpreter(projectId: ProjectId, pyProjectKey: String, nodeId: String): EvoSelectResultDto =
-  PyEvoSdkApi().addInterpreter(projectId, pyProjectKey, nodeId)
-
-@ApiStatus.Internal
 suspend fun requestEvoPerformNodeAction(projectId: ProjectId, pyProjectKey: String, nodeId: String, actionId: String): EvoSelectResultDto =
   PyEvoSdkApi().performNodeAction(projectId, pyProjectKey, nodeId, actionId)
 

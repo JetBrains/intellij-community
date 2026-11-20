@@ -23,7 +23,7 @@ import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLockin
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.binaryPathString
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -91,7 +91,7 @@ internal class PyVirtualEnvTerminalCustomizerTest {
       pyProject.setPythonInterpreter(null).getOrThrow()
       PythonInterpreterRegistry.getInstance(projectFixture.get()).remove(interpreter)
       if (OS.CURRENT == OS.Windows) {
-        deleteCheckLocking(Path.of(interpreter.getSdkAPI().homePath!!))
+        deleteCheckLocking(Path.of(interpreter.binaryPathString))
       }
     }
   }
@@ -130,7 +130,7 @@ internal class PyVirtualEnvTerminalCustomizerTest {
           .createSdkFromThisEnv(ModuleOrProject.ModuleAndProject(pyProject.residesOnModule), null, envDir).getOrThrow()
         val interpreter = pyProject.setPythonInterpreter(built).getOrThrow()!!
         condaInterpreter = interpreter
-        Pair(Path(interpreter.getSdkAPI().homePath!!), envDir.toRealPath().pathString)
+        Pair(Path(interpreter.binaryPathString), envDir.toRealPath().pathString)
       }
       else {
         val venvDir = tempDirFixture.get().resolve(".venv")

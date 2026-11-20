@@ -139,6 +139,7 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
       sysPath = record?.sysPath.orEmpty().mapNotNull(::toPathOrNull),
       addedPaths = record?.addedPaths.orEmpty().mapNotNull(::urlToPathOrNull),
       excludedPaths = record?.excludedPaths.orEmpty().mapNotNullTo(HashSet(), ::urlToPathOrNull),
+      excludedFolders = record?.excludedFolders.orEmpty().mapNotNullTo(HashSet(), ::urlToPathOrNull),
     )
   }
 
@@ -316,6 +317,7 @@ private fun PythonInterpreterRecords.StoredInterpreter.copyWith(facts: PythonInt
     requirementsFile = source.requirementsFile
     addedPaths += facts.addedPaths.map(::pathToUrl)
     excludedPaths += facts.excludedPaths.map(::pathToUrl).sorted()
+    excludedFolders += facts.excludedFolders.map(::pathToUrl).sorted()
     pathMappings += source.pathMappings
     version = facts.version
     sysPath += facts.sysPath.map { it.toString() }.distinct()
@@ -324,7 +326,8 @@ private fun PythonInterpreterRecords.StoredInterpreter.copyWith(facts: PythonInt
 
 private fun PythonInterpreterRecords.StoredInterpreter.sameAsRecord(other: PythonInterpreterRecords.StoredInterpreter): Boolean =
   version == other.version && sysPath == other.sysPath &&
-  addedPaths == other.addedPaths && excludedPaths.toSet() == other.excludedPaths.toSet()
+  addedPaths == other.addedPaths && excludedPaths.toSet() == other.excludedPaths.toSet() &&
+  excludedFolders.toSet() == other.excludedFolders.toSet()
 
 private fun PythonSdkAdditionalData?.addedPaths(): List<Path> = this?.addedPathFiles.orEmpty().mapNotNull(::nioPathOf)
 

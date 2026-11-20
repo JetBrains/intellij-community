@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl;
+package com.jetbrains.python.run;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -17,8 +17,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.project.PyProject;
 import com.jetbrains.python.project.PyProjectKt;
-import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
-import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PySdkRenderingKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -35,8 +33,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 
-public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
-  private final PyIdeCommonOptionsPanel content;
+@ApiStatus.Internal
+public class PyCommonOptionsForm implements AbstractPyCommonOptionsForm {
+  private final PyCommonOptionsPanel content;
   /** The interpreter that {@link #setPythonInterpreter} gave, selected when the mode is not "project default". */
   private @Nullable PythonInterpreter mySelectedInterpreter = null;
 
@@ -53,16 +52,16 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
 
-  private static final Logger LOG = Logger.getInstance(PyIdeCommonOptionsForm.class);
+  private static final Logger LOG = Logger.getInstance(PyCommonOptionsForm.class);
 
-  public PyIdeCommonOptionsForm(PyCommonOptionsFormData data) {
+  public PyCommonOptionsForm(PyCommonOptionsFormData data) {
     myProject = data.getProject();
     setSnapshot(snapshotInterpreters(null));
     List<PyInterpreterItem> rows = new ArrayList<>(myInterpreterItems);
     rows.addFirst(null);
     Module[] modules = ModuleManager.getInstance(data.getProject()).getModules();
     boolean showModules = modules.length != 1;
-    content = new PyIdeCommonOptionsPanel(data, showModules, rows);
+    content = new PyCommonOptionsPanel(data, showModules, rows);
     content.workingDirectoryTextField.addBrowseFolderListener(data.getProject(), FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(PyBundle.message("configurable.select.working.directory")));
     if (!showModules) {

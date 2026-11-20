@@ -1,14 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.ide.plugins.PluginUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtils
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.UnifiedPluginsPageFeature
 import com.intellij.ide.plugins.newui.SearchWords
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
@@ -24,7 +23,12 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ResourceUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
 @VisibleForTesting
@@ -99,7 +103,8 @@ object PluginsMissingUpdateSourceNotifier {
 
 @ApiStatus.Internal
 object PluginUpdateSourceInitializer {
-  private const val INITIALIZATION_HAPPENED_PROPERTY: String = "initialize.plugin.update.sources"
+  private val startupMutex = Mutex()
+  private var startupAttempted = false
 
   @ApiStatus.Internal
   sealed interface Result {
@@ -112,30 +117,40 @@ object PluginUpdateSourceInitializer {
     ) : Result
   }
 
-  fun hasInitializationHappened(): Boolean {
-    return PropertiesComponent.getInstance().getBoolean(INITIALIZATION_HAPPENED_PROPERTY, false)
+  @TestOnly
+  fun resetStartupAttemptForTests() {
+    startupAttempted = false
   }
 
-  fun allowInitializationHappenAgain() {
-    return PropertiesComponent.getInstance().unsetValue(INITIALIZATION_HAPPENED_PROPERTY)
-  }
-
-  fun initialize() {
+  suspend fun initialize() {
     if (!PluginUpdateSourceService.isFunctionalitySupported()) return
     if (!Registry.`is`("update.source.initialization.enabled", false)) return
-    if (!PropertiesComponent.getInstance().updateValue(INITIALIZATION_HAPPENED_PROPERTY, true)) return
-    enforceInitialization()
+    withContext(Dispatchers.IO) {
+      startupMutex.withLock {
+        if (!startupAttempted) {
+          enforceInitialization()
+          startupAttempted = true
+        }
+      }
+    }
+  }
+
+  private fun needsInitialization(service: PluginUpdateSourceServiceImpl, plugin: PluginDescriptor): Boolean = when {
+    !PluginUtils.isUpdateable(plugin) -> false
+    // Plugins with predefined Marketplace update source may still be overwritten in custom repositories and
+    // should go through initialization
+    service.hasExplicitlySetPluginUpdateSource(plugin.pluginId) -> false
+    else -> true
   }
 
   fun enforceInitialization(): Result {
-    val result = doInitializePlugins()
-    if (result is Result.Failure) {
-      PropertiesComponent.getInstance().setValue(INITIALIZATION_HAPPENED_PROPERTY, false)
+    val plugins = PluginUpdateSourcePluginsProvider.getInstance().getAllPlugins()
+    val service = PluginUpdateSourceServiceImpl.getImplInstance()
+    if (plugins.none { needsInitialization(service, it) }) {
+      thisLogger().info("No initialization of plugin update sources needed")
+      return Result.Success(0)
     }
-    return result
-  }
 
-  private fun doInitializePlugins(): Result {
     val dataMap = mutableMapOf<PluginId, MutableList<PluginUpdateSource>>()
 
     val customPluginRepositoryHosts = RepositoryHelper.getCustomPluginRepositoryHosts()
@@ -143,7 +158,7 @@ object PluginUpdateSourceInitializer {
     val handledRepos = mutableSetOf<String>()
     for (host in customPluginRepositoryHosts) {
       if (!handledRepos.add(host)) continue
-      val updateSourceId = PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(host)
+      val updateSourceId = service.createCustomRepositoryPluginUpdateSourceId(host)
 
       if (host.isEmpty()) {
         thisLogger().info("No plugins in $host")
@@ -170,10 +185,21 @@ object PluginUpdateSourceInitializer {
       return Result.Failure()
     }
 
-    val marketplaceUpdateSourceId = PluginUpdateSourceService.getInstance().createMarketplacePluginUpdateSourceId()
-    PluginUpdateSourcePluginsProvider.getInstance().getAllPlugins().forEach { plugin ->
-      val customPluginUpdateSources = dataMap[plugin.pluginId] ?: emptyList()
-      initializePluginUpdateSourceIfNeeded(plugin, customPluginUpdateSources, safePluginList, marketplaceUpdateSourceId)
+    val marketplaceUpdateSourceId = service.createMarketplacePluginUpdateSourceId()
+    plugins.forEach { plugin ->
+      if (needsInitialization(service, plugin)) {
+        val customPluginUpdateSources = dataMap[plugin.pluginId] ?: emptyList()
+        val newUpdateSourceId = getUpdateSourceToInitialize(plugin,
+                                                            customPluginUpdateSources,
+                                                            safePluginList, marketplaceUpdateSourceId)
+        if (newUpdateSourceId != null) {
+          thisLogger().info("Set ${newUpdateSourceId.getPresentableName()} update source to ${plugin.pluginId}")
+          service.setPluginUpdateSourceId(plugin.pluginId, newUpdateSourceId)
+        }
+      }
+      else {
+        thisLogger().info("Plugin ${plugin.pluginId} doesn't need update source init")
+      }
     }
 
     thisLogger().info("Initialization of plugin update sources finished successfully")
@@ -196,28 +222,16 @@ object PluginUpdateSourceInitializer {
     return safePluginListText?.trimEnd()?.lines()
   }
 
-  private fun initializePluginUpdateSourceIfNeeded(
+  private fun getUpdateSourceToInitialize(
     plugin: PluginDescriptor,
     customPluginUpdateSources: List<PluginUpdateSource>,
     safePluginIdList: List<String>,
     marketplaceUpdateSourceId: PluginUpdateSource,
-  ) {
+  ): PluginUpdateSource? {
     val pluginId = plugin.pluginId
-    val service = PluginUpdateSourceService.getInstance()
-    // Plugins with predefined Marketplace update source may still be overwritten in custom repositories and
-    // should go through initialization
-    if (!PluginUtils.isUpdateable(plugin)) {
-      thisLogger().info("Plugin $pluginId doesn't need update source")
-      return
-    }
-    val pluginUpdateSourceId = service.getPluginUpdateSourceId(pluginId)
-    if (pluginUpdateSourceId != null && PluginUpdateSourceServiceImpl.getImplInstance().hasExplicitlySetPluginUpdateSource(pluginId)) {
-      thisLogger().info("Plugin $pluginId already has update source")
-      return
-    }
 
     val singleCustomRepoUpdateSource = customPluginUpdateSources.singleCompatibleSourceOrNull()
-    val newUpdateSourceId = when {
+    return when {
       singleCustomRepoUpdateSource != null -> {
         PluginUpdateSourceServiceImpl.getImplInstance()
           .allowUpdateFromMarketplaceWhenApplicable(singleCustomRepoUpdateSource, plugin, safePluginIdList)
@@ -233,10 +247,6 @@ object PluginUpdateSourceInitializer {
         thisLogger().info("Plugin $pluginId is not found in custom repositories and is not in the safe list")
         null
       }
-    }
-    if (newUpdateSourceId != null) {
-      thisLogger().info("Set ${newUpdateSourceId.getPresentableName()} update source to $pluginId")
-      service.setPluginUpdateSourceId(pluginId, newUpdateSourceId)
     }
   }
 

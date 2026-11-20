@@ -67,22 +67,6 @@ suspend fun List<Sdk>.groupInterpreterItemsByTypes(module: Module?): Map<PyRende
 }
 
 /**
- * [groupInterpreterItemsByTypes] for a Java caller that cannot suspend.
- *
- * The interpreters are read under a progress over [owner], so they run off the EDT. One progress covers the whole
- * list, where before PY-91967 each row probed the file system under a modal progress of its own while it was painted.
- */
-@ApiStatus.Internal
-@RequiresEdt
-fun List<Sdk>.groupInterpreterItemsByTypesUnderProgress(
-  module: Module?,
-  owner: JComponent,
-): Map<PyRenderedSdkType, List<PyInterpreterItem>> =
-  runWithModalProgressBlocking(ModalTaskOwner.component(owner), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
-    groupInterpreterItemsByTypes(module)
-  }
-
-/**
  * These SDKs as a UI list holds them, read under a progress over [owner], for a Java caller that cannot suspend.
  *
  * Order is kept, so a caller that also holds the SDKs can line the two lists up.

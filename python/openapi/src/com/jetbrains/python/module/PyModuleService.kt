@@ -27,6 +27,11 @@ interface PyModuleService {
   @ApiStatus.Internal
   fun forAllFacets(module: Module, facetConsumer: Consumer<Any>)
 
+  /**
+   * Whether [module] is a Python project: of the Python type, with the Python facet, any module with a content root in
+   * PyCharm, or a module that names an interpreter. It is the rule of `PyProject.asPyProject`, read from the current
+   * workspace model, so a module of GoLand with only an interpreter is one too.
+   */
   @ApiStatus.Internal
   fun isPythonModule(module: Module): Boolean
 

@@ -3,6 +3,7 @@ package com.jetbrains.python.module
 
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
@@ -16,6 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.facet.PythonFacetSettings
+import com.jetbrains.python.project.impl.PyProjectService
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 
 internal class PyModuleServiceImpl(val project: Project) : PyModuleService {
@@ -63,10 +65,8 @@ internal class PyModuleServiceImpl(val project: Project) : PyModuleService {
     }
   }
 
-  override fun isPythonModule(module: Module): Boolean {
-    return module.isPyModuleType ||
-           FacetManager.getInstance(module).allFacets.any { it.configuration is PythonFacetSettings }
-  }
+  override fun isPythonModule(module: Module): Boolean =
+    ApplicationManager.getApplication().service<PyProjectService>().isPyProject(module)
 
   private companion object {
     val Module.isPyModuleType: Boolean get() = ModuleType.get(this).id == PYTHON_MODULE_ID

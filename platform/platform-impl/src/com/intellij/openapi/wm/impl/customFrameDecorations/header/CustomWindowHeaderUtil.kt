@@ -20,8 +20,8 @@ import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.mac.MacWinTabsHandler
 import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.ui.tabs.ProjectTabsManager
 import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -157,9 +157,7 @@ object CustomWindowHeaderUtil {
       CustomHeader.enableCustomHeader(frame)
     }
     frame.doSetRootPane(rootPane)
-    if (OS.CURRENT == OS.macOS) {
-      MacWinTabsHandler.fastInit(frame)
-    }
+    ProjectTabsManager.fastInit(frame)
   }
 
   fun makeComponentToBeMouseTransparentInTitleBar(frameHelper: ProjectFrameHelper, component: JComponent) {

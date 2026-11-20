@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xray.frontend.impl.action
 
-import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
@@ -15,13 +14,17 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ui.JBUI
 import com.intellij.xray.frontend.api.XRayBundle
 import com.intellij.xray.frontend.api.XRayMode
+import com.intellij.xray.frontend.api.editorTracking.XRAY_EDITOR_TRACKING_REGISTRY_KEY
 import com.intellij.xray.frontend.api.editorTracking.XRAY_EDITOR_USE_MODE
 import com.intellij.xray.frontend.api.editorTracking.XRayEditorUseMode
 import com.intellij.xray.frontend.impl.service.XRayModeService
@@ -29,10 +32,11 @@ import javax.swing.JComponent
 
 internal class XRayModeActionProvider : InspectionWidgetActionProvider {
   override fun createAction(editor: Editor): AnAction? {
+    if (editor.editorKind != EditorKind.MAIN_EDITOR) return null
+
     val project = editor.project ?: return null
+
     if (project.isDefault) return null
-    // Don't offer the X-Ray toggle in the inlay-settings preview editor, where hints are driven by the settings panel.
-    if (isInlaySettingsEditor(editor)) return null
 
     PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return null
 
@@ -44,7 +48,7 @@ internal class XRayModeActionProvider : InspectionWidgetActionProvider {
 
         val service = XRayModeService.getInstance()
 
-        if (isInlaySettingsEditor(editor)) {
+        if (!EditorUtil.isRealFileEditor(editor)) {
           e.presentation.isEnabledAndVisible = false
           return
         }
@@ -89,17 +93,25 @@ internal class XRayModeActionProvider : InspectionWidgetActionProvider {
                 XRayMode.BASIC -> "xray.config.next.extended"
                 XRayMode.EXTENDED -> "xray.config.next.off"
               }
-              val description = when (val editorUseMode = editor.getUserData(XRAY_EDITOR_USE_MODE)) {
-                is XRayEditorUseMode ->  XRayBundle.message("xray.config.description_template.full",
-                                                            XRayBundle.message("xray.config.mode", editorUseMode.title)
-                )
-                null -> XRayBundle.message("xray.config.description_template.short")
+              if (Registry.`is`(XRAY_EDITOR_TRACKING_REGISTRY_KEY)) {
+                val description = when (val editorUseMode = editor.getUserData(XRAY_EDITOR_USE_MODE)) {
+                  is XRayEditorUseMode -> XRayBundle.message("xray.config.description_template.full",
+                                                             XRayBundle.message("xray.config.mode", editorUseMode.title)
+                  )
+                  null -> XRayBundle.message("xray.config.description_template.short")
+                }
+                HelpTooltip().setTitle(HtmlChunk.text(XRayBundle.message(tooltipTitleKey)))
+                  .setDescription(HtmlChunk.text(description))
+                  .setLink(XRayBundle.message("xray.config.configure")) {
+                    showInlaySettings(project = project, Language.ANY, null)
+                  }.installOn(this)
               }
-              HelpTooltip().setTitle(HtmlChunk.text(XRayBundle.message(tooltipTitleKey)))
-                .setDescription(HtmlChunk.text(description))
-                .setLink(XRayBundle.message("xray.config.configure")) {
-                  showInlaySettings(project = project, Language.ANY, null)
-                }.installOn(this)
+              else {
+                HelpTooltip().setTitle(HtmlChunk.text(XRayBundle.message(tooltipTitleKey)))
+                  .setLink(XRayBundle.message("xray.config.configure")) {
+                    showInlaySettings(project = project, Language.ANY, null)
+                  }.installOn(this)
+              }
             }
           }
         }

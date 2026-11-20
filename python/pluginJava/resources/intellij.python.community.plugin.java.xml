@@ -29,7 +29,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <newProjectWizard.languageGenerator implementation="com.intellij.python.community.plugin.java.PythonNewProjectWizard"/>
     <moduleType id="PYTHON_MODULE" implementationClass="com.intellij.python.community.plugin.java.facet.PythonModuleType"/>
-    <facetType implementation="com.intellij.python.community.plugin.java.facet.JavaPythonFacetType"/>
     <frameworkSupport implementation="com.intellij.python.community.plugin.java.facet.PythonFrameworkSupportProvider"/>
     <projectStructureDetector implementation="com.intellij.python.community.plugin.java.facet.PyProjectStructureDetector"/>
     <moduleConfigurationEditorProvider implementation="com.intellij.python.community.plugin.java.facet.PythonModuleConfigurationEditorProvider"/>

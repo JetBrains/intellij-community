@@ -10,7 +10,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -30,7 +29,6 @@ import com.jetbrains.python.TraceContext
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PyPackageService
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -42,13 +40,9 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
-import com.jetbrains.python.packaging.management.ui.notify
 import com.jetbrains.python.packaging.packageRequirements.PackagesUnavailableNode
-import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.repository.PyRepositoriesList
-import com.jetbrains.python.packaging.repository.checkValid
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
@@ -702,42 +696,6 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     serviceScope.launch(Dispatchers.Default + TraceContext(message("trace.context.packaging.tool.window"), serviceScope)) {
       withContext(TraceContext(message("trace.context.packaging.tool.window.sdk.reload", context.interpreter.asItem().name))) {
         context.managerUI.reloadPackagesBackground()
-        refreshInstalledPackages()
-      }
-    }
-  }
-
-  fun manageRepositories() {
-    val updated = SingleConfigurableEditor(project, PyRepositoriesList(project)).showAndGet()
-    if (updated) {
-      PythonPackagesToolwindowStatisticsCollector.repositoriesChangedEvent.log(project)
-      serviceScope.launch(Dispatchers.IO + TraceContext(message("trace.context.packaging.tool.window"), serviceScope)) {
-        val packageService = PyPackageService.getInstance()
-        val repositoryService = service<PyPackageRepositories>()
-        val allRepos = repositoryService.repositories.map { it.repositoryUrl }
-        packageService.additionalRepositories.asSequence()
-          .filter { it !in allRepos }
-          .forEach { packageService.removeRepository(it) }
-
-        val (valid, invalid) = repositoryService.repositories.partition { it.checkValid() }
-        repositoryService.invalidRepositories.clear()
-        repositoryService.invalidRepositories.addAll(invalid)
-        invalid.forEach { repo ->
-          if (repo.repositoryUrl.isNotEmpty()) packageService.removeRepository(repo.repositoryUrl)
-          repo.enabled = false
-        }
-
-        valid.asSequence()
-          .map { it.repositoryUrl }
-          .filter { it !in packageService.additionalRepositories }
-          .forEach { packageService.addRepository(it) }
-
-        project.service<PipRepositoryManager>()
-          .refreshAddedCaches()
-          .onFailure {
-            it.notify(project)
-          }
-        
         refreshInstalledPackages()
       }
     }

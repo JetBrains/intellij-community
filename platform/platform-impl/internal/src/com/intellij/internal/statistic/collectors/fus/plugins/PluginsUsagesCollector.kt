@@ -13,12 +13,11 @@ import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializer
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import java.nio.file.Files
 
 internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("plugins", 13)
+  private val GROUP = EventLogGroup("plugins", 14)
   private val DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin", EventFields.PluginInfo)
   private val ENABLED_NOT_BUNDLED_PLUGIN = GROUP.registerEvent("enabled.not.bundled.plugin", EventFields.PluginInfo)
   private val UNSAFE_PLUGIN = GROUP.registerEvent("unsafe.plugin",
@@ -27,8 +26,7 @@ internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
   private val MIGRATION_INSTALLED_PLUGIN = GROUP.registerEvent("migration.installed.plugin", EventFields.PluginInfo)
   private val INCOMPATIBLE_PLUGIN = GROUP.registerEvent("incompatible.plugin", EventFields.PluginInfo)
   private val PLUGINS_WITHOUT_PLUGIN_UPDATE_SOURCE = GROUP.registerEvent("plugins.without.plugin.update.source",
-                                                                         EventFields.LogarithmicInt("number_of_plugins"),
-                                                                         EventFields.Boolean("initialization_has_happened"))
+                                                                         EventFields.LogarithmicInt("number_of_plugins"))
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -88,7 +86,6 @@ internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
     val pluginNumber = PluginManagerCore.loadedPlugins.asSequence().count {
       service.isMissingPluginUpdateSource(it)
     }
-    val initializationHappened = PluginUpdateSourceInitializer.hasInitializationHappened()
-    return PLUGINS_WITHOUT_PLUGIN_UPDATE_SOURCE.metric(pluginNumber, initializationHappened)
+    return PLUGINS_WITHOUT_PLUGIN_UPDATE_SOURCE.metric(pluginNumber)
   }
 }

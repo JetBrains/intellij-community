@@ -3,6 +3,8 @@ package org.intellij.plugins.markdown.extensions.jcef.commandRunner
 
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.actions.ChooseRunConfigurationPopup
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.runAnything.RunAnythingAction
@@ -411,7 +413,10 @@ class CommandRunnerExtension(
         ReadAction.nonBlocking<Boolean> {
           RunAnythingProvider.EP_NAME.extensionList.asSequence()
             .filter { checkForCLI(it, allowRunConfigurations) }
-            .any { provider -> provider.findMatchingValue(dataContext, trimmedCmd) != null }
+            .any { provider ->
+              val value = provider.findMatchingValue(dataContext, trimmedCmd) ?: return@any false
+              ((value as? ChooseRunConfigurationPopup.ItemWrapper<*>)?.value as? RunnerAndConfigurationSettings)?.isTemporary != true
+            }
         }.executeSynchronously()
       }
     }

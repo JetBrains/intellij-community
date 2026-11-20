@@ -131,12 +131,6 @@
 
     <optionsApplicabilityFilter implementation="com.intellij.pycharm.community.ide.impl.PyOptionsApplicabilityFilter"/>
 
-    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
-                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PyIdeCommonOptionsFormFactory"/>
-
-    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
-                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PyIdeCommonFragmentsBuilder"/>
-
     <applicationService serviceInterface="com.intellij.platform.whatsNew.WhatsNewInVisionContentProvider"
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.whatsnew.PyCharmWhatsNewInVisionContentProvider"
                         overrides="true"/>

@@ -307,7 +307,5 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     @Language("devkit-action-id")
     private const val ADDITIONAL_PACKAGE_TOOLBAR_ACTION_ID = "PyPackageToolbarAdditional"
 
-    @Language("devkit-action-id")
-    private const val PY_INSTALL_PACKAGE_ACTION_ID = "PyInstallPackageAction"
   }
 }

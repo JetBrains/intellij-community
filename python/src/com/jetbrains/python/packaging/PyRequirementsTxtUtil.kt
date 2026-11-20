@@ -28,7 +28,6 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.requirementsPath
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.AlignX
@@ -275,9 +274,7 @@ private fun showSyncSettingsDialog(
                     if (normalized == initialPath) return@bindText
                     // Goes through a modificator rather than writing to the committed data: an in-place edit leaves the
                     // stored entity behind the bridge, which the workspace model reports as a mismatch (PY-82614).
-                    PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(
-                      project, interpreter.getSdkAPI(), normalized
-                    )
+                    PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(project, interpreter, normalized)
                   })
         .align(AlignX.FILL)
         .focused()

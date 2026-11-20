@@ -3,6 +3,7 @@
 
 package com.jetbrains.python.sdk
 
+import com.jetbrains.python.project.asPyProjectOrCandidate
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
@@ -207,7 +208,7 @@ internal class AddInterpreterOnTargetAction(
     val modality = ModalityState.defaultModalityState()
     module.project.service<TargetInterpreterSetService>().coroutineScope.launch(modality.asContextElement()) {
       val set = withSdkConfigurationLock(module.project) {
-        module.asPyProjectAddingFacet()?.setPythonInterpreter(built, waitForSnapshot = false)
+        module.asPyProjectOrCandidate()?.setPythonInterpreter(built, waitForSnapshot = false)
       }?.onFailure { ErrorSink().withProject(module.project).emit(it) }?.successOrNull ?: return@launch
       // A caller must not build the interpreter again from its SDK: the SDK data can name another interpreter (PY-94081).
       withContext(Dispatchers.EDT) { onInterpreterSet(set) }

@@ -4,6 +4,7 @@ package com.intellij.xray.frontend.impl
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.xray.frontend.api.editorTracking.XRAY_EDITOR_MODE
 import com.intellij.xray.frontend.impl.editorTracking.attachXRayTracker
 import com.intellij.xray.frontend.impl.editorTracking.detachXRayTracker
 
@@ -14,6 +15,7 @@ internal class XRayDynamicPluginListener: DynamicPluginListener {
   override fun pluginsLoaded() {
     EditorFactory.getInstance().allEditors.forEach { editor ->
       attachXRayTracker(editor)
+      attachMouseWheelPatcher(editor)
     }
   }
 
@@ -21,6 +23,8 @@ internal class XRayDynamicPluginListener: DynamicPluginListener {
     if (pluginDescriptor.pluginId.idString == XRAY_PLUGIN_ID) {
       EditorFactory.getInstance().allEditors.forEach { editor ->
         detachXRayTracker(editor)
+        detachMouseWheelPatcher(editor)
+        editor.putUserData(XRAY_EDITOR_MODE, null)
       }
     }
   }

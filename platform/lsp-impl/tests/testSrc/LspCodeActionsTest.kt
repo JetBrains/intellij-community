@@ -8,6 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -100,6 +101,29 @@ class LspCodeActionsTest {
       }
       serverSession.awaitExpected()
       codeInsightFixture.checkResult("AB2\nC\nD\n\n4")
+    }
+
+    @Test
+    fun `each code action of the server is one available intention`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+      awaitFileOpenedByLspServer(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      val codeActionRequest = serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
+        listOf("First", "Second").map { actionTitle ->
+          Either.forRight(CodeAction().apply {
+            title = actionTitle
+            edit = WorkspaceEdit(mapOf(fileUri to listOf(TextEdit(Range(Position(0, 0), Position(0, 5)), actionTitle))))
+          })
+        }
+      }
+
+      val intentions = withContext(Dispatchers.EDT) { codeInsightFixture.availableIntentions }
+      codeActionRequest.await()
+
+      val lspIntentionTexts = intentions.filter { it.familyName == LspBundle.message("intention.family.name") }.map { it.text }
+      assertEquals(listOf("First", "Second"), lspIntentionTexts)
     }
   }
 

@@ -37,12 +37,14 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.createDirectories
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readLines
+import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTimedValue
 
 internal const val THREAD_DUMP_FILE_PREFIX: String = "threadDump"
 internal const val KILL_THREAD_DUMP_FILE_PREFIX: String = "threadDump-before-kill"
+internal const val KILL_CHILD_THREAD_DUMP_FILE_PREFIX: String = "childThreadDump-before-kill"
 
 suspend fun getProcessList(processName: String? = null): List<ProcessInfo> =
   if (processName == null) getFilteredProcessList()
@@ -370,6 +372,19 @@ suspend fun collectJavaThreadDumpSuspendable(
     }
     else {
       throw ise
+    }
+  }
+}
+
+/** Dumps the threads of each Java process that [parentProcessId] started, for example the Maven server, into [directory]. */
+suspend fun collectChildJavaThreadDumps(parentProcessId: Long, javaHome: Path, workDir: Path?, directory: Path, timestamp: Long) {
+  val children = ProcessHandle.of(parentProcessId).getOrNull()?.descendants()?.toList().orEmpty()
+    .filter { child -> child.info().command().getOrNull()?.let { Path.of(it).fileName.toString().removeSuffix(".exe") } == "java" }
+  for (child in children) {
+    catchAll {
+      val stem = shortenFileStemIn(directory, "$KILL_CHILD_THREAD_DUMP_FILE_PREFIX-$timestamp-${child.pid()}", extension = ".txt",
+                                   preservedPrefix = KILL_CHILD_THREAD_DUMP_FILE_PREFIX)
+      collectJavaThreadDumpSuspendable(javaHome, workDir, child.pid(), checkPathLength(directory.resolve("$stem.txt")))
     }
   }
 }

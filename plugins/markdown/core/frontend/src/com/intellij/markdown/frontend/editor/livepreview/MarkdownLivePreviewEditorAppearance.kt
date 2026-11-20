@@ -28,17 +28,13 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 import java.awt.Graphics
 import java.util.function.IntUnaryOperator
-import javax.swing.border.Border
-import javax.swing.border.CompoundBorder
-import javax.swing.border.EmptyBorder
-import kotlin.math.roundToInt
 import kotlin.reflect.KMutableProperty1
 
 /**
- * Shows one editor in the UI font at the `Preview font size`, with soft wraps and with text margins while live preview is on.
- * Hides line numbers, indent guides and the right margin while live preview is on.
+ * Shows one editor in the UI font at the `Preview font size` and with soft wraps while live preview is on.
+ * Hides line numbers, indent guides, the right margin and the line between the gutter and the text while live preview is on.
  * Keeps the caret out of the virtual space after the end of a line while live preview is on.
- * Restores the font of the global scheme, the saved settings and the saved border from before live preview when live preview turns off.
+ * Restores the font of the global scheme and the saved settings from before live preview when live preview turns off.
  * A setting without an override before live preview follows the global settings again after live preview.
  * While live preview is on, keeps soft wraps on. Only a document above the IntelliSense size limit keeps its soft-wrap flag.
  * A wrapped line starts at the first non-blank character of its first line, with no soft-wrap sign before it.
@@ -51,12 +47,10 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
   private val settingsState: EditorSettingsState = settings.getState()
 
   /** The editor settings before live preview. Null while live preview is off. */
-  private var preLivePreviewState: State? = null
+  private var preLivePreviewSettings: List<SavedSetting>? = null
 
-  private class State(
-    val settings: List<SavedSetting>,
-    val contentBorder: Border?,
-  )
+  /** The gutter background flag before live preview. */
+  private var preLivePreviewGutterBackground = true
 
   /** A setting before live preview. A null [override] means that the setting had no override. */
   private class SavedSetting(
@@ -75,10 +69,6 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
       override fun softWrapsChanged() = onSoftWrapsChanged()
       override fun recalculationEnds() = Unit
     })
-    // The editor zoom changes the font size without the font settings.
-    editor.addPropertyChangeListener({ event ->
-      if (event.propertyName == EditorEx.PROP_FONT_SIZE_2D && preLivePreviewState != null) applyContentMargin()
-    }, this)
   }
 
   @RequiresEdt
@@ -86,14 +76,14 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
 
   // The deferred refresh refreshes the editor once for all changed settings.
   private fun apply() = settings.runWithDeferredEditorRefresh {
-    if (preLivePreviewState == null) {
-      val savedSettings = SAVED_SETTINGS.map { property ->
+    if (preLivePreviewSettings == null) {
+      preLivePreviewSettings = SAVED_SETTINGS.map { property ->
         SavedSetting(property, if (settingsState.isOverridden(property)) property.get(settingsState) else null)
       }
-      preLivePreviewState = State(savedSettings, editor.contentComponent.border)
+      preLivePreviewGutterBackground = editor.gutterComponentEx.isPaintBackground
     }
-    // The content margin reads the saved border, so the state comes first.
     applyFont()
+    if (editor.editorKind != EditorKind.DIFF) editor.gutterComponentEx.isPaintBackground = false
     settings.isLineNumbersShown = false
     settings.isIndentGuidesShown = false
     // The UI font puts the margin column in the middle of the text.
@@ -109,16 +99,16 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
     editor.colorsScheme.editorFontName = null
     // The zoomed global size clears the font size of this editor.
     editor.setFontSize(UISettingsUtils.getInstance().scaledEditorFontSize)
-    val state = preLivePreviewState ?: return
-    preLivePreviewState = null
+    val savedSettings = preLivePreviewSettings ?: return
+    preLivePreviewSettings = null
     settings.runWithDeferredEditorRefresh {
       if (settings.isUseSoftWraps) setSoftWrapPainter(CompositeSoftWrapPainter(editor))
-      for (setting in state.settings) {
+      for (setting in savedSettings) {
         val override = setting.override
         if (override == null) settingsState.clearOverriding(setting.property) else setting.property.set(settingsState, override)
       }
+      editor.gutterComponentEx.isPaintBackground = preLivePreviewGutterBackground
     }
-    setContentBorder(state.contentBorder)
   }
 
   override fun dispose() = Unit
@@ -126,7 +116,7 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
   private fun onFontSettingsChanged() {
     val update = Runnable {
       // Null saved settings mean that live preview is off, so the editor keeps the font of the global scheme.
-      if (!editor.isDisposed && preLivePreviewState != null) applyFont()
+      if (!editor.isDisposed && preLivePreviewSettings != null) applyFont()
     }
     val application = ApplicationManager.getApplication()
     if (application.isDispatchThread) update.run() else application.invokeLater(update, ModalityState.any())
@@ -134,9 +124,9 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
 
   private fun onSoftWrapsChanged() {
     // Null saved settings mean that live preview is off, so the editor keeps the soft wraps that the user chose.
-    if (preLivePreviewState == null || editor.settings.isUseSoftWraps) return
+    if (preLivePreviewSettings == null || editor.settings.isUseSoftWraps) return
     ApplicationManager.getApplication().invokeLater({
-      if (!editor.isDisposed && preLivePreviewState != null) forceSoftWraps()
+      if (!editor.isDisposed && preLivePreviewSettings != null) forceSoftWraps()
     }, ModalityState.any())
   }
 
@@ -158,42 +148,13 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
     if (scheme.editorFontSize2D != fontSize) {
       editor.setFontSize(fontSize)
     }
-    applyContentMargin()
-  }
-
-  /**
-   * Adds a text margin of [CONTENT_MARGIN_EMS] font sizes at both sides of the text, as the preview does.
-   * The text margin at the left side keeps the text away from the gutter border.
-   * The text margin at the right side keeps the soft-wrapped text away from the vertical scroll bar.
-   */
-  private fun applyContentMargin() {
-    if (editor.editorKind == EditorKind.DIFF) return
-    val margin = (CONTENT_MARGIN_EMS * editor.colorsScheme.editorFontSize2D).roundToInt()
-    // The soft wraps take insets that are at least as wide as the scroll bar as insets that include the scroll bar.
-    val scrollBar = editor.scrollPane.verticalScrollBar
-    val scrollBarWidth = scrollBar.width.takeIf { it > 0 } ?: scrollBar.preferredSize.width
-    // The editor font size already gives scaled pixels.
-    @Suppress("UseDPIAwareBorders")
-    val marginBorder = EmptyBorder(0, margin, 0, margin + scrollBarWidth)
-    val border = preLivePreviewState?.contentBorder?.let { CompoundBorder(it, marginBorder) } ?: marginBorder
-    if (editor.contentComponent.border?.getBorderInsets(editor.contentComponent) != border.getBorderInsets(editor.contentComponent)) {
-      setContentBorder(border)
-    }
   }
 
   private fun setSoftWrapPainter(painter: SoftWrapPainter) {
     (editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(painter)
   }
 
-  private fun setContentBorder(border: Border?) {
-    editor.contentComponent.border = border
-    // The soft wraps read the text width only when the visible area changes, and a new border keeps the visible area.
-    (editor.softWrapModel as? SoftWrapModelImpl)?.applianceManager?.updateAvailableArea()
-  }
-
   companion object {
-    private const val CONTENT_MARGIN_EMS = 2
-
     private val KEY = Key.create<MarkdownLivePreviewEditorAppearance>("markdown.live.preview.appearance")
 
     /** The settings that live preview changes and restores. */

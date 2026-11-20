@@ -111,7 +111,7 @@ sealed interface MarkdownLivePreviewSpec {
   ) : MarkdownLivePreviewSpec
 
   /**
-   * Replaces a blockquote marker with [placeholderText] until a caret touches [range].
+   * Hides the glyph of a blockquote marker until a caret touches [range]. The marker keeps its width.
    * The [range] covers the run of markers on the marker line. Only spaces and tabs separate the markers of a run.
    * Thus one touch reveals all markers of the run.
    * While the marker is concealed, it paints a vertical rule over [ruleRange].
@@ -119,12 +119,10 @@ sealed interface MarkdownLivePreviewSpec {
   @Serializable
   data class BlockQuote(
     override val range: MarkdownLivePreviewRange,
-    /** The `>` character that the placeholder replaces. */
+    /** The `>` character with the hidden glyph. */
     val markerRange: MarkdownLivePreviewRange,
     /** Starts at the marker. Ends at the start of the next marker line of the blockquote, or at the end of the marker line. */
     val ruleRange: MarkdownLivePreviewRange,
-    /** Keeps each quote level two spaces wide. A space or a tab after the marker stays source text and gives the second space. */
-    val placeholderText: String,
     /** The rule takes the title color of this alert type. A regular blockquote has no alert type. */
     val alertType: AlertType? = null,
   ) : MarkdownLivePreviewSpec

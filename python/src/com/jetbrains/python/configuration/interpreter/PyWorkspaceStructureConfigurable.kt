@@ -13,6 +13,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.PrimaryModuleManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ConfigurationException
@@ -20,6 +21,7 @@ import com.intellij.openapi.options.NoAutomaticReset
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.util.PlatformUtils
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -43,9 +45,9 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.module.PyModuleService
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
+import com.jetbrains.python.project.asPyProjectCandidate
+import com.jetbrains.python.project.asPyProjectOrCandidate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -107,9 +109,6 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
   }
 
   private val modulePanes: MutableMap<Module, PyModuleDetailsPane> = LinkedHashMap()
-
-  /** The panes of the modules that are not Python projects yet, see [PyNoPythonProjectPane]. */
-  private val noPythonProjectPanes: MutableMap<Module, JComponent> = LinkedHashMap()
 
   /** Owns the auto-configure checkbox. */
   private lateinit var dialogPanel: DialogPanel
@@ -245,7 +244,6 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
         // Snapshot before clear — the pipeline disposes these.
         val panesToDispose = modulePanes.values.toList()
         modulePanes.clear()
-        noPythonProjectPanes.clear()
         detailsHolder.removeAll()
         detailsHolder.add(buildPlaceholder(), CARD_PLACEHOLDER)
         detailsCards.show(detailsHolder, CARD_PLACEHOLDER)
@@ -288,7 +286,6 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     sessionScope.cancel()
     modulePanes.values.forEach { it.dispose() }
     modulePanes.clear()
-    noPythonProjectPanes.clear()
   }
 
   /** Refreshes the interpreter combos after an interpreter was added or removed outside this page. */
@@ -310,13 +307,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
 
   private fun computeIsMultiModule(): Boolean = pythonRelevantModules().size > 1
 
-  private fun pythonRelevantModules(): List<Module> {
-    val service = PyModuleService.getInstance(project)
-    val all = ModuleManager.getInstance(project).modules.toList()
-    val filtered = all.filter { service.isPythonModule(it) }
-    val visible = filtered.ifEmpty { all }
-    return visible.sortedBy { it.name }
-  }
+  private fun pythonRelevantModules(): List<Module> = workspaceModulesOf(project)
 
   /** The module that the page selects when it builds its list, see [selectModule]. */
   private var preferredModule: Module? = null
@@ -334,7 +325,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
       moduleList.setSelectedValue(preferredModule?.takeIf { it in modules } ?: modules.first(), true)
     }
     else {
-      showPlaceholder()
+      showNoPythonProjects()
     }
   }
 
@@ -360,7 +351,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
 
   private fun buildSingleModuleLayout(): JComponent {
     val module = pythonRelevantModules().firstOrNull()
-    if (module != null) showModulePane(module)
+    if (module != null) showModulePane(module) else showNoPythonProjects()
     return detailsHolder
   }
 
@@ -375,11 +366,9 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     // preload (sibling PyProjects + current live deps), then build + show in one EDT hop so the
     // Project Links tab paints its final state from the first frame.
     sessionScope.launch {
-      val pyProject = module.asPyProject()
-      if (pyProject == null) {
-        withContext(Dispatchers.EDT) { showNoPythonProjectPane(module) }
-        return@launch
-      }
+      // The root module of a project without a Python project is a candidate, see [workspaceModulesOf]. Its pane writes
+      // nothing until the user sets its interpreter, and then the interpreter makes it a Python project.
+      val pyProject = module.asPyProjectOrCandidate() ?: return@launch
       val projectLinkCandidates = project.getPyProjects().filter { it.baseDir != pyProject.baseDir }
       val initialProjectLinks = pyProject.getPythonDependencies()
       withContext(Dispatchers.EDT) {
@@ -401,22 +390,16 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     detailsCards.show(detailsHolder, CARD_PLACEHOLDER)
   }
 
-  /** Shows the pane that adds the first interpreter of [module], which is not a Python project yet. */
-  private fun showNoPythonProjectPane(module: Module) {
-    if (modulePanes[module] != null) return
-    val cardName = "noPythonProject:${module.name}"
-    if (noPythonProjectPanes[module] == null) {
-      val pane = PyNoPythonProjectPane(module) {
-        // The module is a Python project now, so it gets the pane of a Python project.
-        noPythonProjectPanes.remove(module)?.let(detailsHolder::remove)
-        showModulePane(module)
+  /** Shows that the project has no module to configure: no Python project and no root module, see [workspaceModulesOf]. */
+  private fun showNoPythonProjects() {
+    if (detailsHolder.components.none { it.name == CARD_NO_PYTHON_PROJECTS }) {
+      val label = JLabel(PyBundle.message("configurable.PyWorkspaceStructureConfigurable.modules.empty"), SwingConstants.CENTER).apply {
+        name = CARD_NO_PYTHON_PROJECTS
+        foreground = UIUtil.getInactiveTextColor()
       }
-      noPythonProjectPanes[module] = pane.component
-      detailsHolder.add(pane.component, cardName)
+      detailsHolder.add(label, CARD_NO_PYTHON_PROJECTS)
     }
-    if (moduleList.selectedValue == module || !isMultiModule()) {
-      detailsCards.show(detailsHolder, cardName)
-    }
+    detailsCards.show(detailsHolder, CARD_NO_PYTHON_PROJECTS)
   }
 
   private fun showPlaceholder() {
@@ -469,6 +452,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
   companion object {
     const val ID: String = PY_WORKSPACE_CONFIGURABLE_ID
     private const val CARD_PLACEHOLDER = "placeholder"
+    private const val CARD_NO_PYTHON_PROJECTS = "noPythonProjects"
     // Master-list proportion key persists the divider position across reopens, per the platform
     // convention used by Project Structure / Manage Packages / VCS History.
     private const val SPLITTER_PROPORTION_KEY = "PyWorkspaceStructureConfigurable.splitter.proportion"
@@ -479,3 +463,31 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
 /** Project-scoped CoroutineScope for the Workspace Structure page. Dies with the project. */
 @Service(Service.Level.PROJECT)
 internal class PyWorkspaceStructureScope(val scope: CoroutineScope)
+
+/**
+ * The modules that the Python > Workspace page lists: the modules of the Python projects of the [EvoPyProjectModel]
+ * snapshot, by name. With [listsEveryModule], as in IntelliJ IDEA, every other module with a content root follows.
+ * Without it, as in GoLand or WebStorm, the root module follows only when there is no Python project, see
+ * [workspaceAddTargetOf]. Each other module gets the regular pane as a Python project candidate, see
+ * [asPyProjectOrCandidate], and the interpreter that the user sets makes it a Python project.
+ */
+internal fun workspaceModulesOf(project: Project, listsEveryModule: Boolean = PlatformUtils.isIntelliJ()): List<Module> {
+  val pyProjectModules = EvoPyProjectModel.getInstance(project).snapshotOrNull()?.evoPyProjects.orEmpty()
+    .map { it.pyProject.residesOnModule }
+    .distinct()
+    .sortedBy { it.name }
+    .toList()
+  if (!listsEveryModule) return pyProjectModules.ifEmpty { listOfNotNull(workspaceAddTargetOf(project)) }
+  val others = ModuleManager.getInstance(project).modules
+    .filter { it !in pyProjectModules && it.asPyProjectCandidate() != null }
+    .sortedBy { it.name }
+  return pyProjectModules + others
+}
+
+/**
+ * The module that the Python > Workspace page lists when [project] has no Python project: the root module, which is the
+ * module of the project directory, see [PrimaryModuleManager.findPrimaryModule], else the only module. GoLand can
+ * attach a directory as another module, and that module is not listed. `null` when no module fits.
+ */
+internal fun workspaceAddTargetOf(project: Project): Module? =
+  PrimaryModuleManager.findPrimaryModule(project) ?: ModuleManager.getInstance(project).modules.singleOrNull()

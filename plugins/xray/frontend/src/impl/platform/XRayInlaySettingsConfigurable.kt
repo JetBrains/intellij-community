@@ -15,7 +15,7 @@ import javax.swing.JComponent
 
 internal class XRayInlaySettingsConfigurable(val project: Project) : Configurable, SearchableConfigurable, Configurable.NoScroll, Configurable.VariableProjectAppLevel, InlaySettingsConfigurableApi {
 
-  private val panel: XRayInlaySettingsPanel by lazy  { XRayInlaySettingsPanel(project) }
+  private val panel: XRayInlaySettingsPanel by lazy { XRayInlaySettingsPanel(project) }
 
   override fun createComponent(): JComponent {
     return panel

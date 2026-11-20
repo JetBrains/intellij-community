@@ -51,7 +51,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.awt.Insets
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.roundToInt
@@ -287,35 +286,18 @@ class MarkdownEditorWithPreviewLivePreviewTest {
   }
 
   @Test
-  fun testLivePreviewLayoutAddsTextMargins(): Unit = timeoutRunBlocking {
+  fun testLivePreviewLayoutHidesAndRestoresTheGutterLine(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val editorWithPreview = createEditor()
-      val contentComponent = editorWithPreview.editor.contentComponent
-      assertEquals(Insets(0, 0, 0, 0), contentComponent.insets)
+      val gutter = (editorWithPreview.editor as EditorEx).gutterComponentEx
 
       editorWithPreview.setLivePreviewLayout()
       editorWithPreview.waitForFont(StartupUiUtil.labelFont.fontName)
-      assertEquals(editorWithPreview.expectedTextMargins(), contentComponent.insets)
+      assertFalse(gutter.isPaintBackground, "Live preview must hide the gutter line")
 
       editorWithPreview.setLayout(Layout.SHOW_EDITOR)
       editorWithPreview.waitForFont(EditorColorsManager.getInstance().globalScheme.editorFontName)
-      assertEquals(Insets(0, 0, 0, 0), contentComponent.insets, "Editor Only must remove the text margins")
-    }
-  }
-
-  @Test
-  fun testEditorZoomUpdatesTheTextMargins(): Unit = timeoutRunBlocking {
-    withContext(Dispatchers.EDT) {
-      val editorWithPreview = createEditor()
-      editorWithPreview.setLivePreviewLayout()
-      editorWithPreview.waitForFont(StartupUiUtil.labelFont.fontName)
-      val marginBeforeZoom = editorWithPreview.editor.contentComponent.insets.left
-
-      // The editor zoom calls this.
-      (editorWithPreview.editor as EditorEx).setFontSize(editorWithPreview.editor.colorsScheme.editorFontSize2D * 2)
-
-      assertEquals(editorWithPreview.expectedTextMargins(), editorWithPreview.editor.contentComponent.insets)
-      assertTrue(editorWithPreview.editor.contentComponent.insets.left > marginBeforeZoom, "The zoom must widen the text margins")
+      assertTrue(gutter.isPaintBackground, "Editor Only must restore the gutter line")
     }
   }
 
@@ -524,14 +506,6 @@ class MarkdownEditorWithPreviewLivePreviewTest {
     val fontSize = EditorColorsManager.getInstance().globalScheme.editorFontSize2D.roundToInt() + 6
     settings.update { it.state.fontSize = fontSize }
     return fontSize
-  }
-
-  /** Two font sizes at both sides, and the vertical scroll bar width in addition at the right side. */
-  private fun MarkdownEditorWithPreview.expectedTextMargins(): Insets {
-    val margin = (2 * editor.colorsScheme.editorFontSize2D).roundToInt()
-    val scrollBar = (editor as EditorEx).scrollPane.verticalScrollBar
-    val scrollBarWidth = scrollBar.width.takeIf { it > 0 } ?: scrollBar.preferredSize.width
-    return Insets(0, margin, 0, margin + scrollBarWidth)
   }
 
   private fun MarkdownEditorWithPreview.waitForFont(fontName: String) {

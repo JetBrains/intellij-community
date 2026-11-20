@@ -2,9 +2,15 @@
 package org.jetbrains.kotlin.idea.core.script.settings
 
 import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.components.JBList
+import com.intellij.ui.table.TableView
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionDiscoverySource
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import kotlin.script.experimental.templates.ScriptWithArgs
 
 class ScriptDefinitionsSnapshotTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun runInDispatchThread(): Boolean = false
@@ -112,6 +118,32 @@ class ScriptDefinitionsSnapshotTest : KotlinLightCodeInsightFixtureTestCase() {
             listOf("com.example.A", "com.example.B", "com.example.C", "com.example.D"),
             readScriptDefinitionsSnapshot(project).definitionClasses,
         )
+    }
+
+    fun `test apply shows the definitions of the applied class names`() {
+        val template = ScriptWithArgs::class.java.name
+        runInEdtAndWait {
+            val configurable = KotlinScriptingSettingsConfigurable(project)
+            try {
+                val component = configurable.createComponent()
+                configurable.reset()
+                @Suppress("UNCHECKED_CAST")
+                val definitionClasses = UIUtil.findComponentsOfType(component, JBList::class.java).first().model as CollectionListModel<String>
+                val table = UIUtil.findComponentOfType(component, TableView::class.java)!!
+                fun shownIds() = table.items.map { (it as ScriptDefinitionTableModel).id }
+
+                definitionClasses.add(template)
+                configurable.apply()
+                assertContainsElements(shownIds(), template)
+
+                definitionClasses.remove(template)
+                configurable.apply()
+                assertDoesntContain(shownIds(), template)
+            }
+            finally {
+                configurable.disposeUIResources()
+            }
+        }
     }
 
     fun `test a detached snapshot compares equal until a row is edited`() {

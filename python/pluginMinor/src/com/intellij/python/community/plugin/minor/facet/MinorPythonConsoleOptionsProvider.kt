@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.minor.facet
 
+import com.intellij.python.community.plugin.impl.facet.PythonFacet
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -13,9 +14,9 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * [PyConsoleOptionsProvider] for mini-IDE capable IDEs (e.g. CLion) that store the
- * Python SDK in a [MinorPythonFacet] rather than a module-level SDK.
+ * Python SDK in a [PythonFacet] rather than a module-level SDK.
  *
- * This provider bridges [MinorPythonFacet]-based SDK configuration with the
+ * This provider bridges [PythonFacet]-based SDK configuration with the
  * Python console infrastructure. It does NOT add a settings tab (see
  * [isApplicableTo]) but returns proper [PyConsoleParameters] for modules that
  * have a configured Python interpreter so that
@@ -39,14 +40,14 @@ internal class MinorPythonConsoleOptionsProvider : PyConsoleOptionsProvider {
     PyConsoleOptions.getInstance(project).pythonConsoleSettings
 
   /**
-   * Returns [PyConsoleParameters] for a module that has a [MinorPythonFacet]
+   * Returns [PyConsoleParameters] for a module that has a [PythonFacet]
    * with a configured SDK, or `null` if this module is not a mini-IDE Python
    * module.  A non-null return value guarantees that
    * [com.jetbrains.python.module.PyModuleService.findPythonSdk] will
    * succeed for the returned module (the facet SDK is not null).
    */
   override fun getConsoleParameters(module: Module): PyConsoleParameters? {
-    val facet = FacetManager.getInstance(module).getFacetByType(MinorPythonFacet.ID) ?: return null
+    val facet = FacetManager.getInstance(module).getFacetByType(PythonFacet.ID) ?: return null
     // Only provide parameters when an SDK is actually configured; otherwise
     // fall through to the default SDK-search logic in the base factory.
     facet.configuration.sdk ?: return null

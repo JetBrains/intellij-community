@@ -17,9 +17,9 @@ import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.Graphics2DDelegate
 import com.intellij.ui.JBColor
-import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
+import com.intellij.ui.tabs.ProjectTabsComponent
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
@@ -166,7 +166,7 @@ abstract class InternalUICustomization : UIThemeCustomization {
 
   open fun getProjectTabContentInsets(): Insets? = null
 
-  open fun createProjectTab(frame: JFrame, tabsComponent: WindowTabsComponent) {}
+  open fun createProjectTab(frame: JFrame, tabsComponent: ProjectTabsComponent) {}
 
   open fun paintProjectTab(
     frame: JFrame,

@@ -16,7 +16,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.ui.mac.MacWinTabsHandler
+import com.intellij.ui.tabs.ProjectTabsManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JFrame
 
@@ -90,7 +90,7 @@ internal class PreviousWindow : AbstractTraverseWindowAction(), DumbAware {
   }
 
   override fun switchFullScreenFrame(frame: JFrame) {
-    MacWinTabsHandler.switchFrameIfPossible(/* frame = */ frame, /* next = */ false)
+    ProjectTabsManager.switchFrameIfPossible(/* frame = */ frame, /* next = */ false)
   }
 }
 
@@ -100,6 +100,6 @@ internal class NextWindow : AbstractTraverseWindowAction(), DumbAware {
   }
 
   override fun switchFullScreenFrame(frame: JFrame) {
-    MacWinTabsHandler.switchFrameIfPossible(/* frame = */ frame, /* next = */ true)
+    ProjectTabsManager.switchFrameIfPossible(/* frame = */ frame, /* next = */ true)
   }
 }

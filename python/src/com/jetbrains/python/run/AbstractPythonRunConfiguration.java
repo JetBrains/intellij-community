@@ -126,7 +126,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     List<Module> result = new ArrayList<>();
     for (Module module : modules) {
-      if (PyModuleInterpreterReader.findModuleSdkIfReady(module) != null) {
+      if (PyModuleInterpreterReader.findModuleInterpreterIfReady(module) != null) {
         result.add(module);
       }
     }

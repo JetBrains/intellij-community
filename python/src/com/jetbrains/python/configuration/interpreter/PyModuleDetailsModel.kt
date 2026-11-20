@@ -7,24 +7,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Layout the combo shows: the ordered interpreters and a flag for the "no interpreter" placeholder.
- *
- * Generic over the interpreter [T], so [PyModuleDetailsModelTest] can pin every branch with plain values. The
- * placeholder surfaces only when the list is empty: when there are interpreters to pick from, "no interpreter" is an
- * ambiguous choice that we do not offer.
- */
-@ApiStatus.Internal
-data class SdkComboContents<T : Any>(
-  val orderedSdkNames: List<T>,
-  val includeNoInterpreter: Boolean,
-)
-
-/**
- * State and combo-content decisions for [PyModuleDetailsPane].
- *
- * Two responsibilities:
- *  - "Was the interpreter changed since apply" predicate: [isSdkChanged] / [markSdkApplied].
- *  - Combo layout: [buildComboContents] returns the ordered interpreters and a flag for the "no interpreter" row.
+ * The "was the interpreter changed since apply" state of [PyModuleDetailsPane]: [isSdkChanged] and [markSdkApplied].
  *
  * @param initialSdkName the interpreter the module has when the editor opens, or `null` when it has none.
  */
@@ -40,28 +23,6 @@ class PyModuleDetailsModel<T : Any>(initialSdkName: T?) {
   /** Records [appliedSdkName] as the new baseline after the caller has persisted the change. */
   fun markSdkApplied(appliedSdkName: T?) {
     initialSdkName = appliedSdkName
-  }
-
-  /**
-   * Rules:
-   *  - Preserves [pythonSdkNames] order.
-   *  - Prepends [currentModuleSdkName] when the interpreter of the module is not in [pythonSdkNames], so the combo
-   *    always shows what the module uses.
-   *  - Sets [SdkComboContents.includeNoInterpreter] only when the list is empty, so the combo shows a meaningful empty
-   *    state. When interpreters exist, picking "no interpreter" is not offered.
-   */
-  fun buildComboContents(
-    pythonSdkNames: List<T>,
-    currentModuleSdkName: T?,
-  ): SdkComboContents<T> {
-    val ordered = mutableListOf<T>().apply { addAll(pythonSdkNames) }
-    if (currentModuleSdkName != null && currentModuleSdkName !in ordered) {
-      ordered.add(0, currentModuleSdkName)
-    }
-    return SdkComboContents(
-      orderedSdkNames = ordered,
-      includeNoInterpreter = ordered.isEmpty(),
-    )
   }
 
   /**

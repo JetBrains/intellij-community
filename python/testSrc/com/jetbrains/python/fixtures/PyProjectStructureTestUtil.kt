@@ -19,7 +19,7 @@ import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.intellij.python.sdk.backend.describeForTests
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.languageLevel
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
@@ -121,15 +121,13 @@ fun findPythonInterpreterForTests(module: Module): PythonInterpreter? {
 }
 
 /**
- * The language level of the interpreter of [module], see [findPythonInterpreterForTests]. It reads the version that the
- * SDK of the interpreter records, so it also works for a mock interpreter, which has no binary to run.
+ * The language level of the interpreter of [module], see [findPythonInterpreterForTests]. It reads the recorded
+ * version, so it also works for a mock interpreter, which has no binary to run.
  */
 @TestOnly
 fun findLanguageLevelForTests(module: Module): LanguageLevel {
   val interpreter = checkNotNull(findPythonInterpreterForTests(module)) { "No interpreter for ${module.name}" }
-  @Suppress("DEPRECATION")
-  val versionString = checkNotNull(interpreter.getSdkAPI().versionString) { "No version for $interpreter" }
-  return LanguageLevel.fromPythonVersion(versionString.removePrefix("Python "))!!
+  return interpreter.languageLevel(module.project)
 }
 
 /**

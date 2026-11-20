@@ -175,6 +175,7 @@ internal fun recordOf(
       sysPath += existing.sysPath
       addedPaths += existing.addedPaths
       excludedPaths += existing.excludedPaths
+      excludedFolders += existing.excludedFolders
     }
     else {
       version = sdk.versionString

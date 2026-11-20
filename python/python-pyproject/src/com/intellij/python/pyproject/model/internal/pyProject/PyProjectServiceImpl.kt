@@ -17,6 +17,12 @@ internal class PyProjectServiceImpl : PyProjectService {
   }
 
   override fun getPyProjectsWithoutJpsSync(project: Project): List<PyProject> = project.getPyProjectsWithCurrentStorage().first
+
+  override fun isPyProject(module: Module): Boolean =
+    PyProjectImpl.create(module, WorkspaceModel.getInstance(module.project).currentSnapshot) != null
+
+  override fun getPyProjectCandidate(module: Module): PyProject? =
+    PyProjectImpl.createCandidate(module, WorkspaceModel.getInstance(module.project).currentSnapshot)
 }
 
 /** Every `PyProject` of [this] project, and the storage they were read from. Read more data from the same storage. */

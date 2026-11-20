@@ -2,7 +2,7 @@
 package com.jetbrains.python.newProject
 
 import com.intellij.platform.util.progress.withProgressText
-import com.jetbrains.python.sdk.asPyProjectAddingFacet
+import com.jetbrains.python.project.asPyProjectOrCandidate
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
@@ -143,7 +143,7 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
         return@runWithSdkConfigurationLock
       }
       // The interpreter the project then has: the registry can adopt an existing SDK for it.
-      val set = moduleOrProject.moduleIfExists?.asPyProjectAddingFacet()?.setPythonInterpreter(pythonInterpreter)?.getOr {
+      val set = moduleOrProject.moduleIfExists?.asPyProjectOrCandidate()?.setPythonInterpreter(pythonInterpreter)?.getOr {
         errorSink.emit(it.error, project)
         return@runWithSdkConfigurationLock
       }

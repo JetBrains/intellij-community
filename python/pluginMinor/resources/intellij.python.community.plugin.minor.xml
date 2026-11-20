@@ -21,7 +21,6 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <facetType implementation="com.intellij.python.community.plugin.minor.facet.MinorPythonFacetType"/>
     <applicationService serviceImplementation="com.intellij.python.community.plugin.minor.facet.PySdkToFacetSetterMinorImpl" serviceInterface="com.jetbrains.python.module.PySdkToFacetSetter"/>
   </extensions>
 

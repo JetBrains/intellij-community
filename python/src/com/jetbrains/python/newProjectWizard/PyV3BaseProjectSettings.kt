@@ -2,7 +2,7 @@
 package com.jetbrains.python.newProjectWizard
 
 import com.intellij.platform.util.progress.withProgressText
-import com.jetbrains.python.sdk.asPyProjectAddingFacet
+import com.jetbrains.python.project.asPyProjectOrCandidate
 import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VfsUtil
@@ -55,7 +55,7 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
       val (pythonInterpreter: PythonInterpreter, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@withSdkConfigurationLock it }
 
       // The interpreter the project then has: the registry can adopt an existing SDK for it.
-      val set = module.asPyProjectAddingFacet()?.setPythonInterpreter(pythonInterpreter)?.getOr { return@withSdkConfigurationLock it } ?: pythonInterpreter
+      val set = module.asPyProjectOrCandidate()?.setPythonInterpreter(pythonInterpreter)?.getOr { return@withSdkConfigurationLock it } ?: pythonInterpreter
       Result.success(Pair(set, interpreterStatistics))
     }
     return@coroutineScope sdkResult

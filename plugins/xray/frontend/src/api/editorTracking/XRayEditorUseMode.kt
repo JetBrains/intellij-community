@@ -8,6 +8,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
+@ApiStatus.Internal
+const val XRAY_EDITOR_TRACKING_REGISTRY_KEY: String = "com.intellij.xray.editorTracking"
+
 /**
  * Key pointing to the current line the user is focused on
  */

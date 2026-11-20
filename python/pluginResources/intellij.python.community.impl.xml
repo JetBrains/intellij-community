@@ -291,6 +291,10 @@
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.execution.console.ConsoleHistoryCopyHandler"/>
 
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
+                        serviceImplementation="com.jetbrains.python.run.PyCommonOptionsFormFactoryImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
+                        serviceImplementation="com.jetbrains.python.run.configuration.PyCommonFragmentsBuilderImpl"/>
     <completion.contributor language="Python" id="pythonConsoleCompletionBlocking" order="first"
                             implementationClass="com.jetbrains.python.console.completion.PythonConsoleCompletionBlockingContributor"/>
 

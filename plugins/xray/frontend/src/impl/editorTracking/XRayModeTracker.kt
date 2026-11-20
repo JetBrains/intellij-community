@@ -12,25 +12,22 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.xray.frontend.api.editorTracking.XRAY_CURRENT_LINE
 import com.intellij.xray.frontend.api.editorTracking.XRAY_CURRENT_LINE_POSITION
-import com.intellij.xray.frontend.api.editorTracking.XRAY_EDITOR_MODE
+import com.intellij.xray.frontend.api.editorTracking.XRAY_EDITOR_TRACKING_REGISTRY_KEY
 import com.intellij.xray.frontend.api.editorTracking.XRAY_EDITOR_USE_MODE
 import com.intellij.xray.frontend.api.editorTracking.XRayEditorUseMode
 import com.intellij.xray.frontend.api.editorTracking.XRayTimings
 import com.intellij.xray.frontend.impl.service.XRayModeService
-import java.awt.Component
-import java.awt.Toolkit
-import java.awt.event.InputEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.awt.event.MouseWheelEvent
-import java.awt.event.MouseWheelListener
-import javax.swing.JScrollPane
-import javax.swing.JViewport
 import javax.swing.Timer
 
 internal fun attachXRayTracker(editor: Editor) {
+
+  if (!Registry.`is`(XRAY_EDITOR_TRACKING_REGISTRY_KEY)) return
+
   if (editor.getUserData(XRAY_TRACKER_DISPOSABLE) != null) return
 
   val trackerDisposable = Disposer.newDisposable(XRayEditorTrackingService.getInstance(), "XRayModeTracker")
@@ -105,47 +102,11 @@ internal fun attachXRayTracker(editor: Editor) {
   }
   editor.document.addDocumentListener(documentListener, trackerDisposable)
 
-  // Mouse wheel listener to allow scrolling when the combination is pressed
-  // The implementation reflects the solution from JetBrains Scala plugin (ScalaEditorFactoryListener#editorMouseWheelListener)
-  val editorMouseWheelListener = object : MouseWheelListener {
-    override fun mouseWheelMoved(e: MouseWheelEvent) {
-      val service = XRayModeService.getInstance()
-
-      if (!service.isHoldActive()) return
-
-      if (!e.isShiftDown || !e.isControlDown) return
-
-      e.consume()
-      val event = MouseWheelEvent(
-        e.source as Component, e.id, e.`when`,
-        e.modifiersEx and InputEvent.CTRL_DOWN_MASK.inv() and InputEvent.SHIFT_DOWN_MASK.inv() and
-          (InputEvent.META_DOWN_MASK or InputEvent.BUTTON3_DOWN_MASK).inv(),
-        e.x, e.y, e.xOnScreen, e.yOnScreen, e.clickCount, e.isPopupTrigger, e.scrollType, e.scrollAmount,
-        e.wheelRotation, e.preciseWheelRotation
-      )
-      Toolkit.getDefaultToolkit().systemEventQueue.postEvent(event)
-    }
-  }
-
-  when (val viewPort = editor.contentComponent.parent) {
-    is JViewport -> when (val scrollPane = viewPort.parent) {
-      is JScrollPane -> scrollPane.addMouseWheelListener(editorMouseWheelListener)
-    }
-  }
-
   Disposer.register(trackerDisposable) {
     editor.contentComponent.removeKeyListener(keyListener)
-
-    when (val viewPort = editor.contentComponent.parent) {
-      is JViewport -> when (val scrollPane = viewPort.parent) {
-        is JScrollPane -> scrollPane.removeMouseWheelListener(editorMouseWheelListener)
-      }
-    }
-
     caretRefreshTimer.stop()
     lastDocumentChangeTimer.stop()
 
-    editor.putUserData(XRAY_EDITOR_MODE, null)
     editor.putUserData(XRAY_EDITOR_USE_MODE, null)
     editor.putUserData(XRAY_CURRENT_LINE, null)
     editor.putUserData(XRAY_CURRENT_LINE_POSITION, null)
