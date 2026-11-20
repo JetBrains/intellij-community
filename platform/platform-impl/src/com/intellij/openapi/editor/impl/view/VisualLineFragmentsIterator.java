@@ -174,7 +174,6 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     }
     float startX = myCurrentX;
     int startLogicalLine = myCurrentEndLogicalLine;
-    int startLogicalLineStartOffset = myDocument.lineStartOffset(startLogicalLine);
     VisualLineFragment fragment;
     if (myNextStep == Step.FOLD_REGION) {
       fragment = moveToFoldRegion();
@@ -188,8 +187,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
       myCurrentX,
       myCurrentVisualColumn,
       startLogicalLine,
-      myCurrentEndLogicalLine,
-      startLogicalLineStartOffset
+      myCurrentEndLogicalLine
     );
     return fragment;
   }
@@ -262,6 +260,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     LineVisualFragment delegate = fragmentIterator.next();
     float x = delegate.getEndX();
     int visualColumn = delegate.getEndVisualColumn();
+    int lineStartOffset = myDocument.lineStartOffset(myCurrentEndLogicalLine);
     Step nextStep = Step.TEXT_RUN;
     if (!fragmentIterator.hasNext()) {
       if (myCurrentInlayIndex < myInlays.size()) {
@@ -277,7 +276,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragment> 
     myCurrentVisualColumn = visualColumn;
     myFragmentIterator = fragmentIterator;
     myNextStep = nextStep;
-    myTextRunFragment.set(delegate);
+    myTextRunFragment.set(delegate, lineStartOffset);
     return myTextRunFragment;
   }
 

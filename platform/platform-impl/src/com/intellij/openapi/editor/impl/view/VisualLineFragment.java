@@ -27,7 +27,6 @@ abstract sealed class VisualLineFragment {
   private int endVisualColumn;
   private int startLogicalLine;
   private int endLogicalLine;
-  private int startLogicalLineStartOffset;
 
   private VisualLineFragment(EditorView view, int visualLineStartOffset, float xOffset) {
     this.view = view;
@@ -43,15 +42,13 @@ abstract sealed class VisualLineFragment {
     float endX,
     int endVisualColumn,
     int startLogicalLine,
-    int endLogicalLine,
-    int startLogicalLineStartOffset
+    int endLogicalLine
   ) {
     this.startX = startX;
     this.endX = endX;
     this.endVisualColumn = endVisualColumn;
     this.startLogicalLine = startLogicalLine;
     this.endLogicalLine = endLogicalLine;
-    this.startLogicalLineStartOffset = startLogicalLineStartOffset;
   }
 
   int getVisualLineStartOffset() {
@@ -174,10 +171,6 @@ abstract sealed class VisualLineFragment {
     return xOffset;
   }
 
-  protected final int getStartLogicalLineStartOffset() {
-    return startLogicalLineStartOffset;
-  }
-
   private int getLogicalColumn(int offset) {
     return view.offsetToLogicalPosition(offset).column;
   }
@@ -187,13 +180,18 @@ abstract sealed class VisualLineFragment {
    */
   static final class TextRunFragment extends VisualLineFragment {
     private LineVisualFragment delegate;
+    /**
+     * The start offset of the logical line. The offsets of {@link #delegate} are relative to it.
+     */
+    private int lineStartOffset;
 
     TextRunFragment(EditorView view, int visualLineStartOffset, float xOffset) {
       super(view, visualLineStartOffset, xOffset);
     }
 
-    void set(LineVisualFragment lineVisualFragment) {
+    void set(LineVisualFragment lineVisualFragment, int logicalLineStartOffset) {
       delegate = lineVisualFragment;
+      lineStartOffset = logicalLineStartOffset;
     }
 
     @Override
@@ -258,32 +256,31 @@ abstract sealed class VisualLineFragment {
 
     @Override
     int getStartOffset() {
-      return delegate.getStartOffset() + getStartLogicalLineStartOffset();
+      return delegate.getStartOffset() + lineStartOffset;
     }
 
     @Override
     int getEndOffset() {
-      return delegate.getEndOffset() + getStartLogicalLineStartOffset();
+      return delegate.getEndOffset() + lineStartOffset;
     }
 
     @Override
     int getMinOffset() {
-      return delegate.getMinOffset() + getStartLogicalLineStartOffset();
+      return delegate.getMinOffset() + lineStartOffset;
     }
 
     @Override
     int getMaxOffset() {
-      return delegate.getMaxOffset() + getStartLogicalLineStartOffset();
+      return delegate.getMaxOffset() + lineStartOffset;
     }
 
     @Override
     float offsetToX(int offset) {
-      return delegate.offsetToX(offset - getStartLogicalLineStartOffset()) + getXOffset();
+      return delegate.offsetToX(offset - lineStartOffset) + getXOffset();
     }
 
     @Override
     float offsetToX(float startX, int startOffset, int offset) {
-      int lineStartOffset = getStartLogicalLineStartOffset();
       float x = delegate.offsetToX(startX - getXOffset(), startOffset - lineStartOffset, offset - lineStartOffset);
       return x + getXOffset();
     }
