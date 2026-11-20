@@ -17,14 +17,21 @@ use std::process::ExitCode;
 
 use anyhow::{Context, bail};
 
+// 263 only: the `cli` crate of this branch has no `main` and no `exit_code`, so the binary parses the arguments and reports an
+// error itself. See `plugins/air/BRANCH-263-DIVERGENCE.md` section 4.
 fn main() -> ExitCode {
-    cli::main(run)
+    ExitCode::from(run(std::env::args_os().skip(1), &mut io::stderr()))
 }
 
 /// Runs the tool and returns the exit code: 1 for every error, after the message on `errors`.
 fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
-    let result = write_list(args, &mut io::stdout().lock());
-    cli::exit_code(errors, result, 1)
+    match write_list(args, &mut io::stdout().lock()) {
+        Ok(()) => 0,
+        Err(error) => {
+            cli::report(errors, &error);
+            1
+        }
+    }
 }
 
 fn write_list(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write) -> anyhow::Result<()> {
