@@ -20,8 +20,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -97,17 +95,13 @@ public final class GenerateGetterSetterModCommandAction implements ModCommandAct
     TemplateChoice getterTemplates = myMode.myGetters ? TemplateChoice.of(GetterTemplatesManager.getInstance()) : null;
     TemplateChoice setterTemplates = myMode.mySetters ? TemplateChoice.of(SetterTemplatesManager.getInstance()) : null;
 
-    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.createPointer(aClass);
     int offset = context.offset();
-    return new ModEditOptions<>(
-      JavaBundle.message(myMode.myTitleKey),
-      () -> new AccessorOptions(myMode, members, getterTemplates, setterTemplates, annotationsAvailable,
-                                List.of(preselection), copyAllAnnotations),
-      true,
-      options -> {
-        PsiClass cls = pointer.getElement();
-        return cls == null ? ModCommand.nop() : generate(cls, offset, members, options);
-      });
+    return ModCommand.editOptions(aClass,
+                                  JavaBundle.message(myMode.myTitleKey),
+                                  () -> new AccessorOptions(myMode, members, getterTemplates, setterTemplates, annotationsAvailable,
+                                                            List.of(preselection), copyAllAnnotations),
+                                  true,
+                                  (cls, options) -> generate(cls, offset, members, options));
   }
 
   /**

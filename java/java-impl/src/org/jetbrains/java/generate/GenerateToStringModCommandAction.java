@@ -91,16 +91,13 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
     boolean insertOverride = annotationsAvailable &&
                              JavaCodeStyleSettings.getInstance(psiClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
 
-    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.createPointer(psiClass);
-    return new ModEditOptions<>(
+    return ModCommand.editOptions(
+      psiClass,
       getFamilyName(),
       () -> new ToStringOptions(members, templateOptions, annotationsAvailable, psiClass.getLanguage(), preselection, defaultTemplate,
                                 insertOverride),
       true,
-      options -> {
-        PsiClass cls = pointer.getElement();
-        return cls == null ? ModCommand.nop() : generate(context, cls, members, options);
-      });
+      (cls, options) -> generate(context, cls, members, options));
   }
 
   /**

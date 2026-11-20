@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.codeInspection.options.OptPane;
@@ -18,6 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlace;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -30,8 +33,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * A transparent command that modifies the project/workspace state (writes file, changes setting, moves editor caret, etc.).
@@ -475,6 +480,38 @@ public sealed interface ModCommand
       }
     }
     return new ModEditOptions<>(title, MemberHolder::new, true, mh -> nextCommand.apply(mh.myElements));
+  }
+
+  /**
+   *
+   * @param element an element to capture
+   * @param title user-readable title to display in UI
+   * @param containerSupplier a stateless supplier capable of producing identical options containers to edit. The supplier is necessary,
+   *                          as the command must be immutable, so we cannot simply store a container inside the command.
+   * @param canUseDefaults if true, then it's allowed to skip the interactive editing in the batch mode, accepting the
+   *                       default container state. If false, the command will not be available in the batch mode.
+   * @param nextCommand a function that generates the next command to execute after the editing is finished.
+   *                    The function will be executed in background read action. It also accepts a supplied element, restored from a
+   *                    smart pointer.
+   * @param <T> type of the option container. Must have properly defined {@link OptionContainer#getOptionsPane()} method, so
+   *           it should be possible to generate the editing UI.
+   * @param <E> type of the element.
+   * @return A command that allows to interactively edit the option container and issue a next command after the editing is done.
+   * Does nothing if the editing was cancelled by user.
+   */
+  static <T extends OptionContainer, E extends PsiElement> @NotNull ModCommand editOptions(@NotNull E element,
+                                                                                           @NotNull @NlsContexts.PopupTitle String title,
+                                                                                           @NotNull Supplier<@NotNull T> containerSupplier,
+                                                                                           boolean canUseDefaults,
+                                                                                           @NotNull BiFunction<? super @NotNull E, ? super @NotNull T, ? extends @NotNull ModCommand> nextCommand) {
+    SmartPsiElementPointer<@NotNull E> pointer = SmartPointerManager.createPointer(element);
+    return new ModEditOptions<>(title, containerSupplier, canUseDefaults, container -> {
+      E deref = pointer.getElement();
+      if (deref == null) {
+        return error(AnalysisBundle.message("tooltip.element.not.valid.anymore.try.again"));
+      }
+      return nextCommand.apply(deref, container);
+    });
   }
 
   /**

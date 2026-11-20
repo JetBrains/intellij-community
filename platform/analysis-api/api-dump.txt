@@ -1450,6 +1450,7 @@ com.intellij.modcommand.ModCommand
 - s:chooseAction(java.lang.String,java.util.List):com.intellij.modcommand.ModCommand
 - s:chooseAction(java.lang.String,com.intellij.modcommand.ModCommandAction[]):com.intellij.modcommand.ModCommand
 - s:copyToClipboard(java.lang.String):com.intellij.modcommand.ModCommand
+- s:editOptions(com.intellij.psi.PsiElement,java.lang.String,java.util.function.Supplier,Z,java.util.function.BiFunction):com.intellij.modcommand.ModCommand
 - s:error(java.lang.String):com.intellij.modcommand.ModCommand
 - s:highlight(com.intellij.openapi.editor.colors.TextAttributesKey,com.intellij.psi.PsiElement[]):com.intellij.modcommand.ModCommand
 - s:highlight(com.intellij.psi.PsiElement[]):com.intellij.modcommand.ModCommand

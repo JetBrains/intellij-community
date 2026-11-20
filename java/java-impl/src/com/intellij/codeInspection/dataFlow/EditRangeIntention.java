@@ -123,12 +123,10 @@ public final class EditRangeIntention implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    final PsiModifierListOwner owner = getTarget(context);
-    if (owner == null) return ModCommand.nop();
-    return new ModEditOptions<>(JavaBundle.message("dialog.title.edit.range", getElementName(owner)),
-                                () -> RangeData.from(owner),
-                                false,
-                                data -> updateRange(owner, data.myType, data.min, data.max));
+    PsiModifierListOwner orig = getTarget(context);
+    if (orig == null) return ModCommand.nop();
+    return ModCommand.editOptions(orig, JavaBundle.message("dialog.title.edit.range", getElementName(orig)), () -> RangeData.from(orig),
+                                  false, (owner, data) -> updateRange(owner, data.myType, data.min, data.max));
   }
 
   private static @NotNull ModCommand updateRange(PsiModifierListOwner owner, LongRangeSet fromType, String min, String max) {

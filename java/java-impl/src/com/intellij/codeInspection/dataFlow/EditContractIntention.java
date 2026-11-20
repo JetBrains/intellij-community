@@ -112,10 +112,8 @@ public final class EditContractIntention implements ModCommandAction {
     final PsiMethod method = getTargetMethod(context);
     if (method == null) return ModCommand.nop();
     PsiAnnotation existingAnno = AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(Contract.class.getName()));
-    return new ModEditOptions<>(JavaBundle.message("dialog.title.edit.method.contract"),
-                                () -> ContractData.fromAnnotation(method, existingAnno),
-                                false,
-                                data -> updateContract(method, data));
+    return ModCommand.editOptions(method, JavaBundle.message("dialog.title.edit.method.contract"),
+                                  () -> ContractData.fromAnnotation(method, existingAnno), false, (m, data) -> updateContract(m, data));
   }
 
   private static @NotNull ModCommand updateContract(@NotNull PsiMethod method, @NotNull ContractData data) {

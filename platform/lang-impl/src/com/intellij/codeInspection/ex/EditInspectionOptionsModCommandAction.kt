@@ -44,16 +44,10 @@ class EditInspectionOptionsModCommandAction(private val toolId: String) : ModCom
     val file = context.file()
     val toolWrapper = findToolWrapper(file) ?: return ModCommand.nop()
     if (toolWrapper.tool.optionsPane == OptPane.EMPTY) return ModCommand.nop()
-    val filePointer = SmartPointerManager.createPointer(file)
-    return ModEditOptions(
-      InspectionsBundle.message("edit.inspection.options", toolWrapper.displayName),
-      {
-        val psiFile = checkNotNull(filePointer.element) { "File is invalid" }
-        val toolWrapper = checkNotNull(findToolWrapper(psiFile)) { "Tool not found: ${toolId}" }
-        getToolCopy(psiFile, toolWrapper.tool)
-      },
-      false,
-    ) { edited -> updateOptions(filePointer.element, edited) }
+    return ModCommand.editOptions(file, InspectionsBundle.message("edit.inspection.options", toolWrapper.displayName), {
+      val toolWrapper = checkNotNull(findToolWrapper(file)) { "Tool not found: ${toolId}" }
+      getToolCopy(file, toolWrapper.tool)
+    }, false, ::updateOptions)
   }
 
   private fun findToolWrapper(file: PsiFile): InspectionToolWrapper<*, *>? {

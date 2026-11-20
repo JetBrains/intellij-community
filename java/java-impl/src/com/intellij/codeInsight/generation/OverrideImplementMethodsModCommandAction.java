@@ -112,15 +112,12 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
                              JavaCodeStyleSettings.getInstance(container.file()).INSERT_OVERRIDE_ANNOTATION;
     boolean javadocVisible = container.file().getLanguage().is(JavaLanguage.INSTANCE);
     PsiElement classOrEnumConst = target.element();
-    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(classOrEnumConst);
-    return new ModEditOptions<>(
+    return ModCommand.editOptions(
+      classOrEnumConst,
       JavaOverrideImplementMemberChooser.getChooserTitle(myToImplement, container.merge()),
       () -> new OverrideImplementOptions(members, container.overrideVisible(), javadocVisible, preselection, false, false, insertOverride),
       true,
-      options -> {
-        PsiElement element = pointer.getElement();
-        return element == null ? ModCommand.nop() : generate(element, members, options);
-      });
+      (element, options) -> generate(element, members, options));
   }
 
   private @NotNull ModCommand generate(@NotNull PsiElement element,
