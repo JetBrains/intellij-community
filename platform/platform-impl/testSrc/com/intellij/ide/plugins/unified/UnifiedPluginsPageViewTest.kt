@@ -479,6 +479,13 @@ internal class UnifiedPluginsPageViewTest {
         val enterActionKey = link.getInputMap(JComponent.WHEN_FOCUSED).get(enterKey)
         link.actionMap.get(enterActionKey).actionPerformed(ActionEvent(link, ActionEvent.ACTION_PERFORMED, null))
         assertThat(openedUrls).containsExactly(DEFAULT_PLUGINS_HOST, DEFAULT_PLUGINS_HOST)
+
+        for (onRelease in listOf(false, true)) {
+          val spaceKey = KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0, onRelease)
+          val spaceActionKey = link.getInputMap(JComponent.WHEN_FOCUSED).get(spaceKey)
+          link.actionMap.get(spaceActionKey).actionPerformed(ActionEvent(link, ActionEvent.ACTION_PERFORMED, null))
+        }
+        assertThat(openedUrls).containsExactly(DEFAULT_PLUGINS_HOST, DEFAULT_PLUGINS_HOST, DEFAULT_PLUGINS_HOST)
       }
     }
   }
@@ -1455,7 +1462,7 @@ internal class UnifiedPluginsPageViewTest {
       return RecordingPluginRow().also { rows[occurrenceId] = it }
     }
 
-    override fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>) = Unit
+    override fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>, keyboardOrder: List<JComponent>) = Unit
 
     fun selectedOccurrences(): List<PluginOccurrenceId> {
       return rows.filterValues(RecordingPluginRow::selected).keys.toList()

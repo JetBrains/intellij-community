@@ -109,6 +109,7 @@ import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Window
+import java.awt.event.KeyEvent
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JButton
@@ -1227,10 +1228,7 @@ internal class UnifiedPluginsPageSessionTest {
   fun `Suggested links to the default Marketplace and hides the link for an override`(@TestDisposable disposable: Disposable): Unit =
     uiTest {
       val marketplaceUrl = AtomicReference("$DEFAULT_PLUGINS_HOST/")
-      val customization = object : MarketplaceCustomizationService by MarketplaceCustomizationService.getInstance() {
-        override fun getPluginManagerUrl(): String = marketplaceUrl.get()
-      }
-      ExtensionTestUtil.maskExtensions(MarketplaceCustomizationService.EP, listOf(customization), disposable)
+      setMarketplaceUrl(disposable, marketplaceUrl::get)
 
       val suggested = PluginDto("Suggested Plugin", PluginId.getId("suggested.plugin"))
       val session = createSession(null, marketplaceProvider = FixedMarketplaceDataProvider(suggested = listOf(suggested)))
@@ -1249,6 +1247,56 @@ internal class UnifiedPluginsPageSessionTest {
         waitUntilAssertSucceeds {
           assertThat(componentsOfType(content, ActionLink::class.java)).noneMatch { it.text == linkText && it.parent.isVisible }
         }
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `arrows move between Suggested rows the Marketplace link and the next section`(@TestDisposable disposable: Disposable): Unit =
+    uiTest {
+      setMarketplaceUrl(disposable) { DEFAULT_PLUGINS_HOST }
+      val suggested = PluginDto("Suggested Plugin", PluginId.getId("suggested.plugin"))
+      val repositoryPlugin = PluginDto("Repository Plugin", PluginId.getId("repository.plugin"))
+      val repository = CustomPluginRepository("repository", PluginSource.LOCAL)
+      val session = createSession(
+        null,
+        marketplaceProvider = FixedMarketplaceDataProvider(suggested = listOf(suggested)),
+        repositoryProvider = FixedRepositoryDataProvider(listOf(repository), mapOf(repository.id to listOf(repositoryPlugin))),
+      )
+      try {
+        val content = session.getComponent()
+        val suggestedIds = setOf(suggested.pluginId.idString)
+        val repositoryIds = setOf(repositoryPlugin.pluginId.idString)
+        waitForPluginIds(content, suggestedIds + repositoryIds)
+
+        val linkText = IdeBundle.message("plugins.configurable.more.on.marketplace")
+        waitUntilAssertSucceeds {
+          assertThat(componentsOfType(content, ActionLink::class.java)).anyMatch { it.text == linkText && it.parent.isVisible }
+        }
+        val link = componentsOfType(content, ActionLink::class.java).single { it.text == linkText }
+        session.select(listOf(suggested.pluginId))
+        waitForSelectedPluginIds(content, suggestedIds)
+
+        fun pressArrow(component: Component, keyCode: Int) {
+          val event = KeyEvent(component, KeyEvent.KEY_PRESSED, 0, 0, keyCode, KeyEvent.CHAR_UNDEFINED)
+          component.keyListeners.forEach { it.keyPressed(event) }
+          assertThat(event.isConsumed).isTrue()
+        }
+
+        fun row(pluginId: PluginId): ListPluginComponent =
+          componentsOfType(content, ListPluginComponent::class.java).single { it.getPluginModel().pluginId == pluginId }
+
+        pressArrow(row(suggested.pluginId), KeyEvent.VK_DOWN)
+        waitForSelectedPluginIds(content, emptySet())
+        pressArrow(link, KeyEvent.VK_UP)
+        waitForSelectedPluginIds(content, suggestedIds)
+        pressArrow(row(suggested.pluginId), KeyEvent.VK_DOWN)
+        pressArrow(link, KeyEvent.VK_DOWN)
+        waitForSelectedPluginIds(content, repositoryIds)
+        pressArrow(row(repositoryPlugin.pluginId), KeyEvent.VK_UP)
+        waitForSelectedPluginIds(content, emptySet())
       }
       finally {
         Disposer.dispose(session)
@@ -1406,6 +1454,13 @@ internal class UnifiedPluginsPageSessionTest {
     val container = JPanel()
     ComponentUtil.forceMarkAsShowing(container, true)
     withShowingChanged { container.add(component) }
+  }
+
+  private fun setMarketplaceUrl(disposable: Disposable, url: () -> String) {
+    val customization = object : MarketplaceCustomizationService by MarketplaceCustomizationService.getInstance() {
+      override fun getPluginManagerUrl(): String = url()
+    }
+    ExtensionTestUtil.maskExtensions(MarketplaceCustomizationService.EP, listOf(customization), disposable)
   }
 
   private class SpotlightSearchCaller : SpotlightPainter(JPanel(), {}) {
