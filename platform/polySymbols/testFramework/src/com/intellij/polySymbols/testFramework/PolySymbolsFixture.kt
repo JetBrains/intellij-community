@@ -423,9 +423,9 @@ open class PolySymbolsFixture(
             assertLookupShown()
             tester.joinCompletion()
 
-            val expectedFile = getCodeCompletionExpectedItemsLocation(dir, dirName) +
-                               (if (dir) "/items" else "$testName.items") +
-                               ".${++checkLookupCount}.txt"
+            val prefix = getCodeCompletionExpectedItemsLocation(dir, dirName) + (if (dir) "/items" else "$testName.items")
+            val suffix = ".${++checkLookupCount}.txt"
+            val expectedFile = prefix + getCodeCompletionExpectedItemsFileNameInfix(prefix, suffix) + suffix
 
             checkListByFile(
               actualList = renderLookupItems(
