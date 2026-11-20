@@ -1,0 +1,16 @@
+usecase-beta
+actor Customer:::external
+Checkout("Checkout"):::critical
+systemBoundary Account
+  Profile[Edit profile]
+end
+json Session@{ "active": true }:::data
+Customer --> Checkout
+Checkout --> Profile
+Profile --> Session
+classDef default stroke:#7f8ea3
+classDef external,critical stroke-width:3px
+class Customer,Checkout external,critical
+class Account,Session data
+style Checkout stroke:#c33,stroke-width:4px
+style Account stroke:#536878

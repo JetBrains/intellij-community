@@ -41,6 +41,12 @@ public class MermaidSubgraphBlockImpl extends ASTWrapperPsiElement implements Me
 
   @Override
   @NotNull
+  public List<MermaidConnectorStatement> getConnectorStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidConnectorStatement.class);
+  }
+
+  @Override
+  @NotNull
   public List<MermaidDirectionStatement> getDirectionStatementList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidDirectionStatement.class);
   }

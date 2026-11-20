@@ -89,6 +89,7 @@ public interface MermaidElements {
   IElementType COMPLEX_TASK_NAME = new MermaidElementType("COMPLEX_TASK_NAME");
   IElementType COMPLEX_TITLE_VALUE = new MermaidElementType("COMPLEX_TITLE_VALUE");
   IElementType COMPOSITE_STATE_DECLARATION = new MermaidElementType("COMPOSITE_STATE_DECLARATION");
+  IElementType CONNECTOR_STATEMENT = new MermaidElementType("CONNECTOR_STATEMENT");
   IElementType CRITICAL_HEADER = new MermaidElementType("CRITICAL_HEADER");
   IElementType CRITICAL_STATEMENT = new MermaidElementType("CRITICAL_STATEMENT");
   IElementType CSS_CLASS_STATEMENT = new MermaidElementType("CSS_CLASS_STATEMENT");
@@ -532,6 +533,9 @@ public interface MermaidElements {
       }
       else if (type == COMPOSITE_STATE_DECLARATION) {
         return new MermaidCompositeStateDeclarationImpl(node);
+      }
+      else if (type == CONNECTOR_STATEMENT) {
+        return new MermaidConnectorStatementImpl(node);
       }
       else if (type == CRITICAL_HEADER) {
         return new MermaidCriticalHeaderImpl(node);

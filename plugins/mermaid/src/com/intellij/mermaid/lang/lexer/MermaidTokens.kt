@@ -370,6 +370,10 @@ object MermaidTokens {
     @JvmField
     val SUBGRAPH = MermaidToken("Flowchart.SUBGRAPH")
 
+    /** agentflow: `connector id["label"]`. */
+    @JvmField
+    val CONNECTOR = MermaidToken("Flowchart.CONNECTOR")
+
     @JvmField
     val LINK_STYLE = MermaidToken("Flowchart.LINK_STYLE")
 
@@ -953,17 +957,40 @@ object MermaidTokens {
 
 
   /**
-   * Diagram families mermaid renders but this grammar does not model in detail yet. They are lexed
-   * permissively so such a file is not reported as one long error: the header is recognised and the body
-   * becomes opaque text, which still leaves comments, frontmatter, accessibility statements and the
-   * preview working.
+   * Diagram families that mermaid renders but that this grammar does not parse in detail. Each family has
+   * its own lexer state with its own keywords. All families share these token types, so the parser can
+   * accept the body of every family with one lenient rule.
    */
   object Generic {
     @JvmField
     val GENERIC_DIAGRAM = MermaidToken("Generic.GENERIC_DIAGRAM")
 
+    /** Free text that has no other meaning, for example an ishikawa cause or a treeView name. */
     @JvmField
     val GENERIC_TEXT = MermaidToken("Generic.GENERIC_TEXT")
+
+    @JvmField
+    val GENERIC_KEYWORD = MermaidToken("Generic.GENERIC_KEYWORD")
+
+    @JvmField
+    val GENERIC_ID = MermaidToken("Generic.GENERIC_ID")
+
+    @JvmField
+    val GENERIC_NUMBER = MermaidToken("Generic.GENERIC_NUMBER")
+
+    @JvmField
+    val GENERIC_ARROW = MermaidToken("Generic.GENERIC_ARROW")
+
+    @JvmField
+    val GENERIC_OPERATOR = MermaidToken("Generic.GENERIC_OPERATOR")
+
+    /** A label in brackets, for example `[Title]` in architecture or `;label` in wardley. */
+    @JvmField
+    val GENERIC_LABEL = MermaidToken("Generic.GENERIC_LABEL")
+
+    /** A single-quoted string. A double-quoted string uses the shared `string` tokens. */
+    @JvmField
+    val GENERIC_STRING = MermaidToken("Generic.GENERIC_STRING")
   }
 
 

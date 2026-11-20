@@ -41,6 +41,12 @@ public class MermaidFlowchartBodyImpl extends ASTWrapperPsiElement implements Me
 
   @Override
   @NotNull
+  public List<MermaidConnectorStatement> getConnectorStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidConnectorStatement.class);
+  }
+
+  @Override
+  @NotNull
   public List<MermaidFlowchartClassStatement> getFlowchartClassStatementList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidFlowchartClassStatement.class);
   }

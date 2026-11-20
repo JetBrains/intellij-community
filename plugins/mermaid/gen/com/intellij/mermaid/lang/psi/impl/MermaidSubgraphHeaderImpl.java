@@ -28,9 +28,15 @@ public class MermaidSubgraphHeaderImpl extends ASTWrapperPsiElement implements M
   }
 
   @Override
-  @NotNull
+  @Nullable
+  public MermaidMetadata getMetadata() {
+    return findChildByClass(MermaidMetadata.class);
+  }
+
+  @Override
+  @Nullable
   public MermaidSubgraphName getSubgraphName() {
-    return findNotNullChildByClass(MermaidSubgraphName.class);
+    return findChildByClass(MermaidSubgraphName.class);
   }
 
 }

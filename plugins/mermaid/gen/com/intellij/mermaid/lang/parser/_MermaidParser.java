@@ -4349,6 +4349,19 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // CONNECTOR vertex
+  public static boolean connectorStatement(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "connectorStatement")) return false;
+    if (!nextTokenIs(builder_, CONNECTOR)) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = consumeToken(builder_, CONNECTOR);
+    result_ = result_ && vertex(builder_, level_ + 1);
+    exit_section_(builder_, marker_, CONNECTOR_STATEMENT, result_);
+    return result_;
+  }
+
+  /* ********************************************************** */
   // CRITICAL [complexControlId]
   public static boolean criticalHeader(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "criticalHeader")) return false;
@@ -5634,6 +5647,7 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // vertexStatement (SEMICOLON vertexStatement)*
   //   | subgraphStatement
+  //   | connectorStatement
   //   | styleStatement
   //   | linkStyleStatement
   //   | classDefStatement
@@ -5647,6 +5661,7 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
     Marker marker_ = enter_section_(builder_);
     result_ = flowchartStatement_0(builder_, level_ + 1);
     if (!result_) result_ = subgraphStatement(builder_, level_ + 1);
+    if (!result_) result_ = connectorStatement(builder_, level_ + 1);
     if (!result_) result_ = styleStatement(builder_, level_ + 1);
     if (!result_) result_ = linkStyleStatement(builder_, level_ + 1);
     if (!result_) result_ = classDefStatement(builder_, level_ + 1);
@@ -6317,28 +6332,18 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (GENERIC_TEXT | string)+
+  // genericToken+
   public static boolean genericContent(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "genericContent")) return false;
-    if (!nextTokenIs(builder_, "<generic content>", DOUBLE_QUOTE, GENERIC_TEXT)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_, level_, _NONE_, GENERIC_CONTENT, "<generic content>");
-    result_ = genericContent_0(builder_, level_ + 1);
+    result_ = genericToken(builder_, level_ + 1);
     while (result_) {
       int pos_ = current_position_(builder_);
-      if (!genericContent_0(builder_, level_ + 1)) break;
+      if (!genericToken(builder_, level_ + 1)) break;
       if (!empty_element_parsed_guard_(builder_, "genericContent", pos_)) break;
     }
     exit_section_(builder_, level_, marker_, result_, false, null);
-    return result_;
-  }
-
-  // GENERIC_TEXT | string
-  private static boolean genericContent_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "genericContent_0")) return false;
-    boolean result_;
-    result_ = consumeToken(builder_, GENERIC_TEXT);
-    if (!result_) result_ = string(builder_, level_ + 1);
     return result_;
   }
 
@@ -6406,13 +6411,46 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // directive
   //   | accStatement
+  //   | titleStatement
   //   | genericContent
   static boolean genericStatement(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "genericStatement")) return false;
     boolean result_;
     result_ = directive(builder_, level_ + 1);
     if (!result_) result_ = accStatement(builder_, level_ + 1);
+    if (!result_) result_ = titleStatement(builder_, level_ + 1);
     if (!result_) result_ = genericContent(builder_, level_ + 1);
+    return result_;
+  }
+
+  /* ********************************************************** */
+  // GENERIC_TEXT
+  //   | GENERIC_KEYWORD
+  //   | GENERIC_ID
+  //   | GENERIC_NUMBER
+  //   | GENERIC_ARROW
+  //   | GENERIC_OPERATOR
+  //   | GENERIC_LABEL
+  //   | GENERIC_STRING
+  //   | STYLE_SEPARATOR
+  //   | ID
+  //   | maybeEmptyString
+  //   | metadata
+  static boolean genericToken(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericToken")) return false;
+    boolean result_;
+    result_ = consumeToken(builder_, GENERIC_TEXT);
+    if (!result_) result_ = consumeToken(builder_, GENERIC_KEYWORD);
+    if (!result_) result_ = consumeToken(builder_, GENERIC_ID);
+    if (!result_) result_ = consumeToken(builder_, GENERIC_NUMBER);
+    if (!result_) result_ = consumeToken(builder_, GENERIC_ARROW);
+    if (!result_) result_ = consumeToken(builder_, GENERIC_OPERATOR);
+    if (!result_) result_ = consumeToken(builder_, GENERIC_LABEL);
+    if (!result_) result_ = consumeToken(builder_, GENERIC_STRING);
+    if (!result_) result_ = consumeToken(builder_, STYLE_SEPARATOR);
+    if (!result_) result_ = consumeToken(builder_, ID);
+    if (!result_) result_ = maybeEmptyString(builder_, level_ + 1);
+    if (!result_) result_ = metadata(builder_, level_ + 1);
     return result_;
   }
 
@@ -11602,16 +11640,31 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // SUBGRAPH subgraphName
+  // SUBGRAPH [subgraphName] [metadata]
   public static boolean subgraphHeader(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "subgraphHeader")) return false;
     if (!nextTokenIs(builder_, SUBGRAPH)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
     result_ = consumeToken(builder_, SUBGRAPH);
-    result_ = result_ && subgraphName(builder_, level_ + 1);
+    result_ = result_ && subgraphHeader_1(builder_, level_ + 1);
+    result_ = result_ && subgraphHeader_2(builder_, level_ + 1);
     exit_section_(builder_, marker_, SUBGRAPH_HEADER, result_);
     return result_;
+  }
+
+  // [subgraphName]
+  private static boolean subgraphHeader_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "subgraphHeader_1")) return false;
+    subgraphName(builder_, level_ + 1);
+    return true;
+  }
+
+  // [metadata]
+  private static boolean subgraphHeader_2(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "subgraphHeader_2")) return false;
+    metadata(builder_, level_ + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -12114,7 +12167,7 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // complexIdentifier [metadata | vertexText]
+  // complexIdentifier [metadata | vertexText [metadata]]
   public static boolean vertex(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "vertex")) return false;
     if (!nextTokenIs(builder_, ID)) return false;
@@ -12126,20 +12179,40 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
     return result_;
   }
 
-  // [metadata | vertexText]
+  // [metadata | vertexText [metadata]]
   private static boolean vertex_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "vertex_1")) return false;
     vertex_1_0(builder_, level_ + 1);
     return true;
   }
 
-  // metadata | vertexText
+  // metadata | vertexText [metadata]
   private static boolean vertex_1_0(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "vertex_1_0")) return false;
     boolean result_;
+    Marker marker_ = enter_section_(builder_);
     result_ = metadata(builder_, level_ + 1);
-    if (!result_) result_ = vertexText(builder_, level_ + 1);
+    if (!result_) result_ = vertex_1_0_1(builder_, level_ + 1);
+    exit_section_(builder_, marker_, null, result_);
     return result_;
+  }
+
+  // vertexText [metadata]
+  private static boolean vertex_1_0_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "vertex_1_0_1")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = vertexText(builder_, level_ + 1);
+    result_ = result_ && vertex_1_0_1_1(builder_, level_ + 1);
+    exit_section_(builder_, marker_, null, result_);
+    return result_;
+  }
+
+  // [metadata]
+  private static boolean vertex_1_0_1_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "vertex_1_0_1_1")) return false;
+    metadata(builder_, level_ + 1);
+    return true;
   }
 
   /* ********************************************************** */

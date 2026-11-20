@@ -1,0 +1,3 @@
+Generic.GENERIC_DIAGRAM ('info')
+WHITE_SPACE (' ')
+Generic.GENERIC_KEYWORD ('showInfo')

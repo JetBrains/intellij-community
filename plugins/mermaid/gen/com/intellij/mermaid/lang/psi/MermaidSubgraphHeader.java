@@ -7,7 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface MermaidSubgraphHeader extends MermaidPsiElement {
 
-  @NotNull
+  @Nullable
+  MermaidMetadata getMetadata();
+
+  @Nullable
   MermaidSubgraphName getSubgraphName();
 
 }

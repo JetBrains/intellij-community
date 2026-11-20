@@ -29,6 +29,12 @@ public class MermaidGenericContentImpl extends ASTWrapperPsiElement implements M
 
   @Override
   @NotNull
+  public List<MermaidMetadata> getMetadataList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidMetadata.class);
+  }
+
+  @Override
+  @NotNull
   public List<MermaidString> getStringList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidString.class);
   }

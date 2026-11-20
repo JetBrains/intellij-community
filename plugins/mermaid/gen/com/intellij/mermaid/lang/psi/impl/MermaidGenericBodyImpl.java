@@ -45,4 +45,10 @@ public class MermaidGenericBodyImpl extends ASTWrapperPsiElement implements Merm
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidGenericContent.class);
   }
 
+  @Override
+  @NotNull
+  public List<MermaidTitleStatement> getTitleStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidTitleStatement.class);
+  }
+
 }

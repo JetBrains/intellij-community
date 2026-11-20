@@ -47,11 +47,16 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     }
 
     //region Details
-    // Only the header of an unmodelled diagram family is coloured. GENERIC_TEXT is deliberately left
-    // unmapped so it renders as plain text: the body has no parsed structure, and colouring it uniformly
-    // would suggest a meaning we have not established.
+    // GENERIC_TEXT stays unmapped, so free text such as an ishikawa cause renders as plain text.
     private fun addGenericHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
       holder[MermaidTokens.Generic.GENERIC_DIAGRAM] = MermaidTextAttributes.diagram_name
+      holder[MermaidTokens.Generic.GENERIC_KEYWORD] = MermaidTextAttributes.keyword
+      holder[MermaidTokens.Generic.GENERIC_ID] = MermaidTextAttributes.identifier
+      holder[MermaidTokens.Generic.GENERIC_NUMBER] = MermaidTextAttributes.constant
+      holder[MermaidTokens.Generic.GENERIC_ARROW] = MermaidTextAttributes.edge
+      holder[MermaidTokens.Generic.GENERIC_OPERATOR] = MermaidTextAttributes.operator
+      holder[MermaidTokens.Generic.GENERIC_LABEL] = MermaidTextAttributes.note
+      holder[MermaidTokens.Generic.GENERIC_STRING] = MermaidTextAttributes.string
     }
 
     private fun addPieHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
@@ -69,6 +74,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         holder,
         MermaidTextAttributes.keyword,
         MermaidTokens.Flowchart.SUBGRAPH,
+        MermaidTokens.Flowchart.CONNECTOR,
         MermaidTokens.CLASS_DEF
       )
       holder[MermaidTokens.Flowchart.LINK_TEXT] = MermaidTextAttributes.note

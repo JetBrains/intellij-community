@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface MermaidGenericContent extends MermaidPsiElement {
 
   @NotNull
+  List<MermaidMetadata> getMetadataList();
+
+  @NotNull
   List<MermaidString> getStringList();
 
 }

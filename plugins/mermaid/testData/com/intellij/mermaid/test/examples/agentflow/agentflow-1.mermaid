@@ -1,0 +1,18 @@
+agentflow-beta TB
+  brief["Release brief"]@{ shape: input }
+  flow writer["Drafting Agent"]
+    draft["Draft the notes"]@{ shape: task }
+    lookup["changelog_search"]@{ shape: tool }
+    guide["Tone of voice"]@{ shape: refdoc }
+    draft --> lookup
+    draft -.- guide
+  end
+  flow reviewer["Review Agent"]
+    check["Check the claims"]@{ shape: task }
+    ok["Accurate?"]@{ shape: decision }
+    check --> ok
+  end
+  publish["Publish"]@{ shape: action }
+  brief --> writer
+  writer --> reviewer
+  ok --> publish

@@ -42,6 +42,7 @@ class DiagramsHeadersCompletionTest {
     "block",
     "block-beta",
     // Rendered by the bundled mermaid, parsed via the generic fallback rather than a detailed grammar.
+    "agentflow-beta",
     "architecture-beta",
     "cynefin-beta",
     "eventmodeling",
@@ -56,6 +57,7 @@ class DiagramsHeadersCompletionTest {
     "swimlane-beta",
     "treemap-beta",
     "treeView-beta",
+    "usecase-beta",
     "venn-beta",
     "wardley-beta",
   )

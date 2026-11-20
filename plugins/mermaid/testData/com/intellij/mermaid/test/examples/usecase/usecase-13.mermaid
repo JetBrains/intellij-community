@@ -1,0 +1,10 @@
+usecase-beta
+actor Admin
+actor Person
+Checkout
+Payment
+ApplyCoupon
+Admin --|> Person
+Checkout ..> : include Payment
+ApplyCoupon ..> : extend Checkout
+ApplyCoupon --|> Checkout

@@ -1,0 +1,9 @@
+usecase-beta
+systemBoundary sb1["Payment service"]@{ type: package }:::system
+  actor Clerk("Payment clerk")
+  Authorize("Authorize payment")
+  Receipt[Create receipt]
+end
+Clerk --> Authorize
+Authorize --> Receipt
+classDef system stroke:#4b4b7a

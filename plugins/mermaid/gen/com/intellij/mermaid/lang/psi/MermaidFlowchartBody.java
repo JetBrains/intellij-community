@@ -14,6 +14,9 @@ public interface MermaidFlowchartBody extends MermaidDiagramBlock {
   List<MermaidClassDefStatement> getClassDefStatementList();
 
   @NotNull
+  List<MermaidConnectorStatement> getConnectorStatementList();
+
+  @NotNull
   List<MermaidFlowchartClassStatement> getFlowchartClassStatementList();
 
   @NotNull

@@ -122,6 +122,7 @@ private flowchartLines ::= (flowchartLine | IGNORED) [flowchartLines]
 private flowchartLine ::= flowchartStatement [separator] | separator
 private flowchartStatement ::= vertexStatement (SEMICOLON vertexStatement)*
   | subgraphStatement
+  | connectorStatement
   | styleStatement
   | linkStyleStatement
   | classDefStatement
@@ -137,10 +138,11 @@ flowchartLinkStatement ::= [edgeId] (START_ARROW complexLinkText ARROW | ARROW [
 edgeId ::= ID EDGE_ID_MARKER
 nodeStatement ::= (styledVertex | vertex)  [AMPERSAND nodeStatement]
 styledVertex ::= vertex STYLE_SEPARATOR STYLE_TARGET
-// A node carries either the classic bracket shape or `@{ ... }` metadata, not both. Standalone
+// A node carries the classic bracket shape, `@{ ... }` metadata, or both: upstream reads `node shapeData`,
+// and agentflow writes `task["Draft"]@{ shape: task }` on almost every node. Standalone
 // `e1@{ animate: true }` lines land here too: an id plus metadata is the same shape, and only the id's
 // meaning differs.
-vertex ::= complexIdentifier [metadata | vertexText]
+vertex ::= complexIdentifier [metadata | vertexText [metadata]]
 vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
   | OPEN_ROUND nodeText CLOSE_ROUND
   | STADIUM_START nodeText STADIUM_END
@@ -194,7 +196,11 @@ markdownValue ::= MD_STRING_VALUE { mixin="com.intellij.mermaid.lang.psi.impl.Me
 
 subgraphStatement ::= subgraphHeader separator EOL* subgraphBlock? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
 
-subgraphHeader ::= SUBGRAPH subgraphName
+// Upstream accepts a subgraph without a name. agentflow also writes `global` with no name, and gives a
+// `flow` group metadata: `flow writer["Drafting Agent"]@{ model: "gpt" }`.
+subgraphHeader ::= SUBGRAPH [subgraphName] [metadata]
+// agentflow: `connector github["GitHub API"]` declares an external system.
+connectorStatement ::= CONNECTOR vertex
 subgraphName ::= subgraphId [OPEN_SQUARE nodeText CLOSE_SQUARE]
 private subgraphId ::=
     (maybeEmptyString | maybeEmptyMdText) complexIdentifier
@@ -996,11 +1002,12 @@ private blockDiagramStatement ::= directive
   | flowchartClassStatement
   | styleStatement
 
-// Families mermaid renders but this grammar does not model in detail (packet, architecture, kanban,
-// radar, treemap, treeView, venn, wardley, ishikawa, eventmodeling, cynefin, railroad*, info). The body
-// is intentionally shapeless: the goal is only that the file stops being reported as one long error,
-// while comments, frontmatter, directives, accessibility statements and the preview keep working.
-// Replace a family's entry here with a real grammar when one is written.
+// Families mermaid renders but this grammar does not model in detail (architecture, cynefin,
+// eventmodeling, info, ishikawa, kanban, packet, radar, railroad*, treemap, treeView, usecase, venn,
+// wardley). The lexer gives each family its own keywords, and the body accepts any sequence of the
+// shared tokens. So a file is not reported as one long error, and comments, frontmatter, directives,
+// accessibility statements and the preview keep working. Replace a family's entry here with a real
+// grammar when one is written.
 //
 // Attached to oldDiagram, so interleaved `%%{...}%%` directives are accepted: mermaid strips directives
 // in preprocessDiagram() before the diagram is ever detected or parsed, so they are valid for every
@@ -1012,8 +1019,21 @@ private genericLines ::= genericLine [genericLines]
 private genericLine ::= genericStatement [separator] | separator
 private genericStatement ::= directive
   | accStatement
+  | titleStatement
   | genericContent
-genericContent ::= (GENERIC_TEXT | string)+
+genericContent ::= genericToken+
+private genericToken ::= GENERIC_TEXT
+  | GENERIC_KEYWORD
+  | GENERIC_ID
+  | GENERIC_NUMBER
+  | GENERIC_ARROW
+  | GENERIC_OPERATOR
+  | GENERIC_LABEL
+  | GENERIC_STRING
+  | STYLE_SEPARATOR
+  | ID
+  | maybeEmptyString
+  | metadata
 
 blockDiagramComplexStatement ::= (blockDiagramNodeStatementInner | spaceStatementInner) (blockDiagramNodeStatementInner | spaceStatementInner)+
 

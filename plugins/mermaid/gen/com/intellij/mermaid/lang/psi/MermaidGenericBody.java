@@ -16,4 +16,7 @@ public interface MermaidGenericBody extends MermaidDiagramBlock {
   @NotNull
   List<MermaidGenericContent> getGenericContentList();
 
+  @NotNull
+  List<MermaidTitleStatement> getTitleStatementList();
+
 }

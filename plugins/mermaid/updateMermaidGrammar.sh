@@ -173,7 +173,7 @@ find_platform_runfiles() {
   [ -e "$bazel_bin" ] || return 1
   bazel_bin="$(cd "$bazel_bin" && pwd)"
   local marker
-  marker=$("$FD" -H -t d --max-depth 4 '\.runfiles$' "$bazel_bin" 2>/dev/null | while read -r d; do
+  marker=$("$FD" -H -t d --max-depth 6 '\.runfiles$' "$bazel_bin" 2>/dev/null | while read -r d; do
     if [ -f "$d/community+/platform/util/util.jar" ]; then echo "$d"; break; fi
   done)
   [ -n "$marker" ] || return 1

@@ -1,0 +1,17 @@
+usecase-beta
+Inspect("Inspect payload")
+json Payload@{
+  "2": "second in source",
+  "1": "first after 2",
+  "enabled": true,
+  "count": 3,
+  "missing": null,
+  "colors": ["Red", "Green"],
+  "address": { "city": "Oslo" },
+  "items": [{ "name": "Book" }],
+  "emptyObject": {},
+  "emptyArray": []
+}:::data
+Inspect --> Payload
+classDef data stroke:#3572a5
+style Payload stroke-width:2px

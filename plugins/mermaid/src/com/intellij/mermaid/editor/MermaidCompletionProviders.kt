@@ -42,6 +42,7 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "block-beta",
       // Families rendered by the bundled mermaid but not yet modelled in detail by the grammar. Offering
       // them is still correct: they parse without errors via the generic fallback and render fine.
+      "agentflow-beta",
       "architecture-beta",
       "cynefin-beta",
       "eventmodeling",
@@ -56,6 +57,7 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "swimlane-beta",
       "treemap-beta",
       "treeView-beta",
+      "usecase-beta",
       "venn-beta",
       "wardley-beta",
     )

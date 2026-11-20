@@ -346,6 +346,10 @@ public class MermaidVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitConnectorStatement(@NotNull MermaidConnectorStatement o) {
+    visitPsiElement(o);
+  }
+
   public void visitCriticalHeader(@NotNull MermaidCriticalHeader o) {
     visitPsiElement(o);
   }

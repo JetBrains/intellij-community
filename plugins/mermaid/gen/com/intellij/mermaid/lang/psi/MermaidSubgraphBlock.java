@@ -14,6 +14,9 @@ public interface MermaidSubgraphBlock extends MermaidDiagramBlock {
   List<MermaidClassDefStatement> getClassDefStatementList();
 
   @NotNull
+  List<MermaidConnectorStatement> getConnectorStatementList();
+
+  @NotNull
   List<MermaidDirectionStatement> getDirectionStatementList();
 
   @NotNull

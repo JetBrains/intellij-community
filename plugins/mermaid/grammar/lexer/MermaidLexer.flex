@@ -15,6 +15,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   private Stack<Integer> stack = new Stack<Integer>();
 
+  // agentflow-beta shares the flowchart states. The header sets this flag, so `flow`, `global` and
+  // `connector` are keywords only in an agentflow diagram and stay node ids in a flowchart.
+  private boolean agentflow = false;
+
   public void yypushstate(int newState) {
     stack.push(yystate());
     yybegin(newState);
@@ -84,7 +88,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states block_diagram, block_diagram_node, block_diagram_arrow, block_diagram_size, block_diagram_columns, block_id
 
-%states generic_diagram
+%states info_diagram, packet_diagram, architecture_diagram, architecture_port, kanban_diagram, radar_diagram, treemap_diagram, tree_view_diagram, venn_diagram, wardley_diagram, ishikawa_diagram, event_modeling_diagram, cynefin_diagram, railroad_diagram, railroad_ebnf_diagram, railroad_abnf_diagram, railroad_peg_diagram, usecase_diagram, usecase_json_header
 
 %%
 
@@ -97,9 +101,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   "pie" { yybegin(pie); return Pie.PIE; }
   "journey" { yybegin(journey); return Journey.JOURNEY; }
-  "flowchart" { yybegin(flowchart); return Flowchart.FLOWCHART; }
-  "graph" { yybegin(flowchart); return Flowchart.FLOWCHART; }
-  "flowchart-elk" { yybegin(flowchart); return Flowchart.FLOWCHART; }
+  "flowchart" { agentflow = false; yybegin(flowchart); return Flowchart.FLOWCHART; }
+  "graph" { agentflow = false; yybegin(flowchart); return Flowchart.FLOWCHART; }
+  "flowchart-elk" { agentflow = false; yybegin(flowchart); return Flowchart.FLOWCHART; }
   "sequenceDiagram" { yybegin(sequence); return Sequence.SEQUENCE; }
   "classDiagram" |
   "classDiagram-v2"  { yybegin(class_diagram); return ClassDiagram.CLASS_DIAGRAM; }
@@ -126,25 +130,31 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   // swimlane-beta has no parser of its own upstream: it reuses the flowchart parser wholesale
   // (createFlowDiagram({ defaultLayout: 'swimlane' })), including the direction after the keyword, so it
   // can reuse the flowchart states here too.
-  "swimlane-beta" { yybegin(flowchart); return Flowchart.FLOWCHART; }
+  "swimlane-beta" { agentflow = false; yybegin(flowchart); return Flowchart.FLOWCHART; }
+  // agentflow-beta is the flowchart syntax with `flow id["label"] ... end` and `global ... end` in place of
+  // `subgraph`, and `connector id["label"]` for an external system.
+  "agentflow-beta" { agentflow = true; yybegin(flowchart); return Flowchart.FLOWCHART; }
 
-  // Families mermaid renders but this grammar does not model in detail. Recognising the header and
-  // treating the body as opaque text keeps the file out of the error state; without this every token
-  // falls through to BAD_CHARACTER below and the whole document is red. Both the bare and "-beta"
-  // spellings are accepted where upstream accepts both.
-  "info" |
-  "packet"("-beta")? |
-  "architecture"("-beta")? |
-  "kanban" |
-  "radar-beta" |
-  "treemap"("-beta")? |
-  "treeView-beta" |
-  "venn-beta" |
-  "wardley-beta" |
-  "ishikawa"("-beta")? |
-  "eventmodeling" |
-  "cynefin-beta" |
-  "railroad"("-ebnf"|"-abnf"|"-peg")?"-beta" { yybegin(generic_diagram); return Generic.GENERIC_DIAGRAM; }
+  // Families that mermaid renders but that the parser does not model in detail. Each family has its own
+  // lexer state, so its keywords get their own colour. The parser accepts the body of all of them with one
+  // lenient rule. Both the bare and the "-beta" spellings are accepted where upstream accepts both.
+  "info" { yybegin(info_diagram); return Generic.GENERIC_DIAGRAM; }
+  "packet"("-beta")? { yybegin(packet_diagram); return Generic.GENERIC_DIAGRAM; }
+  "architecture"("-beta")? { yybegin(architecture_diagram); return Generic.GENERIC_DIAGRAM; }
+  "kanban" { yybegin(kanban_diagram); return Generic.GENERIC_DIAGRAM; }
+  "radar-beta" { yybegin(radar_diagram); return Generic.GENERIC_DIAGRAM; }
+  "treemap"("-beta")? { yybegin(treemap_diagram); return Generic.GENERIC_DIAGRAM; }
+  "treeView-beta" { yybegin(tree_view_diagram); return Generic.GENERIC_DIAGRAM; }
+  "venn-beta" { yybegin(venn_diagram); return Generic.GENERIC_DIAGRAM; }
+  "wardley-beta" { yybegin(wardley_diagram); return Generic.GENERIC_DIAGRAM; }
+  "ishikawa"("-beta")? { yybegin(ishikawa_diagram); return Generic.GENERIC_DIAGRAM; }
+  "eventmodeling" { yybegin(event_modeling_diagram); return Generic.GENERIC_DIAGRAM; }
+  "cynefin-beta" { yybegin(cynefin_diagram); return Generic.GENERIC_DIAGRAM; }
+  "railroad-beta" { yybegin(railroad_diagram); return Generic.GENERIC_DIAGRAM; }
+  "railroad-ebnf-beta" { yybegin(railroad_ebnf_diagram); return Generic.GENERIC_DIAGRAM; }
+  "railroad-abnf-beta" { yybegin(railroad_abnf_diagram); return Generic.GENERIC_DIAGRAM; }
+  "railroad-peg-beta" { yybegin(railroad_peg_diagram); return Generic.GENERIC_DIAGRAM; }
+  "usecase-beta" { yybegin(usecase_diagram); return Generic.GENERIC_DIAGRAM; }
 
   --- { yybegin(frontmatter); return Frontmatter.FRONTMATTER_START; }
 
@@ -167,7 +177,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { return EOL; }
 }
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant, sankey, xy_chart, block_diagram, generic_diagram> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant, sankey, xy_chart, block_diagram, info_diagram, packet_diagram, architecture_diagram, architecture_port, kanban_diagram, radar_diagram, treemap_diagram, tree_view_diagram, venn_diagram, wardley_diagram, ishikawa_diagram, event_modeling_diagram, cynefin_diagram, railroad_diagram, railroad_ebnf_diagram, railroad_abnf_diagram, railroad_peg_diagram, usecase_diagram> {
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
 <pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline, quadrant, xy_chart, block_diagram> {
@@ -283,6 +293,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //---flowchart--------------------------------------------------------------------
 <flowchart_body> {
   "subgraph" { return Flowchart.SUBGRAPH; }
+  // The agentflow keywords. A word of the same length is an ID by the rules below, so outside agentflow
+  // these rules return the token that those rules return.
+  "flow" |
+  "global" { return agentflow ? Flowchart.SUBGRAPH : ID; }
+  "connector" { return agentflow ? Flowchart.CONNECTOR : ID; }
   "end" { return END; }
 
   "direction" { yypushstate(direction_value); return DIRECTION; }
@@ -451,6 +466,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
 
   [a-zA-Z_][a-zA-Z0-9_\-]*/[^\S\n\r]*":" { return Flowchart.METADATA_KEY; }
+  // kanban quotes a value with spaces in single quotes: `priority: 'Very High'`.
+  "'"[^'\n\r]*"'" |
   [^\s,:}\"]+ { return Flowchart.METADATA_VALUE; }
 
   [\n\r] { return EOL; }
@@ -458,22 +475,263 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 
 //---generic (families not modelled in detail)-------------------------------------
-// Deliberately structureless: anything that is not whitespace, a newline or a quoted string becomes one
-// opaque token. The point is only to keep such files out of the error state until a real grammar exists,
-// so no attempt is made to guess statements. Quoted strings are still recognised so labels containing
-// spaces stay in one piece.
-<generic_diagram> {
-  // These need their own rules with lookahead rather than joining the shared accTitle/accDescr group:
-  // the catch-all below matches "accTitle:" including the colon, which is longer than a bare "accTitle",
-  // so the shared rule could never win here. Including the colon in the lookahead makes the lengths
-  // equal, and among equal-length matches JFlex prefers the rule declared first.
+// The parser accepts the body of these families with one lenient rule, so the lexer alone gives each
+// family its colours. The rules come in three groups, and the order of the groups matters: among
+// equal-length matches JFlex prefers the rule declared first.
+//   1. Statements that every family shares: accessibility, title, strings and line breaks.
+//   2. The keywords and the special tokens of each family.
+//   3. The fallback tokens: numbers, identifiers, arrows and punctuation. A keyword in group 2 beats an
+//      identifier of the same length here, and a longer identifier such as `services` still wins.
+<info_diagram, packet_diagram, architecture_diagram, kanban_diagram, radar_diagram, treemap_diagram, tree_view_diagram, venn_diagram, wardley_diagram, ishikawa_diagram, event_modeling_diagram, cynefin_diagram, railroad_diagram, railroad_ebnf_diagram, railroad_abnf_diagram, railroad_peg_diagram, usecase_diagram> {
+  // The lookahead includes the colon, so the match is as long as a catch-all token that includes the
+  // colon. Among equal-length matches the rule declared first wins.
   "accTitle"/[^\S\n\r]*":" { yypushstate(acc_title); return ACC_TITLE; }
   "accDescr"/[^\S\n\r]*(":"|"{") { yypushstate(acc_descr); return ACC_DESCR; }
+  "title"/[^\S\n\r]+[^\s] { yypushstate(title); return TITLE; }
 
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  "'"[^'\n\r]*"'" { return Generic.GENERIC_STRING; }
   [\n\r] { return EOL; }
   [^\S\n\r]+ { return WHITE_SPACE; }
-  [^\s\"]+ { return Generic.GENERIC_TEXT; }
+}
+
+<info_diagram> {
+  "showInfo" { return Generic.GENERIC_KEYWORD; }
+}
+
+<architecture_diagram> {
+  "group" |
+  "service" |
+  "junction" |
+  "align" |
+  "row" |
+  "column" |
+  "in" |
+  "{group}" { return Generic.GENERIC_KEYWORD; }
+
+  // `(logos:aws-s3)` names an icon and `[Title text]` gives a title.
+  "("[\w\-:]+")" |
+  "["[^\[\]\r\n]*"]" { return Generic.GENERIC_LABEL; }
+
+  // The side of an edge: `db:R -- L:server`. The letter before the colon is matched with a lookahead, the
+  // letter after it in architecture_port.
+  [LRTB]/":" { return Generic.GENERIC_KEYWORD; }
+  ":" { yypushstate(architecture_port); return Generic.GENERIC_OPERATOR; }
+}
+<architecture_port> {
+  [LRTB]/[^\w] { yypopstate(); return Generic.GENERIC_KEYWORD; }
+  [^] { yypushback(1); yypopstate(); }
+}
+
+<kanban_diagram> {
+  // `id[Text]` and the other node shapes that kanban shares with mindmap.
+  "["[^\]\r\n]*"]" |
+  "(("[^)\r\n]*"))" |
+  "("[^)\r\n]*")" |
+  "{{"[^}\r\n]*"}}" { return Generic.GENERIC_LABEL; }
+  "@{" { yypushstate(metadata); return Flowchart.METADATA_START; }
+}
+
+<radar_diagram> {
+  "axis" |
+  "curve" |
+  "showLegend" |
+  "ticks" |
+  "max" |
+  "min" |
+  "graticule" |
+  "circle" |
+  "polygon" |
+  "true" |
+  "false" { return Generic.GENERIC_KEYWORD; }
+}
+
+<treemap_diagram> {
+  "classDef" { return Generic.GENERIC_KEYWORD; }
+}
+
+<tree_view_diagram> {
+  "icon"/"("[^)\n\r]*")" { return Generic.GENERIC_KEYWORD; }
+  "("[^)\n\r]*")" { return Generic.GENERIC_LABEL; }
+  "##"[^\n\r]* { return Generic.GENERIC_LABEL; }
+  ":::" { yypushstate(class_style_id); return STYLE_SEPARATOR; }
+  // A bare name runs to the next space. It cannot start with a quote or with the first character of an
+  // annotation, so `:::`, `##` and a quoted name keep their own tokens.
+  [^\s\"':#][^\s]* { return Generic.GENERIC_TEXT; }
+}
+
+<venn_diagram> {
+  "set" |
+  "union" |
+  "text" |
+  "style" { return Generic.GENERIC_KEYWORD; }
+  "["[^\]\r\n]*"]" { return Generic.GENERIC_LABEL; }
+}
+
+<wardley_diagram> {
+  "size" |
+  "evolution" |
+  "anchor" |
+  "component" |
+  "label" |
+  "inertia" |
+  "evolve" |
+  "pipeline" |
+  "note" |
+  "annotations" |
+  "annotation" |
+  "accelerator" |
+  "deaccelerator" |
+  "build" |
+  "buy" |
+  "outsource" |
+  "market" { return Generic.GENERIC_KEYWORD; }
+
+  "+<>" |
+  "+>" |
+  "+<" |
+  "-.->" |
+  "+'"[^'\n\r]*"'"("<>"|"<"|">") { return Generic.GENERIC_ARROW; }
+  // `A -> B ;label` labels a link.
+  ";"[^\n\r]+ { return Generic.GENERIC_LABEL; }
+}
+
+<ishikawa_diagram> {
+  // Every line is free text. Upstream has no other statement in this family.
+  [^\s][^\n\r]* { return Generic.GENERIC_TEXT; }
+}
+
+<event_modeling_diagram> {
+  "tf" |
+  "timeframe" |
+  "rf" |
+  "resetframe" |
+  "entity" |
+  "data" |
+  "note" |
+  "gwt" |
+  "given" |
+  "when" |
+  "then" |
+  "rmo" |
+  "readmodel" |
+  "ui" |
+  "cmd" |
+  "command" |
+  "evt" |
+  "event" |
+  "pcr" |
+  "processor" |
+  "json" |
+  "jsobj" |
+  "figma" |
+  "salt" |
+  "uri" |
+  "md" |
+  "html" |
+  "text" { return Generic.GENERIC_KEYWORD; }
+
+  "[[" |
+  "]]" { return Generic.GENERIC_OPERATOR; }
+  "//"[^\n\r]* |
+  "/*"~"*/" { return LINE_COMMENT; }
+}
+
+<cynefin_diagram> {
+  "complex" |
+  "complicated" |
+  "clear" |
+  "chaotic" |
+  "confusion" { return Generic.GENERIC_KEYWORD; }
+}
+
+<railroad_diagram> {
+  "sequence" |
+  "choice" |
+  "optional" |
+  "oneOrMore" |
+  "zeroOrMore" |
+  "terminal" |
+  "nonterminal" |
+  "special" { return Generic.GENERIC_KEYWORD; }
+}
+
+<railroad_diagram, railroad_ebnf_diagram> {
+  "/*"~"*/" { return LINE_COMMENT; }
+}
+
+<railroad_ebnf_diagram> {
+  "(*"~"*)" { return LINE_COMMENT; }
+  "::=" { return Generic.GENERIC_OPERATOR; }
+  // `? special sequence ?`
+  "?"[^?;\n\r]*[^?\s;][^?;\n\r]*"?" { return Generic.GENERIC_LABEL; }
+}
+
+<railroad_abnf_diagram> {
+  // In ABNF a semicolon starts a comment. A semicolon alone ends a rule in the mermaid dialect.
+  ";"[^\n\r]+ { return LINE_COMMENT; }
+  "%"[xXdDbB][0-9A-Fa-f]+("-"[0-9A-Fa-f]+|("."[0-9A-Fa-f]+)+)? { return Generic.GENERIC_NUMBER; }
+  [0-9]*"*"[0-9]* { return Generic.GENERIC_OPERATOR; }
+}
+
+<railroad_peg_diagram> {
+  "#"[^\n\r]* { return LINE_COMMENT; }
+}
+
+<usecase_diagram> {
+  "actor" |
+  "systemBoundary" |
+  "end" |
+  "direction" |
+  "TD" |
+  "TB" |
+  "BT" |
+  "LR" |
+  "RL" |
+  "note" |
+  "for" |
+  "json" |
+  "classDef" |
+  "class" |
+  "style" |
+  "include" |
+  "extend" |
+  "true" |
+  "false" { return Generic.GENERIC_KEYWORD; }
+
+  // `json Payload@{ ... }` holds a JSON object, not metadata. The shared rules lex the JSON, so the `@`
+  // must not open the metadata state.
+  "json"/[^\S\n\r]+[\w]+[^\S\n\r]*"@" { yypushstate(usecase_json_header); return Generic.GENERIC_KEYWORD; }
+
+  "--|>" |
+  "..>" |
+  "--"("o"|"x")/[^\w] { return Generic.GENERIC_ARROW; }
+
+  // `Login("Sign in")`, `Report[Generate report]` and `<<stereotype>>`.
+  "("[^)\r\n]*")" |
+  "["[^\]\r\n]*"]" |
+  "<<"[^>\r\n]*">>" { return Generic.GENERIC_LABEL; }
+  "@{" { yypushstate(metadata); return Flowchart.METADATA_START; }
+}
+<usecase_json_header> {
+  [\w]+ { return Generic.GENERIC_ID; }
+  "@" { yypopstate(); return Generic.GENERIC_OPERATOR; }
+}
+
+<info_diagram, packet_diagram, architecture_diagram, kanban_diagram, radar_diagram, treemap_diagram, venn_diagram, wardley_diagram, event_modeling_diagram, cynefin_diagram, railroad_diagram, railroad_ebnf_diagram, railroad_abnf_diagram, railroad_peg_diagram, usecase_diagram> {
+  ":::" { yypushstate(class_style_id); return STYLE_SEPARATOR; }
+
+  "#"[0-9a-fA-F]{3,8} |
+  [0-9]+("."[0-9]+)? |
+  "."[0-9]+ { return Generic.GENERIC_NUMBER; }
+  [[:letter:]_]([\w\-]*[\w])? { return Generic.GENERIC_ID; }
+
+  "<"?"-"+">"+ |
+  "<"?"-""-"+ |
+  "<-" { return Generic.GENERIC_ARROW; }
+
+  [:;,=|/*+?!&{}()\[\]\.<>@~\^$%`\-] { return Generic.GENERIC_OPERATOR; }
+  [^\s] { return Generic.GENERIC_TEXT; }
 }
 
 //---sequence---------------------------------------------------------------------
