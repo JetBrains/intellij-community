@@ -1,16 +1,19 @@
-swimlane-beta LR
-  subgraph Support
-    classify{Can support solve it?}
-    respond[Respond to customer]
+swimlane-beta TB
+  subgraph Intake
+    collect[Collect request]
+    validate[Validate details]
   end
 
-  subgraph Product
-    prioritize[Prioritize fix]
+  subgraph Review
+    review[Review request]
+    decide{Ready?}
   end
 
-  subgraph Engineering
-    implement[Implement fix]
+  subgraph Delivery
+    schedule[Schedule work]
+    complete[Complete work]
   end
 
-  classify -->|Yes| respond
-  classify -->|No| prioritize --> implement --> respond
+  collect --> validate --> review --> decide
+  decide -->|Yes| schedule --> complete
+  decide -->|No| collect

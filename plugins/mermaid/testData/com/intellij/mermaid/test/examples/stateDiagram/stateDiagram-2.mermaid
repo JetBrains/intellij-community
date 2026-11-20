@@ -1,2 +1,11 @@
 stateDiagram-v2
-    stateId
+  [*] --> Draft
+  Draft --> Submitted : submit
+  state Review {
+    [*] --> Screening
+    Screening --> Decision
+  }
+  Submitted --> Review
+  Review --> Published : approved
+  Review --> Draft : rejected
+  Published --> [*]

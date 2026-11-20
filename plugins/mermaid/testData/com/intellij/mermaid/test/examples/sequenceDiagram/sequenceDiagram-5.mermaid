@@ -1,5 +1,5 @@
 sequenceDiagram
-    participant Alice@{ "type" : "entity" }
+    participant Alice@{ "type" : "boundary" }
     participant Bob
-    Alice->>Bob: Entity request
-    Bob->>Alice: Entity response
+    Alice->>Bob: Request from boundary
+    Bob->>Alice: Response to boundary

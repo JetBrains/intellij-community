@@ -1,4 +1,10 @@
+---
+title: Bank example
+---
 classDiagram
-    class Animal["Animal with a label"]
-    class Car["Car with *! symbols"]
-    Animal --> Car
+    class BankAccount
+    BankAccount : +String owner
+    BankAccount : +Bigdecimal balance
+    BankAccount : +deposit(amount)
+    BankAccount : +withdrawal(amount)
+

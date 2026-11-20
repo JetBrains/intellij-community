@@ -1,8 +1,6 @@
-    stateDiagram-v2
-        State1: The state with a note
-        note right of State1
-            Important information! You can write
-            notes.
-        end note
-        State1 --> State2
-        note left of State2 : This is the note to the left.
+stateDiagram-v2
+    state if_state <<choice>>
+    [*] --> IsPositive
+    IsPositive --> if_state
+    if_state --> False: if n < 0
+    if_state --> True : if n >= 0

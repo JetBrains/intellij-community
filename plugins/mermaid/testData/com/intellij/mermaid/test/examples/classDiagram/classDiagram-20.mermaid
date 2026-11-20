@@ -1,4 +1,20 @@
 classDiagram
-    Customer "1" --> "*" Ticket
-    Student "1" --> "1..*" Course
-    Galaxy --> "many" Star : Contains
+    namespace Platform {
+        namespace Auth {
+            class UserService {
+                +login()
+                +logout()
+            }
+        }
+        namespace Data {
+            class Repository {
+                +find()
+                +save()
+            }
+        }
+        class Gateway {
+            +route()
+        }
+    }
+    Gateway --> UserService : delegates
+    Gateway --> Repository : delegates

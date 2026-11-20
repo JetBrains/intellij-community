@@ -1,19 +1,17 @@
-swimlane-beta TB
-  subgraph Intake
-    collect[Collect request]
-    validate[Validate details]
+swimlane-beta LR
+  subgraph Customer
+    submit[Submit order]
+    confirm[Confirm delivery]
   end
 
-  subgraph Review
-    review[Review request]
-    decide{Ready?}
+  subgraph Store
+    check[Check order]
+    pack[Pack items]
   end
 
-  subgraph Delivery
-    schedule[Schedule work]
-    complete[Complete work]
+  subgraph Carrier
+    collect[Collect package]
+    deliver[Deliver package]
   end
 
-  collect --> validate --> review --> decide
-  decide -->|Yes| schedule --> complete
-  decide -->|No| collect
+  submit --> check --> pack --> collect --> deliver --> confirm

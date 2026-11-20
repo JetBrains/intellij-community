@@ -1,14 +1,12 @@
 swimlane-beta LR
-  subgraph Buyer
-    choose[Choose product]
-    pay[Pay invoice]
+  subgraph sales [Sales team]
+    lead[Qualify lead]
+    quote[Prepare quote]
   end
 
-  subgraph Store
-    reserve[Reserve stock]
-    ship[Ship product]
+  subgraph finance [Finance team]
+    review[Review terms]
+    approve[Approve quote]
   end
 
-  choose --> reserve
-  reserve -->|Invoice ready| pay
-  pay --> ship
+  lead --> quote --> review --> approve

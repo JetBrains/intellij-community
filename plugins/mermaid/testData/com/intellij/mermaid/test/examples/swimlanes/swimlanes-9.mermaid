@@ -1,14 +1,20 @@
 swimlane-beta LR
-  subgraph ops [Operations]
-    intake[Receive request]
-    plan[Plan work]
+  subgraph Applicant
+    apply[Submit application]
+    sign[Sign agreement]
   end
 
-  subgraph legal [Legal]
-    review[Review contract]
+  subgraph Reviewer
+    screen[Screen application]
+    decide{Approved?}
   end
 
-  intake --> plan --> review
+  subgraph System
+    create[Create account]
+    notify[Send welcome email]
+  end
 
-  classDef attention fill:#fff2cc,stroke:#d6a500,color:#111;
-  class review attention;
+  apply -->|Application received| screen
+  screen --> decide
+  decide -->|Approved| create --> notify --> sign
+  decide -->|Needs changes| apply

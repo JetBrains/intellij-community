@@ -1,18 +1,9 @@
 erDiagram
-    direction TB
-    CUSTOMER ||--o{ ORDER : places
-    CUSTOMER {
-        string name
-        string custNumber
-        string sector
+    p[Person] {
+        string firstName
+        string lastName
     }
-    ORDER ||--|{ LINE-ITEM : contains
-    ORDER {
-        int orderNumber
-        string deliveryAddress
+    a["Customer Account"] {
+        string email
     }
-    LINE-ITEM {
-        string productCode
-        int quantity
-        float pricePerUnit
-    }
+    p ||--o| a : has

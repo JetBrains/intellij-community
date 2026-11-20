@@ -1,16 +1,8 @@
 requirementDiagram
 
-direction LR
-
-requirement test_req {
+requirement "__test_req__" {
     id: 1
-    text: the test text.
+    text: "*italicized text* **bold text**"
     risk: high
     verifymethod: test
 }
-
-element test_entity {
-    type: simulation
-}
-
-test_entity - satisfies -> test_req

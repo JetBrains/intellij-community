@@ -1,17 +1,14 @@
 stateDiagram-v2
     [*] --> First
-    First --> Second
-    First --> Third
-
     state First {
-        [*] --> fir
-        fir --> [*]
+        [*] --> second
+        second --> [*]
     }
-    state Second {
-        [*] --> sec
-        sec --> [*]
-    }
-    state Third {
-        [*] --> thi
-        thi --> [*]
+
+    [*] --> NamedComposite
+    NamedComposite: Another Composite
+    state NamedComposite {
+        [*] --> namedSimple
+        namedSimple --> [*]
+        namedSimple: Another simple
     }

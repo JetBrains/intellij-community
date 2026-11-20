@@ -1,5 +1,5 @@
 sequenceDiagram
-    participant A as Alice
-    participant J as John
-    A->>J: Hello John, how are you?
-    J->>A: Great!
+    participant Alice@{ "type" : "collections" }
+    participant Bob
+    Alice->>Bob: Collections request
+    Bob->>Alice: Collections response

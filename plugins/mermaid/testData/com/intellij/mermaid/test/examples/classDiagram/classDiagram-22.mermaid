@@ -1,5 +1,4 @@
 classDiagram
-class Shape
-<<interface>> Shape
-Shape : noOfVertices
-Shape : draw()
+    Customer "1" --> "*" Ticket
+    Student "1" --> "1..*" Course
+    Galaxy --> "many" Star : Contains

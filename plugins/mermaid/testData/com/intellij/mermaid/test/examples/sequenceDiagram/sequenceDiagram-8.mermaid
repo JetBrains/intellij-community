@@ -1,5 +1,5 @@
 sequenceDiagram
-    participant Alice@{ "type" : "queue" }
+    participant Alice@{ "type" : "database" }
     participant Bob
-    Alice->>Bob: Queue message
-    Bob->>Alice: Queue response
+    Alice->>Bob: DB query
+    Bob->>Alice: DB result

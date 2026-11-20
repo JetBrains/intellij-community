@@ -1,12 +1,7 @@
 classDiagram
-class Square~Shape~{
-    int id
-    List~int~ position
-    setPoints(List~int~ points)
-    getPoints() List~int~
+class BankAccount{
+    +String owner
+    +BigDecimal balance
+    +deposit(amount)
+    +withdrawal(amount)
 }
-
-Square : -List~string~ messages
-Square : +setMessages(List~string~ messages)
-Square : +getMessages() List~string~
-Square : +getDistanceMatrix() List~List~int~~

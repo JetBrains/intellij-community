@@ -1,6 +1,10 @@
-flowchart TD
-    A[Start] --> B{Is it?}
-    B -->|Yes| C[OK]
-    C --> D[Rethink]
-    D --> B
-    B ---->|No| E[End]
+---
+config:
+  flowchart:
+    stepDuration: 0.5
+---
+flowchart LR
+  Client e1@--> API
+  API e2@--> Client
+  e1@{ step: 1 }
+  e2@{ step: 2 }

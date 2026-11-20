@@ -1,21 +1,16 @@
 swimlane-beta LR
   subgraph Customer
-    request[Request service]
-    receive[Receive update]
+    Browse[Browse catalogue]
+    Pay[Pay]
   end
-
-  subgraph Support
-    triage[Triage request]
-    answer[Send answer]
+  subgraph Warehouse
+    Pick[Pick items]
+    Ship[Ship order]
   end
-
-  subgraph Engineering
-    investigate[Investigate issue]
-    fix[Prepare fix]
+  subgraph Finance
+    Invoice[Raise invoice]
   end
-
-  request --> triage
-  triage -->|Known issue| answer
-  triage -->|Needs code change| investigate
-  investigate --> fix --> answer
-  answer --> receive
+  Browse --> Pay
+  Pay --> Pick
+  Pick --> Ship
+  Pay --> Invoice

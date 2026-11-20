@@ -1,5 +1,15 @@
 classDiagram
-class Shape
-link Shape "https://www.github.com" "This is a tooltip for a link"
-class Shape2
-click Shape2 href "https://www.github.com" "This is a tooltip for a link"
+  direction RL
+  class Student {
+    -idCard : IdCard
+  }
+  class IdCard{
+    -id : int
+    -name : string
+  }
+  class Bike{
+    -id : int
+    -name : string
+  }
+  Student "1" --o "1" IdCard : carries
+  Student "1" --o "1" Bike : rides

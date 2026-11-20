@@ -1,5 +1,7 @@
 eventmodeling
 
-tf 01 ui CartUI
-tf 02 cmd AddItem
-tf 03 evt ItemAdded
+rf 02 evt CartCreated
+rf 03 evt ItemAdded
+rf 04 evt ItemRemoved
+rf 05 evt CartCleared
+tf 01 rmo CartUI ->> 02 ->> 03 ->> 04 ->> 05

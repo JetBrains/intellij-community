@@ -1,5 +1,9 @@
 venn-beta
-  title "Team overlap"
-  set Frontend
-  set Backend
-  union Frontend,Backend["APIs"]
+  title What makes a good feature
+  set Desirable
+  set Feasible
+  set Viable
+  union Desirable,Feasible["Buildable"]
+  union Feasible,Viable["Sustainable"]
+  union Desirable,Viable["Marketable"]
+  union Desirable,Feasible,Viable["Ship it"]

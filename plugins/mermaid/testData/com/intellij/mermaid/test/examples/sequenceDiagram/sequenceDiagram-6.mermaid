@@ -1,5 +1,5 @@
 sequenceDiagram
-    participant Alice@{ "type" : "database" }
+    participant Alice@{ "type" : "control" }
     participant Bob
-    Alice->>Bob: DB query
-    Bob->>Alice: DB result
+    Alice->>Bob: Control request
+    Bob->>Alice: Control response

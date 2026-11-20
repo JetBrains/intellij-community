@@ -1,7 +1,8 @@
 sequenceDiagram
-    Consumer-->API: Book something
-    API-->BookingService: Start booking process
-    break when the booking process fails
-        API-->Consumer: show failure
+    critical Establish a connection to the DB
+        Service-->DB: connect
+    option Network timeout
+        Service-->Service: Log error
+    option Credentials rejected
+        Service-->Service: Log different error
     end
-    API-->BillingService: Start billing process

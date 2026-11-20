@@ -1,2 +1,19 @@
 flowchart LR
-    id1(This is the text in the box)
+  subgraph Client
+    UI[Web app]
+    Cache[(Local cache)]
+  end
+  subgraph Services
+    API[API gateway]
+    Auth[Auth service]
+    Orders[Order service]
+  end
+  subgraph Storage
+    DB[(Orders DB)]
+  end
+  UI --> API
+  UI --> Cache
+  API --> Auth
+  API --> Orders
+  Orders --> DB
+  Auth -. token .-> UI

@@ -1,20 +1,7 @@
 classDiagram
-    namespace Platform {
-        namespace Auth {
-            class UserService {
-                +login()
-                +logout()
-            }
-        }
-        namespace Data {
-            class Repository {
-                +find()
-                +save()
-            }
-        }
-        class Gateway {
-            +route()
+    namespace Auth["Authentication Service"] {
+        class UserService {
+            +login()
+            +logout()
         }
     }
-    Gateway --> UserService : delegates
-    Gateway --> Repository : delegates

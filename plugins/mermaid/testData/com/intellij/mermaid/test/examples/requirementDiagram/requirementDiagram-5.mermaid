@@ -1,9 +1,11 @@
 requirementDiagram
 
+direction LR
+
 requirement test_req {
     id: 1
-    text: "class styling example"
-    risk: low
+    text: the test text.
+    risk: high
     verifymethod: test
 }
 
@@ -11,5 +13,4 @@ element test_entity {
     type: simulation
 }
 
-classDef important fill:#f96,stroke:#333,stroke-width:4px
-classDef test fill:#ffa,stroke:#000
+test_entity - satisfies -> test_req

@@ -1,8 +1,3 @@
----
-config:
-  class:
-    hierarchicalNamespaces: false
----
 classDiagram
     namespace Company.Engineering.Backend {
         class Developer {
@@ -14,10 +9,10 @@ classDiagram
             +createMockup()
         }
     }
-    namespace Company {
-        class CEO {
-            +makeDecisions()
+    namespace Company.Engineering {
+        class TechLead {
+            +planSprint()
         }
     }
-    CEO --> Developer : oversees
-    CEO --> Designer : oversees
+    TechLead --> Developer : leads
+    TechLead --> Designer : leads

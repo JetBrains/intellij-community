@@ -1,17 +1,14 @@
 swimlane-beta LR
-  subgraph Customer
-    submit[Submit order]
-    confirm[Confirm delivery]
+  subgraph Buyer
+    choose[Choose product]
+    pay[Pay invoice]
   end
 
   subgraph Store
-    check[Check order]
-    pack[Pack items]
+    reserve[Reserve stock]
+    ship[Ship product]
   end
 
-  subgraph Carrier
-    collect[Collect package]
-    deliver[Deliver package]
-  end
-
-  submit --> check --> pack --> collect --> deliver --> confirm
+  choose --> reserve
+  reserve -->|Invoice ready| pay
+  pay --> ship

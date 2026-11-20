@@ -1,4 +1,14 @@
+---
+config:
+  theme: default
+  look: classic
+---
 venn-beta
-  set A["Alpha"]
-  set B["Beta"]
-  union A,B["AB"]
+  title What makes a good feature
+  set Desirable
+  set Feasible
+  set Viable
+  union Desirable,Feasible["Buildable"]
+  union Feasible,Viable["Sustainable"]
+  union Desirable,Viable["Marketable"]
+  union Desirable,Feasible,Viable["Ship it"]

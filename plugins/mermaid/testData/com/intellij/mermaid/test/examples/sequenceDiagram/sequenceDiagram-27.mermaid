@@ -1,8 +1,8 @@
 sequenceDiagram
-    critical Establish a connection to the DB
-        Service-->DB: connect
-    option Network timeout
-        Service-->Service: Log error
-    option Credentials rejected
-        Service-->Service: Log different error
+    par Alice to Bob
+        Alice->>Bob: Hello guys!
+    and Alice to John
+        Alice->>John: Hello guys!
     end
+    Bob-->>Alice: Hi Alice!
+    John-->>Alice: Hi Alice!

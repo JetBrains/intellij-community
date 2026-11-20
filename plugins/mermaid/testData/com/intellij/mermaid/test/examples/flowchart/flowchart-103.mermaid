@@ -1,3 +1,8 @@
-flowchart LR
-%% this is a comment A -- text --> B{node}
-   A -- text --> B -- text2 --> C
+flowchart TD
+    Start --> one
+    subgraph one [My Group]
+        A --> B
+        B --> C
+    end
+    one --> End
+    one@{ view: collapsed }

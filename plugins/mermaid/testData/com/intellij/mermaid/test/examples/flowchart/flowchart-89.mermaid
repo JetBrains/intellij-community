@@ -1,4 +1,11 @@
 flowchart LR
-    A o--o B
-    B <--> C
-    C x--x D
+  Client e1@--> API
+  API e2@--> Cache
+  Cache e3@-->|miss| DB
+  DB e4@--> API
+  API e5@--> Client
+  e1@{ step: 1 }
+  e2@{ step: 2 }
+  e3@{ step: 3 }
+  e4@{ step: 4 }
+  e5@{ step: 5 }

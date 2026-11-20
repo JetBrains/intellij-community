@@ -1,3 +1,5 @@
 flowchart LR
-    A:::myStyle --> B
-    classDef myStyle fill:#ff0000,stroke:#ffff00,stroke-width:4px
+    A e1@==> B
+    A e2@--> C
+    e1@{ curve: linear }
+    e2@{ curve: natural }

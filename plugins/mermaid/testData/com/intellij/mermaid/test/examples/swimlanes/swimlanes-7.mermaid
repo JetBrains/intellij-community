@@ -1,20 +1,17 @@
 swimlane-beta LR
-  subgraph Applicant
-    apply[Submit application]
-    sign[Sign agreement]
+  accTitle: Support escalation
+  accDescr: A request starts with the customer, is triaged by support, and may be escalated to engineering.
+
+  subgraph Customer
+    request[Open request]
   end
 
-  subgraph Reviewer
-    screen[Screen application]
-    decide{Approved?}
+  subgraph Support
+    triage[Triage]
   end
 
-  subgraph System
-    create[Create account]
-    notify[Send welcome email]
+  subgraph Engineering
+    resolve[Resolve]
   end
 
-  apply -->|Application received| screen
-  screen --> decide
-  decide -->|Approved| create --> notify --> sign
-  decide -->|Needs changes| apply
+  request --> triage --> resolve

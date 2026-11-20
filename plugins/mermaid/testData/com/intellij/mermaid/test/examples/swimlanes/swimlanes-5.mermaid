@@ -1,17 +1,19 @@
 swimlane-beta LR
-  accTitle: Support escalation
-  accDescr: A request starts with the customer, is triaged by support, and may be escalated to engineering.
-
-  subgraph Customer
-    request[Open request]
+  subgraph Intake
+    start([Start])
+    task[Do work]
+    fix[Fix issues]
   end
 
-  subgraph Support
-    triage[Triage]
+  subgraph Review
+    decision{Ready?}
   end
 
-  subgraph Engineering
-    resolve[Resolve]
+  subgraph Complete
+    done((Done))
   end
 
-  request --> triage --> resolve
+  start --> task --> decision
+  decision -->|Yes| done
+  decision -->|No| fix
+  fix --> task

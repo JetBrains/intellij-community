@@ -1,8 +1,10 @@
 sequenceDiagram
-    participant Alice
-    participant John
-    links Alice: {"Dashboard": "https://dashboard.contoso.com/alice", "Wiki": "https://wiki.contoso.com/alice"}
-    links John: {"Dashboard": "https://dashboard.contoso.com/john", "Wiki": "https://wiki.contoso.com/john"}
+    autonumber
     Alice->>John: Hello John, how are you?
+    loop HealthCheck
+        John->>John: Fight against hypochondria
+    end
+    Note right of John: Rational thoughts!
     John-->>Alice: Great!
-    Alice-)John: See you later!
+    John->>Bob: How about you?
+    Bob-->>John: Jolly good!
