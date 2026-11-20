@@ -9,7 +9,7 @@ These specifications define plugin manager behavior in the community repository.
 ## Local Format
 
 Each specification has YAML frontmatter with `name`, `description`, and `targets`.
-Its H1 matches `name`. It also has a status, an ISO date, verification links, and open questions.
+Its H1 matches `name`. It also has a status, verification links, and open questions.
 
 Each specification uses sections that describe its own domain:
 

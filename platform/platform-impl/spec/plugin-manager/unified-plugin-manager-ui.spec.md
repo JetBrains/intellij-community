@@ -69,7 +69,6 @@ targets:
 # Unified Plugin Manager UI
 
 Status: Active
-Date: 2026-10-27
 
 ## Purpose
 

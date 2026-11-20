@@ -25,8 +25,8 @@ internal class PluginManagerSpecVerifierTest {
     writeFixture("first missing method", "second missing method", declaredMethod = "different behavior")
 
     assertThat(validate()).containsExactlyInAnyOrder(
-      "spec/example.spec.md:16: [@test] '../test/ExampleTest.kt' does not declare 'first missing method'",
-      "spec/example.spec.md:16: [@test] '../test/ExampleTest.kt' does not declare 'second missing method'",
+      "spec/example.spec.md:15: [@test] '../test/ExampleTest.kt' does not declare 'first missing method'",
+      "spec/example.spec.md:15: [@test] '../test/ExampleTest.kt' does not declare 'second missing method'",
     )
   }
 
@@ -80,7 +80,6 @@ internal class PluginManagerSpecVerifierTest {
         # Example
 
         Status: Active
-        Date: 2026-09-17
 
         ## Purpose
         Summary.

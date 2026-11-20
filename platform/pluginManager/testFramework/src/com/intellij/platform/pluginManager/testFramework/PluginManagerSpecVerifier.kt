@@ -6,8 +6,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.readText
@@ -101,10 +99,6 @@ class PluginManagerSpecVerifier(
     val status = STATUS.matchEntire(spec.text.lineSequence().firstOrNull { it.startsWith("Status:") }.orEmpty())
     if (status == null || status.groupValues[1].isBlank()) {
       violations += "${display(spec.path)}: a nonempty 'Status:' value is required"
-    }
-    val dateText = DATE.matchEntire(spec.text.lineSequence().firstOrNull { it.startsWith("Date:") }.orEmpty())?.groupValues?.get(1)
-    if (dateText == null || !isIsoDate(dateText)) {
-      violations += "${display(spec.path)}: 'Date:' must contain a valid ISO-8601 date"
     }
 
     val sections = spec.text.lineSequence()
@@ -337,16 +331,6 @@ private fun declaresFunction(source: String, name: String): Boolean =
 
 private fun lineOf(text: String, offset: Int): Int = text.take(offset).count { it == '\n' } + 1
 
-private fun isIsoDate(value: String): Boolean {
-  return try {
-    LocalDate.parse(value)
-    true
-  }
-  catch (_: DateTimeParseException) {
-    false
-  }
-}
-
 private fun String.toPathSafeGlob(): String = replace("*", STAR_PLACEHOLDER).replace("?", QUESTION_PLACEHOLDER)
 
 private fun String.restorePathSafeGlob(): String = replace(STAR_PLACEHOLDER, "*").replace(QUESTION_PLACEHOLDER, "?")
@@ -355,7 +339,6 @@ private const val STAR_PLACEHOLDER = "__SPEC_STAR__"
 private const val QUESTION_PLACEHOLDER = "__SPEC_QUESTION__"
 private val REQUIRED_FIELDS = setOf("name", "description")
 private val STATUS = Regex("""Status:\s*(.*)""")
-private val DATE = Regex("""Date:\s*(\d{4}-\d{2}-\d{2})""")
 private val TEST_LINK = Regex("""\[@test]\s*\(?([^\s)]+)\)?""")
 private val MARKDOWN_LINK = Regex("""]\(([^)#\s]+\.md)(?:#[^)]*)?\)""")
 private val BACKLINK = Regex("""(?m)^\s*//\s*@spec\s+(\S+)""")
