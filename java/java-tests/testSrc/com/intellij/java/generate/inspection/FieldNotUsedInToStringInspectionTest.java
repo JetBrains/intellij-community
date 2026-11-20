@@ -8,7 +8,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.java.generate.GenerateToStringContext;
-import org.jetbrains.java.generate.inspection.FieldNotUsedInToStringInspection;
+import com.siyeh.ig.classlayout.FieldNotUsedInToStringInspection;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
