@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowEmptyStateAction
+import com.intellij.ide.actions.ToolWindowsGroup
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -16,6 +17,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Disposer
@@ -48,6 +50,7 @@ import com.intellij.testFramework.replaceService
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
 import com.intellij.toolWindow.ToolWindowProjectSelectorTabs
 import com.intellij.ui.content.Content
@@ -883,6 +886,96 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  fun `the first frame guest keeps a tool window of a bundled plugin in the More menu of the new UI`() = onEdt {
+    val managers = createManagers(isNewUi = true)
+
+    // as TODO: the registration is available, and the layout of the frame owner has no info for it
+    val firstToolWindow = managers.register(first)
+
+    val presenting = managers.owner.getEntry(ID)!!
+    val stripe = buttonManager(managers.owner).getStripeFor(ToolWindowAnchor.LEFT, false)
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
+    assertThat(presenting.toolWindow.isAvailable).isTrue()
+    assertThat(presenting.stripeButton).describedAs("a registration gives a bundled tool window no stripe button").isNull()
+    assertThat(stripe.getButtonFor(ID)).isNull()
+    assertThat(managers.owner.layoutState.getInfo(ID)).isNull()
+    assertThat(moreMenuIds()).describedAs("the user finds the tool window in the More menu").contains(ID)
+
+    // the request of the user, as from the More menu
+    managers.owner.showToolWindow(ID)
+
+    assertThat(stripe.getButtonFor(ID)).isNotNull().isSameAs(presenting.stripeButton)
+    assertThat(firstToolWindow.isVisible).isTrue()
+    assertThat(moreMenuIds()).doesNotContain(ID)
+  }
+
+  @Test
+  fun `the first frame guest gives a tool window with a stripe button by default its button in the new UI`() = onEdt {
+    val managers = createManagers(isNewUi = true)
+
+    managers.register(first, notBundledTask())
+
+    val presenting = managers.owner.getEntry(ID)!!
+    assertThat(presenting.toolWindow.isAvailable).isTrue()
+    assertThat(buttonManager(managers.owner).getStripeFor(ToolWindowAnchor.LEFT, false).getButtonFor(ID))
+      .isNotNull()
+      .isSameAs(presenting.stripeButton)
+    assertThat(moreMenuIds()).doesNotContain(ID)
+  }
+
+  @Test
+  fun `the first frame guest keeps the stripe button that the user gave a tool window of a bundled plugin`() = onEdt {
+    val managers = createManagers(isNewUi = true)
+    managers.owner.layoutState.addInfo(ID, storedStripeChoice(isShowStripeButton = true))
+
+    managers.register(first)
+
+    val presenting = managers.owner.getEntry(ID)!!
+    assertThat(buttonManager(managers.owner).getStripeFor(ToolWindowAnchor.LEFT, false).getButtonFor(ID))
+      .isNotNull()
+      .isSameAs(presenting.stripeButton)
+  }
+
+  @Test
+  fun `the first frame guest brings back no stripe button that the user removed in the new UI`() = onEdt {
+    val managers = createManagers(isNewUi = true)
+    managers.owner.layoutState.addInfo(ID, storedStripeChoice(isShowStripeButton = false))
+
+    managers.register(first, notBundledTask())
+
+    val presenting = managers.owner.getEntry(ID)!!
+    assertThat(presenting.toolWindow.isAvailable).isTrue()
+    assertThat(presenting.stripeButton).isNull()
+    assertThat(buttonManager(managers.owner).getStripeFor(ToolWindowAnchor.LEFT, false).getButtonFor(ID)).isNull()
+    assertThat(moreMenuIds()).contains(ID)
+  }
+
+  @Test
+  fun `a new entry of a frame guest brings back no stripe button that the tool window never had`() = onEdt {
+    val managers = createManagers(isNewUi = true)
+    val firstToolWindow = managers.register(first)
+    val presenting = managers.owner.getEntry(ID)!!
+    assertThat(presenting.stripeButton).isNull()
+    // The frame owner puts content into the tool window and removes it. Nothing shows the tool window, so it has no content UI,
+    // and the test does the hide that the content UI does after the last content.
+    val ownContent = addContent(presenting.toolWindow)
+    presenting.toolWindow.contentManager.removeContent(ownContent, true)
+    managers.owner.hideToolWindow(ID, removeFromStripe = true)
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
+
+    firstToolWindow.setAvailable(false)
+    assertThat(managers.owner.presentation.entriesOf(ID)).isEmpty()
+    firstToolWindow.setAvailable(true)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
+    assertThat(presenting.toolWindow.isAvailable).isTrue()
+    assertThat(presenting.stripeButton).describedAs("the tool window was in the More menu all the time").isNull()
+  }
+
+  /** The ids of the tool windows that the More menu of the frame owner lists: the available ones without a stripe button. */
+  private fun moreMenuIds(): List<String> = ToolWindowsGroup.getToolWindowActions(owner, true).map { it.toolWindowId }
+
+  @Test
   fun `an entry of a frame guest does not bring back a stripe button that the user removed`() = onEdt {
     val managers = createManagers()
     managers.register(first)
@@ -1293,26 +1386,34 @@ internal class FrameGuestToolWindowPresentationTest {
     return events
   }
 
-  /** The managers of the frame owner and of its two frame guests. The record of the test window manager holds the guests. */
-  private fun createManagers(): Managers {
+  /**
+   * The managers of the frame owner and of its two frame guests. The record of the test window manager holds the guests.
+   * With [isNewUi], the managers have the stripes of the new UI, where a tool window of a bundled plugin has no stripe button by default.
+   */
+  private fun createManagers(isNewUi: Boolean = false): Managers {
     val windowManager = WindowManagerEx.getInstanceEx()
-    val ownerManager = createManager(owner)
+    val ownerManager = createManager(owner, isNewUi)
     val guestManagers = listOf(first, second).associateWith { guest ->
       windowManager.addFrameGuest(owner, guest)
       Disposer.register(disposable) { windowManager.removeFrameGuest(guest) }
-      createManager(guest).also { it.initAsFrameGuest(ownerManager.presentation) }
+      createManager(guest, isNewUi).also { it.initAsFrameGuest(ownerManager.presentation) }
     }
     return Managers(ownerManager, guestManagers)
   }
 
-  private fun createManager(project: Project): ToolWindowManagerImpl {
+  private fun createManager(project: Project, isNewUi: Boolean): ToolWindowManagerImpl {
     val state = ToolWindowManagerStateImpl()
     state.noStateLoaded()
     project.replaceService(ToolWindowManagerState::class.java, state, disposable)
 
-    val buttonManager = ToolWindowPaneOldButtonManager(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
+    val buttonManager = if (isNewUi) {
+      ToolWindowPaneNewButtonManager(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
+    }
+    else {
+      ToolWindowPaneOldButtonManager(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
+    }
     val coroutineScope = (project as ComponentManagerEx).getCoroutineScope()
-    val manager = object : ToolWindowManagerImpl(project, isNewUi = false, isEdtRequired = false, coroutineScope = coroutineScope) {
+    val manager = object : ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false, coroutineScope = coroutineScope) {
       override fun getButtonManager(toolWindow: ToolWindow): ToolWindowButtonManager = buttonManager
 
       override fun getButtonManager(paneId: String): ToolWindowButtonManager = buttonManager
@@ -1342,10 +1443,10 @@ internal class FrameGuestToolWindowPresentationTest {
   private class Managers(@JvmField val owner: ToolWindowManagerImpl, private val guests: Map<Project, ToolWindowManagerImpl>) {
     fun of(guest: Project): ToolWindowManagerImpl = guests.getValue(guest)
 
-    /** Registers the tool window of [guest], which the frame owner presents. */
-    fun register(guest: Project): ToolWindowImpl {
+    /** Registers the tool window of [guest] with [task], which the frame owner presents. */
+    fun register(guest: Project, task: RegisterToolWindowTaskData = task()): ToolWindowImpl {
       val manager = of(guest)
-      val toolWindow = manager.registerToolWindow(task(), buttonManager(manager)).toolWindow
+      val toolWindow = manager.registerToolWindow(task, buttonManager(manager)).toolWindow
       assertThat(toolWindow.isPresented).isTrue()
       return toolWindow
     }
@@ -1385,6 +1486,18 @@ private fun task(): RegisterToolWindowTaskData {
     }
   }
   return RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = contentFactory)
+}
+
+/** The registration of a tool window of a plugin that is not bundled. Such a tool window has a stripe button by default, also in the new UI. */
+private fun notBundledTask(): RegisterToolWindowTaskData = task().copy(pluginDescriptor = DefaultPluginDescriptor(ID))
+
+/** The layout info of the test tool window with the stripe button choice [isShowStripeButton] of the user. */
+private fun storedStripeChoice(isShowStripeButton: Boolean): WindowInfoImpl {
+  return WindowInfoImpl().also {
+    it.id = ID
+    it.anchor = ToolWindowAnchor.LEFT
+    it.isShowStripeButton = isShowStripeButton
+  }
 }
 
 private class MultiProjectFactory : MultiProjectToolWindowFactory {

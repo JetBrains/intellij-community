@@ -1616,9 +1616,20 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun isButtonNeeded(task: RegisterToolWindowTaskData, info: WindowInfoImpl?, stripeManager: ToolWindowStripeManager): Boolean {
-    return (task.shouldBeAvailable
-            && (info?.isShowStripeButton ?: shouldShowStripeButtonByDefault(task.id, task.contentFactory, task.pluginDescriptor, isNewUi))
-            && stripeManager.allowToShowOnStripe(task.id, info == null, isNewUi))
+    return task.shouldBeAvailable && isButtonNeeded(
+      id = task.id,
+      info = info,
+      byDefault = shouldShowStripeButtonByDefault(task.id, task.contentFactory, task.pluginDescriptor, isNewUi),
+      stripeManager = stripeManager,
+    )
+  }
+
+  /**
+   * The rule of a registration for the stripe button of the available tool window [id]: the stored choice of the user in [info],
+   * or else [byDefault], see [shouldShowStripeButtonByDefault]. A tool window without a stripe button is in the More menu.
+   */
+  internal fun isButtonNeeded(id: String, info: WindowInfoImpl?, byDefault: Boolean, stripeManager: ToolWindowStripeManager): Boolean {
+    return (info?.isShowStripeButton ?: byDefault) && stripeManager.allowToShowOnStripe(id, info == null, isNewUi)
   }
 
   @Deprecated("Use ToolWindowFactory and toolWindow extension point")
@@ -2394,7 +2405,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     getToolWindowPane(toolWindow).stretchHeight(toolWindow, value)
   }
 
-  internal fun toolWindowAvailable(toolWindow: ToolWindowImpl) {
+  /**
+   * The tool window [toolWindow] became available. It gets its stripe button, and it shows when the layout stores it as visible.
+   * Without [withStripeButton], it gets no stripe button and does not show, as a tool window that a registration gives
+   * no stripe button, see [isButtonNeeded].
+   */
+  internal fun toolWindowAvailable(toolWindow: ToolWindowImpl, withStripeButton: Boolean = true) {
     if (toolWindow.isPresented) {
       frameOwnerPresentation?.availabilityChanged(toolWindow)
       fireStateChanged(ToolWindowManagerEventType.ToolWindowAvailable, toolWindow)
@@ -2406,15 +2422,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     val entry = idToEntry.get(toolWindow.id) ?: return
-    if (entry.stripeButton == null) {
-      val buttonManager = getButtonManager(entry.toolWindow)
-      entry.stripeButton = buttonManager.createStripeButton(entry.toolWindow, entry.readOnlyWindowInfo, task = null)
-    }
+    if (withStripeButton) {
+      if (entry.stripeButton == null) {
+        val buttonManager = getButtonManager(entry.toolWindow)
+        entry.stripeButton = buttonManager.createStripeButton(entry.toolWindow, entry.readOnlyWindowInfo, task = null)
+      }
 
-    val info = layoutState.getInfo(toolWindow.id)
-    if (info != null && info.isVisible) {
-      LOG.assertTrue(!entry.readOnlyWindowInfo.isVisible)
-      showToolWindowImpl(entry = entry, toBeShownInfo = info, dirtyMode = false)
+      val info = layoutState.getInfo(toolWindow.id)
+      if (info != null && info.isVisible) {
+        LOG.assertTrue(!entry.readOnlyWindowInfo.isVisible)
+        showToolWindowImpl(entry = entry, toBeShownInfo = info, dirtyMode = false)
+      }
     }
 
     fireStateChanged(ToolWindowManagerEventType.ToolWindowAvailable, entry.toolWindow)

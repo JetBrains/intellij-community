@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -17,6 +18,7 @@ import com.intellij.toolWindow.ToolWindowEntry
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowFactoryScope
 import com.intellij.toolWindow.ToolWindowProjectSelector
+import com.intellij.toolWindow.ToolWindowStripeManager
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import java.awt.Component
@@ -137,7 +139,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     if (slot.isPlaceholder && slot.lastGuestStripeTitle == null) {
       slot.lastGuestStripeTitle = toolWindow.stripeTitle
     }
-    syncEntry(slot, toolWindow)
+    syncEntry(slot, toolWindow, atRegistration = true)
   }
 
   /**
@@ -320,7 +322,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     slot.isPlaceholder = isPlaceholder
     slots.put(toolWindow.id, slot)
     initOwnerEntry(slot)
-    refresh(slot)
+    refresh(slot, atRegistration = true)
     if (slot.wasVisibleBeforeUnbind && !toolWindow.isVisible && toolWindow.isAvailable) {
       manager.showToolWindow(toolWindow.id)
     }
@@ -517,6 +519,8 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
       presenting = own ?: manager.registerForFrameGuest(placeholderTask).toolWindow,
       isPlaceholder = own == null,
       placeholderTask = placeholderTask,
+      // the factory of `placeholderTask` is not the factory of the frame guest, so the task of the frame guest gives the answer
+      hasStripeButtonByDefault = shouldShowStripeButtonByDefault(task.id, task.contentFactory, task.pluginDescriptor, manager.isNewUi),
     )
     slots.put(task.id, slot)
     initOwnerEntry(slot)
@@ -569,15 +573,15 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     return if (toolWindow === slot.presenting) toolWindow.isOwnAvailable && !manager.suppressesOwnContent else toolWindow.isAvailable
   }
 
-  /** Makes [toolWindow] an entry of the selection or no entry, see [isEntry]. */
-  private fun syncEntry(slot: PresentingSlot, toolWindow: ToolWindowImpl) {
+  /** Makes [toolWindow] an entry of the selection or no entry, see [isEntry]. For [atRegistration], see [updatePresentingState]. */
+  private fun syncEntry(slot: PresentingSlot, toolWindow: ToolWindowImpl, atRegistration: Boolean = false) {
     if (isEntry(slot, toolWindow)) {
       slot.selection.add(toolWindow)
     }
     else {
       slot.selection.remove(toolWindow)
     }
-    refresh(slot)
+    refresh(slot, atRegistration = atRegistration)
   }
 
   /**
@@ -594,11 +598,11 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
 
   /**
    * Brings the tool window of [slot] in line with its entries. With [resolves], a visible tool window without a selected
-   * project selects one, see [ToolWindowProjectSelection.resolve].
+   * project selects one, see [ToolWindowProjectSelection.resolve]. For [atRegistration], see [updatePresentingState].
    */
-  private fun refresh(slot: PresentingSlot, resolves: Boolean = true) {
+  private fun refresh(slot: PresentingSlot, resolves: Boolean = true, atRegistration: Boolean = false) {
     sortEntries(slot)
-    updatePresentingState(slot)
+    updatePresentingState(slot, atRegistration)
     if (resolves && slot.presenting.isVisible) {
       slot.selection.resolve()
     }
@@ -613,11 +617,18 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
    * an entry does not bring back a stripe button that the user removed. A show, an activation and new content bring it back,
    * each on its own path. This function brings back only what it took away: the tool window comes back when a frame guest
    * gets an entry again, if the removal of the last entry hid it, and so does the stripe button.
+   *
+   * [atRegistration] tells that a registration brings the entries: a frame guest registers its tool window, or the frame owner
+   * registers the presenting one. When that makes the presenting tool window available, the rule of a registration decides
+   * its stripe button, see [isButtonNeededAtRegistration]. So a tool window that a frame with one project keeps in the More menu
+   * is there also in a frame with guests. A later change, as the first content of a frame guest, gives the stripe button.
    */
-  private fun updatePresentingState(slot: PresentingSlot) {
+  private fun updatePresentingState(slot: PresentingSlot, atRegistration: Boolean) {
     val presenting = slot.presenting
     if (slot.hasGuestEntry()) {
-      presenting.setHasFrameGuestEntry(true)
+      if (!presenting.hasFrameGuestEntry) {
+        presenting.setHasFrameGuestEntry(true, withStripeButton = !atRegistration || isButtonNeededAtRegistration(slot))
+      }
       if (slot.isOffStripeForNoEntry) {
         slot.isOffStripeForNoEntry = false
         manager.setStripeButtonShown(presenting.id, true)
@@ -633,12 +644,27 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
       val isFrameOwnerOnStripe = presenting.isOwnAvailable && presenting.isOnProjectStripe
       slot.isHiddenForNoEntry = presenting.isVisible && !isFrameOwnerOnStripe
       presenting.setHasFrameGuestEntry(false)
-      if (presenting.isAvailable && !isFrameOwnerOnStripe && presenting.isShowStripeButton) {
+      // a tool window in the More menu has no stripe button to take away
+      if (presenting.isAvailable && !isFrameOwnerOnStripe && manager.isStripeButtonShow(presenting)) {
         // the frame owner left the stripe before, and the last frame guest leaves it now
         manager.hideToolWindow(presenting.id, removeFromStripe = true)
         slot.isOffStripeForNoEntry = true
       }
     }
+  }
+
+  /**
+   * Tells whether the tool window of [slot] gets a stripe button when a registration makes it available: the stored choice
+   * of the user, or else the default of the tool windows of the frame guests, see [ToolWindowManagerImpl.isButtonNeeded].
+   */
+  private fun isButtonNeededAtRegistration(slot: PresentingSlot): Boolean {
+    val id = slot.presenting.id
+    return manager.isButtonNeeded(
+      id = id,
+      info = manager.layoutState.getInfo(id),
+      byDefault = slot.hasStripeButtonByDefault,
+      stripeManager = manager.project.service<ToolWindowStripeManager>(),
+    )
   }
 
   /** Gives each presented tool window its state: the selected one is visible while the presenting tool window is visible. */
@@ -725,6 +751,11 @@ internal class PresentingSlot(
   var isPlaceholder: Boolean,
   /** The registration of a tool window without content of its own for the id, see [isPlaceholder]. */
   val placeholderTask: RegisterToolWindowTaskData,
+  /**
+   * The registration rules give the tool window of a frame guest with the id a stripe button when the layout has no info for it,
+   * see [shouldShowStripeButtonByDefault]. Otherwise such a tool window is in the More menu.
+   */
+  val hasStripeButtonByDefault: Boolean,
 ) {
   /** The presented tool windows of the frame guests, in the order the frame owner got them. */
   val guests = ArrayList<ToolWindowImpl>()

@@ -696,23 +696,26 @@ private val LOG = logger<ToolWindowManagerImpl>()
     }
   }
 
-  /** Sets [hasFrameGuestEntry]. The manager hears of it only when the tool window becomes available or unavailable. */
-  internal fun setHasFrameGuestEntry(value: Boolean) {
+  /**
+   * Sets [hasFrameGuestEntry]. The manager hears of it only when the tool window becomes available or unavailable.
+   * Without [withStripeButton], a tool window that becomes available gets no stripe button, see `ToolWindowManagerImpl.toolWindowAvailable`.
+   */
+  internal fun setHasFrameGuestEntry(value: Boolean, withStripeButton: Boolean = true) {
     if (hasFrameGuestEntry == value) {
       return
     }
     val wasAvailable = isAvailable()
     hasFrameGuestEntry = value
-    availabilityChanged(wasAvailable)
+    availabilityChanged(wasAvailable, withStripeButton)
   }
 
-  private fun availabilityChanged(wasAvailable: Boolean) {
+  private fun availabilityChanged(wasAvailable: Boolean, withStripeButton: Boolean = true) {
     val isAvailable = isAvailable()
     if (wasAvailable == isAvailable) {
       return
     }
     if (isAvailable) {
-      toolWindowManager.toolWindowAvailable(this)
+      toolWindowManager.toolWindowAvailable(this, withStripeButton)
     }
     else {
       toolWindowManager.toolWindowUnavailable(this)
