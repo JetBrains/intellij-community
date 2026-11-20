@@ -248,14 +248,34 @@ public class ActionButtonWithText extends ActionButton {
     look.paintIcon(g, this, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
-    g.setColor(isEnabled() ? getForeground() : getInactiveTextColor());
-    UIUtilities.drawStringUnderlineCharAt(this, g, text, getMnemonicCharIndex(text),
-                                          textRect.x, textRect.y + fm.getAscent());
+    paintText(g, fm, text, textRect);
     if (arrowIcon != null) {
       int x = Math.max(iconRect.x + iconRect.width, textRect.x + textRect.width) + JBUI.scale(TEXT_ARROW_SPACE);
       int y = textRect.y + (textRect.height - arrowIcon.getIconHeight()) / 2 + 1;
       getButtonLook().paintIcon(g, this, arrowIcon, x, y);
     }
+  }
+
+  /**
+   * Paints {@code text} in {@code textRect}.
+   * The text comes from the layout, so it can be a shortened form of the presentation text.
+   */
+  @ApiStatus.Internal
+  protected void paintText(
+    @NotNull Graphics g,
+    @NotNull FontMetrics fm,
+    @NotNull @NlsActions.ActionText String text,
+    @NotNull Rectangle textRect
+  ) {
+    g.setColor(isEnabled() ? getForeground() : getInactiveTextColor());
+    UIUtilities.drawStringUnderlineCharAt(
+      this,
+      g,
+      text,
+      getMnemonicCharIndex(text),
+      textRect.x,
+      textRect.y + fm.getAscent()
+    );
   }
 
   protected @NotNull Icon getDownArrowIcon() {
