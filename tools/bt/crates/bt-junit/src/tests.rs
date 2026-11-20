@@ -327,3 +327,75 @@ fn a_simple_class_name_pattern_accepts_any_package_and_nothing_longer() {
         assert!(!pattern.is_match(unmatched), "{unmatched}");
     }
 }
+
+/// The document of a run whose runner threw on `--filter a.FooTest.testBar` before its first test, as Bazel wrote it.
+/// The digest said only `exited with error code 2`, and the cause was in the log.
+#[test]
+fn a_runner_that_threw_before_its_first_test_names_the_exception_of_its_log() {
+    let report = parse_report(concat!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>"#,
+        "\n<testsuites>\n",
+        r#"  <testsuite name="community+/plugins/markdown/test/tests_test" tests="1" failures="0" errors="1">"#,
+        "\n",
+        r#"    <testcase name="community+/plugins/markdown/test/tests_test" classname="" status="run" duration="3" time="3"><error message="exited with error code 2"></error></testcase>"#,
+        "\n      <system-out>\nGenerated test.log (if the file is not UTF-8, then this may be unreadable):\n<![CDATA[",
+        "Running tests via com.intellij.tests.JUnit5BazelRunner\n",
+        "WARN - a.b.Plugin - java.lang.IllegalStateException: an earlier exception of the log\n",
+        "Test filter: a.FooTest.testBar\n",
+        "java.lang.IllegalArgumentException: Class name should start with uppercase letter: testBar\n",
+        "\tat com.intellij.tests.JUnit5BazelRunner.getClassNameFilter(JUnit5BazelRunner.java:649)\n",
+        "\tat com.intellij.tests.JUnit5BazelRunner.main(JUnit5BazelRunner.java:265)]]>\n",
+        "      </system-out>\n    </testsuite>\n</testsuites>",
+    ));
+    assert!(report.integrity.is_complete(), "{:?}", report.integrity);
+    let failure = report.suites[0].cases[0].failure.as_ref().expect("a failure");
+    assert_eq!(
+        failure.message.as_deref(),
+        Some(
+            "exited with error code 2; the runner threw java.lang.IllegalArgumentException: Class name should start with \
+             uppercase letter: testBar"
+        )
+    );
+    assert_eq!(
+        failure.detail,
+        "at com.intellij.tests.JUnit5BazelRunner.getClassNameFilter(JUnit5BazelRunner.java:649)\n\
+         at com.intellij.tests.JUnit5BazelRunner.main(JUnit5BazelRunner.java:265)"
+    );
+}
+
+#[test]
+fn a_failure_with_its_own_stack_keeps_it_and_a_log_without_an_exception_changes_nothing() {
+    let report = parse_report(concat!(
+        r#"<testsuites><testsuite name="t" tests="2">"#,
+        r#"<testcase name="t" classname=""><error message="exited with error code 1">at p.A.run</error></testcase>"#,
+        r#"<system-out><![CDATA[java.lang.IllegalStateException: not the cause]]></system-out>"#,
+        r#"</testsuite><testsuite name="u" tests="1">"#,
+        r#"<testcase name="u" classname=""><error message="exited with error code 1"/></testcase>"#,
+        r#"<system-out><![CDATA[the JVM ran out of disk]]></system-out>"#,
+        r#"</testsuite></testsuites>"#,
+    ));
+    let failure = |suite: usize| report.suites[suite].cases[0].failure.clone().expect("a failure");
+    assert_eq!(failure(0).message.as_deref(), Some("exited with error code 1"));
+    assert_eq!(failure(0).detail, "at p.A.run");
+    assert_eq!(failure(1).message.as_deref(), Some("exited with error code 1"));
+    assert_eq!(failure(1).detail, "");
+}
+
+#[test]
+fn an_exception_line_is_a_dotted_throwable_name() {
+    for line in [
+        "java.lang.IllegalArgumentException: text",
+        "java.lang.OutOfMemoryError",
+        "a.b.Outer$InnerException: x",
+    ] {
+        assert!(is_exception_line(line), "{line}");
+    }
+    for line in [
+        "IllegalArgumentException: text",
+        "WARN - a.b.Plugin - java.lang.X: y",
+        "a.b.NotACause: x",
+        "Test filter: a.FooTest",
+    ] {
+        assert!(!is_exception_line(line), "{line}");
+    }
+}

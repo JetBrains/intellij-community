@@ -939,3 +939,27 @@ fn a_build_failure_of_a_lane_names_the_targets_that_did_not_build_and_the_bazel_
         "{unknown}"
     );
 }
+
+/// A runner that threw before its first test: the digest names the exception of its log and the frame that threw it.
+#[test]
+fn a_runner_crash_shows_the_exception_of_its_log() {
+    let suites = bt_junit::parse(concat!(
+        r#"<testsuites><testsuite name="community+/plugins/markdown/test/tests_test" tests="1" errors="1">"#,
+        r#"<testcase name="community+/plugins/markdown/test/tests_test" classname=""><error message="exited with error code 2"></error></testcase>"#,
+        "<system-out><![CDATA[Test filter: a.FooTest.testBar\n",
+        "java.lang.IllegalArgumentException: Class name should start with uppercase letter: testBar\n",
+        "\tat com.intellij.tests.JUnit5BazelRunner.getClassNameFilter(JUnit5BazelRunner.java:649)\n",
+        "\tat com.intellij.tests.JUnit5BazelRunner.main(JUnit5BazelRunner.java:265)]]></system-out>",
+        "</testsuite></testsuites>",
+    ));
+    assert_eq!(
+        render_failure(1, &suites[0].cases[0]),
+        [
+            "1) community+/plugins/markdown/test/tests_test",
+            "   exited with error code 2; the runner threw java.lang.IllegalArgumentException: Class name should start with \
+             uppercase letter: testBar",
+            "   at com.intellij.tests.JUnit5BazelRunner.getClassNameFilter(JUnit5BazelRunner.java:649)",
+            "   ... 1 frames omitted",
+        ]
+    );
+}

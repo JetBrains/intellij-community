@@ -128,6 +128,9 @@ reads the value only when the test JVM starts, after the build. So bt reads the 
 list and another wildcard with exit 2. For a NO TESTS run with `--filter`, the `hint` line of the digest names what the
 filter selects, see `no_tests_hint`. The hint does not change the status or the exit code.
 
+When the runner stops before its first test, Bazel writes only `exited with error code N`. The digest then adds the last
+exception of the runner log and its frames.
+
 ## Builds
 
 `bt build <pattern>...` runs `bazel build -k` over target patterns that start with `//` or `@`, with the UI of bazel
