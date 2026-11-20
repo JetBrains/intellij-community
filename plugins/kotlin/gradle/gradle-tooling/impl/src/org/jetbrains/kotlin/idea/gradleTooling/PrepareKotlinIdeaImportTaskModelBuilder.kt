@@ -13,6 +13,7 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.internal.build.BuildState
 import org.gradle.tooling.model.gradle.GradleBuild
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.Message
@@ -33,7 +34,7 @@ interface PrepareKotlinIdeImportTaskModel : Serializable {
 
 class PrepareKotlinIdeImportModelProvider(
     private val executionMode: GradleModelController.GradleModelFetchRequest.GradleExecutionMode,
-    private val isIsolatedProjectsEnabled: Boolean,
+    private val isParallelExecutionModeEnabled: Boolean,
 ) : ProjectImportModelProvider {
     override fun populateModels(
         modelController: GradleModelController,
@@ -46,11 +47,11 @@ class PrepareKotlinIdeImportModelProvider(
     }
 
     private fun getEffectiveExecutionMode(): GradleModelController.GradleModelFetchRequest.GradleExecutionMode {
-        // Workaround for https://github.com/gradle/gradle/issues/39040
-        if (isIsolatedProjectsEnabled && GradleVersionUtil.isCurrentGradleOlderThan("9.9")) {
-            return GradleModelController.GradleModelFetchRequest.GradleExecutionMode.SEQUENTIAL
+        return if (isParallelExecutionModeEnabled) {
+            executionMode
+        } else {
+            GradleModelController.GradleModelFetchRequest.GradleExecutionMode.SEQUENTIAL
         }
-        return executionMode
     }
 
     override fun getPhase(): GradleModelFetchPhase = GradleModelFetchPhase.PROJECT_LOADED_PHASE

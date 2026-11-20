@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradle.utils.KotlinGradleModelFetchProperties
 import org.jetbrains.kotlin.idea.gradleTooling.PrepareKotlinIdeImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -14,12 +15,13 @@ class PrepareKotlinIdeImportTaskResolver : AbstractProjectResolverExtension() {
 
     override fun getModelProvider(): ProjectImportModelProvider = PrepareKotlinIdeImportModelProvider(
         KotlinGradleModelFetchProperties.getExecutionMode(),
-        isIsolatedProjectsEnabled(),
+        isParallelExecutionModeEnabled(),
     )
 
-    private fun isIsolatedProjectsEnabled(): Boolean {
+    // Workaround for https://github.com/gradle/gradle/issues/39040
+    private fun isParallelExecutionModeEnabled(): Boolean {
         val project = resolverCtx.externalSystemTaskId.findProject() ?: return false
         val properties = GradlePropertiesFile.getProperties(project, Path.of(resolverCtx.projectPath))
-        return properties.isolatedProjects?.value == true
+        return properties.isolatedProjects?.value == true && resolverCtx.gradleVersion >= GradleVersion.version("9.9.0")
     }
 }
