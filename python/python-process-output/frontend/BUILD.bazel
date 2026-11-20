@@ -197,6 +197,8 @@ jvm_library(
         "//platform/testFramework/common:common_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
+        "//platform/testFramework/core",
+        "//platform/testFramework/core:core_test_lib",
         "//python/python-process-output/common",
         "//python/python-process-output/common:common_test_lib",
         "//python/junit5Tests-framework:community-junit5Tests-framework",
