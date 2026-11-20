@@ -398,7 +398,7 @@ class LineStatusTrackerManager(
     data.isRefusedByClm = !isRegistered
   }
 
-  private fun unregisterTrackerInCLM(data: TrackerData, wasUnbound: Boolean = false) {
+  private fun unregisterTrackerInCLM(data: TrackerData) {
     val tracker = data.tracker
     val virtualFile = tracker.virtualFile
     if (tracker !is ChangelistsLocalLineStatusTracker) return
@@ -413,21 +413,13 @@ class LineStatusTrackerManager(
 
     ChangeListManagerImpl.getInstanceImpl(project).unregisterChangeTracker(filePath, tracker)
     data.clmFilePath = null
-
-    val actualFilePath = VcsUtil.getFilePath(virtualFile)
-    if (filePath != actualFilePath && !wasUnbound) {
-      LOG.error("[unregisterTrackerInCLM] unexpected file path: expected: $filePath, actual: $actualFilePath")
-    }
   }
 
   private fun reregisterTrackerInCLM(data: TrackerData) {
     val tracker = data.tracker
     val virtualFile = tracker.virtualFile
     if (tracker !is ChangelistsLocalLineStatusTracker) return
-    if (data.isRefusedByClm) {
-      registerTrackerInCLM(data)
-      return
-    }
+    if (data.isRefusedByClm) return
 
     LOG.assertTrue(virtualFile.isInLocalFileSystem, virtualFile)
     val oldFilePath = data.clmFilePath
@@ -547,8 +539,8 @@ class LineStatusTrackerManager(
   }
 
   @RequiresEdt
-  private fun releaseTracker(document: Document, wasUnbound: Boolean = false) {
-    val data = detachTracker(document, wasUnbound) ?: return
+  private fun releaseTracker(document: Document) {
+    val data = detachTracker(document) ?: return
     disposeTracker(data)
   }
 
@@ -556,9 +548,9 @@ class LineStatusTrackerManager(
    * First phase of [releaseTracker]: stop tracking the document. Can be called from any thread (under [LOCK] when needed).
    * Must be followed by [disposeTracker].
    */
-  private fun detachTracker(document: Document, wasUnbound: Boolean = false): TrackerData? {
+  private fun detachTracker(document: Document): TrackerData? {
     val data = trackers.remove(document) ?: return null
-    unregisterTrackerInCLM(data, wasUnbound)
+    unregisterTrackerInCLM(data)
     return data
   }
 
@@ -908,7 +900,7 @@ class LineStatusTrackerManager(
       val projectManager = ProjectManager.getInstanceIfCreated() ?: return
       for (project in projectManager.openProjects) {
         val lstm = project.getServiceIfCreated(LineStatusTrackerManagerI::class.java) as? LineStatusTrackerManager ?: continue
-        lstm.releaseTracker(document, wasUnbound = true)
+        lstm.releaseTracker(document)
       }
     }
   }
@@ -1101,8 +1093,7 @@ class LineStatusTrackerManager(
 
   /**
    * @property isRefusedByClm true when the CLM refused the tracker, because another tracker holds its path.
-   * The CLM then does not know the tracker, so the release of the tracker does not unregister it.
-   * A move of the file tries the registration again at the new path.
+   * The CLM then does not know the tracker, so the release and a move of the file do not change its registration.
    */
   private class TrackerData(
     val tracker: LocalLineStatusTracker<*>,
