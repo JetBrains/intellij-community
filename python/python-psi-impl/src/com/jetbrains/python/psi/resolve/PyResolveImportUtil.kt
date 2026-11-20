@@ -166,7 +166,7 @@ fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQu
  * Creates a [PyQualifiedNameResolveContext] from a [foothold] element.
  */
 fun fromFoothold(foothold: PsiElement): PyQualifiedNameResolveContext {
-  val module = ModuleUtilCore.findModuleForPsiElement(foothold.containingFile ?: foothold)
+  val module = findModuleForPsiElementCached(foothold.containingFile ?: foothold)
   return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold)
 }
 
@@ -226,7 +226,7 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
       val containingName = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null)
       if (containingName != null && containingName.componentCount > 0) {
         val absoluteName = containingName.append(name)
-        val interpreter = ModuleUtilCore.findModuleForPsiElement(footholdFile)?.pythonInterpreterIfReady() ?: return emptyList()
+        val interpreter = findModuleForPsiElementCached(footholdFile)?.pythonInterpreterIfReady() ?: return emptyList()
         val skeletonsVirtualFile = interpreter.skeletonsDirectory(context.project) ?: return emptyList()
         val skeletonsDir = context.psiManager.findDirectory(skeletonsVirtualFile)
         return resolveModuleAt(absoluteName, skeletonsDir, context.copyWithoutForeign())
@@ -480,7 +480,7 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?): Prior
 
 @ApiStatus.Internal
 fun isInSkeletons(element: PsiElement): Boolean {
-  val interpreter = ModuleUtilCore.findModuleForPsiElement(element)?.pythonInterpreterIfReady() ?: return false
+  val interpreter = findModuleForPsiElementCached(element)?.pythonInterpreterIfReady() ?: return false
   val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile?.virtualFile) ?: return false
   val skeletons = interpreter.skeletonsDirectory(element.project) ?: return false
   return VfsUtilCore.isAncestor(skeletons, vFile, false)

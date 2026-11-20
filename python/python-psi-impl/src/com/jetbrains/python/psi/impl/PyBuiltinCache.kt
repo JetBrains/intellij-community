@@ -4,12 +4,12 @@ package com.jetbrains.python.psi.impl
 import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.intellij.python.sdk.backend.isIgnoredInterpreterEntry
 import com.intellij.python.sdk.backend.isInterpreterLibraryCarrier
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.OrderEntryUtil
+import com.intellij.openapi.util.Key
 import com.jetbrains.python.psi.resolve.mainPythonInterpreter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -17,6 +17,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.psi.impl.source.resolve.FileContextUtil
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.QualifiedName
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
@@ -30,6 +34,8 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache
+import com.jetbrains.python.psi.resolve.PyResolveCachesInvalidator
+import com.jetbrains.python.psi.resolve.findModuleForPsiElementCached
 import com.jetbrains.python.psi.resolve.fromInterpreter
 import com.jetbrains.python.psi.resolve.pythonInterpreterIfReady
 import com.jetbrains.python.psi.resolve.resolveSdk
@@ -205,6 +211,7 @@ class PyBuiltinCache private constructor(
     private const val EXCEPTIONS_MODULE = "exceptions"
 
     private val DUD_INSTANCE = PyBuiltinCache()
+    private val INTERPRETER_FOR_FILE_KEY = Key.create<CachedValue<PythonInterpreter?>>("Python.interpreterForFile")
 
     /**
      * Returns an instance of builtin cache. Instances differ per module and are cached.
@@ -238,8 +245,17 @@ class PyBuiltinCache private constructor(
     @JvmStatic
     fun findInterpreterForFile(psiFile: PsiFileSystemItem?): PythonInterpreter? {
       psiFile ?: return null
-      val module = ModuleUtilCore.findModuleForPsiElement(psiFile)
-      return if (module != null) module.pythonInterpreterIfReady() else findInterpreterForNonModuleFile(psiFile)
+      return CachedValuesManager.getCachedValue(psiFile, INTERPRETER_FOR_FILE_KEY) {
+        val project = psiFile.project
+        val module = findModuleForPsiElementCached(psiFile)
+        val interpreter = if (module != null) module.pythonInterpreterIfReady() else findInterpreterForNonModuleFile(psiFile)
+        CachedValueProvider.Result.create(
+          interpreter,
+          PsiModificationTracker.MODIFICATION_COUNT,
+          ProjectRootManager.getInstance(project),
+          PyResolveCachesInvalidator.getInstance(project).modificationTracker,
+        )
+      }
     }
 
     /**
