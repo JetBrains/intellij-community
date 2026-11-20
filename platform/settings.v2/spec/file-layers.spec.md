@@ -147,7 +147,9 @@ This table maps each layer and locality to its file. The requirements below defi
 - A save must write the per-file entries from the vault only. A per-file entry that the load ignores must not
   stay in the config.
   [@test] ../test/src/com/intellij/platform/settings/v2/PerFileLayerTest.kt
-- A per-file entry that disappears from the config must clear that file's layer.
+- A per-file entry that disappears from the config must clear that file's layer. This holds also for an entry
+  that the IDE wrote and that no load has read, and for a config that is deleted.
+  [@test] ../test/src/com/intellij/platform/settings/v2/PerFileLayerTest.kt
 - A rename or a move of a file must carry its per-file entry along. A move puts the entry into the config of the
   new directory. See [ADR 0130](../adr/0130-per-file-settings-follow-their-file-on-a-rename-or-a-move.md).
 

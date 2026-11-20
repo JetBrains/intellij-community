@@ -57,11 +57,12 @@ internal class FileLayerService(private val project: Project, private val scope:
   override val providerClass: Class<out LayerProvider> = JsonFileLayerProvider::class.java
 
   /**
-   * Holds the per-file contexts that [split] last emitted for each config, keyed by the directory url and the
-   * locality, then by the file name. A new parse can drop a [PER_FILE_CONTAINER] entry, or the file itself can go.
-   * Then [split] pushes an empty layer to clear the override of that file, so the override does not stay stale. The
-   * clear uses the remembered context, because the file may be gone from the disk and cannot resolve. A context is a
-   * snapshot with no live references, so it is safe to hold.
+   * Holds the per-file contexts that each config holds, keyed by the directory url and the locality, then by the file
+   * name. [split] fills it with the entries that it emits, and [writeData] with the entries that it writes. A new parse
+   * can drop a [PER_FILE_CONTAINER] entry, or the file itself can go. Then [split] pushes an empty layer to clear the
+   * override of that file, so the override does not stay stale. The clear uses the remembered context, because the
+   * file may be gone from the disk and cannot resolve. A context is a snapshot with no live references, so it is safe
+   * to hold.
    */
   private val currentFileConfigsMap = ConcurrentHashMap<Pair<String, LayerLocality>, Map<String, SettingsContext>>()
 
@@ -110,16 +111,18 @@ internal class FileLayerService(private val project: Project, private val scope:
       return SaveResult.DROPPED
     }
     val directoryData = slices.entries.firstOrNull { it.key.identity == storageContext.identity }?.value ?: MapValue(emptyMap())
-    val perFileData = slices.filterKeys { it.identity != storageContext.identity }
-      .mapKeys { (context, _) ->
+    val perFileContexts = slices.keys.filter { it.identity != storageContext.identity }
+      .associateBy { context ->
         val fileContext = context.realContext as? FileSettingsContext
         require(fileContext != null && fileContext.parentContext.identity == storageContext.identity) {
           "'${context.identity}' is not a file directly under '${storageContext.identity}'"
         }
         fileContext.url.substringAfterLast('/')
       }
+    val perFileData = perFileContexts.mapValues { (_, context) -> slices.getValue(context) }
     val model = if (perFileData.isEmpty()) directoryData else MapValue.wrapOwned(directoryData.values + (PER_FILE_CONTAINER to MapValue.wrapOwned(perFileData)))
     write(storageContext, locality, model)
+    currentFileConfigsMap[directoryContext.url to locality] = perFileContexts
     return SaveResult.SAVED
   }
 

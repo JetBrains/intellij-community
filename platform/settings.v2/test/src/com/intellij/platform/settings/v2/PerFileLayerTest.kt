@@ -96,6 +96,30 @@ class PerFileLayerTest {
   }
 
   /**
+   * Checks that a delete clears a per-file override that the engine wrote and no load has read. The watcher is off
+   * while the override is saved, so no refresh reads the config before the delete.
+   */
+  @Test
+  fun `deleting the config clears a per-file override that no load has read`(): Unit = runBlocking {
+    val dir = VfsTestUtil.createFile(sourceRoot, "perfileW/foo.txt").parent
+    val foo = readAction { dir.findChild("foo.txt")!! }
+    val dirCtx = readAction { SettingsContext.file(dir, project) }
+    val fooCtx = readAction { SettingsContext.file(foo, project) }
+    val config = dir.toNioPath().resolve(localConfigName(FileLayerService.CONFIG_FILE))
+
+    val configFile = withFileWatcherDisabled(project) {
+      style[dirCtx] = "dir"
+      style[fooCtx] = "foo"
+      SettingsVault.getInstance().flush(dirCtx)
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(config)!!
+    }
+    VfsTestUtil.deleteFile(configFile)
+
+    awaitEquals("def") { style[fooCtx] }
+    awaitEquals("def") { style[dirCtx] }
+  }
+
+  /**
    * Checks only the coexistence and the edit, not a delete. A deleted file keeps its per-file entry until the next load
    * of the config, because the vault still holds its slice. Only a change of a config file loads it again.
    */
