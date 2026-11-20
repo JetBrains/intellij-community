@@ -978,11 +978,13 @@ f:com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer
 - process(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
 c:com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest
 - com.intellij.diff.requests.ContentDiffRequest
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,java.lang.String,java.lang.String,com.intellij.diff.requests.ContentDiffRequest):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,com.intellij.diff.requests.ContentDiffRequest):V
 - getChangelistId():java.lang.String
 - getChangelistName():java.lang.String
 - getContentTitles():java.util.List
 - getContents():java.util.List
+- getDocument():com.intellij.openapi.editor.Document
 - getLineStatusTracker():com.intellij.openapi.vcs.ex.LineStatusTracker
 - getProject():com.intellij.openapi.project.Project
 - getRequest():com.intellij.diff.requests.ContentDiffRequest

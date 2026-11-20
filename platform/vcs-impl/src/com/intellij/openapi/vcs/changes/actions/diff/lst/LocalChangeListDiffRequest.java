@@ -5,6 +5,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.impl.AssignmentTracker;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.util.Side;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -27,22 +28,51 @@ import java.util.List;
 public class LocalChangeListDiffRequest extends ContentDiffRequest {
   private final @NotNull Project myProject;
   private final @NotNull VirtualFile myVirtualFile;
+  private final @NotNull Document myDocument;
   private final @NotNull String myChangelistId;
   private final @NotNull @NlsSafe String myChangelistName;
   private final @NotNull ContentDiffRequest myRequest;
 
   private final AssignmentTracker myAssignmentTracker = new LstAssignmentTracker();
 
+  /**
+   * @param document the document of the {@code virtualFile}, which the local content of the {@code request} shows
+   */
   public LocalChangeListDiffRequest(@NotNull Project project,
                                     @NotNull VirtualFile virtualFile,
+                                    @NotNull Document document,
                                     @NotNull String changelistId,
                                     @NotNull String changelistName,
                                     @NotNull ContentDiffRequest request) {
     myProject = project;
     myVirtualFile = virtualFile;
+    myDocument = document;
     myChangelistId = changelistId;
     myChangelistName = changelistName;
     myRequest = request;
+  }
+
+  /**
+   * @deprecated Pass the document of the local content.
+   * This constructor takes it from the right content of the {@code request}, or loads it under a read action.
+   */
+  @Deprecated
+  public LocalChangeListDiffRequest(@NotNull Project project,
+                                    @NotNull VirtualFile virtualFile,
+                                    @NotNull String changelistId,
+                                    @NotNull String changelistName,
+                                    @NotNull ContentDiffRequest request) {
+    this(project, virtualFile, getLocalDocument(virtualFile, request), changelistId, changelistName, request);
+  }
+
+  private static @NotNull Document getLocalDocument(@NotNull VirtualFile virtualFile, @NotNull ContentDiffRequest request) {
+    List<DiffContent> contents = request.getContents();
+    if (contents.size() == 2 && Side.RIGHT.select(contents) instanceof DocumentContent content) {
+      return content.getDocument();
+    }
+    Document document = ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(virtualFile));
+    if (document == null) throw new IllegalArgumentException("The file has no document: " + virtualFile);
+    return document;
   }
 
   public @NotNull Project getProject() {
@@ -51,6 +81,10 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
 
   public @NotNull VirtualFile getVirtualFile() {
     return myVirtualFile;
+  }
+
+  public @NotNull Document getDocument() {
+    return myDocument;
   }
 
   public @NotNull String getChangelistId() {
@@ -66,7 +100,7 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
   }
 
   public @Nullable LineStatusTracker getLineStatusTracker() {
-    return LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myVirtualFile);
+    return LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myDocument);
   }
 
 
@@ -107,25 +141,18 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
     myAssignmentTracker.onAssigned(isAssigned);
   }
 
-  private boolean installTracker() {
-    return ReadAction.computeBlocking(() -> {
-      Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
-      if (document == null) return false;
-
-      LineStatusTrackerManager.getInstance(myProject).requestTrackerFor(document, this);
+  private void installTracker() {
+    ReadAction.runBlocking(() -> {
+      LineStatusTrackerManager.getInstance(myProject).requestTrackerFor(myDocument, this);
 
       DocumentContent beforeContent = (DocumentContent)getContents().getFirst();
       CharSequence beforeText = beforeContent.getDocument().getImmutableCharSequence();
-      LineStatusTrackerManager.getInstanceImpl(myProject).offerTrackerContent(document, beforeText);
-      return true;
+      LineStatusTrackerManager.getInstanceImpl(myProject).offerTrackerContent(myDocument, beforeText);
     });
   }
 
   private void releaseTracker() {
-    Document document = FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
-    if (document == null) return;
-
-    LineStatusTrackerManager.getInstance(myProject).releaseTrackerFor(document, this);
+    LineStatusTrackerManager.getInstance(myProject).releaseTrackerFor(myDocument, this);
   }
 
   private class LstAssignmentTracker extends AssignmentTracker {
@@ -134,7 +161,8 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
     @Override
     public void onEachAssignment() {
       if (!myInstalled) {
-        myInstalled = installTracker();
+        installTracker();
+        myInstalled = true;
       }
     }
 

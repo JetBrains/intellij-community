@@ -143,6 +143,7 @@ jvm_library(
         "//platform/vcs-impl:vcs-impl-tests_test_lib",
         "//platform/code-style-api:codeStyle",
         "//platform/lang-api:lang",
+        "//platform/diff-api:diff",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.tests` end

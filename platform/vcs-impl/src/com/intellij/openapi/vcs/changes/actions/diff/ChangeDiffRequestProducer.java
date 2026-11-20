@@ -403,8 +403,8 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
 
     if (!LineStatusTrackerManager.getInstance(project).arePartialChangelistsEnabled(virtualFile)) return null;
 
-    return new LocalChangeListDiffRequest(project, virtualFile, changeListChange.getChangeListId(), changeListChange.getChangeListName(),
-                                          request);
+    return new LocalChangeListDiffRequest(project, virtualFile, content2.getDocument(),
+                                          changeListChange.getChangeListId(), changeListChange.getChangeListName(), request);
   }
 
   public static @NotNull @Nls String getRequestTitle(@NotNull Change change) {
