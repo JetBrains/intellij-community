@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.configurations
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypes
@@ -9,9 +11,11 @@ import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.workspaceModel.update
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.channels.Channel
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity
@@ -49,6 +53,28 @@ annotation class CircularImport(val path: String)
 
 class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun runInDispatchThread(): Boolean = false
+
+    fun `test script configuration changes notify the traffic light`(): Unit = timeoutRunBlocking {
+        val file = myFixture.addFileToProject("status.kts", "val x = 1")
+        val states = Channel<Boolean>(Channel.UNLIMITED)
+        project.messageBus.connect(testRootDisposable).subscribe(
+            DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
+            object : DaemonCodeAnalyzer.DaemonListener {
+                override fun daemonStatusChanged() {
+                    states.trySend(ReadAction.computeBlocking<Boolean, RuntimeException> {
+                        KotlinScriptEntityProvider.findKotlinScriptEntity(project, file.virtualFile) != null
+                    })
+                }
+            }
+        )
+
+        KotlinScriptService.getInstance(project).load(file.virtualFile)
+        assertTrue("The configuration must exist when the traffic light is notified", states.receive())
+
+        val entity = requireNotNull(KotlinScriptEntityProvider.findKotlinScriptEntity(project, file.virtualFile))
+        project.workspaceModel.update { storage -> storage.removeEntity(entity) }
+        assertFalse("The notification must include a return to the suspended status", states.receive())
+    }
 
     fun `test load creates workspace model entity for kts file`() {
         val file = myFixture.configureByText("test.kts", "val x = 1")

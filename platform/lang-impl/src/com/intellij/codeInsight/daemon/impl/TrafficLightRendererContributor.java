@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows replacing the rendering of the traffic light icon in the top right corner of the editor.
+ * Call {@link ErrorStripeUpdateManager#notifyTrafficLightStatusChanged()} after an asynchronous change to the status of the renderer.
  */
 public interface TrafficLightRendererContributor {
   @Nullable

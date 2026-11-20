@@ -184,7 +184,7 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
           }, indicator);
         }
         finally {
-          externalUpdateTaskCompleted = true;
+          externalUpdateFinished();
         }
       }
 
@@ -210,7 +210,7 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
           }, indicator);
         }
         finally {
-          externalUpdateTaskCompleted = true;
+          externalUpdateFinished();
         }
       }
 
@@ -226,6 +226,13 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
         }), continuation);
       }
     });
+  }
+
+  private void externalUpdateFinished() {
+    externalUpdateTaskCompleted = true;
+    if (!myProject.isDisposed()) {
+      ErrorStripeUpdateManager.getInstance(myProject).notifyTrafficLightStatusChanged();
+    }
   }
 
   @Override

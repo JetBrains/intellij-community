@@ -18,6 +18,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -34,6 +35,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -43,7 +47,21 @@ private val EP_NAME = ExtensionPointName<TrafficLightRendererContributor>("com.i
 
 @Service(Service.Level.PROJECT)
 class ErrorStripeUpdateManager(private val project: Project, private val coroutineScope: CoroutineScope) {
+  private val trafficLightStatusChanges: MutableSharedFlow<Unit> = MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
   init {
+    coroutineScope.launch {
+      trafficLightStatusChanges.collectLatest {
+        project.messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC).daemonStatusChanged()
+        val models = withContext(Dispatchers.EDT) {
+          EditorFactory.getInstance().allEditors
+            .filter { it.project === project && !it.isDisposed }
+            .mapNotNull { it.markupModel as? EditorMarkupModel }
+        }
+        callRepaintErrorStripePanel(models, getFileAsCached = true)
+      }
+    }
+
     EP_NAME.addChangeListener(coroutineScope) {
       launchRepaintErrorStripePanel(
         editors = FileEditorManager.getInstance(project).allEditors.mapNotNull { (it as? TextEditor)?.editor },
@@ -55,6 +73,16 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ErrorStripeUpdateManager = project.service()
+  }
+
+  /**
+   * Requests a status refresh for all editors of this project.
+   * Contributors must call this after changing state that affects their renderer.
+   * Safe to call from any thread. The refresh is asynchronous.
+   */
+  @ApiStatus.Internal
+  fun notifyTrafficLightStatusChanged() {
+    trafficLightStatusChanges.tryEmit(Unit)
   }
 
   @ApiStatus.Internal

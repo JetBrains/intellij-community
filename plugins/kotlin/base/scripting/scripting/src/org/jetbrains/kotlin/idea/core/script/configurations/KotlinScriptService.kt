@@ -3,6 +3,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.configurations
 
+import com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.ide.TrustedFiles
 import com.intellij.notification.NotificationGroup
@@ -59,6 +60,7 @@ import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptLibraryEntityId
+import org.jetbrains.kotlin.idea.core.script.modules.ScriptCompilationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.modules.modifyKotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.definition.BundledScriptDefinition
@@ -393,6 +395,11 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
 
         override fun changed(event: VersionedStorageChange) {
+            if (event.getChanges(KotlinScriptEntity::class.java).any() ||
+                event.getChanges(ScriptCompilationConfigurationEntity::class.java).any()
+            ) {
+                ErrorStripeUpdateManager.getInstance(project).notifyTrafficLightStatusChanged()
+            }
             if (event.getChanges(LibraryEntity::class.java).any() || event.getChanges(ModuleEntity::class.java).any()) {
                 DefinitionFromDependenciesProvider.getInstance(project).refresh()
             }
