@@ -363,11 +363,16 @@ class InternalDecoratorImpl internal constructor(
    * Shows [decorator], the root decorator of the tool window of a frame guest, in place of the header and the content of this
    * decorator. `null` brings the own header and content back. The divider and the project selector stay, see [setProjectSelector].
    * This decorator stays in the tool window pane, so the place and the size of the tool window do not change.
+   *
+   * This decorator paints the border or the island around the project selector and [decorator], see [addInHolder].
+   * [decorator] paints none.
    */
   internal fun present(decorator: InternalDecoratorImpl?) {
     if (presentedDecorator === decorator) {
       return
     }
+    // the holder of the old decorator leaves this decorator, but it keeps its child
+    presentedDecorator?.let { it.parent?.remove(it) }
     presentedDecorator = decorator
     headerPanel.isVisible = decorator == null
     doUpdateMode(mode)
@@ -376,7 +381,10 @@ class InternalDecoratorImpl internal constructor(
     repaint()
   }
 
-  /** Puts [selector] above the header: the component that selects the project whose tool window this decorator shows. */
+  /**
+   * Puts [selector] above the header: the component that selects the project whose tool window this decorator shows.
+   * The selector is inside the border or the island of this decorator, also above a presented decorator, see [present].
+   */
   internal fun setProjectSelector(selector: JComponent?) {
     if (projectSelector === selector) {
       return
@@ -396,10 +404,9 @@ class InternalDecoratorImpl internal constructor(
     border = null
     val presentedDecorator = presentedDecorator
     if (presentedDecorator != null) {
-      // as a split decorator: the child has the header, the border and the island, and this decorator keeps the divider
+      // the child has the header, and this decorator keeps the divider, the project selector, the border and the island
       layout = BorderLayout()
-      add(dividerAndHeader, BorderLayout.NORTH)
-      add(presentedDecorator, BorderLayout.CENTER)
+      addInHolder(presentedDecorator)
       if (!mode.isSplit) {
         disposeNestedContentManagers()
       }
@@ -408,16 +415,13 @@ class InternalDecoratorImpl internal constructor(
     when (mode) {
       Mode.SINGLE, Mode.CELL -> {
         layout = BorderLayout()
-
-        val decorator = InternalUICustomization.getInstance()?.toolWindowUIDecorator
-          ?.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild, toolWindow) { InnerPanelBorder(toolWindow) }
-
-        decorator?.let {
-          add(it, BorderLayout.CENTER)
-        } ?: run {
+        if (toolWindow.isPresented) {
+          // the decorator of the presenting tool window paints the border and the island, see `present`
           add(dividerAndHeader, BorderLayout.NORTH)
           add(myDecoratorChild, BorderLayout.CENTER)
-          border = InnerPanelBorder(toolWindow)
+        }
+        else {
+          addInHolder(myDecoratorChild)
         }
 
         disposeNestedContentManagers()
@@ -432,6 +436,23 @@ class InternalDecoratorImpl internal constructor(
         layout = BorderLayout()
         add(splitter, BorderLayout.CENTER)
       }
+    }
+  }
+
+  /**
+   * Adds the divider, the header and [content] to this decorator. The theme paints the border or the island around them:
+   * its holder takes the three components. Without a theme customization, this decorator has the border itself.
+   */
+  private fun addInHolder(content: JComponent) {
+    val holder = InternalUICustomization.getInstance()?.toolWindowUIDecorator
+      ?.decorateAndReturnHolder(dividerAndHeader, content, toolWindow) { InnerPanelBorder(toolWindow) }
+    if (holder != null) {
+      add(holder, BorderLayout.CENTER)
+    }
+    else {
+      add(dividerAndHeader, BorderLayout.NORTH)
+      add(content, BorderLayout.CENTER)
+      border = InnerPanelBorder(toolWindow)
     }
   }
 

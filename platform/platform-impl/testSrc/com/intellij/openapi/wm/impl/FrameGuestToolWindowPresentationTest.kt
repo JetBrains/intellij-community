@@ -44,6 +44,7 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 private const val ID = "FrameGuestPresentationTestToolWindow"
 
@@ -277,7 +278,7 @@ internal class FrameGuestToolWindowPresentationTest {
     firstToolWindow.show()
     val presentingDecorator = managers.owner.getEntry(ID)!!.toolWindow.decorator!!
 
-    assertThat(firstToolWindow.decorator!!.parent).isSameAs(presentingDecorator)
+    assertThat(SwingUtilities.isDescendingFrom(firstToolWindow.decorator, presentingDecorator)).isTrue()
     assertThat(firstToolWindow.paneDecorator).isSameAs(presentingDecorator)
     assertThat(InternalDecoratorImpl.findTopLevelDecorator(firstToolWindow.component))
       .describedAs("the two decorators belong to two tool windows")
@@ -286,8 +287,21 @@ internal class FrameGuestToolWindowPresentationTest {
 
     managers.owner.presentation.select(ID, second)
 
-    assertThat(firstToolWindow.decorator!!.parent).isNull()
-    assertThat(secondToolWindow.decorator!!.parent).isSameAs(presentingDecorator)
+    assertThat(firstToolWindow.decorator!!.parent).describedAs("a hidden decorator is in no hierarchy").isNull()
+    assertThat(SwingUtilities.isDescendingFrom(secondToolWindow.decorator, presentingDecorator)).isTrue()
+  }
+
+  @Test
+  fun `the presenting tool window has the border around the project selector and the shown tool window`() = onEdt {
+    val managers = createManagers()
+    val firstToolWindow = managers.register(first)
+    managers.register(second)
+    firstToolWindow.show()
+    val presentingDecorator = managers.owner.getEntry(ID)!!.toolWindow.decorator!!
+
+    // a headless test has no theme customization, so the decorator has the border itself, not the island holder of a theme
+    assertThat(presentingDecorator.border).isNotNull()
+    assertThat(firstToolWindow.decorator!!.border).isNull()
   }
 
   @Test
