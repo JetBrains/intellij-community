@@ -78,8 +78,7 @@ public final class PyPackageUtil {
 
   @RequiresReadLock
   public static @Nullable PyFile findSetupPy(@NotNull Module module) {
-    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
-    if (sdk == null) {
+    if (PyModuleInterpreterReader.findModuleInterpreterIfReady(module) == null) {
       return SetupPyHelpers.detectSetupPyInModule(module);
     }
     else {

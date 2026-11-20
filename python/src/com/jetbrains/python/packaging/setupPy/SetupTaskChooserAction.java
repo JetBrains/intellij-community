@@ -67,7 +67,7 @@ public class SetupTaskChooserAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final Module module = e.getData(PlatformCoreDataKeys.MODULE);
-    e.getPresentation().setEnabled(module != null && PyPackageUtil.hasSetupPy(module) && PyModuleInterpreterReader.findModuleSdkIfReady(module) != null);
+    e.getPresentation().setEnabled(module != null && PyPackageUtil.hasSetupPy(module) && PyModuleInterpreterReader.findModuleInterpreterIfReady(module) != null);
   }
 
   private static void runSetupTask(@NlsSafe String taskName, @NotNull Module module) {

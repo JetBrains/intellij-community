@@ -2,21 +2,21 @@
 package com.intellij.restructuredtext.python
 
 import com.intellij.openapi.application.ApplicationManager
+import com.jetbrains.python.configuration.findModuleInterpreterIfReady
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper.REST_RUNNER
-import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.sdk.PySdkUtil
 
 internal fun toHtml(text: String, virtualFile: VirtualFile, project: Project): Pair<String, String>? {
   val module = ApplicationManager.getApplication().runReadAction<Module?> {
     ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)
   } ?: return null
-  val sdk = findModuleSdkIfReady(module) ?: return Pair("", PyBundle.message("python.sdk.no.interpreter.configured.warning"))
-  val commandLine = REST_RUNNER.newCommandLine(sdk, listOf("rst2html"))
+  val interpreter = findModuleInterpreterIfReady(module) ?: return Pair("", PyBundle.message("python.sdk.no.interpreter.configured.warning"))
+  val commandLine = REST_RUNNER.newCommandLine(interpreter, listOf("rst2html"))
   val output = PySdkUtil.getProcessOutput(commandLine, virtualFile.parent.path, null, 5000,
                                           text.toByteArray(Charsets.UTF_8), false)
   return if (output.isCancelled || output.isTimeout)

@@ -2,6 +2,7 @@
 package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.jetbrains.python.configuration.findModuleInterpreterIfReady
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -15,7 +16,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.asSafely
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
@@ -66,11 +66,11 @@ import org.jetbrains.annotations.ApiStatus
 val Project.modules: Array<Module> get() = ModuleManager.getInstance(this).modules
 
 /**
- * Adds python language and interpreter version if the module has sdk
+ * Adds python language and interpreter version if the module has an interpreter
  */
 @ApiStatus.Internal
 fun getPythonSpecificInfo(module: Module): List<EventPair<*>> =
-  findModuleSdkIfReady(module)?.let { sdk -> getPythonSpecificInfo(sdk) } ?: emptyList()
+  findModuleInterpreterIfReady(module)?.let(::getPythonSpecificInfo) ?: emptyList()
 
 /**
  * Adds python language and interpreter version.

@@ -2,6 +2,7 @@
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Lists;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.facet.impl.ui.FacetErrorPanel;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
@@ -15,7 +16,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.jetbrains.python.errorProcessing.ErrorSinkKt;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -311,15 +311,11 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (myModule == null) {
       return "";
     }
-    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(myModule);
-    if (sdk == null) {
+    PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(myModule);
+    if (interpreter == null) {
       return "";
     }
-    SdkAdditionalData data = sdk.getSdkAdditionalData();
-    if (!(data instanceof PythonSdkAdditionalData)) {
-      return "";
-    }
-    Path requirementsPath = ((PythonSdkAdditionalData)data).getRequirementsPath();
+    Path requirementsPath = PythonInterpreterExtKt.getRequirementsPath(interpreter);
     return requirementsPath != null ? requirementsPath.toString() : "";
   }
 

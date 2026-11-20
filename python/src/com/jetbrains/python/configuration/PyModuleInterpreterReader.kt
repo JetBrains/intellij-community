@@ -36,6 +36,10 @@ fun findElementSdkIfReady(element: PsiElement): Sdk? = findModuleSdkIfReady(Modu
 @ApiStatus.Internal
 fun findModuleInterpreterIfReady(module: Module?): PythonInterpreter? = module?.findEvoPyProjectIfReady()?.interpreter
 
+/** Whether [module] has an interpreter, read from the snapshot, for a caller that needs no more than that. */
+@ApiStatus.Internal
+fun hasModuleInterpreterIfReady(module: Module?): Boolean = findModuleInterpreterIfReady(module) != null
+
 /** [findModuleSdkIfReady] for the main Python project of [project], for a Java caller that has no module. */
 @ApiStatus.Internal
 fun findMainSdkIfReady(project: Project): Sdk? {

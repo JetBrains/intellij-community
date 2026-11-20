@@ -2,13 +2,13 @@
 package com.jetbrains.python;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -170,11 +170,9 @@ public enum PythonHelper implements HelperPackage {
     }
 
     @NotNull
-    private GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
-      final String sdkHomePath = pythonSdk.getHomePath();
-      assert sdkHomePath != null;
-      final GeneralCommandLine cmd = newCommandLine(sdkHomePath, parameters);
-      final LanguageLevel version = PythonSdkType.getLanguageLevelForSdk(pythonSdk);
+    private GeneralCommandLine newCommandLine(@NotNull PythonInterpreter interpreter, @NotNull List<String> parameters) {
+      final GeneralCommandLine cmd = newCommandLine(PythonInterpreterExtKt.getBinaryPathString(interpreter), parameters);
+      final LanguageLevel version = PythonInterpreterExtKt.getLanguageLevel(interpreter);
       final String perVersionDependenciesDir = version.isPython2() ? PY2_HELPER_DEPENDENCIES_DIR : PY3_HELPER_DEPENDENCIES_DIR;
       PythonEnvUtil.addToPythonPath(cmd.getEnvironment(), FileUtil.join(getPythonPathEntry(), perVersionDependenciesDir));
       return cmd;
@@ -287,8 +285,10 @@ public enum PythonHelper implements HelperPackage {
     return myModule.newCommandLine(sdkPath, parameters);
   }
 
-  public @NotNull GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
-    return myModule.newCommandLine(pythonSdk, parameters);
+  /** A command line that runs this helper with [interpreter]. The helper dependencies of its Python version are on the path. */
+  @ApiStatus.Internal
+  public @NotNull GeneralCommandLine newCommandLine(@NotNull PythonInterpreter interpreter, @NotNull List<String> parameters) {
+    return myModule.newCommandLine(interpreter, parameters);
   }
 
   @ApiStatus.Internal
