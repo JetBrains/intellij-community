@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
@@ -16,11 +17,13 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -33,6 +36,7 @@ import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
 import com.intellij.toolWindow.computeToolWindowBeans
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -42,6 +46,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 private const val ID = "FrameGuestTestToolWindow"
 private const val MULTI_PROJECT_ID = "FrameGuestTestMultiProjectToolWindow"
+private const val SHOWN_ID = "FrameGuestTestShownToolWindow"
 private const val LEGACY_TOOL_WINDOWS_KEY = "ide.frame.guests.legacy.tool.windows"
 
 /**
@@ -71,6 +76,7 @@ internal class FrameGuestToolWindowRegistrationTest {
   @BeforeEach
   fun setUp() {
     askedProjects.clear()
+    otherToolWindowLookups.clear()
   }
 
   @Test
@@ -258,6 +264,51 @@ internal class FrameGuestToolWindowRegistrationTest {
     }
   }
 
+  @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `a show request of a listener of the registration event shows the tool window of the frame guest`(): Unit = timeoutRunBlocking {
+    ExtensionTestUtil.maskExtensions(
+      ToolWindowEP.EP_NAME,
+      listOf(toolWindowEp(SHOWN_ID, OtherToolWindowLookupFactory::class.java), toolWindowEp(ID, SingleProjectTestFactory::class.java)),
+      disposable,
+      fireEvents = false,
+    )
+    joinFrame()
+    val ownerManager = createManager(owner)
+    val guestManager = createManager(guest)
+    guestManager.initAsFrameGuest(ownerManager.presentation)
+    // the content of a tool window asks the manager of its project for another tool window
+    guest.replaceService(ToolWindowManager::class.java, guestManager, disposable)
+    unregisterActivationActionLater(SHOWN_ID)
+    // the frame owner has registered its tool windows, and its stored layout shows one tool window of the frame guest at once
+    ownerManager.toolWindowSetInitializer.initUi(reopeningEditorJob = Job().also { it.complete() }, taskListDeferred = null)
+    withContext(Dispatchers.EDT) {
+      // another side than the tool window of the show request: a tool window hides the one that is on its side
+      ownerManager.layoutState.addInfo(SHOWN_ID, visibleInfo(SHOWN_ID).also { it.anchor = ToolWindowAnchor.BOTTOM })
+    }
+    // As the listener of the Learn tool window, which queues the show in the event. The wait makes the order fixed:
+    // the request runs after the registration and before the next step of the initialization.
+    guest.messageBus.connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun toolWindowsRegistered(ids: List<String>, toolWindowManager: ToolWindowManager) {
+        if (ID in ids) {
+          ApplicationManager.getApplication().invokeAndWait { toolWindowManager.getToolWindow(ID)!!.show() }
+        }
+      }
+    })
+
+    guestManager.toolWindowSetInitializer.initPresentedUi(ownerManager.presentation)
+
+    withContext(Dispatchers.EDT) {
+      assertThat(ownerManager.getToolWindow(ID)!!.isVisible).describedAs("the frame owner got the show request").isTrue()
+      assertThat(ownerManager.presentation.selectedProjectOf(ID)).isSameAs(guest)
+      assertThat(guestManager.getToolWindow(ID)!!.isVisible).isTrue()
+      assertThat(guestManager.getToolWindow(SHOWN_ID)!!.isVisible).describedAs("the stored layout of the frame owner shows it").isTrue()
+      assertThat(otherToolWindowLookups)
+        .describedAs("the content of a tool window that shows at once finds the other tool window of the frame guest")
+        .containsExactly(true)
+    }
+  }
+
   private fun maskToolWindows() {
     ExtensionTestUtil.maskExtensions(
       ToolWindowEP.EP_NAME,
@@ -287,18 +338,27 @@ internal class FrameGuestToolWindowRegistrationTest {
       override fun getButtonManager(paneId: String): ToolWindowButtonManager = buttonManager
     }
     createdManagers.add(manager)
+    unregisterActivationActionLater(ID)
+    return manager
+  }
+
+  /** The tool window of a frame owner registers the activation action of its id, and the action stays when the tool window leaves. */
+  private fun unregisterActivationActionLater(id: String) {
     Disposer.register(disposable) {
       val actionManager = ActionManager.getInstance()
-      if (actionManager.getAction(activateActionId()) != null) {
-        actionManager.unregisterAction(activateActionId())
+      val actionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(id)
+      if (actionManager.getAction(actionId) != null) {
+        actionManager.unregisterAction(actionId)
       }
     }
-    return manager
   }
 }
 
 /** The tool window id and the project name of each `isApplicableAsync` call. A name, because a static field must not hold a project. */
 private val askedProjects = CopyOnWriteArrayList<Pair<String, String>>()
+
+/** The answers of [OtherToolWindowLookupFactory]: whether its content found the tool window [ID] of its project. */
+private val otherToolWindowLookups = CopyOnWriteArrayList<Boolean>()
 
 private fun activateActionId(): String = ActivateToolWindowAction.Manager.getActionIdForToolWindow(ID)
 
@@ -338,6 +398,13 @@ internal class SingleProjectTestFactory : ToolWindowFactory {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+  }
+}
+
+/** A factory whose content asks for the tool window [ID] of its project, as content that shows another tool window does. */
+internal class OtherToolWindowLookupFactory : ToolWindowFactory {
+  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    otherToolWindowLookups.add(ToolWindowManager.getInstance(project).getToolWindow(ID) != null)
   }
 }
 

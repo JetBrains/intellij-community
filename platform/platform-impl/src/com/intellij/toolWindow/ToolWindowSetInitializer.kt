@@ -233,6 +233,9 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
    * No tool window is shown, and none gets a stripe button or an activation action.
    * The pending tasks run after the registration, so a task of `ToolWindowManager.invokeLater` finds every tool window registered.
    *
+   * The frame owner presents each tool window before the `toolWindowsRegistered` event. So a listener of the event can show
+   * a tool window, also in a later EDT task.
+   *
    * The function waits for the tool windows of the frame owner, because the frame type of the owner decides which ids are suppressed.
    */
   suspend fun initPresentedUi(frameOwnerPresentation: ToolWindowManagerPresentation) {
@@ -250,23 +253,31 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       }
       // the restored editor takes the EDT first
       StartupUiGate.awaitEditorsShown()
+      val taskById = tasks.associateBy { it.id }
       val entries = span("toolwindow creating (frame guest)", Dispatchers.EDT) {
-        registerToolWindows(
+        val entries = registerToolWindows(
           tasks = tasks.map(manager::prepareRegisterToolWindowTask),
           manager = manager,
           layout = manager.getLayout(),
           shouldRegister = { true },
         )
+        // In the EDT task of the registration: the next EDT task can ask to show a tool window, and the frame owner presents it then.
+        // After the registration of every tool window: the frame owner can show a tool window at once, and its content can ask
+        // for another tool window of the guest.
+        for (result in entries) {
+          val task = taskById.getValue(result.entry.id)
+          try {
+            manager.attachPresented(result.entry, task)
+          }
+          catch (e: Throwable) {
+            rethrowControlFlowException(e)
+            LOG.error(PluginException("Cannot present toolwindow ${task.contentFactory}", e, task.pluginDescriptor?.pluginId))
+          }
+        }
+        entries
       }
       // dispatch event not in EDT
       manager.project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries.map { it.entry.id }, manager)
-      // after the event: the frame owner can show a tool window at once, and its content can ask for another tool window of the guest
-      val taskById = tasks.associateBy { it.id }
-      span("toolwindow presenting (frame guest)", Dispatchers.EDT) {
-        for (result in entries) {
-          manager.attachPresented(result.entry, taskById.getValue(result.entry.id))
-        }
-      }
       registerEpListeners(manager)
       processPendingTasks()
     }
