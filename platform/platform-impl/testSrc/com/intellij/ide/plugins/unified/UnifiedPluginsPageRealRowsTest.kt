@@ -12,7 +12,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
@@ -524,19 +523,43 @@ internal class UnifiedPluginsPageRealRowsTest {
     }
 
   @Test
-  fun `Tab enters the list when the Marketplace link is the only row`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+  fun `Marketplace link requires expanded and fully loaded Suggested`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val factory = RecordingRowFactory()
-    val loading = PluginSectionState(PluginSectionId.Suggested, status = PluginSectionStatus.Loading(showingStaleContent = false))
-    val controller = UnifiedPluginsPageController(listOf(loading))
+    val suggestedId = PluginSectionId.Suggested
+    val ready = section(suggestedId, *(1..5).map { item("suggested.$it") }.toTypedArray())
+    val loading = PluginSectionStatus.Loading(showingStaleContent = false)
+    val controller = UnifiedPluginsPageController(listOf(ready.copy(items = emptyList(), status = loading)))
 
     createView(factory).use { view ->
-      view.render(controller.state.value, showMarketplaceLink = true)
+      fun assertLinkVisible(visible: Boolean) {
+        view.render(controller.state.value, showMarketplaceLink = true)
+        val text = IdeBundle.message("plugins.configurable.more.on.marketplace")
+        val link = componentsOfType(view.component, ActionLink::class.java).single { it.text == text }
+        assertThat(link.parent.isVisible).isEqualTo(visible)
+        assertThat(link in factory.keyboardOrder).isEqualTo(visible)
+      }
 
-      val list = componentsOfType(view.component, JBPanelWithEmptyText::class.java).single()
-      val link = componentsOfType(view.component, ActionLink::class.java).single()
-      assertThat(list.isFocusable).isTrue()
-      assertThat(view.focusTraversalOrder()).containsExactly(list)
-      assertThat(factory.keyboardOrder).containsExactly(list, link)
+      assertLinkVisible(false)
+
+      controller.updateSection(ready)
+      assertLinkVisible(true)
+
+      controller.setSectionExpanded(suggestedId, false)
+      assertLinkVisible(false)
+      controller.setSectionExpanded(suggestedId, true)
+      assertLinkVisible(true)
+
+      controller.updateSection(ready.copy(status = PluginSectionStatus.Loading(showingStaleContent = true)))
+      assertLinkVisible(false)
+
+      val error = PluginSectionError("Unable to load Suggested", retryable = true)
+      controller.updateSection(ready.copy(status = PluginSectionStatus.Degraded(error)))
+      assertLinkVisible(false)
+      controller.updateSection(ready.copy(items = emptyList(), status = PluginSectionStatus.Failed(error)))
+      assertLinkVisible(false)
+
+      controller.updateSection(ready)
+      assertLinkVisible(true)
     }
   }
 
