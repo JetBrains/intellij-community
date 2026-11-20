@@ -19,8 +19,8 @@ internal class YamlFlexLexer(val lexer: _YamlLexer) : FlexLexer by lexer {
       }
       // Some complex lexers (e.g. black and white lexer) require "suspending" of the lexer to pass some template language.
       // In these cases we believe that the same instance of the lexer would be restored (with its internal state).
-      initialState == YamlLexerStates.DIRTY_STATE -> lexer.reset(buffer, start, end, _YamlLexer.YYINITIAL)
-      else -> lexer.reset(buffer, start, end, initialState)
+      initialState == YamlLexerStates.DIRTY_STATE -> lexer.resetKeepingColumn(buffer, start, end, _YamlLexer.YYINITIAL)
+      else -> lexer.resetKeepingColumn(buffer, start, end, initialState)
     }
   }
 }

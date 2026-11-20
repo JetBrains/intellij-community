@@ -13,7 +13,6 @@ import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
 %implements FlexLexer
 %unicode
 %public
-%column
 
 %function advance
 %type SyntaxElementType
@@ -89,12 +88,65 @@ import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
 
   private fun isAtLineStart(): Boolean = zzMarkedPos == 0 || zzBuffer[zzMarkedPos - 1] == '\n'
 
+  //-------------------------------------------------------------------------------------------------------------------
+
+  /** A buffer position with a known column. [column] scans back from the token start only up to this position. */
+  private var columnBasePos = 0
+
+  /** The buffer of [columnBasePos]. After a plain [reset] to another buffer, [column] ignores [columnBasePos]. */
+  private var columnBaseBuffer: CharSequence? = null
+
+  /** The column at [columnBasePos]. */
+  private var columnBase = 0
+
+  /**
+   * Returns the column of the current token start, as the `%column` option of JFlex counts it.
+   * The column is the number of chars after the last line break, or after the start of the lexing.
+   */
+  private fun column(): Int {
+    val pos = zzStartRead
+    val useBase = zzBuffer === columnBaseBuffer && pos >= columnBasePos
+    val stop = if (useBase) columnBasePos else 0
+    var i = pos
+    while (i > stop) {
+      val c = zzBuffer[i - 1]
+      if (isColumnReset(c)) return storeColumn(pos, pos - i)
+      if (c.isLowSurrogate() && i - 2 >= stop && zzBuffer[i - 2].isHighSurrogate()) {
+        // JFlex tests the low 16 bits of a supplementary code point against the line breaks.
+        if (isColumnReset(Character.toCodePoint(zzBuffer[i - 2], c).toChar())) return storeColumn(pos, pos - i)
+        i--
+      }
+      i--
+    }
+    return storeColumn(pos, (if (useBase) columnBase else 0) + pos - stop)
+  }
+
+  private fun storeColumn(pos: Int, column: Int): Int {
+    columnBasePos = pos
+    columnBaseBuffer = zzBuffer
+    columnBase = column
+    return column
+  }
+
+  /** Returns true for the chars after which the `%column` option of JFlex starts a new column count. */
+  private fun isColumnReset(c: Char): Boolean = c == '\n' || c == '\r' || c == '\u000B' || c == '\u000C' || c == '\u0085' || c == '\u2028' || c == '\u2029'
+
+  /**
+   * Resets the scanner and keeps the column of the last token start for the new start, as the `%column` option of JFlex does.
+   * A plain [reset] does not keep the column.
+   */
+  fun resetKeepingColumn(buffer: CharSequence, start: Int, end: Int, initialState: Int) {
+    val column = column()
+    reset(buffer, start, end, initialState)
+    storeColumn(start, column)
+  }
+
   fun cleanMyState() {
     braceCount = 0
     blockScalarType = null
     hasUnclosedQuote = false
 
-    yycolumn = 0
+    storeColumn(zzStartRead, 0)
     returnState = YYINITIAL
 
     prepareForNewDocument()
@@ -141,7 +193,7 @@ import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
    */
   private fun getStateAfterLineStart(indentLen: Int) = if (
       possiblePlainTextScalarContinue &&
-      yycolumn + indentLen > prevElementIndent
+      column() + indentLen > prevElementIndent
   ) {
       POSSIBLE_PLAIN_TEXT_STATE
   }
@@ -176,7 +228,7 @@ import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
    * @return scalar key token
    */
   private fun processScalarKey(newReturnState: Int): SyntaxElementType {
-    prevElementIndent = yycolumn
+    prevElementIndent = column()
     returnState = newReturnState
     yybegin(KEY_MODE)
     return YamlSyntaxTokenTypes.SCALAR_KEY
@@ -367,7 +419,7 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
   // If there is non-space symbol after COLON then another rule will be applied
   // Better do not use suffix here because of possible EOF after the COLON
   ":" {
-        prevElementIndent = yycolumn
+        prevElementIndent = column()
         return YamlSyntaxTokenTypes.COLON
       }
 
@@ -408,7 +460,7 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
       }
 
   "?" {
-        prevElementIndent = yycolumn
+        prevElementIndent = column()
         return YamlSyntaxTokenTypes.QUESTION
       } // do not move to another state
 
@@ -416,7 +468,7 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
   // In this case, both the “-” indicator and the following spaces are considered to be part of the indentation of the nested collection.
   // See 8.2.1. Block Sequences http://www.yaml.org/spec/1.2/spec.html#id2797382
   "-" / ({WHITE_SPACE} | {EOL}) {
-        prevElementIndent = yycolumn
+        prevElementIndent = column()
         return YamlSyntaxTokenTypes.SEQUENCE_MARKER
       }
 
@@ -578,7 +630,7 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
   {WHITE_SPACE} { return getWhitespaceType() }
 
   [^ \n\t] {LINE}? {
-        require(yycolumn > prevElementIndent)
+        require(column() > prevElementIndent)
         return blockScalarType
       }
 
