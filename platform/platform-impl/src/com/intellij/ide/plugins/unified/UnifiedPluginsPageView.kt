@@ -2,13 +2,18 @@
 package com.intellij.ide.plugins.unified
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.setToolTipText
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl.DEFAULT_PLUGINS_HOST
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.shortenTextWithEllipsis
@@ -20,7 +25,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBList
@@ -53,6 +57,7 @@ import java.awt.KeyboardFocusManager
 import java.awt.LayoutManager
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.datatransfer.StringSelection
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
@@ -68,6 +73,7 @@ import javax.accessibility.AccessibleState
 import javax.accessibility.AccessibleStateSet
 import javax.swing.DefaultListModel
 import javax.swing.AbstractAction
+import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
@@ -651,19 +657,20 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       isFocusable = false
       isOpaque = false
     }
-    private val marketplaceLink = if (id == PluginSectionId.Suggested) {
-      BrowserLink(IdeBundle.message("plugins.configurable.more.on.marketplace"), DEFAULT_PLUGINS_HOST).apply {
+    private val sectionButtonBorder = JBUI.Borders.empty(
+      SECTION_HEADER_TOP_INSET,
+      SECTION_HEADER_LEFT_INSET,
+      SECTION_HEADER_BOTTOM_INSET,
+      SECTION_HEADER_RIGHT_INSET,
+    )
+    private val marketplaceLink = if (id == PluginSectionId.Suggested) createMarketplaceLink() else null
+    private val marketplaceLinkPanel = marketplaceLink?.let { link ->
+      SelectablePanel().apply {
+        configureSectionButton(this, link, sectionButtonBorder)
         isVisible = false
-        border = JBUI.Borders.empty(ROW_GAP, SECTION_HEADER_LEFT_INSET)
-        addFocusListener(object : FocusAdapter() {
-          override fun focusGained(event: FocusEvent) {
-            val headerHeight = JBUI.scale(SECTION_HEADER_HEIGHT)
-            scrollRectToVisible(Rectangle(0, -headerHeight, width, height + headerHeight))
-          }
-        })
+        preferredHeight = JBUI.scale(SECTION_HEADER_HEIGHT)
       }
     }
-    else null
     private val headerSlot = JPanel(BorderLayout()).apply {
       isOpaque = false
     }
@@ -718,14 +725,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
         titleLabel.labelFor = rowsPanel
       }
 
-      val contentBorder = JBUI.Borders.empty(
-        SECTION_HEADER_TOP_INSET,
-        SECTION_HEADER_LEFT_INSET,
-        SECTION_HEADER_BOTTOM_INSET,
-        SECTION_HEADER_RIGHT_INSET,
-      )
-      fullHeaderButton = SectionHeaderButton { onExpansionChanged(id, !expanded) }.apply {
-        setContentBorder(contentBorder)
+      fullHeaderButton = SectionHeaderButton(sectionButtonBorder) { onExpansionChanged(id, !expanded) }.apply {
         addContent(titleAndStatus, BorderLayout.CENTER)
         addContent(expansionControl, BorderLayout.EAST)
         forwardMouseEventsFromChildren()
@@ -747,10 +747,10 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
           add(errorPanel, BorderLayout.SOUTH)
         }, BorderLayout.NORTH)
         add(if (realRows) rowsPanel else list, BorderLayout.CENTER)
-        val footer = if (marketplaceLink == null) unrealizedItemsSpacer else JPanel(BorderLayout()).apply {
+        val footer = if (marketplaceLinkPanel == null) unrealizedItemsSpacer else JPanel(BorderLayout()).apply {
           isOpaque = false
           add(unrealizedItemsSpacer, BorderLayout.NORTH)
-          add(marketplaceLink, BorderLayout.CENTER)
+          add(marketplaceLinkPanel, BorderLayout.CENTER)
         }
         add(footer, BorderLayout.SOUTH)
       }
@@ -764,7 +764,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       showMarketplaceLink: Boolean,
     ) {
       check(section.id == id)
-      marketplaceLink?.isVisible = showMarketplaceLink
+      marketplaceLinkPanel?.isVisible = showMarketplaceLink
 
       val title = pluginSectionTitle(section)
       fullTitle = title
@@ -871,12 +871,39 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       return true
     }
 
+    private fun createMarketplaceLink(): ActionLink {
+      return object : ActionLink() {
+        override fun getUIClassID(): String = "ButtonUI"
+      }.apply {
+        text = IdeBundle.message("plugins.configurable.more.on.marketplace")
+        setExternalLinkIcon()
+        horizontalAlignment = SwingConstants.LEADING
+        font = titleLabel.font
+        foreground = UIUtil.getContextHelpForeground()
+        isDefaultCapable = false
+        addActionListener { BrowserUtil.browse(DEFAULT_PLUGINS_HOST) }
+        addFocusListener(object : FocusAdapter() {
+          override fun focusGained(event: FocusEvent) {
+            val headerHeight = JBUI.scale(SECTION_HEADER_HEIGHT)
+            scrollRectToVisible(Rectangle(0, -headerHeight, width, height + headerHeight))
+          }
+        })
+        ActionManagerEx.withLazyActionManager(scope = null) { manager ->
+          val actions = DefaultActionGroup(
+            DumbAwareAction.create(IdeBundle.message("action.text.open.link.in.browser"), AllIcons.Nodes.PpWeb) { doClick() },
+            DumbAwareAction.create(IdeBundle.message("action.text.copy.link.address"), AllIcons.Actions.Copy) {
+              CopyPasteManager.getInstance().setContents(StringSelection(DEFAULT_PLUGINS_HOST))
+            },
+          )
+          componentPopupMenu = manager.createActionPopupMenu("popup@browser.link.context.menu", actions).component
+        }
+      }
+    }
+
     private class SectionHeaderButton(
+      contentBorder: Border,
       private val onToggle: () -> Unit,
     ) : SelectablePanel() {
-      private var contentBorder: Border = JBUI.Borders.empty()
-      private var focusBorder: Border = contentBorder
-      private var focusVisible = false
       private val toggleButton = object : JToggleButton() {
         override fun getAccessibleContext(): AccessibleContext {
           if (accessibleContext == null) {
@@ -898,48 +925,10 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       val focusComponent: JComponent = toggleButton
 
       init {
-        layout = BorderLayout()
-        isOpaque = false
-        selectionArc = JBUI.scale(PLUGIN_CARD_SELECTION_ARC)
-        selectionInsets = JBUI.insets(
-          SECTION_HEADER_HOVER_TOP_INSET,
-          SECTION_HEADER_HOVER_HORIZONTAL_INSET,
-          SECTION_HEADER_HOVER_BOTTOM_INSET,
-          SECTION_HEADER_HOVER_HORIZONTAL_INSET,
-        )
         accessibleContextProvider = toggleButton
-        toggleButton.apply {
-          layout = BorderLayout()
-          isOpaque = false
-          isContentAreaFilled = false
-          isBorderPainted = false
-          isFocusPainted = false
-          isRolloverEnabled = true
-          addActionListener { onToggle() }
-          getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), TOGGLE_ACTION_KEY)
-          actionMap.put(TOGGLE_ACTION_KEY, object : AbstractAction() {
-            override fun actionPerformed(event: java.awt.event.ActionEvent) = doClick()
-          })
-          model.addChangeListener { updateFocusPresentation() }
-          addFocusListener(object : FocusAdapter() {
-            override fun focusGained(event: FocusEvent) {
-              focusVisible = event.cause != FocusEvent.Cause.MOUSE_EVENT
-              updateFocusPresentation()
-            }
-
-            override fun focusLost(event: FocusEvent) {
-              focusVisible = false
-              updateFocusPresentation()
-            }
-          })
-        }
-        add(toggleButton, BorderLayout.CENTER)
-      }
-
-      fun setContentBorder(border: Border) {
-        contentBorder = border
-        focusBorder = createUnifiedPluginFocusBorder(toggleButton, border, selectionInsets, selectionArc)
-        updateFocusPresentation()
+        toggleButton.layout = BorderLayout()
+        toggleButton.addActionListener { onToggle() }
+        configureSectionButton(this, toggleButton, contentBorder)
       }
 
       override fun doLayout() {
@@ -955,11 +944,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
         toggleButton.isEnabled = enabled
         toggleButton.isFocusable = enabled
         toggleButton.isSelected = selected
-        val cursor = if (enabled) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
-        this.cursor = cursor
-        toggleButton.cursor = cursor
         toggleButton.accessibleContext.accessibleName = accessibleName
-        updateFocusPresentation()
       }
 
       fun forwardMouseEventsFromChildren() {
@@ -991,20 +976,6 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
           }
         })
         if (component is Container) component.components.forEach(::forwardMouseEvents)
-      }
-
-      private fun updateFocusPresentation() {
-        val showFocus = toggleButton.isEnabled && focusVisible
-        toggleButton.isBorderPainted = showFocus
-        toggleButton.border = if (showFocus) focusBorder else contentBorder
-        val token = ListPluginComponent.HOVER_COLOR.takeIf {
-          toggleButton.isEnabled && !showFocus && toggleButton.model.isRollover
-        }
-        selectionColor = token?.let { ColorUtil.alphaBlending(it, PluginManagerConfigurable.MAIN_BG_COLOR) }
-      }
-
-      companion object {
-        private const val TOGGLE_ACTION_KEY = "toggle-section"
       }
     }
 
@@ -1151,7 +1122,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
         result.add(checkNotNull(activeRow).component)
         result.addAll(activeRow.focusableComponents())
       }
-      marketplaceLink?.let(result::add)
+      if (marketplaceLinkPanel?.isVisible == true) marketplaceLink?.let(result::add)
       return result.filter { it.isFocusable && it.isEnabled && it.isVisible }
     }
 
@@ -1444,12 +1415,63 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   }
 
   private companion object {
+    fun configureSectionButton(panel: SelectablePanel, button: AbstractButton, contentBorder: Border) {
+      panel.layout = BorderLayout()
+      panel.isOpaque = false
+      panel.selectionArc = JBUI.scale(PLUGIN_CARD_SELECTION_ARC)
+      panel.selectionInsets = JBUI.insets(
+        SECTION_HEADER_HOVER_TOP_INSET,
+        SECTION_HEADER_HOVER_HORIZONTAL_INSET,
+        SECTION_HEADER_HOVER_BOTTOM_INSET,
+        SECTION_HEADER_HOVER_HORIZONTAL_INSET,
+      )
+      val focusBorder = createUnifiedPluginFocusBorder(button, contentBorder, panel.selectionInsets, panel.selectionArc)
+      var focusVisible = false
+
+      fun updatePresentation() {
+        val showFocus = button.isEnabled && focusVisible
+        button.isBorderPainted = showFocus
+        button.border = if (showFocus) focusBorder else contentBorder
+        val token = ListPluginComponent.HOVER_COLOR.takeIf { button.isEnabled && !showFocus && button.model.isRollover }
+        panel.selectionColor = token?.let { ColorUtil.alphaBlending(it, PluginManagerConfigurable.MAIN_BG_COLOR) }
+        val cursor = if (button.isEnabled) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
+        panel.cursor = cursor
+        button.cursor = cursor
+      }
+
+      button.apply {
+        isOpaque = false
+        isContentAreaFilled = false
+        isFocusPainted = false
+        isRolloverEnabled = true
+        getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTIVATE_SECTION_BUTTON)
+        actionMap.put(ACTIVATE_SECTION_BUTTON, object : AbstractAction() {
+          override fun actionPerformed(event: java.awt.event.ActionEvent) = doClick()
+        })
+        model.addChangeListener { updatePresentation() }
+        addFocusListener(object : FocusAdapter() {
+          override fun focusGained(event: FocusEvent) {
+            focusVisible = event.cause != FocusEvent.Cause.MOUSE_EVENT
+            updatePresentation()
+          }
+
+          override fun focusLost(event: FocusEvent) {
+            focusVisible = false
+            updatePresentation()
+          }
+        })
+      }
+      panel.add(button, BorderLayout.CENTER)
+      updatePresentation()
+    }
+
     fun addFocusableDescendants(component: Component, result: MutableList<Component>) {
       if (!component.isVisible) return
       if (component.isFocusable && component.isEnabled) result.add(component)
       if (component is Container) component.components.forEach { addFocusableDescendants(it, result) }
     }
 
+    const val ACTIVATE_SECTION_BUTTON: String = "activate-section-button"
     const val DETAILS_MIN_WIDTH: Int = 220
     const val ERROR_INSET: Int = 10
     const val ERROR_LEFT_INSET: Int = 16
