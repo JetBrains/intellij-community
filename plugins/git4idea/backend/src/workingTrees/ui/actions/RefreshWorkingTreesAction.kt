@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import git4idea.repo.GitRepository
-import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.GitWorktreeSupportStatus
 
@@ -21,7 +20,6 @@ internal class RefreshWorkingTreesAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     // Refresh the whole tab: reload every repository's worktrees, regardless of the current selection.
     repositoriesToRefresh(e).forEach { it.workingTreeHolder.scheduleReload() }
   }

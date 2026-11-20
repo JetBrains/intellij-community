@@ -7,7 +7,6 @@ import git4idea.GitReference
 import git4idea.actions.ref.GitSingleRefAction
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 
 class GitOpenExistingWorkingTreeForLocalBranchAction :
@@ -17,13 +16,7 @@ class GitOpenExistingWorkingTreeForLocalBranchAction :
     return findCheckedOutWorkingTree(ref, repositories, true) != null
   }
 
-  override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
-    super.updateIfEnabledAndVisible(e, project, repositories, reference)
-    GitWorkingTreesNewBadgeUtil.addLabelNewIfNeeded(e.presentation)
-  }
-
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
-    GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val workingTrees = findCheckedOutWorkingTrees(reference, repositories, skipCurrentWorkingTree = false)
     val chosen = GitChooseWorkingTreeDialog.chooseAmong(project, workingTrees) ?: return
     GitWorkingTreesService.getInstance(project).openWorkingTreeProject(chosen)

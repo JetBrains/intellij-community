@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.Messages
 import git4idea.i18n.GitBundle
 import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY
 import git4idea.repo.GitRepository
-import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 
 internal class PruneWorkingTreesAction : DumbAwareAction() {
@@ -30,7 +29,6 @@ internal class PruneWorkingTreesAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
     val repository = e.getData(CURRENT_REPOSITORY) ?: return
     val prunableWorktrees = repository.workingTreeHolder.getWorkingTrees().filter { it.isPrunable }.map { it.path.name }

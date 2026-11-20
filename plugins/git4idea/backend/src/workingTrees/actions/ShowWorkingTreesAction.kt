@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.vcs.VcsShowToolWindowTabAction
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
-import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.GitWorktreeSupportStatus
 
@@ -17,7 +16,6 @@ internal class ShowWorkingTreesAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = canBeShown(e)
-    GitWorkingTreesNewBadgeUtil.addLabelNewIfNeeded(e.presentation)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -34,7 +32,6 @@ internal class ShowWorkingTreesAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
     GitWorkingTreesService.getInstance(project).workingTreesTabOpenedByUser()
     project.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()

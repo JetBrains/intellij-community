@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.git.actions.GitSingleRefActions
@@ -38,6 +39,7 @@ internal class GitCreateWorkingTreeActionTest {
     GitCreateWorkingTreeAction().update(event)
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
     assertThat(event.presentation.text).isEqualTo(GitBundle.message("action.Git.CreateNewWorkingTree.text"))
+    assertThat(event.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNull()
   }
 
   @Test
@@ -47,6 +49,7 @@ internal class GitCreateWorkingTreeActionTest {
     GitCreateWorkingTreeAction().update(event)
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
     assertThat(event.presentation.text).isEqualTo(GitBundle.message("action.Git.CreateNewWorkingTree.from.branch.text", branch.name))
+    assertThat(event.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNull()
   }
 
   private fun GitSingleRepoContext.actionEvent(ref: GitReference?): AnActionEvent {

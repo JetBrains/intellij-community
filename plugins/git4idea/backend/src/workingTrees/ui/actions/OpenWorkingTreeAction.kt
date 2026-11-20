@@ -7,7 +7,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import git4idea.GitWorkingTree
 import git4idea.workingTrees.GitCreateWorkingTreeService
-import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES
 
@@ -34,7 +33,6 @@ internal class OpenWorkingTreeAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
     val data = e.getData(SELECTED_WORKING_TREES)
     if (!isEnabledFor(data, project)) return

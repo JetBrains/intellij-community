@@ -5,21 +5,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.ui.components.Badge
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.cancelOnDispose
 import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
-import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.job
-import java.awt.ComponentOrientation
 import java.util.function.Predicate
 
 internal class GitWorkingTreesContentProvider(private val project: Project) : ChangesViewContentProvider {
@@ -49,12 +44,6 @@ internal class GitWorkingTreesContentPreloader(val project: Project) : ChangesVi
     content.apply {
       isCloseable = true
       displayName = GitBundle.message("toolwindow.working.trees.tab.name")
-      if (GitWorkingTreesNewBadgeUtil.shouldShowBadgeNew()) {
-        icon = Badge.new
-        putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
-        putUserData(ToolWindowContentUi.NOT_SELECTED_TAB_ICON_TRANSPARENT, false)
-        putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT)
-      }
     }
     // content.manager is not yet initialized here
     val contentManager = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.contentManager

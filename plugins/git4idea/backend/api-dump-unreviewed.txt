@@ -5012,4 +5012,3 @@ f:git4idea.workingTrees.actions.GitOpenExistingWorkingTreeForLocalBranchAction
 - git4idea.actions.ref.GitSingleRefAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.project.Project,java.util.List,git4idea.GitReference):V
-- updateIfEnabledAndVisible(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.project.Project,java.util.List,git4idea.GitReference):V
