@@ -210,7 +210,8 @@ class DevKitMcpToolset : McpToolset {
   @McpDescription(
     """
       |Resolves the source archives attached to the IntelliJ Platform dependencies of the project.
-      |Use this tool to find the source code of the IntelliJ Platform and of its bundled plugins and libraries.
+      |Use this tool to find the source code of the IntelliJ Platform and of its bundled plugins.
+      |It also finds the sources of the libraries bundled with the IntelliJ Platform or with a plugin dependency.
       |Supports a project that uses the IntelliJ Platform Gradle Plugin 2.x.
       |Returns every distinct archive with its absolute path and its kind.
       |Possible kinds are `PLATFORM`, `API`, and `LIBRARY`.
@@ -218,6 +219,8 @@ class DevKitMcpToolset : McpToolset {
       |To read a source file, call `read_file` with an archive entry path, such as `<archive path>!/com/intellij/Foo.java`.
       |Note: the tool does not download sources. When no `PLATFORM` archive is attached, the result has a hint.
       |Note: the tool does not check that each IntelliJ Platform of the project has its own sources.
+      |Note: the result can have `PLATFORM` archives of different builds, because a plugin dependency can have the sources of another build.
+      |The file name of a `PLATFORM` archive has its version.
     """
   )
   @Suppress("unused", "FunctionName")

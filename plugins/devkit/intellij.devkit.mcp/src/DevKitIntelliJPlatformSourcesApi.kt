@@ -91,19 +91,22 @@ private fun collectSourcesRoots(project: Project): Set<Path>? {
 
 /**
  * Checks if [coordinates] belong to an IntelliJ Platform dependency of the IntelliJ Platform Gradle Plugin 2.x.
- * The rules are the ones of `IntelliJPlatformAttachSourcesProvider` in the `intellij.devkit.gradle` module.
+ * The Gradle sync attaches sources to the libraries with these coordinates.
+ * The groups are the ones of `IntelliJPlatformAuxiliaryArtifactProvider` in the `intellij.devkit.gradle.tooling` module.
  */
 private fun isIntelliJPlatformDependency(coordinates: MavenCoordinates): Boolean {
   val groupId = coordinates.groupId
-  val artifactId = coordinates.artifactId
   return when {
-    // IntelliJ Platform dependency, such as `com.jetbrains.intellij.idea:ideaIC:2023.2.7` or `idea:ideaIC:2024.3`
-    IntelliJPlatformProduct.fromMavenCoordinates(groupId, artifactId) != null -> true
-    IntelliJPlatformProduct.fromCdnCoordinates(groupId, artifactId) != null -> true
+    // IntelliJ Platform artifact, such as `com.jetbrains.intellij.idea:ideaIC:2023.2.7`
+    // or `com.jetbrains.intellij.platform:test-framework:243.21565.193`
+    groupId.startsWith("com.jetbrains.intellij.") -> true
+    // IntelliJ Platform installer, such as `idea:ideaIC:2024.3`
+    IntelliJPlatformProduct.fromMavenCoordinates(groupId, coordinates.artifactId) != null -> true
+    IntelliJPlatformProduct.fromCdnCoordinates(groupId, coordinates.artifactId) != null -> true
     // IntelliJ Platform local installation, bundled plugin, or bundled module, such as `localIde:IC:2023.2.7+445`
     groupId == "localIde" || groupId == "bundledPlugin" || groupId == "bundledModule" -> true
-    // Non-bundled JetBrains plugins with published sources, such as `com.jetbrains.plugins:PythonCore:243.21565.193`
-    groupId == "com.jetbrains.plugins" -> artifactId == "PythonCore" || artifactId == "Pythonid"
+    // Non-bundled plugin, such as `com.jetbrains.plugins:PythonCore:243.21565.193`
+    groupId == "com.jetbrains.plugins" -> true
     else -> false
   }
 }
