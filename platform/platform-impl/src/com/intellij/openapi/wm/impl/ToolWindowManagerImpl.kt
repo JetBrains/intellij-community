@@ -1291,6 +1291,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     // a frame guest registered the id first, and this frame owner put content into the tool window that presents the frame guests
     presentation.placeholderWithOwnerContent(task.id)?.let { return it.toolWindow }
+    // a tool window of the whole frame: the frame owner has the only one, as for the extension point, and this frame guest gets it
+    frameOwnerPresentation?.registerForFrame(task.data)?.let { return it }
     if (isPresentedRegistration(task.data)) {
       return registerPresentedToolWindow(task.data)
     }
@@ -1369,11 +1371,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   /**
-   * Registers a tool window that has no content of its own and presents the tool windows of the frame guests with the id of
-   * [task], see [ToolWindowManagerPresentation], which makes [task]. The tool window is not available at first.
-   * It shows with the stored visible state when a frame guest gets an entry.
+   * Registers the tool window [task] of this frame owner on a request of [ToolWindowManagerPresentation], for a frame guest:
+   * a tool window without content of its own that presents the tool windows of the frame guests with its id, or a tool window
+   * of the whole frame that the code of a frame guest registers.
    */
-  internal fun registerPresentingToolWindow(task: RegisterToolWindowTaskData): ToolWindowEntry {
+  internal fun registerForFrameGuest(task: RegisterToolWindowTaskData): ToolWindowEntry {
     val paneId = layoutState.getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     val entry = registerToolWindow(task, getButtonManager(paneId))
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)

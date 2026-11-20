@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.isClosingWithFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.wm.MultiProjectToolWindowFactory
 import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -170,6 +171,26 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   }
 
   /**
+   * The code of a frame guest registers [task]. A tool window of the whole frame is one for the frame, and the frame owner
+   * has it: the factory of [task] has the marker [MultiProjectToolWindowFactory], or the frame owner has a tool window with
+   * the id whose factory has it. The frame owner registers [task] when it has no tool window with the id.
+   *
+   * @return the tool window of the frame owner, or `null` when [task] is for the frame guest alone
+   */
+  fun registerForFrame(task: RegisterToolWindowTaskData): ToolWindow? {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (isDisposed || manager.project.isDisposed) {
+      return null
+    }
+
+    val own = manager.getEntry(task.id)?.toolWindow
+    if (task.contentFactory is MultiProjectToolWindowFactory) {
+      return own ?: manager.registerForFrameGuest(task).toolWindow
+    }
+    return own?.takeIf { it.isMultiProject }
+  }
+
+  /**
    * The tool window [id] that the frame owner gets when it registers [id], in place of a registration. It is the tool window
    * that this class registered for the frame guests, when the frame owner put content into it already: a new tool window
    * would lose that content. `null` when the frame owner registers a tool window of its own.
@@ -196,7 +217,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     }
     catch (e: Throwable) {
       // the frame guests keep a tool window that presents them
-      bind(slot, manager.registerPresentingToolWindow(slot.placeholderTask).toolWindow, isPlaceholder = true)
+      bind(slot, manager.registerForFrameGuest(slot.placeholderTask).toolWindow, isPlaceholder = true)
       throw e
     }
     bind(slot, entry.toolWindow, isPlaceholder = false)
@@ -223,7 +244,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
       slot.release()
       return
     }
-    bind(slot, manager.registerPresentingToolWindow(slot.placeholderTask).toolWindow, isPlaceholder = true)
+    bind(slot, manager.registerForFrameGuest(slot.placeholderTask).toolWindow, isPlaceholder = true)
   }
 
   /**
@@ -446,7 +467,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
 
     val placeholderTask = placeholderTaskOf(task)
     val slot = PresentingSlot(
-      presenting = own ?: manager.registerPresentingToolWindow(placeholderTask).toolWindow,
+      presenting = own ?: manager.registerForFrameGuest(placeholderTask).toolWindow,
       isPlaceholder = own == null,
       placeholderTask = placeholderTask,
     )
@@ -458,7 +479,8 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
   /**
    * The registration of a tool window that has no content of its own and presents the tool windows of the frame guests with
    * the id of [guestTask]. The tool window takes its look and its default place from [guestTask]. It has a factory only when
-   * [guestTask] has one: a tool window without a factory gets a stripe button by default.
+   * [guestTask] has one: a tool window without a factory gets a stripe button by default. The tool window is not available
+   * at first. It shows with the stored visible state when a frame guest gets an entry.
    */
   private fun placeholderTaskOf(guestTask: RegisterToolWindowTaskData): RegisterToolWindowTaskData {
     return guestTask.copy(

@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.MultiProjectToolWindowFactory
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncEventListener
 import com.intellij.settingsSync.core.SettingsSyncEvents
@@ -33,7 +34,9 @@ internal class SettingsHistoryToolWindowFactory(private val corotineScope: Corou
     SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
       override fun enabledStateChanged(syncEnabled: Boolean) {
         corotineScope.async {
-          ProjectManager.getInstanceIfCreated()?.openProjects?.forEach { project ->
+          // the tool window is one for a frame, so only the owner of a frame has it
+          if (ProjectManager.getInstanceIfCreated() == null) return@async
+          IdeFrameGuests.openFrameOwners().forEach { project ->
             if (shouldBeAvailable()) {
               val toolWindowNullable = ToolWindowManager.getInstance(project).getToolWindow(ID)
               withContext(Dispatchers.EDT) {

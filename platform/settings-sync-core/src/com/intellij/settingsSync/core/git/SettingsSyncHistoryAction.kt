@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncMain
 import git4idea.log.showExternalGitLogInToolwindow
@@ -18,7 +19,8 @@ internal class SettingsSyncHistoryAction : DumbAwareAction() {
     val project = e.project!!
 
     if (Registry.`is`("settingsSync.ui.new.toolwindow.show")) {
-      ToolWindowManager.getInstance(project).getToolWindow(SettingsHistoryToolWindowFactory.ID)?.activate(null)
+      // the tool window is one for a frame, so the owner of the frame has it
+      ToolWindowManager.getInstance(IdeFrameGuests.frameOwnerOf(project)).getToolWindow(SettingsHistoryToolWindowFactory.ID)?.activate(null)
       return
     }
 

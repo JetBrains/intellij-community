@@ -341,6 +341,45 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  fun `a frame guest that registers a tool window of the whole frame gets the tool window of the frame owner`() = onEdt {
+    val managers = createManagers()
+    val factory = MultiProjectFactory()
+
+    // as the code that registers one tool window in every open project
+    val registered = managers.of(first).registerToolWindow(ID) {
+      anchor = ToolWindowAnchor.LEFT
+      contentFactory = factory
+    }
+
+    val own = managers.owner.getToolWindow(ID) as ToolWindowImpl
+    assertThat(registered).isSameAs(own)
+    assertThat(own.isMultiProject).isTrue()
+    assertThat(own.isPresented).isFalse()
+    assertThat(managers.of(first).getToolWindow(ID)).describedAs("the frame guest has no tool window of its own").isNull()
+    assertThat(managers.owner.presentation.entriesOf(ID)).isEmpty()
+
+    val registeredBySecond = managers.of(second).registerToolWindow(ID) {
+      anchor = ToolWindowAnchor.LEFT
+      contentFactory = factory
+    }
+
+    assertThat(registeredBySecond).isSameAs(own)
+  }
+
+  @Test
+  fun `a frame guest gets the tool window of the whole frame that the frame owner has`() = onEdt {
+    val managers = createManagers()
+    val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = MultiProjectFactory())
+    val own = managers.owner.registerToolWindow(task, buttonManager(managers.owner)).toolWindow
+
+    // the code of the frame guest does not know the factory of the frame owner
+    val registered = managers.of(first).registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT))
+
+    assertThat(registered).isSameAs(own)
+    assertThat(managers.of(first).getToolWindow(ID)).isNull()
+  }
+
+  @Test
   fun `a presented tool window has its presenting tool window from the attach to the detach`() = onEdt {
     val managers = createManagers()
     val guestManager = managers.of(first)
