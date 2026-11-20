@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ToolWindowBalloonShowOptions
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
@@ -834,6 +835,51 @@ internal class FrameGuestToolWindowPresentationTest {
     managers.of(first).notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = ToolWindowId.DEBUG, type = MessageType.INFO, htmlBody = "Paused"))
 
     assertThat(shownBalloons).describedAs("the frame owner has the Run tool window that the user sees").containsExactly(owner.name)
+  }
+
+  @Test
+  fun `a balloon of a windowed tool window points at the content of the frame guest that it shows`() = onEdt {
+    val managers = createManagers()
+    val firstToolWindow = managers.register(first)
+    managers.owner.setToolWindowType(ID, ToolWindowType.WINDOWED)
+    firstToolWindow.show()
+
+    checkBalloonAnchor(managers, firstToolWindow, ToolWindowType.WINDOWED)
+  }
+
+  @Test
+  fun `a balloon of a floating tool window points at the content of the frame guest that it shows`() = onEdt {
+    val managers = createManagers()
+    val firstToolWindow = managers.register(first)
+    firstToolWindow.show()
+    // a headless test has no frame for a floating window, so the tool window gets only the state of a floating one
+    val presenting = managers.owner.getEntry(ID)!!
+    presenting.applyWindowInfo((presenting.readOnlyWindowInfo as WindowInfoImpl).copy().also { it.type = ToolWindowType.FLOATING })
+
+    checkBalloonAnchor(managers, firstToolWindow, ToolWindowType.FLOATING)
+  }
+
+  /**
+   * Checks the anchor of a balloon that the frame guest of [guestToolWindow] asks for, while a window of its own shows the tool window.
+   * That window holds the decorator of the tool window of the frame owner, so only a component inside this decorator shows there.
+   */
+  private fun checkBalloonAnchor(managers: Managers, guestToolWindow: ToolWindowImpl, type: ToolWindowType) {
+    val presenting = managers.owner.getEntry(ID)!!
+    assertThat(presenting.toolWindow.type).isEqualTo(type)
+    assertThat(presenting.toolWindow.isVisible).isTrue()
+    assertThat(managers.owner.presentation.shownToolWindowOf(ID)).isSameAs(guestToolWindow)
+    val presentingDecorator = presenting.toolWindow.decorator!!
+    assertThat(SwingUtilities.isDescendingFrom(presenting.toolWindow.component, presentingDecorator))
+      .describedAs("the content of the frame owner is in no window while the tool window shows a frame guest")
+      .isFalse()
+
+    managers.of(guestToolWindow.project).notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = ID, type = MessageType.INFO, htmlBody = "Done"))
+    assertThat(shownBalloons).describedAs("the frame owner shows the balloon").containsExactly(owner.name)
+
+    val anchor = ToolWindowManagerNotifications(managers.owner).externalWindowAnchor(presenting)
+    assertThat(anchor).isNotNull()
+    assertThat(SwingUtilities.isDescendingFrom(anchor, presentingDecorator)).describedAs("the anchor is in the window of the tool window").isTrue()
+    assertThat(InternalDecoratorImpl.findTopLevelDecorator(anchor)).describedAs("the content of the frame guest").isSameAs(guestToolWindow.decorator)
   }
 
   @Test
