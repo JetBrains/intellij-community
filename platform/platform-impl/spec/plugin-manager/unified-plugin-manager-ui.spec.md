@@ -721,13 +721,13 @@ Untested: No focused test verifies Shift-selection across sections.
   )
 
 - Suggested must show a “More on JetBrains Marketplace” link after its plugin rows.
-  The link must appear only when Suggested is expanded, loading succeeds, and the default Marketplace is active.
+  The link requires a successful load, all Suggested plugin rows to be visible, and the default Marketplace to be active.
 - The link must show an external link arrow and open the Marketplace home page in the browser.
 - Enter and Space on the focused link must open the Marketplace home page.
 - The link must use muted text and the same rounded hover and keyboard focus outline as the section headers.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
     `Marketplace link follows Suggested rows in arrow order and stays outside Tab order`;
-    `Marketplace link requires expanded and fully loaded Suggested`
+    `Marketplace link requires all Suggested results to be visible and loaded`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
     `Suggested links to the default Marketplace and hides the link for an override`
