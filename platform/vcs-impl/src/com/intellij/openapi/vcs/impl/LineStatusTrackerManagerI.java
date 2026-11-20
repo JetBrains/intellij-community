@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +33,13 @@ public interface LineStatusTrackerManagerI {
    * This method can be used to explicitly request a tracker to be created.
    * <p>
    * Callers MUST call {@link #releaseTrackerFor} when the tracker is no longer needed.
+   * <p>
+   * The tracker exists when the method returns, if the file can have one.
+   * The tracker becomes {@link LineStatusTracker#isOperational() operational} later.
    *
    * @param requester Marker-object to blame those who did not call {@link #releaseTrackerFor}.
    * @see LineStatusTrackerManager#addTrackerListener(LineStatusTrackerManager.Listener, Disposable)
    */
-  @RequiresReadLock
   @RequiresEdt
   void requestTrackerFor(@NotNull Document document, @NotNull Object requester);
 

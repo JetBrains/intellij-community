@@ -171,14 +171,14 @@ private class HunkNode(
       return
     }
     val modality = ModalityState.defaultModalityState()
-    ReadAction.computeBlocking<Unit, RuntimeException> { manager.requestTrackerFor(document, requester) }
+    manager.requestTrackerFor(document, requester)
     manager.invokeAfterUpdate {
       ApplicationManager.getApplication().invokeLater({
         try {
           find()?.let(action)
         }
         finally {
-          ReadAction.computeBlocking<Unit, RuntimeException> { manager.releaseTrackerFor(document, requester) }
+          manager.releaseTrackerFor(document, requester)
         }
       }, modality, project.disposed)
     }

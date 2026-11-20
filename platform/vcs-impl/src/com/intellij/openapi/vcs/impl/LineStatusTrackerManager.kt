@@ -24,7 +24,6 @@ import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -100,6 +99,7 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.ProjectLevel
 import com.intellij.util.ui.UIUtil
@@ -204,10 +204,8 @@ class LineStatusTrackerManager(
 
       EditorFactory.getInstance().eventMulticaster.addDocumentListener(MyDocumentListener(), this@LineStatusTrackerManager)
 
-      writeIntentReadAction {
-        MyEditorFactoryListener().install(this@LineStatusTrackerManager)
-        onEverythingChanged()
-      }
+      MyEditorFactoryListener().install(this@LineStatusTrackerManager)
+      onEverythingChanged()
 
       PartialLineStatusTrackerManagerState.restoreState(project)
     }
@@ -404,11 +402,9 @@ class LineStatusTrackerManager(
 
   private fun canCreateTrackerFor(virtualFile: VirtualFile, document: Document): Boolean {
     if (isDisposed) return false
-    return runReadActionBlocking {
-      virtualFile.isValid &&
-      !virtualFile.fileType.isBinary &&
-      !FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)
-    }
+    return virtualFile.isValid &&
+           !virtualFile.fileType.isBinary &&
+           !FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)
   }
 
   override fun arePartialChangelistsEnabled(): Boolean {
@@ -495,6 +491,7 @@ class LineStatusTrackerManager(
     }
 
     refreshTracker(tracker, provider)
+    data.isAnnounced = true
     project.messageBus.syncPublisher(TOPIC).onTrackerAdded(tracker)
 
     if (clmFreezeCounter > 0) {
@@ -539,7 +536,7 @@ class LineStatusTrackerManager(
   /** Second phase of [releaseTracker]: notify listeners and release the tracker. */
   @RequiresEdt
   private fun disposeTracker(data: TrackerData) {
-    if (!project.isDisposed) {
+    if (data.isAnnounced && !project.isDisposed) {
       project.messageBus.syncPublisher(TOPIC).onTrackerRemoved(data.tracker)
     }
     data.tracker.release()
@@ -705,11 +702,21 @@ class LineStatusTrackerManager(
   /**
    * We can speedup initial content loading if it was already loaded by someone.
    * We do not set 'contentInfo' here to ensure, that following refresh will fix potential inconsistency.
+   *
+   * A partial tracker takes the read lock to apply the content.
+   * Without the read lock, the manager applies the content in a later EDT event.
    */
   @RequiresEdt
   @ApiStatus.Internal
   fun offerTrackerContent(document: Document, text: CharSequence) {
-    applyOfferedContent(document, text)
+    if (ApplicationManager.getApplication().isReadAccessAllowed) {
+      applyOfferedContent(document, text)
+    }
+    else {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        applyOfferedContent(document, text)
+      }
+    }
   }
 
   @RequiresEdt
@@ -767,8 +774,7 @@ class LineStatusTrackerManager(
     }
 
     override fun editorCreated(event: EditorFactoryEvent) {
-      // Editors may be created on EDT without an implicit read lock, while requesting a tracker needs read access
-      // (see ChangelistsLocalStatusTrackerProvider.createTracker -> FileDocumentManager.getDocument). Same as in `install`.
+      // An editor may be created where locks are prohibited, while a tracker provider or a file status provider may take a lock.
       val editor = event.editor
       val modalityState = ModalityState.current()
       coroutineScope.launch(Dispatchers.EDT + modalityState.asContextElement()) {
@@ -900,9 +906,7 @@ class LineStatusTrackerManager(
 
       log("Tracker install from DocumentListener: ", virtualFile)
 
-      val tracker = runReadActionBlocking {
-        installTracker(virtualFile, document, provider)
-      }
+      val tracker = installTracker(virtualFile, document, provider)
       if (tracker is ChangelistsLocalLineStatusTracker) {
         tracker.replayChangesFromDocumentEvents(listOf(event))
       }
@@ -1056,6 +1060,12 @@ class LineStatusTrackerManager(
      */
     @Volatile
     var contentInfo: ContentInfo? = null
+
+    /**
+     * True after [installTracker] publishes [Listener.onTrackerAdded]. Only then [disposeTracker] publishes [Listener.onTrackerRemoved].
+     * The EDT reads and writes the field.
+     */
+    var isAnnounced: Boolean = false
   }
 
   private class RefreshRequest(val document: Document, val virtualFile: VirtualFile, val loader: LineStatusTrackerContentLoader) {
@@ -1133,7 +1143,7 @@ class LineStatusTrackerManager(
 
   @RequiresEdt
   internal fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<ChangelistsLocalLineStatusTracker.State>) {
-    runWriteAction { /* switchTracker */
+    runWriteAction { /* FileDocumentManager.getDocument */
       if (isDisposed) return@runWriteAction
       for (state in trackerStates) {
         val virtualFile = state.virtualFile
@@ -1571,19 +1581,21 @@ interface LocalLineStatusTrackerProvider {
 
   /**
    * The default implementation calls the deprecated [createTracker] without the document, for the providers that implement only that one.
+   * It calls that function in a read action.
    *
    * @param document the document of the [file], which the new tracker follows
    */
   @RequiresEdt
   fun createTracker(project: Project, file: VirtualFile, document: Document): LocalLineStatusTracker<*>? {
     @Suppress("DEPRECATION")
-    return createTracker(project, file)
+    return runReadActionBlocking { createTracker(project, file) }
   }
 
   /**
    * The manager calls this function only through the default implementation of [createTracker] with the document.
    */
   @Deprecated("Implement createTracker(Project, VirtualFile, Document)")
+  @RequiresReadLock
   @RequiresEdt
   fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
     throw AbstractMethodError("Implement createTracker(Project, VirtualFile, Document) in ${javaClass.name}")

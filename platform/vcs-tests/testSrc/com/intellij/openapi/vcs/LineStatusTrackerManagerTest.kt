@@ -3,6 +3,8 @@ package com.intellij.openapi.vcs
 
 import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -123,6 +125,44 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     assertNull(lstm.getLineStatusTracker(document1))
   }
 
+  fun `test partial tracker lifecycle - locks are prohibited`() {
+    createChangelist("Test")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
+    refreshCLM()
+    file.assertNullTracker()
+
+    val document = file.document
+    val requester = Any()
+
+    withLocksProhibited { lstm.requestTrackerFor(document, requester) }
+    assertTrue(file.tracker is PartialLocalLineStatusTracker)
+
+    lstm.waitUntilBaseContentsLoaded()
+    assertTrue(file.tracker!!.isOperational())
+
+    withLocksProhibited { lstm.releaseTrackerFor(document, requester) }
+    file.assertNullTracker()
+  }
+
+  fun `test simple tracker lifecycle - locks are prohibited`() {
+    arePartialChangelistsSupported = false
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
+    refreshCLM()
+    file.assertNullTracker()
+
+    val document = file.document
+    val requester = Any()
+
+    withLocksProhibited { lstm.requestTrackerFor(document, requester) }
+    assertTrue(file.tracker is SimpleLocalLineStatusTracker)
+
+    lstm.waitUntilBaseContentsLoaded()
+    assertTrue(file.tracker!!.isOperational())
+
+    withLocksProhibited { lstm.releaseTrackerFor(document, requester) }
+    file.assertNullTracker()
+  }
+
   fun `test partial tracker lifecycle - file is deleted`() {
     createChangelist("Test")
     val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
@@ -163,11 +203,31 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     assertNull(lstm.getLineStatusTracker(document))
   }
 
+  /**
+   * Runs the [task] without the write-intent lock of the test, so that each lock request in the [task] fails.
+   */
+  private fun withLocksProhibited(task: () -> Unit) {
+    withoutWriteIntentLock {
+      (ApplicationManager.getApplication() as ApplicationEx).withLocksProhibited("The tracker manager must take no lock here") {
+        task()
+      }
+    }
+  }
+
+  /**
+   * The test holds the write-intent lock, so a read action in the [task] takes no lock.
+   * Without that lock, the read action takes the read lock.
+   */
+  private fun withoutWriteIntentLock(task: () -> Unit) {
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack { task() }
+  }
+
   fun `test tracker provider implements only the deprecated createTracker`() {
     val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     refreshCLM()
 
     val calledFiles = mutableListOf<VirtualFile>()
+    var hasReadAccess = false
     val provider = object : LocalLineStatusTrackerProvider {
       override fun isTrackedFile(project: Project, file: VirtualFile): Boolean = true
       override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = false
@@ -175,6 +235,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       @Deprecated("Implement createTracker(Project, VirtualFile, Document)")
       override fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
         calledFiles.add(file)
+        hasReadAccess = ApplicationManager.getApplication().isReadAccessAllowed
         return null
       }
     }
@@ -183,8 +244,9 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
     val document = file.document
     val requester = Any()
-    lstm.requestTrackerFor(document, requester)
+    withoutWriteIntentLock { lstm.requestTrackerFor(document, requester) }
     assertEquals(listOf(file), calledFiles)
+    assertTrue(hasReadAccess)
     assertNull(lstm.getLineStatusTracker(document))
 
     lstm.releaseTrackerFor(document, requester)

@@ -142,13 +142,11 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
   }
 
   private void installTracker() {
-    ReadAction.runBlocking(() -> {
-      LineStatusTrackerManager.getInstance(myProject).requestTrackerFor(myDocument, this);
+    LineStatusTrackerManager.getInstance(myProject).requestTrackerFor(myDocument, this);
 
-      DocumentContent beforeContent = (DocumentContent)getContents().getFirst();
-      CharSequence beforeText = beforeContent.getDocument().getImmutableCharSequence();
-      LineStatusTrackerManager.getInstanceImpl(myProject).offerTrackerContent(myDocument, beforeText);
-    });
+    DocumentContent beforeContent = (DocumentContent)getContents().getFirst();
+    CharSequence beforeText = beforeContent.getDocument().getImmutableCharSequence();
+    LineStatusTrackerManager.getInstanceImpl(myProject).offerTrackerContent(myDocument, beforeText);
   }
 
   private void releaseTracker() {

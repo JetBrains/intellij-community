@@ -21,6 +21,10 @@ public interface VcsBaseContentProvider {
 
   @Nullable BaseContent getBaseRevision(@NotNull VirtualFile file);
 
+  /**
+   * {@link LineStatusTrackerManager} calls the method on the EDT without a read lock, and on a pooled thread.
+   * The method must take no lock. Give the last known answer, and report a new answer through {@link VcsBaseContentProviderListener}.
+   */
   boolean isSupported(@NotNull VirtualFile file);
 
   interface BaseContent {
