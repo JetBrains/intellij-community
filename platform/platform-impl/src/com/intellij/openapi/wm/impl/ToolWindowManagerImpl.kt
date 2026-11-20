@@ -193,6 +193,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   internal var frameOwnerPresentation: ToolWindowManagerPresentation? = null
     private set
 
+  /**
+   * This manager belongs to a frame guest, or it did until the guest left its frame, see [initAsFrameGuest]. The value stays `true`.
+   * Such a manager has no activation action of its own: the action is one for the application, and in a frame with guests
+   * the tool window of the frame owner has it.
+   */
+  @Volatile
+  private var hasBeenFrameGuest = false
+
   /** Presents the tool windows of the frame guests of [project] in the tool windows of this manager. */
   internal val presentation = ToolWindowManagerPresentation(this)
 
@@ -610,6 +618,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    */
   internal fun initAsFrameGuest(frameOwnerPresentation: ToolWindowManagerPresentation) {
     check(frameOwnerPresentation !== presentation) { "A frame owner is no frame guest of itself" }
+    hasBeenFrameGuest = true
     this.frameOwnerPresentation = frameOwnerPresentation
   }
 
@@ -1632,8 +1641,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     LOG.debug { "unregisterToolWindow($id)" }
 
     ThreadingAssertions.assertEventDispatchThread()
-    // the activation action of a presented tool window belongs to the tool window of the frame owner
-    if (!keepsActivationAction && idToEntry.get(id)?.toolWindow?.isPresented != true) {
+    // A frame guest has no activation action, see `hasBeenFrameGuest`. That holds for its presented tool window, and for
+    // a tool window of the whole frame, which only the frame owner has.
+    if (!keepsActivationAction && !hasBeenFrameGuest) {
       ActivateToolWindowAction.Manager.unregister(id)
     }
 

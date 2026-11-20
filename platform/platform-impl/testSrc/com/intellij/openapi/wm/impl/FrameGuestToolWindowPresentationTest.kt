@@ -522,6 +522,40 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  fun `a frame guest that unregisters a tool window of the whole frame leaves the tool window and its activation action`() = onEdt {
+    val managers = createManagers()
+    val factory = MultiProjectFactory()
+    // as the code that registers one tool window in every open project, and unregisters it there later
+    val registered = managers.of(first).registerToolWindow(ID) {
+      anchor = ToolWindowAnchor.LEFT
+      contentFactory = factory
+    }
+    val own = managers.owner.getToolWindow(ID)!!
+    assertThat(registered).isSameAs(own)
+    val action = ActionManager.getInstance().getAction(activationActionId())
+    assertThat(action).isNotNull()
+
+    @Suppress("DEPRECATION")
+    managers.of(first).unregisterToolWindow(ID)
+
+    assertThat(managers.owner.getToolWindow(ID)).describedAs("the frame owner has the tool window").isSameAs(own)
+    assertThat(ActionManager.getInstance().getAction(activationActionId()))
+      .describedAs("the action of the tool window of the frame owner, not a new one")
+      .isSameAs(action)
+
+    // a frame guest that closes has no presentation of the frame owner any more
+    managers.of(second).projectClosing()
+    @Suppress("DEPRECATION")
+    managers.of(second).unregisterToolWindow(ID)
+
+    assertThat(ActionManager.getInstance().getAction(activationActionId())).isSameAs(action)
+
+    action.actionPerformed(activationEvent(owner))
+
+    assertThat(own.isVisible).describedAs("the action still shows the tool window").isTrue()
+  }
+
+  @Test
   fun `a frame guest gets the tool window of the whole frame that the frame owner has`() = onEdt {
     val managers = createManagers()
     val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = MultiProjectFactory())
