@@ -49,8 +49,24 @@ def take_first_n_coll_elements(coll, n):
     else:
         raise TypeError("Unsupported collection type: '%s'" % str(coll.__class__))
 
+# The policy starts as the environment of the debuggee says, and the IDE changes it during the session with the
+# `valuesPolicy` debugger property (see `set_values_policy`).
+_values_policy = LOAD_VALUES_POLICY
+
+def set_values_policy(policy_name):
+    """
+    Applies the Variables Loading Policy that the IDE names, one of `SYNC`, `ASYNC` and `ON_DEMAND`. The next
+    variables request follows it. An unknown name changes nothing, and the call returns False.
+    """
+    global _values_policy
+    policy = getattr(ValuesPolicy, policy_name, None) if isinstance(policy_name, str) else None
+    if not isinstance(policy, int):
+        return False
+    _values_policy = policy
+    return True
+
 def should_evaluate_shape():
-    return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
+    return _values_policy != ValuesPolicy.ON_DEMAND
 
 def _is_numpy_scalar_type(x):
     if getattr(x, '__module__', None) != 'numpy':
@@ -65,7 +81,7 @@ def should_load_value_on_demand(val):
     The rule is the one of pydevd: a builtin or a numpy scalar is shown at once, because its repr runs no code of the
     user. A list, a tuple, a dict and every other object wait for the request.
     """
-    if LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND:
+    if _values_policy != ValuesPolicy.ON_DEMAND:
         return False
     val_type = type(val)
     is_simple = getattr(val_type, '__module__', None) == 'builtins' or _is_numpy_scalar_type(val_type)
