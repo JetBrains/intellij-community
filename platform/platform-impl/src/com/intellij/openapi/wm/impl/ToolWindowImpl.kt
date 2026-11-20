@@ -172,11 +172,18 @@ private val LOG = logger<ToolWindowManagerImpl>()
   override fun getProject(): Project = toolWindowManager.project
 
   /**
-   * The tool window of the frame owner that presents this tool window of a frame guest.
-   * `null` when this tool window is not presented, see [isPresented].
+   * The slot of the frame owner that holds this presented tool window. Only [ToolWindowManagerPresentation] writes it:
+   * it sets the slot when the frame owner starts to present this tool window, and it clears the slot when the frame owner stops.
    */
-  internal val presentingToolWindow: ToolWindowImpl?
-    get() = if (isPresented) toolWindowManager.presentingManager?.getEntry(id)?.toolWindow else null
+  internal var presentingSlot: PresentingSlot? = null
+
+  /**
+   * The tool window of the frame owner that presents this tool window of a frame guest now.
+   * `null` for a tool window that is not presented, see [isPresented], and for a presented tool window that the frame owner
+   * does not present: such a tool window is hidden, and it has no entry in a project selector.
+   */
+  internal val presentedBy: ToolWindowImpl?
+    get() = presentingSlot?.presenting
 
   /**
    * This presented tool window is on the stripe of its project, so the project selector of the presenting tool window lists the project.
@@ -200,11 +207,11 @@ private val LOG = logger<ToolWindowManagerImpl>()
     }
 
   /**
-   * The decorator that a tool window pane holds for this tool window.
+   * The decorator that a tool window pane holds for this tool window, or `null` when the tool window has no decorator yet.
    * The decorator of a presented tool window is inside the decorator of its presenting tool window.
    */
-  val paneDecorator: InternalDecoratorImpl
-    get() = presentingToolWindow?.decorator ?: decorator!!
+  val decoratorInPane: InternalDecoratorImpl?
+    get() = (presentedBy ?: this).decorator
 
   override fun getDecoration(): ToolWindowEx.ToolWindowDecoration {
     return ToolWindowEx.ToolWindowDecoration(icon, additionalGearActions)
@@ -540,7 +547,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
   override fun isActive(): Boolean {
     if (isPresented) {
       // the frame of a frame guest is the frame of its owner, and the manager of the owner knows a floating tool window
-      return windowInfo.isVisible && presentingToolWindow?.isActive == true
+      return windowInfo.isVisible && presentedBy?.isActive == true
     }
     return windowInfo.isVisible && decorator != null && toolWindowManager.activeToolWindowId == id
   }
@@ -825,7 +832,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
   override fun isShowStripeButton(): Boolean {
     if (isPresented) {
       // the frame owner keeps the stripe button
-      return isOnProjectStripe && presentingToolWindow?.isShowStripeButton != false
+      return isOnProjectStripe && presentedBy?.isShowStripeButton != false
     }
     return windowInfo.isShowStripeButton
   }

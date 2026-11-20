@@ -154,7 +154,7 @@ private inline fun process(processor: (manager: ToolWindowManagerImpl) -> Unit) 
 internal fun getToolWindowManagerForEvent(event: AnActionEvent): ToolWindowManagerEx? {
   (event.getData(PlatformDataKeys.TOOL_WINDOW) as? ToolWindowImpl)?.let {
     // the frame owner shows a presented tool window of a frame guest, and the two have one id
-    return (it.presentingToolWindow ?: it).toolWindowManager
+    return (it.presentedBy ?: it).toolWindowManager
   }
   val project = IdeFrameGuests.frameOwnerOf(event) ?: return null
   return ToolWindowManager.getInstance(project) as? ToolWindowManagerEx

@@ -508,10 +508,11 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
           myInitialHeight.set(splitter.getSecondComponent().getHeight());
           return;
         }
-        if (component instanceof ToolWindowPane) {
+        // the pane holds the decorator of the presenting tool window for a presented tool window
+        InternalDecoratorImpl decoratorInPane = component instanceof ToolWindowPane ? ui.window.getDecoratorInPane() : null;
+        if (decoratorInPane != null) {
           myIsLastComponent.set(ui.window.getAnchor() == ToolWindowAnchor.BOTTOM || ui.window.getAnchor() == ToolWindowAnchor.RIGHT);
-          InternalDecoratorImpl paneDecorator = ui.window.getPaneDecorator();
-          myInitialHeight.set(ui.window.getAnchor().isHorizontal() ? paneDecorator.getHeight() : paneDecorator.getWidth());
+          myInitialHeight.set(ui.window.getAnchor().isHorizontal() ? decoratorInPane.getHeight() : decoratorInPane.getWidth());
           return;
         }
         myIsLastComponent.set(null);
@@ -604,17 +605,16 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
         if (component instanceof Splitter splitter) {
           splitter.setProportion(Math.max(0, Math.min(1, 1f - (float)(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y )/ splitter.getHeight())));
         }
-        if (component instanceof ToolWindowPane) {
-          // the pane holds the decorator of the presenting tool window for a presented tool window
-          InternalDecoratorImpl paneDecorator = ui.window.getPaneDecorator();
+        InternalDecoratorImpl decoratorInPane = component instanceof ToolWindowPane ? ui.window.getDecoratorInPane() : null;
+        if (decoratorInPane != null) {
           if (ui.window.getType() == ToolWindowType.SLIDING) {
-            paneDecorator.updateBounds(e);
+            decoratorInPane.updateBounds(e);
           } else {
-            Dimension size = paneDecorator.getSize();
+            Dimension size = decoratorInPane.getSize();
             if (ui.window.getAnchor().isHorizontal()) {
               size.height = myInitialHeight.get() - myLastPoint.get().y + myPressPoint.get().y;
             }
-            paneDecorator.setSize(size);
+            decoratorInPane.setSize(size);
           }
         }
       }

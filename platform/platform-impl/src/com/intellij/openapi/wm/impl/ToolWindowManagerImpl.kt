@@ -183,12 +183,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private var detachedDefaultPane: ToolWindowPane? = null
 
   /**
-   * The manager of the frame owner, when this manager belongs to a frame guest and the frame owner presents its tool windows.
+   * The presentation of the frame owner, when this manager belongs to a frame guest and the frame owner presents its tool windows.
    * `null` for a project with a frame of its own, and for a frame guest without the legacy mode of a tool window,
    * see [ToolWindowFactoryScope.isSplitEnabled].
    */
   @Volatile
-  internal var presentingManager: ToolWindowManagerImpl? = null
+  internal var frameOwnerPresentation: ToolWindowManagerPresentation? = null
     private set
 
   /** Presents the tool windows of the frame guests of [project] in the tool windows of this manager. */
@@ -550,7 +550,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
     detachedDefaultPane = pane
     if (ToolWindowFactoryScope.isSplitEnabled) {
-      (frameOwner.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl)?.let(::presentThrough)
+      (frameOwner.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl)?.let { initAsFrameGuest(it.presentation) }
     }
     doInit(
       pane = pane,
@@ -561,10 +561,24 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   /**
-   * The tool window of the frame owner that presents the tool window [id] of this manager, or `null` when [id] is not presented.
-   * The frame owner keeps the place, the size and the stripe button, so a call that changes them goes to its manager.
+   * Forwards a call for the presented tool window [toolWindow] to the manager of the frame owner. The frame owner keeps the place,
+   * the size and the stripe button of a presented tool window, so a call that reads or changes them goes to its manager.
+   * [call] gets the tool window of the frame owner that presents [toolWindow]. A presented tool window that the frame owner
+   * does not present now drops the call.
+   *
+   * @return `true` when [toolWindow] is a presented tool window: the caller must leave the state of this manager alone
    */
-  private fun presentingToolWindowOf(id: String): ToolWindowImpl? = idToEntry.get(id)?.toolWindow?.presentingToolWindow
+  private inline fun forwardToFrameOwner(toolWindow: ToolWindow?, call: ToolWindowManagerImpl.(presenting: ToolWindowImpl) -> Unit): Boolean {
+    if (toolWindow !is ToolWindowImpl || !toolWindow.isPresented) {
+      return false
+    }
+    toolWindow.presentedBy?.let { it.toolWindowManager.call(it) }
+    return true
+  }
+
+  private inline fun forwardToFrameOwner(id: String, call: ToolWindowManagerImpl.(presenting: ToolWindowImpl) -> Unit): Boolean {
+    return forwardToFrameOwner(idToEntry.get(id)?.toolWindow, call)
+  }
 
   /**
    * Puts the presented tool window [toolWindow] on the stripe of its project or takes it off, see [ToolWindowImpl.isOnProjectStripe].
@@ -575,7 +589,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
     toolWindow.isOnProjectStripe = value
-    presentingManager?.presentation?.availabilityChanged(toolWindow)
+    frameOwnerPresentation?.availabilityChanged(toolWindow)
   }
 
   /** A show request brings the stripe button back, see [showToolWindowImpl]. So it brings a presented tool window back to its stripe. */
@@ -585,10 +599,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
   }
 
-  /** Makes this manager the manager of a frame guest whose tool windows [ownerManager] presents, see [presentingManager]. */
-  internal fun presentThrough(ownerManager: ToolWindowManagerImpl) {
-    check(ownerManager !== this) { "A manager cannot present its own tool windows" }
-    presentingManager = ownerManager
+  /**
+   * Tells this manager that its project is a frame guest. From now on, each tool window that it registers without the marker
+   * [MultiProjectToolWindowFactory] is a presented tool window, and [frameOwnerPresentation] shows it in the frame of the owner.
+   */
+  internal fun initAsFrameGuest(frameOwnerPresentation: ToolWindowManagerPresentation) {
+    check(frameOwnerPresentation !== presentation) { "A frame owner is no frame guest of itself" }
+    this.frameOwnerPresentation = frameOwnerPresentation
   }
 
   @ApiStatus.Internal
@@ -634,8 +651,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         toolWindowPanes.put(pane.paneId, pane)
       }
       defaultPaneInitialization.join()
-      val presentingManager = presentingManager
-      if (presentingManager == null) {
+      val frameOwnerPresentation = frameOwnerPresentation
+      if (frameOwnerPresentation == null) {
         toolWindowSetInitializer.initUi(
           reopeningEditorJob = reopeningEditorJob,
           taskListDeferred = taskListDeferred,
@@ -646,7 +663,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       else {
         // not awaited: the open of a frame guest restores its editors after this call, and the registration waits for the editors
         coroutineScope.launch(CoroutineName("toolwindow registration of a frame guest") + ModalityState.any().asContextElement()) {
-          toolWindowSetInitializer.initPresentedUi(presentingManager)
+          toolWindowSetInitializer.initPresentedUi(frameOwnerPresentation)
         }
       }
     }
@@ -731,7 +748,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   private fun getProjectFrameToolWindowLayoutProfileId(): String? {
     // a frame guest is in the frame of its owner, so the frame type of the owner decides
-    val frameTypeId = (presentingManager ?: this).projectFrameTypeId
+    val frameOwnerPresentation = frameOwnerPresentation
+    val frameTypeId = if (frameOwnerPresentation == null) projectFrameTypeId else frameOwnerPresentation.projectFrameTypeId
     return service<ProjectFrameTypeService>().getToolWindowLayoutProfileId(frameTypeId)
   }
 
@@ -743,7 +761,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   /** A frame guest leaves its frame at this event, so the frame owner stops to present the tool windows of the guest. */
   internal fun projectClosing() {
-    val presentation = presentingManager?.presentation ?: return
+    val presentation = frameOwnerPresentation ?: return
     for (entry in idToEntry.values) {
       if (entry.toolWindow.isPresented) {
         presentation.detach(entry.toolWindow)
@@ -816,7 +834,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     if (entry.toolWindow.isPresented) {
       putOnProjectStripeForShow(entry.toolWindow)
-      presentingManager?.presentation?.activate(entry.toolWindow, autoFocusContents, source)
+      frameOwnerPresentation?.activate(entry.toolWindow, autoFocusContents, source)
       return
     }
 
@@ -1033,7 +1051,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val entry = idToEntry.get(id) ?: throw IllegalThreadStateException("window with id=\"$id\" is not registered")
     if (entry.toolWindow.isPresented) {
       putOnProjectStripeForShow(entry.toolWindow)
-      presentingManager?.presentation?.show(entry.toolWindow)
+      frameOwnerPresentation?.show(entry.toolWindow)
       return
     }
     if (entry.readOnlyWindowInfo.isVisible) {
@@ -1063,7 +1081,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     val entry = idToEntry.get(id)!!
     if (entry.toolWindow.isPresented) {
-      presentingManager?.presentation?.hide(entry.toolWindow, hideSide, moveFocus, removeFromStripe, source)
+      frameOwnerPresentation?.hide(entry.toolWindow, hideSide, moveFocus, removeFromStripe, source)
       if (removeFromStripe && source == null) {
         // the request of the code, as after the removal of the last content: the stripe button of the frame owner is for the user
         setOnProjectStripe(entry.toolWindow, false)
@@ -1279,7 +1297,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * The frame owner then presents it. The task of a frame owner and of a project with a frame of its own does not change.
    */
   internal fun toCodeRegistration(task: RegisterToolWindowTaskData): RegisterToolWindowTaskData {
-    val isSingleProject = presentingManager != null && task.contentFactory !is MultiProjectToolWindowFactory
+    val isSingleProject = frameOwnerPresentation != null && task.contentFactory !is MultiProjectToolWindowFactory
     return if (isSingleProject) task.copy(singleProject = true) else task
   }
 
@@ -1312,7 +1330,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    */
   internal fun attachPresented(entry: ToolWindowEntry, task: RegisterToolWindowTaskData) {
     if (entry.toolWindow.isPresented) {
-      presentingManager?.presentation?.attach(entry.toolWindow, task)
+      frameOwnerPresentation?.attach(entry.toolWindow, task)
     }
   }
 
@@ -1391,7 +1409,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * moved for it gets the new entry.
    */
   internal fun prepareRegisterToolWindowTask(task: RegisterToolWindowTaskData): PreparedRegisterToolWindowTask {
-    if (presentingManager != null && task.singleProject) {
+    if (frameOwnerPresentation != null && task.singleProject) {
       // the frame owner keeps the place, the stripe button and the visible state of a presented tool window
       return PreparedRegisterToolWindowTask(
         task = task,
@@ -1592,7 +1610,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       val info = layoutState.getInfo(id)
       if (toolWindow.isPresented) {
         // a presented tool window is in no pane and has no stripe button
-        presentingManager?.presentation?.detach(toolWindow)
+        frameOwnerPresentation?.detach(toolWindow)
         activeStack.remove(entry, true)
       }
       else {
@@ -1916,8 +1934,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   // used by Rider
   @Suppress("MemberVisibilityCanBePrivate")
   fun setToolWindowAnchor(id: String, anchor: ToolWindowAnchor, order: Int) {
-    presentingToolWindowOf(id)?.let {
-      it.toolWindowManager.setToolWindowAnchor(id, anchor, order)
+    if (forwardToFrameOwner(id) { setToolWindowAnchor(id, anchor, order) }) {
       return
     }
     val entry = idToEntry.get(id)!!
@@ -1942,7 +1959,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   fun setVisibleOnLargeStripe(id: String, visible: Boolean) {
-    if (presentingToolWindowOf(id) != null) {
+    if (forwardToFrameOwner(id) { }) {
       // the frame owner keeps the stripe button
       return
     }
@@ -2038,8 +2055,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun setSideTool(id: String, isSplit: Boolean) {
-    presentingToolWindowOf(id)?.let {
-      it.toolWindowManager.setSideTool(id, isSplit)
+    if (forwardToFrameOwner(id) { setSideTool(id, isSplit) }) {
       return
     }
     val entry = idToEntry.get(id)
@@ -2082,8 +2098,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun setSideToolAndAnchor(id: String, paneId: String, anchor: ToolWindowAnchor, order: Int, isSplit: Boolean) {
-    presentingToolWindowOf(id)?.let {
-      it.toolWindowManager.setSideToolAndAnchor(id, paneId, anchor, order, isSplit)
+    if (forwardToFrameOwner(id) { setSideToolAndAnchor(id, paneId, anchor, order, isSplit) }) {
       return
     }
     val entry = idToEntry.get(id)!!
@@ -2154,8 +2169,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   internal fun setToolWindowAutoHide(id: String, autoHide: Boolean) {
     EDT.assertIsEdt()
 
-    presentingToolWindowOf(id)?.let {
-      it.toolWindowManager.setToolWindowAutoHide(id, autoHide)
+    if (forwardToFrameOwner(id) { setToolWindowAutoHide(id, autoHide) }) {
       return
     }
 
@@ -2176,8 +2190,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   fun setToolWindowType(id: String, type: ToolWindowType) {
     ThreadingAssertions.assertEventDispatchThread()
 
-    presentingToolWindowOf(id)?.let {
-      it.toolWindowManager.setToolWindowType(id, type)
+    if (forwardToFrameOwner(id) { setToolWindowType(id, type) }) {
       return
     }
 
@@ -2254,23 +2267,22 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun stretchWidth(toolWindow: ToolWindowImpl, value: Int) {
-    toolWindow.presentingToolWindow?.let {
-      it.toolWindowManager.stretchWidth(it, value)
+    if (forwardToFrameOwner(toolWindow) { stretchWidth(it, value) }) {
       return
     }
     getToolWindowPane(toolWindow).stretchWidth(toolWindow, value)
   }
 
   override fun isMaximized(window: ToolWindow): Boolean {
-    (window as? ToolWindowImpl)?.presentingToolWindow?.let {
-      return it.toolWindowManager.isMaximized(it)
+    var isPresentingMaximized = false
+    if (forwardToFrameOwner(window) { isPresentingMaximized = isMaximized(it) }) {
+      return isPresentingMaximized
     }
     return getToolWindowPane(window).isMaximized(window)
   }
 
   override fun setMaximized(window: ToolWindow, maximized: Boolean) {
-    (window as? ToolWindowImpl)?.presentingToolWindow?.let {
-      it.toolWindowManager.setMaximized(it, maximized)
+    if (forwardToFrameOwner(window) { setMaximized(it, maximized) }) {
       return
     }
     if (window.type == ToolWindowType.FLOATING && window is ToolWindowImpl) {
@@ -2294,8 +2306,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun stretchHeight(toolWindow: ToolWindowImpl, value: Int) {
-    toolWindow.presentingToolWindow?.let {
-      it.toolWindowManager.stretchHeight(it, value)
+    if (forwardToFrameOwner(toolWindow) { stretchHeight(it, value) }) {
       return
     }
     getToolWindowPane(toolWindow).stretchHeight(toolWindow, value)
@@ -2303,7 +2314,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   internal fun toolWindowAvailable(toolWindow: ToolWindowImpl) {
     if (toolWindow.isPresented) {
-      presentingManager?.presentation?.availabilityChanged(toolWindow)
+      frameOwnerPresentation?.availabilityChanged(toolWindow)
       fireStateChanged(ToolWindowManagerEventType.ToolWindowAvailable, toolWindow)
       return
     }
@@ -2330,7 +2341,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   internal fun toolWindowUnavailable(toolWindow: ToolWindowImpl) {
     if (toolWindow.isPresented) {
-      presentingManager?.presentation?.availabilityChanged(toolWindow)
+      frameOwnerPresentation?.availabilityChanged(toolWindow)
       fireStateChanged(ToolWindowManagerEventType.ToolWindowUnavailable, toolWindow)
       return
     }
@@ -2443,7 +2454,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   fun restoreStripeButton(id: String) {
     doSetShowStripeButton(id, true)
     // the frame owner has the stripe button of a presented tool window
-    presentingToolWindowOf(id)?.takeIf { it.isAvailable }?.let { it.toolWindowManager.restoreStripeButton(id) }
+    forwardToFrameOwner(id) { presenting -> if (presenting.isAvailable) restoreStripeButton(id) }
   }
 
   private fun doSetShowStripeButton(id: String, value: Boolean) {

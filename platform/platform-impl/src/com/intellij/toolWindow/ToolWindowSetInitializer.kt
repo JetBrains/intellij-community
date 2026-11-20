@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.ToolWindowManagerAppLevelHelper
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.ToolWindowManagerPresentation
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.openapi.wm.impl.seedFromFactoryDefault
 import com.intellij.openapi.wm.safeToolWindowPaneId
@@ -232,16 +233,16 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
    * No tool window is shown, and none gets a stripe button or an activation action.
    * The pending tasks run after the registration, so a task of `ToolWindowManager.invokeLater` finds every tool window registered.
    *
-   * The function waits for the tool windows of [ownerManager], because the frame type of the owner decides which ids are suppressed.
+   * The function waits for the tool windows of the frame owner, because the frame type of the owner decides which ids are suppressed.
    */
-  suspend fun initPresentedUi(ownerManager: ToolWindowManagerImpl) {
+  suspend fun initPresentedUi(frameOwnerPresentation: ToolWindowManagerPresentation) {
     try {
-      ownerManager.awaitToolWindowsRegistered()
+      frameOwnerPresentation.awaitToolWindowsRegistered()
       val tasks = span("toolwindow init command creation (frame guest)") {
         val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
           .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
         addExtraTasks(
-          tasks = computeToolWindowBeans(project = project, projectFrameTypeId = ownerManager.projectFrameTypeId),
+          tasks = computeToolWindowBeans(project = project, projectFrameTypeId = frameOwnerPresentation.projectFrameTypeId),
           project = project,
           ep = ep,
           suppressedToolWindowIds = manager.getSuppressedToolWindowIds(),

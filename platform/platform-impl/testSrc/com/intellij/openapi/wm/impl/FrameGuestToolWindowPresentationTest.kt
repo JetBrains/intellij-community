@@ -246,13 +246,43 @@ internal class FrameGuestToolWindowPresentationTest {
   fun `a tool window that presents every project itself takes no frame guest`() = onEdt {
     val managers = createManagers()
     val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = MultiProjectFactory())
-    managers.owner.registerToolWindow(task, buttonManager(managers.owner))
+    val own = managers.owner.registerToolWindow(task, buttonManager(managers.owner)).toolWindow
 
     val firstToolWindow = managers.register(first)
     firstToolWindow.show()
 
     assertThat(managers.owner.presentation.entriesOf(ID)).isEmpty()
     assertThat(firstToolWindow.isVisible).isFalse()
+    assertThat(firstToolWindow.presentedBy).isNull()
+
+    firstToolWindow.setAnchor(ToolWindowAnchor.RIGHT, null)
+
+    assertThat(own.anchor).describedAs("a tool window that the frame owner does not present moves no tool window").isEqualTo(ToolWindowAnchor.LEFT)
+  }
+
+  @Test
+  fun `a presented tool window has its presenting tool window from the attach to the detach`() = onEdt {
+    val managers = createManagers()
+    val guestManager = managers.of(first)
+    val task = task()
+    val entry = guestManager.registerToolWindow(
+      preparedTask = guestManager.prepareRegisterToolWindowTask(task),
+      buttonManager = buttonManager(guestManager),
+      layout = guestManager.getLayout(),
+      ensureToolWindowActionRegistered = true,
+    ).entry
+    val toolWindow = entry.toolWindow
+    assertThat(toolWindow.isPresented).isTrue()
+    assertThat(toolWindow.presentedBy).describedAs("the frame owner does not present the tool window yet").isNull()
+
+    guestManager.attachPresented(entry, task)
+
+    assertThat(toolWindow.presentedBy).isSameAs(managers.owner.getToolWindow(ID))
+    assertThat(toolWindow.decoratorInPane).isSameAs(managers.owner.getEntry(ID)!!.toolWindow.decorator)
+
+    guestManager.doUnregisterToolWindow(ID)
+
+    assertThat(toolWindow.presentedBy).isNull()
   }
 
   @Test
@@ -279,7 +309,7 @@ internal class FrameGuestToolWindowPresentationTest {
     val presentingDecorator = managers.owner.getEntry(ID)!!.toolWindow.decorator!!
 
     assertThat(SwingUtilities.isDescendingFrom(firstToolWindow.decorator, presentingDecorator)).isTrue()
-    assertThat(firstToolWindow.paneDecorator).isSameAs(presentingDecorator)
+    assertThat(firstToolWindow.decoratorInPane).isSameAs(presentingDecorator)
     assertThat(InternalDecoratorImpl.findTopLevelDecorator(firstToolWindow.component))
       .describedAs("the two decorators belong to two tool windows")
       .isSameAs(firstToolWindow.decorator)
@@ -500,7 +530,7 @@ internal class FrameGuestToolWindowPresentationTest {
     val guestManagers = listOf(first, second).associateWith { guest ->
       windowManager.addFrameGuest(owner, guest)
       Disposer.register(disposable) { windowManager.removeFrameGuest(guest) }
-      createManager(guest).also { it.presentThrough(ownerManager) }
+      createManager(guest).also { it.initAsFrameGuest(ownerManager.presentation) }
     }
     return Managers(ownerManager, guestManagers)
   }

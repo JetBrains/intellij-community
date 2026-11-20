@@ -121,7 +121,7 @@ internal class FrameGuestToolWindowRegistrationTest {
   fun `a presented tool window is registered without a stripe button and stays hidden`(): Unit = timeoutRunBlocking {
     val ownerManager = createManager(owner)
     val guestManager = createManager(guest)
-    guestManager.presentThrough(ownerManager)
+    guestManager.initAsFrameGuest(ownerManager.presentation)
     withContext(Dispatchers.EDT) {
       // a layout that the guest stored for a frame of its own has no meaning in the frame of the owner
       guestManager.layoutState.addInfo(ID, visibleInfo(ID))
@@ -141,7 +141,7 @@ internal class FrameGuestToolWindowRegistrationTest {
   fun `a tool window that code registers in a frame guest is presented`(): Unit = timeoutRunBlocking {
     val ownerManager = createManager(owner)
     val guestManager = createManager(guest)
-    guestManager.presentThrough(ownerManager)
+    guestManager.initAsFrameGuest(ownerManager.presentation)
     withContext(Dispatchers.EDT) {
       val toolWindow = guestManager.registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT)) as ToolWindowImpl
 
@@ -156,7 +156,7 @@ internal class FrameGuestToolWindowRegistrationTest {
   @Test
   fun `the marker keeps a tool window that code registers in a frame guest out of the presentation`(): Unit = timeoutRunBlocking {
     val guestManager = createManager(guest)
-    guestManager.presentThrough(createManager(owner))
+    guestManager.initAsFrameGuest(createManager(owner).presentation)
     val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT)
 
     assertThat(guestManager.toCodeRegistration(task).singleProject).describedAs("no factory").isTrue()
@@ -167,7 +167,7 @@ internal class FrameGuestToolWindowRegistrationTest {
   @Test
   fun `a tool window that code registers in a frame owner keeps its task`(): Unit = timeoutRunBlocking {
     val ownerManager = createManager(owner)
-    createManager(guest).presentThrough(ownerManager)
+    createManager(guest).initAsFrameGuest(ownerManager.presentation)
     val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT)
 
     assertThat(ownerManager.toCodeRegistration(task)).isSameAs(task)
@@ -176,7 +176,7 @@ internal class FrameGuestToolWindowRegistrationTest {
   @Test
   fun `a new layout of a frame guest leaves a presented tool window alone`(): Unit = timeoutRunBlocking {
     val guestManager = createManager(guest)
-    guestManager.presentThrough(createManager(owner))
+    guestManager.initAsFrameGuest(createManager(owner).presentation)
     withContext(Dispatchers.EDT) {
       val toolWindow = guestManager.registerToolWindow(singleProjectTask(), buttonManager(guestManager)).toolWindow
 
@@ -191,7 +191,7 @@ internal class FrameGuestToolWindowRegistrationTest {
   fun `the removal of a presented tool window keeps the activation action of the frame owner`(): Unit = timeoutRunBlocking {
     val ownerManager = createManager(owner)
     val guestManager = createManager(guest)
-    guestManager.presentThrough(ownerManager)
+    guestManager.initAsFrameGuest(ownerManager.presentation)
     withContext(Dispatchers.EDT) {
       ownerManager.registerToolWindow(singleProjectTask(), buttonManager(ownerManager))
       guestManager.registerToolWindow(singleProjectTask(), buttonManager(guestManager))

@@ -667,7 +667,7 @@ class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSourcePane: Too
           (decorator.toolWindow.anchor != BOTTOM ||
            decorator.locationOnScreen.y < point.screenPoint.y - ToolWindowPane.headerResizeArea))
         // a drag of the header of a presented tool window moves the tool window of the frame owner that holds it
-        return decorator.toolWindow.presentingToolWindow ?: decorator.toolWindow
+        return decorator.toolWindow.presentedBy ?: decorator.toolWindow
     }
 
     return when (clickedComponent) {
