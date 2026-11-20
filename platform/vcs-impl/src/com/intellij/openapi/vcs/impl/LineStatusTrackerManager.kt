@@ -51,7 +51,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vcs.FileStatusManager
@@ -216,7 +215,7 @@ class LineStatusTrackerManager(
       forcedDocuments.clear()
 
       for (data in trackers.values) {
-        unregisterTrackerInCLM(data)
+        unregisterTrackerInCLM(data.tracker)
         data.tracker.release()
       }
       trackers.clear()
@@ -381,60 +380,24 @@ class LineStatusTrackerManager(
     }
   }
 
-  private fun registerTrackerInCLM(data: TrackerData) {
-    val tracker = data.tracker
-    val virtualFile = tracker.virtualFile
+  private fun registerTrackerInCLM(tracker: LocalLineStatusTracker<*>) {
     if (tracker !is ChangelistsLocalLineStatusTracker) return
 
+    val virtualFile = tracker.virtualFile
     LOG.assertTrue(virtualFile.isInLocalFileSystem, virtualFile)
-    val filePath = VcsUtil.getFilePath(virtualFile)
-    if (data.clmFilePath != null) {
-      LOG.error("[registerTrackerInCLM] tracker already registered")
-      return
-    }
-
-    val isRegistered = ChangeListManagerImpl.getInstanceImpl(project).registerChangeTracker(filePath, tracker)
-    data.clmFilePath = if (isRegistered) filePath else null
-    data.isRefusedByClm = !isRegistered
+    ChangeListManagerImpl.getInstanceImpl(project).registerChangeTracker(virtualFile, tracker)
   }
 
-  private fun unregisterTrackerInCLM(data: TrackerData) {
-    val tracker = data.tracker
-    val virtualFile = tracker.virtualFile
+  private fun unregisterTrackerInCLM(tracker: LocalLineStatusTracker<*>) {
     if (tracker !is ChangelistsLocalLineStatusTracker) return
-    if (data.isRefusedByClm) return
 
-    LOG.assertTrue(virtualFile.isInLocalFileSystem, virtualFile)
-    val filePath = data.clmFilePath
-    if (filePath == null) {
-      LOG.error("[unregisterTrackerInCLM] tracker is not registered")
-      return
-    }
-
-    ChangeListManagerImpl.getInstanceImpl(project).unregisterChangeTracker(filePath, tracker)
-    data.clmFilePath = null
+    ChangeListManagerImpl.getInstanceImpl(project).unregisterChangeTracker(tracker)
   }
 
-  private fun reregisterTrackerInCLM(data: TrackerData) {
-    val tracker = data.tracker
-    val virtualFile = tracker.virtualFile
+  private fun reregisterTrackerInCLM(tracker: LocalLineStatusTracker<*>) {
     if (tracker !is ChangelistsLocalLineStatusTracker) return
-    if (data.isRefusedByClm) return
 
-    LOG.assertTrue(virtualFile.isInLocalFileSystem, virtualFile)
-    val oldFilePath = data.clmFilePath
-    val newFilePath = VcsUtil.getFilePath(virtualFile)
-
-    if (oldFilePath == null) {
-      LOG.error("[reregisterTrackerInCLM] tracker is not registered")
-      return
-    }
-
-    if (oldFilePath != newFilePath) {
-      ChangeListManagerImpl.getInstanceImpl(project).unregisterChangeTracker(oldFilePath, tracker)
-      data.clmFilePath = null
-      registerTrackerInCLM(data)
-    }
+    ChangeListManagerImpl.getInstanceImpl(project).updateChangeTrackerPath(tracker.virtualFile, tracker)
   }
 
   private fun canCreateTrackerFor(virtualFile: VirtualFile, document: Document): Boolean {
@@ -511,7 +474,7 @@ class LineStatusTrackerManager(
     val replacedData = trackers.put(document, data)
     LOG.assertTrue(replacedData == null)
 
-    registerTrackerInCLM(data)
+    registerTrackerInCLM(tracker)
     refreshTracker(tracker, provider)
     project.messageBus.syncPublisher(TOPIC).onTrackerAdded(tracker)
 
@@ -550,7 +513,7 @@ class LineStatusTrackerManager(
    */
   private fun detachTracker(document: Document): TrackerData? {
     val data = trackers.remove(document) ?: return null
-    unregisterTrackerInCLM(data)
+    unregisterTrackerInCLM(data.tracker)
     return data
   }
 
@@ -864,7 +827,7 @@ class LineStatusTrackerManager(
 
       synchronized(LOCK) {
         forEachTrackerUnder(file) { data ->
-          reregisterTrackerInCLM(data)
+          reregisterTrackerInCLM(data.tracker)
         }
       }
     }
@@ -1091,15 +1054,9 @@ class LineStatusTrackerManager(
   }
 
 
-  /**
-   * @property isRefusedByClm true when the CLM refused the tracker, because another tracker holds its path.
-   * The CLM then does not know the tracker, so the release and a move of the file do not change its registration.
-   */
   private class TrackerData(
     val tracker: LocalLineStatusTracker<*>,
     var contentInfo: ContentInfo? = null,
-    var clmFilePath: FilePath? = null,
-    var isRefusedByClm: Boolean = false,
   )
 
   private class RefreshRequest(val document: Document, val virtualFile: VirtualFile, val loader: LineStatusTrackerContentLoader) {
@@ -1310,7 +1267,7 @@ class LineStatusTrackerManager(
       forcedDocuments.clear()
 
       for (data in trackers.values) {
-        unregisterTrackerInCLM(data)
+        unregisterTrackerInCLM(data.tracker)
         data.tracker.release()
       }
       trackers.clear()

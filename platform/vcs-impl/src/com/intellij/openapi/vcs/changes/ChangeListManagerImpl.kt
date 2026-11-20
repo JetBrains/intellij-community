@@ -328,17 +328,33 @@ class ChangeListManagerImpl(
   }
 
   /**
-   * @return false when another tracker is registered for [filePath]. The other tracker then stays registered.
+   * Registers the [tracker] under the current path of the [file].
+   *
+   * The function reads the path under the data lock, and [updateChangeTrackerPath] does the same.
+   * A background write action can rename the file at the same moment. The later of the two calls then reads the new path.
    */
-  fun registerChangeTracker(filePath: FilePath, tracker: PartialChangeTracker): Boolean {
-    return executeUnderDataLock {
-      worker.registerChangeTracker(filePath, tracker)
+  fun registerChangeTracker(file: VirtualFile, tracker: PartialChangeTracker) {
+    executeUnderDataLock {
+      worker.registerChangeTracker(VcsUtil.getFilePath(file), tracker)
     }
   }
 
-  fun unregisterChangeTracker(filePath: FilePath, tracker: PartialChangeTracker) {
+  /**
+   * Does nothing when the [tracker] is not registered.
+   */
+  fun unregisterChangeTracker(tracker: PartialChangeTracker) {
     executeUnderDataLock {
-      worker.unregisterChangeTracker(filePath, tracker)
+      worker.unregisterChangeTracker(tracker)
+    }
+  }
+
+  /**
+   * Moves the registration of the [tracker] to the current path of the [file]. Call it after a rename or a move of the file.
+   * Does nothing when the [tracker] is not registered.
+   */
+  fun updateChangeTrackerPath(file: VirtualFile, tracker: PartialChangeTracker) {
+    executeUnderDataLock {
+      worker.changeTrackerPath(tracker, VcsUtil.getFilePath(file))
     }
   }
 

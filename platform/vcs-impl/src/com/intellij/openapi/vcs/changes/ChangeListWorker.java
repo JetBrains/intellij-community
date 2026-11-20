@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -662,14 +661,23 @@ public abstract sealed class ChangeListWorker {
       return null;
     }
 
-    /**
-     * @return false when another tracker is registered for {@code filePath}. The worker then keeps the other tracker.
-     */
-    public boolean registerChangeTracker(@NotNull FilePath filePath, @NotNull PartialChangeTracker tracker) {
+    private @Nullable FilePath findTrackerPath(@NotNull PartialChangeTracker tracker) {
+      var entry = ContainerUtil.find(myPartialChangeTrackers.entrySet(), it -> it.getValue() == tracker);
+      return entry != null ? entry.getKey() : null;
+    }
+
+    public void registerChangeTracker(@NotNull FilePath filePath, @NotNull PartialChangeTracker tracker) {
       if (myPartialChangeTrackers.containsKey(filePath)) {
         LOG.error(String.format("Attempt to register duplicate trackers: %s; old: %s; new: %s",
                                 filePath, myPartialChangeTrackers.get(filePath), tracker));
-        return false;
+        return;
+      }
+
+      var registeredPath = findTrackerPath(tracker);
+      if (registeredPath != null) {
+        LOG.error(String.format("Attempt to register a tracker twice: %s; old path: %s; new path: %s",
+                                tracker, registeredPath, filePath));
+        return;
       }
 
       myPartialChangeTrackers.put(filePath, tracker);
@@ -688,7 +696,6 @@ public abstract sealed class ChangeListWorker {
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("[registerChangeTracker] path: %s, old list: %s", filePath, oldList != null ? oldList.id : "null"));
       }
-      return true;
     }
 
     private @Nullable ListData getDataByIdVerify(@NotNull String id) {
@@ -706,38 +713,40 @@ public abstract sealed class ChangeListWorker {
       return myDefault;
     }
 
-    public void unregisterChangeTracker(@NotNull FilePath filePath, @NotNull PartialChangeTracker tracker) {
-      boolean trackerRemoved = myPartialChangeTrackers.remove(filePath, tracker);
-      if (trackerRemoved) {
-        ListData newList = null;
-        Change change = getChangeForAfterPath(filePath);
-        if (change != null) {
-          newList = getMainList(tracker);
-          putChangeMapping(change, newList);
-        }
+    /**
+     * Does nothing when the tracker is not registered.
+     */
+    public void unregisterChangeTracker(@NotNull PartialChangeTracker tracker) {
+      var filePath = findTrackerPath(tracker);
+      if (filePath == null) return;
 
-        List<String> newIds = newList != null ? Collections.singletonList(newList.id) : Collections.emptyList();
-        notifyChangelistsChanged(filePath, tracker.getAffectedChangeListsIds(), newIds);
+      myPartialChangeTrackers.remove(filePath);
 
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(String.format("[unregisterChangeTracker] path: %s, new list: %s, tracker lists: %s",
-                                  filePath, newList != null ? newList.id : "null", tracker.getAffectedChangeListsIds()));
-        }
+      ListData newList = null;
+      Change change = getChangeForAfterPath(filePath);
+      if (change != null) {
+        newList = getMainList(tracker);
+        putChangeMapping(change, newList);
       }
-      else {
-        Map.Entry<FilePath, PartialChangeTracker> entry = ContainerUtil.find(myPartialChangeTrackers.entrySet(),
-                                                                             it -> Comparing.equal(it.getValue(), tracker));
 
-        if (entry != null) {
-          LOG.error(String.format("Unregistered tracker with wrong path: tracker: %s", tracker));
+      List<String> newIds = newList != null ? Collections.singletonList(newList.id) : Collections.emptyList();
+      notifyChangelistsChanged(filePath, tracker.getAffectedChangeListsIds(), newIds);
 
-          FilePath actualFilePath = entry.getKey();
-          unregisterChangeTracker(actualFilePath, tracker);
-        }
-        else {
-          LOG.error(String.format("Tracker is not registered: tracker: %s", tracker));
-        }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("[unregisterChangeTracker] path: %s, new list: %s, tracker lists: %s",
+                                filePath, newList != null ? newList.id : "null", tracker.getAffectedChangeListsIds()));
       }
+    }
+
+    /**
+     * Moves the registration of the tracker to the new path of its file. Does nothing when the tracker is not registered.
+     */
+    public void changeTrackerPath(@NotNull PartialChangeTracker tracker, @NotNull FilePath newFilePath) {
+      var oldFilePath = findTrackerPath(tracker);
+      if (oldFilePath == null || oldFilePath.equals(newFilePath)) return;
+
+      unregisterChangeTracker(tracker);
+      registerChangeTracker(newFilePath, tracker);
     }
 
     public void setChangeListsEnabled(boolean enabled) {
