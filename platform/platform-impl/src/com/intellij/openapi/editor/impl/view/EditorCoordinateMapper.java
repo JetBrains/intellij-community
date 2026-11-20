@@ -507,11 +507,10 @@ final class EditorCoordinateMapper {
   @NotNull Point2D offsetToXY(@NotNull DocumentText document, int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     offset = Math.clamp(offset, 0, document.length());
     offset = DocumentTextUtil.alignToCodePointBoundary(document, offset);
-    int logicalLine = document.lineNumber(offset);
     int visualLine = offsetToVisualLine(document, offset, beforeSoftWrap);
     int visualLineStartOffset = visualLineToOffset(document, visualLine);
     int y = visualLineToY(document, visualLine);
-    float x = getStartX(logicalLine);
+    float x = getStartX(visualLine);
     boolean firstFragment = true;
     for (var fragment : createVisualLineFragmentsIterator(document, offset, beforeSoftWrap, true)) {
       if (firstFragment && offset == visualLineStartOffset && !leanTowardsLargerOffsets ||

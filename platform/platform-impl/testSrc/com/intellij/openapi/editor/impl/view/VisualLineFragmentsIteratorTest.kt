@@ -244,6 +244,18 @@ internal class VisualLineFragmentsIteratorTest {
     assertEquals(firstLineEndX, editor.offsetToPoint2D(wrap, false, true).x)
   }
 
+  @Test
+  fun `an empty line uses the shift of its visual line`(): Unit = withEditor("ab\ncd\n\nlonger line") { editor ->
+    editor.addCollapsedFoldRegion(1, 4, ".")
+    editor.alignRight()
+    val emptyLineOffset = 6
+    assertEquals(1, editor.offsetToVisualLine(emptyLineOffset, false), "the fold region joins the first two lines")
+    val emptyLineStartX = editor.visualPositionToPoint2D(VisualPosition(1, 0)).x
+    val nextLineStartX = editor.visualPositionToPoint2D(VisualPosition(2, 0)).x
+    assertNotEquals(emptyLineStartX, nextLineStartX, "the visual lines must have different shifts")
+    assertEquals(emptyLineStartX, editor.offsetToPoint2D(emptyLineOffset, false, false).x)
+  }
+
   /**
    * Runs [test] on the EDT with a new editor of [text]. The editor uses [MockFontLayoutService].
    */
