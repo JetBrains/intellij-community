@@ -367,9 +367,6 @@ internal class UnifiedPluginsPageController(
     selectedRepositoryIds: Set<String>,
   ): Boolean {
     val marketplaceFamilyId = marketplaceSectionId(query)
-    if (section.id is PluginSectionId.CustomRepository && query.normalizedQuery.isEmpty()) {
-      return section.status is PluginSectionStatus.Failed
-    }
     if (section.id is PluginSectionId.CustomRepository && section.id.repositoryId in selectedRepositoryIds) {
       return true
     }
