@@ -1061,10 +1061,9 @@ class LineStatusTrackerManager(
   }
 
 
-  private class TrackerData(
-    val tracker: LocalLineStatusTracker<*>,
-    var contentInfo: ContentInfo? = null,
-  )
+  private class TrackerData(val tracker: LocalLineStatusTracker<*>) {
+    var contentInfo: ContentInfo? = null
+  }
 
   private class RefreshRequest(val document: Document, val virtualFile: VirtualFile, val loader: LineStatusTrackerContentLoader) {
     override fun equals(other: Any?): Boolean = other is RefreshRequest && document == other.document
