@@ -230,8 +230,9 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
         logOutput("Cleaning up cached installation directory: ${it.value}")
         // A child process of the IDE can outlive it and lock files of the directory, as the .NET backend of CLion does on Windows.
         findAndKillProcessesBySubPathInArguments(it.value.name)
-        it.value.deleteRecursively()
+        // `install` takes an existing directory as a complete installation, and a failed delete leaves a partial one.
         cachedInstallationDirectories.remove(it.key)
+        it.value.deleteRecursively()
       }
     }
   }
