@@ -53,6 +53,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
@@ -62,6 +63,7 @@ import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
@@ -274,6 +276,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
 
   @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
+    if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class, true, PsiExpression.class, PsiStatement.class) != null) return;
     checkHiddenClassReference(ref);
     checkTypeAnnotationModuleDependency(ref);
   }

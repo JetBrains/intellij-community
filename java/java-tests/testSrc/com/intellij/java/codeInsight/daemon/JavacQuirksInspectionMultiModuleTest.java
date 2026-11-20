@@ -58,6 +58,9 @@ public final class JavacQuirksInspectionMultiModuleTest extends JavaCodeInsightF
       """);
     PsiFile file = myFixture.addFileToProject("mod3/Foo.java", """
       public class Foo {
+        /**
+         * {@link Foo#bar(Bar)}
+         */
         public Foo() {
           <warning descr="Java compiler may require dependency from 'mod3' to 'mod1' to process type annotations of 'Bar.baz'"><warning descr="Java compiler may require dependency from 'mod3' to 'mod1' to process type annotations of parameter 'list2' of 'Bar.test'">Bar</warning></warning> bar;
         }
