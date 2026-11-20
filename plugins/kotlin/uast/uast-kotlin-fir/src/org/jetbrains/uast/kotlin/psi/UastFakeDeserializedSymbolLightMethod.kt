@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
@@ -116,7 +117,7 @@ constructor(
         for (symbolPointer in typeArgumentMapping.keys) {
             val typeParameterSymbol = symbolPointer.restoreSymbol()
             if (typeParameterSymbol == type.symbol) {
-                return typeArgumentMapping[symbolPointer]?.restore()
+                return typeArgumentMapping[symbolPointer]?.restore()?.takeUnless { it is KaErrorType }
             }
         }
         return null
