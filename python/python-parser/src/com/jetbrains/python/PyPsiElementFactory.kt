@@ -13,14 +13,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
-/**
- * Creates the PSI for the Python element types of [PyElementTypes].
- *
- * The element types are shared constants. The PSI classes behind them come from this application service each time an
- * element type creates an element. `intellij.python.ast` registers the AST-only PSI as the open default, and
- * `intellij.python.psi.impl` overrides it with the stub-based PSI. JetBrains Light starts with the default and switches to
- * the stub-based PSI when PythonCore loads at the move to the smart mode.
- */
 @ApiStatus.Internal
 abstract class PyPsiElementFactory {
 
