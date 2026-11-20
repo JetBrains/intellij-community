@@ -2489,6 +2489,35 @@ class MarkdownLivePreviewFoldingTest {
   }
 
   @Test
+  fun testManyBulletsChangeInOneInlayBatch(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val items = 150
+      configure((1..items).joinToString("\n") { "- item $it" } + "\n\ntail<caret>")
+      val editor = myFixture.editor
+      val reconciler = MarkdownLivePreviewReconciler.getExisting(editor)!!
+      val specs = computeLivePreviewSpecs(myFixture.file, editor)
+      assertEquals(items, bulletInlays().size)
+      var batches = 0
+      editor.inlayModel.addListener(object : InlayModel.Listener {
+        override fun onBatchModeStart(editor: Editor) {
+          batches++
+        }
+      }, myFixture.testRootDisposable)
+
+      reconciler.publishSpecsAndWait(specs)
+      assertEquals(0, batches, "A publish that keeps every bullet must not start an inlay batch")
+
+      reconciler.publishSpecsAndWait(null)
+      assertThat(bulletInlays()).isEmpty()
+      assertEquals(1, batches, "The removal of the bullets must take one inlay batch")
+
+      reconciler.publishSpecsAndWait(specs)
+      assertEquals(items, bulletInlays().size)
+      assertEquals(2, batches, "The creation of the bullets must take one inlay batch")
+    }
+  }
+
+  @Test
   fun testDisposalRemovesAllDecorationsAndIgnoresLaterUpdates(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       configureAllDecorations()
@@ -2754,6 +2783,11 @@ class MarkdownLivePreviewFoldingTest {
   private fun checkboxInlays(): List<Inlay<out MarkdownLivePreviewCheckboxInlayRenderer>> =
     myFixture.editor.inlayModel.getInlineElementsInRange(
       0, myFixture.editor.document.textLength, MarkdownLivePreviewCheckboxInlayRenderer::class.java,
+    )
+
+  private fun bulletInlays(): List<Inlay<out MarkdownLivePreviewBulletInlayRenderer>> =
+    myFixture.editor.inlayModel.getInlineElementsInRange(
+      0, myFixture.editor.document.textLength, MarkdownLivePreviewBulletInlayRenderer::class.java,
     )
 
   private fun listIndentInlays(): List<Inlay<out MarkdownLivePreviewListIndentInlayRenderer>> =

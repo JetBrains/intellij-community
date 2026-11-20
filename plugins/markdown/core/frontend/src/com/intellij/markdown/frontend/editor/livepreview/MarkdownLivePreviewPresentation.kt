@@ -84,7 +84,10 @@ internal interface MarkdownLivePreviewElementRenderer : Disposable {
  * Implement this interface when an element needs an inlay, highlighter, or similar resource.
  */
 internal interface MarkdownLivePreviewFoldDecoration {
-  /** Creates the resource after the reconciler creates [region]. Return null when creation fails. */
+  /**
+   * Creates the resource after the reconciler creates [region]. Return null when creation fails.
+   * The call can run in an inlay batch, so it must not change folding or convert editor coordinates.
+   */
   fun create(region: FoldRegion): MarkdownLivePreviewMountedDecoration?
 }
 
@@ -97,9 +100,18 @@ internal interface MarkdownLivePreviewMountedDecoration : Disposable {
   /** Updates this resource for [decoration]. Return false when the reconciler must replace this object. */
   fun update(decoration: MarkdownLivePreviewFoldDecoration): Boolean
 
-  /** Releases the editor resource owned by this object. */
+  /**
+   * Releases the editor resource owned by this object.
+   * The call can run in an inlay batch, so it must not change folding or convert editor coordinates.
+   */
   override fun dispose()
 }
+
+/**
+ * The number of inlay changes above which live preview makes them in one inlay batch.
+ * A batch end recalculates the size of the whole editor, so a small change runs without a batch.
+ */
+internal const val INLAY_BATCH_THRESHOLD: Int = 100
 
 /** Adapts backend elements to editor presentations and owns resources that survive source reveal. */
 internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: EditorEx) : Disposable {

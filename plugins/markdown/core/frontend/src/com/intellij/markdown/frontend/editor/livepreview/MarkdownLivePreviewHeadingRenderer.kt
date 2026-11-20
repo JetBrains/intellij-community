@@ -133,7 +133,7 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
 
     // The spacer takes the place of the painted heading, so it sits closer to the line than other inlays, such as an image.
     val properties = InlayProperties().relatesToPrecedingText(true).priority(Int.MAX_VALUE)
-    editor.inlayModel.execute(changeCount > 100) {
+    editor.inlayModel.execute(changeCount > INLAY_BATCH_THRESHOLD) {
       obsolete.forEach(Disposer::dispose)
       wanted.mapTo(kept) { RevealedHeading(it, properties) }
       revealedHeadings = kept
