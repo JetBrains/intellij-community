@@ -571,7 +571,9 @@ def _rust_tool_targets(
     # An argument that the caller left unset stays out of the call, so that a target renders as it did before the
     # argument existed.
     srcs = native.glob(["src/**/*.rs"])
-    clippy_attrs = {"clippy_config": clippy_config} if clippy_config != None else {}
+    # 263 only: the rules_rust of this branch (rules_rs 0.0.112) has no `clippy_config` attribute, so no target gets one and
+    # every clippy reads the `clippy.toml` that `.bazelrc` names. See `plugins/air/BRANCH-263-DIVERGENCE.md` section 3.37.
+    clippy_attrs = {} if clippy_config == None else {}
     crate_extra = dict(clippy_attrs)
     if binaries:
         srcs = [src for src in srcs if src not in binaries.values()]
