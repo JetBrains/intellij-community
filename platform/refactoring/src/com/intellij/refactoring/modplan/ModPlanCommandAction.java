@@ -111,7 +111,7 @@ public class ModPlanCommandAction implements ModCommandAction {
           if (!(plan instanceof ModPlan.AcceptedPlan readyPlan) || currentAnchor == null) {
             return afterPlan.passValue(ModCommand.error(RefactoringBundle.message("cannot.perform.refactoring")));
           }
-          return afterPlan.passValue(ModCommand.showConflicts(
+          return afterPlan.passValue(ModCommand.showConflictsAtPlaces(
               readyPlan.getConflicts().toShowConflictsWithNonCodeUsages(currentAnchor))
                                        .andThen(readyPlan.getExecution().getCommand()));
         });

@@ -418,7 +418,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     ActionContextPointer pointer = new ActionContextPointer(context);
     Project project = context.project();
     var conflictsDialog =
-      new ConflictsDialog(project, conflicts.places(), () -> {
+      new ConflictsDialog(project, conflicts.conflictsByPlace(), () -> {
         ActionContext restored = pointer.restoreAndCheck(editor);
         if (restored != null) {
           doExecuteInteractively(restored, tail, ModCommand.nop(), editor);

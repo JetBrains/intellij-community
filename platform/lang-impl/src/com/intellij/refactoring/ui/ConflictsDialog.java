@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPlace;
 import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ExperimentalUI;
@@ -58,7 +59,6 @@ import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -90,9 +90,11 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
@@ -105,8 +107,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
   private static final @NonNls String EXPAND_LINK = "expand";
 
   protected final String[] myConflictDescriptions;
-  protected final MultiMap<PsiElement, String> myElementConflictDescription;
-  private final @NotNull List<ModShowConflicts.Place> myPlaces;
+  protected final @NotNull Map<PsiPlace, ModShowConflicts.Conflict> myConflicts;
   private final Project myProject;
   private final Runnable myDoRefactoringRunnable;
   private final boolean myCanShowConflictsInView;
@@ -129,19 +130,20 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
                          @Nullable Runnable doRefactoringRunnable,
                          boolean alwaysShowOkButton,
                          boolean canShowConflictsInView) {
-    this(project, conflictDescriptions, placesOf(conflictDescriptions), doRefactoringRunnable, alwaysShowOkButton, canShowConflictsInView);
+    this(project, conflictsOf(conflictDescriptions), doRefactoringRunnable, alwaysShowOkButton, canShowConflictsInView);
   }
 
   /**
-   * @param places the conflicts, each at its place, which the usages of the dialog open
+   * @param conflicts the conflicts, each at its place, which the usages of the dialog open
    */
-  public ConflictsDialog(@NotNull Project project, @NotNull List<ModShowConflicts.Place> places, @Nullable Runnable doRefactoringRunnable) {
-    this(project, elementConflictsOf(places), places, doRefactoringRunnable, true, true);
+  public ConflictsDialog(@NotNull Project project,
+                         @NotNull Map<PsiPlace, ModShowConflicts.Conflict> conflicts,
+                         @Nullable Runnable doRefactoringRunnable) {
+    this(project, conflicts, doRefactoringRunnable, true, true);
   }
 
   private ConflictsDialog(@NotNull Project project,
-                          @NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflictDescriptions,
-                          @NotNull List<ModShowConflicts.Place> places,
+                          @NotNull Map<PsiPlace, ModShowConflicts.Conflict> conflicts,
                           @Nullable Runnable doRefactoringRunnable,
                           boolean alwaysShowOkButton,
                           boolean canShowConflictsInView) {
@@ -150,10 +152,10 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     myDoRefactoringRunnable = doRefactoringRunnable;
     myCanShowConflictsInView = canShowConflictsInView;
 
-    LinkedHashSet<String> conflicts = new LinkedHashSet<>(conflictDescriptions.values());
-    myConflictDescriptions = ArrayUtilRt.toStringArray(conflicts);
-    myElementConflictDescription = conflictDescriptions;
-    myPlaces = places;
+    LinkedHashSet<String> descriptions = new LinkedHashSet<>();
+    conflicts.values().forEach(conflict -> descriptions.addAll(conflict.messages()));
+    myConflictDescriptions = ArrayUtilRt.toStringArray(descriptions);
+    myConflicts = conflicts;
     myUpdatedDialog = Registry.is("refactorings.use.updated.conflicts.detected.dialog");
     setTitle(myUpdatedDialog
              ? RefactoringBundle.message("conflicts.detected.title")
@@ -182,7 +184,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
   protected Action @NotNull [] createActions() {
     if (myUpdatedDialog) return super.createActions();
     Action okAction = getOKAction();
-    boolean showUsagesButton = myElementConflictDescription != null && myCanShowConflictsInView;
+    boolean showUsagesButton = myCanShowConflictsInView;
 
     if (showUsagesButton || !okAction.isEnabled()) {
       okAction.putValue(DEFAULT_ACTION, null);
@@ -196,7 +198,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
 
   @Override
   protected Action @NotNull [] createLeftSideActions() {
-    if (myElementConflictDescription == null || !myCanShowConflictsInView || !myUpdatedDialog) return super.createLeftSideActions();
+    if (!myCanShowConflictsInView || !myUpdatedDialog) return super.createLeftSideActions();
     return new Action[] {
       new ShowConflictsInUsageViewAction()
     };
@@ -216,7 +218,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
   protected JComponent createCenterPanel() {
     JPanel panel;
     
-    if (myUpdatedDialog && myElementConflictDescription != null) {
+    if (myUpdatedDialog) {
       panel = new JPanel(new BorderLayout());
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setMergeDupLinesAvailable(false);
@@ -290,7 +292,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       toolbar.setTargetComponent(myTree);
 
       toolbarPanel.add(toolbar.getComponent(), BorderLayout.WEST);
-      JLabel conflictsLabel = new JLabel(RefactoringBundle.message("conflicts.count.label", myElementConflictDescription.values().size()));
+      JLabel conflictsLabel = new JLabel(RefactoringBundle.message("conflicts.count.label", messageCount()));
       conflictsLabel.setBorder(new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
       toolbarPanel.add(conflictsLabel, BorderLayout.EAST);
       SwingUtilities.invokeLater(() -> previewNode(myProject, myTree.getSelectionPath(), usagePreviewPanel, previewTitle));
@@ -365,26 +367,24 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     return presentation;
   }
 
-  private static @NotNull List<ModShowConflicts.Place> placesOf(@Nullable MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts) {
-    if (conflicts == null) return List.of();
-    return ContainerUtil.map(conflicts.entrySet(),
-                             entry -> new ModShowConflicts.Place(entry.getKey(), null, new ModShowConflicts.Conflict(List.copyOf(entry.getValue()))));
+  private static @NotNull Map<PsiPlace, ModShowConflicts.Conflict> conflictsOf(@NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts) {
+    Map<PsiPlace, ModShowConflicts.Conflict> conflictsByPlace = new LinkedHashMap<>();
+    for (Map.Entry<PsiElement, Collection<String>> entry : conflicts.entrySet()) {
+      conflictsByPlace.put(new PsiPlace(entry.getKey(), null), new ModShowConflicts.Conflict(List.copyOf(entry.getValue())));
+    }
+    return conflictsByPlace;
   }
 
-  private static @NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> elementConflictsOf(@NotNull List<ModShowConflicts.Place> places) {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>(new LinkedHashMap<>());
-    for (ModShowConflicts.Place place : places) {
-      conflicts.putValues(place.element(), place.conflict().messages());
-    }
-    return conflicts;
+  private int messageCount() {
+    return myConflicts.values().stream().mapToInt(conflict -> conflict.messages().size()).sum();
   }
 
   private Usage @NotNull [] createUsages() {
-    ArrayList<Usage> usages = new ArrayList<>(myElementConflictDescription.values().size());
-    for (ModShowConflicts.Place place : myPlaces) {
-      PsiElement element = place.element();
-      TextRange range = place.rangeInElement();
-      for (@NlsContexts.Tooltip String conflictDescription : place.conflict().messages()) {
+    ArrayList<Usage> usages = new ArrayList<>(messageCount());
+    for (Map.Entry<PsiPlace, ModShowConflicts.Conflict> entry : myConflicts.entrySet()) {
+      PsiElement element = entry.getKey().element();
+      TextRange range = entry.getKey().rangeInElement();
+      for (@NlsContexts.Tooltip String conflictDescription : entry.getValue().messages()) {
         UsagePresentation usagePresentation = new ConflictPresentation(conflictDescription);
         UsageInfo usageInfo = new UsageInfo(element, range != null ? range.getStartOffset() : -1, range != null ? range.getEndOffset() : -1) {
           @Override

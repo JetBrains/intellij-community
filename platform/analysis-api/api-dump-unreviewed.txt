@@ -1421,13 +1421,12 @@ f:com.intellij.modcommand.ModOpenUrl
 f:com.intellij.modcommand.ModShowConflicts
 - java.lang.Record
 - com.intellij.modcommand.ModCommand
-- <init>(java.util.List):V
 - <init>(java.util.Map):V
 - conflicts():java.util.Map
+- conflictsByPlace():java.util.Map
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 - isEmpty():Z
-- places():java.util.List
 f:com.intellij.modcommand.ModShowConflicts$Conflict
 - java.lang.Record
 - <init>(java.util.List):V
@@ -1435,14 +1434,6 @@ f:com.intellij.modcommand.ModShowConflicts$Conflict
 - f:hashCode():I
 - merge(com.intellij.modcommand.ModShowConflicts$Conflict):com.intellij.modcommand.ModShowConflicts$Conflict
 - messages():java.util.List
-f:com.intellij.modcommand.ModShowConflicts$Place
-- java.lang.Record
-- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.modcommand.ModShowConflicts$Conflict):V
-- conflict():com.intellij.modcommand.ModShowConflicts$Conflict
-- element():com.intellij.psi.PsiElement
-- f:equals(java.lang.Object):Z
-- f:hashCode():I
-- rangeInElement():com.intellij.openapi.util.TextRange
 f:com.intellij.modcommand.ModStartRename
 - java.lang.Record
 - com.intellij.modcommand.ModCommand
@@ -1817,6 +1808,13 @@ a:com.intellij.problems.WolfTheProblemSolver
 - a:weHaveGotProblems(com.intellij.openapi.vfs.VirtualFile,java.util.List):V
 com.intellij.psi.ForceableComparable
 - a:force():V
+f:com.intellij.psi.PsiPlace
+- java.lang.Record
+- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
+- element():com.intellij.psi.PsiElement
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- rangeInElement():com.intellij.openapi.util.TextRange
 a:com.intellij.psi.Weigher
 - <init>():V
 - setDebugName(java.lang.String):V

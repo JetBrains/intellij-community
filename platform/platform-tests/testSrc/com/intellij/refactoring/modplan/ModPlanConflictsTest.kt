@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiPlace
 import com.intellij.psi.createSmartFileRange
 import com.intellij.psi.findElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -126,11 +127,11 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
     val shownConflicts = runReadActionBlocking { conflicts.toShowConflicts(file) }
 
     assertEquals(2, shownConflicts.size)
-    val shownFiles = shownConflicts.map { it.element.containingFile }
+    val shownFiles = shownConflicts.keys.map { it.element.containingFile }
     assertEquals(listOf(file, otherFile), shownFiles)
-    assertEquals(listOf("one", "two"), shownConflicts.first().conflict.messages)
-    assertEquals(listOf("three"), shownConflicts.last().conflict.messages)
-    assertTrue(shownConflicts.all { it.rangeInElement == null })
+    assertEquals(listOf("one", "two"), shownConflicts.values.first().messages)
+    assertEquals(listOf("three"), shownConflicts.values.last().messages)
+    assertTrue(shownConflicts.keys.all { it.rangeInElement == null })
   }
 
   fun `test toShowConflictsWithNonCodeUsages keeps the range of each non-code usage`() {
@@ -141,8 +142,7 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
 
     val shownConflicts = runReadActionBlocking { conflicts.toShowConflictsWithNonCodeUsages(file) }
 
-    assertEquals(listOf(file, file), shownConflicts.map { it.element })
-    assertEquals(listOf(TextRange(5, 9), TextRange(10, 14)), shownConflicts.map { it.rangeInElement })
+    assertEquals(listOf(PsiPlace(file, TextRange(5, 9)), PsiPlace(file, TextRange(10, 14))), shownConflicts.keys.toList())
   }
 
   fun `test toShowConflicts puts a conflict without an element on the anchor`() {
@@ -152,8 +152,8 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
 
     val shownConflicts = runReadActionBlocking { conflicts.toShowConflicts(anchor) }
 
-    assertEquals(listOf("everywhere"), shownConflicts.single { it.element == anchor }.conflict.messages)
-    assertEquals(listOf("there"), shownConflicts.single { it.element != anchor }.conflict.messages)
+    assertEquals(listOf("everywhere"), shownConflicts[PsiPlace(anchor, null)]!!.messages)
+    assertEquals(listOf("there"), shownConflicts.entries.single { it.key.element != anchor }.value.messages)
   }
 
   fun `test toShowConflicts puts a conflict of a place that is gone on the anchor`() {
@@ -166,7 +166,7 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
 
     val shownConflicts = runReadActionBlocking { goneConflicts.toShowConflicts(anchor) }
 
-    assertEquals(listOf(anchor), shownConflicts.map { it.element })
+    assertEquals(setOf(PsiPlace(anchor, null)), shownConflicts.keys)
   }
 
   fun `test findElement of a whole file is the file`() {

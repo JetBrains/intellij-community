@@ -163,8 +163,8 @@
 - f:merge(com.intellij.refactoring.modplan.ModPlanConflicts):com.intellij.refactoring.modplan.ModPlanConflicts
 - f:needsConfirmation():Z
 - f:nonCodeUsages():java.util.List
-- f:toShowConflicts(com.intellij.psi.PsiElement):java.util.List
-- f:toShowConflictsWithNonCodeUsages(com.intellij.psi.PsiElement):java.util.List
+- f:toShowConflicts(com.intellij.psi.PsiElement):java.util.Map
+- f:toShowConflictsWithNonCodeUsages(com.intellij.psi.PsiElement):java.util.Map
 *f:com.intellij.refactoring.modplan.ModPlanConflicts$Builder
 - f:broken(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.modplan.ModPlanConflicts$Builder
 - f:build():com.intellij.refactoring.modplan.ModPlanConflicts

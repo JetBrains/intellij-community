@@ -7629,11 +7629,11 @@ c:com.intellij.refactoring.ui.ComboBoxVisibilityPanel
 - setDisplayedMnemonicIndex(I):V
 c:com.intellij.refactoring.ui.ConflictsDialog
 - pf:myConflictDescriptions:java.lang.String[]
-- pf:myElementConflictDescription:com.intellij.util.containers.MultiMap
+- pf:myConflicts:java.util.Map
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap,java.lang.Runnable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap,java.lang.Runnable,Z,Z):V
-- <init>(com.intellij.openapi.project.Project,java.util.List,java.lang.Runnable):V
+- <init>(com.intellij.openapi.project.Project,java.util.Map,java.lang.Runnable):V
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
 - p:createLeftSideActions():javax.swing.Action[]

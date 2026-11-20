@@ -17,12 +17,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlace;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -482,16 +484,18 @@ public sealed interface ModCommand
    * @param conflicts conflicts to show
    */
   static @NotNull ModCommand showConflicts(@NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> conflicts) {
-    return conflicts.isEmpty() ? nop() : new ModShowConflicts(conflicts);
+    Map<PsiPlace, ModShowConflicts.Conflict> conflictsByPlace = new LinkedHashMap<>();
+    conflicts.forEach((element, conflict) -> conflictsByPlace.put(new PsiPlace(element, null), conflict));
+    return showConflictsAtPlaces(conflictsByPlace);
   }
 
   /**
    * Creates a command that displays conflicts, each at its place, see {@link #showConflicts(Map)}.
    *
-   * @param places conflicts to show
+   * @param conflictsByPlace conflicts to show
    */
-  static @NotNull ModCommand showConflicts(@NotNull List<ModShowConflicts.@NotNull Place> places) {
-    return places.isEmpty() ? nop() : new ModShowConflicts(places);
+  static @NotNull ModCommand showConflictsAtPlaces(@NotNull Map<@NotNull PsiPlace, ModShowConflicts.@NotNull Conflict> conflictsByPlace) {
+    return conflictsByPlace.isEmpty() ? nop() : new ModShowConflicts(conflictsByPlace);
   }
 
   /**
