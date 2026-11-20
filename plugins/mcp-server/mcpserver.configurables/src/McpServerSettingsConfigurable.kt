@@ -360,7 +360,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
         onClick = state.onAutoConfigure,
         options = options,
         addSeparator = false,
-        modifier = SwingModifier.styleable { enabled(serverRunning) },
+        enabled = serverRunning,
       )
       state.statusIcon?.let {
         Label(text = "", modifier = SwingModifier.gap(FormRightGap.SMALL), style = { icon(it) })

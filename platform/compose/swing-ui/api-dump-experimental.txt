@@ -112,7 +112,7 @@
 - sf:FormGroup$default(java.lang.String,Z,kotlin.jvm.functions.Function3,com.intellij.platform.compose.swing.components.FormScope,androidx.compose.runtime.Composer,I,I):V
 - sf:FormRow$default(java.lang.String,java.lang.String,Z,com.intellij.platform.compose.swing.components.FormGap,com.intellij.platform.compose.swing.components.FormGap,com.intellij.platform.compose.swing.components.FormLabelPosition,I,kotlin.jvm.functions.Function3,com.intellij.platform.compose.swing.components.FormScope,androidx.compose.runtime.Composer,I,I):V
 *f:com.intellij.platform.compose.swing.components.OptionButtonKt
-- *sf:OptionButton(java.lang.String,kotlin.jvm.functions.Function0,org.jetbrains.compose.swing.modifier.SwingModifier,org.jetbrains.compose.swing.style.SwingStyle,java.util.List,Z,androidx.compose.runtime.Composer,I,I):V
+- *sf:OptionButton(java.lang.String,kotlin.jvm.functions.Function0,org.jetbrains.compose.swing.modifier.SwingModifier,org.jetbrains.compose.swing.style.SwingStyle,Z,java.util.List,Z,androidx.compose.runtime.Composer,I,I):V
 *f:com.intellij.platform.compose.swing.components.SearchTextFieldKt
 - *sf:SearchTextField(java.lang.String,kotlin.jvm.functions.Function1,org.jetbrains.compose.swing.modifier.SwingModifier,org.jetbrains.compose.swing.style.SwingStyle,java.lang.String,androidx.compose.runtime.Composer,I,I):V
 *f:com.intellij.platform.compose.swing.components.SegmentedButtonKt
