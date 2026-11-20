@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.setToolTipText
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.impl.ApplicationInfoImpl.DEFAULT_PLUGINS_HOST
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splitter
@@ -19,6 +20,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBList
@@ -233,7 +235,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   }
 
   @RequiresEdt
-  fun render(state: UnifiedPluginsPageState) {
+  fun render(state: UnifiedPluginsPageState, showMarketplaceLink: Boolean = false) {
     val viewportAnchor = captureViewportAnchor()
     val selectedOccurrence = state.selectedOccurrence?.takeIf { it == renderedState?.selectedOccurrence }
     val visibleSelectedRow = selectedOccurrence?.let { occurrenceId ->
@@ -278,7 +280,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
             realRows = rowFactory != null,
           )
         }
-        sectionView.render(section, state.query.revision, state.selectedOccurrences, viewportAnchor?.id)
+        sectionView.render(section, state.query.revision, state.selectedOccurrences, viewportAnchor?.id, showMarketplaceLink)
         orderedSectionViews.add(sectionView)
       }
       reconcileSectionOrder(orderedSectionViews)
@@ -649,6 +651,19 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       isFocusable = false
       isOpaque = false
     }
+    private val marketplaceLink = if (id == PluginSectionId.Suggested) {
+      BrowserLink(IdeBundle.message("plugins.configurable.more.on.marketplace"), DEFAULT_PLUGINS_HOST).apply {
+        isVisible = false
+        border = JBUI.Borders.empty(ROW_GAP, SECTION_HEADER_LEFT_INSET)
+        addFocusListener(object : FocusAdapter() {
+          override fun focusGained(event: FocusEvent) {
+            val headerHeight = JBUI.scale(SECTION_HEADER_HEIGHT)
+            scrollRectToVisible(Rectangle(0, -headerHeight, width, height + headerHeight))
+          }
+        })
+      }
+    }
+    else null
     private val headerSlot = JPanel(BorderLayout()).apply {
       isOpaque = false
     }
@@ -732,7 +747,12 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
           add(errorPanel, BorderLayout.SOUTH)
         }, BorderLayout.NORTH)
         add(if (realRows) rowsPanel else list, BorderLayout.CENTER)
-        add(unrealizedItemsSpacer, BorderLayout.SOUTH)
+        val footer = if (marketplaceLink == null) unrealizedItemsSpacer else JPanel(BorderLayout()).apply {
+          isOpaque = false
+          add(unrealizedItemsSpacer, BorderLayout.NORTH)
+          add(marketplaceLink, BorderLayout.CENTER)
+        }
+        add(footer, BorderLayout.SOUTH)
       }
     }
 
@@ -741,8 +761,10 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       queryRevision: Long,
       selectedOccurrences: List<PluginOccurrenceId>,
       viewportAnchorOccurrence: PluginOccurrenceId?,
+      showMarketplaceLink: Boolean,
     ) {
       check(section.id == id)
+      marketplaceLink?.isVisible = showMarketplaceLink
 
       val title = pluginSectionTitle(section)
       fullTitle = title
@@ -1117,20 +1139,18 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     fun focusTraversalComponents(activeRow: PluginRow?): List<Component> {
       val result = ArrayList<Component>()
       val activeOccurrence = realRowComponents.entries.firstOrNull { it.value === activeRow?.component }?.key
-      if (activeOccurrence == null) {
-        if (retryLink.parent != null) result.add(retryLink)
-        return result.filter { it.isFocusable && it.isEnabled && it.isVisible }
-      }
-
-      result.add(fullHeaderButton.focusComponent)
+      if (activeOccurrence != null) result.add(fullHeaderButton.focusComponent)
       if (retryLink.parent != null) result.add(retryLink)
-      val category = categoryGroupsByPluginId[activeOccurrence.pluginId]?.category
-      if (category != null) {
-        categoryHeaderViews[category]?.let { result.add(it.actionLink) }
-        categoryPromotionPanels[category]?.let { addFocusableDescendants(it, result) }
+      if (activeOccurrence != null) {
+        val category = categoryGroupsByPluginId[activeOccurrence.pluginId]?.category
+        if (category != null) {
+          categoryHeaderViews[category]?.let { result.add(it.actionLink) }
+          categoryPromotionPanels[category]?.let { addFocusableDescendants(it, result) }
+        }
+        result.add(checkNotNull(activeRow).component)
+        result.addAll(activeRow.focusableComponents())
       }
-      result.add(checkNotNull(activeRow).component)
-      result.addAll(activeRow.focusableComponents())
+      marketplaceLink?.let(result::add)
       return result.filter { it.isFocusable && it.isEnabled && it.isVisible }
     }
 
