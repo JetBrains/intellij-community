@@ -133,12 +133,15 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
-      if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-        addJetBrainsAnnotationsWithTypeUse(model);
-      }
-      else {
-        addJetBrainsAnnotations(model);
-      }
+      MavenDependencyUtil.addFromMaven(model, getJetBrainsAnnotationsCoordinates());
+    }
+
+    /**
+     * Returns the Maven coordinates of the JetBrains annotations of the module.
+     * From Java 8, they are the annotations with type use. Below Java 8, they are the annotations for Java 5.
+     */
+    public @NotNull String getJetBrainsAnnotationsCoordinates() {
+      return myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? JETBRAINS_ANNOTATIONS_COORDINATES_JAVA_8 : JETBRAINS_ANNOTATIONS_COORDINATES;
     }
   }
 

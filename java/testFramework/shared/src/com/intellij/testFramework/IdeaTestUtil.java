@@ -183,9 +183,17 @@ public final class IdeaTestUtil {
     return "java " + version;
   }
 
+  /**
+   * Returns the Maven coordinates of the mock JDK with the feature version {@code mockJdk}, for a mock JDK from version 11.
+   * See {@link #getMockJdkFeature(JavaVersion)}.
+   */
+  public static @NotNull String getMockJdkMavenCoordinates(int mockJdk) {
+    return "org.jetbrains.mockjdk:" + MOCK_JDK_GROUP_ID + ":" + mockJdk + ".0.0";
+  }
+
   private static Sdk createMockJdkFromRepository(String name, int version) {
     List<RemoteRepositoryDescription> repos = MavenDependencyUtil.getRemoteRepositoryDescriptions();
-    String coordinates = "org.jetbrains.mockjdk:" + MOCK_JDK_GROUP_ID + ":" + version + ".0.0";
+    String coordinates = getMockJdkMavenCoordinates(version);
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coordinates, false);
     // If the repositoryLibrary EP is missing (e.g. in a lightweight test application), register an empty one so that
     // mock JDK resolution does not fail with "Missing extension point".

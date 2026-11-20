@@ -19,8 +19,8 @@ import java.util.function.Supplier;
 import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleTypeUtils.JAVA_MODULE_ENTITY_TYPE_ID_NAME;
 
 public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
-  private static final String JETBRAINS_ANNOTATIONS_COORDINATES = "org.jetbrains:annotations-java5:24.0.0";
-  private static final String JETBRAINS_ANNOTATIONS_COORDINATES_JAVA_8 = "org.jetbrains:annotations:26.0.2";
+  static final String JETBRAINS_ANNOTATIONS_COORDINATES = "org.jetbrains:annotations-java5:24.0.0";
+  static final String JETBRAINS_ANNOTATIONS_COORDINATES_JAVA_8 = "org.jetbrains:annotations:26.0.2";
   private @Nullable Supplier<? extends Sdk> customSdk;
   private final List<RequiredLibrary> mavenLibraries = new ArrayList<>();
 
