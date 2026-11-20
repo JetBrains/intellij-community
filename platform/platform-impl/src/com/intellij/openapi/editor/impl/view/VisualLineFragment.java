@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 /**
  * A fragment of a visual line: a text run, an inline inlay or a collapsed fold region.
  * {@link VisualLineFragmentsIterator} returns one object for all fragments of a kind.
- * So the values of a fragment change at the next call of {@link VisualLineFragmentsIterator#next()}.
+ * The object gets new values when the iterator returns the next fragment of the same kind.
  */
 abstract sealed class VisualLineFragment {
   private final EditorView view;

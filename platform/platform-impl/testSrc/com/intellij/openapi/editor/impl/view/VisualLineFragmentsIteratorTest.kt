@@ -250,13 +250,15 @@ internal class VisualLineFragmentsIteratorTest {
   private fun withEditor(text: String, test: (EditorImpl) -> Unit): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       FontLayoutService.setInstance(MockFontLayoutService(CHAR_WIDTH, LINE_HEIGHT, DESCENT))
-      val factory = EditorFactory.getInstance()
-      val editor = factory.createEditor(factory.createDocument(text)) as EditorImpl
       try {
-        test(editor)
-      }
-      finally {
-        factory.releaseEditor(editor)
+        val factory = EditorFactory.getInstance()
+        val editor = factory.createEditor(factory.createDocument(text)) as EditorImpl
+        try {
+          test(editor)
+        } finally {
+          factory.releaseEditor(editor)
+        }
+      } finally {
         FontLayoutService.setInstance(null)
       }
     }
@@ -287,8 +289,8 @@ private fun EditorImpl.fragmentsAt(offset: Int, beforeSoftWrap: Boolean = false)
 }
 
 /**
- * Iterates the visual line at offset 0 and checks each fragment against its own bounds:
- * the start and the end columns map to the start and the end x, and back.
+ * Iterates the visual line at offset 0 and checks each fragment against its own bounds.
+ * The start and the end columns must map to the start and the end x, and back.
  * Returns the fragment kinds.
  */
 private fun EditorImpl.checkFragmentCoordinates(align: Boolean): List<Kind> {
