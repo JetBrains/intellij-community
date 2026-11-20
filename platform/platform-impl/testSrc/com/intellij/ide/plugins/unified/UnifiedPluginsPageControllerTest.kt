@@ -649,18 +649,20 @@ internal class UnifiedPluginsPageControllerTest {
   }
 
   @Test
-  fun `Suggested appends new project suggestions before Staff Picks on refresh`() {
+  fun `Suggested keeps the order within each group on refresh`() {
     val project = item("project.first")
     val newProject = item("project.new")
-    val firstPick = item("staff.first").copy(isStaffPick = true)
-    val secondPick = item("staff.second").copy(isStaffPick = true)
-    val suggested = PluginSectionState(PluginSectionId.Suggested, items = listOf(project, firstPick, secondPick))
+    val firstPick = item("staff.first").copy(suggestedGroup = SuggestedPluginGroup.StaffPicks)
+    val secondPick = item("staff.second").copy(suggestedGroup = SuggestedPluginGroup.StaffPicks)
+    val newPick = item("staff.new").copy(suggestedGroup = SuggestedPluginGroup.StaffPicks)
+    val marketplace = item("marketplace.first").copy(suggestedGroup = SuggestedPluginGroup.Marketplace)
+    val suggested = PluginSectionState(PluginSectionId.Suggested, items = listOf(project, firstPick, secondPick, marketplace))
     val controller = UnifiedPluginsPageController(listOf(suggested))
 
-    controller.updateSection(suggested.copy(items = listOf(newProject, project, secondPick, firstPick)))
+    controller.updateSection(suggested.copy(items = listOf(newProject, project, newPick, secondPick, firstPick, marketplace)))
 
     assertThat(controller.state.value.section(PluginSectionId.Suggested).items)
-      .containsExactly(project, newProject, firstPick, secondPick)
+      .containsExactly(project, newProject, firstPick, secondPick, newPick, marketplace)
   }
 
   @Test

@@ -199,25 +199,25 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - When a source filter hides local sections, the active remote sections can show these plugin IDs.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
     `local plugins are excluded from Marketplace and repository sections`;
-    `local plugins are excluded from Suggested`;
+    `Suggested limits results after excluding local plugins`;
     `repository filter shows local plugins when local sections are hidden`
   )
 
-- Suggested must combine project suggestions before Staff Picks.
-- Suggested must keep one result per plugin ID and prefer the project suggestion.
-- Suggested must show available project suggestions while Staff Picks load.
-- Suggested must wait for project suggestions to finish loading before it shows Staff Picks from the same request.
+- Suggested must show project suggestions, then Staff Picks, then results from an empty Marketplace query.
+- Suggested must show at most 20 plugins after it excludes local plugins.
+- Suggested must keep one result per plugin ID and prefer the result from the first group that contains it.
+- Suggested must publish each group as soon as that group and all preceding groups finish loading.
 - Suggested must keep successful results when one suggestion source fails.
 - Suggested must not report custom repository errors as Suggested errors.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceDataProviderTest.kt (
-    `merged suggestions keep project priority and partial errors`;
+    `merged suggestions keep source priority and partial errors`;
     `project suggestions publish first even when Staff Picks load first`;
     `merged suggestions load Staff Picks when project suggestions are empty`;
     `merged suggestions isolate a failed source`;
     `merged suggestions omit only custom repository errors`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceSourceCoordinatorTest.kt (
-    `Suggested shows project suggestions while Staff Picks load`
+    `Suggested shows project suggestions Staff Picks and Marketplace results in order`
   )
 
 - Marketplace must keep one stable occurrence for each plugin ID.
@@ -373,7 +373,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - Enabled plugins must win a match score tie.
 - Later results in the same query revision must retain the relative order of plugins that remain in a section.
 - A new plugin must append after existing plugins. A plugin that leaves and returns must resume its retained position.
-- In Suggested, these rules apply separately to project suggestions and Staff Picks.
+- In Suggested, these rules apply separately to project suggestions, Staff Picks, and Marketplace results.
 - In expanded Bundled, a new plugin must append in its category. A new category must append after existing categories.
 - The first collapsed and expanded Bundled results may set separate orders to keep categories together.
 - An explicit sort must override both local priorities and control Marketplace ordering. Custom repositories must retain their source order.
@@ -388,7 +388,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
     `query revision keeps local row order across repeated refreshes`;
     `new plugins append, returning plugins resume, and a new query resets order`;
-    `Suggested appends new project suggestions before Staff Picks on refresh`;
+    `Suggested keeps the order within each group on refresh`;
     `expanded Bundled appends new plugins inside their category`
   )
 

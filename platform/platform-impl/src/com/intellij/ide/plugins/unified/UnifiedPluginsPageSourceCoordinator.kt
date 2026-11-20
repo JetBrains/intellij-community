@@ -365,7 +365,13 @@ private fun projectUnifiedPluginsPageSourceState(
                              ?.takeIf { it.queryRevision == query.revision && it.section.id == marketplaceFamilyId }
                              ?.section
                            ?: PluginSectionState(marketplaceFamilyId, status = initialMarketplaceSectionStatus(query))
-  val visibleMarketplaceSection = marketplaceSection.withoutPlugins(localPluginIds, cancellationCheck)
+  val availableMarketplaceSection = marketplaceSection.withoutPlugins(localPluginIds, cancellationCheck)
+  val visibleMarketplaceSection = if (marketplaceFamilyId == PluginSectionId.Suggested) {
+    availableMarketplaceSection.copy(items = availableMarketplaceSection.items.take(SUGGESTED_PLUGIN_LIMIT))
+  }
+  else {
+    availableMarketplaceSection
+  }
   val cachedProjectionApplies = previousCache.query == query
   val showsImplementationDetails = route.local.eligible &&
                                    UnifiedPluginsQuery.parse(route.local.query).effectiveInstalledFilter == UnifiedPluginInstalledFilter.BuiltIn

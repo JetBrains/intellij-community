@@ -110,6 +110,7 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
         staffPicksLoaded = true
         UnifiedPluginMarketplaceFetchResult(listOf(staffPick))
       },
+      loadMarketplaceResults = { UnifiedPluginMarketplaceFetchResult(emptyList()) },
     ).toList()
 
     assertThat(projectSuggestionsLoaded).isTrue()
@@ -119,11 +120,13 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
   }
 
   @Test
-  fun `merged suggestions keep project priority and partial errors`() = runTest {
+  fun `merged suggestions keep source priority and partial errors`() = runTest {
     val projectDuplicate = plugin("duplicate.plugin", "Project suggestion")
     val projectOnly = plugin("project.plugin", "Project only")
     val staffDuplicate = plugin("duplicate.plugin", "Staff Pick")
     val staffOnly = plugin("staff.plugin", "Staff only")
+    val marketplaceDuplicate = plugin("staff.plugin", "Marketplace duplicate")
+    val marketplaceOnly = plugin("marketplace.plugin", "Marketplace only")
 
     val result = loadMergedSuggestedPlugins(
       loadProjectSuggestions = {
@@ -132,10 +135,13 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
       loadStaffPicks = {
         UnifiedPluginMarketplaceFetchResult(listOf(staffDuplicate, staffOnly), "staff source failed partially")
       },
+      loadMarketplaceResults = {
+        UnifiedPluginMarketplaceFetchResult(listOf(marketplaceDuplicate, marketplaceOnly), "Marketplace search failed partially")
+      },
     ).toList().last()
 
-    assertThat(result.models).containsExactly(projectDuplicate, projectOnly, staffOnly)
-    assertThat(result.error).isEqualTo("project source failed partially; staff source failed partially")
+    assertThat(result.models).containsExactly(projectDuplicate, projectOnly, staffOnly, marketplaceOnly)
+    assertThat(result.error).isEqualTo("project source failed partially; staff source failed partially; Marketplace search failed partially")
   }
 
   @Test
@@ -169,6 +175,7 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
     val result = loadMergedSuggestedPlugins(
       loadProjectSuggestions = { error("project source unavailable") },
       loadStaffPicks = { UnifiedPluginMarketplaceFetchResult(listOf(staffPick)) },
+      loadMarketplaceResults = { UnifiedPluginMarketplaceFetchResult(emptyList()) },
       onFailure = { sourceName, cause -> failures.add(sourceName to cause) },
     ).toList().last()
 
@@ -192,6 +199,7 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
           staffPicksLoaded = true
           UnifiedPluginMarketplaceFetchResult(listOf(staffPick))
         },
+        loadMarketplaceResults = { UnifiedPluginMarketplaceFetchResult(emptyList()) },
       ).toList(results)
     }
     runCurrent()
