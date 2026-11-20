@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isDecoratedMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isFloatingMenuBarSupported
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isLinuxFrame
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isMenuButtonInToolbar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
@@ -235,7 +236,7 @@ internal class ProjectFrameCustomHeaderHelper(
         updateToolbarVisibility()
       }
     }
-    else if (OS.isGenericUnix()) {
+    else if (isLinuxFrame) {
       toolbarCreator.getToolbarIfCreated()?.isVisible = isToolbarVisible(uiSettings, isFullScreen) {
         blockingComputeMainActionGroups(CustomActionsSchema.getInstance(), projectFrameTypeId = rootPane.getProjectFrameTypeId())
       }
@@ -393,12 +394,12 @@ private fun installCustomHeader(
   val isDecoratedMenu = isDecoratedMenu(uiSettings)
   val isFloatingMenuBarSupported = isFloatingMenuBarSupported
   val hideNativeLinuxTitle = hideNativeLinuxTitle(uiSettings)
-  val ijpl43505fixEnabled = OS.isGenericUnix()
+  val ijpl43505fixEnabled = isLinuxFrame
 
   return if (!isDecoratedMenu && !isFloatingMenuBarSupported && (!ijpl43505fixEnabled || !hideNativeLinuxTitle)) {
     createMacAwareMenuBar(parentCs.childScope(), frame, rootPane, mainMenuActionGroup)
     val headerHelper = FrameHeaderHelper.Undecorated(isFloatingMenuBarSupported = false)
-    if (OS.isGenericUnix() && !isMenuButtonInToolbar(uiSettings)) {
+    if (isLinuxFrame && !isMenuButtonInToolbar(uiSettings)) {
       val menuBar = RootPaneUtil.createMenuBar(parentCs.childScope(), frame, mainMenuActionGroup).apply {
         isOpaque = true
       }

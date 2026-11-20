@@ -56,15 +56,17 @@ private class OsDataLogger(val coroutineScope: CoroutineScope) {
   }
 }
 
+@OptIn(LowLevelLocalMachineAccess::class)
 private class OsDataLoggerApplicationInitializedListener : AppLifecycleListener {
   override fun appStarted() {
-    if (OS.isGenericUnix()) {
+    if (OS.CURRENT.osInfo is OS.UnixInfo) {
       service<OsDataLogger>().reportLinuxDistro()
     }
   }
 }
 
+@OptIn(LowLevelLocalMachineAccess::class)
 internal class OsDataLoggerAboutPopupDescriptionProvider : AboutPopupDescriptionProvider {
   override fun getDescription(): @DetailedDescription String? = null
-  override fun getExtendedDescription(): String? = if (OS.isGenericUnix()) service<OsDataLogger>().osInfoAboutString else null
+  override fun getExtendedDescription(): String? = if (OS.CURRENT.osInfo is OS.UnixInfo) service<OsDataLogger>().osInfoAboutString else null
 }

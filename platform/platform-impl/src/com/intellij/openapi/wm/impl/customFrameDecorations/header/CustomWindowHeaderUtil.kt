@@ -22,6 +22,7 @@ import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.tabs.ProjectTabsManager
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -35,11 +36,21 @@ import javax.swing.JRootPane
 @ApiStatus.Internal
 object CustomWindowHeaderUtil {
   /**
+   * `true` if the IDE frame uses the Linux code for the window header, the menu bar, and the border.
+   */
+  @OptIn(LowLevelLocalMachineAccess::class)
+  internal val isLinuxFrame: Boolean
+    get() = when (OS.CURRENT) {
+      OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> true
+      OS.Windows, OS.macOS -> false
+    }
+
+  /**
    * Returns `true` if a menu button should be placed in a toolbar instead of a menu bar.
    */
   internal fun isMenuButtonInToolbar(uiSettings: UISettings): Boolean =
     ExperimentalUI.isNewUI() && (
-      OS.isGenericUnix() && uiSettings.mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR && !hideNativeLinuxTitle(uiSettings) ||
+      isLinuxFrame && uiSettings.mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR && !hideNativeLinuxTitle(uiSettings) ||
       OS.CURRENT == OS.macOS && !Menu.isJbScreenMenuEnabled()
     )
 
@@ -47,7 +58,7 @@ object CustomWindowHeaderUtil {
     hideNativeLinuxTitleAvailable && hideNativeLinuxTitleSupported && uiSettings.mergeMainMenuWithWindowTitle
 
   internal val hideNativeLinuxTitleSupported: Boolean
-    get() = OS.isGenericUnix() && ExperimentalUI.isNewUI() && hideNativeLinuxTitleNotSupportedReason == null
+    get() = isLinuxFrame && ExperimentalUI.isNewUI() && hideNativeLinuxTitleNotSupportedReason == null
 
   internal enum class HideNativeLinuxTitleNotSupportedReason {
     INCOMPATIBLE_JBR,
@@ -72,7 +83,7 @@ object CustomWindowHeaderUtil {
     }
 
   internal val hideNativeLinuxTitleAvailable: Boolean
-    get() = OS.isGenericUnix() && ExperimentalUI.isNewUI() && Registry.`is`("ide.linux.hide.native.title", false)
+    get() = isLinuxFrame && ExperimentalUI.isNewUI() && Registry.`is`("ide.linux.hide.native.title", false)
 
   internal val isFloatingMenuBarSupported: Boolean
     get() = OS.CURRENT != OS.macOS && FrameInfoHelper.isFullScreenSupportedInCurrentOs()

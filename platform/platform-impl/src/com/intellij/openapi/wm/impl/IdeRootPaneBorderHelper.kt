@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -31,7 +30,7 @@ internal object IdeRootPaneBorderHelper {
    * [frameDecorator] is passed mainly to convey that fact and avoid adding a listener if the state never changes
    */
   fun install(app: Application, coroutineScope: CoroutineScope, frame: JFrame, frameDecorator: IdeFrameDecorator?, rootPane: JRootPane) {
-    if (OS.isGenericUnix()) {
+    if (CustomWindowHeaderUtil.isLinuxFrame) {
       installLinuxBorder(app, coroutineScope, frame, frameDecorator, rootPane)
     }
     else {
@@ -40,7 +39,7 @@ internal object IdeRootPaneBorderHelper {
   }
 
   fun update(rootPane: JRootPane) {
-    if (!OS.isGenericUnix() && ExperimentalUI.isNewUI()) {
+    if (!CustomWindowHeaderUtil.isLinuxFrame && ExperimentalUI.isNewUI()) {
       setWindowBorder(rootPane)
     }
   }

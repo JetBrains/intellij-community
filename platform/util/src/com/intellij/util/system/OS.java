@@ -90,9 +90,9 @@ public enum OS {
     return Other;
   }
 
-  /// Returns `true` if the current operating system is a generic Unix-like system (not Windows or macOS).
+  /// Returns `true` if the current operating system is a generic Unix-like system (not Windows, macOS, or OHOS).
   public static boolean isGenericUnix() {
-    return CURRENT != Windows && CURRENT != macOS;
+    return CURRENT != Windows && CURRENT != macOS && CURRENT != OHOS;
   }
 
   @ReviseWhenPortedToJDK(value = "17", description = "Seal")
