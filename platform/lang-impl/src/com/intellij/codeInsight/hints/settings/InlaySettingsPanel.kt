@@ -125,6 +125,15 @@ class InlaySettingsPanel(val project: Project) {
     }
 
     tree = object : CheckboxTree(InlaySettingsTreeRenderer(), root, CheckPolicy(true, true, true, false)) {
+      override fun onNodeStateChanged(node: CheckedTreeNode?) {
+        if (node == null || node.isChecked) return
+        var parent = node.parent as? CheckedTreeNode
+        while (parent != null && parent.isChecked && isAggregateNode(parent) && !hasCheckedChild(parent)) {
+          parent.isChecked = false
+          parent = parent.parent as? CheckedTreeNode
+        }
+      }
+
       override fun installSpeedSearch() {
         TreeSpeedSearch.installOn(this, true) {
           getName(it.lastPathComponent as DefaultMutableTreeNode,
@@ -353,17 +362,25 @@ class InlaySettingsPanel(val project: Project) {
       is ImmediateConfigurable.Case -> {
         resetNode(node, isCaseEnabled(item, node.parent, settings))
       }
-      is Language -> {
-        resetNode(node, isLanguageEnabled(settings, item))
-      }
     }
     node.children().toList().forEach { reset(it as CheckedTreeNode, settings) }
     when (val item = node.userObject) {
+      is Language -> {
+        resetNode(node, isLanguageEnabled(settings, item) && hasCheckedChild(node))
+      }
       is InlayGroup -> {
         node.isChecked = groups[item]?.any { it.isEnabled } == true
       }
     }
   }
+
+  /**
+   * Tells whether the [node] only shows the state of its children.
+   * Its own check state stores no setting.
+   */
+  private fun isAggregateNode(node: CheckedTreeNode): Boolean = node.userObject is Language || node.userObject is InlayGroup
+
+  private fun hasCheckedChild(node: CheckedTreeNode): Boolean = node.children().toList().any { (it as CheckedTreeNode).isChecked }
 
   private fun isCaseEnabled(item: ImmediateConfigurable.Case, parent: TreeNode, settings: InlayHintsSettings): Boolean {
     return item.value &&
@@ -471,7 +488,7 @@ class InlaySettingsPanel(val project: Project) {
         }
       }
       is Language -> {
-        if (isLanguageEnabled(settings, item) != node.isChecked)
+        if (node.isChecked && !isLanguageEnabled(settings, item))
           return true
       }
     }
