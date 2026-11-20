@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
+import com.intellij.codeInsight.hint.DeclarationRangeUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
@@ -114,7 +115,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
                 Pair(
                     diagnostic.psi,
                      try {
-                         diagnostic.textRanges.map { range ->
+                         getDiagnosticTextRanges(diagnostic).map { range ->
                              convertToBuilder(file, range, diagnostic)
                          }
                      } catch (e: CancellationException) {
@@ -216,6 +217,21 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
             diagnostic.diagnosticClass == KaFirDiagnostic.UnusedExpression::class
                     || diagnostic.diagnosticClass == KaFirDiagnostic.UnusedLambdaExpression::class
         }
+    }
+
+    private fun getDiagnosticTextRanges(diagnostic: KaDiagnosticWithPsi<*>): Collection<TextRange> {
+        val declaration = when (diagnostic) {
+            is KaFirDiagnostic.AbstractMemberNotImplemented -> diagnostic.psi
+            is KaFirDiagnostic.AbstractClassMemberNotImplemented -> diagnostic.psi
+            is KaFirDiagnostic.ManyInterfacesMemberNotImplemented -> diagnostic.psi
+            is KaFirDiagnostic.ManyImplMemberNotImplemented -> diagnostic.psi
+            else -> return diagnostic.textRanges
+        }
+        val declarationRange = DeclarationRangeUtil.getDeclarationRange(declaration)
+        val startOffset = declaration.modifierList?.textRange?.startOffset
+            ?: declaration.getDeclarationKeyword()?.textRange?.startOffset
+            ?: declarationRange.startOffset
+        return listOf(TextRange(startOffset, declarationRange.endOffset))
     }
 
     context(session: KaSession)
