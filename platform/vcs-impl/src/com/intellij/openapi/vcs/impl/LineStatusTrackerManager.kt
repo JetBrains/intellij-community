@@ -1046,36 +1046,34 @@ class LineStatusTrackerManager(
   }
 
   private inner class MyFreezeListener : VcsFreezingProcess.Listener {
+    @RequiresEdt
     override fun onFreeze() {
-      runReadActionBlocking {
-        synchronized(LOCK) {
-          if (clmFreezeCounter == 0) {
-            for (data in trackers.values) {
-              try {
-                data.tracker.freeze()
-              }
-              catch (e: Throwable) {
-                LOG.error(e)
-              }
+      synchronized(LOCK) {
+        if (clmFreezeCounter == 0) {
+          for (data in trackers.values) {
+            try {
+              data.tracker.freeze()
+            }
+            catch (e: Throwable) {
+              LOG.error(e)
             }
           }
-          clmFreezeCounter++
         }
+        clmFreezeCounter++
       }
     }
 
+    @RequiresEdt
     override fun onUnfreeze() {
-      runInEdt(ModalityState.any()) {
-        synchronized(LOCK) {
-          clmFreezeCounter--
-          if (clmFreezeCounter == 0) {
-            for (data in trackers.values) {
-              try {
-                data.tracker.unfreeze()
-              }
-              catch (e: Throwable) {
-                LOG.error(e)
-              }
+      synchronized(LOCK) {
+        clmFreezeCounter--
+        if (clmFreezeCounter == 0) {
+          for (data in trackers.values) {
+            try {
+              data.tracker.unfreeze()
+            }
+            catch (e: Throwable) {
+              LOG.error(e)
             }
           }
         }

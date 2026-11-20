@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.idea.IgnoreJUnit3
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
@@ -9,9 +10,11 @@ import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertBaseTextContentI
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertTextContentIs
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.VcsFreezingProcess
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
 
 class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
@@ -521,6 +524,25 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     val tracker = file.tracker as PartialLocalLineStatusTracker
     assertTrue(tracker.isValid())
     lstm.releaseTrackerFor(file.document, this)
+    file.assertNullTracker()
+  }
+
+  fun `test bulk refresh freezes tracker - freezing process on a background thread`() {
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e2", baseContent = "a_b_c_d_e")
+    refreshCLM()
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+      lstm.waitUntilBaseContentsLoaded()
+      assertTrue(tracker.isValid())
+
+      var isValidInOperation = true
+      val process = VcsFreezingProcess(project, "Test") { isValidInOperation = tracker.isValid() }
+      PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread { process.execute() })
+
+      assertFalse(isValidInOperation)
+      assertTrue(tracker.isValid())
+    }
     file.assertNullTracker()
   }
 

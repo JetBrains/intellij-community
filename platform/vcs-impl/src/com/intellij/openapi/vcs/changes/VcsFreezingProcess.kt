@@ -47,9 +47,14 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
     )
   }
 
+  /**
+   * [VcsFreezingProcess] calls the listener on the EDT. Each [onFreeze] has one [onUnfreeze] after it.
+   */
   interface Listener {
+    @RequiresEdt
     fun onFreeze() {}
 
+    @RequiresEdt
     fun onUnfreeze() {}
 
     companion object {
@@ -91,14 +96,14 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
         enter()
         try {
           LOG.debug("freezing the ChangeListManager")
-          freeze(project, changeListManager, title)
+          changeListManager.freeze(VcsBundle.message("local.changes.freeze.message", title))
           LOG.debug("running the operation")
           action()
           LOG.debug("operation completed.")
         }
         finally {
           LOG.debug("unfreezing the ChangeListManager")
-          unfreeze(project, changeListManager)
+          changeListManager.unfreeze()
         }
       }
       finally {
@@ -118,6 +123,7 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
         throw e
       }
       isEntered.set(true)
+      project.messageBus.syncPublisher(Listener.TOPIC).onFreeze()
     }
 
     /**
@@ -126,7 +132,12 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
     @RequiresEdt
     private fun exitFreezing(project: Project, isEntered: AtomicBoolean) {
       if (!isEntered.get()) return
-      unblock(project)
+      try {
+        project.messageBus.syncPublisher(Listener.TOPIC).onUnfreeze()
+      }
+      finally {
+        unblock(project)
+      }
     }
 
     @RequiresEdt
@@ -149,16 +160,6 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
       val saveAndSyncHandler = getInstance()
       saveAndSyncHandler.unblockSaveOnFrameDeactivation()
       saveAndSyncHandler.unblockSyncOnFrameActivation()
-    }
-
-    private fun freeze(project: Project, changeListManager: ChangeListManagerEx, title: String) {
-      project.getMessageBus().syncPublisher<Listener>(Listener.TOPIC).onFreeze()
-      changeListManager.freeze(VcsBundle.message("local.changes.freeze.message", title))
-    }
-
-    private fun unfreeze(project: Project, changeListManager: ChangeListManagerEx) {
-      project.getMessageBus().syncPublisher<Listener>(Listener.TOPIC).onUnfreeze()
-      changeListManager.unfreeze()
     }
   }
 }
