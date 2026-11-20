@@ -7,6 +7,7 @@ import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
@@ -89,7 +90,6 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.TrackerConte
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileSetFactory
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -134,7 +134,13 @@ class LineStatusTrackerManager(
   private val forcedDocuments = HashMap<Document, Multiset<Any>>()
 
   private var partialChangeListsEnabled: Boolean = false
-  private val documentsInDefaultChangeList: MutableSet<VirtualFile> = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet()
+
+  /**
+   * The files that a document event found in the active changelist. The answer is valid until the end of the write action.
+   * The EDT fills the set. The thread of the write action clears it.
+   */
+  private val documentsInDefaultChangeList: MutableSet<VirtualFile> = ConcurrentCollectionFactory.createConcurrentSet()
+
   private var clmFreezeCounter: Int = 0
 
   private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
@@ -304,7 +310,7 @@ class LineStatusTrackerManager(
   }
 
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun checkIfTrackerCanBeReleased(document: Document) {
     synchronized(LOCK) {
       val data = trackers[document] ?: return
@@ -960,12 +966,25 @@ class LineStatusTrackerManager(
   }
 
   private inner class MyApplicationListener : ApplicationListener {
-    override fun afterWriteActionFinished(action: Any) {
+    override fun writeActionFinished(action: Any) {
+      // The write lock is still held here, so the next write action cannot see an old answer.
       documentsInDefaultChangeList.clear()
-      releaseUnneededTrackers()
+    }
+
+    override fun afterWriteActionFinished(action: Any) {
+      // The event comes on the thread of the write action. For a background write action, this is not the EDT.
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        releaseUnneededTrackers()
+      }
+      else {
+        coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          releaseUnneededTrackers()
+        }
+      }
     }
   }
 
+  @RequiresEdt
   private fun releaseUnneededTrackers() {
     synchronized(LOCK) {
       val documents = trackers.values.map { it.tracker.document }
