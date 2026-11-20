@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.statistics.UnifiedPluginSearchStatistics
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
@@ -81,7 +82,7 @@ import com.intellij.testFramework.replaceService
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.components.BrowserLink
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.withForcedRespectIsShowingClientProperty
@@ -1236,9 +1237,9 @@ internal class UnifiedPluginsPageSessionTest {
       val session = createSession(null, marketplaceProvider = FixedMarketplaceDataProvider(suggested = listOf(suggested)))
       try {
         val content = session.getComponent()
+        val linkText = IdeBundle.message("plugins.configurable.more.on.marketplace")
         waitUntilAssertSucceeds {
-          assertThat(componentsOfType(content, BrowserLink::class.java).filter(BrowserLink::isVisible).map(BrowserLink::url))
-            .containsExactly(DEFAULT_PLUGINS_HOST)
+          assertThat(componentsOfType(content, ActionLink::class.java).filter { it.text == linkText && it.parent.isVisible }).hasSize(1)
         }
 
         marketplaceUrl.set("$DEFAULT_PLUGINS_HOST/custom")
@@ -1247,7 +1248,7 @@ internal class UnifiedPluginsPageSessionTest {
         showComponent(content)
 
         waitUntilAssertSucceeds {
-          assertThat(componentsOfType(content, BrowserLink::class.java)).noneMatch(BrowserLink::isVisible)
+          assertThat(componentsOfType(content, ActionLink::class.java)).noneMatch { it.text == linkText && it.parent.isVisible }
         }
       }
       finally {

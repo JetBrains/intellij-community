@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -499,7 +498,7 @@ internal class UnifiedPluginsPageRealRowsTest {
         view.render(controller.state.value, showMarketplaceLink = true)
         prepareForScrolling(view)
 
-        val link = componentsOfType(view.component, BrowserLink::class.java).single()
+        val link = componentsOfType(view.component, ActionLink::class.java).single()
         val firstRow = factory.row(PluginSectionId.Suggested, first)
         val lastRow = factory.row(PluginSectionId.Suggested, last).component
         val linkTop = SwingUtilities.convertPoint(link, Point(), view.component).y
@@ -513,7 +512,7 @@ internal class UnifiedPluginsPageRealRowsTest {
         controller.setQuery(PluginsQueryState("plugin", "plugin", revision = 1))
         view.render(controller.state.value, showMarketplaceLink = true)
 
-        assertThat(componentsOfType(view.component, BrowserLink::class.java)).isEmpty()
+        assertThat(componentsOfType(view.component, ActionLink::class.java)).isEmpty()
       }
     }
 
