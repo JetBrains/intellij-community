@@ -3,6 +3,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -29,6 +30,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GitBinaryHandler extends GitHandler {
   private static final int BUFFER_SIZE = 8 * 1024;
+  private static final int WAIT_TIMEOUT_MS = 50;
+  private static final int TERMINATION_TIMEOUT_MS = 1000 * 60;
 
   private final @NotNull ByteArrayOutputStream myStdout = new ByteArrayOutputStream();
   private final @NotNull ByteArrayOutputStream myStderr = new ByteArrayOutputStream();
@@ -91,23 +94,46 @@ public class GitBinaryHandler extends GitHandler {
   protected void waitForProcess() {
     int exitCode;
     try {
-      while (!mySteamSemaphore.tryAcquire(2, 50, TimeUnit.MILLISECONDS)) {
+      while (!mySteamSemaphore.tryAcquire(2, WAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
         ProgressManager.checkCanceled();
       }
-      while (!myProcess.waitFor(50, TimeUnit.MILLISECONDS)) {
+      while (!myProcess.waitFor(WAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
         ProgressManager.checkCanceled();
       }
       exitCode = myProcess.exitValue();
+    }
+    catch (ProcessCanceledException e) {
+      tryKillProcess();
+      throw e;
     }
     catch (InterruptedException e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Ignoring process exception: ", e);
       }
+      tryKillProcess();
       exitCode = 255;
     }
     OUTPUT_LOG.debug(String.format("%s %% %s terminated (%s)", getCommand(), this.hashCode(), exitCode));
     setExitCode(exitCode);
     listeners().processTerminated(exitCode);
+  }
+
+  private void tryKillProcess() {
+    var process = myProcess;
+    GitProcessTerminator.terminate(this, TERMINATION_TIMEOUT_MS,
+                                   process::destroy,
+                                   timeoutMs -> waitForExit(process, timeoutMs),
+                                   process::destroyForcibly);
+  }
+
+  private static boolean waitForExit(@NotNull Process process, long timeoutMs) {
+    try {
+      return process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
+    }
+    catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return false;
+    }
   }
 
   /**
