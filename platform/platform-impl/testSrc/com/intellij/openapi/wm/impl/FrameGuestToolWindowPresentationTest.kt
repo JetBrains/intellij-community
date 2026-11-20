@@ -42,6 +42,7 @@ import com.intellij.ui.content.ContentFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
@@ -61,6 +62,18 @@ internal class FrameGuestToolWindowPresentationTest {
 
   @TestDisposable
   private lateinit var disposable: Disposable
+
+  /** The managers of the test. The IDE disposes each manager on the EDT, with its project, so the test does the same. */
+  private val createdManagers = ArrayList<ToolWindowManagerImpl>()
+
+  @AfterEach
+  fun disposeManagers(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      for (manager in createdManagers.asReversed()) {
+        Disposer.dispose(manager)
+      }
+    }
+  }
 
   @Test
   fun `the first tool window of a frame guest makes the frame owner register a presenting tool window`() = onEdt {
@@ -181,6 +194,34 @@ internal class FrameGuestToolWindowPresentationTest {
     assertThat(managers.owner.presentation.selectedProjectOf(ID)).isSameAs(first)
     assertThat(firstToolWindow.isVisible).isTrue()
     assertThat(managers.owner.getToolWindow(ID)!!.isVisible).isTrue()
+  }
+
+  @Test
+  fun `the disposal of a presented tool window removes its entry`() = onEdt {
+    val managers = createManagers()
+    val firstToolWindow = managers.register(first)
+    val secondToolWindow = managers.register(second)
+    secondToolWindow.show()
+
+    // the frame guest goes away without the close event
+    Disposer.dispose(managers.of(second).getEntry(ID)!!.disposable)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
+    assertThat(managers.owner.presentation.selectedProjectOf(ID)).isSameAs(first)
+    assertThat(secondToolWindow.presentedBy).isNull()
+    assertThat(firstToolWindow.isVisible).isTrue()
+  }
+
+  @Test
+  fun `a frame guest that closes gives no tool window to the frame owner`() = onEdt {
+    val managers = createManagers()
+    val guestManager = managers.of(first)
+    guestManager.projectClosing()
+
+    val toolWindow = guestManager.registerToolWindow(task(), buttonManager(guestManager)).toolWindow
+
+    assertThat(toolWindow.presentedBy).isNull()
+    assertThat(managers.owner.getToolWindow(ID)).describedAs("the frame owner presents no tool window of a closed frame guest").isNull()
   }
 
   @Test
@@ -547,7 +588,7 @@ internal class FrameGuestToolWindowPresentationTest {
 
       override fun getButtonManager(paneId: String): ToolWindowButtonManager = buttonManager
     }
-    Disposer.register(disposable, manager)
+    createdManagers.add(manager)
     Disposer.register(disposable) {
       val actionManager = ActionManager.getInstance()
       val actionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(ID)

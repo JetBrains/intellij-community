@@ -328,6 +328,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   override fun dispose() {
+    presentation.dispose()
     detachedDefaultPane?.disposeDetached()
   }
 
@@ -759,9 +760,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                                           "Rework code or use ToolWindowManager.invokeLater")
   }
 
-  /** A frame guest leaves its frame at this event, so the frame owner stops to present the tool windows of the guest. */
+  /**
+   * A frame guest leaves its frame at this event, so the frame owner stops to present the tool windows of the guest.
+   * A tool window that the guest registers after the event is not presented.
+   */
   internal fun projectClosing() {
     val presentation = frameOwnerPresentation ?: return
+    frameOwnerPresentation = null
     for (entry in idToEntry.values) {
       if (entry.toolWindow.isPresented) {
         presentation.detach(entry.toolWindow)

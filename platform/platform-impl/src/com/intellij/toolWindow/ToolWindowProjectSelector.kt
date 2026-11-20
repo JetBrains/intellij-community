@@ -4,6 +4,7 @@ package com.intellij.toolWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GuiUtils
 import com.intellij.ui.tabs.JBTabPainter
@@ -23,18 +24,19 @@ import javax.swing.JPanel
 /**
  * The component that selects the project whose tool window a tool window of the frame owner shows: one tab for each project.
  *
- * The component keeps no selection of its own. [update] gives it the projects and the selected one, and [onSelect] gets the
- * project of a tab that the user selects. [project] is the frame owner. The tabs live until [parentDisposable] is disposed.
+ * The component keeps no selection of its own. [update] gives it the tool window of each project and the selected one, and
+ * [onSelect] gets the tool window of a tab that the user selects. A tab holds the tool window of its project, not the project.
+ * [project] is the frame owner. The tabs live until [parentDisposable] is disposed.
  */
 internal class ToolWindowProjectSelector(
   project: Project,
   parentDisposable: Disposable,
-  private val onSelect: (Project) -> Unit,
+  private val onSelect: (ToolWindowImpl) -> Unit,
 ) {
   private val tabs = ToolWindowProjectSelectorTabs(project, parentDisposable)
 
-  /** The selection that the last [update] gave. A change of the tabs to this project is no request of the user. */
-  private var selected: Project? = null
+  /** The selection that the last [update] gave. A change of the tabs to this tool window is no request of the user. */
+  private var selected: ToolWindowImpl? = null
 
   /** `true` while [update] changes the tabs. The tabs select a tab on their own then, and that is no request of the user either. */
   private var isUpdating = false
@@ -49,22 +51,24 @@ internal class ToolWindowProjectSelector(
     tabs.setTabDraggingEnabled(false)
     tabs.addListener(object : TabsListener {
       override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
-        val newProject = newSelection?.`object` as? Project ?: return
-        if (!isUpdating && newProject !== selected) {
-          onSelect(newProject)
+        val newToolWindow = newSelection?.`object` as? ToolWindowImpl ?: return
+        if (!isUpdating && newToolWindow !== selected) {
+          onSelect(newToolWindow)
         }
       }
     }, parentDisposable)
   }
 
-  fun update(projects: List<Project>, selected: Project?) {
+  /** Shows one tab for the project of each tool window in [toolWindows], in their order. An empty list lets every tool window go. */
+  fun update(toolWindows: List<ToolWindowImpl>, selected: ToolWindowImpl?) {
     this.selected = selected
     isUpdating = true
     try {
-      if (tabs.tabs.map { it.`object` } != projects) {
+      if (tabs.tabs.map { it.`object` } != toolWindows) {
         tabs.removeAllTabs()
-        for (project in projects) {
-          tabs.addTab(TabInfo(emptyTabComponent()).setText(project.name).setTooltipText(project.presentableUrl).setObject(project))
+        for (toolWindow in toolWindows) {
+          val project = toolWindow.project
+          tabs.addTab(TabInfo(emptyTabComponent()).setText(project.name).setTooltipText(project.presentableUrl).setObject(toolWindow))
         }
       }
       val selectedTab = tabs.tabs.firstOrNull { it.`object` === selected }

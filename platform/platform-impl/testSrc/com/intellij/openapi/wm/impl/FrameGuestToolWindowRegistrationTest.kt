@@ -35,6 +35,7 @@ import com.intellij.toolWindow.computeToolWindowBeans
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CopyOnWriteArrayList
@@ -54,6 +55,18 @@ internal class FrameGuestToolWindowRegistrationTest {
 
   @TestDisposable
   private lateinit var disposable: Disposable
+
+  /** The managers of the test. The IDE disposes each manager on the EDT, with its project, so the test does the same. */
+  private val createdManagers = ArrayList<ToolWindowManagerImpl>()
+
+  @AfterEach
+  fun disposeManagers(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      for (manager in createdManagers.asReversed()) {
+        Disposer.dispose(manager)
+      }
+    }
+  }
 
   @BeforeEach
   fun setUp() {
@@ -232,7 +245,7 @@ internal class FrameGuestToolWindowRegistrationTest {
 
       override fun getButtonManager(paneId: String): ToolWindowButtonManager = buttonManager
     }
-    Disposer.register(disposable, manager)
+    createdManagers.add(manager)
     Disposer.register(disposable) {
       val actionManager = ActionManager.getInstance()
       if (actionManager.getAction(activateActionId()) != null) {
