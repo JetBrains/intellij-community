@@ -6,8 +6,6 @@ import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearchCallba
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewContentManager;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,11 +20,12 @@ public final class RangeSearchCreatorImpl implements RangeSearchCreator {
                                             String titleName) {
     RangeSearchCallback rangeSearchCallback = new RangeSearchCallbackImpl();
     RangeSearch rangeSearch = new RangeSearch(virtualFile, project, rangeSearchCallback);
-    Content content = UsageViewContentManager.getInstance(project).addContent(
+    UsageViewContentManager usageViewContentManager = UsageViewContentManager.getInstance(project);
+    Content content = usageViewContentManager.addContent(
       titleName, true, rangeSearch.getComponent(), false, true);
     rangeSearch.setContent(content);
 
-    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND).activate(null, true);
+    usageViewContentManager.getToolWindow().activate(null, true);
 
     content.setDisposer(new Disposable() {
       @Override

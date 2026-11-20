@@ -19,8 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -30,6 +28,7 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
+import com.intellij.usageView.UsageViewContentManager
 import com.intellij.util.Alarm
 import com.intellij.util.CommonProcessors
 import com.intellij.util.EmptyQuery
@@ -423,16 +422,12 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                     }
                 }
 
-                val windowManager = ToolWindowManager.getInstance(project)
-                windowManager.getToolWindow(ToolWindowId.FIND)?.let { toolWindow ->
-                    windowManager.notifyByBalloon(
-                        toolWindow.id,
-                        MessageType.INFO,
-                        DISABLE_COMPONENT_AND_DESTRUCTION_SEARCH_TEXT,
-                        Actions.Find,
-                        listener
-                    )
-                }
+                UsageViewContentManager.getInstance(project).notifyByBalloon(
+                    MessageType.INFO,
+                    DISABLE_COMPONENT_AND_DESTRUCTION_SEARCH_TEXT,
+                    Actions.Find,
+                    listener
+                )
 
                 Unit
             }

@@ -1,3 +1,6 @@
+a:com.intellij.usageView.UsageViewContentManager
+- *a:getToolWindow():com.intellij.openapi.wm.ToolWindow
+- *a:notifyByBalloon(com.intellij.openapi.ui.MessageType,java.lang.String,javax.swing.Icon,javax.swing.event.HyperlinkListener):V
 *:com.intellij.usages.UsageSearchPresentation
 - a:getOptionsString():java.lang.String
 - a:getSearchTargetString():java.lang.String
