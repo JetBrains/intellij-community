@@ -709,12 +709,16 @@ class LineStatusTrackerManager(
   @RequiresEdt
   @ApiStatus.Internal
   fun offerTrackerContent(document: Document, text: CharSequence) {
+    applyOfferedContent(document, text)
+  }
+
+  @RequiresEdt
+  private fun applyOfferedContent(document: Document, text: CharSequence) {
     try {
       val data = trackers[document]
       if (data == null || data.contentInfo != null) return
 
       val tracker = data.tracker
-
       if (tracker is LocalLineStatusTrackerImpl<*>) {
         ClientId.withExplicitClientId(ClientId.localId) {
           tracker.setBaseRevision(text)
