@@ -7,14 +7,17 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = Logger.getInstance(VcsFreezingProcess::class.java)
 
@@ -24,18 +27,21 @@ private val LOG = Logger.getInstance(VcsFreezingProcess::class.java)
  */
 open class VcsFreezingProcess(private val myProject: Project, private val myOperationTitle: @Nls String, private val myRunnable: Runnable) {
   open fun execute() {
+    val isEntered = AtomicBoolean()
     runFreezingInternal(
       myProject,
       myOperationTitle,
       action = myRunnable::run,
       enter = {
         invokeAndWaitIfNeeded {
-          saveAndBlock(myProject)
+          enterFreezing(myProject, isEntered)
         }
       },
       exit = {
-        invokeAndWaitIfNeeded {
-          unblock(myProject)
+        ProgressManager.getInstance().executeNonCancelableSection {
+          invokeAndWaitIfNeeded {
+            exitFreezing(myProject, isEntered)
+          }
         }
       }
     )
@@ -54,23 +60,28 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
 
   companion object {
     suspend fun runFreezing(project: Project, title: String, action: suspend () -> Unit) {
+      val isEntered = AtomicBoolean()
       runFreezingInternal(
         project,
         title,
         action = { action() },
         enter = {
           withContext(Dispatchers.EDT) {
-            saveAndBlock(project)
+            enterFreezing(project, isEntered)
           }
         },
         exit = {
-          withContext(Dispatchers.EDT) {
-            unblock(project)
+          withContext(NonCancellable + Dispatchers.EDT) {
+            exitFreezing(project, isEntered)
           }
         }
       )
     }
 
+    /**
+     * @param enter runs [enterFreezing] on the EDT. A cancellation can end its wait before or after the EDT step runs.
+     * @param exit runs [exitFreezing] on the EDT, also after a cancellation
+     */
     private inline fun runFreezingInternal(project: Project, title: String, action: () -> Unit, enter: () -> Unit, exit: () -> Unit) {
       val changeListManager = ChangeListManagerEx.getInstanceEx(project)
 
@@ -95,6 +106,27 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
         exit()
       }
       LOG.debug("finished.")
+    }
+
+    @RequiresEdt
+    private fun enterFreezing(project: Project, isEntered: AtomicBoolean) {
+      try {
+        saveAndBlock(project)
+      }
+      catch (e: Throwable) {
+        unblock(project)
+        throw e
+      }
+      isEntered.set(true)
+    }
+
+    /**
+     * Undoes [enterFreezing] when the EDT did run it. The caller does not know that after a cancellation.
+     */
+    @RequiresEdt
+    private fun exitFreezing(project: Project, isEntered: AtomicBoolean) {
+      if (!isEntered.get()) return
+      unblock(project)
     }
 
     @RequiresEdt
