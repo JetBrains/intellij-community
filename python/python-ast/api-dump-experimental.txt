@@ -907,8 +907,6 @@ f:com.jetbrains.python.ast.PyAstElementKt
 - sf:isTopLevel(com.intellij.psi.PsiElement):Z
 - sf:onSameLine(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 - sf:strListValue(com.jetbrains.python.ast.PyAstExpression):java.util.List
-- sf:sure(java.lang.Object):java.lang.Object
-- sf:sure(Z):V
 - sf:updateDocumentUnblockedAndCommitted(com.intellij.psi.PsiElement,java.util.function.Consumer):V
 - sf:updateDocumentUnblockedAndCommitted(com.intellij.psi.PsiElement,java.util.function.Function):java.lang.Object
 *f:com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtilCore

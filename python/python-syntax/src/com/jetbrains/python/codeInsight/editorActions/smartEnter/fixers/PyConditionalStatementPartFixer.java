@@ -27,7 +27,7 @@ import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.ast.impl.PyUtilCore.sure;
+import java.util.Objects;
 
 public class PyConditionalStatementPartFixer extends PyFixer<PyAstConditionalStatementPart> {
   public PyConditionalStatementPartFixer() {
@@ -51,7 +51,7 @@ public class PyConditionalStatementPartFixer extends PyFixer<PyAstConditionalSta
         final TokenSet keywords = TokenSet.create(PyTokenTypes.IF_KEYWORD, PyTokenTypes.ELIF_KEYWORD, PyTokenTypes.WHILE_KEYWORD);
         final PsiElement keywordToken = PyPsiUtilsCore.getChildByFilter(statementPart,
                                                                     keywords, 0);
-        final int offset = sure(keywordToken).getTextRange().getEndOffset();
+        final int offset = Objects.requireNonNull(keywordToken).getTextRange().getEndOffset();
         document.insertString(offset, " :");
         processor.registerUnresolvedError(offset + 1);
       }

@@ -241,7 +241,8 @@ public final class PyUtil {
    * @return thing, if not null.
    */
   public static @NotNull <T> T sure(T thing) {
-    return PyUtilCore.sure(thing);
+    if (thing == null) throw new IncorrectOperationException();
+    return thing;
   }
 
   /**
@@ -250,7 +251,7 @@ public final class PyUtil {
    * @param thing what we check.
    */
   public static void sure(boolean thing) {
-    PyUtilCore.sure(thing);
+    if (!thing) throw new IncorrectOperationException();
   }
 
   public static boolean isAttribute(PyTargetExpression ex) {

@@ -12,7 +12,7 @@ import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.ast.impl.PyUtilCore.sure;
+import java.util.Objects;
 
 public class PyClassFixer extends PyFixer<PyAstClass> {
   public PyClassFixer() {
@@ -24,7 +24,7 @@ public class PyClassFixer extends PyFixer<PyAstClass> {
     final PsiElement colon = PyPsiUtilsCore.getFirstChildOfType(pyClass, PyTokenTypes.COLON);
     if (colon == null) {
       final PyAstArgumentList argList = PsiTreeUtil.getChildOfType(pyClass, PyAstArgumentList.class);
-      final int colonOffset = sure(argList).getTextRange().getEndOffset();
+      final int colonOffset = Objects.requireNonNull(argList).getTextRange().getEndOffset();
       String textToInsert = ":";
       if (pyClass.getNameNode() == null) {
         int newCaretOffset = argList.getTextOffset();

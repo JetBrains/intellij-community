@@ -24,7 +24,7 @@ import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.ast.impl.PyUtilCore.sure;
+import java.util.Objects;
 
 public class PyForPartFixer extends PyFixer<PyAstForPart> {
   public PyForPartFixer() {
@@ -45,7 +45,7 @@ public class PyForPartFixer extends PyFixer<PyAstForPart> {
         final PsiElement inToken = PyPsiUtilsCore.getFirstChildOfType(forPart, PyTokenTypes.IN_KEYWORD);
         if (inToken == null) {
           if (sourceOrTarget == null) {
-            positionToInsert = sure(forToken);
+            positionToInsert = Objects.requireNonNull(forToken);
             textToInsert = "  in :";
             processor.registerUnresolvedError(positionToInsert.getTextRange().getEndOffset() + 1);
           }

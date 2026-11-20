@@ -15,7 +15,7 @@ import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.ast.impl.PyUtilCore.sure;
+import java.util.Objects;
 
 public class PyUnconditionalStatementPartFixer extends PyFixer<PyAstElement> {
   public PyUnconditionalStatementPartFixer() {
@@ -30,7 +30,7 @@ public class PyUnconditionalStatementPartFixer extends PyFixer<PyAstElement> {
       if (colon == null) {
         final TokenSet keywords = TokenSet.create(PyTokenTypes.ELSE_KEYWORD, PyTokenTypes.TRY_KEYWORD, PyTokenTypes.FINALLY_KEYWORD);
         final PsiElement keywordToken = PyPsiUtilsCore.getChildByFilter(psiElement, keywords, 0);
-        editor.getDocument().insertString(sure(keywordToken).getTextRange().getEndOffset(), ":");
+        editor.getDocument().insertString(Objects.requireNonNull(keywordToken).getTextRange().getEndOffset(), ":");
       }
     }
   }

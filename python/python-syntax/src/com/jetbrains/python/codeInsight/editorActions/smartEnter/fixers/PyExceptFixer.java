@@ -25,7 +25,7 @@ import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.python.ast.impl.PyUtilCore.sure;
+import java.util.Objects;
 
 public class PyExceptFixer extends PyFixer<PyAstExceptPart> {
   public PyExceptFixer() {
@@ -37,7 +37,7 @@ public class PyExceptFixer extends PyFixer<PyAstExceptPart> {
     final PsiElement colon = PyPsiUtilsCore.getFirstChildOfType(exceptPart, PyTokenTypes.COLON);
     if (colon == null) {
       final PsiElement exceptToken = PyPsiUtilsCore.getFirstChildOfType(exceptPart, PyTokenTypes.EXCEPT_KEYWORD);
-      int offset = sure(exceptToken).getTextRange().getEndOffset();
+      int offset = Objects.requireNonNull(exceptToken).getTextRange().getEndOffset();
       final PyAstExpression exceptClass = exceptPart.getExceptClass();
       if (exceptClass != null) {
         offset = exceptClass.getTextRange().getEndOffset();
