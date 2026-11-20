@@ -33,6 +33,7 @@ import java.util.function.Supplier
 
 /**
  * The JUnit 5 form of [LightJavaInspectionTestCase]. Create it with [lightJavaInspectionFixture].
+ * It is the IDE implementation of [JavaInspectionFixture].
  *
  * The members are the helpers of [LightJavaInspectionTestCase] with the same names and the same checks.
  * Call them from any thread. A helper that runs an intention runs it on the EDT.
@@ -45,21 +46,21 @@ class LightJavaInspectionFixture internal constructor(
   val fixture: LightJavaCodeInsightTestFixture,
   private val inspection: InspectionProfileEntry?,
   private val inspectionClass: Class<out InspectionProfileEntry>?,
-) {
+) : JavaInspectionFixture {
   /**
    * Returns the name of the test method without the `test` prefix, as [LightJavaCodeInsightTestFixture.getTestName] does.
    */
-  fun getTestName(lowercaseFirstLetter: Boolean): String = fixture.getTestName(lowercaseFirstLetter)
+  override fun getTestName(lowercaseFirstLetter: Boolean): String = fixture.getTestName(lowercaseFirstLetter)
 
-  fun addEnvironmentClass(@Language("JAVA") classText: String) {
+  override fun addEnvironmentClass(@Language("JAVA") classText: String) {
     fixture.addClass(classText)
   }
 
-  fun doStatementTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\") class X { void m() {", suffix = "}}") statementText: String) {
+  override fun doStatementTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\") class X { void m() {", suffix = "}}") statementText: String) {
     doTest("class X { void m() {$statementText}}")
   }
 
-  fun doMemberTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\") class X {", suffix = "}") memberText: String) {
+  override fun doMemberTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\") class X {", suffix = "}") memberText: String) {
     doTest("class X {$memberText}")
   }
 
@@ -67,11 +68,11 @@ class LightJavaInspectionFixture internal constructor(
    * Configures `X.java` with [classText] and checks the highlighting.
    * The comments in [classText] mark the expected highlighting, as in [LightJavaInspectionTestCase.doTest].
    */
-  fun doTest(@Language("JAVA") classText: String) {
+  override fun doTest(@Language("JAVA") classText: String) {
     doTest(classText, "X.java")
   }
 
-  fun doTest(@Language("JAVA") classText: String, fileName: String) {
+  override fun doTest(@Language("JAVA") classText: String, fileName: String) {
     fixture.configureByText(fileName, convertMarkers(classText))
     fixture.testHighlighting(true, false, false)
   }
@@ -79,21 +80,21 @@ class LightJavaInspectionFixture internal constructor(
   /**
    * Configures the file `<test name>.java` of the test data and checks the highlighting.
    */
-  fun doTest() {
+  override fun doTest() {
     doNamedTest(getTestName(false))
   }
 
-  fun doNamedTest(name: String) {
+  override fun doNamedTest(name: String) {
     fixture.configureByFile("$name.java")
     fixture.testHighlighting(true, false, false)
   }
 
-  fun assertQuickFixNotAvailable(name: String) {
+  override fun assertQuickFixNotAvailable(name: String) {
     val intentions = fixture.filterAvailableIntentions(name)
     assertTrue(intentions.isEmpty()) { "Expected no intentions starting with \"$name\", got: $intentions" }
   }
 
-  fun checkQuickFix(name: String, @Language("JAVA") result: String) {
+  override fun checkQuickFix(name: String, @Language("JAVA") result: String) {
     runInEdtAndWait {
       invokeIntention(name)
       fixture.checkResult(result)
@@ -103,7 +104,7 @@ class LightJavaInspectionFixture internal constructor(
   /**
    * Runs the intention [name] and compares the file with `<test name>.after.java` of the test data.
    */
-  fun checkQuickFix(name: String) {
+  override fun checkQuickFix(name: String) {
     runInEdtAndWait {
       invokeIntention(name)
       fixture.checkResultByFile(getTestName(false) + ".after.java")
@@ -113,7 +114,7 @@ class LightJavaInspectionFixture internal constructor(
   /**
    * Runs the "Fix all" intention of the inspection and compares the file with `<test name>.after.java` of the test data.
    */
-  fun checkQuickFixAll() {
+  override fun checkQuickFixAll() {
     val tool = InspectionTestUtil.instantiateTool(requireInspectionClass())
     checkNotNull(tool) { "The fixture needs an inspection for checkQuickFixAll() to work" }
     checkQuickFix(InspectionsBundle.message("fix.all.inspection.problems.in.file", tool.displayName))
@@ -177,7 +178,19 @@ class LightJavaInspectionFixture internal constructor(
       return lightTestDataPath(basePath)
     }
 
-    private fun convertMarkers(classText: String): String {
+    /**
+     * Returns the level at which the fixture checks an inspection with the profile level [level].
+     * The fixture raises a level that does not show the inspection, or shows it as a weak warning, to a warning.
+     */
+    @JvmStatic
+    fun checkedLevel(level: HighlightDisplayLevel): HighlightDisplayLevel =
+      if (level == HighlightDisplayLevel.DO_NOT_SHOW || level == HighlightDisplayLevel.WEAK_WARNING) HighlightDisplayLevel.WARNING else level
+
+    /**
+     * Converts the comment markers of [classText] to the highlighting markup, as [LightJavaInspectionTestCase.doTest] does.
+     */
+    @JvmStatic
+    fun convertMarkers(classText: String): String {
       val newText = StringBuilder()
       var start = 0
       var end = classText.indexOf("/*")
@@ -258,8 +271,9 @@ fun lightJavaInspectionFixtureByTestName(
     val displayKey = checkNotNull(HighlightDisplayKey.find(tool.shortName)) { "No display key for ${tool.shortName}" }
     val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
     val errorLevel = currentProfile.getErrorLevel(displayKey, null)
-    if (errorLevel == HighlightDisplayLevel.DO_NOT_SHOW || errorLevel == HighlightDisplayLevel.WEAK_WARNING) {
-      currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.WARNING, project)
+    val checkedLevel = LightJavaInspectionFixture.checkedLevel(errorLevel)
+    if (checkedLevel != errorLevel) {
+      currentProfile.setErrorLevel(displayKey, checkedLevel, project)
     }
   }
   checkMockJdk17(fixture)

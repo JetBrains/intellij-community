@@ -82,6 +82,13 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
       myWithAnnotations = withAnnotations;
     }
 
+    /**
+     * Returns the language level of the module.
+     */
+    public @NotNull LanguageLevel getLanguageLevel() {
+      return myLanguageLevel;
+    }
+
     @Override
     public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
       if (myLanguageLevel.isPreview() || myLanguageLevel == LanguageLevel.JDK_X) {
