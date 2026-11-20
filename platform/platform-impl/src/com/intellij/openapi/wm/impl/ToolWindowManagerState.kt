@@ -29,6 +29,14 @@ interface ToolWindowManagerState : PersistentStateComponent<Element> {
   val isEditorComponentActive: Boolean
   var projectFrame: JFrame?
   var moreButton: ToolWindowAnchor
+
+  /**
+   * Tells the state that its project is a frame guest: the project has no frame of its own, and the frame of its owner shows it.
+   * The state of a frame guest saves nothing, so the layout that the project stored for a frame of its own stays.
+   * A state that never belongs to a frame guest needs no implementation.
+   */
+  fun becomeFrameGuest() {
+  }
 }
 
 private const val LAYOUT_TO_RESTORE = "layout-to-restore"
@@ -59,8 +67,15 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
 
   override var moreButton: ToolWindowAnchor = ToolWindowAnchor.LEFT
 
+  private var isFrameGuest = false
+
+  override fun becomeFrameGuest() {
+    isFrameGuest = true
+  }
+
   override fun getState(): Element? {
-    if (projectFrame == null) {
+    // `null` keeps the stored state: a frame guest never applied it, and its layout describes the frame of its owner
+    if (projectFrame == null || isFrameGuest) {
       return null
     }
 

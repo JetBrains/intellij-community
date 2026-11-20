@@ -204,6 +204,44 @@ internal class FrameGuestToolWindowRegistrationTest {
   }
 
   @Test
+  fun `the presentation of a tool window leaves the stored layout of the frame guest alone`(): Unit = timeoutRunBlocking {
+    val ownerManager = createManager(owner)
+    val guestManager = createManager(guest)
+    guestManager.initAsFrameGuest(ownerManager.presentation)
+    withContext(Dispatchers.EDT) {
+      // the layout that the guest stored for a frame of its own, and the layout of the frame owner
+      guestManager.layoutState.addInfo(ID, visibleInfo(ID).also { it.anchor = ToolWindowAnchor.BOTTOM })
+      ownerManager.layoutState.addInfo(ID, visibleInfo(ID).also { it.anchor = ToolWindowAnchor.RIGHT })
+
+      val toolWindow = guestManager.registerToolWindow(singleProjectTask(), buttonManager(guestManager)).toolWindow
+      assertThat(toolWindow.isVisible).describedAs("the layout of the frame owner shows the tool window").isTrue()
+      assertThat(toolWindow.anchor).isEqualTo(ToolWindowAnchor.RIGHT)
+      toolWindow.hide()
+      assertThat(toolWindow.isVisible).isFalse()
+
+      val stored = guestManager.layoutState.getInfo(ID)!!
+      assertThat(stored.anchor).isEqualTo(ToolWindowAnchor.BOTTOM)
+      assertThat(stored.isVisible).isTrue()
+    }
+  }
+
+  @Test
+  fun `the presentation of a tool window adds no info to the layout of the frame guest`(): Unit = timeoutRunBlocking {
+    val ownerManager = createManager(owner)
+    val guestManager = createManager(guest)
+    guestManager.initAsFrameGuest(ownerManager.presentation)
+    withContext(Dispatchers.EDT) {
+      val toolWindow = guestManager.registerToolWindow(singleProjectTask(), buttonManager(guestManager)).toolWindow
+
+      toolWindow.show()
+      toolWindow.activate(null)
+      toolWindow.hide()
+
+      assertThat(guestManager.layoutState.getInfo(ID)).isNull()
+    }
+  }
+
+  @Test
   fun `the removal of a presented tool window keeps the activation action of the frame owner`(): Unit = timeoutRunBlocking {
     val ownerManager = createManager(owner)
     val guestManager = createManager(guest)

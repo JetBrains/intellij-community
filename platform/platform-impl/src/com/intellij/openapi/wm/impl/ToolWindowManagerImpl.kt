@@ -539,7 +539,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   /**
    * Gives a project that has no frame of its own a default pane that no frame shows.
    * A tool window registration then works, and nothing is visible. [frame] is the frame that hosts the project,
-   * and [frameOwner] is the project that owns it.
+   * and [frameOwner] is the project that owns it. The project saves no tool window layout from now on,
+   * see [ToolWindowManagerState.becomeFrameGuest].
    *
    * With the legacy mode of a tool window, see [ToolWindowFactoryScope.isLegacyToolWindowModeEnabled], the project registers each tool window
    * of the extension point that shows one project, and the manager of [frameOwner] presents it. The registration runs after this
@@ -552,6 +553,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       ToolWindowPane.create(frame, coroutineScope, WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
     }
     detachedDefaultPane = pane
+    state.becomeFrameGuest()
     if (ToolWindowFactoryScope.isLegacyToolWindowModeEnabled) {
       (frameOwner.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl)?.let { initAsFrameGuest(it.presentation) }
     }
@@ -924,6 +926,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   // mutate operation must use info from layout and not from decorator
   @ApiStatus.Internal
   fun getRegisteredMutableInfoOrLogError(id: String): WindowInfoImpl {
+    val presented = idToEntry.get(id)?.takeIf { it.toolWindow.isPresented }
+    if (presented != null) {
+      // The frame owner keeps the place and the visible state of a presented tool window. So its info is a copy that never
+      // goes into the layout of the frame guest, and the layout that the guest stored for a frame of its own stays.
+      return (presented.readOnlyWindowInfo as WindowInfoImpl).copy()
+    }
+
     var info = layoutState.getInfo(id)
     if (info == null) {
       val entry = idToEntry.get(id) ?: throw IllegalStateException("window with id=\"$id\" isn't registered")
@@ -1383,6 +1392,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   /**
    * Sets the state of the presented tool window [id] of this frame guest: [visible], and the place of the presenting tool window
    * [place]. Only [ToolWindowManagerPresentation] calls it. A presented tool window is in no pane, so the call changes no pane.
+   * The state is only in the tool window, not in the layout of this frame guest, see [getRegisteredMutableInfoOrLogError].
    */
   internal fun applyPresented(id: String, visible: Boolean, place: WindowInfo) {
     val entry = idToEntry.get(id) ?: return
