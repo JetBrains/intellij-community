@@ -562,7 +562,8 @@ public class JavaDebugProcess extends XDebugProcess {
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
+      DebugProcessImpl process = getCurrentDebugProcess(e);
+      return (process == null || process.canGetMethodReturnValue()) && DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
     }
 
     @Override

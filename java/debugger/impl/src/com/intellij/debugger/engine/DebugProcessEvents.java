@@ -500,16 +500,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       if (canBeModified) {
         final EventRequestManager requestManager = machineProxy.eventRequestManager();
 
-        if (machineProxy.canGetMethodReturnValues()) {
-          // The emulated watcher reads JVM bytecode. An Android VM has DEX bytecode.
-          boolean emulated = Registry.is("debugger.show.return.values.emulated") &&
-                             machineProxy.canGetBytecodes() && machineProxy.canGetConstantPool() &&
-                             !DebuggerUtils.isAndroidVM(machineProxy.getVirtualMachine());
-          ReturnValueWatcher watcher = emulated
-                                       ? new EmulatedReturnValueWatcher(requestManager)
-                                       : new NativeReturnValueWatcher(requestManager);
-          myReturnValueWatcher = new OverheadReportingWatcher(watcher, this);
-        }
+        myReturnValueWatcher = createReturnValueWatcher(machineProxy, requestManager);
 
         enableNonSuspendingRequest(platformThreadsOnly(requestManager.createThreadStartRequest()),
                                    event -> {
@@ -599,6 +590,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
       return true;
     }
     return false;
+  }
+
+  private @Nullable ReturnValueWatcher createReturnValueWatcher(VirtualMachineProxyImpl machineProxy,
+                                                                EventRequestManager requestManager) {
+    if (!machineProxy.canGetMethodReturnValues()) {
+      return null;
+    }
+    // The emulated watcher reads JVM bytecode. An Android VM has DEX bytecode.
+    boolean canEmulate = machineProxy.canGetBytecodes() && machineProxy.canGetConstantPool() &&
+                         !DebuggerUtils.isAndroidVM(machineProxy.getVirtualMachine());
+    String option = Registry.get("debugger.show.return.values.watcher").getSelectedOption();
+    if (!"native".equals(option) && canEmulate) {
+      return new OverheadReportingWatcher(new EmulatedReturnValueWatcher(requestManager), this);
+    }
+    if ("native".equals(option) || "auto".equals(option)) {
+      return new OverheadReportingWatcher(new NativeReturnValueWatcher(requestManager), this);
+    }
+    // The native watcher slows stepping, so it is opt-in.
+    return null;
   }
 
   private void trackClassRedefinitions() {

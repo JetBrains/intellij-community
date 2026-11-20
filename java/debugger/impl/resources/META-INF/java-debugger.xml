@@ -196,8 +196,9 @@
 
     <registryKey key="debugger.evaluate.method.helper" defaultValue="[off|auto*|always]"
                  description="Use helper to invoke methods avoiding the immediate return value collection"/>
-    <registryKey key="debugger.show.return.values.emulated" defaultValue="true"
-                 description="Use the emulated watcher of method return values instead of the native JDI watcher"/>
+    <registryKey key="debugger.show.return.values.watcher" defaultValue="[emulated*|auto|native]"
+                 description="Select the watcher for Show Method Return Values. 'emulated' uses bytecode breakpoints and requires JVM bytecode access; on VMs without it (such as Android), the feature is off. 'auto' uses 'emulated' when supported and 'native' otherwise. 'native' always uses the JDI watcher, which slows stepping. Takes effect on the next debug session."
+                 restartRequired="false"/>
     <registryKey key="debugger.jdwp.include.virtual.threads" defaultValue="false"
                  description="JDWP setting to include virtual threads in the list of all threads (might lead to problems in case of a huge number of virtual threads)"/>
     <registryKey key="debugger.thread.dump.extended" defaultValue="true"

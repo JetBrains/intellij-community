@@ -286,7 +286,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
   protected @Nullable XNamedValue createCurrentMethodReturnValueNode(@NotNull EvaluationContextImpl evaluationContext,
                                                                      @NotNull MethodExitEvent methodExitEvent) {
-    if (!myDebugProcess.canGetMethodReturnValue() ||
+    if (!evaluationContext.getVirtualMachineProxy().canGetMethodReturnValues() ||
         myDescriptor.getUiIndex() != 0 ||
         !myDescriptor.getFrameProxy().threadProxy().getThreadReference().equals(methodExitEvent.thread())) {
       return null;
