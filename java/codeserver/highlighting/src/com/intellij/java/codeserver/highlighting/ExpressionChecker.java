@@ -1273,14 +1273,21 @@ final class ExpressionChecker {
 
     PsiMethod constructor = result == null ? null : result.getElement();
 
+    PsiReferenceParameterList inapplicableDiamond = null;
     try {
-      PsiDiamondType diamondType =
-        constructorCall instanceof PsiNewExpression newExpression ? PsiDiamondType.getDiamondType(newExpression) : null;
+      PsiNewExpression newExpression = constructorCall instanceof PsiNewExpression expression ? expression : null;
+      PsiDiamondType diamondType = newExpression != null ? PsiDiamondType.getDiamondType(newExpression) : null;
       JavaResolveResult staticFactory = diamondType != null ? diamondType.getStaticFactory() : null;
-      if (staticFactory instanceof MethodCandidateInfo info && info.isApplicable()) {
-        result = info;
-        if (constructor == null) {
-          constructor = info.getElement();
+      if (staticFactory instanceof MethodCandidateInfo info) {
+        if (info.isApplicable()) {
+          result = info;
+          if (constructor == null) {
+            constructor = info.getElement();
+          }
+        }
+        else {
+          PsiJavaCodeReferenceElement reference = newExpression.getClassOrAnonymousClassReference();
+          inapplicableDiamond = reference == null ? null : reference.getParameterList();
         }
       }
     }
@@ -1311,6 +1318,12 @@ final class ExpressionChecker {
     if (myVisitor.hasErrorResults()) return;
 
     if (result.isApplicable()) {
+      if (inapplicableDiamond != null) {
+        // The target type makes the constructor applicable, but the diamond needs an applicable static factory (JLS 15.9.3)
+        myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_DIAMOND_INFERENCE_FAILURE.create(
+          inapplicableDiamond, PsiDiamondType.DiamondInferenceResult.NULL_RESULT));
+        return;
+      }
       checkVarargParameterErasureToBeAccessible(result, constructorCall);
       if (myVisitor.hasErrorResults()) return;
       checkIncompatibleType(constructorCall, result, constructorCall);

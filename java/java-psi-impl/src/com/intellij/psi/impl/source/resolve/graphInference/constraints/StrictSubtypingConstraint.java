@@ -10,12 +10,14 @@ import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiCapturedWildcardType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
@@ -35,6 +37,12 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
   private PsiType myS;
   private PsiType myT;
   private final boolean myCapture;
+  /**
+   * False for the component types of arrays: javac does not capture them.
+   *
+   * @see #getCapturedSubstitutor
+   */
+  private final boolean myCaptureSubtype;
 
   //t < s
   public StrictSubtypingConstraint(PsiType t, PsiType s) {
@@ -43,9 +51,14 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
   //t < s
   public StrictSubtypingConstraint(PsiType t, PsiType s, boolean capture) {
+    this(t, s, capture, true);
+  }
+
+  private StrictSubtypingConstraint(PsiType t, PsiType s, boolean capture, boolean captureSubtype) {
     myT = t;
     myS = s;
     myCapture = capture;
+    myCaptureSubtype = captureSubtype;
   }
 
   @Override
@@ -114,7 +127,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
       final PsiType tComponentType = ((PsiArrayType)myT).getComponentType();
       final PsiType sComponentType = ((PsiArrayType)sType).getComponentType();
       if (!(tComponentType instanceof PsiPrimitiveType) && !(sComponentType instanceof PsiPrimitiveType)) {
-        constraints.add(new StrictSubtypingConstraint(tComponentType, sComponentType, myCapture));
+        constraints.add(new StrictSubtypingConstraint(tComponentType, sComponentType, myCapture, false));
         return true;
       }
       return sComponentType instanceof PsiPrimitiveType && sComponentType.equals(tComponentType);
@@ -163,9 +176,18 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
         final PsiSubstitutor tSubstitutor = TResult.getSubstitutor();
         final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(CClass, SClass, substitutor);
         if (sSubstitutor != null) {
+          PsiSubstitutor capturedSSubstitutor = null;
           for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(CClass)) {
             final PsiType tSubstituted = tSubstitutor.substitute(parameter);
-            final PsiType sSubstituted = sSubstitutor.substitute(parameter);
+            PsiType sSubstituted = sSubstitutor.substitute(parameter);
+            if (isSuperWildcard(tSubstituted) && isSuperWildcard(sSubstituted)) {
+              if (capturedSSubstitutor == null) {
+                capturedSSubstitutor = getCapturedSubstitutor(session, CClass);
+              }
+              if (capturedSSubstitutor != PsiSubstitutor.EMPTY) {
+                sSubstituted = capturedSSubstitutor.substitute(parameter);
+              }
+            }
             if (tSubstituted == null ^ sSubstituted == null) {
               return false;
             }
@@ -261,6 +283,37 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     }
     PsiType usage = hadUpperBound && !recorded ? myS.withNullability(nullability.join(TypeNullability.UNKNOWN)) : myS;
     InferenceVariable.addBound(myT, usage, InferenceBound.LOWER, session);
+  }
+
+  private static boolean isSuperWildcard(PsiType type) {
+    return type instanceof PsiWildcardType && ((PsiWildcardType)type).isSuper();
+  }
+
+  /**
+   * javac 9+ applies the capture conversion to a proper subtype with wildcard type arguments.
+   * The supertypes of such a type are the supertypes of its capture (JLS 4.10.2).
+   * Thus {@code Predicate<? super T> <: Predicate<? super α>} reduces to {@code α <: CAP of ? super T}, not to {@code α <: T}.
+   * javac creates a fresh capture at each check, so an inference variable with such an upper bound
+   * cannot be instantiated in a consistent way.
+   * <p>
+   * The capture is used only to compare two {@code ? super} type arguments.
+   * The capture variables of this session are not fresh, so other uses would accept the code that javac rejects.
+   *
+   * @return the substitutor of {@code containingClass} for the captured subtype,
+   * or {@link PsiSubstitutor#EMPTY} if the capture is not applicable
+   */
+  private @NotNull PsiSubstitutor getCapturedSubstitutor(@NotNull InferenceSession session, @NotNull PsiClass containingClass) {
+    PsiElement context = session.getContext();
+    if (!myCaptureSubtype || !(myS instanceof PsiClassType) || context == null || !session.isProperType(myS)) {
+      return PsiSubstitutor.EMPTY;
+    }
+    PsiType captured = PsiUtil.captureToplevelWildcards(myS, context);
+    if (captured == myS || !(captured instanceof PsiClassType)) return PsiSubstitutor.EMPTY;
+    PsiClassType.ClassResolveResult capturedResult = ((PsiClassType)captured).resolveGenerics();
+    PsiClass capturedClass = capturedResult.getElement();
+    if (capturedClass == null) return PsiSubstitutor.EMPTY;
+    PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(containingClass, capturedClass, capturedResult.getSubstitutor());
+    return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
   }
 
   private static @NotNull PsiType adjustBoundNullity(@NotNull PsiType bound, @NotNull PsiType other) {
