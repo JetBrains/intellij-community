@@ -179,7 +179,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = f
-      #└ TYPE def f(x: Unknown, y: Unknown, z: Unknown) -> int
+      #└ TYPE def f(x: Unknown, y: Unknown = ..., z: Unknown = ...) -> int
       """.trimIndent())
 
     @Test
