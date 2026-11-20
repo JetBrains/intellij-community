@@ -213,6 +213,35 @@ class PythonDocumentationApiTest : PyCodeInsightTestCase() {
   }
 
   @Test
+  @TestFor(issues = ["PY-65518"])
+  fun `an optional callable is parenthesized as a signature but not as a hint`() {
+    inFile("""
+      from typing import Callable
+
+      def f(x: Callable[[int], str] | None): pass
+    """) {
+      val type = typeOf(parameter("f"))
+      assertEquals("((int) -> str) | None", PythonDocumentationProvider.getTypeName(type, context))
+      assertEquals("Callable[[int], str] | None", PythonDocumentationProvider.getTypeHint(type, context))
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-65518"])
+  fun `an optional intersection is parenthesized as a type name but hinted as Any`() {
+    inFile("""
+      class A: ...
+      class B: ...
+
+      def f(x: A & B | None): pass
+    """) {
+      val type = typeOf(parameter("f"))
+      assertEquals("(A & B) | None", PythonDocumentationProvider.getTypeName(type, context))
+      assertEquals("Any | None", PythonDocumentationProvider.getTypeHint(type, context))
+    }
+  }
+
+  @Test
   fun `a hint can be rendered with fully qualified names`() {
     inFile("""
       from mod import C

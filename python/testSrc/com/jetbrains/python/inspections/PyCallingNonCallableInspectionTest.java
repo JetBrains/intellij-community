@@ -23,7 +23,7 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
         from typing import Callable
 
         def f(x: Callable[[int], None] | None):
-            <warning descr="Member 'None' of '(int) -> None | None' is not callable">x(1)</warning>
+            <warning descr="Member 'None' of '((int) -> None) | None' is not callable">x(1)</warning>
         """);
   }
 
