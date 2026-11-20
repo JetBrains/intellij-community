@@ -30,7 +30,6 @@ final class MixedListFactory extends SEResultsListFactory {
   MixedListFactory() {
     prioritizedContributors.add(CalculatorSEContributor.class.getName());
     prioritizedContributors.add("CommandsContributor");
-    prioritizedContributors.add(TopHitSEContributor.class.getSimpleName());
     if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) {
       prioritizedContributors.add(RecentFilesSEContributor.class.getSimpleName());
     }

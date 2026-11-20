@@ -165,13 +165,15 @@ class SeProviderInitializationGuard(
     const val DEFAULT_MAX_COOLDOWN_OPENINGS: Int = 32
 
     /**
-     * The factories of the Files, Classes, Symbols, Actions and Text contributors.
+     * The factories of the Files, Classes, Symbols, Actions, Text and Top Hit providers.
      */
     val DEFAULT_EXEMPT_FACTORY_IDS: Set<String> = setOf(SeProviderIdUtils.FILES_ID,
                                                         SeProviderIdUtils.CLASSES_ID,
                                                         SeProviderIdUtils.SYMBOLS_ID,
                                                         SeProviderIdUtils.ACTIONS_ID,
-                                                        SeProviderIdUtils.TEXT_ID)
+                                                        SeProviderIdUtils.TEXT_ID,
+                                                        SeProviderIdUtils.TOP_HIT_ID,
+                                                        SeProviderIdUtils.TOP_HIT_HOST_ID)
 
     fun getInstance(): SeProviderInitializationGuard = service<SeProviderInitializationGuardHolder>().guard
   }

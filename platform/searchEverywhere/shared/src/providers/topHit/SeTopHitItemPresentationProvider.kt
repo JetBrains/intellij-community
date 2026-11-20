@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers.topHit
 
 import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.getOptionDescriptionIcon
@@ -12,8 +11,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
-import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
@@ -25,11 +25,13 @@ import com.intellij.util.IconUtil.toSize
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus
 
+private const val MAX_SETTING_TEXT_LENGTH = 60
+
 @ApiStatus.Internal
 object SeTopHitItemPresentationProvider {
   private val iconSize get() = JBUIScale.scale(16)
 
-  suspend fun getPresentation(item: Any, project: Project, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeItemPresentation =
+  suspend fun getPresentation(item: Any, project: Project): SeItemPresentation =
     readAction {
       when (item) {
         is AnAction -> {
@@ -50,12 +52,10 @@ object SeTopHitItemPresentationProvider {
           SeBasicItemPresentationBuilder()
             .withIcon(icon ?: EmptyIcon.ICON_16)
             .withText(text)
-            .withExtendedInfo(extendedInfo)
-            .withMultiSelectionSupported(isMultiSelectionSupported)
             .build()
          }
         is OptionDescription -> {
-          val text = TopHitSEContributor.getSettingText(item)
+          val text = getSettingText(item)
           val isChangedChangeable = item is Changeable && (item as Changeable).hasChanged()
 
           val attributes = if (isChangedChangeable) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
@@ -67,7 +67,7 @@ object SeTopHitItemPresentationProvider {
           if (item is BooleanOptionDescription) {
               SeOptionActionItemPresentation(
                   SeActionItemPresentation.Common(text, _switcherState = item.isOptionEnabled),
-                  isBooleanOption = true, isMultiSelectionSupported = isMultiSelectionSupported
+                  isBooleanOption = true, isMultiSelectionSupported = false
               )
           }
           else SeBasicItemPresentationBuilder()
@@ -75,8 +75,6 @@ object SeTopHitItemPresentationProvider {
             .withText(text)
             .withTextAttributes(attributes)
             .withSelectedTextAttributes(selectedAttributes)
-            .withExtendedInfo(extendedInfo)
-            .withMultiSelectionSupported(isMultiSelectionSupported)
             .build()
         }
         else -> {
@@ -85,10 +83,18 @@ object SeTopHitItemPresentationProvider {
           SeBasicItemPresentationBuilder()
             .withIcon(presentation?.getIcon(false) ?: EmptyIcon.ICON_16)
             .withText(presentation?.presentableText ?: item.toString())
-            .withExtendedInfo(extendedInfo)
-            .withMultiSelectionSupported(isMultiSelectionSupported)
             .build()
         }
       }
     }
+
+  /**
+   * Returns the text of [option] for the result list. The text has no XML entities and no trailing colon.
+   * A long text ends with an ellipsis.
+   */
+  private fun getSettingText(option: OptionDescription): @NlsSafe String {
+    val hit = StringUtil.first(StringUtil.unescapeXmlEntities(option.hit ?: option.option ?: ""), MAX_SETTING_TEXT_LENGTH, true)
+    // The mnemonics and the XML conversion can leave double spaces.
+    return hit.replace("  ", " ").trim().removeSuffix(":")
+  }
 }

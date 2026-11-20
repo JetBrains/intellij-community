@@ -1,9 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation
 
+import com.intellij.ide.SearchTopHitProvider
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.testFramework.SeProvidersTestFixture
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
 import com.intellij.testFramework.fixtures.lightJavaProjectFixture
@@ -15,6 +18,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import java.util.function.Consumer
 import kotlin.time.Duration.Companion.minutes
 
 private val TIMEOUT = 1.minutes
@@ -50,6 +54,21 @@ class SeProvidersTestFixtureTest {
     // The actions provider has no provider for the separate tab, and the legacy actions contributor is shown in a separate tab.
     assertSame(fixture.getProvider(SeProviderIdUtils.ACTIONS_ID, isAllTab = true),
                fixture.getProvider(SeProviderIdUtils.ACTIONS_ID, isAllTab = false))
+  }
+
+  @Test
+  fun `test the top hit provider finds a top hit without a legacy contributor`(): Unit = timeoutRunBlocking(TIMEOUT) {
+    val topHit = "SeFixtureTopHit"
+    val topHitProvider = object : SearchTopHitProvider {
+      override fun consumeTopHits(pattern: String, collector: Consumer<Any>, project: Project?) {
+        if (pattern == "needle") collector.accept(topHit)
+      }
+    }
+    ExtensionTestUtil.maskExtensions(SearchTopHitProvider.EP_NAME, listOf(topHitProvider), myFixture.testRootDisposable)
+    val fixture = SeProvidersTestFixture.create(myFixture.project, myFixture.testRootDisposable)
+
+    // No legacy contributor has the id of the top hits, so the session must create the provider from its own factory.
+    assertEquals(listOf<Any>(topHit), fixture.findElements(SeProviderIdUtils.TOP_HIT_HOST_ID, "needle", isAllTab = true))
   }
 
   @Test

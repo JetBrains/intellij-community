@@ -3,9 +3,7 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 
 import com.intellij.featureStatistics.ActionsLocalSummary
 import com.intellij.ide.actions.SearchEverywhereBaseAction
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.MatchMode
@@ -20,6 +18,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actionSystem.EditorAction
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.ACTION_PLUGIN_TYPE
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.GLOBAL_STATISTICS_DEFAULT
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.GLOBAL_STATISTICS_UPDATED
@@ -51,7 +50,7 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGen
 import com.intellij.util.Time
 
 internal class SearchEverywhereActionFeaturesProvider :
-  SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
+  SearchEverywhereElementFeaturesProvider(setOf(SeProviderIdUtils.ACTIONS_ID, SeProviderIdUtils.TOP_HIT_ID)) {
   object Fields {
     internal val IS_ACTION_DATA_KEY = EventFields.Boolean("is_action")
     internal val IS_TOGGLE_ACTION_DATA_KEY = EventFields.Boolean("is_toggle_action")

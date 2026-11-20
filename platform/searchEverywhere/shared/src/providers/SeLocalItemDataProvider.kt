@@ -24,6 +24,7 @@ import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePossibleInternalCommandsHandling
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
@@ -124,7 +125,8 @@ class SeLocalItemDataProvider(
 
   private val infoWithReportableId = mapOf(
     SeItemDataKeys.REPORTABLE_PROVIDER_ID to
-      if (SearchEverywhereUsageTriggerCollector.isReportable(provider)) provider.id else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID
+      if (SearchEverywhereUsageTriggerCollector.isReportable(provider)) SeProviderIdUtils.reportableId(provider.id)
+      else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID
   )
 
   @OptIn(ExperimentalAtomicApi::class)
@@ -182,7 +184,9 @@ class SeLocalItemDataProvider(
     params: SeParams,
     counter: AtomicInt,
   ): Flow<SeItemData> = getRawItems(params).mapNotNull { item ->
-    val itemData = SeItemDataFactory().createItemData(session, UUID.randomUUID().toString(), item, id, infoWithReportableId)
+    // A provider can find a command item. The selection of such an item sets the search text to the command.
+    val additionalInfo = if (item is SeCommandItem) infoWithReportableId + (SeItemDataKeys.IS_COMMAND to "true") else infoWithReportableId
+    val itemData = SeItemDataFactory().createItemData(session, UUID.randomUUID().toString(), item, id, additionalInfo)
     itemData?.also {
       SeLog.log(SeLog.ITEM_EMIT) {
         val count = counter.incrementAndFetch()

@@ -1,9 +1,7 @@
 package com.intellij.searchEverywhereMl.ranking.core.features
 
 import ai.grazie.emb.FloatTextEmbedding
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.getAnActionText
@@ -12,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.searchEverywhereMl.TextEmbeddingProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ENABLED
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_HIGH_PRIORITY
@@ -19,7 +18,7 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGen
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.TYPE_WEIGHT
 
 internal class SearchEverywhereGeneralActionFeaturesProvider
-  : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
+  : SearchEverywhereElementFeaturesProvider(setOf(SeProviderIdUtils.ACTIONS_ID, SeProviderIdUtils.TOP_HIT_ID)) {
   object Fields {
     internal val IS_ENABLED = EventFields.Boolean("is_enabled")
 
@@ -46,7 +45,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
       var similarityScore: Double? = null
 
       // (element is GotoActionModel.MatchedValue) for actions and option provided by 'ActionSearchEverywhereContributor'
-      // (element is OptionDescription || element is AnAction) for actions and option provided by 'TopHitSEContributor'
+      // (element is OptionDescription || element is AnAction) for actions and option provided by 'SeTopHitItemsProvider'
       if (element is GotoActionModel.MatchedValue) {
         add(ITEM_TYPE.with(element.type))
         add(TYPE_WEIGHT.with(element.valueTypeWeight))

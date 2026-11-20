@@ -7,6 +7,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.equalityProviders.platformProviderPriority
 import com.intellij.platform.searchEverywhere.equalityProviders.providerPriorityToSortWeight
 import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeSpellCorrectionAwareItem
@@ -103,7 +104,8 @@ sealed interface SearchResultAdapter {
 private class SeItemDataAdapter(private val seItemData: SeItemData) : SearchResultAdapter.Raw {
   override fun fetchRawItemIfExists(): Any? = seItemData.fetchItemIfExists()?.rawObject
 
-  override val provider: SearchResultProviderAdapter = SearchResultProviderAdapter.createAdapterFor(seItemData.providerId.value)
+  override val provider: SearchResultProviderAdapter =
+    SearchResultProviderAdapter.createAdapterFor(SeProviderIdUtils.reportableId(seItemData.providerId.value))
   override val originalWeight: Int = seItemData.weight
   override val providerWeight: Int = providerPriorityToSortWeight(platformProviderPriority(seItemData.providerId.value))
   override val isSemantic: Boolean = seItemData.isSemantic

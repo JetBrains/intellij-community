@@ -21,6 +21,12 @@ object SeProviderIdUtils {
 
   const val TOP_HIT_ID: String = "TopHitSEContributor"
   const val TOP_HIT_HOST_ID: String = "TopHitSEContributor-Host"
+
+  /**
+   * Returns the id that the statistics and the ML ranking use for the provider [providerId].
+   * The host Top Hit provider uses the id of the client Top Hit provider.
+   */
+  fun reportableId(providerId: String): String = if (providerId == TOP_HIT_HOST_ID) TOP_HIT_ID else providerId
 }
 
 @get:ApiStatus.Internal

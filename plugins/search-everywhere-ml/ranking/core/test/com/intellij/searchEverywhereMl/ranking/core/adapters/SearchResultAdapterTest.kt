@@ -99,6 +99,13 @@ class SearchResultAdapterTest {
   }
 
   @Test
+  fun `item data adapter of the host top hit provider has the id of the client top hit provider`() = runBlocking {
+    val adapter = SearchResultAdapter.createAdapterFor(itemDataFactory.create("element", SeProviderIdUtils.TOP_HIT_HOST_ID))
+
+    assertEquals(SeProviderIdUtils.TOP_HIT_ID, adapter.provider.id)
+  }
+
+  @Test
   fun `item data adapter has correct weight`() = runBlocking {
     val adapter = SearchResultAdapter.createAdapterFor(itemDataFactory.create("element", "id", weight = 42))
 

@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core.features
 
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.RegistryTextOptionDescriptor
 import com.intellij.ide.ui.search.BooleanOptionDescription
@@ -13,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ENABLED
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereOptionFeaturesProvider.Fields.FROM_CONFIGURABLE
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereOptionFeaturesProvider.Fields.IS_BOOLEAN_OPTION
@@ -21,7 +20,7 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereOpt
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereOptionFeaturesProvider.Fields.IS_REGISTRY_OPTION
 
 internal class SearchEverywhereOptionFeaturesProvider :
-  SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
+  SearchEverywhereElementFeaturesProvider(setOf(SeProviderIdUtils.ACTIONS_ID, SeProviderIdUtils.TOP_HIT_ID)) {
   object Fields {
     internal val IS_OPTION = EventFields.Boolean("is_option")
     internal val IS_BOOLEAN_OPTION = EventFields.Boolean("is_boolean_option")

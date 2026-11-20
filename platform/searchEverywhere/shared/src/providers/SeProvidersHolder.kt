@@ -19,7 +19,6 @@ import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider
 import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.toProviderId
 import kotlinx.coroutines.Dispatchers
@@ -96,9 +95,7 @@ class SeProvidersHolder(
         val provider: SeItemsProvider?
         val separateTabProvider: SeItemsProvider?
 
-        val providerFactoryId = providerFactory.id.let {
-          SeProviderId(if (it.startsWith(SeProviderIdUtils.TOP_HIT_ID)) SeProviderIdUtils.TOP_HIT_ID else it)
-        }
+        val providerFactoryId = SeProviderId(providerFactory.id)
         val pluginId = PluginManager.getPluginByClass(providerFactory.javaClass)?.pluginId?.idString
 
         if (providerFactory is SeWrappedLegacyContributorItemsProviderFactory) {
@@ -159,11 +156,7 @@ class SeProvidersHolder(
                                                   presentationProviders: Map<SeProviderId, SeLegacyItemPresentationProvider>,
                                                   session: SeSession,
                                                   logLabel: String): List<Pair<SeProviderId, SeLocalItemDataProvider>> {
-      val providerIds = supportedProviders.keys.map {
-        if (it.value.startsWith(SeProviderIdUtils.TOP_HIT_ID)) SeProviderId(SeProviderIdUtils.TOP_HIT_ID) else it
-      }
-
-      return legacyContributors.filter { !providerIds.contains(it.key) }.map {
+      return legacyContributors.filter { !supportedProviders.containsKey(it.key) }.map {
         it.key to SeLocalItemDataProvider(SeAdaptedItemsProvider(it.value, presentationProviders[it.key]), session, logLabel)
       }
     }

@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -48,7 +47,6 @@ class TestSearchEverywhereAction: AnAction() {
   private fun collectContributors(initEvent: AnActionEvent): List<SearchEverywhereContributor<*>> {
     val project = initEvent.project
     val res = mutableListOf<SearchEverywhereContributor<*>>()
-    res.add(TopHitSEContributor(project, null, null))
     res.add(PSIPresentationBgRendererWrapper.wrapIfNecessary(RecentFilesSEContributor(initEvent)))
     //res.add(RunConfigurationsSEContributor(project, null) { mySearchEverywhereUI.getSearchField().getText() })
 
