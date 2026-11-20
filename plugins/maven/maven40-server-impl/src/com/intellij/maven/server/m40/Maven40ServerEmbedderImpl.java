@@ -124,6 +124,7 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -148,6 +149,9 @@ import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertR
 import static java.util.Objects.requireNonNull;
 
 public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
+  // the standard output of the process, before a Maven invoker replaces System.out
+  private static final PrintStream ourStdOut = System.out;
+
   private final @NotNull Maven40Invoker myMavenInvoker;
   private final @NotNull Lookup myContainer;
 
@@ -242,6 +246,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       .userHome(userHomeDirectory)
       .mavenHome(mavenHomeDirectory)
       .cwd(cwd)
+      // Maven 4 replaces System.out with a JLine stream that writes each byte with a separate system call.
+      // With "-raw-streams", Maven sets System.out to this stream after that. The event spy prints a line per repository event there.
+      .stdOut(ourStdOut)
       .build();
 
     MavenParser mavenParser = new MavenParser() {
@@ -505,6 +512,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForNestedProjectDir(file.getParentFile()));
       }
       userProperties.putAll(customProperties);
+      // disable filtering artifacts based on remote repository prefix lists, unless a system property or a user property sets it
+      Properties systemProperties = request.getSystemProperties();
+      if (systemProperties.getProperty("aether.remoteRepositoryFilter.prefixes") == null) {
+        systemProperties.setProperty("aether.remoteRepositoryFilter.prefixes", "false");
+      }
       request.setPom(file);
       return request;
     }
