@@ -6,8 +6,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.util.ThrowableConsumer
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -35,6 +33,7 @@ import java.nio.file.Path
 @ApiStatus.Experimental
 class NioFileChooserBuilder {
   private var descriptor: FileChooserDescriptor = FileChooserDescriptorFactory.singleFile()
+  private var pathValidator: ThrowableConsumer<List<Path>, Exception>? = null
 
   /** @see FileChooserDescriptor.isChooseFiles */
   fun withChooseFiles(chooseFiles: Boolean): NioFileChooserBuilder = withKind(chooseFiles = chooseFiles)
@@ -112,14 +111,18 @@ class NioFileChooserBuilder {
    * When [validator] throws an exception, the file chooser shows its message and stays open.
    * The check runs after the checks that the builder already has.
    *
-   * @see FileChooserDescriptor.validateSelectedFiles
+   * To reject the paths, [validator] can throw [PathValidationException] with a localised message.
+   * The file chooser also accepts other exceptions, but it logs them as unexpected.
+   *
+   * @see PathValidationException
+   * @see NioFileChooserDialog.setPathValidator
    */
   fun withPathValidator(validator: ThrowableConsumer<List<Path>, Exception>): NioFileChooserBuilder = apply {
-    descriptor = object : FileChooserDescriptor(descriptor) {
-      override fun validateSelectedFiles(files: Array<out VirtualFile>) {
-        super.validateSelectedFiles(files)
-        validator.consume(files.mapNotNull { it.toNioPathOrNull() })
-      }
+    val previous = pathValidator
+    pathValidator = if (previous == null) validator
+    else ThrowableConsumer { paths ->
+      previous.consume(paths)
+      validator.consume(paths)
     }
   }
 
@@ -134,6 +137,7 @@ class NioFileChooserBuilder {
   @JvmOverloads
   fun chooseFiles(project: Project?, toSelect: Path?, parent: Component? = null): List<Path> {
     val chooser = FileChooserFactory.getInstance().createNioFileChooser(descriptor, project, parent)
+    pathValidator?.let { chooser.setPathValidator(it) }
     return if (toSelect != null) chooser.choose(toSelect) else chooser.choose()
   }
 

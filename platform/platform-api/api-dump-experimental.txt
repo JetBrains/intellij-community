@@ -192,6 +192,10 @@ a:com.intellij.openapi.fileChooser.FileChooserFactory
 *:com.intellij.openapi.fileChooser.NioFileChooserDialog
 - a:choose(java.nio.file.Path[],Z):java.util.List
 - bs:choose$default(com.intellij.openapi.fileChooser.NioFileChooserDialog,java.nio.file.Path[],Z,I,java.lang.Object):java.util.List
+*f:com.intellij.openapi.fileChooser.PathValidationException
+- java.lang.Exception
+- <init>(java.lang.String):V
+- getMessage():java.lang.String
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware

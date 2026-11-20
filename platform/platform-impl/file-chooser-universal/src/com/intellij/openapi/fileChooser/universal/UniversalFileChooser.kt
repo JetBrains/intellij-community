@@ -30,6 +30,7 @@ import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.NioFileChooserDialog
 import com.intellij.openapi.fileChooser.PathChooserDialog
+import com.intellij.openapi.fileChooser.PathValidationException
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooser.Panel
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooser.toVirtualFile
@@ -82,6 +83,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
+import com.intellij.util.ThrowableConsumer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.JBUI
@@ -180,6 +182,7 @@ object UniversalFileChooser {
     private val preselectPath: (suspend () -> Path?)? = null
   ) : DialogWrapper(project, parent, true, IdeModalityType.IDE), FileChooserDialog, PathChooserDialog, NioFileChooserDialog {
     private lateinit var mainPanel: Panel
+    private var pathValidator: ThrowableConsumer<List<Path>, Exception>? = null
 
     init {
       init()
@@ -259,13 +262,48 @@ object UniversalFileChooser {
 
     fun getSelectedFiles(): List<Path> = mainPanel.getSelectedFiles()
 
+    override fun setPathValidator(validator: ThrowableConsumer<List<Path>, Exception>?) {
+      pathValidator = validator
+    }
+
     override fun doOKAction() {
       // Before confirming, resolve the path typed in the text field when it diverges from the tree selection
       mainPanel.confirmOk {
-        getSelectedFiles().firstOrNull()?.let { lastSelected ->
+        val selection = getSelectedFiles()
+        if (!validateSelectedPaths(selection)) return@confirmOk
+        selection.firstOrNull()?.let { lastSelected ->
           FileChooserUtil.setLastOpenedFile(project, lastSelected)
         }
         performOkAction()
+      }
+    }
+
+    /**
+     * Checks [paths] with [pathValidator]. The validation can do I/O, so it runs on [Dispatchers.IO]
+     * and shows a modal progress when it takes long.
+     * When the validation fails, shows an error dialog and returns false. The file chooser then stays open.
+     * A [PathValidationException] is an expected rejection. Other exceptions are logged as unexpected.
+     */
+    private fun validateSelectedPaths(paths: List<Path>): Boolean {
+      val validator = pathValidator ?: return true
+      if (paths.isEmpty()) return true
+      try {
+        val progressTitle = IdeBundle.message("universal.file.chooser.progress.validating.files")
+        runWithModalProgressBlocking(ModalTaskOwner.component(contentPane), progressTitle) {
+          withContext(Dispatchers.IO) { validator.consume(paths) }
+        }
+        return true
+      }
+      catch (e: PathValidationException) {
+        LOG.debug { "Dialog.validateSelectedPaths: the validator rejected $paths: ${e.message}" }
+        Messages.showErrorDialog(contentPane, e.message, title)
+        return false
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        LOG.warn("Dialog.validateSelectedPaths: the validation of $paths failed unexpectedly", e)
+        Messages.showErrorDialog(contentPane, e.message, title)
+        return false
       }
     }
 
