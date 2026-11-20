@@ -13,8 +13,13 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
@@ -24,6 +29,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
@@ -69,6 +75,28 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
 
   public void testDefaultConstructor() {
     doTestInplaceRename("HeadlessHorseman");
+  }
+
+  public void testDefaultConstructorTwice() {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    for (String newName : List.of("SomeClass2", "SomeClass3")) {
+      PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+      assertNotNull(element);
+      CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), newName, getEditor(), element);
+    }
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testDefaultConstructorAfterClassNameTyped() {
+    configureFromFileText("SomeClass.java", "class SomeClass {}");
+    PsiClass someClass = ((PsiJavaFile)getFile()).getClasses()[0];
+    assertNotNull(LightDefaultConstructor.create(someClass));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().replaceString(6, 15, "Other"));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiClass otherClass = ((PsiJavaFile)getFile()).getClasses()[0];
+    PsiMethod constructor = LightDefaultConstructor.create(otherClass);
+    assertNotNull(constructor);
+    assertEquals("Other", constructor.getName());
   }
 
   public void testMultipleConstructors() {

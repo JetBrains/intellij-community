@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.openapi.util.Key;
@@ -84,7 +84,7 @@ public class LightDefaultConstructor extends LightMethod implements SyntheticEle
   @Nullable
   public static PsiMethod create(PsiClass aClass) {
     PsiMethod constructor = aClass.getUserData(DEFAULT_CONSTRUCTOR);
-    if (constructor != null) return constructor;
+    if (constructor != null && constructor.getName().equals(aClass.getName())) return constructor;
 
     if (aClass.isInterface()
         || aClass.isRecord()
@@ -106,5 +106,12 @@ public class LightDefaultConstructor extends LightMethod implements SyntheticEle
     LightDefaultConstructor defaultConstructor = new LightDefaultConstructor(nonPhysical, aClass);
     aClass.putUserData(DEFAULT_CONSTRUCTOR, defaultConstructor);
     return defaultConstructor;
+  }
+
+  public static void setName(@NotNull PsiClass aClass, @NotNull String newName) {
+    PsiMethod constructor = aClass.getUserData(DEFAULT_CONSTRUCTOR);
+    if (constructor != null) {
+      constructor.setName(newName);
+    }
   }
 }
