@@ -23,6 +23,7 @@ import kotlin.experimental.or
  * @property persistentCount the number of entries whose policies can require a full traversal.
  * @property subtreeFlavorFlags the combined flavor flags used for query pruning.
  * @property aggregate the sum of marker measures within this subtree.
+ * @property pointsOnly whether every entry is a point with measure zero.
  * @property changedParentMask the mask of parent links that this node must publish for its children.
  * Bit 0 selects [left], and bit 1 selects [right].
  * A clear bit means that the child inherits its parent link from an earlier version.
@@ -40,6 +41,7 @@ internal class PMarkerNode private constructor(
   val persistentCount: Int,
   val subtreeFlavorFlags: Byte,
   val aggregate: Int,
+  val pointsOnly: Boolean,
   private val changedParentMask: Byte,
 ) {
   constructor(
@@ -60,6 +62,7 @@ internal class PMarkerNode private constructor(
     (if (entry.policy.isPersistent) 1 else 0) + (left?.persistentCount ?: 0) + (right?.persistentCount ?: 0),
     entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0),
     entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0),
+    pointsOnly(entry, left, right),
     changedParentMask(version, entry, left, right, lazyDelta, source),
   )
 
@@ -85,10 +88,14 @@ internal class PMarkerNode private constructor(
     version, state, entry, left, right, height, minimumStart, canShiftAtStart(entry, left, right, lazyDelta), maximumEnd, persistentCount,
     if (updateAggregates) entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0) else subtreeFlavorFlags,
     if (updateAggregates) entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0) else aggregate,
+    pointsOnly(entry, left, right),
     changedParentMask,
   )
 
   companion object {
+    private fun pointsOnly(entry: MarkerEntry, left: PMarkerNode?, right: PMarkerNode?): Boolean =
+      entry.nodeStart == entry.nodeEnd && entry.measure == 0 && left?.pointsOnly != false && right?.pointsOnly != false
+
     private fun minimumStart(entry: MarkerEntry, left: PMarkerNode?, delta: Int): Int =
       if (left == null) entry.nodeStart else left.minimumStart + delta
 
@@ -398,7 +405,7 @@ internal class PMarkerNodeHistory<T : Any> {
     }
 
     /** Processes at most [limit] collection notifications. */
-    private fun collect(limit: Int) {
+    fun collect(limit: Int) {
       repeat(limit) {
         val reference = references.poll() ?: return
         (reference as HistoryReference<*>).reclaim()

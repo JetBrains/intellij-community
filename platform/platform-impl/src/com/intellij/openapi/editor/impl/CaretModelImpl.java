@@ -542,7 +542,12 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     } else {
       performCaretMergingAfterCurrentOperation = true;
       try {
-        runnable.run();
+        if (snapshotMarkerStorage == null) {
+          runnable.run();
+        }
+        else {
+          snapshotMarkerStorage.runInBatch(runnable);
+        }
         mergeOverlappingCaretsAndSelections();
       } finally {
         performCaretMergingAfterCurrentOperation = false;

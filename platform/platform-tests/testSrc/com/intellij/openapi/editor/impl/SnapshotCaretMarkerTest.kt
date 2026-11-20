@@ -1,11 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.actionSystem.TypedAction
+import com.intellij.openapi.editor.impl.marker.PMarkerRelocationRoot
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
+import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -20,6 +25,109 @@ import org.junit.jupiter.api.Test
 @TestApplication
 @UsePMarkerImplementation
 class SnapshotCaretMarkerTest {
+  @Test
+  fun `typed actions publish caret relocations once per batch`(): Unit = timeoutRunBlocking {
+    val count = 32
+    val result = withEditor("  \n".repeat(count)) { editor ->
+      editor.caretModel.primaryCaret.moveToOffset(1)
+      for (line in 1 until count) editor.caretModel.addCaret(VisualPosition(line, 1))
+      val marker = positionMarker(editor.caretModel.primaryCaret)
+      val before = rootVersion(marker.currentRootReference().get())
+      TypedAction.getInstance().actionPerformed(editor, 'a', DataContext.EMPTY_CONTEXT)
+      Triple(rootVersion(marker.currentRootReference().get()) - before, editor.document.text, editor.caretModel.allCarets.map { it.offset })
+    }
+    assertThat(result.first).isBetween(1L, 3L)
+    assertThat(result.second).isEqualTo(" a \n".repeat(count))
+    assertThat(result.third).isEqualTo(List(count) { it * 4 + 2 })
+  }
+
+  @Test
+  fun `an interrupted batch publishes its moves and allows another batch`(): Unit = timeoutRunBlocking {
+    val result = withEditor("abcdef") { editor ->
+      val caret = editor.caretModel.primaryCaret
+      val interrupted = try {
+        editor.caretModel.runBatchCaretOperation {
+          caret.moveToOffset(3)
+          throw BatchAbort()
+        }
+        false
+      }
+      catch (_: BatchAbort) {
+        true
+      }
+      caret.moveToOffset(4)
+      Triple(interrupted, caret.offset, positionMarker(caret).currentRootReference().get() is PMarkerRelocationRoot)
+    }
+    assertThat(result.first).isTrue()
+    assertThat(result.second).isEqualTo(4)
+    assertThat(result.third).isFalse()
+  }
+
+  private class BatchAbort : RuntimeException()
+
+  private fun rootVersion(root: PMarkerRoot): Long {
+    val version = root.javaClass.getDeclaredField("version").apply { isAccessible = true }.get(root)
+    return version.javaClass.getDeclaredField("number").apply { isAccessible = true }.getLong(version)
+  }
+
+  @Test
+  fun `caret batches retain intermediate positions and reuse marker handles`(): Unit = timeoutRunBlocking {
+    val result = withEditor("abcdef") { editor ->
+      val caret = editor.caretModel.primaryCaret
+      val marker = positionMarker(caret)
+      val original = marker.currentRootReference().get()
+      val roots = ArrayList<PMarkerRoot>()
+      editor.caretModel.runBatchCaretOperation {
+        caret.moveToOffset(2)
+        roots.add(marker.currentRootReference().get())
+        caret.moveToOffset(4)
+        roots.add(marker.currentRootReference().get())
+      }
+      val allRoots = buildList {
+        add(original)
+        addAll(roots)
+        add(marker.currentRootReference().get())
+      }
+      allRoots to (positionMarker(caret) === marker)
+    }
+    assertThat(result.second).isTrue()
+    val offsets = result.first.map { root ->
+      root.overlappingIterator(0, 6, 0).asSequence().single().nodeStart
+    }
+    assertThat(offsets).containsExactly(0, 2, 4, 4)
+    assertThat(result.first.last()).isNotInstanceOf(PMarkerRelocationRoot::class.java)
+  }
+
+  @Test
+  fun `typing across a caret batch keeps snapshots consistent with caret reads`(): Unit = timeoutRunBlocking {
+    val result = withEditor("  \n  \n  ") { editor ->
+      val first = editor.caretModel.primaryCaret
+      first.moveToOffset(1)
+      editor.caretModel.addCaret(VisualPosition(1, 1))
+      editor.caretModel.addCaret(VisualPosition(2, 1))
+      val carets = editor.caretModel.allCarets
+      val markers = carets.map { positionMarker(it) }
+      val roots = ArrayList<Pair<PMarkerRoot, List<Int>>>()
+      editor.caretModel.runBatchCaretOperation {
+        for (caret in carets.asReversed()) {
+          val offset = caret.offset
+          editor.document.insertString(offset, "a")
+          caret.moveToOffset(offset + 1)
+          roots.add(markers.first().currentRootReference().get() to carets.map { it.offset })
+        }
+      }
+      Triple(editor.document.text, roots, markers)
+    }
+    assertThat(result.first).isEqualTo(" a \n a \n a ")
+    for ((root, offsets) in result.second) {
+      assertThat(result.third.map { PMarkerResolution.startOffset(root.resolve(it.markerHandle)) }).isEqualTo(offsets)
+    }
+    assertThat(result.second.last().second).containsExactly(2, 6, 10)
+  }
+
+  private fun positionMarker(caret: Caret): SnapshotRangeMarkerImpl =
+    CaretImpl::class.java.getDeclaredField("myPositionMarker").apply { isAccessible = true }.get(caret) as SnapshotRangeMarkerImpl
+
   @Test
   fun `caret and selection follow document edits`(): Unit = timeoutRunBlocking {
     val state = withEditor("abcdef") { editor ->

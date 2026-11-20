@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.MarkerTransformResult
+import com.intellij.openapi.editor.impl.marker.PMarkerRelocationRoot
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil
 internal class SnapshotCaretMarkerStorage(
   val document: DocumentImpl,
 ) {
+  private var batching: Boolean = false
   private var rootBeforeChange: PMarkerRoot? = null
   private var affectedHandles: List<SnapshotMarkerReference<SnapshotCaretMarker>> = emptyList()
   val rootStore: SnapshotMarkerRootStore<SnapshotCaretMarker> = SnapshotMarkerRootStore(
@@ -54,6 +56,29 @@ internal class SnapshotCaretMarkerStorage(
     rootStore.dispose(document.snapshotMarkerStores)
     rootBeforeChange = null
     affectedHandles = emptyList()
+  }
+
+  fun runInBatch(runnable: Runnable) {
+    check(!batching)
+    batching = true
+    try {
+      runnable.run()
+    }
+    finally {
+      batching = false
+      if (rootStore.root(currentSnapshot()) is PMarkerRelocationRoot) {
+        rootStore.updateCurrentRoot { PMarkerRelocationRoot.finish(it) }
+      }
+    }
+  }
+
+  fun movePositionMarker(marker: SnapshotCaretMarker, offset: Int) {
+    val entry = PMarkerRoot.MarkerEntry(
+      marker.markerHandle, offset, offset, POSITION_SPEC, marker.flavorFlags, policy = CaretPositionMarkerPolicy,
+    )
+    rootStore.updateCurrentRoot { root ->
+      if (marker.isDisposed()) root else PMarkerRelocationRoot.move(root, entry, defer = batching)
+    }
   }
 
   fun positionSpec(): Byte = POSITION_SPEC

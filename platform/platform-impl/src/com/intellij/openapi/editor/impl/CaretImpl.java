@@ -501,9 +501,15 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   private void updateOffsetsFromLogicalPosition() {
     int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
     PositionMarker oldMarker = myPositionMarker;
-    if (!oldMarker.isValid() || oldMarker.getStartOffset() != offset || oldMarker.getEndOffset() != offset) {
-      myPositionMarker = createPositionMarker(offset);
-      oldMarker.dispose();
+    boolean markerValid = oldMarker.isValid();
+    if (!markerValid || oldMarker.getStartOffset() != offset || oldMarker.getEndOffset() != offset) {
+      if (markerValid && oldMarker instanceof SnapshotPositionMarker marker) {
+        marker.storage.movePositionMarker(marker, offset);
+      }
+      else {
+        myPositionMarker = createPositionMarker(offset);
+        oldMarker.dispose();
+      }
     }
     myLeansTowardsLargerOffsets = myLogicalCaret.leansForward;
     myLogicalColumnAdjustment = myLogicalCaret.column - myEditor.offsetToLogicalPosition(offset).column;
@@ -1734,8 +1740,11 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   }
 
   private final class SnapshotPositionMarker extends SnapshotCaretMarker implements PositionMarker {
+    private final SnapshotCaretMarkerStorage storage;
+
     private SnapshotPositionMarker(@NotNull SnapshotCaretMarkerStorage storage, int offset) {
       super(storage, offset, offset, storage.positionSpec(), storage.positionPolicy());
+      this.storage = storage;
     }
 
     @Override
