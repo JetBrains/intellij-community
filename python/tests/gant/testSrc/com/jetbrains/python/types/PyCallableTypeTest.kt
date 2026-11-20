@@ -38,7 +38,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       dd = spam if random.randint != 42 else Eggs2()
       var = dd if random.randint != 42 else dd
       expr = var()
-      # │    ^^^^^ WARNING Member 'Eggs2' of '() -> Literal["D"] | Eggs2' is not callable
+      # │    ^^^^^ WARNING Member 'Eggs2' of '(() -> Literal["D"]) | Eggs2' is not callable
       # └ TYPE Literal["D"] | Unknown
       """.trimIndent())
 
@@ -284,6 +284,93 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
 
       C().method(foo)
+      """.trimIndent())
+  }
+
+  /**
+   * A callable renders as `(...) -> R`, so it gets parentheses as a member of a `|` union or a `&` intersection.
+   * Without them, `((int) -> str) | None` and `(int) -> str | None` render the same.
+   */
+  @Nested
+  inner class CallableTypeRendering {
+    @Test
+    @TestFor(issues = ["PY-65518"])
+    fun `optional callable renders apart from callable returning optional`() = test("""
+      from typing import Callable
+
+      def f(optional_callable: Callable[[int], str] | None, callable_returning_optional: Callable[[int], str | None]):
+          expr1 = optional_callable
+      #   └ TYPE ((int) -> str) | None
+          expr2 = callable_returning_optional
+      #   └ TYPE (int) -> str | None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-65518"])
+    fun `callable in union with class is parenthesized`() = test("""
+      from typing import Callable
+
+      def f(x: Callable[[int], str] | int):
+          expr = x
+      #   └ TYPE ((int) -> str) | int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-65518"])
+    fun `callable in union with literals is parenthesized`() = test("""
+      from typing import Callable, Literal
+
+      def f(x: Callable[[], int] | Literal[1, 2]):
+          expr = x
+      #   └ TYPE Literal[1, 2] | (() -> int)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-65518"])
+    fun `callable in union with Unknown is parenthesized`() = test("""
+      from typing import Callable
+
+      def f(x: Callable[[int], str], y, flag: bool):
+          expr = x if flag else y
+      #   └ TYPE ((int) -> str) | Unknown
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-65518"])
+    fun `callable in intersection is parenthesized`() = test("""
+      from typing import Callable
+
+      class A: ...
+
+      def f(x: Callable[[], int] & A):
+          expr = x
+      #   └ TYPE (() -> int) & A
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-65518"])
+    fun `callable class instance and class object in union are not parenthesized`() = test("""
+      from typing import Callable
+
+      class C:
+          def __call__(self) -> int: ...
+
+      def f(x: C | type[C] | Callable[[], int]):
+          expr = x
+      #   └ TYPE C | type[C] | (() -> int)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-65518"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39)
+    fun `callable in Union and Optional syntax is not parenthesized`() = test("""
+      from typing import Callable, Optional, Union
+
+      def f(x: Optional[Callable[[int], str]], y: Union[Callable[[int], str], int]):
+          expr1 = x
+      #   └ TYPE Optional[(int) -> str]
+          expr2 = y
+      #   └ TYPE Union[(int) -> str, int]
       """.trimIndent())
   }
 
@@ -933,7 +1020,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       def foo[T: (Box[int], Box[str])](x: T):
           get = x.get
-      #   └ TYPE () -> int | () -> str
+      #   └ TYPE (() -> int) | (() -> str)
           expr = get()
       #   └ TYPE int | str
       """.trimIndent())
@@ -2510,7 +2597,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
               self.x = x
               ...
       expr = ClassA().x
-      #└ TYPE (int, str, str) -> None | None
+      #└ TYPE ((int, str, str) -> None) | None
       """.trimIndent())
 
     @Test

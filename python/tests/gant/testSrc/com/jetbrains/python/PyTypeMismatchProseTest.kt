@@ -344,7 +344,7 @@ class PyTypeMismatchProseTest : PyCodeInsightTestCase() {
       actual = f3 or f4
     """)
     assertEquals("""
-      Not all members of '(b: int) -> None | (c: int) -> None' are assignable to 'C'
+      Not all members of '((b: int) -> None) | ((c: int) -> None)' are assignable to 'C'
         '(b: int) -> None' is not assignable to 'C'
           Expected a parameter named 'a', but found 'b'
         '(c: int) -> None' is not assignable to 'C'

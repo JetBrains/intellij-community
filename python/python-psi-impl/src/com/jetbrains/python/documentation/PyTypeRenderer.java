@@ -271,6 +271,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
 
     @Override
+    protected boolean needsParenthesesInUnion(@Nullable PyType member) {
+      return false;
+    }
+
+    @Override
     public @NotNull HtmlChunk visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
       // There is no way to represent weak unions through type hints
       return visitUnknownType();
@@ -511,7 +516,8 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
     if (unionType.getMembers().stream().anyMatch(it -> isUnknown(it))) {
       // Always put Unknown at the end of the union
-      return renderUnion(List.of(render(PyUnionType.unionOrUnknown(ContainerUtil.filter(unionType.getMembers(), it -> !isUnknown(it)))), visitUnknownType()));
+      var knownType = PyUnionType.unionOrUnknown(ContainerUtil.filter(unionType.getMembers(), it -> !isUnknown(it)));
+      return renderUnion(List.of(renderUnionMember(knownType), visitUnknownType()));
     }
     return renderUnion(ContainerUtil.map(unionType.getMembers(), this::renderUnionMember));
   }
@@ -520,10 +526,22 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     HtmlChunk rendered = render(member);
     // Add parentheses around intersections in unions when using | & syntax for clarity: (A & B) | C instead of A & B | C
     // Not needed for Union[...] syntax
-    if (member instanceof PyIntersectionType && isBitwiseOrUnionAvailable()) {
-      return PyTypeLayout.concat(styled("(", PyHighlighter.PY_PARENTHS), rendered, styled(")", PyHighlighter.PY_PARENTHS));
+    if (isBitwiseOrUnionAvailable() && needsParenthesesInUnion(member)) {
+      return wrapInParentheses(rendered);
     }
     return rendered;
+  }
+
+  protected boolean needsParenthesesInUnion(@Nullable PyType member) {
+    return member instanceof PyIntersectionType || isRenderedAsCallableSignature(member);
+  }
+
+  private static boolean isRenderedAsCallableSignature(@Nullable PyType type) {
+    return type instanceof PyCallableType && !(type instanceof PyClassLikeType);
+  }
+
+  private @NotNull HtmlChunk wrapInParentheses(@NotNull HtmlChunk chunk) {
+    return PyTypeLayout.concat(styled("(", PyHighlighter.PY_PARENTHS), chunk, styled(")", PyHighlighter.PY_PARENTHS));
   }
 
   @Override
@@ -554,12 +572,13 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   // TODO get rid of dedicated rendering for Optional
   private @NotNull HtmlChunk renderOptional(@NotNull PyUnionType type) {
-    HtmlChunk renderedType = render(ContainerUtil.find(type.getMembers(), t -> !isNoneType(t)));
+    PyType notNoneMember = ContainerUtil.find(type.getMembers(), t -> !isNoneType(t));
     if (isBitwiseOrUnionAvailable()) {
-      return joinWithOperator(List.of(renderedType, render(ContainerUtil.find(type.getMembers(), t -> isNoneType(t)))), "|");
+      return joinWithOperator(List.of(renderUnionMember(notNoneMember),
+                                      render(ContainerUtil.find(type.getMembers(), t -> isNoneType(t)))), "|");
     }
     return PyTypeLayout.concat(escaped(isRenderingFqn() ? "typing.Optional" : "Optional"), //NON-NLS
-                               inSquareBrackets(List.of(renderedType)));
+                               inSquareBrackets(List.of(render(notNoneMember))));
   }
 
   @Override
@@ -567,9 +586,8 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     return joinWithOperator(ContainerUtil.map(intersectionType.getMembers(), member -> {
       HtmlChunk rendered = render(member);
       // Add parentheses around unions in intersections when using | & syntax for clarity: (A | B) & C instead of A | B & C
-
-      if (member instanceof PyUnionType && isBitwiseOrUnionAvailable()) {
-        return PyTypeLayout.concat(styled("(", PyHighlighter.PY_PARENTHS), rendered, styled(")", PyHighlighter.PY_PARENTHS));
+      if ((member instanceof PyUnionType && isBitwiseOrUnionAvailable()) || isRenderedAsCallableSignature(member)) {
+        return wrapInParentheses(rendered);
       }
       return rendered;
     }), "&");

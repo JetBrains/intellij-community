@@ -1391,7 +1391,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       def main() -> None:
           assert isinstance(g_b, B)
           expr = g_b
-      #   └ TYPE () -> None & B
+      #   └ TYPE (() -> None) & B
       """.trimIndent())
 
     @Test
