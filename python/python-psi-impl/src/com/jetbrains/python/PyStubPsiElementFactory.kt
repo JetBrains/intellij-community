@@ -120,7 +120,7 @@ import java.util.function.Function
 private typealias F = Function<in ASTNode, out PsiElement>
 
 /**
- * The stub-based Python PSI. It is the first `Pythonid.psiElementFactory` extension, so it replaces the AST-only default of
+ * The stub-based Python PSI. It overrides the [PyPsiElementFactory] service, so it replaces the AST-only default of
  * `intellij.python.ast` wherever `intellij.python.psi.impl` is loaded.
  */
 class PyStubPsiElementFactory : PyPsiElementFactory() {

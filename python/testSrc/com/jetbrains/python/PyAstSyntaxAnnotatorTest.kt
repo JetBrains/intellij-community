@@ -2,8 +2,9 @@
 package com.jetbrains.python
 
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.replaceService
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
@@ -24,7 +25,7 @@ import com.jetbrains.python.validation.PyAstSyntaxAnnotator
 class PyAstSyntaxAnnotatorTest : PyTestCase() {
   override fun setUp() {
     super.setUp()
-    ExtensionTestUtil.maskExtensions(PyPsiElementFactory.EP_NAME, listOf(PyAstPsiElementFactory()), testRootDisposable)
+    ApplicationManager.getApplication().replaceService(PyPsiElementFactory::class.java, PyAstPsiElementFactory(), testRootDisposable)
   }
 
   fun testBreakOutsideALoop() {

@@ -13,9 +13,9 @@
     <lang.parserDefinition language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiParserDefinition"/>
     <lang.ast.factory language="Python" implementationClass="com.jetbrains.python.ast.impl.PythonASTFactory"/>
     <projectService serviceImplementation="com.jetbrains.python.psi.PyAstElementGenerator"/>
-  </extensions>
-  <extensions defaultExtensionNs="Pythonid">
-    <!-- The AST-only PSI. intellij.python.psi.impl registers the stub-based PSI with order="first". -->
-    <psiElementFactory implementation="com.jetbrains.python.ast.impl.PyAstPsiElementFactory" order="last"/>
+    <!-- The AST-only PSI. intellij.python.psi.impl overrides it with the stub-based PSI. -->
+    <applicationService serviceInterface="com.jetbrains.python.PyPsiElementFactory"
+                        serviceImplementation="com.jetbrains.python.ast.impl.PyAstPsiElementFactory"
+                        open="true"/>
   </extensions>
 </idea-plugin>

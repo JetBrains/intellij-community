@@ -39,9 +39,6 @@
     <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor"
                     interface="com.jetbrains.python.PythonDialectsTokenSetContributor"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.psiElementFactory"
-                    interface="com.jetbrains.python.PyPsiElementFactory"
-                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="Pythonid">
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>

@@ -6,6 +6,7 @@ import com.intellij.testFramework.junit5.TestApplication;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.impl.PyAstPsiElementFactory;
 import com.jetbrains.python.debugger.PyEmptySignatureCacheManager;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
@@ -36,6 +37,7 @@ public class PythonBasicPluginProxiedServicesTest {
   /** The open defaults of the basic Python modules that {@code PythonCore} overrides. */
   private static final List<String> OVERRIDDEN_DEFAULT_KEYS = List.of(
     "com.jetbrains.python.PyLanguageFacade",
+    "com.jetbrains.python.PyPsiElementFactory",
     "com.jetbrains.python.debugger.PySignatureCacheManager"
   );
 
@@ -48,6 +50,7 @@ public class PythonBasicPluginProxiedServicesTest {
   public void eachListedServiceIsProxied() {
     Map<Class<?>, Object> defaults = new LinkedHashMap<>();
     defaults.put(PyLanguageFacade.class, new PyDefaultLanguageFacade());
+    defaults.put(PyPsiElementFactory.class, new PyAstPsiElementFactory());
     defaults.put(PySignatureCacheManager.class, new PyEmptySignatureCacheManager());
     assertThat(defaults.keySet()).extracting(Class::getName).containsExactlyElementsOf(OVERRIDDEN_DEFAULT_KEYS);
     for (var entry : defaults.entrySet()) {

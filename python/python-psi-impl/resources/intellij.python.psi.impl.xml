@@ -80,6 +80,11 @@
                         serviceImplementation="com.jetbrains.python.PyLanguageFacadeImpl"
                         overrides="true"/>
 
+    <!-- The stub-based PSI replaces the AST-only default of intellij.python.ast. -->
+    <applicationService serviceInterface="com.jetbrains.python.PyPsiElementFactory"
+                        serviceImplementation="com.jetbrains.python.PyStubPsiElementFactory"
+                        overrides="true"/>
+
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"
                     overrides="true"/>
@@ -1050,8 +1055,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
-    <!-- The stub-based PSI replaces the AST-only default of intellij.python.ast. -->
-    <psiElementFactory implementation="com.jetbrains.python.PyStubPsiElementFactory" order="first"/>
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.search.PySuperMethodsSearchExecutor"/>
     <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>

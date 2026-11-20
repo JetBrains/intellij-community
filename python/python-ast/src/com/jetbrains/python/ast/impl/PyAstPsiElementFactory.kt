@@ -142,8 +142,8 @@ private abstract class PyAstBaseElementImpl(node: ASTNode) : ASTWrapperPsiElemen
 
 /**
  * The AST-only Python PSI: each element is the `PyAst*` interface on an [ASTWrapperPsiElement], without a stub or resolve.
- * It is the `Pythonid.psiElementFactory` extension with `order="last"`, so a process without `intellij.python.psi.impl`
- * uses it: the JetBrains Client frontend and JetBrains Light before the smart mode.
+ * It is the open default of the [PyPsiElementFactory] service, so a process without `intellij.python.psi.impl` uses it:
+ * the JetBrains Client frontend and JetBrains Light before the smart mode.
  */
 class PyAstPsiElementFactory : PyPsiElementFactory() {
 

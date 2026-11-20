@@ -2,7 +2,8 @@
 package com.jetbrains.python
 
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -15,10 +16,10 @@ import java.util.function.Function
 /**
  * Creates the PSI for the Python element types of [PyElementTypes].
  *
- * The element types are shared constants. The PSI classes behind them come from the first extension of
- * `Pythonid.psiElementFactory` at call time. `intellij.python.ast` registers the AST-only default with `order="last"`,
- * and `intellij.python.psi.impl` registers the stub-based PSI with `order="first"`. JetBrains Light starts with the default
- * and switches to the stub-based PSI when PythonCore loads at the move to the smart mode.
+ * The element types are shared constants. The PSI classes behind them come from this application service each time an
+ * element type creates an element. `intellij.python.ast` registers the AST-only PSI as the open default, and
+ * `intellij.python.psi.impl` overrides it with the stub-based PSI. JetBrains Light starts with the default and switches to
+ * the stub-based PSI when PythonCore loads at the move to the smart mode.
  */
 @ApiStatus.Internal
 abstract class PyPsiElementFactory {
@@ -152,14 +153,8 @@ abstract class PyPsiElementFactory {
   open fun parseFileContents(node: ASTNode, languageLevel: LanguageLevel): ASTNode? = null
 
   companion object {
-    @JvmField
-    val EP_NAME: ExtensionPointName<PyPsiElementFactory> = ExtensionPointName("Pythonid.psiElementFactory")
-
-    /** The factory of the process: the first registered extension. */
+    /** The registered factory: the stub-based one when `intellij.python.psi.impl` is loaded, else the AST-only default. */
     @JvmStatic
-    fun current(): PyPsiElementFactory {
-      return EP_NAME.extensionList.firstOrNull()
-             ?: throw IllegalStateException("No ${EP_NAME.name} extension is registered; intellij.python.ast registers the default")
-    }
+    fun current(): PyPsiElementFactory = ApplicationManager.getApplication().service<PyPsiElementFactory>()
   }
 }

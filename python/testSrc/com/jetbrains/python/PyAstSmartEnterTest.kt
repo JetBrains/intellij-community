@@ -3,7 +3,8 @@ package com.jetbrains.python
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.testFramework.replaceService
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.ast.impl.PyAstPsiElementFactory
@@ -21,7 +22,7 @@ import com.jetbrains.python.psi.PyFile
 class PyAstSmartEnterTest : PyTestCase() {
   override fun setUp() {
     super.setUp()
-    ExtensionTestUtil.maskExtensions(PyPsiElementFactory.EP_NAME, listOf(PyAstPsiElementFactory()), testRootDisposable)
+    ApplicationManager.getApplication().replaceService(PyPsiElementFactory::class.java, PyAstPsiElementFactory(), testRootDisposable)
   }
 
   fun testFunction() = doTest("def foo<caret>", "def foo():\n    <caret>")
