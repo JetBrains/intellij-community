@@ -15,12 +15,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.MultiProjectToolWindowFactory
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowBalloonShowOptions
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
@@ -608,6 +610,18 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  fun `a notification of a presented tool window goes to the tool window of the frame owner`() = onEdt {
+    val managers = createManagers()
+    // as Find without a result: the tool window of the frame guest has no content, so no project has an entry
+    val firstToolWindow = managers.registerFromCode(first)
+    firstToolWindow.contentManager.removeContent(addContent(firstToolWindow), true)
+
+    managers.of(first).notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = ID, type = MessageType.INFO, htmlBody = "No results"))
+
+    assertThat(shownBalloons).describedAs("the pane of a frame guest is in no frame").containsExactly(owner.name)
+  }
+
+  @Test
   fun `a tool window that hides on empty content has an entry only with content`() = onEdt {
     val managers = createManagers()
     // as Find: the registration is not available, and the first content makes the tool window available
@@ -963,6 +977,7 @@ internal class FrameGuestToolWindowPresentationTest {
 
   private fun onEdt(test: suspend () -> Unit): Unit = timeoutRunBlocking {
     createdContent.clear()
+    shownBalloons.clear()
     withContext(Dispatchers.EDT) {
       test()
     }
@@ -1010,6 +1025,16 @@ internal class FrameGuestToolWindowPresentationTest {
       override fun getButtonManager(toolWindow: ToolWindow): ToolWindowButtonManager = buttonManager
 
       override fun getButtonManager(paneId: String): ToolWindowButtonManager = buttonManager
+
+      override fun notifyByBalloon(options: ToolWindowBalloonShowOptions) {
+        if (frameOwnerPresentation == null) {
+          // a headless manager has no pane for a balloon, so the test records the request of a project with a frame
+          shownBalloons.add(project.name)
+        }
+        else {
+          super.notifyByBalloon(options)
+        }
+      }
     }
     // an action finds the manager of a project through the service
     project.replaceService(ToolWindowManager::class.java, manager, disposable)
@@ -1053,6 +1078,9 @@ internal class FrameGuestToolWindowPresentationTest {
 
 /** The name of each project that got the content of its tool window. A name, because a static field must not hold a project. */
 private val createdContent = ArrayList<String>()
+
+/** The name of each project whose manager got a request to show a balloon in its frame. */
+private val shownBalloons = ArrayList<String>()
 
 private fun buttonManager(manager: ToolWindowManagerImpl): ToolWindowButtonManager {
   return manager.getButtonManager(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
