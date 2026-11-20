@@ -44,9 +44,16 @@ public abstract class LightQuickFixFileBasedTest implements FileBasedTestCaseHel
     return fileAfterSuffix.startsWith(LightQuickFixTestCase.AFTER_PREFIX) ? fileAfterSuffix.substring(LightQuickFixTestCase.AFTER_PREFIX.length()) : null;
   }
 
+  /**
+   * @return false if the action hint text is a prefix of the action text, like in {@link ActionHint#parse(com.intellij.psi.PsiFile, String, boolean)}
+   */
+  protected boolean isExactActionHintMatch() {
+    return true;
+  }
+
   @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
   @ArgumentsSource(FileBasedArgumentProvider.class)
   public void parameterized(String fileName) {
-    LightQuickFixParameterizedTestCase5Kt.doLightQuickFixFileTest(getFixture(), getTestDataPath(), fileName);
+    LightQuickFixParameterizedTestCase5Kt.doLightQuickFixFileTest(getFixture(), getTestDataPath(), fileName, isExactActionHintMatch());
   }
 }
