@@ -35,9 +35,12 @@ Write a body unless the change is mechanical (a typo, an import, a format pass).
 
 - The diff shows what changed. The body says why.
 - The first paragraph is the lead: the new state and its cause, in 1-3 sentences.
-- Then one paragraph per decision: what you chose, what you did not choose, and why. Write code names in backticks.
+- Then one paragraph for each decision that a reader could question: what you chose, what you did not choose, and
+  why. Skip an obvious decision and a detail that the diff shows. Write code names in backticks.
 - Do not report a test run, a build, or a test that fails also without the change. A commit in master compiles and
   passes its tests. Give a measurement that caused the change in the lead or in its decision.
+- Do not name a stage, a session or a step of a plan. A reader of the history does not have the plan. Say the
+  remaining work in words.
 
 ## Passing the message
 
