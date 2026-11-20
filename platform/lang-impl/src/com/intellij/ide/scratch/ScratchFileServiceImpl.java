@@ -233,7 +233,10 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
 
   private static void processOpenFiles(@NotNull BiConsumer<? super VirtualFile, ? super FileEditorManager> consumer) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      FileEditorManager editorManager = FileEditorManager.getInstance(project);
+      // A project can start its disposal after the list was read.
+      // A project without a created editor manager has no open files.
+      FileEditorManager editorManager = project.isDisposed() ? null : project.getServiceIfCreated(FileEditorManager.class);
+      if (editorManager == null) continue;
       for (VirtualFile file : editorManager.getOpenFiles()) {
         if (file.isValid() && !file.isDirectory()) {
           consumer.accept(file, editorManager);
