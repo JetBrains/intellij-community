@@ -750,6 +750,11 @@ object PyTypeChecker {
       return match(substitution, actual, context).getOrDefault(false)
     }
     if (actual !is PySelfType) {
+      // A class with an `Any` or an unresolved base, such as `NotImplementedType`, matches `Self` as `matchClasses` matches it to a class.
+      if (actual is PyClassType && actual.isDefinition == expected.isDefinition &&
+          PyUtil.hasUnresolvedAncestors(actual.pyClass, context.context)) {
+        return true
+      }
       // A final class has no subclass, so `Self` in it denotes the class itself. A class with own type parameters
       // is excluded: `Self` then denotes the class with those parameters, which the bare scope type cannot express.
       return PyTypingTypeProvider.isFinalClass(expected.pyClass, context.context) &&
