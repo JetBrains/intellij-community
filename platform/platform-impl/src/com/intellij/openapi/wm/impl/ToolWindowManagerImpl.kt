@@ -1662,18 +1662,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       else {
         orphanSlot = presentation.presentingUnregistering(toolWindow)
       }
-      if (!toolWindow.isPresented && info != null) {
-        // remove decorator and tool button from the screen - removing will also save current bounds
-        decorators.updateStateAndRemoveDecorator(info, entry, false)
-        // save recent appearance of a tool window
-        activeStack.remove(entry, true)
-        if (isStackEnabled) {
-          sideStack.remove(id)
+      if (!toolWindow.isPresented) {
+        if (info != null) {
+          // remove decorator from the screen - removing will also save current bounds
+          decorators.updateStateAndRemoveDecorator(info, entry, false)
+          // save recent appearance of a tool window
+          activeStack.remove(entry, true)
+          if (isStackEnabled) {
+            sideStack.remove(id)
+          }
         }
+        // A tool window that became available and was never shown has a stripe button and no layout info, see `toolWindowAvailable`.
         entry.removeStripeButton()
         // a test has no pane
         if (toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)) {
-          val toolWindowPane = getToolWindowPane(info.safeToolWindowPaneId)
+          val toolWindowPane = getToolWindowPane((info ?: entry.readOnlyWindowInfo).safeToolWindowPaneId)
           toolWindowPane.validate()
           toolWindowPane.repaint()
         }

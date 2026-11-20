@@ -283,6 +283,28 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  fun `the stripe button of a tool window that was never shown leaves the stripe with the last frame guest`() = onEdt {
+    val managers = createManagers()
+    managers.register(first)
+    val stripe = buttonManager(managers.owner).getStripeFor(ToolWindowAnchor.LEFT, false)
+    assertThat(stripe.getButtonFor(ID)).isNotNull().isSameAs(managers.owner.getEntry(ID)!!.stripeButton)
+    assertThat(managers.owner.layoutState.getInfo(ID)).describedAs("only a show gives the tool window a layout info").isNull()
+
+    managers.of(first).doUnregisterToolWindow(ID)
+
+    assertThat(managers.owner.getEntry(ID)).isNull()
+    assertThat(stripe.getButtons().filter { it.id == ID }).describedAs("the stripe of the frame owner").isEmpty()
+
+    managers.register(first)
+
+    val presenting = managers.owner.getEntry(ID)!!
+    val buttons = stripe.getButtons().filter { it.id == ID }
+    assertThat(buttons).describedAs("the stripe of the frame owner").hasSize(1)
+    assertThat(buttons.single()).isSameAs(presenting.stripeButton)
+    assertThat(buttons.single().toolWindow).describedAs("the button of the tool window that is registered now").isSameAs(presenting.toolWindow)
+  }
+
+  @Test
   fun `the tool window that presents only frame guests leaves its activation action when it leaves`() = onEdt {
     val managers = createManagers()
     val declared = declareActivationAction()
