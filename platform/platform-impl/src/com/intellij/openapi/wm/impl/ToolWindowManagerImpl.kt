@@ -1289,8 +1289,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow {
     ThreadingAssertions.assertEventDispatchThread()
 
-    // a frame guest registered the id first, and this frame owner got the tool window that presents the frame guests
-    presentation.registeredForGuests(task.id)?.let { return it }
+    // a frame guest registered the id first, and this frame owner put content into the tool window that presents the frame guests
+    presentation.placeholderWithOwnerContent(task.id)?.let { return it.toolWindow }
     if (isPresentedRegistration(task.data)) {
       return registerPresentedToolWindow(task.data)
     }
@@ -1344,15 +1344,18 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun registerToolWindow(task: RegisterToolWindowTaskData, buttonManager: ToolWindowButtonManager): ToolWindowEntry {
-    val result = registerToolWindow(
-      preparedTask = prepareRegisterToolWindowTask(task),
-      buttonManager = buttonManager,
-      layout = layoutState,
-      ensureToolWindowActionRegistered = true,
-    )
-    result.postTask?.invoke()
-    attachPresented(result.entry, task)
-    return result.entry
+    // a frame guest can register the id first: the tool window of this frame owner then takes the place of the one that presents the guests
+    return presentation.registerForOwner(task.id) {
+      val result = registerToolWindow(
+        preparedTask = prepareRegisterToolWindowTask(task),
+        buttonManager = buttonManager,
+        layout = layoutState,
+        ensureToolWindowActionRegistered = true,
+      )
+      result.postTask?.invoke()
+      attachPresented(result.entry, task)
+      result.entry
+    }
   }
 
   /**
@@ -1367,21 +1370,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   /**
    * Registers a tool window that has no content of its own and presents the tool windows of the frame guests with the id of
-   * [guestTask], see [ToolWindowManagerPresentation]. The tool window takes its look and its default place from [guestTask].
-   * It has a factory only when [guestTask] has one: a tool window without a factory gets a stripe button by default.
-   * The tool window is not available at first. It shows with the stored visible state when a frame guest gets an entry.
+   * [task], see [ToolWindowManagerPresentation], which makes [task]. The tool window is not available at first.
+   * It shows with the stored visible state when a frame guest gets an entry.
    */
-  internal fun registerPresentingToolWindow(guestTask: RegisterToolWindowTaskData): ToolWindowEntry {
-    val task = guestTask.copy(
-      component = null,
-      // the dumb mode of the frame owner must not hide the tool window of a frame guest
-      canWorkInDumbMode = true,
-      contentFactory = if (guestTask.contentFactory == null) null else PresentingToolWindowFactory,
-      // only a frame guest or content of the frame owner makes the tool window available, see `ToolWindowImpl.isAvailable`
-      shouldBeAvailable = false,
-      // as Find and Run: the tool window is on the stripe for the frame owner only while it has content of the frame owner
-      hideOnEmptyContent = true,
-    )
+  internal fun registerPresentingToolWindow(task: RegisterToolWindowTaskData): ToolWindowEntry {
     val paneId = layoutState.getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     val entry = registerToolWindow(task, getButtonManager(paneId))
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
@@ -1636,6 +1628,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     val entry = idToEntry.remove(id) ?: return
+    // the frame guests that the tool window presented
+    var orphanSlot: PresentingSlot? = null
     try {
       val toolWindow = entry.toolWindow
 
@@ -1646,7 +1640,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         activeStack.remove(entry, true)
       }
       else {
-        presentation.presentingUnregistered(id)
+        orphanSlot = presentation.presentingUnregistering(toolWindow)
       }
       if (!toolWindow.isPresented && info != null) {
         // remove decorator and tool button from the screen - removing will also save current bounds
@@ -1657,9 +1651,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           sideStack.remove(id)
         }
         entry.removeStripeButton()
-        val toolWindowPane = getToolWindowPane(info.safeToolWindowPaneId)
-        toolWindowPane.validate()
-        toolWindowPane.repaint()
+        // a test has no pane
+        if (toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)) {
+          val toolWindowPane = getToolWindowPane(info.safeToolWindowPaneId)
+          toolWindowPane.validate()
+          toolWindowPane.repaint()
+        }
       }
 
       if (!project.isDisposed) {
@@ -1670,6 +1667,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       // the entry is no longer in idToEntry, so nothing else disposes it
       Disposer.dispose(entry.disposable)
     }
+    // after the disposal: the frame guests get a new tool window with the id
+    orphanSlot?.let(presentation::presentingUnregistered)
   }
 
   internal fun saveFloatingOrWindowedState(entry: ToolWindowEntry, info: WindowInfoImpl) {

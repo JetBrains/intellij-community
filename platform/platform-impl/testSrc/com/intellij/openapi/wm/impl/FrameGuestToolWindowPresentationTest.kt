@@ -678,15 +678,73 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
-  fun `the code of the frame owner gets the tool window that presents the frame guests`() = onEdt {
+  fun `the tool window of the frame owner takes the place of the tool window that a frame guest registered first`() = onEdt {
+    val managers = createManagers()
+    val firstToolWindow = managers.registerFromCode(first)
+    addContent(firstToolWindow)
+    firstToolWindow.show()
+    val placeholder = managers.owner.getToolWindow(ID)
+
+    // as a plugin that loads in both projects: without the takeover, the second registration of the id throws
+    val own = managers.owner.registerToolWindow(task(), buttonManager(managers.owner)).toolWindow
+
+    assertThat(own).isNotSameAs(placeholder)
+    assertThat(managers.owner.getToolWindow(ID)).isSameAs(own)
+    assertThat(firstToolWindow.presentedBy).isSameAs(own)
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(owner, first)
+    assertThat(own.isVisible).describedAs("the tool window before it was visible").isTrue()
+    assertThat(managers.owner.getEntry(ID)!!.stripeButton).isNotNull()
+
+    managers.owner.presentation.select(ID, first)
+
+    assertThat(firstToolWindow.isVisible).isTrue()
+    assertThat(SwingUtilities.isDescendingFrom(firstToolWindow.decorator, own.decorator)).isTrue()
+  }
+
+  @Test
+  fun `the frame owner keeps the tool window of the frame guests when it has content of the owner`() = onEdt {
     val managers = createManagers()
     managers.registerFromCode(first)
+    val placeholder = managers.owner.getToolWindow(ID) as ToolWindowImpl
+    addContent(placeholder)
+
+    val registered = managers.owner.registerToolWindow(task(), buttonManager(managers.owner)).toolWindow
+
+    assertThat(registered).describedAs("a new tool window would lose the content").isSameAs(placeholder)
+  }
+
+  @Test
+  fun `the frame guests get a new tool window when the frame owner unregisters its tool window`() = onEdt {
+    val managers = createManagers()
+    val own = managers.owner.registerToolWindow(task(), buttonManager(managers.owner)).toolWindow
+    val firstToolWindow = managers.register(first)
+    firstToolWindow.show()
+    assertThat(firstToolWindow.isVisible).isTrue()
+
+    managers.owner.doUnregisterToolWindow(ID)
+
     val presenting = managers.owner.getToolWindow(ID)
+    assertThat(presenting).isNotNull().isNotSameAs(own)
+    assertThat(firstToolWindow.presentedBy).isSameAs(presenting)
+    assertThat(firstToolWindow.decorator!!.parent).describedAs("the decorator left the tool window that is gone").isNotSameAs(own.decorator)
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
 
-    // without it, a second registration of the id throws
-    val registered = managers.owner.registerToolWindow(RegisterToolWindowTask(id = ID, anchor = ToolWindowAnchor.LEFT))
+    firstToolWindow.show()
 
-    assertThat(registered).isSameAs(presenting)
+    assertThat(presenting!!.isVisible).isTrue()
+    assertThat(firstToolWindow.isVisible).isTrue()
+  }
+
+  @Test
+  fun `a tool window of the frame owner without frame guests leaves no tool window`() = onEdt {
+    val managers = createManagers()
+    managers.owner.registerToolWindow(task(), buttonManager(managers.owner))
+    managers.register(first)
+    managers.of(first).doUnregisterToolWindow(ID)
+
+    managers.owner.doUnregisterToolWindow(ID)
+
+    assertThat(managers.owner.getToolWindow(ID)).isNull()
   }
 
   /** Makes [owner] a frame owner without tool window content of its own, as the host of a JetBrains Light workspace. */
