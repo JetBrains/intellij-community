@@ -34,7 +34,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
@@ -42,13 +41,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpressionStatement;
@@ -770,8 +769,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       return Pair.create(visibleVars, Collections.emptySet());
     }
 
-    final VirtualFile vFile = positionFile.getVirtualFile();
-    final Document doc = vFile != null ? FileDocumentManager.getInstance().getDocument(vFile) : null;
+    final Document doc = PsiDocumentManager.getInstance(positionFile.getProject()).getLastCommittedDocument(positionFile);
     if (doc == null || doc.getLineCount() == 0 || line > (doc.getLineCount() - 1)) {
       return Pair.create(Collections.emptySet(), Collections.emptySet());
     }
