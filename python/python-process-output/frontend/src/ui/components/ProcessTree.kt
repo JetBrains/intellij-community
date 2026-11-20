@@ -191,7 +191,7 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
     val topY = component.viewport.viewPosition.y
 
     val anchorPath = tree.getClosestPathForLocation(0, topY)
-    val anchorPathId = (anchorPath.lastPathComponent as? ProcessTreeNode)?.nodeId
+    val anchorPathId = (anchorPath?.lastPathComponent as? ProcessTreeNode)?.nodeId
     val anchorRowY = anchorPath?.let { tree.getPathBounds(it)?.y } ?: topY
     val anchorInnerOffset = topY - anchorRowY
 
