@@ -33,7 +33,6 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
-import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.internal.PySdkNamesKt;
@@ -310,12 +309,6 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
       if (err.getCause() instanceof RuntimeException cause) throw cause;
       throw err;
     }
-    // We use gradle script to create environment. This script utilizes Conda.
-    // Conda supports 2 types of package installation: conda native and pip. We use pip.
-    // PyCharm Conda support ignores packages installed via pip ("conda list -e" does it, see PyCondaPackageManagerImpl)
-    // So we need to either fix gradle (PythonEnvsPlugin.groovy on github) or use helper instead of "conda list" to get all packages
-    // We do the latter.
-    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
     return sdk;
   }
 

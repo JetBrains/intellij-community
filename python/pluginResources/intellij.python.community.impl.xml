@@ -442,9 +442,6 @@
                          bundle="messages.PyBundle"
                          key="configurable.PyDebuggerConfigurable.display.name"/> <!--id is used in PyCharmProjectConfigurableStartupActivity-->
 
-    <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
-                        serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
-
     <projectService serviceInterface="com.jetbrains.python.packaging.management.PythonPackageManagerService"
                     serviceImplementation="com.jetbrains.python.packaging.management.PythonPackageManagerServiceImpl"/>
     <projectService serviceInterface="com.intellij.python.sdk.backend.PythonInterpreterPathsSetup"
@@ -702,9 +699,6 @@
     <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonDebugBackendRunner" interface="com.jetbrains.python.debugger.PyDebugBackendRunner"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.packageManagerProvider"
-                    interface="com.jetbrains.python.packaging.PyPackageManagerProvider"
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="Pythonid.interpreterTargetEnvironmentFactory"

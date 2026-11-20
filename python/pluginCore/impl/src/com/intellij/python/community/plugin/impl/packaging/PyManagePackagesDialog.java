@@ -10,7 +10,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.packaging.PyPackageManagers;
+import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridgesKt;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
@@ -59,7 +59,7 @@ final class PyManagePackagesDialog extends DialogWrapper {
     PackagesNotificationPanel notificationPanel = new PyPackagesNotificationPanel();
     final PyInstalledPackagesPanel packagesPanel = new PyInstalledPackagesPanel(project, notificationPanel);
     packagesPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
-    packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(project, sdk));
+    packagesPanel.updatePackages(PythonPackageManagementServiceBridgesKt.packageManagementServiceOf(project, sdk));
     packagesPanel.updateNotifications(sdk);
 
     myMainPanel = new JPanel(new BorderLayout());
@@ -74,7 +74,7 @@ final class PyManagePackagesDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         int index = sdkComboBox.getSelectedIndex();
         Sdk selected = index >= 0 ? sdks.get(index) : null;
-        packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(project, selected));
+        packagesPanel.updatePackages(PythonPackageManagementServiceBridgesKt.packageManagementServiceOf(project, selected));
         packagesPanel.updateNotifications(selected);
       }
     });

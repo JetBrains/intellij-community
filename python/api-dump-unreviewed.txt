@@ -645,7 +645,6 @@ f:com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider$Companio
 - f:bindProjectName(com.intellij.ui.dsl.builder.Cell,com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
 - f:bindProjectName(com.intellij.ui.dsl.builder.Cell,com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider,kotlin.reflect.KMutableProperty0,kotlin.text.Regex):com.intellij.ui.dsl.builder.Cell
 - bs:bindProjectName$default(com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider$Companion,com.intellij.ui.dsl.builder.Cell,com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider,kotlin.reflect.KMutableProperty0,kotlin.text.Regex,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-f:com.jetbrains.python.packaging.PyCustomPackageManagers
 c:com.jetbrains.python.packaging.PyPackageInstallationErrorDialog
 - com.intellij.openapi.ui.DialogWrapper
 - $$$getRootComponent$$$():javax.swing.JComponent

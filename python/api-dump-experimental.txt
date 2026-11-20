@@ -1,5 +1,3 @@
-f:com.jetbrains.python.packaging.PyCustomPackageManagers
-- *sf:tryCreateCustomPackageManager(com.intellij.openapi.projectRoots.Sdk):com.jetbrains.python.packaging.PyPackageManager
 *a:com.jetbrains.python.projectCreation.SystemPythonRequirements
 *f:com.jetbrains.python.projectCreation.SystemPythonRequirements$ByVersionSpecifier
 - com.jetbrains.python.projectCreation.SystemPythonRequirements

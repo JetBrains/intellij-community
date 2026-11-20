@@ -9,7 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
-import com.jetbrains.python.packaging.PyPackageManagers;
+import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridgesKt;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -59,7 +59,7 @@ final class PythonSdkEditorAdditionalOptionsProvider extends SdkEditorAdditional
         new AncestorListenerAdapter() {
           @Override
           public void ancestorAdded(AncestorEvent event) {
-            packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(myProject, mySdk));
+            packagesPanel.updatePackages(PythonPackageManagementServiceBridgesKt.packageManagementServiceOf(myProject, mySdk));
             packagesPanel.updateNotifications(mySdk);
 
             packagesPanel.removeAncestorListener(this);
