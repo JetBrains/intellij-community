@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
 import java.util.function.Function
 
 /**
@@ -20,33 +19,35 @@ import java.util.function.Function
 @Service(Service.Level.PROJECT)
 class GridHookUpRegistry : Disposable {
   private val lock = Any()
-  private val registryId = UUID.randomUUID().toString()
 
   /** Guarded by [lock]. */
   private val references = HashMap<GridHookUpId, HookUpReference>()
-
-  /** Guarded by [lock]. */
-  private var lastSequence = 0L
 
   /** The hookups that a parent or an owner holds; a kept hookup isn't one of them. */
   val hookUps: List<GridDataHookUp<GridRow, GridColumn>>
     get() = synchronized(lock) { references.values.filter { it.referenceCount > 0 }.map { it.hookUp } }
 
   /**
-   * Registers [hookUp] under [parent] and returns it.
+   * Registers [hookUp] under [parent] and returns its new id.
    * Register a hookup once, and share it through [acquire].
    * A second registration gives it a second id and ties its disposal to the second parent.
    * Under an already disposed [parent], it disposes [hookUp] and throws, as [Disposer.register] does.
    */
-  fun <T : GridDataHookUp<GridRow, GridColumn>> registerHookUp(hookUp: T, parent: Disposable): T {
+  fun register(hookUp: GridDataHookUp<GridRow, GridColumn>, parent: Disposable): GridHookUpId {
     val refused = synchronized(lock) {
       val reference = newReference(hookUp, null)
-      if (addReference(reference, parent)) return hookUp
+      if (addReference(reference, parent)) return reference.id
       references.remove(reference.id)
       reference
     }
     Disposer.dispose(refused)
     throw IncorrectOperationException("Cannot register $hookUp under the already disposed $parent")
+  }
+
+  /** Registers [hookUp] as [register] does and returns it. */
+  fun <T : GridDataHookUp<GridRow, GridColumn>> registerHookUp(hookUp: T, parent: Disposable): T {
+    register(hookUp, parent)
+    return hookUp
   }
 
   /** Returns the id of [hookUp], or null if it isn't registered. */
@@ -105,7 +106,8 @@ class GridHookUpRegistry : Disposable {
 
   /** Call under [lock]. */
   private fun newReference(hookUp: GridDataHookUp<GridRow, GridColumn>, reuseClass: Class<*>?): HookUpReference {
-    val reference = HookUpReference(GridHookUpId("$registryId-${++lastSequence}"), hookUp, reuseClass)
+    val id = generateSequence(GridHookUpId::newRandom).first { it !in references }
+    val reference = HookUpReference(id, hookUp, reuseClass)
     references[reference.id] = reference
     return reference
   }
@@ -126,7 +128,7 @@ class GridHookUpRegistry : Disposable {
     return true
   }
 
-  /** Disposes outside [lock], as [registerHookUp] does: a hookup's dispose runs foreign code, such as closing its database session. */
+  /** Disposes outside [lock], as [register] does: a hookup's dispose runs foreign code, such as closing its database session. */
   private fun releaseReference(reference: HookUpReference, keepForReopen: Boolean) {
     val released = synchronized(lock) { removeReference(reference, keepForReopen) } ?: return
     Disposer.dispose(released)
