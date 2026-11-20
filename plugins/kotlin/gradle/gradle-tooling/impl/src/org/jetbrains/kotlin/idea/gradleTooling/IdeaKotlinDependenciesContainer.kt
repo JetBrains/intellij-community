@@ -5,7 +5,12 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.gradle.idea.proto.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.gradle.idea.proto.tcs.toByteArray
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.artifactsClasspath
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.documentationClasspath
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.sourcesClasspath
 import org.jetbrains.kotlin.idea.gradleTooling.serialization.ideaKotlinSerializationContext
 import org.jetbrains.kotlin.idea.gradleTooling.serialization.ideaKotlinSerializationContextOrNull
 import java.io.Serializable
@@ -134,6 +139,19 @@ class IdeaKotlinDecodedDependencyInterner<T : Any> {
 
 private val decodedDependencyInterner = IdeaKotlinDecodedDependencyInterner<IdeaKotlinDependency>()
 
+/**
+ * Reads each lazy extra of [dependency] once, so a later read never writes a default value into the shared, interned instance.
+ */
+private fun warmLazyExtras(dependency: IdeaKotlinDependency) {
+    if (dependency is IdeaKotlinBinaryDependency) {
+        dependency.sourcesClasspath
+        dependency.documentationClasspath
+    }
+    if (dependency is IdeaKotlinProjectArtifactDependency) {
+        dependency.artifactsClasspath
+    }
+}
+
 private class IdeaKotlinDependenciesContainerSurrogate(
     private val pool: IdeaKotlinSerializedDependencyPool
 ) : Serializable {
@@ -143,7 +161,9 @@ private class IdeaKotlinDependenciesContainerSurrogate(
         }
 
         val decodedDependencies = pool.dependencies.map { dependency ->
-            decodedDependencyInterner.intern(dependency) { ideaKotlinSerializationContext.IdeaKotlinDependency(it) }
+            decodedDependencyInterner.intern(dependency) { serialized ->
+                ideaKotlinSerializationContext.IdeaKotlinDependency(serialized)?.also { warmLazyExtras(it) }
+            }
         }
         val deserializedDependencies = pool.dependencyIndexesBySourceSet.mapValues { (_, indexes) ->
             indexes.asList().mapNotNull { decodedDependencies[it] }.toSet()
