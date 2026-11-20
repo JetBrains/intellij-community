@@ -26,8 +26,8 @@ GOTO :CMDSCRIPT
 
 set -eu
 
-TOOL_VERSION="0.39.0-f88a35f"
-ACCIO_ARCHIVE_VERSION="v0.39.0"
+TOOL_VERSION="0.42.0-bbc2feb"
+ACCIO_ARCHIVE_VERSION="v0.42.0"
 
 # Exit code 0 when version $1 is at or above version $2 (major.minor.patch). An unparsable version is older.
 accio_at_least() {
@@ -91,12 +91,12 @@ export TOOL_NAME="accio"
 export TOOL_VERSION
 
 # SHA-256 checksums for each platform
-export TOOL_CHECKSUM_LINUX_X64="e60f333256ec8b5459a18fab87fffcb1082181976afff7d147cfab2234210f57"
-export TOOL_CHECKSUM_LINUX_ARM64="571e0f495437f41c42eb83563530b0c9ef5541dd340b09c336713854cd2357cf"
-export TOOL_CHECKSUM_WINDOWS_X64="d70aae790be999a53eaed91999b8c9830fa2979d98d344b67c83d595af17390e"
-export TOOL_CHECKSUM_WINDOWS_ARM64="0246fb23720b586adc315b3562088b2663ed70e5886d33e219b5506bf7256b88"
-export TOOL_CHECKSUM_MACOS_X64="d901cfabdb5f45837189a2f0e07c1ea4f7ae51bd8464238f1b0dde559106c7d2"
-export TOOL_CHECKSUM_MACOS_ARM64="3a90d45c783e4a20d8b2453161d47fd3f8a380dd0e83a57379d2703cd1b6751d"
+export TOOL_CHECKSUM_LINUX_X64="f192da44fb231bdb97558565efa0bf1c52a977ad31c8b943026e485b4038bf7a"
+export TOOL_CHECKSUM_LINUX_ARM64="8ad00fbb5772023c51700f9d30214f4e4f45cccd3de111dd3cb178b0d14d82f4"
+export TOOL_CHECKSUM_WINDOWS_X64="6175aad04e590583e80f96ae1dd6872b925e499621d94e2b66d313d2083c6ca3"
+export TOOL_CHECKSUM_WINDOWS_ARM64="1be03d8366c3e64ff5b98916b30b424590e13f2a3018f4fb863d9f3a93207276"
+export TOOL_CHECKSUM_MACOS_X64="bcc30b911c5d63c23bad110cf172533780da60ac627a0845099eb6b9dff83522"
+export TOOL_CHECKSUM_MACOS_ARM64="3a5bd40cb3ccfa03f730eed9b36a11c3168e863f78c240b018e50199f9f5b879"
 
 # Download URLs (intellij-build-dependencies through the cache redirector)
 base="https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/accio/${TOOL_VERSION}/accio-${ACCIO_ARCHIVE_VERSION}"
@@ -126,8 +126,8 @@ REM IMPORTANT: After updating TOOL_VERSION or checksums, you MUST run:
 REM   set TOOL_VERIFY_ALL_PLATFORMS=1 && community\tools\accio.cmd
 REM to verify all platform checksums before committing.
 
-set "TOOL_VERSION=0.39.0-f88a35f"
-set "ACCIO_ARCHIVE_VERSION=v0.39.0"
+set "TOOL_VERSION=0.42.0-bbc2feb"
+set "ACCIO_ARCHIVE_VERSION=v0.42.0"
 
 REM An accio.exe on the PATH wins over the pin when its version is at or above the pin.
 REM A cache file holds its version by path, size and time, so a normal call starts no extra process.
@@ -183,12 +183,12 @@ REM accio configuration
 set "TOOL_NAME=accio"
 
 REM SHA-256 checksums for each platform
-set "TOOL_CHECKSUM_LINUX_X64=e60f333256ec8b5459a18fab87fffcb1082181976afff7d147cfab2234210f57"
-set "TOOL_CHECKSUM_LINUX_ARM64=571e0f495437f41c42eb83563530b0c9ef5541dd340b09c336713854cd2357cf"
-set "TOOL_CHECKSUM_WINDOWS_X64=d70aae790be999a53eaed91999b8c9830fa2979d98d344b67c83d595af17390e"
-set "TOOL_CHECKSUM_WINDOWS_ARM64=0246fb23720b586adc315b3562088b2663ed70e5886d33e219b5506bf7256b88"
-set "TOOL_CHECKSUM_MACOS_X64=d901cfabdb5f45837189a2f0e07c1ea4f7ae51bd8464238f1b0dde559106c7d2"
-set "TOOL_CHECKSUM_MACOS_ARM64=3a90d45c783e4a20d8b2453161d47fd3f8a380dd0e83a57379d2703cd1b6751d"
+set "TOOL_CHECKSUM_LINUX_X64=f192da44fb231bdb97558565efa0bf1c52a977ad31c8b943026e485b4038bf7a"
+set "TOOL_CHECKSUM_LINUX_ARM64=8ad00fbb5772023c51700f9d30214f4e4f45cccd3de111dd3cb178b0d14d82f4"
+set "TOOL_CHECKSUM_WINDOWS_X64=6175aad04e590583e80f96ae1dd6872b925e499621d94e2b66d313d2083c6ca3"
+set "TOOL_CHECKSUM_WINDOWS_ARM64=1be03d8366c3e64ff5b98916b30b424590e13f2a3018f4fb863d9f3a93207276"
+set "TOOL_CHECKSUM_MACOS_X64=bcc30b911c5d63c23bad110cf172533780da60ac627a0845099eb6b9dff83522"
+set "TOOL_CHECKSUM_MACOS_ARM64=3a5bd40cb3ccfa03f730eed9b36a11c3168e863f78c240b018e50199f9f5b879"
 
 REM Download URLs (intellij-build-dependencies through the cache redirector)
 set "ACCIO_BASE_URL=https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/accio/%TOOL_VERSION%/accio-%ACCIO_ARCHIVE_VERSION%"
