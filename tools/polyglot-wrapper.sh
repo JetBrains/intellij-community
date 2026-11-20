@@ -13,9 +13,12 @@
 #   exec "$resolved" "$@"
 #
 # `polyglot_real_path` is the fifth step. `polyglot_build_binary` calls it, and `jscpd.cmd` calls it on its own.
-# `polyglot_user_cache` is the sixth step, for a wrapper that keeps a resolved path for all checkouts of the user.
+# `polyglot_user_cache` is the sixth step. It is the one bash source of the path of the monorepo-tools cache, so
+# `tool-wrapper.sh`, `accio.cmd`, `kotlin.cmd` and `tools/jbdu.cmd` of the Ultimate root also source this file.
 #
 # The pin stays in the wrapper. It must run first, and it is the one line that every shell must accept.
+# `accio.cmd`, `kotlin.cmd` and `tools/jbdu.cmd` have no pin, so dash or zsh can source this file. Thus the file must
+# parse under dash: no array. A step that one of them calls must also run under dash and zsh.
 # This file sets no shell option. The wrapper owns `set -eu`.
 
 # On Windows a `.cmd` that Git Bash spawns runs its CMD half: MSYS passes the file to `cmd /c`. An explicit
@@ -67,20 +70,43 @@ polyglot_find_roots() {
   fi
 }
 
-# Sets `user_cache` to the folder `$1` in the cache of the monorepo tools of the user. `tool-wrapper.sh` keeps each
-# downloaded tool in the same cache, and every checkout of the user reads it. Thus a new worktree finds a path that
-# another checkout resolved, and spawns no Bazel. The paths are those of `get_cache_dir` in `tool-wrapper.sh`.
-# Without HOME, the folder is `out/$1` of the checkout, so call this step after `polyglot_find_roots`. `$OSTYPE`
-# selects the path, so the step starts no process.
+# Sets `user_cache` to the folder `$1` in the cache of the monorepo tools of the user, or to the cache itself when `$1`
+# is empty. `tool-wrapper.sh` keeps each downloaded tool there, and every checkout of the user reads it. Thus a new
+# worktree finds a path that another checkout resolved, and spawns no Bazel. The step reads no `XDG_CACHE_HOME`.
+# Without HOME (LOCALAPPDATA on Windows), the step sets `user_cache` to the empty string and returns 1. The caller
+# decides what that means.
+#
+# `$OSTYPE` selects the path, so on macOS and Linux the step starts no process. Dash does not set `OSTYPE`. There
+# the step tests for `~/Library/Caches`, as `accio.cmd` did, so a Linux home with that folder gets the macOS path.
+# Git Bash gets `LOCALAPPDATA` in its own form through `cygpath -u`, which starts a process on Windows only.
 polyglot_user_cache() {
-  if [ -z "${HOME:-}" ]; then
-    user_cache="$root/out/$1"
-    return 0
-  fi
+  user_cache=""
+  local base
   case "${OSTYPE:-}" in
-    darwin*) user_cache="$HOME/Library/Caches/JetBrains/monorepo-tools/$1" ;;
-    *) user_cache="$HOME/.cache/JetBrains/monorepo-tools/$1" ;;
+    msys* | cygwin*)
+      base="${LOCALAPPDATA:-}"
+      [ -n "$base" ] || return 1
+      if command -v cygpath >/dev/null 2>&1; then
+        base="$(cygpath -u "$base")"
+      fi
+      base="$base/JetBrains/monorepo-tools"
+      ;;
+    *)
+      [ -n "${HOME:-}" ] || return 1
+      case "${OSTYPE:-}" in
+        darwin*) base="$HOME/Library/Caches/JetBrains/monorepo-tools" ;;
+        "")
+          if [ -d "$HOME/Library/Caches" ]; then
+            base="$HOME/Library/Caches/JetBrains/monorepo-tools"
+          else
+            base="$HOME/.cache/JetBrains/monorepo-tools"
+          fi
+          ;;
+        *) base="$HOME/.cache/JetBrains/monorepo-tools" ;;
+      esac
+      ;;
   esac
+  user_cache="$base${1:+/$1}"
 }
 
 # A path under the output base is a symlink to the real file, and the real file stays valid after
@@ -105,6 +131,12 @@ polyglot_built_file() {
   } END { print found }' "$1"
 }
 
+# The `bazel build` of `polyglot_build_binary`: the target `$2`, with the build event file `$1`. A function and not an
+# array, so this file parses under dash.
+polyglot_bazel_build() {
+  (cd "$root" && ./bazel.cmd build --config=bt "--build_event_json_file=$1" --nobuild_event_json_file_path_conversion "$2")
+}
+
 # Builds `$2`, the Bazel target of the wrapper `$1`, and sets `resolved` to the executable it made, whose base name is
 # `$4`. It sets `built_wall_ms` to the wall time of the build in milliseconds, as the build event file names it in
 # `buildMetrics`, or to the empty string when the file names none. A failed build or a missing executable prints its message and exits with `$3`, the infrastructure code of the
@@ -122,17 +154,15 @@ polyglot_build_binary() {
   mkdir -p "$root/out/air"
   local events="$root/out/air/$name.events.$$.json"
   local build_log="$root/out/air/$name.build.$$.log"
-  local build=(./bazel.cmd build --config=bt "--build_event_json_file=$events"
-    --nobuild_event_json_file_path_conversion "$target")
   if [ "$output" = log ] && [ ! -t 2 ]; then
-    if ! (cd "$root" && "${build[@]}" >"$build_log" 2>&1); then
+    if ! polyglot_bazel_build "$events" "$target" >"$build_log" 2>&1; then
       cat "$build_log" >&2
       rm -f "$events" "$build_log"
       echo "$name: could not build $target; see the bazel output above" >&2
       exit "$code"
     fi
     rm -f "$build_log"
-  elif ! (cd "$root" && "${build[@]}" >&2); then
+  elif ! polyglot_bazel_build "$events" "$target" >&2; then
     rm -f "$events"
     echo "$name: could not build $target; see the bazel output above" >&2
     exit "$code"

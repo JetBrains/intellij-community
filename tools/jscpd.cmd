@@ -57,7 +57,7 @@ fi
 
 # The host is part of the cache name, so a guest that shares the home folder does not read the path of another machine.
 # Bash sets both variables, so the warm path starts no process for them.
-polyglot_user_cache jscpd
+polyglot_user_cache jscpd || { echo "jscpd: HOME is not set; required to locate the cache directory" >&2; exit 78; }
 cache="$user_cache/jscpd-$version-$OSTYPE-$HOSTTYPE"
 if [ -f "$cache" ]; then
   resolved=""
@@ -134,6 +134,7 @@ if not defined VERSION goto :NOVERSION
 REM The host is part of the cache name, as in the bash half. PROCESSOR_ARCHITECTURE is that of this process, which
 REM is enough for a cache name. Bazel picks the host binary through the select of //tools:jscpd.
 call "%POLYGLOT_WRAPPER%" user-cache jscpd
+if errorlevel 1 goto :NOCACHE
 set "CACHE=%USER_CACHE%\jscpd-%VERSION%-%OS%-%PROCESSOR_ARCHITECTURE%"
 set "RESOLVED="
 if exist "%CACHE%" set /p RESOLVED=<"%CACHE%"
@@ -180,6 +181,10 @@ exit /B 78
 
 :NOVERSION
 echo jscpd: found no JSCPD_VERSION line in %COMMUNITY_ROOT%\tools\jscpd.MODULE.bazel 1>&2
+exit /B 78
+
+:NOCACHE
+echo jscpd: LOCALAPPDATA is not set; required to locate the cache directory 1>&2
 exit /B 78
 
 :BAZELFAILED

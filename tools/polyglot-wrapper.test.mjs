@@ -134,29 +134,93 @@ describe("the override", () => {
 })
 
 describe("the user cache", () => {
+  const dash = spawnSync("dash", ["-c", "exit 0"]).status === 0
+
   /**
-   * @param {Record<string, string | undefined>} variables the values of HOME and OSTYPE, undefined to unset one
+   * Runs `polyglot_user_cache` in `shell` and answers its exit code and the value of `user_cache`.
+   *
+   * @param {Record<string, string | undefined>} variables the values of HOME, OSTYPE and the like, undefined to unset one
+   * @param {{name?: string, shell?: string, path?: string}} [options]
    */
-  function userCache(variables) {
+  function userCache(variables, options = {}) {
     const assignments = Object.entries(variables)
-      .map(([name, value]) => (value === undefined ? `unset ${name}` : `${name}="${value}"`))
+      .map(([name, value]) => (value === undefined ? `unset ${name}` : `${name}='${value}'`))
       .join("; ")
-    const script = `. "${toolsDir}/polyglot-wrapper.sh"; root=/checkout; ${assignments}; polyglot_user_cache openspec; printf "%s" "$user_cache"`
-    const result = bash(["-c", script])
-    equal(result.status, 0, result.stderr)
-    return result.stdout
+    const name = options.name ?? "openspec"
+    const script = `. "${toolsDir}/polyglot-wrapper.sh"; ${assignments}; polyglot_user_cache '${name}'; printf "%s|%s" "$?" "$user_cache"`
+    const env = {...process.env, ...(options.path === undefined ? {} : {PATH: options.path})}
+    const result = spawnSync(options.shell ?? "bash", ["-c", script], {env, encoding: "utf8"})
+    equal(result.stderr, "")
+    const [status, value] = result.stdout.split("|")
+    return {status: Number(status), value}
   }
 
-  it("is the cache of the monorepo tools on macOS, as tool-wrapper.sh has it", () => {
-    equal(userCache({HOME: "/home/u", OSTYPE: "darwin25"}), "/home/u/Library/Caches/JetBrains/monorepo-tools/openspec")
+  it("is the cache of the monorepo tools on macOS", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: "darwin25"}), {
+      status: 0,
+      value: "/home/u/Library/Caches/JetBrains/monorepo-tools/openspec",
+    })
   })
 
-  it("is the cache of the monorepo tools on Linux, as tool-wrapper.sh has it", () => {
-    equal(userCache({HOME: "/home/u", OSTYPE: "linux-gnu"}), "/home/u/.cache/JetBrains/monorepo-tools/openspec")
+  it("is the cache of the monorepo tools on Linux", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: "linux-gnu"}), {
+      status: 0,
+      value: "/home/u/.cache/JetBrains/monorepo-tools/openspec",
+    })
   })
 
-  it("is the out folder of the checkout without HOME", () => {
-    equal(userCache({HOME: undefined, OSTYPE: "darwin25"}), "/checkout/out/openspec")
+  it("is the cache itself, with no trailing slash, for an empty name", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: "darwin25"}, {name: ""}), {
+      status: 0,
+      value: "/home/u/Library/Caches/JetBrains/monorepo-tools",
+    })
+  })
+
+  it("returns 1 and an empty path without HOME", () => {
+    deepEqual(userCache({HOME: undefined, OSTYPE: "darwin25"}), {status: 1, value: ""})
+  })
+
+  it("is LOCALAPPDATA as written in Git Bash without cygpath", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: "msys", LOCALAPPDATA: "C:\\x"}, {path: "/usr/bin:/bin"}), {
+      status: 0,
+      value: "C:\\x/JetBrains/monorepo-tools/openspec",
+    })
+  })
+
+  it("is LOCALAPPDATA through cygpath in Git Bash", () => {
+    deepEqual(
+      userCache({HOME: "/home/u", OSTYPE: "msys", LOCALAPPDATA: "C:\\x"}, {path: `${gitBashStubs}:/usr/bin:/bin`}),
+      {status: 0, value: "W:C:\\x/JetBrains/monorepo-tools/openspec"},
+    )
+  })
+
+  it("returns 1 in Git Bash without LOCALAPPDATA", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: "msys", LOCALAPPDATA: undefined}), {status: 1, value: ""})
+  })
+
+  it("is the macOS path without OSTYPE when the home has Library/Caches", async () => {
+    const home = join(scratch, "home-with-library")
+    await mkdir(join(home, "Library", "Caches"), {recursive: true})
+    deepEqual(userCache({HOME: home, OSTYPE: undefined}), {
+      status: 0,
+      value: `${home}/Library/Caches/JetBrains/monorepo-tools/openspec`,
+    })
+  })
+
+  it("is the Linux path without OSTYPE when the home has no Library/Caches", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: undefined}), {
+      status: 0,
+      value: "/home/u/.cache/JetBrains/monorepo-tools/openspec",
+    })
+  })
+
+  it("parses and runs under dash, which accio.cmd, kotlin.cmd and jbdu.cmd may run in", {skip: !dash && "no dash"}, () => {
+    const parse = spawnSync("dash", ["-n", join(toolsDir, "polyglot-wrapper.sh")], {encoding: "utf8"})
+    equal(parse.status, 0, parse.stderr)
+    deepEqual(userCache({HOME: "/home/u"}, {shell: "dash"}), {
+      status: 0,
+      value: "/home/u/.cache/JetBrains/monorepo-tools/openspec",
+    })
   })
 })
 

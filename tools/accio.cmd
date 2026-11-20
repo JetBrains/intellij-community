@@ -48,14 +48,15 @@ accio_at_least() {
 
 if [ -z "${ACCIO_WRAPPER_ACTIVE:-}" ] && accio_local="$(command -v accio 2>/dev/null)"; then
   accio_pin="${TOOL_VERSION%%-*}"
-  if [ -d "${HOME:-}/Library/Caches" ]; then
-    accio_cache="${HOME:-}/Library/Caches/JetBrains/monorepo-tools/accio/path-version"
-  else
-    accio_cache="${HOME:-}/.cache/JetBrains/monorepo-tools/accio/path-version"
-  fi
+  # `polyglot_user_cache` names the folder and starts no process. Without HOME there is no cache file, and accio probes.
+  case "$0" in */*) accio_dir="${0%/*}" ;; *) accio_dir=. ;; esac
+  . "$accio_dir/polyglot-wrapper.sh"
+  accio_cache=
+  if polyglot_user_cache accio; then accio_cache="$user_cache/path-version"; fi
   accio_version=
   accio_probed=
-  if read -r accio_cached_version accio_cached_path 2>/dev/null < "$accio_cache" \
+  if [ -n "$accio_cache" ] \
+    && read -r accio_cached_version accio_cached_path 2>/dev/null < "$accio_cache" \
     && [ "$accio_cached_path" = "$accio_local" ] \
     && [ "$accio_cache" -nt "$accio_local" ] \
     && [ "$accio_cache" -nt "${accio_local%/*}" ]; then
@@ -71,15 +72,17 @@ if [ -z "${ACCIO_WRAPPER_ACTIVE:-}" ] && accio_local="$(command -v accio 2>/dev/
       *) accio_version= ;;
     esac
     if [ -z "$accio_version" ]; then accio_version=none; fi
-    { mkdir -p "${accio_cache%/*}" && printf '%s %s\n' "$accio_version" "$accio_local" > "$accio_cache.$$" \
-      && mv -f "$accio_cache.$$" "$accio_cache"; } 2>/dev/null || rm -f "$accio_cache.$$" 2>/dev/null || true
+    if [ -n "$accio_cache" ]; then
+      { mkdir -p "${accio_cache%/*}" && printf '%s %s\n' "$accio_version" "$accio_local" > "$accio_cache.$$" \
+        && mv -f "$accio_cache.$$" "$accio_cache"; } 2>/dev/null || rm -f "$accio_cache.$$" 2>/dev/null || true
+    fi
   fi
   if accio_at_least "$accio_version" "$accio_pin"; then
     export ACCIO_WRAPPER_ACTIVE=1
     exec "$accio_local" "$@"
   fi
   if [ -n "$accio_probed" ]; then
-    echo "accio: $accio_local is $accio_version, older than the pin $accio_pin; the pinned accio runs (cache $accio_cache)" >&2
+    echo "accio: $accio_local is $accio_version, older than the pin $accio_pin; the pinned accio runs${accio_cache:+ (cache $accio_cache)}" >&2
   fi
 fi
 

@@ -5,6 +5,10 @@
 
 set -eu
 
+# The step `polyglot_user_cache` of `polyglot-wrapper.sh` names the cache folder. Every caller starts this file by its
+# absolute path, so `BASH_SOURCE` holds the directory.
+. "${BASH_SOURCE[0]%/*}/polyglot-wrapper.sh"
+
 # Required environment variables (set by calling script):
 #   TOOL_NAME              - Tool name (e.g., "uv")
 #   TOOL_VERSION           - Tool version (e.g., "0.9.24")
@@ -53,31 +57,6 @@ detect_platform() {
       ;;
     *)
       die "Unsupported OS: $os"
-      ;;
-  esac
-}
-
-# Get cache directory for current platform
-get_cache_dir() {
-  case "$(uname -s)" in
-    Linux)
-      echo "${HOME}/.cache/JetBrains/monorepo-tools"
-      ;;
-    Darwin)
-      echo "${HOME}/Library/Caches/JetBrains/monorepo-tools"
-      ;;
-    MINGW*|MSYS*|CYGWIN*)
-      local localappdata="${LOCALAPPDATA:-}"
-      if [ -z "$localappdata" ]; then
-        die "LOCALAPPDATA not set; required to locate Windows cache directory"
-      fi
-      if command -v cygpath >/dev/null 2>&1; then
-        localappdata=$(cygpath -u "$localappdata")
-      fi
-      echo "${localappdata}/JetBrains/monorepo-tools"
-      ;;
-    *)
-      die "Unsupported OS for cache directory"
       ;;
   esac
 }
@@ -538,7 +517,8 @@ main() {
   local binary_path
 
   platform=$(detect_platform)
-  cache_dir=$(get_cache_dir)
+  polyglot_user_cache "" || die "HOME (LOCALAPPDATA on Windows) is not set; required to locate the cache directory"
+  cache_dir="$user_cache"
 
   # Download if not cached
   if ! is_cached "$cache_dir" "$platform"; then
