@@ -156,7 +156,7 @@ indexed access) via `JSLiteralExpressionSymbolReferenceProvider`; `js/symbols` m
 (`plugins/JavaScriptLanguage/web-platform/.../nodejs/PackageJsonPolySymbolsRegistryManager.kt`)
 watches `package.json`/`node_modules` and loads each dependency's bundled/npm-shipped
 `web-types.json` or `customElements.json` — this is also what feeds `node-packages`
-[PolyContext](../../poly-context/SKILL.md) rules.
+[PolyContext](poly-context.md) rules.
 
 **Verdict**: for all three languages, PolySymbols is layered *onto* pre-existing extension points
 (`xml.elementDescriptorProvider`, `css.elementDescriptorProvider`, `JSReferenceExpression.resolve()`)

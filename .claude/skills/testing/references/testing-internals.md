@@ -1,8 +1,3 @@
----
-name: testing-internals
-description: Debug `bt.cmd` and `tests.cmd` runs, discovery, and runner internals.
----
-
 # Test Execution Internals
 
 ## Overview
@@ -278,5 +273,5 @@ To pass arbitrary system properties to the test JVM, use the `pass.` prefix. `Te
 
 ## Related Documentation
 
-- [testing](../testing/SKILL.md) - How to run tests via `tests.cmd` (quick start, parameters, examples)
-- [Writing Tests](../writing-tests/SKILL.md) - How to write tests (framework, `@TestApplication`, fixtures, EDT)
+- [testing](../SKILL.md) - How to run tests via `bt.cmd` and `tests.cmd` (quick start, parameters, examples)
+- [Writing Tests](../../writing-tests/SKILL.md) - How to write tests (framework, `@TestApplication`, fixtures, EDT)

@@ -165,7 +165,7 @@ efficiently, conceptually like how completion contributors are matched.
 ```kotlin
 registrar
   .inFile(AstroFileImpl::class.java)
-  .inContext { it.framework == AstroFramework.ID }        // gate by PolyContext — see poly-context skill
+  .inContext { it.framework == AstroFramework.ID }        // gate by PolyContext, see poly-context.md
   .apply {
     forAnyPsiLocationInFile()
       .contributeScopeProvider { location -> listOf(astroFrontmatterScope(location.containingFile as AstroFileImpl)) }
@@ -206,7 +206,7 @@ interface PolySymbolQueryConfigurator {
 ```
 
 Register at EP `com.intellij.polySymbols.queryConfigurator`. Two jobs: dynamic `PolyContext` rules
-(see [poly-context](../../poly-context/SKILL.md)), and **name-conversion rules** — mapping between
+(see [poly-context.md](poly-context.md)), and **name-conversion rules** — mapping between
 a symbol's canonical name and the various surface spellings it can appear as (kebab-case HTML
 attribute ↔ camelCase JS property, or Vue's `v-` directive internal-name stripping).
 `PolySymbolNameConversionRulesBuilder.addRule(symbolKind, converter)` applies one converter to

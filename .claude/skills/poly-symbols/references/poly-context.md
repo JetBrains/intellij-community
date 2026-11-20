@@ -1,8 +1,3 @@
----
-name: poly-context
-description: Implement PolyContext feature gating and environment detection.
----
-
 # PolyContext
 
 `PolyContext` answers "what coding environment am I in right now." It is a general-purpose platform
@@ -45,7 +40,7 @@ which `Language` to parse it as. Concrete chain in this repo:
 Canonical PolySymbols use case: web framework detection. Only one of Vue/Angular/React/Astro can be
 the active `framework` at a location, and each plugin's `PolySymbolQueryScopeContributor` gates its
 registrations with `.inContext { it.framework == MyFramework.ID }`
-(see [poly-symbols/references/query-model.md](../poly-symbols/references/query-model.md)).
+(see [query-model.md](query-model.md)).
 
 ## `PolyContextProvider` — direct/dynamic detection
 
@@ -75,7 +70,7 @@ are declarative and let the platform compute proximity once instead of running N
 ### Via Web Types
 
 Under a top-level `contexts-config` property in a Web Types JSON file (see
-[poly-symbols/references/web-types.md](../poly-symbols/references/web-types.md)):
+[web-types.md](web-types.md)):
 `kind` → `name` → `enable-when`/`disable-when`. (Pre-2024.2 files use a deprecated layout where
 `name` is top-level and `kind` a sibling property — don't use that shape for new files.)
 
@@ -124,5 +119,5 @@ a `Result` with `modificationTrackers` — keep the tracker count minimal since 
 
 ## Related
 
-- **[poly-symbols](../poly-symbols/SKILL.md)** — PolyContext's biggest consumer.
+- [PolySymbols](../SKILL.md) is the biggest consumer of PolyContext.
 - Official docs: [Poly Symbols Context](https://plugins.jetbrains.com/docs/intellij/polysymbols-context.html)

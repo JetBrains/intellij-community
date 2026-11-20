@@ -143,7 +143,7 @@ To reproduce interactions between classes, use the runner's semicolon-separated 
   @community//path/to/package:target_test
 ```
 
-Use the [testing internals skill](../../testing-internals/SKILL.md) when the failure is in discovery or the runner itself.
+Use the [testing internals reference](../../testing/references/testing-internals.md) of the testing skill when the failure is in discovery or the runner itself.
 
 ## Discovery and Sandbox Checks
 

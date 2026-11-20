@@ -1,8 +1,3 @@
----
-name: icon-resources
-description: Manage IntelliJ icons, generated Icons classes, and icon-robots rules.
----
-
 # Icon Resources
 
 ## Generated Icon Classes

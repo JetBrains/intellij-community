@@ -54,8 +54,8 @@ for all other callers. `getOrLoad` waits through `asDeferred()`, which does not 
 
 ## Tests
 
-Every code change in this directory needs a test. Write it with the `py-junit5-tests`
-skill: read `.agents/skills/py-junit5-tests/SKILL.md` and follow it. It covers the JUnit 5
+Every code change in this directory needs a test. Write it with the `pycharm-dev-workflow`
+skill: read `.agents/skills/pycharm-dev-workflow/junit5-tests/index.md` and follow it. It covers the JUnit 5
 fixtures, the environment annotations, and the test module wiring. The skill is in the
 monorepo only.
 

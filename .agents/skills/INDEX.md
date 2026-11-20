@@ -20,8 +20,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [duplicate-and-dead-code](duplicate-and-dead-code/SKILL.md) | Find semantic copies and dead code before a plan or a review. |
 | [eel](eel/SKILL.md) | Use IntelliJ EEL APIs for process execution, paths, WSL, or Docker. |
 | [fix-project-leak-from-tc-report](fix-project-leak-from-tc-report/SKILL.md) | Fix TeamCity project-leak test failures. |
-| [icon-resources](icon-resources/SKILL.md) | Manage IntelliJ icons, generated Icons classes, and icon-robots rules. |
-| [icons](icons/SKILL.md) | Create or review IntelliJ New UI SVG icons and theme variants. |
+| [icons](icons/SKILL.md) | Add or review SVG icons, dark variants, Icons classes, icon-robots. |
 | [ide-diagnostics-mcp](ide-diagnostics-mcp/SKILL.md) | Inspect a running IntelliJ IDE for freezes or blocked threads via MCP. |
 | [jewel](jewel/SKILL.md) | Jewel UI: build, audit, Markdown, Swing interop, PRs and releases. |
 | [jna](jna/SKILL.md) | Implement or debug JNA bindings and ABI layouts in Kotlin or Java. |
@@ -35,8 +34,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [notebook-for-experiment](notebook-for-experiment/SKILL.md) | Create reproducible Jupyter notebooks for performance experiments. |
 | [platform-coroutines-structured-concurrency](platform-coroutines-structured-concurrency/SKILL.md) | Write or review IntelliJ coroutine scope ownership and cancellation. |
 | [plugin-model-analyzer](plugin-model-analyzer/SKILL.md) | Query IntelliJ Product DSL modules, products, and plugin graphs. |
-| [poly-context](poly-context/SKILL.md) | Implement PolyContext feature gating and environment detection. |
-| [poly-symbols](poly-symbols/SKILL.md) | Implement PolySymbols completion, references, and rename. |
+| [poly-symbols](poly-symbols/SKILL.md) | Implement PolySymbols completion, references, rename, and PolyContext feature gating. |
 | [pseudo-kmp](pseudo-kmp/SKILL.md) | Create or modify IntelliJ pseudo-KMP expect/actual modules. |
 | [py-code-insight-counters](py-code-insight-counters/SKILL.md) | Count Python code insight work in tests with PyCodeInsightCounters. |
 | [registry](registry/SKILL.md) | Use the IntelliJ Registry API for registry keys and feature flags. |
@@ -46,7 +44,6 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [ssr](ssr/SKILL.md) | Create or modify IntelliJ Structural Search and Replace patterns. |
 | [symbols-api](symbols-api/SKILL.md) | Use IntelliJ Symbol API for declarations, references, and rename. |
 | [testing](testing/SKILL.md) | Run or troubleshoot IntelliJ tests with `bt.cmd` or `tests.cmd`. |
-| [testing-internals](testing-internals/SKILL.md) | Debug `bt.cmd` and `tests.cmd` runs, discovery, and runner internals. |
 | [ui-accessibility](ui-accessibility/SKILL.md) | Review IntelliJ UI accessibility for keyboard, focus, and labels. |
 | [writing-tests](writing-tests/SKILL.md) | Write IntelliJ JUnit 5 tests with fixtures, lifecycle, and EDT. |
 | [youtrack-community](youtrack-community/SKILL.md) | YouTrack CLI for a community checkout; the monorepo uses `youtrack`. |

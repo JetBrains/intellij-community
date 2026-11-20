@@ -144,6 +144,6 @@ these on your `Symbol`/`PolySymbol`:
 
 ## Related
 
-- **[poly-context](../poly-context/SKILL.md)** — general-purpose, performance-optimized context detection; PolySymbols is one consumer.
+- **[PolyContext](../poly-symbols/references/poly-context.md)** in the poly-symbols skill: general-purpose, performance-optimized context detection. PolySymbols is one consumer.
 - Official docs: [Symbols](https://plugins.jetbrains.com/docs/intellij/symbols.html),
   [Declarations and References](https://plugins.jetbrains.com/docs/intellij/declarations-and-references.html).

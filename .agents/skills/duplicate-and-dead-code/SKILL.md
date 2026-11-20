@@ -90,7 +90,7 @@ Filter the report by file, not by `kind`. An `--kind ast` pair has `"kind": "sim
 `accio unused --scope <dir>/ --limit 1000` gives the candidates. The `note` of the answer
 explains each mark, and `accio unused --help` says what the scan leaves out and cannot see.
 
-- A `(generated)` icon field: delete its SVG and generate the icon class again with the `icon-resources` skill. First
+- A `(generated)` icon field: delete its SVG and generate the icon class again with the `icons` skill. First
   search the SVG file name over the whole repository. A `SKILL.md` can name it as an icon, and then the fix is an
   `icon-robots.txt` skip.
 - A `(published)` candidate is a published API. Keep it unless its owner decides otherwise.

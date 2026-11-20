@@ -221,7 +221,7 @@ Extra `-D...` arguments are passed through as JVM flags to `org.jetbrains.intell
 - Check module dependencies in `.iml` file
 - Consult [module-dependencies](../module-dependencies/SKILL.md)
 
-For deeper troubleshooting, see [testing-internals](../testing-internals/SKILL.md).
+Read [references/testing-internals.md](references/testing-internals.md) when you debug the test discovery or the runner of `bt.cmd` or `tests.cmd`. Examples are a test that is not found, the wrong tests that run, a pattern that matches no class, and the bucketing.
 
 ## Writing Tests
 

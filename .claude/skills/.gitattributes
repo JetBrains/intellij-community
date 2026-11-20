@@ -13,7 +13,6 @@
 /duplicate-and-dead-code/** linguist-generated
 /eel/** linguist-generated
 /fix-project-leak-from-tc-report/** linguist-generated
-/icon-resources/** linguist-generated
 /icons/** linguist-generated
 /ide-diagnostics-mcp/** linguist-generated
 /jewel/** linguist-generated
@@ -28,7 +27,6 @@
 /notebook-for-experiment/** linguist-generated
 /platform-coroutines-structured-concurrency/** linguist-generated
 /plugin-model-analyzer/** linguist-generated
-/poly-context/** linguist-generated
 /poly-symbols/** linguist-generated
 /pseudo-kmp/** linguist-generated
 /py-code-insight-counters/** linguist-generated
@@ -39,7 +37,6 @@
 /ssr/** linguist-generated
 /symbols-api/** linguist-generated
 /testing/** linguist-generated
-/testing-internals/** linguist-generated
 /ui-accessibility/** linguist-generated
 /writing-tests/** linguist-generated
 /youtrack-community/** linguist-generated

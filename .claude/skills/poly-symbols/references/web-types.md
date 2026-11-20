@@ -107,5 +107,5 @@ framework's PolySymbols integration defines behavior for that kind.
 
 ## Related
 
-- [poly-context](../../poly-context/SKILL.md) — `contexts-config` inside a Web Types file gates when its symbols are active.
+- [poly-context.md](poly-context.md): `contexts-config` inside a Web Types file gates when its symbols are active.
 - Official docs: [Web Types](https://plugins.jetbrains.com/docs/intellij/polysymbols-web-types.html).
