@@ -6227,9 +6227,9 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class Finder:
         def check(self) -> list[str]: ...
-    #                          └ WEAK_WARNING Member '(self: Self@Finder) -> list[Unknown]' of '((self: Self@Finder) -> list[Unknown]) | type[list]' does not have attribute '__getitem__' FIXME # PY-92889
+    #                          └ WEAK_WARNING Member 'def list(self: Self@Finder) -> list[Unknown]' of '(def list(self: Self@Finder) -> list[Unknown]) | type[list]' does not have attribute '__getitem__' FIXME # PY-92889
         def list(self) -> list[str]: ...
-    #                         └ WEAK_WARNING Member '(self: Self@Finder) -> list[Unknown]' of '((self: Self@Finder) -> list[Unknown]) | type[list]' does not have attribute '__getitem__' FIXME # PY-92889
+    #                         └ WEAK_WARNING Member 'def list(self: Self@Finder) -> list[Unknown]' of '(def list(self: Self@Finder) -> list[Unknown]) | type[list]' does not have attribute '__getitem__' FIXME # PY-92889
         def after(self) -> list[str]: ...
     #                          └ WARNING Cannot find reference '[' in '(self: Self) -> list' FIXME # PY-92889
 
@@ -6246,11 +6246,11 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class Model:
         def model_fields(self) -> dict[str, int]:
-    #                                 └ WEAK_WARNING Member '(self: Self@Model) -> dict[str, int]' of '((self: Self@Model) -> dict[str, int]) | type[dict]' does not have attribute '__getitem__' FIXME # PY-92889
+    #                                 └ WEAK_WARNING Member 'def dict(self: Self@Model) -> dict[str, int]' of '(def dict(self: Self@Model) -> dict[str, int]) | type[dict]' does not have attribute '__getitem__' FIXME # PY-92889
             return {}
 
         def dict(self) -> dict[str, int]:
-    #                         └ WEAK_WARNING Member '(self: Self@Model) -> dict[str, int]' of '((self: Self@Model) -> dict[str, int]) | type[dict]' does not have attribute '__getitem__' FIXME # PY-92889
+    #                         └ WEAK_WARNING Member 'def dict(self: Self@Model) -> dict[str, int]' of '(def dict(self: Self@Model) -> dict[str, int]) | type[dict]' does not have attribute '__getitem__' FIXME # PY-92889
             return {}
 
         def after(self) -> dict[str, int]:

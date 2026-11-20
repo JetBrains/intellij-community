@@ -2034,7 +2034,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def bar(*, v1: int, v3: str, v2: str = "", **kwargs) -> None:
           ...
       _: TDProtocol = foo
-      #               ^^^ WARNING Expected type 'TDProtocol', got '(*, v1: int, v3: str, v2: str) -> None' instead
+      #               ^^^ WARNING Expected type 'TDProtocol', got 'def foo(*, v1: int, v3: str, v2: str) -> None' instead
       _: TDProtocol = bar # OK, has **kwargs
       """.trimIndent())
 

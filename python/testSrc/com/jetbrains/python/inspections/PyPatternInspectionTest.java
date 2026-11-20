@@ -335,7 +335,7 @@ def f(c):
                        pass
                    
                    match 1:
-                       case <warning descr="Class pattern requires a class, but 'f' can be '() -> None'">f</warning>():
+                       case <warning descr="Class pattern requires a class, but 'f' can be 'def f() -> None'">f</warning>():
                            pass
                    """);
   }
@@ -376,7 +376,7 @@ def f(c):
                    def g(cond):
                        c = A if cond else f
                        match 1:
-                           case <warning descr="Class pattern requires a class, but 'c' can be '() -> None'">c</warning>():
+                           case <warning descr="Class pattern requires a class, but 'c' can be 'def f() -> None'">c</warning>():
                                pass
                    """);
   }

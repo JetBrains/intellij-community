@@ -881,7 +881,7 @@ public class PyStubsTest extends PyTestCase {
     final String annotation = func.getAnnotationValue();
     assertEquals("int", annotation);
     assertNotParsed(file);
-    assertType("() -> int", func, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+    assertType("def func() -> int", func, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
     assertNotParsed(file);
   }
 
@@ -975,7 +975,7 @@ public class PyStubsTest extends PyTestCase {
   public void testUnresolvedTypingSymbol() {
     final PyFile file = getTestFile();
     final PyFunction func = file.findTopLevelFunction("func");
-    assertType("() -> Unknown", func, TypeEvalContext.codeInsightFallback(file.getProject()));
+    assertType("def func() -> Unknown", func, TypeEvalContext.codeInsightFallback(file.getProject()));
     assertNotParsed(file);
   }
 

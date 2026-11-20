@@ -2074,7 +2074,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           pass
 
 
-      v: Proto = f # WARNING Expected type 'Proto', got '(x: int) -> None' instead
+      v: Proto = f # WARNING Expected type 'Proto', got 'def f(x: int) -> None' instead
       """.trimIndent())
 
     @Test

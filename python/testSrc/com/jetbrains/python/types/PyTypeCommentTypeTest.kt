@@ -146,7 +146,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = f
-      # └ TYPE (x: int, *args: float | int, **kwargs: str) -> list[bool]
+      # └ TYPE def f(x: int, *args: float | int, **kwargs: str) -> list[bool]
       """.trimIndent())
 
     @Test
@@ -179,7 +179,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = f
-      #└ TYPE (x: Unknown, y: Unknown, z: Unknown) -> int
+      #└ TYPE def f(x: Unknown, y: Unknown, z: Unknown) -> int
       """.trimIndent())
 
     @Test
@@ -205,7 +205,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = f
-      #└ TYPE (x: int, y: bool, z: Unknown) -> str
+      #└ TYPE def f(x: int, y: bool, z: Unknown) -> str
       """.trimIndent())
 
     @Test
@@ -216,7 +216,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = f
-      #└ TYPE (x: int, y: int) -> None
+      #└ TYPE def f(x: int, y: int) -> None
       """.trimIndent())
 
     @Test

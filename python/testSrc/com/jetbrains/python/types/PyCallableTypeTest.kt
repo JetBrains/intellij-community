@@ -38,7 +38,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       dd = spam if random.randint != 42 else Eggs2()
       var = dd if random.randint != 42 else dd
       expr = var()
-      # │    ^^^^^ WARNING Member 'Eggs2' of '(() -> Literal["D"]) | Eggs2' is not callable
+      # │    ^^^^^ WARNING Member 'Eggs2' of '(def spam() -> Literal["D"]) | Eggs2' is not callable
       # └ TYPE Literal["D"] | Unknown
       """.trimIndent())
 
@@ -100,7 +100,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def func(x: int, /, s: str, *, k: bytes) -> None:
           pass
       expr = func
-      #└ TYPE (x: int, /, s: str, *, k: bytes) -> None
+      #└ TYPE def func(x: int, /, s: str, *, k: bytes) -> None
       """.trimIndent())
 
     @Test
@@ -212,7 +212,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           return 'foo'
 
       print(foo + 3) # we know type at least
-      #     ^^^ WARNING Expected type 'int', got '() -> Literal["foo"]' instead
+      #     ^^^ WARNING Expected type 'int', got 'def foo() -> Literal["foo"]' instead
       """.trimIndent())
 
     @Test
@@ -374,6 +374,49 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
   }
 
+  /**
+   * A function renders with its name: `def f(x: int) -> None`.
+   * A lambda has no name, so it keeps the `(...) -> R` form.
+   */
+  @Nested
+  inner class FunctionTypeRendering {
+    @Test
+    @TestFor(issues = ["PY-88620"])
+    fun `function renders with its name`() = test("""
+      def f(): ...
+
+      expr = f
+      #└ TYPE def f() -> None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88620"])
+    fun `bound method renders without its name`() = test("""
+      class C:
+          def m(self, x: int) -> str: ...
+
+      expr = C().m
+      #└ TYPE (x: int) -> str FIXME def m(x: int) -> str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88620"])
+    fun `lambda renders without a name`() = test("""
+      expr = lambda x: int(x)
+      #└ TYPE (x: Unknown) -> int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88620", "PY-65518"])
+    fun `functions in union render with their names and parentheses`() = test("""
+      def f() -> int: ...
+      def g() -> str: ...
+
+      expr = f or g
+      #└ TYPE (def f() -> int) | (def g() -> str)
+      """.trimIndent())
+  }
+
   @Nested
   inner class CallableParameterInference {
     @Test
@@ -472,7 +515,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       def test():
           for item in func(f, []):
-      #                    └ WARNING Expected type '(Unknown) -> str', got '(x: Unknown) -> int' instead
+      #                    └ WARNING Expected type '(Unknown) -> str', got 'def f(x: Unknown) -> int' instead
               pass
 
           for item in func(int, []):
@@ -957,7 +1000,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       def foo(a: A[str]):
           f = a.f
-      #   └ TYPE () -> int
+      #   └ TYPE def f() -> int
           expr = f()
       #   └ TYPE int
       """.trimIndent())
@@ -995,7 +1038,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       a = A[str]()
       func = a.f
-      #└ TYPE (*args: A[str]) -> int
+      #└ TYPE def f(*args: A[str]) -> int
       expr = a.f()
       #└ TYPE int
       """.trimIndent())
@@ -1638,7 +1681,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           ...
 
       expr = func
-      #└ TYPE (c: (**P) -> int, *args: **P, **kwargs: **P) -> None
+      #└ TYPE def func(c: (**P) -> int, *args: **P, **kwargs: **P) -> None
       """.trimIndent())
 
     @Test
@@ -1655,7 +1698,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           ...
 
       expr = func
-      #└ TYPE (c: (**P) -> int, *args: **P, **kwargs: **P) -> None
+      #└ TYPE def func(c: (**P) -> int, *args: **P, **kwargs: **P) -> None
       """.trimIndent())
 
     @Test
@@ -1669,7 +1712,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           ...
 
       expr = func
-      #└ TYPE (c: (**P) -> int, *args: **P, **kwargs: **P) -> None
+      #└ TYPE def func(c: (**P) -> int, *args: **P, **kwargs: **P) -> None
       """.trimIndent())
 
     @Test
@@ -1677,7 +1720,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       from mod import func
 
       expr = func
-      #└ TYPE (c: (**P) -> int, *args: **P, **kwargs: **P) -> None
+      #└ TYPE def func(c: (**P) -> int, *args: **P, **kwargs: **P) -> None
       """.trimIndent(),
       "mod.py" to """
         from typing import Callable, ParamSpec
@@ -2494,7 +2537,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def wrapper(func: PAlias) -> None:
           pass
       expr = wrapper
-      #└ TYPE (func: (str, int) -> str) -> None
+      #└ TYPE def wrapper(func: (str, int) -> str) -> None
       """.trimIndent())
 
     @Test
@@ -2505,7 +2548,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def wrapper(func: PAlias[bool, [str, str]]) -> None:
           pass
       expr = wrapper
-      #└ TYPE (func: (str, str) -> bool) -> None
+      #└ TYPE def wrapper(func: (str, str) -> bool) -> None
       """.trimIndent())
 
     @Test
@@ -2768,12 +2811,12 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           callback(1, 'abc', 2)
 
 
-      foo(too_few_arguments__correct_types) # WARNING Expected type '(int, str, int) -> bool', got '(a: int, b: str) -> bool' instead
-      foo(too_few_arguments__wrong_types) # WARNING Expected type '(int, str, int) -> bool', got '(a: int, b: int) -> bool' instead
+      foo(too_few_arguments__correct_types) # WARNING Expected type '(int, str, int) -> bool', got 'def too_few_arguments__correct_types(a: int, b: str) -> bool' instead
+      foo(too_few_arguments__wrong_types) # WARNING Expected type '(int, str, int) -> bool', got 'def too_few_arguments__wrong_types(a: int, b: int) -> bool' instead
       foo(matching_number_arguments__correct_types)
-      foo(matching_number_arguments__wrong_types) # WARNING Expected type '(int, str, int) -> bool', got '(a: int, b: str, c: str) -> bool' instead
-      foo(too_many_arguments__correct_types) # WARNING Expected type '(int, str, int) -> bool', got '(a: int, b: str, c: int, d: str) -> bool' instead
-      foo(too_many_arguments__wrong_types) # WARNING Expected type '(int, str, int) -> bool', got '(a: int, b: str, c: str, d: str) -> bool' instead
+      foo(matching_number_arguments__wrong_types) # WARNING Expected type '(int, str, int) -> bool', got 'def matching_number_arguments__wrong_types(a: int, b: str, c: str) -> bool' instead
+      foo(too_many_arguments__correct_types) # WARNING Expected type '(int, str, int) -> bool', got 'def too_many_arguments__correct_types(a: int, b: str, c: int, d: str) -> bool' instead
+      foo(too_many_arguments__wrong_types) # WARNING Expected type '(int, str, int) -> bool', got 'def too_many_arguments__wrong_types(a: int, b: str, c: str, d: str) -> bool' instead
       """.trimIndent())
 
     @Test
@@ -2787,7 +2830,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def is_str(x: Any) -> TypeIs[str]:
          ...
 
-      foo(is_str) # WARNING Expected type '(Any) -> TypeIs[int]', got '(x: Any) -> TypeIs[str]' instead
+      foo(is_str) # WARNING Expected type '(Any) -> TypeIs[int]', got 'def is_str(x: Any) -> TypeIs[str]' instead
       """.trimIndent())
 
     @Test
@@ -2821,7 +2864,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def is_str(x: Any) -> TypeIs[B]:
          ...
 
-      foo(is_str) # WARNING Expected type '(Any) -> TypeIs[D]', got '(x: Any) -> TypeIs[B]' instead
+      foo(is_str) # WARNING Expected type '(Any) -> TypeIs[D]', got 'def is_str(x: Any) -> TypeIs[B]' instead
       """.trimIndent())
 
     @Test
@@ -2840,7 +2883,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       def is_str(x: Any) -> TypeIs[D]:
          ...
-      foo(is_str) # WARNING Expected type '(Any) -> TypeIs[B]', got '(x: Any) -> TypeIs[D]' instead
+      foo(is_str) # WARNING Expected type '(Any) -> TypeIs[B]', got 'def is_str(x: Any) -> TypeIs[D]' instead
       """.trimIndent())
 
     @Test
@@ -2860,8 +2903,8 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           return isinstance(val, int)
 
       takes_typeguard(is_int_typeguard)
-      takes_typeguard(is_int_typeis) # WARNING Expected type '(object) -> TypeGuard[int]', got '(val: object) -> TypeIs[int]' instead
-      takes_typeis(is_int_typeguard) # WARNING Expected type '(object) -> TypeIs[int]', got '(val: object) -> TypeGuard[int]' instead
+      takes_typeguard(is_int_typeis) # WARNING Expected type '(object) -> TypeGuard[int]', got 'def is_int_typeis(val: object) -> TypeIs[int]' instead
+      takes_typeis(is_int_typeguard) # WARNING Expected type '(object) -> TypeIs[int]', got 'def is_int_typeguard(val: object) -> TypeGuard[int]' instead
       takes_typeis(is_int_typeis)
       """.trimIndent())
 
@@ -2880,7 +2923,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def is_bool(x: object) -> TypeIs[bool]:
           return isinstance(x, bool)
 
-      takes_narrower(42, is_bool) # WARNING Expected type '(object) -> TypeIs[int]', got '(x: object) -> TypeIs[bool]' instead
+      takes_narrower(42, is_bool) # WARNING Expected type '(object) -> TypeIs[int]', got 'def is_bool(x: object) -> TypeIs[bool]' instead
       """.trimIndent())
 
     @Test
@@ -3172,9 +3215,9 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       call = single_int
       call = int_bool
       call = single_str
-      #      ^^^^^^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '(x: str) -> str' instead
+      #      ^^^^^^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got 'def single_str(x: str) -> str' instead
       call = empty
-      #      ^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '() -> str' instead
+      #      ^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got 'def empty() -> str' instead
       """.trimIndent())
 
     @TestFor(issues = ["PY-89912"])
@@ -3196,7 +3239,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       shape = Shape()
       shape.apply(accept_circle)
-      #           ^^^^^^^^^^^^^ WARNING Expected type '(Shape) -> None', got '(c: Circle) -> None' instead
+      #           ^^^^^^^^^^^^^ WARNING Expected type '(Shape) -> None', got 'def accept_circle(c: Circle) -> None' instead
       """.trimIndent())
 
     @Test
@@ -3261,7 +3304,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
 
       func(accepts_str)
-      #    ^^^^^^^^^^^ WARNING Expected type '(T ≤: int) -> None', got '(x: str) -> None' instead
+      #    ^^^^^^^^^^^ WARNING Expected type '(T ≤: int) -> None', got 'def accepts_str(x: str) -> None' instead
       """.trimIndent())
 
     @Test
@@ -3302,7 +3345,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
 
       func(returns_str)
-      #    ^^^^^^^^^^^ WARNING Expected type '() -> T ≤: int', got '() -> str' instead
+      #    ^^^^^^^^^^^ WARNING Expected type '() -> T ≤: int', got 'def returns_str() -> str' instead
       """.trimIndent())
 
     @Test
@@ -3318,7 +3361,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
 
       func(accepts_anything)
-      #    ^^^^^^^^^^^^^^^^ WARNING Expected type '(T ≤: int | bool) -> None', got '(x: str) -> None' instead
+      #    ^^^^^^^^^^^^^^^^ WARNING Expected type '(T ≤: int | bool) -> None', got 'def accepts_anything(x: str) -> None' instead
       """.trimIndent())
 
     @Test
@@ -3335,7 +3378,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
 
       func(42, accepts_anything)
-      #        ^^^^^^^^^^^^^^^^ WARNING Expected type '(int) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead
+      #        ^^^^^^^^^^^^^^^^ WARNING Expected type '(int) -> None' (matched generic type '(T) -> None'), got 'def accepts_anything(x: str) -> None' instead
       """.trimIndent())
 
     @Test
@@ -3965,12 +4008,12 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       foo0: NamedParam = named_parameter
       foo1: NamedParam = named_parameter_wrong_type
-      #                  ^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'NamedParam', got '(arg: int) -> float | int' instead
+      #                  ^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'NamedParam', got 'def named_parameter_wrong_type(arg: int) -> float | int' instead
       foo2: StarParam = star_parameter
       foo3: StarParam = star_parameter_wrong_type
-      #                 ^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'StarParam', got '(*args: int) -> float | int' instead
+      #                 ^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'StarParam', got 'def star_parameter_wrong_type(*args: int) -> float | int' instead
       foo4: StarParam = named_parameter
-      #                 ^^^^^^^^^^^^^^^ WARNING Expected type 'StarParam', got '(arg: float | int) -> float | int' instead
+      #                 ^^^^^^^^^^^^^^^ WARNING Expected type 'StarParam', got 'def named_parameter(arg: float | int) -> float | int' instead
       """.trimIndent())
   }
 
