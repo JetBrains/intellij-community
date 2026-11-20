@@ -6,6 +6,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 
 | skill | description |
 | --- | --- |
+| [accio](accio/SKILL.md) | Search code with accio.cmd instead of grep, rg or find. |
 | [actions](actions/SKILL.md) | Implement or change IntelliJ `AnAction` actions and registrations. |
 | [bazel-test-migration](bazel-test-migration/SKILL.md) | Migrate IntelliJ JPS module tests to Bazel; debug Bazel-only failures. |
 | [code-style](code-style/SKILL.md) | Apply IntelliJ Kotlin and Java code style when writing or reviewing. |

@@ -1,4 +1,5 @@
 # BEGIN community/.ai/render-guides.mjs: the files it writes whole; rerun it instead of editing this block
+/accio/** linguist-generated
 /actions/** linguist-generated
 /bazel-test-migration/** linguist-generated
 /code-style/** linguist-generated

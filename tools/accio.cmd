@@ -19,6 +19,8 @@ GOTO :CMDSCRIPT
 #   2. Upload the six archives to accio/<version>-<short sha>/ in https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies.
 #      <short sha> is the commit of the tag v<version>.
 #   3. Change TOOL_VERSION, ACCIO_ARCHIVE_VERSION and the checksums in both sections. The .sha256 assets hold them.
+#   4. Copy the body of skill/SKILL.md of the tag v<version> into community/.agents/skills/accio/SKILL.md.
+#      Keep the description, the line on the accio.cmd path and the section "In this repository" there.
 #
 # IMPORTANT: After updating TOOL_VERSION or checksums, you MUST run:
 #   TOOL_VERIFY_ALL_PLATFORMS=1 ./community/tools/accio.cmd

@@ -61,7 +61,7 @@ Ask the Product DSL for a plugin model answer, not `rg` or `bazel cquery`: `./ba
 <!-- /IF_EDITION:ULTIMATE -->
 When JetBrains MCP is available, check the changed files with `lint_files` and fix the warnings of your change, and use `rename_refactoring` instead of a search and replace. An IDE answers from the project that it has open, not from a lease.
 
-Shell is allowed where this guide documents it, and for git, build, and test. Outside the working copy, read only what the task names. The accio commands, the allowlist, the Windows rules, and the tool inventory: [Tools Reference](./tools.md).
+Shell is allowed where this guide documents it, and for git, build, and test. Outside the working copy, read only what the task names. The accio commands are in the `accio` skill. The allowlist, the Windows rules, and the tool inventory: [Tools Reference](./tools.md).
 
 ### Skills
 
