@@ -68,5 +68,13 @@ public record OptMultiSelector(@Language("jvm-field-name") @NotNull String bindI
      * @return additional information to display alongside the main text for the element
      */
     default @Nls @Nullable String getSecondaryText() { return null; }
+
+    /**
+     * A form renderer can show the elements in groups, for example, under a separator with the group name.
+     * Elements with the same group name are in the same group.
+     *
+     * @return the name of the group of the element, or null if the element is not in a group
+     */
+    default @Nls @Nullable String getGroupName() { return null; }
   }
 }

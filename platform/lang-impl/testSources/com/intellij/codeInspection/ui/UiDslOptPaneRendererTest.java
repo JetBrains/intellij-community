@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInsight.generation.ClassMember;
+import com.intellij.codeInsight.generation.MemberChooserObject;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.options.CustomComponentExtension;
@@ -19,19 +21,27 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.TestDisposable;
 import com.intellij.ui.ContextHelpLabel;
+import com.intellij.ui.GroupHeaderSeparator;
 import com.intellij.ui.SeparatorComponent;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JTree;
+import javax.swing.ListModel;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -353,6 +363,119 @@ public class UiDslOptPaneRendererTest {
     assertEquals("String", list.getSelectedValuesList().get(0).getText());
     assertEquals("Double", list.getSelectedValuesList().get(1).getText());
     assertEquals(inspection.chosen, list.getSelectedValuesList());
+  }
+
+  private record ParentElement(@NotNull String getText) implements MemberChooserObject {
+    @Override
+    public void renderTreeNode(SimpleColoredComponent component, JTree tree) { }
+  }
+
+  private record ChildElement(@NotNull String getText, @NotNull ParentElement getParentNodeDelegate) implements ClassMember {
+    @Override
+    public void renderTreeNode(SimpleColoredComponent component, JTree tree) { }
+  }
+
+  private static class MyGroupedMultiSelectorInspection extends LocalInspectionTool {
+    private static final ParentElement CHILD_CLASS = new ParentElement("Child");
+    private static final ParentElement PARENT_CLASS = new ParentElement("Parent");
+
+    public List<ChildElement> elements = List.of(new ChildElement("a", CHILD_CLASS), new ChildElement("x", PARENT_CLASS),
+                                                 new ChildElement("b", CHILD_CLASS), new ChildElement("y", PARENT_CLASS));
+    public List<ChildElement> chosen = List.of(elements.get(2), elements.get(1));
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      return pane(
+        multiSelector("chosen", elements, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY)
+      );
+    }
+  }
+
+  @Test
+  public void testMultiSelectorGroupedByParent() {
+    MyGroupedMultiSelectorInspection inspection = new MyGroupedMultiSelectorInspection();
+    JComponent component = render(inspection);
+    //noinspection unchecked
+    JBList<OptMultiSelector.OptElement> list = UIUtil.findComponentOfType(component, JBList.class);
+    assertEquals(List.of("a", "b", "x", "y"), getTexts(list));
+    assertEquals(List.of("b", "x"), ContainerUtil.map(list.getSelectedValuesList(), OptMultiSelector.OptElement::getText));
+    assertEquals(Arrays.asList("Child", null, "Parent", null), getSeparatorCaptions(list));
+  }
+
+  private static class MySameParentMultiSelectorInspection extends LocalInspectionTool {
+    private static final ParentElement PARENT_CLASS = new ParentElement("Parent");
+
+    public List<ChildElement> elements = List.of(new ChildElement("b", PARENT_CLASS), new ChildElement("a", PARENT_CLASS));
+    public List<ChildElement> chosen = List.of();
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      return pane(
+        multiSelector("chosen", elements, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY)
+      );
+    }
+  }
+
+  @Test
+  public void testMultiSelectorWithOneParentHasNoSeparator() {
+    MySameParentMultiSelectorInspection inspection = new MySameParentMultiSelectorInspection();
+    JComponent component = render(inspection);
+    //noinspection unchecked
+    JBList<OptMultiSelector.OptElement> list = UIUtil.findComponentOfType(component, JBList.class);
+    assertEquals(List.of("b", "a"), getTexts(list));
+    assertEquals(Arrays.asList(null, null), getSeparatorCaptions(list));
+  }
+
+  private record GroupedElement(@NotNull String getText, @Nullable String getGroupName) implements OptMultiSelector.OptElement {
+  }
+
+  private static class MyPartlyGroupedMultiSelectorInspection extends LocalInspectionTool {
+    public List<GroupedElement> elements = List.of(new GroupedElement("a", null), new GroupedElement("x", "Group"),
+                                                   new GroupedElement("b", null), new GroupedElement("y", "Group"));
+    public List<GroupedElement> chosen = List.of(elements.get(3));
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      return pane(
+        multiSelector("chosen", elements, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY)
+      );
+    }
+  }
+
+  @Test
+  public void testMultiSelectorElementsWithoutGroupHaveNoSeparator() {
+    MyPartlyGroupedMultiSelectorInspection inspection = new MyPartlyGroupedMultiSelectorInspection();
+    JComponent component = render(inspection);
+    //noinspection unchecked
+    JBList<OptMultiSelector.OptElement> list = UIUtil.findComponentOfType(component, JBList.class);
+    assertEquals(List.of("a", "b", "x", "y"), getTexts(list));
+    assertEquals(List.of("y"), ContainerUtil.map(list.getSelectedValuesList(), OptMultiSelector.OptElement::getText));
+    assertEquals(Arrays.asList(null, null, "Group", null), getSeparatorCaptions(list));
+  }
+
+  private static @NotNull List<String> getTexts(@NotNull JBList<OptMultiSelector.OptElement> list) {
+    ListModel<OptMultiSelector.OptElement> model = list.getModel();
+    List<String> texts = new ArrayList<>();
+    for (int i = 0; i < model.getSize(); i++) {
+      texts.add(model.getElementAt(i).getText());
+    }
+    return texts;
+  }
+
+  /**
+   * @return the caption of the visible separator above each element of the list, or null for an element without a separator
+   */
+  private static @NotNull List<String> getSeparatorCaptions(@NotNull JBList<OptMultiSelector.OptElement> list) {
+    List<String> captions = new ArrayList<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ListModel<OptMultiSelector.OptElement> model = list.getModel();
+      for (int i = 0; i < model.getSize(); i++) {
+        Component cell = list.getCellRenderer().getListCellRendererComponent(list, model.getElementAt(i), i, false, false);
+        GroupHeaderSeparator separator = UIUtil.findComponentOfType((JComponent)cell, GroupHeaderSeparator.class);
+        captions.add(separator != null && separator.isVisible() ? separator.getCaption() : null);
+      }
+    });
+    return captions;
   }
 
   @Test

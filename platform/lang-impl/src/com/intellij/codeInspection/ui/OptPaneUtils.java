@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.AbstractButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JList;
 import javax.swing.text.JTextComponent;
 
 @ApiStatus.Experimental
@@ -83,7 +84,7 @@ public final class OptPaneUtils {
     builder.setCenterPanel(component);
     JComponent toFocus = UIUtil.uiTraverser(component)
       .filter(JComponent.class)
-      .find(c -> c instanceof JTextComponent || c instanceof JComboBox<?> || c instanceof AbstractButton);
+      .find(c -> c instanceof JTextComponent || c instanceof JComboBox<?> || c instanceof AbstractButton || c instanceof JList<?>);
     if (toFocus != null) {
       builder.setPreferredFocusComponent(toFocus);
     }

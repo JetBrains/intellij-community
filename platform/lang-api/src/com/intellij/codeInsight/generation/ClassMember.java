@@ -5,7 +5,9 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JTree;
 
@@ -18,6 +20,15 @@ public interface ClassMember extends MemberChooserObject, OptElement {
    * @return should override equals() and hashCode()
    */
   MemberChooserObject getParentNodeDelegate();
+
+  /**
+   * @return the text of {@link #getParentNodeDelegate()}, or null if the member has no parent node
+   */
+  @Override
+  default @Nls @Nullable String getGroupName() {
+    MemberChooserObject parent = getParentNodeDelegate();
+    return parent == null ? null : parent.getText();
+  }
 
   /**
    * Adapt {@link OptElement} to {@link ClassMember}
