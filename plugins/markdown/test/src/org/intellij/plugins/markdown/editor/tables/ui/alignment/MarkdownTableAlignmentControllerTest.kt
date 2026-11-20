@@ -14,8 +14,9 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewConfiguration
 import org.intellij.plugins.markdown.editor.livepreview.computeLivePreviewSpecs
-import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
+import org.intellij.plugins.markdown.editor.livepreview.setLivePreviewEnabledness
 import org.intellij.plugins.markdown.publishSpecsAndWait
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -66,11 +67,13 @@ class MarkdownTableAlignmentControllerTest {
           | **bb** | y |
           """.trimIndent()
         myFixture.configureByText("some.md", content)
-        myFixture.editor.enableLivePreview()
+        myFixture.editor.setLivePreviewEnabledness(true)
         myFixture.editor.caretModel.moveToOffset(content.length)
 
         val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(myFixture.editor))
-        reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
+        reconciler.publishSpecsAndWait(
+          computeLivePreviewSpecs(myFixture.file, myFixture.editor, MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION)
+        )
         awaitPads()
         assertBordersAligned()
 

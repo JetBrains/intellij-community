@@ -24,8 +24,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownTestingUtil.paintInlay
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewConfiguration
 import org.intellij.plugins.markdown.editor.livepreview.computeLivePreviewSpecs
-import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
+import org.intellij.plugins.markdown.editor.livepreview.setLivePreviewEnabledness
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
@@ -126,11 +127,13 @@ class MarkdownTableInlayHintsPassTest {
           """.trimIndent()
         myFixture.configureByText("some.md", content)
         myFixture.doHighlighting()
-        myFixture.editor.enableLivePreview()
+        myFixture.editor.setLivePreviewEnabledness(true)
         myFixture.editor.caretModel.moveToOffset(content.length)
 
         val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(myFixture.editor))
-        reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
+        reconciler.publishSpecsAndWait(
+          computeLivePreviewSpecs(myFixture.file, myFixture.editor, MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION)
+        )
         val bar = requireNotNull(getInlay())
         paintInlay(bar)
         val hiddenWidth = bar.widthInPixels

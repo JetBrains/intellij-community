@@ -50,12 +50,13 @@ internal class MarkdownLivePreviewLeakTest {
     val editor = EditorFactory.getInstance().createEditor(psiFile.fileDocument, project, file, false)
     try {
       editor.caretModel.moveToOffset(CONTENT.length)
-      editor.enableLivePreview()
+      editor.setLivePreviewEnabledness(true)
       PlatformTestUtil.waitWithEventsDispatching(
         "Live preview did not show the heading and the image", { isShown(editor) }, 10
       )
 
-      val shown = computeLivePreviewSpecs(psiFile, editor).elements.mapTo(HashSet()) { it.javaClass }
+      val shown = computeLivePreviewSpecs(psiFile, editor, MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION)
+        .elements.mapTo(HashSet()) { it.javaClass }
       val missing = MarkdownLivePreviewSpec::class.java.permittedSubclasses.filter { it !in shown }.map { it.simpleName }
       assertEquals(
         emptyList<String>(), missing,

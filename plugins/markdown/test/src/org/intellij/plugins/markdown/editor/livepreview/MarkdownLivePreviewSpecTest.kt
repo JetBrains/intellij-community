@@ -109,11 +109,7 @@ class MarkdownLivePreviewSpecTest {
   fun testOnlyAClosedMermaidFenceIsSpec() {
     val fence = "```mermaid\ngraph LR\n  A --> B\n```"
     val content = "Some `mermaid` code\n\n```\nval a = 1\n```\n\n$fence\n\n```mermaid\nopen\n"
-    myFixture.configureByText("test.md", content)
-
-    (val range, val source) = timeoutRunBlocking { readAction { computeLivePreviewSpecs(myFixture.file, myFixture.editor) } }.elements
-      .filterIsInstance<MarkdownLivePreviewSpec.CodeFence>()
-      .single()
+    (val range, val source) = elements(content).filterIsInstance<MarkdownLivePreviewSpec.CodeFence>().single()
 
     assertEquals(fence, content.substring(range.startOffset, range.endOffset))
     assertEquals("graph LR\n  A --> B", source)
@@ -189,8 +185,7 @@ class MarkdownLivePreviewSpecTest {
     TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
       TrustedProjects.setProjectTrusted(myFixture.project, false)
       try {
-        myFixture.configureByText("test.md", "![local](image.png)\n\n![remote](https://example.org/image.png)")
-        val images = timeoutRunBlocking { readAction { computeLivePreviewSpecs(myFixture.file, myFixture.editor) } }.elements.filterIsInstance<MarkdownLivePreviewSpec.Image>()
+        val images = images("![local](image.png)\n\n![remote](https://example.org/image.png)")
         assertEquals(listOf("image.png", "https://example.org/image.png"), images.map { it.destination })
         assertEquals(listOf(MarkdownLivePreviewSpec.ImageFailure.UNTRUSTED), images.map { it.failure }.distinct())
         assertTrue(images.all { it.source == null })
@@ -819,6 +814,72 @@ class MarkdownLivePreviewSpecTest {
     assertFalse(MarkdownLivePreviewDocumentVersion(patchVersion, 42).matchesDocument(MarkdownLivePreviewDocumentVersion(null, 42)))
   }
 
+  @Test
+  fun testProhibitedImagesHaveNoSpecs() {
+    val noImages = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION.copy(
+      prohibited = setOf(MarkdownLivePreviewConfiguration.IMAGES)
+    )
+
+    assertThat(images("![local](image.png) ![remote](https://example.org/image.png)", noImages)).isEmpty()
+    assertThat(concealed("![alt](image.png)", noImages)).isEmpty()
+  }
+
+  @Test
+  fun testHeadingKeepsTheImageSourceAsTextWhenImagesAreProhibited() {
+    val content = "# ![logo](logo.png) Title"
+    val noImages = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION.copy(
+      prohibited = setOf(MarkdownLivePreviewConfiguration.IMAGES)
+    )
+    val body = headings(content, noImages).single().body()
+
+    assertEquals("![logo](logo.png) Title", body.text())
+    val image = body.select("span[md-src-pos]").first { it.wholeText() == "![logo](logo.png)" }
+    val [start, end] = image.attr("md-src-pos").split("..").map(String::toInt)
+    assertEquals("![logo](logo.png)", content.substring(start, end))
+  }
+
+  @Test
+  fun testProhibitedCodeFenceLanguagesHaveNoSpecs() {
+    val content = "```mermaid\ngraph LR\n```\n\n```plantuml\nA -> B\n```"
+    val configuration = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION.copy(
+      prohibited = setOf(MarkdownLivePreviewConfiguration.MERMAID)
+    )
+    val languages = elements(content, configuration).filterIsInstance<MarkdownLivePreviewSpec.CodeFence>().map { it.language }
+
+    assertEquals(listOf("plantuml"), languages)
+  }
+
+  @Test
+  fun testProhibitedCodeFenceKeepsItsMarkerConcealsAndCodeFont() {
+    val content = "```mermaid\ngraph LR\n```"
+    val configuration = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION.copy(
+      prohibited = setOf(MarkdownLivePreviewConfiguration.MERMAID)
+    )
+
+    assertEquals(listOf("```mermaid", "```"), concealed(content, configuration))
+    assertEquals(1, elements(content, configuration).filterIsInstance<MarkdownLivePreviewSpec.CodeFont>().size)
+  }
+
+  @Test
+  fun testProhibitedHeadingsHaveNoSpecsAndKeepTheirInlineConceals() {
+    val content = "### Deep *header*\n\nSetext\n===\n\n> # quoted"
+    val noHeadings = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION.copy(
+      prohibited = setOf(MarkdownLivePreviewConfiguration.HEADINGS)
+    )
+
+    assertEquals(listOf("*", "*", ">"), concealed(content, noHeadings))
+  }
+
+  @Test
+  fun testProhibitedBlockQuotesHaveNoSpecsAndNoQuotedHeadings() {
+    val content = "> [!NOTE]\n> *text*\n\n> # quoted\n\n# top"
+    val noBlockQuotes = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION.copy(
+      prohibited = setOf(MarkdownLivePreviewConfiguration.BLOCK_QUOTES)
+    )
+
+    assertEquals(listOf("*", "*", "# top"), concealed(content, noBlockQuotes))
+  }
+
   private fun MarkdownLivePreviewSpec.concealedRanges(): List<MarkdownLivePreviewRange> = when (this) {
     is MarkdownLivePreviewSpec.Conceal -> conceals
     is MarkdownLivePreviewSpec.BlockQuote -> listOf(markerRange)
@@ -832,9 +893,12 @@ class MarkdownLivePreviewSpecTest {
     is MarkdownLivePreviewSpec.ListIndent -> emptyList()
   }
 
-  private fun elements(content: String): List<MarkdownLivePreviewSpec> {
+  private fun elements(
+    content: String,
+    configuration: MarkdownLivePreviewConfiguration = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION,
+  ): List<MarkdownLivePreviewSpec> {
     myFixture.configureByText("test.md", content)
-    val elements = timeoutRunBlocking { readAction { computeLivePreviewSpecs(myFixture.file, myFixture.editor) } }.elements
+    val elements = timeoutRunBlocking { readAction { computeLivePreviewSpecs(myFixture.file, myFixture.editor, configuration) } }.elements
     for (element in elements) {
       val conceals = element.concealedRanges()
       if (element is MarkdownLivePreviewSpec.ListIndent) {
@@ -854,8 +918,12 @@ class MarkdownLivePreviewSpecTest {
     return elements
   }
 
-  private fun concealed(content: String): List<String> =
-    elements(content).flatMap { it.concealedRanges() }.map { (val startOffset, val endOffset) -> content.substring(startOffset, endOffset) }
+  private fun concealed(
+    content: String,
+    configuration: MarkdownLivePreviewConfiguration = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION,
+  ) =
+    elements(content, configuration).flatMap { it.concealedRanges() }
+      .map { (val startOffset, val endOffset) -> content.substring(startOffset, endOffset) }
 
   private fun revealRanges(content: String): List<String> =
     elements(content)
@@ -874,11 +942,17 @@ class MarkdownLivePreviewSpecTest {
   private fun blockQuotes(content: String): List<MarkdownLivePreviewSpec.BlockQuote> =
     elements(content).filterIsInstance<MarkdownLivePreviewSpec.BlockQuote>()
 
-  private fun images(content: String): List<MarkdownLivePreviewSpec.Image> =
-    elements(content).filterIsInstance<MarkdownLivePreviewSpec.Image>()
+  private fun images(
+    content: String,
+    configuration: MarkdownLivePreviewConfiguration = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION,
+  ) =
+    elements(content, configuration).filterIsInstance<MarkdownLivePreviewSpec.Image>()
 
-  private fun headings(content: String): List<MarkdownLivePreviewSpec.Heading> =
-    elements(content).filterIsInstance<MarkdownLivePreviewSpec.Heading>()
+  private fun headings(
+    content: String,
+    configuration: MarkdownLivePreviewConfiguration = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION,
+  ) =
+    elements(content, configuration).filterIsInstance<MarkdownLivePreviewSpec.Heading>()
 
   private fun MarkdownLivePreviewSpec.Heading.body(): Element = Jsoup.parseBodyFragment(html).body()
 

@@ -105,11 +105,13 @@ class MarkdownLivePreviewFoldingTest {
   @TestDisposable
   lateinit var disposable: Disposable
 
+  private var configuration = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION
+
   @BeforeEach
   fun setUp() {
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorCreated(event: EditorFactoryEvent) {
-        if (event.editor.editorKind == EditorKind.UNTYPED) event.editor.enableLivePreview()
+        if (event.editor.editorKind == EditorKind.UNTYPED) event.editor.setLivePreviewEnabledness(true, configuration)
       }
     }, disposable)
   }
@@ -348,7 +350,7 @@ class MarkdownLivePreviewFoldingTest {
       val content = "before\n# title\n\nafter"
       configure("$content<caret>")
       val renderer = headingFolds().single().renderer
-      val stale = computeLivePreviewSpecs(myFixture.file, myFixture.editor)
+      val stale = computeLivePreviewSpecs(myFixture.file, myFixture.editor, configuration)
       moveCaretTo(0)
       myFixture.type("more ")
       myFixture.doHighlighting()
@@ -366,7 +368,7 @@ class MarkdownLivePreviewFoldingTest {
       configure("# title\n\ntail<caret>")
       moveCaretTo(0)
       val inlay = myFixture.editor.inlayModel.getBlockElementsInRange(0, 7).single()
-      myFixture.editor.setLivePreviewEnabledness(false)
+      myFixture.editor.setLivePreviewEnabledness(false, configuration)
       MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.reconcileNow()
       assertFalse(inlay.isValid)
       assertThat(headingFolds()).isEmpty()
@@ -1226,7 +1228,7 @@ class MarkdownLivePreviewFoldingTest {
       assertThat(checkboxInlays()).isEmpty()
 
       configure("$content<caret>")
-      myFixture.editor.setLivePreviewEnabledness(false)
+      myFixture.editor.setLivePreviewEnabledness(false, configuration)
       myFixture.doHighlighting()
       waitForConcealed(emptyList())
       assertThat(checkboxInlays()).isEmpty()
@@ -1473,7 +1475,7 @@ class MarkdownLivePreviewFoldingTest {
       val content = "`---`\n---\ntail"
       configure("$content<caret>")
 
-      assertEquals(listOf("`---`", "`---`", "---"), computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements
+      assertEquals(listOf("`---`", "`---`", "---"), computeLivePreviewSpecs(myFixture.file, myFixture.editor, configuration).elements
         .filterNot { it is MarkdownLivePreviewSpec.CodeFont }
         .map { content.substring(it.range.startOffset, it.range.endOffset) })
       assertEquals(content.indexOf('\n'), headingFolds().single().endOffset)
@@ -1501,7 +1503,7 @@ class MarkdownLivePreviewFoldingTest {
       waitForCurrentSpecs()
       assertEquals(listOf("foo()", "```", "val a = 10", "```"), codeFontTexts())
 
-      myFixture.editor.setLivePreviewEnabledness(false)
+      myFixture.editor.setLivePreviewEnabledness(false, configuration)
       MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.reconcileNow()
       assertThat(codeFontHighlighters()).isEmpty()
     }
@@ -1880,7 +1882,8 @@ class MarkdownLivePreviewFoldingTest {
       val content = "# Markdown WYSIWYG Demo\n\n![logo](image.png)\n\n![logo](image.png)\n\n# Markdown WYSIWYG Demo"
       configureProjectFile(content)
 
-      assertEquals(2, computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
+      assertEquals(2, computeLivePreviewSpecs(myFixture.file, myFixture.editor, configuration).elements
+        .filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
       waitForImageInlays(2)
     }
   }
@@ -1998,7 +2001,8 @@ class MarkdownLivePreviewFoldingTest {
       Disposer.register(disposable) { VfsTestUtil.deleteFile(image.parent) }
       configureProjectFile("![alt](../../$sibling/image.png)\n\ntail")
 
-      assertEquals(1, computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
+      assertEquals(1, computeLivePreviewSpecs(myFixture.file, myFixture.editor, configuration).elements
+        .filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
       waitForPlaceholders(MarkdownBundle.message("markdown.live.preview.image.outside.project", "../../$sibling/image.png"))
     }
   }
@@ -2102,6 +2106,53 @@ class MarkdownLivePreviewFoldingTest {
 
       ApplicationManager.getApplication().messageBus.syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(LafManager.getInstance())
       PlatformTestUtil.waitWithEventsDispatching("A new theme did not render the diagram again", { service.renders.get() == 2 }, 10)
+    }
+  }
+
+  @Test
+  fun testProhibitedElementsShowTheirSourceAndCaretRevealsNothing(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val service = FixedCodeFenceRenderingService()
+      CodeFenceRenderingService.EP_NAME.point.registerExtension(service, disposable)
+      addPng(120, 60)
+      configuration = MarkdownLivePreviewConfiguration(
+        prohibited = setOf(
+          MarkdownLivePreviewConfiguration.IMAGES,
+          MarkdownLivePreviewConfiguration.MERMAID,
+          MarkdownLivePreviewConfiguration.HEADINGS,
+          MarkdownLivePreviewConfiguration.BLOCK_QUOTES,
+        ),
+      )
+      val content = "![alt](image.png)\n\n# title\n\n> [!NOTE]\n> text\n\n```mermaid\ngraph LR\n```\n\ntail"
+      configureProjectFile(content)
+
+      val fenceMarkers = listOf("```mermaid", "```")
+      assertEquals(fenceMarkers, concealed())
+      assertThat(imageInlays()).isEmpty()
+      assertThat(headingFolds()).isEmpty()
+      assertThat(blockQuoteRules()).isEmpty()
+      assertThat(mermaidInlays()).isEmpty()
+      for (element in listOf("alt", "title", "NOTE", "text")) {
+        moveCaretTo(content.indexOf(element))
+        assertEquals(fenceMarkers, concealed(), "The caret on $element must not reveal anything")
+        assertThat(mermaidInlays()).isEmpty()
+      }
+      assertEquals(0, service.renders.get())
+    }
+  }
+
+  @Test
+  fun testNewConfigurationRendersPreviouslyProhibitedElements(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      configuration = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION.copy(
+        prohibited = setOf(MarkdownLivePreviewConfiguration.HEADINGS)
+      )
+      configure("# title\n\ntail<caret>")
+      assertThat(headingFolds()).isEmpty()
+
+      myFixture.editor.setLivePreviewEnabledness(true)
+
+      PlatformTestUtil.waitWithEventsDispatching("The heading did not render", { headingFolds().size == 1 }, 10)
     }
   }
 
@@ -2434,11 +2485,11 @@ class MarkdownLivePreviewFoldingTest {
       configure("Some **bold** text<caret>")
       assertEquals(listOf("**", "**"), concealed())
 
-      myFixture.editor.setLivePreviewEnabledness(false)
+      myFixture.editor.setLivePreviewEnabledness(false, configuration)
       myFixture.doHighlighting()
       waitForConcealed(emptyList())
 
-      myFixture.editor.setLivePreviewEnabledness(true)
+      myFixture.editor.setLivePreviewEnabledness(true, configuration)
       myFixture.doHighlighting()
       waitForConcealed(listOf("**", "**"))
     }
@@ -2450,7 +2501,7 @@ class MarkdownLivePreviewFoldingTest {
       configureAllDecorations()
       val editor = myFixture.editor
       val reconciler = MarkdownLivePreviewReconciler.getExisting(editor)!!
-      val specs = computeLivePreviewSpecs(myFixture.file, editor)
+      val specs = computeLivePreviewSpecs(myFixture.file, editor, configuration)
       val folds = concealedLivePreviewRegions(editor)
       val checkbox = checkboxInlays().single()
       val indent = listIndentInlays().single()
@@ -2477,7 +2528,7 @@ class MarkdownLivePreviewFoldingTest {
       assertEquals(1, thematicBreakHighlighters().size)
       assertEquals(1, imageInlays().size)
 
-      editor.setLivePreviewEnabledness(false)
+      editor.setLivePreviewEnabledness(false, configuration)
       reconciler.reconcileNow()
 
       assertThat(concealed()).isEmpty()
@@ -2523,7 +2574,7 @@ class MarkdownLivePreviewFoldingTest {
       configureAllDecorations()
       val editor = myFixture.editor
       val reconciler = MarkdownLivePreviewReconciler.getExisting(editor)!!
-      val specs = computeLivePreviewSpecs(myFixture.file, editor)
+      val specs = computeLivePreviewSpecs(myFixture.file, editor, configuration)
 
       Disposer.dispose(reconciler)
       reconciler.publishSpecsAndWait(specs)
@@ -2547,7 +2598,7 @@ class MarkdownLivePreviewFoldingTest {
       val diffEditor = EditorFactory.getInstance().createEditor(document, myFixture.project, myFixture.file.virtualFile, false, EditorKind.DIFF)
       try {
         val reconciler = MarkdownLivePreviewReconciler.getOrCreate(diffEditor)!!
-        reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
+        reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor, configuration))
         assertThat(concealed(diffEditor)).describedAs("A diff editor must show the raw source").isEmpty()
       }
       finally {
@@ -2565,7 +2616,7 @@ class MarkdownLivePreviewFoldingTest {
       try {
         assertFalse(mainEditor.isLivePreviewEnabled())
         val reconciler = MarkdownLivePreviewReconciler.getOrCreate(mainEditor)!!
-        reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
+        reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor, configuration))
         assertThat(concealed(mainEditor)).describedAs("A main editor without live preview must show the raw source").isEmpty()
       }
       finally {
@@ -2621,7 +2672,7 @@ class MarkdownLivePreviewFoldingTest {
       val editor = myFixture.editor
       val reconciler = MarkdownLivePreviewReconciler.getExisting(editor)!!
       reconciler.publishSpecsAndWait(null)
-      val elements = computeLivePreviewSpecs(myFixture.file, editor).elements
+      val elements = computeLivePreviewSpecs(myFixture.file, editor, configuration).elements
       val oldVersion = MarkdownLivePreviewDocumentVersion.capture(editor.document, myFixture.project)
       (editor.document as DocumentEx).setModificationStamp(editor.document.modificationStamp + 1)
 
@@ -2644,7 +2695,7 @@ class MarkdownLivePreviewFoldingTest {
       PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
       val editor = myFixture.editor
       val reconciler = MarkdownLivePreviewReconciler.getOrCreate(editor)!!
-      val specSet = computeLivePreviewSpecs(myFixture.file, editor)
+      val specSet = computeLivePreviewSpecs(myFixture.file, editor, configuration)
 
       DocumentUtil.executeInBulk(editor.document, true) {
         reconciler.publishSpecsAndWait(specSet)
@@ -2746,7 +2797,7 @@ class MarkdownLivePreviewFoldingTest {
   private fun configureWithLateSpecs(content: String, caretOffset: Int): MarkdownLivePreviewSpecSet {
     configure(content)
     val editor = myFixture.editor
-    val specs = computeLivePreviewSpecs(myFixture.file, editor)
+    val specs = computeLivePreviewSpecs(myFixture.file, editor, configuration)
     MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecsAndWait(null)
     EditorTestUtil.setEditorVisibleSize(editor, 80, 10)
     moveCaretTo(caretOffset)

@@ -46,7 +46,7 @@ internal class MarkdownLivePreviewPerformanceTest {
     testMethod = testInfo.testMethod.get()
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorCreated(event: EditorFactoryEvent) {
-        if (event.editor.editorKind == EditorKind.UNTYPED) event.editor.enableLivePreview()
+        if (event.editor.editorKind == EditorKind.UNTYPED) event.editor.setLivePreviewEnabledness(true)
       }
     }, disposable)
   }

@@ -15,32 +15,41 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
-/** Holds the live-preview state of an editor. Live preview is off until [setLivePreviewEnabledness] turns it on. */
-private val LIVE_PREVIEW_KEY: Key<MutableStateFlow<Boolean>> = Key.create("markdown.live.preview")
+/**
+ * Holds the live-preview configuration of an editor.
+ * Live preview is off while it is null, until [setLivePreviewEnabledness] turns it on.
+ */
+private val LIVE_PREVIEW_KEY: Key<MutableStateFlow<MarkdownLivePreviewConfiguration?>> = Key.create("markdown.live.preview")
 
-private fun Editor.livePreviewState(): MutableStateFlow<Boolean> {
-  return (this as UserDataHolderEx).getOrCreateUserData(LIVE_PREVIEW_KEY) { MutableStateFlow(false) }
+private fun Editor.livePreviewState(): MutableStateFlow<MarkdownLivePreviewConfiguration?> {
+  return (this as UserDataHolderEx).getOrCreateUserData(LIVE_PREVIEW_KEY) { MutableStateFlow(null) }
 }
 
+/**
+ * Turns Markdown live preview on or off for this editor.
+ * While it is on, live preview renders the elements that [configuration] does not prohibit.
+ */
 @ApiStatus.Experimental
-fun Editor.enableLivePreview() {
-  setLivePreviewEnabledness(true)
-}
-
-/** Turns Markdown live preview on or off for this editor. */
-@ApiStatus.Experimental
-fun Editor.setLivePreviewEnabledness(enabled: Boolean) {
-  livePreviewState().value = enabled
+@JvmOverloads
+fun Editor.setLivePreviewEnabledness(
+  enabled: Boolean,
+  configuration: MarkdownLivePreviewConfiguration = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION,
+) {
+  livePreviewState().value = if (enabled) configuration else null
 }
 
 @ApiStatus.Experimental
 fun Editor.isLivePreviewEnabled(): Boolean {
-  return getUserData(LIVE_PREVIEW_KEY)?.value == true
+  return livePreviewConfiguration() != null
 }
 
-/** Emits the live-preview state of this editor each time [setLivePreviewEnabledness] changes it. */
+internal fun Editor.livePreviewConfiguration(): MarkdownLivePreviewConfiguration? {
+  return getUserData(LIVE_PREVIEW_KEY)?.value
+}
+
+/** Emits the live-preview configuration of this editor each time it changes. Null means that live preview is off. */
 @ApiStatus.Internal
-fun Editor.livePreviewEnablednessFlow(): StateFlow<Boolean> {
+fun Editor.livePreviewConfigurationFlow(): StateFlow<MarkdownLivePreviewConfiguration?> {
   return livePreviewState()
 }
 

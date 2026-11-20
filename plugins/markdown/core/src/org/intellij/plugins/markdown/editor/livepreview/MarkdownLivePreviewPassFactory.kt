@@ -41,7 +41,7 @@ internal class MarkdownLivePreviewPassFactory:
     if (IdeProductMode.isFrontend && !IdeProductMode.isLight) return null
     if (!psiFile.language.isMarkdownLanguage()) return null
     val shouldNotCreate = when {
-      editor.computesLivePreview() -> editor.hasCurrentLivePreviewSpecs(psiFile.project)
+      editor.computedLivePreviewConfiguration() != null -> editor.hasCurrentLivePreviewSpecs(psiFile.project)
       else -> editor.livePreviewSpecSetFlow().value == null
     }
     return if (shouldNotCreate) null else MarkdownLivePreviewPass(editor, psiFile)
@@ -54,7 +54,8 @@ private class MarkdownLivePreviewPass(editor: Editor, psiFile: PsiFile):
   private var specSet: MarkdownLivePreviewSpecSet? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    specSet = if (myEditor.computesLivePreview()) computeLivePreviewSpecs(myFile, myEditor) else null
+    val configuration = myEditor.computedLivePreviewConfiguration()
+    specSet = if (configuration != null) computeLivePreviewSpecs(myFile, myEditor, configuration) else null
   }
 
   override fun doApplyInformationToEditor() {
@@ -72,9 +73,11 @@ internal suspend fun Editor.publishCurrentLivePreviewSpecs(force: Boolean = fals
   val specSet = readAction {
     val documentManager = PsiDocumentManager.getInstance(project)
     val file = documentManager.getPsiFile(document)?.takeIf { it.language.isMarkdownLanguage() }
+    val configuration = computedLivePreviewConfiguration()
     when {
-      file == null || !documentManager.isCommitted(document) || !force && hasCurrentLivePreviewSpecs(project) -> null
-      else -> computeLivePreviewSpecs(file, this)
+      file == null || configuration == null || !documentManager.isCommitted(document) -> null
+      !force && hasCurrentLivePreviewSpecs(project) -> null
+      else -> computeLivePreviewSpecs(file, this, configuration)
     }
   } ?: return
   // Document changes happen on the EDT, so the version check stays true until the publication.
@@ -89,7 +92,7 @@ internal class MarkdownLivePreviewTrustListener : TrustedProjectsListener {
   override fun onProjectUntrusted(project: Project) = republish(project)
 
   private fun republish(project: Project) {
-    val editors = EditorFactory.getInstance().allEditors.filter { it.project == project && it.computesLivePreview() }
+    val editors = EditorFactory.getInstance().allEditors.filter { it.project == project && it.computedLivePreviewConfiguration() != null }
     if (editors.isEmpty()) return
     MarkdownPluginScope.scope(project).launch {
       editors.forEach { it.publishCurrentLivePreviewSpecs(force = true) }
@@ -112,7 +115,8 @@ private fun Editor.hasCurrentLivePreviewSpecs(project: Project): Boolean {
 }
 
 /**
- * Live preview is on when the frontend state is visible on this editor, which is the monolith case,
- * or when the frontend requested it over RPC, which is the split-mode case.
+ * The configuration of the frontend state when it is visible on this editor, which is the monolith case,
+ * or the configuration that the frontend requested over RPC, which is the split-mode case. Null means that live preview is off.
  */
-private fun Editor.computesLivePreview(): Boolean = isLivePreviewEnabled() || isLivePreviewRequested()
+private fun Editor.computedLivePreviewConfiguration(): MarkdownLivePreviewConfiguration? =
+  livePreviewConfiguration() ?: requestedLivePreviewConfiguration()
