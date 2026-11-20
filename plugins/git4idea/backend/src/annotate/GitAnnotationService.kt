@@ -17,10 +17,11 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import git4idea.annotate.GitAnnotationProvider.GitRawAnnotationProvider
 import git4idea.telemetry.GitBackendTelemetrySpan
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.CancellationException
 import kotlin.time.TimedValue
@@ -71,40 +72,39 @@ class GitAnnotationService(private val project: Project, private val cs: Corouti
                                                    file: VirtualFile): GitFileAnnotation {
     require(providers.isNotEmpty()) // to guarantee that there is at least one `send` to the channel below
 
-    val channel = cs.produce {
-      for (provider in providers) {
-        launch {
-          send(annotateWithProvider(provider, root, filePath, revision, file))
+    val received = mutableListOf<ProviderResult>()
+    val annotation = coroutineScope {
+      val channel = produce {
+        for (provider in providers) {
+          // the providers block, and the caller runs on the single thread of `runBlockingCancellable`
+          launch(Dispatchers.IO) {
+            send(annotateWithProvider(provider, root, filePath, revision, file))
+          }
         }
       }
-    }
-
-    val result = CompletableDeferred<GitFileAnnotation>()
-
-    cs.launch {
-      val received = mutableListOf<ProviderResult>()
 
       for (providerResult in channel) {
         received.add(providerResult)
 
         val value = providerResult.timedValue.value.getOrNull()
-        if (value != null && result.complete(value)) {
+        if (value != null) {
           LOG.debug("Annotations was loaded using ${providerResult.provider.presentableName()}")
           logFirstResult(file, revision, providerResult)
+          // stop the providers that did not answer yet
+          channel.cancel()
+          return@coroutineScope value
         }
       }
+      null
+    }
 
-      if (!result.isCompleted) {
-        result.completeExceptionally(
-          // the default provider cannot provide `null` annotation, and hence it threw an exception, rethrow it here
-          received.first { it.byDefaultProvider() }.timedValue.value.exceptionOrNull() ?: noDefaultAnnotationException()
-        )
-      }
-
+    cs.launch {
       logAndReportAllResults(root, file, revision, received)
     }
 
-    return result.await()
+    return annotation
+           // the default provider cannot provide `null` annotation, and hence it threw an exception, rethrow it here
+           ?: throw (received.firstOrNull { it.byDefaultProvider() }?.timedValue?.value?.exceptionOrNull() ?: noDefaultAnnotationException())
   }
 
   private suspend fun annotateWithProvider(provider: GitRawAnnotationProvider,
