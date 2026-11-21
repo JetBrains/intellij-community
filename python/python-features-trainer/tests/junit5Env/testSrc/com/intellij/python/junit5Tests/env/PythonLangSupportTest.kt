@@ -1,5 +1,7 @@
 package com.intellij.python.junit5Tests.env
 
+import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
+import com.intellij.python.sdk.backend.binaryPathString
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -8,11 +10,9 @@ import com.intellij.python.community.services.internal.impl.VanillaPythonWithPyt
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.featuresTrainer.ift.PythonLangSupport
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
-import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
 import com.intellij.python.test.env.common.PredefinedPyEnvironments
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
@@ -83,13 +83,13 @@ class PythonLangSupportTest {
       sut.cleanupBeforeLessons(project)
     }
     @Suppress("DEPRECATION") // The test reads the home path of the SDK and removes the SDK.
-    val sdk = project.mainPythonInterpreterIfReady()!!.getSdkAPI()
+    val interpreter = project.mainPythonInterpreterIfReady()!!
     try {
-      val pythonBinary = Path.of(sdk.homePath!!)
+      val pythonBinary = Path.of(interpreter.binaryPathString)
       Assertions.assertTrue(VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonBinary).orThrow().pythonInfo.languageLevel.isPy3K, "Sdk is broken")
     }
     finally {
-      removeTestSdkFromOpenProjects(sdk)
+      removeTestInterpreterFromOpenProjects(interpreter)
       withContext(Dispatchers.EDT) {
         ProjectManager.getInstance().closeAndDispose(project)
       }

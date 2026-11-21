@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -46,3 +48,19 @@ fun PythonInterpreter.mockVersionForTests(): String? = sdk.getUserData(PythonMoc
 fun PythonInterpreter.mockSysPathForTests(): List<String> =
   sdk.getUserData(PythonMockInterpreterKeys.SYS_PATH)
   ?: listOf(Path.of(requireNotNull(sdk.homePath) { "No home path for the mock interpreter $this" }).parent.toString())
+
+/**
+ * Makes [data] the SDK data of this interpreter, such as the data of a uv interpreter that gives it the uv flavor, and
+ * returns the data it had. A test restores the previous data afterwards.
+ */
+@TestOnly
+@ApiStatus.Internal
+suspend fun PythonInterpreter.setSdkAdditionalDataForTests(data: SdkAdditionalData?): SdkAdditionalData? {
+  val previous = sdk.sdkAdditionalData
+  edtWriteAction {
+    val modificator = sdk.sdkModificator
+    modificator.sdkAdditionalData = data
+    modificator.commitChanges()
+  }
+  return previous
+}

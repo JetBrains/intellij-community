@@ -1,13 +1,12 @@
 package com.intellij.python.junit5Tests.env.addProject
 
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.setSdkAdditionalDataForTests
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
@@ -60,15 +59,8 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
   @NullSource
   fun testPyProject(projectName: @NlsSafe String?): Unit = timeoutRunBlocking {
 
-    @Suppress("DEPRECATION") val sdk = sdkFixture.interpreter.getSdkAPI()
     val additionalData = additionalChecks?.additionalData?.invoke(module)
-    additionalData?.let { additionalDataToSet ->
-      writeAction {
-        val m = sdk.sdkModificator
-        m.sdkAdditionalData = additionalDataToSet
-        m.commitChanges()
-      }
-    }
+    additionalData?.let { sdkFixture.interpreter.setSdkAdditionalDataForTests(it) }
 
     val sut = ensureActionIsVisibleAndGetPresenter(forNewProject = projectName != null)
     if (projectName != null) {
@@ -90,10 +82,9 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
   }
 
   private suspend fun ensureActionIsVisibleAndGetPresenter(forNewProject: Boolean): PyProjectPresenter {
-    @Suppress("DEPRECATION") val sdk = sdkFixture.interpreter.getSdkAPI()
     withSdkConfigurationLock(projectFixture.get()) {
       withContext(Dispatchers.IO) {
-        module.setPythonSdkForTests(sdk)
+        module.setPythonSdkForTests(sdkFixture.interpreter)
       }
     }
     // The action reads the interpreter from the model snapshot, which follows the module change a moment later.
