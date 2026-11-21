@@ -6,8 +6,10 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.containers.tailOrEmpty
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.parseStdDataclassParameters
+import com.jetbrains.python.codeInsight.resolveDataclassFieldParameters
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -52,6 +54,7 @@ class PyStdlibDataclassInspection : PyInspection() {
           if (!PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
             processDefaultFieldValue(element)
             processAsInitVar(element, postInit)?.let { localInitVars.add(it.type) }
+            if (getInitVarType(element) == null) processDefaultFactoryWithoutInit(node, dataclassParameters, element)
           }
 
           processFieldFunctionCall(node, dataclassParameters, element)
@@ -92,6 +95,36 @@ class PyStdlibDataclassInspection : PyInspection() {
         registerProblem(value,
                         PyPsiBundle.problemMessage("INSP.dataclasses.mutable.attribute.default.not.allowed.use.default.factory", value?.text),
                         ProblemHighlightType.GENERIC_ERROR)
+      }
+    }
+
+    /**
+     * Reports the `default_factory` of [field] when no `__init__` of [dataclass] can set the attribute.
+     * That is when the class has `init=False` and neither the class nor an ancestor provides an `__init__`.
+     */
+    private fun processDefaultFactoryWithoutInit(
+      dataclass: PyClass,
+      dataclassParameters: PyDataclassParameters,
+      field: PyTargetExpression,
+    ) {
+      if (dataclassParameters.init || field.annotationValue == null || hasInheritedOrOwnInit(dataclass)) return
+      val fieldStub = resolveDataclassFieldParameters(dataclass, dataclassParameters, field, myTypeEvalContext) ?: return
+      if (!fieldStub.hasDefaultFactory) return
+      val call = field.findAssignedValue() as? PyCallExpression ?: return
+      registerProblem(call.getKeywordArgument("default_factory"),
+                      PyPsiBundle.problemMessage("INSP.dataclasses.default.factory.not.called.without.generated.init", field.name))
+    }
+
+    /**
+     * True when [dataclass] or an ancestor other than `object` defines an `__init__`.
+     * A dataclass ancestor with `init=True` counts, because its generated `__init__` is inherited.
+     */
+    private fun hasInheritedOrOwnInit(dataclass: PyClass): Boolean {
+      if (dataclass.findMethodByName(PyNames.INIT, false, myTypeEvalContext) != null) return true
+      return dataclass.getAncestorClasses(myTypeEvalContext).any { ancestor ->
+        !PyUtil.isObjectClass(ancestor) &&
+        (ancestor.findMethodByName(PyNames.INIT, false, myTypeEvalContext) != null ||
+         parseStdDataclassParameters(ancestor, myTypeEvalContext)?.init == true)
       }
     }
 
