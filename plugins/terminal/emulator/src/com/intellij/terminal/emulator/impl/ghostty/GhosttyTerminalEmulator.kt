@@ -171,6 +171,20 @@ internal class GhosttyTerminalEmulator(
   private val sizeHandler: GhosttySizeHandler = GhosttySizeHandler(initialGeometry.cellSize, ::terminalGetU16)
   private val xtversion: GhosttyXtversion = GhosttyXtversion()
 
+  // One instance for each place that makes a native call with callbacks. See [GhosttyWindowsCallbackStackCommitter].
+
+  /**
+   * Covers the callbacks from `ghostty_terminal_vt_write`: [onWritePty], [onBell], [onProgressReport],
+   * [onColorSchemeQuery], the size query, the XTVERSION query, and the log callback.
+   */
+  private val writeStackCommitter: GhosttyWindowsCallbackStackCommitter = GhosttyWindowsCallbackStackCommitter()
+
+  /**
+   * Covers the callbacks from `ghostty_terminal_resize`: [onWritePty] for the in-band size report (mode 2048),
+   * and the log callback.
+   */
+  private val resizeStackCommitter: GhosttyWindowsCallbackStackCommitter = GhosttyWindowsCallbackStackCommitter()
+
   // Reusable scratch buffers + cell holder (this instance is single-threaded).
   private val scratchPoint: MemorySegment = scratchArena.allocate(POINT)
   private val scratchGridRef: MemorySegment = scratchArena.allocate(GRID_REF)
@@ -626,6 +640,7 @@ internal class GhosttyTerminalEmulator(
    * slices must see what the slices before it changed.
    */
   private fun writeToVt(data: ByteArray, offset: Int, length: Int) {
+    writeStackCommitter.commit()
     paletteDirty = true // a write may change the palette (OSC 4 / 104 / RIS)
 
     // Feed [scratchWrite]-sized chunks.
@@ -646,6 +661,7 @@ internal class GhosttyTerminalEmulator(
 
   override fun resize(geometry: TerminalGridGeometry) {
     ensureOpen()
+    resizeStackCommitter.commit()
     sizeHandler.resize(terminal, geometry)
   }
 
