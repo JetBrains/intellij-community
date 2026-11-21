@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.PyPrefixExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySetCompExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
+import com.jetbrains.python.psi.PyDoubleStarExpression
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
@@ -288,6 +289,10 @@ class PyLiteralType private constructor(
           else if (candidate is PyClassType && !candidate.isDefinition && acceptsDictLiteral(candidate, dictLiteral)) {
             return candidate
           }
+        }
+        // Per-entry promotion would drop the `**` entries, so defer to regular inference, as for a starred tuple.
+        if (dictLiteral.children.any { it is PyDoubleStarExpression }) {
+          return context.getType(dictLiteral)
         }
         return promoteDictLiteralOrDictComprehension(expectedType, dictLiteral, dictLiteral.elements.asList())
       }
