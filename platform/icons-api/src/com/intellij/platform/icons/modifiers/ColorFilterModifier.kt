@@ -5,6 +5,7 @@ import com.intellij.platform.icons.IconManager
 import com.intellij.platform.icons.design.BlendMode
 import com.intellij.platform.icons.design.Color
 import com.intellij.platform.icons.filters.ColorFilter
+import com.intellij.platform.icons.filters.gray
 import com.intellij.platform.icons.filters.tintColorFilter
 
 fun IconModifier.colorFilter(colorFilter: ColorFilter): IconModifier =
@@ -12,3 +13,10 @@ fun IconModifier.colorFilter(colorFilter: ColorFilter): IconModifier =
 
 fun IconModifier.tintColor(color: Color, blendMode: BlendMode): IconModifier =
     colorFilter(tintColorFilter(color, blendMode))
+
+/**
+ * Turns the icon gray with the given values. See [com.intellij.platform.icons.filters.gray] for the steps, the ranges
+ * and the defaults.
+ */
+fun IconModifier.grayFilter(brightness: Int = 0, contrast: Int = 0, alpha: Int = 100): IconModifier =
+    colorFilter(ColorFilter.gray(brightness, contrast, alpha))

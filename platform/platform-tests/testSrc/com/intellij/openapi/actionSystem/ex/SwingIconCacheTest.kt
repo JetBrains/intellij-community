@@ -2,15 +2,18 @@
 package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.maxAlpha
+import com.intellij.openapi.actionSystem.isGray
 import com.intellij.openapi.actionSystem.paintToImage
 import com.intellij.openapi.actionSystem.visiblePixels
 import com.intellij.openapi.actionSystem.withDarkTheme
+import com.intellij.openapi.actionSystem.withGrayFilter
 import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.imageIconDescriptor
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.ui.GrayFilter
+import com.intellij.util.ui.UIUtil
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -53,11 +56,14 @@ class SwingIconCacheTest {
   }
 
   @Test
-  fun `disabled icon is fainter`() {
+  fun `disabled icon is gray and differs from the base icon`() {
     val cache = SwingIconCache().apply { update(executeDescriptor()) }
-    val baseAlpha = assertNotNull(cache.icon).paintToImage().maxAlpha()
-    val disabledAlpha = assertNotNull(cache.disabled).paintToImage().maxAlpha()
-    assertTrue(disabledAlpha < baseAlpha, "the disabled icon is not fainter than the base icon")
+    val basePixels = assertNotNull(cache.icon).paintToImage().visiblePixels()
+    val disabledPixels = assertNotNull(cache.disabled).paintToImage().visiblePixels()
+
+    assertTrue(basePixels.any { !isGray(it) }, "the base icon is already gray, so the test proves nothing")
+    assertTrue(disabledPixels.isNotEmpty(), "the disabled icon painted nothing")
+    assertTrue(disabledPixels.all { isGray(it) }, "the disabled icon has colored pixels")
   }
 
   @Test
@@ -114,6 +120,34 @@ class SwingIconCacheTest {
     withDarkTheme { cache.update(executeDescriptor()) }
 
     assertNotSame(first, cache.icon, "the icon was kept after a theme change")
+  }
+
+  @Test
+  fun `a changed gray filter gives another disabled icon`() {
+    val cache = SwingIconCache().apply { update(executeDescriptor()) }
+    val before = assertNotNull(cache.disabled)
+    val beforePixels = before.paintToImage().visiblePixels()
+
+    withGrayFilter(GrayFilter(-70, -70, 100)) {
+      cache.update(executeDescriptor())
+
+      val after = assertNotNull(cache.disabled)
+      assertNotSame(before, after, "the old disabled icon was kept after the gray filter changed")
+      assertNotEquals(beforePixels, after.paintToImage().visiblePixels(), "the disabled icon is still the old one")
+    }
+  }
+
+  @Test
+  fun `a new gray filter with the same values keeps the icons`() {
+    val cache = SwingIconCache().apply { update(executeDescriptor()) }
+    val icon = cache.icon
+    val disabled = cache.disabled
+    val filter = UIUtil.getGrayFilter() as GrayFilter
+
+    withGrayFilter(GrayFilter(filter.brightness, filter.contrast, filter.alpha)) { cache.update(executeDescriptor()) }
+
+    assertSame(icon, cache.icon, "the icon was rebuilt")
+    assertSame(disabled, cache.disabled, "the disabled icon was rebuilt")
   }
 
   @Test

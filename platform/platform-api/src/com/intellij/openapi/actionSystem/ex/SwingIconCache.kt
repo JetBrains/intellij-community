@@ -13,7 +13,8 @@ import javax.swing.Icon
  * A Swing icon has no `equals`. A component that builds a new icon on every update fires property changes and repaints.
  * [update] keeps the same icons while the descriptor and the theme stay the same.
  *
- * The cache key is the descriptor and the theme. A theme change builds new icons, because an icon keeps the theme of its first paint.
+ * The cache key is the descriptor, the theme and the values of the gray filter. A theme change builds new icons, because an icon keeps the theme of its first paint.
+ * A change of the gray filter builds new icons too, because the disabled icon has the values of the filter.
  *
  * Use this class on the EDT only. [disabled] is built on first read, and it reads the theme at that time.
  * A theme change before the first read is harmless. The next [update] call sees the new theme and builds the icons again.
@@ -22,6 +23,7 @@ import javax.swing.Icon
 class SwingIconCache {
   private var descriptor: IconDescriptor? = null
   private var bright = JBColor.isBright()
+  private var grayFilter = grayFilterValues()
   private var disabledIcon: Icon? = null
 
   /** The Swing icon of the descriptor. It is `null` while the cache has no descriptor. */
@@ -42,10 +44,18 @@ class SwingIconCache {
    */
   fun update(descriptor: IconDescriptor?) {
     val bright = JBColor.isBright()
-    if (descriptor == this.descriptor && bright == this.bright) return
+    val grayFilter = grayFilterValues()
+    if (descriptor == this.descriptor && bright == this.bright && grayFilter == this.grayFilter) return
     this.descriptor = descriptor
     this.bright = bright
+    this.grayFilter = grayFilter
     icon = descriptor?.createSwingIcon()
     disabledIcon = null
   }
+
+  private fun grayFilterValues(): GrayFilterValues = ActionIconDescriptors.grayFilter().let {
+    GrayFilterValues(it.brightness, it.contrast, it.alpha)
+  }
+
+  private data class GrayFilterValues(val brightness: Int, val contrast: Int, val alpha: Int)
 }
