@@ -30,12 +30,20 @@ internal class PyWorkspaceAddTargetTest {
   private val primaryFixture = projectFixture.moduleFixture(projectFixture.directoryInProjectFixture(Path("")), addPathToSourceRoot = true)
   private val attachedFixture = projectFixture.moduleFixture(projectFixture.directoryInProjectFixture(Path("attached")), addPathToSourceRoot = true)
 
+  // The page lists every module only in IDEA. The tests name the product, so they do not depend on the one they run in.
   @Test
   fun `the first interpreter goes to the module of the project directory`() {
     val primary = primaryFixture.get()
     attachedFixture.get()
     assertThat(workspaceAddTargetOf(projectFixture.get())).isEqualTo(primary)
-    assertThat(workspaceModulesOf(projectFixture.get())).containsExactly(primary)
+    assertThat(workspaceModulesOf(projectFixture.get(), listsEveryModule = false)).containsExactly(primary)
+  }
+
+  @Test
+  fun `IDEA lists every module`() {
+    val primary = primaryFixture.get()
+    val attached = attachedFixture.get()
+    assertThat(workspaceModulesOf(projectFixture.get(), listsEveryModule = true)).containsExactlyInAnyOrder(primary, attached)
   }
 }
 
