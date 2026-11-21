@@ -111,6 +111,15 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     updateTextAttributes();
   }
 
+  /**
+   * Runs document edits with eligible fold marker updates buffered until the action exits.
+   * Marker queries and document callbacks remain available during the action.
+   * Completes pending updates even when the action throws.
+   */
+  void runBatchMarkerOperation(@NotNull Runnable runnable) {
+    myRegionStorage.runInBatch(runnable);
+  }
+
   @Override
   @RequiresEdt
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {

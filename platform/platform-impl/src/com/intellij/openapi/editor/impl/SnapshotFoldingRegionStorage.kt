@@ -33,7 +33,10 @@ import java.util.concurrent.ConcurrentHashMap
 private const val FOLD_REGION_FLAVOR: Int = 1
 private const val CUSTOM_FOLD_REGION_FLAVOR: Int = 2
 
-/** Stores fold regions for one editor in the snapshot marker [rootStore]. */
+/**
+ * Stores fold regions for one editor in [rootStore].
+ * [runInBatch] buffers eligible insertions while each document edit keeps its marker queries and callbacks available.
+ */
 internal class SnapshotFoldingRegionStorage(
   internal val model: FoldingModelImpl,
   internal val editor: EditorImpl,
@@ -108,6 +111,16 @@ internal class SnapshotFoldingRegionStorage(
   }
 
   override fun size(): Int = registeredRegions.size
+
+  /** Uses [SnapshotMarkerRootStore.runInBatch] for registered regions. Empty stores run [runnable] directly. */
+  override fun runInBatch(runnable: Runnable) {
+    if (registeredRegions.isEmpty()) {
+      runnable.run()
+    }
+    else {
+      rootStore.runInBatch(runnable)
+    }
+  }
 
   /**
    * Processes all regions from one captured root.

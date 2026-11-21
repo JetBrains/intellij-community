@@ -57,7 +57,7 @@ internal class PMarkerRelocationRootTest {
     val expected = eager.applyPatch(patch, text, after)
     val actual = pending.applyPatch(patch, text, after)
     for (entry in entries) assertEquals(expected.resolve(entry.handle), actual.resolve(entry.handle))
-    val finished = PMarkerRelocationRoot.finish(pending)
+    val finished = runInBatch(document, pending)
     for (entry in entries) assertEquals(eager.resolve(entry.handle), finished.resolve(entry.handle))
   }
 
@@ -85,7 +85,7 @@ internal class PMarkerRelocationRootTest {
       text = after
     }
     assertTrue(current is PMarkerRelocationRoot)
-    val finished = PMarkerRelocationRoot.finish(current)
+    val finished = runInBatch(document, current)
     assertTrue(finished is PMarkerDirectRoot)
     for ((expected, root) in versions) {
       for ((index, entry) in entries.withIndex()) {
@@ -169,14 +169,14 @@ internal class PMarkerRelocationRootTest {
   }
 
   @Test
-  fun `queries and subsequent moves preserve pending positions`() = withEntries { _, entries ->
+  fun `queries and subsequent moves preserve pending positions`() = withEntries { document, entries ->
     val original = PMarkerDirectRoot.empty().insertMany(entries)
     val first = entries.last().copy(nodeStart = 150, nodeEnd = 150)
     val pending = PMarkerRelocationRoot.move(original, first)
     assertEquals(entries.size, pending.overlappingIterator(0, 200, 0).asSequence().count())
     val second = entries.first().copy(nodeStart = 5, nodeEnd = 5)
     val resumed = PMarkerRelocationRoot.move(pending, second)
-    val finished = PMarkerRelocationRoot.finish(resumed)
+    val finished = runInBatch(document, resumed)
     for (root in listOf(resumed, finished)) {
       assertEquals(first.range(), root.resolve(first.handle))
       assertEquals(second.range(), root.resolve(second.handle))
@@ -199,6 +199,18 @@ internal class PMarkerRelocationRootTest {
   }
 
   private fun MarkerEntry.range(): Long = TextRangeScalarUtil.toScalarRange(nodeStart, nodeEnd)
+
+  private fun runInBatch(document: DocumentImpl, root: PMarkerRoot): PMarkerRoot {
+    val store = SnapshotMarkerRootStore(document, SnapshotRangeMarkerImpl::class.java, emptyRoot = root)
+    try {
+      store.currentRootReference()
+      PMarkerRelocationRoot.runInBatch(store) { }
+      return store.currentRootReference().get()
+    }
+    finally {
+      store.dispose(document.snapshotMarkerStores)
+    }
+  }
 
   private fun withEntries(test: (DocumentImpl, List<MarkerEntry>) -> Unit) {
     val document = DocumentImpl("x".repeat(500), true)

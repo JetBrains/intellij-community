@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.impl.marker.PMarkerInsertionRoot
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
@@ -17,6 +18,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -32,6 +34,83 @@ import java.awt.geom.Rectangle2D
 @TestApplication
 @UsePMarkerImplementation
 class SnapshotFoldingModelTest {
+  @Test
+  fun `caret batch preserves fold snapshots and finishes after an exception`(): Unit = timeoutRunBlocking {
+    val state = withEditor("0123456789\n0123456789\n0123456789") { editor ->
+      val first = addFoldRegion(editor, 1, 8) as SnapshotRangeMarkerImpl
+      val second = addFoldRegion(editor, 12, 19) as SnapshotRangeMarkerImpl
+      editor.caretModel.addCaret(editor.offsetToVisualPosition(editor.document.textLength))!!
+      val store = editor.foldingModel.rootStore()
+      val document = editor.document as DocumentImpl
+      val initial = store.root(document.core.snapshot())!!
+      val roots = ArrayList<PMarkerRoot>()
+      val failure = runCatching {
+        editor.caretModel.runBatchCaretOperation {
+          document.insertString(4, "a")
+          roots.add(store.root(document.core.snapshot())!!)
+          check(editor.foldingModel.getFoldRegion(1, 9) === first)
+          store.runInBatch {
+            document.insertString(16, "b\n")
+            roots.add(store.root(document.core.snapshot())!!)
+            check(editor.foldingModel.getFoldRegion(13, 22) === second)
+          }
+          check(store.root(document.core.snapshot()) is PMarkerInsertionRoot)
+          throw IllegalStateException("test failure")
+        }
+      }.exceptionOrNull()
+      val finished = store.root(document.core.snapshot())!!
+      editor.caretModel.runBatchCaretOperation { document.insertString(25, "x") }
+      BatchState(
+        failure = failure?.message,
+        bufferedRoots = roots.map { it is PMarkerInsertionRoot },
+        finished = finished !is PMarkerInsertionRoot,
+        ranges = listOf(first.resolve(initial), second.resolve(initial), second.resolve(roots[0]), second.resolve(roots[1])),
+        finalRange = second.textRange,
+      )
+    }
+    assertThat(state.failure).isEqualTo("test failure")
+    assertThat(state.bufferedRoots).containsExactly(true, true)
+    assertThat(state.finished).isTrue()
+    assertThat(state.ranges).containsExactly(
+      TextRangeScalarUtil.toScalarRange(1, 8), TextRangeScalarUtil.toScalarRange(12, 19),
+      TextRangeScalarUtil.toScalarRange(13, 20), TextRangeScalarUtil.toScalarRange(13, 22),
+    )
+    assertThat(state.finalRange).isEqualTo(TextRange(13, 22))
+  }
+
+  @Test
+  fun `fold batch falls back when an insertion forms a surrogate pair at a boundary`(): Unit = timeoutRunBlocking {
+    val range = withEditor("a\uDE00bcde") { editor ->
+      val region = addFoldRegion(editor, 1, 5)
+      editor.caretModel.addCaret(editor.offsetToVisualPosition(editor.document.textLength))!!
+      editor.caretModel.runBatchCaretOperation {
+        editor.document.insertString(3, "x")
+        editor.document.insertString(1, "\uD83D")
+      }
+      region.textRange
+    }
+    assertThat(range).isEqualTo(TextRange(1, 7))
+  }
+
+  @Test
+  fun `custom folds validate line boundaries after buffered insertions`(): Unit = timeoutRunBlocking {
+    val state = withEditor("a\nb\nc") { editor ->
+      lateinit var region: CustomFoldRegion
+      editor.foldingModel.runBatchFoldingOperation {
+        region = editor.foldingModel.addCustomLinesFolding(0, 1, customRenderer)!!
+      }
+      editor.caretModel.addCaret(editor.offsetToVisualPosition(editor.document.textLength))!!
+      editor.caretModel.runBatchCaretOperation {
+        editor.document.insertString(1, "q\n")
+        check(region.textRange == TextRange(0, 5))
+        editor.document.insertString(5, "x")
+      }
+      region.isValid to editor.foldingModel.allFoldRegions.size
+    }
+    assertThat(state.first).isFalse()
+    assertThat(state.second).isZero()
+  }
+
   @Test
   fun `fold region resolves in snapshot branches`(): Unit = timeoutRunBlocking {
     val state = withEditor("abcdef") { editor ->
@@ -363,6 +442,14 @@ class SnapshotFoldingModelTest {
       clearLineFlags = false,
     )
   }
+
+  private data class BatchState(
+    val failure: String?,
+    val bufferedRoots: List<Boolean>,
+    val finished: Boolean,
+    val ranges: List<Long>,
+    val finalRange: TextRange,
+  )
 
   private data class BranchState(
     val usesSnapshotStorage: Boolean,

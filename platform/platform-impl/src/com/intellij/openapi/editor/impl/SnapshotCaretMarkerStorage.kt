@@ -17,10 +17,14 @@ import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.TextRangeScalarUtil
 
-/** Stores caret position and selection markers for one editor. */
+/**
+ * Stores caret position and selection markers for one editor.
+ * [runInBatch] defers eligible position moves while each document edit still reports affected markers.
+ */
 internal class SnapshotCaretMarkerStorage(
   val document: DocumentImpl,
 ) {
+  /** Enables deferred position moves only while the batch callback executes. */
   private var batching: Boolean = false
   private var rootBeforeChange: PMarkerRoot? = null
   private var affectedHandles: List<SnapshotMarkerReference<SnapshotCaretMarker>> = emptyList()
@@ -58,20 +62,24 @@ internal class SnapshotCaretMarkerStorage(
     affectedHandles = emptyList()
   }
 
+  /**
+   * Runs [runnable] with deferred position moves. Calls must not nest.
+   * Resets the batching flag before materializing pending moves, including when [runnable] throws.
+   */
   fun runInBatch(runnable: Runnable) {
     check(!batching)
-    batching = true
-    try {
-      runnable.run()
-    }
-    finally {
-      batching = false
-      if (rootStore.root(currentSnapshot()) is PMarkerRelocationRoot) {
-        rootStore.updateCurrentRoot { PMarkerRelocationRoot.finish(it) }
+    PMarkerRelocationRoot.runInBatch(rootStore) {
+      batching = true
+      try {
+        runnable.run()
+      }
+      finally {
+        batching = false
       }
     }
   }
 
+  /** Moves a live position marker. Defers eligible moves within [runInBatch] and applies other moves immediately. */
   fun movePositionMarker(marker: SnapshotCaretMarker, offset: Int) {
     val entry = PMarkerRoot.MarkerEntry(
       marker.markerHandle, offset, offset, POSITION_SPEC, marker.flavorFlags, policy = CaretPositionMarkerPolicy,

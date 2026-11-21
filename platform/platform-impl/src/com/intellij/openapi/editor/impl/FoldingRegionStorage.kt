@@ -27,6 +27,7 @@ interface FoldRegionMarker : FoldRegion, RangeMarkerEx {
 
 internal interface CustomFoldRegionMarker : FoldRegionMarker, CustomFoldRegion
 
+/** Owns regular and custom fold regions and applies document changes to their markers. */
 internal interface FoldingRegionStorage {
   fun createFoldRegion(
     startOffset: Int,
@@ -49,6 +50,16 @@ internal interface FoldingRegionStorage {
   fun dispose()
 
   fun size(): Int
+
+  /**
+   * Runs [runnable] with deferred marker updates when supported.
+   * Marker queries and document callbacks remain available during the action.
+   * Implementations complete pending updates when the action exits, including when it throws.
+   * The default implementation runs the action directly.
+   */
+  fun runInBatch(runnable: Runnable) {
+    runnable.run()
+  }
 
   /**
    * Processes all regions in unspecified order.

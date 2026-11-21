@@ -45,11 +45,16 @@ class PMarkerDirectRoot private constructor(
 
   override fun isEmpty(): Boolean = root == null
 
+  /** Whether all valid markers have zero length and measure, and no policy is persistent. */
   internal val canDeferPointInsertions: Boolean
     get() = root?.let { it.pointsOnly && it.persistentCount == 0 } ?: true
 
+  /** Whether any valid marker uses a persistent policy. */
   internal val hasPersistentMarkers: Boolean
     get() = (root?.persistentCount ?: 0) > 0
+
+  /** Returns whether every valid marker ends before [offset]. */
+  internal fun endsBefore(offset: Int): Boolean = root == null || root.maximumEnd < offset
 
   override fun isValid(handle: SnapshotMarkerReference<*>): Boolean {
     val resolution = cachedResolutions?.get(handle.id) ?: PMarkerResolution.UNRESOLVED
@@ -201,6 +206,36 @@ class PMarkerDirectRoot private constructor(
     }
     require(found == entries.size) { "The relocated marker must be valid" }
     rebuildEntries(combined)
+  }
+
+  /**
+   * Applies insertions whose affected policies were checked by [PMarkerInsertionRoot].
+   * Preserves marker handles and metadata. Small batches update paths, and larger batches rebuild the tree.
+   */
+  internal fun applyInsertions(insertions: PMarkerRelocationRoot.Insertions): PMarkerDirectRoot {
+    val height = root?.height ?: 0
+    if (insertions.size < 16 || insertions.size.toLong() * height < (1L shl height)) {
+      var result = this
+      insertions.forEach { offset, length -> result = result.applyBufferedInsertion(offset, length) }
+      return result
+    }
+    val entries = ArrayList<MarkerEntry>()
+    processAll(root, 0) { entry, delta ->
+      val start = entry.nodeStart + delta
+      val end = entry.nodeEnd + delta
+      entries.add(entry.copy(nodeStart = start + insertions.deltaAt(start), nodeEnd = end + insertions.deltaAt(end)))
+      true
+    }
+    return rebuildEntries(entries)
+  }
+
+  /** Applies an insertion whose policies and strict interior ranges were checked by [PMarkerInsertionRoot]. */
+  private fun applyBufferedInsertion(offset: Int, length: Int): PMarkerDirectRoot = keepingRootAlive {
+    val editor = Editor()
+    val node = editor.updateOutsideStarts(root, offset, offset, length) { entry ->
+      MarkerTransformResult(entry.nodeStart, entry.nodeEnd + if (entry.nodeEnd > offset) length else 0)
+    }
+    editor.finish(node, PMarkerResolutionUpdate(resolutionCacheIdentity, offset, offset, length, resolutionUpdate))
   }
 
   /** Rebuilds all valid entries in one version. The entries must preserve the marker handles and metadata. */

@@ -12,6 +12,7 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.containers.ReferenceQueueable
+import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
@@ -21,6 +22,7 @@ import java.util.function.Consumer
  * Stores marker [roots] outside snapshots and follows each [DocumentSnapshot] transition for [document].
  *
  * The store uses weak identity keys. A snapshot can be collected after all other owners release it.
+ * [runInBatch] buffers eligible insertions while each snapshot keeps a queryable marker root.
  *
  * The constructor registers this store with the document's [SnapshotMarkerStores].
  * An owner with a shorter lifetime than the document must call [dispose].
@@ -203,6 +205,28 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   /** Publishes updates to the current root through the commit gate. */
   override fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): PMarkerRoot? =
     updateCurrentRoot { _, root -> update(root) }
+
+  /**
+   * Buffers ordered insertions in the current root during [runnable].
+   * Uses [PMarkerInsertionRoot] for direct roots with valid markers and no persistent markers.
+   * Nested calls reuse an active insertion batch. Unsupported operations can materialize the tree before the scope ends.
+   * The scope that installs the buffer materializes the current root in `finally`, including when [runnable] throws.
+   * Runs [runnable] directly when the current root cannot start a batch.
+   */
+  @ApiStatus.Internal
+  fun runInBatch(runnable: Runnable) {
+    val started = updateCurrentRoot { root ->
+      if (root is PMarkerDirectRoot && !root.isEmpty() && !root.hasPersistentMarkers) PMarkerInsertionRoot(root) else root
+    } != null
+    try {
+      runnable.run()
+    }
+    finally {
+      if (started) {
+        updateCurrentRoot { root -> if (root is PMarkerInsertionRoot) root.materialize() else root }
+      }
+    }
+  }
 
   /**
    * Applies [update] to the root for [snapshot], creating the root entry when necessary.

@@ -10,19 +10,32 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
-/** Buffers point moves and ordered insertions in immutable roots until a batch ends or an operation needs the complete tree. */
+/**
+ * Buffers point moves and ordered insertions in immutable roots.
+ * Each root resolves its positions independently of later edits.
+ * Queries and unsupported operations can materialize the complete tree.
+ * [runInBatch] materializes any remaining moves when the scope exits.
+ */
 @ApiStatus.Internal
 class PMarkerRelocationRoot private constructor(
+  /** Stores entries whose positions can be replaced by [positions]. */
   private val base: PMarkerDirectRoot,
+  /** Maps moved handles to entries and the cumulative shift at their last move. */
   private val positions: PersistentLongMap<Position>,
+  /** The cumulative shift shared by the entries in [positions]. */
   private val shift: Int,
+  /** The lower bound of affected point positions, before adding [shift]. */
   private val boundary: Int,
+  /** The upper bound of affected point positions, before adding [shift]. */
   private val lastBoundary: Int,
+  /** Advances cached resolutions across the moves and edits represented by this root. */
   private val update: PMarkerResolutionUpdate,
+  /** Records insertions still pending in [base], or is null when no insertion is deferred. */
   private val insertions: Insertions? = null,
 ) : PMarkerRoot by base {
   override val resolutionCacheIdentity: Any = Any()
 
+  /** Caches the direct tree without changing the positions represented by this root. */
   @Volatile
   private var rebuilt: PMarkerDirectRoot? = null
 
@@ -111,7 +124,7 @@ class PMarkerRelocationRoot private constructor(
     return PMarkerRelocationRoot(
       base, nextPositions, nextShift, first, last,
       PMarkerResolutionUpdate(resolutionCacheIdentity, start, start, length, update),
-      (insertions ?: Insertions(PersistentVector(5), descending, 0)).append(baseStart, length),
+      (insertions ?: Insertions(descending)).append(baseStart, length),
     )
   }
 
@@ -181,20 +194,89 @@ class PMarkerRelocationRoot private constructor(
 
   override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean = materialize().processAllRangeMarkers(processor)
 
+  /** Stores a moved entry with the cumulative shift at the time of its move. */
   private class Position(val entry: MarkerEntry, val shift: Int) {
+    /** Resolves the entry after later insertions change the cumulative shift. */
     fun entryAt(currentShift: Int): MarkerEntry {
       val offset = entry.nodeStart + (currentShift - shift)
       return entry.copy(nodeStart = offset, nodeEnd = offset)
     }
   }
 
-  private class Insertion(val offset: Int, val totalDelta: Int)
+  /** Stores a source offset, the cumulative inserted length, and this insertion's length. */
+  private class Insertion(val offset: Int, val totalDelta: Int, val length: Int)
 
-  private class Insertions(val entries: PersistentVector<Insertion>, val descending: Boolean, val totalDelta: Int) {
+  /**
+   * Stores ordered insertions in offsets from the base text.
+   * The entries and cumulative lengths follow application order.
+   * [deltaAt] supplies shifts for base offsets. [toBaseOffset] maps current offsets back.
+   * The log shares entries without retaining marker roots.
+   */
+  internal class Insertions private constructor(
+    /** The insertion records in application order. */
+    private val entries: PersistentVector<Insertion>,
+    /** Whether insertions proceed from larger base offsets to smaller offsets. */
+    val descending: Boolean,
+    /** The sum of all inserted lengths. */
+    val totalDelta: Int,
+  ) {
+    constructor(descending: Boolean) : this(PersistentVector(5), descending, 0)
+
+    val size: Int
+      get() = entries.size()
+
+    /** Selects the direction. A log with multiple entries must keep its current direction. */
+    fun withDirection(descending: Boolean): Insertions {
+      check(size <= 1 || this.descending == descending)
+      return if (this.descending == descending) this else Insertions(entries, descending, totalDelta)
+    }
+
+    /** Appends an insertion in the selected order. [offset] refers to the base text. */
     fun append(offset: Int, length: Int): Insertions =
-      Insertions(entries.put(entries.size().toLong(), Insertion(offset, totalDelta + length)), descending, totalDelta + length)
+      Insertions(entries.put(entries.size().toLong(), Insertion(offset, totalDelta + length, length)), descending, totalDelta + length)
 
+    /** Visits insertions in application order, with offsets in the text before each insertion. */
+    fun forEach(action: (offset: Int, length: Int) -> Unit) {
+      for (index in 0 until entries.size()) {
+        val insertion = requireNotNull(entries.getUnchecked(index.toLong()))
+        val offset = insertion.offset + if (descending) 0 else insertion.totalDelta - insertion.length
+        action(offset, insertion.length)
+      }
+    }
+
+    /** Maps a current offset to the base text. Offsets within inserted text map to that insertion's base offset. */
+    fun toBaseOffset(offset: Int): Int {
+      if (entries.size() == 0) return offset
+      val first = requireNotNull(entries.getUnchecked(if (descending) entries.size() - 1L else 0L))
+      if (offset < currentStart(first)) return offset
+      val last = requireNotNull(entries.getUnchecked(if (descending) 0L else entries.size() - 1L))
+      if (offset >= currentStart(last) + last.length) return offset - totalDelta
+      var low = 0
+      var high = entries.size()
+      while (low < high) {
+        val middle = (low + high) ushr 1
+        val insertion = requireNotNull(entries.getUnchecked(middle.toLong()))
+        val start = currentStart(insertion)
+        if (if (descending) start > offset else start <= offset) low = middle + 1
+        else high = middle
+      }
+      val index = if (descending) low else low - 1
+      if (index !in 0 until entries.size()) return offset
+      val insertion = requireNotNull(entries.getUnchecked(index.toLong()))
+      return insertion.offset + maxOf(0, offset - currentStart(insertion) - insertion.length)
+    }
+
+    /** Returns the insertion's start in the text after all logged insertions. */
+    private fun currentStart(insertion: Insertion): Int =
+      insertion.offset + if (descending) totalDelta - insertion.totalDelta else insertion.totalDelta - insertion.length
+
+    /** Returns the total length inserted strictly before [offset] in the base text. */
     fun deltaAt(offset: Int): Int {
+      if (entries.size() == 0) return 0
+      val first = requireNotNull(entries.getUnchecked(if (descending) entries.size() - 1L else 0L))
+      if (offset <= first.offset) return 0
+      val last = requireNotNull(entries.getUnchecked(if (descending) 0L else entries.size() - 1L))
+      if (offset > last.offset) return totalDelta
       var low = 0
       var high = entries.size()
       while (low < high) {
@@ -209,7 +291,28 @@ class PMarkerRelocationRoot private constructor(
   }
 
   companion object {
-    /** Moves an existing point with measure zero. The entry must preserve its policy and marker flags. */
+    /**
+     * Runs [runnable] and materializes any remaining relocation root in [rootStore] on exit, including when [runnable] throws.
+     * The caller controls deferral through [move].
+     */
+    @JvmStatic
+    fun runInBatch(rootStore: SnapshotMarkerRootStore<*>, runnable: Runnable) {
+      try {
+        runnable.run()
+      }
+      finally {
+        val snapshot = rootStore.document?.core?.snapshot()
+        if (snapshot != null && rootStore.root(snapshot) is PMarkerRelocationRoot) {
+          rootStore.updateCurrentRoot { finish(it) }
+        }
+      }
+    }
+
+    /**
+     * Moves a valid point marker with measure zero. [entry] must preserve its policy and marker flags.
+     * Eligible deferred moves return a buffered root. Queries and unsupported operations can materialize it.
+     * When [defer] is false, applies the move immediately.
+     */
     @JvmStatic
     fun move(root: PMarkerRoot, entry: MarkerEntry, defer: Boolean = true): PMarkerRoot {
       require(entry.nodeStart >= 0 && entry.nodeStart == entry.nodeEnd && entry.measure == 0) { "A relocation requires a point marker" }
@@ -239,8 +342,6 @@ class PMarkerRelocationRoot private constructor(
       )
     }
 
-    /** Builds the complete tree when a caret batch ends. */
-    @JvmStatic
-    fun finish(root: PMarkerRoot): PMarkerRoot = if (root is PMarkerRelocationRoot) root.materialize() else root
+    private fun finish(root: PMarkerRoot): PMarkerRoot = if (root is PMarkerRelocationRoot) root.materialize() else root
   }
 }
