@@ -577,8 +577,8 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
         AtomicBoolean executed = new AtomicBoolean();
         app.executeOnPooledThread(() -> app.invokeLater(EmptyRunnable.INSTANCE));
         app.invokeLater(() -> executed.set(true));
-        UIUtil.dispatchAllInvocationEvents();
-        assertTrue(executed.get());
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        assertTrue("The EDT invocation did not run", executed.get());
       }
     });
 
