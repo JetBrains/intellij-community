@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core.type
 
+import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.idea.TestFor
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -17,6 +19,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -61,6 +64,21 @@ internal class PyLspTypeEngineTest {
     assertTrue(engine.supports(referenceIn(mainPath.get())))
   }
 
+  /**
+   * A custom member of `PyCustomMemberProviderImpl` wraps the node of the element that it resolves to. The
+   * position of that node does not give the type of the wrapper, so the built-in engine answers.
+   */
+  @Test
+  @TestFor(issues = ["PY-93908"])
+  fun `a wrapper over the node of another element is not supported`() = runBlocking {
+    val engine = FakeLspTypeEngine(fakePyToolClient(mainPyProject.get()))
+    val reference = referenceIn(mainPath.get())
+    val wrapper = readAction { NodeWrapper(reference.node) }
+
+    assertFalse(engine.supports(wrapper))
+    assertTrue(engine.supports(reference))
+  }
+
   /** [PyLspTypeEngine.isSupportedForResolve] reads the PSI, so it runs in a read action. */
   private suspend fun PyLspTypeEngine.supports(element: PyTypedElement): Boolean =
     readAction { isSupportedForResolve(element) }
@@ -80,6 +98,10 @@ internal class PyLspTypeEngineTest {
         "No reference expression in ${psiFile.name}, which parsed as ${psiFile.language}"
       }
     }
+  }
+
+  private class NodeWrapper(node: ASTNode) : ASTWrapperPsiElement(node), PyTypedElement {
+    override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyType? = null
   }
 
   private class FakeLspTypeEngine(
