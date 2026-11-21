@@ -146,7 +146,11 @@ class GhosttyTerminalSession internal constructor(
 
   // Encode AWT key/mouse events into PTY bytes through the emulator; call only under
   // [emulatorLock].
-  private val keyEncoder = TerminalEmulatorKeyEventEncoder(emulator, settings)
+  private val keyEncoder = TerminalEmulatorKeyEventEncoder(
+    emulator,
+    settings,
+    isWinConPty = localTtyConnector?.isWinConPty() == true,
+  )
   private val mouseEncoder = TerminalEmulatorMouseEventEncoder(emulator, settings)
 
   /**

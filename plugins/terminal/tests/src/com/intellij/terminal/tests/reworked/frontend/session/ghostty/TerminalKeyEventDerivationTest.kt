@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend.session.ghostty
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.emulator.KittyKeyboardFlag
 import com.intellij.terminal.emulator.TerminalEmulator
@@ -12,6 +15,7 @@ import com.intellij.terminal.emulator.TerminalKeyAction
 import com.intellij.terminal.emulator.TerminalKeyEvent
 import com.intellij.terminal.frontend.session.ghostty.TerminalEmulatorKeyEventEncoder
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
 import org.junit.jupiter.api.Test
@@ -39,7 +43,7 @@ internal class TerminalKeyEventDerivationTest {
   private val settings = object : JBTerminalSystemSettingsProviderBase() {
     override fun altSendsEscape(): Boolean = altSendsEscape
   }
-  private val encoder = TerminalEmulatorKeyEventEncoder(emulator.proxy, settings, lockingKeys = { emptySet() })
+  private val encoder = TerminalEmulatorKeyEventEncoder(emulator.proxy, settings, isWinConPty = false, lockingKeys = { emptySet() })
 
   @Test
   fun `a typed character carries the physical key of its pressed half`() {
@@ -231,6 +235,41 @@ internal class TerminalKeyEventDerivationTest {
     assertThat(events).containsExactly(
       TerminalKeyEvent(TerminalKey.I, modifiers = setOf(CTRL), text = "i", unshiftedCodepoint = 'i'.code),
     )
+  }
+
+  /**
+   * TODO: Merge this case into `encoding Ctrl+Enter without a ConPTY` of [TerminalSessionKeyEventTest],
+   *  when [GhosttyTerminalSessionTestCase.runSessionTest] can create a session with a custom `isWinConPty` flag.
+   */
+  @Test
+  fun `ctrl+enter is LF only for a ConPTY outside the Kitty protocol`(@TestDisposable disposable: Disposable) {
+    setCtrlEnterSendsLf(true, disposable)
+    fun enter(id: Int, modifiers: Int) = KeyEvent(source, id, 0, modifiers, KeyEvent.VK_ENTER, '\n')
+    val conPtyEncoder = TerminalEmulatorKeyEventEncoder(emulator.proxy, settings, isWinConPty = true, lockingKeys = { emptySet() })
+
+    // The emulator never sees the chord there.
+    val result = conPtyEncoder.encodeKeyEvent(enter(KeyEvent.KEY_PRESSED, CTRL_MASK))
+    assertThat((result as KeyEventProcessingResultDto.BytesResult).bytes.map(Byte::toInt)).containsExactly(10)
+    conPtyEncoder.encodeKeyEvent(enter(KeyEvent.KEY_RELEASED, CTRL_MASK))
+    assertThat(events).isEmpty()
+
+    // In each other case the emulator gets the chord.
+    fun assertEmulatorGetsChord(case: String, encoder: TerminalEmulatorKeyEventEncoder, modifiers: Int, expected: TerminalKeyEvent) {
+      events.clear()
+      encoder.encodeKeyEvent(enter(KeyEvent.KEY_PRESSED, modifiers))
+      encoder.encodeKeyEvent(enter(KeyEvent.KEY_RELEASED, modifiers))
+      assertThat(events).describedAs(case).containsExactly(expected)
+    }
+
+    val ctrlEnter = TerminalKeyEvent(TerminalKey.ENTER, modifiers = setOf(CTRL))
+    val ctrlShiftEnter = TerminalKeyEvent(TerminalKey.ENTER, modifiers = setOf(CTRL, SHIFT))
+    assertEmulatorGetsChord("with Shift", conPtyEncoder, CTRL_MASK or SHIFT_MASK, ctrlShiftEnter)
+    assertEmulatorGetsChord("without a ConPTY", encoder, CTRL_MASK, ctrlEnter)
+    setCtrlEnterSendsLf(false, disposable)
+    assertEmulatorGetsChord("with the setting off", conPtyEncoder, CTRL_MASK, ctrlEnter)
+    setCtrlEnterSendsLf(true, disposable)
+    emulator.kittyKeyboardFlags = setOf(KittyKeyboardFlag.DISAMBIGUATE_ESCAPE_CODES)
+    assertEmulatorGetsChord("under the Kitty protocol", conPtyEncoder, CTRL_MASK, ctrlEnter)
   }
 
   @Test
@@ -453,6 +492,14 @@ internal class TerminalKeyEventDerivationTest {
     encoder.encodeKeyEvent(object : KeyEvent(source, id, 0, 0, VK_UNDEFINED, keyChar, KEY_LOCATION_STANDARD) {
       override fun getExtendedKeyCode(): Int = getExtendedKeyCodeForChar(keyChar.code)
     })
+}
+
+/** Sets the "Send LF on Ctrl+Enter on Windows" setting until [disposable] is disposed. */
+internal fun setCtrlEnterSendsLf(value: Boolean, disposable: Disposable) {
+  val settingId = TerminalEmulatorKeyEventEncoder.CTRL_ENTER_SENDS_LF_SETTING_ID
+  val previousValue = AdvancedSettings.getBoolean(settingId)
+  AdvancedSettings.setBoolean(settingId, value)
+  Disposer.register(disposable) { AdvancedSettings.setBoolean(settingId, previousValue) }
 }
 
 private const val SHIFT_MASK = InputEvent.SHIFT_DOWN_MASK

@@ -69,6 +69,18 @@ internal class TerminalSessionKeyEventTest : GhosttyTerminalSessionTestCase() {
   }
 
   @Test
+  fun `encoding Ctrl+Enter without a ConPTY`() = runSessionTest { session, connector, _ ->
+    setCtrlEnterSendsLf(true, testDisposable)
+    // The test connector is not a ConPTY. `TerminalKeyEventDerivationTest` has the ConPTY case.
+    fun ctrlEnter() = pressed(KeyEvent.VK_ENTER, Char(10), InputEvent.CTRL_DOWN_MASK)
+    assertThat(bytesOf(session.processKeyEvent(ctrlEnter()))).isEqualTo(csi("27;5;13~"))
+    applyModes(connector, csi(">4;2m")) // turns on modifyOtherKeys state 2
+    assertThat(bytesOf(session.processKeyEvent(ctrlEnter()))).isEqualTo(csi("27;5;13~"))
+    applyModes(connector, csi(">1u")) // pushes the Kitty flag 1, "disambiguate escape codes"
+    assertThat(bytesOf(session.processKeyEvent(ctrlEnter()))).isEqualTo(csi("13;5u"))
+  }
+
+  @Test
   fun `alt chords go through the encoder when Alt sends Escape`() = runSessionTest { session, connector, _ ->
     val options = TerminalOptionsProvider.instance
     val useOptionAsMetaKey = options.useOptionAsMetaKey

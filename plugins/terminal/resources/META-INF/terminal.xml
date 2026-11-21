@@ -128,6 +128,8 @@
     <advancedSetting id="new.terminal.output.capacity.kb" default="1024" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.shift.enter.sends.esc.cr" default="true"
                      bundle="messages.TerminalBundle" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.ctrl.enter.sends.lf" default="true"
+                     bundle="messages.TerminalBundle" groupKey="group.advanced.settings.terminal"/>
 
     <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.hyperlinks.menu.TerminalHyperlinksSessionIdDataContextSerializer"/>
     <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.hyperlinks.menu.HyperlinkIdDataContextSerializer"/>

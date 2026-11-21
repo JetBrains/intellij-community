@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.session.ghostty
 
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.emulator.TerminalEmulator
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
  *   Ghostty app resolves them above VT encoding too: a VT encoder reports SUPER as the
  *   xterm meta modifier, which shells ignore;
  * - Shift+Enter as `ESC CR` outside the Kitty keyboard protocol, while the "Send Esc+CR on Shift+Enter" setting is on;
+ * - Ctrl+Enter as `LF` for a ConPTY outside the Kitty keyboard protocol, while the "Send LF on Ctrl+Enter on Windows" setting is on;
  * - whether Alt is a modifier for the shell (the `altSendsEscape` setting). The encoder
  *   gets it as its `macos_option_as_alt` option and applies the active protocol;
  * - splitting AWT's KEY_PRESSED/KEY_TYPED pair so each keystroke is encoded exactly once.
@@ -38,11 +40,13 @@ import java.util.concurrent.ConcurrentHashMap
  * Not thread-safe: it drives the lock-protected emulator, so every call must happen
  * under the owning session's lock.
  *
+ * @param isWinConPty whether the bytes go to a Windows ConPTY, which turns them into console key records.
  * @param lockingKeys reads the Caps Lock and Num Lock state; a test replaces it.
  */
 internal class TerminalEmulatorKeyEventEncoder(
   private val emulator: TerminalEmulator,
   private val settings: JBTerminalSystemSettingsProviderBase,
+  private val isWinConPty: Boolean,
   private val lockingKeys: () -> Set<TerminalInputModifier> = LockingKeys::current,
 ) {
   /** What this layer knows about a key that is held down. */
@@ -119,6 +123,10 @@ internal class TerminalEmulatorKeyEventEncoder(
 
     if (isShiftEnterAsEscCR(e)) {
       return bytesResult(byteArrayOf(ESC, CR), e)
+    }
+
+    if (isCtrlEnterAsLF(e)) {
+      return bytesResult(byteArrayOf(LF), e)
     }
 
     macNaturalTextEditingChord(e)?.let { chord ->
@@ -409,6 +417,29 @@ internal class TerminalEmulatorKeyEventEncoder(
     settings.shiftEnterSendsEscCR() &&
     emulator.kittyKeyboardFlags.isEmpty()
 
+  /**
+   * Whether Ctrl+Enter is encoded as `LF`, the byte of Ctrl+J.
+   * This applies for a ConPTY while the "Send LF on Ctrl+Enter on Windows" setting is on and the Kitty keyboard protocol is off.
+   * Under the Kitty protocol, this function returns false, and the program gets `CSI 13;5u`.
+   *
+   * ConPTY turns `LF` into the key record of Ctrl+Enter, so a Windows console program gets the real chord.
+   *
+   * Without this function, the encoder sends `CSI 27;5;13~`, the xterm modifyOtherKeys form.
+   * ConPTY drops that sequence, so a Windows console program gets no key (IJPL-262277).
+   * Without a ConPTY, a program gets that sequence. `LF` there is Ctrl+J, which a program can bind to another action.
+   *
+   * TODO: Remove this workaround and its advanced setting when the emulator supports win32-input-mode (`CSI ?9001h`).
+   *  Then the emulator sends Ctrl+Enter in the win32-input-mode form, and ConPTY turns it into the same key record.
+   *  Before that, consider to expose the modifyOtherKeys state in the emulator, as the TODO of [isShiftEnterAsEscCR] says.
+   *  Then this function can return false when modifyOtherKeys is on, and a program that requests it gets `CSI 27;5;13~`.
+   */
+  private fun isCtrlEnterAsLF(e: KeyEvent): Boolean =
+    isWinConPty &&
+    e.keyCode == KeyEvent.VK_ENTER &&
+    modifierKeys(e) == InputEvent.CTRL_DOWN_MASK &&
+    AdvancedSettings.getBoolean(CTRL_ENTER_SENDS_LF_SETTING_ID) &&
+    emulator.kittyKeyboardFlags.isEmpty()
+
   private fun bytesResult(bytes: ByteArray, e: KeyEvent): KeyEventProcessingResultDto.BytesResult {
     val shouldScroll = settings.scrollToBottomOnTyping() && isCodeThatScrolls(e.keyCode)
     return KeyEventProcessingResultDto.BytesResult(bytes, shouldScroll)
@@ -523,8 +554,12 @@ internal class TerminalEmulatorKeyEventEncoder(
   companion object {
     private const val TAB: Byte = 0x09
     private const val ESC: Byte = 0x1B
+    private const val LF: Byte = 0x0A
     private const val CR: Byte = 0x0D
     private const val NAK: Byte = 0x15  // Ctrl+U: kill line
+
+    /** The ID of the "Send LF on Ctrl+Enter on Windows" advanced setting. */
+    internal const val CTRL_ENTER_SENDS_LF_SETTING_ID = "terminal.ctrl.enter.sends.lf"
 
     /** The US layout's shifted digits, indexed by digit. */
     private const val US_SHIFTED_DIGITS = ")!@#$%^&*("
