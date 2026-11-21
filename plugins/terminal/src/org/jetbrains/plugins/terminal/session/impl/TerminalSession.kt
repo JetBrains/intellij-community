@@ -28,14 +28,6 @@ interface TerminalSession {
   val processId: Long
 
   /**
-   * Waits for the terminal process and returns its actual exit code.
-   * Returns `null` if this session cannot provide the process exit code. This does not indicate success.
-   * The result remains available after the session closes, including to concurrent callers.
-   * Cancelling the caller cancels only its wait. Process observation errors propagate to the caller.
-   */
-  suspend fun awaitProcessExitCode(): Int? = null
-
-  /**
    * Use this channel to send the input events to the Terminal session.
    *
    * The channel is used here to mimic the behavior of the simple output stream:

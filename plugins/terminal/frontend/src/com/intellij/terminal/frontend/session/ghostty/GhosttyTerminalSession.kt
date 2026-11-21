@@ -28,8 +28,6 @@ import com.intellij.terminal.frontend.session.toTerminalGridGeometry
 import com.intellij.terminal.frontend.session.toTerminalSize
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.io.awaitExit
-import com.jediterm.terminal.ProcessTtyConnector
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -266,10 +264,6 @@ class GhosttyTerminalSession internal constructor(
       }
       return connector.shellEelProcess.eelProcess.pid.value
     }
-
-  override suspend fun awaitProcessExitCode(): Int? {
-    return (ttyConnector.original as? ProcessTtyConnector)?.process?.awaitExit()
-  }
 
   /**
    * Invoked by the working-directory tracker; the new value is reported by the next
