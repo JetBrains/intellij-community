@@ -30,6 +30,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -63,6 +64,7 @@ import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcesso
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
 import org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
+import org.jetbrains.jewel.markdown.rendering.ImageSourceResolver
 import org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.rendering.create
 import org.jetbrains.jewel.markdown.scrolling.ScrollSyncMarkdownBlockRenderer
@@ -127,7 +129,13 @@ internal class MarkdownComposePanel(
         InlineMarkdownRenderer.create(allRenderingExtensions),
       )
     }
+    val imageSourceResolver = remember(virtualFile) {
+      val baseDir = virtualFile?.parent?.toNioPathOrNull()
+      if (baseDir == null) ImageSourceResolver.create(logResolveFailure = false)
+      else ImageSourceResolver.create(baseDir, logResolveFailure = false)
+    }
     ProvideMarkdownStyling(
+      imageSourceResolver = imageSourceResolver,
       markdownMode = markdownMode,
       markdownProcessor = processor,
       markdownStyling = markdownStyling,

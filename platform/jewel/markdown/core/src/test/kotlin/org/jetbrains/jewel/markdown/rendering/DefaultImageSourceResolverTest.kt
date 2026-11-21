@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.markdown.rendering
 
+import java.nio.file.Path
 import junit.framework.TestCase
 import junit.framework.TestCase.assertNull
 import org.jetbrains.jewel.markdown.assertNotNull
@@ -60,6 +61,20 @@ public class DefaultImageSourceResolverTest {
         val result = DefaultImageSourceResolver().resolve(absolutePath)
 
         TestCase.assertEquals(absolutePath, result)
+    }
+
+    @Test
+    public fun `resolves relative paths against the root directory`() {
+        val resolver = ImageSourceResolver.create(Path.of("/root/docs"), logResolveFailure = false)
+
+        TestCase.assertEquals(
+            Path.of("/root/docs/images/image.png").toAbsolutePath().toString(),
+            resolver.resolve("images/image.png"),
+        )
+        TestCase.assertEquals(
+            Path.of("/root/shared/image.png").toAbsolutePath().toString(),
+            resolver.resolve("../shared/image.png"),
+        )
     }
 
     @Test
