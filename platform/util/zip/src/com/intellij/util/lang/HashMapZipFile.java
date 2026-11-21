@@ -84,6 +84,9 @@ public final class HashMapZipFile implements ZipFile {
                                @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     int minNameLength = dir.length() + 2;
     for (ImmutableZipEntry entry : entries) {
+      if (entry.isDirectory()) {
+        continue;
+      }
       String name = entry.getName();
       if (name.length() >= minNameLength && name.charAt(dir.length()) == '/' && name.startsWith(dir) && nameFilter.test(name)) {
         try (InputStream stream = entry.getInputStream(this)) {
