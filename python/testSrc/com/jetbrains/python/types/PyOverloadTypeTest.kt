@@ -364,6 +364,23 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       lower_first(b"", takes)
       #                ^^^^^ WARNING Expected type '(bytes) -> None' (matched generic type '(T) -> None'), got 'Overload[(x: int) -> None, (x: str) -> None]' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `overloaded callable argument with one matching overload binds a type parameter from its side`() = test("""
+      from typing import Callable, overload
+
+      @overload
+      def takes(x: int) -> None: ...
+      @overload
+      def takes(x: bytes, y: int) -> None: ...
+      def takes(x, y=0): ...
+
+      def upper_first[T](cb: Callable[[T], None], x: T) -> None: ...
+
+      upper_first(takes, 1)
+      upper_first(takes, "") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal[""]' instead
+      """.trimIndent())
   }
 
   @Nested
