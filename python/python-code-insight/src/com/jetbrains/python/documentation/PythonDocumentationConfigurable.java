@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import java.util.ArrayList;
 import java.util.Map;
@@ -31,7 +30,7 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public final class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private final PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
+  private @Nullable PythonDocumentationPanel myPanel;
 
   @Override
   public @NotNull String getId() {
@@ -53,32 +52,41 @@ public final class PythonDocumentationConfigurable implements SearchableConfigur
     Border border = IdeBorderFactory.createEmptyBorder(JBUI.insets(10, 0));
     JPanel panelWithDescription = JBUI.Panels.simplePanel(new JBLabel(PyCodeInsightBundle.message("external.documentation.description"))).withBorder(border);
 
-    SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
-    myPanel.getTable().setShowGrid(false);
+    var panel = new PythonDocumentationPanel();
+    panel.getTable().setShowGrid(false);
+    myPanel = panel;
 
-    BorderLayoutPanel myComponent = new BorderLayoutPanel()
+    return new BorderLayoutPanel()
       .addToTop(panelWithDescription)
-      .addToCenter(myPanel);
-
-    return myComponent;
+      .addToCenter(panel);
   }
 
   @Override
   public void reset() {
-    myPanel.getData().clear();
-    myPanel.getData().addAll(PythonDocumentationMap.getInstance().getEntries().entrySet());
+    var panel = myPanel;
+    if (panel == null) return;
+    panel.setData(new ArrayList<>(PythonDocumentationMap.getInstance().getEntries().entrySet()));
   }
 
   @Override
   public boolean isModified() {
+    var panel = myPanel;
+    if (panel == null) return false;
     Map<String, String> originalEntries = Map.copyOf(PythonDocumentationMap.getInstance().getEntries());
-    Map<String, String> editedEntries = ImmutableMap.copyOf(myPanel.getData());
+    Map<String, String> editedEntries = ImmutableMap.copyOf(panel.getData());
     return !editedEntries.equals(originalEntries);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    PythonDocumentationMap.getInstance().setEntries(ImmutableMap.copyOf(myPanel.getData()));
+    var panel = myPanel;
+    if (panel == null) return;
+    PythonDocumentationMap.getInstance().setEntries(ImmutableMap.copyOf(panel.getData()));
+  }
+
+  @Override
+  public void disposeUIResources() {
+    myPanel = null;
   }
 
   private static class PythonDocumentationTableModel extends AddEditRemovePanel.TableModel<Map.Entry<String, String>> {
