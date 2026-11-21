@@ -363,6 +363,90 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  @TestFor(issues = "PY-57603")
+  public void testAsyncMismatch() {
+    doTestByText("""
+                   class Base:
+                       async def do_async(self):
+                           ...
+
+                       def do(self):
+                           ...
+
+                   class Child(Base):
+                       def <warning descr="Method 'Child.do_async()' is not async, but the base method in class 'Base' is async">do_async</warning>(self):
+                           ...
+
+                       async def <warning descr="Method 'Child.do()' is async, but the base method in class 'Base' is not">do</warning>(self):
+                           ...
+                   """);
+  }
+
+  @TestFor(issues = "PY-57603")
+  public void testAsyncMismatchWithCompatibleReturnType() {
+    doTestByText("""
+                   from typing import Awaitable
+
+                   async def fetch_value():
+                       ...
+
+                   class Base:
+                       async def fetch(self):
+                           ...
+
+                       def load(self) -> Awaitable[int]:
+                           ...
+
+                   class Child(Base):
+                       def fetch(self):
+                           return fetch_value()
+
+                       async def load(self) -> int:
+                           ...
+                   """);
+  }
+
+  @TestFor(issues = "PY-57603")
+  public void testAsyncMismatchWithReturnAnnotationsReportedOnce() {
+    doTestByText("""
+                   class Base:
+                       def run(self) -> None:
+                           ...
+
+                   class Child(Base):
+                       async def <warning descr="Method 'Child.run()' is async, but the base method in class 'Base' is not">run</warning>(self) -> None:
+                           ...
+                   """);
+  }
+
+  @TestFor(issues = "PY-57603")
+  public void testAsyncMismatchIgnoresPlaceholdersAndGenerators() {
+    doTestByText("""
+                   from contextlib import asynccontextmanager
+
+                   class Base:
+                       def run(self):
+                           raise NotImplementedError
+
+                       async def items(self):
+                           yield 1
+
+                       @asynccontextmanager
+                       async def session(self):
+                           yield self
+
+                   class Child(Base):
+                       async def run(self):
+                           ...
+
+                       def items(self):
+                           return iter([1])
+
+                       def session(self):
+                           return super().session()
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
