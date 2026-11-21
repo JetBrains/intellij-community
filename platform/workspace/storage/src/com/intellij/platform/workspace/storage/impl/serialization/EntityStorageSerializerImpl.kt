@@ -8,6 +8,7 @@ import com.esotericsoftware.kryo.kryo5.KryoException
 import com.esotericsoftware.kryo.kryo5.io.Input
 import com.esotericsoftware.kryo.kryo5.io.Output
 import com.esotericsoftware.kryo.kryo5.objenesis.strategy.StdInstantiatorStrategy
+import com.esotericsoftware.kryo.kryo5.util.MapReferenceResolver
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -96,7 +97,7 @@ public class EntityStorageSerializerImpl(
   override var serializerDataFormatVersion: String = STORAGE_SERIALIZATION_VERSION
 
   internal fun createKryo(): Triple<Kryo, Object2IntWithDefaultMap<TypeInfo>, StorageSerializerUtil> {
-    val kryo = Kryo()
+    val kryo = Kryo(InternAwareReferenceResolver())
 
     kryo.setAutoReset(false)
     kryo.references = true
@@ -321,3 +322,20 @@ public class EntityStorageSerializerImpl(
 }
 
 internal class UnsupportedEntitiesVersionException : Exception("Version of the entities in cache is not supported")
+
+internal class InternAwareReferenceResolver : MapReferenceResolver() {
+  internal var lastAllocatedReadId: Int = -1
+    private set
+
+  override fun nextReadId(type: Class<*>?): Int {
+    val id = super.nextReadId(type)
+    lastAllocatedReadId = id
+    return id
+  }
+
+  internal fun replaceReadObjectIfSame(id: Int, expected: Any, replacement: Any) {
+    if (id >= 0 && id < readObjects.size && readObjects.get(id) === expected) {
+      readObjects.set(id, replacement)
+    }
+  }
+}
