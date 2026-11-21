@@ -53,7 +53,8 @@ internal class NoCondaAndVenAsSystemPythonsTest {
     private val pyProjectFixture = projectFixture.pyProjectFixture()
     private val venvSdkFixture = pyEnvironmentFixture().pyVenvFixture(tempFixture, pyProjectFixture)
     private lateinit var ourSystemPython: PythonBinary
-    private lateinit var condaInterpreter: PythonInterpreter
+    // The interpreter holds its project, so a static field keeps it only until the class ends.
+    private var condaInterpreter: PythonInterpreter? = null
     private lateinit var pythonsToExclude: List<PythonBinary>
 
     @SystemStub
@@ -65,8 +66,9 @@ internal class NoCondaAndVenAsSystemPythonsTest {
     @JvmStatic
     fun setUp(@CondaEnv condaEnv: PyCondaEnv, @PythonBinaryPath condaBasePython: PythonBinary): Unit = timeoutRunBlocking(5.minutes) {
       ourSystemPython = condaBasePython
-      condaInterpreter = condaEnv.createSdkFromThisEnv(projectFixture.get(), null, venvSdkFixture.get().ownerDir).getOrThrow()
-      pythonsToExclude = binaryPaths(condaInterpreter, venvSdkFixture.get()) + listOf(condaBasePython)
+      val interpreter = condaEnv.createSdkFromThisEnv(projectFixture.get(), null, venvSdkFixture.get().ownerDir).getOrThrow()
+      condaInterpreter = interpreter
+      pythonsToExclude = binaryPaths(interpreter, venvSdkFixture.get()) + listOf(condaBasePython)
       val newBinPaths = pythonsToExclude.map { it.parent }.toTypedArray()
       environment.mockPathAndAdd(*newBinPaths)
     }
@@ -74,7 +76,8 @@ internal class NoCondaAndVenAsSystemPythonsTest {
     @JvmStatic
     @AfterAll
     fun tearDown(): Unit = timeoutRunBlocking {
-      removeTestInterpreterFromOpenProjects(condaInterpreter)
+      condaInterpreter?.let { removeTestInterpreterFromOpenProjects(it) }
+      condaInterpreter = null
       environment.unMockPath()
     }
 

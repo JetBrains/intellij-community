@@ -33,11 +33,6 @@ private enum class Group {
    * System (both vanilla and from providers)
    */
   OTHER,
-
-  /**
-   * Those, which should be filtered out
-   */
-  REDUNDANT
 }
 
 internal fun <P : PathHolder> Flow<List<PythonSelectableInterpreter<P>>?>.mapDistinctSortedForExistingEnvironment(
@@ -62,7 +57,10 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
     venvReader.getVEnvRootDir()
   }.toString()
   return withContext(Dispatchers.Default) {
-    val groupedPythons = pythons.groupBy {
+    // A detected Python at the path of an existing interpreter is that interpreter, so only the interpreter is listed.
+    val existingPaths = pythons.filterIsInstance<ExistingSelectableInterpreter<P>>().mapTo(HashSet()) { it.homePath }
+    val withoutCopies = pythons.filter { it is ExistingSelectableInterpreter || it.homePath !in existingPaths }
+    val groupedPythons = withoutCopies.groupBy {
       when (it) {
         is InstallableSelectableInterpreter -> error("$it is unexpected")
         is DetectedSelectableInterpreter -> {
@@ -96,10 +94,8 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
       }.joinToString("\n"))
     }
 
-    // A Python at the path of a redundant SDK is the interpreter of another Python project, so it is hidden too.
-    val redundantPaths = groupedPythons[Group.REDUNDANT].orEmpty().map { it.homePath }.toSet()
-    groupedPythons.filterKeys { it != Group.REDUNDANT }.toSortedMap().flatMap { (_, pythons) ->
+    groupedPythons.toSortedMap().flatMap { (_, pythons) ->
       pythons.sorted()
-    }.filter { it.homePath !in redundantPaths }.distinctBy { it.homePath }
+    }.distinctBy { it.homePath }
   }
 }
