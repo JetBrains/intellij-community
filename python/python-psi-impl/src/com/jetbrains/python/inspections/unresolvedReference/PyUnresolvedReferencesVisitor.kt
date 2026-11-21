@@ -23,16 +23,20 @@ import com.jetbrains.python.codeInsight.PyDunderMatchArgsReference
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference
 import com.jetbrains.python.codeInsight.controlflow.Reachability
 import com.jetbrains.python.codeInsight.controlflow.getReachabilityForInspection
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyInspectionMessages
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.inspections.PyInspectionVisitor
+import com.jetbrains.python.inspections.quickfix.PyAddFutureAnnotationsImportQuickFix
 import com.jetbrains.python.inspections.quickfix.PyRenameUnresolvedRefQuickFix
 import com.jetbrains.python.psi.AccessDirection
+import com.jetbrains.python.psi.FutureFeature
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PsiReferenceEx
+import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
@@ -41,6 +45,7 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyExceptPart
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyIfStatement
@@ -64,7 +69,9 @@ import com.jetbrains.python.psi.impl.references.PyFromImportNameReference
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
 import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper
+import com.jetbrains.python.psi.resolve.PyForwardReferenceResolveProvider
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassMembersProvider
@@ -296,6 +303,7 @@ class PyUnresolvedReferencesVisitor(
       fixes.addAll(getAddSelfFixes(myTypeEvalContext, spec.node, element))
       fixes.addIfNotNull(getCreateFunctionQuickFix(element))
       fixes.addIfNotNull(getAddParameterQuickFix(spec.refName, element))
+      fixes.addIfNotNull(getAddFutureAnnotationsImportQuickFix(element))
       fixes.add(PyRenameUnresolvedRefQuickFix())
     }
     if (spec.qualifierType != null) {
@@ -321,6 +329,21 @@ class PyUnresolvedReferencesVisitor(
     if (!installAll) {
       registerProblem(spec.node, spec.message, hlType, *fixes.toTypedArray<LocalQuickFix>(), rangeInElement = spec.rangeInElement)
     }
+  }
+
+  /**
+   * Offers `from __future__ import annotations` for a name in an annotation that the import makes resolvable,
+   * for example a method that returns its own class. With the import, [PyForwardReferenceResolveProvider] resolves the name.
+   */
+  private fun getAddFutureAnnotationsImportQuickFix(reference: PyReferenceExpression): LocalQuickFix? {
+    val languageLevel = LanguageLevel.forElement(reference)
+    if (languageLevel.isOlderThan(LanguageLevel.PYTHON37) || languageLevel.isAtLeast(LanguageLevel.PYTHON314)) return null
+    val file = reference.containingFile as? PyFile ?: return null
+    if (file.hasImportFromFuture(FutureFeature.ANNOTATIONS)) return null
+    if (PsiTreeUtil.getParentOfType(reference, PyAnnotation::class.java) == null) return null
+    val name = reference.referencedName ?: return null
+    val owner = ScopeUtil.getScopeOwner(reference) ?: return null
+    return if (PyResolveUtil.resolveLocally(owner, name).isNotEmpty()) PyAddFutureAnnotationsImportQuickFix() else null
   }
 
   private fun buildProblemSpec(initialNode: PyElement, reference: PsiReference, initialSeverity: HighlightSeverity): ProblemSpec? {
