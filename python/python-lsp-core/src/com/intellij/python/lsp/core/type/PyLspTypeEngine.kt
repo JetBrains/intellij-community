@@ -56,6 +56,12 @@ interface PyLspTypeEngine : PyTypeEngine {
     if (pyTypedElement.textRange == null)
       return false
 
+    // A wrapper such as a custom member of `PyCustomMemberProviderImpl` wraps the node of another element.
+    // The position of that node does not give the type of the wrapper. The node of a file is always the
+    // file, and the check skips it because `getNode` of a file parses the whole file.
+    if (pyTypedElement !is PsiFile && pyTypedElement.node?.psi !== pyTypedElement)
+      return false
+
     val realFile = pyTypedElement.containingFile?.originalFile ?: return false
     if (realFile is PyExpressionCodeFragment)
       return false

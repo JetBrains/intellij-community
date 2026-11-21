@@ -74,8 +74,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
 
     val offsetDetector = PyreflyOffsetDetectorVisitor()
     element.accept(offsetDetector)
-    // An element whose `accept` does not call `visitPyElement` gets no offset, such as a custom member of
-    // `PyCustomMemberProviderImpl`. The built-in engine then answers.
+    // An element whose `accept` does not call `visitPyElement` gets no offset. The built-in engine then answers.
     if (offsetDetector.offset < 0) return null
     // A notebook cell is its own document for the server, so the offset maps to the cell and its URI.
     val request = getDocumentPosition(file, document, offsetDetector.offset)
