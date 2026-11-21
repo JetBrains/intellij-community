@@ -99,6 +99,8 @@ import com.intellij.openapi.util.Pair as JBPair
  * Functions common to different implementors of PyCallExpression, with different base classes.
  */
 object PyCallExpressionHelper {
+  private const val NOT_IMPLEMENTED_TYPE = "types.NotImplementedType"
+
   /**
    * Tries to interpret a call as a call to built-in `classmethod` or `staticmethod`.
    *
@@ -462,6 +464,10 @@ object PyCallExpressionHelper {
    */
   @JvmStatic
   fun getCallType(expression: PyBinaryExpression, context: TypeEvalContext, @Suppress("unused") key: TypeEvalContext.Key): PyType? {
+    return withoutNotImplemented(getOperatorCallType(expression, context))
+  }
+
+  private fun getOperatorCallType(expression: PyBinaryExpression, context: TypeEvalContext): PyType? {
     val leftExpr = PyAstBinaryExpression.getChainedComparisonAwareLeftExpression(expression) as? PyExpression ?: return PyAnyType.unknown
     val rightExpr = expression.rightExpression ?: return PyAnyType.unknown
 
@@ -491,6 +497,10 @@ object PyCallExpressionHelper {
 
   @JvmStatic
   fun getCallType(statement: PyAugAssignmentStatement, context: TypeEvalContext, @Suppress("unused") key: TypeEvalContext.Key): PyType? {
+    return withoutNotImplemented(getOperatorCallType(statement, context))
+  }
+
+  private fun getOperatorCallType(statement: PyAugAssignmentStatement, context: TypeEvalContext): PyType? {
     val operators = resolveOperatorCalls(statement, context)
 
     val matchingOperators = operators.filter { it.matched }
@@ -511,6 +521,17 @@ object PyCallExpressionHelper {
     }
 
     return getCallType(matchingOperators.ifEmpty { operators })
+  }
+
+  /**
+   * Removes `NotImplementedType` from the union that the methods of an operator return.
+   * `NotImplemented` is not the value of the operator expression: Python then calls the next method of the operator, or uses the fallback of the operator.
+   * The result does not model that next method. A union of only `NotImplementedType` stays.
+   */
+  private fun withoutNotImplemented(type: PyType?): PyType? {
+    if (type !is PyUnionType) return type
+    val members = type.members.filterNot { it is PyClassType && !it.isDefinition && it.classQName == NOT_IMPLEMENTED_TYPE }
+    return if (members.isEmpty() || members.size == type.members.size) type else PyUnionType.unionOrNever(members)
   }
 
   private fun areAllTypesCoveredByCandidates(
