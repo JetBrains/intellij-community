@@ -277,7 +277,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
-    myInterpreterOptions = JDOMExternalizerUtil.readField(element, "INTERPRETER_OPTIONS");
+    myInterpreterOptions = JDOMExternalizerUtil.readField(element, "INTERPRETER_OPTIONS", "");
     readEnvs(element);
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
 
@@ -349,13 +349,13 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
-  public String getInterpreterOptions() {
+  public @NotNull String getInterpreterOptions() {
     return myInterpreterOptions;
   }
 
   @Override
-  public void setInterpreterOptions(String interpreterOptions) {
-    myInterpreterOptions = interpreterOptions;
+  public void setInterpreterOptions(@Nullable String interpreterOptions) {
+    myInterpreterOptions = StringUtil.notNullize(interpreterOptions);
   }
 
   @Override
