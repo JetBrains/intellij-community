@@ -12,12 +12,13 @@ import com.intellij.platform.icons.rendering.ScalingContext
 import kotlin.math.ceil
 
 fun IconLayer.generateImageModifiers(renderingContext: DefaultRenderingContext? = null): DefaultImageModifiers {
-    val defaults = renderingContext?.defaultImageModifiers ?: renderingContext?.theme?.imageModifiers() as? DefaultImageModifiers
+    val theme = renderingContext?.theme?.imageModifiers() as? DefaultImageModifiers
+    val caller = renderingContext?.defaultImageModifiers
     return DefaultImageModifiers(
-        colorFilter = findModifier<ColorFilterModifier>()?.colorFilter ?: defaults?.colorFilter,
-        svgPatcher = findModifier<SvgPatcherModifier>()?.svgPatcher ?: defaults?.svgPatcher,
-        isDark = defaults?.isDark ?: false,
-        stroke = findModifier<StrokeModifier>()?.color ?: defaults?.stroke,
+        colorFilter = findModifier<ColorFilterModifier>()?.colorFilter ?: caller?.colorFilter ?: theme?.colorFilter,
+        svgPatcher = findModifier<SvgPatcherModifier>()?.svgPatcher ?: caller?.svgPatcher ?: theme?.svgPatcher,
+        isDark = theme?.isDark ?: caller?.isDark ?: false,
+        stroke = findModifier<StrokeModifier>()?.color ?: caller?.stroke ?: theme?.stroke,
     )
 }
 

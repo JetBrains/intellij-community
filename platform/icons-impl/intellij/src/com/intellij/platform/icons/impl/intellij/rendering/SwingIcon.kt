@@ -6,6 +6,7 @@ import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.impl.rendering.ResolvedScalingContext
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.impl.rendering.resolve
+import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.scale.FactorScale
 import com.intellij.platform.icons.scale.FitAreaScale
 import com.intellij.platform.icons.scale.IconScale
@@ -40,9 +41,8 @@ class SwingIcon(
     IconRendererManager.getInstance().createRenderer(iconDescriptor, context)
   }
 
-  private val dimensions by lazy {
-    renderer.resolve(1f, scale).finalDimensions
-  }
+  private val dimensions: Dimensions
+    get() = renderer.resolve(1f, scale).finalDimensions
 
   override fun scaled(scale: IconScale): ScalableSwingIcon {
     val mergedScale = if (this.scale != null) {

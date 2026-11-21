@@ -5,6 +5,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.icons.RgbImageFilterSupplier
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.SVGLoader
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.ImageModifiers
 import java.awt.Image
@@ -14,14 +15,14 @@ import javax.swing.Icon
 internal class LegacyIconImageResourceHolder(
   private val backingLegacyIcon: Icon
 ): SwingImageResourceHolder {
-  override fun getExpectedDimensions(): Dimensions {
+  override fun getExpectedDimensions(imageModifiers: ImageModifiers?): Dimensions {
     return Dimensions(backingLegacyIcon.iconWidth, backingLegacyIcon.iconHeight)
   }
 
   override fun getImage(scale: ScaleContext, imageModifiers: ImageModifiers?): Image? {
     val params = imageModifiers.toLoadParameters()
     val svgPatcher = params.colorPatcher
-    val icon = if (backingLegacyIcon is CachedImageIcon && svgPatcher != null) {
+    val icon = if (backingLegacyIcon is CachedImageIcon && svgPatcher != null && svgPatcher !== SVGLoader.colorPatcherProvider) {
       backingLegacyIcon.createWithPatcher(svgPatcher, isDark = params.isDark, useStroke = params.isStroke)
     } else backingLegacyIcon
     val filtered = if (params.filters.isNotEmpty()) {
