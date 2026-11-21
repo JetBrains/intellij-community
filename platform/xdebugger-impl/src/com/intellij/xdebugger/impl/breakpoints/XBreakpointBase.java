@@ -137,6 +137,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public final void fireBreakpointPresentationUpdated(@Nullable XDebugSession session) {
     clearIcon();
     myBreakpointManager.fireBreakpointPresentationUpdated(this, session);
+    // the breakpoint state sent to the frontend contains the tooltip, which shows the error message of the presentation
+    emitBreakpointChanged();
   }
 
   public final Flow<Unit> breakpointChangedFlow() {
