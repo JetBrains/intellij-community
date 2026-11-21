@@ -17,6 +17,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -26,8 +27,12 @@ import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.util.text.CharArrayUtil
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.visible.getRecentCommits
 import git4idea.GitUtil
-import git4idea.history.GitLogUtil
+import git4idea.history.GitLogUtil.collectMetadata
 import git4idea.repo.GitRepository
 
 class GitCommitCompletionContributor : CompletionContributor(), DumbAware {
@@ -48,24 +53,44 @@ class GitCommitCompletionContributor : CompletionContributor(), DumbAware {
                                               result: CompletionResultSet,
                                               completionPrefix: String,
                                               gitPrefix: String) {
-    if (Registry.`is`(COMPLETION_REGISTRY_KEY)) {
-      val repository = GitUtil.getRepositories(project).singleOrNull() ?: return
-      result.caseInsensitive()
-        .withPrefixMatcher(PlainPrefixMatcher(completionPrefix, true))
-        .addAllElements(
-          getLastCommits(repository).reversed().mapIndexed { i, oldCommitMessage ->
-            PrioritizedLookupElement.withPriority(LookupElementBuilder.create("$gitPrefix $oldCommitMessage"), i.toDouble())
-          }
-        )
-    }
+    if (!Registry.`is`(COMPLETION_REGISTRY_KEY)) return
+
+    val repositories = GitUtil.getRepositories(project)
+    if (repositories.isEmpty()) return
+
+    val limit = RegistryManager.getInstance().intValue("git.commit.recent.commits.limit", 20)
+    val commits = getLastCommits(project, repositories, limit)
+
+    result.caseInsensitive()
+      .withPrefixMatcher(PlainPrefixMatcher(completionPrefix, true))
+      .addAllElements(
+        commits.reversed().mapIndexed { i, commit ->
+          PrioritizedLookupElement.withPriority(LookupElementBuilder.create("$gitPrefix ${commit.subject}"), i.toDouble())
+        })
   }
 
-  private fun getLastCommits(repository: GitRepository): List<String> {
-    val future = ApplicationManager.getApplication().executeOnPooledThread<List<String>> {
-      val limit = RegistryManager.getInstance().intValue("git.commit.recent.commits.limit", 20)
-      GitLogUtil.collectMetadata(repository.project, repository.root, "-n $limit").commits.map { it.subject }
+  private fun getLastCommits(project: Project, repositories: Collection<GitRepository>, limit: Int): List<VcsCommitMetadata> {
+    val indicator = ProgressIndicatorProvider.getInstance().progressIndicator
+    val future = ApplicationManager.getApplication().executeOnPooledThread<List<VcsCommitMetadata>> {
+      val commits = if (repositories.size <= Registry.intValue("git.commit.recent.commits.repository.git.limit")) {
+        repositories.flatMap { collectMetadata(project, it.root, "-n $limit").commits }
+      }
+      else {
+        getLastCommitsFromLog(project, limit, indicator)
+      }
+      commits.sortedByDescending { it.timestamp }.take(limit)
     }
-    return ApplicationUtil.runWithCheckCanceled(future, ProgressIndicatorProvider.getInstance().progressIndicator)
+    return ApplicationUtil.runWithCheckCanceled(future, indicator)
+  }
+
+  private fun getLastCommitsFromLog(project: Project, limit: Int, indicator: ProgressIndicator): Collection<VcsCommitMetadata> {
+    if (!VcsLogManager.keepUpToDate()) return emptyList()
+
+    val dataManager = VcsProjectLog.getInstance(project).logManager?.dataManager ?: return emptyList()
+    val recentCommits = dataManager.getRecentCommits(listOf(GitUtil.HEAD), limit)
+    val result = mutableListOf<VcsCommitMetadata>()
+    dataManager.miniDetailsGetter.loadCommitsDataSynchronously(recentCommits, indicator) { _, details -> result.add(details) }
+    return result
   }
 
   data class GitPrefix(val value: String, val prefixToMatch: String)
