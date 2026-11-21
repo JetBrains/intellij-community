@@ -44,6 +44,9 @@ interface McpServerSettings {
   var enableTerminalAnsiHighlighting: Boolean
   var consent: McpServerConsent
 
+  /** Whether a request rejected for a missing or wrong token may raise the explanatory dialog. */
+  var notifyOnUnauthorizedAccess: Boolean
+
   var enabledByFreshInstallPolicy: Boolean
 }
 
@@ -90,6 +93,12 @@ internal class McpServerSettingsImpl : McpServerSettings, SimplePersistentStateC
       state.consent = value
     }
 
+  override var notifyOnUnauthorizedAccess: Boolean
+    get() = state.notifyOnUnauthorizedAccess
+    set(value) {
+      state.notifyOnUnauthorizedAccess = value
+    }
+
   override var enabledByFreshInstallPolicy: Boolean
     get() = state.enabledByFreshInstallPolicy
     set(value) {
@@ -120,6 +129,7 @@ internal class McpServerSettingsImpl : McpServerSettings, SimplePersistentStateC
     var enableTerminalAnsiHighlighting: Boolean by property(false)
     var mcpServerPort: Int by property(DEFAULT_MCP_PORT)
     var consent: McpServerConsent by enum(McpServerConsent.NOT_ASKED)
+    var notifyOnUnauthorizedAccess: Boolean by property(true)
     var enabledByFreshInstallPolicy: Boolean by property(false)
   }
 }

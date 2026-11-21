@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
 import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.clients.McpClient
@@ -43,10 +42,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.compose.swing.ComposeSwingSearchableConfigurable
 import com.intellij.platform.compose.swing.components.ActionLink
@@ -113,11 +112,16 @@ private class McpServerSettingsCoroutineScope(val cs: CoroutineScope)
 @ApiStatus.Internal
 class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   private val PORT_TXT_WIDTH = 5
+  private val TOKEN_TXT_COLUMNS = 36
   private val settings get() = McpServerSettings.getInstance()
 
   private var enabled by bind(settings::enableMcpServer)
   private var port by bind(settings::mcpServerPort)
   private var portChangedWarning by mutableStateOf<@NlsContexts.DetailedDescription String?>(null)
+
+  // The token row is not backed by [McpServerSettings] - it edits a file - so the page tracks its modification itself.
+  private var tokenValue by mutableStateOf("")
+  private var tokenInEffect by mutableStateOf("")
 
   private var braveMode by bind(settings::enableBraveMode)
   private var showTerminalPromotion by bind(TerminalPromotionSetting::isShown, TerminalPromotionSetting::setShown)
@@ -150,6 +154,11 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   override fun getHelpTopic(): @NonNls String = "settings.mcp.server"
 
   override fun getId(): @NonNls String = "com.intellij.mcpserver.settings"
+
+  override fun isModified(): Boolean = super.isModified() || tokenValue != tokenInEffect
+
+  /** The token travels in HTTP headers and JSON client configs, so spaces and non-ASCII characters would make clients fail strangely. */
+  private fun isValidToken(value: String): Boolean = value.isNotEmpty() && value.all { it.code in 33..126 }
 
   @Composable
   override fun ComposeContent() {
@@ -201,7 +210,20 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   override fun apply() {
     // we need to check this before applying the settings.
     val portChanged = port != settings.mcpServerPort
+    val tokenChanged = tokenValue != tokenInEffect
+    if (tokenChanged && !isValidToken(tokenValue)) {
+      Messages.showErrorDialog(McpServerBundle.message("mcp.server.global.token.error"),
+                               McpServerBundle.message("mcp.server.global.token.error.title"))
+      return
+    }
     super.apply()
+    if (tokenChanged) {
+      // The new token is live at once: every request compares against the value the service keeps.
+      McpServerServiceImpl.getInstance().updateGlobalAuthToken(tokenValue)
+      tokenInEffect = tokenValue
+      // The written client entries hold the old token, so their status has to be recomputed.
+      refreshClients(resetAutoConfig = true)
+    }
     if (portChanged) {
       // A toggle that holds the lock refreshes `port` to the running server's port, so read it before queuing.
       val requestedPort = port
@@ -260,8 +282,6 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
       )
     }
     if (enabled) {
-      val tokenFile = McpServerService.getInstance().globalAuthTokenFile
-      @NlsSafe val tokenFileStr = tokenFile.toString()
       FormGroup(McpServerBundle.message("mcp.server.global.configuration"), indent = true) {
         FormRow(McpServerBundle.message("mcp.server.global.port.label")) {
           TextField(
@@ -290,18 +310,22 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
           )
           BrowserLink(text = streamUrl, url = streamUrl, modifier = SwingModifier.styleable { toolTip(streamUrl) })
         }
-        FormRow(McpServerBundle.message("mcp.server.global.token")) {
+        FormRow(McpServerBundle.message("mcp.server.global.token"),
+                comment = McpServerBundle.message("mcp.server.global.token.comment", IJ_MCP_AUTH_TOKEN)) {
+          TextField(
+            value = tokenValue,
+            onValueChange = { tokenValue = it },
+            modifier = SwingModifier.gap(FormRightGap.SMALL),
+            columns = TOKEN_TXT_COLUMNS,
+          )
           ActionLink(
-            text = tokenFileStr,
-            onClick = { RevealFileAction.openFile(tokenFile) },
-            modifier = SwingModifier.styleable { toolTip(RevealFileAction.getActionName()) },
+            text = McpServerBundle.message("copy.mcp.server.token"),
+            onClick = { CopyPasteManager.getInstance().setContents(TextTransferable(tokenValue as CharSequence)) },
+            modifier = SwingModifier.styleable { toolTip(McpServerBundle.message("copy.mcp.server.token.tooltip")) },
           )
         }
-        FormRow(comment = McpServerBundle.message("mcp.server.global.token.comment", IJ_MCP_AUTH_TOKEN)) {
-          ActionLink(
-            text = McpServerBundle.message("copy.mcp.server.token.file.path"),
-            onClick = { CopyPasteManager.getInstance().setContents(TextTransferable(tokenFileStr as CharSequence)) },
-          )
+        if (tokenValue != tokenInEffect && !isValidToken(tokenValue)) {
+          FormComment(McpServerBundle.message("mcp.server.global.token.invalid"))
         }
       }
     }
@@ -488,6 +512,12 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     }
     sseUrl = if (serverRunning) service.serverSseUrl else ""
     streamUrl = if (serverRunning) service.serverStreamUrl else ""
+    // An unapplied edit in the token field survives a refresh; otherwise the field shows the token in effect.
+    if (tokenValue == tokenInEffect) {
+      val token = service.getGlobalAuthToken().second
+      tokenValue = token
+      tokenInEffect = token
+    }
   }
 
   private fun refreshClients(resetAutoConfig: Boolean = false) {

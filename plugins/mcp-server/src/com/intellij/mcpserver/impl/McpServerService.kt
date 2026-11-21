@@ -134,6 +134,14 @@ interface McpServerService {
   val globalAuthTokenFile: Path
 
   /**
+   * Replaces the token of the global server and stores it in [globalAuthTokenFile]. Requests that arrive after this
+   * call are checked against the new value, so no server restart is needed. Clients configured before the change
+   * keep the old token and have to be reconfigured.
+   */
+  @ApiStatus.Internal
+  fun updateGlobalAuthToken(newToken: String)
+
+  /**
    * Starts an isolated MCP on a separate port that doesn't interfere with the main MCP server,
    * thus it can be used even if the main MCP server is enabled by a user.
    * This isolated server runs only for the method execution period.

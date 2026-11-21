@@ -26,6 +26,7 @@ import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.toolsets.general.ROUTER_TOOL_NAME
 import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.mcpserver.util.enableIfNotExplicitlyDisabled
+import com.intellij.mcpserver.util.notifyUnauthorizedMcpRequest
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
@@ -44,12 +45,14 @@ import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.delete
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.cio.CIO
 import io.ktor.server.cio.CIOApplicationEngine
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
@@ -157,7 +160,11 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
 
   // Declared before [server]: the start of the global server reads the token file.
   override val globalAuthTokenFile: Path = PathManager.getConfigDir().resolve("global_mcp_server_token.txt")
-  internal val globalToken: String by lazy { getGlobalToken() }
+
+  // Every request compares its header against this value, so [updateGlobalAuthToken] takes effect without a restart.
+  @Volatile
+  internal var globalToken: String = getGlobalToken()
+    private set
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
 
   /**
@@ -176,6 +183,19 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
 
   override fun getGlobalAuthToken(): Pair<String, String> {
     return IJ_MCP_AUTH_TOKEN to globalToken
+  }
+
+  override fun updateGlobalAuthToken(newToken: String) {
+    // The token travels in HTTP headers and JSON client configs, so anything outside printable ASCII breaks clients.
+    require(newToken.isNotEmpty() && newToken.all { it.code in 33..126 }) {
+      "The MCP server token must be printable ASCII characters without spaces"
+    }
+    val path = globalAuthTokenFile
+    path.parent.createDirectories()
+    path.writeText(newToken)
+    setPermissionsToOwnerOnly(path)
+    globalToken = newToken
+    logger.trace("Global MCP server token updated in ${path}")
   }
 
   override val isRunning: Boolean
@@ -455,6 +475,11 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
           // normal string comparison
           if (!MessageDigest.isEqual(authToken?.toByteArray(), globalToken.toByteArray())) {
             call.respond(HttpStatusCode.Unauthorized, McpServerBundle.message("mcp.server.global.auth.token.invalid", IJ_MCP_AUTH_TOKEN))
+            logger.warn("Rejected an unauthorized MCP request to ${call.request.uri} " +
+                        "(user agent: ${call.request.headers[HttpHeaders.UserAgent]})")
+            cs.launch {
+              notifyUnauthorizedMcpRequest(resolvedPort)
+            }
             finish()
             return@prePhase
           }
