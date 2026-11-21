@@ -31,7 +31,7 @@
       "name": "air-slow",
       "axis": "category",
       "excludedFromBroadRuns": "fast-lane",
-      "description": "An IDE-free target that is slow by nature: it sweeps many cases through the platform editor of an open project, or it starts many processes. Only `BT --lane fast` leaves it out. A directory run, `BT --lane all`, and the CI configurations run it."
+      "description": "An IDE-free target that is slow by nature: it sweeps many cases through the platform editor of an open project, it starts many processes, or it drives the platform cherry-pick of an open project. Only `BT --lane fast` leaves it out. A directory run, `BT --lane all`, and the CI configurations run it."
     },
     {
       "name": "air-integration-ui-flow",
@@ -73,6 +73,7 @@
   "excludedTestLibs": [
     "//plugins/air/backend/agent-extensions/hooks:aiagentextensions-hooks-tests_test_lib",
     "//plugins/air/backend/workflows:air-backend-workflows-tests_test_lib",
+    "//plugins/air/backend/worktree:air-backend-worktree-tests_test_lib",
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
     "//plugins/air/frontend/llm/analytics/jcp:air-frontend-llm-analytics-jcp-tests_test_lib",
     "//plugins/air/tests/integration/headless/acp-perf:acp-perf_test_lib",
