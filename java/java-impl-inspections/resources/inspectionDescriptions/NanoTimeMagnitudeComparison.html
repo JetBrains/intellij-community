@@ -1,0 +1,31 @@
+<html>
+<body>
+Reports comparisons of a <code>System.nanoTime()</code> value with another value using
+<code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> or <code>&gt;=</code>.
+<p>
+  Values returned by <code>System.nanoTime()</code> are meaningful only when one is subtracted from another. The
+  absolute values can be negative and can overflow, so a direct magnitude comparison of two such values can give a
+  wrong result once the difference between them crosses the overflow boundary. As the method documentation states,
+  you should use <code>t1 - t0 &lt; 0</code>, not <code>t1 &lt; t0</code>.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  long deadline = System.nanoTime() + timeoutNanos;
+  while (System.nanoTime() &lt; deadline) { // warning: magnitude comparison
+    // ...
+  }
+</code></pre>
+<p>Rewrite the loop to compare the difference:</p>
+<pre><code>
+  long start = System.nanoTime();
+  while (System.nanoTime() - start &lt; timeoutNanos) {
+    // ...
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>
+  The inspection reports only a direct <code>System.nanoTime()</code> call on one side of the comparison. The correct
+  idiom, which subtracts first and compares the difference, is not reported.
+</p>
+</body>
+</html>
