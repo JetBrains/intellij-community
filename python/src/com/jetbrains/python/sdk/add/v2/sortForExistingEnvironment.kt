@@ -1,13 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
+import com.jetbrains.python.project.asPyProjectCandidate
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
-import com.jetbrains.python.sdk.isAssociatedWithModule
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -82,18 +79,12 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
           }
         }
         is ManuallyAddedSelectableInterpreter -> Unit // Those are pythons, and not SDKs
-        is ExistingSelectableInterpreter -> { //SDKs
-          if (module != null) {
-            if (it.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI().isAssociatedWithModule(module)) {
-              return@groupBy Group.ASSOC_WITH_PROJ_ROOT
-            }
-            else if (it.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI().isAssociatedWithAnotherModule(module)) {
-              return@groupBy Group.REDUNDANT // Foreign SDK
-            }
-          }
-          else if (it.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI().pySdkAdditionalData.associatedModulePath != null) {
-            // module == null, associated path != null: associated sdk can't be used without a module
-            return@groupBy Group.REDUNDANT
+        is ExistingSelectableInterpreter -> {
+          // The interpreter of this module goes first. An interpreter of another Python project stays selectable: a
+          // module can use the interpreter of its workspace root or of its parent.
+          val moduleDir = module?.asPyProjectCandidate()?.baseDir
+          if (moduleDir != null && it.pythonInterpreterWrapper.pythonInterpreter.ownerDir == moduleDir) {
+            return@groupBy Group.ASSOC_WITH_PROJ_ROOT
           }
         }
       }

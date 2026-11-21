@@ -25,7 +25,6 @@ import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImp
 import com.intellij.python.hatch.common.icons.PythonHatchCommonIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.intellij.python.venv.PipPyTool
@@ -45,7 +44,6 @@ import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.createSdkGuessingTypeByPath
-import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.findInstalledPython
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
@@ -97,9 +95,8 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
   @ApiStatus.Internal
   suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {
     savePathToExecutableToProperties()
-    val pythonInterpreter = getOrCreateSdk(moduleOrProject).getOr { return it }
-    moduleOrProject.project.excludeInnerVirtualEnv(pythonInterpreter.getSdkAPI())
-    return Result.success(pythonInterpreter)
+    // setPythonInterpreter, which the caller calls next, excludes a virtual environment inside the project.
+    return getOrCreateSdk(moduleOrProject)
   }
 
   /**

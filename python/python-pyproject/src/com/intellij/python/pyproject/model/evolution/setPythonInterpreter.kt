@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject.model.evolution
 
+import com.jetbrains.python.sdk.notifyPythonInterpreterChanged
 import java.nio.file.Path
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.python.sdk.backend.PythonInterpreterKey
@@ -25,7 +26,6 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
-import com.jetbrains.python.sdk.notifyPythonSdkChanged
 import com.jetbrains.python.sdk.writePythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,15 +64,15 @@ suspend fun PyProject.setPythonInterpreter(interpreter: PythonInterpreter?, wait
   val previous = residesOnModule.readStoredInterpreter()
   // From the entry, so it is known also when the environment is gone and the interpreter does not resolve.
   val previousHome = residesOnModule.storedInterpreterKey()?.let(::homeOf)
-  @Suppress("DEPRECATION") // An older build reads the SDK of the module, and the listeners take SDKs.
-  val (previousSdk, sdk) = previous?.getSdkAPI() to set?.getSdkAPI()
   if (libraryFlow) {
     writeInterpreterLibraryEntry(name)
   }
   else {
-    residesOnModule.writePythonSdk(sdk)
+    // An older build reads the SDK of the module.
+    @Suppress("DEPRECATION")
+    residesOnModule.writePythonSdk(set?.getSdkAPI())
   }
-  residesOnModule.notifyPythonSdkChanged(previousSdk, sdk)
+  residesOnModule.notifyPythonInterpreterChanged(previous, set)
   previousHome?.let { removeGoneEnvExclusion(it) }
   set?.let { excludeInnerVirtualEnv(it) }
   if (waitForSnapshot) EvoPyProjectModel.getInstance(project).awaitInterpreterOf(listOf(this))

@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk
 
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.fileLogger
@@ -12,8 +13,8 @@ import com.intellij.python.sdk.backend.pythonInterpreter
 
 /**
  * Writes [newSdk] to this module as an older build reads it. This build never reads the value back: it reads the
- * interpreter library entry. The write only keeps the project usable in an older build. It tells [PySdkListener]
- * nothing: the caller does that, see [notifyPythonSdkChanged].
+ * interpreter library entry. The write only keeps the project usable in an older build. It tells
+ * [PythonInterpreterListener] nothing: the caller does that, see [notifyPythonInterpreterChanged].
  *
  * Production code calls `PyProject.setPythonInterpreter`, which also writes the entry. Tests call [setPythonSdkForTests].
  *
@@ -33,13 +34,13 @@ fun Module.writePythonSdk(newSdk: Sdk?) {
 }
 
 /**
- * Tells [PySdkListener] that this module had the interpreter of [prevSdk] and has the interpreter of [newSdk] now. It
- * runs whether or not the SDK of the module is written, see [writePythonSdk].
+ * Tells [PythonInterpreterListener] that this module had [previous] and has [current] now. It runs whether or not the
+ * SDK of the module is written, see [writePythonSdk].
  */
 @ApiStatus.Internal
-fun Module.notifyPythonSdkChanged(prevSdk: Sdk?, newSdk: Sdk?) {
-  if (prevSdk == newSdk) return
-  ApplicationManager.getApplication().messageBus.syncPublisher(PySdkListener.TOPIC).moduleSdkUpdated(this, prevSdk, newSdk)
+fun Module.notifyPythonInterpreterChanged(previous: PythonInterpreter?, current: PythonInterpreter?) {
+  if (previous == current) return
+  ApplicationManager.getApplication().messageBus.syncPublisher(PythonInterpreterListener.TOPIC).moduleInterpreterChanged(this, previous, current)
 }
 
 private val thisLogger = fileLogger()

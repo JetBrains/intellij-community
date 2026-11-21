@@ -90,7 +90,7 @@
 
   <applicationListeners>
     <listener class="com.jetbrains.python.sdk.PySdkTransferredRootsListener"
-              topic="com.jetbrains.python.sdk.PySdkListener"/>
+              topic="com.jetbrains.python.sdk.PythonInterpreterListener"/>
   </applicationListeners>
 
   <extensions defaultExtensionNs="Pythonid">

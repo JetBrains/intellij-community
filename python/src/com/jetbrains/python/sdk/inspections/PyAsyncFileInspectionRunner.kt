@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.inspections
 
+import com.jetbrains.python.sdk.PythonInterpreterListener
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
@@ -13,7 +15,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -23,7 +24,6 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.ui.components.ActionLink
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.orLogException
-import com.jetbrains.python.sdk.PySdkListener
 import com.jetbrains.python.sdk.isSdkConfigurationInProgress
 import com.jetbrains.python.sdk.tryWithSdkConfigurationLock
 import kotlinx.coroutines.CoroutineScope
@@ -52,11 +52,11 @@ class PyAsyncFileInspectionRunner(
   private val cacheLoader: suspend (Module) -> InspectionRunnerResult,
 ) {
   init {
-    // Invalidate cached inspection results when a module's SDK changes, so the notification
+    // Invalidate cached inspection results when the interpreter of a module changes, so the notification
     // panel re-evaluates immediately instead of waiting for the cache TTL to expire.
     // PythonPluginDisposable is used as parent so the connection is cleaned up on plugin unload.
-    ApplicationManager.getApplication().messageBus.connect(PythonPluginDisposable.getInstance()).subscribe(PySdkListener.TOPIC, object : PySdkListener {
-      override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
+    ApplicationManager.getApplication().messageBus.connect(PythonPluginDisposable.getInstance()).subscribe(PythonInterpreterListener.TOPIC, object : PythonInterpreterListener {
+      override fun moduleInterpreterChanged(module: Module, previous: PythonInterpreter?, current: PythonInterpreter?) {
         cache.invalidate(module)
       }
     })

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.google.common.collect.MultimapBuilder
 import com.google.common.collect.SetMultimap
 import com.intellij.ide.projectView.actions.MarkRootsManager
@@ -103,13 +104,14 @@ fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
 }
 
 /**
- * Handles transferred roots and virtualenv exclusion when a module's Python SDK changes.
- * Registered as a listener for [PySdkListener.TOPIC].
+ * Handles transferred roots and virtualenv exclusion when the interpreter of a module changes.
+ * Registered as a listener for [PythonInterpreterListener.TOPIC].
  */
-internal class PySdkTransferredRootsListener : PySdkListener {
-  override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
-    if (prevSdk != null) {
-      val oldPaths = getPathsToTransfer(prevSdk)
+internal class PySdkTransferredRootsListener : PythonInterpreterListener {
+  override fun moduleInterpreterChanged(module: Module, previous: PythonInterpreter?, current: PythonInterpreter?) {
+    // The paths to transfer are SDK data of the interpreter.
+    if (previous != null) {
+      val oldPaths = getPathsToTransfer(previous.sdk)
       if (oldPaths.isNotEmpty()) {
         runInEdt {
           val rootsToRemove = TransferredRootsDetector(module.project).detect(module, oldPaths, oldPaths)
@@ -118,9 +120,9 @@ internal class PySdkTransferredRootsListener : PySdkListener {
       }
     }
 
-    if (newSdk != null) {
-      transferRoots(module, newSdk)
-      module.excludeInnerVirtualEnv(newSdk)
+    if (current != null) {
+      transferRoots(module, current.sdk)
+      module.excludeInnerVirtualEnv(current.sdk)
     }
   }
 }

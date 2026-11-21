@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.community.impl.installer.CondaInstallManager
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleColoredComponent
@@ -52,6 +52,7 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUA
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.ui.badgeIcon
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +61,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -225,9 +225,9 @@ internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpret
     }
     is ExistingSelectableInterpreter -> {
       icon = PythonParserIcons.PythonFile
-      // This is a dirty hack, but version string might be null for invalid pythons
-      // We must fix it after PythonInterpreterService will make sdk needless
-      append(interpreter.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI().versionString ?: "broken interpreter")
+      // A broken interpreter has no recorded version.
+      val pythonInterpreter = interpreter.pythonInterpreterWrapper.pythonInterpreter
+      append(PythonInterpreterDetails.getInstance(pythonInterpreter.project).version(pythonInterpreter) ?: "broken interpreter")
       append(" " + replaceHomePathToTilde(interpreter.homePath.toStringPossiblyMRFS()), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
   }

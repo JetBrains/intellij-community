@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
+import com.jetbrains.python.sdk.notifyPythonInterpreterChanged
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.edtWriteAction
@@ -23,7 +24,6 @@ import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.notifyPythonSdkChanged
 import com.jetbrains.python.sdk.writePythonSdk
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -161,7 +161,7 @@ fun Module.setPythonSdkForTests(sdk: Sdk?) {
   else {
     writePythonSdk(sdk)
   }
-  notifyPythonSdkChanged(prevSdk, sdk)
+  notifyPythonInterpreterChanged(prevSdk?.pythonInterpreterResult(project)?.successOrNull, sdk?.pythonInterpreterResult(project)?.successOrNull)
 }
 
 /** Writes the interpreter library entry of [key] to this module, or removes the entry for a `null` [key]. */
