@@ -20,6 +20,7 @@ import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentType
 import java.awt.Image
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
+import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.File
 import java.nio.file.Files
 import javax.imageio.ImageIO
@@ -31,14 +32,12 @@ internal object TerminalClipboard {
     view: TerminalView,
     preferSystemSelection: Boolean = false,
   ) {
-    val systemContents = CopyPasteManager.getInstance().systemSelectionContents
-    val defaultContents = CopyPasteManager.getInstance().contents
-
     view.coroutineScope.launch {
-      val result: ContentToTextConversionResult = sequenceOf(if (preferSystemSelection) systemContents else null, defaultContents)
-                   .firstNotNullOfOrNull { getContentAsText(it, view) }
-                   ?.takeIf { it.text.isNotEmpty() }
-                   ?: return@launch
+      val result: ContentToTextConversionResult = withContext(Dispatchers.IO) {
+        val systemContents = if (preferSystemSelection) CopyPasteManager.getInstance().systemSelectionContents else null
+        sequenceOf(systemContents, ClipboardContents)
+          .firstNotNullOfOrNull { getContentAsText(it, view) }
+      }?.takeIf { it.text.isNotEmpty() } ?: return@launch
 
       view.createSendTextBuilder()
         .useBracketedPasteMode()
@@ -87,6 +86,22 @@ internal object TerminalClipboard {
     }
 
     return null
+  }
+
+  private object ClipboardContents : Transferable {
+    private val supportedFlavors = arrayOf(DataFlavor.javaFileListFlavor, DataFlavor.imageFlavor, DataFlavor.stringFlavor)
+
+    override fun getTransferDataFlavors(): Array<DataFlavor> {
+      return supportedFlavors.filter { isDataFlavorSupported(it) }.toTypedArray()
+    }
+
+    override fun isDataFlavorSupported(flavor: DataFlavor): Boolean {
+      return CopyPasteManager.getInstance().areDataFlavorsAvailable(flavor)
+    }
+
+    override fun getTransferData(flavor: DataFlavor): Any {
+      return CopyPasteManager.getInstance().getContents(flavor) ?: throw UnsupportedFlavorException(flavor)
+    }
   }
 
   private data class ContentToTextConversionResult(
