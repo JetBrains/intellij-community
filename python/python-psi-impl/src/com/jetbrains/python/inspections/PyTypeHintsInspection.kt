@@ -736,7 +736,7 @@ class PyTypeHintsInspection : PyInspection() {
         }
       }
 
-      constraints.asSequence().plus(bound).forEach {
+      constraints.forEach {
         if (it != null) {
           val type = PyTypingTypeProvider.getType(it, myTypeEvalContext)?.get()
 
@@ -748,6 +748,10 @@ class PyTypeHintsInspection : PyInspection() {
       }
 
       val boundType = bound?.let { PyTypingTypeProvider.getType(it, myTypeEvalContext)?.get() }
+      if (bound != null && boundType.hasGenerics(myTypeEvalContext)) {
+        registerProblem(bound, PyPsiBundle.message("INSP.type.hints.typevar.bound.cannot.be.parametrized.by.type.variables"),
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+      }
       if (boundType is PyClassLikeType && boundType.classQName == PyTypingTypeProvider.TYPED_DICT) {
         registerProblem(bound, PyPsiBundle.message("INSP.type.hints.typed.dict.is.not.allowed.as.a.bound.for.a.type.var"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
