@@ -3,8 +3,12 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorContextProvider
+import com.intellij.openapi.actionSystem.ExperimentalIconRendering
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionIconDescriptors
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.SwingIconCache
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.ui.popup.PopupAlignableComponent
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -30,17 +34,24 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
   var betweenIconsGap: Int by Delegates.observable(0, this::fireUpdateEvents)
   var iconTextGap: Int by Delegates.observable(6, this::fireUpdateEvents)
 
+  private val iconCache = SwingIconCache()
+
+  private var lastDescriptorUpdate: DescriptorUpdate? = null
+
+  /** The inputs and the result of one update of [leftIcons] through the descriptor path. [updateUI] repeats it. */
+  private class DescriptorUpdate(val descriptor: IconDescriptor?, val isEnabled: Boolean, val icons: List<Icon>)
+
   override fun updateUI() {
     setUI(UIManager.getUI(this))
+    val update = lastDescriptorUpdate ?: return
+    if (leftIcons !== update.icons) return
+    leftIcons = descriptorLeftIcons(update.descriptor, update.isEnabled)
   }
 
   open fun updateFromPresentation(presentation: Presentation) {
     text = presentation.text
     toolTipText = presentation.description
-    leftIcons = listOfNotNull(
-      if (!presentation.isEnabled) presentation.disabledIcon ?: presentation.icon
-      else presentation.icon
-    )
+    leftIcons = if (ExperimentalIconRendering.isEnabled) descriptorLeftIcons(presentation) else legacyLeftIcons(presentation)
     rightIcons = listOfNotNull(presentation.getClientProperty(ActionUtil.SECONDARY_ICON))
   }
 
@@ -68,5 +79,22 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
     }
 
     return result
+  }
+
+  private fun legacyLeftIcons(presentation: Presentation): List<Icon> {
+    return listOfNotNull(
+      if (!presentation.isEnabled) presentation.disabledIcon ?: presentation.icon
+      else presentation.icon
+    )
+  }
+
+  private fun descriptorLeftIcons(presentation: Presentation): List<Icon> =
+    descriptorLeftIcons(ActionIconDescriptors.effective(presentation), presentation.isEnabled)
+
+  private fun descriptorLeftIcons(descriptor: IconDescriptor?, isEnabled: Boolean): List<Icon> {
+    iconCache.update(descriptor)
+    val icons = listOfNotNull(if (isEnabled) iconCache.icon else iconCache.disabled)
+    lastDescriptorUpdate = DescriptorUpdate(descriptor, isEnabled, icons)
+    return icons
   }
 }
