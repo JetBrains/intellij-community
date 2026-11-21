@@ -130,9 +130,9 @@ internal class PythonPackageManagerServiceImpl(
   private fun watchInterpreterPaths(key: PythonInterpreter, entry: CachedManager) {
     val watcher = Disposer.newDisposable("VFS listener for ${entry.interpreter} in scope of ${project.name}")
     try {
-      // Under the lifetime of the interpreter, so the watch goes with it. The manager outlives the interpreter, so it cannot
-      // be that parent.
-      Disposer.register(entry.lifetime ?: entry.manager, watcher)
+      // Under the manager, which the project owns, so the watch never holds a closed project. The end of the lifetime of the
+      // interpreter disposes it too, see removeWhenLifetimeEnds.
+      Disposer.register(entry.manager, watcher)
     }
     catch (e: IncorrectOperationException) {
       logger.info("The interpreter ${entry.interpreter} is gone, dropping its manager", e)
@@ -226,7 +226,11 @@ internal class PythonPackageManagerServiceImpl(
   private fun removeWhenLifetimeEnds(entry: CachedManager) {
     val lifetime = entry.lifetime ?: return
     val localCache = cache
-    val removal = Disposable { localCache.remove(entry.interpreter, entry) }
+    val removal = Disposable {
+      localCache.remove(entry.interpreter, entry)
+      // The interpreter is gone, so nothing is left to watch.
+      watchersLock.withLock { entry.watcher?.let { Disposer.dispose(it) } }
+    }
     try {
       Disposer.register(lifetime, removal)
     }
@@ -235,6 +239,16 @@ internal class PythonPackageManagerServiceImpl(
       throw AlreadyDisposedException("Requesting a package manager for the interpreter ${entry.interpreter}, which is gone, ${e.localizedMessage}")
     }
     entry.removal = removal
+    unlinkWithManager(entry, removal)
+  }
+
+  /**
+   * Disposes [removal] with the manager of [entry]. [removal] has the lifetime of the interpreter as its parent, and that
+   * SDK can outlive the project, while [removal] holds the project. The manager goes when the project closes, also when
+   * this service is not disposed, for example when it was made while the project was closing.
+   */
+  private fun unlinkWithManager(entry: CachedManager, removal: Disposable) {
+    Disposer.register(entry.manager) { Disposer.dispose(removal) }
   }
 
   private fun createManager(interpreter: PythonInterpreter): PythonPackageManager {
@@ -267,10 +281,10 @@ internal class PythonPackageManagerServiceImpl(
   /**
    * Takes the watcher and the removal from every entry before dropping them.
    *
-   * Clearing the cache alone leaks the project. The watcher and the removal have the SDK as their parent, and an SDK can
-   * live as long as the application. The watcher holds this service, and the removal holds the entry with its manager,
-   * so each one holds the project (PY-89433). The reference runs from the SDK inward, so letting go of the entries does
-   * not break it. Both have to go.
+   * Clearing the cache alone leaks the project. The removal has the SDK as its parent, and an SDK can live as long as
+   * the application. The removal holds the entry with its manager, so it holds the project (PY-89433). The reference runs
+   * from the SDK inward, so letting go of the entries does not break it. The manager takes the removal back too, see
+   * unlinkWithManager.
    */
   override fun dispose() {
     watchersLock.withLock {

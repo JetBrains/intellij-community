@@ -425,9 +425,12 @@ suspend fun PythonInterpreter.activationEnvironment(): PyResult<Map<String, Stri
   is TargetPythonInterpreter -> PyResult.success(emptyMap())
 }
 
-/** [activationEnvironment] for a Java caller that cannot suspend. Call it off the EDT. */
+/**
+ * [activationEnvironment] for a Java caller that cannot suspend. Call it off the EDT. The assertion is off, as for the
+ * SDK variant before it: a run configuration test builds its command line on the EDT.
+ */
 @Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun PythonInterpreter.activationEnvironmentBlocking(): PyResult<Map<String, String>> =
   runBlockingMaybeCancellable { activationEnvironment() }

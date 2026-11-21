@@ -157,9 +157,8 @@ internal class PythonPackageManagerUnusedSdkTest {
   }
 
   /**
-   * A watcher is parented to the interpreter, which lives as long as the application, and the change it runs holds the
-   * service and through it the project. Closing the project therefore has to take the watcher, or the interpreter keeps
-   * the closed project alive (PY-89433).
+   * The change a watcher runs holds the service and through it the project. Closing the project therefore has to take
+   * the watcher, so nothing that outlives the project keeps it alive (PY-89433).
    */
   @Test
   fun `the watcher of an interpreter goes when the project goes`(
@@ -197,6 +196,26 @@ internal class PythonPackageManagerUnusedSdkTest {
     Disposer.dispose(service.impl())
 
     assertThat(removalGone.get()).describedAs("The removal outlived the project that owns it").isTrue()
+  }
+
+  /**
+   * The manager takes the removal back. A service that is made while the project closes is not disposed, and its
+   * removal would keep the closed project under the SDK.
+   */
+  @Test
+  fun `the removal of an entry goes with its manager`(
+    @TempDir home: Path,
+  ): Unit = timeoutRunBlocking(1.minutes) {
+    val project = projectFixture.get()
+    val interpreter = registerInterpreter("PY-93079 packages of a dropped manager", home)
+    val service = project.service<PythonPackageManagerService>()
+    val manager = service.forPythonInterpreter(interpreter)
+
+    val removalGone = AtomicBoolean()
+    Disposer.register(service.impl().lifetimeRemoval(interpreter)!!, Disposable { removalGone.set(true) })
+    Disposer.dispose(manager)
+
+    assertThat(removalGone.get()).describedAs("The removal outlived the manager that it removes").isTrue()
   }
 
   private fun PythonPackageManagerService.impl(): PythonPackageManagerServiceImpl = this as PythonPackageManagerServiceImpl

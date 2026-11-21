@@ -20,9 +20,6 @@ public final class PythonSdkUtil {
   private PythonSdkUtil() {
   }
 
-  /** The `id` the venv provider declares in `intellij.python.venv.xml`. */
-  /** The `id` the conda provider declares in `intellij.python.community.impl.conda.xml`. */
-
   public static boolean isPythonSdk(@NotNull Sdk sdk) {
     return com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk(sdk);
   }
