@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.python.sdk.backend.impl.presentation
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -33,7 +33,7 @@ suspend fun updateInterpreterFactsOrShowError(interpreter: PythonInterpreter, pr
   withContext(Dispatchers.EDT) {
     Messages.showErrorDialog(
       project,
-      PyBundle.message("python.sdk.cannot.setup.sdk", interpreter.getSdkAPI().name),
+      PyBundle.message("python.sdk.cannot.setup.sdk", interpreter.presentation().name),
       PyBundle.message("python.sdk.invalid.python.sdk"),
     )
   }
