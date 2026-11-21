@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools.sdkTools
 
+import com.intellij.python.sdk.backend.isMockForTests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.extensions.LoadingOrder
@@ -9,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.requirements.PyPackageVersion
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyRequirement
@@ -37,7 +37,7 @@ class PythonMockPackageManagerProvider : PythonPackageManagerProvider {
   override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager? {
     if (interpreter.project.getUserData(OWN_MANAGER) == true) return null
     @Suppress("DEPRECATION") // The keys of a mock are user data of its SDK.
-    return if (PythonMockSdkKeys.isMock(interpreter.getSdkAPI())) PythonMockPackageManager(interpreter) else null
+    return if (interpreter.isMockForTests()) PythonMockPackageManager(interpreter) else null
   }
 
   companion object {

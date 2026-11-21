@@ -1,17 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.conda
 
-import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
+import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.allure.Components
@@ -48,11 +45,11 @@ import kotlin.time.Duration.Companion.minutes
 @PyEnvTestCaseWithConda
 internal class CondaPipBootstrapTest {
   private val projectFixture = projectFixture()
-  private var sdk: Sdk? = null
+  private var interpreter: PythonInterpreter? = null
 
   @AfterEach
   fun tearDown(): Unit = timeoutRunBlocking {
-    sdk?.let { removeTestSdkFromOpenProjects(it) }
+    interpreter?.let { removeTestInterpreterFromOpenProjects(it) }
   }
 
   @Test
@@ -66,10 +63,10 @@ internal class CondaPipBootstrapTest {
 
         val project = projectFixture.get()
         val env = PyCondaEnv(PyCondaEnvIdentity.UnnamedEnv(envPath, false), conda)
-        val condaSdk = env.createSdkFromThisEnv(project, null, project.basePath?.toNioPathOrNull()!!).getOrThrow().getSdkAPI()
-        sdk = condaSdk
+        val condaInterpreter = env.createSdkFromThisEnv(project, null, project.basePath?.toNioPathOrNull()!!).getOrThrow()
+        interpreter = condaInterpreter
         val manager =
-          CondaPackageManager(condaSdk.pythonInterpreterResultAsync(project).orThrow()).also { Disposer.register(project, it) }
+          CondaPackageManager(condaInterpreter).also { Disposer.register(project, it) }
 
         val spec = PythonRepositoryPackageSpecification(PyPiPackageRepository, "yandex-book-api", "0.1.0")
         manager.installPackage(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))).getOrThrow()

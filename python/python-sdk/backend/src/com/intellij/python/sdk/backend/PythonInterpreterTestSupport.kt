@@ -164,6 +164,14 @@ fun Module.setPythonSdkForTests(sdk: Sdk?) {
   notifyPythonInterpreterChanged(prevSdk?.pythonInterpreterResult(project)?.successOrNull, sdk?.pythonInterpreterResult(project)?.successOrNull)
 }
 
+/** [setPythonSdkForTests] for a test that holds the interpreter, such as one that a fixture built. */
+@TestOnly
+@ApiStatus.Internal
+@RequiresBackgroundThread(generateAssertion = false)
+fun Module.setPythonSdkForTests(interpreter: PythonInterpreter?) {
+  setPythonSdkForTests(interpreter?.sdk)
+}
+
 /** Writes the interpreter library entry of [key] to this module, or removes the entry for a `null` [key]. */
 private fun Module.writeInterpreterLibraryEntryForTests(key: PythonInterpreterKey?) {
   val name = key?.let { PyInterpreterLibraryName.of(checkNotNull(project.interpreterOwnerProjectDir), it) }

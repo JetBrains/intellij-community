@@ -1,7 +1,7 @@
 package com.intellij.python.junit5Tests.env.tests
 
-import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
-
+import com.intellij.python.sdk.backend.impl.presentation
+import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
@@ -11,7 +11,6 @@ import com.intellij.platform.testFramework.junit5.eel.params.api.EelType.Local
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelType.Ssh
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelType.Wsl
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
@@ -59,10 +58,10 @@ class CondaEnvTest(val eelHolder: EelHolder) {
       workingDirectory = Path.of(""),
     ).getOrThrow()
     try {
-      assert(!pythonInterpreter.getSdkAPI().name.contains("null"))
+      assert(!pythonInterpreter.presentation().name.contains("null"))
     }
     finally {
-      removeTestSdkFromOpenProjects(pythonInterpreter.getSdkAPI())
+      removeTestInterpreterFromOpenProjects(pythonInterpreter)
     }
   }
 }

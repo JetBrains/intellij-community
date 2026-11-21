@@ -1,12 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
+import com.intellij.python.sdk.backend.isMockForTests
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.project.Project
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.tools.sdkTools.PythonMockPackageManagerProvider
-import com.jetbrains.python.tools.sdkTools.PythonMockSdkKeys
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.TestOnly
 @TestOnly
 internal class MockSdkPackageManagerProvider : PythonPackageManagerProvider {
   override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager? =
-    if (PythonMockSdkKeys.isMock(interpreter.getSdkAPI())) TestPythonPackageManager(interpreter) else null
+    if (interpreter.isMockForTests()) TestPythonPackageManager(interpreter) else null
 
   companion object {
     /**

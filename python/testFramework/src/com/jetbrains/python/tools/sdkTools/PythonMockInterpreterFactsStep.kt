@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools.sdkTools
 
+import com.intellij.python.sdk.backend.mockSysPathForTests
+import com.intellij.python.sdk.backend.mockVersionForTests
+import com.intellij.python.sdk.backend.isMockForTests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.project.Project
@@ -9,7 +12,6 @@ import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateStep
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.errorProcessing.PyError
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
@@ -32,12 +34,10 @@ internal class PythonMockInterpreterFactsStep : PythonInterpreterUpdateStep {
     request: PythonInterpreterUpdateRequest,
     failure: (PyError) -> Unit,
   ): Boolean {
-    @Suppress("DEPRECATION") // The keys of a mock are user data of its SDK.
-    val sdk = interpreter.getSdkAPI()
-    if (!PythonMockSdkKeys.isMock(sdk)) return true
+    if (!interpreter.isMockForTests()) return true
     val details = PythonInterpreterDetails.getInstance(project)
-    details.writeVersion(interpreter, sdk.getUserData(PythonMockSdkKeys.VERSION) ?: sdk.versionString)
-    details.writeSysPath(interpreter, PythonMockSdkKeys.sysPath(sdk))
+    details.writeVersion(interpreter, interpreter.mockVersionForTests())
+    details.writeSysPath(interpreter, interpreter.mockSysPathForTests())
     // A test reads the roots right after the update. The roots follow the facts on their own, so the step waits for them.
     PythonInterpreterRoots.getInstance(project).awaitCommittedForTests()
     return false

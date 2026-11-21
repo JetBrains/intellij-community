@@ -1,14 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.conda
 
+import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.community.junit5Tests.framework.conda.createCondaEnv
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -52,7 +51,7 @@ class CondaInterpreterVisibleTest {
           .isEqualTo(created)
       }
       finally {
-        removeTestSdkFromOpenProjects(created.getSdkAPI())
+        removeTestInterpreterFromOpenProjects(created)
       }
     }
 }

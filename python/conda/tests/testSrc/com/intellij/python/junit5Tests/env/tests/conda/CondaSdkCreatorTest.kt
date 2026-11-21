@@ -1,7 +1,7 @@
 package com.intellij.python.junit5Tests.env.tests.conda
 
-import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
-
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.community.junit5Tests.framework.conda.createCondaEnv
@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.junit5.fixture.projectFixture
 
 @Subsystems.Interpreters
@@ -31,12 +30,12 @@ class CondaSdkCreatorTest {
   fun createSdk(@CondaEnv condaEnv: PyCondaEnv, @TempDir path: Path): Unit = timeoutRunBlocking(10.minutes) {
     val condaPath = path.resolve("foo_bar_buz")
     val env = createCondaEnv(condaEnv, condaPath)
-    val sdk = env.createSdkFromThisEnv(projectFixture.get(), null, path).getOrThrow().getSdkAPI()
+    val interpreter = env.createSdkFromThisEnv(projectFixture.get(), null, path).getOrThrow()
     try {
-      PythonSdkFlavor.tryDetectFlavorByLocalPath(Path.of(sdk.homePath!!))
+      PythonSdkFlavor.tryDetectFlavorByLocalPath(Path.of(interpreter.binaryPathString))
       deleteCheckLocking(path)
     }finally {
-      removeTestSdkFromOpenProjects(sdk)
+      removeTestInterpreterFromOpenProjects(interpreter)
     }
   }
 }

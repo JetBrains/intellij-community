@@ -1,19 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.poetry
 
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.intellij.idea.TestFor
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.RequiresPoetry
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -142,17 +142,16 @@ class PoetryInProjectSdkConfigurationTest {
     info: CreateInterpreterInfoWithInterpreterCreator,
     assertions: suspend (sdkHome: Path?) -> Unit,
   ) {
-    var sdk: Sdk? = null
+    var interpreter: PythonInterpreter? = null
     try {
-      sdk = info.getInterpreterCreator(pyProject.residesOnModule)
+      interpreter = info.getInterpreterCreator(pyProject.residesOnModule)
         .createInterpreter()
         .getOrThrow()
-        .getSdkAPI()
-      assertions(sdk.homePath?.let(::Path))
+      assertions(Path(interpreter.binaryPathString))
     }
     finally {
       try {
-        sdk?.let { removeTestSdkFromOpenProjects(it) }
+        interpreter?.let { removeTestInterpreterFromOpenProjects(it) }
       }
       finally {
         runPoetry(baseDir.asEelOrJustPath(), "env", "remove", "--all", inProjectEnv = false)

@@ -1,8 +1,8 @@
 package com.intellij.python.junit5Tests.env.tests
 
-import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
-
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
@@ -12,7 +12,6 @@ import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.junit5Tests.framework.mockPathAndAdd
 import com.intellij.python.junit5Tests.framework.unMockPath
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -22,7 +21,6 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.hamcrest.CoreMatchers.hasItems
@@ -55,7 +53,7 @@ internal class NoCondaAndVenAsSystemPythonsTest {
     private val pyProjectFixture = projectFixture.pyProjectFixture()
     private val venvSdkFixture = pyEnvironmentFixture().pyVenvFixture(tempFixture, pyProjectFixture)
     private lateinit var ourSystemPython: PythonBinary
-    private lateinit var condaSdk: Sdk
+    private lateinit var condaInterpreter: PythonInterpreter
     private lateinit var pythonsToExclude: List<PythonBinary>
 
     @SystemStub
@@ -67,8 +65,8 @@ internal class NoCondaAndVenAsSystemPythonsTest {
     @JvmStatic
     fun setUp(@CondaEnv condaEnv: PyCondaEnv, @PythonBinaryPath condaBasePython: PythonBinary): Unit = timeoutRunBlocking(5.minutes) {
       ourSystemPython = condaBasePython
-      condaSdk = condaEnv.createSdkFromThisEnv(projectFixture.get(), null, venvSdkFixture.get().getSdkAPI().pySdkAdditionalData.workingDirectory).getOrThrow().getSdkAPI()
-      pythonsToExclude = sdkHomePaths(condaSdk, venvSdkFixture.get().getSdkAPI()) + listOf(condaBasePython)
+      condaInterpreter = condaEnv.createSdkFromThisEnv(projectFixture.get(), null, venvSdkFixture.get().ownerDir).getOrThrow()
+      pythonsToExclude = binaryPaths(condaInterpreter, venvSdkFixture.get()) + listOf(condaBasePython)
       val newBinPaths = pythonsToExclude.map { it.parent }.toTypedArray()
       environment.mockPathAndAdd(*newBinPaths)
     }
@@ -76,12 +74,12 @@ internal class NoCondaAndVenAsSystemPythonsTest {
     @JvmStatic
     @AfterAll
     fun tearDown(): Unit = timeoutRunBlocking {
-      removeTestSdkFromOpenProjects(condaSdk)
+      removeTestInterpreterFromOpenProjects(condaInterpreter)
       environment.unMockPath()
     }
 
-    private fun sdkHomePaths(vararg sdk: Sdk): List<Path> =
-      sdk.map { Path.of(it.homePath!!) }
+    private fun binaryPaths(vararg interpreters: PythonInterpreter): List<Path> =
+      interpreters.map { Path.of(it.binaryPathString) }
   }
 
   enum class Api { WIN_SDK_FLAVOR, SYSTEM_PYTHON_SERVICE }

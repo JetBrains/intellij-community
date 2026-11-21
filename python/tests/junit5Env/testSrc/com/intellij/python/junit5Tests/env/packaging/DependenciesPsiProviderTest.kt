@@ -21,7 +21,6 @@ import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.venv.createVenv
 import com.intellij.python.venv.createVenvAdditionalData
 import com.intellij.testFramework.ExtensionTestUtil
@@ -252,7 +251,7 @@ internal class DependenciesPsiProviderTest {
       // The test package manager reads its provider from the SDK. The project starts the manager of an interpreter as soon
       // as a module uses it, so the key is there before the interpreter is set.
       @Suppress("DEPRECATION")
-      built.getSdkAPI().putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, requirementsProviderType)
+      TestPythonPackageManager.setRequirementsProvider(built, requirementsProviderType)
       withContext(Dispatchers.EDT) { beforePackageManager() }
       val interpreter = checkNotNull(pyProject.setPythonInterpreter(built).orThrow())
       PythonPackageManager.forPythonInterpreter(interpreter).waitForInit()
