@@ -5,19 +5,27 @@ import com.intellij.codeInsight.controlflow.ConditionalInstruction
 import com.intellij.codeInsight.controlflow.ControlFlow
 import com.intellij.codeInsight.controlflow.Instruction
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.ThreeState
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.psi.PyAnnotationOwner
 import com.jetbrains.python.psi.PyAssertStatement
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyRaiseStatement
+import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyStatement
 import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTypeCommentOwner
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -120,12 +128,44 @@ class PyDataFlow(private val controlFlow: PyControlFlow, context: FlowContext) :
    * Returns `true` if the static type of the condition guarantees that the branch corresponding to
    * [instruction] can never be taken, e.g. the `then` branch of `if a:` where `a` is always falsy
    * (its `__bool__` returns a false literal).
+   * The type does not count when the condition reads a variable that another scope can assign, see [readsVariableOfOtherScope].
    */
   private fun isContradictedByConditionType(instruction: ConditionalInstruction, context: TypeEvalContext): Boolean {
     val condition = instruction.condition as? PyExpression ?: return false
     val truthiness = PyTypeUtil.getTypeTruthiness(context.getType(condition), condition, context)
     if (truthiness == ThreeState.UNSURE) return false
+    if (readsVariableOfOtherScope(condition, context)) return false
     return instruction.result != (truthiness == ThreeState.YES)
+  }
+
+  /**
+   * Returns `true` if [condition] reads a variable without a declared type that another scope can assign:
+   * a variable of an outer scope, or a variable of the scope of [condition] that a nested scope rebinds with `global` or `nonlocal`.
+   * The inferred literal type of such a variable, as `Literal[False]` of `flag = False`, comes from one assignment only.
+   */
+  private fun readsVariableOfOtherScope(condition: PyExpression, context: TypeEvalContext): Boolean {
+    val owner = ScopeUtil.getScopeOwner(condition) ?: return false
+    val resolveContext = PyResolveContext.defaultContext(context)
+    return SyntaxTraverser.psiTraverser(condition).filter(PyReferenceExpression::class.java).any { reference ->
+      val name = reference.referencedName
+      !reference.isQualified && name != null &&
+      reference.getReference(resolveContext).multiResolve(false).any { result ->
+        val variable = result.element
+        (variable is PyTargetExpression || variable is PyNamedParameter) &&
+        !hasDeclaredType(variable) &&
+        (!isScopeOfCondition(ScopeUtil.getScopeOwner(variable), owner, condition) || ScopeUtil.isReboundInNestedScope(owner, name))
+      }
+    }
+  }
+
+  private fun isScopeOfCondition(variableOwner: ScopeOwner?, owner: ScopeOwner, condition: PyExpression): Boolean {
+    // A comprehension or a lambda in the condition has its own scope.
+    return variableOwner == owner || variableOwner != null && PsiTreeUtil.isAncestor(condition, variableOwner, false)
+  }
+
+  private fun hasDeclaredType(variable: PsiElement): Boolean {
+    return variable is PyAnnotationOwner && variable.annotationValue != null ||
+           variable is PyTypeCommentOwner && variable.typeCommentAnnotation != null
   }
 
   fun getReachability(instruction: Instruction): Reachability {

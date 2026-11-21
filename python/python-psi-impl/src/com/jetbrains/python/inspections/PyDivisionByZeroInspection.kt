@@ -4,7 +4,6 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
@@ -16,10 +15,8 @@ import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyElementType
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyGlobalStatement
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyNamedParameter
-import com.jetbrains.python.psi.PyNonlocalStatement
 import com.jetbrains.python.psi.PyNumericLiteralExpression
 import com.jetbrains.python.psi.PyPrefixExpression
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -188,9 +185,7 @@ class PyDivisionByZeroInspection : PyInspection() {
       if (resolved.isEmpty() || resolved.any { (it !is PyTargetExpression && it !is PyNamedParameter) || ScopeUtil.getScopeOwner(it) != owner }) {
         return false
       }
-      val rebindings = PsiTreeUtil.findChildrenOfAnyType(owner, PyGlobalStatement::class.java, PyNonlocalStatement::class.java)
-        .flatMap { (it as? PyGlobalStatement)?.globals?.asList() ?: (it as PyNonlocalStatement).variables.asList() }
-      return rebindings.none { it.name == name }
+      return !ScopeUtil.isReboundInNestedScope(owner, name)
     }
 
     /**

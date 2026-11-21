@@ -8,11 +8,15 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache.getScope
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyGlobalStatement
 import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyNonlocalStatement
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator
 import com.jetbrains.python.psi.impl.PyForStatementNavigator
 import com.jetbrains.python.psi.impl.PyListCompExpressionNavigator
+import org.jetbrains.annotations.ApiStatus
 
 object ScopeUtil {
   @JvmStatic
@@ -82,4 +86,17 @@ object ScopeUtil {
       .filterIsInstance<ReadWriteInstruction>()
       .filter { name == it.name && type == it.access }
       .mapNotNull { it.element }
+
+  /**
+   * Checks that a scope nested in [owner] rebinds [name] with `global` or `nonlocal`.
+   * The inferred type of a variable that such a scope assigns does not cover that assignment.
+   */
+  @JvmStatic
+  @ApiStatus.Internal
+  fun isReboundInNestedScope(owner: ScopeOwner, name: String): Boolean {
+    if (owner is PyFile) return getScope(owner).isGlobal(name)
+    return PsiTreeUtil.findChildrenOfAnyType(owner, PyGlobalStatement::class.java, PyNonlocalStatement::class.java)
+      .flatMap { (it as? PyGlobalStatement)?.globals?.asList() ?: (it as PyNonlocalStatement).variables.asList() }
+      .any { it.name == name }
+  }
 }
