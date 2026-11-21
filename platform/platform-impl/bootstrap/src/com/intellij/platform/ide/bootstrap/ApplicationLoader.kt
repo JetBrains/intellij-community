@@ -152,6 +152,9 @@ internal suspend fun loadApp(
       span("app component registration") {
         app.registerComponents(pluginSet.sequenceResolvedSortedDescriptorsForRegistration(), app)
       }
+      span("event queue initialization waiting") {
+        initAwtToolkitAndEventQueueJob.join()
+      }
       // ApplicationManager.getApplication may be used in ApplicationInitializedListener constructor
       ApplicationManager.setApplication(app)
     }
