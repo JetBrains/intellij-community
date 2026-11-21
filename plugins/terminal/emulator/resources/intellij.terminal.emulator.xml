@@ -11,5 +11,10 @@
     <registryKey key="terminal.ghostty.native.logging" defaultValue="true"
                  description="Redirect native logging by libghostty-vt to idea.log."
                  restartRequired="true"/>
+    <registryKey key="terminal.ghostty.commit.stack.on.each.call"
+                 defaultValue="false"
+                 os="windows"
+                 description="Commit the thread stack before each native call to libghostty-vt that can run a callback, not once for each thread (IJPL-261768). Applies to a new terminal session."
+                 restartRequired="false"/>
   </extensions>
 </idea-plugin>

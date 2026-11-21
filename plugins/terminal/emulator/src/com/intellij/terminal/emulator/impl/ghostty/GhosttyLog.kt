@@ -93,6 +93,7 @@ internal object GhosttyLog {
   fun installIfEnabled() {
     try {
       if (isLoggingEnabled()) {
+        commitStackForLogCallback()
         val result = LibGhosttyVt.sysSet(GhosttySysOption.LOG.code, nativeLogStub)
         if (result != GhosttyResult.SUCCESS) {
           LOG.warn("ghostty_sys_set(LOG) returned $result; libghostty-vt native logs will not be captured")
@@ -105,6 +106,15 @@ internal object GhosttyLog {
     catch (t: Throwable) {
       LOG.warn("Failed to capture the libghostty-vt native logging", t)
     }
+  }
+
+  /**
+   * Commits the stack of the thread that loads the library. In the IDE, this thread creates the first emulator.
+   * This covers [onNativeLog] from the next native calls of that thread, such as the calls in the emulator constructor.
+   * [onNativeLog] is also covered by [GhosttyTerminalEmulator.writeStackCommitter] and [GhosttyTerminalEmulator.resizeStackCommitter].
+   */
+  private fun commitStackForLogCallback() {
+    GhosttyWindowsCallbackStackCommitter().commit()
   }
 
   fun isLoggingEnabled(): Boolean = Registry.`is`("terminal.ghostty.native.logging", true)
