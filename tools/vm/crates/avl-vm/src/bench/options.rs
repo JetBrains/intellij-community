@@ -8,7 +8,7 @@ use clap::{Subcommand, ValueEnum};
 use super::arm::{Arm, ArmKind, Property, Twin, check_plugin_id, parse_arm};
 use super::gc::DEFAULT_KEEP;
 use super::profile::ProfileEvent;
-use super::record::CLASS_ANCHORS;
+use super::record::{CLASS_ANCHORS, FIND_QUERY_SEPARATOR};
 
 /// The plugin id of Air, which owns the gate span of the empty-editor arm.
 const AIR_PLUGIN_ID: &str = "com.intellij.air";
@@ -71,6 +71,13 @@ pub(crate) enum BenchVerb {
     /// no prime run, and the IDE opens no README, as RustRoverIndexingTest does. The gate is the first line
     /// `CargoSyncTask started` of idea.log. Its metric cargoSyncStarted is in ms from the process start, and cargoSyncStarted.ideaLog is
     /// the ms of the log, the value of rust_duration_from_start_to_cargo_sync of the RustRover perf test.
+    ///
+    /// In the find-in-files arm, every run opens the project directory, and the IDE opens no README. The command
+    /// %findInFiles of the performance plugin then searches the project scope for each --query in turn. The gate is the
+    /// end of the span `findInFiles#search: <query>` of each query. The metric findInFiles.search is the sum of their
+    /// durations, and each span is a metric with its duration and its result count. The IDE needs the performance
+    /// plugin: JetBrains Light gets it through --context-plugins. --in-place opens a large tree, such as a checkout,
+    /// where it is.
     Project(ProjectArgs),
     /// Removes the old generations: all except the --keep newest and those a session of the last 24 hours names.
     Gc(GcArgs),
@@ -449,9 +456,23 @@ pub(crate) struct ProjectArgs {
     #[arg(long, value_name = "N", default_value_t = DEFAULT_OPEN_PROJECT_RUNS, value_parser = clap::value_parser!(u32).range(1..=50))]
     pub(crate) runs: u32,
     /// The arms of the session. `both` interleaves the project arm and the empty-editor arm. `cargo-sync` needs an IDE
-    /// with the Rust plugin, such as --target //build:rustrover_dist, and a Cargo project.
+    /// with the Rust plugin, such as --target //build:rustrover_dist, and a Cargo project. `find-in-files` needs --query
+    /// and an IDE with the performance plugin.
     #[arg(long, value_enum, default_value_t = ProjectArmChoice::Project)]
     pub(crate) arm: ProjectArmChoice,
+    /// A text that each run of the find-in-files arm finds in the project scope, repeatable, in the order of the
+    /// searches. A query cannot hold `;`, which separates the queries of %findInFiles.
+    #[arg(long = "query", value_name = "TEXT", value_parser = find_query)]
+    pub(crate) queries: Vec<String>,
+    /// Opens the project directory where it is, in every run, and copies nothing into the sandbox. A tree too large to
+    /// copy, such as a checkout, needs it. The IDE writes its project files into the `.idea` of the tree.
+    #[arg(long)]
+    pub(crate) in_place: bool,
+    /// The label of a `context_plugin_dir`, such as //platform/unified:performance_testing_plugin_dir. The session builds it from
+    /// the working tree, also with --generation, and each sandbox holds its plugin directories. JetBrains Light does
+    /// not bundle the performance plugin that the find-in-files arm needs.
+    #[arg(long, value_name = "LABEL", value_parser = flag_value)]
+    pub(crate) context_plugins: Option<String>,
     #[command(flatten)]
     pub(crate) measure: MeasureArgs,
     #[command(flatten)]
@@ -471,6 +492,11 @@ impl ProjectArgs {
     /// of the Air composer.
     pub(crate) fn arms(&self) -> Result<Vec<Arm>, String> {
         let arms = self.measure.twins.with_twins(self.arm.arms());
+        match (self.arm == ProjectArmChoice::FindInFiles, self.queries.is_empty()) {
+            (true, true) => return Err("--arm find-in-files needs --query: a run searches for each query".to_owned()),
+            (false, false) => return Err("--query needs --arm find-in-files".to_owned()),
+            (true, false) | (false, true) => {}
+        }
         if self.measure.cold && arms.iter().any(|arm| arm.kind == ArmKind::Project) {
             return Err(
                 "--cold needs --arm empty-editor: the project arm restores the editor that its prime run saved, and a cold session has no prime run"
@@ -531,6 +557,7 @@ pub(crate) enum ProjectArmChoice {
     EmptyEditor,
     Both,
     CargoSync,
+    FindInFiles,
 }
 
 impl ProjectArmChoice {
@@ -541,8 +568,26 @@ impl ProjectArmChoice {
             Self::EmptyEditor => vec![Arm::EMPTY_EDITOR],
             Self::Both => vec![Arm::PROJECT, Arm::EMPTY_EDITOR],
             Self::CargoSync => vec![Arm::CARGO_SYNC],
+            Self::FindInFiles => vec![Arm::FIND_IN_FILES],
         }
     }
+}
+
+/// Parses `--query`: a text that is not empty, has no space at its ends, and holds no `;` and no control character.
+fn find_query(value: &str) -> Result<String, String> {
+    if value.is_empty() || value.trim() != value {
+        return Err(format!("the query `{value}` is empty or has a space at an end"));
+    }
+    if let Some(character) = value
+        .chars()
+        .find(|character| *character == FIND_QUERY_SEPARATOR || character.is_control())
+    {
+        return Err(format!(
+            "the query `{value}` holds `{}`, which separates the queries of %findInFiles or ends its line",
+            character.escape_default()
+        ));
+    }
+    Ok(value.to_owned())
 }
 
 /// A value of an option, refused when it is another long option.

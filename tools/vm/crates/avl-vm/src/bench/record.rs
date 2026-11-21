@@ -71,13 +71,14 @@ pub(crate) const QUIT_ANCHOR: &str = "quit";
 
 /// The anchors of the class counts, in the order of the start-up. Each one except [`QUIT_ANCHOR`] is a metric in
 /// milliseconds from the process start. A run has the metric [`named_at`] for each anchor that it has.
-pub(crate) const CLASS_ANCHORS: [&str; 7] = [
+pub(crate) const CLASS_ANCHORS: [&str; 8] = [
     FRAME_BECAME_VISIBLE,
     EMPTY_STATE_BUILT,
     WELCOME_BECAME_VISIBLE,
     WELCOME_SCREEN_PAINTED,
     CARGO_SYNC_STARTED,
     EDITOR_HIGHLIGHTED,
+    FIND_IN_FILES_END,
     QUIT_ANCHOR,
 ];
 
@@ -205,6 +206,52 @@ pub(crate) const CARGO_SYNC_STARTED: &str = "cargoSyncStarted";
 /// The same line on the clock of `idea.log`: the milliseconds in its `[...]` column, from the creation of the log. It
 /// is the value of `rust_duration_from_start_to_cargo_sync` of the perf test.
 pub(crate) const CARGO_SYNC_LOG_MS: &str = "cargoSyncStarted.ideaLog";
+
+/// The script of the performance plugin in a run directory of the find-in-files arm. The launch writes it, and the IDE
+/// reads it through `testscript.filename`. The record reads the queries of the run back from it, see [`find_script`].
+pub(crate) const FIND_SCRIPT_FILE: &str = "find-in-files.ijperf";
+
+/// The command of the performance plugin that runs Find in Files over the project scope, `FindInFilesCommand`. It
+/// takes the queries separated by `;`.
+const FIND_COMMAND: &str = "%findInFiles";
+
+/// The separator of the queries of [`FIND_COMMAND`]. A query cannot hold it.
+pub(crate) const FIND_QUERY_SEPARATOR: char = ';';
+
+/// The prefix of the span of one search of [`FIND_COMMAND`]: `findInFiles#search: <query>`. The span starts at the
+/// open of the dialog with the query and ends when the search finishes. Its tag [`FIND_RESULTS_TAG`] counts the results.
+/// The metric of each search is the span name, with its duration.
+pub(crate) const FIND_SEARCH_PREFIX: &str = "findInFiles#search: ";
+
+/// The span of [`FIND_COMMAND`] that opens the dialog with an empty query before the searches.
+pub(crate) const FIND_DIALOG_SPAN: &str = "findInFiles#openDialog";
+
+/// The tag of a search span with the count of its results.
+const FIND_RESULTS_TAG: &str = "resultsCount";
+
+/// The metric key of the find-in-files arm: the sum of the durations of its search spans.
+pub(crate) const FIND_IN_FILES: &str = "findInFiles.search";
+
+/// The milliseconds from the process start to the end of the last search span, on the clock of the anchors.
+pub(crate) const FIND_IN_FILES_END: &str = "findInFiles.end";
+
+/// The metric key of the result count of the search span `span`, such as `findInFiles#search: FindModel results`.
+pub(crate) fn find_results(span: &str) -> String {
+    format!("{span} results")
+}
+
+/// The text of [`FIND_SCRIPT_FILE`] for `queries`: one line of [`FIND_COMMAND`].
+pub(crate) fn find_script(queries: &[String]) -> String {
+    let separator = FIND_QUERY_SEPARATOR.to_string();
+    format!("{FIND_COMMAND} {}\n", queries.join(&separator))
+}
+
+/// The queries of a text of [`FIND_SCRIPT_FILE`], in their order, or `None` for a text of another shape.
+pub(crate) fn find_queries(script: &str) -> Option<Vec<String>> {
+    let queries = script.trim_end().strip_prefix(FIND_COMMAND)?.strip_prefix(' ')?;
+    let queries: Vec<String> = queries.split(FIND_QUERY_SEPARATOR).map(str::to_owned).collect();
+    (!queries.iter().any(String::is_empty)).then_some(queries)
+}
 
 /// The prefix of the spans of the Air empty-state composer. Each span is a metric with its duration, and the digest
 /// shows each one.
@@ -567,6 +614,9 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
         metrics.insert(metric.to_owned(), process_ms);
         metrics.insert(log_metric.to_owned(), log_ms);
     }
+    if gate == Gate::FindInFiles {
+        find_in_files_gate(run_dir, trace.as_ref(), metrics)?;
+    }
     if record.arm.kind == ArmKind::OpenProject {
         open_project_metrics(record.launch.open_request_us, trace.as_ref(), stats.as_ref(), metrics)?;
     }
@@ -872,6 +922,51 @@ fn span_gate(trace: Option<&Trace>, name: &str, missing: &str) -> Result<(), Str
         return Err(format!(
             "the {name} span did not end before the {QUIT_SPAN} span started, so the quit cut it short"
         ));
+    }
+    Ok(())
+}
+
+/// The find-in-files gate: a search span for each query of [`FIND_SCRIPT_FILE`], none with an error and each before the
+/// quit. It adds the duration and the result count of each search, their sum [`FIND_IN_FILES`], the end of the last
+/// search [`FIND_IN_FILES_END`] and the duration of [`FIND_DIALOG_SPAN`].
+fn find_in_files_gate(run_dir: &Path, trace: Option<&Trace>, metrics: &mut BTreeMap<String, f64>) -> Result<(), String> {
+    let script = files::read_optional(&run_dir.join(FIND_SCRIPT_FILE))
+        .map_err(|error| format!("{error:#}"))?
+        .ok_or_else(|| format!("no {FIND_SCRIPT_FILE}, so the run has no queries"))?;
+    let queries = find_queries(&script).ok_or_else(|| format!("{FIND_SCRIPT_FILE} holds no {FIND_COMMAND} line"))?;
+    let Some(trace) = trace else {
+        return Err(format!("no {TRACE_FILE}, so no search span"));
+    };
+    let origin = trace.origin_us();
+    let mut sum = 0.0;
+    let mut end: Option<f64> = None;
+    for query in &queries {
+        let name = format!("{FIND_SEARCH_PREFIX}{query}");
+        span_gate(
+            Some(trace),
+            &name,
+            "the IDE has no performance plugin, or the search did not finish",
+        )?;
+        let Some(span) = trace.first(&name) else {
+            return Err(format!("no {name} span in {TRACE_FILE}"));
+        };
+        let ms = micros_to_ms(span.duration);
+        sum += ms;
+        metrics.insert(name.clone(), ms);
+        if let Some(results) = span.number_tag(FIND_RESULTS_TAG) {
+            metrics.insert(find_results(&name), results);
+        }
+        if let Some(origin) = origin {
+            let span_end = span.end_ms(origin);
+            end = Some(end.map_or(span_end, |last: f64| last.max(span_end)));
+        }
+    }
+    metrics.insert(FIND_IN_FILES.to_owned(), tenth(sum));
+    if let Some(end) = end {
+        metrics.insert(FIND_IN_FILES_END.to_owned(), end);
+    }
+    if let Some(dialog) = trace.first(FIND_DIALOG_SPAN) {
+        metrics.insert(FIND_DIALOG_SPAN.to_owned(), micros_to_ms(dialog.duration));
     }
     Ok(())
 }

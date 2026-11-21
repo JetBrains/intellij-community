@@ -59,6 +59,8 @@ pub(crate) fn session_info(arms: Vec<Arm>, runs: u32) -> SessionInfo {
         with_property: None,
         additional_modules: Vec::new(),
         max_load: None,
+        queries: Vec::new(),
+        context_plugins: None,
         warnings: Vec::new(),
     }
 }

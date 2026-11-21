@@ -3,10 +3,10 @@ use std::path::Path;
 use pretty_assertions::assert_eq;
 
 use super::{
-    DYNAMIC_AGENT_OPTION, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, PRODUCT_INFO_FILE, Profiler, RunPlan,
-    SUPPRESSED_PLUGINS_PROPERTY, TRUST_PROPERTY, argfile_text, class_load_option, dist_options, entry_options, idea_log_pid,
-    measure_options, product_info_file, profile_stop_argv, quote_argument, sandbox_options, scheme_arguments, span_ended, thread_dump_argv,
-    vm_options_file,
+    DYNAMIC_AGENT_OPTION, EVENT_TIMEOUT, FIND_TIMEOUT, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, PRODUCT_INFO_FILE, Profiler,
+    RunPlan, SUPPRESSED_PLUGINS_PROPERTY, TRUST_PROPERTY, argfile_text, class_load_option, dist_options, entry_options, gate_timeout,
+    idea_log_pid, measure_options, product_info_file, profile_stop_argv, quote_argument, sandbox_options, scheme_arguments, span_ended,
+    thread_dump_argv, vm_options_file,
 };
 use crate::bench::arm::{Arm, ArmKind, Property};
 use crate::bench::profile::ProfileEvent;
@@ -54,8 +54,21 @@ fn every_arm_is_an_integration_test_and_a_project_start_trusts_its_project() {
         );
         assert_eq!(
             options.contains(&trust),
-            matches!(arm.kind, ArmKind::Project | ArmKind::EmptyEditor | ArmKind::CargoSync),
+            matches!(
+                arm.kind,
+                ArmKind::Project | ArmKind::EmptyEditor | ArmKind::CargoSync | ArmKind::FindInFiles
+            ),
             "{arm:?}: {options:?}"
+        );
+        assert_eq!(
+            options.contains(&"-Dtestscript.filename=/s/run/find-in-files.ijperf".to_owned()),
+            arm.kind == ArmKind::FindInFiles,
+            "only the find-in-files arm runs a script of the performance plugin: {arm:?}"
+        );
+        assert_eq!(
+            options.contains(&"-Dperformance.execute.script.right.after.ide.opened=true".to_owned()),
+            arm.kind == ArmKind::FindInFiles,
+            "the script of JetBrains Light, which holds the dumb mode, starts at the open: {arm:?}"
         );
         assert_eq!(
             options.contains(&"-Dllm.show.ai.promotion.window.on.start=false".to_owned()),
@@ -216,12 +229,14 @@ fn the_prime_run_of_a_project_opens_its_first_file_and_a_measured_run_restores_i
     let project = Project {
         name: "markdown".to_owned(),
         file: "README.md".into(),
+        place: None,
     };
     let plan = |kind| RunPlan {
         arm: Arm::PROJECT,
         kind,
         project: Some(project.paths(&sandbox)),
         open_project: None,
+        queries: &[],
     };
     assert_eq!(
         plan(RunKind::Prime).program_arguments(),
@@ -239,6 +254,7 @@ fn the_prime_run_of_a_project_opens_its_first_file_and_a_measured_run_restores_i
         kind: RunKind::Measured,
         project: None,
         open_project: Some(Path::new("/p")),
+        queries: &[],
     };
     assert!(
         welcome.program_arguments().is_empty(),
@@ -260,6 +276,7 @@ fn every_run_of_the_empty_editor_arm_opens_the_project_without_a_file() {
     let project = Project {
         name: "markdown".to_owned(),
         file: "README.md".into(),
+        place: None,
     };
     for kind in [RunKind::Prime, RunKind::Measured] {
         let plan = RunPlan {
@@ -267,6 +284,7 @@ fn every_run_of_the_empty_editor_arm_opens_the_project_without_a_file() {
             kind,
             project: Some(project.paths(&sandbox)),
             open_project: None,
+            queries: &[],
         };
         assert_eq!(
             plan.program_arguments(),
@@ -277,6 +295,31 @@ fn every_run_of_the_empty_editor_arm_opens_the_project_without_a_file() {
     let options = measure_options(Path::new("/r"), &sandbox, &Arm::EMPTY_EDITOR, None).expect("the options");
     assert!(options.contains(&format!("-D{TRUST_PROPERTY}")), "{options:?}");
     assert!(!options.contains(&format!("-D{FORCE_MODAL_PROPERTY}")));
+}
+
+/// Every run of the find-in-files arm opens the project directory alone, and an in-place project is the same directory
+/// in every sandbox. The wait for its last search has a limit of its own, and the ceiling of the process grows with it.
+#[test]
+fn the_find_in_files_arm_opens_its_project_where_it_is_and_waits_longer() {
+    let first = Sandbox::new("/s/find-in-files-sandbox");
+    let second = Sandbox::new("/s/other-sandbox");
+    let project = Project {
+        name: "idea".to_owned(),
+        file: "README.md".into(),
+        place: Some("/work/idea".into()),
+    };
+    assert_eq!(project.paths(&first), project.paths(&second));
+    let queries = ["FindModel".to_owned()];
+    let plan = RunPlan {
+        arm: Arm::FIND_IN_FILES,
+        kind: RunKind::Prime,
+        project: Some(project.paths(&first)),
+        open_project: None,
+        queries: &queries,
+    };
+    assert_eq!(plan.program_arguments(), vec!["/work/idea"]);
+    assert_eq!(gate_timeout(Arm::FIND_IN_FILES.gate()), FIND_TIMEOUT);
+    assert_eq!(gate_timeout(Arm::EMPTY_EDITOR.gate()), EVENT_TIMEOUT);
 }
 
 /// The poll of a span gate: no trace, a trace without the span, then a trace that the running IDE still writes, with

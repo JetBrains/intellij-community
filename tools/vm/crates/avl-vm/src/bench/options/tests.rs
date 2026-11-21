@@ -307,6 +307,62 @@ fn project_takes_the_empty_editor_arm_and_cold_for_it_alone() {
     );
 }
 
+/// The find-in-files arm needs a query, a query needs that arm, and a query holds no `;`. The project opens in place
+/// with --in-place, and --context-plugins names the plugins of each sandbox.
+#[test]
+fn project_takes_the_find_in_files_arm_with_its_queries() {
+    let BenchVerb::Project(args) = verb(&[
+        "project",
+        "idea",
+        "--arm",
+        "find-in-files",
+        "--query",
+        "FindModel",
+        "--query",
+        "create Searcher",
+        "--in-place",
+        "--context-plugins",
+        "//platform/unified:performance_testing_plugin_dir",
+        "--with-property",
+        "ijlight.accio.enabled=false",
+    ]) else {
+        panic!("expected project");
+    };
+    assert_eq!(args.queries, ["FindModel", "create Searcher"]);
+    assert!(args.in_place);
+    assert_eq!(args.context_plugins.as_deref(), Some("//platform/unified:performance_testing_plugin_dir"));
+    assert_eq!(
+        args.arms(),
+        Ok(vec![
+            Arm::FIND_IN_FILES,
+            Arm::FIND_IN_FILES.with(&Property::parse("ijlight.accio.enabled=false").expect("a property"))
+        ])
+    );
+    let arms = |argv: &[&str]| {
+        let BenchVerb::Project(args) = verb(argv) else {
+            panic!("expected project");
+        };
+        args.arms()
+    };
+    assert_eq!(
+        arms(&["project", "idea", "--arm", "find-in-files"]),
+        Err("--arm find-in-files needs --query: a run searches for each query".to_owned())
+    );
+    assert_eq!(
+        arms(&["project", "idea", "--query", "FindModel"]),
+        Err("--query needs --arm find-in-files".to_owned())
+    );
+    for query in ["a;b", " a", ""] {
+        assert!(
+            matches!(
+                parsed(&["project", "idea", "--arm", "find-in-files", "--query", query]),
+                Parsed::Refused { .. }
+            ),
+            "{query:?}"
+        );
+    }
+}
+
 /// `--suppress-plugin` adds a twin right after each arm of a welcome or a project session. `--arm` of a verb that reads
 /// a session takes the label of a twin.
 #[test]

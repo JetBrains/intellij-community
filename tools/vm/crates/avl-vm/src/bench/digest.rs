@@ -13,9 +13,10 @@ use super::profile::{FrameSamples, ProfileEvent, ProfileScope};
 use super::record::{
     CARGO_SYNC_LOG_MS, CARGO_SYNC_STARTED, CLASS_ANCHORS, CLASS_EDT_TIME, CLASS_REQUESTS, CLASS_TIME, CLASSES_HIDDEN, CLASSES_JAR,
     CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM, CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT,
-    EMPTY_STATE_PREFIX, EMPTY_STATE_SPANS, END_SPANS, FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, JVM_LOADING_TIME, JVM_PROCESS_START,
-    MODAL_SPANS, OPEN_EDITOR_PAINT, OPEN_FRAME, OPEN_HIGHLIGHTED, PLATFORM_SPANS, PLUGIN_CLASSES, PLUGIN_LOG_STACK_MS, PLUGIN_LOG_WRITE_MS,
-    TOTAL_DURATION, WELCOME_BECAME_VISIBLE, WELCOME_SPANS, edt_at, named_at, span_end,
+    EMPTY_STATE_PREFIX, EMPTY_STATE_SPANS, END_SPANS, FIND_DIALOG_SPAN, FIND_IN_FILES, FIND_IN_FILES_END, FIND_SEARCH_PREFIX,
+    FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, JVM_LOADING_TIME, JVM_PROCESS_START, MODAL_SPANS, OPEN_EDITOR_PAINT, OPEN_FRAME,
+    OPEN_HIGHLIGHTED, PLATFORM_SPANS, PLUGIN_CLASSES, PLUGIN_LOG_STACK_MS, PLUGIN_LOG_WRITE_MS, TOTAL_DURATION, WELCOME_BECAME_VISIBLE,
+    WELCOME_SPANS, edt_at, named_at, span_end,
 };
 use super::session::SUMMARY_FILE;
 use super::summary::{ArmSummary, Summary};
@@ -137,8 +138,8 @@ fn header(text: &mut String, summary: &Summary, arms: &[&ArmSummary]) {
 }
 
 /// The metric groups of a table over `arms`, in order: a title and its rows. The editor needs the project arm, the
-/// welcome spans need an arm with the non-modal welcome screen, the modal spans need the modal arm, and the second
-/// project needs the open-project arm. The project arm finds its editor spans in the platform spans. The class group
+/// welcome spans need an arm with the non-modal welcome screen, the modal spans need the modal arm, the find-in-files
+/// group needs the find-in-files arm, and the second project needs the open-project arm. The project arm finds its editor spans in the platform spans. The class group
 /// holds a row of [`named_at`] only for an anchor that an arm has. The cost of the plugin class log needs an arm with
 /// the metric, so a log without the trailer adds no `not measured` row. The memory groups need an arm with a memory
 /// sample, so a session from before the sample adds no such row. The span ends are on the clock of the anchors.
@@ -175,6 +176,9 @@ pub(crate) fn metric_groups(arms: &[&ArmSummary]) -> Vec<(&'static str, Vec<Stri
     }
     if arms.iter().any(|arm| arm.arm.kind == ArmKind::CargoSync) {
         groups.push(("cargo sync", vec![CARGO_SYNC_STARTED.to_owned(), CARGO_SYNC_LOG_MS.to_owned()]));
+    }
+    if arms.iter().any(|arm| arm.arm.kind == ArmKind::FindInFiles) {
+        groups.push(("find in files", find_in_files_rows(arms)));
     }
     groups.push(("platform spans", PLATFORM_SPANS.map(str::to_owned).to_vec()));
     if arms
@@ -254,6 +258,21 @@ fn empty_state_rows(arms: &[&ArmSummary]) -> Vec<String> {
         add(name);
     }
     rows
+}
+
+/// The find-in-files rows: the sum of the searches, the end of the last one and the dialog, then the duration and the
+/// result count of each search, in name order.
+fn find_in_files_rows(arms: &[&ArmSummary]) -> Vec<String> {
+    let searches: BTreeSet<&String> = arms
+        .iter()
+        .flat_map(|arm| arm.summary.keys())
+        .filter(|metric| metric.starts_with(FIND_SEARCH_PREFIX))
+        .collect();
+    [FIND_IN_FILES, FIND_IN_FILES_END, FIND_DIALOG_SPAN]
+        .into_iter()
+        .map(str::to_owned)
+        .chain(searches.into_iter().cloned())
+        .collect()
 }
 
 /// The welcome span rows: the fixed names, with the per-feature rows after the feature ids.

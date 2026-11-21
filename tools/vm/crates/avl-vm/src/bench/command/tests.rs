@@ -653,11 +653,30 @@ fn project_takes_markdown_or_a_directory_with_a_file_to_open() {
     use crate::bench::command::project_source;
     use crate::bench::session::ProjectSource;
     let dir = tempfile::tempdir().expect("a temporary directory");
-    assert_eq!(project_source("markdown", dir.path()), Ok(ProjectSource::Markdown));
+    assert_eq!(project_source("markdown", dir.path(), false), Ok(ProjectSource::Markdown));
     std::fs::create_dir_all(dir.path().join("docs")).expect("a project");
     std::fs::write(dir.path().join("docs/README.md"), "# docs\n").expect("a file");
-    assert_eq!(project_source("docs", dir.path()), Ok(ProjectSource::Dir(dir.path().join("docs"))));
-    let refused = |arg: &str| project_source(arg, dir.path()).expect_err("a refusal");
+    assert_eq!(
+        project_source("docs", dir.path(), false),
+        Ok(ProjectSource::Dir(dir.path().join("docs")))
+    );
+    assert_eq!(
+        project_source("docs", dir.path(), true),
+        Ok(ProjectSource::InPlace(dir.path().join("docs")))
+    );
+    assert_eq!(
+        project_source("./docs/.", dir.path(), true),
+        Ok(ProjectSource::InPlace(dir.path().join("docs"))),
+        "a `.` stays out of the path"
+    );
+    let markdown_in_place = project_source("markdown", dir.path(), true).expect_err("a refusal");
+    assert_eq!(markdown_in_place.code, "usage");
+    assert!(
+        markdown_in_place.message.starts_with("--in-place needs a project directory"),
+        "{}",
+        markdown_in_place.message
+    );
+    let refused = |arg: &str| project_source(arg, dir.path(), false).expect_err("a refusal");
     let absent = refused("absent");
     assert_eq!((absent.code.as_ref(), absent.exit), ("usage", Exit::USAGE));
     assert!(

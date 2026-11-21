@@ -994,3 +994,101 @@ fn a_memory_sample_gives_the_memory_metrics_and_a_failed_one_is_a_note() {
 fn metric_of(record: &RunRecord, name: &str) -> Option<f64> {
     record.metrics.get(name).copied()
 }
+
+/// A run of the find-in-files arm in `session`: a copy of the fixture `project-run-01` with the script of `queries`
+/// and the spans of `%findInFiles`, each search with the result count `results`. Answers the run directory.
+fn find_in_files_run(session: &Path, queries: &[&str], spans: &[(&str, i64, i64)], results: u64) -> std::path::PathBuf {
+    use super::{FIND_SCRIPT_FILE, FIND_SEARCH_PREFIX, find_script};
+    let run = session.join("find-in-files-run-01");
+    avl_testkit::traces::copy_tree(&session.join("project-run-01"), &run);
+    let queries: Vec<String> = queries.iter().map(|query| (*query).to_owned()).collect();
+    std::fs::write(run.join(FIND_SCRIPT_FILE), find_script(&queries)).expect("a script");
+    append_spans(&run, spans);
+    let path = run.join("opentelemetry.json");
+    let mut trace: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).expect("a trace")).expect("a Jaeger trace");
+    for span in trace["data"][0]["spans"].as_array_mut().expect("a span list") {
+        if span["operationName"]
+            .as_str()
+            .is_some_and(|name| name.starts_with(FIND_SEARCH_PREFIX))
+        {
+            span["tags"] = serde_json::json!([{"key": "resultsCount", "type": "int64", "value": results}]);
+        }
+    }
+    std::fs::write(&path, trace.to_string()).expect("a trace");
+    run
+}
+
+/// A find-in-files run ends at its last search. Each search is a metric with its duration and its result count, the
+/// main metric is their sum, and the end of the last search is an anchor of the class counts.
+#[test]
+fn a_find_in_files_run_sums_its_searches_and_ends_at_the_last_one() {
+    use super::{FIND_DIALOG_SPAN, FIND_IN_FILES, FIND_IN_FILES_END, find_results};
+    let (_dir, session) = fixture_session();
+    let run = find_in_files_run(
+        &session,
+        &["FindModel", "createSearcher"],
+        &[
+            (FIND_DIALOG_SPAN, 3000, 40),
+            ("findInFiles#search: FindModel", 3100, 250),
+            ("findInFiles#search: createSearcher", 3400, 150),
+        ],
+        12,
+    );
+    let record = collect(&run, &id(Arm::FIND_IN_FILES), LaunchFacts::default());
+    assert_eq!(record.reason, None);
+    let metric = |name: &str| record.metrics.get(name).copied();
+    assert_eq!(
+        (
+            metric(FIND_IN_FILES),
+            metric(FIND_IN_FILES_END),
+            metric(FIND_DIALOG_SPAN),
+            metric("findInFiles#search: FindModel"),
+            metric(&find_results("findInFiles#search: createSearcher")),
+        ),
+        (Some(400.0), Some(3550.0), Some(40.0), Some(250.0), Some(12.0))
+    );
+    assert!(
+        record.metrics.contains_key(&named_at(FIND_IN_FILES_END)),
+        "{:?}",
+        record.metrics.keys()
+    );
+}
+
+/// A find-in-files run without the span of a query is not valid, and the reason says why a run can lack it. A run
+/// without its script has no queries and is not valid either.
+#[test]
+fn a_find_in_files_run_without_a_search_or_its_script_is_invalid() {
+    use super::FIND_SCRIPT_FILE;
+    let (_dir, session) = fixture_session();
+    let run = find_in_files_run(
+        &session,
+        &["FindModel", "createSearcher"],
+        &[("findInFiles#search: FindModel", 3100, 250)],
+        3,
+    );
+    let record = collect(&run, &id(Arm::FIND_IN_FILES), LaunchFacts::default());
+    assert!(!record.valid);
+    assert_eq!(
+        record.reason.as_deref(),
+        Some(
+            "no findInFiles#search: createSearcher span in opentelemetry.json: the IDE has no performance plugin, or the search did not finish"
+        )
+    );
+    assert!(record.metrics.is_empty(), "a failed run reports no number");
+
+    std::fs::remove_file(run.join(FIND_SCRIPT_FILE)).expect("a removal");
+    let record = collect(&run, &id(Arm::FIND_IN_FILES), LaunchFacts::default());
+    assert_eq!(record.reason.as_deref(), Some("no find-in-files.ijperf, so the run has no queries"));
+}
+
+/// The script holds one `%findInFiles` line with the queries in their order, and reads back to the same queries.
+#[test]
+fn the_find_in_files_script_reads_back_to_its_queries() {
+    use super::{find_queries, find_script};
+    let queries = vec!["FindModel".to_owned(), "a b".to_owned()];
+    let script = find_script(&queries);
+    assert_eq!(script, "%findInFiles FindModel;a b\n");
+    assert_eq!(find_queries(&script), Some(queries));
+    assert_eq!(find_queries("%findInFiles \n"), None, "an empty query");
+    assert_eq!(find_queries("%openFile a\n"), None, "another command");
+}

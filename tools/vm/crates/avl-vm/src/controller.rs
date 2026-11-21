@@ -206,7 +206,7 @@ pub(crate) async fn run(
     interrupts: Interrupts,
 ) -> Exit {
     let invocation = match parse(&argv, &facts) {
-        Parsed::Invocation(invocation) => invocation,
+        Parsed::Invocation(invocation) => *invocation,
         Parsed::Help { form, text } => {
             reporter.set_mode(plain_mode(form));
             return report::main("help", &reporter, || Outcome::new(HelpData { usage: &text }, text.as_str()));

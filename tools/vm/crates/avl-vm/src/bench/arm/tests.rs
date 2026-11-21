@@ -2,8 +2,8 @@ use pretty_assertions::assert_eq;
 
 use super::{Arm, ArmKind, Gate, Property, Twin, check_plugin_id, parse_arm};
 use crate::bench::record::{
-    CARGO_SYNC_LOG_LINE, CARGO_SYNC_LOG_MS, CARGO_SYNC_STARTED, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPAN, OPEN_HIGHLIGHTED,
-    WELCOME_BECAME_VISIBLE,
+    CARGO_SYNC_LOG_LINE, CARGO_SYNC_LOG_MS, CARGO_SYNC_STARTED, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPAN, FIND_IN_FILES,
+    FIND_IN_FILES_END, OPEN_HIGHLIGHTED, WELCOME_BECAME_VISIBLE,
 };
 
 #[test]
@@ -14,6 +14,9 @@ fn the_main_metric_of_a_welcome_arm_is_the_welcome_event() {
     assert_eq!(Arm::PROJECT.main_metric(), EDITOR_HIGHLIGHTED);
     assert_eq!(Arm::EMPTY_EDITOR.main_metric(), EMPTY_STATE_BUILT);
     assert_eq!(Arm::CARGO_SYNC.main_metric(), CARGO_SYNC_STARTED);
+    assert_eq!(Arm::FIND_IN_FILES.main_metric(), FIND_IN_FILES);
+    assert_eq!(Arm::FIND_IN_FILES.main_anchor(), FIND_IN_FILES_END);
+    assert_eq!(Arm::FIND_IN_FILES.gate(), Gate::FindInFiles);
 }
 
 #[test]
@@ -39,9 +42,9 @@ fn only_the_project_arms_skip_the_welcome_screen() {
     );
 }
 
-/// The cargo-sync arm is the last one of the digest, and the label of an arm is its value on the command line.
+/// The find-in-files arm is the last one of the digest, and the label of an arm is its value on the command line.
 #[test]
-fn the_cargo_sync_arm_comes_last_and_each_arm_has_its_key_and_its_label() {
+fn the_find_in_files_arm_comes_last_and_each_arm_has_its_key_and_its_label() {
     assert_eq!(
         Arm::ALL,
         [
@@ -50,8 +53,13 @@ fn the_cargo_sync_arm_comes_last_and_each_arm_has_its_key_and_its_label() {
             Arm::OPEN_PROJECT,
             Arm::PROJECT,
             Arm::EMPTY_EDITOR,
-            Arm::CARGO_SYNC
+            Arm::CARGO_SYNC,
+            Arm::FIND_IN_FILES
         ]
+    );
+    assert_eq!(
+        (Arm::FIND_IN_FILES.key(), Arm::FIND_IN_FILES.label()),
+        ("findInFiles".to_owned(), "find-in-files".to_owned())
     );
     assert_eq!(
         (Arm::CARGO_SYNC.key(), Arm::CARGO_SYNC.label()),

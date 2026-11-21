@@ -39,14 +39,38 @@ pub(crate) fn write_json(path: &Path, value: &impl Serialize) -> anyhow::Result<
 /// Copies a directory tree. A symbolic link is copied as a link. `fs::copy` clones a file on APFS, so a copy of a
 /// primed sandbox is fast.
 pub(crate) fn copy_dir(from: &Path, to: &Path) -> anyhow::Result<()> {
+    copy_tree(from, to, Links::Keep)
+}
+
+/// Copies a directory tree with the files and the directories that its symbolic links name, such as the outputs of a
+/// Bazel target, which link into the output tree. The copy holds no link.
+pub(crate) fn copy_dir_resolved(from: &Path, to: &Path) -> anyhow::Result<()> {
+    copy_tree(from, to, Links::Follow)
+}
+
+/// What a copy of a tree does with a symbolic link.
+#[derive(Clone, Copy)]
+enum Links {
+    /// The copy holds the same link.
+    Keep,
+    /// The copy holds what the link names.
+    Follow,
+}
+
+fn copy_tree(from: &Path, to: &Path, links: Links) -> anyhow::Result<()> {
     fs::create_dir_all(to).with_context(|| format!("cannot create {}", to.display()))?;
     for entry in fs::read_dir(from).with_context(|| format!("cannot list {}", from.display()))? {
         let entry = entry.with_context(|| format!("cannot list {}", from.display()))?;
         let source = entry.path();
         let target = to.join(entry.file_name());
-        let kind = entry.file_type().with_context(|| format!("cannot stat {}", source.display()))?;
+        let mut kind = entry.file_type().with_context(|| format!("cannot stat {}", source.display()))?;
+        if kind.is_symlink() && matches!(links, Links::Follow) {
+            kind = fs::metadata(&source)
+                .with_context(|| format!("cannot stat the target of {}", source.display()))?
+                .file_type();
+        }
         if kind.is_dir() {
-            copy_dir(&source, &target)?;
+            copy_tree(&source, &target, links)?;
         } else if kind.is_symlink() {
             copy_link(&source, &target)?;
         } else {

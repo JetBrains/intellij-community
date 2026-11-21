@@ -175,7 +175,8 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 
 ## The bench
 
-`vm bench` measures the start-up of the IDE on a macOS host. ADR 0193 records why the verb is in `vm`.
+`vm bench` measures the start-up of the IDE on a macOS host, and one search workload after the start-up: Find in
+Files. ADR 0193 records why the verb is in `vm`.
 `vm.cmd bench --help` states what a session does and the exit codes. `vm.cmd bench <verb> --help` states the grammar
 and the defaults of the verb.
 
@@ -248,7 +249,7 @@ that the JVM loads, and the digest notes how many samples it left out.
 | --- | --- | --- |
 | `welcome` | How long does the IDE take to show the welcome screen, in the modal and the non-modal arm? | A session directory with its `summary.json`, and a text digest. |
 | `open-project <project>` | How long does a running IDE take to open a project and paint its editor? | A session with the open-project arm. |
-| `project <project>` | How long does the IDE take from its start on a project to the highlighted editor, or, with `--arm empty-editor`, to the built Air composer of an empty editor area? With `--arm cargo-sync` and `--target //build:rustrover_dist`, to the first Cargo sync, as the RustRover perf test measures it. `--cold` starts each empty-editor run with empty caches. | A session with the project arm, the empty-editor arm, both, or the cargo-sync arm. |
+| `project <project>` | How long does the IDE take from its start on a project to the highlighted editor, or, with `--arm empty-editor`, to the built Air composer of an empty editor area? With `--arm cargo-sync` and `--target //build:rustrover_dist`, to the first Cargo sync, as the RustRover perf test measures it. With `--arm find-in-files` and `--query`, how long the Find in Files searches of each query take. `--cold` starts each empty-editor run with empty caches. | A session with the project arm, the empty-editor arm, both, or the cargo-sync arm. |
 | `replay <session>` | What does a finished session give when the controller parses it again? | A new `summary.json` and the digest, without an IDE. |
 | `trace <session>` | What runs between the frame and the welcome paint? | The anchors of one run, and one line per span in the window. |
 | `activities <session>` | Which post-startup activities run while the welcome panel paints? | One table by class and one table by plugin for one run. |
@@ -292,6 +293,23 @@ A session directory holds:
 | `summary.json` | `distDigest`, `measureModel`, `maxLoad`, `warnings`, the runs and the median, min and max of each metric per arm, and the non-modal minus modal `delta` |
 
 The lock of a session and of `gc` is `<runtime root>/bench/session.lock`.
+
+A run of the find-in-files arm writes the script `find-in-files.ijperf` of the performance plugin into its run
+directory. The script is one line, `%findInFiles <query>;<query>`, and `-Dtestscript.filename` names it. The plugin runs
+it once the project opened, and the gate is the span `findInFiles#search: <query>` of each query. The metric
+`findInFiles.search` is the sum of the searches. Each search is a metric with its duration, and `<span> results` holds its
+result count, so a twin of `--with-property ijlight.accio.enabled=false` shows whether accio and the platform walk find
+the same. JetBrains Light does not bundle the performance plugin, so a session gives it with `--context-plugins
+//platform/unified:performance_testing_plugin_dir`. The session builds that pool from the working tree, also with
+`--generation`, and copies its plugin directories into the `plugins` directory of the template. `--in-place` opens a tree
+too large to copy, such as a checkout, where it is, and the IDE writes the `.idea` of that tree. Each run gets the
+environment of `vm.cmd`, so the accio of `PATH` answers the searches of the accio plugin.
+
+```bash
+./community/tools/vm.cmd bench project . --in-place --target //build:jetbrains_light_all_plugins_dist \
+  --context-plugins //platform/unified:performance_testing_plugin_dir --arm find-in-files \
+  --query createSearcher --query FindModel --with-property ijlight.accio.enabled=false
+```
 
 What a session cannot measure yet:
 

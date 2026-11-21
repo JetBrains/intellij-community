@@ -25,6 +25,9 @@ pub(crate) enum ArmKind {
     /// A Rust project that the command line of the IDE names, to the start of its first Cargo sync, as the perf test
     /// of RustRover measures it.
     CargoSync,
+    /// A project that the command line of the IDE names, to the end of the Find in Files searches that the
+    /// `%findInFiles` command of the performance plugin runs.
+    FindInFiles,
 }
 
 /// What a run of an arm must show to pass the gate.
@@ -35,6 +38,9 @@ pub(crate) enum Gate {
     Welcome { modal: bool },
     /// The `editor highlighting completed` event in the trace or in the report.
     Highlighted,
+    /// A span `findInFiles#search: <query>` in the trace for each query of the run, see
+    /// [`record::FIND_SEARCH_PREFIX`]. The run directory holds the queries in [`record::FIND_SCRIPT_FILE`].
+    FindInFiles,
     /// The span `name` in the trace. The IDE writes a span when it ends. `missing` tells why a run can lack it.
     Span { name: &'static str, missing: &'static str },
     /// The first line of `idea.log` that holds `line`. The record keeps its time from the process start as `metric`,
@@ -57,6 +63,7 @@ impl ArmKind {
             Self::Project => "project",
             Self::EmptyEditor => "emptyEditor",
             Self::CargoSync => "cargoSync",
+            Self::FindInFiles => "findInFiles",
         }
     }
 
@@ -69,17 +76,19 @@ impl ArmKind {
             Self::Project => "project",
             Self::EmptyEditor => "empty-editor",
             Self::CargoSync => "cargo-sync",
+            Self::FindInFiles => "find-in-files",
         }
     }
 
     /// Every kind, in the order of the digest.
-    pub(crate) const ALL: [Self; 6] = [
+    pub(crate) const ALL: [Self; 7] = [
         Self::Modal,
         Self::NonModal,
         Self::OpenProject,
         Self::Project,
         Self::EmptyEditor,
         Self::CargoSync,
+        Self::FindInFiles,
     ];
 }
 
@@ -148,15 +157,17 @@ impl Arm {
     pub(crate) const PROJECT: Self = Self::plain(ArmKind::Project);
     pub(crate) const EMPTY_EDITOR: Self = Self::plain(ArmKind::EmptyEditor);
     pub(crate) const CARGO_SYNC: Self = Self::plain(ArmKind::CargoSync);
+    pub(crate) const FIND_IN_FILES: Self = Self::plain(ArmKind::FindInFiles);
 
     /// Every plain arm, in the order of the digest. A twin is not in it.
-    pub(crate) const ALL: [Self; 6] = [
+    pub(crate) const ALL: [Self; 7] = [
         Self::MODAL,
         Self::NON_MODAL,
         Self::OPEN_PROJECT,
         Self::PROJECT,
         Self::EMPTY_EDITOR,
         Self::CARGO_SYNC,
+        Self::FIND_IN_FILES,
     ];
 
     /// The arm of `kind` without a twin change.
@@ -218,18 +229,21 @@ impl Arm {
             ArmKind::Project => record::EDITOR_HIGHLIGHTED,
             ArmKind::EmptyEditor => record::EMPTY_STATE_BUILT,
             ArmKind::CargoSync => record::CARGO_SYNC_STARTED,
+            ArmKind::FindInFiles => record::FIND_IN_FILES,
         }
     }
 
     /// The anchor of the arm in milliseconds from the process start: [`Self::main_metric`] when it is one, else
-    /// `welcomeBecameVisible`, which the open-project arm reaches before it opens its second project. The default window
-    /// of `bench trace` without the frame ends at it, and `bench classes` counts at it by default.
+    /// `welcomeBecameVisible`, which the open-project arm reaches before it opens its second project. The main metric of
+    /// the find-in-files arm is a sum of durations, so its anchor is the end of its last search. The default window of
+    /// `bench trace` without the frame ends at it, and `bench classes` counts at it by default.
     pub(crate) const fn main_anchor(&self) -> &'static str {
         match self.kind {
             ArmKind::Modal | ArmKind::NonModal | ArmKind::OpenProject => record::WELCOME_BECAME_VISIBLE,
             ArmKind::Project => record::EDITOR_HIGHLIGHTED,
             ArmKind::EmptyEditor => record::EMPTY_STATE_BUILT,
             ArmKind::CargoSync => record::CARGO_SYNC_STARTED,
+            ArmKind::FindInFiles => record::FIND_IN_FILES_END,
         }
     }
 
@@ -249,6 +263,7 @@ impl Arm {
                 log_metric: record::CARGO_SYNC_LOG_MS,
                 missing: "the IDE has no Rust plugin, or the project has no Cargo.toml",
             },
+            ArmKind::FindInFiles => Gate::FindInFiles,
         }
     }
 

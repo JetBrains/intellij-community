@@ -41,6 +41,9 @@ use super::trace;
 const POLL: Duration = Duration::from_millis(200);
 /// How long a run waits for its event.
 pub(crate) const EVENT_TIMEOUT: Duration = Duration::from_secs(180);
+/// How long a run of the find-in-files arm waits for its last search. The first search of a project can wait for the
+/// first index of accio, and a search without accio walks every file of the project.
+pub(crate) const FIND_TIMEOUT: Duration = Duration::from_mins(15);
 /// How long a run waits for the event of its gate after `startup-stats.json` appeared.
 const AFTER_REPORT_TIMEOUT: Duration = Duration::from_secs(20);
 /// How long a run of a span gate waits after `startup-stats.json` appeared, when the trace does not show the span yet.
@@ -94,8 +97,8 @@ const MEASURE_PROPERTIES: [&str; 8] = [
 /// The property that forces the modal welcome screen.
 pub(crate) const FORCE_MODAL_PROPERTY: &str = "idea.force.disable.non.modal.welcome.screen=true";
 
-/// The property of the `project` and `empty-editor` arms: the project of the command line is trusted, so no trust
-/// dialog stops a run.
+/// The property of the `project`, `empty-editor`, `cargo-sync` and `find-in-files` arms: the project of the command line is
+/// trusted, so no trust dialog stops a run.
 pub(crate) const TRUST_PROPERTY: &str = "idea.trust.all.projects=true";
 
 /// The properties of the cargo-sync arm that the context of `RustRoverIndexingTest` sets (`rustRoverVmOptions`) and
@@ -104,6 +107,13 @@ pub(crate) const CARGO_SYNC_PROPERTIES: [&str; 2] = [
     "llm.show.ai.promotion.window.on.start=false",
     "org.rust.external.linter.on.the.fly=false",
 ];
+
+/// The property of the performance plugin that names its script.
+pub(crate) const TEST_SCRIPT_PROPERTY: &str = "testscript.filename";
+
+/// The property of the performance plugin that runs the script once the project opened. Without it, the plugin waits
+/// for the smart mode, and JetBrains Light holds the dumb mode, so the script never starts there.
+pub(crate) const SCRIPT_AT_OPEN_PROPERTY: &str = "performance.execute.script.right.after.ide.opened=true";
 
 /// The property of a twin arm without a plugin, see [`Twin::Without`]. The IDE reads it as a list of plugin ids at the
 /// start and loads none of them.
@@ -171,6 +181,11 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: &Arm, prof
             options.push(format!("-D{TRUST_PROPERTY}"));
             options.extend(CARGO_SYNC_PROPERTIES.iter().map(|property| format!("-D{property}")));
         }
+        ArmKind::FindInFiles => {
+            options.push(format!("-D{TRUST_PROPERTY}"));
+            options.push(property(TEST_SCRIPT_PROPERTY, &run_dir.join(record::FIND_SCRIPT_FILE)));
+            options.push(format!("-D{SCRIPT_AT_OPEN_PROPERTY}"));
+        }
         ArmKind::NonModal | ArmKind::OpenProject => {}
     }
     match &arm.twin {
@@ -225,6 +240,8 @@ pub(crate) struct RunPlan<'a> {
     pub(crate) project: Option<ProjectPaths>,
     /// The project that the running IDE opens in the `open-project` arm.
     pub(crate) open_project: Option<&'a Path>,
+    /// The queries of the `find-in-files` arm, in their order. Another arm has none.
+    pub(crate) queries: &'a [String],
 }
 
 impl RunPlan<'_> {
@@ -528,9 +545,9 @@ impl Launcher {
         }
     }
 
-    /// The ceiling of one IDE process: every wait of a run, and the hold.
-    fn ceiling(&self) -> Duration {
-        EVENT_TIMEOUT * 2 + self.hold + QUIT_TIMEOUT * 3 + TERM_TIMEOUT
+    /// The ceiling of one IDE process of `gate`: every wait of a run, and the hold.
+    fn ceiling(&self, gate: Gate) -> Duration {
+        gate_timeout(gate) + EVENT_TIMEOUT + self.hold + QUIT_TIMEOUT * 3 + TERM_TIMEOUT
     }
 
     /// Writes the FUS test scheme into the template with one headless run.
@@ -568,6 +585,12 @@ impl Launcher {
                 return facts;
             }
         };
+        if plan.arm.kind == ArmKind::FindInFiles
+            && let Err(error) = files::write_text(&run_dir.join(record::FIND_SCRIPT_FILE), &record::find_script(plan.queries))
+        {
+            facts.failure = Some(format!("{error:#}"));
+            return facts;
+        }
         let argv = match self.argv(&run_dir.join("launch.args"), &options, &plan.program_arguments()) {
             Ok(argv) => argv,
             Err(error) => {
@@ -579,7 +602,7 @@ impl Launcher {
         let log = run_dir.join("launch.log");
         let spawn_options = SpawnOptions {
             responsibility: Responsibility::Own,
-            ..self.logged(self.ceiling(), "bench_ide_ceiling")
+            ..self.logged(self.ceiling(plan.arm.gate()), "bench_ide_ceiling")
         };
         let started = Instant::now();
         let mut ide = Box::pin(self.runner.checked_to_file(&child, &argv, &log, &spawn_options));
@@ -590,6 +613,7 @@ impl Launcher {
             Gate::Highlighted => wait_for_highlighted(ctx, &mut ide, run_dir, plan.kind == RunKind::Prime, &mut facts).await,
             Gate::Span { name, missing } => wait_for_span(ctx, &mut ide, run_dir, name, missing, &mut facts).await,
             Gate::LogLine { line, missing, .. } => wait_for_log_line(ctx, &mut ide, run_dir, line, missing, &mut facts).await,
+            Gate::FindInFiles => wait_for_find_in_files(ctx, &mut ide, run_dir, plan.queries, &mut facts).await,
         };
         facts.waited_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
         if exited.is_none() && facts.failure.is_none() {
@@ -817,21 +841,45 @@ enum Check {
     Failed(String),
 }
 
-/// Runs `check` every [`POLL`] until it ends the wait, the IDE exits, the session is interrupted, or [`EVENT_TIMEOUT`]
-/// passes. An exit, an interrupt and the timeout set the failure: `event` names the awaited event in the failure of an
-/// exit, and `timed_out` is the failure of the timeout. Answers how the IDE ended when it exited.
+/// How long the wait for `gate` takes at most.
+pub(crate) const fn gate_timeout(gate: Gate) -> Duration {
+    match gate {
+        Gate::FindInFiles => FIND_TIMEOUT,
+        Gate::Welcome { .. } | Gate::Highlighted | Gate::Span { .. } | Gate::LogLine { .. } => EVENT_TIMEOUT,
+    }
+}
+
+/// [`poll_until_within`] [`EVENT_TIMEOUT`].
 async fn poll_until<F>(
     ctx: &Ctx,
     ide: &mut F,
     facts: &mut LaunchFacts,
     event: &str,
     timed_out: String,
+    check: impl FnMut(Instant) -> Check,
+) -> Option<Ended>
+where
+    F: Future<Output = Result<String, ProcError>> + Unpin,
+{
+    poll_until_within(ctx, ide, facts, event, timed_out, EVENT_TIMEOUT, check).await
+}
+
+/// Runs `check` every [`POLL`] until it ends the wait, the IDE exits, the session is interrupted, or `timeout` passes.
+/// An exit, an interrupt and the timeout set the failure: `event` names the awaited event in the failure of an exit,
+/// and `timed_out` is the failure of the timeout. Answers how the IDE ended when it exited.
+async fn poll_until_within<F>(
+    ctx: &Ctx,
+    ide: &mut F,
+    facts: &mut LaunchFacts,
+    event: &str,
+    timed_out: String,
+    timeout: Duration,
     mut check: impl FnMut(Instant) -> Check,
 ) -> Option<Ended>
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
-    let deadline = Instant::now() + EVENT_TIMEOUT;
+    let deadline = Instant::now() + timeout;
     loop {
         tokio::select! {
             result = &mut *ide => {
@@ -995,6 +1043,24 @@ where
         } else {
             Check::Pending
         }
+    })
+    .await
+}
+
+/// Waits for the search span of the last of `queries`, an exit of the IDE, an interrupt or [`FIND_TIMEOUT`]. The
+/// performance plugin runs the searches one after another, so the last span ends after the others. An exit, an interrupt
+/// and the timeout set the failure.
+async fn wait_for_find_in_files<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, queries: &[String], facts: &mut LaunchFacts) -> Option<Ended>
+where
+    F: Future<Output = Result<String, ProcError>> + Unpin,
+{
+    let name = format!("{}{}", record::FIND_SEARCH_PREFIX, queries.last().map_or("", String::as_str));
+    let timed_out = format!(
+        "no {name} span within {} s: the IDE has no performance plugin, or a search did not finish",
+        FIND_TIMEOUT.as_secs()
+    );
+    poll_until_within(ctx, ide, facts, &format!("the {name} span ended"), timed_out, FIND_TIMEOUT, |_| {
+        if span_ended(run_dir, &name) { Check::Done } else { Check::Pending }
     })
     .await
 }
