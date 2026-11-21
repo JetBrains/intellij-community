@@ -486,7 +486,7 @@ public class FileEncodingTest implements TestDialog {
       public void documentChanged(@NotNull DocumentEvent event) {
         changed[0] = true;
       }
-    });
+    }, getTestRootDisposable());
 
     EncodingProjectManager.getInstance(getProject()).setEncoding(file, StandardCharsets.UTF_8);
     UIUtil.dispatchAllInvocationEvents();
@@ -494,8 +494,7 @@ public class FileEncodingTest implements TestDialog {
 
     //text in the editor changed
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
-    UIUtil.dispatchAllInvocationEvents();
-    assertTrue(changed[0]);
+    PlatformTestUtil.waitWithEventsDispatching("The document is not reloaded in UTF-8", () -> changed[0], 10);
     changed[0] = false;
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -516,9 +515,7 @@ public class FileEncodingTest implements TestDialog {
     EncodingProjectManager.getInstance(getProject()).setEncoding(file, StandardCharsets.US_ASCII);
     UIUtil.dispatchAllInvocationEvents();
     assertEquals(StandardCharsets.US_ASCII, file.getCharset());
-    UIUtil.dispatchAllInvocationEvents();
-
-    assertTrue(changed[0]); //reloaded again
+    PlatformTestUtil.waitWithEventsDispatching("The document is not reloaded in US-ASCII", () -> changed[0], 10);
 
     // after 'save as US_ASCII', the file is changed
     bytes = FileUtil.loadFileBytes(ioFile);
