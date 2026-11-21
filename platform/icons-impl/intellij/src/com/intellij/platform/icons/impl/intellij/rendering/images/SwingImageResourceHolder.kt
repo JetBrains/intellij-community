@@ -9,12 +9,15 @@ import com.intellij.platform.icons.impl.intellij.rendering.toIJPatcher
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.rendering.Dimensions
+import com.intellij.platform.icons.modifiers.SizeVariantPolicy
 import com.intellij.platform.icons.rendering.ImageModifiers
+import java.awt.Component
 import java.awt.Image
 import java.awt.image.ImageFilter
 
 internal interface SwingImageResourceHolder {
-  fun getImage(scale: ScaleContext, imageModifiers: ImageModifiers?): Image?
+  /** @param component the component the image is painted in, if known; passed to a legacy icon that paints the image */
+  fun getImage(scale: ScaleContext, imageModifiers: ImageModifiers?, component: Component? = null): Image?
   fun getExpectedDimensions(): Dimensions
 }
 
@@ -45,3 +48,6 @@ internal fun ImageModifiers?.toLoadParameters(): LoadIconParameters {
     isStroke = isStroke
   )
 }
+/** The size-variant policy resolved for the image ([SizeVariantPolicy.Exact] if the modifiers do not say). */
+internal fun ImageModifiers?.sizeVariantPolicy(): SizeVariantPolicy =
+  (this as? DefaultImageModifiers)?.sizeVariantPolicy ?: SizeVariantPolicy.Exact

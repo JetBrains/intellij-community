@@ -4,7 +4,7 @@ package com.intellij.platform.icons.impl.intellij
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.platform.icons.design.dp
 import com.intellij.platform.icons.iconDescriptor
-import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.imageResIconDescriptor
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.scale
 import com.intellij.platform.icons.scale.fitArea
@@ -142,7 +142,7 @@ class IconTest {
   @Test
   fun `should render icon to buffered image`() {
     IntelliJIconManager.activate()
-    val icon = imageIconDescriptor("actions/addFile.svg", IconTest::class.java.classLoader)
+    val icon = imageResIconDescriptor("actions/addFile.svg", IconTest::class.java.classLoader)
 
     val swingIcon = icon.createSwingIcon()
     val image = BufferedImage(swingIcon.iconWidth, swingIcon.iconHeight, BufferedImage.TYPE_INT_ARGB)

@@ -13,7 +13,7 @@ import com.intellij.platform.icons.design.badge
 import com.intellij.platform.icons.design.dp
 import com.intellij.platform.icons.design.rectangle
 import com.intellij.platform.icons.design.sRGB
-import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.imageResIconDescriptor
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.align
 import com.intellij.platform.icons.modifiers.margin
@@ -38,7 +38,7 @@ internal class IconsPanel : UISandboxPanel {
   override val title: String = "Icons"
 
   override fun createContent(disposable: Disposable): JComponent {
-    val sampleIcon = imageIconDescriptor("expui/fileTypes/actionScript.svg", AllIcons::class.java.classLoader)
+    val sampleIcon = imageResIconDescriptor("expui/fileTypes/actionScript.svg", AllIcons::class.java.classLoader)
     return panel {
       group(DevkitUiDslBundle.message("sandbox.border.title.basic.icons")) {
         row {

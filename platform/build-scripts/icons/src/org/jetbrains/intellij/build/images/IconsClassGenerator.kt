@@ -476,10 +476,6 @@ internal open class IconsClassGenerator(
       return
     }
 
-    if (!iconClassSpecificsGenerator.includeImage(image)) {
-      return
-    }
-
     processedIcons.incrementAndGet()
     if (image.phantom) {
       processedPhantom.incrementAndGet()

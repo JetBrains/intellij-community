@@ -16,10 +16,6 @@ internal interface IconClassSpecificsGenerator {
   fun appendDeprecationReplacementClass(generator: IconsClassGenerator, result: StringBuilder, iconName: CharSequence, deprecation: DeprecationData, level: Int)
   fun appendDeprecationReplacementReferenceClass(generator: IconsClassGenerator, result: StringBuilder, iconName: CharSequence, deprecation: DeprecationData, level: Int)
 
-  // Whether to emit the given image. Java generators keep every image.
-  // A Kotlin generator drops deprecated icons.
-  fun includeImage(image: ImageInfo): Boolean = true
-
   // The default methods below emit Java syntax. A Kotlin generator overrides them.
   fun appendPackageStatement(generator: IconsClassGenerator, result: StringBuilder, packageName: String?) {
     generator.append(result, "package $packageName;\n", 0)

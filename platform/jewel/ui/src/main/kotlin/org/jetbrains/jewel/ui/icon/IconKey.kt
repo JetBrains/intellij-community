@@ -20,7 +20,7 @@ public interface IconKey {
  * @param modifier The [IconModifier] to apply to the icon. Defaults to the identity modifier.
  */
 public fun IconDesigner.iconKey(iconKey: IconKey, modifier: IconModifier = IconModifier) {
-    image(iconKey.path(isNewUi = true), iconKey.iconClass.classLoader, modifier)
+    imageRes(iconKey.path(isNewUi = true), iconKey.iconClass.classLoader, modifier)
 }
 
 /** An [IconKey] that resolves to a single fixed icon [path], regardless of the UI mode. */

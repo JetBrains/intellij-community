@@ -29,6 +29,14 @@ interface FitAreaScale : IconScale {
     val width: IconUnit
     val height: IconUnit
     val relative: Boolean
+
+    /** Whether content smaller than the area is enlarged to fit it; if not, it keeps its size. */
+    val upscale: Boolean
+        get() = true
+
+    /** Whether content larger than the area is shrunk to fit it; if not, it keeps its size. */
+    val downscale: Boolean
+        get() = true
 }
 
 interface FillAreaScale : IconScale {
@@ -53,9 +61,24 @@ fun factor(factor: Double): FactorScale = IconManager.units().factorScale(factor
  *
  * @param relative - if true, the parent layer and icon scaling will affect the resulting scale, otherwise the scale
  *   will be in absolute units
+ * @param upscale - if false, content smaller than the area keeps its size instead of being enlarged
+ * @param downscale - if false, content larger than the area keeps its size instead of being shrunk; with
+ *   `upscale = false`, the area is a maximum size (e.g. for icons of arbitrary size chosen by the user)
+ *
+ * A fit that limits [upscale] or [downscale] resizes the content exactly as an icon's scale or on a layer directly in an
+ * icon; inside a `row`/`column`, the row reserves the content's own size for it.
  */
+fun fitArea(
+    width: IconUnit,
+    height: IconUnit,
+    relative: Boolean = true,
+    upscale: Boolean = true,
+    downscale: Boolean = true,
+): FitAreaScale = IconManager.units().fitAreaScale(width, height, relative, upscale, downscale)
+
+@Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
 fun fitArea(width: IconUnit, height: IconUnit, relative: Boolean = true): FitAreaScale =
-    IconManager.units().fitAreaScale(width, height, relative)
+    fitArea(width, height, relative, upscale = true, downscale = true)
 
 /**
  * Fill area scale will adjust the layer, including the sublayers, so that the resulting content is scaled to fill the

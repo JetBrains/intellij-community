@@ -8,6 +8,7 @@ import com.intellij.platform.icons.design.IconAnimationDesigner
 import com.intellij.platform.icons.design.IconDesigner
 import com.intellij.platform.icons.design.Shape
 import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
+import com.intellij.platform.icons.impl.UrlImageResourceLocation
 import com.intellij.platform.icons.impl.layers.AnimatedIconLayer
 import com.intellij.platform.icons.impl.layers.ImageIconLayer
 import com.intellij.platform.icons.impl.layers.LayoutIconLayer
@@ -22,6 +23,10 @@ abstract class DefaultIconDesigner : IconDesigner {
 
     override fun image(resourceLoader: ImageResourceLocation, modifier: IconModifier) {
         layers.add(ImageIconLayer(resourceLoader, modifier))
+    }
+
+    override fun image(url: String, modifier: IconModifier) {
+        image(UrlImageResourceLocation(url), modifier)
     }
 
     override fun icon(iconDescriptor: IconDescriptor, modifier: IconModifier) {

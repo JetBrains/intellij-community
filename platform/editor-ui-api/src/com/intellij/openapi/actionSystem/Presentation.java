@@ -13,8 +13,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.platform.icons.IconDescriptor;
+import com.intellij.platform.icons.scale.IconScale;
+import com.intellij.platform.icons.swing.SwingIconKt;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.ApiStatus;
@@ -64,18 +67,6 @@ public final class Presentation implements Cloneable {
   /** value: {@link IconDescriptor} descriptor, see {@link #getSelectedIconDescriptor()} */
   @ApiStatus.Experimental
   public static final @NonNls String PROP_SELECTED_ICON_DESCRIPTOR = "selectedIconDescriptor";
-
-  /**
-   * Returned by {@link #getIconDescriptor()} while the experimental icons pipeline is off ({@link ExperimentalIconRendering}).
-   * Means "must not be rendered": never pass it to the icons API, compare by identity.
-   */
-  @ApiStatus.Experimental
-  public static final IconDescriptor NO_ICON_DESCRIPTOR = new IconDescriptor() {
-    @Override
-    public String toString() {
-      return "NO_ICON_DESCRIPTOR";
-    }
-  };
   public static final @NonNls String PROP_DISABLED_ICON = "disabledIcon";
   public static final @NonNls String PROP_SELECTED_ICON = "selectedIcon";
   public static final @NonNls String PROP_HOVERED_ICON = "hoveredIcon";
@@ -108,6 +99,11 @@ public final class Presentation implements Cloneable {
   private Icon selectedIcon;
 
   private @Nullable Supplier<? extends @Nullable IconDescriptor> iconDescriptor;
+  /**
+   * The icon supplier {@link #iconDescriptor} was bridged from by {@link #setIcon}/{@link #setIconSupplier}, or {@code null}
+   * when the descriptor was set explicitly (an explicit descriptor is never replaced by a bridged one).
+   */
+  private @Nullable Supplier<? extends @Nullable Icon> iconDescriptorBridgedFrom;
   private @Nullable IconDescriptor hoveredIconDescriptor;
   private @Nullable IconDescriptor selectedIconDescriptor;
 
@@ -332,6 +328,13 @@ public final class Presentation implements Cloneable {
   }
 
   public @Nullable Icon getIcon() {
+    if (ExperimentalIconRendering.isEnabled()) {
+      IconDescriptor descriptor = getIconDescriptor();
+      if (descriptor == null) {
+        return null;
+      }
+      return SwingIconKt.createSwingIcon(descriptor, IconScale.Default);
+    }
     Supplier<? extends Icon> icon = this.icon;
     return icon == null ? null : icon.get();
   }
@@ -343,12 +346,17 @@ public final class Presentation implements Cloneable {
   /**
    * Icon descriptor for the experimental icons pipeline (see {@link ExperimentalIconRendering}).
    *
-   * @return {@link #NO_ICON_DESCRIPTOR} when the pipeline is off, otherwise the descriptor or {@code null} when none is set
+   * @return {@code null} when the pipeline is off; otherwise the descriptor, a descriptor bridged from the legacy icon when
+   * only an icon is set, or {@code null} when there is neither
    */
   @ApiStatus.Experimental
   public @Nullable IconDescriptor getIconDescriptor() {
     if (!ExperimentalIconRendering.isEnabled()) {
-      return NO_ICON_DESCRIPTOR;
+      return null;
+    }
+    if (iconDescriptor == null && icon != null) {
+      // the icon was set while the pipeline was off; bridge the raw supplier: getIcon() reads this descriptor
+      bridgeIconDescriptor(icon);
     }
     Supplier<? extends IconDescriptor> iconDescriptor = this.iconDescriptor;
     return iconDescriptor == null ? null : iconDescriptor.get();
@@ -367,6 +375,7 @@ public final class Presentation implements Cloneable {
 
   @ApiStatus.Experimental
   public void setIconDescriptorSupplier(@Nullable Supplier<? extends @Nullable IconDescriptor> iconDescriptor) {
+    iconDescriptorBridgedFrom = null;
     if (myListeners.isEmpty() || !ExperimentalIconRendering.isEnabled()) {
       this.iconDescriptor = iconDescriptor;
       return;
@@ -453,6 +462,7 @@ public final class Presentation implements Cloneable {
     }
     if (iconDescriptor == null) {
       iconDescriptor = other.iconDescriptor;
+      iconDescriptorBridgedFrom = other.iconDescriptorBridgedFrom;
     }
     Supplier<TextWithMnemonic> ownText = textWithMnemonicSupplier;
     Supplier<TextWithMnemonic> otherText = other.textWithMnemonicSupplier;
@@ -478,17 +488,20 @@ public final class Presentation implements Cloneable {
   }
 
   public void setIcon(@Nullable Icon icon) {
+    Supplier<Icon> supplier = icon == null ? null : () -> icon;
+    bridgeIconDescriptor(supplier);
     if (myListeners.isEmpty()) {
-      this.icon = icon == null ? null : () -> icon;
+      this.icon = supplier;
       return;
     }
 
     Icon oldIcon = this.icon == null ? null : this.icon.get();
-    this.icon = () -> icon;
+    this.icon = supplier;
     fireObjectPropertyChange(PROP_ICON, oldIcon, icon);
   }
 
   public void setIconSupplier(@Nullable Supplier<? extends @Nullable Icon> icon) {
+    bridgeIconDescriptor(icon);
     if (myListeners.isEmpty()) {
       this.icon = icon;
       return;
@@ -499,6 +512,23 @@ public final class Presentation implements Cloneable {
     Icon newIcon = icon == null ? null : icon.get();
     if (Objects.equals(oldIcon, newIcon)) return;
     fireObjectPropertyChange(PROP_ICON, oldIcon, newIcon);
+  }
+
+  /**
+   * Under the experimental icons pipeline, makes the descriptor a bridge of the legacy {@code icon} (converted lazily and once),
+   * unless a descriptor was set explicitly. Does nothing, and allocates nothing, while the pipeline is off.
+   */
+  private void bridgeIconDescriptor(@Nullable Supplier<? extends @Nullable Icon> icon) {
+    if (!ExperimentalIconRendering.isEnabled()) return;
+    if (iconDescriptor != null && iconDescriptorBridgedFrom == null) return;
+    if (icon != null && icon == iconDescriptorBridgedFrom) return;
+    iconDescriptor = icon == null ? null : new SynchronizedClearableLazy<>(() -> convertIconDescriptor(icon.get()));
+    iconDescriptorBridgedFrom = icon;
+  }
+
+  private static @Nullable IconDescriptor convertIconDescriptor(@Nullable Icon icon) {
+    if (icon == null) return null;
+    return SwingIconKt.toIconDescriptor(icon);
   }
 
   public @Nullable Icon getDisabledIcon() {
@@ -829,8 +859,10 @@ public final class Presentation implements Cloneable {
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
     setDescription(presentation.descriptionSupplier);
 
-    setIconSupplier(presentation.icon);
+    // the descriptor first: setIconSupplier keeps an explicit descriptor and reuses a bridge of the same icon supplier
     setIconDescriptorSupplier(presentation.iconDescriptor);
+    iconDescriptorBridgedFrom = presentation.iconDescriptorBridgedFrom;
+    setIconSupplier(presentation.icon);
 
     setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());

@@ -129,6 +129,16 @@ private inline fun findUrl(path: String, urlProvider: (String) -> URL?): URL? {
   return urlProvider(effectivePath)
 }
 
+/**
+ * The loader of the image at the `file:` or `jar:` [url], as for user icons ([com.intellij.openapi.util.findUserIconByPath])
+ * and icons found by URL ([com.intellij.openapi.util.IconLoader.findIcon]).
+ */
+@ApiStatus.Internal
+fun createImageDataLoaderByUrl(url: String): ImageDataLoader {
+  require(url.startsWith(FILE_SCHEME_PREFIX) || url.startsWith("jar:")) { "Image URL must be a file: or a jar: URL: $url" }
+  return if (url.startsWith(FILE_SCHEME_PREFIX)) ImageDataByFilePathLoader(url) else ImageDataByUrlLoader(url = URL(url))
+}
+
 internal class ImageDataByFilePathLoader(override val path: String) : PatchedImageDataLoader {
   override val url: URL
     get() = URL(path)

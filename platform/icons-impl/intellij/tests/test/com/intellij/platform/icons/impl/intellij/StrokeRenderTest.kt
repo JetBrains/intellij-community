@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.intellij
 
-import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.imageResIconDescriptor
 import com.intellij.platform.icons.impl.design.DefaultSRGB
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.patchSvg
@@ -148,7 +148,7 @@ class StrokeRenderTest {
 
   private fun render(path: String, modifier: IconModifier): BufferedImage {
     IntelliJIconManager.activate()
-    val swingIcon = imageIconDescriptor(path, StrokeRenderTest::class.java.classLoader, modifier).createSwingIcon()
+    val swingIcon = imageResIconDescriptor(path, StrokeRenderTest::class.java.classLoader, modifier).createSwingIcon()
     val image = BufferedImage(swingIcon.iconWidth, swingIcon.iconHeight, BufferedImage.TYPE_INT_ARGB)
     val g = image.createGraphics()
     try {

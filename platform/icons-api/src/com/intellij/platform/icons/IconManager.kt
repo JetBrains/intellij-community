@@ -78,7 +78,7 @@ interface IconManager {
  * inside components. (check intellij.platform.icons.api.rendering module), for usage inside swing, use toSwingIcon
  * method.
  *
- * Usage: ''' icon { image("icons/icon.svg", MyClass::class.java.classLoader) } '''
+ * Usage: ''' icon { imageRes("icons/icon.svg", MyClass::class.java.classLoader) } '''
  *
  * Check the designer interface for layer options. Also check intellij.platform.icons.api.swing module to find out how
  * to convert swing icons and new icons.
@@ -96,6 +96,17 @@ fun deferredIconDescriptor(
   evaluator: suspend () -> IconDescriptor,
 ): IconDescriptor = IconManager.getInstance().deferredIconDescriptor(placeholder, evaluator)
 
-fun imageIconDescriptor(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier): IconDescriptor = iconDescriptor {
-    image(path, classLoader, modifier)
+/** An icon of the image resource at [path] in [classLoader], see [IconDesigner.imageRes]. */
+fun imageResIconDescriptor(path: String, classLoader: ClassLoader, modifier: IconModifier = IconModifier): IconDescriptor =
+    iconDescriptor {
+        imageRes(path, classLoader, modifier)
+    }
+
+@Deprecated("Use imageResIconDescriptor for a class path resource", ReplaceWith("imageResIconDescriptor(path, classLoader, modifier)"))
+fun imageIconDescriptor(path: String, classLoader: ClassLoader, modifier: IconModifier = IconModifier): IconDescriptor =
+    imageResIconDescriptor(path, classLoader, modifier)
+
+/** An icon of the image at [url], a `file:` or `jar:` URL or a file path, see [IconDesigner.image]. */
+fun imageIconDescriptor(url: String, modifier: IconModifier = IconModifier): IconDescriptor = iconDescriptor {
+    image(url, modifier)
 }

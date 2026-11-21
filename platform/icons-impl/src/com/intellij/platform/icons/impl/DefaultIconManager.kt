@@ -5,6 +5,7 @@ import com.intellij.platform.icons.DeferredIconDescriptor
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.IconIdentifier
 import com.intellij.platform.icons.IconManager
+import com.intellij.platform.icons.ImageResourceLocation
 import com.intellij.platform.icons.design.IconDesigner
 import com.intellij.platform.icons.design.SvgPatcherDesigner
 import com.intellij.platform.icons.design.UnitsFactory
@@ -88,6 +89,7 @@ abstract class DefaultIconManager : IconManager {
         polymorphic(DeferredIconDescriptor::class, DefaultDeferredIconDescriptor::class, deferredIconDeserializer)
         polymorphic(IconModifier::class, IconModifier.Companion::class, IconModifierConstSerializer)
         polymorphic(IconIdentifier::class, StringIconIdentifier::class, StringIconIdentifier.serializer())
+        polymorphic(ImageResourceLocation::class, UrlImageResourceLocation::class, UrlImageResourceLocation.serializer())
 
         iconLayer(AnimatedIconLayer::class)
         iconLayer(NestedIconLayer::class)
