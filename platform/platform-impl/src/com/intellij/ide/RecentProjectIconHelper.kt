@@ -159,6 +159,7 @@ class RecentProjectIconHelper {
       isProjectValid = isProjectValid,
       iconSize = iconSize,
       name = name,
+      isDark = !JBColor.isBright(),
     ))
   }
 
@@ -205,9 +206,10 @@ private data class LocalProjectIconKey(
   val isProjectValid: Boolean,
   override val iconSize: Int,
   val name: String?,
+  val isDark: Boolean,
 ) : DeferredIconKey() {
   override fun loadIcon(): Icon =
-    getCustomIcon(path, isProjectValid, iconSize)
+    getCustomIcon(path, isProjectValid, iconSize, isDark)
     ?: getGeneratedProjectIcon(path, isProjectValid, name, iconSize)
 
   override fun getCachedIcon(): Icon? = projectIconCache.get(Pair(path, iconSize))?.icon
@@ -225,8 +227,8 @@ private data class NonLocalProjectIconKey(
   override fun getCachedIcon(): Icon? = nonLocalProjectIconCache.get(Pair(id, iconSize))?.icon
 }
 
-private fun getCustomIconFileInfo(file: Path): Pair<Path, BasicFileAttributes>? {
-  val lookup = if (!JBColor.isBright()) sequenceOf("icon_dark.svg", "icon_dark.png", "icon.svg", "icon.png") else sequenceOf("icon.svg", "icon.png")
+private fun getCustomIconFileInfo(file: Path, isDark: Boolean = !JBColor.isBright()): Pair<Path, BasicFileAttributes>? {
+  val lookup = if (isDark) sequenceOf("icon_dark.svg", "icon_dark.png", "icon.svg", "icon.png") else sequenceOf("icon.svg", "icon.png")
   val file = lookup
                .mapNotNull { RecentProjectIconHelper.getDotIdeaPath(file)?.resolve(it) }
                .firstOrNull { Files.exists(it) } ?: return null
@@ -235,7 +237,7 @@ private fun getCustomIconFileInfo(file: Path): Pair<Path, BasicFileAttributes>? 
   return Pair(file, fileInfo)
 }
 
-private fun getCustomIcon(path: Path, isProjectValid: Boolean, iconSize: Int): Icon? {
+private fun getCustomIcon(path: Path, isProjectValid: Boolean, iconSize: Int, isDark: Boolean): Icon? {
   // IJPL-194035
   // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
   //	1.	it may trigger Ijent initialization for each recent project
@@ -244,12 +246,11 @@ private fun getCustomIcon(path: Path, isProjectValid: Boolean, iconSize: Int): I
     return null
   }
 
-  val isDark = !JBColor.isBright()
-  val (file, fileInfo) = getCustomIconFileInfo(path) ?: return null
+  val (file, fileInfo) = getCustomIconFileInfo(path, isDark) ?: return null
   val timestamp = fileInfo.lastModifiedTime().toMillis()
 
   var iconWrapper = projectIconCache.get(Pair(path, iconSize))
-  if (iconWrapper != null && isCachedIcon(iconWrapper, isProjectValid, timestamp)) {
+  if (iconWrapper != null && isCachedIcon(iconWrapper, isProjectValid, timestamp, isDark = isDark)) {
     return iconWrapper.icon
   }
 
@@ -321,11 +322,17 @@ private fun getGeneratedProjectIcon(
   return generatedProjectIcon
 }
 
-private fun isCachedIcon(icon: ProjectIcon, isProjectValid: Boolean, timestamp: Long? = null, name: String? = null): Boolean {
+private fun isCachedIcon(
+  icon: ProjectIcon,
+  isProjectValid: Boolean,
+  timestamp: Long? = null,
+  name: String? = null,
+  isDark: Boolean = !JBColor.isBright(),
+): Boolean {
   val presentation = (icon.icon as? AvatarIcon)?.presentation as? ProjectAvatarPresentation
   val isNameChanged = presentation?.let { it.name != name } ?: false
   val isTimestampChanged = timestamp?.let { icon.timestamp != it } ?: false
-  val isDarkChanged = icon.isDark?.let { it != !JBColor.isBright() } ?: false
+  val isDarkChanged = icon.isDark?.let { it != isDark } ?: false
 
   return icon.isProjectValid == isProjectValid
          && icon.lastUsedProjectIconSize == userScaledProjectIconSize()
