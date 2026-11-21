@@ -42,6 +42,8 @@ com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - getQuickInfo(com.intellij.psi.PsiElement):java.lang.String
+f:com.jetbrains.python.extensions.python.PyCallExpressionExtKt
+- sf:isCalleeName(com.jetbrains.python.psi.PyCallExpression,com.jetbrains.python.nameResolver.FQNamesProvider[]):Z
 a:com.jetbrains.python.inspections.PyInspectionExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V

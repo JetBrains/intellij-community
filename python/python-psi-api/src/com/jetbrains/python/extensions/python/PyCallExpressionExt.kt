@@ -3,20 +3,9 @@ package com.jetbrains.python.extensions.python
 
 import com.jetbrains.python.nameResolver.FQNamesProvider
 import com.jetbrains.python.nameResolver.NameResolverTools
-import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyPossibleClassMember
-import org.jetbrains.annotations.ApiStatus
-
-/**
- * Checks if ``foo = SomeExpr()`` where foo is class attribute
- */
-@get:ApiStatus.Internal val PyCallExpression.isClassAttribute: Boolean
-  get() =
-    (parent as? PyAssignmentStatement)?.targets?.filterIsInstance<PyPossibleClassMember>()?.any { it.containingClass != null } == true
 
 /**
  * Checks if callee has certain name. Only name is checked, so import aliases aren't supported, but it works pretty fast
  */
 fun PyCallExpression.isCalleeName(vararg names: FQNamesProvider): Boolean = NameResolverTools.isCalleeShortCut(this, *names)
-

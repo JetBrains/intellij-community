@@ -99,7 +99,6 @@
     <module name="intellij.python.codeInsight"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
-    <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.helpersLocator"/>
@@ -448,6 +447,8 @@
                     serviceImplementation="com.jetbrains.python.packaging.management.PythonPackageManagerServiceImpl"/>
     <projectService serviceInterface="com.intellij.python.sdk.backend.PythonInterpreterPathsSetup"
                     serviceImplementation="com.jetbrains.python.sdk.PythonInterpreterFactsPathsSetup"/>
+    <projectService serviceInterface="com.jetbrains.python.module.PyModuleService"
+                    serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
 
     <externalAnnotator language="Python" implementationClass="com.jetbrains.python.validation.Pep8ExternalAnnotator"/>
 

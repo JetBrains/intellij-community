@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
-    <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />

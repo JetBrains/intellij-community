@@ -2033,7 +2033,6 @@ python/python-black/tests
 python/python-code-insight
 python/python-console
 python/python-copyright
-python/python-core-impl
 python/python-devkit
 python/python-exec-service
 python/python-exec-service/execService.python

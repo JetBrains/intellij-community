@@ -547,6 +547,18 @@ a:com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant
 - a:getFunctionName():java.lang.String
 - getHighlightRange():com.intellij.openapi.util.TextRange
 - hashCode():I
+f:com.jetbrains.python.extensions.NameAndElement
+- <init>(com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement):V
+- f:component1():com.intellij.psi.util.QualifiedName
+- f:component2():com.intellij.psi.PsiElement
+- f:copy(com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement):com.jetbrains.python.extensions.NameAndElement
+- bs:copy$default(com.jetbrains.python.extensions.NameAndElement,com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement,I,java.lang.Object):com.jetbrains.python.extensions.NameAndElement
+- equals(java.lang.Object):Z
+- f:getElement():com.intellij.psi.PsiElement
+- f:getName():com.intellij.psi.util.QualifiedName
+- hashCode():I
+f:com.jetbrains.python.extensions.QualifiedNameExtKt
+- sf:getRelativeNameTo(com.intellij.psi.util.QualifiedName,com.intellij.psi.util.QualifiedName):com.intellij.psi.util.QualifiedName
 f:com.jetbrains.python.extensions.TargetWithVariantExtKt
 - sf:asPsiElement(com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant,com.jetbrains.python.run.AbstractPythonRunConfiguration,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.PsiElement
 - bs:asPsiElement$default(com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant,com.jetbrains.python.run.AbstractPythonRunConfiguration,com.intellij.openapi.vfs.VirtualFile,I,java.lang.Object):com.intellij.psi.PsiElement

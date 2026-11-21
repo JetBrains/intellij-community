@@ -77,7 +77,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.community.impl.conda"/>
-    <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.impl" required-if-available="intellij.platform.backend"/>

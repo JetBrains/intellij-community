@@ -86,7 +86,6 @@ jvm_library(
         "//xml/xml-psi-impl:psi-impl",
         "//python/python-ast:ast",
         "//python/openapi:community",
-        "//python/python-core-impl:community-core-impl",
         "//python/python-parser:parser",
         "//python/python-psi-api:psi",
         "//python/python-psi-impl:psi-impl",

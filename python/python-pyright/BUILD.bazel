@@ -25,7 +25,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//python/python-sdk/backend",
-        "//python/python-core-impl:community-core-impl",
         "//platform/code-style-impl:codeStyle-impl",
         "//platform/editor-ui-ex:editor-ex",
         "//platform/ide-core",

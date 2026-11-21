@@ -126,7 +126,6 @@ jvm_library(
         "//platform/ml-api:ml",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/test",
-        "//python/python-core-impl:community-core-impl",
         "//python/python-sdk/backend",
         "//python/python-sdk/common",
         "//libraries/gson",

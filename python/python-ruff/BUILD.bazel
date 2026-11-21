@@ -45,7 +45,6 @@ jvm_library(
         "//platform/lang-impl",
         "//python:python-community-impl",
         "//python/python-sdk/backend",
-        "//python/python-core-impl:community-core-impl",
         "//platform/core-impl",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",

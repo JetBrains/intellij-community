@@ -70,7 +70,6 @@
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.python.ast" />
     <orderEntry type="module" module-name="intellij.python.community" />
-    <orderEntry type="module" module-name="intellij.python.community.core.impl" />
     <orderEntry type="module" module-name="intellij.python.parser" />
     <orderEntry type="module" module-name="intellij.python.psi" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" />

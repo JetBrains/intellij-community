@@ -1,11 +1,10 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.python.community.impl.poetry.common"/>
     <module name="intellij.python.community.impl.pipenv"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.python.ast"/>
     <module name="intellij.python.community"/>
-    <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.helpersLocator"/>
@@ -24,8 +23,8 @@
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.syntax.core"/>
     <module name="intellij.python.venv"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <!-- Declare that we support core Python functionality -->
   <module value="com.intellij.modules.python"/>
 </idea-plugin>

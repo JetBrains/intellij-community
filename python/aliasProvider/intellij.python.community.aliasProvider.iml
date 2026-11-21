@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="intellij.python.psi.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.impl" scope="RUNTIME" />

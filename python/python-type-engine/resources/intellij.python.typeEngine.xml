@@ -29,7 +29,6 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.pyproject"/>

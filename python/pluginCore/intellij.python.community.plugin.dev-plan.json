@@ -133,9 +133,6 @@
             "module": "intellij.python.community.impl.conda"
         },
         {
-            "module": "intellij.python.community.core.impl"
-        },
-        {
             "module": "intellij.python.community.helpersLocator"
         },
         {

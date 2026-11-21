@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="RUNTIME" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="RUNTIME" />
