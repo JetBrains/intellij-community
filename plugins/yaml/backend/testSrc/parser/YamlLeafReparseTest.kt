@@ -155,30 +155,21 @@ class YamlLeafReparseTest {
   }
 
   /**
-   * Makes each one-char insertion and each one-char deletion in each of [SAMPLES].
-   * If the leaf reparse accepts the change, the committed tree must be equal to a parse of the new text.
+   * Makes each one-char insertion and each one-char deletion at each offset of the parser and lexer test data and of [SAMPLES].
+   * If the leaf reparse accepts the change, the tree must be equal to a parse of the new text.
+   * A hunt adds the other test data and more edits, see [YamlReparseHunt].
    */
   @Test
-  fun `each accepted leaf reparse gives the tree of a full parse`() = timeoutRunBlocking(2.minutes) {
+  fun `each accepted leaf reparse gives the tree of a full parse`() = timeoutRunBlocking(if (YamlReparseHunt.wide) 60.minutes else 5.minutes) {
     withContext(Dispatchers.EDT) {
       val chars = listOf("x", " ", ":", "#", "\"", "'", "-", ",", "[", "]", "{", "}", "\\", "!", "&", "*", "|", ">", "?", "%", "\t")
-      var accepted = 0
-      var total = 0
-      for (sample in SAMPLES) {
-        for (offset in 0..sample.length) {
-          val changes = chars.map { TextRange(offset, offset) to it } +
-                        if (offset < sample.length) listOf(TextRange(offset, offset + 1) to "") else emptyList()
-          for ((range, replacement) in changes) {
-            total++
-            if (isLeafReparse(sample, range, replacement)) {
-              accepted++
-              checkCommit(sample, range, replacement)
-            }
-          }
-        }
+      val insertions = if (YamlReparseHunt.wide) (chars + YAML_HUNT_INSERTIONS).distinct() else chars
+      val deletions = if (YamlReparseHunt.wide) listOf(1, 2, 3, 4) else listOf(1)
+      val result = YamlReparseOracle(project.get()).bruteForce("Leaf brute force", yamlReparseTexts(SAMPLES), setOf(YamlReparseKind.LEAF)) { text, offset ->
+        yamlBruteForceChanges(text, offset, insertions, deletions)
       }
-      println("Leaf reparse accepted $accepted of $total changes")
-      assertTrue(accepted > total / 10, "accepted $accepted of $total")
+      assertTrue(result.failures.isEmpty()) { result.failures.values.take(5).joinToString("\n\n") }
+      assertTrue(result.accepted > result.total / 10, "accepted ${result.accepted} of ${result.total}")
     }
   }
 

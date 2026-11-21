@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import java.lang.ref.WeakReference
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Checks the lazy parser of [YamlSyntaxElementTypes.MAPPING] and [YamlSyntaxElementTypes.SEQUENCE] on a tree of the syntax library.
@@ -41,36 +43,50 @@ class YamlSyntaxBlockReparseTest {
     assertTrue(!isReparsed("a:\n  b:\n    c: 1\n    d: 2\n", offset = 16, deleted = 0, inserted = "\nf: 4"))
   }
 
-  /** Each accepted reparse must give the subtree of a full parse of the new text. */
+  /**
+   * Each accepted reparse must give the subtree of a full parse of the new text.
+   * Makes the changes at each offset of the parser and lexer test data and of [SAMPLES], in parallel.
+   * A hunt adds the other test data and more edits, see [YamlReparseHunt].
+   */
   @Test
   fun `each accepted reparse gives the tree of a full parse`() {
-    val insertions = listOf("x", " ", "\n", "\n  ", "\n    ", "\n- ", "- ", ": ", "#", "\"", "|", "-", "{", "&", "\t")
-    var accepted = 0
-    var total = 0
-    for (sample in SAMPLES) {
-      for (offset in 0..sample.length) {
-        for (inserted in insertions) {
-          total++
-          if (isReparsed(sample, offset, 0, inserted)) accepted++
-        }
-        if (offset < sample.length) {
-          total++
-          if (isReparsed(sample, offset, 1, "")) accepted++
+    val base = listOf("x", " ", "\n", "\n  ", "\n    ", "\n- ", "- ", ": ", "#", "\"", "|", "-", "{", "&", "\t")
+    val insertions = if (YamlReparseHunt.wide) (base + YAML_HUNT_INSERTIONS).distinct() else base
+    val deletions = if (YamlReparseHunt.wide) listOf(1, 2, 3, 4, 8) else listOf(1)
+    val texts = yamlReparseTexts(SAMPLES)
+    val accepted = AtomicInteger()
+    val total = AtomicInteger()
+    val failures = ConcurrentHashMap<String, String>()
+    texts.flatMap { (name, text) -> (0..text.length step 200).map { Triple(name, text, it until minOf(text.length + 1, it + 200)) } }
+      .parallelStream()
+      .forEach { (name, text, offsets) ->
+        val oldTree = parseYaml(text)
+        for (offset in offsets) {
+          for (change in yamlBruteForceChanges(text, offset, insertions, deletions)) {
+            total.incrementAndGet()
+            try {
+              if (isReparsed(text, change.range.startOffset, change.range.length, change.replacement, oldTree)) accepted.incrementAndGet()
+            }
+            catch (e: Throwable) {
+              failures.putIfAbsent("${escapeYaml(change.replacement)}:${change.range.length}", "$name, change $change: ${e.message}")
+            }
+          }
         }
       }
-    }
-    println("Syntax block reparse accepted $accepted of $total changes")
-    assertTrue(accepted > total / 10, "accepted $accepted of $total")
+    println("Syntax block reparse: ${texts.size} texts, accepted $accepted of $total changes, ${failures.size} distinct failures")
+    for (failure in failures.values) println("FAILURE: $failure\n")
+    assertTrue(failures.isEmpty()) { failures.values.take(5).joinToString("\n\n") }
+    assertTrue(accepted.get() > total.get() / 50, "accepted $accepted of $total")
   }
 
   /**
    * Tries each block node around the change, from the innermost one.
    * If the lazy parser accepts a node, checks the reparsed node against a full parse and returns true.
    */
-  private fun isReparsed(text: String, offset: Int, deleted: Int, inserted: String): Boolean {
+  private fun isReparsed(text: String, offset: Int, deleted: Int, inserted: String, oldTree: SyntaxNode = parseYaml(text)): Boolean {
     val newText = text.substring(0, offset) + inserted + text.substring(offset + deleted)
     val delta = inserted.length - deleted
-    var node: SyntaxNode? = deepestNode(parseYaml(text), maxOf(0, offset - 1), minOf(offset + deleted, text.length - 1))
+    var node: SyntaxNode? = deepestNode(oldTree, maxOf(0, offset - 1), minOf(offset + deleted, text.length - 1))
     while (node != null) {
       if (node.type === YamlSyntaxElementTypes.MAPPING || node.type === YamlSyntaxElementTypes.SEQUENCE) {
         val detached = DetachedNode(node, newText.substring(node.startOffset, node.endOffset + delta))

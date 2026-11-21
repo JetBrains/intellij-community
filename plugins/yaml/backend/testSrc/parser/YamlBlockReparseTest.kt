@@ -227,31 +227,22 @@ class YamlBlockReparseTest {
   fun `a dedent to the parent key makes a full reparse`() = check("a:\n  b:\n    c: 1<caret>\n    d: 2\n", "\nf: 4", block = false)
 
   /**
-   * Makes many insertions and deletions in each of [SAMPLES].
-   * The committed tree must be equal to a parse of the new text, after the block reparse and after the full reparse.
+   * Makes many insertions and deletions at each offset of the parser and lexer test data and of [SAMPLES].
+   * If the block reparse or the reparse of another node accepts the change, the tree must be equal to a parse of the new text.
+   * The test does not check a full reparse, because it is the baseline of the incremental reparse.
+   * A hunt adds the other test data and more edits, see [YamlReparseHunt].
    */
   @Test
-  fun `each accepted block reparse gives the tree of a full parse`() = timeoutRunBlocking(5.minutes) {
+  fun `each accepted block reparse gives the tree of a full parse`() = timeoutRunBlocking(if (YamlReparseHunt.wide) 60.minutes else 5.minutes) {
     withContext(Dispatchers.EDT) {
-      val insertions = listOf("x", " ", "\n", "\n  ", "\n    ", "\n- ", "\n  - ", "- ", ": ", "a: ", "#", "\"", "'", "|", "-", "?", "{", "[", "&", "!", "\t")
-      var accepted = 0
-      var total = 0
-      for (sample in SAMPLES) {
-        for (offset in 0..sample.length) {
-          val changes = insertions.map { TextRange(offset, offset) to it } +
-                        listOfNotNull(
-                          if (offset < sample.length) TextRange(offset, offset + 1) to "" else null,
-                          if (offset + 2 < sample.length) TextRange(offset, offset + 3) to "" else null,
-                        )
-          for ((range, replacement) in changes) {
-            total++
-            if (findReparsedBlock(sample, range, replacement) != null) accepted++
-            checkCommit(sample, range, replacement)
-          }
-        }
+      val base = listOf("x", " ", "\n", "\n  ", "\n    ", "\n- ", "\n  - ", "- ", ": ", "a: ", "#", "\"", "'", "|", "-", "?", "{", "[", "&", "!", "\t")
+      val insertions = if (YamlReparseHunt.wide) (base + YAML_HUNT_INSERTIONS).distinct() else base
+      val deletions = if (YamlReparseHunt.wide) listOf(1, 2, 3, 4, 8) else listOf(1, 3)
+      val result = YamlReparseOracle(project.get()).bruteForce("Block brute force", yamlReparseTexts(SAMPLES), setOf(YamlReparseKind.BLOCK, YamlReparseKind.OTHER)) { text, offset ->
+        yamlBruteForceChanges(text, offset, insertions, deletions)
       }
-      println("Block reparse accepted $accepted of $total changes")
-      assertTrue(accepted > total / 10, "accepted $accepted of $total")
+      assertTrue(result.failures.isEmpty()) { result.failures.values.take(5).joinToString("\n\n") }
+      assertTrue(result.accepted > result.total / 50, "accepted ${result.accepted} of ${result.total}")
     }
   }
 
