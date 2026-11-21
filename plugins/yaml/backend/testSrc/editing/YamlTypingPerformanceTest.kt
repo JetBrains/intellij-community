@@ -1,13 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.editing
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightProjectFixture
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PerformanceUnitTest
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.StressTestApplication
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.yaml.psi.YAMLFile
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Measures the typing in a large OpenAPI file, see IJPL-63225.
@@ -18,90 +27,95 @@ import org.jetbrains.yaml.psi.YAMLFile
  * The flat-mapping, flat-sequence and long-line tests type in the middle line of a file with one root key over all of the file.
  * There, a block or leaf check costs more than a full reparse, so the reparse must fall back to a full reparse.
  */
+@StressTestApplication
+@TestApplication
 @PerformanceUnitTest
-class YamlTypingPerformanceTest : BasePlatformTestCase() {
-  @PerformanceUnitTest
+class YamlTypingPerformanceTest : YamlPerformanceTestCase() {
+  private val projectFixture = codeInsightProjectFixture()
+  private val myFixture by codeInsightFixture(projectFixture)
+
+  @Test
   fun testTypingInDoubleQuotedScalar() = doTest("description: \"Returns the item $MIDDLE_ITEM", "x".repeat(10))
 
-  @PerformanceUnitTest
+  @Test
   fun testTypingInPlainScalar() = doTest("x-note: plain text of the item $MIDDLE_ITEM", "x".repeat(10))
 
-  @PerformanceUnitTest
+  @Test
   fun testTypingInComment() = doTest("# The comment of the operation $MIDDLE_ITEM", "x".repeat(10))
 
-  @PerformanceUnitTest
+  @Test
   fun testTypingWordsInPlainScalar() = doTest("x-note: plain text of the item $MIDDLE_ITEM", " word".repeat(2), atLineEnd = true)
 
-  @PerformanceUnitTest
+  @Test
   fun testTypingInKey() = doTest("      operation", "x".repeat(10))
 
-  @PerformanceUnitTest
+  @Test
   fun testTypingInBlockScalar() = doTest("block text of the item $MIDDLE_ITEM", "x".repeat(10))
 
-  @PerformanceUnitTest
+  @Test
   fun testTypingInFlowMappingValue() = doTest("x-flow: {first: one", "x".repeat(10))
 
-  @PerformanceUnitTest
+  @Test
   fun testEnterAfterPlainScalar() = doTest("x-note: plain text of the item $MIDDLE_ITEM", "\n".repeat(10), atLineEnd = true)
 
-  @PerformanceUnitTest
+  @Test
   fun testTypingInKeyInSmallFile() = doTest("      operation", "x".repeat(10), items = SMALL_FILE_ITEMS)
 
-  @PerformanceUnitTest
+  @Test
   fun testTypingInPlainScalarInSmallFile() = doTest("x-note: plain text of the item $SMALL_MIDDLE_ITEM", "x".repeat(10), items = SMALL_FILE_ITEMS)
 
-  @PerformanceUnitTest
+  @Test
   fun testEnterAfterPlainScalarInSmallFile() =
     doTest("x-note: plain text of the item $SMALL_MIDDLE_ITEM", "\n".repeat(10), atLineEnd = true, items = SMALL_FILE_ITEMS)
 
-  @PerformanceUnitTest
+  @Test
   fun testTypingInKeyInFlatMapping() =
     doTest("  key_$FLAT_MIDDLE_LINE", "x".repeat(10), text = flatMappingText(), markerStart = "en:\n", warmups = FLAT_WARMUPS)
 
-  @PerformanceUnitTest
+  @Test
   fun testEnterInFlatMapping() =
     doTest("  key_$FLAT_MIDDLE_LINE", "\n".repeat(10), atLineEnd = true, text = flatMappingText(), markerStart = "en:\n",
            warmups = FLAT_WARMUPS)
 
-  @PerformanceUnitTest
+  @Test
   fun testOpenBracketInFlatMappingValue() =
     doTest("  key_$FLAT_MIDDLE_LINE: ", "[".repeat(10), text = flatMappingText(), markerStart = "en:\n", warmups = FLAT_WARMUPS)
 
-  @PerformanceUnitTest
+  @Test
   fun testEnterInFlatSequence() =
     doTest("  - item $FLAT_MIDDLE_LINE", "\n".repeat(10), atLineEnd = true, text = flatSequenceText(), markerStart = "items:\n",
            warmups = FLAT_WARMUPS)
 
-  @PerformanceUnitTest
+  @Test
   fun testTypingInLongPlainLine() =
     doTest("word$LONG_LINE_MIDDLE_WORD", "x".repeat(10), text = longPlainLineText(), markerStart = "data: ", warmups = FLAT_WARMUPS)
 
-  @PerformanceUnitTest
+  @Test
   fun testHighlighterUpdateInDoubleQuotedScalar() = doHighlighterTest("description: \"Returns the item $MIDDLE_ITEM")
 
-  @PerformanceUnitTest
+  @Test
   fun testHighlighterUpdateInKey() = doHighlighterTest("      operation")
 
-  @PerformanceUnitTest
+  @Test
   fun testHighlighterUpdateInBlockScalar() = doHighlighterTest("block text of the item $MIDDLE_ITEM")
 
   /**
    * Inserts 10 chars after [caretMarker] in the middle item, one char at a time, and does not commit the document.
    * So it measures only the update of the editor highlighter, which relexes the text from a restart point of the lexer.
    */
-  private fun doHighlighterTest(caretMarker: String) {
-    myFixture.configureByText("openapi.yaml", openApiText())
-    assertInstanceOf(myFixture.editor.highlighter, LexerEditorHighlighter::class.java)
+  private fun doHighlighterTest(caretMarker: String) = onEdt {
+    myFixture.configureByText("openapi.yaml", openApiText(ITEMS))
+    assertInstanceOf(LexerEditorHighlighter::class.java, myFixture.editor.highlighter)
     val document = myFixture.editor.document
     var offset = 0
 
-    Benchmark.newBenchmark(getTestName(false)) {
+    benchmark {
       repeat(10) { i ->
-        WriteCommandAction.runWriteCommandAction(project) { document.insertString(offset + i, "x") }
+        WriteCommandAction.runWriteCommandAction(myFixture.project) { document.insertString(offset + i, "x") }
       }
     }.setup {
       offset = markerEnd(document.charsSequence, caretMarker, itemStart(MIDDLE_ITEM))
-    }.start()
+    }.startForTest()
   }
 
   /**
@@ -121,21 +135,31 @@ class YamlTypingPerformanceTest : BasePlatformTestCase() {
     text: String = openApiText(items),
     markerStart: String = itemStart(items / 2),
     warmups: Int = 1,
-  ) {
+  ) = onEdt {
     myFixture.configureByText("openapi.yaml", text)
-    assertInstanceOf(myFixture.file, YAMLFile::class.java)
+    assertInstanceOf(YAMLFile::class.java, myFixture.file)
     val document = myFixture.editor.document
 
-    Benchmark.newBenchmark(getTestName(false)) {
+    benchmark {
       for (char in typedText) {
         myFixture.type(char)
-        PsiDocumentManager.getInstance(project).commitDocument(document)
+        PsiDocumentManager.getInstance(myFixture.project).commitDocument(document)
       }
     }.setup {
       val chars = document.charsSequence
       val markerEnd = markerEnd(chars, caretMarker, markerStart)
       myFixture.editor.caretModel.moveToOffset(if (atLineEnd) chars.indexOf('\n', markerEnd) else markerEnd)
-    }.warmupIterations(warmups).start()
+    }.warmupIterations(warmups).startForTest()
+  }
+
+  /**
+   * Runs [action] on the EDT, as the editor and the typing need it.
+   * One test of a large file can type for some minutes, so the timeout is long.
+   */
+  private fun onEdt(action: () -> Unit) {
+    timeoutRunBlocking(timeout = 10.minutes) {
+      withContext(Dispatchers.EDT) { action() }
+    }
   }
 }
 
@@ -150,6 +174,7 @@ private fun markerEnd(text: CharSequence, marker: String, anchor: String): Int {
 /** Returns the first line of the item [item] of the OpenAPI file. */
 private fun itemStart(item: Int): String = "  /items/$item:\n"
 
+/** The items of the OpenAPI file of about 2 MB, below the size limit of the code insight. */
 private const val ITEMS = 5000
 private const val MIDDLE_ITEM = ITEMS / 2
 
@@ -172,27 +197,6 @@ private const val FLAT_WARMUPS = 4
 /** The items of a small file of about 4 KB. */
 private const val SMALL_FILE_ITEMS = 10
 private const val SMALL_MIDDLE_ITEM = SMALL_FILE_ITEMS / 2
-
-/** Builds an OpenAPI file with [items] items. The default file has about 2 MB, below the size limit of the code insight. */
-private fun openApiText(items: Int = ITEMS): String = buildString {
-  append("openapi: \"3.0.3\"\n")
-  append("paths:\n")
-  for (i in 0 until items) {
-    append("  /items/$i:\n")
-    append("    get:\n")
-    append("      summary: \"Get the item $i\"\n")
-    append("      description: \"Returns the item $i with all its fields. It is a long text of the description.\"\n")
-    append("      # The comment of the operation $i\n")
-    append("      operationId: get-item-$i\n")
-    append("      x-note: plain text of the item $i\n")
-    append("      x-text: |\n")
-    append("        block text of the item $i\n")
-    append("      x-flow: {first: one, second: two}\n")
-    append("      responses:\n")
-    append("        \"200\":\n")
-    append("          description: OK\n")
-  }
-}
 
 /** Builds a file with one root key over all of the file, such as a Rails i18n file. */
 private fun flatMappingText(): String = buildString {
