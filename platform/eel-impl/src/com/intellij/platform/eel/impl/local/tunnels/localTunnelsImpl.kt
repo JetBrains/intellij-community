@@ -37,6 +37,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
@@ -164,10 +165,32 @@ private suspend fun deleteFileSilently(file: Path) {
   }
 }
 
-private suspend fun getConnectionToRemotePortImpl(args: GetConnectionToRemotePortArgs): Connection = withContext(Dispatchers.IO) {
-  val socketChannel = args.protocolPreference.protocolFamily?.let {
-    SocketChannel.open(it)
-  } ?: SocketChannel.open()
+private suspend fun getConnectionToRemotePortImpl(args: GetConnectionToRemotePortArgs): Connection {
+  // a call that throws, including a cancel, leaves no open channel.
+  // it also covers a ready result that `withContext` drops on a cancel.
+  var openedChannel: SocketChannel? = null
+  try {
+    return withContext(Dispatchers.IO) {
+      val socketChannel = args.protocolPreference.protocolFamily?.let {
+        SocketChannel.open(it)
+      } ?: SocketChannel.open()
+      openedChannel = socketChannel
+      connectSocketChannel(socketChannel, args)
+      SocketAdapter(socketChannel)
+    }
+  }
+  catch (e: Throwable) {
+    try {
+      openedChannel?.close()
+    }
+    catch (closeError: Throwable) {
+      e.addSuppressed(closeError)
+    }
+    throw e
+  }
+}
+
+private suspend fun connectSocketChannel(socketChannel: SocketChannel, args: GetConnectionToRemotePortArgs) {
   args.configureSocketBeforeConnection(ConfigurableClientSocketImpl(socketChannel.socket()))
   socketChannel.configureBlocking(false)
   try {
@@ -180,7 +203,7 @@ private suspend fun getConnectionToRemotePortImpl(args: GetConnectionToRemotePor
           do {
             // 100 was taken just as a beautiful number with no research.
             timeout = (pollUntil - System.nanoTime().nanoseconds).coerceAtMost(100.milliseconds)
-            ensureActive()
+            currentCoroutineContext().ensureActive()
           }
           while (timeout.isPositive() && selector.select(timeout.inWholeMilliseconds) == 0)
           selector.selectedKeys().clear()
@@ -196,7 +219,6 @@ private suspend fun getConnectionToRemotePortImpl(args: GetConnectionToRemotePor
     // TODO IMO Timeouts deserve a dedicated exception.
     throw EelConnectionError.ConnectionProblem("Timed out waiting ${args.timeout}")
   }
-  SocketAdapter(socketChannel)
 }
 
 @OptIn(DelicateCoroutinesApi::class)
