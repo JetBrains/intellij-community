@@ -138,6 +138,25 @@ impl Property {
     }
 }
 
+impl Property {
+    /// Parses `<name>=<value>` of a property of every run of a session. The name is a name that [`check_twin_text`]
+    /// accepts, and the value can hold any character but a control character, such as the `/` of a path: no label
+    /// names it.
+    pub(crate) fn parse_session(text: &str) -> Result<Self, String> {
+        let Some((name, value)) = text.split_once('=') else {
+            return Err(format!("the property `{text}` has no `=`; write <name>=<value>"));
+        };
+        check_twin_text("the property name", name)?;
+        if value.chars().any(char::is_control) {
+            return Err(format!("the value of the property `{name}` holds a control character"));
+        }
+        Ok(Self {
+            name: name.to_owned(),
+            value: value.to_owned(),
+        })
+    }
+}
+
 impl fmt::Display for Property {
     /// `<name>=<value>`.
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {

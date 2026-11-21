@@ -13,10 +13,10 @@ use super::profile::{FrameSamples, ProfileEvent, ProfileScope};
 use super::record::{
     CARGO_SYNC_LOG_MS, CARGO_SYNC_STARTED, CLASS_ANCHORS, CLASS_EDT_TIME, CLASS_REQUESTS, CLASS_TIME, CLASSES_HIDDEN, CLASSES_JAR,
     CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM, CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT,
-    EMPTY_STATE_PREFIX, EMPTY_STATE_SPANS, END_SPANS, FIND_DIALOG_SPAN, FIND_IN_FILES, FIND_IN_FILES_END, FIND_SEARCH_PREFIX,
-    FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, JVM_LOADING_TIME, JVM_PROCESS_START, MODAL_SPANS, OPEN_EDITOR_PAINT, OPEN_FRAME,
-    OPEN_HIGHLIGHTED, PLATFORM_SPANS, PLUGIN_CLASSES, PLUGIN_LOG_STACK_MS, PLUGIN_LOG_WRITE_MS, TOTAL_DURATION, WELCOME_BECAME_VISIBLE,
-    WELCOME_SPANS, edt_at, named_at, span_end,
+    EMPTY_STATE_PREFIX, EMPTY_STATE_SPANS, END_SPANS, FIND_DIALOG_SPAN, FIND_DIRECTORY_PREFIX, FIND_IN_DIRECTORY, FIND_IN_FILES,
+    FIND_IN_FILES_END, FIND_SEARCH_PREFIX, FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, JVM_LOADING_TIME, JVM_PROCESS_START,
+    MODAL_SPANS, OPEN_EDITOR_PAINT, OPEN_FRAME, OPEN_HIGHLIGHTED, PLATFORM_SPANS, PLUGIN_CLASSES, PLUGIN_LOG_STACK_MS, PLUGIN_LOG_WRITE_MS,
+    TOTAL_DURATION, WELCOME_BECAME_VISIBLE, WELCOME_SPANS, edt_at, named_at, span_end,
 };
 use super::session::SUMMARY_FILE;
 use super::summary::{ArmSummary, Summary};
@@ -260,15 +260,15 @@ fn empty_state_rows(arms: &[&ArmSummary]) -> Vec<String> {
     rows
 }
 
-/// The find-in-files rows: the sum of the searches, the end of the last one and the dialog, then the duration and the
-/// result count of each search, in name order.
+/// The find-in-files rows: the sum of the searches of each pass, the end of the last search and the dialog, then the
+/// duration and the result count of each search, in name order.
 fn find_in_files_rows(arms: &[&ArmSummary]) -> Vec<String> {
     let searches: BTreeSet<&String> = arms
         .iter()
         .flat_map(|arm| arm.summary.keys())
-        .filter(|metric| metric.starts_with(FIND_SEARCH_PREFIX))
+        .filter(|metric| metric.starts_with(FIND_SEARCH_PREFIX) || metric.starts_with(FIND_DIRECTORY_PREFIX))
         .collect();
-    [FIND_IN_FILES, FIND_IN_FILES_END, FIND_DIALOG_SPAN]
+    [FIND_IN_FILES, FIND_IN_DIRECTORY, FIND_IN_FILES_END, FIND_DIALOG_SPAN]
         .into_iter()
         .map(str::to_owned)
         .chain(searches.into_iter().cloned())

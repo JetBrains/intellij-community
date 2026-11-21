@@ -151,6 +151,14 @@ pub(crate) struct SessionInfo {
     /// The queries of the find-in-files arm, in their order. A session without that arm has none.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(crate) queries: Vec<String>,
+    /// The directory of the second pass of the find-in-files arm, relative to the project. A session without
+    /// `--directory` has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) directory: Option<String>,
+    /// The properties `<name>=<value>` of every run of the session, see `--property`. A session without the option has
+    /// none.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) properties: Vec<String>,
     /// The label of the `context_plugin_dir` whose plugin directories each sandbox of the session holds. A session
     /// without `--context-plugins` has none.
     #[serde(default, skip_serializing_if = "Option::is_none")]

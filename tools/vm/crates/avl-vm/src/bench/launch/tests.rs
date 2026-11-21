@@ -237,6 +237,7 @@ fn the_prime_run_of_a_project_opens_its_first_file_and_a_measured_run_restores_i
         project: Some(project.paths(&sandbox)),
         open_project: None,
         queries: &[],
+        directory: None,
     };
     assert_eq!(
         plan(RunKind::Prime).program_arguments(),
@@ -255,6 +256,7 @@ fn the_prime_run_of_a_project_opens_its_first_file_and_a_measured_run_restores_i
         project: None,
         open_project: Some(Path::new("/p")),
         queries: &[],
+        directory: None,
     };
     assert!(
         welcome.program_arguments().is_empty(),
@@ -285,6 +287,7 @@ fn every_run_of_the_empty_editor_arm_opens_the_project_without_a_file() {
             project: Some(project.paths(&sandbox)),
             open_project: None,
             queries: &[],
+            directory: None,
         };
         assert_eq!(
             plan.program_arguments(),
@@ -316,8 +319,34 @@ fn the_find_in_files_arm_opens_its_project_where_it_is_and_waits_longer() {
         project: Some(project.paths(&first)),
         open_project: None,
         queries: &queries,
+        directory: Some(Path::new("platform")),
     };
     assert_eq!(plan.program_arguments(), vec!["/work/idea"]);
+    let script = plan.find_script().expect("a script");
+    assert_eq!(
+        script.text(),
+        "%findInFiles -headless FindModel\n%findInFiles -headless -directory=/work/idea/platform FindModel\n"
+    );
+    assert_eq!(script.last_span(), "findInFiles#searchInDirectory: FindModel");
+    let root = RunPlan {
+        directory: Some(Path::new(".")),
+        ..plan.clone()
+    };
+    assert_eq!(
+        root.find_script().expect("a script").directory.as_deref(),
+        Some("/work/idea"),
+        "`.` is the project directory"
+    );
+    let project_only = RunPlan {
+        directory: None,
+        ..plan.clone()
+    };
+    assert_eq!(
+        project_only.find_script().expect("a script").last_span(),
+        "findInFiles#search: FindModel"
+    );
+    let other = RunPlan { arm: Arm::PROJECT, ..plan };
+    assert_eq!(other.find_script(), None, "only the find-in-files arm has a script");
     assert_eq!(gate_timeout(Arm::FIND_IN_FILES.gate()), FIND_TIMEOUT);
     assert_eq!(gate_timeout(Arm::EMPTY_EDITOR.gate()), EVENT_TIMEOUT);
 }

@@ -26,12 +26,12 @@ use avl_host_sys::proc::Responsibility;
 use avl_host_sys::{Ctx, ProcError, Runner, SpawnOptions};
 use serde::Deserialize;
 
-use super::arm::{Arm, ArmKind, Gate, Twin};
+use super::arm::{Arm, ArmKind, Gate, Property, Twin};
 use super::files;
 use super::fus;
 use super::memory::{self, MEMORY_FILE};
 use super::profile::{GATE_PROFILE, ProfileEvent, WHOLE_PROFILE};
-use super::record::{self, EDITOR_HIGHLIGHTED, LaunchFacts, RunKind, THREAD_DUMP_FILE};
+use super::record::{self, EDITOR_HIGHLIGHTED, FindScript, LaunchFacts, RunKind, THREAD_DUMP_FILE};
 use super::session::{CLASS_LOAD_LOG, ProjectPaths, Sandbox, TRACE_FILE};
 use super::stage::{DistConfig, Generation};
 use super::stats;
@@ -242,6 +242,35 @@ pub(crate) struct RunPlan<'a> {
     pub(crate) open_project: Option<&'a Path>,
     /// The queries of the `find-in-files` arm, in their order. Another arm has none.
     pub(crate) queries: &'a [String],
+    /// The directory of the second pass of the `find-in-files` arm, relative to the project. A run without it searches
+    /// the project scope alone.
+    pub(crate) directory: Option<&'a Path>,
+}
+
+impl RunPlan<'_> {
+    /// The script of the `find-in-files` arm: the queries, and the directory of the second pass below the project
+    /// directory of this run. `None` for another arm, and for a run without a project.
+    pub(crate) fn find_script(&self) -> Option<FindScript> {
+        if self.arm.kind != ArmKind::FindInFiles {
+            return None;
+        }
+        let project = self.project.as_ref()?;
+        Some(FindScript {
+            queries: self.queries.to_vec(),
+            directory: self.directory.map(|directory| {
+                // `.` is the project directory itself, without a trailing `/.` that the IDE would keep in the scope
+                let inner: PathBuf = directory
+                    .components()
+                    .filter(|component| *component != std::path::Component::CurDir)
+                    .collect();
+                if inner.as_os_str().is_empty() {
+                    project.dir.display().to_string()
+                } else {
+                    project.dir.join(inner).display().to_string()
+                }
+            }),
+        })
+    }
 }
 
 impl RunPlan<'_> {
@@ -484,7 +513,7 @@ pub(crate) struct Launcher {
     pub(crate) runner: Runner,
     pub(crate) java: PathBuf,
     pub(crate) repo_root: PathBuf,
-    /// The JVM options of the distribution: [`dist_options`].
+    /// The JVM options of the distribution, [`dist_options`], and the properties of the session.
     pub(crate) dist_options: Vec<String>,
     /// The tail of every argfile: [`entry_options`].
     pub(crate) entry_options: Vec<String>,
@@ -494,12 +523,15 @@ pub(crate) struct Launcher {
 
 impl Launcher {
     /// The launcher of a generation. A generation of another shape is a refusal that names the file.
+    /// `properties` are the properties of every run of the session, see [`super::options::LaunchArgs::properties`]. They come after the
+    /// options of the distribution and before the options of a run, so a property of the bench or of a twin wins.
     pub(crate) fn of(
         generation: &Generation,
         runner: Runner,
         repo_root: &Path,
         profiler: Option<Profiler>,
         hold: Duration,
+        properties: &[Property],
     ) -> Result<Self, Refusal> {
         let refuse = |error: anyhow::Error| {
             Refusal::new(
@@ -508,7 +540,8 @@ impl Launcher {
                 format!("the generation {} cannot start: {error:#}", generation.root.display()),
             )
         };
-        let dist_options = dist_options(&generation.home, &generation.config, repo_root).map_err(refuse)?;
+        let mut dist_options = dist_options(&generation.home, &generation.config, repo_root).map_err(refuse)?;
+        dist_options.extend(properties.iter().map(|property| format!("-D{property}")));
         let opened_packages = files::read_text(&generation.root.join(OPENED_PACKAGES_FILE)).map_err(refuse)?;
         let classpath = files::read_text(&generation.home.join("core-classpath.txt")).map_err(refuse)?;
         let entry_options = entry_options(&generation.home, &opened_packages, &classpath, &generation.config.main_class).map_err(refuse)?;
@@ -585,8 +618,9 @@ impl Launcher {
                 return facts;
             }
         };
-        if plan.arm.kind == ArmKind::FindInFiles
-            && let Err(error) = files::write_text(&run_dir.join(record::FIND_SCRIPT_FILE), &record::find_script(plan.queries))
+        let find_script = plan.find_script();
+        if let Some(script) = &find_script
+            && let Err(error) = files::write_text(&run_dir.join(record::FIND_SCRIPT_FILE), &script.text())
         {
             facts.failure = Some(format!("{error:#}"));
             return facts;
@@ -613,7 +647,14 @@ impl Launcher {
             Gate::Highlighted => wait_for_highlighted(ctx, &mut ide, run_dir, plan.kind == RunKind::Prime, &mut facts).await,
             Gate::Span { name, missing } => wait_for_span(ctx, &mut ide, run_dir, name, missing, &mut facts).await,
             Gate::LogLine { line, missing, .. } => wait_for_log_line(ctx, &mut ide, run_dir, line, missing, &mut facts).await,
-            Gate::FindInFiles => wait_for_find_in_files(ctx, &mut ide, run_dir, plan.queries, &mut facts).await,
+            Gate::FindInFiles => {
+                if let Some(script) = &find_script {
+                    wait_for_find_in_files(ctx, &mut ide, run_dir, &script.last_span(), &mut facts).await
+                } else {
+                    facts.failure = Some("the find-in-files arm has no project to search".to_owned());
+                    None
+                }
+            }
         };
         facts.waited_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
         if exited.is_none() && facts.failure.is_none() {
@@ -1047,20 +1088,19 @@ where
     .await
 }
 
-/// Waits for the search span of the last of `queries`, an exit of the IDE, an interrupt or [`FIND_TIMEOUT`]. The
-/// performance plugin runs the searches one after another, so the last span ends after the others. An exit, an interrupt
-/// and the timeout set the failure.
-async fn wait_for_find_in_files<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, queries: &[String], facts: &mut LaunchFacts) -> Option<Ended>
+/// Waits for the span `name` of the last search, an exit of the IDE, an interrupt or [`FIND_TIMEOUT`]. The performance
+/// plugin runs the searches one after another, so the last span ends after the others. An exit, an interrupt and the
+/// timeout set the failure.
+async fn wait_for_find_in_files<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, name: &str, facts: &mut LaunchFacts) -> Option<Ended>
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
-    let name = format!("{}{}", record::FIND_SEARCH_PREFIX, queries.last().map_or("", String::as_str));
     let timed_out = format!(
         "no {name} span within {} s: the IDE has no performance plugin, or a search did not finish",
         FIND_TIMEOUT.as_secs()
     );
     poll_until_within(ctx, ide, facts, &format!("the {name} span ended"), timed_out, FIND_TIMEOUT, |_| {
-        if span_ended(run_dir, &name) { Check::Done } else { Check::Pending }
+        if span_ended(run_dir, name) { Check::Done } else { Check::Pending }
     })
     .await
 }

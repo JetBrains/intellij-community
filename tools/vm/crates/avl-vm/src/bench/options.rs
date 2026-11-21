@@ -339,6 +339,11 @@ pub(crate) struct LaunchArgs {
     /// the generation, so an A/B/A run measures the base again from its own bytes.
     #[arg(long, value_name = "DIGEST", value_parser = parse_digest_prefix, conflicts_with = "target")]
     pub(crate) generation: Option<String>,
+    /// Passes `-D<NAME>=<VALUE>` to every run of the session, also to the prime runs, before the properties of the
+    /// bench and of a twin, so both win over a property of the same name. Repeatable. A value can name a path, such as
+    /// accio.binary=/opt/accio/bin/accio.
+    #[arg(long = "property", value_name = "NAME=VALUE", value_parser = Property::parse_session)]
+    pub(crate) properties: Vec<Property>,
 }
 
 #[derive(Clone, Debug, PartialEq, clap::Args)]
@@ -464,6 +469,10 @@ pub(crate) struct ProjectArgs {
     /// searches. A query cannot hold `;`, which separates the queries of %findInFiles.
     #[arg(long = "query", value_name = "TEXT", value_parser = find_query)]
     pub(crate) queries: Vec<String>,
+    /// A directory of the project, relative to it, or `.` for the project directory. Each run of the find-in-files arm
+    /// then searches it too, with its subdirectories, after the project scope. The span of such a search is `findInFiles#searchInDirectory: <query>`.
+    #[arg(long, value_name = "DIR", value_parser = find_directory)]
+    pub(crate) directory: Option<PathBuf>,
     /// Opens the project directory where it is, in every run, and copies nothing into the sandbox. A tree too large to
     /// copy, such as a checkout, needs it. The IDE writes its project files into the `.idea` of the tree.
     #[arg(long)]
@@ -496,6 +505,9 @@ impl ProjectArgs {
             (true, true) => return Err("--arm find-in-files needs --query: a run searches for each query".to_owned()),
             (false, false) => return Err("--query needs --arm find-in-files".to_owned()),
             (true, false) | (false, true) => {}
+        }
+        if self.directory.is_some() && self.arm != ProjectArmChoice::FindInFiles {
+            return Err("--directory needs --arm find-in-files".to_owned());
         }
         if self.measure.cold && arms.iter().any(|arm| arm.kind == ArmKind::Project) {
             return Err(
@@ -588,6 +600,18 @@ fn find_query(value: &str) -> Result<String, String> {
         ));
     }
     Ok(value.to_owned())
+}
+
+/// Parses `--directory`: a relative path without a space, which ends the path in the script, and without `..`.
+fn find_directory(value: &str) -> Result<PathBuf, String> {
+    let path = PathBuf::from(value);
+    if value.is_empty() || path.is_absolute() || value.chars().any(|character| character.is_whitespace() || character.is_control()) {
+        return Err(format!("the directory `{value}` must be a relative path without a space"));
+    }
+    if path.components().any(|component| component == std::path::Component::ParentDir) {
+        return Err(format!("the directory `{value}` leaves the project"));
+    }
+    Ok(path)
 }
 
 /// A value of an option, refused when it is another long option.

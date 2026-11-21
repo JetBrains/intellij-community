@@ -295,20 +295,29 @@ A session directory holds:
 The lock of a session and of `gc` is `<runtime root>/bench/session.lock`.
 
 A run of the find-in-files arm writes the script `find-in-files.ijperf` of the performance plugin into its run
-directory. The script is one line, `%findInFiles <query>;<query>`, and `-Dtestscript.filename` names it. The plugin runs
-it once the project opened, and the gate is the span `findInFiles#search: <query>` of each query. The metric
-`findInFiles.search` is the sum of the searches. Each search is a metric with its duration, and `<span> results` holds its
+directory. The script is the line `%findInFiles -headless <query>;<query>`, and `-Dtestscript.filename` names it.
+`-Dperformance.execute.script.right.after.ide.opened=true` runs it once the project opened: JetBrains Light holds the
+dumb mode, and the plugin would wait for the smart mode. `-headless` runs each search to its last usage without the
+popup, because the popup search of JetBrains Light does not finish in a bench run. The gate is the span `findInFiles#search: <query>` of each query. The metric
+`findInFiles.search` is the sum of the searches. `--directory <dir>` adds a second pass over that directory of the
+project, with its subdirectories: the line `%findInFiles -headless -directory=<path> <query>;<query>`, the spans
+`findInFiles#searchInDirectory: <query>` and their sum `findInFiles.searchInDirectory`. The two passes take two paths
+through Find in Files, and the digest shows both. Each search is a metric with its duration, and `<span> results` holds its
 result count, so a twin of `--with-property ijlight.accio.enabled=false` shows whether accio and the platform walk find
 the same. JetBrains Light does not bundle the performance plugin, so a session gives it with `--context-plugins
 //platform/unified:performance_testing_plugin_dir`. The session builds that pool from the working tree, also with
 `--generation`, and copies its plugin directories into the `plugins` directory of the template. `--in-place` opens a tree
 too large to copy, such as a checkout, where it is, and the IDE writes the `.idea` of that tree. Each run gets the
-environment of `vm.cmd`, so the accio of `PATH` answers the searches of the accio plugin.
+environment of `vm.cmd`, so the accio of `PATH` answers the searches of the accio plugin. `--property accio.binary=<path>`
+and `--property accio.home=<dir>` name another accio and its index for every run. `--property` passes `-D<name>=<value>`
+to every run of a session, also to the prime runs, and its value can name a path, which a twin of `--with-property`
+cannot.
 
 ```bash
 ./community/tools/vm.cmd bench project . --in-place --target //build:jetbrains_light_all_plugins_dist \
   --context-plugins //platform/unified:performance_testing_plugin_dir --arm find-in-files \
-  --query createSearcher --query FindModel --with-property ijlight.accio.enabled=false
+  --query createSearcher --query FindModel --directory platform \
+  --property accio.binary=$HOME/.cargo/bin/accio --property accio.home=$PWD/out/bench-accio-home
 ```
 
 What a session cannot measure yet:

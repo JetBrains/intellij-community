@@ -329,6 +329,7 @@ fn project_takes_the_find_in_files_arm_with_its_queries() {
         panic!("expected project");
     };
     assert_eq!(args.queries, ["FindModel", "create Searcher"]);
+    assert_eq!(args.directory, None);
     assert!(args.in_place);
     assert_eq!(args.context_plugins.as_deref(), Some("//platform/unified:performance_testing_plugin_dir"));
     assert_eq!(
@@ -361,6 +362,59 @@ fn project_takes_the_find_in_files_arm_with_its_queries() {
             "{query:?}"
         );
     }
+}
+
+/// `--directory` adds the directory pass to the find-in-files arm and stays inside the project. `--property` takes a
+/// value with a `/`, which a twin cannot name, and repeats.
+#[test]
+fn project_takes_a_directory_of_the_find_in_files_arm_and_session_properties() {
+    let BenchVerb::Project(args) = verb(&[
+        "project",
+        "idea",
+        "--arm",
+        "find-in-files",
+        "--query",
+        "createSearcher",
+        "--directory",
+        "platform/lang-impl",
+        "--property",
+        "accio.binary=/opt/accio/bin/accio",
+        "--property",
+        "ijlight.workspace.enabled=false",
+    ]) else {
+        panic!("expected project");
+    };
+    assert_eq!(args.directory, Some(PathBuf::from("platform/lang-impl")));
+    assert_eq!(
+        args.launch.properties.iter().map(ToString::to_string).collect::<Vec<_>>(),
+        ["accio.binary=/opt/accio/bin/accio", "ijlight.workspace.enabled=false"]
+    );
+    let BenchVerb::Project(args) = verb(&["project", "idea", "--directory", "platform"]) else {
+        panic!("expected project");
+    };
+    assert_eq!(args.arms(), Err("--directory needs --arm find-in-files".to_owned()));
+    for directory in ["/abs", "../up", "a b", ""] {
+        assert!(
+            matches!(
+                parsed(&[
+                    "project",
+                    "idea",
+                    "--arm",
+                    "find-in-files",
+                    "--query",
+                    "a",
+                    "--directory",
+                    directory
+                ]),
+                Parsed::Refused { .. }
+            ),
+            "{directory:?}"
+        );
+    }
+    assert!(matches!(
+        parsed(&["project", "idea", "--property", "novalue"]),
+        Parsed::Refused { .. }
+    ));
 }
 
 /// `--suppress-plugin` adds a twin right after each arm of a welcome or a project session. `--arm` of a verb that reads

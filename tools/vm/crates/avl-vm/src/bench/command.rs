@@ -73,6 +73,8 @@ struct Plan {
     queries: Vec<String>,
     /// The `context_plugin_dir` of `--context-plugins`.
     context_plugins: Option<String>,
+    /// The directory of the second pass of the find-in-files arm, relative to the project.
+    directory: Option<PathBuf>,
 }
 
 /// The project of a session.
@@ -120,6 +122,7 @@ impl Bench<'_> {
                     with_property: args.measure.twins.property.as_ref().map(ToString::to_string),
                     queries: Vec::new(),
                     context_plugins: None,
+                    directory: None,
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -140,6 +143,7 @@ impl Bench<'_> {
                     with_property: None,
                     queries: Vec::new(),
                     context_plugins: None,
+                    directory: None,
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -160,6 +164,7 @@ impl Bench<'_> {
                     with_property: args.measure.twins.property.as_ref().map(ToString::to_string),
                     queries: args.queries.clone(),
                     context_plugins: args.context_plugins.clone(),
+                    directory: args.directory.clone(),
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -324,7 +329,7 @@ impl Bench<'_> {
         } else {
             None
         };
-        let launcher = Launcher::of(&generation, self.runner.clone(), repo, profiler, args.hold)?;
+        let launcher = Launcher::of(&generation, self.runner.clone(), repo, profiler, args.hold, &args.properties)?;
 
         let template = Sandbox::new(session.join(TEMPLATE_DIR));
         session::write_template(&template, license, generation.config.platform_prefix.as_deref())
@@ -376,7 +381,9 @@ impl Bench<'_> {
             suppressed_plugin: plan.suppressed_plugin.clone(),
             with_property: plan.with_property.clone(),
             queries: plan.queries.clone(),
+            directory: plan.directory.as_ref().map(|directory| directory.display().to_string()),
             context_plugins: plan.context_plugins.clone(),
+            properties: args.properties.iter().map(ToString::to_string).collect(),
             warnings,
         };
         files::write_json(&session.join(SESSION_FILE), &info).map_err(|error| session_failed(format!("{error:#}")))?;
@@ -469,6 +476,7 @@ impl Bench<'_> {
                 Some(PlannedProject::Start(_)) | None => None,
             },
             queries: &running.plan.queries,
+            directory: running.plan.directory.as_deref(),
         };
         let mut facts = running.launcher.run(ctx, &run_dir, &sandbox, &plan).await;
         facts.dist_digest = Some(digest);
