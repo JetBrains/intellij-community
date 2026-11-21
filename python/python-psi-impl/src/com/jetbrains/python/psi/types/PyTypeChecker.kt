@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTargetExpression
@@ -328,9 +329,17 @@ object PyTypeChecker {
     return matched
   }
 
-  /** Best-effort reason a protocol member didn't match, used as the breakdown node above the type leaf. */
-  private fun protocolMemberFailureMessage(protocolMember: PyTypeMember, candidates: List<PyTypeMember>, context: TypeEvalContext): ProblemMessage {
-    val name = protocolMember.name
+  /**
+   * Best-effort reason a protocol member didn't match, used as the breakdown node above the type leaf.
+   * The name of the protocol member links to [subclassMember], the member that this frame checks.
+   */
+  private fun protocolMemberFailureMessage(
+    protocolMember: PyTypeMember,
+    subclassMember: PyTypeMember,
+    candidates: List<PyTypeMember>,
+    context: TypeEvalContext,
+  ): ProblemMessage {
+    val name: Any? = protocolMember.name?.let { memberReference(subclassMember, it) ?: it }
     val candidate = candidates.singleOrNull()
     if (candidate != null) {
       if (PyTypeUtil.isSettable(protocolMember, context) && !PyTypeUtil.isSettable(candidate, context)) {
@@ -342,6 +351,10 @@ object PyTypeChecker {
     }
     return PyPsiBundle.problemMessage("INSP.type.checker.breakdown.member.incompatible", name)
   }
+
+  /** [name] as a link to the declaration of [member], or null when the declaration has no qualified name. */
+  private fun memberReference(member: PyTypeMember, name: String): PyInspectionMessages.CodifiedParam? =
+    (member.element as? PyQualifiedNameOwner)?.let { PyInspectionMessages.CodifiedParam.ofReference(it, name) }
 
   private fun match(expected: PyType?, actual: PyType?, context: MatchContext): Optional<Boolean> {
     PyCodeInsightCounters.inc(Counter.MATCH_STEPS)
@@ -1273,14 +1286,15 @@ object PyTypeChecker {
       for (subclassElementMember in subclassElementMembers) {
         val isMatchingProtocolMember = recordFrameBool(
           protocolContext,
-          { protocolMemberFailureMessage(protocolMember, subclassElementMembers, context) },
+          { protocolMemberFailureMessage(protocolMember, subclassElementMember, subclassElementMembers, context) },
           // The subclass's type for the attribute, so the Attribute step can report the attribute's own types when the
           // mismatch is buried inside a parameterized type (`list[set[int]]` vs `list[set[None]]`).
           { protocolMember.name?.let {
               PyMismatchStep.Attribute(it,
                                        subclassElementType(expected, actual, subclassElementMember, subclassElementMember.type, actualSubstitutions, protocolContext)
                                          ?.let { t -> codifiedType(protocolContext, t) },
-                                       codifiedType(protocolContext, protocolElementType)) } },
+                                       codifiedType(protocolContext, protocolElementType),
+                                       memberReference(subclassElementMember, it)) } },
           { isMatchingProtocolMember(expected, actual, protocolMember, subclassElementMember, protocolElementType, expectedSubstitutions, actualSubstitutions, protocolContext) }
         )
         if (isMatchingProtocolMember) {
