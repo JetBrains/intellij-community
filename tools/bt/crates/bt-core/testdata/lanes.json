@@ -64,6 +64,12 @@
       "description": "The performance tests on the product heap, `ui-perf_lane_test`. `BT --lane ui-perf` selects it."
     },
     {
+      "name": "air-integration-ui-light",
+      "axis": "lane",
+      "category": "air-integration-ui",
+      "description": "The JetBrains Light workspace suites, `ui-light_lane_test`. `BT --lane ui-light` selects it."
+    },
+    {
       "name": "air-integration-jcp",
       "axis": "lane",
       "category": "air-integration-ui",
@@ -110,6 +116,7 @@
     "plugins/air/tests/integration/lanes.json": [],
     "plugins/air/tests/integration/testData": [],
     "plugins/air/tests/integration/ui": [],
+    "plugins/air/tests/integration/ui-light": [],
     "plugins/air/tests/integration/ui-live": [],
     "plugins/air/tests/integration/ui-perf": [],
     "plugins/air/tests/integration/ui-real": [],
@@ -217,6 +224,16 @@
       "integrationTag": "air-integration-gui-chat",
       "catalogLane": "GUI_CHAT",
       "testLabel": "//plugins/air/tests/integration/gui-chat:gui-chat_lane_test"
+    },
+    {
+      "name": "ui-light",
+      "description": "the JetBrains Light workspace scenarios (launches JetBrains Light through the guest agent; its target is manual, so a guest run is vm.cmd run --lane ui-light, or a suite, flow or changed path of the lane)",
+      "target": "//plugins/air/tests/integration/ui-light:ui-light_lane_test",
+      "extra": [],
+      "shards": 1,
+      "integrationTag": "air-integration-ui-light",
+      "catalogLane": "UI_LIGHT",
+      "testLabel": "//plugins/air/tests/integration/ui-light:ui-light_lane_test"
     },
     {
       "name": "headless",

@@ -138,7 +138,7 @@ async fn shard(ctx: &Ctx, host: &Host, args: &ShardArgs, run_id: &str) -> Result
             run_id,
             "shard-run",
             workers,
-            DaemonTarget::Lanes,
+            DaemonTarget::of_lane(parsed.selection.lane.as_deref()),
             |held: &[HeldWorker]| divide(reporter, args, &baseline, held.len(), &program),
             async |plan: &ShardPlan, index: usize, current: Lease, built: &Arc<PreparedBuild>| {
                 run_shard(ctx, host, &parsed, plan, index, &current, built).await

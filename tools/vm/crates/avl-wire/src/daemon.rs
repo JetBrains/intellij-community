@@ -47,6 +47,16 @@ pub const LINUX_GUEST_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemo
 /// needs an option of its own.
 pub const LINUX_GUEST_LIVE_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_linux_guest_live";
 
+/// The lane that runs JetBrains Light. Its descriptors name the JetBrains Light distribution in place of the IDEA one, so a
+/// run that holds this lane builds [`LIGHT_LABEL`] or [`LINUX_GUEST_LIGHT_LABEL`], and no other lane.
+pub const LIGHT_LANE: &str = "ui-light";
+
+/// The Bazel target of the runtime descriptor of a macOS guest for [`LIGHT_LANE`].
+pub const LIGHT_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_light";
+
+/// The Bazel target of the runtime descriptor of a Linux guest for [`LIGHT_LANE`].
+pub const LINUX_GUEST_LIGHT_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_linux_guest_light";
+
 /// The prefix of every daemon run id. Only a daemon start sends a supervisor `start` with it, so it is what lets a
 /// controller that holds no record still recognise a daemon run in the slot.
 pub const DAEMON_RUN_PREFIX: &str = "run-ui-daemon-";

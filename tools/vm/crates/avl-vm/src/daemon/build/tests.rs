@@ -429,12 +429,23 @@ fn the_environment_digest_is_by_name() {
     );
 }
 
-/// The guest and the live CLIs are targets and not build options, so each guest OS has its own daemon target, and a
-/// Linux guest has one more for a run that holds the live lane. A macOS guest runs no live lane.
+/// The guest, the live CLIs and the JetBrains Light distribution are targets and not build options, so each guest OS has
+/// its own daemon target, one more for the light lane, and a Linux guest has one more for a run that holds the live
+/// lane. A macOS guest runs no live lane.
 #[test]
 fn each_guest_builds_its_own_daemon_target() {
     assert_eq!(daemon_label(GuestOs::Macos, DaemonTarget::Lanes), LABEL);
     assert_eq!(daemon_label(GuestOs::Linux, DaemonTarget::Lanes), LINUX_GUEST_LABEL);
     assert_eq!(daemon_label(GuestOs::Linux, DaemonTarget::LiveLane), LINUX_GUEST_LIVE_LABEL);
     assert_eq!(daemon_label(GuestOs::Macos, DaemonTarget::LiveLane), LABEL);
+    assert_eq!(daemon_label(GuestOs::Macos, DaemonTarget::LightLane), LIGHT_LABEL);
+    assert_eq!(daemon_label(GuestOs::Linux, DaemonTarget::LightLane), LINUX_GUEST_LIGHT_LABEL);
+}
+
+/// Only the light lane builds the descriptor of JetBrains Light. A selection of no lane builds the one of the lanes.
+#[test]
+fn only_the_light_lane_builds_the_light_descriptor() {
+    assert_eq!(DaemonTarget::of_lane(Some(LIGHT_LANE)), DaemonTarget::LightLane);
+    assert_eq!(DaemonTarget::of_lane(Some("ui")), DaemonTarget::Lanes);
+    assert_eq!(DaemonTarget::of_lane(None), DaemonTarget::Lanes);
 }

@@ -483,6 +483,24 @@ data. The daemon does not, and the next section states how that is asserted. Eac
 the guest agent's supervisor, so after the IDE stop the controller asks the supervisor about every IDE
 context. A run that is not finished refuses the remount as `daemon_remount_ide_running`.
 
+### The JetBrains Light lane
+
+The lane `ui-light` runs JetBrains Light, not IDEA. Its suites check the frame model of Air in a workspace host frame of
+JetBrains Light. Use it for a change of `plugins/air/frontend/session/unifiedIde/`,
+`plugins/air/frontend/session/toolwindow.unifiedIde/` or `platform/unified/workspace/`. `vm.cmd suites` maps these
+paths to its suites.
+
+The lane has two descriptors of its own: `//plugins/air/tests/integration/ui:ui_daemon_linux_guest_light` on the
+default guest and `:ui_daemon_light` on a macOS guest. They name the distribution
+`//plugins/air/tests/integration/ide:light_air_lane_dist_linux` and `:light_air_lane_dist`. JetBrains Light does not
+bundle the performance plugin, which the bridge needs for its robot. So the IDE context gets that plugin beside the
+bridge. The lane document turns the registry key `ijlight.workspace.enabled` on, so the driven project opens as a member
+of a workspace host frame.
+
+One build names one distribution. So a run that reaches `ui-light` and another lane is refused with
+`light_lane_beside_other_lanes`. Run the selection twice, once with `--lane ui-light`. The lane test is `manual`, so
+neither a wildcard build nor the TeamCity UI job assembles the JetBrains Light distribution.
+
 ### Guest-local writable state
 
 Everything a worker writes lives under `$AIR_VM_DATA`, in five directories and the parity marker

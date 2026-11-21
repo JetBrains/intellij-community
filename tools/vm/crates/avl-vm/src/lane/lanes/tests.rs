@@ -20,7 +20,10 @@ fn lanes() -> &'static Lanes {
 #[test]
 fn only_the_ide_lanes_are_runnable() {
     avl_affected::bridge::install_fixture();
-    assert_eq!(ui_lane_names(), ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"]);
+    assert_eq!(
+        ui_lane_names(),
+        ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat", "ui-light"]
+    );
     for lane in ui_lanes() {
         assert!(
             lanes().get(lane.name).is_some(),
@@ -32,7 +35,7 @@ fn only_the_ide_lanes_are_runnable() {
     let refused = refusal(lane_selection("fast"));
     assert_eq!(refused.exit, Exit::USAGE);
     assert!(
-        refused.message.contains("ui, ui-real, ui-live, ui-perf, jcp, gui-chat"),
+        refused.message.contains("ui, ui-real, ui-live, ui-perf, jcp, gui-chat, ui-light"),
         "the refusal does not name the runnable lanes: {}",
         refused.message
     );

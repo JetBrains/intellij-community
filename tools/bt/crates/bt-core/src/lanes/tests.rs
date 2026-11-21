@@ -428,7 +428,7 @@ fn the_two_tag_axes_are_disjoint_and_every_lane_tag_names_a_real_lane() {
     }
     assert_eq!(
         lanes().integration_lane_names(),
-        ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"]
+        ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat", "ui-light"]
     );
 }
 
@@ -550,6 +550,7 @@ fn the_parser_refuses_a_table_whose_lanes_and_tags_disagree() {
             "air-integration-ui-real",
             "air-integration-ui-live",
             "air-integration-ui-perf",
+            "air-integration-ui-light",
             "air-integration-jcp",
         ]
     );
@@ -564,8 +565,8 @@ fn lane_names_cover_every_lane_exactly_once() {
     assert_eq!(
         names,
         [
-            "fast", "property", "ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat", "headless", "all", "claude", "codex", "pi",
-            "opencode", "junie", "acp", "acp-perf"
+            "fast", "property", "ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat", "ui-light", "headless", "all", "claude", "codex",
+            "pi", "opencode", "junie", "acp", "acp-perf"
         ]
     );
 }
@@ -675,7 +676,7 @@ fn the_lane_table_parses_with_the_paths_the_join_reads() {
             flow_text_dir: "plugins/air/docs/flows",
         })
     );
-    assert_eq!(lanes().catalog_lane_names(), ["GUI_CHAT", "UI", "UI_REAL"]);
+    assert_eq!(lanes().catalog_lane_names(), ["GUI_CHAT", "UI", "UI_LIGHT", "UI_REAL"]);
 }
 
 /// A harness directory holds itself and every path under it, but not a sibling that shares its name as a prefix. The
