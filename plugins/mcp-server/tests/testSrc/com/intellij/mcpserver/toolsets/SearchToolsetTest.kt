@@ -53,6 +53,7 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class SearchToolsetTest : GeneralMcpToolsetTestBase() {
   private val json = Json { ignoreUnknownKeys = true }
@@ -570,6 +571,48 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
 
     assertNotCached(excludedDirPath.resolve(fileName))
     assertChildrenNotCached(excludedDir)
+  }
+
+  @Test
+  fun search_file_excluded_walk_finishes_with_many_excluded_roots() = runBlocking(Dispatchers.Default) {
+    // A contributor can register an excluded root for each file of a directory. The node_modules support does this.
+    // The roots are deep siblings, so a check of each pair of roots takes much longer than the timeout.
+    awaitIndexes()
+    val fileName = "se_target_7c1d.txt"
+    val rootDir = sourceRootFixture.get().virtualFile
+    val relativeDir = List(20) { "d" }.joinToString("/", prefix = "se_deep_7c1d/")
+    val dirPath = Files.createDirectories(rootDir.toNioPath().resolve(relativeDir))
+    val fileNames = List(20_000) { "f${it}_7c1d" } + fileName
+    for (name in fileNames) {
+      Files.createFile(dirPath.resolve(name))
+    }
+    val workspaceModel = project.workspaceModel
+    val urlManager = workspaceModel.getVirtualFileUrlManager()
+    workspaceModel.update("add many workspace-index excluded roots") { storage ->
+      for (name in fileNames) {
+        storage.addEntity(ExcludedTestEntity(urlManager.getOrCreateFromUrl("${rootDir.url}/$relativeDir/$name"), NonPersistentEntitySource))
+      }
+    }
+    registerFileIndexContributor(ExcludedKindFileSetTestContributor())
+    edtWriteAction {
+      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dirPath)
+      ?: error("Directory is not visible to the VFS: $dirPath")
+    }
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+
+    withSearchTimeoutOverride(project, 5.seconds) {
+      testMcpTool(
+        SearchToolset::search_file.name,
+        buildJsonObject {
+          put("q", JsonPrimitive("**/$fileName"))
+          put("includeExcluded", JsonPrimitive(true))
+        }
+      ) { actualResult ->
+        val result = parseResult(actualResult.textContent.text)
+        assertThat(result.partialResultReason).isNull()
+        assertThat(result.filePaths()).anyMatch { it.endsWith("$relativeDir/$fileName") }
+      }
+    }
   }
 
   @Test
