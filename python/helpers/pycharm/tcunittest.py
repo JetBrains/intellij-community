@@ -1,7 +1,7 @@
 import os
 import re
 import traceback, sys
-from unittest import TestResult
+from unittest import TestCase, TestResult
 import datetime
 
 from tcmessages import TeamcityServiceMessages
@@ -38,23 +38,23 @@ def smart_str(s):
     return s
 
 
-_CLASS_LEVEL_ERROR_DESCRIPTION = re.compile(r"^(\w+) \((.+)\)$")
+_CLASS_LEVEL_ERROR_DESCRIPTION = re.compile(r"^(?P<method>\w+) \((?P<parent>.+)\)$")
 
 
 def class_level_error_suite(test, protocol):
   """
   Gives the suite, the location and the suite location of an error in a method of a class or a module.
   Examples of such methods are ``setUpClass`` and ``setUpModule``. unittest reports such an error with an
-  ``_ErrorHolder``. Its description is the method name and the id of the class or the module, for example
-  ``setUpClass (app.tests.FooTests)``. The suite is the class or the module, and both locations point to it.
-  Gives None for any other test.
+  object that is not a ``TestCase``. Its description is the method name and the id of the class or the module,
+  for example ``setUpClass (app.tests.FooTests)``. unittest gives the class or the module only in this description.
+  The suite is the class or the module, and both locations point to it. Gives None for any other test.
   """
-  if type(test).__name__ != "_ErrorHolder":
+  if isinstance(test, TestCase):
     return None
   match = _CLASS_LEVEL_ERROR_DESCRIPTION.match(str(test))
   if not match:
     return None
-  suite = match.group(2)
+  suite = match.group("parent")
   location = protocol + suite
   return suite, location, location
 
