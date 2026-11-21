@@ -267,6 +267,10 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
                      key="INSP.NAME.division.by.zero" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyDivisionByZeroInspection"/>
+    <localInspection language="Python" shortName="PyMisplacedRegexFlagInspection" suppressId="PyMisplacedRegexFlag" bundle="messages.PyPsiBundle"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
+                     key="INSP.NAME.misplaced.regex.flag" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyMisplacedRegexFlagInspection"/>
     <localInspection language="Python" shortName="PyDefaultArgumentInspection" suppressId="PyDefaultArgument" bundle="messages.PyPsiBundle"
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
                      key="INSP.NAME.default.argument" enabledByDefault="true" level="WARNING"
