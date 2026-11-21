@@ -290,7 +290,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
         a: int
     class C:
         a: str
-    expected: A = C()  # WARNING TOOLTIP Attribute \n <code>a</code> \n element/builtins.str \n element/builtins.int
+    expected: A = C()  # WARNING TOOLTIP Attribute \n element/aaa.C.a">a</a></code> \n element/builtins.str \n element/builtins.int
     """.trimIndent())
 
   /**

@@ -54,7 +54,26 @@ public final class PyQualifiedNameProvider implements QualifiedNameProvider {
       return functions.get(0);
     }
     PyFile module = qualifiedNameToModule(fqn, project);
-    return module != null ? module : qualifiedNameToModuleAttribute(fqn, project);
+    if (module != null) return module;
+    PsiElement moduleAttribute = qualifiedNameToModuleAttribute(fqn, project);
+    return moduleAttribute != null ? moduleAttribute : qualifiedNameToClassAttribute(fqn, project);
+  }
+
+  /**
+   * Resolves the qualified name of a class attribute, for example {@code mod.C.x}, to its target expression.
+   * A class attribute takes precedence over an instance attribute of the same name.
+   */
+  private static @Nullable PsiElement qualifiedNameToClassAttribute(@NotNull String fqn, @NotNull Project project) {
+    QualifiedName qualifiedName = QualifiedName.fromDottedString(fqn);
+    if (qualifiedName.getComponentCount() < 2) return null;
+    String name = qualifiedName.getLastComponent();
+    String className = qualifiedName.removeLastComponent().toString();
+    for (PyClass cls : PyClassNameIndex.findByQualifiedName(className, project, GlobalSearchScope.allScope(project))) {
+      PsiElement attribute = cls.findClassAttribute(name, false, null);
+      if (attribute == null) attribute = cls.findInstanceAttribute(name, false);
+      if (attribute != null) return attribute;
+    }
+    return null;
   }
 
   /**

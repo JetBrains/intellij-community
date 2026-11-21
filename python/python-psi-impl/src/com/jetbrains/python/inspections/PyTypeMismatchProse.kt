@@ -383,7 +383,7 @@ object PyTypeMismatchProse {
           if (member == null) member = step.expected
         }
         is PyMismatchStep.Attribute -> {
-          path.attribute(step.name)
+          path.attribute(step.name, step.reference)
           attributeActual = step.actual
           attributeExpected = step.expected
         }
@@ -519,10 +519,10 @@ object PyTypeMismatchProse {
   private fun actualMissing(callSite: CallSite, name: String): ProblemMessage =
     PyPsiBundle.problemMessage("INSP.type.checker.prose.arg.act.missing", callSite.argument, callSite.actualType, name)
 
-  private fun requirementAttribute(callSite: CallSite, path: String, expected: CodifiedParam): ProblemMessage =
+  private fun requirementAttribute(callSite: CallSite, path: CodifiedParam, expected: CodifiedParam): ProblemMessage =
     PyPsiBundle.problemMessage("INSP.type.checker.prose.arg.req.attribute", callSite.callee, parameterPhrase(callSite), path, expected)
 
-  private fun actualAttribute(callSite: CallSite, path: String, actual: CodifiedParam): ProblemMessage =
+  private fun actualAttribute(callSite: CallSite, path: CodifiedParam, actual: CodifiedParam): ProblemMessage =
     PyPsiBundle.problemMessage("INSP.type.checker.prose.arg.act.attribute", callSite.argument, callSite.actualType, path, actual)
 
   private fun requirementNominal(callSite: CallSite): ProblemMessage =
@@ -547,21 +547,27 @@ object PyTypeMismatchProse {
    */
   private class PathBuilder {
     private val sb = StringBuilder()
+    private val tooltip = StringBuilder()
     private var segments = 0
     var isReturnOnly = false
       private set
 
     val isEmpty: Boolean get() = sb.isEmpty()
 
-    fun attribute(@NlsSafe name: String) {
-      if (sb.isNotEmpty()) sb.append('.')
+    fun attribute(@NlsSafe name: String, reference: CodifiedParam?) {
+      if (sb.isNotEmpty()) {
+        sb.append('.')
+        tooltip.append('.')
+      }
       sb.append(name)
+      tooltip.append(reference?.tooltip ?: HtmlChunk.text(name).toString())
       segments++
       isReturnOnly = false
     }
 
     fun typeArgument(oneBasedIndex: Int) {
       sb.append('[').append(oneBasedIndex).append(']')
+      tooltip.append('[').append(oneBasedIndex).append(']')
       segments++
       isReturnOnly = false
     }
@@ -571,7 +577,7 @@ object PyTypeMismatchProse {
       segments++
     }
 
-    @NlsSafe
-    fun render(): String = sb.toString()
+    /** The path as plain text for the description, and with a link per linked attribute for the tooltip. */
+    fun render(): CodifiedParam = CodifiedParam(sb.toString(), tooltip.toString())
   }
 }
