@@ -6,9 +6,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.vcs.log.VcsLogCommitSelection;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.history.FileHistoryUi;
@@ -80,7 +83,9 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
 
     selection.requestFullDetails(detailsList -> {
       List<Change> changes = VcsLogUtil.collectChanges(detailsList);
-      CreatePatchFromChangesAction.createPatch(project, commitMessage, changes, mySilentClipboard);
+      CommitContext commitContext = new CommitContext();
+      commitContext.putUserData(PatchWriter.FULL_COMMIT_MESSAGE_KEY, StringUtil.join(detailsList, it -> it.getFullMessage(), "\n\n"));
+      CreatePatchFromChangesAction.createPatch(project, commitMessage, changes, mySilentClipboard, commitContext);
     });
   }
 }
