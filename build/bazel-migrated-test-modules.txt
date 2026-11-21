@@ -166,6 +166,7 @@ intellij.kotlin.onboarding.gradle.tests
 intellij.kotlin.onboarding.tests
 intellij.kotlin.propertyBased.tests
 intellij.lombok.tests
+intellij.markdown.jewel.tests
 intellij.markdown.tests
 intellij.maven.groovy.tests
 intellij.maven.jps.tests
