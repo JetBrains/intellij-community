@@ -3,6 +3,8 @@
 
 package com.intellij.ui.svg
 
+import com.intellij.util.JBHiDPIScaledImage
+import com.intellij.util.ui.JBImageToolkit
 import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.image.ImageDecoder
 import sun.awt.image.InputStreamImageSource
@@ -10,6 +12,7 @@ import java.awt.image.ImageConsumer
 import java.io.EOFException
 import java.io.IOException
 import java.io.InputStream
+import java.util.Hashtable
 
 @Internal
 class SvgImageDecoder(
@@ -28,10 +31,12 @@ class SvgImageDecoder(
         throw IOException("Cannot load SVG document", e)
       }
 
-      // how to have an hidpi aware image?
       val bi = jSvgDocument.createImage(preferredWidth.takeIf { it > 0 }, preferredHeight.takeIf { it > 0 })
 
       setDimensions(bi.width, bi.height)
+      setProperties(Hashtable<String, Any>().apply {
+        put(JBImageToolkit.IMAGE_SCALE_PROPERTY, (bi as? JBHiDPIScaledImage)?.scale ?: 1.0)
+      })
       setColorModel(bi.colorModel)
 
       val pixels = bi.raster.getDataElements(0, 0, bi.width, bi.height, null) as IntArray

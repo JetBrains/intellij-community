@@ -9,6 +9,7 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.util.DataUrl
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.html.ImageViewPreferredSpan
+import com.intellij.util.ui.html.getImageVerticalAlignment
 import com.intellij.util.ui.html.getIntAttr
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Container
@@ -47,7 +48,6 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
 
   private var myPreferredImageViewDimensions: FloatDimensions = FloatDimensions(DEFAULT_WIDTH.toFloat(), DEFAULT_HEIGHT.toFloat())
   private var myBorder: Int = 0
-  private var myVerticalAlign: Float = 0f
   private var myWidthAttrValue: Int = -1
   private var myHeightAttrValue: Int = -1
 
@@ -57,19 +57,6 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
 
   private fun updateStateFromAttrs() {
     myBorder = getIntAttr(HTML.Attribute.BORDER, DEFAULT_BORDER)
-    var alignment = element.attributes.getAttribute(HTML.Attribute.ALIGN)
-    var vAlign = 1.0f
-    if (alignment != null) {
-      alignment = alignment.toString()
-      if ("top" == alignment) {
-        vAlign = 0f
-      }
-      else if ("middle" == alignment) {
-        vAlign = .5f
-      }
-    }
-    this.myVerticalAlign = vAlign
-
     myWidthAttrValue = getIntAttr(HTML.Attribute.WIDTH, -1)
     myHeightAttrValue = getIntAttr(HTML.Attribute.HEIGHT, -1)
     myImageRenderer?.setOrigin(getImageOrigin())
@@ -228,7 +215,7 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
   }
 
   override fun getAlignment(axis: Int): Float {
-    return if (axis == Y_AXIS) myVerticalAlign else super.getAlignment(axis)
+    return if (axis == Y_AXIS) getImageVerticalAlignment() else super.getAlignment(axis)
   }
 
   private fun computeViewDimensions(defaultWidth: Float, defaultHeight: Float): FloatDimensions {
