@@ -112,7 +112,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -515,7 +514,17 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
                                      node);
     }
 
-    highlightIncorrectArguments(node);
+    highlightIncorrectArguments(node.getArguments());
+  }
+
+  @Override
+  public void visitPyClass(@NotNull PyClass node) {
+    super.visitPyClass(node);
+
+    var superClassList = node.getSuperClassExpressionList();
+    if (superClassList != null) {
+      highlightIncorrectArguments(superClassList.getArguments());
+    }
   }
 
   @Override
@@ -682,14 +691,14 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
                                    node);
   }
 
-  private void highlightIncorrectArguments(@NotNull PyCallExpression callExpression) {
+  private void highlightIncorrectArguments(PyExpression @NotNull [] arguments) {
     final Set<String> keywordArgumentNames = new HashSet<>();
 
     boolean seenKeywordArgument = false;
     boolean seenKeywordContainer = false;
     boolean seenPositionalContainer = false;
 
-    for (PyExpression argument : callExpression.getArguments()) {
+    for (PyExpression argument : arguments) {
       if (argument instanceof PyKeywordArgument) {
         final String keyword = ((PyKeywordArgument)argument).getKeyword();
 
@@ -745,7 +754,7 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     }
 
     /* check for trailing comma */
-    PyExpression lastArg = ContainerUtil.getLastItem(Arrays.asList(callExpression.getArguments()));
+    PyExpression lastArg = ArrayUtil.getLastElement(arguments);
     if (lastArg instanceof PyStarArgument) {
       PsiElement sibling = PyPsiUtils.getNextNonWhitespaceSibling(lastArg);
       if (sibling != null && sibling.getNode().getElementType() == PyTokenTypes.COMMA) {
