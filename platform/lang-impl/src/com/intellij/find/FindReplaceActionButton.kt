@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.Insets
@@ -16,7 +17,8 @@ internal class FindReplaceActionButton(
 ) : JButton(text) {
 
   init {
-    if (!getInstance().disableMnemonicsInControls) {
+    DialogUtil.registerMnemonic(this)
+    if (!getInstance().disableMnemonicsInControls && mnemonic == 0) {
       setMnemonic(myMnemonic)
     }
     isContentAreaFilled = !ExperimentalUI.isNewUI()
