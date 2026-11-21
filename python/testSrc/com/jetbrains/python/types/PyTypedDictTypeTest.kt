@@ -1535,6 +1535,36 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-89543"])
+    fun `typed dict against a mapping or a dict with a key type other than str`() = test("""
+      from collections.abc import Mapping
+      from typing import Any, TypedDict
+
+      class Flags(TypedDict):
+          body: bool
+
+      def takes_mapping(m: Mapping[Any, Any]) -> None: ...
+      def takes_mapping_of_bool(m: Mapping[Any, bool]) -> None: ...
+      def takes_dict(d: dict[Any, Any]) -> None: ...
+      def takes_bare_mapping(m: Mapping) -> None: ...
+      def takes_object_key(m: Mapping[object, Any]) -> None: ...
+      def takes_int_key(m: Mapping[int, Any]) -> None: ...
+
+      flags = Flags(body=True)
+      takes_mapping(flags)
+      # An open TypedDict can have extra items of the type `object`.
+      takes_mapping_of_bool(flags)
+      #                     ^^^^^ WARNING Expected type 'Mapping[Any, bool]', got 'Flags' instead
+      takes_dict(flags)
+      #          ^^^^^ WARNING Expected type 'dict[Any, Any]', got 'Flags' instead
+      takes_bare_mapping(flags)
+      takes_object_key(flags)
+      #                ^^^^^ WARNING Expected type 'Mapping[object, Any]', got 'Flags' instead
+      takes_int_key(flags)
+      #             ^^^^^ WARNING Expected type 'Mapping[int, Any]', got 'Flags' instead
+      """.trimIndent())
+
+    @Test
     fun `literal type in typed dict`() = test("""
       from typing import TypedDict, Literal
       class Foo(TypedDict):
