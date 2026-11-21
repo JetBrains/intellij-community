@@ -32,17 +32,21 @@ export function posixRelative(from: string, path: string): string {
 /**
  * Calls `visit` with every file under `dir`, depth first, with the entries of a directory in sorted order. An entry
  * that `skips` accepts is not entered and not visited. A `dir` that does not exist has no files.
+ *
+ * The kind of an entry comes with the directory listing, so the walk asks the file system once for a directory, not
+ * once for each entry. A symbolic link takes the kind of its target.
  */
 export function walkFiles(dir: string, skips: (entry: string) => boolean, visit: (path: string) => void): void {
   if (!existsSync(dir)) {
     return
   }
-  for (const entry of readdirSync(dir).sort()) {
-    if (skips(entry)) {
+  const entries = readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
+  for (const entry of entries) {
+    if (skips(entry.name)) {
       continue
     }
-    const path = join(dir, entry)
-    if (statSync(path).isDirectory()) {
+    const path = join(dir, entry.name)
+    if (entry.isSymbolicLink() ? statSync(path).isDirectory() : entry.isDirectory()) {
       walkFiles(path, skips, visit)
     }
     else {
