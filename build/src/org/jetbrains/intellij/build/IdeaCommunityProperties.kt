@@ -7,7 +7,6 @@ import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.createBuildContext
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
-import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
 import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
@@ -133,11 +132,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
 
     copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), targetDir)
     copyFileToDir(context.paths.communityHomeDir.resolve("NOTICE.txt"), targetDir)
-
-    copyDir(
-      sourceDir = context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"),
-      targetDir = targetDir.resolve("bin"),
-    )
 
     bundleExternalPlugins(context, targetDir)
   }
