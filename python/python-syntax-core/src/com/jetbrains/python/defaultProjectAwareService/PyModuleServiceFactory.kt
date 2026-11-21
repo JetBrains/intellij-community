@@ -26,6 +26,10 @@ interface PyModuleServiceFactory<T> {
   fun getService(module: Module): T
 }
 
+/**
+ * Caches one service per module until the module is disposed. A disposed module gets a new service each time, which is
+ * not cached. A [Disposable] service of a disposed module gets no parent, so it must not hold resources.
+ */
 @ApiStatus.Internal
 class PyModuleServiceFactoryImpl<T : Any>(
   private val serviceFactory: (Module) -> T,
@@ -33,6 +37,11 @@ class PyModuleServiceFactoryImpl<T : Any>(
   private val instances = ConcurrentHashMap<Module, T>()
 
   override fun getService(module: Module): T {
+    // A caller can still hold a module that a reload of the project model disposed, such as an open settings dialog
+    // or an action update. Nothing removes its service from the cache, so it gets a service that is not cached.
+    // Modules are disposed in a write action, so for a caller that holds a read lock the module cannot become disposed
+    // after the check.
+    if (module.isDisposed) return serviceFactory(module)
     return instances.computeIfAbsent(module) {
       val service = serviceFactory(module)
       Disposer.register(module) {
