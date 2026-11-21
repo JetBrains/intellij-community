@@ -158,6 +158,13 @@ void* table_get(table* t, int key) {
   }
 }
 
+void table_set(table* t, int key, void* value) {
+  int k = wrap(key, t);
+  if (k >= 0) {
+    t->data[k] = value;
+  }
+}
+
 void table_delete(table* t) {
   if (t != NULL) {
     free(t->data);
