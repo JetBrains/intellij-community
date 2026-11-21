@@ -410,7 +410,9 @@ class PyTypedDictType private constructor(
       val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
       val elementTypes = expected.typeArguments
 
-      if (elementTypes.size != 2 || builtinCache.strType != elementTypes[0]) {
+      // A `Mapping` with an `Any` or an unknown key accepts the `str` keys. A `dict` does not: the typing specification
+      // makes a TypedDict inconsistent with `dict[Any, Any]`. A type variable stays unmatched here: this match cannot bind it.
+      if (elementTypes.size != 2 || elementTypes[0] != builtinCache.strType && !(isMapping && elementTypes[0].isAnyOrUnknown)) {
         return false
       }
 
