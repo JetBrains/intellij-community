@@ -26,6 +26,8 @@ import kotlin.time.Duration.Companion.minutes
  * Most tests type in the middle item of the file.
  * The flat-mapping, flat-sequence and long-line tests type in the middle line of a file with one root key over all of the file.
  * There, a block or leaf check costs more than a full reparse, so the reparse must fall back to a full reparse.
+ * The small-file and medium-file tests check that the reparse checks cost little in a file of a usual size.
+ * The backslash tests type a char that the leaf check refuses, so they measure the refused leaf check and the block reparse.
  */
 @StressTestApplication
 @TestApplication
@@ -67,6 +69,38 @@ class YamlTypingPerformanceTest : YamlPerformanceTestCase() {
   @Test
   fun testEnterAfterPlainScalarInSmallFile() =
     doTest("x-note: plain text of the item $SMALL_MIDDLE_ITEM", "\n".repeat(10), atLineEnd = true, items = SMALL_FILE_ITEMS)
+
+  @Test
+  fun testTypingInDoubleQuotedScalarInSmallFile() =
+    doTest("description: \"Returns the item $SMALL_MIDDLE_ITEM", "x".repeat(10), items = SMALL_FILE_ITEMS)
+
+  @Test
+  fun testTypingInCommentInSmallFile() =
+    doTest("# The comment of the operation $SMALL_MIDDLE_ITEM", "x".repeat(10), items = SMALL_FILE_ITEMS)
+
+  @Test
+  fun testTypingInBlockScalarInSmallFile() = doTest("block text of the item $SMALL_MIDDLE_ITEM", "x".repeat(10), items = SMALL_FILE_ITEMS)
+
+  @Test
+  fun testTypingInFlowMappingValueInSmallFile() = doTest("x-flow: {first: one", "x".repeat(10), items = SMALL_FILE_ITEMS)
+
+  @Test
+  fun testTypingBackslashInPlainScalarInSmallFile() =
+    doTest("x-note: plain text of the item $SMALL_MIDDLE_ITEM", "\\".repeat(10), items = SMALL_FILE_ITEMS)
+
+  @Test
+  fun testTypingBackslashInPlainScalar() = doTest("x-note: plain text of the item $MIDDLE_ITEM", "\\".repeat(10))
+
+  @Test
+  fun testTypingInKeyInMediumFile() = doTest("      operation", "x".repeat(10), items = MEDIUM_FILE_ITEMS)
+
+  @Test
+  fun testTypingInPlainScalarInMediumFile() =
+    doTest("x-note: plain text of the item $MEDIUM_MIDDLE_ITEM", "x".repeat(10), items = MEDIUM_FILE_ITEMS)
+
+  @Test
+  fun testEnterAfterPlainScalarInMediumFile() =
+    doTest("x-note: plain text of the item $MEDIUM_MIDDLE_ITEM", "\n".repeat(10), atLineEnd = true, items = MEDIUM_FILE_ITEMS)
 
   @Test
   fun testTypingInKeyInFlatMapping() =
@@ -197,6 +231,10 @@ private const val FLAT_WARMUPS = 4
 /** The items of a small file of about 4 KB. */
 private const val SMALL_FILE_ITEMS = 10
 private const val SMALL_MIDDLE_ITEM = SMALL_FILE_ITEMS / 2
+
+/** The items of a medium file of about 100 KB. */
+private const val MEDIUM_FILE_ITEMS = 250
+private const val MEDIUM_MIDDLE_ITEM = MEDIUM_FILE_ITEMS / 2
 
 /** Builds a file with one root key over all of the file, such as a Rails i18n file. */
 private fun flatMappingText(): String = buildString {
