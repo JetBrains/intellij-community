@@ -54,12 +54,14 @@ private val scrollbarService by lazy { StandaloneScrollbarHelper() }
  * changes to them.
  *
  * Both reading and observing are delegated to [MacPlatformServices]; the native `NSNotificationCenter` observer and its
- * JNA callback live in [MacPlatformServices.onPreferencesChanged]. The observed preferences are:
+ * FFM upcall live in [MacPlatformServices.onPreferencesChanged]. The observed preferences are:
  * - Scrollbar visibility style (always visible vs. overlay/when scrolling)
  * - Track click behavior (jump to spot vs. next page)
  *
  * When a change notification arrives, [scrollbarVisibilityStyleFlow] and [trackClickBehaviorFlow] are both refreshed
  * from the system, so consumers observing them see the new values.
+ *
+ * [close] unregisters the native observer. After that, the flows keep their last values.
  *
  * @param macPlatformServices The platform services used to read the preferences and register the native observer.
  */
@@ -67,7 +69,7 @@ private val scrollbarService by lazy { StandaloneScrollbarHelper() }
 @InternalJewelApi
 public class StandaloneScrollbarHelper(
     private val macPlatformServices: MacPlatformServices = MacPlatformServicesDefaultImpl
-) : ScrollbarHelper {
+) : ScrollbarHelper, AutoCloseable {
     private val _trackClickBehaviorFlow = MutableStateFlow(macPlatformServices.readScrollbarTrackClickBehavior())
     override val trackClickBehaviorFlow: StateFlow<TrackClickBehavior> = _trackClickBehaviorFlow
 
@@ -80,11 +82,14 @@ public class StandaloneScrollbarHelper(
     override val scrollbarVisibilityStyle: ScrollbarVisibility
         get() = macPlatformServices.readScrollbarVisibility()
 
-    init {
+    private val subscription =
         macPlatformServices.onPreferencesChanged {
             _trackClickBehaviorFlow.value = macPlatformServices.readScrollbarTrackClickBehavior()
             _scrollbarVisibilityStyleFlow.value = macPlatformServices.readScrollbarVisibility()
         }
+
+    override fun close() {
+        subscription.close()
     }
 }
 

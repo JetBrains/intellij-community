@@ -46,6 +46,15 @@ internal class StandaloneScrollbarHelperTest {
     }
 
     @Test
+    fun `close stops updating the flows`() {
+        helper.close()
+
+        fakePlatformServices.simulateSystemChange(TrackClickBehavior.NextPage)
+
+        assertEquals(TrackClickBehavior.JumpToSpot, helper.trackClickBehaviorFlow.value)
+    }
+
+    @Test
     @DisabledOnOs(OS.MAC)
     fun `on non-macOS platforms should return default values`() {
         val visibility = helper.scrollbarVisibilityStyle

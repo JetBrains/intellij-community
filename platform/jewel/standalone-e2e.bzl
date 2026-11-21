@@ -11,6 +11,8 @@ SPECTRE_JVM_FLAGS = [
     "-Djava.awt.headless=false",
     # Keeps the test window out of the macOS Dock.
     "-Dapple.awt.UIElement=true",
+    # The macOS integration of Jewel Standalone calls native code through FFM.
+    "--enable-native-access=ALL-UNNAMED",
     "-ea",
 ]
 

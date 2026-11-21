@@ -46,7 +46,6 @@ jvm_library(
         "//libraries/compose-runtime-desktop",
         "//platform/jewel/foundation",
         "//libraries/jbr",
-        "@lib//:platform-jewel-int_ui-standalone-jna",
         "//platform/icons-api",
         "//platform/icons-impl",
     ],

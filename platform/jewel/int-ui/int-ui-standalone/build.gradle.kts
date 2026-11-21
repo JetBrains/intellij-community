@@ -17,7 +17,6 @@ dependencies {
     api(project(":jb-icons-api-rendering"))
     api(project(":jb-icons-impl"))
     implementation(libs.jbr.api)
-    implementation(libs.jna.core)
 }
 
 intelliJThemeGenerator {

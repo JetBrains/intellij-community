@@ -20,7 +20,6 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
-    testImplementation(libs.jna.core)
 
     "spectreTestImplementation"(projects.foundation)
     "spectreTestImplementation"(projects.ui)
@@ -45,6 +44,8 @@ tasks {
             project(":int-ui:int-ui-standalone").layout.buildDirectory.dir("classes/kotlin/main"),
         )
     }
+
+    withType<Test>().configureEach { jvmArgs("--enable-native-access=ALL-UNNAMED") }
 
     named<Test>("test") { useJUnitPlatform() }
 
