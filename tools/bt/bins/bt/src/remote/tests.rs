@@ -7,6 +7,7 @@ use super::*;
 use crate::execute::execute_with;
 use bt_core::fake::{FakeRuntime, REPO_ROOT, area_files, refusal};
 use bt_core::result::RunStatus;
+use bt_core::runtime::CheckoutTree;
 
 const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 
@@ -33,16 +34,46 @@ fn records(fake: &FakeRuntime) -> Option<String> {
     fake.state().files.get(RECORDS).cloned()
 }
 
-/// A link whose run ends with `code`, `stdout` and the fetched files.
+/// HEAD of the fake checkout, the parent of [`COMMIT`] in a run of the working tree.
+const HEAD: &str = "89abcdef0123456789abcdef0123456789abcdef";
+
+/// A link whose run of the committed HEAD ends with `code`, `stdout` and the fetched files.
 fn link_ending(code: i32, stdout: &str, fetched: &[&str]) -> FakeLink {
-    let link = FakeLink::default();
-    link.answer_run(Ok(HostOutcome {
+    link_answering(HostOutcome {
         commit: COMMIT.to_owned(),
+        head: COMMIT.to_owned(),
+        working_tree: false,
         code,
         stdout: stdout.to_owned(),
         fetched: fetched.iter().map(|path| (*path).to_owned()).collect(),
-    }));
+    })
+}
+
+/// A link whose run of the working tree on [`HEAD`] passes: the host ran [`COMMIT`].
+fn link_of_working_tree() -> FakeLink {
+    link_answering(HostOutcome {
+        commit: COMMIT.to_owned(),
+        head: HEAD.to_owned(),
+        working_tree: true,
+        code: 0,
+        stdout: "PASS  12 tests\n".to_owned(),
+        fetched: Vec::new(),
+    })
+}
+
+fn link_answering(ran: HostOutcome) -> FakeLink {
+    let link = FakeLink::default();
+    link.answer_run(Ok(ran));
     link
+}
+
+/// A checkout tree on [`HEAD`] with the tree `tree` and the changed paths `changed`.
+fn checkout_tree(tree: &str, changed: &[&str]) -> CheckoutTree {
+    CheckoutTree {
+        head: HEAD.to_owned(),
+        tree: tree.to_owned(),
+        changed: changed.iter().map(|path| (*path).to_owned()).collect(),
+    }
 }
 
 fn outcome(argv: &[&str], fake: &FakeRuntime, link: &FakeLink) -> Outcome {
@@ -167,19 +198,19 @@ fn a_refusal_on_the_host_keeps_its_code() {
     assert_eq!((failure.code.as_ref(), failure.exit), ("host_run_failed", exit::USAGE));
 }
 
-/// A refusal of brd-host keeps its code under `host_`, and its details give the exit code of brd-host. Local changes are
-/// a usage failure; the rest is infrastructure.
+/// A refusal of brd-host keeps its code under `host_`, and its details give the exit code of brd-host. Each refusal is
+/// infrastructure.
 #[test]
 fn a_refusal_of_brd_host_maps_by_its_meaning() {
     let fake = checkout();
     let link = FakeLink::default();
-    link.answer_run(Err(host_refused(code::LOCAL_CHANGES, "this checkout has local changes")));
+    link.answer_run(Err(host_refused("unreachable", "no address of studio answers")));
     let failure = refusal(execute_with(["--host", "studio", "--lane", "fast"], &fake, &link));
-    assert_eq!((failure.code.as_ref(), failure.exit), ("host_local_changes", exit::USAGE));
-    assert_eq!(failure.message, "bt --host studio: this checkout has local changes");
+    assert_eq!((failure.code.as_ref(), failure.exit), ("host_unreachable", exit::INFRA));
+    assert_eq!(failure.message, "bt --host studio: no address of studio answers");
     assert_eq!(failure.details_json_text(), Some(r#"{"brd_host_exit":75}"#));
 
-    for code in ["unreachable", "untrusted", "lease_failed", code::NOT_INSTALLED] {
+    for code in ["untrusted", "lease_failed", code::NOT_INSTALLED] {
         let link = FakeLink::default();
         link.answer_run(Err(host_refused(code, "said")));
         let failure = refusal(execute_with(["--host", "studio", "--lane", "fast"], &fake, &link));
@@ -194,6 +225,25 @@ fn a_refusal_of_brd_host_maps_by_its_meaning() {
     let failure = refusal(execute_with(["--host", "studio", "--lane", "fast"], &fake, &link));
     assert_eq!((failure.code.as_ref(), failure.exit), ("host_fetch_failed", exit::INFRA));
     assert_eq!(failure.details_json_text(), Some(r#"{"brd_host_exit":255}"#));
+}
+
+/// `heavy_timeout` and `superseded` exit 75, as a refusal before the start does, but their run belongs on the host: bt
+/// passes them on and runs nothing locally.
+#[test]
+fn a_refusal_with_the_exit_not_run_never_runs_the_command_here() {
+    for code in ["heavy_timeout", "superseded"] {
+        let fake = checkout();
+        let link = FakeLink::default();
+        link.answer_run(Err(host_refused(code, "said")));
+        let failure = refusal(execute_with(["--host", "studio", "FooTest"], &fake, &link));
+        assert_eq!(
+            (failure.code.as_ref(), failure.exit),
+            (format!("host_{code}").as_str(), exit::INFRA)
+        );
+        assert_eq!(link.calls(), ["run studio"], "{code}: one run, and on the host");
+        assert!(fake.spawned().is_empty(), "{code}: bt ran something here: {:#?}", fake.spawned());
+        assert_eq!(records(&fake), None, "{code}");
+    }
 }
 
 #[test]
@@ -269,12 +319,90 @@ fn a_red_run_on_a_host_or_one_without_a_commit_records_nothing() {
     let link = FakeLink::default();
     link.answer_run(Ok(HostOutcome {
         commit: String::new(),
+        head: String::new(),
+        working_tree: false,
         code: 0,
         stdout: "PASS\n".to_owned(),
         fetched: Vec::new(),
     }));
     outcome(&["--host", "studio", "FooTest"], &fake, &link);
     assert_eq!(records(&fake), None);
+}
+
+/// A run of the working tree records the tree that the host ran with the real HEAD, and names the local changes of
+/// that tree, as a local run does: the pick finds the record only for a commit of these files.
+#[test]
+fn a_green_run_of_the_working_tree_records_its_tree_with_head_and_names_the_changes() {
+    let fake = checkout();
+    fake.state().checkout_trees = std::iter::once(checkout_tree(TREE, &["src/A.kt", "src/New.kt"])).collect();
+    outcome(&["--host", "studio", "FooTest"], &fake, &link_of_working_tree());
+    assert_eq!(
+        records(&fake).as_deref(),
+        Some(
+            format!(
+                r#"{{"schema":1,"tree":"{TREE}","head":"{HEAD}","tool":"bt","command":"test","patterns":["FooTest"],"exit":0,"at":1000,"host":"studio"}}
+"#
+            )
+            .as_str()
+        )
+    );
+    assert_eq!(
+        fake.state().stderr,
+        [
+            "> studio: bt FooTest".to_owned(),
+            "bt: the check record names the tree with the local changes of src/A.kt, src/New.kt. Commit them, or delete \
+             the ones that are not part of the work, before brd lease pick: the pick finds the record only for a commit \
+             of these files"
+                .to_owned(),
+        ]
+    );
+}
+
+/// An edit during the run leaves the record of the tree that ran, since the host ran exactly that tree, and a line
+/// that says so.
+#[test]
+fn an_edit_during_a_run_of_the_working_tree_keeps_the_record_and_says_so() {
+    let fake = checkout();
+    fake.state().checkout_trees = std::iter::once(checkout_tree("edited", &["src/A.kt"])).collect();
+    outcome(&["--host", "studio", "FooTest"], &fake, &link_of_working_tree());
+    let text = records(&fake).expect("a record of the tree that ran");
+    assert!(text.contains(&format!(r#""tree":"{TREE}","head":"{HEAD}""#)), "{text}");
+    assert_eq!(
+        fake.state().stderr.last().map(String::as_str),
+        Some(
+            format!(
+                "bt: the files changed after the start of the run (tree {TREE} ran, the checkout has edited). The check \
+                 record names the tree that ran: the pick finds it only for a commit of that tree"
+            )
+            .as_str()
+        )
+    );
+}
+
+/// A run of the committed HEAD reads no tree of the checkout and names no change. A report of an older brd-host has no
+/// HEAD, and the record names the commit as its HEAD.
+#[test]
+fn a_run_of_the_committed_head_reads_no_tree_of_the_checkout() {
+    let fake = checkout();
+    fake.state().checkout_trees = std::iter::once(checkout_tree("edited", &["src/A.kt"])).collect();
+    outcome(&["--host", "studio", "FooTest"], &fake, &link_ending(0, "PASS\n", &[]));
+    let link = link_answering(HostOutcome {
+        commit: COMMIT.to_owned(),
+        head: String::new(),
+        working_tree: false,
+        code: 0,
+        stdout: "PASS\n".to_owned(),
+        fetched: Vec::new(),
+    });
+    outcome(&["--host", "studio", "FooTest"], &fake, &link);
+    let text = records(&fake).expect("the records");
+    let lines: Vec<&str> = text.lines().collect();
+    assert_eq!(lines.len(), 2, "{text}");
+    for line in lines {
+        assert!(line.contains(&format!(r#""tree":"{TREE}","head":"{COMMIT}""#)), "{line}");
+    }
+    assert_eq!(fake.state().checkout_trees.len(), 1, "the tree of the checkout was read");
+    assert_eq!(fake.state().stderr, ["> studio: bt FooTest", "> studio: bt FooTest"]);
 }
 
 #[test]

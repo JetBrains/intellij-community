@@ -1,5 +1,5 @@
 //! The production [`HostLink`]: the `brd-host` binary of Branch Deck as a child process, with the contract of
-//! `spec/cli/host.spec.md` of Branch Deck.
+//! `openspec/specs/cli/host/spec.md` of Branch Deck.
 //!
 //! bt looks for `brd-host` on the PATH, else at `~/.local/bin/brd-host`, where `brd install` links it. The child gets the
 //! stdin and the stderr of bt, and bt reads its stdout. A run writes its report to the descriptor 3, which a shell
@@ -106,17 +106,11 @@ impl HostLink for BrdHost<'_> {
 }
 
 /// The arguments of `brd-host run`, after the binary. The defaults of `run` are the ones of a person, so bt names its
-/// options in full ("The report of a run" in `spec/cli/host.spec.md` of Branch Deck): niceness 0 keeps the CPU for the
-/// tests, and `--no-outputs` keeps the local copies of the outputs of `[host]`.
+/// options in full ("The report of a run" in `openspec/specs/cli/host/spec.md` of Branch Deck): niceness 0 keeps the
+/// CPU for the tests, and `--no-outputs` keeps the local copies of the outputs of `[host]`. Without `--head`, the run
+/// ships the working tree, so the host tests the files of this checkout as they are.
 fn run_args(alias: &str, request: &HostRun<'_>) -> Vec<OsString> {
-    let mut args: Vec<OsString> = vec![
-        "run".into(),
-        alias.into(),
-        "--head".into(),
-        "--nice".into(),
-        "0".into(),
-        "--no-outputs".into(),
-    ];
+    let mut args: Vec<OsString> = vec!["run".into(), alias.into(), "--nice".into(), "0".into(), "--no-outputs".into()];
     for dir in request.fetch {
         args.push("--fetch".into());
         args.push(dir.into());
@@ -176,7 +170,7 @@ fn exit_code(status: ExitStatus) -> i32 {
     status.code().unwrap_or(-1)
 }
 
-/// The report of a run on the descriptor 3: "The report of a run" of `spec/cli/host.spec.md` of Branch Deck. bt
+/// The report of a run on the descriptor 3: "The report of a run" of `openspec/specs/cli/host/spec.md` of Branch Deck. bt
 /// reads only the fields that it acts on.
 #[derive(Deserialize)]
 struct RunReport {
@@ -185,7 +179,13 @@ struct RunReport {
     exit: i32,
     /// The exit code of the command, `None` when it did not run or its end is unknown.
     command_exit: Option<i32>,
+    /// The commit that the host ran: HEAD, or a commit of the working tree on top of it.
     commit: Option<String>,
+    /// HEAD of the checkout. An older `brd-host` writes no such field.
+    head: Option<String>,
+    /// Whether the run shipped the working tree. An older `brd-host` writes no such field.
+    #[serde(default)]
+    working_tree: bool,
     refusal: Option<ReportRefusal>,
     #[serde(default)]
     fetched: Vec<String>,
@@ -223,6 +223,8 @@ fn outcome_of(exit: i32, stdout: String, report: &str) -> Result<HostOutcome, Ho
     }
     Ok(HostOutcome {
         commit: report.commit.unwrap_or_default(),
+        head: report.head.unwrap_or_default(),
+        working_tree: report.working_tree,
         code: report.command_exit.unwrap_or(report.exit),
         stdout,
         fetched: report.fetched,

@@ -68,12 +68,12 @@ Options:
   --json                   emit one JSON object on stdout and nothing else
   --dry-run                print the resolved label, filter, and argv; run nothing
   --verbose                also echo bazel's own captured output
-  --host <ssh alias>       run the committed HEAD on that machine through brd-host of Branch Deck: send
-                           the missing git objects, check the commit out in a host slot that the
-                           machine lends to this run only, run the same command, stream its output,
-                           copy back the kept logs of out/bt-runs; Ctrl+C cancels the run there;
-                           refused when the checkout has local changes; `brd install` puts
-                           brd-host into ~/.local/bin, and `brd-host setup <alias>` readies the machine
+  --host <ssh alias>       run the working tree, local changes included, on that machine through
+                           brd-host of Branch Deck: send the missing git objects, check the tree out in
+                           a host slot that the machine lends to this run only, run the same command,
+                           stream its output, copy back the kept logs of out/bt-runs; Ctrl+C cancels
+                           the run there; `brd install` puts brd-host into ~/.local/bin, and
+                           `brd-host setup <alias>` readies the machine
   --host-repo <path>       the main repository on the --host machine (env BT_HOST_REPO, default
                            the one of the host file that `brd-host setup` writes)
   --help
@@ -117,7 +117,7 @@ Options:
   --json                   emit one JSON object on stdout and nothing else
   --dry-run                print the argv; run nothing
   --verbose                also echo bazel's own captured output
-  --host <ssh alias>       build the committed HEAD on that machine, as bt --host does
+  --host <ssh alias>       build the working tree on that machine, as bt --host does
   --host-repo <path>       the main repository on the --host machine (env BT_HOST_REPO)
   --help
 

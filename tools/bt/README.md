@@ -167,7 +167,8 @@ bt is the only writer. `bins/bt/src/check.rs` holds the rules:
    so in the monorepo a read takes about 1.5 s with `status.showUntrackedFiles=all` and 17-49 s without it.
 4. A record of a tree with local changes names those paths on the stderr. The pick finds the record only for a commit
    of the same files, so commit or delete scratch files before the last check.
-5. A `--host` run records the tree of the commit that the report of `brd-host` names as the one that ran.
+5. A `--host` run records the tree of the commit that the report of `brd-host` names as the one that ran, and the
+   HEAD that the report names. That commit holds the local changes of the checkout, so rule 4 applies to it too.
 6. The file is `bd-checks.jsonl` in the git directory (`git rev-parse --git-path bd-checks.jsonl`), so each linked work
    tree has its own. Each write replaces the file in one step. It keeps the last 100 records, one JSON object a line:
 
@@ -186,14 +187,15 @@ that took only some classes. For a `--host` run it holds the arguments of bt on 
 before or after the selector. `bins/bt/src/remote.rs` starts `brd-host` of Branch Deck, and the agent `brd-host serve`
 on the host does the rest. bt finds `brd-host` on the PATH, else at `~/.local/bin/brd-host`, where `brd install` links
 it. Without it, bt refuses with 6 and `host_not_installed`, and the message names `brd install`. The contract of
-`brd-host` is `spec/cli/host.spec.md` of Branch Deck. No step of a run uses ssh. The command line is:
+`brd-host` is `openspec/specs/cli/host/spec.md` of Branch Deck. No step of a run uses ssh. The command line is:
 
 ```sh
-brd-host run <alias> --head --fetch out/bt-runs [--repo <path>] --report-fd 3 -- ./community/tools/bt.cmd <args>
+brd-host run <alias> --nice 0 --no-outputs --fetch out/bt-runs [--repo <path>] --report-fd 3 -- ./community/tools/bt.cmd <args>
 ```
 
-1. `brd-host` refuses a checkout with local changes, untracked files included, because only the commit reaches the
-   host.
+1. `brd-host` writes HEAD and the local changes as one commit, untracked files included and ignored files left out.
+   The index, the files and the refs of the checkout stay as they are, and no ref names the commit. A clean checkout
+   ships HEAD itself.
 2. `brd-host` sends the git objects that the host lacks, as a thin pack, to the main repository of the host.
    `--host-repo` or `BT_HOST_REPO` names that repository. Without them, the host file that `brd-host setup` writes
    names it.
@@ -202,7 +204,8 @@ brd-host run <alias> --head --fetch out/bt-runs [--repo <path>] --report-fd 3 --
    digest or the `--json` payload, and bt reads it. `brd-host` writes one JSON report of the run to the descriptor 3:
    the exit code of the command, the commit, the fetched files, or a refusal code. The exit code of the command is the
    exit code here. A refusal of `brd-host` is 6, with the code `host_<code>` and the exit code of `brd-host` in the
-   details (`{"brd_host_exit": 75}` when the command did not run). Local changes are 2.
+   details (`{"brd_host_exit": 75}` when the command did not run). bt never runs the command locally after a
+   refusal: `heavy_timeout` and `superseded` also exit 75, and their run belongs on the host.
 4. The new run directories of `out/bt-runs` come back to `out/bt-runs` here, and the digest names each local copy.
 5. The run lives on the agent, not on the connection, and `brd-host` follows it again after a lost connection.
    `brd-host` stays in the process group of bt, so Ctrl+C reaches it, and bt only waits. Ctrl+C cancels the run on the

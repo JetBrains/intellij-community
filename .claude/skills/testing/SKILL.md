@@ -59,7 +59,7 @@ bt prints a short summary of the run, the digest. The rules:
 | `--no-cache` | Runs the tests again when Bazel has a cached result. |
 | `--dry-run` | Prints the resolved label, the filter, and the Bazel command. Runs nothing. |
 | `--json` | Writes one JSON object to stdout and nothing else. |
-| `--host <host>` | Runs the committed HEAD on another machine of the user through `brd-host` of Branch Deck. The `brd-host` skill (`brd-host skill install`) gives the rules. |
+| `--host <host>` | Runs the working tree, local changes included, on another machine of the user through `brd-host` of Branch Deck. The `brd-host` skill (`brd-host skill install`) gives the rules. |
 | `-- --flaky_test_attempts=3` | Runs a failed test up to 3 times. `tests.cmd` uses `-Dintellij.build.test.attempt.count=3` for this. |
 | `-- --test_arg=--jvm_flag=-Dkey=value` | Sets a system property in the test JVM. `tests.cmd` uses `-Dpass.key=value` for this. |
 | `-- --test_arg=--jvm_flag=-Xmx8g` | Sets the heap of the test JVM. `tests.cmd` uses `-Dintellij.build.test.jvm.memory.options=-Xmx8g` for this. |

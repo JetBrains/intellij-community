@@ -15,7 +15,7 @@ use bt_core::fake::{FakeRuntime, area_files, refusal};
 use bt_core::runtime::Platform;
 
 /// The golden JSON of the report of a run: the block `json golden=run-report` of "The report of a run" in
-/// `spec/cli/host.spec.md` of Branch Deck.
+/// `openspec/specs/cli/host/spec.md` of Branch Deck.
 const GOLDEN_REPORT: &str = r#"{
   "schema": 1,
   "alias": "studio",
@@ -133,6 +133,8 @@ fn a_run_passes_the_contract_arguments_and_answers_the_stdout_and_the_report() {
         ran,
         HostOutcome {
             commit: COMMIT.to_owned(),
+            head: String::new(),
+            working_tree: false,
             code: 3,
             stdout: "FAIL  1 of 3 tests failed\n".to_owned(),
             fetched: vec!["out/bt-runs/1/shard-1/idea.log".to_owned()],
@@ -144,7 +146,6 @@ fn a_run_passes_the_contract_arguments_and_answers_the_stdout_and_the_report() {
         [
             "run",
             "studio",
-            "--head",
             "--nice",
             "0",
             "--no-outputs",
@@ -181,7 +182,6 @@ fn the_exit_code_of_the_command_passes_through_bt() {
         [
             "run",
             "studio",
-            "--head",
             "--nice",
             "0",
             "--no-outputs",
@@ -200,13 +200,33 @@ fn the_exit_code_of_the_command_passes_through_bt() {
 #[test]
 fn a_refusal_of_the_report_is_a_host_refusal_with_the_exit_of_brd_host() {
     let fake = FakeBrdHost::new(&answering(
-        &report(75, None, Some(("local_changes", "this checkout has local changes"))),
+        &report(75, None, Some(("superseded", "run 1-2 was superseded by run 1-3"))),
         "",
         75,
     ));
     assert_eq!(
         fake.refused_run(),
-        HostRefusal::new(code::LOCAL_CHANGES, 75, "this checkout has local changes")
+        HostRefusal::new("superseded", 75, "run 1-2 was superseded by run 1-3")
+    );
+}
+
+/// A run of the working tree names the commit that the host ran and HEAD of the checkout apart.
+#[test]
+fn a_report_of_the_working_tree_names_the_commit_and_head() {
+    let text = serde_json::json!({
+        "schema": 1,
+        "commit": COMMIT,
+        "head": "89abcdef0123456789abcdef0123456789abcdef",
+        "working_tree": true,
+        "exit": 0,
+        "command_exit": 0,
+        "refusal": null,
+    })
+    .to_string();
+    let ran = outcome_of(0, "PASS\n".to_owned(), &text).expect("a run to its end");
+    assert_eq!(
+        (ran.commit.as_str(), ran.head.as_str(), ran.working_tree),
+        (COMMIT, "89abcdef0123456789abcdef0123456789abcdef", true)
     );
 }
 
@@ -266,6 +286,8 @@ fn the_golden_report_of_the_spec_parses() {
         ran,
         HostOutcome {
             commit: "8d4b3790b5c0e7f1a2d3c4b5a6978877665544aa".to_owned(),
+            head: "8d4b3790b5c0e7f1a2d3c4b5a6978877665544aa".to_owned(),
+            working_tree: false,
             code: 0,
             stdout: "PASS\n".to_owned(),
             fetched: vec!["out/bt-runs/20261028-100000-0001/summary.json".to_owned()],
