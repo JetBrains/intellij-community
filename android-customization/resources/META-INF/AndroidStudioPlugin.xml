@@ -10,6 +10,7 @@
   <module value="com.intellij.modules.lang"/>
   <module value="com.intellij.modules.lang.actions"/>
   <module value="com.intellij.modules.platform"/>
+  <module value="com.intellij.modules.python-classic-capable"/>
   <module value="com.intellij.modules.python-core-capable"/>
   <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
 

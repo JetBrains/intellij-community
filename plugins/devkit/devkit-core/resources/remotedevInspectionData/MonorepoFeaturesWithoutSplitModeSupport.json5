@@ -11,7 +11,8 @@
     "community/python//*",
     "community/plugins/grazie//*",
     "language-server//*",
-    "draft//*"
+    "draft//*",
+    "python/lsp-mode//*"
   ],
 
   moduleNames: [

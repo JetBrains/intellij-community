@@ -203,6 +203,7 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   alias("com.intellij.modules.java-capable")
   alias("com.intellij.modules.python-core-capable")
   alias("com.intellij.modules.python-in-non-pycharm-ide-capable")
+  alias("com.intellij.modules.python-classic-capable")
 
   if (platformPrefix != "AndroidStudio") {
     alias("com.intellij.platform.ide.provisioner")

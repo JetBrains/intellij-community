@@ -9,6 +9,7 @@
   <module value="com.intellij.modules.platform"/>
   <module value="com.intellij.modules.pycharm"/>
   <module value="com.intellij.modules.pycharm.community"/>
+  <module value="com.intellij.modules.python-classic-capable"/>
   <module value="com.intellij.modules.python-core-capable"/>
   <module value="com.intellij.platform.ide.provisioner"/>
 

@@ -63,6 +63,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     // Module capability aliases
     alias("com.intellij.modules.pycharm.community")
     alias("com.intellij.modules.python-core-capable")
+    alias("com.intellij.modules.python-classic-capable")
     alias("com.intellij.platform.ide.provisioner")
 
     // Content modules
