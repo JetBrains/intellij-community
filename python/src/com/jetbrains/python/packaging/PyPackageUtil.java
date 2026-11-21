@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiManager;
 import com.intellij.python.requirements.parser.PyRequirementParser;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.jetbrains.python.PyNames;
@@ -27,14 +26,6 @@ import com.jetbrains.python.packaging.setupPy.SetupPyHelpers;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.remote.PyCredentialsContribution;
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
-import com.jetbrains.python.sdk.CredentialsTypeExChecker;
-import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.SdkExtKt;
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,9 +83,9 @@ public final class PyPackageUtil {
 
   @SuppressWarnings("unused")
   public static @Nullable VirtualFile findRequirementsTxt(@NotNull Module module) {
-    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
-    if (sdk != null) {
-      VirtualFile stored = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(sdk);
+    PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(module);
+    if (interpreter != null) {
+      VirtualFile stored = PythonRequirementTxtSdkUtils.INSTANCE.resolvePersistedRequirementsFile(interpreter);
       if (stored != null) {
         return stored;
       }
@@ -127,8 +118,7 @@ public final class PyPackageUtil {
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   private static @Nullable PyFile findSetupPyPsiFileForSdk(@NotNull Module module) {
-    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
-    if (sdk == null) return null;
+    if (!PyModuleInterpreterReader.hasModuleInterpreterIfReady(module)) return null;
 
     VirtualFile setupPyVFile = findSetupPyFile(module);
     if (setupPyVFile == null) return null;
@@ -187,41 +177,6 @@ public final class PyPackageUtil {
         return false;
       }
     });
-  }
-
-  /**
-   * @param newUi                set only for new toolwindow
-   * @param calledFromInspection when so, we can't change anything, and if sdk lacks of additional data we do not add it.
-   *                             See {@link SdkExtKt#getOrCreateAdditionalData(Sdk)}
-   */
-  public static boolean packageManagementEnabled(@Nullable Sdk sdk, boolean newUi, boolean calledFromInspection) {
-    if (sdk == null) {
-      return false;
-    }
-    // Temporary fix because old UI doesn't support non-local conda
-    var data = calledFromInspection
-               ? (ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class))
-               : PySdkExtKt.getOrCreateAdditionalData(sdk);
-    if (!calledFromInspection
-        && !newUi
-        && data.getFlavor() instanceof CondaEnvSdkFlavor
-        && SdkExtKt.getTargetEnvConfiguration(sdk) != null) {
-      LOG.warn("Remote Conda package manager is disabled");
-      return false;
-    }
-    Boolean supported = PythonInterpreterTargetEnvironmentFactory.isPackageManagementSupported(sdk);
-    if (supported != null) {
-      return supported;
-    }
-    if (!PythonSdkUtil.isRemote(sdk)) {
-      return true;
-    }
-    return new CredentialsTypeExChecker() {
-      @Override
-      protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
-        return languageContribution.isPackageManagementEnabled();
-      }
-    }.check(sdk);
   }
 
   @RequiresBackgroundThread(generateAssertion = false)

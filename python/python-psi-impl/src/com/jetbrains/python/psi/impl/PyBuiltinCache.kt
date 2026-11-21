@@ -38,7 +38,6 @@ import com.jetbrains.python.psi.resolve.PyResolveCachesInvalidator
 import com.jetbrains.python.psi.resolve.findModuleForPsiElementCached
 import com.jetbrains.python.psi.resolve.fromInterpreter
 import com.jetbrains.python.psi.resolve.pythonInterpreterIfReady
-import com.jetbrains.python.psi.resolve.resolveSdk
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -233,10 +232,6 @@ class PyBuiltinCache private constructor(
       }
       return DUD_INSTANCE // a non-functional fail-fast instance, for a case when skeletons are not available
     }
-
-    /** The SDK of [findInterpreterForFile]. */
-    @JvmStatic
-    fun findSdkForFile(psiFile: PsiFileSystemItem?): Sdk? = findInterpreterForFile(psiFile)?.resolveSdk()
 
     /**
      * The interpreter that resolves the names of [psiFile]: the interpreter of its module, or for a file outside every

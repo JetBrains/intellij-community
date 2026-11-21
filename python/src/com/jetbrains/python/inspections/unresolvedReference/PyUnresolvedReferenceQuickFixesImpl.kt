@@ -21,7 +21,6 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
@@ -41,7 +40,7 @@ import com.jetbrains.python.inspections.quickfix.InstallAndImportPackageQuickFix
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.inspections.quickfix.PyMarkDirectoryAsSourceRootQuickFix
 import com.jetbrains.python.module.PySourceRootDetectionService
-import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.isPackageManagementEnabled
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
 import com.jetbrains.python.psi.PyCallExpression
@@ -95,8 +94,7 @@ open class PyUnresolvedReferenceQuickFixesImpl(private val suggestInstallingPack
     val packageName = PyPsiPackageUtil.moduleToPackageName(components[0])
 
     val interpreter = node.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return emptyList()
-    @Suppress("DEPRECATION")
-    if (!PyPackageUtil.packageManagementEnabled(interpreter.getSdkAPI(), false, true)) {
+    if (!interpreter.isPackageManagementEnabled()) {
       return emptyList()
     }
 

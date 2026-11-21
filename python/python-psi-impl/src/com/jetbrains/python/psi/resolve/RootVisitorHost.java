@@ -4,14 +4,11 @@ package com.jetbrains.python.psi.resolve;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.PyInterpreterLibraryKt;
-import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ModuleSourceOrderEntry;
@@ -121,9 +118,8 @@ public final class RootVisitorHost {
 
   /** Visits the class roots of [interpreter] in [project]. Returns whether the visitor stopped. */
   public static boolean visitInterpreterRoots(@NotNull Project project, @NotNull PythonInterpreter interpreter, @NotNull RootVisitor visitor) {
-    final Sdk sdk = MainPythonSdkKt.resolveSdk(interpreter);
     for (VirtualFile root : PythonInterpreterExtKt.getClassRoots(interpreter)) {
-      if (!visitor.visitRoot(root, null, sdk, false)) {
+      if (!visitor.visitRoot(root, null, false)) {
         return true;
       }
     }
@@ -135,17 +131,12 @@ public final class RootVisitorHost {
     for (ContentEntry entry : rootModel.getContentEntries()) {
       VirtualFile rootFile = entry.getFile();
 
-      if (rootFile != null && !visitor.visitRoot(rootFile, null, null, true)) return false;
+      if (rootFile != null && !visitor.visitRoot(rootFile, null, true)) return false;
       for (VirtualFile folder : entry.getSourceFolderFiles()) {
-        if (!visitor.visitRoot(folder, rootModel.getModule(), null, true)) return false;
+        if (!visitor.visitRoot(folder, rootModel.getModule(), true)) return false;
       }
     }
     return true;
-  }
-
-  /** The SDK of the interpreter that [entry] carries, when it is the interpreter library of its module. */
-  private static @Nullable Sdk interpreterSdkOf(@NotNull OrderEntry entry) {
-    return PyInterpreterLibraryKt.isInterpreterLibraryCarrier(entry) ? MainPythonSdkKt.pythonSdkIfReady(entry.getOwnerModule()) : null;
   }
 
   private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
@@ -153,9 +144,8 @@ public final class RootVisitorHost {
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
     Module module = entry instanceof ModuleOrderEntry ? ((ModuleOrderEntry)entry).getModule() : null;
-    Sdk sdk = entry instanceof JdkOrderEntry ? ((JdkOrderEntry)entry).getJdk() : interpreterSdkOf(entry);
     for (VirtualFile root : allRoots) {
-      if (!visitor.visitRoot(root, module, sdk, false)) {
+      if (!visitor.visitRoot(root, module, false)) {
         return false;
       }
     }

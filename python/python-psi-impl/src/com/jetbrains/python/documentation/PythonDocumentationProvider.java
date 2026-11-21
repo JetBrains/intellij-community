@@ -4,7 +4,8 @@ package com.jetbrains.python.documentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.python.sdk.backend.PythonInterpreterDetails;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -837,8 +838,8 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   public static @Nullable String getOnlyUrlFor(PsiElement element, PsiElement originalElement) {
     PsiFileSystemItem file = getFile(element);
     if (file == null) return null;
-    final Sdk sdk = PyBuiltinCache.findSdkForFile(file);
-    if (sdk == null) {
+    final PythonInterpreter interpreter = PyBuiltinCache.findInterpreterForFile(file);
+    if (interpreter == null) {
       return null;
     }
     final QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
@@ -846,7 +847,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       return null;
     }
     final PythonDocumentationMap map = PythonDocumentationMap.getInstance();
-    final String pyVersion = pyVersion(sdk.getVersionString());
+    final String pyVersion = pyVersion(PythonInterpreterDetails.getInstance(interpreter.getProject()).version(interpreter));
     PsiNamedElement namedElement = getNamedElement(element);
     final String url = map.urlFor(qName, namedElement, pyVersion);
     if (url != null) {

@@ -50,7 +50,6 @@ e:com.jetbrains.python.PythonHelper
 - asParamString():java.lang.String
 - getPythonPathEntries():java.util.List
 - getPythonPathEntry():java.lang.String
-- newCommandLine(com.intellij.openapi.projectRoots.Sdk,java.util.List):com.intellij.execution.configurations.GeneralCommandLine
 - newCommandLine(java.lang.String,java.util.List):com.intellij.execution.configurations.GeneralCommandLine
 - s:valueOf(java.lang.String):com.jetbrains.python.PythonHelper
 - s:values():com.jetbrains.python.PythonHelper[]

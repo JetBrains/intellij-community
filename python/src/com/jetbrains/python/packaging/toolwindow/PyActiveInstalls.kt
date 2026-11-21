@@ -1,25 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow
 
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.getOrCreateUserDataUnsafe
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.PyPackageName
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Per-SDK map of "installs currently running", keyed by opaque strings — the normalized package
+ * Per-interpreter map of "installs currently running", keyed by opaque strings — the normalized package
  * name for package installs (see [packageKey]) or the install dialog's namespaced `"location:"` /
  * `"command:"` keys. It is the single source of truth behind the tool-window tree link, the info
  * pane and the install dialog, so a package cannot be installed twice at once into the same
  * interpreter and every surface shows the same in-progress state (PY-91529).
  *
- * Scoped to the [Sdk] (stored in its user data, mirroring [com.jetbrains.python.packaging.management.CancellableJobSerialRunner]'s
- * per-SDK mutex) rather than to the project: installs happen per interpreter, so "is X installing"
- * only makes sense for a given SDK. Change notification is *not* kept here — it is UI-scoped and
+ * Scoped to the interpreter: the map lives in the user data of its [PythonPackageManager], see [of]. Installs happen per interpreter, so "is X installing" only
+ * makes sense for a given interpreter. Change notification is *not* kept here — it is UI-scoped and
  * owned by [PyPackagingToolWindowService], which fires its listeners on the EDT.
  *
  * Thread-safe.
@@ -56,18 +53,11 @@ internal class PyActiveInstalls {
   companion object {
     private val KEY = Key.create<PyActiveInstalls>(PyActiveInstalls::class.java.name)
 
-    /**
-     * The active-installations map of [interpreter], created on first use.
-     *
-     * It lives in the user data of the SDK the interpreter wraps. So every [PythonInterpreter] of one SDK shares the
-     * map, as they share the same environment.
-     */
-    @Suppress("DEPRECATION") // The map lives on the SDK, so this is the one place that reaches it.
-    fun of(interpreter: PythonInterpreter): PyActiveInstalls = of(interpreter.getSdkAPI())
-
-    /** Storage accessor by raw [UserDataHolder] — the SDK in production, any holder in tests. */
-    internal fun of(holder: UserDataHolder): PyActiveInstalls =
-      synchronized(holder) { holder.getOrCreateUserDataUnsafe(KEY) { PyActiveInstalls() } }
+    /** The active-installations map of [interpreter], created on first use. */
+    fun of(interpreter: PythonInterpreter): PyActiveInstalls {
+      val manager = PythonPackageManager.forPythonInterpreter(interpreter)
+      return synchronized(manager) { manager.getOrCreateUserDataUnsafe(KEY) { PyActiveInstalls() } }
+    }
 
     /** Normalized key for a package install: `Django`, `django` and `DJANGO` collapse to one entry. */
     fun packageKey(packageName: String): String = PyPackageName.from(packageName).name

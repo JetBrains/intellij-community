@@ -26,6 +26,7 @@
 - outdatedPackagesChanged(com.intellij.python.sdk.backend.PythonInterpreter):V
 - packagesChanged(com.intellij.python.sdk.backend.PythonInterpreter):V
 *a:com.jetbrains.python.packaging.management.PythonPackageManager
+- com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.Disposable
 - *sf:Companion:com.jetbrains.python.packaging.management.PythonPackageManager$Companion
 - f:getProject():com.intellij.openapi.project.Project

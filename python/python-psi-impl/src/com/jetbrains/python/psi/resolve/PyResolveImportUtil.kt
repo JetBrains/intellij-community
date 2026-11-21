@@ -283,7 +283,7 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
     if (context.visitAllModules) consoleInterpreter else storedInterpreter ?: module?.pythonInterpreterIfReady()
   val languageLevel = languageInterpreter?.let { PythonLanguageLevels.levelOf(context.project, it) }
 
-  val visitor = RootVisitor { root, _, _, isModuleSource ->
+  val visitor = RootVisitor { root, _, isModuleSource ->
     val results = if (isModuleSource) moduleResults else sdkResults
     if (!root.isValid ||
         languageLevel != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, languageLevel)

@@ -158,14 +158,10 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
         it.asTargetWithMappedLocalVfs(targetEnvironmentConfiguration)
       }
 
-    /**
-     * Null means this sdk is not target based. In other case value means if user can install package in this SDK
-     */
+    /** Whether the user can install a package on [configuration], or `null` when no factory knows the target. */
     @JvmStatic
-    fun isPackageManagementSupported(sdk: Sdk): Boolean? =
-      (sdk.sdkAdditionalData as? PyTargetAwareAdditionalData)?.targetEnvironmentConfiguration?.let { targetEnvironmentConfiguration ->
-        EP_NAME.extensionList.firstNotNullOfOrNull { it.packageManagementSupported(targetEnvironmentConfiguration) }
-      }
+    fun isPackageManagementSupported(configuration: TargetEnvironmentConfiguration): Boolean? =
+      EP_NAME.extensionList.firstNotNullOfOrNull { it.packageManagementSupported(configuration) }
 
     /**
      * Module may be not local but resided on target (like wsl)

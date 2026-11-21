@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -91,6 +92,9 @@ import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Represents a Python package manager for a specific Python SDK. Encapsulate main operations with package managers
+ *
+ * The project keeps one manager per interpreter for the lifetime of the interpreter, so its user data holds the
+ * in-memory state of the interpreter, such as the lock of a package command.
  * @see com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI to execute commands with UI handlers
  */
 @ApiStatus.Experimental
@@ -98,7 +102,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   /** The interpreter whose environment this manager manages. It is detected, so its environment is known. */
   @get:ApiStatus.Internal
   val interpreter: PythonInterpreter,
-) : Disposable {
+) : UserDataHolderBase(), Disposable {
   /** For the subclasses outside the Python plugin. The interpreter gives the project. */
   @ApiStatus.Internal
   @Deprecated("Pass only the interpreter", ReplaceWith("PythonPackageManager(interpreter)"))

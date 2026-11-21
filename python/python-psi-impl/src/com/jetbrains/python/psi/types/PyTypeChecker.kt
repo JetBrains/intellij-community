@@ -16,7 +16,6 @@ import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.codeInsight.typing.ProtocolAndSubclassElements
@@ -49,7 +48,8 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.resolve.pythonSdkIfReady
+import com.jetbrains.python.psi.resolve.pythonInterpreterIfReady
+import com.intellij.python.sdk.backend.languageLevel
 import com.jetbrains.python.psi.types.PyCallableParameterMapping.mapCallableParameters
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.match
@@ -3042,7 +3042,7 @@ object PyTypeChecker {
     val subClassFile = subClass.containingFile
 
     val isPy2 = if (subClassFile is PyiFile)
-      PythonRuntimeService.getInstance().getLanguageLevelForSdk(subClassFile.pythonSdkIfReady()).isPython2
+      (subClassFile.pythonInterpreterIfReady()?.languageLevel ?: LanguageLevel.getDefault()).isPython2
     else
       LanguageLevel.forElement(subClass).isPython2
 

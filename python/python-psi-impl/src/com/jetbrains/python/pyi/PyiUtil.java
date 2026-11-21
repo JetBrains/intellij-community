@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.pyi;
 
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -32,7 +33,6 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,9 +127,9 @@ public final class PyiUtil {
     if (!(element.getContainingFile() instanceof PyFile file) || file instanceof PyiFile) return false;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
-    final Sdk sdk = MainPythonSdkKt.pythonSdkIfReady(file);
-    if (sdk == null) return false;
-    final VirtualFile skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk);
+    final PythonInterpreter interpreter = MainPythonSdkKt.pythonInterpreterIfReady(file);
+    if (interpreter == null) return false;
+    final VirtualFile skeletonsDir = PythonInterpreterExtKt.skeletonsDirectory(interpreter);
     return skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
   }
 

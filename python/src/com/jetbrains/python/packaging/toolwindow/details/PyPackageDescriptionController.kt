@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
@@ -37,7 +36,7 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.isPackageManagementEnabled
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.toInstallRequest
@@ -274,10 +273,7 @@ internal class PyPackageDescriptionController(
       currentPackageKey = newKey
     }
     val interpreter = service.currentInterpreter
-    @Suppress("DEPRECATION")
-    isManagement.set(interpreter != null && !interpreter.isReadOnly && PyPackageUtil.packageManagementEnabled(interpreter.getSdkAPI(),
-                                                                                                              true,
-                                                                                                              false))
+    isManagement.set(interpreter != null && !interpreter.isReadOnly && interpreter.isPackageManagementEnabled())
   }
 
   fun setPackageDetails(packageDetails: PythonPackageDetails) {

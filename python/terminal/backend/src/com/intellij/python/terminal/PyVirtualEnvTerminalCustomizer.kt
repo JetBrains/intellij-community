@@ -1,11 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.terminal
 
+import com.intellij.python.sdk.backend.activationEnvironment
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
@@ -22,12 +23,10 @@ import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.ShellActivation
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.ShellType
-import com.jetbrains.python.sdk.activationEnvironment
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -78,11 +77,11 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
   }
 
   @RequiresBackgroundThread
-  private fun activateUnknownShell(sdk: Sdk, envs: MutableMap<String, String>): Jediterm? {
+  private fun activateUnknownShell(interpreter: NativePythonInterpreter, envs: MutableMap<String, String>): Jediterm? {
     //for other shells we read envs from activate script by the default shell and pass them to the process
-    val envVars = runBlockingMaybeCancellable { sdk.activationEnvironment() }.successOrNull ?: emptyMap()
+    val envVars = runBlockingMaybeCancellable { interpreter.activationEnvironment() }.successOrNull ?: emptyMap()
     if (envVars.isEmpty()) {
-      logger.warn("No vars found to activate in ${sdk.homePath}")
+      logger.warn("No vars found to activate in ${interpreter.pythonBinary}")
     }
     else {
       envs.putAll(envVars)
@@ -98,8 +97,8 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
    * environment, and the terminal gets it as variables. Every other shell asks the environment itself, so no kind of environment is named here.
    */
   @RequiresBackgroundThread
-  private fun activate(shell: ShellType?, sdk: Sdk, environment: PythonEnvironment, envs: MutableMap<String, String>): Jediterm? {
-    if (shell == null) return activateUnknownShell(sdk, envs)
+  private fun activate(shell: ShellType?, interpreter: NativePythonInterpreter, environment: PythonEnvironment, envs: MutableMap<String, String>): Jediterm? {
+    if (shell == null) return activateUnknownShell(interpreter, envs)
     return when (val activation = environment.activationScript(shell)) {
       null -> null
       is ShellActivation.SourceScript -> Jediterm(activation.scriptPath, activation.args)
@@ -169,13 +168,15 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       return
     }
 
-    @Suppress("DEPRECATION") // The activation of an unknown shell takes an SDK.
-    val sdk = pythonInterpreter.getSdkAPI()
-
-    // A target interpreter has no environment on this machine.
-    val interpreter = pythonInterpreter as? NativePythonInterpreter
-    val pythonEnvironment = interpreter?.environmentResult?.orLogException(logger) ?: run {
-      logger.warn("Cannot detect Python environment for SDK ${sdk.homePath}, skipping activation")
+    val interpreter = when (pythonInterpreter) {
+      is NativePythonInterpreter -> pythonInterpreter
+      is TargetPythonInterpreter -> {
+        logger.info("Skipping virtual env activation: a target interpreter has no environment on this machine")
+        return
+      }
+    }
+    val pythonEnvironment = interpreter.environmentResult.orLogException(logger) ?: run {
+      logger.warn("Cannot detect Python environment for ${interpreter.pythonBinary}, skipping activation")
       return
     }
 
@@ -186,13 +187,13 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
     }
 
     if (!pythonEnvironment.isActivatable) {
-      logger.debug("Nothing to activate for ${sdk.homePath}")
+      logger.debug("Nothing to activate for ${interpreter.pythonBinary}")
       return
     }
-    val jediterm = activate(shell, sdk, pythonEnvironment, envs)
+    val jediterm = activate(shell, interpreter, pythonEnvironment, envs)
     jediterm?.buildEnvironmentVariables()?.let { envs.putAll(it) }
 
-    logger.debug("Activating ${sdk.homePath} with ${envs.entries.joinToString("\n")}")
+    logger.debug("Activating ${interpreter.pythonBinary} with ${envs.entries.joinToString("\n")}")
   }
 }
 

@@ -1275,7 +1275,6 @@ f:com.jetbrains.python.psi.impl.PyBuiltinCache
 - sf:TYPES_MODULE:java.lang.String
 - <init>(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):V
 - sf:findInterpreterForFile(com.intellij.psi.PsiFileSystemItem):com.intellij.python.sdk.backend.PythonInterpreter
-- sf:findSdkForFile(com.intellij.psi.PsiFileSystemItem):com.intellij.openapi.projectRoots.Sdk
 - f:getBoolType():com.jetbrains.python.psi.types.PyClassType
 - f:getBuiltinsFile():com.jetbrains.python.psi.PyFile
 - sf:getBuiltinsFileName(com.jetbrains.python.psi.LanguageLevel):java.lang.String
@@ -1313,7 +1312,6 @@ f:com.jetbrains.python.psi.impl.PyBuiltinCache
 f:com.jetbrains.python.psi.impl.PyBuiltinCache$Companion
 - f:findInterpreterForFile(com.intellij.psi.PsiFileSystemItem):com.intellij.python.sdk.backend.PythonInterpreter
 - f:findInterpreterForNonModuleFile(com.intellij.psi.PsiFileSystemItem):com.intellij.python.sdk.backend.PythonInterpreter
-- f:findSdkForFile(com.intellij.psi.PsiFileSystemItem):com.intellij.openapi.projectRoots.Sdk
 - f:getBuiltinsFileName(com.jetbrains.python.psi.LanguageLevel):java.lang.String
 - f:getBuiltinsForInterpreter(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):com.jetbrains.python.psi.PyFile
 - f:getBuiltinsForSdk(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk):com.jetbrains.python.psi.PyFile

@@ -11,10 +11,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,8 +25,6 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 import static com.jetbrains.python.sdk.PySdkUtil.getLanguageLevelForSdk;
-import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.findSkeletonsDir;
-import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
 
 /**
  * Skeleton logic from the original [com.jetbrains.python.sdk.PythonSdkUtil]
@@ -36,8 +33,8 @@ import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
 public final class PySkeletonUtil {
   private static final Key<PySkeletonHeader> CACHED_SKELETON_HEADER = Key.create("CACHED_SKELETON_HEADER");
 
-  private static @Nullable PySkeletonHeader readSkeletonHeader(@NotNull VirtualFile file, @NotNull Sdk pythonSdk) {
-    final VirtualFile skeletonsDir = findSkeletonsDir(pythonSdk);
+  private static @Nullable PySkeletonHeader readSkeletonHeader(@NotNull VirtualFile file, @NotNull PythonInterpreter interpreter) {
+    final VirtualFile skeletonsDir = PythonInterpreterExtKt.skeletonsDirectory(interpreter);
     if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, file, false)) {
       PySkeletonHeader skeletonHeader = file.getUserData(CACHED_SKELETON_HEADER);
       if (skeletonHeader == null) {
@@ -57,19 +54,17 @@ public final class PySkeletonUtil {
   @RequiresBackgroundThread(generateAssertion = false)
   public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable PythonInterpreter interpreter) {
     if (interpreter == null) return false;
-    //noinspection deprecation
-    final Sdk pythonSdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
     @Nullable VirtualFile originFile = vFile;
     @NotNull String originPath = vFile.getPath();
     boolean checkOnRemoteFS = false;
     // All binary skeletons are collected under the same root regardless of their original location.
     // Because of that we need to use paths to the corresponding binary modules recorded in their headers.
-    final PySkeletonHeader header = readSkeletonHeader(originFile, pythonSdk);
+    final PySkeletonHeader header = readSkeletonHeader(originFile, interpreter);
     if (header != null) {
       // Binary module paths in skeleton headers of Mock SDK don't map to actual physical files.
       // Fallback to the old heuristic for these stubs.
       if (ApplicationManager.getApplication().isUnitTestMode() &&
-          Objects.equals(vFile.getParent(), findSkeletonsDir(pythonSdk))) {
+          Objects.equals(vFile.getParent(), PythonInterpreterExtKt.skeletonsDirectory(interpreter))) {
         return true;
       }
 
@@ -77,7 +72,7 @@ public final class PySkeletonUtil {
       if (binaryPath.equals(PySkeletonHeader.BUILTIN_NAME)) {
         return true;
       }
-      if (isRemote(pythonSdk)) {
+      if (PythonInterpreterExtKt.isOnTarget(interpreter)) {
         checkOnRemoteFS = true;
         // Actual file is on remote file system and not available
         originFile = null;
@@ -92,12 +87,12 @@ public final class PySkeletonUtil {
       originPath = originFile.getPath();
     }
 
-    final VirtualFile libDir = PythonInterpreterExtKt.stdlibLibDirectory(pythonSdk);
-    if (libDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, libDir, pythonSdk, checkOnRemoteFS)) {
+    final VirtualFile libDir = PythonInterpreterExtKt.stdlibLibDirectory(interpreter);
+    if (libDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, libDir, interpreter, checkOnRemoteFS)) {
       return true;
     }
     final VirtualFile venvLibDir = PythonInterpreterExtKt.venvLibDirectory(interpreter);
-    if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, venvLibDir, pythonSdk, checkOnRemoteFS)) {
+    if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, venvLibDir, interpreter, checkOnRemoteFS)) {
       return true;
     }
     if (PyTypeShed.INSTANCE.isInStandardLibrary(vFile)) {
@@ -109,13 +104,13 @@ public final class PySkeletonUtil {
   private static boolean isUnderLibDirButNotSitePackages(@Nullable VirtualFile file,
                                                          @NotNull String path,
                                                          @NotNull VirtualFile libDir,
-                                                         @NotNull Sdk sdk,
+                                                         @NotNull PythonInterpreter interpreter,
                                                          boolean checkOnRemoteFS) {
     final VirtualFile originLibDir;
     final String originLibDirPath;
     if (checkOnRemoteFS) {
       originLibDir = libDir;
-      originLibDirPath = mapToRemote(originLibDir.getPath(), sdk);
+      originLibDirPath = mapToRemote(originLibDir.getPath(), interpreter);
     }
     else {
       // Normalize the path to the lib directory on local FS
@@ -137,8 +132,9 @@ public final class PySkeletonUtil {
     return false;
   }
 
-  private static @NotNull String mapToRemote(@NotNull String localRoot, @NotNull Sdk sdk) {
-    return PythonRuntimeService.getInstance().mapToRemote(localRoot, sdk);
+  private static @NotNull String mapToRemote(@NotNull String localRoot, @NotNull PythonInterpreter interpreter) {
+    final PathMappingSettings mappings = PythonInterpreterExtKt.getPathMappings(interpreter);
+    return mappings != null ? mappings.convertToRemote(localRoot) : localRoot;
   }
 
   /**

@@ -25,10 +25,8 @@ import com.intellij.python.lsp.core.pyLspAttachedDescriptor
 import com.intellij.python.lsp.core.pyLspInterpreterOf
 import com.intellij.python.lsp.core.pyLspProjectsToServeWith
 import com.intellij.python.lsp.core.pyServedProjects
-import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.detectedEnvironment
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.zuban.common.ZubanTypeCheckingMode
 import com.intellij.util.EnvironmentUtil
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -150,9 +148,8 @@ class ZubanLspClientDescriptor(
 
   override suspend fun resolveCommandLine(): GeneralCommandLine {
     val commandLine = super.resolveCommandLine()
-    @Suppress("DEPRECATION") // The local check still reads the SDK.
-    val interpreter = pyLspInterpreterOf(pyProject)?.takeIf { PyTypeEngineUtils.isLocalSdk(it.getSdkAPI()) }
-    pythonExecutable = interpreter?.detectedEnvironment?.pythonBinaryPath?.let { zubanPythonExecutable(it) }
+    // Only a native interpreter runs on this machine.
+    pythonExecutable = pyLspInterpreterOf(pyProject)?.detectedEnvironment?.pythonBinaryPath?.let { zubanPythonExecutable(it) }
     val firstRoot = readAction {
       refreshModuleRoots()
       roots.firstOrNull()?.let { it.fileSystem.getNioPath(it) }

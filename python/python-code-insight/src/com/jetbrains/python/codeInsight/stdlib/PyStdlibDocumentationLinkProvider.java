@@ -2,7 +2,6 @@
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableMap;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -10,7 +9,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.python.sdk.backend.PythonInterpreter;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreterDetails;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationLinkProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -983,20 +982,17 @@ public final class PyStdlibDocumentationLinkProvider implements PythonDocumentat
     PythonInterpreter interpreter = PyBuiltinCache.findInterpreterForFile(file);
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null && interpreter != null && PySkeletonUtil.isStdLib(vFile, interpreter)) {
-      //noinspection deprecation
-      Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
       QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
       if (qName == null) {
         return null;
       }
-      return getStdlibUrlFor(element, qName, sdk);
+      return getStdlibUrlFor(element, qName, interpreter);
     }
     return null;
   }
 
-  private static @NotNull String getExternalDocumentationRoot(@NotNull Sdk sdk) {
-    final String versionString = sdk.getVersionString();
-    final String pyVersion = PythonDocumentationProvider.pyVersion(versionString);
+  private static @NotNull String getExternalDocumentationRoot(@NotNull PythonInterpreter interpreter) {
+    final String pyVersion = PythonDocumentationProvider.pyVersion(versionOf(interpreter));
     StringBuilder urlBuilder = new StringBuilder("https://docs.python.org/");
     if (pyVersion != null) {
       urlBuilder.append(pyVersion).append("/");
@@ -1032,10 +1028,10 @@ public final class PyStdlibDocumentationLinkProvider implements PythonDocumentat
     };
   }
 
-  private String getStdlibUrlFor(PsiElement element, QualifiedName moduleName, Sdk sdk) {
-    StringBuilder urlBuilder = new StringBuilder(getExternalDocumentationRoot(sdk));
+  private String getStdlibUrlFor(PsiElement element, QualifiedName moduleName, PythonInterpreter interpreter) {
+    StringBuilder urlBuilder = new StringBuilder(getExternalDocumentationRoot(interpreter));
 
-    final String webpageName = webPageName(moduleName, sdk);
+    final String webpageName = webPageName(moduleName, interpreter);
 
     final boolean isBuiltin = isBuiltins(webpageName);
 
@@ -1060,14 +1056,19 @@ public final class PyStdlibDocumentationLinkProvider implements PythonDocumentat
     return urlBuilder.toString();
   }
 
+  /** The version of {@code interpreter}, such as {@code Python 3.12.4}, or {@code null} before the first record. */
+  private static @Nullable String versionOf(@NotNull PythonInterpreter interpreter) {
+    return PythonInterpreterDetails.getInstance(interpreter.getProject()).version(interpreter);
+  }
+
   private static boolean isBuiltins(String webpageName) {
     return "__builtin__".equals(webpageName) || "builtins".equals(webpageName);
   }
 
-  public String webPageName(QualifiedName moduleName, Sdk sdk) {
+  public String webPageName(QualifiedName moduleName, PythonInterpreter interpreter) {
     String modName = getModuleName(moduleName.toString());
 
-    final String pyVersion = PythonDocumentationProvider.pyVersion(sdk.getVersionString());
+    final String pyVersion = PythonDocumentationProvider.pyVersion(versionOf(interpreter));
     final Map<String, String> moduleToWebpageName =
       pyVersion != null && pyVersion.startsWith("3") ? py3LibraryModulesToWebpageName : py2LibraryModulesToWebpageName;
     return moduleToWebpageName.get(modName);
