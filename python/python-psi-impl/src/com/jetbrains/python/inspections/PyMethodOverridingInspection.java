@@ -132,6 +132,18 @@ public final class PyMethodOverridingInspection extends PyInspection {
         }
       }
 
+      if (function.isAsync() != baseMethod.isAsync() && isAsyncMismatchComparable(function, baseMethod)) {
+        PyType baseMethodReturnType = substitute(myTypeEvalContext.getReturnType(baseMethod), substitutions);
+        PyType overriddenReturnType = myTypeEvalContext.getReturnType(function);
+        // A function without `async` can still return a coroutine, and a coroutine is an awaitable.
+        if (!PyTypeChecker.match(baseMethodReturnType, overriddenReturnType, myTypeEvalContext)) {
+          String key = function.isAsync() ? "INSP.overriding.method.adds.async" : "INSP.overriding.method.removes.async";
+          ProblemMessage msg = PyPsiBundle.problemMessage(key, methodSignatureParam, baseClassParam);
+          registerOverrideMismatch(function.getNameIdentifier(), baseMethodReturnType, overriddenReturnType, msg);
+          return;
+        }
+      }
+
       PyAnnotation annotation = function.getAnnotation();
       PyExpression returnExpression = annotation != null ? annotation.getValue() : null;
       String baseMethodAnnotation = baseMethod.getAnnotationValue();
@@ -145,6 +157,17 @@ public final class PyMethodOverridingInspection extends PyInspection {
         ProblemMessage msg = PyPsiBundle.problemMessage("INSP.overridden.method.return.type.mismatch", methodSignatureParam, baseClassParam);
         registerOverrideMismatch(returnExpression, baseMethodReturnType, overriddenReturnType, msg);
       }
+    }
+
+    /**
+     * Checks that the return types of {@code function} and {@code baseMethod} show what {@code async} changes.
+     * An async generator returns no coroutine. A base method that only raises {@code NotImplementedError} is a placeholder,
+     * and a decorator of the base method can change its return type.
+     */
+    private boolean isAsyncMismatchComparable(@NotNull PyFunction function, @NotNull PyFunction baseMethod) {
+      return !function.isGenerator() && !baseMethod.isGenerator() &&
+             !baseMethod.onlyRaisesNotImplementedError() &&
+             !PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(baseMethod, myTypeEvalContext);
     }
 
     /**
