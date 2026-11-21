@@ -1,10 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.CommonBundle
 import com.intellij.concurrency.currentThreadContextOrNull
-import com.intellij.diagnostic.IdeErrorsDialog
-import com.intellij.diagnostic.LogMessage
-import com.intellij.diagnostic.MessagePool
+import com.intellij.diagnostic.DiagnosticBundle
+import com.intellij.diagnostic.DisablePluginsDialog
+import com.intellij.diagnostic.toProblematicPluginInfo
+import com.intellij.ide.actions.ShowLogAction
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionContextElement
 import com.intellij.openapi.application.ApplicationManager
@@ -13,7 +17,9 @@ import com.intellij.openapi.application.UnhandledExceptionLoggingMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.UnhandledException
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.Nls
@@ -36,27 +42,49 @@ internal fun processUnhandledException(
       // Write the log on this thread. A caller can stop the process before the EDT runs the block below,
       // and then the exception reaches no log. See IJPL-254578.
       logExceptionSafely(message, exception)
-      SwingUtilities.invokeLater {
-        val defaultMessage = LogMessage(exception, message, emptyList())
-        // "clear" button doesn't play well with interactive message. Once cleared, windows becomes empty.
-        val application = ApplicationManager.getApplication()
-        val messagePool = MessagePool.getInstance()
 
-        val showError = application != null // Early stage: app and registry aren't initialized yet
-                        && Registry.`is`("ide.exceptions.show.interactive", false)
-                        && !application.isHeadlessEnvironment
-                        // Sunsetting app might produce lots of errors due to races.
-                        // While all of them needs to be fixed, no need to bother user with them,
-                        && !application.isExitInProgress
-                        && messagePool.getFatalErrors(true, true).isNotEmpty()
-        if (showError) {
-          IdeErrorsDialog(messagePool, null, false, defaultMessage, isModal = true, actionLeadToError = interactiveMode.action, hideClearButton = true).show()
+      val app = ApplicationManager.getApplication()
+      val showError = (
+        !(app == null || app.isHeadlessEnvironment || app.isExitInProgress) &&
+        Registry.`is`("ide.exceptions.show.interactive", defaultValue = false)
+      )
+      if (showError) {
+        SwingUtilities.invokeLater {
+          showErrorDialog(cause, interactiveMode.action)
         }
       }
     }
     Mode.NonInteractive -> {
       logExceptionSafely(message, UnhandledException(cause, isInteractive = false))
     }
+  }
+}
+
+private fun showErrorDialog(cause: Throwable, action: String?) {
+  val title = when {
+    action != null -> DiagnosticBundle.message("unhandled.exception.dialog.title.with.action", action)
+    else -> DiagnosticBundle.message("unhandled.exception.dialog.title")
+  }
+  val plugin = PluginUtil.getInstance().findPluginId(cause)
+    ?.let { PluginManagerCore.getPlugin(it) }
+    ?.let { toProblematicPluginInfo(it) }
+  val message = if (plugin == null) {
+    DiagnosticBundle.message("unhandled.exception.dialog.message", cause.javaClass.name, cause.message ?: "'null'")
+  }
+  else {
+    DiagnosticBundle.message("unhandled.exception.dialog.message.with.plugin", plugin.name, cause.javaClass.name, cause.message ?: "'null'")
+  }
+  val options = buildList {
+    add(CommonBundle.getCloseButtonText())
+    add(ShowLogAction.getActionName())
+    if (plugin != null && !plugin.isEssential && !plugin.isImplementationDetail) {
+      add(DiagnosticBundle.message("error.dialog.disable.plugin.action.disable"))
+    }
+  }
+  val choice = Messages.showDialog(null as Project?, message, title, options.toTypedArray(), 0, Messages.getErrorIcon())
+  when (choice) {
+    1 -> ShowLogAction.showLog()
+    2 -> DisablePluginsDialog.confirmDisablePlugins(project = null, listOf(plugin!!))
   }
 }
 
