@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -186,6 +187,9 @@ class AsyncDocumentFormattingSupportImpl(
   ) : AsyncFormattingRequest {
     private val initialModificationStamp = document.getModificationStamp()
 
+    // the command group of an asynchronous result, see runAndAwaitTask
+    private val commandGroupId: Any? = if (isSync) null else requestingCommandGroupId()
+
     @Volatile
     var task: FormattingTask? = null
 
@@ -257,11 +261,17 @@ class AsyncDocumentFormattingSupportImpl(
           }
           else {
             withContext(Dispatchers.EDT) {
-              CommandProcessor.getInstance().runUndoTransparentAction {
+              val project = _context.project
+              if (project.isDisposed) return@withContext
+              // A command, not an undo-transparent action: a transparent change that no command absorbs, as after a
+              // Reformat Code command that leaves the document to this request, is reverted by the next Undo and never
+              // offered to Redo. Sharing the requesting command's group still merges the result into that command's own
+              // changes while nothing has come between them.
+              CommandProcessor.getInstance().executeCommand(project, {
                 WriteAction.run<Throwable> {
                   updateDocument(formattedText)
                 }
-              }
+              }, CodeStyleBundle.message("process.reformat.code"), commandGroupId, UndoConfirmationPolicy.DEFAULT, false)
             }
           }
         }
@@ -314,6 +324,19 @@ class AsyncDocumentFormattingSupportImpl(
         LOG.warn(e)
         return null
       }
+    }
+
+    /**
+     * The group of the command that requests this formatting, given one if it has none, so that the result can be merged
+     * into the command's own changes.
+     */
+    private fun requestingCommandGroupId(): Any? {
+      val commandProcessor = CommandProcessor.getInstance()
+      val groupId = commandProcessor.currentCommandGroupId
+      if (groupId != null || commandProcessor.currentCommand == null || !ApplicationManager.getApplication().isDispatchThread) {
+        return groupId
+      }
+      return Any().also { commandProcessor.setCurrentCommandGroupId(it) }
     }
 
     fun updateDocument(newText: String) {
