@@ -156,6 +156,71 @@ fn a_target_outside_the_ide_lanes_is_refused() {
     }
 }
 
+/// A target outside the lanes is refused with the host command, which runs it with no guest.
+#[test]
+fn a_refused_target_names_the_host_command() {
+    avl_affected::bridge::install_fixture();
+    let selector = "//plugins/air/tests/integration/headless/claude:claude_test";
+    let refused = refusal(resolve_selector_selection_in(&fixture_runtime(), selector));
+    assert!(
+        refused
+            .message
+            .ends_with(&format!("Run it on the host: ./community/tools/bt.cmd {selector}")),
+        "{}",
+        refused.message
+    );
+}
+
+/// A class of a module whose tests do not run under Bazel is no class of a UI lane, so the refusal is the controller's
+/// and not the migration of `bt`: a migration would not make it a lane test. The host command of `bt` follows.
+#[test]
+fn a_class_of_a_module_outside_the_migrated_list_is_no_lane_test() {
+    avl_affected::bridge::install_fixture();
+    let fake = fixture_runtime();
+    fake.put("community/MODULE.bazel", "");
+    fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.x.tests\n");
+    let root = "platform/unified/accio-plugin/tests";
+    fake.add_class(
+        &format!("{root}/src/AccioLocateQueryTest.kt"),
+        "com.intellij.platform.light.accio.AccioLocateQueryTest",
+    );
+    fake.add_module(module_entry_json(
+        root,
+        Some(&jps_json("intellij.platform.light.accio.tests", root, &[("src", true)], None)),
+        &[],
+        Some(&[
+            target_json(
+                root,
+                "jvm_library",
+                "tests_test_lib",
+                Some("intellij.platform.light.accio.tests"),
+                &[],
+                &[],
+            ),
+            target_json(root, "jps_test", "tests_test", None, &[], &["tests_test_lib"]),
+        ]),
+    ));
+
+    let refused = refusal(resolve_selector_selection_in(&fake, "AccioLocateQueryTest"));
+
+    assert_eq!((refused.code.as_ref(), refused.exit), ("usage", Exit::USAGE));
+    assert!(
+        refused
+            .message
+            .starts_with("AccioLocateQueryTest is no test of a UI lane; a VM worker runs only the IDE UI targets ("),
+        "{}",
+        refused.message
+    );
+    assert!(
+        refused.message.ends_with(
+            "./community/tools/bt.cmd //platform/unified/accio-plugin/tests:tests_test --filter \
+             com.intellij.platform.light.accio.AccioLocateQueryTest"
+        ),
+        "{}",
+        refused.message
+    );
+}
+
 /// The lane's own label resolves without accio and without a read, through the real runtime over an empty
 /// checkout.
 #[test]
