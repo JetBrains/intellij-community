@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history
 
+import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
@@ -22,4 +23,10 @@ interface ActivityPresentationProvider {
    * @param kind activity identifier
    */
   fun getIcon(kind: @NonNls String): Icon? = null
+
+  /**
+   * Color to use for the activity presentation.
+   * @param kind activity identifier
+   */
+  fun getColor(kind: @NonNls String): JBColor? = null
 }

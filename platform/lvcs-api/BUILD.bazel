@@ -23,6 +23,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     deps = [
+        "//platform/util:util-ui",
         # do not sort,
         "//platform/core-api:core",
         "//platform/util",
