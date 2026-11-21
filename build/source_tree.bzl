@@ -34,7 +34,9 @@ def _monorepo_directory(repo_name, path):
 def source_tree_files(name = "source_tree_files", roots = [""]):
     """The files under `roots` of this package and the files of each subpackage there, for a `source_tree`.
 
-    Each package of a tree calls it, so a subpackage without the call fails the analysis of the tree.
+    Each package of a tree calls it, so a subpackage without the call fails the analysis of the tree. The filegroup has
+    the `manual` tag: only a `source_tree` of a test reads it. So `bazel build //...` skips it, and the Patronus rule of
+    that build does not take its files.
 
     Args:
       name: the name of the filegroup. A subpackage must use the same name.
@@ -53,6 +55,7 @@ def source_tree_files(name = "source_tree_files", roots = [""]):
             "//%s:%s" % (native.package_name() + "/" + subpackage if native.package_name() else subpackage, name)
             for subpackage in native.subpackages(include = include, allow_empty = True)
         ],
+        tags = ["manual"],
         visibility = ["//visibility:public"],
     )
 
