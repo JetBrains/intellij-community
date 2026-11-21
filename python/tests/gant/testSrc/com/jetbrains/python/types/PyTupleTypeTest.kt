@@ -488,6 +488,71 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       *a, b = 1, 2, "x"
       #             ^^^ WARNING Expected type 'bool', got 'Literal["x"]' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-55834"])
+    fun `parenthesized with target destructures the enter type`() = test("""
+      class CM:
+          def __enter__(self) -> tuple[str, int]: ...
+          def __exit__(self, *args): ...
+
+      with CM() as (first, second):
+          expr = first, second
+      #   └ TYPE tuple[str, int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-55834"])
+    fun `nested list with target destructures the enter type`() = test("""
+      class CM:
+          def __enter__(self) -> tuple[str, list[bytes]]: ...
+          def __exit__(self, *args): ...
+
+      with CM() as [first, (second, *rest)]:
+          expr = first, second, rest
+      #   └ TYPE tuple[str, bytes, list[bytes]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-55834"])
+    fun `async with target destructures the aenter type`() = test("""
+      class ACM:
+          async def __aenter__(self) -> tuple[str, int]: ...
+          async def __aexit__(self, *args): ...
+
+      async def f():
+          async with ACM() as (first, second):
+              expr = first, second
+      #       └ TYPE tuple[str, int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-55834"])
+    fun `with target destructures a homogeneous enter type`() = test("""
+      class CM:
+          def __enter__(self) -> list[int]: ...
+          def __exit__(self, *args): ...
+
+      with CM() as (first, *rest):
+          expr = first, rest
+      #   └ TYPE tuple[int, list[int]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-55834"])
+    fun `with targets of two items destructure their own enter types`() = test("""
+      class A:
+          def __enter__(self) -> tuple[str, int]: ...
+          def __exit__(self, *args): ...
+
+      class B:
+          def __enter__(self) -> bytes: ...
+          def __exit__(self, *args): ...
+
+      with A() as (first, second), B() as third:
+          expr = first, second, third
+      #   └ TYPE tuple[str, int, bytes]
+      """.trimIndent())
   }
 
   @Nested

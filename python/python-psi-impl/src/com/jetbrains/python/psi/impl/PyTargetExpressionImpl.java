@@ -250,6 +250,18 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           }
         }
       }
+      // `with cm as (a, b)` unpacks the value of `__enter__` or `__aenter__`
+      if (nextParent instanceof PyWithItem withItem &&
+          PyPsiUtils.flattenParens(withItem.getTarget()) instanceof PySequenceExpression target &&
+          (target instanceof PyTupleExpression || target instanceof PyListLiteralExpression)) {
+        var enterType = getWithItemVariableType(withItem, context);
+        if (enterType != null) {
+          var positionalItemType = getTargetTypeFromIterableUnpacking(this, target, null, enterType, context);
+          if (positionalItemType != null) {
+            return positionalItemType;
+          }
+        }
+      }
     }
     if (parent instanceof PyWithItem withItem) {
       return getWithItemVariableType(withItem, context);
