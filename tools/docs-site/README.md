@@ -235,11 +235,13 @@ module. After a kernel change, run the checks and the e2e suite of both sites.
    Set `packageManager` and `engines.node` to the kernel values.
 3. Write `site.config.ts`. Pick a new `base`, `outDir`, and `themeStorageKey`, and the doc folders, the topics, and
    the diagram kinds.
-4. Write `scripts/modelProvider.ts` and `scripts/harvest.ts`. The harvest calls `harvestDocs` and `harvestSpecs` of
-   the kernel and writes `generated/`.
+4. Write `scripts/modelProvider.ts` and `scripts/harvest.ts`. `readHarvest` calls `harvestDocs` and `harvestSpecs` of
+   the kernel and returns the harvest in memory, and `harvest` writes it to `generated/`.
 5. Write `src/main.tsx`, `src/site.tsx`, and the Home page, and add the Tailwind entry with its `@source` lines.
-6. Add the `check` script with the kernel CLIs of the Checks section, and `test:scripts` with the kernel tests.
-7. Write `scripts/gate.ts` with a new sentinel, and a JUnit test that runs it on `//build:bun`.
+6. Write `scripts/checks.ts` with the list of the checks of the site, as in `build/docs`. Its CLI is the `check`
+   script: it runs the list, and then the script tests of the site and of the kernel.
+7. Write `scripts/gate.ts` with a new sentinel. It runs the list of `scripts/checks.ts`. Add a test that runs it on
+   `//build:bun`.
 8. Add the site manifest to the list of `DocsSiteToolchainConsistencyTest`.
 9. Add a `.gitignore` with `generated/`. The root `.gitignore` already covers `out/`.
 10. Write `README.md` and `AGENTS.md`, and a dated decision record of the site that names the kernel.
