@@ -240,9 +240,11 @@ class SeTabVmImpl(
               resultsFlowWithAdaptedPresentations.throttleUntilEssentialsArrive(essential)
             }
           }.map { item ->
-            if (!shouldLoadMoreFlow.value) _resultsHitBackPressureFlow.emit(searchId to true)
-            shouldLoadMoreFlow.first { it }
-            _resultsHitBackPressureFlow.emit(searchId to false)
+            if (!shouldLoadMoreFlow.value) {
+              _resultsHitBackPressureFlow.emit(searchId to true)
+              shouldLoadMoreFlow.first { it }
+              _resultsHitBackPressureFlow.emit(searchId to false)
+            }
             item
           }
 
