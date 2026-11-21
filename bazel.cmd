@@ -78,16 +78,21 @@ $ProgressPreference = \"SilentlyContinue\"; ^
 Set-StrictMode -Version 3.0; ^
  ^
  $BazeliskUrl = \"https://cache-redirector.jetbrains.com/github.com/bazelbuild/bazelisk/releases/download/v%BAZELISK_VERSION%/bazelisk-windows-$(\"%BAZELISK_ARCH%\".ToLower()).exe\"; ^
- New-Item -ItemType Directory -Path \"%BAZELISK_TARGET_DIR%\" -Force; ^
+ $null = New-Item -ItemType Directory -Path \"%BAZELISK_TARGET_DIR%\" -Force; ^
  ^
  $randomSuffix = [System.IO.Path]::GetRandomFileName(); ^
  $tmpFile = \"%BAZELISK_TARGET_FILE%-$randomSuffix\"; ^
  ^
  Write-Host \"Downloading $BazeliskUrl to %BAZELISK_TARGET_FILE%\"; ^
- $Web_client = New-Object System.Net.WebClient; ^
- $Web_client.DownloadFile($BazeliskUrl, $tmpFile); ^
- ^
- Move-Item -Path $tmpFile -Destination \"%BAZELISK_TARGET_FILE%\" -Force;
+ try { ^
+  $Web_client = New-Object System.Net.WebClient; ^
+  $Web_client.DownloadFile($BazeliskUrl, $tmpFile); ^
+  ^
+  try { Move-Item -Path $tmpFile -Destination \"%BAZELISK_TARGET_FILE%\" -Force } ^
+  catch { if (-not (Test-Path \"%BAZELISK_TARGET_FILE%\")) { throw } } ^
+ } finally { ^
+  Remove-Item -Path $tmpFile -Force -ErrorAction SilentlyContinue ^
+ }
 
 IF NOT EXIST "%BAZELISK_TARGET_FILE%" "%POWERSHELL%" -nologo -noprofile -Command %POWERSHELL_COMMAND% >&2
 
