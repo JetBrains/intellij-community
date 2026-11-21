@@ -13,6 +13,7 @@ load("@rules_rust//rust:defs.bzl", "rust_clippy_test", "rust_common")
 
 # No public file exports `LintsInfo`; rules_rs `cargo_lints.bzl` loads it from here too.
 load("@rules_rust//rust/private:providers.bzl", "LintsInfo")
+load(":rust_test_junit.bzl", "without_optimized_test_rustc_flags")
 
 # The `target_compatible_with` of a target that a Windows host must not build or run.
 NOT_ON_WINDOWS = select({
@@ -707,20 +708,23 @@ def _rust_tool_targets(
     )
 
 _COMPILATION_MODE = "//command_line_option:compilation_mode"
+_EXTRA_RUSTC_FLAGS = str(Label("@rules_rust//rust/settings:extra_rustc_flags"))
 
 def _optimized_transition_impl(settings, attr):
     return {
         _COMPILATION_MODE: "opt",
         _PLATFORMS: [str(attr.platform)] if attr.platform else settings[_PLATFORMS],
+        _EXTRA_RUSTC_FLAGS: without_optimized_test_rustc_flags(settings[_EXTRA_RUSTC_FLAGS]),
     }
 
 # A shipped binary is always optimized. `bazel run` and a lane's runfiles build in fastbuild, which for Rust is
 # `-Copt-level=0` for every crate and every dependency: the hashing, the zip deflate, the WebP stills and the X11 frame
-# copies would then run ten times slower or worse.
+# copies would then run ten times slower or worse. In the data of an `optimized` `rust_test_junit` the binary drops the
+# flags of that test, so it builds as it does outside the test.
 _optimized_transition = transition(
     implementation = _optimized_transition_impl,
-    inputs = [_PLATFORMS],
-    outputs = [_COMPILATION_MODE, _PLATFORMS],
+    inputs = [_PLATFORMS, _EXTRA_RUSTC_FLAGS],
+    outputs = [_COMPILATION_MODE, _PLATFORMS, _EXTRA_RUSTC_FLAGS],
 )
 
 def _optimized_binary_impl(ctx):

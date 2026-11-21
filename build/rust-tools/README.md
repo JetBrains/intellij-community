@@ -35,6 +35,9 @@ follow it.
   `wrapper` argument names the binary. A workspace gives the rule to the macro core as its test rule. The
   `junit_class` argument gives every case one class name and names each case by the last segment of its test name, so
   a Rust test that replaces a JUnit test keeps the TeamCity history of its cases.
+  The `optimized` argument builds the test, the wrapper and their dependencies with `OPTIMIZED_TEST_RUSTC_FLAGS`:
+  `-Copt-level=1` with the debug assertions and the overflow checks. `optimized_binary` drops these flags, so a shipped
+  binary in the data of such a test builds as it does outside it.
 - `libtest-junit-wrapper/`: the default wrapper binary, a `rust_tool_binary` over the crates of `@ddt`. Its `e2e/`
   test runs a fixture with two failed tests and compares the report with `expected-report.xml`.
 - `.jscpd.json`: the jscpd configuration of the copy-paste gate over the community workspaces: BT, the Air UI-lane
