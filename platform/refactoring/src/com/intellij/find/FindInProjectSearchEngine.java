@@ -108,7 +108,9 @@ public interface FindInProjectSearchEngine {
      * The searcher is complete for the current {@link FindModel} over the non-indexable files:
      * every non-indexable file that can contain the pattern was either fed to the processor
      * or is covered (see {@link FindInProjectSearcher#isCovered(VirtualFile)}).
-     * "Find in Path" then skips the brute-force walk of the non-indexable files.
+     * "Find in Path" then skips the brute-force walk of the non-indexable files: the non-indexable roots of the project, the
+     * directories of a {@code FindInProjectDirectoriesProvider}, and a named directory in them.
+     * It still walks a named directory outside them.
      * The searcher decides it when its enumeration ends, so it may decide from what the enumeration observed.
      * It counts only when the searcher is reliable (see {@link FindInProjectSearcher#isReliable()}).
      */

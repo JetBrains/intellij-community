@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 /**
@@ -163,8 +164,11 @@ final class FindInProjectTask {
         return pair == null ? null : pair.second;
       }
     );
+    // the walk asks this only after a reliable searcher covered all candidates, so a walked directory search does not ask the provider
+    BooleanSupplier namedDirectoryIsNonIndexable =
+      directoryCandidate == null || moduleToSearchIn != null ? () -> false : () -> liesInProjectDirectories(project, directoryCandidate);
     scopeWalker = new ScopeWalker(findModel, project, candidateFilter, moduleToSearchIn, directoriesToSearchIn, withSubdirectories,
-                                  directoryStandsForProject, customScope);
+                                  directoryStandsForProject, customScope, namedDirectoryIsNonIndexable);
 
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     progressIndicator = progress != null ?
@@ -202,6 +206,15 @@ final class FindInProjectTask {
     if (project.isDefault()) return null;
     List<VirtualFile> directories = FindInProjectDirectoriesProvider.findProjectDirectories(project);
     return directories == null ? null : ContainerUtil.filter(directories, VirtualFile::isValid);
+  }
+
+  /**
+   * True when {@code directory} lies in a directory that the {@link FindInProjectDirectoriesProvider} of {@code project} gives.
+   * Such a project is a set of directories with only non-indexable files, so the named directory holds only non-indexable files too.
+   */
+  private static boolean liesInProjectDirectories(@NotNull Project project, @NotNull VirtualFile directory) {
+    List<VirtualFile> directories = projectDirectories(project);
+    return directories != null && ContainerUtil.exists(directories, root -> VfsUtilCore.isAncestorOrSelf(root.getPath(), directory));
   }
 
   /**
