@@ -46,6 +46,14 @@ public final class PyStdReferenceContributor extends PsiReferenceContributor {
           return parent instanceof PyAssignmentStatement;
         }
       };
+
+    private static final PatternCondition<PyTargetExpression> UNQUALIFIED =
+      new PatternCondition<>("unqualified") {
+        @Override
+        public boolean accepts(@NotNull PyTargetExpression target, ProcessingContext context) {
+          return !target.isQualified();
+        }
+      };
   }
 
   @Override
@@ -82,6 +90,7 @@ public final class PyStdReferenceContributor extends PsiReferenceContributor {
                                           .withParent(psiElement(PySequenceExpression.class)
                                                         .with(Holder.IN_OPTIONAL_PARENTHESIS_INSIDE_ASSIGNMENT)
                                                         .inside(true, psiElement(PyAssignmentStatement.class)
-                                                          .withFirstChild(psiElement(PyTargetExpression.class).withName(name)))), provider);
+                                                          .withFirstChild(psiElement(PyTargetExpression.class).withName(name)
+                                                                            .with(Holder.UNQUALIFIED)))), provider);
   }
 }
