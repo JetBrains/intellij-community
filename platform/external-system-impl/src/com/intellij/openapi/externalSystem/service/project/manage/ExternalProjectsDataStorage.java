@@ -69,6 +69,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
@@ -90,6 +91,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     ConcurrentCollectionFactory.createConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY);
 
   private final AtomicBoolean changed = new AtomicBoolean();
+  private volatile boolean lazyLoadPending = false;
   private State myState = new State();
 
   public static ExternalProjectsDataStorage getInstance(@NotNull Project project) {
@@ -107,6 +109,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
 
         @Override
         public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          ensureLoaded();
           Set<ProjectSystemId> existingEPs =
             ExternalSystemManager.EP_NAME.getExtensionList().stream()
               .map(ExternalSystemManager::getSystemId)
@@ -127,6 +130,57 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   }
 
   public synchronized void load() {
+    if (Registry.is("external.system.lazy.data.storage", true) && myExternalRootProjects.isEmpty()) {
+      try {
+        VersionedFile cacheFile = getCacheFile(myProject);
+        BasicFileAttributes attrs = PathKt.basicAttributesIfExists(cacheFile.getFile());
+        if (attrs != null &&
+            attrs.isRegularFile() &&
+            attrs.size() > 16 &&
+            !isInvalidated(cacheFile.getFile(), attrs) &&
+            canDeferMergeLocalSettings()) {
+          myProject.putUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES, true);
+          lazyLoadPending = true;
+          incModificationCount();
+          return;
+        }
+      }
+      catch (Throwable e) {
+        rethrowControlFlowException(e);
+        LOG.warn("Lazy external project cache check failed, falling back to eager load", e);
+      }
+    }
+    doLoad();
+  }
+
+  private boolean canDeferMergeLocalSettings() {
+    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getIterable()) {
+      AbstractExternalSystemLocalSettings<?> localSettings = manager.getLocalSettingsProvider().fun(myProject);
+      for (ExternalProjectPojo projectPojo : localSettings.getAvailableProjects().keySet()) {
+        ExternalProjectSettings linkedProjectSettings =
+          manager.getSettingsProvider().fun(myProject).getLinkedProjectSettings(projectPojo.getPath());
+        if (linkedProjectSettings != null && ContainerUtil.isEmpty(linkedProjectSettings.getModules())) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private void ensureLoaded() {
+    if (!lazyLoadPending) {
+      return;
+    }
+    synchronized (this) {
+      if (!lazyLoadPending) {
+        return;
+      }
+      lazyLoadPending = false;
+      doLoad();
+    }
+  }
+
+  private synchronized void doLoad() {
     long startTs = System.currentTimeMillis();
     long readEnd = startTs;
     try {
@@ -217,6 +271,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     try {
       //noinspection SynchronizeOnThis
       synchronized (this) {
+        ensureLoaded();
         long start = System.currentTimeMillis();
         doSave(myProject, myExternalRootProjects.values());
         long duration = System.currentTimeMillis() - start;
@@ -229,6 +284,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   }
 
   public void update(@NotNull ExternalProjectInfo externalProjectInfo) {
+    ensureLoaded();
     ProjectSystemId projectSystemId = externalProjectInfo.getProjectSystemId();
     String projectPath = externalProjectInfo.getExternalProjectPath();
     InternalExternalProjectInfo newInfo = new InternalExternalProjectInfo(
@@ -323,10 +379,12 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
 
   @Nullable
   ExternalProjectInfo get(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
+    ensureLoaded();
     return myExternalRootProjects.get(Pair.create(projectSystemId, new File(externalProjectPath)));
   }
 
   void remove(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
+    ensureLoaded();
     final InternalExternalProjectInfo removed = myExternalRootProjects.remove(Pair.create(projectSystemId, new File(externalProjectPath)));
     if (removed != null) {
       markAsChangedAndScheduleSave();
@@ -336,6 +394,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   @NotNull
   @ApiStatus.Internal
   public @Unmodifiable Collection<ExternalProjectInfo> list(final @NotNull ProjectSystemId projectSystemId) {
+    ensureLoaded();
     return ContainerUtil.mapNotNull(myExternalRootProjects.values(),
                                     info -> projectSystemId.equals(info.getProjectSystemId()) ? info : null);
   }

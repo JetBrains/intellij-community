@@ -35,6 +35,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.util.CoroutineScopeKt;
@@ -70,6 +71,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
   private final AtomicBoolean isInitializationStarted = new AtomicBoolean();
   private final AtomicBoolean isDisposed = new AtomicBoolean();
+  private final AtomicBoolean myTaskShortcutsInitialized = new AtomicBoolean();
   private final CompositeRunnable myPostInitializationActivities = new CompositeRunnable();
   private final CompositeRunnable myPostInitializationBGActivities = new CompositeRunnable();
   private @NotNull ExternalProjectsState myState = new ExternalProjectsState();
@@ -206,18 +208,24 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
 
     // init shortcuts manager
     myShortcutsManager.init();
-    for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemManager.EP_NAME.getIterable()) {
-      Collection<ExternalProjectInfo> externalProjects = ExternalProjectsDataStorage.getInstance(myProject).list(systemManager.getSystemId());
-      for (ExternalProjectInfo externalProject : externalProjects) {
-        if (externalProject.getExternalProjectStructure() == null) {
-          continue;
-        }
-        Collection<DataNode<TaskData>> taskData = ExternalSystemApiUtil.findAllRecursively(externalProject.getExternalProjectStructure(), TASK);
-        myShortcutsManager.scheduleKeymapUpdate(taskData);
+    myShortcutsManager.addListener(() -> {
+      if (!myTaskShortcutsInitialized.get() && myShortcutsManager.hasAnyProjectShortcuts()) {
+        ensureTaskShortcutsUpdated();
       }
-
-      if (!externalProjects.isEmpty()) {
-        myShortcutsManager.scheduleRunConfigurationKeymapUpdate(systemManager.getSystemId());
+    }, myShortcutsManager);
+    if (!Registry.is("external.system.lazy.data.storage", true) || myShortcutsManager.hasAnyProjectShortcuts()) {
+      ensureTaskShortcutsUpdated();
+      for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemManager.EP_NAME.getIterable()) {
+        if (!ExternalProjectsDataStorage.getInstance(myProject).list(systemManager.getSystemId()).isEmpty()) {
+          myShortcutsManager.scheduleRunConfigurationKeymapUpdate(systemManager.getSystemId());
+        }
+      }
+    }
+    else {
+      for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemManager.EP_NAME.getIterable()) {
+        if (!systemManager.getSettingsProvider().fun(myProject).getLinkedProjectsSettings().isEmpty()) {
+          myShortcutsManager.scheduleRunConfigurationKeymapUpdate(systemManager.getSystemId());
+        }
       }
     }
     // init task activation info
@@ -235,6 +243,24 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
         myPostInitializationBGActivities.run();
         myPostInitializationBGActivities.clear();
       });
+    }
+  }
+
+  private void ensureTaskShortcutsUpdated() {
+    if (!myTaskShortcutsInitialized.compareAndSet(false, true)) {
+      return;
+    }
+    for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemManager.EP_NAME.getIterable()) {
+      Collection<ExternalProjectInfo> externalProjects =
+        ExternalProjectsDataStorage.getInstance(myProject).list(systemManager.getSystemId());
+      for (ExternalProjectInfo externalProject : externalProjects) {
+        if (externalProject.getExternalProjectStructure() == null) {
+          continue;
+        }
+        Collection<DataNode<TaskData>> taskData =
+          ExternalSystemApiUtil.findAllRecursively(externalProject.getExternalProjectStructure(), TASK);
+        myShortcutsManager.scheduleKeymapUpdate(taskData);
+      }
     }
   }
 
