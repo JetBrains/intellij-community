@@ -1,0 +1,19 @@
+<html>
+<body>
+<p>Reports a flag of the <code>re</code> module, for example <code>re.IGNORECASE</code>,
+  that is passed as an argument that takes another number:
+  <code>pos</code> or <code>endpos</code> of a method of a compiled pattern, <code>maxsplit</code> of <code>split()</code>,
+  or <code>count</code> of <code>sub()</code> and <code>subn()</code>.
+  The function takes the flag as that number, so the flag has no effect.</p>
+<p><b>Example:</b></p>
+<pre><code>
+import re
+
+regex = re.compile(r'\wo\w')
+match = regex.search('foo bar', re.I)
+text = re.sub(r'o', '0', 'Foo', re.I)
+</code></pre>
+<p>As a fix, pass the flag to <code>re.compile()</code>, for example <code>re.compile(r'\wo\w', re.I)</code>,
+  or pass it to a function of the <code>re</code> module as the keyword argument <code>flags</code>.</p>
+</body>
+</html>
