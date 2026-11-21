@@ -94,7 +94,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues = ["PY-28243"])
+  @TestFor(issues = ["PY-28243", "PY-55307"])
   fun `TypeVar parameterized constraints`() = test("""
     from typing import TypeVar, List
 
@@ -105,7 +105,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                       ^^^^^^^^ WARNING Constraints cannot be parametrized by type variables
     T3 = TypeVar('T3', bound=List[T1])
     #                        │    ^^ WARNING Unbound type variable
-    #                        ^^^^^^^^ WARNING Constraints cannot be parametrized by type variables
+    #                        ^^^^^^^^ WARNING TypeVar bound cannot be parametrized by type variables
 
     T4 = TypeVar('T4', int, List[int])
     T5 = TypeVar('T5', bound=List[int])
