@@ -104,10 +104,67 @@ function gitQueryPath(root: string, path: string, links: Map<string, boolean>): 
   return path
 }
 
+/** What a git command printed and its exit status. */
+interface GitRun {
+  status: number | null
+  stdout: string
+  stderr: string
+}
+
+/**
+ * Runs `git <args>` in the work tree at `root`. Returns null without git, or outside a work tree. `command` names the
+ * git command in a message.
+ */
+function runGit(root: string, command: string, args: readonly string[], input?: string): GitRun | null {
+  const result = spawnSync('git', ['-C', root, ...args], { input, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+  if (result.error !== undefined) {
+    if ((result.error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return null
+    }
+    throw new Error(`git ${command} in ${root}: ${result.error.message}`)
+  }
+  if (result.status === 128 && /not a git repository/.test(result.stderr)) {
+    return null
+  }
+  return result
+}
+
+function gitFailure(root: string, command: string, run: GitRun): Error {
+  return new Error(`git ${command} in ${root} failed with the status ${run.status}: ${run.stderr.trim()}`)
+}
+
+/** The items of a NUL-separated output of git. */
+function nulSeparated(output: string): string[] {
+  return output.split('\0').filter(item => item.length > 0)
+}
+
+/**
+ * The paths of `matched` that git does not track. An ignore rule can match a tracked file, and a folder that a rule
+ * matches can hold a tracked file. Git ignores neither.
+ */
+function untrackedPaths(root: string, matched: readonly string[]): Set<string> {
+  if (matched.length === 0) {
+    return new Set()
+  }
+  const run = runGit(root, 'ls-files', ['--literal-pathspecs', 'ls-files', '-z', '--', ...matched])
+  if (run === null) {
+    return new Set()
+  }
+  if (run.status !== 0) {
+    throw gitFailure(root, 'ls-files', run)
+  }
+  const tracked = nulSeparated(run.stdout)
+  return new Set(matched.filter(path => !tracked.some(file => file === path || file.startsWith(`${path}/`))))
+}
+
 /**
  * The paths of `paths` that git ignores in the work tree at `root`. A tracked file is never ignored. A path below a
  * symbolic link takes the answer of the link. Without git, or outside a work tree, the set is empty, as in the content
  * image, which holds no ignored file. Any other failure of git throws with its message.
+ *
+ * `git check-ignore` reads only the ignore rules (`--no-index`). With the index, it compares each path with each
+ * index entry, which takes seconds in a large repository. `git ls-files` then answers for the few paths that a rule
+ * matches.
  */
 export function gitIgnoredPaths(root: string, paths: readonly string[]): Set<string> {
   if (paths.length === 0) {
@@ -115,32 +172,23 @@ export function gitIgnoredPaths(root: string, paths: readonly string[]): Set<str
   }
   const links = new Map<string, boolean>()
   const queries = new Map(paths.map(path => [path, gitQueryPath(root, path, links)]))
-  const result = spawnSync('git', ['-C', root, 'check-ignore', '-z', '--stdin'], {
-    input: [...new Set(queries.values())].join('\0'),
-    encoding: 'utf8',
-    maxBuffer: 64 * 1024 * 1024,
-  })
-  if (result.error !== undefined) {
-    if ((result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return new Set()
-    }
-    throw new Error(`git check-ignore in ${root}: ${result.error.message}`)
-  }
-  if (result.status === 128 && /not a git repository/.test(result.stderr)) {
+  const input = [...new Set(queries.values())].join('\0')
+  const run = runGit(root, 'check-ignore', ['check-ignore', '--no-index', '-z', '--stdin'], input)
+  if (run === null) {
     return new Set()
   }
-  // 0: some paths are ignored, 1: none is ignored. A message with 1 is a failure, such as the git shim of macOS
+  // 0: a rule matches some paths, 1: a rule matches none. A message with 1 is a failure, such as the git shim of macOS
   // without the developer tools.
-  if ((result.status !== 0 && result.status !== 1) || (result.status === 1 && result.stderr.trim() !== '')) {
-    throw new Error(`git check-ignore in ${root} failed with the status ${result.status}: ${result.stderr.trim()}`)
+  if ((run.status !== 0 && run.status !== 1) || (run.status === 1 && run.stderr.trim() !== '')) {
+    throw gitFailure(root, 'check-ignore', run)
   }
-  const ignored = new Set(result.stdout.split('\0').filter(path => path.length > 0))
+  const ignored = untrackedPaths(root, nulSeparated(run.stdout))
   return new Set(paths.filter(path => ignored.has(queries.get(path) ?? path)))
 }
 
 /**
  * The code-span paths of the docs in `bodies`, by doc path. A file counts when it exists in the repository at `root`,
- * and git does not ignore it. One git call answers for every span of the harvest.
+ * and git does not ignore it. One call of `gitIgnoredPaths` answers for every span of the harvest.
  */
 export function resolveCodeSpanPaths(contentRoot: string, bodies: ReadonlyMap<string, string>, root: string): Map<string, Map<string, string | null>> {
   const existing = new Set<string>()

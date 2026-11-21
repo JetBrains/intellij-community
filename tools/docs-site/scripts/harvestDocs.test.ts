@@ -104,6 +104,15 @@ describe('the doc harvest', () => {
     assert.throws(() => harvestDocs(testSiteConfig(), provider(), { root }), /docs\/guides\/g\.md: frontmatter "group:" is missing or unknown; use one of docs/)
   })
 
+  it('resolves the code spans on the first call, and keeps the answer', () => {
+    const guide = '---\ngroup: docs\n---\n\n# A guide\n\nSee `src/Gone.kt`.\n'
+    const root = temporaryTree('harvest-docs-', { ...FILES, 'docs/guides/g.md': guide })
+    const harvest = harvestDocs(testSiteConfig(), provider(), { root })
+    const paths = harvest.codeSpanPaths()
+    assert.deepStrictEqual(paths, new Map([['docs/guides', new Map([['src/Gone.kt', null]])]]))
+    assert.equal(harvest.codeSpanPaths(), paths)
+  })
+
   it('takes each check from the check run of the caller, once', () => {
     const root = temporaryTree('harvest-docs-', FILES)
     const config = testSiteConfig()

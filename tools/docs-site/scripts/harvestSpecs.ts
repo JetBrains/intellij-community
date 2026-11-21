@@ -7,6 +7,7 @@
 
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { once } from './checkRun.ts'
 import { resolveCodeSpanPaths } from './codeSpans.ts'
 import { collectDocPictures, parseFrontmatter } from './harvestDocs.ts'
 import { contentDir, posixRelative, repoRoot, specFiles } from './paths.ts'
@@ -55,8 +56,12 @@ export interface SpecHarvest {
   bodies: Map<string, string>
   /** The content-relative paths of the pictures that the spec bodies reference. */
   pictures: Set<string>
-  /** The code spans of the spec bodies that their folder does not resolve, by spec folder (codeSpans.ts). */
-  codeSpanPaths: Map<string, Map<string, string | null>>
+  /**
+   * The code spans of the spec bodies that their folder does not resolve, by spec folder (codeSpans.ts). The first
+   * call resolves them and asks git for the ignored files. A caller that needs no code span never calls it, so it runs
+   * no git.
+   */
+  codeSpanPaths: () => Map<string, Map<string, string | null>>
 }
 
 /**
@@ -97,5 +102,5 @@ export function harvestSpecs(config: SpecHarvestConfig, root: string = repoRoot)
     bodies.set(path, body)
     collectDocPictures(config, path, source, body, pictures, root)
   }
-  return { specs, bodies, pictures, codeSpanPaths: resolveCodeSpanPaths(config.contentRoot, bodies, root) }
+  return { specs, bodies, pictures, codeSpanPaths: once(() => resolveCodeSpanPaths(config.contentRoot, bodies, root)) }
 }

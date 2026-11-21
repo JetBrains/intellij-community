@@ -138,6 +138,22 @@ describe('gitIgnoredPaths', () => {
     assert.deepEqual(gitIgnoredPaths(root, []), new Set())
   })
 
+  it('names no tracked file that an ignore rule matches, and no folder that holds one', { skip: !HAS_GIT }, () => {
+    const root = temporaryTree('code-spans-', {
+      '.gitignore': 'generated/\n',
+      'generated/kept.json': '{}\n',
+      'generated/[kept].json': '{}\n',
+      'generated/local.json': '{}\n',
+      'generated/sub/local.json': '{}\n',
+    })
+    git(root, 'init', '-q')
+    git(root, 'add', '.gitignore')
+    git(root, 'add', '-f', 'generated/kept.json', 'generated/[kept].json')
+    const tracked = ['generated', 'generated/kept.json', 'generated/[kept].json']
+    const untracked = ['generated/local.json', 'generated/sub', 'generated/sub/local.json']
+    assert.deepEqual(gitIgnoredPaths(root, [...tracked, ...untracked]), new Set(untracked))
+  })
+
   it('answers for a path below a symbolic link with the link', { skip: !HAS_GIT }, () => {
     const elsewhere = temporaryTree('code-spans-out-', { 'update-from-sources/update-ide.json': '{}\n' })
     const root = temporaryTree('code-spans-', { '.gitignore': '/out\n', 'real/a.json': '{}\n' })

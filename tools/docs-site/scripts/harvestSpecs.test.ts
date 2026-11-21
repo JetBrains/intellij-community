@@ -72,4 +72,13 @@ describe('harvestSpecs', () => {
     assert.equal(legacy.name, 'legacy')
     assert.equal(legacy.style, null)
   })
+
+  it('resolves the code spans on the first call, and keeps the answer', () => {
+    const spec = '---\nname: New\n---\n\n# New\n\nSee `src/Gone.kt`.\n'
+    const root = temporaryTree('harvest-specs-', { ...FILES, 'build/spec/actions/new.spec.md': spec })
+    const harvest = harvestSpecs(config, root)
+    const paths = harvest.codeSpanPaths()
+    assert.deepEqual(paths, new Map([['build/spec/actions', new Map([['src/Gone.kt', null]])]]))
+    assert.equal(harvest.codeSpanPaths(), paths)
+  })
 })
