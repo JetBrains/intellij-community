@@ -5,7 +5,9 @@ package com.jetbrains.python.psi.types
 
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyDoubleStarExpression
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyKeyValueExpression
 import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
@@ -16,6 +18,8 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeChecker.expandTupleTypeParameters
+import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
+import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 
 object PyCollectionTypeUtil {
 
@@ -168,15 +172,18 @@ object PyCollectionTypeUtil {
   }
 
   private fun getDictLiteralElementTypes(sequence: PyDictLiteralExpression, context: TypeEvalContext): Pair<PyType?, PyType?> {
-    val elements = sequence.elements
+    // `getElements()` skips the `**` entries, so read the children in source order.
+    val elements = sequence.children.filter { it is PyKeyValueExpression || it is PyDoubleStarExpression }
     val keyTypes = mutableListOf<PyType?>()
     val valueTypes = mutableListOf<PyType?>()
 
     elements
       .take(MAX_ANALYZED_ELEMENTS_OF_LITERALS)
       .forEach {
-        val type = context.getType(it)
-        val (keyType, valueType) = getKeyValueType(type)
+        val (keyType, valueType) = when (it) {
+          is PyDoubleStarExpression -> getUnpackedMappingTypes(it, context)
+          else -> getKeyValueType(context.getType(it as PyKeyValueExpression))
+        }
         keyTypes.add(PyTypeUtil.widenLiteralAndNumeric(keyType))
         valueTypes.add(PyTypeUtil.widenLiteralAndNumeric(valueType))
       }
@@ -187,6 +194,26 @@ object PyCollectionTypeUtil {
     }
 
     return Pair(PyUnionType.unionOrUnknown(keyTypes), PyUnionType.unionOrUnknown(valueTypes))
+  }
+
+  /**
+   * The key and value types of the mapping that [unpacking] unpacks, as `_typeshed.SupportsKeysAndGetItem` sees them.
+   * Each member of a union operand adds its own types. A TypedDict adds `str` and `object`, as in pyright.
+   * A member that does not match the protocol adds `Unknown`.
+   */
+  private fun getUnpackedMappingTypes(unpacking: PyDoubleStarExpression, context: TypeEvalContext): Pair<PyType?, PyType?> {
+    val operand = unpacking.expression ?: return PyAnyType.unknown to PyAnyType.unknown
+    val memberTypes = context.getType(operand).asUnionSequence().map { member ->
+      if (member is PyTypedDictType) {
+        // The keys of a TypedDict are strings, and its values have no common type that a dict could keep.
+        val builtins = PyBuiltinCache.getInstance(unpacking)
+        return@map builtins.strType to builtins.objectType
+      }
+      val mapping = member.convertToType("_typeshed.${PyABCUtil.SUPPORTS_KEYS_AND_GET_ITEM}", unpacking, context) as? PyClassType
+      val typeArguments = mapping?.typeArguments
+      if (typeArguments?.size == 2) typeArguments[0] to typeArguments[1] else PyAnyType.unknown to PyAnyType.unknown
+    }.toList()
+    return PyUnionType.union(memberTypes.map { it.first }) to PyUnionType.union(memberTypes.map { it.second })
   }
 
   private fun getKeyValueType(sequenceElementType: PyType?): Pair<PyType?, PyType?> {

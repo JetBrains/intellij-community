@@ -38,6 +38,69 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-58549"])
+    fun `dict literal unpacks the key and value types of a mapping`() = test("""
+      my_dict: dict[int, str] = {1: "10"}
+      expr = {**my_dict}
+      # └ TYPE dict[int, str]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-58549"])
+    fun `dict literal joins unpacked and literal entries`() = test("""
+      from typing import Mapping
+
+      def f(m: Mapping[str, int]):
+          expr = {**m, 1: b""}
+      #   └ TYPE dict[str | int, int | bytes]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-58549"])
+    fun `dict literal unpacking a value of unknown type has unknown types`() = test("""
+      def f(m):
+          expr = {**m, "a": 1}
+      #   └ TYPE dict[str | Unknown, int | Unknown]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-58549"])
+    fun `dict literal unpacks each member of a union`() = test("""
+      def f(m: dict[int, str] | dict[bytes, bytes]):
+          expr = {**m}
+      #   └ TYPE dict[int | bytes, str | bytes]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-58549"])
+    fun `dict literal unpacks a TypedDict`() = test("""
+      from typing import TypedDict
+
+      class Movie(TypedDict):
+          name: str
+          year: int
+
+      def f(m: Movie):
+          expr = {**m}
+      #   └ TYPE dict[str, object]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-58549"])
+    fun `dict literal with an unpacking is promoted to its own type`() = test("""
+      from typing import Mapping, TypeVar
+
+      K = TypeVar("K")
+      V = TypeVar("V")
+
+      def key(m: Mapping[K, V]) -> K: ...
+
+      my_dict: dict[int, str] = {1: "10"}
+      expr = key({**my_dict})
+      # └ TYPE int
+      """.trimIndent())
+
+    @Test
     fun `list literal of ints`() = test("""
       expr = [1, 2, 3]
       # └ TYPE list[int]
