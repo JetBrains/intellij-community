@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject
 
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.project.asPyProjectOrCandidate
 import com.intellij.ide.highlighter.ModuleFileType
@@ -12,8 +13,6 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.DEFAULT_EEL_FOR_NEW_PROJECTS
 import com.jetbrains.python.PyBundle
@@ -35,6 +34,7 @@ import kotlinx.io.files.SystemPathSeparator
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JComponent
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Data for sharing among the steps of the new Python project wizard.
@@ -42,18 +42,11 @@ import javax.swing.JComponent
 interface NewProjectWizardPythonData : NewProjectWizardBaseData {
 
   /**
-   * A property for tracking changes in [pythonSdk].
+   * The interpreter of the new Python project or module. It is `null` until [NewProjectWizardStep.setupProject] gets or
+   * creates the interpreter and sets it on the module.
    */
-  val pythonSdkProperty: GraphProperty<Sdk?>
-
-  /**
-   * The Python SDK for the new Python project or module.
-   *
-   * During [NewProjectWizardStep.setupUI] it reflects the selected Python SDK (it may be `null` for a new environment or if there is no
-   * Python installed on the machine). After [PythonSdkStep] gets or creates the actual SDK for the new project in its
-   * [NewProjectWizardStep.setupProject], the attribute contains the actual SDK.
-   */
-  var pythonSdk: Sdk?
+  @get:ApiStatus.Internal
+  val pythonInterpreter: PythonInterpreter?
 
   /**
    * The Python module after it has been created during [NewProjectWizardStep.setupProject].
@@ -81,8 +74,9 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
   constructor(parent: NewProjectWizardStep) : this(parent,
                                                    false) // a separated constructor was made for compatibility with existing plugins
 
-  override val pythonSdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null)
-  override var pythonSdk: Sdk? by pythonSdkProperty
+  @get:ApiStatus.Internal
+  override var pythonInterpreter: PythonInterpreter? = null
+    private set
   override val module: Module?
     get() = intellijModule
 
@@ -147,7 +141,7 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
         errorSink.emit(it.error, project)
         return@runWithSdkConfigurationLock
       }
-      pythonSdk = (set ?: pythonInterpreter).getSdkAPI()
+      this@NewPythonProjectStep.pythonInterpreter = set ?: pythonInterpreter
     }
   }
 

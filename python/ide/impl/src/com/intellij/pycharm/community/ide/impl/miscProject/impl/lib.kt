@@ -24,7 +24,6 @@ import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
@@ -98,7 +97,7 @@ suspend fun createMiscProject(
 private suspend fun generateAndOpenFile(projectPath: Path, project: Project, fileType: MiscFileType, pythonInterpreter: PythonInterpreter): PsiFile {
   val generateFile = generateFile(projectPath, fileType.fileName)
   val psiFile = openFile(project, generateFile)
-  fileType.fillFile(psiFile, pythonInterpreter.getSdkAPI())
+  fileType.fillFile(psiFile, pythonInterpreter)
   return psiFile
 }
 

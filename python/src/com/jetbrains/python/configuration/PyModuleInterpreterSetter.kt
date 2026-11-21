@@ -5,7 +5,11 @@ package com.jetbrains.python.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.writeRequirementsPath
+import com.jetbrains.python.PyBundle
+import java.nio.file.Path
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -29,5 +33,18 @@ fun setPythonInterpreterBlocking(module: Module, interpreter: PythonInterpreter?
   runWithSdkConfigurationLock(module.project) {
     val result = module.asPyProjectOrCandidate()?.setPythonInterpreter(interpreter, waitForSnapshot = false)
     if (result is Result.Failure) ErrorSink().emit(result.error, module.project)
+  }
+}
+
+/**
+ * Stores [path] as the requirements file of [interpreter], see [writeRequirementsPath], for a settings UI that applies
+ * on the EDT and cannot suspend. It runs under a modal progress. It writes only the interpreter facts and does not wait
+ * for the project model.
+ */
+@ApiStatus.Internal
+@RequiresEdt
+fun writeRequirementsPathBlocking(interpreter: PythonInterpreter, path: Path?) {
+  runWithModalProgressBlocking(interpreter.project, PyBundle.message("form.integrated.tools.package.requirements.file.saving")) {
+    interpreter.writeRequirementsPath(path)
   }
 }

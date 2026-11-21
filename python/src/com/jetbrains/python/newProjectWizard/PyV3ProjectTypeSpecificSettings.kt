@@ -2,16 +2,17 @@
 package com.jetbrains.python.newProjectWizard
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.errorProcessing.PyResult
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Implementation must have fields and generate project-specific (like Django) things using them i.e:
  * ```kotlin
  * class SpamGeneratorSettings(var queueSize:Int): PyV3ProjectTypeSpecificSettings {
- *    override fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk) {
- *       generateSpam(queueSize, module, baseDir, sdk)
+ *    override fun generateProject(module: Module, baseDir: VirtualFile, interpreter: PythonInterpreter) {
+ *       generateSpam(queueSize, module, baseDir, interpreter)
  *    }
  * }
  * ```
@@ -19,7 +20,8 @@ import com.jetbrains.python.errorProcessing.PyResult
 fun interface PyV3ProjectTypeSpecificSettings {
   /**
    * Generate project-specific things in [baseDir].
-   * You might need to [installPackages] on [sdk].
+   * You might need to [installPackages] on [interpreter].
    */
-  suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): PyResult<Unit>
+  @ApiStatus.Internal
+  suspend fun generateProject(module: Module, baseDir: VirtualFile, interpreter: PythonInterpreter): PyResult<Unit>
 }

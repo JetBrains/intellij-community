@@ -15,7 +15,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.jetbrains.python.errorProcessing.ErrorSinkKt;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -41,8 +40,6 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI;
-import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.testing.PyAbstractTestFactory;
 import com.jetbrains.python.testing.settings.PyTestRunConfigurationRenderer;
 import com.jetbrains.python.testing.settings.PyTestRunConfigurationsModel;
@@ -51,7 +48,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import javax.swing.AbstractButton;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
@@ -324,17 +320,21 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       return;
     }
 
-    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(myModule);
-    if (sdk == null) {
+    PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(myModule);
+    if (interpreter == null) {
       return;
     }
+    Path path;
     try {
-      Path path = requirementsPath.isBlank() ? null : Path.of(requirementsPath);
-      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(myModule.getProject(), sdk, path);
+      path = requirementsPath.isBlank() ? null : Path.of(requirementsPath);
     }
     catch (InvalidPathException e) {
       throw new ConfigurationException(PyBundle.message("form.integrated.tools.package.requirements.file.invalid.path", e.getMessage()));
     }
+    if (Objects.equals(path, PythonInterpreterExtKt.getRequirementsPath(interpreter))) {
+      return;
+    }
+    PyModuleInterpreterSetter.writeRequirementsPathBlocking(interpreter, path);
   }
 
   private void initErrorValidation() {
