@@ -309,6 +309,64 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
     assertResolves("builtins.str")
   }
 
+  @Test
+  @TestFor(issues = ["PY-90723"])
+  fun `protocol member breakdown links the member`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      from typing import Protocol
+      class A(Protocol):
+          def foo(self) -> str: ...
+      class C:
+          def foo(self) -> int: ...
+      _: A = C()
+      """.trimIndent(),
+      "Expected type"
+    )
+    assertTrue("Attribute <code>" in info.toolTip!!, info.toolTip!!)
+    assertLink(info, "aaa.C.foo")
+    assertInstanceOf<PyFunction>(runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement("aaa.C.foo", myFixture.project) })
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90723"])
+  fun `protocol data attribute link resolves to the attribute`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      from typing import Protocol
+      class A(Protocol):
+          a: int
+      class C:
+          a: str
+      _: A = C()
+      """.trimIndent(),
+      "Expected type"
+    )
+    assertLink(info, "aaa.C.a")
+    val target = runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement("aaa.C.a", myFixture.project) }
+    val attribute = assertInstanceOf<PyTargetExpression>(target)
+    assertEquals("aaa.C.a", runReadActionBlocking { attribute.qualifiedName })
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90723"])
+  fun `protocol member that is not writable links the member`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      from typing import Protocol
+      class A(Protocol):
+          x: int
+      class C:
+          @property
+          def x(self) -> int: ...
+      _: A = C()
+      """.trimIndent(),
+      "Expected type"
+    )
+    assertTrue("not writable" in info.toolTip!!, info.toolTip!!)
+    assertLink(info, "aaa.C.x")
+  }
+
   // PY-80221: the invariance breakdown links the owner class (e.g. `Box`), which resolves. The type variable
   // itself stays a plain <code> span, since the tooltip link handler resolves only classes and functions.
   @Test

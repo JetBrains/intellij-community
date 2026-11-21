@@ -62,12 +62,13 @@ sealed interface PyMismatchStep {
    * Descent into the attribute/member named [name]; folds into the access path as `.name`. [actual]/[expected]
    * are the attribute's own types (the subclass's vs the protocol's); the renderer reports them directly when the
    * mismatch is *inside* a parameterized attribute type, rather than descending into a meaningless `[1][1]` of
-   * type-argument positions.
+   * type-argument positions. [reference] is [name] as a link to the attribute in the subclass, for the tooltip.
    */
   data class Attribute(
     val name: String,
     val actual: CodifiedParam? = null,
     val expected: CodifiedParam? = null,
+    val reference: CodifiedParam? = null,
   ) : PyMismatchStep
 
   /**
