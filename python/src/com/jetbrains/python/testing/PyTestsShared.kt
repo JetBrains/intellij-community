@@ -987,6 +987,11 @@ private fun getTargetForConfig(
   configuration: PyAbstractTestConfiguration,
   baseElement: PsiElement,
 ): PyTestTargetForConfig? {
+  // The file check reads only the stub. The checks below resolve the ancestors of each class and read each docstring.
+  if (baseElement !is PsiDirectory &&
+      !PyTestDiscoveryUtil.isPyTestAllowedForFile(configuration.module, baseElement.containingFile as? PyFile)) {
+    return null
+  }
   var element = baseElement
   // Go up until we reach top of the file
   // asking configuration about each element if it is supported or not
@@ -1016,9 +1021,6 @@ private fun createPyTestPythonTarget(element: PsiElement, configuration: PyAbstr
 
       val elementFile = element.containingFile as? PyFile ?: return null
 
-      // If pytest is the selected framework, ensure the file is a pytest test module by default naming
-      if (!PyTestDiscoveryUtil.isPyTestAllowedForFile(module, elementFile)) return null
-
       val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile, module) ?: return null
       val context = QNameResolveContext(ModuleBasedContextAnchor(module),
                                         evalContext = TypeEvalContext.userInitiated(configuration.project,
@@ -1032,12 +1034,7 @@ private fun createPyTestPythonTarget(element: PsiElement, configuration: PyAbstr
       val virtualFile = element.virtualFile
 
       val workingDirectory: VirtualFile = when (element) {
-                                            is PyFile -> {
-                                              val file = element
-                                              val module = configuration.module
-                                              if (!PyTestDiscoveryUtil.isPyTestAllowedForFile(module, file)) return null
-                                              getDirectoryForFileToBeImportedFrom(file, configuration.module)?.virtualFile
-                                            }
+                                            is PyFile -> getDirectoryForFileToBeImportedFrom(element, configuration.module)?.virtualFile
                                             is PsiDirectory -> virtualFile
                                             else -> return null
                                           } ?: return null
