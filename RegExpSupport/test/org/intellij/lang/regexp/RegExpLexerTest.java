@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestFixtures
 public class RegExpLexerTest {
   private Supplier<? extends Lexer> myLexerFactory;
-  private final TestFixture<LexerTestFixture> lexer = lexerFixture("", ".txt", true, false, () -> myLexerFactory.get());
+  private final TestFixture<LexerTestFixture> lexer = lexerFixture("", ".txt", true, true, () -> myLexerFactory.get());
 
   private void setLexerFactory(Supplier<? extends Lexer> lexerFactory) {
     myLexerFactory = lexerFactory;

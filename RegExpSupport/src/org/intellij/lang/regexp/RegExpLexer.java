@@ -34,7 +34,10 @@ public class RegExpLexer extends FlexAdapter {
 
     @Override
     public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
-      getRegExLexer().commentMode = (initialState & COMMENT_MODE) != 0 || myCapabilities.contains(RegExpCapability.COMMENT_MODE);
+      final _RegExLexer flex = getRegExLexer();
+      flex.commentMode = (initialState & COMMENT_MODE) != 0 || myCapabilities.contains(RegExpCapability.COMMENT_MODE);
+      flex.states.clear();
+      flex.capturingGroupCount = 0;
       super.start(buffer, startOffset, endOffset, initialState & ~COMMENT_MODE);
     }
 
