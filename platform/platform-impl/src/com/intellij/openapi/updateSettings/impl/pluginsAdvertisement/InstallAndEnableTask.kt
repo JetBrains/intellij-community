@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.getLastCompatiblePluginUpdate
 import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
@@ -24,11 +25,11 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
@@ -90,19 +91,9 @@ class InstallAndEnableTask(
         val marketplace = MarketplaceRequests.getInstance()
         val descriptorIds: Set<PluginId> = descriptors.mapTo(mutableSetOf()) { it.pluginId }
         val compatiblePluginUpdates = runBlockingCancellable { getLastCompatiblePluginUpdate(descriptorIds) }
-        for (update in compatiblePluginUpdates) {
-          val index = ContainerUtil.indexOf(descriptors) { d -> d.pluginId.idString == update.pluginId }
-          if (index != -1) {
-            val descriptor = descriptors[index]
-
-            descriptor.externalPluginId = update.externalPluginId
-            descriptor.externalUpdateId = update.externalUpdateId
-            descriptor.description = null
-
-            runBlockingCancellable { marketplace.loadPluginDetails(descriptor) }?.let { pluginModel ->
-              loadAllPluginDetailsSync(descriptor, pluginModel)
-              descriptors[index] = pluginModel
-            }
+        applyMarketplaceDetails(descriptors, compatiblePluginUpdates) { descriptor ->
+          runBlockingCancellable { marketplace.loadPluginDetails(descriptor) }?.also { pluginModel ->
+            loadAllPluginDetailsSync(descriptor, pluginModel)
           }
         }
       }
@@ -145,6 +136,34 @@ class InstallAndEnableTask(
   private fun runOnSuccess(success: Boolean) {
     if (success) {
       onSuccess.run()
+    }
+  }
+}
+
+@VisibleForTesting
+@ApiStatus.Internal
+fun applyMarketplaceDetails(
+  descriptors: MutableList<PluginUiModel>,
+  compatiblePluginUpdates: List<IdeCompatibleUpdate>,
+  loadPluginDetails: (PluginUiModel) -> PluginUiModel?,
+) {
+  for (update in compatiblePluginUpdates) {
+    val index = descriptors.indexOfFirst { it.pluginId.idString == update.pluginId }
+    if (index == -1) continue
+
+    val descriptor = descriptors[index]
+    if (descriptor.repositoryName != null) {
+      // the descriptor was resolved to a custom repository serving a newer version than the Marketplace (see
+      // RepositoryHelper.mergePluginModelsFromRepositories); replacing it with the Marketplace model would revert that choice
+      continue
+    }
+
+    descriptor.externalPluginId = update.externalPluginId
+    descriptor.externalUpdateId = update.externalUpdateId
+    descriptor.description = null
+
+    loadPluginDetails(descriptor)?.let { pluginModel ->
+      descriptors[index] = pluginModel
     }
   }
 }
