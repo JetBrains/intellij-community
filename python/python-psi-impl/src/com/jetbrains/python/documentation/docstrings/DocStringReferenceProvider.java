@@ -90,6 +90,10 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         return result.toArray(PsiReference.EMPTY_ARRAY);
       }
     }
+    // The name references above resolve against the documented definition, so a variable docstring gets the Sphinx ones only
+    if (element instanceof PyStringLiteralExpression expr && DocStringUtil.isDocStringExpression(expr)) {
+      return SphinxReferences.INSTANCE.findReferences(expr).toArray(PsiReference.EMPTY_ARRAY);
+    }
     return PsiReference.EMPTY_ARRAY;
   }
 

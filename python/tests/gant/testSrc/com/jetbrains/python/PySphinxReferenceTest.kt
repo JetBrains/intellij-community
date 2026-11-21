@@ -108,6 +108,79 @@ class PySphinxReferenceTest : PyTestCase() {
     assertResolvesTo("MyClass>", PyClass::class.java, "MyClass")
   }
 
+  @TestFor(issues = ["PY-92432"])
+  fun testResolveInVariableDocstring() {
+    configure(
+      """
+      class MyClass:
+          pass
+
+      INSTANCE = MyClass()
+      $TQ:py:class:`MyClass`$TQ
+      """
+    )
+    assertResolvesTo("MyClass`", PyClass::class.java, "MyClass")
+  }
+
+  @TestFor(issues = ["PY-92432"])
+  fun testResolveInClassAttributeDocstring() {
+    configure(
+      """
+      class MyClass:
+          pass
+
+      class Holder:
+          instance = MyClass()
+          $TQ:py:class:`MyClass`$TQ
+      """
+    )
+    assertResolvesTo("MyClass`", PyClass::class.java, "MyClass")
+  }
+
+  @TestFor(issues = ["PY-92432"])
+  fun testResolveInInstanceAttributeDocstring() {
+    configure(
+      """
+      class MyClass:
+          pass
+
+      class Holder:
+          def __init__(self):
+              self.instance = MyClass()
+              $TQ:py:class:`MyClass`$TQ
+      """
+    )
+    assertResolvesTo("MyClass`", PyClass::class.java, "MyClass")
+  }
+
+  @TestFor(issues = ["PY-92432"])
+  fun testStringAfterLocalVariableHasNoReference() {
+    configure(
+      """
+      class MyClass:
+          pass
+
+      def f():
+          local = MyClass()
+          $TQ:py:class:`MyClass`$TQ
+      """
+    )
+    val offset = myFixture.file.text.lastIndexOf("MyClass`")
+    assertNull(myFixture.file.findReferenceAt(offset))
+  }
+
+  @TestFor(issues = ["PY-92432"])
+  fun testParameterTagInVariableDocstringHasNoReference() {
+    configure(
+      """
+      CALLBACK = print
+      $TQ:param code: the exit code$TQ
+      """
+    )
+    val offset = myFixture.file.text.lastIndexOf("code:")
+    assertNull(myFixture.file.findReferenceAt(offset))
+  }
+
   fun testSuppressedRoleHasNoReference() {
     configure(
       """
