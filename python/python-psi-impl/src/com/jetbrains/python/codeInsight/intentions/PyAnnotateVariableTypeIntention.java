@@ -20,6 +20,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.Pep484IncompatibleTypeException;
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.doctest.PyDoctestFile;
 import com.jetbrains.python.psi.AccessDirection;
@@ -111,6 +112,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
         return dir != null && !index.isInLibraryClasses(dir);
       })
       .filter(target -> canBeAnnotated(target))
+      .filter(target -> !isEnumMemberOrAlias(target, typeEvalContext))
       .filter(target -> !isAnnotated(target, typeEvalContext))
       .toList();
   }
@@ -143,6 +145,19 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
       return false;
     }
     return PsiTreeUtil.getParentOfType(target, PyWithItem.class, PyAssignmentStatement.class, PyForPart.class) != null;
+  }
+
+  /**
+   * Returns true if {@code target} is a member or a member alias of an enum class. {@code PyEnumInspection} reports an annotation on both.
+   */
+  private static boolean isEnumMemberOrAlias(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    if (target.isQualified() ||
+        !(ScopeUtil.getScopeOwner(target) instanceof PyClass cls) ||
+        !PyStdlibTypeProvider.isCustomEnum(cls, context)) {
+      return false;
+    }
+    var info = PyStdlibTypeProvider.getEnumAttributeInfo(cls, target, context);
+    return info != null && info.attributeKind() != PyStdlibTypeProvider.EnumAttributeKind.NONMEMBER;
   }
 
   // TODO unify this logic with PyTypingTypeProvider somehow

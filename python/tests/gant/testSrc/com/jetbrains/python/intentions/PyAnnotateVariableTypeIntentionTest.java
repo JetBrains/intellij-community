@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Components;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,16 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testNotSuggestedForNonlocalTarget() {
+    doNegativeTest();
+  }
+
+  @TestFor(issues = "PY-89517")
+  public void testNotSuggestedForEnumMember() {
+    doNegativeTest();
+  }
+
+  @TestFor(issues = "PY-89517")
+  public void testNotSuggestedForEnumMemberDefinition() {
     doNegativeTest();
   }
 
