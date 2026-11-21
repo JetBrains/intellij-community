@@ -13,8 +13,8 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiElementFactory
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PyCommonOptionsFormData
@@ -87,7 +87,7 @@ internal class PyConsoleSpecificOptionsPanel(private val project: Project) {
   }
 
   private fun createDocument(project: Project, text: String): Document {
-    val fragment = PyExpressionCodeFragmentImpl(project, "start_script.py", text.trim(), true)
+    val fragment = PyPsiElementFactory.current().createExpressionCodeFragment(project, "start_script.py", text.trim(), true)
     return requireNotNull(PsiDocumentManager.getInstance(project).getDocument(fragment))
   }
 }

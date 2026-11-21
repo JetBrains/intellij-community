@@ -65,6 +65,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -81,16 +82,13 @@ import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoContext;
-import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoHandler;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
-import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.remote.RemoteProcessControl;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
-import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import com.jetbrains.python.testing.PythonTestRunConfiguration;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -111,8 +109,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.getTypeRenderer;
-import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRendererKt.getTypeRenderer;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRendererKt.loadTypeRendererChildren;
 import static com.jetbrains.python.statistics.PythonDebuggerIdsHolder.CONNECTION_FAILED;
 
 public class PyDebugProcess extends XDebugProcess
@@ -126,7 +124,7 @@ public class PyDebugProcess extends XDebugProcess
 
   private final ProcessDebugger myDebugger;
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
-  private final PyDebuggerEditorsProvider myEditorsProvider;
+  private final XDebuggerEditorsProvider myEditorsProvider;
   private final ProcessHandler myProcessHandler;
   private final ExecutionConsole myExecutionConsole;
   private final Map<PySourcePosition, XLineBreakpoint<?>> myRegisteredBreakpoints = new ConcurrentHashMap<>();
@@ -150,7 +148,7 @@ public class PyDebugProcess extends XDebugProcess
   private boolean myDownloadSources = false;
 
   protected PyPositionConverter myPositionConverter;
-  private final @NotNull XSmartStepIntoHandler<?> mySmartStepIntoHandler;
+  private final @Nullable XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
   private PyStackFrame myConsoleContextFrame = null;
   private PyReferrersLoader myReferrersProvider;
@@ -203,7 +201,7 @@ public class PyDebugProcess extends XDebugProcess
     }
     myBreakpointHandlers = breakpointHandlers.toArray(XBreakpointHandler.EMPTY_ARRAY);
 
-    myEditorsProvider = new PyDebuggerEditorsProvider();
+    myEditorsProvider = PyDebuggerFacade.getInstance().createEditorsProvider();
     myProcessHandler = processHandler;
     myExecutionConsole = executionConsole;
     if (myProcessHandler != null) {
@@ -216,7 +214,7 @@ public class PyDebugProcess extends XDebugProcess
       myPositionConverter = new PyLocalPositionConverter();
     }
 
-    mySmartStepIntoHandler = new PySmartStepIntoHandler(this);
+    mySmartStepIntoHandler = PyDebuggerFacade.getInstance().createSmartStepIntoHandler(this);
 
     PyDebugValueExecutionService executionService = PyDebugValueExecutionService.getInstance(getProject());
     executionService.sessionStarted(this);
@@ -364,7 +362,7 @@ public class PyDebugProcess extends XDebugProcess
   }
 
   @Override
-  public @NotNull XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
+  public @Nullable XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
     return mySmartStepIntoHandler;
   }
 
@@ -566,7 +564,7 @@ public class PyDebugProcess extends XDebugProcess
 
   @Override
   public @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
-    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject(), null);
+    return PyDebuggerFacade.getInstance().createConfigureTypeRendererLink(typeRendererId, getProject(), null);
   }
 
   public void registerLineBreakpoints() {
@@ -588,7 +586,7 @@ public class PyDebugProcess extends XDebugProcess
     ExecutionEnvironment environment = getSession().getExecutionEnvironment();
     if (environment == null) return;
     RunProfile runProfile = environment.getRunProfile();
-    if (runProfile instanceof AbstractPythonTestRunConfiguration
+    if (runProfile instanceof PythonTestRunConfiguration
         && PyDebuggerOptionsProvider.getInstance(getProject()).isDropIntoDebuggerOnFailedTest()) {
       myDebugger.setUnitTestDebuggingMode();
     }
@@ -1034,10 +1032,12 @@ public class PyDebugProcess extends XDebugProcess
             if (node != null && !node.isObsolete()) {
               if (e.getMessage().startsWith("Timeout")) {
                 value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
-                ConfigureTypeRenderersHyperLink configureLink = new ConfigureTypeRenderersHyperLink(null, getProject(), value);
+                XDebuggerTreeNodeHyperlink configureLink = PyDebuggerFacade.getInstance().createConfigureTypeRendererLink(null, getProject(), value);
                 if (node instanceof XValueNodeEx valueNode) {
                   valueNode.clearAdditionalHyperlinks();
-                  valueNode.addAdditionalHyperlink(configureLink);
+                  if (configureLink != null) {
+                    valueNode.addAdditionalHyperlink(configureLink);
+                  }
                 }
               }
               else {
@@ -1188,7 +1188,7 @@ public class PyDebugProcess extends XDebugProcess
           if (breakpointLine < document.getLineCount()) {
             PsiElement psiElement = XDebuggerUtil.getInstance().
               findContextElement(file, document.getLineStartOffset(breakpointLine), project, false);
-            PyFunction function = PsiTreeUtil.getParentOfType(psiElement, PyFunction.class);
+            PyAstFunction function = PsiTreeUtil.getParentOfType(psiElement, PyAstFunction.class);
             if (function != null) {
               return function.getName();
             }
@@ -1399,8 +1399,8 @@ public class PyDebugProcess extends XDebugProcess
   public @Nullable XSourcePosition getSourcePositionForName(String name, String parentType) {
     try {
       PyStackFrame frame = currentFrame();
-      PySourcePositionResolver resolver = new PySourcePositionResolver(frame, getProject());
-      return resolver.getSourcePositionForName(name, parentType);
+      PySourcePositionResolverBase resolver = PyDebuggerFacade.getInstance().createSourcePositionResolver(frame, getProject());
+      return resolver != null ? resolver.getSourcePositionForName(name, parentType) : null;
     } catch (PyDebuggerException e) {
       LOG.warn("Could not retrieve current frame for source position resolution", e);
       return null;
@@ -1411,8 +1411,8 @@ public class PyDebugProcess extends XDebugProcess
   public @Nullable XSourcePosition getSourcePositionForType(String typeName) {
     try {
       PyStackFrame frame = currentFrame();
-      PySourcePositionResolver resolver = new PySourcePositionResolver(frame, getProject());
-      return resolver.getSourcePositionForType(typeName);
+      PySourcePositionResolverBase resolver = PyDebuggerFacade.getInstance().createSourcePositionResolver(frame, getProject());
+      return resolver != null ? resolver.getSourcePositionForType(typeName) : null;
     } catch (PyDebuggerException e) {
       LOG.warn("Could not retrieve current frame for source position resolution", e);
       return null;

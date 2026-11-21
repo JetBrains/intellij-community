@@ -10,6 +10,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Quick-fix for `[project].dependencies` problems in `pyproject.toml` reported by managers
@@ -29,7 +30,8 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
  * underlying mechanism (lockfile update vs. install-list) is an implementation detail of how
  * the specific package manager satisfies that intent.
  */
-internal class UpdateLockedDependenciesQuickFix(
+@ApiStatus.Internal
+class UpdateLockedDependenciesQuickFix(
   private val packageManager: PythonPackageManager,
 ) : LocalQuickFix, PriorityAction {
   override fun getFamilyName(): String = PyBundle.message("QFIX.NAME.install.all.requirements")

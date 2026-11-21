@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAstElementGenerator;
-import com.jetbrains.python.psi.PyElementGenerator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,7 @@ public final class PyToxTestLocator implements SMTestLocator {
                                              final @NotNull String path,
                                              final @NotNull Project project,
                                              final @NotNull GlobalSearchScope scope) {
-    final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.PYTHON27, DUMMY_FILE_PADDING);
+    final PsiFile file = PyAstElementGenerator.getInstance(project).createDummyFile(LanguageLevel.PYTHON27, DUMMY_FILE_PADDING);
     file.putUserData(ENV_NAME_KEY, path);
     @SuppressWarnings("unchecked")
     final List<Location> locations = Collections.singletonList(new PsiLocation(file));

@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.variablesview.usertyperenderers
 
+import com.intellij.xdebugger.frame.XValueChildrenList
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.debugger.PyDebugValue
+import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.PyUserTypeRenderer
 import org.jetbrains.annotations.ApiStatus
 import java.io.Serializable
@@ -89,4 +92,51 @@ fun getNewRendererName(existingNames: List<String>?): String {
   else {
     default
   }
+}
+
+fun getRendererIndexWithId(typeRendererId: String): Int? {
+  val settings = PyUserTypeRenderersSettings.getInstance()
+  val renderers = settings.renderers
+  return renderers.indices.firstOrNull { index ->
+    renderers[index].isApplicable() && renderers[index].toType == typeRendererId
+  }
+}
+
+fun getTypeRenderer(debugValue: PyDebugValue): PyUserNodeRenderer? {
+  val typeRendererId = debugValue.typeRendererId ?: return null
+  val index = getRendererIndexWithId(typeRendererId) ?: return null
+  return PyUserTypeRenderersSettings.getInstance().renderers[index]
+}
+
+private fun loadCustomChildren(frameAccessor: PyFrameAccessor,
+                               renderer: PyUserNodeRenderer,
+                               debugValue: PyDebugValue): List<PyDebugValue> {
+  val customChildren: MutableList<PyDebugValue> = mutableListOf()
+  for (child in renderer.childrenRenderer.children) {
+    val res = child.expression.replace("self", debugValue.evaluationExpression)
+    val evalResult = frameAccessor.evaluate(res, false, true) ?: return emptyList()
+    customChildren.add(evalResult)
+  }
+  return customChildren
+}
+
+fun loadTypeRendererChildren(frameAccessor: PyFrameAccessor,
+                             debugValue: PyDebugValue,
+                             typeRenderer: PyUserNodeRenderer): XValueChildrenList {
+  val childrenList = XValueChildrenList()
+  if (!typeRenderer.childrenRenderer.isDefault) {
+    val customChildren = loadCustomChildren(frameAccessor, typeRenderer, debugValue)
+    for (child in customChildren) {
+      childrenList.add(child.name, child)
+    }
+  }
+  if (typeRenderer.childrenRenderer.isDefault ||
+      typeRenderer.childrenRenderer.appendDefaultChildren) {
+    frameAccessor.loadVariableDefaultView(debugValue)?.let { defaultChildren ->
+      for (i in 0 until defaultChildren.size()) {
+        childrenList.add(defaultChildren.getName(i), defaultChildren.getValue(i))
+      }
+    }
+  }
+  return childrenList
 }

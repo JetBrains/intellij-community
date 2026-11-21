@@ -21,7 +21,8 @@ object PyDependencyDeclarations {
 
   // [onNonInjectedProvider] lets the inspection run its empty-file check without a second traversal.
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-  internal fun collect(
+  @ApiStatus.Internal
+  fun collect(
     rootFile: PsiFile,
     onNonInjectedProvider: (PsiFile, DependenciesPsiProvider<*>) -> Unit,
   ): DependencyMap {

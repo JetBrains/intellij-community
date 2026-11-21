@@ -8,6 +8,9 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +26,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,14 +65,17 @@ public class PyStackFrame extends XStackFrame {
   private void computeIsExternal() {
     if (myPosition != null) {
       VirtualFile file = myPosition.getFile();
-      PyUtil.runWithProgress(myProject, PyBundle.message("debugger.progress.title.stackframe.processing"), false, true, indicator -> {
-        isExternal = ReadAction.compute(() -> {
-                                          final Document document = FileDocumentManager.getInstance().getDocument(file);
-                                          if (document != null && myProject != null) {
-                                            return !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
-                                          }
-                                          return true;
-                                        });
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("debugger.progress.title.stackframe.processing"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          isExternal = ReadAction.compute(() -> {
+            final Document document = FileDocumentManager.getInstance().getDocument(file);
+            if (document != null && myProject != null) {
+              return !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
+            }
+            return true;
+          });
+        }
       });
     }
   }

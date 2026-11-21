@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.project.PyProject
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.DefaultListModel
 import javax.swing.JComponent
@@ -23,7 +24,8 @@ import javax.swing.JPanel
  * construction in `PyWorkspaceStructureConfigurable`), so the pane renders its final state from
  * the first paint — no empty-then-populated flash.
  */
-internal class PyModuleDependenciesPane(
+@ApiStatus.Internal
+class PyModuleDependenciesPane(
   subject: PyProject,
   candidates: List<PyProject>,
   initialDependencies: Set<PyProject>,

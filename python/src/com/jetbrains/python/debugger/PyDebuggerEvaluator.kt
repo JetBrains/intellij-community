@@ -18,13 +18,13 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.jetbrains.python.PydevBundle
+import com.jetbrains.python.ast.PyAstBinaryExpression
+import com.jetbrains.python.ast.PyAstCallExpression
+import com.jetbrains.python.ast.PyAstExpression
+import com.jetbrains.python.ast.PyAstLiteralExpression
+import com.jetbrains.python.ast.PyAstPrefixExpression
+import com.jetbrains.python.ast.PyAstReferenceExpression
 import com.jetbrains.python.console.PyConsoleIndentUtil
-import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.PyLiteralExpression
-import com.jetbrains.python.psi.PyPrefixExpression
-import com.jetbrains.python.psi.PyReferenceExpression
-import com.jetbrains.python.psi.PyBinaryExpression
 import org.jetbrains.annotations.ApiStatus
 
 internal class PyDebuggerEvaluator(private val myProject: Project, private val myDebugProcess: PyFrameAccessor) : XDebuggerEvaluator(), XDebuggerDocumentOffsetEvaluator {
@@ -108,8 +108,8 @@ fun evaluateWithOffset(
 
   val element = ref.element
   when (element) {
-    is PyExpression -> {
-      if (element.parent is PyCallExpression) {
+    is PyAstExpression -> {
+      if (element.parent is PyAstCallExpression) {
         callback.errorOccurred("")
       }
       else {
@@ -138,12 +138,12 @@ fun filterExpressionRangeForHover(project: Project, document: Document, offset: 
   return ReadAction.computeBlocking<TextRange?, Nothing> {
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@computeBlocking range
     var element: PsiElement? = psiFile.findElementAt(offset)
-    if (element !is PyExpression || element is PyLiteralExpression) {
-      element = PsiTreeUtil.getParentOfType(element, PyExpression::class.java)
+    if (element !is PyAstExpression || element is PyAstLiteralExpression) {
+      element = PsiTreeUtil.getParentOfType(element, PyAstExpression::class.java)
     }
     when (element) {
-      is PyReferenceExpression if element.parent is PyCallExpression -> element.textRange
-      is PyCallExpression, is PyBinaryExpression, is PyPrefixExpression -> null
+      is PyAstReferenceExpression if element.parent is PyAstCallExpression -> element.textRange
+      is PyAstCallExpression, is PyAstBinaryExpression, is PyAstPrefixExpression -> null
       else -> range
     }
   }

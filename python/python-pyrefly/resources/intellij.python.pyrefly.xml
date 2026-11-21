@@ -25,6 +25,8 @@
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.psi"/>
+    <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pyrefly.common"/>
     <module name="intellij.python.pytools.backend"/>

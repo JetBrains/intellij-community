@@ -11,14 +11,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySymbolFieldWithBrowseButton
-import com.jetbrains.python.extensions.ModuleBasedContextAnchor
-import com.jetbrains.python.extensions.ProjectContextAnchor
-import com.jetbrains.python.isPythonModule
+import com.jetbrains.python.run.PyModuleNameFieldFactory
 import com.jetbrains.python.run.PythonRunConfiguration
 import org.jetbrains.annotations.ApiStatus
 import java.awt.GridBagConstraints
@@ -93,11 +89,11 @@ class PyScriptOrModuleFragment : SettingsEditorFragment<PythonRunConfiguration, 
     hints[scriptField] = PyBundle.message("python.run.configuration.fragments.script.path.hint")
 
     val module = config.module
-    val contentAnchor = if (module == null) ProjectContextAnchor(config.project, config.pythonInterpreter) else ModuleBasedContextAnchor(module)
     val workingDirectory = config.workingDirectory
-    val moduleField = PySymbolFieldWithBrowseButton(
-      contentAnchor,
-      { element -> (element is PsiFileSystemItem && isPythonModule(element)) },
+    val moduleField = PyModuleNameFieldFactory.getInstance().createModuleNameField(
+      config.project,
+      module,
+      config.pythonInterpreter,
       if (StringUtil.isEmpty(workingDirectory)) {
         null
       }

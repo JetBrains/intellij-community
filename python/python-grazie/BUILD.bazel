@@ -29,6 +29,7 @@ jvm_library(
         "//plugins/grazie",
         "//platform/core-api:core",
         "//python:python-community-impl",
+        "//python/python-psi-impl:psi-impl",
         "//platform/util",
         "@lib//:kotlin-stdlib",
         "//platform/core-impl",

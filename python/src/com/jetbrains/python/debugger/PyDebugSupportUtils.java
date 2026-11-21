@@ -4,24 +4,31 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstCallExpression;
+import com.jetbrains.python.ast.PyAstExpression;
+import com.jetbrains.python.ast.PyAstExpressionStatement;
+import com.jetbrains.python.ast.PyAstFile;
+import com.jetbrains.python.ast.PyAstLiteralExpression;
+import com.jetbrains.python.ast.PyAstNamedParameter;
+import com.jetbrains.python.ast.PyAstQualifiedExpression;
+import com.jetbrains.python.ast.PyAstReferenceExpression;
+import com.jetbrains.python.ast.PyAstStatementList;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyExpressionStatement;
-import com.jetbrains.python.psi.PyLiteralExpression;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyAstElementGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +42,8 @@ public final class PyDebugSupportUtils {
   public static boolean isExpression(final Project project, final String expression) {
     return ReadAction.compute(() -> {
 
-      final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
-      return file.getFirstChild() instanceof PyExpressionStatement && file.getFirstChild() == file.getLastChild();
+      final PsiFile file = PyAstElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
+      return file.getFirstChild() instanceof PyAstExpressionStatement && file.getFirstChild() == file.getLastChild();
     });
   }
 
@@ -46,13 +53,13 @@ public final class PyDebugSupportUtils {
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (psiFile != null) {
         PsiElement element = psiFile.findElementAt(offset);
-        if (!(element instanceof PyExpression) || element instanceof PyLiteralExpression) {
-          element = PsiTreeUtil.getParentOfType(element, PyExpression.class);
+        if (!(element instanceof PyAstExpression) || element instanceof PyAstLiteralExpression) {
+          element = PsiTreeUtil.getParentOfType(element, PyAstExpression.class);
         }
-        if (element instanceof PyLiteralExpression) {
+        if (element instanceof PyAstLiteralExpression) {
           return null;
         }
-        if (element instanceof PyReferenceExpression && element.getParent() instanceof PyCallExpression parent) {
+        if (element instanceof PyAstReferenceExpression && element.getParent() instanceof PyAstCallExpression parent) {
           // Don't evaluate function objects, expand range for the entire call (`foo` -> `foo(arg1, ..., argN)`)
           element = parent;
         }
@@ -66,10 +73,10 @@ public final class PyDebugSupportUtils {
 
   // is expression suitable to quick evaluate/display tooltip
   private static boolean isSimpleEnough(final PsiElement element) {
-    return element instanceof PyLiteralExpression ||
-           element instanceof PyQualifiedExpression ||
-           element instanceof PyNamedParameter ||
-           element instanceof PyCallExpression;
+    return element instanceof PyAstLiteralExpression ||
+           element instanceof PyAstQualifiedExpression ||
+           element instanceof PyAstNamedParameter ||
+           element instanceof PyAstCallExpression;
   }
 
   // is expression a variable reference and can be evaluated
@@ -77,15 +84,15 @@ public final class PyDebugSupportUtils {
   public static boolean canSaveToTemp(final Project project, final String expression) {
     return ReadAction.compute(() -> {
 
-      final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
+      final PsiFile file = PyAstElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
       final PsiElement root = file.getFirstChild();
-      return !isVariable(root) && (root instanceof PyExpressionStatement);
+      return !isVariable(root) && (root instanceof PyAstExpressionStatement);
     });
   }
 
   private static Boolean isVariable(PsiElement root) {
-    return root instanceof PyExpressionStatement &&
-           root.getFirstChild() instanceof PyReferenceExpression &&
+    return root instanceof PyAstExpressionStatement &&
+           root.getFirstChild() instanceof PyAstReferenceExpression &&
            root.getFirstChild() == root.getLastChild() &&
            root.getFirstChild().getFirstChild() != null &&
            root.getFirstChild().getFirstChild().getNode().getElementType() == PyTokenTypes.IDENTIFIER &&
@@ -112,5 +119,37 @@ public final class PyDebugSupportUtils {
   public static boolean isCurrentPythonDebugProcess(@NotNull AnActionEvent event) {
     XDebugSession session = DebuggerUIUtil.getSession(event);
     return session != null && session.getDebugProcess() instanceof PyDebugProcess;
+  }
+
+  public static @Nullable PsiElement getContextElement(final Project project, XSourcePosition sourcePosition) {
+    if (sourcePosition != null) {
+      final Document document = FileDocumentManager.getInstance().getDocument(sourcePosition.getFile());
+      if (document == null) return null;
+      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile != null) {
+        int offset = sourcePosition.getOffset();
+        if (offset >= 0 && offset < document.getTextLength()) {
+          final int lineEndOffset = document.getLineEndOffset(document.getLineNumber(offset));
+          do {
+            PsiElement element = psiFile.findElementAt(offset);
+            if (element != null && !(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+              return getStatement(element);
+            }
+            if (element == null) return null;
+            offset = element.getTextRange().getEndOffset();
+          }
+          while (offset < lineEndOffset);
+        }
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable PsiElement getStatement(@NotNull PsiElement element) {
+    PsiElement statementList = element instanceof PyAstFile || element instanceof PyAstStatementList
+                               ? element
+                               : PsiTreeUtil.getParentOfType(element, PyAstFile.class, PyAstStatementList.class);
+    if (statementList == null) return null;
+    return PyPsiUtilsCore.getParentRightBefore(element, statementList);
   }
 }

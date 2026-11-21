@@ -9,16 +9,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.xdebugger.XDebugProcess;
+import com.jetbrains.python.ast.PyAstExpressionCodeFragment;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugProcessWithConsole;
-import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
+import com.jetbrains.python.debugger.PyDebugSupportUtils;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
-import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,8 +53,8 @@ public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugPr
    * Set context for static code completion in the Debugger Console
    */
   public void setContext() {
-    if (PsiUtilCore.getPsiFile(myProject, myConsoleView.getVirtualFile()) instanceof PyExpressionCodeFragmentImpl editorPsiFile) {
-      PsiElement debuggerContext = PyDebuggerEditorsProvider.getContextElement(myProject, myDebugProcess.getSession().getCurrentPosition());
+    if (PsiUtilCore.getPsiFile(myProject, myConsoleView.getVirtualFile()) instanceof PyAstExpressionCodeFragment editorPsiFile) {
+      PsiElement debuggerContext = PyDebugSupportUtils.getContextElement(myProject, myDebugProcess.getSession().getCurrentPosition());
       editorPsiFile.setContext(debuggerContext);
     }
   }

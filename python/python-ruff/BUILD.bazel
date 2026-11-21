@@ -82,6 +82,7 @@ jvm_library(
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/databind",
         "//libraries/jackson3/dataformat-toml:libraries-jackson3-dataformat-toml",
+        "//python/python-psi-api:psi",
     ],
 )
 ### auto-generated section `build intellij.python.ruff` end

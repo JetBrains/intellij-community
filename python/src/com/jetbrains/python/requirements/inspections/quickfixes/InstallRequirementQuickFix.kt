@@ -11,8 +11,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import org.jetbrains.annotations.ApiStatus
 
-internal class InstallRequirementQuickFix(val requirement: PyRequirement) : LocalQuickFix, PriorityAction {
+@ApiStatus.Internal
+class InstallRequirementQuickFix(val requirement: PyRequirement) : LocalQuickFix, PriorityAction {
   override fun getFamilyName(): String {
     return PyBundle.message("QFIX.NAME.install.requirement", requirement.presentableText)
   }

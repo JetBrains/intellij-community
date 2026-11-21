@@ -251,6 +251,7 @@ f:com.jetbrains.python.ast.PyAstElementKt
 - forceResolveScope(com.intellij.psi.search.GlobalSearchScope):V
 - getForcedResolveScope():com.intellij.psi.search.GlobalSearchScope
 - getRealContext():com.intellij.psi.PsiElement
+- setContext(com.intellij.psi.PsiElement):V
 *:com.jetbrains.python.ast.PyAstExpressionStatement
 - com.jetbrains.python.ast.PyAstStatement
 - acceptPyVisitor(com.jetbrains.python.ast.PyAstElementVisitor):V

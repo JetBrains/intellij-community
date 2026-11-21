@@ -71,6 +71,7 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
     return myPhysical;
   }
 
+  @Override
   public void setContext(PsiElement context) {
     myContext = context;
   }

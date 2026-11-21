@@ -3,16 +3,8 @@
  */
 package com.jetbrains.python.run.targetBasedConfiguration
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
-import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.extensions.ModuleBasedContextAnchor
-import com.jetbrains.python.extensions.QNameResolveContext
-import com.jetbrains.python.extensions.resolveToElement
-import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PythonRunConfigurationForm
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -24,27 +16,6 @@ enum class PyRunTargetVariant(@Nls private val customName: String? = null) {
   PYTHON(PythonRunConfigurationForm.getModuleNameText()), PATH(PythonRunConfigurationForm.getScriptPathText()), CUSTOM;
 
   @Nls fun getCustomName(): String = customName ?: PythonRunConfigurationForm.getCustomNameText()
-}
-
-/**
- * Converts target to PSI element if possible resolving it against roots and working directory
- */
-fun targetAsPsiElement(targetType: PyRunTargetVariant,
-                       target: String,
-                       configuration: AbstractPythonRunConfiguration<*>,
-                       workingDirectory: VirtualFile? = StandardFileSystems.local().findFileByPath(
-                         configuration.getWorkingDirectorySafe()))
-  : PsiElement? {
-  if (targetType == PyRunTargetVariant.PYTHON) {
-    val module = configuration.module ?: return null
-    val context = TypeEvalContext.userInitiated(configuration.getProject(), null)
-
-    return runReadAction {
-      QualifiedName.fromDottedString(target)
-        .resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.pythonInterpreter, context, workingDirectory, true))
-    }
-  }
-  return null
 }
 
 /**
@@ -60,7 +31,7 @@ fun targetAsVirtualFile(targetType: PyRunTargetVariant, target: String): Virtual
 
 
 /**
- * Implement it to obtain extension methods for [targetAsPsiElement]
+ * Implement it to obtain extension methods for [com.jetbrains.python.extensions.targetAsPsiElement]
  * and [targetAsVirtualFile]
  */
 interface TargetWithVariant {

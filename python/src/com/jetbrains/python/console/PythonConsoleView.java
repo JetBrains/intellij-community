@@ -63,6 +63,9 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyLanguageFacade;
+import com.jetbrains.python.PyPsiElementFactory;
+import com.jetbrains.python.ast.PyAstExpressionCodeFragment;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.actions.CommandQueueListener;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
@@ -70,15 +73,12 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.console.pythonCommandQueue.PythonCommandQueuePanel;
 import com.jetbrains.python.debugger.PyDebugValueDescriptor;
-import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
+import com.jetbrains.python.debugger.PyDebuggerFacade;
 import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,7 +141,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
   }
 
   private static @NotNull Helper createHelper(@NotNull Project project, String title) {
-    return new Helper(project, Objects.requireNonNull(PsiUtilCore.getVirtualFile(new PyExpressionCodeFragmentImpl(project, title + ".py", "", true))));
+    return new Helper(project, Objects.requireNonNull(PsiUtilCore.getVirtualFile(PyPsiElementFactory.current().createExpressionCodeFragment(project, title + ".py", "", true))));
   }
 
 
@@ -152,8 +152,8 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
   public PythonConsoleView(final Project project, final String title, final @Nullable PythonInterpreter interpreter, final boolean testMode) {
     super(createHelper(project, title));
     try {
-      myHistoryPsiFile = new PyExpressionCodeFragmentImpl(project, "dummy.py", "", true);
-      if (PsiUtilCore.getPsiFile(project, getVirtualFile()) instanceof PyExpressionCodeFragmentImpl codeFragment) {
+      myHistoryPsiFile = PyPsiElementFactory.current().createExpressionCodeFragment(project, "dummy.py", "", true);
+      if (PsiUtilCore.getPsiFile(project, getVirtualFile()) instanceof PyAstExpressionCodeFragment codeFragment) {
         codeFragment.setContext(myHistoryPsiFile);
       }
 
@@ -162,7 +162,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
       isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
       VirtualFile virtualFile = getVirtualFile();
       LanguageLevel languageLevel = interpreter != null ? PythonInterpreterExtKt.getLanguageLevel(interpreter) : LanguageLevel.getDefault();
-      PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, languageLevel);
+      PyLanguageFacade.getINSTANCE().setEffectiveLanguageLevel(virtualFile, languageLevel);
       virtualFile.putUserData(CONSOLE_KEY, true);
       // Mark editor as console one, to prevent autopopup completion if runtime completion is enabled
       if (PyConsoleOptions.getInstance(getProject()).isRuntimeCodeCompletion()) {
@@ -451,7 +451,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
   @Override
   public void print(@NotNull String text, final @NotNull ConsoleViewContentType outputType) {
     if (myTestMode) {
-      text = PyTestsSharedKt.processTCMessage(text);
+      text = PydevConsoleRunnerUtil.processTCMessage(text);
     }
     detectIPython(text);
     if (PyConsoleUtil.detectIPythonEnd(text)) {
@@ -547,7 +547,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
     Project project = getProject();
     PyStackFrame stackFrame = new PyStackFrame(project, consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
     stackFrame.restoreChildrenDescriptors(myDescriptorsCache);
-    final XStandaloneVariablesView view = new XStandaloneVariablesView(project, new PyDebuggerEditorsProvider(), stackFrame);
+    final XStandaloneVariablesView view = new XStandaloneVariablesView(project, PyDebuggerFacade.getInstance().createEditorsProvider(), stackFrame);
     consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
       public void commandExecuted(boolean more) {

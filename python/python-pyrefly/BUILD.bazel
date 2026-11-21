@@ -41,6 +41,8 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/analysis-api:analysis",
         "//python:python-community-impl",
+        "//python/python-psi-api:psi",
+        "//python/python-psi-impl:psi-impl",
         "//python/python-sdk/backend",
         "//python/python-pyproject:pyproject",
         "//platform/platform-impl:ide-impl",

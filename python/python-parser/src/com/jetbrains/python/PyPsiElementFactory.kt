@@ -4,11 +4,14 @@ package com.jetbrains.python
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.tree.IElementType
+import com.intellij.util.LocalTimeCounter
 import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
@@ -143,6 +146,9 @@ abstract class PyPsiElementFactory {
    * Returns `null` when the default parse applies.
    */
   open fun parseFileContents(node: ASTNode, languageLevel: LanguageLevel): ASTNode? = null
+
+  open fun createExpressionCodeFragment(project: Project, name: String, text: String, isPhysical: Boolean): PsiFile =
+    PsiFileFactory.getInstance(project).createFileFromText(name, PythonFileType.INSTANCE, text, LocalTimeCounter.currentTime(), isPhysical)
 
   companion object {
     /** The registered factory: the stub-based one when `intellij.python.psi.impl` is loaded, else the AST-only default. */

@@ -1,13 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration.interpreter
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Decides what happens when the SDK combo receives a new selection. The pane injects the side effects: hide the combo
  * popup, navigate to the "All Interpreters" settings page, show or hide the interpreters of the other projects, and propagate
  * the value to the underlying `CollectionComboBoxModel`. So the presenter itself is Swing-free, and
  * [SdkComboPresenterTest] pins its dispatch.
  */
-internal class SdkComboPresenter(
+@ApiStatus.Internal
+class SdkComboPresenter(
   private val hidePopup: () -> Unit,
   private val navToAllInterpreters: () -> Unit,
   private val toggleOtherProjects: () -> Unit,

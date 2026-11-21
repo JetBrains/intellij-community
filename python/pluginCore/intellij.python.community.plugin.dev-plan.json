@@ -142,6 +142,9 @@
             "module": "intellij.python.community.impl"
         },
         {
+            "module": "intellij.python.community.impl.classic"
+        },
+        {
             "module": "intellij.python.refactoring"
         },
         {

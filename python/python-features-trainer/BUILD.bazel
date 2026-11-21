@@ -42,6 +42,7 @@ jvm_library(
         "//platform/execution",
         "//platform/refactoring",
         "//python:python-community-impl",
+        "//python/classic",
         "//python/python-refactoring:refactoring",
         "//python/python-code-insight:codeInsight",
         "//plugins/ide-features-trainer:featuresTrainer",

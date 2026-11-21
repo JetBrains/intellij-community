@@ -1,0 +1,370 @@
+c:com.jetbrains.python.console.completion.PydevConsoleElement
+- com.jetbrains.python.psi.impl.LightNamedElement
+- <init>(com.intellij.psi.PsiManager,java.lang.String,java.lang.String):V
+- s:generateDoc(com.jetbrains.python.console.completion.PydevConsoleElement):com.intellij.openapi.util.text.HtmlChunk
+c:com.jetbrains.python.debugger.PyDebuggerEditorsProvider
+- com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- <init>():V
+- createDocument(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
+- createExpression(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.lang.Language,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.xdebugger.XExpression
+- getFileType():com.intellij.openapi.fileTypes.FileType
+- getInlineDebuggerHelper():com.intellij.xdebugger.evaluation.InlineDebuggerHelper
+f:com.jetbrains.python.extensions.NameAndElement
+- <init>(com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement):V
+- f:component1():com.intellij.psi.util.QualifiedName
+- f:component2():com.intellij.psi.PsiElement
+- f:copy(com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement):com.jetbrains.python.extensions.NameAndElement
+- bs:copy$default(com.jetbrains.python.extensions.NameAndElement,com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement,I,java.lang.Object):com.jetbrains.python.extensions.NameAndElement
+- equals(java.lang.Object):Z
+- f:getElement():com.intellij.psi.PsiElement
+- f:getName():com.intellij.psi.util.QualifiedName
+- hashCode():I
+f:com.jetbrains.python.extensions.QualifiedNameExtKt
+- sf:getRelativeNameTo(com.intellij.psi.util.QualifiedName,com.intellij.psi.util.QualifiedName):com.intellij.psi.util.QualifiedName
+f:com.jetbrains.python.extensions.TargetWithVariantExtKt
+- sf:asPsiElement(com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant,com.jetbrains.python.run.AbstractPythonRunConfiguration,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.PsiElement
+- bs:asPsiElement$default(com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant,com.jetbrains.python.run.AbstractPythonRunConfiguration,com.intellij.openapi.vfs.VirtualFile,I,java.lang.Object):com.intellij.psi.PsiElement
+- sf:targetAsPsiElement(com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant,java.lang.String,com.jetbrains.python.run.AbstractPythonRunConfiguration,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.PsiElement
+- bs:targetAsPsiElement$default(com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant,java.lang.String,com.jetbrains.python.run.AbstractPythonRunConfiguration,com.intellij.openapi.vfs.VirtualFile,I,java.lang.Object):com.intellij.psi.PsiElement
+f:com.jetbrains.python.run.configuration.PySdkComboBox
+- javax.swing.JPanel
+- com.jetbrains.python.run.configuration.PyInterpreterModeNotifier
+- addInterpreterModeListener(java.util.function.Consumer):V
+- f:apply(com.jetbrains.python.run.AbstractPythonRunConfigurationParams):V
+- isRemoteSelected():Z
+- f:moduleChanged():V
+- f:reset(com.jetbrains.python.run.AbstractPythonRunConfigurationParams):V
+f:com.jetbrains.python.sdk.PySdkPopupFactory
+- sf:Companion:com.jetbrains.python.sdk.PySdkPopupFactory$Companion
+- <init>(com.intellij.openapi.module.Module):V
+- f:getModule():com.intellij.openapi.module.Module
+f:com.jetbrains.python.sdk.PySdkPopupFactory$Companion
+a:com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration
+- com.jetbrains.python.testing.AbstractPythonTestRunConfiguration
+- com.intellij.execution.configurations.RefactoringListenerProvider
+- com.jetbrains.python.run.AbstractPythonRunConfigurationParams
+- com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams
+- p:myClassName:java.lang.String
+- p:myFolderName:java.lang.String
+- p:myMethodName:java.lang.String
+- p:myScriptName:java.lang.String
+- p:myTestType:com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,com.jetbrains.python.psi.resolve.PackageAvailabilitySpec):V
+- checkConfiguration():V
+- compareSettings(com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration):Z
+- s:copyParams(com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams,com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams):V
+- getActionName():java.lang.String
+- getBaseParams():com.jetbrains.python.run.AbstractPythonRunConfigurationParams
+- getClassName():java.lang.String
+- getFolderName():java.lang.String
+- getMethodName():java.lang.String
+- getPattern():java.lang.String
+- pa:getPluralTitle():java.lang.String
+- getRefactoringElementListener(com.intellij.psi.PsiElement):com.intellij.refactoring.listeners.RefactoringElementListener
+- getScriptName():java.lang.String
+- getTestRunConfigurationParams():com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams
+- getTestType():com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType
+- pa:getTitle():java.lang.String
+- getWorkingDirectorySafe():java.lang.String
+- readExternal(org.jdom.Element):V
+- setClassName(java.lang.String):V
+- setFolderName(java.lang.String):V
+- setMethodName(java.lang.String):V
+- setPattern(java.lang.String):V
+- setScriptName(java.lang.String):V
+- setTestType(com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType):V
+- suggestedName():java.lang.String
+- usePattern():Z
+- usePattern(Z):V
+- writeExternal(org.jdom.Element):V
+e:com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType
+- java.lang.Enum
+- sf:TEST_CLASS:com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType
+- sf:TEST_FOLDER:com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType
+- sf:TEST_FUNCTION:com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType
+- sf:TEST_METHOD:com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType
+- sf:TEST_SCRIPT:com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType
+- s:valueOf(java.lang.String):com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType
+- s:values():com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType[]
+a:com.jetbrains.python.testing.AbstractPythonTestConfigurationProducer
+- com.intellij.execution.actions.RunConfigurationProducer
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- createConfigurationFromContext(com.intellij.execution.actions.ConfigurationContext):com.intellij.execution.actions.ConfigurationFromContext
+- a:getConfigurationClass():java.lang.Class
+- p:getConfigurationSettingsList(com.intellij.execution.RunManager):java.util.List
+a:com.jetbrains.python.testing.AbstractPythonTestRunConfiguration
+- com.jetbrains.python.run.AbstractPythonRunConfiguration
+- sf:Companion:com.jetbrains.python.testing.AbstractPythonTestRunConfiguration$Companion
+- psf:TEST_NAME_PARTS_SPLITTER:java.lang.String
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory):V
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,com.jetbrains.python.psi.resolve.PackageAvailabilitySpec):V
+- b:<init>(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,com.jetbrains.python.psi.resolve.PackageAvailabilitySpec,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- checkConfiguration():V
+- getTestSpec(com.intellij.execution.Location,com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
+- getTestSpec(com.intellij.execution.target.TargetEnvironmentRequest,com.intellij.execution.Location,com.intellij.execution.testframework.AbstractTestProxy):java.util.function.Function
+- f:isFrameworkInstalled():Z
+f:com.jetbrains.python.testing.AbstractPythonTestRunConfiguration$Companion
+com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams
+- a:getBaseParams():com.jetbrains.python.run.AbstractPythonRunConfigurationParams
+- a:getClassName():java.lang.String
+- a:getFolderName():java.lang.String
+- a:getMethodName():java.lang.String
+- a:getPattern():java.lang.String
+- a:getScriptName():java.lang.String
+- a:getTestType():com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType
+- a:setAddContentRoots(Z):V
+- a:setAddSourceRoots(Z):V
+- a:setClassName(java.lang.String):V
+- a:setFolderName(java.lang.String):V
+- a:setMethodName(java.lang.String):V
+- a:setPattern(java.lang.String):V
+- a:setScriptName(java.lang.String):V
+- a:setTestType(com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration$TestType):V
+- a:shouldAddContentRoots():Z
+- a:shouldAddSourceRoots():Z
+- a:usePattern():Z
+- a:usePattern(Z):V
+f:com.jetbrains.python.testing.ConfigurationTarget
+- com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
+- <init>(java.lang.String,com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant):V
+- f:asPsiElement(com.jetbrains.python.testing.PyAbstractTestConfiguration):com.intellij.psi.PsiElement
+- f:component1():java.lang.String
+- f:component2():com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
+- f:copy(java.lang.String,com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant):com.jetbrains.python.testing.ConfigurationTarget
+- bs:copy$default(com.jetbrains.python.testing.ConfigurationTarget,java.lang.String,com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant,I,java.lang.Object):com.jetbrains.python.testing.ConfigurationTarget
+- f:copyTo(com.jetbrains.python.testing.ConfigurationTarget):V
+- equals(java.lang.Object):Z
+- f:generateArgumentsLine(com.intellij.execution.target.TargetEnvironmentRequest,com.jetbrains.python.testing.PyAbstractTestConfiguration):java.util.List
+- f:generateArgumentsLine(com.jetbrains.python.testing.PyAbstractTestConfiguration):java.util.List
+- f:getElementDirectory(com.jetbrains.python.testing.PyAbstractTestConfiguration):com.intellij.openapi.vfs.VirtualFile
+- getTarget():java.lang.String
+- getTargetType():com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
+- hashCode():I
+- setTarget(java.lang.String):V
+- setTargetType(com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant):V
+a:com.jetbrains.python.testing.PyAbstractTestConfiguration
+- com.jetbrains.python.testing.AbstractPythonTestRunConfiguration
+- com.intellij.execution.configurations.RefactoringListenerProvider
+- com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
+- com.jetbrains.python.testing.PyRerunAwareConfiguration
+- <init>(com.intellij.openapi.project.Project,com.jetbrains.python.testing.PyAbstractTestFactory):V
+- checkConfiguration():V
+- f:copyFrom(com.jetbrains.python.reflection.Properties):V
+- f:copyTo(com.jetbrains.python.reflection.Properties):V
+- f:couldBeTestTarget(com.intellij.psi.PsiElement):Z
+- createTestConsoleProperties(com.intellij.execution.Executor):com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
+- f:getAdditionalArguments():java.lang.String
+- p:getCustomRawArgumentsString(Z):java.lang.String
+- bs:getCustomRawArgumentsString$default(com.jetbrains.python.testing.PyAbstractTestConfiguration,Z,I,java.lang.Object):java.lang.String
+- getPythonTargetAdditionalParams():java.lang.String
+- pf:getRawArgumentsSeparator():java.lang.String
+- getRefactoringElementListener(com.intellij.psi.PsiElement):com.intellij.refactoring.listeners.RefactoringElementListener
+- f:getTarget():com.jetbrains.python.testing.ConfigurationTarget
+- f:getTestFrameworkName():java.lang.String
+- f:getTestSpec():java.util.List
+- f:getTestSpec(com.intellij.execution.Location,com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
+- f:getTestSpec(com.intellij.execution.target.TargetEnvironmentRequest):java.util.List
+- getTestSpecsForRerun(com.intellij.execution.target.TargetEnvironmentRequest,com.intellij.psi.search.GlobalSearchScope,java.util.List):java.util.List
+- getTestSpecsForRerun(com.intellij.psi.search.GlobalSearchScope,java.util.List):java.util.List
+- p:getUseFrameworkNameInConfiguration():Z
+- getWorkingDirectorySafe():java.lang.String
+- isIdTestBased():Z
+- isSameAsLocation(com.jetbrains.python.testing.ConfigurationTarget,java.lang.String):Z
+- f:isTestClassRequired():com.intellij.util.ThreeState
+- readExternal(org.jdom.Element):V
+- f:reset():V
+- f:setAdditionalArguments(java.lang.String):V
+- setMetaInfo(java.lang.String):V
+- suggestedName():java.lang.String
+- writeExternal(org.jdom.Element):V
+a:com.jetbrains.python.testing.PyAbstractTestFactory
+- com.jetbrains.python.run.PythonConfigurationFactoryBase
+- <init>(com.jetbrains.python.testing.PythonTestConfigurationType):V
+- a:createTemplateConfiguration(com.intellij.openapi.project.Project):com.jetbrains.python.testing.PyAbstractTestConfiguration
+- equals(java.lang.Object):Z
+- getPackageSpec():com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+- hashCode():I
+- isExplicitChoice():Z
+a:com.jetbrains.python.testing.PyAbstractTestSettingsEditor
+- com.intellij.openapi.options.SettingsEditor
+- <init>(com.jetbrains.python.testing.PyTestSharedForm):V
+- p:applyEditorTo(com.jetbrains.python.testing.PyAbstractTestConfiguration):V
+- p:createEditor():javax.swing.JComponent
+- p:resetEditorFrom(com.jetbrains.python.testing.PyAbstractTestConfiguration):V
+f:com.jetbrains.python.testing.PyTestConfiguration
+- com.jetbrains.python.testing.PyAbstractTestConfiguration
+- <init>(com.intellij.openapi.project.Project,com.jetbrains.python.testing.PyTestFactory):V
+- createAdditionalArguments(com.jetbrains.python.testing.QualifiedNameParts):java.lang.String
+- getFileSymbolSeparator():java.lang.String
+- f:getKeywords():java.lang.String
+- f:getParameters():java.lang.String
+- getPythonTargetAdditionalParams():java.lang.String
+- getState(com.intellij.execution.Executor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunProfileState
+- getSymbolSymbolSeparator():java.lang.String
+- getTestSpecsForRerun(com.intellij.execution.target.TargetEnvironmentRequest,com.intellij.psi.search.GlobalSearchScope,java.util.List):java.util.List
+- getTestSpecsForRerun(com.intellij.psi.search.GlobalSearchScope,java.util.List):java.util.List
+- isSameAsLocation(com.jetbrains.python.testing.ConfigurationTarget,java.lang.String):Z
+- f:setKeywords(java.lang.String):V
+- setMetaInfo(java.lang.String):V
+- f:setParameters(java.lang.String):V
+f:com.jetbrains.python.testing.PyTestFactory
+- com.jetbrains.python.testing.PyAbstractTestFactory
+- sf:Companion:com.jetbrains.python.testing.PyTestFactory$Companion
+- sf:id:java.lang.String
+- <init>(com.jetbrains.python.testing.PythonTestConfigurationType):V
+- createTemplateConfiguration(com.intellij.openapi.project.Project):com.jetbrains.python.testing.PyTestConfiguration
+- getId():java.lang.String
+- getName():java.lang.String
+- getPackageSpec():com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+f:com.jetbrains.python.testing.PyTestFactory$Companion
+f:com.jetbrains.python.testing.PyTestSharedForm
+- com.jetbrains.python.reflection.SimplePropertiesProvider
+- $$$getRootComponent$$$():javax.swing.JComponent
+- s:create(com.jetbrains.python.testing.PyAbstractTestConfiguration,com.jetbrains.python.testing.PyTestCustomOption[]):com.jetbrains.python.testing.PyTestSharedForm
+- getPropertyNames():java.util.List
+- getPropertyValue(java.lang.String):java.lang.Object
+- getTarget():java.lang.String
+- getTargetType():com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
+- s:setBorderToPanel(javax.swing.JPanel,java.lang.String):V
+- setPropertyValue(java.lang.String,java.lang.Object):V
+- setTarget(java.lang.String):V
+- setTargetType(com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant):V
+f:com.jetbrains.python.testing.PyTestsSharedKt
+- sf:getFactoryById(java.lang.String):com.jetbrains.python.testing.PyAbstractTestFactory
+f:com.jetbrains.python.testing.PyUnitTestConfiguration
+- com.jetbrains.python.testing.PyAbstractTestConfiguration
+- <init>(com.intellij.openapi.project.Project,com.jetbrains.python.testing.PyUnitTestFactory):V
+- checkConfiguration():V
+- f:getPattern():java.lang.String
+- getState(com.intellij.execution.Executor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunProfileState
+- isIdTestBased():Z
+- f:setPattern(java.lang.String):V
+f:com.jetbrains.python.testing.PyUnitTestFactory
+- com.jetbrains.python.testing.PyAbstractTestFactory
+- sf:Companion:com.jetbrains.python.testing.PyUnitTestFactory$Companion
+- sf:id:java.lang.String
+- <init>(com.jetbrains.python.testing.PythonTestConfigurationType):V
+- createTemplateConfiguration(com.intellij.openapi.project.Project):com.jetbrains.python.testing.PyUnitTestConfiguration
+- getId():java.lang.String
+- getName():java.lang.String
+- getPackageSpec():com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+f:com.jetbrains.python.testing.PyUnitTestFactory$Companion
+c:com.jetbrains.python.testing.PythonTRunnerConsoleProperties
+- com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
+- com.intellij.execution.testframework.sm.SMCustomMessagesParsing
+- sf:FRAMEWORK_NAME:java.lang.String
+- <init>(com.intellij.execution.configurations.ModuleRunConfiguration,com.intellij.execution.Executor,Z,com.intellij.execution.testframework.sm.runner.SMTestLocator):V
+- getTestLocator():com.intellij.execution.testframework.sm.runner.SMTestLocator
+- isEditable():Z
+a:com.jetbrains.python.testing.PythonTestCommandLineStateBase
+- com.jetbrains.python.run.PythonCommandLineState
+- pf:myConfiguration:com.jetbrains.python.run.AbstractPythonRunConfiguration
+- <init>(com.jetbrains.python.run.AbstractPythonRunConfiguration,com.intellij.execution.runners.ExecutionEnvironment):V
+- p:addAfterParameters(com.intellij.execution.configurations.GeneralCommandLine):V
+- p:addAfterParameters(com.intellij.execution.target.TargetEnvironmentRequest,com.jetbrains.python.run.PythonScriptExecution):V
+- p:addBeforeParameters(com.intellij.execution.configurations.GeneralCommandLine):V
+- p:addBeforeParameters(com.jetbrains.python.run.PythonScriptExecution):V
+- p:addTestRunnerParameters(com.intellij.execution.configurations.GeneralCommandLine):V
+- p:addTestSpecsAsParameters(com.jetbrains.python.run.PythonScriptExecution,java.util.List):V
+- p:buildPythonExecution(com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest):com.jetbrains.python.run.PythonExecution
+- p:createAndAttachConsole(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessHandler,com.intellij.execution.Executor):com.intellij.execution.ui.ConsoleView
+- p:createConsoleProperties(com.intellij.execution.Executor):com.jetbrains.python.testing.PythonTRunnerConsoleProperties
+- customizeEnvironmentVars(java.util.Map,Z):V
+- p:customizePythonExecutionEnvironmentVars(com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest,java.util.Map,Z):V
+- execute(com.intellij.execution.Executor,com.jetbrains.python.run.PythonCommandLineState$PythonProcessStarter,com.jetbrains.python.run.CommandLinePatcher[]):com.intellij.execution.ExecutionResult
+- execute(com.intellij.execution.Executor,com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder):com.intellij.execution.ExecutionResult
+- generateCommandLine():com.intellij.execution.configurations.GeneralCommandLine
+- getConfiguration():com.jetbrains.python.run.AbstractPythonRunConfiguration
+- p:getPythonExecutionWorkingDir(com.intellij.execution.target.TargetEnvironmentRequest):java.util.function.Function
+- pa:getRunner():com.jetbrains.python.HelperPackage
+- p:getTestLocator():com.intellij.execution.testframework.sm.runner.SMTestLocator
+- pa:getTestSpecs():java.util.List
+- p:getTestSpecs(com.intellij.execution.target.TargetEnvironmentRequest):java.util.List
+- p:setWorkingDirectory(com.intellij.execution.configurations.GeneralCommandLine):V
+f:com.jetbrains.python.testing.PythonTestConfigurationType
+- com.intellij.execution.configurations.ConfigurationTypeBase
+- sf:ID:java.lang.String
+- <init>():V
+- getAutoDetectFactory():com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
+- getDocTestFactory():com.jetbrains.python.run.PythonConfigurationFactoryBase
+- getHelpTopic():java.lang.String
+- s:getInstance():com.jetbrains.python.testing.PythonTestConfigurationType
+- getPyTestFactory():com.jetbrains.python.testing.PyTestFactory
+- getTag():java.lang.String
+- getTypedFactories():java.util.List
+- getUnitTestFactory():com.jetbrains.python.testing.PyUnitTestFactory
+- isDumbAware():Z
+a:com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer
+- com.jetbrains.python.testing.AbstractPythonTestConfigurationProducer
+- p:<init>():V
+- getConfigurationClass():java.lang.Class
+- p:getTestCaseClassesFromFile(com.jetbrains.python.psi.PyFile):java.util.List
+- p:isAvailable(com.intellij.execution.Location):Z
+- isConfigurationFromContext(com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration,com.intellij.execution.actions.ConfigurationContext):Z
+- ps:isPythonModule(com.intellij.openapi.module.Module):Z
+- p:isTestClass(com.jetbrains.python.psi.PyClass,com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration,com.jetbrains.python.psi.types.TypeEvalContext):Z
+- p:isTestFile(com.jetbrains.python.psi.PyFile):Z
+- p:isTestFolder(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
+- p:isTestFunction(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration):Z
+- p:setupConfigurationFromClass(com.jetbrains.python.psi.PyClass,com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration):Z
+- p:setupConfigurationFromContext(com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration,com.intellij.execution.actions.ConfigurationContext,com.intellij.openapi.util.Ref):Z
+- p:setupConfigurationFromFile(com.jetbrains.python.psi.PyFile,com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration):Z
+- p:setupConfigurationFromFunction(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration):Z
+- ps:setupConfigurationScript(com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration,com.jetbrains.python.psi.PyElement):Z
+f:com.jetbrains.python.testing.QualifiedNameParts
+- <init>(com.intellij.psi.util.QualifiedName,com.intellij.psi.util.QualifiedName,com.jetbrains.python.psi.PyFile):V
+- f:component1():com.intellij.psi.util.QualifiedName
+- f:component2():com.intellij.psi.util.QualifiedName
+- f:component3():com.jetbrains.python.psi.PyFile
+- f:copy(com.intellij.psi.util.QualifiedName,com.intellij.psi.util.QualifiedName,com.jetbrains.python.psi.PyFile):com.jetbrains.python.testing.QualifiedNameParts
+- bs:copy$default(com.jetbrains.python.testing.QualifiedNameParts,com.intellij.psi.util.QualifiedName,com.intellij.psi.util.QualifiedName,com.jetbrains.python.psi.PyFile,I,java.lang.Object):com.jetbrains.python.testing.QualifiedNameParts
+- equals(java.lang.Object):Z
+- f:getElementName():com.intellij.psi.util.QualifiedName
+- f:getElementNamePrependingFile(com.intellij.psi.PsiDirectory):com.intellij.psi.util.QualifiedName
+- bs:getElementNamePrependingFile$default(com.jetbrains.python.testing.QualifiedNameParts,com.intellij.psi.PsiDirectory,I,java.lang.Object):com.intellij.psi.util.QualifiedName
+- f:getFile():com.jetbrains.python.psi.PyFile
+- f:getFileName():com.intellij.psi.util.QualifiedName
+- hashCode():I
+a:com.jetbrains.python.testing.TestRunnerService
+- com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService
+- p:<init>():V
+- s:getConfigurator():com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator
+- s:getInstance(com.intellij.openapi.module.Module):com.jetbrains.python.testing.TestRunnerService
+- f:getProjectConfiguration():java.lang.String
+- f:getSelectedFactory():com.jetbrains.python.testing.PyAbstractTestFactory
+- f:setProjectConfiguration(java.lang.String):V
+- f:setSelectedFactory(com.jetbrains.python.testing.PyAbstractTestFactory):V
+f:com.jetbrains.python.testing.autoDetectTests.PyAutoDetectTestConfiguration
+- com.jetbrains.python.testing.PyAbstractTestConfiguration
+- <init>(com.intellij.openapi.project.Project,com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory):V
+- f:detectedConfiguration(com.intellij.openapi.module.Module):com.jetbrains.python.testing.PyAbstractTestConfiguration
+- getState(com.intellij.execution.Executor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunProfileState
+f:com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
+- com.jetbrains.python.testing.PyAbstractTestFactory
+- <init>(com.jetbrains.python.testing.PythonTestConfigurationType):V
+- createTemplateConfiguration(com.intellij.openapi.project.Project):com.jetbrains.python.testing.autoDetectTests.PyAutoDetectTestConfiguration
+- getId():java.lang.String
+- getName():java.lang.String
+- isExplicitChoice():Z
+f:com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer
+- com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer
+- <init>():V
+- getConfigurationFactory():com.intellij.execution.configurations.ConfigurationFactory
+- isPreferredConfiguration(com.intellij.execution.actions.ConfigurationFromContext,com.intellij.execution.actions.ConfigurationFromContext):Z
+- shouldReplace(com.intellij.execution.actions.ConfigurationFromContext,com.intellij.execution.actions.ConfigurationFromContext):Z
+f:com.jetbrains.python.testing.tox.PyToxConfiguration
+- com.jetbrains.python.testing.AbstractPythonTestRunConfiguration
+- addTestSpecsAsParameters(com.intellij.execution.configurations.ParamsGroup,java.util.List):V
+- getState(com.intellij.execution.Executor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunProfileState
+- getTestSpec(com.intellij.execution.Location,com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
+- isIdTestBased():Z
+- readExternal(org.jdom.Element):V
+- setArguments(java.lang.String[]):V
+- setRunOnlyEnvs(java.lang.String[]):V
+- writeExternal(org.jdom.Element):V
+f:com.jetbrains.python.testing.tox.PyToxConfigurationProducer
+- com.intellij.execution.actions.LazyRunConfigurationProducer
+- <init>():V
+- getConfigurationFactory():com.intellij.execution.configurations.ConfigurationFactory
+- isConfigurationFromContext(com.jetbrains.python.testing.tox.PyToxConfiguration,com.intellij.execution.actions.ConfigurationContext):Z

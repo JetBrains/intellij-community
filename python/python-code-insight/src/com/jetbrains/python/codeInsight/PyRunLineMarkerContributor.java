@@ -12,10 +12,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIfStatement;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyIfStatementNavigator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,7 @@ public final class PyRunLineMarkerContributor extends RunLineMarkerContributor i
       return statement != null &&
              ScopeUtil.getScopeOwner(element) instanceof PyFile containingFile &&
              containingFile.getVirtualFile().getFileType() == PythonFileType.INSTANCE &&
-             PyUtil.isIfNameEqualsMain(statement);
+             PyUtilCore.isIfNameEqualsMain(statement);
     }
     else {
       return false;

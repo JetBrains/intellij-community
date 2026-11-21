@@ -24,7 +24,8 @@ abstract class DependenciesPsiProvider<T : PsiFile>(
     if (`class`.isInstance(file)) provideDependencies(file as T) else null
 }
 
-internal object DependenciesPsiProviderData {
+@ApiStatus.Internal
+object DependenciesPsiProviderData {
   private val EP_NAME =
     ExtensionPointName<DependenciesPsiProvider<*>>(
       "com.jetbrains.python.inspections.dependencies.dependenciesInspectionProvider",

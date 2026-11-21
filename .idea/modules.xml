@@ -2265,6 +2265,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-exec-service/tests/win/intellij.python.community.execService.tests.win.iml" filepath="$PROJECT_DIR$/python/python-exec-service/tests/win/intellij.python.community.execService.tests.win.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/impl.helperLocator/intellij.python.community.helpersLocator.iml" filepath="$PROJECT_DIR$/python/impl.helperLocator/intellij.python.community.helpersLocator.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.impl.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/classic/intellij.python.community.impl.classic.iml" filepath="$PROJECT_DIR$/python/classic/intellij.python.community.impl.classic.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/conda/intellij.python.community.impl.conda.iml" filepath="$PROJECT_DIR$/python/conda/intellij.python.community.impl.conda.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/conda/common/intellij.python.community.impl.conda.common.iml" filepath="$PROJECT_DIR$/python/conda/common/intellij.python.community.impl.conda.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/conda/frontend/intellij.python.community.impl.conda.frontend.iml" filepath="$PROJECT_DIR$/python/conda/frontend/intellij.python.community.impl.conda.frontend.iml" />

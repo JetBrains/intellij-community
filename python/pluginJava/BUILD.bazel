@@ -38,6 +38,7 @@ jvm_library(
         "//python/python-sdk/common",
         "//python/python-psi-api:psi",
         "//python:python-community-impl",
+        "//python/classic",
         "//python/python-source-roots:sourceRoots",
         "//platform/forms_rt:java-guiForms-rt",
         "//java/openapi:java",

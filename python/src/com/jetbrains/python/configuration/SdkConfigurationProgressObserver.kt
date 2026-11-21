@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.sdk.isSdkConfigurationInProgress
+import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.function.Consumer
@@ -23,7 +24,8 @@ import javax.swing.JComponent
  *  - [onReleased] fires only on a real locked -> unlocked transition, so the caller can refresh
  *    controls that may have gone stale while the background SDK configuration was running.
  */
-internal fun observeSdkConfigurationInProgress(
+@ApiStatus.Internal
+fun observeSdkConfigurationInProgress(
   project: Project,
   uiComponent: JComponent,
   onInProgressChanged: Consumer<Boolean>,

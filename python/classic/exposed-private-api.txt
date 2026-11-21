@@ -1,0 +1,3 @@
+com/jetbrains/python/HelperPackage
+com/jetbrains/python/psi/resolve/PackageAvailabilitySpec
+com/jetbrains/python/testing/PyTestCustomOption

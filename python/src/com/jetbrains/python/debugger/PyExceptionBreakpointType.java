@@ -1,15 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
-import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.util.AbstractTreeClassChooserDialog;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.JBBox;
@@ -21,9 +15,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyClassTreeChooserDialog;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +26,6 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
 
 
 @ApiStatus.Internal
@@ -66,52 +55,17 @@ public final class PyExceptionBreakpointType
 
   @Override
   public boolean isAddBreakpointButtonVisible() {
-    return true;
+    return PyDebuggerFacade.getInstance().canChooseExceptionClass();
   }
 
   @Override
   public XBreakpoint<PyExceptionBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
-    final PyClassTreeChooserDialog dialog = new PyClassTreeChooserDialog(PyBundle.message(
-      "debugger.exception.breakpoint.select.exception.class"),
-                                                                         project,
-                                                                         GlobalSearchScope.allScope(project),
-                                                                         new PyExceptionCachingFilter(), null);
-
-    dialog.showDialog();
-
-    // on ok
-    final PyClass pyClass = dialog.getSelected();
-    if (pyClass != null) {
-      final String qualifiedName = pyClass.getQualifiedName();
-      assert qualifiedName != null : "Qualified name of the class shouldn't be null";
+    String qualifiedName = PyDebuggerFacade.getInstance().chooseExceptionClass(project);
+    if (qualifiedName != null) {
       return XDebuggerManager.getInstance(project).getBreakpointManager()
         .addBreakpoint(this, new PyExceptionBreakpointProperties(qualifiedName));
     }
     return null;
-  }
-
-  private static class PyExceptionCachingFilter implements AbstractTreeClassChooserDialog.Filter<PyClass> {
-    private final HashMap<Integer, Pair<WeakReference<PyClass>, Boolean>> processedElements = Maps.newHashMap();
-
-    @Override
-    public boolean isAccepted(final @NotNull PyClass pyClass) {
-      final VirtualFile virtualFile = pyClass.getContainingFile().getVirtualFile();
-      if (virtualFile == null) {
-        return false;
-      }
-
-      final int key = pyClass.hashCode();
-      final Pair<WeakReference<PyClass>, Boolean> pair = processedElements.get(key);
-      boolean isException;
-      if (pair == null || pair.first.get() != pyClass) {
-        isException = ReadAction.compute(() -> PyUtil.isExceptionClass(pyClass));
-        processedElements.put(key, Pair.create(new WeakReference<>(pyClass), isException));
-      }
-      else {
-        isException = pair.second;
-      }
-      return isException;
-    }
   }
 
   @Override
@@ -135,7 +89,7 @@ public final class PyExceptionBreakpointType
   @Override
   public @Nullable XDebuggerEditorsProvider getEditorsProvider(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint,
                                                                @NotNull Project project) {
-    return new PyDebuggerEditorsProvider();
+    return PyDebuggerFacade.getInstance().createEditorsProvider();
   }
 
   @Override

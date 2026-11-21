@@ -1,12 +1,13 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.copyright"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community.impl"/>
-    <!-- endregion -->
+    <module name="intellij.python.psi"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij.copyright">
     <updater filetype="Python" implementationClass="com.intellij.python.copyright.PyUpdateCopyrightsProvider"/>
   </extensions>

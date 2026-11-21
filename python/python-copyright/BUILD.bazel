@@ -39,6 +39,7 @@ jvm_library(
         "//platform/util",
         "//platform/core-api:core",
         "//python:python-community-impl",
+        "//python/python-psi-api:psi",
     ],
 )
 ### auto-generated section `build intellij.python.copyright` end

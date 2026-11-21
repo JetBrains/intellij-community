@@ -4,6 +4,11 @@ package com.jetbrains.python.configuration.interpreter
 import com.intellij.openapi.project.Project
 import com.intellij.python.pyproject.model.api.cleanupPyProjectBasedModules
 import com.intellij.python.pyproject.model.usePyprojectToml
+import org.jetbrains.annotations.ApiStatus
+
+/** The id of `PyWorkspaceStructureConfigurable`, for code that opens the page by id. It keeps its old name, so saved settings still find the page. */
+@ApiStatus.Internal
+const val PY_WORKSPACE_CONFIGURABLE_ID: String = "com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurable"
 
 /**
  * Swing-free state for [PyWorkspaceStructureConfigurable]'s "Auto-configure project workspace from
@@ -11,7 +16,8 @@ import com.intellij.python.pyproject.model.usePyprojectToml
  * point so a unit test can pin both without a Settings dialog fixture — the configurable only
  * renders this state and forwards user clicks back.
  */
-internal class PyWorkspaceStructurePresenter {
+@ApiStatus.Internal
+class PyWorkspaceStructurePresenter {
 
   /** Classification of the toggle transition the configurable needs to react to on Apply. */
   enum class ToggleOutcome { ToggledOff, ToggledOn, NoChange }

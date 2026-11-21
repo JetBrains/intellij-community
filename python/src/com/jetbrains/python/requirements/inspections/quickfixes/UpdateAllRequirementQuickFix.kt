@@ -10,8 +10,10 @@ import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.management.ui.updatePackagesBackground
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import org.jetbrains.annotations.ApiStatus
 
-internal class UpdateAllRequirementQuickFix(val outdatedPackages: List<PythonOutdatedPackage>) : LocalQuickFix {
+@ApiStatus.Internal
+class UpdateAllRequirementQuickFix(val outdatedPackages: List<PythonOutdatedPackage>) : LocalQuickFix {
   override fun getFamilyName() = PyBundle.message("QFIX.NAME.update.all.requirements")
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
   override fun startInWriteAction(): Boolean = false

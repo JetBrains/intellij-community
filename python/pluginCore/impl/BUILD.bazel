@@ -43,6 +43,7 @@ jvm_library(
         "//platform/ide-core",
         "//platform/projectModel-api:projectModel",
         "//python:python-community-impl",
+        "//python/classic",
         "//python/python-sdk/backend",
         "//python/python-pyproject:pyproject",
         "//python/python-sdk/common",

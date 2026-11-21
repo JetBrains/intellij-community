@@ -30,11 +30,11 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.DocumentUtil
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.psi.PyStatementListContainer
-import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.ast.PyAstStatementListContainer
+import com.jetbrains.python.ast.PyAstStringLiteralExpression
+import com.jetbrains.python.ast.PyAstTryPart
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore
 import com.jetbrains.python.psi.PyStringLiteralUtil
-import com.jetbrains.python.psi.PyTryPart
-import com.jetbrains.python.psi.impl.PyPsiUtils
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -75,7 +75,7 @@ class PyConsoleEnterHandler {
 
     val isLineContinuation = prevLine.trim().endsWith('\\')
     val insideDocString = isElementInsideDocString(atElement, caretOffset)
-    val isMultiLineCommand = PsiTreeUtil.getParentOfType(atElement, PyStatementListContainer::class.java) != null || isCellMagic
+    val isMultiLineCommand = PsiTreeUtil.getParentOfType(atElement, PyAstStatementListContainer::class.java) != null || isCellMagic
     val isAtTheEndOfCommand = editor.document.getLineNumber(caretOffset) == editor.document.lineCount - 1
 
     val hasCompleteStatement = !insideDocString && !isLineContinuation && checkComplete(atElement)
@@ -95,7 +95,7 @@ class PyConsoleEnterHandler {
   }
 
   private fun isElementInsideDocString(atElement: PsiElement, caretOffset: Int): Boolean {
-    return atElement.context is PyStringLiteralExpression &&
+    return atElement.context is PyAstStringLiteralExpression &&
         (PyTokenTypes.TRIPLE_NODES.contains(atElement.node.elementType) ||
             atElement.node.elementType === PyTokenTypes.DOCSTRING) &&
         isMultilineString(atElement.text) &&
@@ -103,11 +103,11 @@ class PyConsoleEnterHandler {
   }
 
   private fun checkComplete(el: PsiElement): Boolean {
-    val compoundStatement = PsiTreeUtil.getParentOfType(el, PyStatementListContainer::class.java)
-    if (compoundStatement != null && compoundStatement !is PyTryPart) {
+    val compoundStatement = PsiTreeUtil.getParentOfType(el, PyAstStatementListContainer::class.java)
+    if (compoundStatement != null && compoundStatement !is PyAstTryPart) {
       return compoundStatement.statementList.statements.size != 0
     }
-    val topLevel = PyPsiUtils.getParentRightBefore(el, el.containingFile)
+    val topLevel = PyPsiUtilsCore.getParentRightBefore(el, el.containingFile)
     return topLevel != null && !PsiTreeUtil.hasErrorElements(topLevel)
   }
 

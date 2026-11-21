@@ -54,7 +54,8 @@ internal class CythonWarningIdsHolder : NotificationIdsHolder {
   }
 }
 
-internal class PackageRequirementsIdsHolder : NotificationIdsHolder {
+@ApiStatus.Internal
+class PackageRequirementsIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> = listOf(
     REQUIREMENTS_HAVE_BEEN_IGNORED,
   )
@@ -64,7 +65,8 @@ internal class PackageRequirementsIdsHolder : NotificationIdsHolder {
   }
 }
 
-internal class PythonSDKUpdaterIdsHolder : NotificationIdsHolder {
+@ApiStatus.Internal
+class PythonSDKUpdaterIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> = listOf(
     REFRESH_SKELETONS_FAILED,
     REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED,
@@ -78,7 +80,8 @@ internal class PythonSDKUpdaterIdsHolder : NotificationIdsHolder {
   }
 }
 
-internal class SyncPythonRequirementsIdsHolder : NotificationIdsHolder {
+@ApiStatus.Internal
+class SyncPythonRequirementsIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> = listOf(
     NO_INTERPRETER_CONFIGURED,
     CREATE_REQUIREMENTS_FILE_FAILED,

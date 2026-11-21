@@ -52,6 +52,7 @@
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.classic" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.conda" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />

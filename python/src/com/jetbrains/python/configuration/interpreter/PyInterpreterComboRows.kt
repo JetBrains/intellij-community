@@ -2,11 +2,13 @@
 package com.jetbrains.python.configuration.interpreter
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * One row of [PyInterpreterComboBox]. It is generic over the interpreter [T], so a test can use plain values.
  */
-internal sealed interface SdkComboItem<out T : Any> {
+@ApiStatus.Internal
+sealed interface SdkComboItem<out T : Any> {
   /** The row that stands for the interpreter of the module, whichever it is at run time. */
   data object ModuleInterpreter : SdkComboItem<Nothing>
 
@@ -24,7 +26,8 @@ internal sealed interface SdkComboItem<out T : Any> {
 }
 
 /** What [PyInterpreterComboBox] can list for one module. */
-internal class InterpreterComboSource<T : Any>(
+@ApiStatus.Internal
+class InterpreterComboSource<T : Any>(
   /** The interpreter of the module, or `null` when it has none. */
   val moduleInterpreter: T?,
   /**
@@ -58,7 +61,8 @@ internal class InterpreterComboSource<T : Any>(
  * - No row stands for no interpreter: the combo draws no selection as a grey text, and a module does not go back to it.
  * - The "All Interpreters" row shows only with [offerShowAll].
  */
-internal fun <T : Any> interpreterComboRows(
+@ApiStatus.Internal
+fun <T : Any> interpreterComboRows(
   source: InterpreterComboSource<T>,
   showOtherProjects: Boolean,
   kept: List<T>,
@@ -97,5 +101,6 @@ internal fun <T : Any> interpreterComboRows(
  * in, such as the interpreter of a run configuration. A selection of another project is one of them, so the combo shows
  * them all, and its toggle offers to show the own interpreters only.
  */
-internal fun <T : Any> opensOtherProjects(source: InterpreterComboSource<T>, selected: T?): Boolean =
+@ApiStatus.Internal
+fun <T : Any> opensOtherProjects(source: InterpreterComboSource<T>, selected: T?): Boolean =
   selected != null && selected !in source.ownInterpreters

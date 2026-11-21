@@ -18,8 +18,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.ast.PyAstFile;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfigurationProducer;
 import org.jetbrains.annotations.ApiStatus;
@@ -46,7 +46,7 @@ public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
     final Project project = e.getProject();
     final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     final Presentation presentation = e.getPresentation();
-    presentation.setEnabledAndVisible(project != null && psiFile instanceof PyFile);
+    presentation.setEnabledAndVisible(project != null && psiFile instanceof PyAstFile);
   }
 
   @Override

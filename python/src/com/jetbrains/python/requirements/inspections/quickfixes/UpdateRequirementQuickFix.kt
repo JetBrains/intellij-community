@@ -12,8 +12,10 @@ import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.management.ui.updatePackagesBackground
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import org.jetbrains.annotations.ApiStatus
 
-internal class UpdateRequirementQuickFix(private val outdatedPackage: PythonOutdatedPackage) : LocalQuickFix, PriorityAction {
+@ApiStatus.Internal
+class UpdateRequirementQuickFix(private val outdatedPackage: PythonOutdatedPackage) : LocalQuickFix, PriorityAction {
   override fun getFamilyName() = PyBundle.message("QFIX.NAME.update.requirement", outdatedPackage.name)
   override fun getPriority(): PriorityAction.Priority = PriorityAction.Priority.TOP
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo = IntentionPreviewInfo.EMPTY

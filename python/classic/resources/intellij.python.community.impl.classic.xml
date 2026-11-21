@@ -1,0 +1,334 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.toml.lang"/>
+    <module name="intellij.commandInterface"/>
+    <module name="intellij.json"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.commons.lang3"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.javax.annotation"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.jsoup"/>
+    <module name="intellij.libraries.jsr305"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.libthrift"/>
+    <module name="intellij.libraries.semver"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.libraries.xstream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.consoleView"/>
+    <module name="intellij.platform.consoleView.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.ide.codeinsight.inline"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.remote"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.ide.ui"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.macro"/>
+    <module name="intellij.platform.ml"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.remote.core"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.testIntegration"/>
+    <module name="intellij.platform.testIntegration.ui"/>
+    <module name="intellij.platform.testRunner"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.annotations"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.welcomeScreen.impl"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+    <module name="intellij.platform.wsl.impl"/>
+    <module name="intellij.python.codeInsight"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.common"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.community.execService.python"/>
+    <module name="intellij.python.community.helpersLocator"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.community.impl.conda"/>
+    <module name="intellij.python.community.impl.conda.common"/>
+    <module name="intellij.python.community.impl.installer"/>
+    <module name="intellij.python.community.impl.pipenv"/>
+    <module name="intellij.python.community.impl.pipenv.common"/>
+    <module name="intellij.python.community.impl.poetry.backend"/>
+    <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.community.services.internal.impl"/>
+    <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.console"/>
+    <module name="intellij.python.externalIndex"/>
+    <module name="intellij.python.hatch"/>
+    <module name="intellij.python.hatch.common"/>
+    <module name="intellij.python.navigation"/>
+    <module name="intellij.python.packaging"/>
+    <module name="intellij.python.processOutput.common"/>
+    <module name="intellij.python.psi"/>
+    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.pydev"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.pytools.backend.runtime"/>
+    <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.refactoring"/>
+    <module name="intellij.python.requirements.backend"/>
+    <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.sdk.common"/>
+    <module name="intellij.python.sourceRoots"/>
+    <module name="intellij.python.spellchecker"/>
+    <module name="intellij.python.syntax"/>
+    <module name="intellij.python.testing.codeInsight"/>
+    <module name="intellij.python.uv.backend"/>
+    <module name="intellij.python.uv.common"/>
+    <module name="intellij.python.venv"/>
+    <module name="intellij.python.venv.common"/>
+    <module name="intellij.regexp"/>
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.toml.core"/>
+    <module name="intellij.yaml"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.PyBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectConfigurable groupId="python.group.settings"
+                         id="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyAllInterpretersConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyAllInterpretersConfigurable.display.name"
+                         instance="com.jetbrains.python.configuration.interpreter.PyAllInterpretersConfigurable"
+                         groupWeight="199"/>
+    <localInspection language="" shortName="DependenciesInspection" suppressId="Dependencies" bundle="messages.PyBundle"
+                     key="INSP.dependencies.name" groupKey="INSP.GROUP.dependencies" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.dependencies.DependenciesInspection"/>
+    <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="com.jetbrains.python.suggestions.MarimoSuggestionProvider"/>
+    <applicationSettings service="com.jetbrains.python.testing.TestRunnerService$AppService"/>
+    <projectConfigurable groupId="python.group.settings"
+                         id="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyWorkspaceStructureConfigurable.display.name"
+                         instance="com.jetbrains.python.configuration.interpreter.PyWorkspaceStructureConfigurable"
+                         groupWeight="200"
+                         nonDefaultProject="true"/>
+    <postStartupActivity implementation="com.jetbrains.python.psi.resolve.PyPartialStubMarkersInvalidatorActivity"/>
+    <postStartupActivity implementation="com.jetbrains.python.psi.resolve.PyResolveCachesInvalidatorActivity"/>
+    <applicationService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextFactory"
+                        serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextFactoryImpl"/>
+    <localInspection language="Python" shortName="PyUnusedImportsInspection"
+                     suppressId="PyUnusedImports" alternativeId="PyUnresolvedReferences"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.unused.imports"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.unused.symbols"
+                     enabledByDefault="true" level="WARNING" runForWholeFile="true"
+                     implementationClass="com.jetbrains.python.inspections.PyUnusedImportsInspection"/>
+    <completion.confidence language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyCompletionConfidence"/>
+    <workspaceModel.customImlComponentNameContributor
+      implementation="com.jetbrains.python.testing.TestRunnerServiceImlComponentNameContributor"/>
+    <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.jetbrains.python.packaging.management.PythonPackageStubRootsListener"
+              topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
+    <listener class="com.jetbrains.python.sdk.inspections.PyInterpreterNotificationFileOpenedListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
+                        serviceImplementation="com.jetbrains.python.run.configuration.PyCommonFragmentsBuilderImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.psi.resolve.PackageAvailabilityService"
+                        serviceImplementation="com.jetbrains.python.packaging.PackageAvailabilityServiceImpl"/>
+    <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
+    <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.tox.PyToxConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
+    <runLineMarkerContributor language="Python"
+                              implementationClass="com.jetbrains.python.testing.PyTestLineMarkerContributor"/>
+    <testFinder implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestFinder"/>
+    <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
+    <localInspection language="Python" shortName="PyUnresolvedReferencesInspection" suppressId="PyUnresolvedReferences"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.unresolved.refs"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection"/>
+    <localInspection shortName="PyPackageRequirementsInspection" suppressId="PyPackageRequirements"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.requirements"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.packaging"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsInspection"/>
+    <editorNotificationProvider implementation="com.jetbrains.python.sdk.inspections.PyInterpreterNotificationProvider"/>
+    <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility"
+                     bundle="messages.PyPsiBundle" key="INSP.stub.packages.compatibility"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.codeInsight.stubs.PyStubPackagesCompatibilityInspection"/>
+    <localInspection language="Python" shortName="PyStubPackagesAdvertiser" suppressId="PyStubPackagesAdvertiser"
+                     bundle="messages.PyPsiBundle" key="INSP.stub.packages"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.codeInsight.stubs.PyStubPackagesAdvertiser"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyConsoleFileReferenceContributor" language="Python"
+                              order="before filePath"/>
+    <applicationConfigurable groupId="reference.idesettings.debugger.python"
+                             id="debugger.dataViews.python.type.renderers"
+                             instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
+                             key="configurable.PyUserTypeRenderersConfigurable.display.name"/> <!--id is used in PyCharmCorePluginConfigurator-->
+    <projectConfigurable groupId="python.tools.group.settings"
+                         id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+                         instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyIntegratedToolsModulesConfigurable.display.name"
+                         groupWeight="20"/>
+    <search.optionContributor implementation="com.jetbrains.python.PySearchableOptionContributor"/>
+    <projectConfigurable groupId="reference.idesettings.debugger.python"
+                         id="python.debug.console"
+                         instance="com.jetbrains.python.console.PyDebugConsoleConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyDebugConsoleConfigurable.display.name"/>
+    <externalAnnotator language="Python" implementationClass="com.jetbrains.python.validation.Pep8ExternalAnnotator"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkAdditionalDataMigrationActivity"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.testing.PyTestConfigurationPropertiesPreloader"/>
+    <directoryProjectConfigurator implementation="com.jetbrains.python.configuration.PyDefaultProjectAwareServiceConfigurator"
+                                  id="integratedTools" order="after sdk"/>
+    <applicationService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$AppService"/>
+    <applicationService serviceInterface="com.jetbrains.python.testing.PyModuleTestRunnerQuery"
+                        serviceImplementation="com.jetbrains.python.testing.PyModuleTestRunnerQueryImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.packaging.requirementsTxt.PyRequirementsSyncService"
+                        serviceImplementation="com.jetbrains.python.packaging.PyRequirementsSyncServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
+                        serviceImplementation="com.jetbrains.python.PythonRuntimeServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.debugger.PyDebuggerFacade"
+                        serviceImplementation="com.jetbrains.python.debugger.PyDebuggerFacadeImpl"
+                        overrides="true"/>
+    <applicationService serviceInterface="com.jetbrains.python.run.PyModuleNameFieldFactory"
+                        serviceImplementation="com.jetbrains.python.PyModuleNameFieldFactoryImpl"
+                        overrides="true"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonUiService"
+                        serviceImplementation="com.jetbrains.python.PythonUiServiceImpl"/>
+    <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor"/>
+    <daemon.changeLocalityDetector implementation="com.jetbrains.python.inspections.flake8.Flake8SuppressingCommentLocalityDetector"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.pyTestConfigurationSelector"
+                    interface="com.jetbrains.python.testing.PyTestConfigurationSelector" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pep8ProblemSuppressor"
+                    interface="com.jetbrains.python.validation.Pep8ProblemSuppressor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.testing.pyTestLineMarkerContributorCustomizer"
+                    interface="com.jetbrains.python.testing.PyTestLineMarkerContributorCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
+                    interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <interpreterUpdateStep id="sdkSources" order="after probe, before environmentBackground" implementation="com.jetbrains.python.sdk.PythonSdkSourcesStep"/>
+    <environmentUpdateStep id="skeletons" order="after probe" implementation="com.jetbrains.python.sdk.PythonEnvironmentSkeletonsStep"/>
+    <interpreterUpdateStep id="sdkSkeletonsFailure" order="after environmentBackground" implementation="com.jetbrains.python.sdk.PythonSdkSkeletonsFailureStep"/>
+    <interpreterUpdateStep id="sdkPackages" order="after sdkSkeletonsFailure" implementation="com.jetbrains.python.sdk.PythonSdkPackagesStep"/>
+    <interpreterRootsContributor id="packageStubs" order="after typeshedStdlib" implementation="com.jetbrains.python.packaging.management.PythonPackageStubRoots"/>
+    <consoleLexerDetector implementation="com.jetbrains.python.console.PyPydevConsoleLexerDetector"/>
+    <typeProvider id="pyCallSignatureTypeProvider" implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"
+                  order="after pyMockerFixtureTypeProvider"/>
+    <visitorFilter language="Python" implementationClass="com.jetbrains.python.console.ConsoleVisitorFilter"/>
+    <inspectionExtension implementation="com.jetbrains.python.console.PyDebuggerConsoleUnresolvedReferenceSkipper"/>
+    <keywordArgumentProvider implementation="com.jetbrains.python.packaging.setupPy.SetupKeywordArgumentProvider"/>
+    <visitorFilter language="PyFunctionTypeComment"
+                   implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsVisitorFilter"/>
+    <visitorFilter language="PyTypeHint"
+                   implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsVisitorFilter"/>
+    <visitorFilter language="Doctest"
+                   implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsVisitorFilter"/>
+    <visitorFilter language="PythonDocstringCodeBlock"
+                   implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsVisitorFilter"/>
+    <visitorFilter language="Doctest"
+                   implementationClass="com.jetbrains.python.inspections.unresolvedReference.PyInjectedUnresolvedReferencesVisitorFilter"/>
+    <visitorFilter language="PythonDocstringCodeBlock"
+                   implementationClass="com.jetbrains.python.inspections.unresolvedReference.PyInjectedUnresolvedReferencesVisitorFilter"/>
+    <pep8ProblemSuppressor implementation="com.jetbrains.python.validation.Pep8TypeParameterProblemSuppressor"/>
+    <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
+    <projectSdkConfigurationExtension
+      implementation="com.jetbrains.python.venv.sdk.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
+      id="requirementsTxtOrSetupPy" order="before uv"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.venv.sdk.configuration.PyVenvSdkConfiguration"
+                                      id="venv" order="last"/>
+  </extensions>
+
+  <actions resource-bundle="messages.PyBundle">
+    <action id="PyInterpretersAction"
+            class="com.jetbrains.python.packaging.toolwindow.actions.PyInterpretersAction"
+            icon="AllIcons.General.Settings">
+      <add-to-group group-id="PyPackageToolbarAdditional" anchor="before" relative-to-action="PyRepositoriesAction"/>
+    </action>
+  </actions>
+
+  <actions>
+    <action id="PySyncPythonRequirements" class="com.jetbrains.python.packaging.PySyncPythonRequirementsAction"/>
+    <group id="PyPackagingMenu">
+      <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
+      <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+    <action id="PyDebugger.CustomizeDataView"
+            class="com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.jetbrains">
+    <python.inspections.dependencies.dependenciesInspectionProvider
+      implementation="com.jetbrains.python.requirements.inspections.tools.RequirementsDependenciesPsiProvider"/>
+    <python.inspections.dependencies.dependenciesInspectionProvider
+      implementation="com.jetbrains.python.pipenv.PipEnvDependenciesPsiProvider"/>
+    <python.inspections.dependencies.dependenciesInspectionProvider
+      implementation="com.jetbrains.python.sdk.poetry.LegacyPoetryDependenciesPsiProvider"/>
+    <python.inspections.dependencies.dependenciesInspectionProvider
+      implementation="com.jetbrains.python.packaging.setupPy.SetupPyDependenciesPsiProvider"/>
+  </extensions>
+
+</idea-plugin>

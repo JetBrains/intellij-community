@@ -4,6 +4,7 @@ package com.jetbrains.python
 import com.intellij.lang.ASTNode
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.PsiBuilderFactory
+import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -41,6 +42,7 @@ import com.jetbrains.python.psi.impl.PyElsePartImpl
 import com.jetbrains.python.psi.impl.PyEmptyExpressionImpl
 import com.jetbrains.python.psi.impl.PyExceptPartImpl
 import com.jetbrains.python.psi.impl.PyExecStatementImpl
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
 import com.jetbrains.python.psi.impl.PyExpressionStatementImpl
 import com.jetbrains.python.psi.impl.PyFStringFragmentFormatPartImpl
 import com.jetbrains.python.psi.impl.PyFStringFragmentImpl
@@ -237,6 +239,9 @@ class PyStubPsiElementFactory : PyPsiElementFactory() {
   override fun createStatementListNode(type: IElementType, text: CharSequence?): ASTNode = PyStatementListImpl(type, text)
 
   override fun createStringLeaf(type: IElementType, text: CharSequence): LeafElement = PyPlainStringElementImpl(type, text)
+
+  override fun createExpressionCodeFragment(project: Project, name: String, text: String, isPhysical: Boolean): PsiFile =
+    PyExpressionCodeFragmentImpl(project, name, text, isPhysical)
 
   /** Parses a console file with the console lexer and parser. */
   override fun parseFileContents(node: ASTNode, languageLevel: LanguageLevel): ASTNode? {

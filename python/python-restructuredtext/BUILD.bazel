@@ -41,6 +41,7 @@ jvm_library(
         "//libraries/guava",
         "//platform/projectModel-api:projectModel",
         "//python:python-community-impl",
+        "//python/classic",
         "//platform/core-ui",
         "//libraries/jsoup",
         "//python/python-sdk/backend",

@@ -2016,6 +2016,7 @@ python/basic-plugin intellij.python.basic.plugin
 python/build intellij.pycharm.community.build intellij.pycharm.community.build.tests
 python/build/build-debug-binaries intellij.pycharm.community.build.debugBinaries
 python/build/tests/sdks intellij.pycharm.community.build.tests.sdks
+python/classic intellij.python.community.impl.classic
 python/common intellij.python.community.common
 python/conda intellij.python.community.impl.conda
 python/conda/common intellij.python.community.impl.conda.common

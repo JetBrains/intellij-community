@@ -38,6 +38,8 @@ public interface PyAstExpressionCodeFragment extends PyAstFile, PsiCodeFragment 
   @Override
   default void forceResolveScope(GlobalSearchScope scope) {}
 
+  default void setContext(@Nullable PsiElement context) {}
+
   @Override
   default GlobalSearchScope getForcedResolveScope() { return null; }
 }

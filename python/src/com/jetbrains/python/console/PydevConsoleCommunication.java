@@ -47,6 +47,7 @@ import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebugValueExecutionService;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PyDebuggerFacade;
 import com.jetbrains.python.debugger.PyFrameAccessor;
 import com.jetbrains.python.debugger.PyFrameListener;
 import com.jetbrains.python.debugger.PyReferrersLoader;
@@ -60,12 +61,11 @@ import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.pydev.tables.PyDevCommandParameters;
 import com.jetbrains.python.debugger.pydev.tables.PyDevImageCommandParameters;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyAstElementGenerator;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
 import org.apache.thrift.TException;
@@ -87,8 +87,8 @@ import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.createA
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.createPyDebugValue;
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.parseVars;
 import static com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult.ResultType.UNHANDLED_ERROR;
-import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.getTypeRenderer;
-import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRendererKt.getTypeRenderer;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRendererKt.loadTypeRendererChildren;
 
 /**
  * Communication with Python console backend using Thrift services.
@@ -321,7 +321,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         () -> WriteCommandAction.runWriteCommandAction(myProject, null, null,
                                                        () -> {
                                                          PsiElement[] newElems =
-                                                           PyElementGenerator.getInstance(myProject)
+                                                           PyAstElementGenerator.getInstance(myProject)
                                                              .createDummyFile(LanguageLevel.forElement(myConsoleView.getFile()),
                                                                               command.getText())
                                                              .getChildren();
@@ -947,7 +947,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
   @Override
   public @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
-    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject(), null);
+    return PyDebuggerFacade.getInstance().createConfigureTypeRendererLink(typeRendererId, getProject(), null);
   }
 
   public void setDebugCommunication(PythonDebugConsoleCommunication debugCommunication) {

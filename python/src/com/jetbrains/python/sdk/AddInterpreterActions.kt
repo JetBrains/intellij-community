@@ -99,7 +99,8 @@ abstract class DialogAction(
   }
 }
 
-internal fun createAddInterpreterActionGroup(moduleOrProject: ModuleOrProject, onInterpreterSet: Consumer<PythonInterpreter>): DefaultActionGroup =
+@ApiStatus.Internal
+fun createAddInterpreterActionGroup(moduleOrProject: ModuleOrProject, onInterpreterSet: Consumer<PythonInterpreter>): DefaultActionGroup =
   DefaultActionGroup(collectAddInterpreterActions(moduleOrProject, onInterpreterSet)).apply {
     ActionManager.getInstance().getAction("Python.NewInterpreter.Extra")?.let { add(it) }
     templatePresentation.putClientProperty(

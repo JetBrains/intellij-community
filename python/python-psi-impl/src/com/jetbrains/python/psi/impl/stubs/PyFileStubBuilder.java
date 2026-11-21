@@ -6,11 +6,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.DefaultStubBuilder;
 import com.intellij.psi.stubs.StubElement;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIfPart;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyStatementPart;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,7 +31,7 @@ public class PyFileStubBuilder extends DefaultStubBuilder {
   @Override
   public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
     PsiElement parentPsi = parent.getPsi();
-    if (parentPsi instanceof PyIfStatement && PyUtil.isIfNameEqualsMain((PyIfStatement)parentPsi)) {
+    if (parentPsi instanceof PyIfStatement && PyUtilCore.isIfNameEqualsMain((PyIfStatement)parentPsi)) {
       return true;
     }
     if (parentPsi instanceof PyIfStatement ifStatement && node.getPsi() instanceof PyStatementPart part) {

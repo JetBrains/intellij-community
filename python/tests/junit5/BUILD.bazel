@@ -71,6 +71,7 @@ jvm_library(
         "//platform/testFramework/structureView",
         "//platform/workspace/storage",
         "//python/python-psi-api:psi",
+        "//python/classic",
         "//python/python-refactoring:refactoring",
         "//python/python-code-insight:codeInsight",
         "//python/python-source-roots:sourceRoots",

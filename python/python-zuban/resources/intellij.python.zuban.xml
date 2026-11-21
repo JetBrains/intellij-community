@@ -12,6 +12,8 @@
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.lsp.core.common"/>
+    <module name="intellij.python.psi"/>
+    <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.zuban.common"/>

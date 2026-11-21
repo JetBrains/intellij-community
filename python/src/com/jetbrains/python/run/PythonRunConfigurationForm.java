@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.TextAccessor;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -95,7 +96,7 @@ public final class PythonRunConfigurationForm implements PythonRunConfigurationP
   @Override
   public String getScriptName() {
     if (isModuleMode()) {
-      return content.moduleField.getText().trim();
+      return ((TextAccessor)content.moduleField).getText().trim();
     }
     else {
       return FileUtil.toSystemIndependentName(content.scriptTextField.getText().trim());
@@ -105,7 +106,7 @@ public final class PythonRunConfigurationForm implements PythonRunConfigurationP
   @Override
   public void setScriptName(String scriptName) {
     if (isModuleMode()) {
-      content.moduleField.setText(StringUtil.notNullize(scriptName));
+      ((TextAccessor)content.moduleField).setText(StringUtil.notNullize(scriptName));
     }
     else {
       content.scriptTextField.setText(scriptName == null ? "" : FileUtil.toSystemDependentName(scriptName));

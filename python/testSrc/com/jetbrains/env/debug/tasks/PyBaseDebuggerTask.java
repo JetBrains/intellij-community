@@ -58,6 +58,7 @@ import org.junit.Assert;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -575,12 +576,12 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   public @NotNull Promise<? extends List<?>> getSmartStepIntoVariantsAsync() {
       XSourcePosition position = XDebuggerManager.getInstance(getProject()).getCurrentSession().getCurrentPosition();
-      return myDebugProcess.getSmartStepIntoHandler().computeSmartStepVariantsAsync(position);
+      return Objects.requireNonNull(myDebugProcess.getSmartStepIntoHandler()).computeSmartStepVariantsAsync(position);
   }
 
   public List<?> getSmartStepIntoVariants() {
     XSourcePosition position = XDebuggerManager.getInstance(getProject()).getCurrentSession().getCurrentPosition();
-    return myDebugProcess.getSmartStepIntoHandler().computeSmartStepVariants(position);
+    return Objects.requireNonNull(myDebugProcess.getSmartStepIntoHandler()).computeSmartStepVariants(position);
   }
 
   @Override

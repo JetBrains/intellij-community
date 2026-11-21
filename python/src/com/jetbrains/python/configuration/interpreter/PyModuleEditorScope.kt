@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.jetbrains.python.project.PyProject
+import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import java.util.concurrent.ConcurrentHashMap
@@ -22,7 +23,8 @@ import java.util.concurrent.ConcurrentHashMap
  * See `community/python/exec-conventions.md` → "Scope-based lifecycle".
  */
 @Service(Service.Level.PROJECT)
-internal class PyModuleEditorScopes(private val projectScope: CoroutineScope) {
+@ApiStatus.Internal
+class PyModuleEditorScopes(private val projectScope: CoroutineScope) {
 
   private val byPyProject = ConcurrentHashMap<PyProject, CoroutineScope>()
 

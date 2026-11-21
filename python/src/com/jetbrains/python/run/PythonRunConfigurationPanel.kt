@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
+import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.dsl.builder.AlignX
@@ -17,10 +17,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.selected
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySymbolFieldWithBrowseButton
-import com.jetbrains.python.extensions.ModuleBasedContextAnchor
-import com.jetbrains.python.extensions.ProjectContextAnchor
-import com.jetbrains.python.isPythonModule
 import java.util.Objects
 import javax.swing.ButtonGroup
 import javax.swing.ButtonModel
@@ -33,7 +29,7 @@ internal class PythonRunConfigurationPanel(configuration: PythonRunConfiguration
   val scriptTextField = TextFieldWithBrowseButton()
 
   @JvmField
-  val moduleField: PySymbolFieldWithBrowseButton
+  val moduleField: ComponentWithBrowseButton<*>
 
   @JvmField
   val scriptParametersTextField = RawCommandLineEditor()
@@ -53,7 +49,6 @@ internal class PythonRunConfigurationPanel(configuration: PythonRunConfiguration
     val project = configuration.project
     val module = configuration.module
 
-    val contentAnchor = if (module == null) ProjectContextAnchor(project, configuration.pythonInterpreter) else ModuleBasedContextAnchor(module)
     val workingDirectory = commonOptionsForm.workingDirectory
     val startFromDirectory: (() -> VirtualFile)? = if (StringUtil.isEmpty(workingDirectory)) {
       null
@@ -62,9 +57,8 @@ internal class PythonRunConfigurationPanel(configuration: PythonRunConfiguration
       { StandardFileSystems.local().findFileByPath(workingDirectory)!! }
     }
 
-    moduleField = PySymbolFieldWithBrowseButton(contentAnchor,
-                                                { element -> (element is PsiFileSystemItem && isPythonModule(element)) },
-                                                startFromDirectory)
+    moduleField = PyModuleNameFieldFactory.getInstance()
+      .createModuleNameField(project, module, configuration.pythonInterpreter, startFromDirectory)
 
     panel = panel {
       row {

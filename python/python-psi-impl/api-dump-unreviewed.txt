@@ -779,11 +779,6 @@ f:com.jetbrains.python.extensions.PyClassExtKt
 - sf:inherits(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.types.TypeEvalContext,com.jetbrains.python.nameResolver.FQNamesProvider):Z
 - sf:inherits(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.types.TypeEvalContext,java.util.Set):Z
 - sf:inherits(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.types.TypeEvalContext,java.lang.String[]):Z
-c:com.jetbrains.python.facet.PythonFacetSettings
-- p:mySdk:com.intellij.openapi.projectRoots.Sdk
-- <init>():V
-- getSdk():com.intellij.openapi.projectRoots.Sdk
-- setSdk(com.intellij.openapi.projectRoots.Sdk):V
 c:com.jetbrains.python.findUsages.PythonFindUsagesProvider
 - com.intellij.lang.findUsages.FindUsagesProvider
 - <init>():V
@@ -1108,7 +1103,6 @@ f:com.jetbrains.python.psi.PyUtil
 - s:isExceptionClass(com.jetbrains.python.psi.PyClass):Z
 - s:isExplicitPackage(com.intellij.psi.PsiDirectory):Z
 - s:isForbiddenMutableDefault(com.jetbrains.python.psi.PyTypedElement,com.jetbrains.python.psi.types.TypeEvalContext):Z
-- s:isIfNameEqualsMain(com.jetbrains.python.psi.PyIfStatement):Z
 - s:isImportable(com.intellij.psi.PsiFile,com.intellij.psi.PsiFileSystemItem):Z
 - s:isInitMethod(com.intellij.psi.PsiElement):Z
 - s:isInitOrNewMethod(com.intellij.psi.PsiElement):Z
@@ -1135,7 +1129,6 @@ f:com.jetbrains.python.psi.PyUtil
 - s:peelArgument(com.jetbrains.python.psi.PyExpression):com.jetbrains.python.psi.PyExpression
 - s:removeQualifier(com.jetbrains.python.psi.PyReferenceExpression):V
 - s:resolveToTheTop(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- s:runWithProgress(com.intellij.openapi.project.Project,java.lang.String,Z,Z,com.intellij.util.Consumer):V
 - s:searchForWrappingMethod(com.intellij.psi.PsiElement,Z):java.util.List
 - s:strListValue(com.jetbrains.python.psi.PyExpression):java.util.List
 - s:sure(java.lang.Object):java.lang.Object

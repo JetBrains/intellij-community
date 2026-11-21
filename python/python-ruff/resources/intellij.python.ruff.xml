@@ -36,6 +36,7 @@
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.lsp.core.common"/>
+    <module name="intellij.python.psi"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.pytools.backend.runtime"/>
     <module name="intellij.python.pytools.common"/>

@@ -11,10 +11,12 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal class SyncProjectQuickFix : LocalQuickFix {
+@ApiStatus.Internal
+class SyncProjectQuickFix : LocalQuickFix {
   override fun getFamilyName(): String = PyBundle.message("python.sdk.intention.family.name.sync.project")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

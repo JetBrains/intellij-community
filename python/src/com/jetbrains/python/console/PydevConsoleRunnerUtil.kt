@@ -22,8 +22,6 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.createMapper
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
-import com.jetbrains.python.console.completion.PydevConsoleElement
-import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.parsing.console.PythonConsoleData
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.remote.PyRemotePathMapper
@@ -33,6 +31,9 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.asModuleOrProject
 import com.jetbrains.python.sdk.findPyProject
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
+import jetbrains.buildServer.messages.serviceMessages.TestStdErr
+import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
@@ -151,17 +152,6 @@ internal fun setCorrectStdOutEncoding(commandLine: GeneralCommandLine) {
   PythonEnvUtil.setPythonIOEncoding(commandLine.environment, defaultCharset.name())
 }
 
-internal fun isInPydevConsole(element: PsiElement): Boolean {
-  return element is PydevConsoleElement || getConsoleCommunication(element) != null || hasConsoleKey(element)
-}
-
-private fun hasConsoleKey(element: PsiElement): Boolean {
-  val psiFile = element.containingFile ?: return false
-  if (psiFile.virtualFile == null) return false
-  val inConsole = element.containingFile.virtualFile.getUserData(PythonConsoleView.CONSOLE_KEY)
-  return inConsole != null && inConsole
-}
-
 @ApiStatus.Internal
 fun isConsoleView(file: VirtualFile): Boolean {
   return file.getUserData(PythonConsoleView.CONSOLE_KEY) == true
@@ -175,11 +165,6 @@ internal fun getPythonConsoleData(element: ASTNode?): PythonConsoleData? {
   return file.getUserData(PyConsoleUtil.PYTHON_CONSOLE_DATA)
 }
 
-private fun getConsoleCommunication(element: PsiElement): ConsoleCommunication? {
-  val containingFile = element.containingFile
-  return containingFile?.getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY)
-}
-
 internal fun getConsoleInterpreter(element: PsiElement): PythonInterpreter? {
   val containingFile = element.containingFile
   return containingFile?.getCopyableUserData(PydevConsoleRunner.CONSOLE_INTERPRETER)
@@ -191,4 +176,18 @@ suspend fun getModuleToStartConsole(project: Project): Module? = findPyProjectTo
 private suspend fun findPyProjectToStartConsole(project: Project): PyProject? {
   val selectedFile = readAction { FileEditorManager.getInstance(project).selectedFiles.firstOrNull() }
   return resolveConsoleTarget(project, selectedFile)?.pyProject
+}
+
+/**
+ * Accepts text that may be wrapped in TC message. Unwraps it and removes TC escape code.
+ * Regular text is unchanged
+ */
+@ApiStatus.Internal
+fun processTCMessage(text: String): String {
+  val parsedMessage = ServiceMessage.parse(text.trim()) ?: return text // Not a TC message
+  return when (parsedMessage) {
+    is TestStdOut -> parsedMessage.stdOut // TC with stdout
+    is TestStdErr -> parsedMessage.stdErr // TC with stderr
+    else -> "" // TC with out of any output
+  }
 }

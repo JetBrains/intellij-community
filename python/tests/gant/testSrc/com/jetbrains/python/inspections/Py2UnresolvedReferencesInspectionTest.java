@@ -16,7 +16,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
+import com.jetbrains.python.debugger.PyDebugSupportUtils;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -389,7 +389,7 @@ public class Py2UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   }
 
   protected void doEvaluateExpressionTest(@NotNull VirtualFile mainFile, @NotNull String expression, int lineNumber) {
-    PsiElement element = PyDebuggerEditorsProvider.getContextElement(myFixture.getProject(),
+    PsiElement element = PyDebugSupportUtils.getContextElement(myFixture.getProject(),
                                                                      XSourcePositionImpl.create(mainFile, lineNumber));
     final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(myFixture.getProject(), "fragment.py", expression, true);
     fragment.setContext(element);

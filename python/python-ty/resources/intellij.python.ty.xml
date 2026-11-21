@@ -26,6 +26,8 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.progress"/>
     <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.psi"/>
+    <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.ty.common"/>

@@ -18,9 +18,9 @@ import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
 import com.intellij.psi.PsiManager
 import com.intellij.python.pyproject.model.evolution.findEvoPyProject
 import com.jetbrains.python.PyPsiPackageUtil
+import com.jetbrains.python.ast.PyAstFile
+import com.jetbrains.python.ast.PyAstImportStatementBase
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.PyImportStatementBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -57,9 +57,9 @@ internal class PackageDaemonTaskExecutor(private val project: Project, private v
         val psiFile = PsiManager.getInstance(project).findFile(vFile) ?: return@readAction emptyList()
         val viewProvider = psiFile.viewProvider
         val pyPsiFile = if (viewProvider is MultiplePsiFilesPerDocumentFileViewProvider) {
-          viewProvider.allFiles.firstOrNull { it is PyFile }
+          viewProvider.allFiles.firstOrNull { it is PyAstFile }
         } else psiFile
-        if (pyPsiFile !is PyFile) return@readAction emptyList()
+        if (pyPsiFile !is PyAstFile) return@readAction emptyList()
         val interpreter = evoPyProject.interpreter
         val interpreterType = interpreter?.interpreterType ?: InterpreterType.REGULAR
         val interpreterTarget = interpreter?.executionType ?: InterpreterTarget.LOCAL
@@ -68,7 +68,7 @@ internal class PackageDaemonTaskExecutor(private val project: Project, private v
           PythonPackageManager.forPythonInterpreter(interpreter).listInstalledPackagesSnapshot().associate { it.name to it.version }
         }
 
-        pyPsiFile.children.filterIsInstance<PyImportStatementBase>().mapNotNull { import ->
+        pyPsiFile.children.filterIsInstance<PyAstImportStatementBase>().mapNotNull { import ->
           // all imports from the same statement should start with the same module
           import.fullyQualifiedObjectNames.firstOrNull()?.let { firstModule ->
             val packageName = PyPsiPackageUtil.moduleToPackageName(firstModule.split('.').first())

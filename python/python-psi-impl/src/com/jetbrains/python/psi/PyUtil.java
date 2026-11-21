@@ -8,13 +8,9 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -87,12 +83,10 @@ import com.jetbrains.python.pyi.PyiStubSuppressor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -287,30 +281,8 @@ public final class PyUtil {
     final PyIfStatement dunderMain = SyntaxTraverser.psiApi()
       .children(file)
       .filterMap(psi -> psi instanceof PyIfStatement ? ((PyIfStatement)psi) : null)
-      .find(ifStatement -> isIfNameEqualsMain(ifStatement));
+      .find(ifStatement -> PyUtilCore.isIfNameEqualsMain(ifStatement));
     return dunderMain != null;
-  }
-
-  public static boolean isIfNameEqualsMain(PyIfStatement ifStatement) {
-    final PyExpression condition = ifStatement.getIfPart().getCondition();
-    return isNameEqualsMain(condition);
-  }
-
-  private static boolean isNameEqualsMain(PyExpression condition) {
-    if (condition instanceof PyParenthesizedExpression) {
-      return isNameEqualsMain(((PyParenthesizedExpression)condition).getContainedExpression());
-    }
-    if (condition instanceof PyBinaryExpression binaryExpression) {
-      if (binaryExpression.getOperator() == PyTokenTypes.OR_KEYWORD) {
-        return isNameEqualsMain(binaryExpression.getLeftExpression()) || isNameEqualsMain(binaryExpression.getRightExpression());
-      }
-      if (binaryExpression.getRightExpression() instanceof PyStringLiteralExpression rhs) {
-        return binaryExpression.getOperator() == PyTokenTypes.EQEQ &&
-               binaryExpression.getLeftExpression().getText().equals(PyNames.NAME) &&
-               rhs.getStringValue().equals("__main__");
-      }
-    }
-    return false;
   }
 
   /**
@@ -673,24 +645,6 @@ public final class PyUtil {
       cache.put(wrappedParam, value);
     }
     return value.orElse(null);
-  }
-
-  /**
-   * This method is allowed to be called from any thread, but in general you should not set {@code modal=true} if you're calling it
-   * from the write action, because in this case {@code function} will be executed right in the current thread (presumably EDT)
-   * without any progress whatsoever to avoid possible deadlock.
-   *
-   * @see com.intellij.openapi.application.impl.ApplicationImpl#runProcessWithProgressSynchronously(Runnable, String, boolean, boolean, Project, JComponent, String)
-   */
-  public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
-                                     boolean modal, boolean canBeCancelled, final @NotNull Consumer<? super ProgressIndicator> function) {
-    Task.Backgroundable task = new Task.Backgroundable(project, title, canBeCancelled) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        function.consume(indicator);
-      }
-    };
-    ProgressManager.getInstance().run(task.toModalIfNeeded(modal));
   }
 
   /**

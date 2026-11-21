@@ -16,8 +16,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.ast.PyAstFile;
 import com.jetbrains.python.console.PyExecuteConsoleCustomizer;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -104,6 +104,6 @@ public final class PyExecuteSelectionAction extends DumbAwareAction {
     }
 
     PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    return psi instanceof PyFile;
+    return psi instanceof PyAstFile;
   }
 }

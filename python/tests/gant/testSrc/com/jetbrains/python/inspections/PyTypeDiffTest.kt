@@ -531,7 +531,7 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
           f(d, "x")
     """)
     val muted = Regex("""<span style="color: ${Regex.escape(mutedColor)};">(.*?)</span>""").findAll(tooltip).map { it.groupValues[1] }.toList()
-    assertTrue(muted.isNotEmpty() && muted.all { it == PyTypeDiffGrid.ELLIPSIS }, muted.toString())
+    assertTrue(muted.isNotEmpty() && muted.all { it == "…" }, muted.toString())
   }
 
   // Each name in a type links to its own declaration: the link of `dict` does not cover its type arguments.

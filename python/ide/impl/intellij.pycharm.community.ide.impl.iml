@@ -48,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.classic" />
     <orderEntry type="module" module-name="intellij.python.codeInsight" />
     <orderEntry type="module" module-name="intellij.python.sourceRoots" />
     <orderEntry type="module" module-name="intellij.platform.lang" />

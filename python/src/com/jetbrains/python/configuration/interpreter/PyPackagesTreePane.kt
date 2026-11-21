@@ -52,6 +52,7 @@ import com.jetbrains.python.packaging.toolwindow.ui.PyChangeVersionPopupLauncher
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialogLauncher
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.ModuleOrProject
+import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
@@ -186,7 +187,8 @@ internal fun classifyPkgRow(
  * [com.jetbrains.python.packaging.management.DependencyTreeProvider] when available, falls back to a flat
  * list. Uninstall + change-version go through the public launchers; install opens the shared dialog.
  */
-internal class PyPackagesTreePane(
+@ApiStatus.Internal
+class PyPackagesTreePane(
   private val moduleOrProject: ModuleOrProject.ModuleAndProject,
   parentDisposable: Disposable,
   private val isMultiModuleProvider: () -> Boolean,

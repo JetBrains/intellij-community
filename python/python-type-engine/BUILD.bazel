@@ -49,6 +49,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/lang-impl",
         "//python:python-community-impl",
+        "//python/python-psi-api:psi",
         "//python/python-sdk/backend",
         "//python/python-pyproject:pyproject",
         "//platform/platform-impl:ide-impl",

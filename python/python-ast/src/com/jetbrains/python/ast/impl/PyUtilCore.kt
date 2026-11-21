@@ -10,12 +10,15 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.ast.PyAstAssignmentStatement
+import com.jetbrains.python.ast.PyAstBinaryExpression
 import com.jetbrains.python.ast.PyAstBreakStatement
 import com.jetbrains.python.ast.PyAstContinueStatement
 import com.jetbrains.python.ast.PyAstExpression
 import com.jetbrains.python.ast.PyAstExpressionStatement
 import com.jetbrains.python.ast.PyAstFunction
+import com.jetbrains.python.ast.PyAstIfStatement
 import com.jetbrains.python.ast.PyAstListLiteralExpression
 import com.jetbrains.python.ast.PyAstLoopStatement
 import com.jetbrains.python.ast.PyAstParenthesizedExpression
@@ -241,6 +244,30 @@ object PyUtilCore {
   @JvmStatic
   fun getInitialUnderscores(name: String?): Int {
     return if (name == null) 0 else if (name.startsWith("__")) 2 else if (name.startsWith(PyNames.UNDERSCORE)) 1 else 0
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isIfNameEqualsMain(ifStatement: PyAstIfStatement): Boolean {
+    return isNameEqualsMain(ifStatement.ifPart.condition)
+  }
+
+  private fun isNameEqualsMain(condition: PyAstExpression?): Boolean {
+    if (condition is PyAstParenthesizedExpression) {
+      return isNameEqualsMain(condition.containedExpression)
+    }
+    if (condition is PyAstBinaryExpression) {
+      if (condition.operator === PyTokenTypes.OR_KEYWORD) {
+        return isNameEqualsMain(condition.leftExpression) || isNameEqualsMain(condition.rightExpression)
+      }
+      val rhs = condition.rightExpression
+      if (rhs is PyAstStringLiteralExpression) {
+        return condition.operator === PyTokenTypes.EQEQ &&
+               condition.leftExpression.text == PyNames.NAME &&
+               rhs.stringValue == "__main__"
+      }
+    }
+    return false
   }
 
   @JvmStatic

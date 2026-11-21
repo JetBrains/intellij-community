@@ -10,19 +10,19 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.text.CharArrayUtil
 import com.intellij.xdebugger.XSourcePosition
-import com.jetbrains.python.psi.PyBreakStatement
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyContinueStatement
-import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyLambdaExpression
-import com.jetbrains.python.psi.PyLoopStatement
-import com.jetbrains.python.psi.PyRaiseStatement
-import com.jetbrains.python.psi.PyRecursiveElementVisitor
-import com.jetbrains.python.psi.PyReturnStatement
-import com.jetbrains.python.psi.PyStatement
-import com.jetbrains.python.psi.PyStatementList
-import com.jetbrains.python.psi.PyYieldExpression
+import com.jetbrains.python.ast.PyAstBreakStatement
+import com.jetbrains.python.ast.PyAstClass
+import com.jetbrains.python.ast.PyAstContinueStatement
+import com.jetbrains.python.ast.PyAstFile
+import com.jetbrains.python.ast.PyAstFunction
+import com.jetbrains.python.ast.PyAstLambdaExpression
+import com.jetbrains.python.ast.PyAstLoopStatement
+import com.jetbrains.python.ast.PyAstRaiseStatement
+import com.jetbrains.python.ast.PyAstRecursiveElementVisitor
+import com.jetbrains.python.ast.PyAstReturnStatement
+import com.jetbrains.python.ast.PyAstStatement
+import com.jetbrains.python.ast.PyAstStatementList
+import com.jetbrains.python.ast.PyAstYieldExpression
 import org.jetbrains.annotations.ApiStatus
 
 /** A debug process that can step out of the code block of the paused line. */
@@ -70,20 +70,20 @@ class PyCodeBlockStepping(
     @RequiresReadLock
     fun find(project: Project, position: XSourcePosition, stackDepth: Int): PyCodeBlockStepping? {
       val file = position.file
-      val psiFile = PsiManager.getInstance(project).findFile(file) as? PyFile ?: return null
+      val psiFile = PsiManager.getInstance(project).findFile(file) as? PyAstFile ?: return null
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
       if (position.line !in 0 until document.lineCount) return null
       val offset = CharArrayUtil.shiftForward(document.charsSequence, document.getLineStartOffset(position.line), " \t")
       val element = psiFile.findElementAt(offset) ?: return null
-      val loop = PsiTreeUtil.getParentOfType(element, PyLoopStatement::class.java)
+      val loop = PsiTreeUtil.getParentOfType(element, PyAstLoopStatement::class.java)
       val block = if (loop != null && document.getLineNumber(loop.textRange.startOffset) == position.line) {
         loop
       }
       else {
-        val statementList = PsiTreeUtil.getParentOfType(element, PyStatementList::class.java) ?: return null
-        PsiTreeUtil.getParentOfType(statementList, PyStatement::class.java) ?: return null
+        val statementList = PsiTreeUtil.getParentOfType(element, PyAstStatementList::class.java) ?: return null
+        PsiTreeUtil.getParentOfType(statementList, PyAstStatement::class.java) ?: return null
       }
-      if (block is PyFunction || block is PyClass) return null
+      if (block is PyAstFunction || block is PyAstClass) return null
       val range = block.textRange
       val lines = document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
       return PyCodeBlockStepping(file, lines, stackDepth, findExitLine(block, document))
@@ -94,29 +94,29 @@ class PyCodeBlockStepping(
      * A `return`, a `raise`, a `yield`, or a `break` or a `continue` of an outer loop ends the block elsewhere.
      * An exception from a called function can end it elsewhere too, and the run then does not stop.
      */
-    private fun findExitLine(block: PyStatement, document: Document): Int? {
-      val next = PsiTreeUtil.getNextSiblingOfType(block, PyStatement::class.java) ?: return null
+    private fun findExitLine(block: PyAstStatement, document: Document): Int? {
+      val next = PsiTreeUtil.getNextSiblingOfType(block, PyAstStatement::class.java) ?: return null
       var endsOnlyAtEnd = true
-      block.accept(object : PyRecursiveElementVisitor() {
-        override fun visitPyFunction(node: PyFunction) {}
-        override fun visitPyClass(node: PyClass) {}
-        override fun visitPyLambdaExpression(node: PyLambdaExpression) {}
-        override fun visitPyReturnStatement(node: PyReturnStatement) {
+      block.accept(object : PyAstRecursiveElementVisitor() {
+        override fun visitPyFunction(node: PyAstFunction) {}
+        override fun visitPyClass(node: PyAstClass) {}
+        override fun visitPyLambdaExpression(node: PyAstLambdaExpression) {}
+        override fun visitPyReturnStatement(node: PyAstReturnStatement) {
           endsOnlyAtEnd = false
         }
-        override fun visitPyRaiseStatement(node: PyRaiseStatement) {
+        override fun visitPyRaiseStatement(node: PyAstRaiseStatement) {
           endsOnlyAtEnd = false
         }
-        override fun visitPyYieldExpression(node: PyYieldExpression) {
+        override fun visitPyYieldExpression(node: PyAstYieldExpression) {
           endsOnlyAtEnd = false
         }
-        override fun visitPyBreakStatement(node: PyBreakStatement) {
+        override fun visitPyBreakStatement(node: PyAstBreakStatement) {
           if (!isInBlock(node.loopStatement)) endsOnlyAtEnd = false
         }
-        override fun visitPyContinueStatement(node: PyContinueStatement) {
+        override fun visitPyContinueStatement(node: PyAstContinueStatement) {
           if (!isInBlock(node.loopStatement)) endsOnlyAtEnd = false
         }
-        private fun isInBlock(loop: PyLoopStatement?): Boolean = loop != null && PsiTreeUtil.isAncestor(block, loop, false)
+        private fun isInBlock(loop: PyAstLoopStatement?): Boolean = loop != null && PsiTreeUtil.isAncestor(block, loop, false)
       })
       return if (endsOnlyAtEnd) document.getLineNumber(next.textRange.startOffset) else null
     }

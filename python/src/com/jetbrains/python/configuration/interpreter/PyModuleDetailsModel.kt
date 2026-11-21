@@ -60,7 +60,8 @@ class PyModuleDetailsModel<T : Any>(initialSdkName: T?) {
    * `.iml` immediately after Apply still sees the pre-Apply file. Caller gates on dirtiness.
    */
   @RequiresEdt
-  internal fun flushSettings(project: Project) {
+  @ApiStatus.Internal
+  fun flushSettings(project: Project) {
     StoreUtil.saveDocumentsAndProjectSettings(project)
   }
 }

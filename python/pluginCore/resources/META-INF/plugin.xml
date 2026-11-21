@@ -82,7 +82,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.community.impl.conda"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community"/>
-    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.community.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.python.community.impl.classic"/>
     <module name="intellij.python.refactoring"/>
     <module name="intellij.python.codeInsight"/>
     <module name="intellij.python.sourceRoots"/>

@@ -63,6 +63,7 @@ jvm_library(
         "//python/openapi:community",
         "//python/common",
         "//python:python-community-impl",
+        "//python/classic",
         "//python/conda",
         "//python/python-exec-service:community-execService",
         "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
