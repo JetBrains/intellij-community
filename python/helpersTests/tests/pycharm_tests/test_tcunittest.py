@@ -66,6 +66,13 @@ def _class_level_error_tests():
     return SetUpClassErrorTests, TearDownClassErrorTests
 
 
+class _NamedTest(object):
+    """A test that is not a ``TestCase`` and has a description with no space."""
+
+    def __str__(self):
+        return "doctest_name"
+
+
 class _DjangoLikeTestResult(TeamcityTestResult):
     """Gives the suite of a class-level error as ``DjangoTeamcityTestResult`` does. The helper tests have no Django."""
 
@@ -199,11 +206,10 @@ class ClassLevelErrorTest(HelpersTestCase):
     def test_test_method_is_not_a_class_level_error(self):
         self.assertIsNone(class_level_error_suite(self.SetUpClassErrorTests("test_one"), "django_testid://"))
 
-    def test_test_name_without_space_is_the_whole_name(self):
-        class NamedTest(object):
-            def __str__(self):
-                return "doctest_name"
+    def test_object_with_other_description_is_not_a_class_level_error(self):
+        self.assertIsNone(class_level_error_suite(_NamedTest(), "django_testid://"))
 
+    def test_test_name_without_space_is_the_whole_name(self):
         result = TeamcityTestResult(six.StringIO())
 
-        self.assertEqual(result.getTestName(NamedTest()), "doctest_name")
+        self.assertEqual(result.getTestName(_NamedTest()), "doctest_name")
