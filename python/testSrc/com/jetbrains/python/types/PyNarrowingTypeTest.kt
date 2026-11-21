@@ -2590,6 +2590,73 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           print(1)
       #   ^^^^^^^^ WARNING This code is unreachable
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94288"])
+    fun `false global value that the function rebinds keeps code after the if reachable`() = test("""
+      _created = False
+
+      def reset():
+          global _created
+          if not _created:
+              _created = True
+              return
+          print(1)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94288"])
+    fun `false module value that another function rebinds keeps both branches reachable`() = test("""
+      _created = False
+
+      def create():
+          global _created
+          _created = True
+
+      create()
+      if _created:
+          print(1)
+      else:
+          print(2)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94288"])
+    fun `false local value that a nested function rebinds keeps both branches reachable`() = test("""
+      def outer():
+          started = False
+
+          def start():
+              nonlocal started
+              started = True
+
+          start()
+          if started:
+              print(1)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94288"])
+    fun `false final module value read in a function still makes if unreachable`() = test("""
+      from typing import Final
+
+      DEBUG: Final = False
+
+      def f():
+          if DEBUG:
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94288"])
+    fun `false local value without a rebinding still makes if unreachable`() = test("""
+      def f():
+          created = False
+          if created:
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+      """.trimIndent())
   }
 
   @Nested
