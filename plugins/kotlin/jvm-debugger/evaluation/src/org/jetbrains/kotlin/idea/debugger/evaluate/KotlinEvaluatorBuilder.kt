@@ -469,7 +469,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 }
 
                 override fun loadType(classType: Type, classLoader: ClassLoaderReference?): ReferenceType {
-                    return context.debugProcess.findClass(context.evaluationContext, classType.className, classLoader)
+                    val type = context.debugProcess.findClass(context.evaluationContext, classType.className, classLoader)
+                    if (!type.isInitialized && DebuggerUtils.isAndroidVM(context.vm.virtualMachine)) {
+                        context.debugProcess.loadClass(context.evaluationContext, classType.className, classLoader)
+                    }
+                    return type
                 }
             }
 
