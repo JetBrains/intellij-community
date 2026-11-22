@@ -12,6 +12,8 @@ of the first cell and draws the `In [N]:` prompts itself.
 import codeop
 import sys
 
+import pydevd_tracing
+
 from _pydevd_bundle.pydevd_save_locals import update_globals_and_locals
 
 _shell = None
@@ -145,12 +147,14 @@ def run_cell(frame, code):
     untraced = sys.version_info < (3, 12)
     if untraced:
         trace = sys.gettrace()
-        sys.settrace(None)
+        # pydevd wraps sys.settrace and warns when other code calls it, so call the original one.
+        set_trace = pydevd_tracing.TracingFunctionHolder._original_tracing or sys.settrace
+        set_trace(None)
     try:
         shell.run_cell(cell, store_history=True)
     finally:
         if untraced:
-            sys.settrace(trace)
+            set_trace(trace)
         updated = {}
         for key, value in shell.user_ns.items():
             if key in initial:
