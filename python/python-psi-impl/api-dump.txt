@@ -1,0 +1,25 @@
+c:com.jetbrains.python.psi.impl.PyBaseElementImpl
+- <init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
+- getElementType():com.intellij.psi.stubs.IStubElementType
+- getIElementType():com.intellij.psi.tree.IElementType
+c:com.jetbrains.python.psi.impl.PyClassImpl
+- <init>(com.jetbrains.python.psi.stubs.PyClassStub,com.intellij.psi.tree.IElementType):V
+c:com.jetbrains.python.psi.impl.PyFunctionImpl
+- <init>(com.jetbrains.python.psi.stubs.PyFunctionStub,com.intellij.psi.tree.IElementType):V
+c:com.jetbrains.python.psi.impl.PyImportElementImpl
+- <init>(com.jetbrains.python.psi.stubs.PyImportElementStub,com.intellij.psi.tree.IElementType):V
+c:com.jetbrains.python.psi.impl.PyNamedParameterImpl
+- <init>(com.jetbrains.python.psi.stubs.PyNamedParameterStub,com.intellij.psi.tree.IElementType):V
+c:com.jetbrains.python.psi.impl.PyTargetExpressionImpl
+- <init>(com.jetbrains.python.psi.stubs.PyTargetExpressionStub,com.intellij.psi.tree.IElementType):V
+c:com.jetbrains.python.psi.impl.stubs.PyClassElementType
+- com.intellij.psi.stubs.StubSerializingElementFactory
+- p:getStubElementType():com.intellij.psi.tree.IElementType
+c:com.jetbrains.python.psi.impl.stubs.PyFunctionElementType
+- com.intellij.psi.stubs.StubSerializingElementFactory
+- p:getStubElementType():com.intellij.psi.tree.IElementType
+f:com.jetbrains.python.validation.PyNewMethodHighlightingAnnotator
+- com.intellij.lang.annotation.Annotator
+- <init>():V
+- annotate(com.intellij.psi.PsiElement,com.jetbrains.python.validation.PyAnnotationHolder):V
+- runInBatchMode():Z

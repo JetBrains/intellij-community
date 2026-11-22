@@ -1,0 +1,4 @@
+f:com.jetbrains.python.validation.PyAstSyntaxAnnotator
+- com.intellij.lang.annotation.Annotator
+- com.intellij.openapi.project.DumbAware
+- <init>():V

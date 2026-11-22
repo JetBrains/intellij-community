@@ -1,0 +1,13 @@
+c:com.jetbrains.python.PythonParserDefinition
+- com.intellij.lang.ParserDefinition
+- sf:PYTHON_FILE:com.intellij.psi.tree.IFileElementType
+- <init>():V
+- createElement(com.intellij.lang.ASTNode):com.intellij.psi.PsiElement
+- createFile(com.intellij.psi.FileViewProvider):com.intellij.psi.PsiFile
+- createLexer(com.intellij.openapi.project.Project):com.intellij.lexer.Lexer
+- createParser(com.intellij.openapi.project.Project):com.intellij.lang.PsiParser
+- getCommentTokens():com.intellij.psi.tree.TokenSet
+- getFileNodeType():com.intellij.psi.tree.IFileElementType
+- getStringLiteralElements():com.intellij.psi.tree.TokenSet
+- getWhitespaceTokens():com.intellij.psi.tree.TokenSet
+- spaceExistenceTypeBetweenTokens(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.lang.ParserDefinition$SpaceRequirements

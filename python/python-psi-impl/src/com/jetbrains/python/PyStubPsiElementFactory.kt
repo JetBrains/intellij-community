@@ -115,10 +115,12 @@ import com.jetbrains.python.psi.impl.PyWithItemImpl
 import com.jetbrains.python.psi.impl.PyWithStatementImpl
 import com.jetbrains.python.psi.impl.PyYieldExpressionImpl
 import com.jetbrains.python.pyi.PyiFile
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
 private typealias F = Function<in ASTNode, out PsiElement>
 
+@ApiStatus.Internal
 class PyStubPsiElementFactory : PyPsiElementFactory() {
 
   // Elements with a stub

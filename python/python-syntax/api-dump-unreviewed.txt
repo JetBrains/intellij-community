@@ -55,7 +55,6 @@ c:com.jetbrains.python.highlighting.PySyntaxHighlighterFactoryBase
 - getConsoleSyntaxHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
 - getSyntaxHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
 - getSyntaxHighlighterForLanguageLevel(com.jetbrains.python.psi.LanguageLevel):com.intellij.openapi.fileTypes.SyntaxHighlighter
-- p:useConsoleLexer(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 c:com.jetbrains.python.highlighting.PythonColorsPage
 - com.intellij.application.options.colors.InspectionColorSettingsPage
 - com.intellij.openapi.options.colors.RainbowColorSettingsPage

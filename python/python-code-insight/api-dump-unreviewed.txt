@@ -60,9 +60,6 @@ f:com.jetbrains.python.highlighting.PyRainbowVisitor$Holder
 - f:getDEFAULT_HIGHLIGHTING_KEY():com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:getHIGHLIGHTING_KEYS():java.util.Set
 - f:getIGNORED_NAMES():java.util.Set
-f:com.jetbrains.python.highlighting.PySyntaxHighlighterFactory
-- com.jetbrains.python.highlighting.PySyntaxHighlighterFactoryBase
-- <init>():V
 c:com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix
 - com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 - com.intellij.codeInspection.LocalQuickFix

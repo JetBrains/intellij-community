@@ -1,0 +1,12 @@
+com.jetbrains.python.PyElementTypes
+- sf:DECORATORS:com.intellij.psi.tree.TokenSet
+- sf:EXCEPT_PARTS:com.intellij.psi.tree.TokenSet
+- sf:IMPORT_ELEMENTS:com.intellij.psi.tree.TokenSet
+- sf:KEY_VALUE_EXPRESSIONS:com.intellij.psi.tree.TokenSet
+- sf:TARGET_EXPRESSIONS:com.intellij.psi.tree.TokenSet
+- sf:TYPE_PARAMETERS:com.intellij.psi.tree.TokenSet
+c:com.jetbrains.python.psi.PyElementType
+- com.jetbrains.python.psi.PyPsiCreatingElementType
+- s:viaFactory(java.lang.String,java.util.function.Function):com.jetbrains.python.psi.PyElementType
+com.jetbrains.python.psi.PyPsiCreatingElementType
+- a:createElement(com.intellij.lang.ASTNode):com.intellij.psi.PsiElement

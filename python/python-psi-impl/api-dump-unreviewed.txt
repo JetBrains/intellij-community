@@ -68,18 +68,6 @@ com.jetbrains.python.PyStubElementTypes
 - sf:TYPE_PARAMETER_LIST:com.jetbrains.python.psi.PyStubElementType
 com.jetbrains.python.PyUserInitiatedResolvableReference
 - a:userInitiatedResolve():com.intellij.psi.PsiElement
-c:com.jetbrains.python.PythonParserDefinition
-- com.intellij.lang.ParserDefinition
-- <init>():V
-- createElement(com.intellij.lang.ASTNode):com.intellij.psi.PsiElement
-- createFile(com.intellij.psi.FileViewProvider):com.intellij.psi.PsiFile
-- createLexer(com.intellij.openapi.project.Project):com.intellij.lexer.Lexer
-- createParser(com.intellij.openapi.project.Project):com.intellij.lang.PsiParser
-- getCommentTokens():com.intellij.psi.tree.TokenSet
-- getFileNodeType():com.intellij.psi.tree.IFileElementType
-- getStringLiteralElements():com.intellij.psi.tree.TokenSet
-- getWhitespaceTokens():com.intellij.psi.tree.TokenSet
-- spaceExistenceTypeBetweenTokens(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.lang.ParserDefinition$SpaceRequirements
 f:com.jetbrains.python.codeInsight.InitFieldsAccumulator
 - <init>():V
 - f:getControllingParameters():com.jetbrains.python.codeInsight.PyDataclassParameters
@@ -968,7 +956,6 @@ f:com.jetbrains.python.psi.PyElementKnownDecorators
 f:com.jetbrains.python.psi.PyElementKnownDecorators$Companion
 c:com.jetbrains.python.psi.PyFileElementType
 - com.intellij.psi.tree.IStubFileElementType
-- sf:INSTANCE:com.jetbrains.python.psi.PyFileElementType
 - p:<init>(com.intellij.lang.Language):V
 - deserialize(com.intellij.psi.stubs.StubInputStream,com.intellij.psi.stubs.StubElement):com.jetbrains.python.psi.stubs.PyFileStub
 - getBuilder():com.intellij.psi.StubBuilder
@@ -1889,15 +1876,11 @@ com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub
 - com.jetbrains.python.psi.impl.stubs.PyCustomStub
 - a:getCalleeName():com.intellij.psi.util.QualifiedName
 c:com.jetbrains.python.psi.impl.stubs.PyClassElementType
-- com.jetbrains.python.psi.PyStubElementType
 - <init>():V
-- <init>(java.lang.String):V
-- createElement(com.intellij.lang.ASTNode):com.intellij.psi.PsiElement
 - createPsi(com.jetbrains.python.psi.stubs.PyClassStub):com.jetbrains.python.psi.PyClass
 - createStub(com.jetbrains.python.psi.PyClass,com.intellij.psi.stubs.StubElement):com.jetbrains.python.psi.stubs.PyClassStub
 - deserialize(com.intellij.psi.stubs.StubInputStream,com.intellij.psi.stubs.StubElement):com.jetbrains.python.psi.stubs.PyClassStub
 - getExtensions():java.util.List
-- p:getStubElementType():com.intellij.psi.stubs.IStubElementType
 - s:getSuperClassQNames(com.jetbrains.python.psi.PyClass):java.util.Map
 - indexStub(com.jetbrains.python.psi.stubs.PyClassStub,com.intellij.psi.stubs.IndexSink):V
 - serialize(com.jetbrains.python.psi.stubs.PyClassStub,com.intellij.psi.stubs.StubOutputStream):V
@@ -1905,14 +1888,10 @@ com.jetbrains.python.psi.impl.stubs.PyCustomStub
 - a:getTypeClass():java.lang.Class
 - a:serialize(com.intellij.psi.stubs.StubOutputStream):V
 c:com.jetbrains.python.psi.impl.stubs.PyFunctionElementType
-- com.jetbrains.python.psi.PyStubElementType
 - <init>():V
-- <init>(java.lang.String):V
-- createElement(com.intellij.lang.ASTNode):com.intellij.psi.PsiElement
 - createPsi(com.jetbrains.python.psi.stubs.PyFunctionStub):com.jetbrains.python.psi.PyFunction
 - createStub(com.jetbrains.python.psi.PyFunction,com.intellij.psi.stubs.StubElement):com.jetbrains.python.psi.stubs.PyFunctionStub
 - deserialize(com.intellij.psi.stubs.StubInputStream,com.intellij.psi.stubs.StubElement):com.jetbrains.python.psi.stubs.PyFunctionStub
-- p:getStubElementType():com.intellij.psi.stubs.IStubElementType
 - indexStub(com.jetbrains.python.psi.stubs.PyFunctionStub,com.intellij.psi.stubs.IndexSink):V
 - serialize(com.jetbrains.python.psi.stubs.PyFunctionStub,com.intellij.psi.stubs.StubOutputStream):V
 c:com.jetbrains.python.psi.resolve.CompletionVariantsProcessor

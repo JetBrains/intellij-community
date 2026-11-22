@@ -124,6 +124,7 @@ import com.jetbrains.python.ast.PyAstYieldExpression
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.pyi.PyiFileType
 import com.jetbrains.python.pyi.PyiLanguageDialect
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
 private typealias F = Function<in ASTNode, out PsiElement>
@@ -140,6 +141,7 @@ private abstract class PyAstBaseElementImpl(node: ASTNode) : ASTWrapperPsiElemen
   }
 }
 
+@ApiStatus.Internal
 class PyAstPsiElementFactory : PyPsiElementFactory() {
 
   // Elements with a stub in the stub-based PSI
