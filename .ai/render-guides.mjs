@@ -524,6 +524,7 @@ export async function loadToolPermissions(edition, path = toolPermissionsPath) {
   const permissions = {
     allow: resolvePermissionEntries(parsed.allow, toolsDir, "allow"),
     deny: resolvePermissionEntries(parsed.deny, toolsDir, "deny"),
+    denyExact: resolvePermissionEntries(parsed.denyExact ?? [], toolsDir, "denyExact"),
     denyTools: parsed.denyTools ?? [],
     additionalDirectories: parsed.additionalDirectories ?? [],
   };
@@ -566,8 +567,13 @@ function toRuleSpellings(argv) {
   return [argv, [argv[0].slice(2), ...argv.slice(1)]];
 }
 
-function toClaudeBashRules(entries) {
-  return entries.flatMap(argv => toRuleSpellings(argv).map(spelling => `Bash(${spelling.join(" ")}:*)`));
+/**
+ * A Claude Code rule with `:*` matches the command with any further arguments; a rule without it matches the exact
+ * command only.
+ */
+function toClaudeBashRules(entries, exact = false) {
+  const suffix = exact ? "" : ":*";
+  return entries.flatMap(argv => toRuleSpellings(argv).map(spelling => `Bash(${spelling.join(" ")}${suffix})`));
 }
 
 /**
@@ -588,7 +594,11 @@ export function applyClaudePermissions(settingsText, permissions) {
   const keptAllowRules = (claudePermissions.allow ?? []).filter(rule => !rule.startsWith("Bash("));
   // Assigning to existing keys keeps their position, so the file's shape does not churn.
   claudePermissions.allow = [...keptAllowRules, ...toClaudeBashRules(permissions.allow)];
-  claudePermissions.deny = [...permissions.denyTools, ...toClaudeBashRules(permissions.deny)];
+  claudePermissions.deny = [
+    ...permissions.denyTools,
+    ...toClaudeBashRules(permissions.deny),
+    ...toClaudeBashRules(permissions.denyExact ?? [], true),
+  ];
   const additionalDirectories = permissions.additionalDirectories ?? [];
   if (additionalDirectories.length === 0) {
     delete claudePermissions.additionalDirectories;
@@ -601,6 +611,8 @@ export function applyClaudePermissions(settingsText, permissions) {
 /**
  * Renders `.codex/rules/default.rules`, which governs execution outside the Codex sandbox.
  * `forbidden` wins over `allow` there, so the denied entries are emitted first for readability.
+ * A Codex rule matches a prefix only, so an exact deny becomes a prefix `prompt`: Codex asks a human for every run of
+ * the command. `prompt` wins over `allow`, so an allow entry under such a prefix would never apply and is left out.
  */
 export function buildCodexRules(permissions) {
   const lines = [
@@ -609,9 +621,18 @@ export function buildCodexRules(permissions) {
     "#",
     "# These govern execution *outside* the Codex sandbox. `forbidden` wins over `allow`, and Codex",
     "# matches every stage of a pipeline, so a forbidden entry is refused in any position.",
+    "# Codex has no exact match: a command that Claude Code denies only without arguments prompts here",
+    "# for every run, and no allow rule is emitted under it.",
     "",
   ];
-  for (const [section, decision] of [[permissions.deny, "forbidden"], [permissions.allow, "allow"]]) {
+  const denyExact = permissions.denyExact ?? [];
+  const isUnderDenyExact = argv => denyExact.some(prefix => prefix.every((token, index) => argv[index] === token));
+  const sections = [
+    [permissions.deny, "forbidden"],
+    [denyExact, "prompt"],
+    [permissions.allow.filter(argv => !isUnderDenyExact(argv)), "allow"],
+  ];
+  for (const [section, decision] of sections) {
     for (const argv of section) {
       for (const spelling of toRuleSpellings(argv)) {
         const pattern = spelling.map(token => JSON.stringify(token)).join(", ");

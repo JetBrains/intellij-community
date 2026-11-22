@@ -45,6 +45,7 @@
     ["bazel", "info"],
     ["bazel", "run"],
     ["./bazel-build-all.cmd"],
+    ["./bazel-clean-caches.cmd", "--gc"],
     ["./build/jpsModelToBazel.cmd"],
     ["./.teamcity/scripts/dsl-test.cmd"],
     ["./.teamcity/scripts/dsl-generate.cmd"],
@@ -190,7 +191,6 @@
   "deny": [
     ["bazel", "clean"],
     ["./bazel.cmd", "clean"],
-    ["./bazel-clean-caches.cmd"],
     ["find"],
     ["grep", "-r"],
     ["grep", "-R"],
@@ -203,6 +203,18 @@
     ["grep", "-rin"],
     ["grep", "--recursive"],
     ["git", "grep"]
+  ],
+
+  "$comment_denyExact": [
+    "Commands denied only in this exact form, with no other argument. `./bazel-clean-caches.cmd`",
+    "without arguments removes the disk cache and runs `bazel clean`; with `--gc` it keeps the warm",
+    "caches, and `allow` lists that form. Claude Code renders an entry as an exact rule (no `:*`).",
+    "Codex has no exact match, so its rules make the entry a `prompt` prefix: Codex asks a human for",
+    "every run, `--gc` too. `prompt` wins over `allow`, so the renderer leaves out a Codex allow rule",
+    "under that prefix."
+  ],
+  "denyExact": [
+    ["./bazel-clean-caches.cmd"]
   ],
 
   "$comment_denyTools": [

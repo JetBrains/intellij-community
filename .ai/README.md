@@ -76,6 +76,8 @@ config, so neither harness needs a permission hook:
 
 Both are ultimate-only outputs, since a community checkout has neither file. Entries are argv
 prefixes, not command strings; see the `$comment` blocks in the source for the matching contract.
+A `denyExact` entry denies the command only with no other argument. Codex has no exact match, so
+its rules make such an entry a `prompt` prefix and leave out the allow rules under it.
 
 ## Skill sources and stub generation
 
