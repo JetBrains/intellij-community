@@ -271,6 +271,21 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return result;
   }
 
+  /**
+   * The registered flavor with the {@link #getUniqueId() id}, also when it is not applicable on the OS of the IDE.
+   * The flavor of a target SDK describes the target, so {@link UnixPythonSdkFlavor} is valid for it on macOS and Windows.
+   */
+  @ApiStatus.Internal
+  public static @Nullable PythonSdkFlavor<?> findFlavorById(@NotNull String id) {
+    for (PythonSdkFlavor<?> flavor : EP_NAME.getExtensionList()) {
+      if (flavor.getUniqueId().equals(id)) return flavor;
+    }
+    for (PythonSdkFlavor<?> flavor : getPlatformFlavorsFromExtensions()) {
+      if (flavor.getUniqueId().equals(id)) return flavor;
+    }
+    return null;
+  }
+
   private static @NotNull List<PythonSdkFlavor<?>> getPlatformFlavorsFromExtensions() {
     List<PythonSdkFlavor<?>> result = new ArrayList<>();
     for (PythonFlavorProvider provider : PythonFlavorProvider.EP_NAME.getExtensionList()) {
