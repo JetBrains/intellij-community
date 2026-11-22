@@ -22,4 +22,12 @@ public interface FlyweightCapableTreeStructure<T> {
 
   int getStartOffset(@NotNull T node);
   int getEndOffset(@NotNull T node);
+
+  /**
+   * Returns the length of the text of {@code node}.
+   * Override it if an offset is more expensive than a length, for example if an offset needs a walk up to the root.
+   */
+  default int getTextLength(@NotNull T node) {
+    return getEndOffset(node) - getStartOffset(node);
+  }
 }

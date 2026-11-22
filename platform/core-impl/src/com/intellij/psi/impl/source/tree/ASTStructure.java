@@ -73,4 +73,9 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
            ? ((TreeElement)node).getStartOffsetVersioned(version) + ((TreeElement)node).getTextLengthVersioned(version)
            : node.getStartOffset() + node.getTextLength();
   }
+
+  @Override
+  public int getTextLength(@NotNull ASTNode node) {
+    return node instanceof TreeElement ? ((TreeElement)node).getTextLengthVersioned(version) : node.getTextLength();
+  }
 }

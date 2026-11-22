@@ -1957,6 +1957,7 @@ c:com.intellij.psi.impl.source.tree.ASTStructure
 - getParent(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 - getRoot():com.intellij.lang.ASTNode
 - getStartOffset(com.intellij.lang.ASTNode):I
+- getTextLength(com.intellij.lang.ASTNode):I
 - toString(com.intellij.lang.ASTNode):java.lang.CharSequence
 f:com.intellij.psi.impl.source.tree.AstBufferUtil
 - s:toBuffer(com.intellij.lang.ASTNode,C[],I):I

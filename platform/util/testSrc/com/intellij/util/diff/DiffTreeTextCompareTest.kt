@@ -52,6 +52,21 @@ class DiffTreeTextCompareTest {
   }
 
   @Test
+  fun `a flat tree with a changed child asks for few offsets`() {
+    val oldString = flatText(FLAT_CHILDREN)
+    val middle = oldString.indexOf("child-${FLAT_CHILDREN / 2};")
+    val newString = oldString.substring(0, middle) + "x" + oldString.substring(middle)
+    val oldStructure = Structure(flat(oldString), CountingText(oldString))
+    val newStructure = Structure(flat(newString), CountingText(newString))
+
+    val events = diff(oldStructure, newStructure)
+
+    assertEquals(listOf("REPLACED: leaf xchild-${FLAT_CHILDREN / 2};"), events)
+    assertTrue(oldStructure.offsetCalls <= 8) { "old tree: ${oldStructure.offsetCalls} offset calls for $FLAT_CHILDREN children" }
+    assertTrue(newStructure.offsetCalls <= 8) { "new tree: ${newStructure.offsetCalls} offset calls for $FLAT_CHILDREN children" }
+  }
+
+  @Test
   fun `a flat tree with an inserted child reports the insertion`() {
     val oldString = flatText(FLAT_CHILDREN)
     val middle = oldString.indexOf("child-${FLAT_CHILDREN / 2};")
@@ -171,7 +186,10 @@ private fun chain(text: String): Node {
   return Node("root", 0, text.length, text, listOf(node))
 }
 
-private fun diff(oldRoot: Node, oldText: CountingText, newRoot: Node, newText: CountingText): List<String> {
+private fun diff(oldRoot: Node, oldText: CountingText, newRoot: Node, newText: CountingText): List<String> =
+  diff(Structure(oldRoot, oldText), Structure(newRoot, newText))
+
+private fun diff(oldStructure: Structure, newStructure: Structure): List<String> {
   val events = ArrayList<String>()
   val builder = object : DiffTreeChangeBuilder<Node, Node> {
     override fun nodeReplaced(oldChild: Node, newChild: Node) {
@@ -186,7 +204,7 @@ private fun diff(oldRoot: Node, oldText: CountingText, newRoot: Node, newText: C
       events.add("INSERTED: ${newNode.type} at $pos")
     }
   }
-  DiffTree.diff(Structure(oldRoot, oldText), Structure(newRoot, newText), Comparator, builder, oldText)
+  DiffTree.diff(oldStructure, newStructure, Comparator, builder, oldStructure.text)
   return events
 }
 
@@ -195,7 +213,11 @@ private class Node(val type: String, val start: Int, val end: Int, fullText: Str
   val text: String = fullText.substring(start, end)
 }
 
-private class Structure(private val root: Node, private val text: CountingText) : FlyweightCapableTreeStructure<Node> {
+/** A tree of [Node]s. Like the structure of an AST, it gives a length without an offset, and it counts the offset calls. */
+private class Structure(private val root: Node, val text: CountingText) : FlyweightCapableTreeStructure<Node> {
+  var offsetCalls: Int = 0
+    private set
+
   override fun getRoot(): Node = root
 
   override fun getParent(node: Node): Node? = null
@@ -209,9 +231,17 @@ private class Structure(private val root: Node, private val text: CountingText) 
 
   override fun toString(node: Node): CharSequence = if (node === root) text else node.text
 
-  override fun getStartOffset(node: Node): Int = node.start
+  override fun getStartOffset(node: Node): Int {
+    offsetCalls++
+    return node.start
+  }
 
-  override fun getEndOffset(node: Node): Int = node.end
+  override fun getEndOffset(node: Node): Int {
+    offsetCalls++
+    return node.end
+  }
+
+  override fun getTextLength(node: Node): Int = node.end - node.start
 }
 
 /** Compares the children of each composite node, and the text of each leaf. */
