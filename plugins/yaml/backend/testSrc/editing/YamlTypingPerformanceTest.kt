@@ -27,7 +27,8 @@ import kotlin.time.Duration.Companion.minutes
  * The flat-mapping, flat-sequence and long-line tests type in the middle line of a file with one root key over all of the file.
  * There, a block or leaf check costs more than a full reparse, so the reparse must fall back to a full reparse.
  * The small-file and medium-file tests check that the reparse checks cost little in a file of a usual size.
- * The backslash tests type a char that the leaf check refuses, so they measure the refused leaf check and the block reparse.
+ * The backslash tests type a backslash in a plain scalar.
+ * A backslash is an escape only in a double-quoted scalar, so the leaf check accepts it when it does not escape a double quote.
  */
 @StressTestApplication
 @TestApplication
@@ -90,6 +91,10 @@ class YamlTypingPerformanceTest : YamlPerformanceTestCase() {
 
   @Test
   fun testTypingBackslashInPlainScalar() = doTest("x-note: plain text of the item $MIDDLE_ITEM", "\\".repeat(10))
+
+  @Test
+  fun testTypingBackslashInPlainScalarInMediumFile() =
+    doTest("x-note: plain text of the item $MEDIUM_MIDDLE_ITEM", "\\".repeat(10), items = MEDIUM_FILE_ITEMS)
 
   @Test
   fun testTypingInKeyInMediumFile() = doTest("      operation", "x".repeat(10), items = MEDIUM_FILE_ITEMS)
