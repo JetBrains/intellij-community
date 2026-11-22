@@ -1,4 +1,5 @@
-//! What the host Bazel built for a session: the `.dist` directory and its config, and the async-profiler library.
+//! What the host Bazel built for a session: the `.dist` directory and its config, the jar of the in-memory Java
+//! preferences, and the async-profiler library.
 //!
 //! The distribution holds its JBR, as a production distribution does, so the stage takes the JBR from the `.dist`
 //! directory. The JBR that `avl-wire`'s runtime descriptor names is the archive for a guest, not for this host.
@@ -22,6 +23,10 @@ const UNZIP_TIMEOUT: Duration = Duration::from_secs(60);
 
 /// The opened packages of the checkout, which the Starter reads too.
 pub(crate) const OPENED_PACKAGES: &str = "community/platform/platform-impl/resources/META-INF/OpenedPackages.txt";
+
+/// The target of the jar of the in-memory Java preferences, which a session builds with the distribution. See
+/// [`super::launch::PREFERENCES_FACTORY`].
+pub(crate) const PREFERENCES_TARGET: &str = "@community//tools/vm/bench-preferences";
 
 /// The suffix of the label of a self-contained distribution.
 const DIST_SUFFIX: &str = "_dist";
@@ -49,6 +54,14 @@ pub(crate) fn dist_outputs(files: &str) -> (Option<&str>, Option<&str>) {
     )
 }
 
+/// The class jar among the lines of `cquery --output=files` of [`PREFERENCES_TARGET`].
+pub(crate) fn preferences_jar(files: &str) -> Option<&str> {
+    files
+        .lines()
+        .map(str::trim)
+        .find(|line| Path::new(line).extension().is_some_and(|extension| extension == "jar") && !line.ends_with("-src.jar"))
+}
+
 /// An output path of `cquery`, which is relative to the execution root.
 async fn output_path(ctx: &Ctx, bazel: &Bazel, line: &str) -> Result<PathBuf, Refusal> {
     let path = Path::new(line);
@@ -58,7 +71,7 @@ async fn output_path(ctx: &Ctx, bazel: &Bazel, line: &str) -> Result<PathBuf, Re
     Ok(bazel.execution_root(ctx).await?.join(path))
 }
 
-/// The sources of the generation of `target`, after the build of `target`.
+/// The sources of the generation of `target`, after the build of `target` and of [`PREFERENCES_TARGET`].
 pub(crate) async fn sources(ctx: &Ctx, bazel: &Bazel, repo_root: &Path, target: &str) -> Result<Sources, Refusal> {
     let files = bazel
         .query(ctx, "cquery", &["--output=files".to_owned(), target.to_owned()])
@@ -73,11 +86,18 @@ pub(crate) async fn sources(ctx: &Ctx, bazel: &Bazel, repo_root: &Path, target: 
         Some(config) => output_path(ctx, bazel, config).await?,
         None => dist.with_extension("ide.config"),
     };
+    let files = bazel
+        .query(ctx, "cquery", &["--output=files".to_owned(), PREFERENCES_TARGET.to_owned()])
+        .await?;
+    let Some(preferences) = preferences_jar(&files) else {
+        return Err(unsupported(format!("{PREFERENCES_TARGET} has no jar output")));
+    };
     Ok(Sources {
         target: target.to_owned(),
         dist,
         config,
         opened_packages: repo_root.join(OPENED_PACKAGES),
+        preferences: output_path(ctx, bazel, preferences).await?,
     })
 }
 

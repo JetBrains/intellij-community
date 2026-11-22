@@ -1,0 +1,9 @@
+# The in-memory Java preferences of the IDE of a `vm bench` run. The session builds this jar with the distribution and
+# stages it into the generation, and every run puts it on the boot class path. See `InMemoryPreferencesFactory`.
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+    name = "bench-preferences",
+    srcs = glob(["src/**/*.java"]),
+    visibility = ["//visibility:public"],
+)

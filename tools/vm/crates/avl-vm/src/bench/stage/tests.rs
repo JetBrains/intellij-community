@@ -6,7 +6,7 @@ use avl_host_sys::{Ctx, Interrupts, Runner};
 use pretty_assertions::assert_eq;
 
 use super::{DistConfig, Generation, RECORD_FILE, Sources, java_in, java_name, open, parse_config, read_digest, stage, stays_inside};
-use crate::bench::launch::OPENED_PACKAGES_FILE;
+use crate::bench::launch::{OPENED_PACKAGES_FILE, PREFERENCES_JAR};
 use crate::bench::session::GitInfo;
 
 /// The checkout that built the sources of a test.
@@ -115,11 +115,15 @@ fn fake_sources(root: &Path) -> Sources {
     }
     let opened_packages = root.join("OpenedPackages.txt");
     std::fs::write(&opened_packages, "--add-opens=java.base/java.lang=ALL-UNNAMED\n").expect("the opened packages");
+    let preferences = root.join("bazel-bin/external/community+/tools/vm/bench-preferences/libbench-preferences.jar");
+    std::fs::create_dir_all(preferences.parent().expect("a parent")).expect("the directory of the preferences jar");
+    std::fs::write(&preferences, "preferences").expect("the preferences jar");
     Sources {
         target: "//build:idea_dist".to_owned(),
         dist,
         config,
         opened_packages,
+        preferences,
     }
 }
 
@@ -188,6 +192,10 @@ async fn a_stage_clones_the_sources_read_only_and_a_second_stage_reuses_them() {
     assert_eq!(std::fs::read_to_string(&jar).expect("the clone"), "a");
     assert!(std::fs::metadata(&jar).expect("the clone").permissions().readonly());
     assert!(generation.root.join(OPENED_PACKAGES_FILE).is_file());
+    assert_eq!(
+        std::fs::read_to_string(generation.root.join(PREFERENCES_JAR)).expect("the preferences jar"),
+        "preferences"
+    );
     #[cfg(unix)]
     assert_eq!(
         std::fs::read_link(generation.dist.join("jbr/Contents/Home/legal/java.rmi/LICENSE")).expect("the link"),
@@ -213,6 +221,11 @@ async fn a_stage_clones_the_sources_read_only_and_a_second_stage_reuses_them() {
         "a rebuild leaves the first generation as it was"
     );
     assert!(generation.root.join(RECORD_FILE).is_file());
+
+    std::fs::write(&sources.preferences, "changed").expect("a rebuild of the preferences jar");
+    let with_new_preferences = fixture.stage(&built()).await.expect("a generation");
+    assert!(!with_new_preferences.reused, "the key covers the preferences jar");
+    assert_ne!(with_new_preferences.digest, rebuilt.digest);
 }
 
 #[cfg(unix)]
@@ -308,7 +321,7 @@ async fn a_generation_names_its_commit_and_opens_by_a_prefix_of_its_digest() {
 }
 
 /// Writes a published generation `digest` under `generations` with the record of a stage from before the commit, the
-/// config copy and the JBR of the distribution.
+/// config copy, the JBR of the distribution and the preferences jar.
 fn fake_generation(generations: &Path, digest: &str) {
     let root = generations.join(digest);
     std::fs::create_dir_all(&root).expect("a generation");
@@ -330,6 +343,7 @@ fn fake_generation(generations: &Path, digest: &str) {
     let java = java_in(&root.join("idea_dist.dist"));
     std::fs::create_dir_all(java.parent().expect("a bin")).expect("a bin directory");
     std::fs::write(&java, "").expect("a java");
+    std::fs::write(root.join(PREFERENCES_JAR), "").expect("a preferences jar");
 }
 
 /// A prefix that no generation has, or that several have, is refused with the candidates. An unfinished stage is no
@@ -382,4 +396,17 @@ fn a_generation_of_the_earlier_layout_is_refused() {
     std::fs::remove_file(&java).expect("no java");
     let refusal = open(dir.path(), "ab").expect_err("an earlier layout");
     assert_unsupported(&refusal, &format!("has no JBR at {}", java.display()));
+}
+
+/// A generation of the second layout has no preferences jar, so its runs would read the Java preferences of the host.
+/// `open` refuses it with the path of the missing jar.
+#[test]
+fn a_generation_without_the_preferences_jar_is_refused() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let generations = dir.path().join("bench/generations");
+    fake_generation(&generations, "ab12");
+    let jar = generations.join("ab12").join(PREFERENCES_JAR);
+    std::fs::remove_file(&jar).expect("no preferences jar");
+    let refusal = open(dir.path(), "ab").expect_err("an earlier layout");
+    assert_unsupported(&refusal, &format!("has no preferences jar at {}", jar.display()));
 }

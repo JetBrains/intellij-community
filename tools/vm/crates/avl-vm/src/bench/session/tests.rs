@@ -3,15 +3,15 @@ use pretty_assertions::assert_eq;
 use std::path::Path;
 
 use super::{
-    GENERAL_SETTINGS, NO_README_SETTINGS, Project, ProjectSource, RESULT_FILE, Sandbox, first_file, license_file_name, live_sandbox,
-    open_no_readme, own_welcome_project, run_dirs, write_project, write_template,
+    GENERAL_SETTINGS, NO_README_SETTINGS, Project, ProjectSource, RESULT_FILE, SECURITY_SETTINGS, Sandbox, first_file, license_file_name,
+    live_sandbox, open_no_readme, own_welcome_project, run_dirs, write_project, write_template,
 };
 use crate::bench::arm::Arm;
 use crate::bench::record::{RunId, RunKind};
 use crate::bench::testing::{run_record, session_info};
 
 #[test]
-fn the_template_has_the_settings_and_the_license() {
+fn the_template_has_the_settings_the_license_and_an_empty_home() {
     let dir = tempfile::tempdir().expect("a temporary directory");
     let license = dir.path().join("idea.key");
     std::fs::write(&license, "key").expect("a license");
@@ -25,7 +25,17 @@ fn the_template_has_the_settings_and_the_license() {
         std::fs::read_to_string(template.config().join("idea.key")).expect("the license"),
         "key"
     );
+    assert_eq!(
+        std::fs::read_to_string(template.config().join("options/security.xml")).expect("the password settings"),
+        SECURITY_SETTINGS
+    );
+    assert!(SECURITY_SETTINGS.contains(r#"<option name="PROVIDER" value="MEMORY_ONLY" />"#));
     assert!(template.system().is_dir() && template.plugins().is_dir());
+    assert_eq!(
+        std::fs::read_dir(template.home()).expect("the home").count(),
+        0,
+        "the home of the template is empty"
+    );
     let error = write_template(&template, &dir.path().join("absent"), None).expect_err("no license");
     assert!(format!("{error:#}").starts_with("cannot copy the license "), "{error:#}");
 }
@@ -322,15 +332,15 @@ fn the_max_load_and_the_measure_model_go_through_session_json_and_summary_json()
     };
     let text = serde_json::to_string(&info).expect("JSON");
     assert!(text.contains(r#""maxLoad":10.0"#), "{text}");
-    assert!(text.contains(r#""measureModel":{"name":"integration-test","version":2}"#), "{text}");
+    assert!(text.contains(r#""measureModel":{"name":"integration-test","version":3}"#), "{text}");
     assert_eq!(serde_json::from_str::<SessionInfo>(&text).expect("a session"), info);
     let summary = serde_json::to_value(Summary::build(&info, "s", &[])).expect("JSON");
     assert_eq!(summary["maxLoad"], 10.0);
     assert_eq!(
         summary["measureModel"],
-        serde_json::json!({"name": "integration-test", "version": 2})
+        serde_json::json!({"name": "integration-test", "version": 3})
     );
-    assert_eq!(MeasureModel::current().to_string(), "integration-test v2");
+    assert_eq!(MeasureModel::current().to_string(), "integration-test v3");
     let fixture = read_info(&testdata_dir().join("session")).expect("the fixture session");
     assert_eq!(fixture.max_load, None, "a session of before the option has none");
     assert_eq!(fixture.measure_model, None, "a session of before the model has none");

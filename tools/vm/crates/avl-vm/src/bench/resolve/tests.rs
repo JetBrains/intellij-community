@@ -1,6 +1,6 @@
 use pretty_assertions::assert_eq;
 
-use super::{check_dist_label, context_plugins_dir, dist_outputs, profiler_jar};
+use super::{check_dist_label, context_plugins_dir, dist_outputs, preferences_jar, profiler_jar};
 
 #[test]
 fn a_label_without_the_dist_suffix_is_refused_before_the_build() {
@@ -22,6 +22,17 @@ fn finds_the_dist_and_its_config_among_the_cquery_files() {
         )
     );
     assert_eq!(dist_outputs("bazel-out/x/bin/build/idea.jar\n"), (None, None));
+}
+
+#[test]
+fn finds_the_preferences_jar_among_the_cquery_files() {
+    let files = "bazel-out/x/bin/external/community+/tools/vm/bench-preferences/libbench-preferences-src.jar\n\
+                 bazel-out/x/bin/external/community+/tools/vm/bench-preferences/libbench-preferences.jar\n";
+    assert_eq!(
+        preferences_jar(files),
+        Some("bazel-out/x/bin/external/community+/tools/vm/bench-preferences/libbench-preferences.jar")
+    );
+    assert_eq!(preferences_jar("bazel-out/x/bin/build/idea_dist.dist\n"), None);
 }
 
 #[test]

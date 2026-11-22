@@ -8,10 +8,13 @@
 //!   distribution places it, so the clone of the distribution is the clone of its JBR too;
 //! - `ide.config`: the copy of the config of the distribution;
 //! - `OpenedPackages.txt`: the copy of the `--add-opens` list of the checkout, which the launch reads;
+//! - `bench-preferences.jar`: the copy of the jar of the in-memory Java preferences, which every run of the IDE puts on
+//!   its boot class path, see [`super::launch::PREFERENCES_FACTORY`];
 //! - `generation.json`: the record, written last. It names the commit of the checkout that built the bytes, so a
 //!   session over the generation, see [`open`], names the commit of the bytes that it measures.
 //!
-//! The digest is the key: the content of the distribution tree with its JBR, the config text and the opened packages,
+//! The digest is the key: the content of the distribution tree with its JBR, the config text, the opened packages and
+//! the preferences jar,
 //! through the [`FileDigestCache`] of `<runtime root>/bench/digest-cache.json`, so a second session over the same
 //! build reads only stats. The stage clones into `.stage-<digest>-<pid>` and publishes it with one `rename`, under
 //! the lock `generations.lock`, so a reader never sees half a generation and two sessions never stage one digest
@@ -33,7 +36,7 @@ use avl_report::digest::{FileDigestCache, PathDigest, path_sensitive_digest, sha
 use avl_wire::runtime::HOME_PATH_KEY;
 use serde::{Deserialize, Serialize};
 
-use super::launch::OPENED_PACKAGES_FILE;
+use super::launch::{OPENED_PACKAGES_FILE, PREFERENCES_JAR};
 use super::session::{BENCH_DIR, GitInfo};
 
 /// The record of a generation, the last file the stage writes.
@@ -46,7 +49,7 @@ pub(crate) const GENERATIONS_DIR: &str = "generations";
 const CONFIG_FILE: &str = "ide.config";
 
 /// The version of the generation layout. It is a part of the key, so a change of the layout stages anew.
-const LAYOUT: &str = "bench-generation-2";
+const LAYOUT: &str = "bench-generation-3";
 
 /// How long a stage waits for another stage that holds the lock.
 const LOCK_WAIT: Duration = Duration::from_secs(600);
@@ -62,6 +65,8 @@ pub(crate) struct Sources {
     pub(crate) config: PathBuf,
     /// `OpenedPackages.txt` of the checkout.
     pub(crate) opened_packages: PathBuf,
+    /// The jar of the in-memory Java preferences.
+    pub(crate) preferences: PathBuf,
 }
 
 /// The fields of a dist config that the launch reads.
@@ -134,6 +139,9 @@ struct RecordSources {
     dist: String,
     config: String,
     opened_packages: String,
+    /// The preferences jar. A generation of an earlier layout has none.
+    #[serde(default)]
+    preferences: String,
 }
 
 /// A refusal for a distribution that the bench cannot stage: the invocation named a target of another shape.
@@ -192,16 +200,18 @@ pub(crate) fn parse_config(text: &str) -> Result<DistConfig, String> {
     })
 }
 
-/// The key of a generation: the layout version, the distribution tree with its JBR, the config text and the opened
-/// packages, in order.
+/// The key of a generation: the layout version, the distribution tree with its JBR, the config text, the opened packages
+/// and the preferences jar, in order.
 pub(crate) fn key(cache: &mut FileDigestCache, sources: &Sources, config_text: &str, dist_name: &str) -> io::Result<String> {
     let dist = cache.digest(&sources.dist)?;
     let opened_packages = cache.digest(&sources.opened_packages)?;
+    let preferences = cache.digest(&sources.preferences)?;
     Ok(path_sensitive_digest(&[
         PathDigest::new("@layout", sha256_text(LAYOUT)),
         PathDigest::new(dist_name, dist),
         PathDigest::new(CONFIG_FILE, sha256_text(config_text)),
         PathDigest::new(OPENED_PACKAGES_FILE, opened_packages),
+        PathDigest::new(PREFERENCES_JAR, preferences),
     ]))
 }
 
@@ -315,6 +325,7 @@ pub(crate) async fn stage(
         dist: sources.dist.display().to_string(),
         config: sources.config.display().to_string(),
         opened_packages: sources.opened_packages.display().to_string(),
+        preferences: sources.preferences.display().to_string(),
     };
     let staged = {
         let sources = sources.clone();
@@ -329,6 +340,8 @@ pub(crate) async fn stage(
                 .map_err(|error| failed(format!("cannot write the config copy: {error}")))?;
             fscopy::clone_or_copy(&sources.opened_packages, &temporary.join(OPENED_PACKAGES_FILE))
                 .map_err(|error| failed(format!("cannot copy {}: {error}", sources.opened_packages.display())))?;
+            fscopy::clone_or_copy(&sources.preferences, &temporary.join(PREFERENCES_JAR))
+                .map_err(|error| failed(format!("cannot copy {}: {error}", sources.preferences.display())))?;
             // The source is hashed again, from the stats the first pass cached. A build that rewrote a file during the
             // clone moves its stat, and the copy then holds bytes the key does not name.
             let again = key(&mut cache, &sources, &config_text, &dist_name)
@@ -403,7 +416,7 @@ fn read_record(root: &Path) -> Result<Record, Refusal> {
 /// Opens the staged generation whose digest starts with `prefix`, under `<runtime root>/bench/generations`, for a
 /// session that measures it again without a build and a stage. A prefix that no generation has is the refusal
 /// `no_generation`, and a prefix of several generations is a usage refusal. Each refusal names the candidates. A
-/// generation of an earlier layout has no JBR in its distribution, and is refused.
+/// generation of an earlier layout has no JBR in its distribution or no preferences jar, and is refused.
 pub(crate) fn open(runtime_root: &Path, prefix: &str) -> Result<Staged, Refusal> {
     let generations = runtime_root.join(BENCH_DIR).join(GENERATIONS_DIR);
     let digests = staged_digests(&generations);
@@ -449,12 +462,14 @@ pub(crate) fn open(runtime_root: &Path, prefix: &str) -> Result<Staged, Refusal>
     let dist = root.join(&record.dist_name);
     let home = home_in(&dist, &config);
     let java = java_in(&home);
-    if !java.is_file() {
-        return Err(unsupported(format!(
-            "the generation {} has no JBR at {}, so it is of an earlier layout; run the session without --generation to stage the distribution again",
-            root.display(),
-            java.display()
-        )));
+    for (what, path) in [("JBR", &java), ("preferences jar", &root.join(PREFERENCES_JAR))] {
+        if !path.is_file() {
+            return Err(unsupported(format!(
+                "the generation {} has no {what} at {}, so it is of an earlier layout; run the session without --generation to stage the distribution again",
+                root.display(),
+                path.display()
+            )));
+        }
     }
     Ok(Staged {
         generation: Generation {

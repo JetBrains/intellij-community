@@ -85,7 +85,7 @@ fn a_session_of_another_measurement_model_than_a_gets_a_note() {
     assert_eq!(
         comparison.model_notes,
         [
-            "B has another measurement model than A: A none (a session from before the model), B integration-test v2; a delta B-A \
+            "B has another measurement model than A: A none (a session from before the model), B integration-test v3; a delta B-A \
              mixes the change with the model, so measure both sessions with one model"
         ]
     );
@@ -97,7 +97,7 @@ fn a_session_of_another_measurement_model_than_a_gets_a_note() {
     assert_eq!(json["sessions"][0]["measureModel"], serde_json::Value::Null);
     assert_eq!(
         json["sessions"][1]["measureModel"],
-        serde_json::json!({"name": "integration-test", "version": 2})
+        serde_json::json!({"name": "integration-test", "version": 3})
     );
     assert_eq!(json["modelNotes"][0], comparison.model_notes[0]);
 

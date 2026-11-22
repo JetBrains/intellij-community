@@ -3,10 +3,10 @@ use std::path::Path;
 use pretty_assertions::assert_eq;
 
 use super::{
-    DYNAMIC_AGENT_OPTION, EVENT_TIMEOUT, FIND_TIMEOUT, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, PRODUCT_INFO_FILE, Profiler,
-    RunPlan, SUPPRESSED_PLUGINS_PROPERTY, TRUST_PROPERTY, argfile_text, class_load_option, dist_options, entry_options, gate_timeout,
-    idea_log_pid, measure_options, product_info_file, profile_stop_argv, quote_argument, sandbox_options, scheme_arguments, span_ended,
-    thread_dump_argv, vm_options_file,
+    DYNAMIC_AGENT_OPTION, EVENT_TIMEOUT, FIND_TIMEOUT, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, PREFERENCES_FACTORY,
+    PRODUCT_INFO_FILE, Profiler, RunPlan, SUPPRESSED_PLUGINS_PROPERTY, TRUST_PROPERTY, argfile_text, class_load_option, dist_options,
+    entry_options, gate_timeout, home_option, idea_log_pid, measure_options, preferences_options, product_info_file, profile_stop_argv,
+    quote_argument, sandbox_options, scheme_arguments, span_ended, thread_dump_argv, vm_options_file,
 };
 use crate::bench::arm::{Arm, ArmKind, Property};
 use crate::bench::profile::ProfileEvent;
@@ -36,6 +36,38 @@ fn the_measure_options_select_the_sandbox_and_the_files_of_the_run() {
     assert!(
         !options.iter().any(|option| option.contains("non.modal")),
         "the non-modal arm forces nothing"
+    );
+}
+
+/// The IDE of a run sees no account, no Java preferences and no common data of the host: its `user.home` is the home of
+/// its sandbox, and the preferences are in its memory. Only the cargo-sync arm keeps the home of the host, for the
+/// toolchain of the Rust plugin.
+#[test]
+fn a_run_takes_the_home_of_its_sandbox_and_the_preferences_in_its_memory() {
+    let sandbox = Sandbox::new("/s/sandbox");
+    assert_eq!(home_option(&sandbox), "-Duser.home=/s/sandbox/home");
+    for arm in [
+        Arm::MODAL,
+        Arm::NON_MODAL,
+        Arm::OPEN_PROJECT,
+        Arm::PROJECT,
+        Arm::EMPTY_EDITOR,
+        Arm::FIND_IN_FILES,
+    ] {
+        let options = measure_options(Path::new("/s/run"), &sandbox, &arm, None).expect("the options");
+        assert_eq!(options[3], "-Duser.home=/s/sandbox/home", "{arm:?}");
+    }
+    let cargo_sync = measure_options(Path::new("/s/run"), &sandbox, &Arm::CARGO_SYNC, None).expect("the options");
+    assert!(
+        !cargo_sync.iter().any(|option| option.starts_with("-Duser.home=")),
+        "{cargo_sync:?}"
+    );
+    assert_eq!(
+        preferences_options(Path::new("/g/bench-preferences.jar")),
+        [
+            format!("-Djava.util.prefs.PreferencesFactory={PREFERENCES_FACTORY}"),
+            "-Xbootclasspath/a:/g/bench-preferences.jar".to_owned(),
+        ]
     );
 }
 

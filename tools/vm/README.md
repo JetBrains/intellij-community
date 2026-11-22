@@ -261,13 +261,20 @@ that the JVM loads, and the digest notes how many samples it left out.
 | `gc` | Which generations can go? | One line per removed generation, with its size. |
 
 A session stages a generation under `<runtime root>/bench/generations/<digest>/`. The generation holds the clone of
-the `.dist` directory, the dist config and `OpenedPackages.txt`. The home in the `.dist` directory holds the JBR at
+the `.dist` directory, the dist config, `OpenedPackages.txt` and `bench-preferences.jar`, the in-memory Java preferences
+of `@community//tools/vm/bench-preferences`. The home in the `.dist` directory holds the JBR at
 `jbr/Contents/Home`, as a macOS production distribution does, and every run starts with that JBR. The digest of these
-three inputs is the key, so a generation that exists is reused. Its files are read-only. Its `generation.json`
+four inputs is the key, so a generation that exists is reused. Its files are read-only. Its `generation.json`
 names the commit of the checkout that built it. A run starts from the home that the dist config names: the `.dist`
 directory, or its `Contents` for a macOS app.
 The sandbox template takes the license `out/dev-data/idea/config/idea.key` of the checkout, or of the main checkout when
 the checkout is a linked worktree without a license.
+Besides the config and the system of its sandbox, each run gives the IDE the `home` of the sandbox as `user.home`, the
+Java preferences in its memory and the passwords in its memory, so the IDE sees no account, no preferences and no common
+data of the host, as a lane with a fresh home does. A cargo-sync run keeps the `user.home` of the host, because the
+Rust plugin finds the toolchain in `~/.cargo` below it. The record
+[A bench run sees no account and no data of the host](docs/decisions/2026-11-22-a-bench-run-sees-no-account-and-no-data-of-the-host.md)
+states why.
 
 `--generation` takes the start of a digest and runs the session over that generation, with no build and no stage. The
 session names the commit that built the generation, so `ls` and `compare` show the commit of the measured bytes. An

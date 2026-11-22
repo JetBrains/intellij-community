@@ -3,7 +3,8 @@
 //! The command line is the one the IDE Starter gives a locally built distribution (`IdeFromCodeInstaller`):
 //! `<java> @<argfile>`, where the argfile holds the JVM options of the distribution (the vmoptions file that
 //! `product-info.json` names, `-Djb.vmOptionsFile` and the `additionalJvmArguments`), the test options of the Starter, the
-//! options of the run with the JVM class-load log, the `--add-opens` lines of `OpenedPackages.txt` for this OS, `-classpath` with the entries of
+//! in-memory Java preferences of the generation, see [`PREFERENCES_FACTORY`], the options of the run with the home of
+//! its sandbox and the JVM class-load log, the `--add-opens` lines of `OpenedPackages.txt` for this OS, `-classpath` with the entries of
 //! `core-classpath.txt`, and the main class of the dist config. Every path in it is a path of the generation.
 //!
 //! The IDE is its own responsible process on macOS, as an app that Launch Services starts, so the WebKit processes of its
@@ -123,6 +124,20 @@ pub(crate) const SUPPRESSED_PLUGINS_PROPERTY: &str = "idea.suppressed.plugins.id
 /// `community/platform/platform-impl/resources/META-INF/OpenedPackages.txt`.
 pub(crate) const OPENED_PACKAGES_FILE: &str = "OpenedPackages.txt";
 
+/// The jar of the in-memory Java preferences in a generation, a copy of the output of [`super::resolve::PREFERENCES_TARGET`].
+pub(crate) const PREFERENCES_JAR: &str = "bench-preferences.jar";
+
+/// The class in [`PREFERENCES_JAR`] that gives the IDE an empty user root and an empty system root of the Java
+/// preferences in its memory. On macOS, the JDK keeps the preferences of every JVM of a user in one store of the user,
+/// and `JBAManager` keeps the JetBrains Account login there, so without it a run starts signed in to the account of
+/// the host.
+pub(crate) const PREFERENCES_FACTORY: &str = "com.intellij.tools.vm.bench.InMemoryPreferencesFactory";
+
+/// The note of a cargo-sync run. It keeps the home of the host, because the Rust plugin finds the toolchain in
+/// `~/.cargo` below `user.home`.
+pub(crate) const HOST_HOME_NOTE: &str =
+    "the run keeps the user.home of the host, because the Rust plugin finds the toolchain in ~/.cargo below it";
+
 fn property(key: &str, value: &Path) -> String {
     format!("-D{key}={}", value.display())
 }
@@ -133,6 +148,20 @@ pub(crate) fn sandbox_options(sandbox: &Sandbox) -> Vec<String> {
         property("idea.config.path", &sandbox.config()),
         property("idea.system.path", &sandbox.system()),
         property("idea.plugins.path", &sandbox.plugins()),
+    ]
+}
+
+/// The option that makes the home of the sandbox the `user.home` of a JVM, see [`Sandbox::home`].
+pub(crate) fn home_option(sandbox: &Sandbox) -> String {
+    property("user.home", &sandbox.home())
+}
+
+/// The options that give a JVM the in-memory Java preferences of `jar`, see [`PREFERENCES_FACTORY`]. The JDK loads the
+/// factory through the system class loader, so the jar is on the boot class path.
+pub(crate) fn preferences_options(jar: &Path) -> [String; 2] {
+    [
+        format!("-Djava.util.prefs.PreferencesFactory={PREFERENCES_FACTORY}"),
+        format!("-Xbootclasspath/a:{}", jar.display()),
     ]
 }
 
@@ -158,12 +187,15 @@ pub(crate) fn class_load_option(run_dir: &Path) -> Result<String, String> {
     Ok(format!("-Xlog:class+load,os+thread:file={path}:uptime,tid,tags"))
 }
 
-/// The options of a measured start, in order: the sandbox, the files of the run, the asynchronous log, see
+/// The options of a measured start, in order: the sandbox with its home, the files of the run, the asynchronous log, see
 /// [`ASYNC_LOG_OPTIONS`], the class-load log, the properties, the arm, the change of a twin and the profiler. The
 /// property of a twin comes after the properties of the bench, so it wins over a property of the same name. A run directory that the class-load log cannot name is an error, see [`class_load_option`]. The profiler
 /// starts with the JVM and writes [`WHOLE_PROFILE`] at the exit, unless the run stops it at the gate.
 pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: &Arm, profiler: Option<&Profiler>) -> Result<Vec<String>, String> {
     let mut options = sandbox_options(sandbox);
+    if arm.kind != ArmKind::CargoSync {
+        options.push(home_option(sandbox));
+    }
     options.extend([
         property("idea.log.path", &run_dir.join("log")),
         property("idea.log.perf.stats.file", &run_dir.join("startup-stats.json")),
@@ -542,6 +574,7 @@ impl Launcher {
             )
         };
         let mut dist_options = dist_options(&generation.home, &generation.config, repo_root).map_err(refuse)?;
+        dist_options.extend(preferences_options(&generation.root.join(PREFERENCES_JAR)));
         dist_options.extend(properties.iter().map(|property| format!("-D{property}")));
         let opened_packages = files::read_text(&generation.root.join(OPENED_PACKAGES_FILE)).map_err(refuse)?;
         let classpath = files::read_text(&generation.home.join("core-classpath.txt")).map_err(refuse)?;
@@ -588,6 +621,7 @@ impl Launcher {
     pub(crate) async fn write_scheme(&self, ctx: &Ctx, template: &Sandbox, log_dir: &Path) -> Result<(), Refusal> {
         let failed = |message: String| Refusal::new("bench_scheme_failed", Exit::FAILURE, message);
         let mut options = sandbox_options(template);
+        options.push(home_option(template));
         options.push(property("idea.log.path", log_dir));
         options.push("-Djava.awt.headless=true".to_owned());
         let argv = self
@@ -762,6 +796,7 @@ impl Launcher {
         F: Future<Output = Result<String, ProcError>> + Unpin,
     {
         let mut options = sandbox_options(sandbox);
+        options.push(home_option(sandbox));
         options.push(property("idea.log.path", &run_dir.join("open-log")));
         let argv = match self.argv(&run_dir.join("open.args"), &options, &[project.display().to_string()]) {
             Ok(argv) => argv,
@@ -826,6 +861,7 @@ impl Launcher {
     {
         if !ctx.is_cancelled() {
             let mut options = sandbox_options(sandbox);
+            options.push(home_option(sandbox));
             options.push(property("idea.log.path", &run_dir.join("exit-log")));
             if let Ok(argv) = self.argv(&run_dir.join("exit.args"), &options, &["exit".to_owned()]) {
                 let (quit_log, quit_options) = (run_dir.join("exit.log"), self.logged(QUIT_TIMEOUT, "bench_exit_timeout"));

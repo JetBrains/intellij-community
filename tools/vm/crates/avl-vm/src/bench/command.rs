@@ -23,7 +23,7 @@ use super::compare::{self, Compared};
 use super::digest;
 use super::files;
 use super::gc;
-use super::launch::{Launcher, Profiler, RunPlan};
+use super::launch::{HOST_HOME_NOTE, Launcher, Profiler, RunPlan};
 use super::load;
 use super::ls;
 use super::options::{BenchVerb, LaunchArgs};
@@ -314,7 +314,10 @@ impl Bench<'_> {
             }
             (staged.generation, git, staged.target)
         } else {
-            let labels: Vec<String> = std::iter::once(args.target.clone()).chain(plan.context_plugins.clone()).collect();
+            let labels: Vec<String> = [args.target.clone(), resolve::PREFERENCES_TARGET.to_owned()]
+                .into_iter()
+                .chain(plan.context_plugins.clone())
+                .collect();
             self.bazel.build_labels(ctx, &build_log, &labels).await?;
             let sources = resolve::sources(ctx, self.bazel, repo, &args.target).await?;
             let git = self.git_info(ctx, repo).await;
@@ -501,7 +504,10 @@ impl Bench<'_> {
         std::fs::create_dir_all(&run_dir).map_err(|error| session_failed(format!("cannot create {}: {error}", run_dir.display())))?;
         std::fs::rename(&sandbox.root, &kept)
             .map_err(|error| session_failed(format!("cannot move {} to {}: {error}", sandbox.root.display(), kept.display())))?;
-        let record = record::collect(&run_dir, id, facts);
+        let mut record = record::collect(&run_dir, id, facts);
+        if id.arm.kind == ArmKind::CargoSync {
+            record.notes.push(HOST_HOME_NOTE.to_owned());
+        }
         write_result(&run_dir, &record, self.reporter);
         self.publish_run(&name, &record);
         if ctx.is_cancelled() {
