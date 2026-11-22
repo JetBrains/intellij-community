@@ -192,6 +192,19 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
     return attributes != null && attributes.isWritable();
   }
 
+  /**
+   * Checks the one child on disk, as {@link CacheAvoidingVirtualFileWrapper#findChild} does, instead of listing every child:
+   * a transient directory keeps no children, so a lookup of a deep path does not list each directory on the way.
+   */
+  @Override
+  public @Nullable VirtualFile findChild(@NotNull String name) {
+    if (name.isEmpty() || name.indexOf('/') >= 0 || name.equals(".") || name.equals("..")) {
+      return super.findChild(name);
+    }
+    TransientVirtualFileImpl child = new TransientVirtualFileImpl(name, path + '/' + name, fileSystem, this);
+    return child.exists() ? child : null;
+  }
+
   @Override
   public VirtualFile[] getChildren() {
     //MAYBE RC: cache children once calculated?
