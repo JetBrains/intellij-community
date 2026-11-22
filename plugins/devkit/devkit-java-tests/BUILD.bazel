@@ -7,7 +7,10 @@ BAZEL_TARGETS_JSON = current_bazel_targets_json()
 jps_test(
     name = "java-tests_test",
     timeout = "long",
-    data = [BAZEL_TARGETS_JSON],
+    data = [
+        "//plugins/devkit/jps-plugin:jps",
+        BAZEL_TARGETS_JSON,
+    ],
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
     ],

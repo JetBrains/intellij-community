@@ -9,7 +9,10 @@ BAZEL_TARGETS_JSON = current_bazel_targets_json()
 jps_test(
     name = "java-guiForms-designer-tests_test",
     timeout = "long",
-    data = [BAZEL_TARGETS_JSON],
+    data = [
+        "//plugins/ui-designer/jps-plugin:java-guiForms-jps",
+        BAZEL_TARGETS_JSON,
+    ],
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
     ],
