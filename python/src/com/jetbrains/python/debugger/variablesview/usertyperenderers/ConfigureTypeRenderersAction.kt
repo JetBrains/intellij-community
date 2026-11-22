@@ -45,7 +45,7 @@ private fun loadCustomChildren(frameAccessor: PyFrameAccessor,
   val customChildren: MutableList<PyDebugValue> = mutableListOf()
   for (child in renderer.childrenRenderer.children) {
     val res = child.expression.replace("self", debugValue.evaluationExpression)
-    val evalResult = frameAccessor.evaluate(res, false, true)
+    val evalResult = frameAccessor.evaluate(res, false, true) ?: return emptyList()
     customChildren.add(evalResult)
   }
   return customChildren

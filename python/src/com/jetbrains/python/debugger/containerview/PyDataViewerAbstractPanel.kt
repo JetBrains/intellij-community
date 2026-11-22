@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.EditorTextField
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PydevBundle
 import com.jetbrains.python.debugger.ArrayChunk
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyDebuggerException
@@ -178,11 +179,9 @@ abstract class PyDataViewerAbstractPanel(
       val debugValue = dataViewerModel.frameAccessor.evaluate(expression, false, true)
       if (debugValue == null || debugValue.isErrorOnEval) {
         ApplicationManager.getApplication().invokeLater {
-          val debugValueExpression = debugValue.value
-          val errorText = if (debugValue != null && debugValueExpression != null) {
-            debugValueExpression
-          } else {
-            PyBundle.message("debugger.data.view.failed.to.evaluate.expression", expression)
+          val errorText = when (debugValue) {
+            null -> PydevBundle.message("pydev.session.finished")
+            else -> debugValue.value ?: PyBundle.message("debugger.data.view.failed.to.evaluate.expression", expression)
           }
 
           setError(errorText, modifier)
