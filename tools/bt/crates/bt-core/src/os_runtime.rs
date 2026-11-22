@@ -538,6 +538,95 @@ struct Git<'a> {
     input: Option<&'a [u8]>,
 }
 
+/// The mode of the untracked files for the `git status` of [`Runtime::checkout_tree`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum UntrackedMode {
+    /// Each file. The status names a nested checkout as `dir/`.
+    All,
+    /// An untracked directory as `dir/`, and each untracked file of a tracked directory.
+    Normal,
+}
+
+impl UntrackedMode {
+    const fn option(self) -> &'static str {
+        match self {
+            Self::All => "--untracked-files=all",
+            Self::Normal => "--untracked-files=normal",
+        }
+    }
+}
+
+/// The mode that `status.showUntrackedFiles` of the checkout sets: `all` for `all`, and `normal` for each other value.
+///
+/// Git uses the untracked cache of the index only for a status in this mode, because it keeps the cache for the mode of
+/// the setting. A status in the other mode walks each directory of the checkout, which takes minutes in the monorepo.
+fn untracked_mode(root: &Path) -> io::Result<UntrackedMode> {
+    let value = git_text(
+        root,
+        &["config", "--default", "normal", "--get", "status.showUntrackedFiles"],
+        &Git::default(),
+    )?;
+    Ok(if value == "all" {
+        UntrackedMode::All
+    } else {
+        UntrackedMode::Normal
+    })
+}
+
+/// The pathspec bytes of one `git ls-files` command of [`untracked_files`]. Windows limits a command line to 32767
+/// characters.
+const MAX_PATHSPEC_BYTES: usize = 16 * 1024;
+
+/// The untracked files under the untracked directories `dirs` of a normal-mode status, NUL-separated, as
+/// `git status --untracked-files=all` names them. A nested checkout is `dir/`.
+///
+/// `git ls-files --others` reads only the named directories. The [`git`] helper takes `&str` arguments, and only the
+/// unix-only `OsStrExt` makes other bytes an argument. So a directory with a name that is not UTF-8 gives one status in
+/// the mode `all`. Only Unix gives such a name, because git on Windows writes UTF-8.
+fn untracked_files(root: &Path, dirs: &[&[u8]]) -> io::Result<Vec<u8>> {
+    let Some(dirs) = dirs.iter().map(|dir| std::str::from_utf8(dir).ok()).collect::<Option<Vec<&str>>>() else {
+        let status = git(
+            root,
+            &["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames"],
+            &Git::default(),
+        )?;
+        let mut files = Vec::new();
+        for entry in status.split(|byte| *byte == 0).filter(|entry| entry.starts_with(b"?? ")) {
+            files.extend_from_slice(&entry[3..]);
+            files.push(0);
+        }
+        return Ok(files);
+    };
+    let mut files = Vec::new();
+    for part in pathspec_parts(&dirs, MAX_PATHSPEC_BYTES) {
+        let mut args = vec!["--literal-pathspecs", "ls-files", "-z", "--others", "--exclude-standard", "--"];
+        args.extend_from_slice(part);
+        files.extend(git(root, &args, &Git::default())?);
+    }
+    Ok(files)
+}
+
+/// Splits `dirs` into parts in their order. Each part holds at most `limit` bytes, with one separator byte for each
+/// name. A name longer than `limit` is a part of its own.
+fn pathspec_parts<'a>(dirs: &'a [&'a str], limit: usize) -> Vec<&'a [&'a str]> {
+    let mut parts = Vec::new();
+    let mut rest = dirs;
+    while !rest.is_empty() {
+        let mut size = 0;
+        let count = rest
+            .iter()
+            .take_while(|dir| {
+                size += dir.len() + 1;
+                size <= limit
+            })
+            .count()
+            .max(1);
+        parts.push(&rest[..count]);
+        rest = &rest[count..];
+    }
+    parts
+}
+
 /// Runs one git command in `root`, and answers its stdout. An error names the command and gives its stderr.
 ///
 /// `GIT_OPTIONAL_LOCKS=0` keeps `git status` from a refresh of the index, which would take `index.lock` from a commit
@@ -719,8 +808,10 @@ impl Runtime for OsRuntime {
     /// Asks git, not through the injected spawn, for the reason of [`OsRuntime::list_files`].
     ///
     /// A checkout whose `.git` is no file is not a linked work tree, and it costs one stat. A clean linked work tree
-    /// costs one `git status`. With local changes, a copy of the index takes the changed paths that the status names,
-    /// and `git write-tree` writes the tree of the copy. The index of the checkout stays as it was.
+    /// costs one `git status` in the mode of [`untracked_mode`], so git uses the untracked cache of the index. With
+    /// local changes, a copy of the index takes the changed paths, and `git write-tree` writes the tree of the copy.
+    /// The index of the checkout stays as it was. The paths are the paths of `git status --untracked-files=all`:
+    /// [`untracked_files`] lists the files of each untracked directory that the status names.
     ///
     /// Two cases differ from `git add -A`. An untracked nested checkout (`?? dir/`) is left out, where `add -A` would
     /// add a gitlink. A directory replaced by a symbolic link makes `update-index` fail, so the answer is an error.
@@ -738,20 +829,40 @@ impl Runtime for OsRuntime {
                 root.display()
             )));
         };
+        let mode = untracked_mode(root)?;
         let status = git(
             root,
-            &["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames"],
+            &["status", "--porcelain=v1", "-z", mode.option(), "--no-renames"],
             &Git::default(),
         )?;
-        // Each entry is `XY <path>`. A path that ends with `/` is a nested checkout, which `update-index` refuses.
+        // Each entry is `XY <path>`. A path that ends with `/` is an untracked directory in the normal mode, or a
+        // nested checkout, which `update-index` refuses.
+        let mut paths: Vec<&[u8]> = Vec::new();
+        let mut untracked_dirs = Vec::new();
+        for entry in status.split(|byte| *byte == 0) {
+            let Some(path) = entry.get(3..).filter(|path| !path.is_empty()) else {
+                continue;
+            };
+            if !path.ends_with(b"/") {
+                paths.push(path);
+            } else if mode == UntrackedMode::Normal && entry.starts_with(b"??") {
+                untracked_dirs.push(path);
+            }
+        }
+        let listed = untracked_files(root, &untracked_dirs)?;
+        paths.extend(
+            listed
+                .split(|byte| *byte == 0)
+                .filter(|path| !path.is_empty() && !path.ends_with(b"/")),
+        );
+        paths.sort_unstable();
+        paths.dedup();
         let mut input = Vec::new();
         let mut changed = Vec::new();
-        for entry in status.split(|byte| *byte == 0) {
-            if let Some(path) = entry.get(3..).filter(|path| !path.is_empty() && !path.ends_with(b"/")) {
-                input.extend_from_slice(path);
-                input.push(0);
-                changed.push(String::from_utf8_lossy(path).into_owned());
-            }
+        for path in paths {
+            input.extend_from_slice(path);
+            input.push(0);
+            changed.push(String::from_utf8_lossy(path).into_owned());
         }
         if changed.is_empty() {
             return Ok(Some(CheckoutTree {

@@ -851,8 +851,8 @@ fn the_time_line_names_the_parts_of_the_run_and_a_note_for_each_slow_one() {
     assert_eq!(slow[0], "time   bt build 34.8s · check record 48.3s · bazel 30.0s (analysis 20.0s)");
     assert!(slow[1].starts_with("note   bt built itself for 34.8s: "), "{slow:?}");
     assert!(
-        slow[2].starts_with("note   the check record scanned the untracked files of the checkout for 48.3s. ")
-            && slow[2].contains("`git config status.showUntrackedFiles all`"),
+        slow[2].starts_with("note   the check record read the status of the checkout for 48.3s. ")
+            && slow[2].contains("With `core.untrackedCache=true`, one `git status` in the checkout writes that cache"),
         "{slow:?}"
     );
     assert!(slow[3].starts_with("note   bazel spent 20.0s of 30.0s in analysis: "), "{slow:?}");

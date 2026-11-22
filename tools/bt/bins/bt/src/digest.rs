@@ -328,9 +328,9 @@ fn render_time(time: &RunTime) -> Vec<String> {
     }
     if time.check_record_ms >= SLOW_PART_MS {
         lines.push(format!(
-            "note   the check record scanned the untracked files of the checkout for {}. \
-             `git config status.showUntrackedFiles all` in this repository lets git keep its untracked cache for that \
-             scan, so the next scans take seconds",
+            "note   the check record read the status of the checkout for {}. A heavy load of the machine, or an \
+             index without an untracked cache, makes the read slow. With `core.untrackedCache=true`, one `git status` in \
+             the checkout writes that cache into the index",
             format_duration(time.check_record_ms)
         ));
     }

@@ -165,8 +165,10 @@ bt is the only writer. `bins/bt/src/check.rs` holds the rules:
    untracked nested checkout is left out, and a directory replaced by a symbolic link gives a warning and no record.
 3. A local run reads the tree before its first bazel spawn and again after a green result. It records only when both
    are the same tree. A red run, a dry run and a run during which the files changed record nothing. Each read is one
-   `git status --untracked-files=all`. Git keeps its untracked cache only for the mode of `status.showUntrackedFiles`,
-   so in the monorepo a read takes about 1.5 s with `status.showUntrackedFiles=all` and 17-49 s without it.
+   `git status` in the mode of `status.showUntrackedFiles`, because git uses the untracked cache of the index only for
+   that mode. In the normal mode, `git ls-files --others` then lists the files of each untracked directory. The paths
+   are the paths of `git status --untracked-files=all`. A status in the other mode walks each directory of the
+   monorepo and takes minutes.
 4. A record of a tree with local changes names those paths on the stderr. The pick finds the record only for a commit
    of the same files, so commit or delete scratch files before the last check.
 5. A `--host` run records the tree of the commit that the report of `brd-host` names as the one that ran, and the

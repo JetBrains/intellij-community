@@ -482,7 +482,9 @@ fn a_directory_that_cannot_be_listed_is_an_error() {
 
 /// Only a linked work tree has a tree: no git, a main checkout and a host slot answer none. The tree of a clean work
 /// tree is the tree of HEAD. With local changes it is the tree that `git add -A` would stage: a changed file, a new
-/// file, a deleted file, and no ignored file. The index of the work tree stays as it was.
+/// file, the files of a new directory, a deleted file, and no ignored file. A nested checkout is left out, both under
+/// a tracked directory and under a new directory. The answer
+/// is the same in each mode of `status.showUntrackedFiles`. The index of the work tree stays as it was.
 #[test]
 fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
     let Some(dir) = repository_dir() else {
@@ -544,9 +546,20 @@ fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
         ("src/Changed.kt", "after"),
         ("src/with space.kt", "new"),
         ("out/Built.class", "ignored"),
+        ("added/Top.kt", "new"),
+        ("added/deep/File.kt", "new"),
+        ("glob[1]/File.kt", "new"),
+        ("added/out/Built.class", "ignored"),
+        ("added/nested/Inner.kt", "nested"),
+        ("only-nested/nested/Inner.kt", "nested"),
+        ("only-ignored/out/Built.class", "ignored"),
+        ("src/nested/Inner.kt", "nested"),
     ] {
         write_in(repo, path, text);
     }
+    git_in(&repo.join("src/nested"), &["init", "-q"], None);
+    git_in(&repo.join("added/nested"), &["init", "-q"], None);
+    git_in(&repo.join("only-nested/nested"), &["init", "-q"], None);
     std::fs::remove_file(repo.join("src/Deleted.kt")).expect("remove");
     let status = git_in(repo, &["status", "--porcelain"], None);
 
@@ -559,16 +572,35 @@ fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
     let scratch = tempfile::tempdir().expect("a temporary directory");
     let expected_index = scratch.path().join("expected-index");
     git_in(repo, &["read-tree", "HEAD"], Some(&expected_index));
-    git_in(repo, &["add", "-A"], Some(&expected_index));
+    git_in(
+        repo,
+        &[
+            "add",
+            "-A",
+            "--",
+            ".",
+            ":(exclude)src/nested",
+            ":(exclude)added/nested",
+            ":(exclude)only-nested/nested",
+        ],
+        Some(&expected_index),
+    );
     let expected = git_in(repo, &["write-tree"], Some(&expected_index));
     assert_eq!(
         dirty,
         CheckoutTree {
             head,
             tree: expected,
-            changed: ["src/Changed.kt", "src/Deleted.kt", "src/with space.kt"]
-                .map(str::to_owned)
-                .to_vec(),
+            changed: [
+                "added/Top.kt",
+                "added/deep/File.kt",
+                "glob[1]/File.kt",
+                "src/Changed.kt",
+                "src/Deleted.kt",
+                "src/with space.kt",
+            ]
+            .map(str::to_owned)
+            .to_vec(),
         }
     );
     assert_ne!(dirty.tree, head_tree);
@@ -577,6 +609,63 @@ fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
         status,
         "the index of the checkout changed"
     );
+
+    git_in(repo, &["config", "status.showUntrackedFiles", "all"], None);
+    assert_eq!(
+        runtime
+            .checkout_tree()
+            .expect("git reads a changed checkout")
+            .expect("a git checkout"),
+        dirty,
+        "the mode `all` gives another tree"
+    );
+}
+
+/// The pathspecs of the untracked directories go in parts of at most the limit, one separator byte for each name, in
+/// their order. A name over the limit is a part of its own.
+#[test]
+fn the_pathspecs_go_in_parts_of_at_most_the_limit() {
+    assert_eq!(pathspec_parts(&[], 8), Vec::<&[&str]>::new());
+    let dirs = ["a/", "bb/", "ccc/", "dddddddddd/", "e/"];
+    assert_eq!(pathspec_parts(&dirs, 8), [&["a/", "bb/"][..], &["ccc/"], &["dddddddddd/"], &["e/"]]);
+    assert_eq!(pathspec_parts(&dirs, 1024), [&dirs[..]]);
+}
+
+/// A new directory with a name that is not UTF-8 gives the same tree as `git add -A`: the files come from one status in
+/// the mode `all`. Only Linux makes such a name, because macOS and Windows refuse it.
+#[cfg(target_os = "linux")]
+#[test]
+fn a_new_directory_with_a_name_that_is_not_utf8_is_in_the_tree() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+
+    let Some(dir) = repository_dir() else {
+        return;
+    };
+    let main = dir.path().join("main");
+    write_in(&main, "src/Kept.kt", "kept");
+    git_in(&main, &["init", "-q"], None);
+    git_in(&main, &["add", "-A"], None);
+    git_in(&main, &["commit", "-q", "-m", "first"], None);
+    git_in(&main, &["worktree", "add", "-q", "--detach", "../lease"], None);
+    let repo = &dir.path().join("lease");
+    let odd = repo.join(OsStr::from_bytes(b"odd-\xff"));
+    std::fs::create_dir_all(odd.join("deep")).expect("mkdir");
+    std::fs::write(odd.join("deep/File.kt"), "new").expect("write");
+    write_in(repo, "added/Top.kt", "new");
+
+    let tree = OsRuntime::builder(repo)
+        .build()
+        .checkout_tree()
+        .expect("git reads a changed checkout")
+        .expect("a linked work tree");
+
+    let scratch = tempfile::tempdir().expect("a temporary directory");
+    let expected_index = scratch.path().join("expected-index");
+    git_in(repo, &["read-tree", "HEAD"], Some(&expected_index));
+    git_in(repo, &["add", "-A"], Some(&expected_index));
+    assert_eq!(tree.tree, git_in(repo, &["write-tree"], Some(&expected_index)));
+    assert_eq!(tree.changed, ["added/Top.kt", "odd-\u{fffd}/deep/File.kt"]);
 }
 
 /// The kept evidence of a run: a copy creates its directories, a copy of a read-only bazel output is a file the
