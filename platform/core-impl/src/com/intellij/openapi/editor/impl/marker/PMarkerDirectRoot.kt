@@ -631,10 +631,12 @@ class PMarkerDirectRoot private constructor(
    * Each editor is confined to one update.
    */
   private inner class Editor {
+    /** The successor version, or null before the first use of [version]. */
+    private var allocatedVersion: PMarkerNodeVersion? = null
+
     /** Allocates one successor version on first use. */
-    val version: PMarkerNodeVersion by lazy(LazyThreadSafetyMode.NONE) {
-      PMarkerNodeHistory.nextVersion(this@PMarkerDirectRoot.version)
-    }
+    val version: PMarkerNodeVersion
+      get() = allocatedVersion ?: PMarkerNodeHistory.nextVersion(this@PMarkerDirectRoot.version).also { allocatedVersion = it }
 
     private var firstPendingHandle: SnapshotMarkerReference<*>? = null
     private var firstPendingState: PMarkerInvalidNode? = null
