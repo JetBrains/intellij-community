@@ -1498,8 +1498,8 @@ public class RangeMarkerTest {
 
   @PerformanceUnitTest
   @Test
-  public void testRangeHighlighterLinesInRangeForLongLinePerformance() {
-    final int N = 50000;
+  public void testRangeHighlighterLinesInRangeForVeryLongLinePerformance() {
+    int N = 500_000;
     Document document = EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol('x', 2 * N));
 
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
