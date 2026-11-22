@@ -13,6 +13,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -94,8 +95,7 @@ class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingList
 
         if (!doNotAddFoldingAgain) {
           for (String prefix : lastLinePrefix) {
-            if (lineText.startsWith(prefix) && (!prefix.equals("[")) ||
-                (prefix.equals("[") && prevLineText != null && prevLineText.startsWith(PYTHON_PREFIX))) {
+            if (lineText.startsWith(prefix) && (!prefix.equals("[") || isFirstLineOfTwoLineBanner(prevLineText))) {
               finish = document.getLineEndOffset(line);
               finishLine = line;
               doNotAddFoldingAgain = myAddOnce;
@@ -108,13 +108,21 @@ class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingList
       if (myStartFoldRegion != null) {
         foldingModel.removeFoldRegion(myStartFoldRegion);
       }
-      if ((start >= finish) || (startLine == finishLine)) return;
+      if ((start >= finish) || (finishLine <= startLine)) return;
       FoldRegion foldRegion = foldingModel.addFoldRegion(start, finish, placeholderText);
       if (foldRegion != null) {
         foldRegion.setExpanded(false);
         myStartFoldRegion = foldRegion;
       }
     });
+  }
+
+  /**
+   * Whether {@code line} is the first line of a banner of two lines. Such a {@code sys.version} puts the compiler, in
+   * brackets, on the second line, while a banner of one line holds the brackets itself.
+   */
+  private static boolean isFirstLineOfTwoLineBanner(@Nullable String line) {
+    return line != null && line.startsWith(PYTHON_PREFIX) && !line.contains("[");
   }
 
   @Override
