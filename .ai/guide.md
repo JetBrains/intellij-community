@@ -59,7 +59,7 @@ Search the repository with `{{TOOLS_DIR}}/accio.cmd`, not with the `search_*` to
 <!-- IF_EDITION:ULTIMATE -->
 Ask the Product DSL for a plugin model answer, not `rg` or `bazel cquery`: `./bazel.cmd run //platform/buildScripts:plugin-model-tool -- --json='<request>'`. The `plugin-model-analyzer` skill holds the request shapes.
 
-Measure the start-up of an IDE with `{{TOOLS_DIR}}/vm.cmd bench`: its time, its classes and the code that loads them. `{{TOOLS_DIR}}/vm.cmd bench --help` states how.
+`{{TOOLS_DIR}}/vm.cmd bench --help` states how to measure the start-up time and classes of an IDE.
 <!-- /IF_EDITION:ULTIMATE -->
 When JetBrains MCP is available, check the changed files with `lint_files` and fix the warnings of your change, and use `rename_refactoring` instead of a search and replace. An IDE answers from the project that it has open, not from a lease.
 
