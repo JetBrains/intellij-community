@@ -1281,6 +1281,7 @@ f:com.jetbrains.python.psi.impl.PyBuiltinCache
 - f:getIntType():com.jetbrains.python.psi.types.PyClassType
 - f:getListType():com.jetbrains.python.psi.types.PyClassType
 - f:getNoneType():com.jetbrains.python.psi.types.PyClassType
+- f:getNoneTypeOrUnknown():com.jetbrains.python.psi.types.PyType
 - f:getObjectType():com.jetbrains.python.psi.types.PyClassType
 - f:getObjectType(java.lang.String):com.jetbrains.python.psi.types.PyClassType
 - f:getSetType():com.jetbrains.python.psi.types.PyClassType

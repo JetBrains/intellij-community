@@ -78,7 +78,6 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
-import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl;
 import com.jetbrains.python.psi.types.PyNeverType;
 import com.jetbrains.python.psi.types.PyType;
@@ -237,12 +236,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return PyTypingTypeProvider.removeNarrowedTypeIfNeeded(PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType));
   }
 
-  /** The type of `None`, or an unknown type when the project has no builtins. */
-  private @Nullable PyType getNoneTypeOrUnknown() {
-    final PyClassType noneType = PyBuiltinCache.getInstance(this).getNoneType();
-    return noneType != null ? noneType : PyAnyType.getUnknown();
-  }
-
   private static @Nullable PyType derefType(@NotNull Ref<PyType> typeRef, @NotNull PyTypeProvider typeProvider) {
     final PyType type = typeRef.get();
     if (type != null) {
@@ -318,16 +311,16 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (point instanceof PyReturnStatement returnStatement) {
         hasReturn = true;
         final PyExpression expr = returnStatement.getExpression();
-        types.add(expr != null ? context.getType(expr) : getNoneTypeOrUnknown());
+        types.add(expr != null ? context.getType(expr) : PyBuiltinCache.getInstance(this).getNoneTypeOrUnknown());
       }
       else {
-        types.add(getNoneTypeOrUnknown());
+        types.add(PyBuiltinCache.getInstance(this).getNoneTypeOrUnknown());
       }
     }
 
     if ((isGeneratedStub() || PyKnownDecoratorUtil.hasAbstractDecorator(this, context)) && !hasReturn) {
       if (PyUtil.isInitMethod(this)) {
-        return getNoneTypeOrUnknown();
+        return PyBuiltinCache.getInstance(this).getNoneTypeOrUnknown();
       }
       return PyAnyType.getUnknown();
     }

@@ -180,8 +180,13 @@ class PyBuiltinCache private constructor(
   val sliceType: PyClassType?
     get() = getObjectType("slice")
 
+  /** The class type of `None`, or null when `types.NoneType` does not resolve. See also [noneTypeOrUnknown]. */
   val noneType: PyClassType?
     get() = myTypesFile?.getClassType("NoneType") ?: myTypeshedFile?.getClassType("NoneType")
+
+  /** The type of `None`, or Unknown when `types.NoneType` does not resolve. */
+  val noneTypeOrUnknown: PyType?
+    get() = noneType ?: PyAnyType.unknown
 
   val ellipsisType: PyClassType?
     get() = myTypesFile?.getClassType("EllipsisType")

@@ -226,9 +226,9 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return Ref(param.toKeywordContainerType(type) ?: PyAnyType.unknown)
     }
     if (PyNames.NONE == param.defaultValueText) {
-      val noneType = PyBuiltinCache.getInstance(param).noneType
-      if (!type.acceptsNoneDefault(noneType, context.typeContext)) {
-        return Ref(PyUnionType.unionOrUnknown(type, noneType ?: PyAnyType.unknown))
+      val builtinCache = PyBuiltinCache.getInstance(param)
+      if (!type.acceptsNoneDefault(builtinCache.noneType, context.typeContext)) {
+        return Ref(PyUnionType.unionOrUnknown(type, builtinCache.noneTypeOrUnknown))
       }
     }
     if (context.typeContext.maySwitchToAST(param)) {
@@ -590,7 +590,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val isAsync = ASYNC_GENERATOR == qName
         if (!isAsync && GENERATOR != qName) return null
 
-        val noneType: PyType? = PyBuiltinCache.getInstance(type.pyClass).noneType ?: PyAnyType.unknown
+        val noneType: PyType? = PyBuiltinCache.getInstance(type.pyClass).noneTypeOrUnknown
 
         var yieldType: PyType? = PyAnyType.unknown
         var sendType = noneType
@@ -1585,7 +1585,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (typeHint is PyNoneLiteralExpression ||
           typeHint is PyReferenceExpression && PyNames.NONE == typeHint.text
       ) {
-        return Ref(PyBuiltinCache.getInstance(resolved).noneType ?: PyAnyType.unknown)
+        return Ref(PyBuiltinCache.getInstance(resolved).noneTypeOrUnknown)
       }
       return null
     }
@@ -1819,7 +1819,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           if (argExpr != null) {
             argType = getType(argExpr, context).derefOrUnknown()
           }
-          return Ref(PyUnionType.unionOrUnknown(argType, PyBuiltinCache.getInstance(element).noneType ?: PyAnyType.unknown))
+          return Ref(PyUnionType.unionOrUnknown(argType, PyBuiltinCache.getInstance(element).noneTypeOrUnknown))
         }
       }
       return null

@@ -396,7 +396,7 @@ open class PyTypeCheckerInspection : PyInspection() {
           }
 
           val actual =
-            if (returnExpr == null) PyBuiltinCache.getInstance(node).noneType ?: PyAnyType.unknown
+            if (returnExpr == null) PyBuiltinCache.getInstance(node).noneTypeOrUnknown
             else returnExpr.getType(myTypeEvalContext)
           if (!matchesExpectedType(expected, actual, returnExpr, null)) {
             if (returnExpr != null) {
@@ -1040,7 +1040,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       if (hasExplicitType(node)) {
         val annotation = node.annotation
         val expected: PyType? = getExpectedReturnStatementType(node, myTypeEvalContext)
-        val noneType: PyType? = PyBuiltinCache.getInstance(node).noneType ?: PyAnyType.unknown
+        val noneType: PyType? = PyBuiltinCache.getInstance(node).noneTypeOrUnknown
         val returnsNone = expected.isNoneType
         val returnsOptional = match(expected, noneType, myTypeEvalContext)
 
