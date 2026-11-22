@@ -29,6 +29,7 @@ public final class DiffTree<OldNode, NewNode> {
   private final int myNewTreeStart;
   private char[] myOldChunk;
   private char[] myNewChunk;
+  private final int myOldRootLength;
 
   /**
    * The old text from {@code myMatchedOldStart} to {@code myMatchedOldEnd} is equal to the new text that starts {@code myMatchedShift} chars later.
@@ -54,6 +55,8 @@ public final class DiffTree<OldNode, NewNode> {
     myOldTreeStart = oldTree.getStartOffset(oldTree.getRoot());
     myNewText = newTree.toString(newTree.getRoot());
     myNewTreeStart = newTree.getStartOffset(newTree.getRoot());
+    myOldRootLength = oldTree.getEndOffset(oldTree.getRoot()) - myOldTreeStart;
+    assert oldText.length() == myOldRootLength : "old text length " + oldText.length() + " != old root length " + myOldRootLength;
   }
 
   /**
@@ -63,7 +66,7 @@ public final class DiffTree<OldNode, NewNode> {
    * @param newTree the tree representing the new state
    * @param comparator the comparator used to determine equality between nodes
    * @param consumer the consumer to report changes detected during the diff operation
-   * @param oldText the textual content of the old tree state, used for comparison purposes
+   * @param oldText the text of the old root, from its start offset to its end offset
    */
   public static <OldNode, NewNode> void diff(@NotNull FlyweightCapableTreeStructure<OldNode> oldTree,
                                              @NotNull FlyweightCapableTreeStructure<NewNode> newTree,

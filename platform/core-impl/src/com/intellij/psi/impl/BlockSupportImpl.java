@@ -394,7 +394,13 @@ public final class BlockSupportImpl extends BlockSupport {
                                    @NotNull FlyweightCapableTreeStructure<T> newTreeStructure,
                                    @NotNull ProgressIndicator indicator,
                                    @NotNull CharSequence lastCommittedText) {
-    DiffTree.diff(createInterruptibleASTStructure(oldRoot, indicator), newTreeStructure, comparator, builder, lastCommittedText);
+    ASTStructure oldTreeStructure = createInterruptibleASTStructure(oldRoot, indicator);
+    int oldRootStart = oldTreeStructure.getStartOffset(oldRoot);
+    int oldRootEnd = oldTreeStructure.getEndOffset(oldRoot);
+    CharSequence oldRootText = oldRootEnd - oldRootStart == lastCommittedText.length()
+                               ? lastCommittedText
+                               : lastCommittedText.subSequence(oldRootStart, oldRootEnd);
+    DiffTree.diff(oldTreeStructure, newTreeStructure, comparator, builder, oldRootText);
   }
 
   private static @NotNull ASTStructure createInterruptibleASTStructure(@NotNull ASTNode oldRoot, @NotNull ProgressIndicator indicator) {
