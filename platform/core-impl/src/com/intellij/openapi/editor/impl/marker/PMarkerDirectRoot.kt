@@ -18,7 +18,7 @@ import java.util.function.Consumer
 
 /**
  * Stores one persistent AVL snapshot with direct child links.
- * The tree retains valid nodes. [invalids] retains invalid states and removal tombstones.
+ * The tree retains valid nodes. [invalids] retains invalid states. Removal records [PMarkerNodeHistory.removedState] in the histories.
  * Handles select positions and invalid states through weak histories for [version].
  * Updates copy changed paths. Position changes publish histories after the new root retains the resulting tree.
  *
@@ -26,7 +26,7 @@ import java.util.function.Consumer
  *
  * @property version the revision used for state and parent lookup.
  * @property root the valid subtree, or null when this snapshot has no valid markers.
- * @property invalids the invalid and removed states retained by this snapshot, keyed by handle ID.
+ * @property invalids the invalid states retained by this snapshot, keyed by handle ID.
  * @property resolutionCacheIdentity the token shared by roots with unchanged marker offsets and validity.
  * @property cachedResolutions the valid resolutions already checked for this snapshot.
  * Only roots with the same resolution identity share it.
@@ -304,7 +304,6 @@ class PMarkerDirectRoot private constructor(
 
   override fun remove(handle: SnapshotMarkerReference<*>): PMarkerDirectRoot = keepingRootAlive {
     val previous = state(handle) ?: return@keepingRootAlive this
-    if (previous is PMarkerInvalidNode && previous.reason == 0) return@keepingRootAlive this
     val offsets = resolveState(previous)
     if (PMarkerResolution.isAbsent(offsets)) return@keepingRootAlive this
     val editor = Editor()
@@ -312,7 +311,7 @@ class PMarkerDirectRoot private constructor(
       editor.delete(root, TextRangeScalarUtil.startOffset(offsets), previous.handle)
     }
     else root
-    editor.recordInvalid(handle, 0, 0)
+    editor.recordRemoval(handle)
     val resolutionUpdate = if (previous is PMarkerValidNode) {
       PMarkerResolutionUpdate(
         resolutionCacheIdentity, TextRangeScalarUtil.startOffset(offsets), TextRangeScalarUtil.endOffset(offsets), 0,
@@ -323,7 +322,7 @@ class PMarkerDirectRoot private constructor(
     editor.finish(result, resolutionUpdate = resolutionUpdate)
   }
 
-  /** Removes each distinct handle in one version and discards its entry from [invalids]. */
+  /** Purges each distinct handle in one version. A purge also replaces a removal and discards the entry from [invalids]. */
   override fun purgeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerDirectRoot = keepingRootAlive {
     if (handles.isEmpty()) return@keepingRootAlive this
     val editor = Editor()
@@ -332,9 +331,12 @@ class PMarkerDirectRoot private constructor(
     val processed = HashSet<SnapshotMarkerReference<*>>()
     for (handle in handles) {
       if (!processed.add(handle)) continue
-      val previous = state(handle) ?: continue
-      val offsets = resolveState(previous)
-      if (previous is PMarkerValidNode) {
+      val previous = state(handle)
+      if (previous == null) {
+        if (!isRemoved(handle)) continue
+      }
+      else if (previous is PMarkerValidNode) {
+        val offsets = resolveState(previous)
         if (!PMarkerResolution.isValid(offsets)) continue
         result = editor.delete(result, TextRangeScalarUtil.startOffset(offsets), handle)
       }
@@ -346,7 +348,7 @@ class PMarkerDirectRoot private constructor(
 
   /**
    * Merges valid markers from another root.
-   * Existing valid markers and invalid or removed states in this root take precedence.
+   * Existing valid markers, invalid states and removals in this root take precedence.
    */
   override fun mergeValidMarkersFrom(other: PMarkerRoot): PMarkerDirectRoot = keepingRootAlive {
     if (other is PMarkerDirectRoot && (other.root == null || root === other.root)) return@keepingRootAlive this
@@ -354,7 +356,7 @@ class PMarkerDirectRoot private constructor(
     var result = root
     other.processAllRangeMarkers { entry, delta ->
       val handle = entry.handle
-      if (invalids.getUnchecked(handle.id) == null && !isValid(handle)) {
+      if (invalids.getUnchecked(handle.id) == null && !isRemoved(handle) && !isValid(handle)) {
         result = editor.insert(result, entry.shifted(delta))
       }
       true
@@ -538,13 +540,16 @@ class PMarkerDirectRoot private constructor(
 
   /**
    * Reads this version's history for a handle.
-   * An invalid or removed state must also appear by identity in [invalids].
+   * An invalid state must also appear by identity in [invalids], so a removal reads as null.
    * Tree entries supply the current metadata. Callers must check whether a valid position belongs to this root.
    */
   private fun state(handle: SnapshotMarkerReference<*>): PMarkerNodeState? {
     val state = handle.states.get(version)
     return if (state is PMarkerInvalidNode && invalids.getUnchecked(handle.id) !== state) null else state
   }
+
+  /** Whether [remove] removed [handle] in this version or an earlier one, and no later record replaces the removal. */
+  private fun isRemoved(handle: SnapshotMarkerReference<*>): Boolean = handle.states.get(version) === PMarkerNodeHistory.removedState
 
   /**
    * Resolves absolute offsets by summing lazy shifts along versioned parents.
@@ -642,7 +647,7 @@ class PMarkerDirectRoot private constructor(
     private var firstPendingState: PMarkerInvalidNode? = null
     private var additionalPendingStates: MutableMap<SnapshotMarkerReference<*>, PMarkerInvalidNode>? = null
 
-    /** Builds the map of invalid and removed states for this version from the existing [invalids]. */
+    /** Builds the map of invalid states for this version from the existing [invalids]. */
     private var invalidsBuilder: PersistentLongMapBuilder<PMarkerInvalidNode>? = null
 
     private fun editInvalids(): PersistentLongMapBuilder<PMarkerInvalidNode> =
@@ -673,6 +678,12 @@ class PMarkerDirectRoot private constructor(
 
     fun recordPurge(handle: SnapshotMarkerReference<*>) {
       recordPendingState(handle, PMarkerNodeHistory.purgedState)
+      removeInvalid(handle.id)
+    }
+
+    /** Records a removal for this version. Unlike [recordInvalid], it leaves no entry in [invalids]. */
+    fun recordRemoval(handle: SnapshotMarkerReference<*>) {
+      recordPendingState(handle, PMarkerNodeHistory.removedState)
       removeInvalid(handle.id)
     }
 
@@ -716,8 +727,8 @@ class PMarkerDirectRoot private constructor(
       val handle = entry.handle
       var existing = state(handle)
       if (existing is PMarkerValidNode && !isValid(handle)) existing = null
-      require(existing == null || existing is PMarkerInvalidNode && existing.reason == 0) { "The marker already exists" }
-      assert(existing == null) { "The marker handle must not be reused" }
+      require(existing == null) { "The marker already exists" }
+      assert(!isRemoved(handle)) { "The marker handle must not be reused" }
       return insertNode(root, entry)
     }
 
@@ -908,14 +919,14 @@ class PMarkerDirectRoot private constructor(
       }
     }
 
-    /** Records an invalid state or removal tombstone for this version. A zero [reason] marks removal. */
+    /** Records an invalid state for this version. [reason] is the negative code from [MarkerTransformResult.range]. */
     fun recordInvalid(handle: SnapshotMarkerReference<*>, range: Long, reason: Int) {
       val state = PMarkerInvalidNode(range, reason)
       recordPendingState(handle, state)
       editInvalids().put(handle.id, state)
     }
 
-    /** Creates a root that retains the final tree and invalid and removed states, then publishes their weak histories. */
+    /** Creates a root that retains the final tree and invalid states, then publishes the weak histories. */
     fun finish(
       node: PMarkerNode?,
       resolutionUpdate: PMarkerResolutionUpdate? = null,

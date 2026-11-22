@@ -417,6 +417,12 @@ internal class PMarkerNodeHistory<T : Any> {
     val purgedState: PMarkerInvalidNode = PMarkerInvalidNode(0, 0)
 
     /**
+     * Keeps removal records alive, as [purgedState] does for purge records.
+     * Unlike a purge, a removal stops a merge from restoring the marker.
+     */
+    val removedState: PMarkerInvalidNode = PMarkerInvalidNode(0, 0)
+
+    /**
      * Extends the branch of [previous] if [previous] is still its tip. Otherwise, starts a new branch at [previous].
      * Each allocation also processes a bounded number of collection notifications.
      */
