@@ -22,4 +22,11 @@ class FindInFilesArgumentTest {
     assertEquals(FindInFilesArgument("/work/p", true, listOf("foo")), parseFindInFilesArgument("-directory=/work/p -headless foo"))
     assertEquals(FindInFilesArgument(null, true, listOf("foo", "bar")), parseFindInFilesArgument("-headless foo;bar"))
   }
+
+  @Test
+  fun `the project option names the base path of the project to search in`() {
+    assertEquals(FindInFilesArgument(null, true, listOf("foo"), "/work/project"), parseFindInFilesArgument("-headless -project=/work/project foo"))
+    assertEquals(FindInFilesArgument("/work/project/platform", true, listOf("foo"), "/work/project"),
+                 parseFindInFilesArgument("-project=/work/project -headless -directory=/work/project/platform foo"))
+  }
 }
