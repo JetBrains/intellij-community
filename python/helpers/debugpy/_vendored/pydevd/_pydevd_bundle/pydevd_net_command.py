@@ -186,7 +186,9 @@ class NetCommand(_BaseNetCommand):
                 out_message += text.replace("\n", " ")
                 try:
                     pydev_log.critical("%s\n", out_message)
-                except:
+                except Exception:
+                    # JetBrains extension (PY-92486): a bare except also dropped the KeyboardInterrupt of a Debug Console
+                    # command whose output this traces, so Ctrl+C did nothing while the debugger logs were on.
                     pass
             finally:
                 cls._showing_debug_info -= 1

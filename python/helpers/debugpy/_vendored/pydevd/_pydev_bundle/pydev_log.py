@@ -193,7 +193,9 @@ def _pydevd_log(level, msg, *args):
                 _LoggingGlobals._debug_stream.write(msg)
 
             _LoggingGlobals._debug_stream.flush()
-        except:
+        except Exception:
+            # JetBrains extension (PY-92486): a bare except also dropped the KeyboardInterrupt of a Debug Console
+            # command whose output is logged here, so Ctrl+C did nothing while the debugger logs were on.
             pass
         return True
 
