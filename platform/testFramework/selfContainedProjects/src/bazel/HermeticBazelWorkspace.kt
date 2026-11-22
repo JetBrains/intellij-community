@@ -40,6 +40,9 @@ class HermeticBazelWorkspace private constructor(
   companion object {
     private const val SHUTDOWN_TIMEOUT_SECONDS = 60L
 
+    /** `TEST_TMPDIR` of an outer `bazel test` makes Bazel idle out after 15 s; [close] runs `bazel shutdown`. */
+    private const val MAX_IDLE_SECONDS = 3600
+
     /**
      * Writes the offline `.bazelrc` of [workspace] and creates the output directories under [outputRoot].
      *
@@ -75,6 +78,7 @@ class HermeticBazelWorkspace private constructor(
         add("common --repository_cache=${bazelRcPath(cache.repositoryCache)}")
         addAll(javaToolchainBazelRc(javaRuntimeVersion, javaLanguageVersion))
         addAll(outputBazelRc(outputBase, outputUserRoot))
+        add("startup --max_idle_secs=$MAX_IDLE_SECONDS")
       }
       return lines.joinToString("\n")
     }
