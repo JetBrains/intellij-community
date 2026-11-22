@@ -984,6 +984,21 @@ open class EditorsSplitters internal constructor(
   internal open val isSingletonEditorInWindow: Boolean
     get() = false
 
+  /**
+   * `true` when another component shows the tabs of these splitters. Each window then hides its own tab row, also after a
+   * new tab, a reopen, a split and a settings change, see [EditorWindow.updateTabsVisibility].
+   */
+  @Internal
+  var isTabRowHidden: Boolean = false
+    @RequiresEdt
+    set(value) {
+      if (field == value) return
+      field = value
+      for (window in windows) {
+        window.updateTabsVisibility()
+      }
+    }
+
   internal open fun afterFileClosed(file: VirtualFile) {
     cancelEmptyStateComponentCreation()
     if (showEmptyText()) {

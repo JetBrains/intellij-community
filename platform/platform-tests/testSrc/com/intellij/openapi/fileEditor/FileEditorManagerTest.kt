@@ -1425,6 +1425,41 @@ class FileEditorManagerTest {
   }
 
   @Test
+  fun testHiddenTabRowOfSplitters(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val splitters = manager.mainSplitters
+    try {
+      val file = openSourceFile("1.txt")
+      val primaryWindow = currentWindow()
+      splitters.isTabRowHidden = true
+      assertThat(primaryWindow.tabbedPane.editorTabs.isHideTabs).describedAs("the tab row after the flag is set").isTrue()
+
+      // a reopen of the selected file gives no event of the editor manager
+      manager.openFile(file, true)
+      assertThat(primaryWindow.tabbedPane.editorTabs.isHideTabs).describedAs("the tab row after a reopen of the selected file").isTrue()
+
+      openSourceFile("2.txt")
+      assertThat(primaryWindow.tabbedPane.editorTabs.isHideTabs).describedAs("the tab row after a new tab").isTrue()
+
+      primaryWindow.split(SwingConstants.VERTICAL, true, null, true)
+      val secondaryWindow = nextWindow(primaryWindow)
+      assertThat(secondaryWindow.tabbedPane.editorTabs.isHideTabs).describedAs("the tab row of a new split window").isTrue()
+
+      splitters.uiSettingsChanged(UISettings.getInstance())
+      assertThat(splitters.windows().map { it.tabbedPane.editorTabs.isHideTabs }.toList())
+        .describedAs("the tab rows after a settings change")
+        .containsOnly(true)
+
+      splitters.isTabRowHidden = false
+      assertThat(splitters.windows().map { it.tabbedPane.editorTabs.isHideTabs }.toList())
+        .describedAs("the tab rows after the flag is cleared")
+        .containsOnly(false)
+    }
+    finally {
+      splitters.isTabRowHidden = false
+    }
+  }
+
+  @Test
   fun testStoringCaretStateForFileWithFoldingsWithNoTabs(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     UISettings.getInstance().editorTabPlacement = UISettings.TABS_NONE
     val file = getSourceFile("Test.java")
