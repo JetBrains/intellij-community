@@ -324,6 +324,66 @@ fn checkout_with_a_license() -> (TempDir, PathBuf) {
     (root, session)
 }
 
+/// Runs `git` with `args`, with a fixed identity and without the signing and the hooks of the user.
+#[cfg(target_os = "macos")]
+fn git(args: &[&str]) {
+    let status = std::process::Command::new("git")
+        .args(["-c", "user.name=bench", "-c", "user.email=bench@localhost"])
+        .args(["-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null"])
+        .args(args)
+        .status()
+        .expect("git");
+    assert!(status.success(), "git {args:?}: {status}");
+}
+
+/// A root that is a linked worktree without a license, and a main checkout `main` with a license, in the second
+/// directory.
+#[cfg(target_os = "macos")]
+fn linked_worktree_without_a_license() -> (TempDir, TempDir) {
+    let root = tempfile::tempdir().expect("a temporary root");
+    let directory = tempfile::tempdir().expect("a temporary directory");
+    let main = text(&directory.path().join("main"));
+    git(&["init", "--quiet", &main]);
+    git(&["-C", &main, "commit", "--quiet", "--allow-empty", "--message", "base"]);
+    git(&["-C", &main, "worktree", "add", "--quiet", "--detach", &text(root.path())]);
+    let license = directory.path().join("main").join(crate::bench::session::LICENSE_FILE);
+    std::fs::create_dir_all(license.parent().expect("a parent")).expect("the license directory");
+    std::fs::write(&license, "key").expect("a license");
+    (root, directory)
+}
+
+/// A linked worktree without a license takes the license of its main checkout, and the session names it.
+#[cfg(target_os = "macos")]
+#[tokio::test]
+async fn a_linked_worktree_without_a_license_takes_the_license_of_its_main_checkout() {
+    let (root, directory) = linked_worktree_without_a_license();
+    let license_file = crate::bench::session::LICENSE_FILE;
+    let path = std::env::var("PATH").unwrap_or_default();
+    let session = text(&root.path().join("session"));
+    let argv = ["bench", "welcome", "--max-load", "0.001", "--session", &session, "--text"];
+    let answer = invoke_with(&root, &argv, &[("PATH", &path)]).await;
+    assert_eq!(answer.exit, Exit::TEMP_FAIL, "the license check passes: {}", answer.stderr);
+    let note = answer
+        .stderr
+        .lines()
+        .find_map(|line| line.strip_prefix("vm: license "))
+        .unwrap_or_else(|| panic!("no license note: {}", answer.stderr));
+    assert!(note.ends_with(&format!("/main/{license_file}")), "{note}");
+
+    // Without a license in the main checkout, the refusal names both paths that the session checked.
+    std::fs::remove_file(directory.path().join("main").join(license_file)).expect("a removal");
+    let answer = invoke_with(&root, &["bench", "welcome", "--json"], &[("PATH", &path)]).await;
+    assert_eq!(answer.exit, Exit::USAGE, "{}", answer.stderr);
+    let error = &envelope(&answer.stderr)["error"];
+    assert_eq!(error["code"], "license_missing");
+    let message = error["message"].as_str().unwrap_or_default();
+    let root_name = root.path().file_name().expect("a name").to_string_lossy();
+    assert!(message.starts_with("no license at "), "{message}");
+    assert!(message.contains(&format!("/{root_name}/{license_file} or at ")), "{message}");
+    assert!(message.contains(&format!("/main/{license_file}: an unlicensed IDE")), "{message}");
+    assert!(message.ends_with("start the dev IDE once and register it"), "{message}");
+}
+
 /// A session on a host above `--max-load` is the refusal `host_busy` before the lock and the build. Any live macOS
 /// host has a 1-minute load above 0.001.
 #[cfg(target_os = "macos")]

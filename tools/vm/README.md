@@ -266,6 +266,8 @@ the `.dist` directory, the dist config and `OpenedPackages.txt`. The home in the
 three inputs is the key, so a generation that exists is reused. Its files are read-only. Its `generation.json`
 names the commit of the checkout that built it. A run starts from the home that the dist config names: the `.dist`
 directory, or its `Contents` for a macOS app.
+The sandbox template takes the license `out/dev-data/idea/config/idea.key` of the checkout, or of the main checkout when
+the checkout is a linked worktree without a license.
 
 `--generation` takes the start of a digest and runs the session over that generation, with no build and no stage. The
 session names the commit that built the generation, so `ls` and `compare` show the commit of the measured bytes. An

@@ -11,6 +11,7 @@ use avl_host_sys::guest::ensure_host_paths;
 use avl_host_sys::lock::{LockGuard, LockManager};
 use avl_host_sys::{Ctx, Runner, SpawnOptions};
 use avl_wire::progress::Event;
+use avl_wire::worktree::linked_worktree_main_root;
 use jiff::tz::TimeZone;
 use serde_json::json;
 
@@ -103,6 +104,30 @@ fn session_failed(message: impl Into<String>) -> Refusal {
 
 fn working_dir() -> Result<PathBuf, Refusal> {
     std::env::current_dir().map_err(|error| session_failed(format!("cannot read the working directory: {error}")))
+}
+
+/// The license of the checkout `repo`. When `repo` is a linked worktree without a license, the license at the same
+/// path in its main checkout.
+fn find_license(repo: &Path) -> Result<PathBuf, Refusal> {
+    let mut checked = vec![repo.join(session::LICENSE_FILE)];
+    if let Some(main) = std::fs::read_to_string(repo.join(".git"))
+        .ok()
+        .and_then(|dot_git| linked_worktree_main_root(repo, &dot_git))
+    {
+        checked.push(main.join(session::LICENSE_FILE));
+    }
+    if let Some(license) = checked.iter().find(|license| license.exists()) {
+        return Ok(license.clone());
+    }
+    let paths: Vec<String> = checked.iter().map(|license| license.display().to_string()).collect();
+    Err(Refusal::new(
+        "license_missing",
+        Exit::USAGE,
+        format!(
+            "no license at {}: an unlicensed IDE shows a dialog instead of the welcome screen; start the dev IDE once and register it",
+            paths.join(" or at ")
+        ),
+    ))
 }
 
 impl Bench<'_> {
@@ -234,17 +259,8 @@ impl Bench<'_> {
         for warning in &warnings {
             self.reporter.note(format!("warning: {warning}"), None);
         }
-        let license = repo.join(session::LICENSE_FILE);
-        if !license.exists() {
-            return Err(Refusal::new(
-                "license_missing",
-                Exit::USAGE,
-                format!(
-                    "no license at {}: an unlicensed IDE shows a dialog instead of the welcome screen; start the dev IDE once and register it",
-                    license.display()
-                ),
-            ));
-        }
+        let license = find_license(&repo)?;
+        self.reporter.note(format!("license {}", license.display()), None);
         let host_load = load::read(ctx, self.runner).await;
         if host_load.is_none() {
             self.reporter
