@@ -17,7 +17,17 @@ final class CpuTimings {
 
   private static final Mandelbrot MANDELBROT = new Mandelbrot(765);
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  /**
+   * The number of steps in a row without a new minimum, after which the minimum is stable.
+   */
+  private static final int STABLE_STEPS = 100;
+
+  /**
+   * The wall time limit of {@link #calcStableCpuTiming()}.
+   * When the limit stops the calibration, the result is the minimum found until then.
+   */
+  private static final long TIME_LIMIT_MS = 5_000;
+
   static long calcStableCpuTiming() {
     long start = System.currentTimeMillis();
 
@@ -30,8 +40,14 @@ final class CpuTimings {
         minTime = time;
         minIteration = i;
       }
-      else if (i - minIteration > 100) {
+      else if (i - minIteration > STABLE_STEPS) {
         LOG.debug("CPU timing rating: " + minTime + " (calculated in " + (System.currentTimeMillis() - start) + "ms)");
+        return minTime;
+      }
+
+      long elapsed = System.currentTimeMillis() - start;
+      if (elapsed >= TIME_LIMIT_MS) {
+        LOG.info("CPU timing rating: " + minTime + " (not stable after " + (i + 1) + " steps in " + elapsed + "ms)");
         return minTime;
       }
     }
