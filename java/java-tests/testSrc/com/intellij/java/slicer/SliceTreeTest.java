@@ -6,6 +6,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -58,6 +59,7 @@ import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaC
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -75,20 +77,9 @@ public class SliceTreeTest {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile(name + ".java");
     return EdtTestUtil.runInEdtAndGet(() -> {
-      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-      PsiElement element = SliceHandler.create(true).getExpressionAtCaret(myFixture.getEditor(), myFixture.getFile());
-      assertNotNull(element);
-      Collection<HighlightInfo> errors = myFixture.doHighlighting(HighlightSeverity.ERROR);
-      assertThat(errors).isNullOrEmpty();
-
-      SliceAnalysisParams params = new SliceAnalysisParams();
-      params.scope = new AnalysisScope(myFixture.getProject());
-      params.dataFlowToThis = true;
-
-      SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
-
+      SliceRootNode root = createRoot(myFixture);
       ToolWindowHeadlessManagerImpl.MockToolWindow toolWindow = new ToolWindowHeadlessManagerImpl.MockToolWindow(myFixture.getProject());
-      SlicePanel panel = new SlicePanel(myFixture.getProject(), true, new SliceRootNode(myFixture.getProject(), new DuplicateMap(), usage), false, toolWindow) {
+      SlicePanel panel = new SlicePanel(myFixture.getProject(), true, root, false, toolWindow) {
         @Override
         public boolean isAutoScroll() {
           return false;
@@ -112,6 +103,21 @@ public class SliceTreeTest {
     });
   }
 
+  private static SliceRootNode createRoot(LightJavaCodeInsightTestFixture fixture) {
+    PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments();
+    PsiElement element = SliceHandler.create(true).getExpressionAtCaret(fixture.getEditor(), fixture.getFile());
+    assertNotNull(element);
+    Collection<HighlightInfo> errors = fixture.doHighlighting(HighlightSeverity.ERROR);
+    assertThat(errors).isNullOrEmpty();
+
+    SliceAnalysisParams params = new SliceAnalysisParams();
+    params.scope = new AnalysisScope(fixture.getProject());
+    params.dataFlowToThis = true;
+
+    SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
+    return new SliceRootNode(fixture.getProject(), new DuplicateMap(), usage);
+  }
+
   private static void expandNodesTo(SliceNode node, List<? super SliceNode> to) {
     node.update();
     node.calculateDupNode();
@@ -125,9 +131,9 @@ public class SliceTreeTest {
   @Test
   public void testTypingDoesNotInterfereWithDuplicates() {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
-    SliceTreeStructure treeStructure = configureTree("DupSlice");
+    myFixture.configureByFile("DupSlice.java");
     EdtTestUtil.runInEdtAndWait(() -> {
-      SliceNode root = treeStructure.getRootElement();
+      SliceRootNode root = createRoot(myFixture);
       List<SliceNode> nodes = new ArrayList<>();
       expandNodesTo(root, nodes);
 
@@ -139,7 +145,10 @@ public class SliceTreeTest {
           assertTrue(element instanceof PsiParameter && "i".equals(((PsiParameter)element).getName()) || element instanceof PsiLiteralExpression);
         }
       }
+      assertFalse(hasDups.isEmpty(), "The slice must contain duplicates before editing");
 
+      Document document = myFixture.getEditor().getDocument();
+      String originalText = document.getText();
       myFixture.type("   xx");
       PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
       backspace();
@@ -150,6 +159,7 @@ public class SliceTreeTest {
       PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
       backspace();
       PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      assertEquals(originalText, document.getText());
 
       nodes.clear();
       expandNodesTo(root, nodes);
