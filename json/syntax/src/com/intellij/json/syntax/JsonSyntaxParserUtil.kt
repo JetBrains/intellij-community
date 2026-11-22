@@ -10,8 +10,6 @@ import com.intellij.platform.syntax.parser.ProductionResult
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.prepareProduction
 import com.intellij.platform.syntax.util.log.logger
-import com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil.areBracesBalancedInside
-import com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil.isBalancedBlock
 import com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil.parseBlockLazy
 import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 import com.intellij.platform.syntax.util.runtime.SyntaxRuntimeBundle
@@ -84,32 +82,58 @@ fun shallowParseArray(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
   }
 }
 
-fun isObjectReparseable(tokenList: TokenList, cancellationProvider: CancellationProvider): Boolean {
-  return isBalancedBlock(
-    leftBrace = JsonSyntaxElementTypes.L_CURLY,
-    rightBrace = JsonSyntaxElementTypes.R_CURLY,
-    cancellationProvider = cancellationProvider,
-    tokenList = tokenList,
-  ) && areBracesBalancedInside(
-    tokenList = tokenList,
-    leftBrace = JsonSyntaxElementTypes.L_BRACKET,
-    rightBrace = JsonSyntaxElementTypes.R_BRACKET,
-    cancellationProvider = cancellationProvider,
-  )
+/** Checks that [tokenList] is one object with correctly nested braces and brackets. */
+fun isObjectReparseable(tokenList: TokenList, cancellationProvider: CancellationProvider): Boolean =
+  isJsonBlock(tokenList, JsonSyntaxElementTypes.L_CURLY, cancellationProvider)
+
+/** Checks that [tokenList] is one array with correctly nested braces and brackets. */
+fun isArrayReparseable(tokenList: TokenList, cancellationProvider: CancellationProvider): Boolean =
+  isJsonBlock(tokenList, JsonSyntaxElementTypes.L_BRACKET, cancellationProvider)
+
+private fun isJsonBlock(tokenList: TokenList, open: SyntaxElementType, cancellationProvider: CancellationProvider): Boolean {
+  val checker = JsonBlockChecker(open, cancellationProvider)
+  for (i in 0 until tokenList.tokenCount) {
+    if (!checker.add(tokenList.getTokenType(i))) return false
+  }
+  return checker.isBlock
 }
 
-fun isArrayReparseable(tokenList: TokenList, cancellationProvider: CancellationProvider): Boolean {
-  return isBalancedBlock(
-    leftBrace = JsonSyntaxElementTypes.L_BRACKET,
-    rightBrace = JsonSyntaxElementTypes.R_BRACKET,
-    cancellationProvider = cancellationProvider,
-    tokenList = tokenList,
-  ) && areBracesBalancedInside(
-    tokenList = tokenList,
-    leftBrace = JsonSyntaxElementTypes.L_CURLY,
-    rightBrace = JsonSyntaxElementTypes.R_CURLY,
-    cancellationProvider = cancellationProvider,
-  )
+/**
+ * Checks that a sequence of tokens is one object or one array with correctly nested braces and brackets.
+ *
+ * The sequence starts with [open] and ends with its closing token.
+ * Give each token to [add] in the order of the text, then read [isBlock].
+ */
+class JsonBlockChecker(private val open: SyntaxElementType, private val cancellationProvider: CancellationProvider) {
+  private val stack = ArrayList<SyntaxElementType>()
+  private var tokenCount = 0
+  private var isClosed = false
+  private var isBroken = false
+
+  /** True if the tokens so far are one complete block. */
+  val isBlock: Boolean
+    get() = isClosed && !isBroken
+
+  /**
+   * Adds the next token. A null [type] is a token that is no brace and no bracket.
+   *
+   * @return false if no continuation of the tokens can make one block
+   */
+  fun add(type: SyntaxElementType?): Boolean {
+    if (isBroken) return false
+    if (tokenCount++ % 100 == 0) cancellationProvider.checkCancelled()
+    if (isClosed || tokenCount == 1 && type !== open) {
+      isBroken = true
+      return false
+    }
+    when (type) {
+      JsonSyntaxElementTypes.L_CURLY, JsonSyntaxElementTypes.L_BRACKET -> stack.add(type)
+      JsonSyntaxElementTypes.R_CURLY -> isBroken = stack.removeLastOrNull() !== JsonSyntaxElementTypes.L_CURLY
+      JsonSyntaxElementTypes.R_BRACKET -> isBroken = stack.removeLastOrNull() !== JsonSyntaxElementTypes.L_BRACKET
+    }
+    isClosed = stack.isEmpty()
+    return !isBroken
+  }
 }
 
 private const val JSON_PARSING_MAX_RECURSION_DEPTH: Int = 1000

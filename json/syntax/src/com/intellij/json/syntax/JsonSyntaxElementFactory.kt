@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.syntax
 
+import com.intellij.json.syntax.json5.Json5SyntaxLexer
 import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.LazyParsingContext
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
+import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parser.ProductionResult
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.tree.SyntaxNode
@@ -39,12 +42,22 @@ private fun lazySyntaxElementType(
   isReparseable: (TokenList, CancellationProvider) -> Boolean,
   parse: (SyntaxTreeBuilder, Int) -> ProductionResult,
 ): SyntaxElementType = SyntaxElementType(debugName = name, lazyParser = object : com.intellij.platform.syntax.LazyParser {
-  override fun canBeReparsedIncrementally(parsingContext: LazyParsingContext): Boolean =
-    isReparseable(parsingContext.tokenList, parsingContext.cancellationProvider)
+  /** Checks the new tokens and the old text of the node. */
+  override fun canBeReparsedIncrementally(parsingContext: LazyParsingContext): Boolean {
+    val cancellationProvider = parsingContext.cancellationProvider
+    if (!isReparseable(parsingContext.tokenList, cancellationProvider)) return false
+    val oldTokens = performLexing(parsingContext.text, lexerOf(parsingContext.node), cancellationProvider, null)
+    return isReparseable(oldTokens, cancellationProvider)
+  }
 
   override fun parse(parsingContext: LazyParsingContext): ProductionResult =
     parse(parsingContext.syntaxTreeBuilder, parsingContext.node.depth)
 })
+
+private fun lexerOf(node: SyntaxNode): Lexer =
+  if (node.language?.id == JSON5_LANGUAGE_ID) Json5SyntaxLexer() else JsonSyntaxLexer()
+
+private const val JSON5_LANGUAGE_ID = "JSON5"
 
 private val SyntaxNode.depth: Int
   get() = generateSequence(parent()) { it.parent() }.count()

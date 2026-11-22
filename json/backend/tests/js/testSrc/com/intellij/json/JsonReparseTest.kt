@@ -18,6 +18,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.source.tree.LazyParseableElement
 import com.intellij.psi.tree.IReparseableElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
@@ -32,6 +33,7 @@ import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import java.util.concurrent.CopyOnWriteArrayList
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -322,6 +324,30 @@ internal class JsonReparseTest {
     )
   }
 
+  @Test
+  fun testCloseBraceThatWasOpenInTheOldArray() = timeoutRunBlocking {
+    // A full parse of the new text ends the object "o" after "b": 2.
+    checkReparse("{\"o\": {\"a\": [1, {<caret>], \"b\": 2}, \"c\": 3}}", "}")
+  }
+
+  @Test
+  fun testReplaceAnUnparsedArrayWithAnOpenBrace() = timeoutRunBlocking {
+    // The selection replaces the unparsed array "[{]" as a whole. A full parse of the new text ends the object "o" after "b": 2.
+    checkReparse("{\"o\": {\"a\": [[1<selection>], [{], [</selection>2]], \"b\": 2}, \"c\": 3}}", ", ") { psiFile ->
+      val root = (psiFile as JsonFile).topLevelValue as JsonObject
+      val inner = root.findProperty("o")!!.value as JsonObject
+      val array = inner.findProperty("a")!!.value as JsonArray
+      val replaced = array.valueList[1].node as LazyParseableElement
+      assertFalse(replaced.isParsed, "the replaced array is parsed")
+    }
+  }
+
+  @Test
+  fun testBracketInsideANestedObject() = timeoutRunBlocking {
+    // The object "{[}" holds the inner "[". So the new "]" closes the root array.
+    checkReparse("[{[}, 1<caret>]", "]")
+  }
+
   // IJPL-256275: a host language can embed a JSON fragment. The fragment then reports the language
   // of the host file, which is no JSON dialect.
 
@@ -388,7 +414,17 @@ internal class JsonReparseTest {
     }
   }
 
-  private suspend fun checkReparse(text: String, insertion: String, target: VirtualFile = file) {
+  /**
+   * Replaces the markup range of [text] with [insertion], and compares the reparsed tree with a full parse.
+   *
+   * @param prepare runs on the old tree before the edit; the default parses the whole tree
+   */
+  private suspend fun checkReparse(
+    text: String,
+    insertion: String,
+    target: VirtualFile = file,
+    prepare: (PsiFile) -> Unit = { PsiTestUtil.checkFileStructure(it) },
+  ) {
     val textWithMarkup = text.trimIndent()
     val (cleanText, startOffset, endOffset) = extractMarkup(textWithMarkup)
 
@@ -401,7 +437,7 @@ internal class JsonReparseTest {
     val psiFile = readAction { PsiManager.getInstance(project).findFile(target)!! }
 
     readAction {
-      PsiTestUtil.checkFileStructure(psiFile)
+      prepare(psiFile)
     }
 
     edtWriteAction {
