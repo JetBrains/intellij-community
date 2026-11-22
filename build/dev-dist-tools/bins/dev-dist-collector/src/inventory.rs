@@ -211,7 +211,7 @@ pub(crate) fn write_manifest(path: &Path, header: &ManifestHeader, files: &[Sour
 /// record's `relative_path` is the key of the tree's root directory. The inventory lists the files below that root,
 /// and the collector places them without reading the tree.
 ///
-/// `intellij_dev_dist.bzl` writes every key, except `tree` for a file record.
+/// `intellij_dist.bzl` writes every key, except `tree` for a file record.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct MetadataRecord {

@@ -74,7 +74,7 @@ object BazelBuildInputs {
    * **Manifest only, deliberately with no runfiles fallback.** A container target is a `java_library`/`jvm_import`, not
    * a file, so `BazelRunfiles.getFileByLabel` cannot resolve it - it fails with "Unable to find dependency
    * '@lib//:kotlin-stdlib'". Only the input manifest maps a container key to files, because
-   * `intellij_dev_build_inputs` is what expands it. A caller that may run under plain runfiles has to take the per-jar
+   * `intellij_build_inputs` is what expands it. A caller that may run under plain runfiles has to take the per-jar
    * `LibraryDescription.jarTargets` branch instead, which is one of the reasons that field stays in `bazel-targets.json`.
    */
   fun resolveAllIfDeclared(label: String): List<Path>? = resolver?.resolveAllIfDeclared(label)
@@ -206,7 +206,7 @@ internal class ExplicitBazelInputResolver private constructor(
     file.parent?.let { Files.createDirectories(it) }
     val unused = inputs.values.asSequence().flatten().map(ExplicitBazelInput::execPath).filterNot(usedExecPaths::contains).distinct().sorted().toList()
     // Empty means an empty file, not a lone newline. The only reader is `wc -l`
-    // (`build/dev_dist_unused_inputs_test.bzl`), so a trailing newline with nothing before it reports a fully honest
+    // (`build/dist_unused_inputs_test.bzl`), so a trailing newline with nothing before it reports a fully honest
     // fragment as having one unused input.
     Files.writeString(file, if (unused.isEmpty()) "" else unused.joinToString(separator = "\n", postfix = "\n"))
   }
@@ -533,7 +533,7 @@ class BazelModuleOutputProvider(
    * A library's files in the Bazel runfiles, jar by jar: the per-jar label, or else the jar file of the container.
    *
    * The per-jar label of a Maven library is a `copy_file` output, and the container imports the downloaded file itself.
-   * A binary whose data is `dev_dist_plugin_content` holds the container jars only. That is the rule of
+   * A binary whose data is `dist_plugin_content` holds the container jars only. That is the rule of
    * [resolveDeclaredLibrary] too: a jar is declared by its own label or as a file.
    */
   private fun resolveLibraryRunfiles(library: BazelTargetsInfo.LibraryDescription, libraryMoniker: String): List<BazelOutputJar> {

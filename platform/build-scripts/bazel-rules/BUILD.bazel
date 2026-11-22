@@ -1,8 +1,8 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
-load(":dev_dist_content_test.bzl", "dev_dist_content_test_suite")
-load(":dev_dist_platform_jar_order_test.bzl", "dev_dist_platform_jar_order_test_suite")
-load(":dev_dist_product_content_test.bzl", "dev_dist_product_content_test_suite")
-load(":dev_dist_tool.bzl", "dev_dist_tool")
+load(":dist_content_test.bzl", "dist_content_test_suite")
+load(":dist_platform_jar_order_test.bzl", "dist_platform_jar_order_test_suite")
+load(":dist_product_content_test.bzl", "dist_product_content_test_suite")
+load(":dist_tool.bzl", "dist_tool")
 load(":java_glob_test.bzl", "java_glob_test_suite")
 
 # Whether the packaging actions of a dev distribution write a Jaeger-JSON span file beside each of their outputs.
@@ -11,7 +11,7 @@ load(":java_glob_test.bzl", "java_glob_test_suite")
 # key, argument list and declared output set is exactly what it was before this flag existed. That is the point - these
 # actions are the dev build, and a measurement that re-keys them measures a different build.
 #
-# It lives in this package because the rules that read it are here (`intellij_dev_dist.bzl`, `content_module_jar.bzl`),
+# It lives in this package because the rules that read it are here (`intellij_dist.bzl`, `content_module_jar.bzl`),
 # and it is public rather than package-private because it is set from the command line of the repository that wraps this
 # one:
 #
@@ -31,72 +31,72 @@ bool_flag(
 # which is a measurement. Folding the recipe into `trace_spans` would make every request for one also take span output
 # and re-key every action a measured comparison had pinned.
 #
-#     bazel build //build:idea_air_dist --@community//platform/build-scripts/bazel-rules:dev_dist_plans \
-#       --output_groups=+dev_dist_plans
+#     bazel build //build:idea_air_dist --@community//platform/build-scripts/bazel-rules:dist_plans \
+#       --output_groups=+dist_plans
 bool_flag(
-    name = "dev_dist_plans",
+    name = "dist_plans",
     build_setting_default = False,
     visibility = ["//visibility:public"],
 )
 
 # The tools of the dev distribution, one binary each for all products. A rule attribute names these targets with
-# `cfg = "exec"`, never the `rust_binary` itself. See `dev_dist_tool`.
-dev_dist_tool(
+# `cfg = "exec"`, never the `rust_binary` itself. See `dist_tool`.
+dist_tool(
     name = "content_module_packer",
     tool = "//build/dev-dist-tools/bins/content-module-packer",
     visibility = ["//visibility:public"],
 )
 
-dev_dist_tool(
-    name = "dev_dist_collector",
+dist_tool(
+    name = "dist_collector",
     tool = "//build/dev-dist-tools/bins/dev-dist-collector",
     visibility = ["//visibility:public"],
 )
 
-dev_dist_tool(
-    name = "dev_dist_composer",
+dist_tool(
+    name = "dist_composer",
     tool = "//build/dev-dist-tools/bins/dev-dist-composer",
     visibility = ["//visibility:public"],
 )
 
-dev_dist_tool(
+dist_tool(
     name = "plugin_descriptor_writer",
     tool = "//build/dev-dist-tools/bins/plugin-descriptor-writer",
     visibility = ["//visibility:public"],
 )
 
-dev_dist_tool(
+dist_tool(
     name = "plugin_remainder_packer",
     tool = "//build/dev-dist-tools/bins/plugin-remainder-packer",
     visibility = ["//visibility:public"],
 )
 
-dev_dist_tool(
+dist_tool(
     name = "product_files",
     tool = "//build/dev-dist-tools/bins/product-files",
     visibility = ["//visibility:public"],
 )
 
-dev_dist_tool(
+dist_tool(
     name = "runtime_layout",
     tool = "//build/dev-dist-tools/bins/runtime-layout",
     visibility = ["//visibility:public"],
 )
 
-dev_dist_content_test_suite(name = "dev_dist_content_tests")
+dist_content_test_suite(name = "dist_content_tests")
 
-dev_dist_platform_jar_order_test_suite(name = "dev_dist_platform_jar_order_tests")
+dist_platform_jar_order_test_suite(name = "dist_platform_jar_order_tests")
 
-dev_dist_product_content_test_suite(name = "dev_dist_product_content_tests")
+dist_product_content_test_suite(name = "dist_product_content_tests")
 
 java_glob_test_suite(name = "java_glob_tests")
 
 test_suite(
     name = "bazel_rules_tests",
     tests = [
-        ":dev_dist_content_tests",
-        ":dev_dist_platform_jar_order_tests",
-        ":dev_dist_product_content_tests",
+        ":dist_content_tests",
+        ":dist_platform_jar_order_tests",
+        ":dist_product_content_tests",
         ":java_glob_tests",
         "//build/dev-dist-tools/bins/plugin-descriptor-writer:descriptor_rule_tests",
         "//platform/build-scripts/bazel-rules/context-plugin-dir-tests:context_plugin_dir_tests",

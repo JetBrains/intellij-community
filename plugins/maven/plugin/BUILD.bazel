@@ -1,9 +1,9 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
 
 ### auto-generated section `dev intellij.maven.plugin` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.maven.model",
@@ -31,7 +31,7 @@ dev_dist_plugin(
     main_module = "intellij.maven.plugin",
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//plugins/maven:maven.jar": "intellij.maven",
         "//plugins/maven/maven3-server-common:server-m3-common.jar": "intellij.maven.server.m3.common",
@@ -47,7 +47,7 @@ dev_dist_complex_plugin(
         "//plugins/maven/artifact-resolver/common:common.jar": "intellij.maven.artifactResolver.common",
         "//plugins/maven-server-api:maven-server.jar": "intellij.maven.server",
     },
-    descriptor = "//build/dev-dist-descriptors/intellij.maven.plugin:intellij.maven.plugin_dev_descriptor",
+    descriptor = "//build/dist-descriptors/intellij.maven.plugin:intellij.maven.plugin_dev_descriptor",
     execution_version = 2,
     independent_artifacts = [
         "//plugins/maven/model:model_content_module_jar",

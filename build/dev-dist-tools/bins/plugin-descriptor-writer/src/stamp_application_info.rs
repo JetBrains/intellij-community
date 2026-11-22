@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The `--stamp-application-info` mode: the executor of `dev_dist_product_application_info`.
+//! The `--stamp-application-info` mode: the executor of `dist_product_application_info`.
 
 use std::path::PathBuf;
 

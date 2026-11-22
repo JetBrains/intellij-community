@@ -1,6 +1,6 @@
 //! Composition spec v1, the file that `--composition-spec` names, and the source bindings JSONL that it can name.
 //!
-//! `intellij_dev_dist.bzl` writes both files with `json.encode`. It writes every key of the spec, with `null` for an
+//! `intellij_dist.bzl` writes both files with `json.encode`. It writes every key of the spec, with `null` for an
 //! absent value. A key without `Option` is required. An `Option` key takes `null`, and an absent one reads as `None`.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};

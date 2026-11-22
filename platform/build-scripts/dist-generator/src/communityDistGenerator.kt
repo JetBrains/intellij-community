@@ -14,7 +14,7 @@ import kotlin.system.exitProcess
 /**
  * The community binary: it regenerates the distribution files of the community half.
  *
- * Run `bazel run //build:dev_dist_generator` in `community/`, or `bazel run @community//build:dev_dist_generator` in the
+ * Run `bazel run //build:dist_generator` in `community/`, or `bazel run @community//build:dist_generator` in the
  * monorepo root. Both runs find one community root, see [findCommunityRoot], so both write the same bytes.
  *
  * Arguments:

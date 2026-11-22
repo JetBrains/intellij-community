@@ -26,7 +26,7 @@ class DistOptionalLocalDirectoryTest {
     val input = bindings.catalogueFacts.additionalInputs.single()
     assertThat(input).isEqualTo(DistPluginRawInput(
       id = "optional-local-directory:out/bundle-plugins/backend-a",
-      label = "//:dev_dist_optional_local_directories",
+      label = "//:dist_optional_local_directories",
       kind = "directory",
       fileName = "backend-a",
       sourceTreePrefix = "out/bundle-plugins/backend-a",

@@ -37,7 +37,7 @@ import java.util.TreeMap
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
- * Which plugins a `dev_dist_plugin_descriptor` action can patch, and everything one plugin's patch needs that the
+ * Which plugins a `dist_plugin_descriptor` action can patch, and everything one plugin's patch needs that the
  * Bazel side cannot derive.
  *
  * The action is the one producer of a bundled plugin's patched `META-INF/plugin.xml`. Its request is generated and
@@ -92,7 +92,7 @@ private val HOST_PLATFORM_ARCHITECTURES: Set<String> = HOST_PLATFORMS.mapTo(Link
  * architecture on every operating system. A [HOST_PLATFORMS] entry serves itself alone.
  *
  * So the platform set follows from the variant, and the plan states no platform list.
- * `dev_dist_plugin_descriptor_platforms` of `dev_dist_plugin_descriptor.bzl` mirrors this function. A drift between the
+ * `dist_plugin_descriptor_platforms` of `dist_plugin_descriptor.bzl` mirrors this function. A drift between the
  * two is loud on the Bazel side: every variant of one plugin is in one set target's list, and that rule fails when two
  * of them survive its platform filter.
  */
@@ -142,7 +142,7 @@ internal class PluginDescriptorEntry(
   /**
    * The main module's `jvm_library` target, which is the package the descriptor label comes from.
    *
-   * The entry does not carry the `dev_dist_plugin_descriptor` target of that package. The dev section of the plugin
+   * The entry does not carry the `dist_plugin_descriptor` target of that package. The dev section of the plugin
    * decides the target, and it reads the entry first. So [DistToolVerdicts.ownDescriptorTarget] answers it.
    */
   @JvmField val moduleTarget: String,
@@ -165,7 +165,7 @@ internal class PluginDescriptorEntry(
   /**
    * Every descriptor beyond the plugin's own `META-INF/plugin.xml` that the patch reads, as `(load path, label)`.
    *
-   * All of them, and not only the ones the flat `dev_dist_descriptors.bzl` carries. That file exists because a Bazel
+   * All of them, and not only the ones the flat `dist_descriptors.bzl` carries. That file exists because a Bazel
    * probe finds `<module>.xml` and `META-INF/plugin.xml` without being told; this action declares its own inputs, so
    * a conventional path needs a declaration here exactly as much as any other.
    */
@@ -235,7 +235,7 @@ internal class PluginDescriptorEntry(
   /**
    * The modes that change the bytes of the plugin component: each mode of [modeRefusedContentModules] with a refusal,
    * sorted. They form the stamp class of the component. A component call states them, and
-   * `dev_dist_stamp_class_transition` keeps only this part of the configuration.
+   * `dist_stamp_class_transition` keeps only this part of the configuration.
    */
   val stampClassModes: List<String>
     get() = modeRefusedContentModules.filterValues { it.isNotEmpty() }.keys.sorted()
@@ -265,11 +265,11 @@ internal data class EmbeddedProductDescriptorPlan(
 /**
  * The actions that write the generated entries of the application-info module jar of one product.
  *
- * `dev_dist_product_descriptor` resolves the product descriptor, the text `processAndGetProductPluginContentModules`
- * writes. The macro composes the [content] over the module-set table of the half. `dev_dist_product_application_info`
+ * `dist_product_descriptor` resolves the product descriptor, the text `processAndGetProductPluginContentModules`
+ * writes. The macro composes the [content] over the module-set table of the half. `dist_product_application_info`
  * replaces the markers of [replacements] in the application info, the text `computeAppInfoXml` writes. Only a product
  * with [replacements] has this action, see [hasApplicationInfo]. The generator writes the targets into
- * [PRODUCT_DESCRIPTOR_PACKAGE], and `dev_dist_platform_jar` patches the outputs into the jar, see
+ * [PRODUCT_DESCRIPTOR_PACKAGE], and `dist_platform_jar` patches the outputs into the jar, see
  * [applicationInfoPatchLabel].
  */
 internal data class ProductDescriptorPlan(
@@ -322,7 +322,7 @@ internal data class ProductDescriptorPlan(
     get() = "$descriptorLabel.plugin-classpath-prefix"
 
   /**
-   * The label that `dev_dist_platform_jar` patches as [applicationInfoPath], spelled for a plan package of [index]: the
+   * The label that `dist_platform_jar` patches as [applicationInfoPath], spelled for a plan package of [index]: the
    * application info action, or the [applicationInfo] source of a plan without [hasApplicationInfo].
    *
    * The packer writes the patches first, in their order. `layoutPlatformDistribution` patches the application info
@@ -335,9 +335,9 @@ internal data class ProductDescriptorPlan(
 }
 
 /** The generated package of every [ProductDescriptorPlan]. */
-internal const val PRODUCT_DESCRIPTOR_PACKAGE: String = "build/dev-dist-product-descriptors"
+internal const val PRODUCT_DESCRIPTOR_PACKAGE: String = "build/dist-product-descriptors"
 
-/** The declared file inputs of one `dev_dist_frontend_application_info` action, as labels. */
+/** The declared file inputs of one `dist_frontend_application_info` action, as labels. */
 internal data class FrontendApplicationInfoPlan(
   @JvmField val clientApplicationInfo: String,
   @JvmField val productApplicationInfo: String,
@@ -377,7 +377,7 @@ internal class DeclaredLibraryDescriptor(@JvmField val loadPath: String, @JvmFie
 /**
  * The build date `.SNAPSHOT` becomes, and therefore the date an EAP product's `majorReleaseDate` is formatted from.
  *
- * `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS` of `dev_dist_build_date.bzl` pins the same date for the actions. The
+ * `DIST_PINNED_BUILD_DATE_IN_SECONDS` of `dist_build_date.bzl` pins the same date for the actions. The
  * descriptor writer formats the release date of an EAP product from it. Keep the two equal.
  */
 internal const val PINNED_BUILD_DATE_IN_SECONDS: Long = 1767225600 // 2026-01-01T00:00:00Z
@@ -864,7 +864,7 @@ private class OsArchStamps(@JvmField val marker: String, @JvmField val versionSu
  *
  * Both are mechanical. The row names the `<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->` replacement, and a plugin of one
  * platform states that platform in its version. So the plan states neither, and this function is what
- * `dev_dist_plugin_descriptor_os_arch_stamps` of `dev_dist_plugin_descriptor.bzl` mirrors.
+ * `dist_plugin_descriptor_os_arch_stamps` of `dist_plugin_descriptor.bzl` mirrors.
  *
  * [statedDescriptorFacts] verifies the layout against this answer. A mismatch stops generation. Thus, each entry
  * carries exactly these two values, and the macro derives both.
@@ -1382,21 +1382,21 @@ internal fun descriptorLabel(descriptor: ReachedDescriptor, index: DistBazelInde
 }
 
 /**
- * Renders `dev_dist_product_info.bzl`: the product mode of every product, and nothing about a plugin.
+ * Renders `dist_product_info.bzl`: the product mode of every product, and nothing about a plugin.
  *
  * It states no value of the application info, and no descriptor reads an application info. The descriptor writer
  * stamps a retained `product-descriptor` from the build number and the pinned build date.
  *
- * The community half also states [MARKETPLACE_NAMES] as `DEV_DIST_MARKETPLACE_NAMES`. The descriptor rule of both halves
+ * The community half also states [MARKETPLACE_NAMES] as `DIST_MARKETPLACE_NAMES`. The descriptor rule of both halves
  * loads that one constant, so the names are no product fact.
  *
  * Products with equal values share one private struct, named after the first of them in [plans] order, the way
- * `dev_dist_plan.bzl` shares `_PLAN_<first product>`.
+ * `dist_plan.bzl` shares `_PLAN_<first product>`.
  */
 internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DistHalf): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
-  append("# The product mode of every product. A consumer of a plugin component sets `@community//build:dev_dist_stamp_class`\n")
+  append("# The product mode of every product. A consumer of a plugin component sets `@community//build:dist_stamp_class`\n")
   append("# to the mode of its product. A component keeps the mode only when its descriptor refuses modules for it.\n")
   append("#\n")
   append("# No descriptor reads an application info. The descriptor writer stamps a retained `product-descriptor` from the\n")
@@ -1407,7 +1407,7 @@ internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DistHalf
     append("\n")
     append("# `OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells. A leaf builds\n")
     append("# the marker row and the version suffix of a one-platform variant from these, and no rule can read an enum.\n")
-    append("DEV_DIST_MARKETPLACE_NAMES = {\n")
+    append("DIST_MARKETPLACE_NAMES = {\n")
     for ((token, name) in MARKETPLACE_NAMES.toList().sortedBy { it.first }) {
       append("    \"").append(token).append("\": \"").append(name).append("\",\n")
     }
@@ -1425,7 +1425,7 @@ internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DistHalf
     append(")\n")
   }
   append("\n")
-  append("DEV_DIST_PRODUCT_INFO = {\n")
+  append("DIST_PRODUCT_INFO = {\n")
   for (plan in plans) {
     val structName = structNames.getValue(ProductInfoValues(plan))
     append("    \"").append(plan.platformPrefix).append("\": ").append(structName).append(",\n")
@@ -1433,7 +1433,7 @@ internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DistHalf
   append("}\n")
 }
 
-/** The generated values of one `dev_dist_product_info`, so two products with equal values share one struct. */
+/** The generated values of one `dist_product_info`, so two products with equal values share one struct. */
 private data class ProductInfoValues(val mode: String) {
   constructor(plan: PluginDescriptorPlan) : this(plan.mode)
 }
@@ -1442,7 +1442,7 @@ private data class ProductInfoValues(val mode: String) {
  * The key every deviation table is keyed by: the plugin, and its layout variant where it has one.
  *
  * A deviation is a fact about one (plugin, variant), not about the plugin: two variants of one plugin state different
- * markers, and the OS-specific ones state different versions. `dev_dist_plugin_descriptor.bzl` composes the same key.
+ * markers, and the OS-specific ones state different versions. `dist_plugin_descriptor.bzl` composes the same key.
  */
 internal fun planEntryKey(entry: PluginDescriptorEntry): String = when {
   entry.variant.isEmpty() -> entry.mainModule

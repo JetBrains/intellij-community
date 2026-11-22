@@ -49,7 +49,7 @@ private val TABLE: Map<String, ModuleSetData> = listOf(
 
 /**
  * A `platform_lib` payload writes only the packing labels no referenced module set carries. Two products that share a
- * set write the set's labels once, in `dev_dist_module_sets.bzl`. A product that does not hand over the label of a set
+ * set write the set's labels once, in `dist_module_sets.bzl`. A product that does not hand over the label of a set
  * member fails the generator, because the set carries the label for every product.
  *
  * The labels that the module system loads are shared the same way. A set names a member as loaded only when every

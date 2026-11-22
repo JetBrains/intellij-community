@@ -58,8 +58,8 @@ internal class UndeclaredDevDistMessageTest {
       |The IntelliJ IDEA test runs under Bazel runfiles and declares no dev distribution. The legacy engine cannot build the IDE, because the test target does not pass '-Dintellij.build.bazel.targets.json.file'.
       |  product: idea
       |  requested modules: []
-      |The distribution index is not readable, so this message names no label: the index file /tmp/home/build/dev-dist-distributions.json is missing.
-      |Find the distribution in build/dev-dist-distributions.json of the checkout, or in community/build/dev-dist-distributions.json for a community product. Its product is 'idea', and each requested module is one of its additional or bundled modules. Of these distributions, take the one with the fewest additional modules. Declare it in the test target:
+      |The distribution index is not readable, so this message names no label: the index file /tmp/home/build/dist-distributions.json is missing.
+      |Find the distribution in build/dist-distributions.json of the checkout, or in community/build/dist-distributions.json for a community product. Its product is 'idea', and each requested module is one of its additional or bundled modules. Of these distributions, take the one with the fewest additional modules. Declare it in the test target:
       |  data = [
       |      "<label>",
       |      "<label>_ide_config",
@@ -67,7 +67,7 @@ internal class UndeclaredDevDistMessageTest {
       |  jvm_flags = ["-Didea.ide.config.path=${'$'}(rlocationpath <label>_ide_config)"],
       |
       """.trimMargin(),
-      message(distributions = emptyList(), indexProblem = "the index file /tmp/home/build/dev-dist-distributions.json is missing"),
+      message(distributions = emptyList(), indexProblem = "the index file /tmp/home/build/dist-distributions.json is missing"),
     )
   }
 
@@ -87,9 +87,9 @@ internal class UndeclaredDevDistMessageTest {
     val text = message(modules = listOf("intellij.java.plugin", "intellij.space", "intellij.go"))
     assertTrue(text.contains("No distribution of the index has the product 'idea' and the additional modules [intellij.go, intellij.space]. "), text)
     assertTrue(text.contains("'-Dadditional.modules=intellij.go,intellij.space'. Then run `bazel run //platform/buildScripts:plugin-model-tool`"), text)
-    assertTrue(text.contains("`intellij_dev_fragments_dist_ultimate` of `//build:intellij_dev_ultimate.bzl` with these `additional_modules`. "), text)
-    assertTrue(text.contains("come from `dev_dist_platform_fragments(product = \"idea\")` of the same file. "), text)
-    assertTrue(text.contains("`intellij_dev_dist_config` of `@community//build:intellij_dev.bzl`"), text)
+    assertTrue(text.contains("`intellij_fragments_dist_ultimate` of `//build:intellij_dev_ultimate.bzl` with these `additional_modules`. "), text)
+    assertTrue(text.contains("come from `dist_platform_fragments(product = \"idea\")` of the same file. "), text)
+    assertTrue(text.contains("`intellij_dist_config` of `@community//build:intellij_dev.bzl`"), text)
     assertFalse(text.contains("runtime.module.repository"), text)
   }
 
@@ -99,7 +99,7 @@ internal class UndeclaredDevDistMessageTest {
     assertTrue(text.contains("  runtime module repository: requested\n"), text)
     assertTrue(text.contains("No distribution of the index has the product 'idea' with a runtime module repository. "), text)
     assertTrue(text.contains("`.idea/runConfigurations`, with '-Dintellij.build.generate.runtime.module.repository=true'. "), text)
-    assertTrue(text.contains("`dev_dist_platform_fragments(product = \"idea\", runtime_module_repository = True)`"), text)
+    assertTrue(text.contains("`dist_platform_fragments(product = \"idea\", runtime_module_repository = True)`"), text)
     assertFalse(text.contains("additional"), text)
   }
 

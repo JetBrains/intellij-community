@@ -36,7 +36,7 @@ internal class BazelFileUpdaterRemoveSectionsTest {
       ### auto-generated section `iml sample` end
 
       ### auto-generated section `dev sample` start
-      dev_dist_plugin(descriptor_module = ":sample")
+      dist_plugin(descriptor_module = ":sample")
       ### auto-generated section `dev sample` end
 
       ### auto-generated section `test sample` start
@@ -54,7 +54,7 @@ internal class BazelFileUpdaterRemoveSectionsTest {
       load("@rules_jvm//:jvm.bzl", "jvm_library")
 
       ### auto-generated section `dev sample` start
-      dev_dist_plugin(descriptor_module = ":sample")
+      dist_plugin(descriptor_module = ":sample")
       ### auto-generated section `dev sample` end
     """.trimIndent() + "\n", file.readText())
   }

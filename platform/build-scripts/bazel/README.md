@@ -353,7 +353,7 @@ The generator searches for marker files to find project roots:
 | `build/bazel-generated-file-list.txt` | List of generated files for cleanup |
 
 The generator states the JPS model and nothing more. It reads no table under `community/build/`, it derives no
-dev-distribution jar, and it emits no `content_module_jar`, `dev_dist_plugin` or `dev_dist_plugin_jar` call. The
+dev-distribution jar, and it emits no `content_module_jar`, `dist_plugin` or `dist_plugin_jar` call. The
 `dev <module>` section of a `BUILD.bazel` belongs to `plugin-model-tool`
 (`bazel run //platform/buildScripts:plugin-model-tool`). That tool runs after the generator and reads the JPS index
 for its labels. The generator keeps the load symbols that section names and never rewrites or removes it.

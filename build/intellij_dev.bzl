@@ -3,14 +3,14 @@
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@dev_launch_paths//:paths.bzl", "HOME", "OUTPUT_BASE", "WORKSPACE_ROOT")
-load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "IntellijDevDistInfo", "dist_home_path")
+load("//platform/build-scripts/bazel-rules:intellij_dist.bzl", "IntellijDistInfo", "dist_home_path")
 
 # Names the prepared distribution for its consumer: the prebuilt dev-build runner of IDE Starter in a test, and
 # `PreBuiltDevMain` in the docker run configuration. Keep in sync with `DevIdeConfig.CONFIG_PATH_PROPERTY`, which is
 # where the reading side of this contract lives.
 DEV_IDE_CONFIG_PATH_PROPERTY = "idea.ide.config.path"
 
-def intellij_dev_dist_config(name, dist, visibility = None):
+def intellij_dist_config(name, dist, visibility = None):
     """A single-file label for the config file of an assembled distribution, for `$(rlocationpath ...)`.
 
     That expansion takes a label naming exactly one file, which a dist target - two outputs, one of them declared rather
@@ -30,7 +30,7 @@ def intellij_dev_dist_config(name, dist, visibility = None):
         visibility = visibility,
     )
 
-def dev_dist_build_test(name, targets, tags = [], **kwargs):
+def dist_build_test(name, targets, tags = [], **kwargs):
     """A skylib `build_test` that gates the build of distribution targets, kept out of an IDE sync.
 
     A "Build and Resync" of the Bazel plugin builds the generated `srcs` of every `genrule` below a sync target. The
@@ -102,7 +102,7 @@ _RUNTIME_MODULE_REPOSITORY_FILE = "modules/module-descriptors.dat"
 _RUNTIME_MODULE_REPOSITORY_PROPERTY = "-Dintellij.platform.runtime.repository.path="
 
 def export_vm_options(name, runtime_module_repository):
-    """The attributes of the sibling vmoptions file of the export `<name>.dist`, for `intellij_dev_fragments_dist`.
+    """The attributes of the sibling vmoptions file of the export `<name>.dist`, for `intellij_fragments_dist`.
 
     The lines are `dev_launch_jvm_flags` over `out/dev-data/<name>`, with absolute paths. With
     `runtime_module_repository`, the last line names `modules/module-descriptors.dat` of the home of the export as the
@@ -344,7 +344,7 @@ def _native_launch(ctx, os, dist, placement, flags, program_args):
 
 def _intellij_dev_java_launcher_impl(ctx):
     os = _target_os(ctx)
-    dist = ctx.attr.dist[IntellijDevDistInfo]
+    dist = ctx.attr.dist[IntellijDistInfo]
     placement = dist.placement
     if placement == None or dist.core_classpath == None:
         fail("%s: %s is no local launch with a placement for every component" % (ctx.label, ctx.attr.dist.label))
@@ -407,7 +407,7 @@ runs that command, writes a copy of the vmoptions file with its debug options, a
     executable = True,
     fragments = ["java"],
     attrs = {
-        "dist": attr.label(mandatory = True, providers = [IntellijDevDistInfo], doc = "The local launch of the distribution, the `_dist_launch` target. Its placement names the files of the home, its layout the hashes and the modes, and its `home_prefix` the directory of the home below the generation."),
+        "dist": attr.label(mandatory = True, providers = [IntellijDistInfo], doc = "The local launch of the distribution, the `_dist_launch` target. Its placement names the files of the home, its layout the hashes and the modes, and its `home_prefix` the directory of the home below the generation."),
         "vm_options": attr.string_dict(mandatory = True, doc = "The destination of the main vmoptions file in the home, `bin/<name>`, for each OS token: `darwin`, `linux` and `windows`. The native launcher reads the file there, and the rule checks that the home has it."),
         "product_info": attr.string_dict(mandatory = True, doc = "The destination of `product-info.json` in the home, for each OS token. The production place is the root, or `Resources/` for a macOS app."),
         "launcher": attr.string_dict(doc = "The destination of the native launcher in the home, for each OS token: `darwin`, `linux` and `windows`."),

@@ -7,7 +7,7 @@ import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.junit.jupiter.api.Test
 
 /**
- * The labels of `build/dev_dist_reference_inputs.bzl`: the generator resolves the runtime classpath seeds through the
+ * The labels of `build/dist_reference_inputs.bzl`: the generator resolves the runtime classpath seeds through the
  * targets JSON, and it refuses a name that the reference macro cannot resolve at load time.
  */
 class DistReferenceInputsTest {
@@ -152,7 +152,7 @@ class DistReferenceInputsTest {
       |    "//x:x.jar",
       |]
       |
-      |DEV_DIST_REFERENCE_INPUTS = {
+      |DIST_REFERENCE_INPUTS = {
       |    "a": struct(
       |        runtime_classpath = _RUNTIME_CLASSPATH + [
       |            "//y:y.jar",

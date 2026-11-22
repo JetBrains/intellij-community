@@ -3,9 +3,9 @@ load("@rules_java//java:defs.bzl", "java_import")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
 load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
 load("//build/dev-dist-tools:defs.bzl", "dev_dist_rust_crate")
-load("//platform/build-scripts/bazel-rules:dev_dist_embedded_product_descriptor.bzl", "dev_dist_embedded_product_descriptor")
-load("//platform/build-scripts/bazel-rules:dev_dist_frontend_application_info.bzl", "dev_dist_frontend_application_info")
-load("//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl", "dev_dist_product_application_info", "dev_dist_product_descriptor")
+load("//platform/build-scripts/bazel-rules:dist_embedded_product_descriptor.bzl", "dist_embedded_product_descriptor")
+load("//platform/build-scripts/bazel-rules:dist_frontend_application_info.bzl", "dist_frontend_application_info")
+load("//platform/build-scripts/bazel-rules:dist_product_descriptor.bzl", "dist_product_application_info", "dist_product_descriptor")
 load(":descriptor_rules_test.bzl", "EMBEDDED_FIXTURE_MODULE_SETS", "PRODUCT_FIXTURE_MODULE_SETS", "descriptor_action_test")
 
 dev_dist_rust_crate(
@@ -59,7 +59,7 @@ java_import(
 
 # The composition of `a_composition_gives_the_stage_output_of_its_source`, so the rule and the unit test compare one
 # expected file.
-dev_dist_embedded_product_descriptor(
+dist_embedded_product_descriptor(
     testonly = True,
     aliases = [
         "embedded.alias.b",
@@ -113,7 +113,7 @@ descriptor_action_test(
     target_under_test = ":embedded_dev_embedded_product_descriptor",
 )
 
-dev_dist_frontend_application_info(
+dist_frontend_application_info(
     testonly = True,
     client_application_info = "testdata/application_info/client.xml",
     main_module = "client_default",
@@ -135,7 +135,7 @@ descriptor_action_test(
 
 # The same fixture as `the_composition_of_the_source_matches_kotlin`, so the rule and the unit test compare one
 # expected file.
-dev_dist_product_descriptor(
+dist_product_descriptor(
     name = "product_descriptor",
     testonly = True,
     aliases = [
@@ -184,7 +184,7 @@ descriptor_action_test(
     target_under_test = ":product_descriptor",
 )
 
-dev_dist_product_application_info(
+dist_product_application_info(
     name = "product_application_info",
     testonly = True,
     replacements = [

@@ -37,12 +37,12 @@ class DistOwnershipTest {
     assertThat(monorepoHalf.ownsPackage(DIST_CONTENT_MODULE_JARS_PACKAGE)).isTrue()
     // The community half writes relative to its root, so every package it names is a community package.
     assertThat(CommunityDistHalf.ownsPackage("plugins/c")).isTrue()
-    assertThat(CommunityDistHalf.ownsPackage("build/dev-dist-descriptors/intellij.c")).isTrue()
+    assertThat(CommunityDistHalf.ownsPackage("build/dist-descriptors/intellij.c")).isTrue()
   }
 
   @Test
   fun `a write outside the packages of the half fails and names the path`() {
-    monorepoHalf.requireWritable("build/dev-dist-descriptors/$communityPlugin/BUILD.bazel")
+    monorepoHalf.requireWritable("build/dist-descriptors/$communityPlugin/BUILD.bazel")
     assertThatThrownBy { monorepoHalf.requireWritable("community/plugins/c/intellij.c.dev-plan.json") }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("community/plugins/c/intellij.c.dev-plan.json")
@@ -53,8 +53,8 @@ class DistOwnershipTest {
 
   @Test
   fun `the ultimate half reuses an equal community section and moves a differing one into a product package`() {
-    val own = mapOf("intellij.equal" to "dev_dist_plugin(a)", "intellij.other" to "dev_dist_plugin(b)", "intellij.unplanned" to "dev_dist_plugin(c)")
-    val upstream = mapOf("intellij.equal" to "dev_dist_plugin(a)", "intellij.other" to "dev_dist_plugin(x)")
+    val own = mapOf("intellij.equal" to "dist_plugin(a)", "intellij.other" to "dist_plugin(b)", "intellij.unplanned" to "dist_plugin(c)")
+    val upstream = mapOf("intellij.equal" to "dist_plugin(a)", "intellij.other" to "dist_plugin(x)")
 
     assertThat(divergentDevSections(plugins = own.keys, sections = own, otherSections = upstream))
       .containsExactly("intellij.other", "intellij.unplanned")
@@ -89,7 +89,7 @@ class DistOwnershipTest {
     assertThat(call).contains("module = \"@community//plugins/c:c\"")
     assertThat(call).contains("\"@community//libraries/x\"").contains("\"@lib//:y\"")
     assertThat(call).contains("modules_before = [\"@community//platform/core\"]")
-    assertThat(relocatedContentModuleJarLabel(communityPlugin)).isEqualTo("//build/dev-dist-content-module-jars:intellij.c_content_module_jar")
+    assertThat(relocatedContentModuleJarLabel(communityPlugin)).isEqualTo("//build/dist-content-module-jars:intellij.c_content_module_jar")
     assertThat(renderRelocatedContentModuleJarPackage(emptyMap(), monorepoHalf)).isNull()
     assertThat(renderRelocatedContentModuleJarPackage(mapOf(communityPlugin to call), monorepoHalf))
       .contains("load(\"@community//platform/build-scripts/bazel-rules:content_module_jar.bzl\", \"content_module_jar\")")
@@ -98,9 +98,9 @@ class DistOwnershipTest {
 
   @Test
   fun `the ultimate half reuses the plan files and the calls of an equal complex community plugin`() {
-    val plans = communityPlans(planText = "{\"library\": \"//libraries/x\"}\n", call = "dev_dist_complex_plugin(descriptor = \"//plugins/c:intellij.c_dev_descriptor\")\n")
+    val plans = communityPlans(planText = "{\"library\": \"//libraries/x\"}\n", call = "dist_complex_plugin(descriptor = \"//plugins/c:intellij.c_dev_descriptor\")\n")
     val ultimateText = mapOf("intellij.c.dev-plan.json" to "{\"library\": \"@community//libraries/x\"}\n")
-    val ultimateCall = "dev_dist_complex_plugin(descriptor = \"@community//plugins/c:intellij.c_dev_descriptor\")\n"
+    val ultimateCall = "dist_complex_plugin(descriptor = \"@community//plugins/c:intellij.c_dev_descriptor\")\n"
 
     assertThat(plans.acceptsUpstreamPlans(communityPlugin, ultimateText, ultimateCall)).isTrue()
     val home = plans.upstreamHome(communityPlugin)
@@ -116,7 +116,7 @@ class DistOwnershipTest {
 
   @Test
   fun `the ultimate half keeps a complex plugin whose equal texts name a label outside the community call labels`() {
-    val call = "dev_dist_complex_plugin(libraries = {\"@jcef_{platform}//:files\": \"x\"})\n"
+    val call = "dist_complex_plugin(libraries = {\"@jcef_{platform}//:files\": \"x\"})\n"
     val planText = "{\"input\": \"@ultimate_lib//:profiler\"}\n"
     val plans = communityPlans(planText = planText, call = call)
 
@@ -139,7 +139,7 @@ class DistOwnershipTest {
     // The component map of a community product states only the additional tier.
     val components = mapOf(
       "Idea" to mapOf(
-        DistPluginTier.BUNDLED to listOf(GeneratedPluginComponent("intellij.java.plugin", label = "//build/dev-dist-descriptors/intellij.java.plugin:c")),
+        DistPluginTier.BUNDLED to listOf(GeneratedPluginComponent("intellij.java.plugin", label = "//build/dist-descriptors/intellij.java.plugin:c")),
         DistPluginTier.ADDITIONAL to listOf(GeneratedPluginComponent("intellij.devkit", label = "//plugins/devkit:c")),
       ),
       "idea" to mapOf(
@@ -150,7 +150,7 @@ class DistOwnershipTest {
     val rendered = renderPluginComponents(components, planLabel = { it }, communityProducts = setOf("Idea")) { emptyList() }
     assertThat(rendered).isEqualTo(
       """
-      DEV_DIST_PLUGIN_COMPONENTS = {
+      DIST_PLUGIN_COMPONENTS = {
           "Idea": {
               "additional": {
                   "intellij.devkit": "//plugins/devkit:c",

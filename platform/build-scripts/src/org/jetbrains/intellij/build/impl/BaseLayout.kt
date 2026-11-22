@@ -224,7 +224,7 @@ sealed class BaseLayout {
    * @param relativeOutputPath target path relative to the plugin root directory
    *
    * The path stays inside the Bazel package of the module, the directory that holds its `BUILD.bazel`. It uses no `..`
-   * and crosses no nested package. The distribution generator derives `//<package>:dev_dist_resources` from the
+   * and crosses no nested package. The distribution generator derives `//<package>:dist_resources` from the
    * declaration and refuses a layout that breaks the rule. Declare a resource against the module whose package holds it.
    */
   fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {

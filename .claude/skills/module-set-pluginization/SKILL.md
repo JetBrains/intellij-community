@@ -91,7 +91,7 @@ Expected diffs:
 - `community/platform/platform-resources/generated/META-INF/intellij.moduleSets.essential.xml`, `…ide.common.xml`, and `licenseCommon/generated/META-INF/intellij.moduleSets.ide.ultimate.xml` no longer list the pluginized modules.
 - `.idea/modules.xml` gains the new `intellij.platform.<feature>.plugin.iml` module in canonical order. For a community wrapper, `community/.idea/modules.xml` gains it too.
 - `community/build/bazel-generated-file-list.txt` gains the new plugin directory of a community wrapper, and `build/bazel-generated-file-list.txt` gains that of an ultimate wrapper.
-- The wrapper plugin's `BUILD.bazel` gains a `dev` section with its `dev_dist_plugin` call, written by `plugin-model-tool`.
+- The wrapper plugin's `BUILD.bazel` gains a `dev` section with its `dist_plugin` call, written by `plugin-model-tool`.
 - `tests/ideaProjectStructure/testResources/com/intellij/ideaProjectStructure/fast/available-in-idea-free-mode.txt` gains the plugin id of an ultimate wrapper if it is free-mode available.
 - Existing wrappers under `community/module-set-plugins/generated/intellij.moduleSet.plugin.<name>/` are unrelated — do not touch them unless you are migrating one to a hand-written wrapper.
 

@@ -106,7 +106,7 @@ declaration states its arguments.
   `closure.txt` holds on every host.
 - `rust_tool_identity_inputs` returns the facts and the files of the identity of a binary: each linked crate and each
   proc macro, their sources, the Rust toolchain and the rules_rs sources. It leaves out `_HOST_CRATES`, so one identity
-  holds on every host. `dev_dist_tool` writes the identity of each dev-dist tool from it.
+  holds on every host. `dist_tool` writes the identity of each dev-dist tool from it.
 - `optimized_binary` gives one shipped binary in `opt`, for the host or for one platform. The test stays on the
   `rust_binary` of the build configuration.
 - `platform_clippy_tests` declares `clippy-<os>-<arch>` per platform, such as the Linux platforms of

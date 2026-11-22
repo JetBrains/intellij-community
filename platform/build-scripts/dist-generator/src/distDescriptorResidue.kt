@@ -19,7 +19,7 @@ internal class ProductDescriptorEntry(
  * A residue is what a plugin's patched descriptor needs and the convention does not give. Two products whose entries
  * state one residue are one class, and the class shares one home. The baseline class holds the earliest product of the
  * product order and shares the plugin's own home, so that home never moves when a later product joins. An entry outside
- * the baseline class is divergent. Its class shares one product home under `build/dev-dist-descriptors/<module>/<product>`,
+ * the baseline class is divergent. Its class shares one product home under `build/dist-descriptors/<module>/<product>`,
  * named after the first product of the class by the same rule, see [home].
  *
  * The product mode is no residue. Every product's entry of one plugin states the same [PluginDescriptorEntry.modeRefusedContentModules],

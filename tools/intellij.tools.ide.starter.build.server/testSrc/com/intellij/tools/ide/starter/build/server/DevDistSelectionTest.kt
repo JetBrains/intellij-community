@@ -89,8 +89,8 @@ internal class DevDistSelectionTest {
 
   @Test
   fun `real community index selects the community IDE`() {
-    val file = BazelRunfiles.getFileByLabelOrNull(BazelLabel("community", "build", "dev-dist-distributions.json"))
-               ?: BazelRunfiles.getFileByLabel(BazelLabel("", "build", "dev-dist-distributions.json"))
+    val file = BazelRunfiles.getFileByLabelOrNull(BazelLabel("community", "build", "dist-distributions.json"))
+               ?: BazelRunfiles.getFileByLabel(BazelLabel("", "build", "dist-distributions.json"))
     val index = readDevDistIndex(file.parent.parent)
     assertEquals("//build:idea_community_dist", select(index.distributions, "Idea")?.label)
   }

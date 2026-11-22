@@ -7,8 +7,8 @@
 //! The `--application-info` mode produces the application info of the embedded JetBrains Client.
 //! The `--stamp-application-info` mode stamps the application info of a product.
 //!
-//! With no mode flag, it is the executor of the `dev_dist_plugin_descriptor` rule
-//! (`community/platform/build-scripts/bazel-rules/dev_dist_plugin_descriptor.bzl`), and the counterpart of
+//! With no mode flag, it is the executor of the `dist_plugin_descriptor` rule
+//! (`community/platform/build-scripts/bazel-rules/dist_plugin_descriptor.bzl`), and the counterpart of
 //! `applyPluginDescriptorPatch` of
 //! `community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt`. A descriptor feeds
 //! every plugin main jar, so a JVM action for it would sit on the critical path of the build.
@@ -164,7 +164,7 @@ fn take_mode(options: &mut cli::Options) -> Result<Option<Mode>> {
 /// The request of one plugin, as the rule states it.
 ///
 /// Every field is a string, a boolean, a path or a list of those. Nothing here can reach a layout or a build context.
-/// `dev_dist_plugin_descriptor` states the request, and [`parse_plugin_request`] is its one reader.
+/// `dist_plugin_descriptor` states the request, and [`parse_plugin_request`] is its one reader.
 #[derive(Debug, PartialEq, Eq)]
 struct PluginRequest {
     output: PathBuf,
@@ -316,7 +316,7 @@ fn retained_product_stamps(build_number: &str, product: &RetainedProduct) -> Res
     })
 }
 
-/// Reads the parameter file that `dev_dist_plugin_descriptor` writes, one option per line.
+/// Reads the parameter file that `dist_plugin_descriptor` writes, one option per line.
 ///
 /// An option that the parser does not know fails the run. That is the rule of the platform too. It keeps the rule and
 /// this binary on one spelling: a rule that grows an option reaches this parser or fails here.

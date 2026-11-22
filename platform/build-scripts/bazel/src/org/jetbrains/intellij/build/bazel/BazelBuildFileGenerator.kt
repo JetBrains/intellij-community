@@ -1908,7 +1908,7 @@ private fun compileExcludeSortKey(pattern: String): String = pattern.lowercase()
  * and a predicate that assumes two directories leaves those unexported, which is an analysis error
  * the moment the plan names one.
  *
- * Deliberately a superset. An `exports_files` entry costs nothing - only what `build/dev_dist_plan.bzl` and the
+ * Deliberately a superset. An `exports_files` entry costs nothing - only what `build/dist_plan.bzl` and the
  * convention probe name is materialized into the project model tree - and keeping the two rules independent is what
  * makes them unable to disagree: this side only has to be wide enough.
  */

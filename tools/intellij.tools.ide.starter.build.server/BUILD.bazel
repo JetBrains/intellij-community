@@ -4,7 +4,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
     name = "ide-starter-build-server-tests_test",
-    data = ["//build:dev-dist-distributions.json"],
+    data = ["//build:dist-distributions.json"],
     tags = ["community-aggregator"],
     runtime_deps = [":ide-starter-build-server-tests_test_lib"],
 )

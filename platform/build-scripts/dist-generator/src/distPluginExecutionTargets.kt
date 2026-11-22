@@ -51,7 +51,7 @@ internal class DistPluginExecutionConfiguration(
 )
 
 /**
- * The `dev_dist_complex_plugin` arguments of one chain, rendered as Starlark, the label of its component, and the slot
+ * The `dist_complex_plugin` arguments of one chain, rendered as Starlark, the label of its component, and the slot
  * values of its folded plan file. [platform] is null for a chain that serves every platform. [folded] is true for a
  * chain with a folded plan file. [platformValues] is empty for a chain without a folded plan file, and for a folded
  * plan file without a slot. The fold over the platforms happens in [renderDistPluginExecutionCalls].
@@ -377,7 +377,7 @@ private fun communityCallLabel(label: String, communityPass: Boolean, callReposi
 }
 
 /**
- * The chain stem `dev_dist_complex_plugin` derives: `<main module>[.<chain class>][_<platform>]`. The component, the
+ * The chain stem `dist_complex_plugin` derives: `<main module>[.<chain class>][_<platform>]`. The component, the
  * graph, the catalogue and the remainder of one chain add their suffix to it.
  */
 internal fun distChainStem(mainModule: String, chainClass: String, platform: String?): String {
@@ -391,7 +391,7 @@ private val PLATFORM_ARGUMENTS = java.util.Set.of(
 )
 
 /**
- * Renders the `dev_dist_complex_plugin` calls of one plugin. One call declares every platform chain when the chains
+ * Renders the `dist_complex_plugin` calls of one plugin. One call declares every platform chain when the chains
  * differ only in the platform token. Otherwise each chain keeps a call of its own, so the difference stays visible in
  * the generated file instead of hidden behind a fallback. A call whose chains keep a plan file per platform, because
  * the fold was refused, states `platform_plans = True`. A call whose chains have a folded plan file with slots states
@@ -439,7 +439,7 @@ internal fun renderDistPluginExecutionCalls(mainModule: String, variants: List<D
         })
       }
       executionCall(
-        "dev_dist_complex_plugin",
+        "dist_complex_plugin",
         arguments + ("platforms" to executionStrings(platforms)) + ("platform_values" to platformValues) + platformPlans + ("executables" to executables),
       )
     }

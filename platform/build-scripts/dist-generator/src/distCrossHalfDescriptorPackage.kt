@@ -56,21 +56,21 @@ private fun snapshotDescriptorEntry(entry: PluginDescriptorEntry): PluginDescrip
 /**
  * The directory that holds the product package of each plugin and the class package of each divergent descriptor leaf.
  *
- * Beside `//build/dev-dist-descriptors` itself, which declares the product's set targets. A subpackage rather than a
+ * Beside `//build/dist-descriptors` itself, which declares the product's set targets. A subpackage rather than a
  * target of that package, because that package loads the plan file, and a leaf must not be re-analysed when another
  * plugin's plan row moves.
  */
 private const val CROSS_HALF_DESCRIPTOR_PACKAGE_ROOT: String = CROSS_HALF_PACKAGE_ROOT
 
 /**
- * What a `dev_dist_plugin_descriptor` target's name ends in.
+ * What a `dist_plugin_descriptor` target's name ends in.
  *
- * Three owners spell it: `dev_dist_plugin_descriptor_target_name` of `dev_dist_plugin_descriptor.bzl`, which composes
+ * Three owners spell it: `dist_plugin_descriptor_target_name` of `dist_plugin_descriptor.bzl`, which composes
  * the name, `DEV_DESCRIPTOR_TARGET_SUFFIX` of `distBazelIndex.kt`, and this one.
  */
 private const val DESCRIPTOR_TARGET_SUFFIX: String = "_dev_descriptor"
 
-/** One plan entry's `dev_dist_plugin_descriptor` target name, which carries the plugin and the layout variant. */
+/** One plan entry's `dist_plugin_descriptor` target name, which carries the plugin and the layout variant. */
 private fun descriptorTargetName(entry: PluginDescriptorEntry): String = when {
   entry.variant.isEmpty() -> entry.mainModule + DESCRIPTOR_TARGET_SUFFIX
   else -> "${entry.mainModule}_${entry.variant}$DESCRIPTOR_TARGET_SUFFIX"
@@ -104,7 +104,7 @@ internal class CrossHalfDescriptorPackages(
 
   /**
    * Every package file with its final text. [pluginTargets] adds the rendered `dev_plugin` target of a simple plugin to
-   * its package, keyed by the package path. [complexPluginCalls] adds the rendered `dev_dist_complex_plugin` calls of a
+   * its package, keyed by the package path. [complexPluginCalls] adds the rendered `dist_complex_plugin` calls of a
    * community complex plugin to its plugin package, keyed the same way. A package without a descriptor leaf gets one
    * for the target or the calls.
    */
@@ -167,7 +167,7 @@ private fun listDirectories(directory: Path): List<Path> {
 }
 
 /**
- * The `dev_dist_plugin_descriptor` target of every plugin whose own Bazel package cannot declare one, and of every
+ * The `dist_plugin_descriptor` target of every plugin whose own Bazel package cannot declare one, and of every
  * product that states a plugin differently from the baseline product.
  *
  * ### Why a package here at all
@@ -193,7 +193,7 @@ private fun listDirectories(directory: Path): List<Path> {
  *
  * One leaf produces one text. A product outside the baseline class of [classes] needs a leaf other than the baseline's,
  * and every product of its class reads the same one. A `dev` section must not name a product, because a community
- * section cannot name an ultimate one. So the leaf goes into `build/dev-dist-descriptors/<module>/<product>/BUILD.bazel`
+ * section cannot name an ultimate one. So the leaf goes into `build/dist-descriptors/<module>/<product>/BUILD.bazel`
  * under its plain name, whatever half the plugin is in, and `<product>` is the home of the class
  * ([DescriptorResidueClasses.home]).
  *
@@ -273,7 +273,7 @@ private fun productOfPackagePath(path: String): String? {
 }
 
 /**
- * One product package. [complexPluginCalls] is the rendered `dev_dist_complex_plugin` calls of a community complex
+ * One product package. [complexPluginCalls] is the rendered `dist_complex_plugin` calls of a community complex
  * plugin, or `null`. A call names the product info of the main repository, so the community section cannot hold it.
  * The plan file it reads sits in the community package, exported, or in this package. [planLabel] spells the label of a
  * load line for the package.
@@ -310,23 +310,23 @@ private fun renderCrossHalfPackage(
   }
   append("#\n")
   append("# Every target is `manual`, which the macros add. A set target names the descriptor and states the product of\n")
-  append("# the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`\n")
+  append("# the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`\n")
   append("# call.\n")
   if (descriptorTargets.isNotEmpty()) {
     append("#\n")
     append("# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.\n")
   }
   append("\n")
-  // The bridge of the half exports `dev_dist_plugin_descriptor` bound to its descriptor index.
+  // The bridge of the half exports `dist_plugin_descriptor` bound to its descriptor index.
   val loads = ArrayList<Pair<String, String>>()
   if (descriptorTargets.isNotEmpty()) {
-    loads.add("@${half.jpsBridge}//:targets.bzl" to "dev_dist_plugin_descriptor")
+    loads.add("@${half.jpsBridge}//:targets.bzl" to "dist_plugin_descriptor")
   }
   if (pluginTarget != null) {
     loads.add(planLabel(DEV_PLUGIN_RULE) to "dev_plugin")
   }
   if (complexPluginCalls != null) {
-    loads.add(planLabel(DEV_PLUGIN_REMAINDER_RULE) to "dev_dist_complex_plugin")
+    loads.add(planLabel(DEV_PLUGIN_REMAINDER_RULE) to "dist_complex_plugin")
   }
   // The load lines in the order buildifier sorts them: a file of an explicit repository before a file of this one.
   val loadOrder = BazelLabelComparator(forLoadStatements = true)
@@ -428,7 +428,7 @@ private class CrossHalfDescriptorTarget(entry: PluginDescriptorEntry, product: S
   fun render(planLabel: (String) -> String, bridgeLabel: (moduleName: String) -> String?): String = buildString {
     val entry = declaration.entry
     val contentModules = entry.contentModules.mapTo(TreeSet()) { it.name }
-    append("dev_dist_plugin_descriptor(\n")
+    append("dist_plugin_descriptor(\n")
     appendStarlarkStringList(name = "content_modules", values = contentModules.toList())
     if (entry.descriptorInTestOutput) {
       appendStarlarkString(name = "descriptor_entry", value = entry.descriptor)
@@ -468,7 +468,7 @@ private class CrossHalfDescriptorTarget(entry: PluginDescriptorEntry, product: S
     )
     appendStarlarkString(name = "main_module", value = entry.mainModule)
     // A variant of one operating system and one architecture states no row and no version suffix. The leaf derives both
-    // from `DEV_DIST_MARKETPLACE_NAMES`.
+    // from `DIST_MARKETPLACE_NAMES`.
     if (!entry.derivesOsArchStamps) {
       appendStarlarkStringList(name = "markers", values = entry.markers)
     }

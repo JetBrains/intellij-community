@@ -142,7 +142,7 @@ pub fn read_recipes(paths: &[PathBuf]) -> Result<Vec<Recipe>> {
         if found.is_empty() {
             bail!(
                 "{} holds no *.plan.yaml; a flag-off build prunes them, so re-run with \
-                 --@community//platform/build-scripts/bazel-rules:dev_dist_plans --output_groups=+dev_dist_plans",
+                 --@community//platform/build-scripts/bazel-rules:dist_plans --output_groups=+dist_plans",
                 path.display()
             );
         }

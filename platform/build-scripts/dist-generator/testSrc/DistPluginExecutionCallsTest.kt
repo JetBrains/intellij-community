@@ -16,7 +16,7 @@ class DistPluginExecutionCallsTest {
 
     assertThat(text).isEqualTo(
       """
-      dev_dist_complex_plugin(
+      dist_complex_plugin(
           descriptor = "//plugins/sample:descriptor_{platform}",
           main_module = "intellij.sample",
           platforms = [
@@ -36,7 +36,7 @@ class DistPluginExecutionCallsTest {
 
     assertThat(text).isEqualTo(
       """
-      dev_dist_complex_plugin(
+      dist_complex_plugin(
           descriptor = "//plugins/sample:descriptor_{platform}",
           main_module = "intellij.sample",
           platform_values = {
@@ -63,7 +63,7 @@ class DistPluginExecutionCallsTest {
 
     assertThat(text).isEqualTo(
       """
-      dev_dist_complex_plugin(
+      dist_complex_plugin(
           descriptor = "//plugins/sample:descriptor_{platform}",
           main_module = "intellij.sample",
           platform_plans = True,
@@ -82,7 +82,7 @@ class DistPluginExecutionCallsTest {
 
     assertThat(text).isEqualTo(
       """
-      dev_dist_complex_plugin(
+      dist_complex_plugin(
           descriptor = "//plugins/sample:descriptor",
           main_module = "intellij.sample",
       )
@@ -102,7 +102,7 @@ class DistPluginExecutionCallsTest {
 
     assertThat(text).isEqualTo(
       """
-      dev_dist_complex_plugin(
+      dist_complex_plugin(
           descriptor = "//plugins/sample:descriptor_{platform}",
           executables = {
               "darwin_aarch64": [
@@ -126,7 +126,7 @@ class DistPluginExecutionCallsTest {
 
     assertThat(text).isEqualTo(
       """
-      dev_dist_complex_plugin(
+      dist_complex_plugin(
           descriptor = "//plugins/sample:descriptor",
           executables = ["bin/tool"],
           main_module = "intellij.sample",

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The composition of a product descriptor from the flags of `dev_dist_product_descriptor` and
-//! `dev_dist_embedded_product_descriptor`.
+//! The composition of a product descriptor from the flags of `dist_product_descriptor` and
+//! `dist_embedded_product_descriptor`.
 //!
 //! The element is the one that `buildProductContentXml(inlineModuleSets = true)`
 //! (`community/platform/build-scripts/product-dsl/src/generator.kt`) renders, after the round trip of [`descriptorxml`]

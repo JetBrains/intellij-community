@@ -27,7 +27,7 @@ class DistResourceResolverTest {
     assertThat(input).isEqualTo(
       DistPluginRawInput(
         id = "module-resource:resource-generator:0:0:source",
-        label = "//plugins/x/lib:dev_dist_resources",
+        label = "//plugins/x/lib:dist_resources",
         kind = "directory",
         fileName = "sampleData",
         sourceTreePrefix = "plugins/x/lib/sampleData",
@@ -42,7 +42,7 @@ class DistResourceResolverTest {
 
     val error = assertThrows<DistUnplannableLayoutException> { bindings(checkout, "lib/sampleData") }
 
-    assertThat(error).hasMessageContaining("is a Bazel package without a module, and its BUILD file declares no 'dev_dist_resources' filegroup by hand")
+    assertThat(error).hasMessageContaining("is a Bazel package without a module, and its BUILD file declares no 'dist_resources' filegroup by hand")
   }
 
   @Test
@@ -56,7 +56,7 @@ class DistResourceResolverTest {
     assertThat(input).isEqualTo(
       DistPluginRawInput(
         id = "module-resource:resource-generator:0:0:source",
-        label = "//plugins/x:dev_dist_resources_helpers",
+        label = "//plugins/x:dist_resources_helpers",
         kind = "directory",
         fileName = "helpers",
         sourceTreePrefix = "plugins/x/helpers",
@@ -93,7 +93,7 @@ class DistResourceResolverTest {
     val nestedPackage = Files.createDirectories(moduleRoot.resolve("lib"))
     Files.writeString(
       nestedPackage.resolve("BUILD.bazel"),
-      if (declaresFilegroup) "filegroup(name = \"dev_dist_resources\")\n" else "",
+      if (declaresFilegroup) "filegroup(name = \"dist_resources\")\n" else "",
     )
     return moduleRoot
   }

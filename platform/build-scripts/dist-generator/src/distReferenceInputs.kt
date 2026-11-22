@@ -8,9 +8,9 @@ import java.util.TreeMap
 import java.util.TreeSet
 
 /** The runtime classpath that the reference fragments declare, relative to the root of the half. Only the reference macros load it. */
-internal const val DIST_REFERENCE_INPUTS_RELATIVE_PATH: String = "build/dev_dist_reference_inputs.bzl"
+internal const val DIST_REFERENCE_INPUTS_RELATIVE_PATH: String = "build/dist_reference_inputs.bzl"
 
-/** The runtime module repository payload of a product as `dev_dist_fragment_inputs.bzl` states it: JPS names, not labels. */
+/** The runtime module repository payload of a product as `dist_fragment_inputs.bzl` states it: JPS names, not labels. */
 internal class DistReferencePayload(
   @JvmField val modules: List<String>,
   @JvmField val projectLibraries: List<String>,
@@ -148,7 +148,7 @@ private const val PLATFORM_LIB_PAYLOAD: String = "platform_lib"
 private const val RUNTIME_MODULE_REPOSITORY_PAYLOAD: String = "platform_runtime_module_repository"
 
 /**
- * `build/dev_dist_reference_inputs.bzl` of [inputs], keyed by product in key order. Only a product with a runtime
+ * `build/dist_reference_inputs.bzl` of [inputs], keyed by product in key order. Only a product with a runtime
  * classpath has a row.
  *
  * The labels that every row states are one private constant `_RUNTIME_CLASSPATH`, when two or more rows exist. A row
@@ -159,7 +159,7 @@ internal fun renderDistReferenceInputs(inputs: Map<String, DistReferenceInputs>,
   append("#\n")
   append("# The runtime classpath that a platform patch of a product loads, as labels. Only the reference fragments of the\n")
   append("# `jars`, `replay` and `runtime-repo` gates read it, and no distribution reads it. The generator resolves the\n")
-  append("# `runtime_classpath_modules` seeds of `dev_dist_fragment_inputs.bzl` through the targets JSON. Only the reference\n")
+  append("# `runtime_classpath_modules` seeds of `dist_fragment_inputs.bzl` through the targets JSON. Only the reference\n")
   append("# macros load this file, so a change here does not run the JPS bridge again.\n")
   append("#\n")
   append("# `runtime_classpath` holds the outputs and the libraries of the non-test dependency closure of the seeds. A\n")
@@ -184,10 +184,10 @@ internal fun renderDistReferenceInputs(inputs: Map<String, DistReferenceInputs>,
     append("]\n\n")
   }
   if (rows.isEmpty()) {
-    append("DEV_DIST_REFERENCE_INPUTS = {}\n")
+    append("DIST_REFERENCE_INPUTS = {}\n")
     return@buildString
   }
-  append("DEV_DIST_REFERENCE_INPUTS = {\n")
+  append("DIST_REFERENCE_INPUTS = {\n")
   for ((product, row) in rows) {
     append(INDENT).append(quoteStarlarkString(product)).append(": struct(\n")
     append(INDENT).append(INDENT).append("runtime_classpath = ")

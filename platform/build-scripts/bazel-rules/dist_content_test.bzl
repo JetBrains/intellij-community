@@ -1,0 +1,1128 @@
+"""Analysis tests for direct distribution packaging."""
+
+load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
+load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
+load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
+load(":content_module_jar.bzl", "ContentModuleJarInfo", "DistPlatformJarInfo")
+load(":content_module_jar_test.bzl", "content_module_jar_test_suite")
+load(":dist_content.bzl", "DistContentInfo", "DistPlatformPayloadInfo", "dist_platform_payload", "dist_plugin_content")
+load(":dist_plugin.bzl", "dist_plugin")
+load(":dist_plugin_descriptor.bzl", "dist_plugin_descriptor_target_name")
+load(":dist_runtime_module_repository.bzl", "dist_runtime_module_repository")
+load(
+    ":intellij_dist.bzl",
+    "DistPlacementInfo",
+    "IntellijDevBuildInputsInfo",
+    "IntellijDevFragmentInfo",
+    "IntellijDevReferenceInfo",
+    "IntellijDistInfo",
+    "IntellijProjectModelTreeInfo",
+    "dist_home_path",
+    "intellij_build_inputs",
+    "intellij_fragment",
+    "intellij_fragments_dist",
+    "intellij_packed_jars_component",
+)
+
+# The fixture of an unpacked archive, with the files `bin/tool`, `lib/helper` and `lib/sub/data.txt`.
+_UNPACKED_ARCHIVE = Label("//platform/build-scripts/bazel-rules/testdata/unpacked_archive:files")
+_UNPACKED_ARCHIVE_EXECUTABLE_LIST = Label("//platform/build-scripts/bazel-rules/testdata/unpacked_archive:executables.json")
+
+_EMPTY_JAR = "PK\005\006" + ("\000" * 18)
+_TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
+_ZIPPER = attr.label(default = "@bazel_tools//tools/zip:zipper", executable = True, cfg = "exec")
+
+# Materializes an empty tree artifact. A shell action needs bash, which a Windows build agent does not have, so the
+# tree is an empty archive that the zipper extracts.
+def _empty_tree(ctx, tree):
+    archive = ctx.actions.declare_file(tree.short_path.rpartition("/")[0].rpartition("/")[2] + ".empty.zip")
+    ctx.actions.write(archive, _EMPTY_JAR)
+    ctx.actions.run(
+        executable = ctx.executable._zipper,
+        arguments = ["x", archive.path, "-d", tree.path],
+        inputs = [archive],
+        outputs = [tree],
+        mnemonic = "DevDistContentTestEmptyTree",
+    )
+
+def _fake_module_impl(ctx):
+    jar = ctx.actions.declare_file(ctx.label.name + ".jar")
+    ctx.actions.write(jar, _EMPTY_JAR)
+    return [
+        DefaultInfo(files = depset([jar])),
+        _KtJvmInfo(all_output_jars = [jar], module_name = ctx.attr.module_name),
+    ]
+
+_fake_module = rule(
+    implementation = _fake_module_impl,
+    attrs = {"module_name": attr.string(mandatory = True)},
+)
+
+def _fake_library_impl(ctx):
+    jars = []
+    infos = []
+    for index in range(ctx.attr.jar_count):
+        jar = ctx.actions.declare_file("%s-%d.jar" % (ctx.label.name, index))
+        ctx.actions.write(jar, ctx.label.name)
+        jars.append(jar)
+        infos.append(JavaInfo(output_jar = jar, compile_jar = jar))
+    return [
+        DefaultInfo(files = depset(jars)),
+        java_common.merge(infos),
+    ]
+
+_fake_library = rule(
+    implementation = _fake_library_impl,
+    attrs = {"jar_count": attr.int(default = 1)},
+)
+
+def _fake_packed_impl(ctx):
+    jar = ctx.actions.declare_file(ctx.label.name + ".jar")
+    metadata = ctx.actions.declare_file(ctx.label.name + ".metadata.json")
+    ctx.actions.write(jar, _EMPTY_JAR)
+    ctx.actions.write(metadata, "{}")
+    member = ctx.attr.member[_KtJvmInfo]
+    libraries = []
+    if ctx.attr.library:
+        libraries.append(struct(
+            label = str(ctx.attr.library.label),
+            jars = tuple(ctx.attr.library[JavaInfo].transitive_runtime_jars.to_list()),
+        ))
+
+    # A jar with natives has a tree per platform, each with the metadata of its own action. Two platforms are enough to
+    # show that the payload takes the tree of its own one.
+    native_trees = {}
+    if ctx.attr.native_lib_dir:
+        for platform in _FAKE_NATIVE_PLATFORMS:
+            tree = ctx.actions.declare_directory(ctx.label.name + ".native_" + platform + "/native")
+            _empty_tree(ctx, tree)
+            tree_metadata = ctx.actions.declare_file(ctx.label.name + ".native_" + platform + ".metadata.json")
+            ctx.actions.write(tree_metadata, "{}")
+            native_trees[platform] = struct(tree = tree, metadata = tree_metadata)
+    return [
+        DefaultInfo(files = depset([jar])),
+        ContentModuleJarInfo(
+            jar = jar,
+            metadata = metadata,
+            module_name = member.module_name,
+            relative_path = jar.basename,
+            member_jars = tuple(member.all_output_jars),
+            member_modules = (member.module_name,),
+            library_jars = tuple(libraries),
+            native_lib_dir = ctx.attr.native_lib_dir,
+            native_trees = native_trees,
+        ),
+    ]
+
+_FAKE_NATIVE_PLATFORMS = ["darwin_aarch64", "linux_x64"]
+
+_fake_packed = rule(
+    implementation = _fake_packed_impl,
+    attrs = {
+        "library": attr.label(providers = [JavaInfo]),
+        "member": attr.label(mandatory = True, providers = [_KtJvmInfo]),
+        "native_lib_dir": attr.string(),
+        "_zipper": _ZIPPER,
+    },
+)
+
+# A platform jar that names a subdirectory of `lib/`. A content module jar does not.
+def _fake_platform_jar_impl(ctx):
+    jar = ctx.actions.declare_file(ctx.label.name + ".jar")
+    metadata = ctx.actions.declare_file(ctx.label.name + ".metadata.json")
+    ctx.actions.write(jar, _EMPTY_JAR)
+    ctx.actions.write(metadata, "{}")
+    return [
+        DefaultInfo(files = depset([jar])),
+        DistPlatformJarInfo(
+            jar = jar,
+            metadata = metadata,
+            relative_path = ctx.attr.destination,
+            member_jars = (),
+            member_modules = (),
+            library_jars = (),
+        ),
+    ]
+
+_fake_platform_jar = rule(
+    implementation = _fake_platform_jar_impl,
+    attrs = {"destination": attr.string(mandatory = True)},
+)
+
+# A plugin component as `dist_plugin_content` sees it: the raw module jars of its members and one library container.
+def _fake_content_impl(ctx):
+    jars = []
+    for module in ctx.attr.modules:
+        jars.extend(module[_KtJvmInfo].all_output_jars)
+    libraries = []
+    if ctx.attr.library:
+        libraries.append(struct(
+            label = str(ctx.attr.library.label),
+            jars = tuple(ctx.attr.library[JavaInfo].transitive_runtime_jars.to_list()),
+        ))
+    return [
+        DefaultInfo(files = depset()),
+        DistContentInfo(module_jars = depset(jars), library_jars = depset(libraries)),
+    ]
+
+_fake_content = rule(
+    implementation = _fake_content_impl,
+    attrs = {
+        "modules": attr.label_list(providers = [_KtJvmInfo]),
+        "library": attr.label(providers = [JavaInfo]),
+    },
+)
+
+def _plugin_content_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    content = target[DistContentInfo]
+
+    # By short path, as sets: `plugins` are configured for the product and the test's own attributes are not, so one
+    # jar arrives as two `File` objects, and a jar two plugins share is one entry or two by configuration alone.
+    expected_jars = {}
+    expected_libraries = {}
+    for plugin in ctx.attr.plugins:
+        plugin_content = plugin[DistContentInfo]
+        for jar in plugin_content.module_jars.to_list():
+            expected_jars[jar.short_path] = True
+        for entry in plugin_content.library_jars.to_list():
+            expected_libraries[entry.label] = True
+    asserts.equals(env, sorted(expected_jars.keys()), sorted({jar.short_path: True for jar in content.module_jars.to_list()}.keys()))
+    asserts.equals(env, sorted(expected_libraries.keys()), sorted({entry.label: True for entry in content.library_jars.to_list()}.keys()))
+    asserts.equals(env, [], target[DefaultInfo].files.to_list())
+    asserts.equals(env, [], analysistest.target_actions(env))
+    return analysistest.end(env)
+
+_plugin_content_test = analysistest.make(
+    _plugin_content_test_impl,
+    attrs = {
+        "plugins": attr.label_list(mandatory = True, providers = [DistContentInfo], doc = "Every content target the union is expected to cover."),
+    },
+)
+
+def _expected_failure_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    asserts.expect_failure(env, ctx.attr.expected_message)
+    return analysistest.end(env)
+
+_expected_failure_test = analysistest.make(
+    _expected_failure_test_impl,
+    expect_failure = True,
+    attrs = {"expected_message": attr.string(mandatory = True)},
+)
+
+def _platform_payload_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    payload = target[DistPlatformPayloadInfo]
+    reference = target[DistContentInfo]
+    packed = ctx.attr.packed[ContentModuleJarInfo]
+    nested = ctx.attr.nested[DistPlatformJarInfo]
+    natives = ctx.attr.natives[ContentModuleJarInfo]
+    native = natives.native_trees[_PAYLOAD_PLATFORM]
+
+    # The destination, not the file name: this is the set the owning fragment must not pack, and a nested jar whose
+    # base name reached it would leave both producers writing the same jar to two places.
+    asserts.equals(env, sorted([packed.relative_path, nested.relative_path, natives.relative_path]), payload.packed_jar_names)
+
+    # Jars only, because the byte gate reads this set. The native tree of the payload's platform travels in the jar's
+    # record, with its own metadata. A jar without one says so with `None` and an empty directory.
+    asserts.equals(env, [packed.jar, nested.jar, natives.jar], payload.packed_jars.to_list())
+
+    # The core classpath: a direct child of `lib/` that the module system does not load. The module system loads the
+    # jar with natives, and the nested jar is never on it.
+    records = {record.jar: record for record in payload.packed_metadata.to_list()}
+    asserts.equals(
+        env,
+        struct(jar = packed.jar, metadata = packed.metadata, relative_path = packed.relative_path, native_tree = None, native_metadata = None, native_lib_dir = "", core_classpath = True),
+        records[packed.jar],
+    )
+    asserts.equals(
+        env,
+        struct(jar = nested.jar, metadata = nested.metadata, relative_path = nested.relative_path, native_tree = None, native_metadata = None, native_lib_dir = "", core_classpath = False),
+        records[nested.jar],
+    )
+    asserts.equals(
+        env,
+        struct(jar = natives.jar, metadata = natives.metadata, relative_path = natives.relative_path, native_tree = native.tree, native_metadata = native.metadata, native_lib_dir = natives.native_lib_dir, core_classpath = False),
+        records[natives.jar],
+    )
+    asserts.equals(env, [packed.relative_path], payload.core_classpath_jar_names)
+
+    # What each packed jar merges, sorted by destination. The runtime module repository orders it by the platform jar rule.
+    asserts.equals(
+        env,
+        sorted([
+            struct(destination = info.relative_path, member_modules = info.member_modules, library_jars = info.library_jars)
+            for info in [packed, nested, natives]
+        ], key = lambda entry: entry.destination),
+        payload.layout,
+    )
+    asserts.equals(env, list(packed.member_jars) + list(natives.member_jars), reference.module_jars.to_list())
+    asserts.equals(env, list(packed.library_jars), reference.library_jars.to_list())
+    return analysistest.end(env)
+
+_platform_payload_test = analysistest.make(
+    _platform_payload_test_impl,
+    attrs = {
+        "packed": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
+        "nested": attr.label(mandatory = True, providers = [DistPlatformJarInfo]),
+        "natives": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
+    },
+)
+
+# The platform the test payloads are for.
+_PAYLOAD_PLATFORM = "linux_x64"
+
+def _build_inputs_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    info = target[IntellijDevBuildInputsInfo]
+    expected = []
+    for module in ctx.attr.modules:
+        expected.extend(module[_KtJvmInfo].all_output_jars)
+    expected.extend(ctx.attr.library[JavaInfo].transitive_runtime_jars.to_list())
+    for file in expected:
+        asserts.true(env, file in info.files.to_list(), file.path)
+    asserts.equals(env, sorted([info.manifest, info.inputs_origin]), sorted(target[DefaultInfo].files.to_list()))
+    asserts.equals(env, 2, len(analysistest.target_actions(env)))
+    return analysistest.end(env)
+
+_build_inputs_test = analysistest.make(
+    _build_inputs_test_impl,
+    attrs = {
+        "library": attr.label(mandatory = True, providers = [JavaInfo]),
+        "modules": attr.label_list(mandatory = True, providers = [_KtJvmInfo]),
+    },
+)
+
+def _tool_fixture_impl(ctx):
+    executable = ctx.actions.declare_file(ctx.label.name + ".sh")
+    tree = ctx.actions.declare_directory(ctx.label.name + ".tree")
+    ctx.actions.write(executable, "#!/bin/sh\nexit 0\n", is_executable = True)
+    ctx.actions.write(ctx.outputs.data, "fixture")
+    _empty_tree(ctx, tree)
+    return [
+        DefaultInfo(files = depset([executable, ctx.outputs.data]), executable = executable),
+        IntellijProjectModelTreeInfo(tree = tree),
+    ]
+
+_tool_fixture = rule(
+    implementation = _tool_fixture_impl,
+    attrs = {"_zipper": _ZIPPER},
+    executable = True,
+    outputs = {"data": "%{name}.data"},
+)
+
+def _fragment_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    inputs = ctx.attr.build_inputs[IntellijDevBuildInputsInfo]
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic.startswith("IntellijDev")]
+    asserts.equals(env, 1, len(actions))
+    layout = target[OutputGroupInfo].runtime_module_repository_layout.to_list()
+    asserts.equals(env, 1, len(layout))
+    if actions:
+        action = actions[0]
+        for file in inputs.files.to_list():
+            asserts.true(env, file in action.inputs.to_list(), file.path)
+
+        # The runtime module repository reference also writes the layout it generates the repository from, beside the
+        # home.
+        asserts.true(env, layout[0] in action.outputs.to_list())
+        asserts.true(env, "--runtime-module-repository-layout=" + layout[0].path in action.argv)
+
+    # A reference builds no plugin, so it declares no plugin output: the packed plugin components own that group. It
+    # publishes no component provider, so no distribution can compose it.
+    asserts.false(env, hasattr(target[OutputGroupInfo], "dist_plugin_outputs"))
+    asserts.false(env, IntellijDevFragmentInfo in target)
+    asserts.equals(env, "platform_runtime_module_repository", target[IntellijDevReferenceInfo].name)
+    asserts.equals(
+        env,
+        [target.label.name + ".home"],
+        [file.basename for file in target[DefaultInfo].files.to_list()],
+    )
+    return analysistest.end(env)
+
+_fragment_test = analysistest.make(
+    _fragment_test_impl,
+    attrs = {
+        "build_inputs": attr.label(mandatory = True, providers = [IntellijDevBuildInputsInfo]),
+    },
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _runtime_module_repository_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    actions = analysistest.target_actions(env)
+    payload = ctx.attr.payload[DistPlatformPayloadInfo]
+
+    # The core plugin part, written at analysis from the payload: every packed jar under `lib/`, in the platform jar order.
+    # The jars with a module sort by their smallest member. The library-only `ext/nested.jar` is in `last_jars`.
+    parts = [action for action in actions if action.mnemonic == "FileWrite" and action.outputs.to_list()[0].basename.endswith(".platform.runtime-layout.json")]
+    asserts.equals(env, 1, len(parts))
+    part = json.decode(parts[0].content)
+    asserts.equals(env, ["test.core", "", "layout"], [part[key] for key in ["descriptorModule", "directory", "order"]])
+    asserts.false(env, "jarOrder" in part)
+    by_module = {entry.member_modules[0]: "lib/" + entry.destination for entry in payload.layout if entry.member_modules}
+    asserts.equals(env, [by_module["test.natives"], by_module["test.packed"], "lib/ext/nested.jar"], [jar["destination"] for jar in part["jars"]])
+    asserts.equals(env, [{"module": "test.packed"}], [member for member in part["jars"][1]["members"] if "module" in member])
+
+    # The assembly reads the part, bazel-targets.json and the module facts, and writes the layout and the selected facts.
+    # The generator reads the layout, the selected facts and the core descriptor, and writes the two predeclared files.
+    assemblies = [action for action in actions if action.mnemonic == "DevDistRuntimeLayout"]
+    asserts.equals(env, 1, len(assemblies))
+    layout = target[OutputGroupInfo].runtime_module_repository_layout.to_list()
+    asserts.equals(env, 2, len(layout))
+    if assemblies:
+        asserts.true(env, "--part=" + parts[0].outputs.to_list()[0].path in assemblies[0].argv)
+        asserts.true(env, "--module-facts=" + ctx.file.module_facts.path in assemblies[0].argv)
+        asserts.true(env, ctx.file.module_facts in assemblies[0].inputs.to_list())
+        asserts.equals(env, layout, assemblies[0].outputs.to_list())
+    generators = [action for action in actions if action.mnemonic == "DevDistRuntimeModuleRepository"]
+    asserts.equals(env, 1, len(generators))
+    if generators:
+        asserts.equals(env, ["module-descriptors.dat", "module-descriptors.jar"], [file.basename for file in generators[0].outputs.to_list()])
+        generator_inputs = generators[0].inputs.to_list()
+        for file in layout + [ctx.file.core_descriptor]:
+            asserts.true(env, file in generator_inputs, file.path)
+        asserts.false(env, ctx.file.module_facts in generator_inputs, "the generator reads only the selected facts")
+        asserts.equals(env, [], [file.path for file in generator_inputs if file.is_directory])
+        asserts.equals(env, generators[0].outputs.to_list(), target[DefaultInfo].files.to_list())
+    return analysistest.end(env)
+
+_runtime_module_repository_test = analysistest.make(
+    _runtime_module_repository_test_impl,
+    attrs = {
+        "payload": attr.label(mandatory = True, providers = [DistPlatformPayloadInfo]),
+        "core_descriptor": attr.label(mandatory = True, allow_single_file = True),
+        "module_facts": attr.label(mandatory = True, allow_single_file = True),
+    },
+)
+
+def _fake_component_impl(ctx):
+    manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
+    payload = ctx.actions.declare_file(ctx.label.name + ".payload")
+    plugin_output = ctx.actions.declare_file(ctx.label.name + ".plugin-output")
+    ctx.actions.write(manifest, "{}")
+    ctx.actions.write(payload, ctx.label.name)
+    ctx.actions.write(plugin_output, ctx.label.name)
+    return [
+        DefaultInfo(files = depset([manifest, plugin_output]), runfiles = ctx.runfiles(files = [payload])),
+        OutputGroupInfo(dist_plugin_outputs = depset([plugin_output])),
+        IntellijDevFragmentInfo(
+            name = ctx.attr.component_name,
+            payload = depset([payload]),
+            manifest = manifest,
+            plugin_classpath_part = None,
+            plugin_classpath_prefix = None,
+        ),
+    ]
+
+_fake_component = rule(
+    implementation = _fake_component_impl,
+    attrs = {"component_name": attr.string(mandatory = True)},
+)
+
+def _distribution_groups_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    groups = target[OutputGroupInfo]
+    expected_production = [component[OutputGroupInfo].dist_plugin_outputs.to_list()[0] for component in ctx.attr.production]
+    asserts.equals(env, sorted(expected_production), sorted(groups.dist_plugin_outputs.to_list()))
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevDistCompose"]
+    asserts.equals(env, 1, len(actions))
+    return analysistest.end(env)
+
+_distribution_groups_test = analysistest.make(
+    _distribution_groups_test_impl,
+    attrs = {
+        "production": attr.label_list(mandatory = True, providers = [IntellijDevFragmentInfo]),
+    },
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _sibling_vm_options_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    info = target[IntellijDistInfo]
+    file = info.sibling_vm_options
+    asserts.true(env, file != None, "the export has a sibling vmoptions file")
+    if file == None:
+        return analysistest.end(env)
+    asserts.equals(env, target.label.name + ".dist.vmoptions", file.basename)
+    asserts.true(env, file in target[DefaultInfo].files.to_list(), "the target builds the file")
+    asserts.false(env, file in target[DefaultInfo].default_runfiles.files.to_list(), "the file is no runfile")
+    writes = [action for action in analysistest.target_actions(env) if file in action.outputs.to_list()]
+    asserts.equals(env, 1, len(writes), "one action writes the file")
+    if writes:
+        # `${EXPORT}` resolves to the absolute path of the home of the export below the execution root.
+        export = "/output-base/execroot/%s/%s" % (ctx.workspace_name, info.home.path)
+        if ctx.attr.home_prefix:
+            export += "/" + ctx.attr.home_prefix
+        asserts.equals(env, "/output-base/execroot/%s/%s" % (ctx.workspace_name, dist_home_path(info)), export)
+        asserts.equals(env, "-Da=1\n-Dexport=%s/x\n" % export, writes[0].content)
+
+    # The provider and the composer get the home prefix. The composer gets no option for the output itself.
+    asserts.equals(env, ctx.attr.home_prefix, info.home_prefix)
+    composes = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevDistCompose"]
+    asserts.equals(env, 1, len(composes), "one action composes the export")
+    if composes:
+        prefixes = [argument for argument in composes[0].argv if argument.startswith("--home-prefix")]
+        asserts.equals(env, ["--home-prefix=" + ctx.attr.home_prefix] if ctx.attr.home_prefix else [], prefixes)
+    return analysistest.end(env)
+
+_sibling_vm_options_test = analysistest.make(
+    _sibling_vm_options_test_impl,
+    attrs = {"home_prefix": attr.string(doc = "The home prefix of the export under test.")},
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _packed_component_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    component = target[IntellijDevFragmentInfo]
+    payload = component.payload.to_list()
+    natives = ctx.attr.natives[ContentModuleJarInfo]
+    native = natives.native_trees[_PAYLOAD_PLATFORM]
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevPackedJars"]
+    asserts.equals(env, 1, len(actions))
+    if actions:
+        for file in payload:
+            asserts.false(env, file in actions[0].inputs.to_list())
+    asserts.equals(env, sorted([component.manifest] + payload), sorted(target[DefaultInfo].files.to_list()))
+
+    # The tree is in the payload beside its jar, so the composer places it. Both files the collector reads name it as a
+    # `tree`: the destinations under `lib/<native_lib_dir>/`, the catalogue under the tree's own name and with the
+    # metadata of the tree action. A jar entry has no `tree` key. Both files are sorted by source. The tree of the other
+    # platform stays out.
+    asserts.true(env, native.tree in payload)
+    asserts.false(env, [file for file in payload if file.path.endswith(".native_darwin_aarch64/native")])
+    written = {
+        action.outputs.to_list()[0].basename: json.decode(action.content)
+        for action in analysistest.target_actions(env)
+        if action.mnemonic == "FileWrite"
+    }
+    destinations = written[target.label.name + ".jars.json"]
+    catalogue = written[target.label.name + ".metadata-catalogue.json"]
+
+    # The manifest marks the jars that the payload puts on the core classpath, and no other jar.
+    packed = ctx.attr.packed[ContentModuleJarInfo]
+    nested = ctx.attr.nested[DistPlatformJarInfo]
+    asserts.true(env, {"source": packed.jar.path, "relativePath": packed.relative_path, "coreClassPath": True} in destinations)
+    asserts.true(env, {"source": nested.jar.path, "relativePath": nested.relative_path} in destinations)
+    asserts.true(env, {"source": natives.jar.path, "relativePath": natives.relative_path} in destinations)
+    asserts.true(env, {"source": native.tree.path, "relativePath": natives.native_lib_dir, "tree": True} in destinations)
+    asserts.true(env, {"source": natives.jar.path, "metadata": natives.metadata.path, "relativePath": natives.jar.basename} in catalogue)
+    asserts.true(env, {"source": native.tree.path, "metadata": native.metadata.path, "relativePath": "native", "tree": True} in catalogue)
+    asserts.true(env, native.metadata in actions[0].inputs.to_list())
+    for entries in [destinations, catalogue]:
+        asserts.equals(env, len(payload), len(entries))
+        asserts.equals(env, sorted([entry["source"] for entry in entries]), [entry["source"] for entry in entries])
+    return analysistest.end(env)
+
+_packed_component_test = analysistest.make(
+    _packed_component_test_impl,
+    attrs = {
+        "packed": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
+        "nested": attr.label(mandatory = True, providers = [DistPlatformJarInfo]),
+        "natives": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
+    },
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _files_component_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevFiles"]
+    asserts.equals(env, 1, len(actions))
+
+    # The `platform_resources` component declares the IDE main class of the launch model. Another component declares none.
+    main_class = [argument for argument in actions[0].argv if argument.startswith("--main-class=")] if actions else []
+    asserts.equals(env, ["--main-class=" + ctx.attr.main_class] if ctx.attr.main_class else [], main_class)
+    return analysistest.end(env)
+
+_files_component_test = analysistest.make(
+    _files_component_test_impl,
+    attrs = {"main_class": attr.string()},
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _unpacked_archive_component_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+
+    # Each file of the archive goes below its directory at its path in the archive, beside an explicit file. A directory
+    # value names only the files directly in it, so `lib/sub/data.txt` keeps no executable bit.
+    placement = target[DistPlacementInfo]
+    asserts.equals(env, ["build.txt", "runtime/bin/tool", "runtime/lib/helper", "runtime/lib/sub/data.txt"], sorted(placement.files.keys()))
+
+    # The source is the archive file of the fixture package. Its short path starts with `../community+/` when the test
+    # runs from the ultimate workspace, so the test compares the owner package and the archive-relative tail only.
+    for path in ["bin/tool", "lib/helper", "lib/sub/data.txt"]:
+        source = placement.files.get("runtime/" + path)
+        asserts.equals(env, _UNPACKED_ARCHIVE.package, source.owner.package if source else None)
+        asserts.true(env, source != None and source.short_path.endswith("/" + path), "runtime/%s comes from %s" % (path, source.short_path if source else None))
+    asserts.equals(env, {}, placement.trees)
+    asserts.equals(env, ["runtime/bin/tool", "runtime/lib/helper"], sorted(placement.executables))
+
+    # The collector reads the same destinations. With an executable list, an archive file names the list and its path in
+    # the archive, and the list is an input of the collector. Without a list, the record states neither.
+    collector = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevFiles"]
+    asserts.equals(env, 1, len(collector))
+    executable_list = [file for file in collector[0].inputs.to_list() if file.basename == "executables.json"] if collector else []
+    asserts.equals(env, 1 if ctx.attr.executable_list else 0, len(executable_list))
+    written = [
+        json.decode(action.content)
+        for action in analysistest.target_actions(env)
+        if action.mnemonic == "FileWrite" and action.outputs.to_list()[0].basename == target.label.name + ".files.json"
+    ]
+    asserts.equals(env, 1, len(written))
+    records = {record["relativePath"]: record for record in written[0]} if written else {}
+    asserts.equals(env, sorted(placement.files.keys()), sorted(records.keys()))
+    asserts.equals(env, ["executable", "relativePath", "source"], sorted(records["build.txt"].keys()) if records else None)
+    for destination in ["runtime/bin/tool", "runtime/lib/helper", "runtime/lib/sub/data.txt"]:
+        record = records.get(destination, {})
+        asserts.equals(env, placement.files[destination].path, record.get("source"))
+        asserts.equals(env, destination in placement.executables, record.get("executable"))
+        asserts.equals(env, executable_list[0].path if executable_list else None, record.get("executableList"))
+        asserts.equals(env, destination.removeprefix("runtime/") if ctx.attr.executable_list else None, record.get("archivePath"))
+    return analysistest.end(env)
+
+_unpacked_archive_component_test = analysistest.make(
+    _unpacked_archive_component_test_impl,
+    attrs = {"executable_list": attr.bool(mandatory = True)},
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _manifest_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    info = target[IntellijDevBuildInputsInfo]
+    asserts.true(env, info.manifest.basename.endswith(ctx.attr.expected_suffix))
+    asserts.equals(env, [info.manifest, info.inputs_origin], target[DefaultInfo].files.to_list())
+    asserts.equals(env, 2, len(analysistest.target_actions(env)))
+    return analysistest.end(env)
+
+_manifest_test = analysistest.make(
+    _manifest_test_impl,
+    attrs = {"expected_suffix": attr.string(mandatory = True)},
+)
+
+def _declaration_test_impl(ctx):
+    env = unittest.begin(ctx)
+    asserts.equals(env, json.decode(ctx.attr.expected), json.decode(ctx.attr.actual))
+    return unittest.end(env)
+
+_declaration_test = unittest.make(
+    _declaration_test_impl,
+    attrs = {
+        "actual": attr.string(mandatory = True),
+        "expected": attr.string(mandatory = True),
+    },
+)
+
+def _fake_descriptor_impl(ctx):
+    descriptor = ctx.actions.declare_file(ctx.label.name + ".xml")
+    ctx.actions.write(descriptor, "<idea-plugin/>")
+    return [DefaultInfo(files = depset([descriptor]))]
+
+_fake_descriptor = rule(implementation = _fake_descriptor_impl)
+
+def _plugin_macro_tests(name):
+    owner = name + "_macro_owner"
+    member = name + "_macro_member"
+    source = name + "_macro_descriptor"
+    _fake_module(name = owner, module_name = "test.plugin")
+    _fake_module(name = member, module_name = "test.member")
+    _fake_descriptor(name = source)
+    dist_plugin(
+        main_module = "test.plugin",
+        module_targets = {
+            "test.member": [":" + member + ".jar"],
+            "test.plugin": [":" + owner + ".jar"],
+        },
+        content_modules = ["test.member"],
+        descriptor = source,
+    )
+    descriptor = native.existing_rule(dist_plugin_descriptor_target_name("test.plugin"))
+    test = name + "_plugin_macro_test"
+    _declaration_test(
+        name = test,
+        actual = json.encode([
+            descriptor["main_module"],
+            descriptor["descriptor"],
+        ]),
+        expected = json.encode([
+            "test.plugin",
+            ":" + source,
+        ]),
+    )
+
+    # The descriptor leaf derives a row for the main module and each member the index knows. A module outside the plugin
+    # gets no row. An explicit row wins by load path, so the second member keeps its own label.
+    indexed = {
+        role: name + "_macro_indexed_" + role
+        for role in ["owner", "first", "second", "source", "main_xml", "first_xml", "second_xml", "explicit_xml", "stranger_xml"]
+    }
+    _fake_module(name = indexed["owner"], module_name = "test.indexed")
+    _fake_module(name = indexed["first"], module_name = "test.indexed.first")
+    _fake_module(name = indexed["second"], module_name = "test.indexed.second")
+    for role in ["source", "main_xml", "first_xml", "second_xml", "explicit_xml", "stranger_xml"]:
+        _fake_descriptor(name = indexed[role])
+    dist_plugin(
+        main_module = "test.indexed",
+        module_targets = {
+            "test.indexed": [":" + indexed["owner"] + ".jar"],
+            "test.indexed.first": [":" + indexed["first"] + ".jar"],
+            "test.indexed.second": [":" + indexed["second"] + ".jar"],
+        },
+        descriptor_index = {
+            "test.indexed": ":" + indexed["main_xml"],
+            "test.indexed.first": ":" + indexed["first_xml"],
+            "test.indexed.second": ":" + indexed["second_xml"],
+            "test.stranger": ":" + indexed["stranger_xml"],
+        },
+        content_modules = ["test.indexed.first", "test.indexed.second"],
+        descriptor = indexed["source"],
+        descriptors = {":" + indexed["explicit_xml"]: "test.indexed.second.xml"},
+    )
+    indexed_descriptors = native.existing_rule(dist_plugin_descriptor_target_name("test.indexed"))["descriptors"]
+    indexed_test = name + "_plugin_macro_indexed_test"
+    _declaration_test(
+        name = indexed_test,
+        # The target names only: `existing_rule` returns a label key in its canonical form.
+        actual = json.encode([[str(label).rpartition(":")[2], path] for label, path in indexed_descriptors.items()]),
+        expected = json.encode(sorted([
+            [indexed["main_xml"], "test.indexed.xml"],
+            [indexed["first_xml"], "test.indexed.first.xml"],
+            [indexed["explicit_xml"], "test.indexed.second.xml"],
+        ])),
+    )
+
+    # A plugin that states `jars` also declares a packed component: the main module and the merged modules go in as
+    # `modules`, a content module no jar merges is reused from its own packing target, and the library token passes
+    # through unchanged.
+    packed_owner = name + "_macro_packed_owner"
+    packed_split = name + "_macro_packed_split"
+    packed_member = name + "_macro_packed_member"
+    packed_source = name + "_macro_packed_descriptor"
+    _fake_module(name = packed_owner, module_name = "intellij.test.packed")
+    _fake_module(name = packed_split, module_name = "intellij.test.packed.split")
+    _fake_module(name = packed_member, module_name = "intellij.test.packed.member")
+    _fake_descriptor(name = packed_source)
+    dist_plugin(
+        main_module = "intellij.test.packed",
+        module_targets = {
+            "intellij.test.packed": [":" + packed_owner + ".jar"],
+            "intellij.test.packed.member": [":" + packed_member + ".jar"],
+            "intellij.test.packed.split": [":" + packed_split + ".jar"],
+        },
+        content_modules = ["intellij.test.packed.split", "intellij.test.packed.member"],
+        descriptor = packed_source,
+        jars = {
+            "lib/test-packed.jar": ["@lib//:fake", "intellij.test.packed", "intellij.test.packed.split"],
+        },
+        classpath_jars = ["lib/modules/intellij.test.packed.member.jar", "lib/test-packed.jar"],
+    )
+    component = native.existing_rule("intellij.test.packed_dev_plugin")
+    inputs = native.existing_rule("intellij.test.packed_dev_plugin_inputs")
+    packed_test = name + "_plugin_macro_packed_test"
+    _declaration_test(
+        name = packed_test,
+        actual = json.encode([
+            component["main_module"],
+            component["plugin_directory"],
+            component["descriptor"],
+            component["inputs"],
+            component["jars"],
+            component["classpath_jars"],
+            sorted(component["tags"]),
+            sorted(inputs["modules"].items()),
+            # The values only: `existing_rule` returns a label key in its canonical form.
+            sorted(inputs["libraries"].values()),
+            inputs["content_module_jars"],
+        ]),
+        expected = json.encode([
+            "intellij.test.packed",
+            "plugins/test-packed",
+            ":" + dist_plugin_descriptor_target_name("intellij.test.packed"),
+            ":intellij.test.packed_dev_plugin_inputs",
+            {"lib/test-packed.jar": ["@lib//:fake", "intellij.test.packed", "intellij.test.packed.split"]},
+            ["lib/modules/intellij.test.packed.member.jar", "lib/test-packed.jar"],
+            ["manual"],
+            sorted([[":" + packed_owner, "intellij.test.packed"], [":" + packed_split, "intellij.test.packed.split"]]),
+            ["@lib//:fake"],
+            [":" + packed_member + "_content_module_jar"],
+        ]),
+    )
+
+    # A reused content module whose call is relocated takes the label `content_module_jar_labels` states. Any other
+    # reused module takes the label of its own package.
+    relocated_owner = name + "_macro_relocated_owner"
+    relocated_member = name + "_macro_relocated_member"
+    relocated_kept = name + "_macro_relocated_kept"
+    relocated_source = name + "_macro_relocated_descriptor"
+    relocated_jar = name + "_macro_relocated_jar"
+    _fake_module(name = relocated_jar, module_name = "intellij.test.relocated.member")
+    _fake_module(name = relocated_owner, module_name = "intellij.test.relocated")
+    _fake_module(name = relocated_member, module_name = "intellij.test.relocated.member")
+    _fake_module(name = relocated_kept, module_name = "intellij.test.relocated.kept")
+    _fake_descriptor(name = relocated_source)
+    dist_plugin(
+        main_module = "intellij.test.relocated",
+        module_targets = {
+            "intellij.test.relocated": [":" + relocated_owner + ".jar"],
+            "intellij.test.relocated.kept": [":" + relocated_kept + ".jar"],
+            "intellij.test.relocated.member": [":" + relocated_member + ".jar"],
+        },
+        content_modules = ["intellij.test.relocated.member", "intellij.test.relocated.kept"],
+        content_module_jar_labels = {"intellij.test.relocated.member": ":" + relocated_jar},
+        descriptor = relocated_source,
+        jars = {"lib/test-relocated.jar": ["intellij.test.relocated"]},
+    )
+    relocated_test = name + "_plugin_macro_relocated_test"
+    _declaration_test(
+        name = relocated_test,
+        actual = json.encode(native.existing_rule("intellij.test.relocated_dev_plugin_inputs")["content_module_jars"]),
+        expected = json.encode([
+            ":" + relocated_jar,
+            ":" + relocated_kept + "_content_module_jar",
+        ]),
+    )
+
+    # The stale-module case of the macro lives in `dev_plugin_test.bzl`: its warning must not print in a dist analysis,
+    # and every dist loads this package for `:trace_spans`.
+    return [test, indexed_test, packed_test, relocated_test]
+
+def dist_content_test_suite(name):
+    library = name + "_library"
+    _fake_library(name = library, jar_count = 2)
+    tests = []
+
+    packed_owner = name + "_packed_owner"
+    raw_owner = name + "_raw_owner"
+    packed = name + "_packed"
+    _fake_module(name = packed_owner, module_name = "test.packed")
+    _fake_module(name = raw_owner, module_name = "test.raw")
+    _fake_packed(name = packed, member = ":" + packed_owner, library = ":" + library)
+    nested = name + "_nested"
+    _fake_platform_jar(name = nested, destination = "ext/nested.jar")
+    natives_owner = name + "_natives_owner"
+    _fake_module(name = natives_owner, module_name = "test.natives")
+    natives = name + "_natives"
+    _fake_packed(name = natives, member = ":" + natives_owner, native_lib_dir = "jna")
+    payload = name + "_payload"
+    dist_platform_payload(
+        name = payload,
+        packed = [":" + packed, ":" + nested, ":" + natives],
+        module_system_loaded = [":" + natives],
+        native_platform = _PAYLOAD_PLATFORM,
+    )
+    tests.append(name + "_platform_payload_test")
+    _platform_payload_test(
+        name = tests[-1],
+        target_under_test = ":" + payload,
+        packed = ":" + packed,
+        nested = ":" + nested,
+        natives = ":" + natives,
+    )
+
+    # One owner per `lib/<dir>/`: two trees in one directory are refused where both jars are still named.
+    duplicate_natives = [name + "_duplicate_natives_first", name + "_duplicate_natives_second"]
+    for duplicate in duplicate_natives:
+        _fake_packed(name = duplicate, member = ":" + natives_owner, native_lib_dir = "shared")
+
+    # A payload with natives needs its platform, and a jar needs a tree of that platform. The module system can load
+    # only a jar that the payload packs.
+    for case, packed_jars, module_system_loaded, native_platform, expected_message in [
+        ("duplicate_natives", duplicate_natives, [], _PAYLOAD_PLATFORM, "lib/shared/ receives the native tree of both"),
+        ("no_platform", [natives], [], "", "so the payload needs native_platform"),
+        ("unknown_platform", [natives], [], "windows_x64", "has no native tree for 'windows_x64'"),
+        ("unpacked_module_system_loaded", [packed], [natives], _PAYLOAD_PLATFORM, "module_system_loaded names jars that packed does not name"),
+    ]:
+        failing_payload = name + "_" + case + "_payload"
+        dist_platform_payload(
+            name = failing_payload,
+            packed = [":" + jar for jar in packed_jars],
+            module_system_loaded = [":" + jar for jar in module_system_loaded],
+            native_platform = native_platform,
+            tags = ["manual"],
+        )
+        tests.append(failing_payload + "_test")
+        _expected_failure_test(
+            name = tests[-1],
+            target_under_test = ":" + failing_payload,
+            expected_message = expected_message,
+        )
+
+    # The union of the bundled plugins' raw content. `plugins` go through the stamp class transition, `deps` come as they
+    # are, and both land in one provider. A target without `DistContentInfo` is refused at the attribute.
+    second_library = name + "_second_library"
+    _fake_library(name = second_library)
+    plugin_contents = [name + "_plugin_content_first", name + "_plugin_content_second", name + "_plugin_content_frontend"]
+    _fake_content(name = plugin_contents[0], modules = [":" + packed_owner], library = ":" + library)
+    _fake_content(name = plugin_contents[1], modules = [":" + packed_owner, ":" + raw_owner], library = ":" + second_library)
+    _fake_content(name = plugin_contents[2], modules = [":" + raw_owner])
+    plugin_content = name + "_plugin_content"
+    dist_plugin_content(
+        name = plugin_content,
+        plugins = [":" + plugin_contents[0], ":" + plugin_contents[1]],
+        deps = [":" + plugin_contents[2]],
+        stamp_class = "",
+    )
+    tests.append(plugin_content + "_test")
+    _plugin_content_test(
+        name = tests[-1],
+        target_under_test = ":" + plugin_content,
+        plugins = [":" + content for content in plugin_contents],
+    )
+    refused_plugin_content = name + "_refused_plugin_content"
+    dist_plugin_content(
+        name = refused_plugin_content,
+        plugins = [":" + raw_owner],
+        stamp_class = "",
+        tags = ["manual"],
+    )
+    tests.append(refused_plugin_content + "_test")
+    _expected_failure_test(
+        name = tests[-1],
+        target_under_test = ":" + refused_plugin_content,
+        expected_message = "does not have mandatory providers",
+    )
+
+    inputs = name + "_inputs"
+    intellij_build_inputs(
+        name = inputs,
+        content = [":" + payload],
+    )
+    tests.append(inputs + "_test")
+    _build_inputs_test(
+        name = tests[-1],
+        target_under_test = ":" + inputs,
+        library = ":" + library,
+        modules = [":" + packed_owner],
+    )
+
+    fixture = name + "_tool"
+    _tool_fixture(name = fixture, tags = ["manual"])
+    fragment = name + "_fragment"
+    intellij_fragment(
+        name = fragment,
+        assembler = ":" + fixture,
+        platform_prefix = "idea",
+        target_platform = "linux_x64",
+        fragment_name = "platform_runtime_module_repository",
+        runtime_module_repository = True,
+        project_model_tree = ":" + fixture,
+        bazel_targets_json = ":" + fixture + ".data",
+        build_inputs = ":" + inputs,
+        preloaded_manifests = [":" + fixture + ".data"],
+        tags = ["manual"],
+    )
+    repository_files = [name + "_repository_core.xml", name + "_repository_targets.json", name + "_repository_facts.json"]
+    for file in repository_files:
+        native.genrule(name = file + "_file", outs = [file], cmd = "echo '{}' > $@", tags = ["manual"])
+    repository = name + "_runtime_module_repository"
+    dist_runtime_module_repository(
+        name = repository,
+        platform_payload = ":" + payload,
+        core_module = "test.core",
+        core_descriptor = ":" + repository_files[0],
+        first_jars = [],
+        last_jars = ["ext/nested.jar"],
+        runtime_module_facts = ":" + repository_files[2],
+        bazel_targets_json = ":" + repository_files[1],
+        tags = ["manual"],
+    )
+    tests.append(repository + "_test")
+    _runtime_module_repository_test(
+        name = tests[-1],
+        target_under_test = ":" + repository,
+        payload = ":" + payload,
+        core_descriptor = ":" + repository_files[0],
+        module_facts = ":" + repository_files[2],
+    )
+
+    # The platform jar rule refuses a named jar that the payload does not pack, and a library-only jar outside `last_jars`.
+    for case, first_jars, last_jars, expected_message in [
+        ("unknown_jar", ["missing.jar"], ["ext/nested.jar"], "the platform jar order names missing.jar, but the payload does not pack it"),
+        ("unplaced_library_jar", [], [], "ext/nested.jar has no module and so no sort key, but the platform jar order does not name it in last"),
+    ]:
+        failing_repository = repository + "_" + case
+        dist_runtime_module_repository(
+            name = failing_repository,
+            platform_payload = ":" + payload,
+            core_module = "test.core",
+            core_descriptor = ":" + repository_files[0],
+            first_jars = first_jars,
+            last_jars = last_jars,
+            runtime_module_facts = ":" + repository_files[2],
+            bazel_targets_json = ":" + repository_files[1],
+            tags = ["manual"],
+        )
+        tests.append(failing_repository + "_test")
+        _expected_failure_test(
+            name = tests[-1],
+            target_under_test = ":" + failing_repository,
+            expected_message = expected_message,
+        )
+
+    tests.append(fragment + "_test")
+    _fragment_test(
+        name = tests[-1],
+        target_under_test = ":" + fragment,
+        build_inputs = ":" + inputs,
+    )
+
+    production = [name + "_component_first", name + "_component_second"]
+    for component in production:
+        _fake_component(name = component, component_name = component)
+    distribution = name + "_distribution"
+    intellij_fragments_dist(
+        name = distribution,
+        composer = ":" + fixture,
+        fragments = [":" + component for component in production],
+        platform_prefix = "idea",
+        expect_fragments = production,
+        tags = ["manual"],
+    )
+    tests.append(distribution + "_test")
+    _distribution_groups_test(
+        name = tests[-1],
+        target_under_test = ":" + distribution,
+        production = [":" + component for component in production],
+    )
+
+    # The sibling vmoptions file of an export, flat and with the home in `Contents`, and the lines and the distributions
+    # that the rule refuses.
+    for suffix, prefix in [("", ""), ("_contents", "Contents")]:
+        sibling = name + "_sibling_distribution" + suffix
+        intellij_fragments_dist(
+            name = sibling,
+            composer = ":" + fixture,
+            fragments = [":" + component for component in production],
+            platform_prefix = "idea",
+            expect_fragments = production,
+            sibling_vm_options = ["-Da=1", "-Dexport=${EXPORT}/x"],
+            output_base = "/output-base",
+            home_prefix = prefix,
+            tags = ["manual"],
+        )
+        tests.append(sibling + "_test")
+        _sibling_vm_options_test(name = tests[-1], target_under_test = ":" + sibling, home_prefix = prefix)
+    for suffix, local_launch, lines, output_base, expected_message in [
+        ("local_launch", True, ["-Da=1"], "", "a local launch has no export, so it takes no sibling_vm_options"),
+        ("line_break", False, ["-Da=1\n-Db=2"], "", "a sibling vmoptions line must be one JVM option"),
+        ("empty_line", False, [""], "", "a sibling vmoptions line must be one JVM option"),
+        ("no_output_base", False, ["-Dexport=${EXPORT}"], "", "names ${EXPORT}, so output_base is required"),
+    ]:
+        refused = "%s_sibling_%s" % (name, suffix)
+        intellij_fragments_dist(
+            name = refused,
+            composer = ":" + fixture,
+            fragments = [":" + component for component in production],
+            platform_prefix = "idea",
+            expect_fragments = production,
+            local_launch = local_launch,
+            sibling_vm_options = lines,
+            output_base = output_base,
+            tags = ["manual"],
+        )
+        tests.append(refused + "_test")
+        _expected_failure_test(name = tests[-1], target_under_test = ":" + refused, expected_message = expected_message)
+
+    packed_component = name + "_packed_component"
+    intellij_packed_jars_component(
+        name = packed_component,
+        collector = ":" + fixture,
+        component_name = "platform",
+        platform_prefix = "idea",
+        target_platform = "linux_x64",
+        platform_payload = ":" + payload,
+        tags = ["manual"],
+    )
+    tests.append(packed_component + "_test")
+    _packed_component_test(
+        name = tests[-1],
+        target_under_test = ":" + packed_component,
+        packed = ":" + packed,
+        nested = ":" + nested,
+        natives = ":" + natives,
+    )
+
+    build_txt = name + "_build_txt"
+    native.genrule(name = build_txt, outs = [build_txt + ".txt"], cmd = "echo IU > $@", tags = ["manual"])
+    for case, main_class in [("resources", "com.intellij.idea.Main"), ("files", "")]:
+        files_component = name + "_" + case + "_component"
+        intellij_packed_jars_component(
+            name = files_component,
+            collector = ":" + fixture,
+            component_name = "platform_" + case,
+            platform_prefix = "idea",
+            target_platform = "linux_x64",
+            files = {"build.txt": ":" + build_txt},
+            main_class = main_class,
+            tags = ["manual"],
+        )
+        tests.append(files_component + "_test")
+        _files_component_test(name = tests[-1], target_under_test = ":" + files_component, main_class = main_class)
+
+    # An unpacked archive below one directory, beside an explicit file, with and without an executable list. Then the
+    # inputs that the rule refuses: a destination that both an explicit file and the archive place, an executable value
+    # that names no archive file, and an executable list that names no directory of an archive.
+    runtime_list = {"runtime": _UNPACKED_ARCHIVE_EXECUTABLE_LIST}
+    for suffix, lists in [("", runtime_list), ("_without_executable_list", {})]:
+        archive_component = name + "_unpacked_archive_component" + suffix
+        intellij_packed_jars_component(
+            name = archive_component,
+            collector = ":" + fixture,
+            component_name = "platform_assets",
+            platform_prefix = "idea",
+            target_platform = "linux_x64",
+            files = {"build.txt": ":" + build_txt},
+            unpacked_archives = {_UNPACKED_ARCHIVE: "runtime"},
+            unpacked_archive_executables = ["runtime/bin/tool", "runtime/lib/"],
+            unpacked_archive_executable_lists = lists,
+            tags = ["manual"],
+        )
+        tests.append(archive_component + "_test")
+        _unpacked_archive_component_test(name = tests[-1], target_under_test = ":" + archive_component, executable_list = bool(lists))
+    for case, files, executables, lists, message in [
+        ("duplicate", {"runtime/bin/tool": ":" + build_txt}, [], runtime_list, "duplicate destination: runtime/bin/tool"),
+        ("unknown_executable", {}, ["runtime/lib/sub"], runtime_list, "unpacked_archive_executables names 'runtime/lib/sub', which matches no file of unpacked_archives"),
+        ("unknown_executable_directory", {}, ["runtime/bin/sub/"], runtime_list, "unpacked_archive_executables names 'runtime/bin/sub/', which matches no file of unpacked_archives"),
+        (
+            "unknown_executable_list",
+            {},
+            [],
+            runtime_list | {"other": _UNPACKED_ARCHIVE_EXECUTABLE_LIST},
+            "unpacked_archive_executable_lists names 'other', which is no directory of unpacked_archives",
+        ),
+    ]:
+        refused = "%s_unpacked_archive_%s" % (name, case)
+        intellij_packed_jars_component(
+            name = refused,
+            collector = ":" + fixture,
+            component_name = "platform_assets",
+            platform_prefix = "idea",
+            target_platform = "linux_x64",
+            files = files,
+            unpacked_archives = {_UNPACKED_ARCHIVE: "runtime"},
+            unpacked_archive_executables = executables,
+            unpacked_archive_executable_lists = lists,
+            tags = ["manual"],
+        )
+        tests.append(refused + "_test")
+        _expected_failure_test(name = tests[-1], target_under_test = ":" + refused, expected_message = message)
+
+    empty_inputs = name + "_empty_inputs"
+    intellij_build_inputs(name = empty_inputs)
+    tests.append(empty_inputs + "_test")
+    _manifest_test(name = tests[-1], target_under_test = ":" + empty_inputs, expected_suffix = ".bazel-inputs")
+
+    tests.extend(_plugin_macro_tests(name))
+    content_module_jar_test_suite(name = name + "_production")
+    tests.append(name + "_production")
+    native.test_suite(name = name, tests = tests)

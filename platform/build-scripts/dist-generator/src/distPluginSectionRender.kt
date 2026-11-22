@@ -18,8 +18,8 @@ import kotlin.io.path.relativeTo
 /**
  * The `dev <main module>` section of one plugin, rendered as the converter renders it.
  *
- * [body] holds one `dev_dist_plugin(...)` call.
- * [loadStatements] names the `dev_dist_plugin` of the plugin's JPS bridge. The section writer merges the load into
+ * [body] holds one `dist_plugin(...)` call.
+ * [loadStatements] names the `dist_plugin` of the plugin's JPS bridge. The section writer merges the load into
  * the file head.
  */
 internal class DevSectionRender(
@@ -34,7 +34,7 @@ internal class DevSectionRender(
  * The record exists whether or not a section is rendered.
  */
 internal class DevSectionRecord(
-  /** The absolute `dev_dist_plugin_descriptor` label of every variant, keyed by the variant token, sorted. */
+  /** The absolute `dist_plugin_descriptor` label of every variant, keyed by the variant token, sorted. */
   @JvmField val descriptorTargets: Map<String, String>,
 )
 
@@ -99,7 +99,7 @@ internal fun computeDevSection(
   val entries = descriptorEntries.sortedBy { it.variant }
   check(entries.map { it.variant }.distinct().size == entries.size) { "Plugin '$mainModule' has two baseline entries of one variant" }
   val contentModuleNames = sectionContentModuleNames(context = context, memberNames = packing.content.memberNames)
-  // `dev_dist_plugin` passes the main module and the content modules to the leaf, and the leaf derives their rows.
+  // `dist_plugin` passes the main module and the content modules to the leaf, and the leaf derives their rows.
   val descriptors = computePluginDescriptors(context = context, entries = entries, derivedModules = setOf(mainModule) + contentModuleNames)
   val statesSection = contentModuleNames.isNotEmpty() || descriptors.isNotEmpty()
   val content = if (statesSection) PluginContentModules(contentModuleNames = contentModuleNames) else null
@@ -109,11 +109,11 @@ internal fun computeDevSection(
     descriptorTargets.put(descriptor.variant, "$packagePrefix:${index.pluginDescriptorTargetName(mainModule, descriptor.variant)}")
   }
   val record = DevSectionRecord(descriptorTargets = descriptorTargets)
-  // The bridge of the plugin's repository half exports `dev_dist_plugin` bound to its own module map and descriptor
+  // The bridge of the plugin's repository half exports `dist_plugin` bound to its own module map and descriptor
   // index, so the section states neither map and loads nothing else.
   val loadStatements = listOf(LoadStatement(
     bzlFile = "@jps_dynamic_deps_${if (context.isCommunity) "community" else "ultimate"}//:targets.bzl",
-    symbols = listOf("dev_dist_plugin"),
+    symbols = listOf("dist_plugin"),
   ))
   return DevSectionOutcome(
     draft = if (statesSection) PendingDevSection(context, content, descriptors, record, loadStatements) else null,
@@ -373,7 +373,7 @@ private fun libraryDescriptorLabels(context: DevSectionContext, entry: PluginDes
 
 /**
  * The one leaf every variant agrees on, or `null` for no leaf. Two variants that state a fact differently fail, because
- * `dev_dist_plugin` states a plugin's descriptor facts once for every variant.
+ * `dist_plugin` states a plugin's descriptor facts once for every variant.
  */
 private fun commonPluginDescriptor(mainModule: String, descriptors: List<PluginDescriptorLeaf>): PluginDescriptorLeaf? {
   val first = descriptors.firstOrNull() ?: return null
@@ -381,7 +381,7 @@ private fun commonPluginDescriptor(mainModule: String, descriptors: List<PluginD
     val differing = other.deviatesFrom(first)
     check(differing.isEmpty()) {
       "$mainModule: layout variant '${other.variant}' states $differing differently from '${first.variant}'," +
-      " and `dev_dist_plugin` states a plugin's descriptor facts once for every variant"
+      " and `dist_plugin` states a plugin's descriptor facts once for every variant"
     }
   }
   return first
@@ -430,7 +430,7 @@ private fun renderBody(
     return null
   }
   val descriptor = commonPluginDescriptor(mainModule = context.mainModule, descriptors = descriptors)
-  val call = Target("dev_dist_plugin")
+  val call = Target("dist_plugin")
   val declaredPackaging = packaging?.takeIf { !it.crossHalf }
   // The attributes in alphabetical order, each only where it states something.
   declaredPackaging?.classpathJars?.ifNotEmpty { call.option("classpath_jars", it.unsorted()) }

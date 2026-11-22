@@ -167,16 +167,16 @@ internal fun undeclaredDevDistMessage(
   }
   append(". Then run `bazel run //platform/buildScripts:plugin-model-tool`, and run the test again for the label.\n")
 
-  append("  - In the package of the test, declare `intellij_dev_fragments_dist_ultimate` of `//build:intellij_dev_ultimate.bzl`")
+  append("  - In the package of the test, declare `intellij_fragments_dist_ultimate` of `//build:intellij_dev_ultimate.bzl`")
   if (additional.isNotEmpty()) {
     append(" with these `additional_modules`")
   }
-  append(". Its `platform_fragments` and `platform_fragment_names` come from `dev_dist_platform_fragments(product = \"$product\"")
+  append(". Its `platform_fragments` and `platform_fragment_names` come from `dist_platform_fragments(product = \"$product\"")
   if (runtimeModuleRepository) {
     append(", runtime_module_repository = True")
   }
   append(")` of the same file. ")
-  append("Declare `intellij_dev_dist_config` of `@community//build:intellij_dev.bzl` for it. ")
+  append("Declare `intellij_dist_config` of `@community//build:intellij_dev.bzl` for it. ")
   append("`//tests/intellij.ide.starter.extended.uiAgent:ui-agent_test` is an example.\n")
 }
 

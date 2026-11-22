@@ -28,7 +28,7 @@ object CommunityDistHalf : DistHalf {
    * is `community`. The ultimate tool writes the same bytes, because it runs this half in the same way.
    */
   override val generatorCommand: String
-    get() = "bazel run @community//build:dev_dist_generator"
+    get() = "bazel run @community//build:dist_generator"
 
   /**
    * IDEA Community is the key `Idea`, whose name folds to the name of another key on a case-insensitive file system, so

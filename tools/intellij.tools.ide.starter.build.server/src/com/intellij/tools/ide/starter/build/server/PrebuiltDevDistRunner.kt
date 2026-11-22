@@ -17,7 +17,7 @@ import kotlin.io.path.isDirectory
  * inside it.
  *
  * The distribution is named by [DevIdeConfig.CONFIG_PATH_PROPERTY] - under Bazel, an `$(rlocationpath ...)` of an
- * `intellij_dev_dist` target's config file - so a test target declares the IDE it runs against the same way it declares
+ * `intellij_dist` target's config file - so a test target declares the IDE it runs against the same way it declares
  * any other input, and an unchanged tree means no assembly at all. Everything downstream is unchanged:
  * `IdeFromCodeInstaller` reads `core-classpath.txt`, resolves the JBR, and synthesizes the command line exactly as it
  * does for an assembled run.

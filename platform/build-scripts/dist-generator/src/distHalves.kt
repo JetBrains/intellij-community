@@ -196,7 +196,7 @@ internal class DistUpstreamHalf(
  *
  * The plan reads [DistBuildSections.verdicts], so it renders after the sections. The plugin executions render
  * between the sections and their write, because the `dev` section of a complex plugin holds its
- * `dev_dist_complex_plugin` calls or exports its plan files, see [computeDistPluginExecutions]. The walk and each
+ * `dist_complex_plugin` calls or exports its plan files, see [computeDistPluginExecutions]. The walk and each
  * render get a span of their own. The JSON is read once, and the index gives it to every render. The descriptor walk
  * runs once, and every render reads it.
  *
@@ -332,7 +332,7 @@ internal fun requireForeignFixpoint(foreign: Set<String>, second: Set<String>) {
  *
  * One key with one product class in both registries is one product. The community half plans it, and the second half
  * writes no row of it. A distribution of such a key composes the community platform set and the community bundled
- * plugins, see `intellij_dev_dist_declarations`. [productClasses] maps each split product of the second half to the
+ * plugins, see `intellij_dist_declarations`. [productClasses] maps each split product of the second half to the
  * class of its product properties. [upstreamProductClasses] are the classes of the products that the community half
  * planned, keyed by the `dev-build.json` key. A key with two classes, such as `AndroidStudio`, states two products, so
  * it is no community product.

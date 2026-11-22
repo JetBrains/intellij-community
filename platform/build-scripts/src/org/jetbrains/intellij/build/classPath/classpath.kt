@@ -109,7 +109,7 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
  * Which of [externallyPackedJars] belong on the core classpath, decided from the layout instead of from packed entries.
  *
  * A split distribution fragment hands these jars to another producer, so it neither packs them nor resolves the
- * modules in them. `dev_dist_platform_payload` derives the core classpath of these jars in Bazel. The distribution
+ * modules in them. `dist_platform_payload` derives the core classpath of these jars in Bazel. The distribution
  * plan generator calls this function over the source layout of each product and fails when the two answers differ.
  * The core classpath has to stay complete: it is what `PreBuiltDevMain` starts the IDE with.
  *
@@ -163,7 +163,7 @@ fun contentModuleJarCoreClasspathEntries(
 /**
  * The core classpath of a split distribution of the platform [layout], as `lib/`-relative names in bytewise order.
  *
- * `dev_dist_platform_payload` derives the same list in Bazel: every packed direct child of `lib/` that the module system
+ * `dist_platform_payload` derives the same list in Bazel: every packed direct child of `lib/` that the module system
  * does not load. Here the module jars come from [contentModuleJarCoreClasspathEntries] over every module jar of
  * [layout]. A jar with project libraries and no module is on the list when it is a direct child of `lib/`, as in
  * [generateClassPathByLayoutReport]. The plan generator checks the Bazel derivation against this function, see ADR 0037.

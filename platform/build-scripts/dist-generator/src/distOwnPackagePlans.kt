@@ -11,7 +11,7 @@ import java.util.TreeSet
 private val QUOTED_LABEL = Regex("\"([^\"\\s]*//[^\"\\s]*)\"")
 
 /**
- * The plan files and the `dev_dist_complex_plugin` calls that the community half writes into the own package of a
+ * The plan files and the `dist_complex_plugin` calls that the community half writes into the own package of a
  * community plugin.
  *
  * The community half renders first and writes them. The ultimate half cannot write a community package, so it homes a

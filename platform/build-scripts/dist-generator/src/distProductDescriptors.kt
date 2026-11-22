@@ -23,12 +23,12 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
   append("#\n")
   append("# The generated entries of the application-info module jar of each product: the product descriptor, and the\n")
   append("# application info of a product with `appInfoXmlReplacements`. The application info action replaces only these\n")
-  append("# markers, and the run time reads the build number from `build.txt`. `dev_dist_platform_jar` patches the outputs\n")
-  append("# into the jar, see the `patches` of the residual jar in `build/dev_dist_fragment_inputs.bzl`. A product without\n")
+  append("# markers, and the run time reads the build number from `build.txt`. `dist_platform_jar` patches the outputs\n")
+  append("# into the jar, see the `patches` of the residual jar in `build/dist_fragment_inputs.bzl`. A product without\n")
   append("# replacements patches its application info source as it is.\n")
   append("#\n")
   append("# A target states the Product DSL content of its product: the aliases, the deprecated includes, the top-level module\n")
-  append("# sets with their loading overrides, and the additional modules. The macro walks `DEV_DIST_MODULE_SETS` as\n")
+  append("# sets with their loading overrides, and the additional modules. The macro walks `DIST_MODULE_SETS` as\n")
   append("# `processAndGetProductPluginContentModules` inlines the sets, and the descriptor writer composes the content. The\n")
   append("# macro derives the descriptor row of each content module from the bridge index of the half, so `descriptors`\n")
   append("# states only the other rows. Every target is `manual`, which the macros add.\n")
@@ -36,13 +36,13 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
     return@buildString
   }
   append("\n")
-  // The bridge of the half exports `dev_dist_product_descriptor` bound to its descriptor index. The load lines are in
+  // The bridge of the half exports `dist_product_descriptor` bound to its descriptor index. The load lines are in
   // the order buildifier sorts them: a file of an explicit repository before a file of this one.
   val loads = ArrayList<LoadStatement>()
   if (plans.any(ProductDescriptorPlan::hasApplicationInfo)) {
-    loads.add(LoadStatement(index.planLabel(PRODUCT_DESCRIPTOR_RULE), listOf("dev_dist_product_application_info")))
+    loads.add(LoadStatement(index.planLabel(PRODUCT_DESCRIPTOR_RULE), listOf("dist_product_application_info")))
   }
-  loads.add(LoadStatement("@${half.jpsBridge}//:targets.bzl", listOf("dev_dist_product_descriptor")))
+  loads.add(LoadStatement("@${half.jpsBridge}//:targets.bzl", listOf("dist_product_descriptor")))
   loads.add(LoadStatement(DIST_MODULE_SETS_BZL, listOf(DIST_MODULE_SETS_SYMBOL)))
   val loadOrder = BazelLabelComparator(forLoadStatements = true)
   for (load in loads.sortedWith { a, b -> loadOrder.compare(a.bzlFile, b.bzlFile) }) {
@@ -65,7 +65,7 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
     if (plan.scrambledContentModules.isNotEmpty()) {
       attributes.put("scrambled_content_modules", plan.scrambledContentModules)
     }
-    val descriptor = Target("dev_dist_product_descriptor")
+    val descriptor = Target("dist_product_descriptor")
     descriptor.option("name", "${plan.name}_product_descriptor")
     for ((key, value) in attributes) {
       descriptor.option(key, value)
@@ -74,7 +74,7 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
 
     if (plan.hasApplicationInfo) {
       append("\n")
-      val applicationInfo = Target("dev_dist_product_application_info")
+      val applicationInfo = Target("dist_product_application_info")
       applicationInfo.option("name", "${plan.name}_application_info")
       applicationInfo.option("replacements", plan.replacements.unsorted())
       applicationInfo.option("source", index.planLabel(plan.applicationInfo))
@@ -83,8 +83,8 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
   }
 }
 
-/** The `.bzl` file that exports `dev_dist_product_application_info`. */
-private const val PRODUCT_DESCRIPTOR_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl"
+/** The `.bzl` file that exports `dist_product_application_info`. */
+private const val PRODUCT_DESCRIPTOR_RULE: String = "@community//platform/build-scripts/bazel-rules:dist_product_descriptor.bzl"
 
 /**
  * The `.xml` files of [PRODUCT_DESCRIPTOR_PACKAGE], as project-relative paths. The run writes none, because the macro

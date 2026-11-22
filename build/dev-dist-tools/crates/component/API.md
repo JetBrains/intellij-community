@@ -4,7 +4,7 @@ The component contract that the collector and the composer share. Each line name
 `src/`, with its module path. The crate root also exports `ComponentManifest` and `ComponentEntry`.
 
 The crate implements only the inputs that the repository produces. Every other input fails with an error that names
-it. The collector writes the manifests, and the composer reads them. `intellij_dev_dist.bzl` writes the metadata
+it. The collector writes the manifests, and the composer reads them. `intellij_dist.bzl` writes the metadata
 catalogue with `json.encode`, and the collector reads it with `json::read`. The composer writes the local layout, and
 `dev-home` and `dev-dist` read it with `layout::read_layout`.
 

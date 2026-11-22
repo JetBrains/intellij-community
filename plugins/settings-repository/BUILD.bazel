@@ -1,5 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -11,7 +11,7 @@ jps_test(
 ### skip generation section `test intellij.settingsRepository.tests`
 
 ### auto-generated section `dev intellij.settingsRepository` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.libraries.sshd.osgi",

@@ -105,7 +105,7 @@ pub(crate) fn bind_files(directory: &TempDir, component: &str, sources: &[&str])
     read_bindings(&file, component)
 }
 
-/// One line of the source bindings file, as `_add_source_bindings` in `intellij_dev_dist.bzl` writes it.
+/// One line of the source bindings file, as `_add_source_bindings` in `intellij_dist.bzl` writes it.
 pub(crate) fn binding_line(component: &str, source: &str, anchor_relative: &str, kind: &str, members: &[&str]) -> String {
     format!(
         r#"{{"component":{},"source":{},"anchorRelativePath":{},"type":{},"members":{}}}"#,

@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The `--embedded-product` mode: the executor of `dev_dist_embedded_product_descriptor`.
+//! The `--embedded-product` mode: the executor of `dist_embedded_product_descriptor`.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
@@ -12,7 +12,7 @@ use crate::descriptorxml::{self, Element};
 use crate::structural::{self, Cache, ContentRequest};
 use crate::{Jars, append_descriptor_jar, put_descriptor, report, seed_cache, write_resolved};
 
-/// The declared inputs of `dev_dist_embedded_product_descriptor`.
+/// The declared inputs of `dist_embedded_product_descriptor`.
 ///
 /// The rule states no descriptor search scope. Every lookup reads the one cache that the declared files seed, so this
 /// mode refuses `--module` as an unknown option.

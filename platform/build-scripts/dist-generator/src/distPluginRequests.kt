@@ -18,7 +18,7 @@ import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 
 /**
  * The tier of a plugin request. A distribution composes every bundled component and the additional components its
- * `additional_modules` name. [key] is the Starlark key of the tier in `DEV_DIST_PLUGIN_COMPONENTS`. Only the tiers of
+ * `additional_modules` name. [key] is the Starlark key of the tier in `DIST_PLUGIN_COMPONENTS`. Only the tiers of
  * [DIST_COMPONENT_TIERS] get a component.
  */
 @ApiStatus.Internal
@@ -33,7 +33,7 @@ enum class DistPluginTier(@JvmField val key: String) {
   REGISTRY("registry"),
 }
 
-/** The tiers that get a component in `DEV_DIST_PLUGIN_COMPONENTS`, in the order of the Starlark keys. */
+/** The tiers that get a component in `DIST_PLUGIN_COMPONENTS`, in the order of the Starlark keys. */
 @ApiStatus.Internal
 val DIST_COMPONENT_TIERS: List<DistPluginTier> = listOf(DistPluginTier.BUNDLED, DistPluginTier.ADDITIONAL)
 

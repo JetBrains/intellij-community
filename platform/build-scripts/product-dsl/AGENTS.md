@@ -26,9 +26,9 @@ defined there, not in a community-only checkout.
    Both halves read `build/bazel-targets.json`, and the community half takes the rows of the community modules.
    After a rebase, run the whole recipe before a push.
 
-   A community-only checkout regenerates only its dev-dist half with `bazel run //build:dev_dist_generator`
+   A community-only checkout regenerates only its dev-dist half with `bazel run //build:dist_generator`
    from `community/`. Add `-- --check` to report a stale file. From the ultimate root, the check is
-   `bazel run @community//build:dev_dist_generator -- --check`.
+   `bazel run @community//build:dist_generator -- --check`.
 
    **Verification — must produce no changes:**
    - Do NOT just trust the generator's printed stats

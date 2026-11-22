@@ -64,7 +64,7 @@ class DistResourceTreeBindingTest {
     ))
     assertThat(bindings.catalogueFacts.additionalInputs).containsExactly(DistPluginRawInput(
       id = inputId,
-      label = "//plugins/x:dev_dist_resources_helpers",
+      label = "//plugins/x:dist_resources_helpers",
       kind = "directory",
       fileName = "helpers",
       sourceTreePrefix = "plugins/x/helpers",
@@ -81,7 +81,7 @@ class DistResourceTreeBindingTest {
     val bindings = bindings(layout)
 
     val input = bindings.catalogueFacts.additionalInputs.single()
-    assertThat(input.label).isEqualTo("//plugins/x:dev_dist_resources")
+    assertThat(input.label).isEqualTo("//plugins/x:dist_resources")
     assertThat(input.sourceTreeExclusions).isEqualTo(DevPluginResourceExclusions.NONE)
     assertThat(bindings.facts.declaredAssets.getValue("resource-generator:0").single().destination).isEqualTo("lib/helpers")
     assertThat(bindings.operations).isEmpty()

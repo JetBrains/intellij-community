@@ -19,7 +19,7 @@ class DistResourceFilegroupTest {
     assertThat(renderResourceFilegroup(listOf("resources/shell-integrations"))).isEqualTo(
       """
       filegroup(
-          name = "dev_dist_resources",
+          name = "dist_resources",
           srcs = glob(
               ["resources/shell-integrations/**"],
           ),
@@ -34,7 +34,7 @@ class DistResourceFilegroupTest {
     assertThat(renderResourceFilegroup(listOf("rubystubs", "resources/rb", "rubysigs"))).isEqualTo(
       """
       filegroup(
-          name = "dev_dist_resources",
+          name = "dist_resources",
           srcs = glob(
               [
                   "resources/rb/**",
@@ -82,7 +82,7 @@ class DistResourceFilegroupTest {
       plugin = "intellij.x",
       inputs = listOf(
         DistPluginRawInput(id = "intellij.x", label = "//plugins/x:x", kind = "directory", fileName = "intellij.x"),
-        DistPluginRawInput(id = "module-resource:0:source", label = "//plugins/x:dev_dist_resources", kind = "directory", fileName = "helpers", sourceTreePrefix = "plugins/x/helpers"),
+        DistPluginRawInput(id = "module-resource:0:source", label = "//plugins/x:dist_resources", kind = "directory", fileName = "helpers", sourceTreePrefix = "plugins/x/helpers"),
         DistPluginRawInput(id = "module-resource:1:source", label = "//plugins/x:helper.sh", kind = "file", fileName = "helper.sh"),
       ),
     )
@@ -93,7 +93,7 @@ class DistResourceFilegroupTest {
       "intellij.x",
       """
       filegroup(
-          name = "dev_dist_resources",
+          name = "dist_resources",
           srcs = glob(
               ["helpers/**"],
           ),
@@ -115,7 +115,7 @@ class DistResourceFilegroupTest {
     assertThat(renderFilteredResourceFilegroup("helpers", exclusions)).isEqualTo(
       """
       filegroup(
-          name = "dev_dist_resources_helpers",
+          name = "dist_resources_helpers",
           srcs = glob(
               ["helpers/**"],
               exclude = [
@@ -131,7 +131,7 @@ class DistResourceFilegroupTest {
     assertThat(renderFilteredResourceFilegroup("lib/data", DevPluginResourceExclusions(files = listOf("x.txt")))).isEqualTo(
       """
       filegroup(
-          name = "dev_dist_resources_lib_data",
+          name = "dist_resources_lib_data",
           srcs = glob(
               ["lib/data/**"],
               exclude = ["lib/data/**/x.txt"],
@@ -152,10 +152,10 @@ class DistResourceFilegroupTest {
     statements.addPlanInputs(
       plugin = "intellij.x",
       inputs = listOf(
-        DistPluginRawInput(id = "module-resource:0:source", label = "//plugins/x:dev_dist_resources", kind = "directory", fileName = "data", sourceTreePrefix = "plugins/x/data"),
+        DistPluginRawInput(id = "module-resource:0:source", label = "//plugins/x:dist_resources", kind = "directory", fileName = "data", sourceTreePrefix = "plugins/x/data"),
         DistPluginRawInput(
           id = "module-resource:1:source",
-          label = "//plugins/x:dev_dist_resources_helpers",
+          label = "//plugins/x:dist_resources_helpers",
           kind = "directory",
           fileName = "helpers",
           sourceTreePrefix = "plugins/x/helpers",
@@ -170,7 +170,7 @@ class DistResourceFilegroupTest {
       "intellij.x",
       """
       filegroup(
-          name = "dev_dist_resources",
+          name = "dist_resources",
           srcs = glob(
               ["data/**"],
           ),
@@ -178,7 +178,7 @@ class DistResourceFilegroupTest {
       )
 
       filegroup(
-          name = "dev_dist_resources_helpers",
+          name = "dist_resources_helpers",
           srcs = glob(
               ["helpers/**"],
               exclude = ["helpers/**/setup.py"],
@@ -195,7 +195,7 @@ class DistResourceFilegroupTest {
     fun filtered(plugin: String, file: String) {
       statements.addPlanInputs(plugin = plugin, inputs = listOf(DistPluginRawInput(
         id = "module-resource:0:source",
-        label = "//plugins/x:dev_dist_resources_helpers",
+        label = "//plugins/x:dist_resources_helpers",
         kind = "directory",
         fileName = "helpers",
         sourceTreePrefix = "plugins/x/helpers",
@@ -217,7 +217,7 @@ class DistResourceFilegroupTest {
     val error = assertThrows<IllegalStateException> {
       statements.addPlanInputs(plugin = "intellij.x", inputs = listOf(DistPluginRawInput(
         id = "module-resource:0:source",
-        label = "//plugins/x:dev_dist_resources",
+        label = "//plugins/x:dist_resources",
         kind = "directory",
         fileName = "helpers",
         sourceTreePrefix = "plugins/x/helpers",
@@ -225,7 +225,7 @@ class DistResourceFilegroupTest {
       )))
     }
 
-    assertThat(error).hasMessageContaining("instead of the filegroup 'dev_dist_resources_helpers' of its package")
+    assertThat(error).hasMessageContaining("instead of the filegroup 'dist_resources_helpers' of its package")
   }
 
   @Test
@@ -236,7 +236,7 @@ class DistResourceFilegroupTest {
       inputs = listOf("a/b", "a_b").mapIndexed { index, directory ->
         DistPluginRawInput(
           id = "module-resource:$index:source",
-          label = "//plugins/x:dev_dist_resources_a_b",
+          label = "//plugins/x:dist_resources_a_b",
           kind = "directory",
           fileName = directory.substringAfterLast('/'),
           sourceTreePrefix = "plugins/x/$directory",

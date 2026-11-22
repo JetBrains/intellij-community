@@ -55,7 +55,7 @@ internal class DistToolVerdicts(
   @JvmField val frontendRootDescriptorJars: Map<String, String> = emptyMap(),
 ) {
   /**
-   * The `dev_dist_plugin_descriptor` label the own package of [mainModule] declares for [variant], or `null` when it
+   * The `dist_plugin_descriptor` label the own package of [mainModule] declares for [variant], or `null` when it
    * declares none.
    *
    * `null` says the section refused, and every refusal has one shape: a community package cannot name what the entry
@@ -390,7 +390,7 @@ internal class DistBuildSections private constructor(
   /**
    * Binds the rendered plugin executions to the sections, once, before the first [sectionBody] read.
    *
-   * The `dev` section of a complex plugin holds its own `dev_dist_complex_plugin` calls after the `dev_dist_plugin`
+   * The `dev` section of a complex plugin holds its own `dist_complex_plugin` calls after the `dist_plugin`
    * call, and its package loads the macro in the spelling of its half. The `dev` section of a community complex plugin
    * exports its plan files with `exports_files` when a call in the product package reads one. A call in the product package is not
    * bound here: the plan generator writes it into the product package, see [CrossHalfDescriptorPackages].
@@ -405,17 +405,17 @@ internal class DistBuildSections private constructor(
       pluginExecutionCalls.put(mainModule, text)
       val loads = sectionLoadStatements.computeIfAbsent(mainModule) { ArrayList() }
       val remainderRule = if (isCommunity) "//" + DEV_PLUGIN_REMAINDER_RULE.removePrefix(COMMUNITY_REPOSITORY_PREFIX) else DEV_PLUGIN_REMAINDER_RULE
-      loads.add(LoadStatement(remainderRule, listOf("dev_dist_complex_plugin")))
+      loads.add(LoadStatement(remainderRule, listOf("dist_complex_plugin")))
       // A product that embeds the frontend declares its helper targets beside the complex plugin call. The bridge of the
       // half exports the embedded descriptor macro bound to its descriptor index, and the macro reads the module-set table.
       if (mainModule == half.embeddedFrontend?.pluginMainModule) {
-        if ("dev_dist_embedded_product_descriptor(" in text) {
+        if ("dist_embedded_product_descriptor(" in text) {
           val bridge = "@jps_dynamic_deps_${if (isCommunity) "community" else "ultimate"}//:targets.bzl"
-          loads.add(LoadStatement(bridge, listOf("dev_dist_embedded_product_descriptor")))
+          loads.add(LoadStatement(bridge, listOf("dist_embedded_product_descriptor")))
           loads.add(LoadStatement(DIST_MODULE_SETS_BZL, listOf(DIST_MODULE_SETS_SYMBOL)))
         }
-        if ("dev_dist_frontend_application_info(" in text) {
-          loads.add(LoadStatement(DIST_FRONTEND_APPLICATION_INFO_RULE, listOf("dev_dist_frontend_application_info")))
+        if ("dist_frontend_application_info(" in text) {
+          loads.add(LoadStatement(DIST_FRONTEND_APPLICATION_INFO_RULE, listOf("dist_frontend_application_info")))
         }
       }
     }
@@ -438,7 +438,7 @@ internal class DistBuildSections private constructor(
            module == half.embeddedFrontend?.descriptorModule && frontendRootDescriptorJars.isNotEmpty()
   }
 
-  /** Whether the section of [module] holds a `dev_dist_complex_plugin` call or exports a plan file. */
+  /** Whether the section of [module] holds a `dist_complex_plugin` call or exports a plan file. */
   fun ownsPluginExecution(module: String): Boolean {
     check(pluginExecutionsBound) { "The plugin executions are not bound yet" }
     return pluginExecutionCalls.containsKey(module) || planFileExports.containsKey(module)
@@ -603,7 +603,7 @@ internal class DistBuildSections private constructor(
   /**
    * The body of the `dev <module>` section of [module], or `null` when the module states nothing.
    *
-   * The call comes first, then the resource filegroup, then the plugin section, then the `dev_dist_complex_plugin`
+   * The call comes first, then the resource filegroup, then the plugin section, then the `dist_complex_plugin`
    * calls of an ultimate complex plugin or the plan file exports of a community one. The statements of the half follow,
    * and the frontend root descriptor jars of the embedded descriptor module come last. One blank line separates the
    * statements, as `BuildFile.render` separates targets. [bindPluginExecutions] runs before the first read.
@@ -1175,24 +1175,24 @@ private fun packagingDifference(first: DistSimplePackaging, second: DistSimplePa
   return "$name: $a vs $b"
 }
 
-/** The name suffix of a `dev_plugin` target. `dev_dist_plugin.bzl` derives the same name for a plugin's own section. */
+/** The name suffix of a `dev_plugin` target. `dist_plugin.bzl` derives the same name for a plugin's own section. */
 internal const val DEV_PLUGIN_TARGET_SUFFIX: String = "_dev_plugin"
 
-/** The `.bzl` file that exports `dev_dist_complex_plugin`. The `dev` section of an ultimate complex plugin loads it. */
+/** The `.bzl` file that exports `dist_complex_plugin`. The `dev` section of an ultimate complex plugin loads it. */
 internal const val DEV_PLUGIN_REMAINDER_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl"
 
 /** The `.bzl` file that exports `dev_plugin`. A product package loads it for a simple plugin. */
 internal const val DEV_PLUGIN_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_plugin.bzl"
 
-/** The `.bzl` file that exports `dev_dist_frontend_application_info` for the helper of a divergent product that embeds the frontend. */
+/** The `.bzl` file that exports `dist_frontend_application_info` for the helper of a divergent product that embeds the frontend. */
 internal const val DIST_FRONTEND_APPLICATION_INFO_RULE: String =
-  "@community//platform/build-scripts/bazel-rules:dev_dist_frontend_application_info.bzl"
+  "@community//platform/build-scripts/bazel-rules:dist_frontend_application_info.bzl"
 
 /**
  * The directory of the product packages, one per plugin, and of one class package per divergent (plugin, product).
  * `distCrossHalfDescriptorPackage.kt` writes them.
  */
-internal const val CROSS_HALF_PACKAGE_ROOT: String = "build/dev-dist-descriptors"
+internal const val CROSS_HALF_PACKAGE_ROOT: String = "build/dist-descriptors"
 
 /**
  * The community plugins that [ultimate] plans and whose `dev` section differs from the one of [upstream], sorted.
@@ -1221,7 +1221,7 @@ internal fun isRelocatedContentModuleJarCall(module: String, call: String, upstr
 }
 
 /** The package of the `content_module_jar` calls that the ultimate half relocates, relative to the monorepo root. */
-internal const val DIST_CONTENT_MODULE_JARS_PACKAGE: String = "build/dev-dist-content-module-jars"
+internal const val DIST_CONTENT_MODULE_JARS_PACKAGE: String = "build/dist-content-module-jars"
 
 /** The name of the relocated `content_module_jar` target of [module]. The JPS name keeps two modules of one target name apart. */
 private fun relocatedContentModuleJarTargetName(module: String): String = module + "_content_module_jar"
@@ -1442,7 +1442,7 @@ private fun writeDistBuildSections(
 }
 
 /** The name of the filegroup a plan names for the `withResource*` directories of a package. `dev_plugin_remainder.bzl` reads its files. */
-internal const val DIST_RESOURCES_TARGET: String = "dev_dist_resources"
+internal const val DIST_RESOURCES_TARGET: String = "dist_resources"
 
 /** The name of the filegroup of one filtered package-relative directory: [DIST_RESOURCES_TARGET], `_`, and the path with `_` for `/`. */
 internal fun filteredResourcesTarget(packageRelativePath: String): String {
@@ -1469,7 +1469,7 @@ private fun isModuleResourceInputId(id: String): Boolean = id.startsWith("module
 /**
  * The resource statements the plans of one run name, collected per package.
  *
- * A plan names `<package>:dev_dist_resources` for each `withResource*` directory, and the reader takes the files below
+ * A plan names `<package>:dist_resources` for each `withResource*` directory, and the reader takes the files below
  * the prefix of each id. The filegroup globs those directories. A plan names a `withResource*` file by its source-file
  * label, and `exports_files` makes it a public target. So a plan names only what a section declares. The tier of the
  * plugin plays no part: a complex plugin's chain and a simple plugin's `files` read the same labels. A package without

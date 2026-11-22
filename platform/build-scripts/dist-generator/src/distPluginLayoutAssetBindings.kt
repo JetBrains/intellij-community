@@ -312,7 +312,7 @@ private class LayoutAssetSourceResolver(
     val id = "optional-local-directory:$path"
     registerRawInput(DistPluginRawInput(
       id = id,
-      label = "//:dev_dist_optional_local_directories",
+      label = "//:dist_optional_local_directories",
       kind = "directory",
       fileName = path.substringAfterLast('/'),
       sourceTreePrefix = path,

@@ -10,8 +10,8 @@ load(":jps_model.bzl", "read_project_model")
 load(
     ":jps_target_derivation.bzl",
     "compute_module_descriptor_target",
-    "format_dev_dist_plugin_load",
-    "format_dev_dist_plugin_wrapper",
+    "format_dist_plugin_load",
+    "format_dist_plugin_wrapper",
     "module_rule_label",
     "parse_iml",
 )
@@ -472,35 +472,35 @@ def _module_descriptor_index_test_impl(ctx):
 
 _module_descriptor_index_test = unittest.make(_module_descriptor_index_test_impl)
 
-def _dev_dist_plugin_wrapper_test_impl(ctx):
+def _dist_plugin_wrapper_test_impl(ctx):
     env = unittest.begin(ctx)
     asserts.equals(env, "".join([
-        'load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", _dev_dist_plugin = "dev_dist_plugin")\n',
-        'load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", _dev_dist_plugin_descriptor = "dev_dist_plugin_descriptor")\n',
-        'load("@community//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl", _dev_dist_product_descriptor = "dev_dist_product_descriptor")\n',
-        'load("@community//platform/build-scripts/bazel-rules:dev_dist_embedded_product_descriptor.bzl", _dev_dist_embedded_product_descriptor = "dev_dist_embedded_product_descriptor")\n',
-    ]), format_dev_dist_plugin_load())
+        'load("@community//platform/build-scripts/bazel-rules:dist_plugin.bzl", _dist_plugin = "dist_plugin")\n',
+        'load("@community//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", _dist_plugin_descriptor = "dist_plugin_descriptor")\n',
+        'load("@community//platform/build-scripts/bazel-rules:dist_product_descriptor.bzl", _dist_product_descriptor = "dist_product_descriptor")\n',
+        'load("@community//platform/build-scripts/bazel-rules:dist_embedded_product_descriptor.bzl", _dist_embedded_product_descriptor = "dist_embedded_product_descriptor")\n',
+    ]), format_dist_plugin_load())
     asserts.equals(env, "\n".join([
-        "def dev_dist_plugin(module_targets = MODULE_TARGETS, descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
-        '    """`dev_dist_plugin` bound to this bridge\'s module map and descriptor index."""',
-        "    _dev_dist_plugin(module_targets = module_targets, descriptor_index = descriptor_index, **kwargs)",
+        "def dist_plugin(module_targets = MODULE_TARGETS, descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dist_plugin` bound to this bridge\'s module map and descriptor index."""',
+        "    _dist_plugin(module_targets = module_targets, descriptor_index = descriptor_index, **kwargs)",
         "",
-        "def dev_dist_plugin_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
-        '    """`dev_dist_plugin_descriptor` bound to this bridge\'s descriptor index."""',
-        "    _dev_dist_plugin_descriptor(descriptor_index = descriptor_index, **kwargs)",
+        "def dist_plugin_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dist_plugin_descriptor` bound to this bridge\'s descriptor index."""',
+        "    _dist_plugin_descriptor(descriptor_index = descriptor_index, **kwargs)",
         "",
-        "def dev_dist_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
-        '    """`dev_dist_product_descriptor` bound to this bridge\'s descriptor index."""',
-        "    _dev_dist_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
+        "def dist_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dist_product_descriptor` bound to this bridge\'s descriptor index."""',
+        "    _dist_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
         "",
-        "def dev_dist_embedded_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
-        '    """`dev_dist_embedded_product_descriptor` bound to this bridge\'s descriptor index."""',
-        "    _dev_dist_embedded_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
+        "def dist_embedded_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dist_embedded_product_descriptor` bound to this bridge\'s descriptor index."""',
+        "    _dist_embedded_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
         "",
-    ]), format_dev_dist_plugin_wrapper())
+    ]), format_dist_plugin_wrapper())
     return unittest.end(env)
 
-_dev_dist_plugin_wrapper_test = unittest.make(_dev_dist_plugin_wrapper_test_impl)
+_dist_plugin_wrapper_test = unittest.make(_dist_plugin_wrapper_test_impl)
 
 def _module_rule_label_test_impl(ctx):
     env = unittest.begin(ctx)
@@ -524,7 +524,7 @@ def jps_library_derivation_pipeline_test_suite(name):
     unittest.suite(
         name,
         _module_descriptor_index_test,
-        _dev_dist_plugin_wrapper_test,
+        _dist_plugin_wrapper_test,
         _module_rule_label_test,
         project_libraries_only_include_referenced_test,
         project_library_repo_selection_test,

@@ -35,7 +35,7 @@ windows_clippy_tests(
 
 # The files of this workspace that pin what a crate of a tool links: the versions in `Cargo.lock`, the features in
 # `Cargo.toml` and the build settings in `.cargo/config.toml`. The identity of each dev-dist tool hashes them, see
-# `dev_dist_tool`.
+# `dist_tool`.
 filegroup(
     name = "tool_identity_manifests",
     srcs = [

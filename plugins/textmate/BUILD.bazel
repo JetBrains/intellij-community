@@ -20,7 +20,7 @@ pkg_files(
 content_module_jar(module = ":textmate")
 
 filegroup(
-    name = "dev_dist_resources",
+    name = "dist_resources",
     srcs = glob(
         ["lib/bundles/**"],
     ),

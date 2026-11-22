@@ -4,9 +4,9 @@ load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:community_build_target.bzl", "community_build_target")
-load("//build:dev_dist_local_launch_test.bzl", "dev_dist_local_launch_test")
-load("//build:dev_dist_products.bzl", "DEV_DIST_PRODUCTS")
-load("//build:intellij_dev_community.bzl", "intellij_dev_launch_assembles_test", "intellij_dev_platform_set_community")
+load("//build:dist_local_launch_test.bzl", "dist_local_launch_test")
+load("//build:dist_products.bzl", "DIST_PRODUCTS")
+load("//build:intellij_dev_community.bzl", "intellij_dev_launch_assembles_test", "intellij_platform_set_community")
 load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 load(":dev_run_configuration_test.bzl", "dev_run_configuration_test_suite")
@@ -69,7 +69,7 @@ exports_files(
 
 # The distribution index, for the tests of the IDE Starter build server.
 exports_files(
-    ["dev-dist-distributions.json"],
+    ["dist-distributions.json"],
     visibility = ["//tools/intellij.tools.ide.starter.build.server:__pkg__"],
 )
 
@@ -87,13 +87,13 @@ filegroup(
 # sets it for its product. A component keeps it only when its descriptor refuses content modules for that mode, so one
 # component serves every product of one stamp class. Bazel trims the default from the configuration.
 string_flag(
-    name = "dev_dist_stamp_class",
+    name = "dist_stamp_class",
     build_setting_default = "",
     visibility = ["//visibility:public"],
 )
 
 # The JPS project model of the community half, named once: the targets-json generator and the project model tree
-# of `intellij_dev_project_model_tree_community` read exactly this set.
+# of `intellij_project_model_tree_community` read exactly this set.
 filegroup(
     name = "community_project_model_files",
     srcs = [
@@ -210,10 +210,10 @@ java_binary(
 )
 
 # The community binary of the dev-dist generator. It regenerates the distribution files of the community half:
-# `bazel run //build:dev_dist_generator` in `community/`, or `bazel run @community//build:dev_dist_generator` in the
+# `bazel run //build:dist_generator` in `community/`, or `bazel run @community//build:dist_generator` in the
 # monorepo root. `--check` writes nothing and fails when a file is out of sync.
 java_binary(
-    name = "dev_dist_generator",
+    name = "dist_generator",
     add_opens = INTELLIJ_ADD_OPENS,
     data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
     jvm_flags = [
@@ -226,7 +226,7 @@ java_binary(
 # The tests of the community binary. The identity of the two renders of the community half is a test of the monorepo,
 # `DistCommunityHalfIdentityTest` in `//build:ultimate-build-tests_test`, because only the monorepo has both JSON files.
 jps_test(
-    name = "dev_dist_generator_identity_test",
+    name = "dist_generator_identity_test",
     data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
     env = {
         "JB_TEST_JUNIT5_FILTERS": "include-classname=com.intellij.platform.buildScripts.distGenerator.CommunityDistGeneratorTest",
@@ -268,29 +268,29 @@ java_binary(
 # Turns the `lib/` jars that `jvm_library` packs into a distribution component. It evaluates no layout and reads no
 # project model.
 alias(
-    name = "dev_dist_packed_jars",
-    actual = "//platform/build-scripts/bazel-rules:dev_dist_collector",
+    name = "dist_packed_jars",
+    actual = "//platform/build-scripts/bazel-rules:dist_collector",
     visibility = ["//visibility:public"],
 )
 
 alias(
-    name = "dev_dist_composer",
-    actual = "//platform/build-scripts/bazel-rules:dev_dist_composer",
+    name = "dist_composer",
+    actual = "//platform/build-scripts/bazel-rules:dist_composer",
     visibility = ["//visibility:public"],
 )
 
 # The platform set of every community split product. The distribution of every community run configuration comes from
-# `dev_server_run_configurations()` below and reads these components. `DEV_DIST_PRODUCTS` in
-# `build/dev_dist_products.bzl` is the one list of the products.
+# `dev_server_run_configurations()` below and reads these components. `DIST_PRODUCTS` in
+# `build/dist_products.bzl` is the one list of the products.
 #
 # Public: a distribution of a community product in the ultimate checkout composes these components too, see
-# `DEV_DIST_COMMUNITY_PRODUCTS` of the ultimate plan.
+# `DIST_COMMUNITY_PRODUCTS` of the ultimate plan.
 [
-    intellij_dev_platform_set_community(
+    intellij_platform_set_community(
         product = product,
         visibility = ["//visibility:public"],
     )
-    for product in DEV_DIST_PRODUCTS
+    for product in DIST_PRODUCTS
 ]
 
 # The names of the launchers before they became rows of `dev_server_run_configurations.bzl`.
@@ -306,7 +306,7 @@ alias(
 
 # The plain `Idea` run configuration on the split path, `:idea_community`. The first test checks that the launch-only
 # distribution states its home. The second test checks that the row builds.
-dev_dist_local_launch_test(
+dist_local_launch_test(
     name = "idea_community_local_launch_test",
     target_under_test = ":idea_community_dist_launch",
 )
@@ -317,7 +317,7 @@ intellij_dev_launch_assembles_test(
 )
 
 # The `AndroidStudio` run configuration on the split path, `:android_studio_dev_build`: the same pair of checks.
-dev_dist_local_launch_test(
+dist_local_launch_test(
     name = "android_studio_dev_build_local_launch_test",
     target_under_test = ":android_studio_dev_build_dist_launch",
 )

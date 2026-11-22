@@ -107,7 +107,7 @@ class DistSimplePackagingTest {
   private fun treeInput(id: String, prefix: String): DistPluginRawInput {
     return DistPluginRawInput(
       id = id,
-      label = "//plugins/x:dev_dist_resources",
+      label = "//plugins/x:dist_resources",
       kind = "directory",
       fileName = prefix.substringAfterLast('/'),
       sourceTreePrefix = prefix,
@@ -232,7 +232,7 @@ class DistSimplePackagingTest {
     val input: DistPluginRawInput = treeInput("module-resource:0:source", "plugins/x/helpers")
     val packaging: DistSimplePackaging = requireSimple(planEntry(assets = listOf(mainJar(), treeCopy("helpers", input.id)), inputs = listOf(input)))
 
-    assertThat(packaging.files).containsExactly(entry("helpers", "//plugins/x:dev_dist_resources"))
+    assertThat(packaging.files).containsExactly(entry("helpers", "//plugins/x:dist_resources"))
     assertThat(packaging.filePrefixes).containsExactly(entry("helpers", "plugins/x/helpers"))
     assertThat(packaging.executables).isEmpty()
     assertThat(packaging.crossHalf).isFalse()
@@ -259,7 +259,7 @@ class DistSimplePackagingTest {
 
     assertThat(packaging.files.keys).containsExactly("bin/helper.sh", "helpers", "data")
     assertThat(packaging.filePrefixes.keys).containsExactly("helpers", "data")
-    assertThat(packaging.fileLabels).containsExactly("//plugins/x:helper.sh", "//plugins/x:dev_dist_resources")
+    assertThat(packaging.fileLabels).containsExactly("//plugins/x:helper.sh", "//plugins/x:dist_resources")
   }
 
   @Test
@@ -409,7 +409,7 @@ class DistSimplePackagingTest {
 
     val target = renderCrossHalfDevPluginTarget(
       packaging = packaging,
-      descriptorLabel = "//build/dev-dist-descriptors/intellij.c:intellij.c_dev_descriptor",
+      descriptorLabel = "//build/dist-descriptors/intellij.c:intellij.c_dev_descriptor",
       index = index,
       stampClassModes = listOf("frontend"),
       embedContentModules = false,
@@ -435,7 +435,7 @@ class DistSimplePackagingTest {
     val archive: DistPluginRawInput = fileInput("layout-source:custom-asset:0:0", "@dev_launch_air_openui_renderer//:files", kind = "archive")
     val tree = DistPluginRawInput(
       id = "module-resource:1:source",
-      label = "@community//plugins/c:dev_dist_resources",
+      label = "@community//plugins/c:dist_resources",
       kind = "directory",
       fileName = "helpers",
       sourceTreePrefix = "community/plugins/c/helpers",
@@ -451,13 +451,13 @@ class DistSimplePackagingTest {
     val packaging: DistSimplePackaging = requireSimple(planEntry(assets = assets, inputs = listOf(script, archive, tree, web), plugin = communityPlugin))
     assertThat(packaging.crossHalf).isTrue()
 
-    val target = renderCrossHalfDevPluginTarget(packaging, descriptorLabel = "//build/dev-dist-descriptors/intellij.c:intellij.c_dev_descriptor", index = index)
+    val target = renderCrossHalfDevPluginTarget(packaging, descriptorLabel = "//build/dist-descriptors/intellij.c:intellij.c_dev_descriptor", index = index)
 
     assertThat(target).isEqualTo(
       """
       dev_plugin(
           name = "intellij.c_dev_plugin",
-          descriptor = "//build/dev-dist-descriptors/intellij.c:intellij.c_dev_descriptor",
+          descriptor = "//build/dist-descriptors/intellij.c:intellij.c_dev_descriptor",
           executables = [
               "bin/helper.sh",
           ],
@@ -466,7 +466,7 @@ class DistSimplePackagingTest {
           },
           files = {
               "bin/helper.sh": "@community//plugins/c:helper.sh",
-              "helpers": "@community//plugins/c:dev_dist_resources",
+              "helpers": "@community//plugins/c:dist_resources",
               "openui/air-openui-renderer.zip": "@dev_launch_air_openui_renderer//:files",
               "web": "@dev_launch_air_openui_renderer//:web",
           },
@@ -517,13 +517,13 @@ class DistSimplePackagingTest {
     val assets = listOf(mainJar(), moduleJar("lib/tests.jar", testModule))
     val packaging: DistSimplePackaging = requireSimple(planEntry(assets = assets, inputs = emptyList(), testModules = setOf(testModule)))
 
-    val target = renderCrossHalfDevPluginTarget(packaging, descriptorLabel = "//build/dev-dist-descriptors/intellij.x:intellij.x_dev_descriptor", index = index)
+    val target = renderCrossHalfDevPluginTarget(packaging, descriptorLabel = "//build/dist-descriptors/intellij.x:intellij.x_dev_descriptor", index = index)
 
     assertThat(target).isEqualTo(
       """
       dev_plugin(
           name = "intellij.x_dev_plugin",
-          descriptor = "//build/dev-dist-descriptors/intellij.x:intellij.x_dev_descriptor",
+          descriptor = "//build/dist-descriptors/intellij.x:intellij.x_dev_descriptor",
           jars = {
               "lib/x.jar": [
                   "intellij.x",
@@ -585,7 +585,7 @@ class DistSimplePackagingTest {
     val community = classify(communityPlugin, relocatedModules = setOf(communityContentModule))
     assertThat(community.crossHalf).isTrue()
     assertThat(community.contentModuleJarLabels).isEmpty()
-    val target = renderCrossHalfDevPluginTarget(community, "//build/dev-dist-descriptors/$communityPlugin:${communityPlugin}_dev_descriptor", index) {
+    val target = renderCrossHalfDevPluginTarget(community, "//build/dist-descriptors/$communityPlugin:${communityPlugin}_dev_descriptor", index) {
       relocatedLabel
     }
     assertThat(target).contains("\"$relocatedLabel\"")

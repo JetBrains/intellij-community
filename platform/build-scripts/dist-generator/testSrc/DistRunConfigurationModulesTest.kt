@@ -658,7 +658,7 @@ class DistRunConfigurationModulesTest {
     assertThat(renderDevServerRunConfigurations(rows, splitProducts = splitProducts, macrosBzl = TEST_MACROS_BZL, header = TEST_HEADER, sharedDistributions = true))
       .contains(
         """
-        |DEV_DIST_SHARED_DISTRIBUTIONS = {
+        |DIST_SHARED_DISTRIBUTIONS = {
         |    "idea": "//build:idea_dist",
         |    "ideaJetBrainsClient": "//build:client_dist",
         |}
@@ -667,7 +667,7 @@ class DistRunConfigurationModulesTest {
         |""".trimMargin()
       )
     assertThat(renderDevServerRunConfigurations(rows, splitProducts = splitProducts, macrosBzl = TEST_MACROS_BZL, header = TEST_HEADER))
-      .doesNotContain("DEV_DIST_SHARED_DISTRIBUTIONS")
+      .doesNotContain("DIST_SHARED_DISTRIBUTIONS")
   }
 
   @Test

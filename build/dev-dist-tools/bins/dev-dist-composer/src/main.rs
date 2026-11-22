@@ -3,7 +3,7 @@
 //! `dev-dist-composer` assembles the components of a distribution into one tree, or into launch metadata only.
 //! Then it writes the files that start the IDE.
 //!
-//! The rule `intellij_dev_fragments_dist` runs it with `--composition-spec`, `--output-dir`, `--ide-config`,
+//! The rule `intellij_fragments_dist` runs it with `--composition-spec`, `--output-dir`, `--ide-config`,
 //! `--fingerprint` and an optional `--trace-file`, each in the `--key=value` form. A full distribution also needs
 //! `--mac-binaries`, which gets the Mach-O files of the home, see [`mac_binaries`]. Launch metadata can also name
 //! `--core-classpath-file` and `--plugin-classpath-file`, which get a copy of the two metadata files of the output.

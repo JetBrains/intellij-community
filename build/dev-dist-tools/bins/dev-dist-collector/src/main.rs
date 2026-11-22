@@ -1,7 +1,7 @@
 //! `dev-dist-collector` writes the manifest of one distribution component. The manifest names each file where
 //! Bazel already put it. The collector copies nothing, and it reads a payload only to hash a file without metadata.
 //!
-//! Three modes exist. `intellij_dev_packed_jars_component` (`intellij_dev_dist.bzl`) uses `--jars-file` with
+//! Three modes exist. `intellij_packed_jars_component` (`intellij_dist.bzl`) uses `--jars-file` with
 //! `--metadata-catalogue` and `--files-file`. `_dev_plugin` and `dev_plugin_component` use `--plugin-component`.
 //!
 //! [`inventory`] builds the manifest of each mode. [`plugin_classpath`] gives and checks the classpath record of a plugin

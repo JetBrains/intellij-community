@@ -17,9 +17,9 @@ private val RESERVED_PATH_COMPONENT = Regex("(?i)(con|prn|aux|nul|com[1-9]|lpt[1
  * ultimate half reads them in the own package and writes no copy, see [DistOwnPackagePlans].
  */
 internal class DistPluginPlanHome(
-  /** The project-relative directory: `community/plugins/kotlin/plugin`, `plugins/tailwindcss`, or `build/dev-dist-descriptors/intellij.java.plugin`. */
+  /** The project-relative directory: `community/plugins/kotlin/plugin`, `plugins/tailwindcss`, or `build/dist-descriptors/intellij.java.plugin`. */
   @JvmField val directory: String,
-  /** The absolute package label the call states: `@community//plugins/kotlin/plugin`, `//plugins/tailwindcss`, or `//build/dev-dist-descriptors/intellij.java.plugin`. */
+  /** The absolute package label the call states: `@community//plugins/kotlin/plugin`, `//plugins/tailwindcss`, or `//build/dist-descriptors/intellij.java.plugin`. */
   @JvmField val packageLabel: String,
   /** Whether the call lives in the product package, and not in the own `dev` section. */
   @JvmField val callIsCrossHalf: Boolean,

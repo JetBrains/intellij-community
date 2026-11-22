@@ -1,0 +1,1206 @@
+"""The declarations of a split distribution: the platform set, the distribution and the launcher of a row.
+
+Each half of the repository calls `intellij_dist_declarations` once with its own tables and re-exports the macros
+of the result. The code here reads no table directly, so it names no target of the other half.
+
+A community product is a key that both registries state with one product class. The community half plans it, and the
+ultimate half writes no row of it. A distribution of a community product in the ultimate checkout composes the
+community platform set and the community bundled plugins, with the additional plugins of its own rows. The ultimate
+tables name the community products and the community tables in `community`, see `_community_product`.
+"""
+
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dist_platform_jar")
+load("//platform/build-scripts/bazel-rules:dist_content.bzl", "dist_platform_payload")
+load("//platform/build-scripts/bazel-rules:dist_product_files.bzl", "MAC_APP_FILES", "build_txt_destination", "dist_product_files", "home_prefix", "mac_app_icon_roles", "product_info_destination")
+load("//platform/build-scripts/bazel-rules:dist_runtime_module_repository.bzl", "dist_runtime_layout_parts", "dist_runtime_module_repository")
+load("//platform/build-scripts/bazel-rules:intellij_dist.bzl", "intellij_fragments_dist", "intellij_packed_jars_component")
+load(":download_rules.bzl", "EXECUTABLE_LIST_NAME")
+load(":host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
+load(":intellij_dev.bzl", "dist_build_test", "export_vm_options", "intellij_dev_java_launcher_binary", "intellij_dist_config")
+
+def _plugin_component_entries(platform_prefix, tier, entries):
+    """Reads one tier of the generated component map as `struct(main_module, label, labels)` entries.
+
+    The map keys a plugin by its main module. The value is the label of the one component that serves every
+    platform, or a dict from a `HOST_PLATFORMS` entry to the component that serves it.
+    """
+    if type(entries) != "dict":
+        fail("Generated dev-plugin component tier '%s/%s' must map main modules to labels" % (platform_prefix, tier))
+    result = []
+    for main_module, value in entries.items():
+        if type(value) == "string":
+            result.append(struct(main_module = main_module, label = value, labels = None))
+        elif type(value) == "dict":
+            result.append(struct(main_module = main_module, label = "", labels = value))
+        else:
+            fail("Generated dev-plugin component '%s' in tier '%s/%s' must be a label or a platform-to-label dict" % (main_module, platform_prefix, tier))
+    return result
+
+# The two tiers of `tables.plugin_components[product]`, in the order the catalogue reads them.
+_PLUGIN_COMPONENT_TIERS = ["bundled", "additional"]
+
+def _community_product(tables, product):
+    """The community tables when the community half plans `product`, else `None`.
+
+    `tables.community` is `None` for the community half. For the ultimate half it is a struct with these fields:
+
+    - `products`: the community products, `DIST_COMMUNITY_PRODUCTS` of the ultimate plan.
+    - `plans`: the community `DIST_PLANS`.
+    - `product(key)`: the community product entry, with its `platform_set`.
+    - `build_package`: the package of the community platform sets, `@community//build`.
+    - `bundled_components(product)`: the bundled tier of the community component map, with every label spelled for
+      the ultimate checkout.
+    - `product_mode(product)`: the mode of the community product `product`, its stamp class.
+    """
+    community = tables.community
+    if community == None or product not in community.products:
+        return None
+    if product in tables.plans:
+        fail("Product '%s' is a community product, and the plan of this half has a row of it; run plugin-model-tool" % product)
+    return community
+
+def _component_tiers(tables, platform_prefix):
+    """The two tiers of the component map of one product, before the checks of `_plugin_component_catalogue`.
+
+    For a community product, the bundled tier is the community one, and the own map states the additional tier only.
+    """
+    tiers = tables.plugin_components.get(platform_prefix)
+    if tiers == None:
+        fail("No generated dev-plugin components for product '%s'" % platform_prefix)
+    if type(tiers) != "dict":
+        fail("Generated dev-plugin components for '%s' must be a dict of tiers" % platform_prefix)
+    community = _community_product(tables, platform_prefix)
+    if community == None:
+        return tiers
+    if sorted(tiers.keys()) != ["additional"]:
+        fail("Generated dev-plugin components for the community product '%s' must have exactly the tier ['additional'], found %s" % (
+            platform_prefix,
+            sorted(tiers.keys()),
+        ))
+    return {"bundled": community.bundled_components(platform_prefix), "additional": tiers["additional"]}
+
+def _plugin_component_catalogue(tables, platform_prefix):
+    """Returns the generated component map of one product after checking it.
+
+    The map has two tiers, `bundled` and `additional`, each keyed by the plugin's main module. A plugin is in one tier
+    only. It has one component label that serves every platform, or one label per `HOST_PLATFORMS` entry that has
+    the plugin. The bundled tier is in composition order: a distribution composes its neutral entries in list order,
+    then its per-platform entries in list order. The bundled tier of a community product is the community one, see
+    `_component_tiers`.
+    """
+    tiers = _component_tiers(tables, platform_prefix)
+    if sorted(tiers.keys()) != sorted(_PLUGIN_COMPONENT_TIERS):
+        fail("Generated dev-plugin components for '%s' must have exactly the tiers %s, found %s" % (
+            platform_prefix,
+            _PLUGIN_COMPONENT_TIERS,
+            sorted(tiers.keys()),
+        ))
+    if not tiers["bundled"]:
+        fail("Generated dev-plugin components for '%s' name no bundled plugin" % platform_prefix)
+    by_tier = {}
+    modules = {}
+    labels = {}
+    for tier in _PLUGIN_COMPONENT_TIERS:
+        entries = _plugin_component_entries(platform_prefix, tier, tiers[tier])
+        by_tier[tier] = entries
+        for entry in entries:
+            main_module = entry.main_module
+            label = entry.label
+            platform_labels = entry.labels
+            if not main_module or bool(label) == (platform_labels != None):
+                fail("Invalid generated dev-plugin component in tier '%s/%s': %s" % (platform_prefix, tier, entry))
+            entry_labels = [label]
+            if platform_labels != None:
+                if type(platform_labels) != "dict" or not platform_labels:
+                    fail("Generated dev-plugin component '%s' of '%s' must map platforms to labels" % (main_module, platform_prefix))
+                for platform in platform_labels:
+                    if platform not in HOST_PLATFORMS:
+                        fail("Generated dev-plugin component '%s' of '%s' names platform '%s', which is not one of %s" % (
+                            main_module,
+                            platform_prefix,
+                            platform,
+                            HOST_PLATFORMS,
+                        ))
+                entry_labels = platform_labels.values()
+            if main_module in modules:
+                fail("Plugin '%s' is both a bundled and an additional component of '%s'" % (main_module, platform_prefix))
+            for entry_label in entry_labels:
+                if not entry_label:
+                    fail("Generated dev-plugin component '%s' of '%s' states an empty label" % (main_module, platform_prefix))
+                if entry_label in labels:
+                    fail("Generated component label '%s' is not unique for '%s'" % (entry_label, platform_prefix))
+                labels[entry_label] = tier
+            modules[main_module] = tier
+    return struct(
+        bundled = by_tier["bundled"],
+        additional = by_tier["additional"],
+        tiers = modules,
+    )
+
+def _product_descriptor(tables, product):
+    """The label of the classpath descriptor that `dist_product_descriptor` writes for `product`.
+
+    That is the descriptor of the plugin-classpath prefix, which the platform payload names. It embeds the descriptor of
+    every content module, a scrambled one too, as the core plugin of the runtime module repository needs.
+    """
+    inputs = tables.fragment_inputs.get(product, {}).get(tables.platform_lib_fragment)
+    prefix = getattr(inputs, "plugin_classpath_prefix", "") if inputs else ""
+    if not prefix.endswith(".plugin-classpath-prefix"):
+        fail("The plan of '%s' names no product descriptor, so its runtime module repository has no core plugin descriptor" % product)
+    return prefix.removesuffix(".plugin-classpath-prefix") + ".classpath.xml"
+
+def _plugin_components(target_platform, entries, selected_modules = None):
+    """Selects the generated components of the given catalogue entries.
+
+    The result lists the neutral entries in entry order, then the per-platform entries in entry order. A neutral
+    component is listed directly. A per-platform component takes the label of `target_platform` when one is set, and
+    a `select` over the host platform otherwise. A per-platform plugin absent from a platform contributes nothing on
+    that platform. `selected_modules` keeps the entries of the named main modules only.
+    """
+    if selected_modules != None:
+        selected = {module: True for module in selected_modules}
+        entries = [entry for entry in entries if entry.main_module in selected]
+
+    neutral = [entry for entry in entries if entry.labels == None]
+    per_platform = [entry for entry in entries if entry.labels != None]
+    labels = [entry.label for entry in neutral]
+    modules = [entry.main_module for entry in neutral]
+    if not per_platform:
+        return struct(labels = labels, modules = modules)
+
+    if target_platform:
+        if target_platform not in HOST_PLATFORMS:
+            fail("'%s' is not one of %s" % (target_platform, HOST_PLATFORMS))
+        present = [entry for entry in per_platform if target_platform in entry.labels]
+        return struct(
+            labels = labels + [entry.labels[target_platform] for entry in present],
+            modules = modules + [entry.main_module for entry in present],
+        )
+
+    def by_host(field):
+        return select({
+            "@community//build:host_" + platform: [
+                entry.labels[platform] if field == "label" else getattr(entry, field)
+                for entry in per_platform
+                if platform in entry.labels
+            ]
+            for platform in HOST_PLATFORMS
+        })
+
+    return struct(
+        labels = labels + by_host("label"),
+        modules = modules + by_host("main_module"),
+    )
+
+# The `DevMainKt` property of a run configuration that asks for the runtime module repository. A row states it as an
+# attribute, because the row composes another distribution. The plan generator (`distRunConfigurations.kt`) takes
+# it out of `jvm_flags`.
+_GENERATE_RUNTIME_MODULE_REPOSITORY_FLAG = "-Dintellij.build.generate.runtime.module.repository=true"
+
+# `JetBrainsClientProperties.configureRootModuleForModularLoader` reads the property while the layout is built, so it
+# changes the platform and the bundled plugins of a frontend. A split platform set is built without the row's flags,
+# so a row states its root module as the `rootModule` of its own `build/dev-build.json` key instead.
+_ROOT_MODULE_OVERRIDE_FLAG_PREFIX = "-Didea.jbclient.root.module.override="
+
+# The JPS output directories below `out/` of the two halves. A dev launch builds no JPS output, so a launcher flag that
+# names one names a file that no build writes. `distRunConfigurations.kt` refuses the same directories in a row.
+_JPS_OUTPUT_DIRECTORIES = ["classes", "production", "test"]
+_WORKSPACE_OUT = "{BUILD_WORKSPACE_DIRECTORY}/out/"
+
+def _names_jps_output(flag):
+    """Whether `flag` names a JPS output directory below `${BUILD_WORKSPACE_DIRECTORY}/out/`."""
+    for rest in flag.split(_WORKSPACE_OUT)[1:]:
+        segment = rest.partition("/")[0].partition(":")[0].partition(";")[0].partition(" ")[0].partition("\"")[0]
+        if segment in _JPS_OUTPUT_DIRECTORIES:
+            return True
+    return False
+
+# The component that provides the `lib/` jars the packer produces. The composer checks the exact set of composed
+# kinds, so this name is part of the distribution's contract.
+PACKED_JARS_COMPONENT = "platform_packed_content_modules"
+
+# The component that places the platform's declared dist files: the files of the unpacked dev-launch archives that
+# `PlatformLayout.withDistFiles` names, at their distribution paths. The generated plan states them per host platform.
+# The component also places the native launcher files, which `_launcher_files` derives from the launch facts of the plan,
+# and the files of the bundled runtime below `jbr/`.
+PLATFORM_ASSETS_COMPONENT = "platform_assets"
+
+def jbr_runtime_repository_label(platform):
+    """The `files` filegroup of the unpacked production runtime of one [HOST_PLATFORMS] entry."""
+    platform_parts(platform)
+    return Label("@jbr_runtime_%s_extracted//:files" % platform)
+
+def jbr_runtime_executable_list_label(platform):
+    """The executable list of the repository of [jbr_runtime_repository_label], or `None` for a Windows platform.
+
+    A Windows target gives a file no executable bit, so the collector does not read the list of a Windows runtime.
+    """
+    if platform_parts(platform).os == "windows":
+        return None
+    return Label("@jbr_runtime_%s_extracted//:%s" % (platform, EXECUTABLE_LIST_NAME))
+
+# The unpacked launcher archive, and its spelling of the `platform_parts` tokens in `<OS>-<Arch>/`.
+_LAUNCHER_REPOSITORY = "@launcher_extracted//:"
+_LAUNCHER_ARCHIVE_OS = {"darwin": "macOS", "linux": "Linux", "windows": "Windows"}
+_LAUNCHER_ARCHIVE_ARCH = {"aarch64": "AArch64", "x64": "X86_64"}
+
+def _launcher_files(launcher, platform):
+    """The native launcher files of one host platform, as `struct(source, path, executable)` entries.
+
+    `launcher` is the `launch.launcher` struct of a plan. It states the base file name, the language server flag and the
+    two Windows launcher flags of the product. The rule mirrors the OS builders of production packaging:
+
+    - `LinuxDistributionBuilder.addNativeLauncher` places `bin/<base>`.
+    - `MacDistributionBuilder.layoutMacApp` places `MacOS/<base>`, and `layoutMacCli` places `bin/<base>` for a language
+      server. A dev home starts through `bin`, so macOS always gets `bin/<base>`. An app also gets `MacOS/<base>`,
+      which the restarter starts.
+    - `WindowsDistributionBuilder.patchLauncher` writes the GUI launcher `bin/<base>64.exe` and the console launcher
+      `bin/<base>.exe`, each one when its flag is set. A language server adds no `64`.
+
+    Every platform also gets the launcher license at `license/launcher-third-party-libraries.html`. The OS builders patch
+    the launcher, and this component places the archive bytes as they are.
+    """
+    parts = platform_parts(platform)
+    directory = _LAUNCHER_REPOSITORY + _LAUNCHER_ARCHIVE_OS[parts.os] + "-" + _LAUNCHER_ARCHIVE_ARCH[parts.arch] + "/"
+    base = launcher.base_file_name
+    launchers = []
+    if parts.os == "windows":
+        if launcher.windows_gui:
+            launchers.append((directory + "xplat-launcher.exe", "bin/%s.exe" % (base if launcher.language_server else base + "64")))
+        if launcher.windows_console:
+            launchers.append((directory + "xplat-launcher-win-con.exe", "bin/%s.exe" % base))
+    else:
+        launchers.append((directory + "xplat-launcher", "bin/" + base))
+        if parts.os == "darwin" and not launcher.language_server:
+            launchers.append((directory + "xplat-launcher", "MacOS/" + base))
+    files = [struct(source = source, path = path, executable = True) for source, path in launchers]
+    files.append(struct(
+        source = _LAUNCHER_REPOSITORY + "license/xplat-launcher-third-party-licenses.html",
+        path = "license/launcher-third-party-libraries.html",
+        executable = False,
+    ))
+    return files
+
+# The directory of the bundled runtime in a distribution home. On macOS the runtime is a bundle with `Contents/Home`.
+_RUNTIME_DIRECTORY = "jbr"
+
+def _runtime_executables(platform):
+    """The `unpacked_archive_executables` values of the bundled runtime of one host platform.
+
+    The composer gives the executable bit only to a destination that this list names.
+    """
+    os = platform_parts(platform).os
+    if os == "windows":
+        return []
+
+    # BundledRuntimeImpl.executableFilesPatterns
+    if os == "darwin":
+        # Production omits `jspawnhelper` on macOS. The archive gives it the executable bit, and `posix_spawn` needs it.
+        return [_RUNTIME_DIRECTORY + "/Contents/Home/bin/", _RUNTIME_DIRECTORY + "/Contents/Home/lib/jspawnhelper"]
+    return [_RUNTIME_DIRECTORY + "/bin/", _RUNTIME_DIRECTORY + "/lib/jexec", _RUNTIME_DIRECTORY + "/lib/jspawnhelper"]
+
+def _runtime_executable_lists(platform):
+    """The `unpacked_archive_executable_lists` value of the bundled runtime of one host platform.
+
+    A Windows runtime has no executable list, so the collector does not check its files.
+    """
+    executable_list = jbr_runtime_executable_list_label(platform)
+    return {_RUNTIME_DIRECTORY: executable_list} if executable_list else {}
+
+# The component of `bin/idea.properties`, the vmoptions files, `product-info.json` and `build.txt`, which the product
+# files action renders from the launch model of the product.
+_PLATFORM_RESOURCES_FRAGMENT = "platform_resources"
+
+def _launch_destinations(plan, os):
+    """The destinations of the launch files, as `struct(vm_options, product_info, build_txt, frontend_vm_options)`.
+
+    `os` is an OS token of `platform_parts`. The `platform_resources` component places the files there. The native
+    launcher of a row reads the main vmoptions file and `product-info.json` there. A vmoptions file is `bin/<name>`,
+    with the name of the plan. `product_info_destination` and `build_txt_destination` state the paths of
+    `product-info.json` and `build.txt`. `frontend_vm_options` is `None` for a product without an embedded frontend.
+    """
+    frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
+    language_server = plan.launch.launcher.language_server
+    return struct(
+        vm_options = "bin/" + plan.launch.vmoptions[os],
+        product_info = product_info_destination(os, language_server),
+        build_txt = build_txt_destination(os, language_server),
+        frontend_vm_options = "bin/" + frontend_vmoptions[os] if frontend_vmoptions else None,
+    )
+
+def _launcher_destinations(launcher):
+    """The destination of the native launcher that a launch target starts, for each OS token.
+
+    `launcher` is the `launch.launcher` struct of a plan. macOS and Linux start `bin/<base>`, which every home of these
+    OSes has. Windows starts the console launcher, so `bazel run` keeps a console. A product without one starts its GUI
+    launcher.
+    """
+    base = launcher.base_file_name
+    if launcher.windows_console:
+        windows = "bin/%s.exe" % base
+    elif launcher.windows_gui:
+        windows = "bin/%s.exe" % (base if launcher.language_server else base + "64")
+    else:
+        fail("The launcher '%s' has no Windows launcher" % base)
+    return {"darwin": "bin/" + base, "linux": "bin/" + base, "windows": windows}
+
+def _env_var_base_name(launch, program_args):
+    """The base of the variables that the native launcher reads for a row with `program_args`.
+
+    The launcher selects a custom command from the first program argument. A command can state a base of its own, such
+    as `JETBRAINS_CLIENT` for `ijLight`. Any other row gets the base of the product.
+    """
+    commands = getattr(launch, "command_env_var_base_names", {})
+    if program_args and program_args[0] in commands:
+        return commands[program_args[0]]
+    return launch.env_var_base_name
+
+def _fragment_suffix(fragment_name):
+    """The target suffix of a platform component, `<platform set>_<suffix>`."""
+    return fragment_name[len("platform_"):]
+
+def _plan(tables, product):
+    """The generated plan of `product`, or a failure that names the product. The plan of a community product is the community one."""
+    community = _community_product(tables, product)
+    plan = (community.plans if community != None else tables.plans).get(product)
+    if plan == None:
+        fail("No generated dev-distribution plan for product '%s'" % product)
+    return plan
+
+def _product_mode(tables, product):
+    """The mode of `product`, the stamp class its plugin components are configured with."""
+    community = _community_product(tables, product)
+    if community != None:
+        return community.product_mode(product)
+    return tables.product_mode(product)
+
+def _platform_fragment_layout(tables, product):
+    """The ordered platform components of one product, as `struct(suffix, fragment_name)` entries.
+
+    `suffix` names the target, `<platform set>_<suffix>`. `fragment_name` is the composer's name for it. The order is
+    the composition order: `platform_resources`, then the packed content-module jars, then the platform assets. This is
+    the one owner of that list; the declaring macro and the label lookup both read it. Every product has the platform
+    assets, because every product places the native launcher.
+    """
+
+    # A product without a plan fails here, with its name.
+    _plan(tables, product)
+    return [
+        struct(suffix = _fragment_suffix(_PLATFORM_RESOURCES_FRAGMENT), fragment_name = _PLATFORM_RESOURCES_FRAGMENT),
+        struct(suffix = PACKED_JARS_COMPONENT, fragment_name = PACKED_JARS_COMPONENT),
+        struct(suffix = "assets", fragment_name = PLATFORM_ASSETS_COMPONENT),
+    ]
+
+def _has_runtime_module_repository(tables, product):
+    """Whether the plan of `product` has the runtime module repository component.
+
+    The generator states it for a product with a row that asks for the repository. `_platform_fragment_layout` never
+    lists the component.
+    """
+    return getattr(_plan(tables, product), "runtime_module_repository", False)
+
+def _modular_loader(tables, product):
+    """Whether the generated plan says `product` starts through the modular loader, which reads the repository at every start."""
+    return getattr(_plan(tables, product), "modular_loader", False)
+
+def _platform_fragments(tables, product, runtime_module_repository = False, platform_set = None):
+    """The platform component labels of one split product, for a distribution declared outside the build package.
+
+    Returns `struct(fragments, fragment_names)` in composition order, with absolute labels into `tables.build_package`.
+    The product's platform set must be declared there through the platform set macro. For a community product, the
+    labels name the community platform set in the community build package. With `runtime_module_repository`, or for a
+    product the plan marks `modular_loader`, the list ends with the `platform_runtime_module_repository` component; a
+    product whose plan has none fails.
+
+    `platform_set` is the `name` of a platform set that the platform set macro declares for another target platform.
+    It defaults to the entry's `platform_set`. A community product fails with it, because the community half owns
+    those sets.
+    """
+    community = _community_product(tables, product)
+    if platform_set != None and community != None:
+        fail("Product '%s' is a community product, so the community half owns its platform sets; do not pass platform_set '%s'" % (product, platform_set))
+    build_package = community.build_package if community != None else tables.build_package
+    platform_set = platform_set or (community.product if community != None else tables.product)(product).platform_set
+    layout = _platform_fragment_layout(tables, product)
+    fragments = ["%s:%s_%s" % (build_package, platform_set, entry.suffix) for entry in layout]
+    fragment_names = [entry.fragment_name for entry in layout]
+    if runtime_module_repository or _modular_loader(tables, product):
+        if not _has_runtime_module_repository(tables, product):
+            fail("The generated dev-distribution plan of '%s' has no runtime module repository fragment: no run configuration of the product asks for one" % product)
+        fragments.append("%s:%s_%s" % (build_package, platform_set, _fragment_suffix(tables.runtime_module_repository_fragment)))
+        fragment_names.append(tables.runtime_module_repository_fragment)
+    return struct(
+        fragments = fragments,
+        fragment_names = fragment_names,
+    )
+
+def _platform_set(tables, product, name, target_platform, visibility):
+    """The platform set of one split product. The factory result documents it as `platform_set`."""
+    if _community_product(tables, product) != None:
+        fail("Product '%s' is a community product, so the community half declares its platform set; compose it through platform_fragments" % product)
+    name = name or tables.product(product).platform_set
+    plan = _plan(tables, product)
+
+    def per_platform(value_of):
+        # `value_of` the target platform, or a `select` of it over the host platforms when the set has no target platform.
+        if target_platform:
+            return value_of(target_platform)
+        return select({"@community//build:host_" + platform: value_of(platform) for platform in HOST_PLATFORMS})
+
+    # The packing targets of the `lib/` jars. The `dist_platform_payload` target below reads them once and answers
+    # every consumer from one provider, so the component that composes the jars in, the runtime module repository and
+    # the reference target cannot disagree.
+    platform_lib_payload = tables.platform_lib_payload(product)
+
+    # The `plugins/plugin-classpath.txt` prefix that `dist_product_descriptor` writes. The packed-jars component
+    # carries it to the composer.
+    plugin_classpath_prefix = tables.fragment_inputs[product][tables.platform_lib_fragment].plugin_classpath_prefix
+
+    def runtime_module_repository_component():
+        # The runtime module repository from Bazel facts, see `dist_runtime_module_repository`. The component places
+        # its two files in `modules/`. Returns the label of the component.
+        catalogue = _plugin_component_catalogue(tables, product)
+        repository = name + "_runtime_module_repository_files"
+        dist_runtime_layout_parts(
+            name = repository + "_parts",
+            plugins = _plugin_components(target_platform, catalogue.bundled).labels,
+            stamp_class = tables.product_mode(product),
+            tags = ["manual"],
+        )
+
+        # The embedded frontend is a frontend-only plugin of the product, and so are the plugins that only the frontend
+        # bundles. Their components are the frontend product's. The parts target configures them for the mode of this
+        # product through `stamp_class`, because the repository of this product lists them.
+        frontend_attrs = {}
+        frontend = getattr(plan, "embedded_frontend", "")
+        if frontend:
+            frontend_catalogue = _plugin_component_catalogue(tables, frontend)
+            frontend_order = tables.platform_jar_orders[frontend]
+            bundled = {entry.main_module: True for entry in catalogue.bundled}
+            frontend_only = [entry.main_module for entry in frontend_catalogue.bundled if entry.main_module not in bundled]
+            dist_runtime_layout_parts(
+                name = repository + "_frontend_parts",
+                plugins = _plugin_components(target_platform, frontend_catalogue.bundled, selected_modules = frontend_only).labels,
+                stamp_class = tables.product_mode(product),
+                tags = ["manual"],
+            )
+            frontend_attrs = {
+                "frontend_platform_payload": "%s:%s_platform_payload" % (tables.build_package, tables.product(frontend).platform_set),
+                "frontend_core_module": tables.plans[frontend].application_info_module,
+                "frontend_core_descriptor": _product_descriptor(tables, frontend),
+                "frontend_first_jars": frontend_order.first,
+                "frontend_last_jars": frontend_order.last,
+                "frontend_plugins": ":" + repository + "_frontend_parts",
+            }
+        order = tables.platform_jar_orders[product]
+        dist_runtime_module_repository(
+            name = repository,
+            platform_payload = ":" + name + "_platform_payload",
+            core_module = plan.application_info_module,
+            core_descriptor = _product_descriptor(tables, product),
+            first_jars = order.first,
+            last_jars = order.last,
+            plugins = ":" + repository + "_parts",
+            ide_properties = [":%s_product_files/idea.properties" % name],
+            runtime_module_facts = tables.runtime_module_facts,
+            bazel_targets_json = tables.bazel_targets_json,
+            tags = ["manual"],
+            **frontend_attrs
+        )
+        component = name + "_" + _fragment_suffix(tables.runtime_module_repository_fragment)
+        intellij_packed_jars_component(
+            name = component,
+            visibility = visibility,
+            tags = ["manual"],
+            collector = tables.collector,
+            component_name = tables.runtime_module_repository_fragment,
+            platform_prefix = product,
+            target_platform = target_platform,
+            files = {
+                "modules/module-descriptors.dat": ":%s.home/modules/module-descriptors.dat" % repository,
+                "modules/module-descriptors.jar": ":%s.home/modules/module-descriptors.jar" % repository,
+            },
+        )
+        return ":" + component
+
+    def packed_jars_component():
+        # The `content_module_jar` targets of the payload and one `dist_platform_jar` target per residual jar. The
+        # component composes their jars in, and the reference target packs the same jars and nothing else.
+        residual_jars = []
+        residual_jar_targets = {}
+        for destination, jar in getattr(tables.fragment_inputs[product][tables.platform_lib_fragment], "residual_jars", {}).items():
+            # A destination can name a subdirectory of `lib/`, and a target name cannot hold a `/`. Two destinations
+            # that differ only in a separator would collapse to one target, which Bazel reports as a duplicate rule in
+            # a generated file - so name the pair here, where the destinations are still readable.
+            target_name = name + "_platform_jar_" + destination.replace("/", "_")
+            if target_name in residual_jar_targets:
+                fail("%s and %s both need the target '%s'" % (residual_jar_targets[target_name], destination, target_name))
+            residual_jar_targets[target_name] = destination
+            dist_platform_jar(
+                name = target_name,
+                relative_output_file = destination,
+                modules = getattr(jar, "modules", []),
+                libraries = getattr(jar, "libraries", []),
+                # The application-info module jar: the product descriptor and the stamped application info.
+                patches = getattr(jar, "patches", {}),
+                patched_module = getattr(jar, "patched_module", ""),
+            )
+            residual_jars.append(":" + target_name)
+
+        # A content module jar whose presigned library carries native files has a tree per platform. The payload takes
+        # the tree of the one platform the set is for, chosen the way `_native_bin_files` chooses the OS of `bin/`.
+        dist_platform_payload(
+            name = name + "_platform_payload",
+            packed = platform_lib_payload.packed + residual_jars,
+            # The packed jars the module system loads. The payload puts every other direct child of `lib/` on the core
+            # classpath.
+            module_system_loaded = platform_lib_payload.module_system_loaded,
+            native_platform = per_platform(lambda platform: platform),
+        )
+
+        intellij_packed_jars_component(
+            name = name + "_" + PACKED_JARS_COMPONENT,
+            visibility = visibility,
+            collector = tables.collector,
+            component_name = PACKED_JARS_COMPONENT,
+            platform_prefix = product,
+            target_platform = target_platform,
+            platform_payload = ":" + name + "_platform_payload",
+            plugin_classpath_prefix = plugin_classpath_prefix,
+        )
+
+    def product_files_component():
+        # `build.txt`, `bin/idea.properties`, the vmoptions file and `product-info.json`. A product with an embedded
+        # frontend also gets the vmoptions file of the frontend. The product files action renders them from the launch
+        # model the plan generator writes for the product, so the component reads no project model and starts no JVM.
+        # The action reads the application info sources and `build.txt` for the version, the names and the build number.
+        # The rendered files have fixed names, and the component maps each one to its path in the distribution.
+        # `_launch_destinations` states the paths of the vmoptions files, `product-info.json` and `build.txt`.
+        # The component also declares the main class of the launch model. A classic-loader launch takes its boot class
+        # path from the core classpath of the platform payload. A modular-loader launch states `platform-loader.jar`
+        # in the model.
+        files = name + "_product_files"
+        frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
+
+        # The macOS app: `Info.plist`, the strings files and the icons that the action writes. The plan states the icons
+        # for a product with an app. A product without one gets no macOS app files.
+        mac_bundle = getattr(plan.launch, "mac_bundle", None)
+        mac_app_paths = MAC_APP_FILES + ["Resources/" + name for name in mac_bundle.icons] if mac_bundle else []
+        mac_app_files = {path: "%s/Contents/%s" % (files, path) for path in mac_app_paths}
+
+        def on_mac(platform, value, other):
+            return value if mac_bundle and platform_parts(platform).os == "darwin" else other
+
+        application_info = tables.application_infos[product]
+        dist_product_files(
+            name = files,
+            tags = ["manual"],
+            model = tables.launch_models[product],
+            application_info = application_info.source,
+            host_application_info = getattr(application_info, "host", None),
+            replacements = getattr(application_info, "replacements", []),
+            idea_properties = plan.launch.idea_properties,
+            platform = per_platform(lambda platform: platform),
+            build_txt = files + "/build.txt",
+            idea_properties_out = files + "/idea.properties",
+            vmoptions = files + "/vmoptions",
+            product_info = files + "/product-info.json",
+            frontend_vmoptions = files + "/frontend.vmoptions" if frontend_vmoptions else None,
+            platform_payload = None if _modular_loader(tables, product) else ":" + name + "_platform_payload",
+            mac_app_files = mac_app_files.values(),
+            mac_app_template = per_platform(lambda platform: on_mac(platform, Label("//platform/build-scripts:mac_app_template"), None)),
+            mac_app_icons = per_platform(lambda platform: on_mac(platform, mac_app_icon_roles(mac_bundle.icons) if mac_bundle else {}, {})),
+        )
+
+        def placed(platform):
+            destinations = _launch_destinations(plan, platform_parts(platform).os)
+            result = {
+                destinations.build_txt: ":%s/build.txt" % files,
+                "bin/idea.properties": ":%s/idea.properties" % files,
+                destinations.vm_options: ":%s/vmoptions" % files,
+                destinations.product_info: ":%s/product-info.json" % files,
+            }
+            if destinations.frontend_vm_options:
+                result[destinations.frontend_vm_options] = ":%s/frontend.vmoptions" % files
+            if on_mac(platform, True, False):
+                for path, output in mac_app_files.items():
+                    result[path] = ":" + output
+            return result
+
+        intellij_packed_jars_component(
+            name = name + "_" + _fragment_suffix(_PLATFORM_RESOURCES_FRAGMENT),
+            visibility = visibility,
+            tags = ["manual"],
+            collector = tables.collector,
+            component_name = _PLATFORM_RESOURCES_FRAGMENT,
+            platform_prefix = product,
+            target_platform = target_platform,
+            files = per_platform(placed),
+            main_class = plan.launch.main_class,
+        )
+
+    def assets_component():
+        # The generated plan states each file as `struct(source, path, executable)` per host platform, and
+        # `_launcher_files` adds the launcher files in the same shape. The rule takes the files as two path-to-label
+        # dicts, one per executable bit. The path is the key, so one source can go to two paths. The bundled runtime goes
+        # in as an unpacked archive, and the rule refuses a runtime file at the path of an explicit asset.
+        def platform_files(platform):
+            entries = getattr(plan, "platform_assets", {}).get(platform, []) + _launcher_files(plan.launch.launcher, platform)
+            paths = {}
+            for entry in entries:
+                if entry.path in paths:
+                    fail("%s: two platform assets of %s go to '%s'" % (product, platform, entry.path))
+                paths[entry.path] = True
+            return entries
+
+        def asset_files(entries, executable):
+            return {entry.path: entry.source for entry in entries if entry.executable == executable}
+
+        def selected(executable):
+            return per_platform(lambda platform: asset_files(platform_files(platform), executable))
+
+        intellij_packed_jars_component(
+            name = name + "_assets",
+            visibility = visibility,
+            tags = ["manual"],
+            collector = tables.collector,
+            component_name = PLATFORM_ASSETS_COMPONENT,
+            platform_prefix = product,
+            target_platform = target_platform,
+            files = selected(False),
+            executable_files = selected(True),
+            unpacked_archives = per_platform(lambda platform: {jbr_runtime_repository_label(platform): _RUNTIME_DIRECTORY}),
+            unpacked_archive_executables = per_platform(_runtime_executables),
+            unpacked_archive_executable_lists = per_platform(_runtime_executable_lists),
+        )
+
+    # Declared in the layout's order, which is the composition order the returned lists state.
+    layout = _platform_fragment_layout(tables, product)
+    for entry in layout:
+        if entry.fragment_name == _PLATFORM_RESOURCES_FRAGMENT:
+            product_files_component()
+        elif entry.fragment_name == PACKED_JARS_COMPONENT:
+            packed_jars_component()
+        elif entry.fragment_name == PLATFORM_ASSETS_COMPONENT:
+            assets_component()
+        else:
+            fail("Platform fragment layout of '%s' names the unknown component '%s'" % (product, entry.fragment_name))
+
+    # Declared after the layout and returned apart from it: only a row that asks for the runtime module repository
+    # composes the component. Every row is a host row, so a set for an explicit target platform declares it only for a
+    # product that needs it at every start.
+    runtime_module_repository = None
+    if _has_runtime_module_repository(tables, product) and (not target_platform or _modular_loader(tables, product)):
+        runtime_module_repository = runtime_module_repository_component()
+
+    return struct(
+        fragments = [":" + name + "_" + entry.suffix for entry in layout],
+        fragment_names = [entry.fragment_name for entry in layout],
+        runtime_module_repository = runtime_module_repository,
+    )
+
+def _declare_fragments_dist(
+        tables,
+        name,
+        visibility,
+        platform_fragments,
+        platform_fragment_names,
+        product,
+        additional_modules,
+        target_platform,
+        create_local_launch,
+        catalogue,
+        export_attrs = {},
+        export_visibility = None):
+    """Declares the distribution `name` and, with `create_local_launch`, `<name>_launch` over `catalogue`.
+
+    `catalogue` is `_plugin_component_catalogue(tables, product)`. A caller that declares several distributions of one
+    product reads it once and passes it to each. `export_attrs` holds the attributes that only the export takes: the
+    sibling vmoptions attributes of `export_vm_options` in `intellij_dev.bzl`. `export_visibility`, when set, is the
+    visibility of the export instead of `visibility`.
+    """
+    bundled_components = _plugin_components(target_platform, catalogue.bundled)
+
+    # The distribution composes every bundled component, and the additional components its `additional_modules`
+    # name. A bundled module that `additional_modules` also names is composed once, as a bundled component.
+    #
+    # Only the assembly is split this way. What the distribution *declares* it contains stays the whole
+    # `additional_modules` below, because that is what a consumer compares its own needs against: a claimed
+    # module is in the distribution just as much as an unclaimed one, and declaring only the unclaimed ones
+    # once made every AIR UI lane refuse to launch over a plugin that was sitting in the IDE.
+    additional_component_modules = []
+    for module in additional_modules:
+        tier = catalogue.tiers.get(module)
+        if tier == None:
+            fail("Additional plugin module '%s' of %s has no generated component" % (module, name))
+        if tier == "bundled":
+            continue
+        additional_component_modules.append(module)
+    additional_components = _plugin_components(
+        target_platform,
+        catalogue.additional,
+        selected_modules = additional_component_modules,
+    )
+
+    # The plugin components are declared apart from the platform components: the dist rule configures them for the
+    # product, and the platform components keep their configuration. Every plugin of the distribution is a component.
+    fragments = list(platform_fragments)
+    plugin_components = bundled_components.labels + additional_components.labels
+
+    # The component name of a plugin component is its main module (`component_name` in `dev_plugin_component`).
+    expect_fragments = (
+        list(platform_fragment_names) +
+        bundled_components.modules +
+        additional_components.modules
+    )
+
+    # The export and the local launch share the home prefix, so the runfiles home of a row has the layout of the
+    # export.
+    prefix = _home_prefix(_plan(tables, product), target_platform)
+    for local_launch in [False, True] if create_local_launch else [False]:
+        intellij_fragments_dist(
+            name = name + ("_launch" if local_launch else ""),
+            visibility = visibility if local_launch or export_visibility == None else export_visibility,
+            tags = ["manual"],
+            composer = tables.composer,
+            fragments = fragments,
+            platform_prefix = product,
+            plugin_components = plugin_components,
+            stamp_class = _product_mode(tables, product),
+            expect_fragments = expect_fragments,
+            additional_modules = additional_modules,
+            bundled_modules = bundled_components.modules,
+            local_launch = local_launch,
+            home_prefix = prefix,
+            **({} if local_launch else export_attrs)
+        )
+
+def _home_prefix(plan, target_platform):
+    """The `home_prefix` of a distribution of `plan`: for `target_platform`, or a `select` over the host platforms.
+
+    `home_prefix` of `dist_product_files.bzl` states the rule. It is `Contents` for a macOS app.
+    """
+    language_server = plan.launch.launcher.language_server
+    if target_platform:
+        return home_prefix(platform_parts(target_platform).os, language_server)
+    return select({
+        "@community//build:host_" + platform: home_prefix(platform_parts(platform).os, language_server)
+        for platform in HOST_PLATFORMS
+    })
+
+def _check_plan(tables, name, product):
+    """Fails when the generated plan cannot serve the launcher `name` of `product`.
+
+    The one place a run configuration reads the generator's switch. The split distributions of a generator half
+    write a plan entry for a listed product and nothing for the others. A community product has its plan entry in the
+    community half. The message names the recipe: the map to edit and the tool run that writes the plan. The generator
+    stops on a module that a run configuration names and that it cannot plan. A module outside the plugin components of
+    the product fails in the distribution macro.
+    """
+    if _community_product(tables, product) == None and product not in tables.plans:
+        fail("%s: product '%s' has no generated dev-distribution plan; add it to the split distributions of its generator half and run plugin-model-tool" % (name, product))
+
+def _distribution_groups(rows):
+    """The rows of `DEV_RUN_CONFIGURATIONS` grouped by the distribution they share.
+
+    The plan generator names the distribution of each row in its `distribution` field. The result maps that name to
+    `struct(product, additional_modules, runtime_module_repository, names)`, with the row names in row order. Rows
+    that state one distribution and another product, `additional_modules` or `runtime_module_repository` fail. So do
+    rows that state the same three and two distributions.
+    """
+    groups = {}
+    names_by_key = {}
+    for name, row in rows.items():
+        distribution = getattr(row, "distribution", None)
+        if not distribution:
+            fail("%s: the row states no distribution; run the plan generator of its half" % name)
+        additional_modules = getattr(row, "additional_modules", [])
+        runtime_module_repository = getattr(row, "runtime_module_repository", False)
+        key = (row.product, tuple(additional_modules), runtime_module_repository)
+        known = names_by_key.setdefault(key, distribution)
+        if known != distribution:
+            fail("%s: the row states the distribution '%s', and a row with the same product, additional_modules and runtime_module_repository states '%s'" % (
+                name,
+                distribution,
+                known,
+            ))
+        group = groups.get(distribution)
+        if group == None:
+            groups[distribution] = struct(
+                product = row.product,
+                additional_modules = additional_modules,
+                runtime_module_repository = runtime_module_repository,
+                names = [name],
+            )
+            continue
+        if (group.product, group.additional_modules, group.runtime_module_repository) != (row.product, additional_modules, runtime_module_repository):
+            fail("%s: the row states the distribution '%s' of '%s' with another product, additional_modules or runtime_module_repository" % (
+                name,
+                distribution,
+                group.names[0],
+            ))
+        group.names.append(name)
+    return groups
+
+def _declare_run_distribution(tables, name, product, additional_modules, runtime_module_repository, catalogue, visibility, export_visibility = None):
+    """The distribution of one or more launchers: the self-contained `<name>_dist` and the local launch `<name>_dist_launch`.
+
+    `<name>_dist_ide_config` is the config file of `<name>_dist`, for `$(rlocationpath ...)`. A test that declares both
+    in `data` runs on the distribution, see `PrebuiltDevDistRunner`. `export_visibility`, when set, is the visibility
+    of the two instead of `visibility`.
+
+    A row starts over the placement of `_dist_launch`, and on Windows over the home of `_dist`. A distribution with
+    `runtime_module_repository` composes the `platform_runtime_module_repository` component of its product, which
+    places the `modules/` files of `dist_runtime_module_repository`.
+
+    The export `<name>_dist.dist` gets the sibling vmoptions file `<name>_dist.dist.vmoptions`. A bare start of the
+    export through the native launcher keeps its data in `out/dev-data/<name>_dist`. On macOS the home of the export is
+    `<name>_dist.dist/Contents`. The launcher strips that level, so it finds the file on macOS too. The file names the
+    runtime module repository of a classic-loader export that has one. A modular-loader launch states it in
+    `product-info.json`.
+    """
+    _check_plan(tables, name, product)
+    platform = _platform_fragments(tables, product, runtime_module_repository = runtime_module_repository)
+    _declare_fragments_dist(
+        tables = tables,
+        name = name + "_dist",
+        visibility = visibility,
+        platform_fragments = platform.fragments,
+        platform_fragment_names = platform.fragment_names,
+        product = product,
+        additional_modules = additional_modules,
+        target_platform = "",
+        create_local_launch = True,
+        catalogue = catalogue,
+        export_attrs = export_vm_options(
+            name + "_dist",
+            runtime_module_repository = runtime_module_repository and not _modular_loader(tables, product),
+        ),
+        export_visibility = export_visibility,
+    )
+    intellij_dist_config(
+        name = name + "_dist_ide_config",
+        dist = ":" + name + "_dist",
+        visibility = visibility if export_visibility == None else export_visibility,
+    )
+
+def _check_before_run(tables, name, jvm_flags, compile_clion_backend_before_run):
+    """Checks the before-run step of a row with the `check_before_run` hook of the tables.
+
+    No launcher runs the step. A developer runs it as a target of its own. Without the hook, a row that asks for the step
+    fails.
+    """
+    if tables.check_before_run != None:
+        tables.check_before_run(name, jvm_flags, compile_clion_backend_before_run)
+    elif compile_clion_backend_before_run:
+        fail("%s: compile_clion_backend_before_run needs the check_before_run hook, and the tables of this half have none" % name)
+
+def _declare_run_launcher(
+        tables,
+        name,
+        distribution,
+        product,
+        additional_modules,
+        runtime_module_repository,
+        jvm_flags,
+        env,
+        data,
+        program_args,
+        compile_clion_backend_before_run,
+        visibility):
+    """The launcher `name`, the launcher over the distribution `_declare_run_distribution` declared as `distribution`.
+
+    The row is an `intellij_dev_java_launcher` over `<distribution>_dist_launch`, on every OS. It starts the native
+    launcher of the generation with the variables of `_env_var_base_name`. Its vmoptions file names the runtime module
+    repository under the rule of `export_vm_options`.
+    """
+    for flag in jvm_flags:
+        if flag.startswith("-Dadditional.modules="):
+            fail("%s: pass the modules of '%s' as additional_modules, not in jvm_flags" % (name, flag))
+        if flag == _GENERATE_RUNTIME_MODULE_REPOSITORY_FLAG:
+            fail("%s: state '%s' as the attribute of intellij_dev_run_configuration, not in jvm_flags" % (name, flag))
+        if flag.startswith(_ROOT_MODULE_OVERRIDE_FLAG_PREFIX):
+            fail("%s: state the root module as `rootModule` of a build/dev-build.json key, not as '%s'" % (name, flag))
+        if _names_jps_output(flag):
+            fail(("%s: '%s' names a JPS output below out/, which a dev launch does not build. State a file of the " +
+                  "distribution, such as runtime_module_repository = True for the runtime module repository, or a path " +
+                  "outside out/classes, out/production and out/test") % (name, flag))
+
+    _check_before_run(tables, name, jvm_flags, compile_clion_backend_before_run)
+    if tables.launcher_jvm_flags != None:
+        jvm_flags = tables.launcher_jvm_flags(product, additional_modules, jvm_flags)
+    if getattr(tables, "launcher_data", None) != None:
+        data = tables.launcher_data(product, additional_modules, data)
+
+    plan = _plan(tables, product)
+    destinations = {os: _launch_destinations(plan, os) for os in plan.launch.vmoptions}
+    intellij_dev_java_launcher_binary(
+        name = name,
+        visibility = visibility,
+        dist = "//%s:%s_dist_launch" % (native.package_name(), distribution),
+        vm_options = {os: destination.vm_options for os, destination in destinations.items()},
+        product_info = {os: destination.product_info for os, destination in destinations.items()},
+        launcher = _launcher_destinations(plan.launch.launcher),
+        env_var_base_name = _env_var_base_name(plan.launch, program_args),
+        runtime_module_repository = runtime_module_repository and not _modular_loader(tables, product),
+        jvm_flags = jvm_flags,
+        env = env,
+        data = data,
+        program_args = program_args,
+    )
+
+def _launch_assembles_test(name, rows, tags):
+    """A `dist_build_test` that builds the launchers of `rows`. The factory result documents it as `launch_assembles_test`."""
+    dist_build_test(
+        name = name,
+        tags = tags,
+        targets = rows,
+    )
+
+def _run_configurations(tables, rows):
+    """The launchers of `DEV_RUN_CONFIGURATIONS`. The factory result documents it as `run_configurations`."""
+    catalogues = {}
+    for distribution, group in _distribution_groups(rows).items():
+        product = group.product
+        additional_modules = group.additional_modules
+        runtime_module_repository = group.runtime_module_repository
+        if product not in catalogues:
+            catalogues[product] = _plugin_component_catalogue(tables, product)
+        _declare_run_distribution(
+            tables = tables,
+            name = distribution,
+            product = product,
+            additional_modules = list(additional_modules),
+            runtime_module_repository = runtime_module_repository,
+            catalogue = catalogues[product],
+            visibility = None,
+            # A test target declares the export and its config file, see `PrebuiltDevDistRunner`.
+            export_visibility = ["//visibility:public"],
+        )
+        for name in group.names:
+            row = rows[name]
+            _declare_run_launcher(
+                tables = tables,
+                name = name,
+                distribution = distribution,
+                product = product,
+                additional_modules = additional_modules,
+                runtime_module_repository = runtime_module_repository,
+                jvm_flags = getattr(row, "jvm_flags", []),
+                env = getattr(row, "env", {}),
+                data = [],
+                program_args = getattr(row, "program_args", []),
+                compile_clion_backend_before_run = getattr(row, "compile_clion_backend_before_run", False),
+                visibility = None,
+            )
+
+def _run_configuration(
+        tables,
+        name,
+        visibility,
+        product,
+        additional_modules,
+        jvm_flags,
+        env,
+        data,
+        program_args,
+        generate_runtime_module_repository,
+        compile_clion_backend_before_run):
+    """One hand-written launcher over a distribution of its own. The factory result documents it as `run_configuration`."""
+    _declare_run_distribution(
+        tables = tables,
+        name = name,
+        product = product,
+        additional_modules = additional_modules,
+        runtime_module_repository = generate_runtime_module_repository,
+        catalogue = _plugin_component_catalogue(tables, product),
+        visibility = visibility,
+    )
+    _declare_run_launcher(
+        tables = tables,
+        name = name,
+        distribution = name,
+        product = product,
+        additional_modules = additional_modules,
+        runtime_module_repository = generate_runtime_module_repository,
+        jvm_flags = jvm_flags,
+        env = env,
+        data = data,
+        program_args = program_args,
+        compile_clion_backend_before_run = compile_clion_backend_before_run,
+        visibility = visibility,
+    )
+
+_RUN_CONFIGURATION_DOC = """One dev launcher written by hand, `bazel run //<package>:<name>`, over a distribution of its own.
+
+    It declares what `run_configurations` declares for one generated row: the distribution `<name>_dist` with
+    `<name>_dist_launch`, and `<name>`, an `intellij_dev_java_launcher` over it. The rows of `.idea/runConfigurations`
+    do not use this macro:
+    `dev_server_run_configurations.bzl` passes them to `run_configurations`, which lets rows share a distribution.
+
+    A launcher the generated plan cannot serve fails at load time (`check_plan`): a product that the split
+    distributions of its generator half do not name. A module of `additional_modules` without a
+    generated component fails in the distribution macro.
+    """
+
+_RUN_CONFIGURATION_ATTRS = {
+    "product": attr.string(mandatory = True, configurable = False, doc = "The build/dev-build.json key of the product; for a frontend, the base product's key plus 'JetBrainsClient'; for a frontend debug wrapper, a key with a `rootModule`."),
+    "additional_modules": attr.string_list(default = [], configurable = False, doc = "Plugin modules included on top of the product's own, the -Dadditional.modules of a run configuration."),
+    "jvm_flags": attr.string_list(default = [], configurable = False, doc = "Additional JVM flags, without -Dadditional.modules and without the two properties the boolean attributes state."),
+    "env": attr.string_dict(default = {}, configurable = False, doc = "Environment variables to set when running the launcher."),
+    "data": attr.label_list(default = [], doc = "Extra data dependencies of the launcher."),
+    "program_args": attr.string_list(default = [], configurable = False, doc = "Program arguments of the launcher."),
+    "generate_runtime_module_repository": attr.bool(default = False, configurable = False, doc = "The -Dintellij.build.generate.runtime.module.repository=true of a run configuration. The distribution composes the `platform_runtime_module_repository` component of its product."),
+    "compile_clion_backend_before_run": attr.bool(default = False, configurable = False, doc = "The before-run step of a run configuration. The `check_before_run` hook of the tables checks it, and no launcher runs it. Without the hook, the attribute fails."),
+}
+
+def intellij_dist_declarations(tables):
+    """Binds the declarations of a split distribution to the generated tables of one half.
+
+    Call it once at load time of a `.bzl` file, and assign each macro of the result to a global of that file. Bazel
+    names the symbolic macro `run_configuration` after that global.
+
+    `tables` is a struct with these fields:
+
+    - `plans`, `launch_models`: the generated plan tables, keyed by product.
+    - `platform_jar_orders`: the generated platform jar orders, keyed by product. Each entry is `struct(first, last)`,
+      the platform jars before and after the sorted range.
+    - `application_infos`: the generated application info sources, keyed by product. Each entry is
+      `struct(source, host, replacements)`, where `host` and `replacements` are present only when set.
+    - `fragment_inputs`: the generated input table, keyed by product.
+    - `plugin_components`: the generated component catalogue, keyed by product.
+    - `product(key)`: the product entry, with its `platform_set`. It fails for an unknown product.
+    - `platform_lib_fragment`, `runtime_module_repository_fragment`: the payload names of the input tables.
+    - `platform_lib_payload(product)`: the `struct(packed, module_system_loaded)` of the packing targets of the `lib/`
+      jars, as `dist_packed_labels` returns it.
+    - `bazel_targets_json`, `project_model_tree`, `runtime_module_facts`, `collector`, `composer`: the labels of the
+      shared inputs and tools.
+    - `build_package`: the package that declares the platform sets, for example `//build`.
+    - `product_mode(product)`: the mode of `product`, its stamp class.
+    - `launcher_jvm_flags(product, additional_modules, jvm_flags)`: the `jvm_flags` of a launcher, or `None`.
+    - `check_before_run(name, jvm_flags, compile_clion_backend_before_run)`: checks the before-run step of a row, or
+      `None`. No launcher runs the step.
+    - `community`: the community products and the community tables that a distribution of one reads, or `None`.
+      See `_community_product` for the fields.
+
+    Returns a struct of the macros and the helpers below.
+    """
+
+    def platform_set(product, name = None, target_platform = "", visibility = None):
+        """The platform set of one split product: its components for one target platform, which its distributions share.
+
+        `product` is the `build/dev-build.json` key and a product entry. The community rules take it as `platform_prefix`.
+        `name` defaults to the entry's `platform_set`. A second set of the same product for another target platform
+        names it. `visibility` is the visibility of every component of the set. A community product fails: the
+        community half declares its set, and a distribution of it reads the set through `platform_fragments`.
+
+        The set declares only what a distribution composes. A reference of a gate is declared elsewhere, with the same
+        `product`, `name` and `target_platform`.
+
+        Returns a struct of the component labels in composition order. `runtime_module_repository` is the label of the
+        `platform_runtime_module_repository` component when the plan has one, else `None`. It is kept out of
+        `fragments`: only a row that asks for the repository composes it, or every row of a product the plan marks
+        `modular_loader`. A set with a `target_platform` has none unless the product is `modular_loader`, because every
+        row is a host row.
+        """
+        return _platform_set(tables, product, name, target_platform, visibility)
+
+    def platform_fragments(product, runtime_module_repository = False, platform_set = None):
+        """The platform component labels of one split product. See `_platform_fragments`."""
+        return _platform_fragments(
+            tables,
+            product,
+            runtime_module_repository = runtime_module_repository,
+            platform_set = platform_set,
+        )
+
+    def declare_fragments_dist(
+            name,
+            visibility,
+            platform_fragments,
+            platform_fragment_names,
+            product,
+            additional_modules,
+            target_platform,
+            create_local_launch,
+            catalogue):
+        """Declares the distribution `name` and, with `create_local_launch`, `<name>_launch` over `catalogue`."""
+        _declare_fragments_dist(
+            tables = tables,
+            name = name,
+            visibility = visibility,
+            platform_fragments = platform_fragments,
+            platform_fragment_names = platform_fragment_names,
+            product = product,
+            additional_modules = additional_modules,
+            target_platform = target_platform,
+            create_local_launch = create_local_launch,
+            catalogue = catalogue,
+        )
+
+    def check_plan(name, product):
+        """Fails when the generated plan cannot serve the launcher `name` of `product`. See `_check_plan`."""
+        _check_plan(tables, name, product)
+
+    def run_configurations(rows):
+        """The launchers of `DEV_RUN_CONFIGURATIONS`, the rows the plan generator writes into `dev_server_run_configurations.bzl`.
+
+        `rows` maps a launcher name to `struct(product, distribution, additional_modules?, jvm_flags?, program_args?,
+        env?, runtime_module_repository?, compile_clion_backend_before_run?)`. Rows with the same product,
+        `additional_modules` and `runtime_module_repository` share one distribution, which the generator names in
+        `distribution`, and each row is one launcher over it. A launch-time flag therefore never splits a distribution,
+        and two rows of one product compose once. The plugin catalogue of a product is read once for all its
+        distributions.
+        """
+        _run_configurations(tables, rows)
+
+    def launch_assembles_test(name, rows, tags = []):
+        """A `dist_build_test` `name` that builds the launchers of `rows`, labels of rows of this package or another one."""
+        _launch_assembles_test(name, rows, tags)
+
+    def run_configuration_impl(
+            name,
+            visibility,
+            product,
+            additional_modules,
+            jvm_flags,
+            env,
+            data,
+            program_args,
+            generate_runtime_module_repository,
+            compile_clion_backend_before_run):
+        _run_configuration(
+            tables,
+            name = name,
+            visibility = visibility,
+            product = product,
+            additional_modules = additional_modules,
+            jvm_flags = jvm_flags,
+            env = env,
+            data = data,
+            program_args = program_args,
+            generate_runtime_module_repository = generate_runtime_module_repository,
+            compile_clion_backend_before_run = compile_clion_backend_before_run,
+        )
+
+    return struct(
+        platform_set = platform_set,
+        platform_fragments = platform_fragments,
+        declare_fragments_dist = declare_fragments_dist,
+        check_plan = check_plan,
+        run_configurations = run_configurations,
+        launch_assembles_test = launch_assembles_test,
+        run_configuration = macro(
+            doc = _RUN_CONFIGURATION_DOC,
+            implementation = run_configuration_impl,
+            attrs = _RUN_CONFIGURATION_ATTRS,
+        ),
+        distribution_groups = _distribution_groups,
+        plugin_component_catalogue = lambda product: _plugin_component_catalogue(tables, product),
+        plugin_components = _plugin_components,
+        fragment_suffix = _fragment_suffix,
+        has_runtime_module_repository = lambda product: _has_runtime_module_repository(tables, product),
+        modular_loader = lambda product: _modular_loader(tables, product),
+        product_descriptor = lambda product: _product_descriptor(tables, product),
+        project_model_tree = tables.project_model_tree,
+    )

@@ -10,7 +10,7 @@ fn write_spec(directory: &TempDir, content: &str) -> PathBuf {
     file
 }
 
-/// The shape of `json.encode` in `intellij_dev_dist.bzl`: every key, with `null` for an absent file or map.
+/// The shape of `json.encode` in `intellij_dist.bzl`: every key, with `null` for an absent file or map.
 const STARLARK_SPEC: &str = concat!(
     r#"{"version":1,"platformPrefix":"idea","expectedFragments":["platform_core","intellij.java.plugin"],"#,
     r#""additionalModules":["intellij.air.plugin"],"#,

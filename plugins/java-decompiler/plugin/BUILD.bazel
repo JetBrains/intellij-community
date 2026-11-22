@@ -1,6 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 filegroup(
@@ -23,7 +23,7 @@ jps_test(
 ### skip generation section `test intellij.java.decompiler.tests`
 
 ### auto-generated section `dev intellij.java.decompiler` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = ["intellij.java.decompiler.engine"],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {

@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The `--application-info` mode: the executor of `dev_dist_frontend_application_info`.
+//! The `--application-info` mode: the executor of `dist_frontend_application_info`.
 
 use std::path::PathBuf;
 
@@ -9,7 +9,7 @@ use appinfo::{ApplicationInfoElements, Replacement, descriptorxml, merge_host_ap
 
 use crate::{read_text, report, write_resolved};
 
-/// The declared inputs of `dev_dist_frontend_application_info`.
+/// The declared inputs of `dist_frontend_application_info`.
 ///
 /// The rule states none of the overrides that `applyApplicationInfoOverrides` in `ApplicationInfoPropertiesImpl.kt`
 /// applies. So this mode refuses `--eap-override`, `--version-suffix-override`, `--nightly` and `--branch-name` as unknown

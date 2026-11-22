@@ -10,7 +10,7 @@ use super::{TemplateFile, render_mac_bundle, select_icons, substitute_placeholde
 use crate::model::{LaunchModel, parse_launch_model};
 use crate::render::{Product, parse_platform};
 
-/// `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS`: 2026-01-01T00:00:00Z.
+/// `DIST_PINNED_BUILD_DATE_IN_SECONDS`: 2026-01-01T00:00:00Z.
 const PINNED_BUILD_DATE_SECONDS: i64 = 1_767_225_600;
 
 /// Set it to rewrite the goldens of `testdata/mac-bundle` under `cargo test`.

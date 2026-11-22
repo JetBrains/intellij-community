@@ -15,11 +15,11 @@ import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import java.util.TreeMap
 
 /**
- * The content of one product descriptor, as the attributes of `dev_dist_product_descriptor` and
- * `dev_dist_embedded_product_descriptor` state it. The module-set table of the half, see [ModuleSetData], states the
+ * The content of one product descriptor, as the attributes of `dist_product_descriptor` and
+ * `dist_embedded_product_descriptor` state it. The module-set table of the half, see [ModuleSetData], states the
  * rest.
  *
- * The macro walks the table with `product_content_rows` of `dev_dist_product_content.bzl`. The descriptor writer composes
+ * The macro walks the table with `product_content_rows` of `dist_product_content.bzl`. The descriptor writer composes
  * the `<idea-plugin>` element from the rows, as `buildProductContentXml(inlineModuleSets = true)` renders it.
  */
 internal data class ProductContentPlan(
@@ -65,10 +65,10 @@ internal class StarlarkIdentifier(private val name: String) : Renderable {
 }
 
 /** The symbol of the module-set table, which a product descriptor package loads from [DIST_MODULE_SETS_BZL]. */
-internal const val DIST_MODULE_SETS_SYMBOL: String = "DEV_DIST_MODULE_SETS"
+internal const val DIST_MODULE_SETS_SYMBOL: String = "DIST_MODULE_SETS"
 
 /** The module-set table of the half, in the spelling of a package of that half. */
-internal const val DIST_MODULE_SETS_BZL: String = "//build:dev_dist_module_sets.bzl"
+internal const val DIST_MODULE_SETS_BZL: String = "//build:dist_module_sets.bzl"
 
 /** The namespace of the module-set block and of every additional module that is not private. */
 private const val JETBRAINS_NAMESPACE: String = PluginModuleId.DEFAULT_NAMESPACE
@@ -201,7 +201,7 @@ private fun normalizedLoading(rule: String?): String? = if (rule.isNullOrEmpty()
 /**
  * The element structure that the macro and the descriptor writer compose from [content] and [table].
  *
- * The walk is `product_content_rows` of `dev_dist_product_content.bzl`, step by step: pre-order over
+ * The walk is `product_content_rows` of `dist_product_content.bzl`, step by step: pre-order over
  * [ProductContentPlan.moduleSets], a set once, the own members of a set before its nested sets, no row for a set without
  * an own member. An override applies to the own members of a top-level set. A set that a top-level entry reaches again
  * with overrides takes them on its earlier rows, but only when none of them carries a non-default loading.

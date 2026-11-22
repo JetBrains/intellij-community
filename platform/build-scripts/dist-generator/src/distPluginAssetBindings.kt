@@ -278,7 +278,7 @@ private fun mergeGeneratedCatalogueFacts(
  * A checkout resource of a plugin, resolved in the Bazel package that owns its files.
  *
  * That package is the nearest one above the resource, below the package of the module that declares it. A directory
- * is read through the `dev_dist_resources` filegroup of the package. The tool writes the filegroup into the `dev`
+ * is read through the `dist_resources` filegroup of the package. The tool writes the filegroup into the `dev`
  * section of the package's first module from the plans that name it. A package without a module declares the filegroup
  * by hand. A file is read as its own source-file label, which the `dev` section of its package exports.
  */
@@ -331,7 +331,7 @@ class DistResourceSources(
    * content root, and a module with more than one content root can legitimately need `..` to reach a later one.
    * The nearest package above the resource owns it. When that package is a
    * nested one without a module, the tool writes no `dev` section there, so its `BUILD.bazel` must declare the
-   * `dev_dist_resources` filegroup by hand, and a file resource has no owner. A layout that breaks the rule
+   * `dist_resources` filegroup by hand, and a file resource has no owner. A layout that breaks the rule
    * stops the run, and the message names the broken part. The containment check is path-based, not filesystem-based,
    * so a plugin whose resource a download fills gets the same message on every checkout.
    */

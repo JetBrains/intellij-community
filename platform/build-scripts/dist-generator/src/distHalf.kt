@@ -141,7 +141,7 @@ internal fun DistHalf.requireWritable(relativePath: String) {
 /** What a half can plan beyond the common facts. */
 @ApiStatus.Internal
 enum class DistCapability {
-  /** The reference files of the gates, `build/dev_dist_reference_plan.bzl` and `build/dev_dist_reference_inputs.bzl`. */
+  /** The reference files of the gates, `build/dist_reference_plan.bzl` and `build/dist_reference_inputs.bzl`. */
   REFERENCE_PLAN,
 
   /** A platform patch of a layout patcher, see [DistPlatformPatchSupport]. */
@@ -313,7 +313,7 @@ internal fun DistHalf.extraPluginModules(product: String, contextPlugins: Map<St
 /**
  * The bundled plugins of a split product that the composer writes first, the frozen
  * [SplitDistribution.compositionOrder]. Empty for a product that is not split. The bundled tier of
- * `DEV_DIST_PLUGIN_COMPONENTS` starts with this list.
+ * `DIST_PLUGIN_COMPONENTS` starts with this list.
  */
 internal fun DistHalf.compositionOrder(product: String): List<String> = splitDistributions.get(product)?.compositionOrder ?: emptyList()
 
@@ -554,7 +554,7 @@ interface DistPlatformPatchSupport {
   fun newTargets(): DistPlatformPatchTargets
 }
 
-/** The `dev_dist_platform_patch` targets of the split products of one run. */
+/** The `dist_platform_patch` targets of the split products of one run. */
 @ApiStatus.Internal
 interface DistPlatformPatchTargets {
   /** The label of the target that writes [entry] of [product]. [moduleLabel] gives the label of a module by its JPS name. */

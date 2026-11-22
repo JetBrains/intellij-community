@@ -528,7 +528,7 @@ class DistUnplannablePluginsTest {
     return DistToolVerdicts(contentModuleJarLabels = emptyMap<String, DistModuleJarArtifact>(), pluginRecords = pluginRecords, population = setOf("intellij.x"))
   }
 
-  private val pluginPackage = "build/dev-dist-descriptors/intellij.x/BUILD.bazel"
+  private val pluginPackage = "build/dist-descriptors/intellij.x/BUILD.bazel"
 
   /** A layout of `intellij.x` whose descriptor patch states a marker, so its entry differs from a plain one. */
   private fun markedLayout(): PluginLayout {
@@ -552,7 +552,7 @@ class DistUnplannablePluginsTest {
     assertThat(packages.files(emptyMap()).keys).containsExactly(pluginPackage)
     for (plan in plans) {
       val entry: PluginDescriptorEntry = plan.plugins.single()
-      assertThat(packages.sharedDeclaration(entry)?.label).isEqualTo("//build/dev-dist-descriptors/intellij.x:intellij.x_dev_descriptor")
+      assertThat(packages.sharedDeclaration(entry)?.label).isEqualTo("//build/dist-descriptors/intellij.x:intellij.x_dev_descriptor")
       assertThat(packages.productDeclaration(plan.platformPrefix, entry)).isNull()
     }
   }
@@ -605,11 +605,11 @@ class DistUnplannablePluginsTest {
     val text = packages.files(pluginTargets = mapOf(pluginPackage to "dev_plugin(name = \"intellij.x_dev_plugin\")\n")).getValue(pluginPackage)
     // The bridge of the half binds the leaf, and buildifier sorts a file of an explicit repository first.
     assertThat(text).contains(
-      "load(\"@jps_dynamic_deps_community//:targets.bzl\", \"dev_dist_plugin_descriptor\")\n" +
+      "load(\"@jps_dynamic_deps_community//:targets.bzl\", \"dist_plugin_descriptor\")\n" +
       "load(\"//platform/build-scripts/bazel-rules:dev_plugin.bzl\", \"dev_plugin\")\n",
     )
     assertThat(text).contains(
-      "dev_dist_plugin_descriptor(\n" +
+      "dist_plugin_descriptor(\n" +
       "    content_modules = [\n        \"intellij.x.a\",\n        \"intellij.x.b\",\n    ],\n" +
       "    descriptor = \"//plugins/x:resources/META-INF/plugin.xml\",\n" +
       "    descriptors = {\n" +
@@ -626,7 +626,7 @@ class DistUnplannablePluginsTest {
     val plans = listOf<PluginDescriptorPlan>(descriptorPlan("idea", plainLayout("intellij.x")), descriptorPlan("server", markedLayout()))
     val ideaEntry: PluginDescriptorEntry = plans[0].plugins.single()
     val serverEntry: PluginDescriptorEntry = plans[1].plugins.single()
-    val serverPackage = "build/dev-dist-descriptors/intellij.x/server/BUILD.bazel"
+    val serverPackage = "build/dist-descriptors/intellij.x/server/BUILD.bazel"
 
     val classes = computeDescriptorResidueClasses(plans, productOrder = listOf("idea", "server"))
     val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes, planLabel = { it }, bridgeLabel = { null }, half = CommunityDistHalf)
@@ -644,15 +644,15 @@ class DistUnplannablePluginsTest {
       .contains("for the product `server`")
       .contains("markers = [\n        \"marker:<idea-plugin>:<idea-plugin implementation-detail=\\\"true\\\">\",\n    ],\n")
       .contains("main_module = \"intellij.x\"")
-    assertThat(packages.sharedDeclaration(ideaEntry)?.label).isEqualTo("//build/dev-dist-descriptors/intellij.x:intellij.x_dev_descriptor")
+    assertThat(packages.sharedDeclaration(ideaEntry)?.label).isEqualTo("//build/dist-descriptors/intellij.x:intellij.x_dev_descriptor")
     assertThat(packages.productDeclaration("idea", ideaEntry)).isNull()
-    assertThat(packages.productDeclaration("server", serverEntry)?.label).isEqualTo("//build/dev-dist-descriptors/intellij.x/server:intellij.x_dev_descriptor")
+    assertThat(packages.productDeclaration("server", serverEntry)?.label).isEqualTo("//build/dist-descriptors/intellij.x/server:intellij.x_dev_descriptor")
 
     // A plugin whose own package declares the leaf keeps that leaf for the baseline, and the product home is the same.
     val ownPackages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = "@community//plugins/x:intellij.x_dev_descriptor"), classes, planLabel = { it }, bridgeLabel = { null }, half = CommunityDistHalf)
     assertThat(ownPackages.files(emptyMap()).keys).containsExactly(serverPackage)
     assertThat(ownPackages.sharedDeclaration(ideaEntry)).isNull()
-    assertThat(ownPackages.productDeclaration("server", serverEntry)?.label).isEqualTo("//build/dev-dist-descriptors/intellij.x/server:intellij.x_dev_descriptor")
+    assertThat(ownPackages.productDeclaration("server", serverEntry)?.label).isEqualTo("//build/dist-descriptors/intellij.x/server:intellij.x_dev_descriptor")
 
     // The product order decides the baseline, and the sorted plan order does not.
     val reversed = computeDescriptorResidueClasses(plans, productOrder = listOf("server", "idea")).getValue("intellij.x")
@@ -735,16 +735,16 @@ class DistUnplannablePluginsTest {
     // On disk: the root package, the written plugin package, and a file that is no package. Also a product that left
     // the split products, and a plugin that left the population with a product package of its own.
     for (relativePath in listOf("BUILD.bazel", "intellij.x/BUILD.bazel", "intellij.x/gone/BUILD.bazel", "intellij.y/BUILD.bazel", "intellij.y/idea/BUILD.bazel", "intellij.z/notes.txt")) {
-      val file = dir.resolve("build/dev-dist-descriptors").resolve(relativePath)
+      val file = dir.resolve("build/dist-descriptors").resolve(relativePath)
       Files.createDirectories(file.parent)
       Files.writeString(file, "")
     }
 
     assertThat(packages.files(emptyMap()).keys).containsExactly(pluginPackage)
     assertThat(packages.stale(dir, emptyMap())).containsExactly(
-      "build/dev-dist-descriptors/intellij.x/gone/BUILD.bazel",
-      "build/dev-dist-descriptors/intellij.y/BUILD.bazel",
-      "build/dev-dist-descriptors/intellij.y/idea/BUILD.bazel",
+      "build/dist-descriptors/intellij.x/gone/BUILD.bazel",
+      "build/dist-descriptors/intellij.y/BUILD.bazel",
+      "build/dist-descriptors/intellij.y/idea/BUILD.bazel",
     )
     assertThat(packages.stale(dir.resolve("no-checkout"), emptyMap())).isEmpty()
   }

@@ -11,7 +11,7 @@ set -eu
 script_dir="$(cd "$(dirname "$0")"; pwd)"
 /bin/bash "$script_dir/jpsModelToBazelCommunityOnly.cmd"
 cd "$script_dir/.."
-exec /bin/bash "./bazel.cmd" run //build:dev_dist_generator -- "$@"
+exec /bin/bash "./bazel.cmd" run //build:dist_generator -- "$@"
 
 :CMDSCRIPT
 
@@ -20,7 +20,7 @@ call "%~dp0jpsModelToBazelCommunityOnly.cmd"
 IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
 
 pushd "%~dp0.."
-call "bazel.cmd" run //build:dev_dist_generator -- %* <nul
+call "bazel.cmd" run //build:dist_generator -- %* <nul
 set _exit_code=%ERRORLEVEL%
 popd
 EXIT /B %_exit_code%

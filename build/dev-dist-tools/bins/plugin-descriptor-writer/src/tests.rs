@@ -18,7 +18,7 @@ fn path(dir: &Path, name: &str) -> String {
     path_string(&dir.join(name))
 }
 
-/// `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS`: 2026-01-01T00:00:00Z.
+/// `DIST_PINNED_BUILD_DATE_IN_SECONDS`: 2026-01-01T00:00:00Z.
 const PINNED_BUILD_DATE: &str = "--build-date-seconds=1767225600";
 
 /// The range that the rule states for every plugin without an exact version.

@@ -1,18 +1,18 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
-load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
 load(":downloads_test.bzl", "downloads_test_suite")
 
 ### auto-generated section `dev intellij.terminal` start
 filegroup(
-    name = "dev_dist_resources",
+    name = "dist_resources",
     srcs = glob(
         ["resources/shell-integrations/**"],
     ),
     visibility = ["//visibility:public"],
 )
 
-dev_dist_plugin(
+dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.terminal.backend",
@@ -29,14 +29,14 @@ dev_dist_plugin(
     main_module = "intellij.terminal",
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//plugins/terminal/completion:completion.jar": "intellij.terminal.completion",
         "//libraries/completion-ranking-sh:completion-ranking-sh.jar": "intellij.libraries.completion.ranking.sh",
         "//plugins/terminal/libraries:libraries-completionDbWithExtensions.jar": "intellij.terminal.libraries.completionDbWithExtensions",
         "//plugins/terminal:terminal.jar": "intellij.terminal",
     },
-    descriptor = "//build/dev-dist-descriptors/intellij.terminal:intellij.terminal_dev_descriptor",
+    descriptor = "//build/dist-descriptors/intellij.terminal:intellij.terminal_dev_descriptor",
     execution_version = 2,
     independent_artifacts = [
         "//plugins/terminal/backend:backend_content_module_jar",
@@ -104,7 +104,7 @@ dev_dist_complex_plugin(
         "module-resource:0:source": "plugins/terminal/resources/shell-integrations",
     },
     source_tree_targets = {
-        "module-resource:0:source": "//plugins/terminal:dev_dist_resources",
+        "module-resource:0:source": "//plugins/terminal:dist_resources",
     },
     stamp_class_modes = ["frontend"],
 )

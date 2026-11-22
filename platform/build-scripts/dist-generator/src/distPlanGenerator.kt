@@ -86,7 +86,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
- * The file of `DEV_DIST_EXTRA_DESCRIPTOR_FILES`, the descriptors that a module reaches only through an `xi:include`.
+ * The file of `DIST_EXTRA_DESCRIPTOR_FILES`, the descriptors that a module reaches only through an `xi:include`.
  *
  * The shared project model tree carries every content module descriptor and every bundled plugin descriptor. Only
  * the runtime module facts action and the references read the tree. Bazel finds most descriptors by convention,
@@ -98,13 +98,13 @@ import kotlin.io.path.invariantSeparatorsPathString
  * descriptor-only regeneration then leaves the partition file [DIST_PLAN_RELATIVE_PATH] unchanged. Each file is
  * also its own merge-conflict domain.
  */
-private const val DIST_DESCRIPTORS_RELATIVE_PATH: String = "build/dev_dist_descriptors.bzl"
-private const val DIST_PRODUCT_INFO_RELATIVE_PATH: String = "build/dev_dist_product_info.bzl"
-private const val DIST_PLAN_RELATIVE_PATH: String = "build/dev_dist_plan.bzl"
-private const val DIST_REFERENCE_PLAN_RELATIVE_PATH: String = "build/dev_dist_reference_plan.bzl"
+private const val DIST_DESCRIPTORS_RELATIVE_PATH: String = "build/dist_descriptors.bzl"
+private const val DIST_PRODUCT_INFO_RELATIVE_PATH: String = "build/dist_product_info.bzl"
+private const val DIST_PLAN_RELATIVE_PATH: String = "build/dist_plan.bzl"
+private const val DIST_REFERENCE_PLAN_RELATIVE_PATH: String = "build/dist_reference_plan.bzl"
 
 /** The package of the launch models, whose `BUILD.bazel` exports every `<product>.launch.json`. */
-private const val DIST_LAUNCH_DIRECTORY: String = "build/dev-dist-launch"
+private const val DIST_LAUNCH_DIRECTORY: String = "build/dist-launch"
 
 private const val LAUNCH_MODEL_SUFFIX: String = ".launch.json"
 
@@ -117,7 +117,7 @@ private fun launchModelRelativePath(caseSafeName: String): String = "$DIST_LAUNC
 /**
  * The `lib/` jar order of the platform as a rule with two lists. The core plugin lists the jars of [first] in that
  * order. Then it lists every other jar with a module, sorted by its smallest member module name. Then it lists the jars
- * of [last] in that order. `dev_dist_platform_jar_order.bzl` applies the rule. Bazel knows the member names, but not
+ * of [last] in that order. `dist_platform_jar_order.bzl` applies the rule. Bazel knows the member names, but not
  * the two lists.
  *
  * The runtime module repository states the entries of the core plugin in this order. The modular loader builds the main
@@ -187,17 +187,17 @@ private fun listLaunchModels(projectRoot: Path): List<String> {
     stream.map { it.fileName.toString() }.filter { it.endsWith(LAUNCH_MODEL_SUFFIX) }.map { "$DIST_LAUNCH_DIRECTORY/$it" }.sorted()
   }
 }
-private const val DIST_FRAGMENT_INPUTS_RELATIVE_PATH: String = "build/dev_dist_fragment_inputs.bzl"
-private const val DIST_MODULE_SETS_RELATIVE_PATH: String = "build/dev_dist_module_sets.bzl"
+private const val DIST_FRAGMENT_INPUTS_RELATIVE_PATH: String = "build/dist_fragment_inputs.bzl"
+private const val DIST_MODULE_SETS_RELATIVE_PATH: String = "build/dist_module_sets.bzl"
 /**
- * The file of `DEV_DIST_PLUGIN_COMPONENTS`, the component label of every plugin. A component of its own packs each
- * plugin, so the platform payload tables name no plugin jar. The `dev_dist_complex_plugin` call of a complex plugin
+ * The file of `DIST_PLUGIN_COMPONENTS`, the component label of every plugin. A component of its own packs each
+ * plugin, so the platform payload tables name no plugin jar. The `dist_complex_plugin` call of a complex plugin
  * sits beside the plugin, see [DistPluginPlanHome].
  */
-private const val DIST_CONTENT_SETS_RELATIVE_PATH: String = "build/dev-dist-content/dev_dist_content_sets.bzl"
+private const val DIST_CONTENT_SETS_RELATIVE_PATH: String = "build/dist-content/dist_content_sets.bzl"
 private const val DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH: String = "build/dev_server_run_configurations.bzl"
 /** The distribution index of the rows of [DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH], see [renderDistDistributionIndex]. */
-private const val DIST_DISTRIBUTION_INDEX_RELATIVE_PATH: String = "build/dev-dist-distributions.json"
+private const val DIST_DISTRIBUTION_INDEX_RELATIVE_PATH: String = "build/dist-distributions.json"
 
 /**
  * One descriptor file, as the Bazel side needs it: a project-relative path plus the JPS module whose Bazel
@@ -272,7 +272,7 @@ internal fun distPlanInputExists(projectRoot: Path): Boolean {
  * The plan files and the rendered calls of every complex plugin, see [computeDistPluginExecutions].
  *
  * [files] holds the plan files and the plan home of every complex plugin. [rendering] holds the calls keyed by main
- * module, and the two maps of `dev_dist_content_sets.bzl`.
+ * module, and the two maps of `dist_content_sets.bzl`.
  */
 internal class DistPluginExecutions(
   @JvmField val files: DistPluginPlanFiles,
@@ -280,7 +280,7 @@ internal class DistPluginExecutions(
 )
 
 /**
- * Collects the plan files of every complex plugin, renders its `dev_dist_complex_plugin` calls, and binds both to
+ * Collects the plan files of every complex plugin, renders its `dist_complex_plugin` calls, and binds both to
  * [sections].
  *
  * The `dev` section of an ultimate complex plugin holds the calls, and the `dev` section of a community complex plugin
@@ -664,7 +664,7 @@ internal fun checkPluginNativeTrees(entries: Collection<DistPluginPlanEntry>) {
 private const val PLATFORM_LIB_FRAGMENT = "platform_lib"
 
 /**
- * The component that places `modules/module-descriptors.{dat,jar}`, which the `dev_dist_runtime_module_repository`
+ * The component that places `modules/module-descriptors.{dat,jar}`, which the `dist_runtime_module_repository`
  * action writes. The plan emits it for a product with a run configuration that asks for the runtime module repository,
  * and only such a row composes it.
  */
@@ -689,7 +689,7 @@ private data class FragmentPayload(
    *
    * The one thing about this payload that Bazel cannot ask the graph. Packing is a target of its own now, and a
    * repository rule can neither see a provider nor test whether a target exists, so the payload's own modules cannot be
-   * asked which of them pack - the question `dev_dist_platform_payload` used to answer with an aspect over an output
+   * asked which of them pack - the question `dist_platform_payload` used to answer with an aspect over an output
    * group. The generator is the only side that knows, and `bazel-targets.json` already records the label per module.
    *
    * This is not the name table that [ADR 0001][] deleted. That table had 2 524 module names in a separate file.
@@ -697,7 +697,7 @@ private data class FragmentPayload(
    *
    * [collectFragmentPlan] fills the whole handover set. [collectDescriptorFiles] then keeps only the labels no
    * referenced module set carries, see [sharePackedLabels]: a set member's label lives in [ModuleSetData.packed], and
-   * the binder unions the two halves back at load time with `dev_dist_packed_labels`.
+   * the binder unions the two halves back at load time with `dist_packed_labels`.
    */
   @JvmField val packedContentModuleJars: List<String> = emptyList(),
   @JvmField val residualJars: Map<String, ResidualPlatformJar> = emptyMap(),
@@ -710,7 +710,7 @@ private data class FragmentPayload(
    * The `content_module_jar` labels of the packed jars that the module system loads, sorted. Only the `lib/`-owning
    * payload states them.
    *
-   * `dev_dist_platform_payload` puts every other packed jar that is a direct child of `lib/` on the core classpath.
+   * `dist_platform_payload` puts every other packed jar that is a direct child of `lib/` on the core classpath.
    * [collectFragmentPlan] fills the whole list. [collectDescriptorFiles] then keeps only the labels that no referenced
    * module set carries, see [shareModuleSystemLoadedLabels].
    */
@@ -718,7 +718,7 @@ private data class FragmentPayload(
 )
 
 /**
- * One `lib/` jar the `platform_lib` fragment hands to a `dev_dist_platform_jar` target: the member outputs and the
+ * One `lib/` jar the `platform_lib` fragment hands to a `dist_platform_jar` target: the member outputs and the
  * merged libraries as labels. A jar with a module member holds no native file. A library-only jar has no [modules]
  * and keeps the native files of its libraries, as `JarPackager` does.
  *
@@ -951,7 +951,7 @@ internal fun distRefusingModeIds(splitModes: List<Pair<String, String>>): List<S
   val stated = DIST_STATED_PRODUCT_MODES.map { it.id }
   val unstated = splitModes.filter { (_, mode) -> mode != monolith && mode !in stated }
   check(unstated.isEmpty()) {
-    "The split products ${unstated.map { it.first }} use a mode that DEV_DIST_STATED_PRODUCT_MODES does not state: ${unstated.map { it.second }.distinct()}"
+    "The split products ${unstated.map { it.first }} use a mode that DIST_STATED_PRODUCT_MODES does not state: ${unstated.map { it.second }.distinct()}"
   }
   return stated.sorted()
 }
@@ -1381,7 +1381,7 @@ internal fun moduleSetModuleSystemLoaded(table: List<ModuleSetData>, payloads: L
  * The labels of [moduleSystemLoaded] that no module set of one `platform_lib` payload carries, sorted.
  *
  * The Bazel side rebuilds [moduleSystemLoaded] as the union of the result and the labels of the walked sets, see
- * `dev_dist_packed_labels`. Both sides skip a set member that [productMode] refuses. The union is exact only when every
+ * `dist_packed_labels`. Both sides skip a set member that [productMode] refuses. The union is exact only when every
  * other set label is in [moduleSystemLoaded], so this function fails for a set member that the module system of
  * [product] does not load.
  */
@@ -1473,7 +1473,7 @@ internal fun collectContentVetoModules(products: List<DiscoveredProduct>): List<
 /**
  * The `content_module_jar` labels of the handed-over jars that the module system loads, sorted.
  *
- * `dev_dist_platform_payload` puts a packed jar on the core classpath when it is a direct child of `lib/` and the
+ * `dist_platform_payload` puts a packed jar on the core classpath when it is a direct child of `lib/` and the
  * result does not name it. [coreClassPath] is what `contentModuleJarCoreClasspathEntries` returns over [handedOver].
  * This function fails when the two answers can differ:
  *
@@ -1525,7 +1525,7 @@ private fun collectFragmentPlan(
   directContentModules: List<String>,
   /** The module-set table of the half, keyed by set name. The payload walks the sets it references. */
   moduleSets: Map<String, ModuleSetData>,
-  /** The `dev_dist_platform_patch` targets of every product, or `null` for a half without platform patches. */
+  /** The `dist_platform_patch` targets of every product, or `null` for a half without platform patches. */
   platformPatches: DistPlatformPatchTargets?,
   bazelTargets: BazelTargetsInfo.TargetsFile,
   descriptorCollector: DescriptorCollector,
@@ -1582,7 +1582,7 @@ private fun collectFragmentPlan(
     platformPayload.modules.add(contentModule.substringBeforeLast('/'))
   }
 
-  // The set membership itself goes to `dev_dist_module_sets.bzl` and the payload keeps the references, so a set
+  // The set membership itself goes to `dist_module_sets.bzl` and the payload keeps the references, so a set
   // shared by two split products is written once instead of flattened into both. The table states the DSL sets, and
   // the chain a module was reached by names the top-level set that the payload references first.
   for ((contentModule, chain) in moduleToSetChain) {
@@ -1668,7 +1668,7 @@ private fun collectFragmentPlan(
   // The module set members that the product mode refuses. The payload hands over none of them.
   val refusedSetMembers = HashSet<String>()
   val platformLibPayload = platformPayload.let { payload ->
-    // The `lib/`-owning payload hands jars over to another producer, and `dev_dist_platform_payload` needs the handover
+    // The `lib/`-owning payload hands jars over to another producer, and `dist_platform_payload` needs the handover
     // set. See `FragmentPayload.packedContentModuleJars`.
     val packed = run {
       // Every module the payload holds at *analysis* time, not just the ones it names here. `_expand_module_sets` in
@@ -1779,7 +1779,7 @@ private fun collectFragmentPlan(
         // Any other jar the packer cannot pack fails the generator, because a holdout brings `platform_lib` back.
         fun cannotPack(reason: String): Nothing = error("${product.name}: the packer cannot pack the platform jar '$destination': $reason")
         when {
-          // A nested destination is fine. `dev_dist_platform_jar` states its own `lib/`-relative path, and the
+          // A nested destination is fine. `dist_platform_jar` states its own `lib/`-relative path, and the
           // collector places the jar there, so `ext/platform-main.jar` packs like any other residual jar.
           !destination.endsWith(".jar") -> cannotPack("not a jar")
           items.any { it.moduleName in layout.getModuleExcludesModuleNames() } -> cannotPack("a member has a module exclude")
@@ -2010,8 +2010,8 @@ private fun frontendIconPatches(
  * The generator lays the platform and every bundled plugin out without files, and the dry layout resolves the output
  * and the libraries of each module it packs. The `platform_lib` payload of the product already names the platform,
  * and the `platform_lib` payload of [embeddedFrontend] names the frontend's platform. The reference macro takes
- * both declarations whole, before the packed jars leave them. The bundled plugins arrive as `DevDistContentInfo` from
- * their components, which `dev_dist_plugin_content` unions per product. So this payload names only the embedded
+ * both declarations whole, before the packed jars leave them. The bundled plugins arrive as `DistContentInfo` from
+ * their components, which `dist_plugin_content` unions per product. So this payload names only the embedded
  * frontend root modules and the product's own modular-loader root, which no platform payload and no plugin carries.
  * A debug wrapper's `rootModule` (`build/dev-build.json`) is that root, and the layout packs it into a residual jar
  * only, whose raw output the `platform_lib` payload does not declare.
@@ -2082,7 +2082,7 @@ private fun checkBundledPluginsHaveComponents(
  *
  * The fragment dry-builds every bundled plugin descriptor the runtime repository generator reads, including the extra
  * frontend-only plugins of the embedded frontend. The tree takes the conventional descriptors, and the others from the
- * `DEV_DIST_EXTRA_DESCRIPTOR_FILES` of the flat walk. The converter drops a listed file that the package of its module
+ * `DIST_EXTRA_DESCRIPTOR_FILES` of the flat walk. The converter drops a listed file that the package of its module
  * does not hold, so such a file is missing from the tree as well.
  */
 private fun checkRuntimeModuleRepositoryDescriptors(
@@ -2217,7 +2217,7 @@ private fun collectLibraryOnlyJars(
 }
 
 /**
- * The native signing mode of the distribution. `intellij_dev_dist.bzl` assembles unscrambled builds only, and the
+ * The native signing mode of the distribution. `intellij_dist.bzl` assembles unscrambled builds only, and the
  * packer writes a native tree as the unsigned bytes of the library jar. The plugin side states the same mode in
  * its native policy.
  */
@@ -2471,7 +2471,7 @@ private class MutablePayload {
  * The module travels beside it only so that the plan can name the Bazel package that exports the file.
  *
  * Every reached descriptor belongs in the plan, the conventional ones included. The convention the flat
- * `dev_dist_descriptors.bzl` relies on is a fact about a Bazel *probe*, which finds `<moduleName>.xml` and
+ * `dist_descriptors.bzl` relies on is a fact about a Bazel *probe*, which finds `<moduleName>.xml` and
  * `META-INF/plugin.xml` without being told. A per-plugin action declares its own inputs, so it has to name them all.
  */
 internal data class ReachedDescriptor(
@@ -3306,7 +3306,7 @@ private fun renderDescriptors(files: List<DescriptorFile>, half: DistHalf): Stri
   append("#\n")
   append("# A stale entry here is dropped rather than an error: this list is probed during module-extension\n")
   append("# evaluation, so failing would make the very tool that regenerates it unbuildable.\n")
-  append("DEV_DIST_EXTRA_DESCRIPTOR_FILES = [\n")
+  append("DIST_EXTRA_DESCRIPTOR_FILES = [\n")
   for (file in files) {
     append("    (\"").append(file.relativePath).append("\", \"").append(file.moduleName).append("\"),\n")
   }
@@ -3315,7 +3315,7 @@ private fun renderDescriptors(files: List<DescriptorFile>, half: DistHalf): Stri
 
 /**
  * [communityProducts] are the community products of [half], see [distCommunityProducts]. The half that renders second
- * names them in `DEV_DIST_COMMUNITY_PRODUCTS`, so its binder composes the community rows for a distribution of one.
+ * names them in `DIST_COMMUNITY_PRODUCTS`, so its binder composes the community rows for a distribution of one.
  */
 private fun renderPartition(products: List<ProductFragmentPlan>, half: DistHalf, communityProducts: Set<String>): String = buildString {
   append(half.generatedByHeader)
@@ -3324,12 +3324,12 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DistHalf,
   append("# and fails when the requested product is absent.\n")
   append("#\n")
   if (half.writesCommunityPackages) {
-    append("# What the fragments of a product declare as their inputs lives in `dev_dist_fragment_inputs.bzl`, which churns\n")
+    append("# What the fragments of a product declare as their inputs lives in `dist_fragment_inputs.bzl`, which churns\n")
     append("# with every model change.\n")
   }
   else {
-    append("# The facts that only the reference fragments of the gates read live in `dev_dist_reference_plan.bzl`. What those\n")
-    append("# fragments declare as their inputs lives in `dev_dist_fragment_inputs.bzl`, which churns with every model change.\n")
+    append("# The facts that only the reference fragments of the gates read live in `dist_reference_plan.bzl`. What those\n")
+    append("# fragments declare as their inputs lives in `dist_fragment_inputs.bzl`, which churns with every model change.\n")
   }
   append("#\n")
   append("# There is deliberately no content digest here. An action key already covers everything that decides what the\n")
@@ -3362,12 +3362,12 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DistHalf,
     append("# The community products: the keys that both registries state with one product class. The community half plans\n")
     append("# them, so the plan tables of this half have no row of them. The component map states only their additional tier,\n")
     append("# and the rows file keeps their run configurations. A distribution of a community product composes the community\n")
-    append("# platform set and the community bundled plugins, see `intellij_dev_dist_declarations`.\n")
+    append("# platform set and the community bundled plugins, see `intellij_dist_declarations`.\n")
     if (communityProducts.isEmpty()) {
-      append("DEV_DIST_COMMUNITY_PRODUCTS = []\n")
+      append("DIST_COMMUNITY_PRODUCTS = []\n")
     }
     else {
-      append("DEV_DIST_COMMUNITY_PRODUCTS = [\n")
+      append("DIST_COMMUNITY_PRODUCTS = [\n")
       for (product in communityProducts) {
         append("    \"").append(product).append("\",\n")
       }
@@ -3375,7 +3375,7 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DistHalf,
     }
     append("\n")
   }
-  append("DEV_DIST_PLANS = {\n")
+  append("DIST_PLANS = {\n")
   for (product in products) {
     append("    \"").append(product.platformPrefix).append("\": ")
     val sharedName = sharedBodyNames.get(product.platformPrefix)
@@ -3391,7 +3391,7 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DistHalf,
   append("# The launch model of every product, which its `platform_resources` component renders. A model file takes the\n")
   append("# case-safe name of its product, so two products never share one file on a case-insensitive disk. The map is\n")
   append("# apart from the plans, so products with equal launch facts still share one plan.\n")
-  append("DEV_DIST_LAUNCH_MODELS = {\n")
+  append("DIST_LAUNCH_MODELS = {\n")
   for (product in products) {
     val path = product.launchModelRelativePath
     append("    \"").append(product.platformPrefix).append("\": \"//").append(path.substringBeforeLast('/')).append(':').append(path.substringAfterLast('/')).append("\",\n")
@@ -3400,7 +3400,7 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DistHalf,
   append("\n")
   append("# The application info sources of every product. The product files action and the plugin descriptor actions read\n")
   append("# these files. So an edit of a version, a suffix, a release date or the EAP flag changes no generated file.\n")
-  append("DEV_DIST_APPLICATION_INFOS = {\n")
+  append("DIST_APPLICATION_INFOS = {\n")
   for (product in products) {
     val sources = product.applicationInfoSources
     append("    \"").append(product.platformPrefix).append("\": struct(source = ").append(quoteStarlarkString(sources.source))
@@ -3430,7 +3430,7 @@ private fun StringBuilder.appendJarList(field: String, jars: List<String>, inden
 }
 
 /**
- * `DEV_DIST_PLATFORM_JAR_ORDERS` of [orders], in the given product order. A struct that two or more products state alike
+ * `DIST_PLATFORM_JAR_ORDERS` of [orders], in the given product order. A struct that two or more products state alike
  * is one private constant. It is `_PLATFORM_JAR_ORDER` when every product states it, and `_PLATFORM_JAR_ORDER_<first
  * product>` otherwise. This is the naming of [sharePlanFieldBodies].
  */
@@ -3449,7 +3449,7 @@ private fun StringBuilder.appendPlatformJarOrders(orders: List<Pair<String, Plat
     appendJarList("last", order.last, indent = INDENT)
     append(")\n\n")
   }
-  append("DEV_DIST_PLATFORM_JAR_ORDERS = {\n")
+  append("DIST_PLATFORM_JAR_ORDERS = {\n")
   for ((product, order) in orders) {
     append(INDENT).append("\"").append(product).append("\": ")
     val sharedName = sharedNames.get(order)
@@ -3488,7 +3488,7 @@ private fun renderReferencePlan(products: List<ProductFragmentPlan>, half: DistH
     }
     append(name).append(" = struct(\n").append(body).append(")\n\n")
   }
-  append("DEV_DIST_REFERENCE_PLANS = {\n")
+  append("DIST_REFERENCE_PLANS = {\n")
   for (product in products) {
     append("    \"").append(product.platformPrefix).append("\": ")
     val sharedName = sharedNames.get(product.platformPrefix)
@@ -3571,7 +3571,7 @@ private fun planFieldBodies(product: ProductFragmentPlan): List<PlanFieldBody> {
       append("}")
     }))
   }
-  // The facts of the launch model that Bazel reads at analysis time. `DEV_DIST_LAUNCH_MODELS` names the model itself.
+  // The facts of the launch model that Bazel reads at analysis time. `DIST_LAUNCH_MODELS` names the model itself.
   val model = product.launchModel
   val osTokens = listOf("darwin" to OsFamily.MACOS, "linux" to OsFamily.LINUX, "windows" to OsFamily.WINDOWS)
   result.add(PlanFieldBody("launch", buildString {
@@ -3598,7 +3598,7 @@ private fun planFieldBodies(product: ProductFragmentPlan): List<PlanFieldBody> {
       append("    }),\n")
     }
     append("    main_class = \"").append(model.launch.mainClass).append("\",\n")
-    // The facts the native launcher files derive from, see `_launcher_files` in `intellij_dev_dist_declarations.bzl`.
+    // The facts the native launcher files derive from, see `_launcher_files` in `intellij_dist_declarations.bzl`.
     append("    launcher = struct(base_file_name = \"").append(model.baseFileName)
       .append("\", language_server = ").append(starlarkBoolean(model.languageServer))
       .append(", windows_gui = ").append(starlarkBoolean(product.windowsGuiLauncher))
@@ -3688,11 +3688,11 @@ private fun renderFragmentInputs(products: List<ProductFragmentPlan>, half: Dist
   append("# `packed_content_module_jars` is labels: whether a module packs a `lib/` jar is a target of its own, and only the\n")
   append("# generator knows which modules have one.\n")
   append("#\n")
-  append("# `module_sets` is a reference, not a name list: the modules a set contains live in `dev_dist_module_sets.bzl`\n")
+  append("# `module_sets` is a reference, not a name list: the modules a set contains live in `dist_module_sets.bzl`\n")
   append("# and are shared by every product referencing that set, so this file carries only what no set covers.\n")
   append("# The same holds for the packing labels: the label of a set member lives in the `packed` dict of its set, and\n")
   append("# `packed_content_module_jars` names only the labels of the modules no set covers. The binder unions the set\n")
-  append("# labels into the payload at load time with `dev_dist_packed_labels`.\n")
+  append("# labels into the payload at load time with `dist_packed_labels`.\n")
   append("#\n")
   append("# `module_system_loaded` names the packed jars that the module system loads, as labels, and only the ones no\n")
   append("# set carries in its own `module_system_loaded`. The payload puts every other packed direct child of `lib/` on\n")
@@ -3724,7 +3724,7 @@ private fun renderFragmentInputs(products: List<ProductFragmentPlan>, half: Dist
     }
     append(name).append(" = {\n").append(body).append("}\n\n")
   }
-  append("DEV_DIST_FRAGMENT_INPUTS = {\n")
+  append("DIST_FRAGMENT_INPUTS = {\n")
   for (product in products) {
     append("    \"").append(product.platformPrefix).append("\": ")
     val sharedName = sharedBodyNames.get(product.platformPrefix)
@@ -3809,7 +3809,7 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DistHalf): S
   append(half.generatedByHeader)
   append("#\n")
   append("# What each module set a split product references contains: the modules it declares itself, and the sets it\n")
-  append("# nests. `dev_dist_fragment_inputs.bzl` names the sets a product's platform payload references and the binder\n")
+  append("# nests. `dist_fragment_inputs.bzl` names the sets a product's platform payload references and the binder\n")
   append("# walks them from here, so a set two products share is written once instead of flattened into both payloads -\n")
   append("# which is what made that file grow by ~450 names per split product.\n")
   append("#\n")
@@ -3818,11 +3818,11 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DistHalf): S
   append("# model-generation validation. `modules` and `nested` keep the DSL order.\n")
   append("#\n")
   append("# `loading` maps each member with a non-default loading rule to that rule, `required_if_available` maps a member to\n")
-  append("# the module it states, and `alias` is the plugin alias of the set. `dev_dist_product_descriptor` and\n")
-  append("# `dev_dist_embedded_product_descriptor` walk the sets in DSL order with these facts and compose the product content.\n")
+  append("# the module it states, and `alias` is the plugin alias of the set. `dist_product_descriptor` and\n")
+  append("# `dist_embedded_product_descriptor` walk the sets in DSL order with these facts and compose the product content.\n")
   append("#\n")
   append("# `packed` maps each member that owns a `content_module_jar` target to that label, written once per set. A\n")
-  append("# product's `platform_lib` payload in `dev_dist_fragment_inputs.bzl` names only the labels no set carries.\n")
+  append("# product's `platform_lib` payload in `dist_fragment_inputs.bzl` names only the labels no set carries.\n")
   append("# Every product that references a set hands over the labels of its members, less the ones its mode refuses.\n")
   append("#\n")
   append("# `module_system_loaded` names the `packed` members whose jar the module system loads in every product that\n")
@@ -3833,7 +3833,7 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DistHalf): S
   append("#\n")
   append("# The binder fails on a set name that a payload references and this table does not have. One generator run writes\n")
   append("# both files, and no module extension loads this one.\n")
-  append("DEV_DIST_MODULE_SETS = {\n")
+  append("DIST_MODULE_SETS = {\n")
   for (moduleSet in moduleSets) {
     append("    \"").append(moduleSet.name).append("\": struct(\n")
     appendNameList("modules", moduleSet.modules, indent = "        ")
@@ -3886,18 +3886,18 @@ private fun renderContentSets(
 ): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
-  append("# `DEV_DIST_PLUGIN_COMPONENTS`, derived from the Product DSL, the layouts and the plugin descriptors: the\n")
+  append("# `DIST_PLUGIN_COMPONENTS`, derived from the Product DSL, the layouts and the plugin descriptors: the\n")
   append("# component of every plugin by product key, tier and main module. The tier is `bundled` or `additional`. The\n")
   append("# value is one label, or a dict from host platform to label for a platform-specific plugin. The bundled tier is\n")
   append("# in composition order: the generator's frozen list first. A simple plugin's component is its `dev_plugin`\n")
   if (half.writesCommunityPackages) {
-    append("# target. A complex plugin's component is the component of its `dev_dist_complex_plugin` call. The call sits in\n")
+    append("# target. A complex plugin's component is the component of its `dist_complex_plugin` call. The call sits in\n")
     append("# the `dev` section of the plugin when its own package holds the same plan files and calls. Otherwise it sits in\n")
-    append("# `build/dev-dist-descriptors/<main module>/BUILD.bazel`.\n")
+    append("# `build/dist-descriptors/<main module>/BUILD.bazel`.\n")
   }
   else {
-    append("# target. A complex plugin's component is the component of its `dev_dist_complex_plugin` call, which sits beside\n")
-    append("# the plugin: in the `dev` section of an ultimate plugin, or in `build/dev-dist-descriptors/<main module>/BUILD.bazel`\n")
+    append("# target. A complex plugin's component is the component of its `dist_complex_plugin` call, which sits beside\n")
+    append("# the plugin: in the `dev` section of an ultimate plugin, or in `build/dist-descriptors/<main module>/BUILD.bazel`\n")
     append("# for a community plugin.\n")
   }
   append("#\n")
@@ -3910,23 +3910,23 @@ private fun renderContentSets(
   val testPlugins = renderTestPlugins(pluginExecutions.testPlugins)
   if (testPlugins.isNotEmpty()) {
     append("\n")
-    append("# `DEV_DIST_TEST_PLUGINS`, derived from the Product DSL test plugins: the main module of every test plugin in the\n")
-    append("# tiers of `DEV_DIST_PLUGIN_COMPONENTS`, by product key. The keys and the modules are sorted. A product without\n")
+    append("# `DIST_TEST_PLUGINS`, derived from the Product DSL test plugins: the main module of every test plugin in the\n")
+    append("# tiers of `DIST_PLUGIN_COMPONENTS`, by product key. The keys and the modules are sorted. A product without\n")
     append("# a test plugin has no key.\n")
     append(testPlugins)
   }
   if (updatePlugins.isNotEmpty()) {
     append("\n")
-    append("# `DEV_DIST_UPDATE_PLUGINS`, derived from the published plugins of each updater product: the update plugins in\n")
-    append("# the `additional` tier of `DEV_DIST_PLUGIN_COMPONENTS`, without the hold-outs, by product key. The modules are\n")
+    append("# `DIST_UPDATE_PLUGINS`, derived from the published plugins of each updater product: the update plugins in\n")
+    append("# the `additional` tier of `DIST_PLUGIN_COMPONENTS`, without the hold-outs, by product key. The modules are\n")
     append("# sorted. An updater product keeps its key also with no plugin.\n")
     append(renderUpdatePlugins(updatePlugins))
   }
 }
 
-/** The `DEV_DIST_UPDATE_PLUGINS` dict of [updatePlugins], in the key order of the map. */
+/** The `DIST_UPDATE_PLUGINS` dict of [updatePlugins], in the key order of the map. */
 private fun renderUpdatePlugins(updatePlugins: Map<String, List<String>>): String = buildString {
-  append("DEV_DIST_UPDATE_PLUGINS = {\n")
+  append("DIST_UPDATE_PLUGINS = {\n")
   for ((product, modules) in updatePlugins) {
     if (modules.isEmpty()) {
       append("    \"").append(product).append("\": [],\n")

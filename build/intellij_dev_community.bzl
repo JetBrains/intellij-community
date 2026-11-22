@@ -1,23 +1,23 @@
 """The split distributions and launchers of the community products.
 
-The file binds `intellij_dev_dist_declarations` to the generated tables of the community half and re-exports its
+The file binds `intellij_dist_declarations` to the generated tables of the community half and re-exports its
 macros. `build/intellij_dev_ultimate.bzl` of the ultimate checkout is the twin of this file.
 """
 
 load("@jps_dynamic_deps_community//:targets.bzl", "BAZEL_TARGETS_JSON_COMMUNITY")
-load("//build/dev-dist-content:dev_dist_content_sets.bzl", "DEV_DIST_PLUGIN_COMPONENTS")
-load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_module_facts")
-load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_project_model_tree")
-load(":dev_dist_fragment_inputs.bzl", "DEV_DIST_FRAGMENT_INPUTS")
-load(":dev_dist_module_sets.bzl", "DEV_DIST_MODULE_SETS")
-load(":dev_dist_packed_labels.bzl", "dev_dist_packed_labels")
-load(":dev_dist_plan.bzl", "DEV_DIST_APPLICATION_INFOS", "DEV_DIST_LAUNCH_MODELS", "DEV_DIST_PLANS", "DEV_DIST_PLATFORM_JAR_ORDERS")
-load(":dev_dist_product_info.bzl", "DEV_DIST_PRODUCT_INFO")
-load(":dev_dist_products.bzl", "DEV_DIST_PRODUCTS", "dev_dist_product")
-load(":intellij_dev_dist_declarations.bzl", "intellij_dev_dist_declarations")
+load("//build/dist-content:dist_content_sets.bzl", "DIST_PLUGIN_COMPONENTS")
+load("//platform/build-scripts/bazel-rules:dist_runtime_module_repository.bzl", "dist_runtime_module_facts")
+load("//platform/build-scripts/bazel-rules:intellij_dist.bzl", "intellij_project_model_tree")
+load(":dist_fragment_inputs.bzl", "DIST_FRAGMENT_INPUTS")
+load(":dist_module_sets.bzl", "DIST_MODULE_SETS")
+load(":dist_packed_labels.bzl", "dist_packed_labels")
+load(":dist_plan.bzl", "DIST_APPLICATION_INFOS", "DIST_LAUNCH_MODELS", "DIST_PLANS", "DIST_PLATFORM_JAR_ORDERS")
+load(":dist_product_info.bzl", "DIST_PRODUCT_INFO")
+load(":dist_products.bzl", "DIST_PRODUCTS", "dist_product")
+load(":intellij_dist_declarations.bzl", "intellij_dist_declarations")
 
 # The checkout files a dev assembly of a community product reads that the JPS project model does not name. The
-# product's own files are in the `extra_project_files` of its `DEV_DIST_PRODUCTS` entry.
+# product's own files are in the `extra_project_files` of its `DIST_PRODUCTS` entry.
 COMMUNITY_EXTRA_PROJECT_FILES = [
     "//build:dev-build.json",
     "//:build.txt",
@@ -27,12 +27,12 @@ COMMUNITY_EXTRA_PROJECT_FILES = [
     "//platform/platform-impl:resources/META-INF/OpenedPackages.txt",
 ]
 
-# The project model tree of the community half, declared by `intellij_dev_project_model_tree_community`. Only the
+# The project model tree of the community half, declared by `intellij_project_model_tree_community`. Only the
 # runtime module facts action reads it, and no community row asks for the runtime module repository component yet.
-_DEV_PROJECT_MODEL_TREE = "//build:dev_project_model_tree"
+_PROJECT_MODEL_TREE = "//build:project_model_tree"
 
 # The runtime module facts of that tree, declared next to it. The runtime module repository actions read them.
-_DEV_RUNTIME_MODULE_FACTS = "//build:dev_runtime_module_facts"
+_RUNTIME_MODULE_FACTS = "//build:runtime_module_facts"
 
 # The payload key of the platform `lib/` jars, and the component of the runtime module repository. The ultimate
 # bridge exports the same two names.
@@ -41,32 +41,32 @@ _PLATFORM_LIB_FRAGMENT = "platform_lib"
 _PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT = "platform_runtime_module_repository"
 
 def _platform_lib_payload(product):
-    info = DEV_DIST_PRODUCT_INFO.get(product)
+    info = DIST_PRODUCT_INFO.get(product)
     if info == None:
         fail("No generated dev-distribution product info for product '%s', so its product mode is unknown" % product)
-    return dev_dist_packed_labels(DEV_DIST_FRAGMENT_INPUTS, DEV_DIST_MODULE_SETS, product, info.mode)
+    return dist_packed_labels(DIST_FRAGMENT_INPUTS, DIST_MODULE_SETS, product, info.mode)
 
 def _product_mode(product):
-    return DEV_DIST_PRODUCT_INFO[product].mode
+    return DIST_PRODUCT_INFO[product].mode
 
 # The generated tables of the community half, which the shared declarations read. The community half has no hook:
 # no community launcher changes its flags, and none has a before-run step.
-_DECLARATIONS = intellij_dev_dist_declarations(struct(
-    plans = DEV_DIST_PLANS,
-    launch_models = DEV_DIST_LAUNCH_MODELS,
-    application_infos = DEV_DIST_APPLICATION_INFOS,
-    platform_jar_orders = DEV_DIST_PLATFORM_JAR_ORDERS,
-    fragment_inputs = DEV_DIST_FRAGMENT_INPUTS,
-    plugin_components = DEV_DIST_PLUGIN_COMPONENTS,
-    product = dev_dist_product,
+_DECLARATIONS = intellij_dist_declarations(struct(
+    plans = DIST_PLANS,
+    launch_models = DIST_LAUNCH_MODELS,
+    application_infos = DIST_APPLICATION_INFOS,
+    platform_jar_orders = DIST_PLATFORM_JAR_ORDERS,
+    fragment_inputs = DIST_FRAGMENT_INPUTS,
+    plugin_components = DIST_PLUGIN_COMPONENTS,
+    product = dist_product,
     platform_lib_fragment = _PLATFORM_LIB_FRAGMENT,
     runtime_module_repository_fragment = _PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT,
     platform_lib_payload = _platform_lib_payload,
     bazel_targets_json = BAZEL_TARGETS_JSON_COMMUNITY,
-    project_model_tree = _DEV_PROJECT_MODEL_TREE,
-    runtime_module_facts = _DEV_RUNTIME_MODULE_FACTS,
-    collector = "//build:dev_dist_packed_jars",
-    composer = "//build:dev_dist_composer",
+    project_model_tree = _PROJECT_MODEL_TREE,
+    runtime_module_facts = _RUNTIME_MODULE_FACTS,
+    collector = "//build:dist_packed_jars",
+    composer = "//build:dist_composer",
     build_package = "//build",
     product_mode = _product_mode,
     launcher_jvm_flags = None,
@@ -74,11 +74,11 @@ _DECLARATIONS = intellij_dev_dist_declarations(struct(
     community = None,
 ))
 
-# The platform set of one split product. See `platform_set` in `intellij_dev_dist_declarations.bzl`.
-intellij_dev_platform_set_community = _DECLARATIONS.platform_set
+# The platform set of one split product. See `platform_set` in `intellij_dist_declarations.bzl`.
+intellij_platform_set_community = _DECLARATIONS.platform_set
 
 # The platform component labels of one split product, for a distribution declared outside `build/BUILD.bazel`.
-dev_dist_platform_fragments = _DECLARATIONS.platform_fragments
+dist_platform_fragments = _DECLARATIONS.platform_fragments
 
 # Fails at load time when the generated plan cannot serve a launcher.
 dev_run_configuration_check_plan = _DECLARATIONS.check_plan
@@ -92,33 +92,33 @@ intellij_dev_run_configurations = _DECLARATIONS.run_configurations
 # One dev launcher written by hand over a distribution of its own. Bazel names the symbolic macro after this global.
 intellij_dev_run_configuration = _DECLARATIONS.run_configuration
 
-# A `dev_dist_build_test` that builds some rows.
+# A `dist_build_test` that builds some rows.
 intellij_dev_launch_assembles_test = _DECLARATIONS.launch_assembles_test
 
-def intellij_dev_project_model_tree_community():
-    """Declares `//build:dev_project_model_tree`, the checkout-shaped tree of the community half.
+def intellij_project_model_tree_community():
+    """Declares `//build:project_model_tree`, the checkout-shaped tree of the community half.
 
     It carries the community project model, the product files, and the union of the `extra_project_files` of every
-    `DEV_DIST_PRODUCTS` entry. Only the runtime module facts action reads the tree. Call the macro in
+    `DIST_PRODUCTS` entry. Only the runtime module facts action reads the tree. Call the macro in
     `//build` when the first community row asks for that component.
 
-    It also declares `//build:dev_runtime_module_facts`, the runtime module facts of the tree.
+    It also declares `//build:runtime_module_facts`, the runtime module facts of the tree.
     """
     if native.package_name() != "build":
-        fail("Declare the dev project model tree in //build, where %s points" % _DEV_PROJECT_MODEL_TREE)
+        fail("Declare the dev project model tree in //build, where %s points" % _PROJECT_MODEL_TREE)
     extra_project_files = {}
-    for entry in DEV_DIST_PRODUCTS.values():
+    for entry in DIST_PRODUCTS.values():
         for file in entry.extra_project_files:
             extra_project_files[file] = True
     intellij_project_model_tree(
-        name = _DEV_PROJECT_MODEL_TREE.split(":")[1],
+        name = _PROJECT_MODEL_TREE.split(":")[1],
         materializer = "//build/dev-dist-tools/bins/project-model-tree",
         mode = "community",
         project_model_files = ["//build:community_project_model_files"],
         extra_project_files = COMMUNITY_EXTRA_PROJECT_FILES + extra_project_files.keys(),
     )
-    dev_dist_runtime_module_facts(
-        name = _DEV_RUNTIME_MODULE_FACTS.split(":")[1],
-        project_model_tree = _DEV_PROJECT_MODEL_TREE,
+    dist_runtime_module_facts(
+        name = _RUNTIME_MODULE_FACTS.split(":")[1],
+        project_model_tree = _PROJECT_MODEL_TREE,
         tags = ["manual"],
     )

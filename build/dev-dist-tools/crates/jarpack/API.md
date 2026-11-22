@@ -11,7 +11,7 @@ writer reads the declared library jars with `reader::Jar`.
 ## Supported subset
 
 The crate takes only the inputs that a producer writes. The producers are `pack_jar` in `content_module_jar.bzl`, which
-`content_module_jar`, `dev_dist_platform_jar` and `dev_plugin` call, the recipe replay of `build/dev-dist`, and the
+`content_module_jar`, `dist_platform_jar` and `dev_plugin` call, the recipe replay of `build/dev-dist`, and the
 plan files through pluginpack. Each other input fails with an error that names it.
 
 | Input | Accepted | Refused |

@@ -43,7 +43,7 @@ struct ExecutableList {
     executables: Option<HashSet<String>>,
 }
 
-/// The packed jars and the native trees of `intellij_dev_packed_jars_component`, each at `lib/<relativePath>`.
+/// The packed jars and the native trees of `intellij_packed_jars_component`, each at `lib/<relativePath>`.
 pub(crate) fn platform_jars(file: &str) -> anyhow::Result<Vec<JarRecord>> {
     let records = read_records(file)?;
     let mut files = Vec::with_capacity(records.len());
@@ -84,7 +84,7 @@ pub(crate) fn platform_jars(file: &str) -> anyhow::Result<Vec<JarRecord>> {
     Ok(files)
 }
 
-/// The explicit files of `intellij_dev_packed_jars_component`, each at its `relativePath`.
+/// The explicit files of `intellij_packed_jars_component`, each at its `relativePath`.
 ///
 /// `os` is the target OS of the manifest. A file of an unpacked archive states `executableList` and `archivePath`. The
 /// collector refuses such a file when the list names its path and the record states no executable bit. The check skips

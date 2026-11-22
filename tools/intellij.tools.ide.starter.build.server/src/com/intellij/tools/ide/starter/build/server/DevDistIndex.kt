@@ -15,7 +15,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /** The path of the distribution index, relative to the root of one half of the repository. */
-internal const val DEV_DIST_INDEX_PATH: String = "build/dev-dist-distributions.json"
+internal const val DEV_DIST_INDEX_PATH: String = "build/dist-distributions.json"
 
 /** The Bazel repository name of the community half, as the ultimate root sees it. */
 private const val COMMUNITY_REPOSITORY = "@community"

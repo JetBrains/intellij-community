@@ -6,7 +6,7 @@ use std::path::Path;
 
 use crate::{ApplicationInfo, format_build_date_time, format_major_release_date, format_version, linux_frame_class, shorten_company_name};
 
-/// `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS`: 2026-01-01T00:00:00Z.
+/// `DIST_PINNED_BUILD_DATE_IN_SECONDS`: 2026-01-01T00:00:00Z.
 const PINNED: i64 = 1_767_225_600;
 
 /// An application info with this `version` element, this `names` element and this `build` element, and a fixed

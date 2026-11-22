@@ -46,10 +46,10 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `bins/dev-dist-composer` | The composer: the composition spec, the composition and its copy step, and the local layout writer. It also writes the plugin classpath file and the fingerprint. It checks the home placement, and it writes the executable list of a context plugin pool. | `@community//build/dev-dist-tools/bins/dev-dist-composer:dev-dist-composer_test` |
 | `bins/plugin-descriptor-writer` | The descriptor writer. | `@community//build/dev-dist-tools/bins/plugin-descriptor-writer:plugin-descriptor-writer_test` and `:descriptor_rule_tests` |
 | `bins/plugin-remainder-packer` | The remainder packer. | `@community//build/dev-dist-tools/bins/plugin-remainder-packer:plugin-remainder-packer_test` and `:plugin-remainder-packer_cli_test` |
-| `bins/product-files` | The tool of `dev_dist_product_files`. | `@community//build/dev-dist-tools/bins/product-files:product-files_test` |
+| `bins/product-files` | The tool of `dist_product_files`. | `@community//build/dev-dist-tools/bins/product-files:product-files_test` |
 | `bins/project-model-tree` | The `materializer` of `intellij_project_model_tree`. | `@community//build/dev-dist-tools/bins/project-model-tree:project-model-tree_test` |
 | `bins/runtime-layout` | The runtime layout tool. | `@community//build/dev-dist-tools/bins/runtime-layout:runtime-layout_test` |
-| `bins/tool-identity` | The identity writer: the identity file of each dev-dist tool, from the facts and the files that `dev_dist_tool` states. | `@community//build/dev-dist-tools/bins/tool-identity:tool-identity_test` |
+| `bins/tool-identity` | The identity writer: the identity file of each dev-dist tool, from the facts and the files that `dist_tool` states. | `@community//build/dev-dist-tools/bins/tool-identity:tool-identity_test` |
 | `build/dev-dist-tools/bins/dev-dist` | The binary of `./build/dev-dist.cmd`, in the ultimate root. | `//build/dev-dist-tools/bins/dev-dist:dev-dist_test` |
 | `build/dev-dist-tools/bins/content-report` | The `content-report pure` command, in the ultimate root. | `//build/dev-dist-tools/bins/content-report:content-report_test` |
 

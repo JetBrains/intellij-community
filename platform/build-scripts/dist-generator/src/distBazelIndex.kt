@@ -179,7 +179,7 @@ class DistBazelIndex(
     return label.substringBefore(':') + ":" + name
   }
 
-  /** The name of the `dev_dist_plugin_descriptor` target of [mainModule] for [variant], which is empty for the one shared layout. */
+  /** The name of the `dist_plugin_descriptor` target of [mainModule] for [variant], which is empty for the one shared layout. */
   fun pluginDescriptorTargetName(mainModule: String, variant: String): String {
     return if (variant.isEmpty()) mainModule + DEV_DESCRIPTOR_TARGET_SUFFIX else "${mainModule}_$variant$DEV_DESCRIPTOR_TARGET_SUFFIX"
   }
@@ -298,7 +298,7 @@ private const val COMMUNITY_REPOSITORY_NAME: String = "@community"
 /** The name suffix of a `content_module_jar` target. `content_module_jar_target_name` of `content_module_jar.bzl` is the Starlark half. */
 private const val CONTENT_MODULE_JAR_TARGET_SUFFIX: String = "_content_module_jar"
 
-/** The name suffix of a `dev_dist_plugin_descriptor` target. `dev_dist_plugin_descriptor.bzl` is the Starlark half. */
+/** The name suffix of a `dist_plugin_descriptor` target. `dist_plugin_descriptor.bzl` is the Starlark half. */
 private const val DEV_DESCRIPTOR_TARGET_SUFFIX: String = "_dev_descriptor"
 
 /**

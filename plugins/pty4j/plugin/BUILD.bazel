@@ -1,15 +1,15 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
 
 ### auto-generated section `dev intellij.pty4j.plugin` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = ["intellij.libraries.pty4j"],
     descriptor = "resources/META-INF/plugin.xml",
     main_module = "intellij.pty4j.plugin",
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//plugins/pty4j/plugin:plugin.jar": "intellij.pty4j.plugin",
     },

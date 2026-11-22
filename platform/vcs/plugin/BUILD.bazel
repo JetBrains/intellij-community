@@ -1,9 +1,9 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
 
 ### auto-generated section `dev intellij.platform.vcs.plugin` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.platform.vcs",
@@ -26,11 +26,11 @@ dev_dist_plugin(
     main_module = "intellij.platform.vcs.plugin",
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//platform/vcs/plugin:plugin.jar": "intellij.platform.vcs.plugin",
     },
-    descriptor = "//build/dev-dist-descriptors/intellij.platform.vcs.plugin:intellij.platform.vcs.plugin_dev_descriptor",
+    descriptor = "//build/dist-descriptors/intellij.platform.vcs.plugin:intellij.platform.vcs.plugin_dev_descriptor",
     execution_version = 2,
     independent_artifacts = [
         "//platform/vcs-api:vcs_content_module_jar",

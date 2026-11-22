@@ -5,7 +5,7 @@ owner 'IJPL'
 
 /dist-generator/**
 /product-dsl/**
-/bazel-rules/dev_dist_*.bzl
+/bazel-rules/dist_*.bzl
 /src/org/jetbrains/intellij/build/dist/**
 /tests/testSrc/org/jetbrains/intellij/build/dist/**
 /plugin-preparation/src/dist/**

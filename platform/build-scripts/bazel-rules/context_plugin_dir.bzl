@@ -8,8 +8,8 @@ directory of the runfiles through `-Dplugin.path`, and the IDE loads it in place
 into `<context>/plugins`.
 """
 
-load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS", "dev_dist_stamp_class_consumer_transition")
-load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
+load(":dist_plugin_descriptor.bzl", "DIST_STAMP_CLASS_CONSUMER_ATTRS", "dist_stamp_class_consumer_transition")
+load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevFragmentInfo")
 
 ContextPluginInfo = provider(
     doc = "The files and the directory trees of the plugin directories of an IDE context.",
@@ -40,7 +40,7 @@ def _parents(destination):
 
 def _placed_directory(plugin):
     """The one plugin directory that `plugin` places its files and directory trees in, below `plugins/`."""
-    placement = plugin[DevDistPlacementInfo]
+    placement = plugin[DistPlacementInfo]
     for executable in placement.executables:
         if executable not in placement.files:
             fail("%s marks '%s' executable, and it places no file there" % (plugin.label, executable), attr = "plugins")
@@ -83,7 +83,7 @@ def _context_plugin_dir_impl(ctx):
     trees = {}
     executables = []
     for plugin in ctx.attr.plugins:
-        placement = plugin[DevDistPlacementInfo]
+        placement = plugin[DistPlacementInfo]
         executables.extend([destination[len(_PLUGINS_PREFIX):] for destination in placement.executables])
         for destination in sorted(placement.files):
             relative = destination[len(_PLUGINS_PREFIX):]
@@ -153,14 +153,14 @@ each main module. It is a runfile too and the `context_plugin_modules` output gr
 too. The composer writes it. It is a runfile too and the `context_plugin_executables` output group.""",
     implementation = _context_plugin_dir_impl,
     attrs = dict(
-        DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS,
+        DIST_STAMP_CLASS_CONSUMER_ATTRS,
         plugins = attr.label_list(
             doc = "The `dev_plugin` component of each plugin.",
             mandatory = True,
             allow_empty = False,
-            providers = [DevDistPlacementInfo, IntellijDevFragmentInfo],
-            cfg = dev_dist_stamp_class_consumer_transition,
+            providers = [DistPlacementInfo, IntellijDevFragmentInfo],
+            cfg = dist_stamp_class_consumer_transition,
         ),
-        _composer = attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_composer", executable = True, cfg = "exec"),
+        _composer = attr.label(default = "//platform/build-scripts/bazel-rules:dist_composer", executable = True, cfg = "exec"),
     ),
 )

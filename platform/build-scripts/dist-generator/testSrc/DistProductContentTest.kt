@@ -196,7 +196,7 @@ class DistProductContentTest {
     val attributes = productContentPlan(spec(moduleSets = listOf(ModuleSetWithOverrides(C))), "probe").attributes(DIST_MODULE_SETS_SYMBOL)
 
     assertThat(attributes.keys).containsExactly("module_set_table", "module_sets")
-    assertThat(formatValue(attributes.getValue("module_set_table"))).isEqualTo("DEV_DIST_MODULE_SETS")
+    assertThat(formatValue(attributes.getValue("module_set_table"))).isEqualTo("DIST_MODULE_SETS")
     assertThat(formatValue(attributes.getValue("module_sets"))).isEqualTo("[\"intellij.moduleSets.c\"]")
   }
 }

@@ -71,7 +71,7 @@ private val LEGACY_ENGINE_ENV = setOf("CLASSES_DIR")
 /**
  * A value that names a JPS output directory below `$PROJECT_DIR$/out/`: `out/classes` of the ultimate half, and
  * `out/production` and `out/test` of the community half. `_declare_run_launcher` in
- * `community/build/intellij_dev_dist_declarations.bzl` refuses the same directories in a launcher flag.
+ * `community/build/intellij_dist_declarations.bzl` refuses the same directories in a launcher flag.
  */
 private val JPS_OUTPUT = Regex(Regex.escape("$PROJECT_DIR_MACRO/out/") + "(classes|production|test)(?=[/:;\" ]|$)")
 
@@ -557,7 +557,7 @@ internal fun distIndexProducts(
 private val DISTRIBUTION_INDEX_JSON = Json { prettyPrint = true }
 
 /**
- * The content of `build/dev-dist-distributions.json`: the `products` that the distributions of [rows] name, keyed by
+ * The content of `build/dist-distributions.json`: the `products` that the distributions of [rows] name, keyed by
  * the product and sorted, and one `distributions` entry for each distribution, sorted by name, see [devRunDistributions].
  *
  * A reader picks a distribution for a set of modules from this file without a Bazel query. The file holds only the
@@ -624,10 +624,10 @@ fun renderDistDistributionIndex(
  * A row states only what differs from the reader's defaults. A flag list or a program argument list of two or more
  * items that two or more rows state alike is one private `_JVM_FLAGS_<first row>` or `_PROGRAM_ARGS_<first row>` list,
  * as a shared residual jar struct is in
- * `dev_dist_fragment_inputs.bzl`. An entry whose every field fits on one line is one line, with its XML file as a
+ * `dist_fragment_inputs.bzl`. An entry whose every field fits on one line is one line, with its XML file as a
  * trailing comment; buildifier keeps both forms.
  *
- * With [sharedDistributions], the file also holds `DEV_DIST_SHARED_DISTRIBUTIONS`: the label of the shared distribution
+ * With [sharedDistributions], the file also holds `DIST_SHARED_DISTRIBUTIONS`: the label of the shared distribution
  * of each product, see [devRunSharedDistributions]. `starter_test` of `//build:starter_test.bzl` reads it. Only the
  * ultimate half writes it, because only ultimate declares that macro.
  *
@@ -672,7 +672,7 @@ fun renderDevServerRunConfigurations(
     append("# The `DevMainKt` run configurations of `.idea/runConfigurations`, one launcher `//build:<name>` each. Only the\n")
     append("# product, `additional_modules` and `runtime_module_repository` choose a distribution, so rows that state the same\n")
     append("# three share one; see `intellij_dev_run_configurations` in `").append(macrosBzl.substringAfterLast(':')).append("`.\n")
-    append("# The `distribution` field of a row names its distribution, and `dev-dist-distributions.json` lists them.\n")
+    append("# The `distribution` field of a row names its distribution, and `dist-distributions.json` lists them.\n")
     append("load(\"").append(macrosBzl).append("\", \"intellij_dev_run_configurations\")\n\n")
     for ((shared, what) in listOf(sharedFlagLists to "flag list", sharedArgumentLists to "program argument list")) {
       if (shared.isEmpty()) continue
@@ -693,7 +693,7 @@ fun renderDevServerRunConfigurations(
     if (sharedDistributions) {
       append("# The shared distribution of each product: the fewest additional modules, then no runtime module repository, then\n")
       append("# the first name. Every Starter test of the product runs against it, see `starter_test.bzl`.\n")
-      append("DEV_DIST_SHARED_DISTRIBUTIONS = {\n")
+      append("DIST_SHARED_DISTRIBUTIONS = {\n")
       for ((product, distribution) in devRunSharedDistributions(runDistributions)) {
         append("    ").append(starlarkString(product)).append(": ")
           .append(starlarkString("//$RUN_CONFIGURATIONS_PACKAGE:${distribution.name}_dist")).append(",\n")

@@ -89,7 +89,7 @@ class DistHalfTest {
     assertThat(half.macrosBzl).isEqualTo("//build:intellij_dev_community.bzl")
     assertThat(half.writesCommunityPackages).isTrue()
     assertThat(half.ownsPackage("plugins/c")).isTrue()
-    assertThat(half.ownsPackage("build/dev-dist-descriptors/intellij.c")).isTrue()
+    assertThat(half.ownsPackage("build/dist-descriptors/intellij.c")).isTrue()
     half.requireWritable("plugins/c/BUILD.bazel")
     assertThat(half.generatedModuleSetDescriptors.keys).containsExactly("platform/platform-resources/generated/META-INF")
   }
@@ -99,7 +99,7 @@ class DistHalfTest {
     assertThat(isCommunityDirectory("community")).isTrue()
     assertThat(isCommunityDirectory("community/plugins/c")).isTrue()
     assertThat(isCommunityDirectory("communityx/plugins/c")).isFalse()
-    assertThat(isCommunityDirectory("build/dev-dist-descriptors/intellij.c")).isFalse()
+    assertThat(isCommunityDirectory("build/dist-descriptors/intellij.c")).isFalse()
     assertThat(isCommunityDirectory("")).isFalse()
   }
 
@@ -129,8 +129,8 @@ class DistHalfTest {
     assertThat(communityIndex.planLabel("@community//platform/core:core")).isEqualTo("//platform/core:core")
     assertThat(communityIndex.planLabel("@lib//:kotlin-stdlib")).isEqualTo("@lib//:kotlin-stdlib")
     assertThat(communityIndex.planLabel("@restarter_extracted//:x")).isEqualTo("@restarter_extracted//:x")
-    assertThat(communityIndex.planLabel("//build/dev-dist-descriptors/intellij.java.plugin:x"))
-      .isEqualTo("//build/dev-dist-descriptors/intellij.java.plugin:x")
+    assertThat(communityIndex.planLabel("//build/dist-descriptors/intellij.java.plugin:x"))
+      .isEqualTo("//build/dist-descriptors/intellij.java.plugin:x")
     assertThat(monorepoIndex.planLabel("@community//platform/core:core")).isEqualTo("@community//platform/core:core")
   }
 

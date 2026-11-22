@@ -54,12 +54,12 @@ class DistPluginPlanHomeTest {
   fun `the ultimate half homes a community plugin in the cross-half package`() {
     val home = distPluginPlanHome("intellij.community", index)
 
-    assertThat(home.directory).isEqualTo("build/dev-dist-descriptors/intellij.community")
-    assertThat(home.packageLabel).isEqualTo("//build/dev-dist-descriptors/intellij.community")
+    assertThat(home.directory).isEqualTo("build/dist-descriptors/intellij.community")
+    assertThat(home.packageLabel).isEqualTo("//build/dist-descriptors/intellij.community")
     assertThat(home.callIsCrossHalf).isTrue()
     assertThat(home.exportsPlanFiles).isFalse()
     assertThat(home.isModulePackage).isFalse()
-    assertThat(home.path("intellij.community.dev-plan.json")).isEqualTo("build/dev-dist-descriptors/intellij.community/intellij.community.dev-plan.json")
+    assertThat(home.path("intellij.community.dev-plan.json")).isEqualTo("build/dist-descriptors/intellij.community/intellij.community.dev-plan.json")
   }
 
   @Test

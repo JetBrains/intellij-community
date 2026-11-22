@@ -347,7 +347,7 @@ Read the two decision sections above before you add a set.
 
 Do not:
 
-- edit a generated `intellij.moduleSets.*.xml`, a product descriptor, or a `dev_dist_*.bzl` file by hand;
+- edit a generated `intellij.moduleSets.*.xml`, a product descriptor, or a `dist_*.bzl` file by hand;
 - add a `module-content.yaml`, because the generator derives the jar of a content module;
 - add an `xi:include` for a module set by hand, because the generator writes it from `moduleSet()`.
 

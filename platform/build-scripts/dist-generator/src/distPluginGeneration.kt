@@ -48,7 +48,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * The catalogue ID of the generated descriptor of [mainModule]. The same descriptor serves every platform and every
  * product, so a plan file reads the same for every product that plans the plugin the same way.
- * `dev_dist_complex_plugin` of `dev_plugin_remainder.bzl` composes the same ID.
+ * `dist_complex_plugin` of `dev_plugin_remainder.bzl` composes the same ID.
  */
 internal fun distDescriptorInputId(mainModule: String): String = "descriptor:$mainModule"
 
@@ -663,7 +663,7 @@ private class EmbeddedFrontendLayoutBinding(
  * name into the icons jar. The packer executes it, so the chain needs no Kotlin preparation.
  *
  * The application info helper and the branding tree follow the product of [request]: the baseline product keeps the unsuffixed
- * helper targets of the plugin's own `dev_dist_plugin` call, and a divergent product reads product-suffixed helpers. The
+ * helper targets of the plugin's own `dist_plugin` call, and a divergent product reads product-suffixed helpers. The
  * embedded descriptor follows [home], the product that declares the one action of the class of the product of [request].
  */
 private fun embeddedFrontendLayoutBinding(
@@ -905,7 +905,7 @@ internal fun assignRegistryLayoutsToProducts(
 }
 
 /**
- * The `dev_dist_complex_plugin` calls of one complex plugin, as top-level statements.
+ * The `dist_complex_plugin` calls of one complex plugin, as top-level statements.
  *
  * [sectionText] holds the calls the plugin's own `dev` section states, or `null`. [crossHalfText] holds the calls of the
  * product package at [crossHalfPath], or `null`. A community plugin states its baseline call in its own section
@@ -922,9 +922,9 @@ internal class DistPluginCallRendering(
 
 /**
  * The rendered plugin executions of one run: the calls of every complex plugin keyed by main module and sorted, and the
- * `DEV_DIST_PLUGIN_COMPONENTS` map of `dev_dist_content_sets.bzl`. [bundledModules] are the main modules of the bundled
+ * `DIST_PLUGIN_COMPONENTS` map of `dist_content_sets.bzl`. [bundledModules] are the main modules of the bundled
  * tier of each product, for the distribution index, see [distBundledModules]. [testPlugins] are the main modules of
- * the test plugins of each product, for `DEV_DIST_TEST_PLUGINS`, see [distTestPluginModules].
+ * the test plugins of each product, for `DIST_TEST_PLUGINS`, see [distTestPluginModules].
  */
 internal class DistPluginExecutionRendering(
   @JvmField val calls: Map<String, DistPluginCallRendering>,
@@ -962,7 +962,7 @@ internal fun distBundledModules(components: List<GeneratedPluginComponent>): Dis
 }
 
 /**
- * Renders the `dev_dist_complex_plugin` calls of every complex plugin, one chain per plan file behind them, and the
+ * Renders the `dist_complex_plugin` calls of every complex plugin, one chain per plan file behind them, and the
  * product and tier index that consumes every plugin component.
  *
  * The call of a plugin sits in the package its plan home names, see [DistPluginPlanHome]: the own package of an
@@ -1073,7 +1073,7 @@ private fun namesCommunityLabelsOnly(text: String, communityPass: Boolean): Bool
 }
 
 /**
- * Renders the `dev_dist_complex_plugin` call of [entry] with [chainClass], and the embedded frontend helpers of its
+ * Renders the `dist_complex_plugin` call of [entry] with [chainClass], and the embedded frontend helpers of its
  * product. The call states no product, so two products whose calls render alike share one call.
  */
 private fun renderPluginCall(
@@ -1130,9 +1130,9 @@ private fun distPluginCallPackageLabel(mainModule: String, home: DistPluginPlanH
  *
  * The embedded descriptor action is one per class: only the home of the class declares it, see
  * [EmbeddedProductDescriptorPlan.home]. The baseline product keeps the unsuffixed target name. The baseline product keeps
- * the application info helper inside the plugin's own `dev_dist_plugin` call. A divergent product cannot share that
+ * the application info helper inside the plugin's own `dist_plugin` call. A divergent product cannot share that
  * helper, because the product application info differs. So that helper sits beside the product's
- * `dev_dist_complex_plugin` call under a product-suffixed name.
+ * `dist_complex_plugin` call under a product-suffixed name.
  */
 private fun renderEmbeddedFrontendHelpers(
   support: DistEmbeddedFrontendSupport,
@@ -1155,7 +1155,7 @@ private fun renderEmbeddedFrontendHelpers(
     val frontend = requireNotNull(embedded.frontendApplicationInfo) {
       "Product '$product' plans '${support.pluginMainModule}' without a frontend application info"
     }
-    val frontendCall = Target("dev_dist_frontend_application_info")
+    val frontendCall = Target("dist_frontend_application_info")
     frontendCall.option("client_application_info", frontend.clientApplicationInfo)
     frontendCall.option("main_module", support.pluginMainModule)
     frontendCall.option("product", product)
@@ -1166,7 +1166,7 @@ private fun renderEmbeddedFrontendHelpers(
 }
 
 /**
- * The `dev_dist_embedded_product_descriptor` call of one class home. [product] is the home, or `null` for the baseline
+ * The `dist_embedded_product_descriptor` call of one class home. [product] is the home, or `null` for the baseline
  * product, which keeps the unsuffixed target name. The macro composes the content over the module-set table and derives
  * the conventional descriptor rows, so the call states only the other rows.
  */
@@ -1188,7 +1188,7 @@ private fun renderEmbeddedProductDescriptorCall(
   if (embedded.separateJar.isNotEmpty()) {
     attributes.put("separate_jar", embedded.separateJar)
   }
-  val call = Target("dev_dist_embedded_product_descriptor")
+  val call = Target("dist_embedded_product_descriptor")
   for ((key, value) in attributes) {
     call.option(key, value)
   }
@@ -1246,7 +1246,7 @@ private fun checkComponentMembership(products: Map<String, Map<DistPluginTier, L
 }
 
 /**
- * `DEV_DIST_PLUGIN_COMPONENTS[product]` holds two tiers, `bundled` and `additional`, under the `dev-build.json`
+ * `DIST_PLUGIN_COMPONENTS[product]` holds two tiers, `bundled` and `additional`, under the `dev-build.json`
  * product key, see [DIST_COMPONENT_TIERS]. A tier maps a plugin's main module to its component label. A
  * platform-specific plugin maps to a dict from host platform to label instead. A plugin is in one tier only. A
  * registry plugin is in no tier.
@@ -1266,7 +1266,7 @@ internal fun renderPluginComponents(
   communityProducts: Set<String>,
   compositionOrder: (String) -> List<String>,
 ): String = buildString {
-  append("DEV_DIST_PLUGIN_COMPONENTS = {\n")
+  append("DIST_PLUGIN_COMPONENTS = {\n")
   for ((product, tiers) in products) {
     append("    \"").append(product).append("\": {\n")
     for (tier in DIST_COMPONENT_TIERS) {
@@ -1330,14 +1330,14 @@ internal fun distTestPluginModules(
 }
 
 /**
- * `DEV_DIST_TEST_PLUGINS` maps a `dev-build.json` product key to the main modules of its test plugins, see
+ * `DIST_TEST_PLUGINS` maps a `dev-build.json` product key to the main modules of its test plugins, see
  * [distTestPluginModules], which sorts the keys and the modules. An empty [testPlugins] renders nothing.
  */
 internal fun renderTestPlugins(testPlugins: Map<String, List<String>>): String = buildString {
   if (testPlugins.isEmpty()) {
     return@buildString
   }
-  append("DEV_DIST_TEST_PLUGINS = {\n")
+  append("DIST_TEST_PLUGINS = {\n")
   for ((product, modules) in testPlugins) {
     append("    \"").append(product).append("\": [\n")
     for (module in modules) {

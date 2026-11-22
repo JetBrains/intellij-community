@@ -203,7 +203,7 @@ class DistPluginPlanFilesTest {
 
     val files = collectDistPluginPlanFiles(dir, records, index, CommunityDistHalf, productOrder = listOf("idea", "server"))
 
-    val crossHalf = "build/dev-dist-descriptors/$communityPlugin"
+    val crossHalf = "build/dist-descriptors/$communityPlugin"
     assertThat(files.files.keys).containsExactlyInAnyOrder("$crossHalf/$communityPlugin.dev-plan.json", "$crossHalf/$communityPlugin.server.dev-plan.json")
     assertThat(files.exportedFiles).isEmpty()
     val serverRecord: DistPluginPlanRecord = records.getValue(key("server", plugin = communityPlugin))
@@ -311,17 +311,17 @@ class DistPluginPlanFilesTest {
     val files = collectDistPluginPlanFiles(dir, records, index, CommunityDistHalf, productOrder = listOf("idea"))
 
     val home = files.home(communityPlugin)
-    assertThat(home.directory).isEqualTo("build/dev-dist-descriptors/$communityPlugin")
-    assertThat(home.packageLabel).isEqualTo("//build/dev-dist-descriptors/$communityPlugin")
+    assertThat(home.directory).isEqualTo("build/dist-descriptors/$communityPlugin")
+    assertThat(home.packageLabel).isEqualTo("//build/dist-descriptors/$communityPlugin")
     assertThat(home.callIsCrossHalf).isTrue()
     assertThat(home.exportsPlanFiles).isFalse()
     assertThat(home.isModulePackage).isFalse()
-    assertThat(files.files.keys).containsExactly("build/dev-dist-descriptors/$communityPlugin/$communityPlugin.dev-plan.json")
+    assertThat(files.files.keys).containsExactly("build/dist-descriptors/$communityPlugin/$communityPlugin.dev-plan.json")
     assertThat(files.files.values.single()).contains("@ultimate_lib//:profiler")
     assertThat(files.exportedFiles).isEmpty()
     val record = records.getValue(key("idea", plugin = communityPlugin))
     val labels = files.executionGraphLabels(key("idea", plugin = communityPlugin), record)
-    assertThat(labels.projection).isEqualTo("//build/dev-dist-descriptors/$communityPlugin:$communityPlugin.dev-plan.json")
+    assertThat(labels.projection).isEqualTo("//build/dist-descriptors/$communityPlugin:$communityPlugin.dev-plan.json")
     files.checkExecutionGraph(key("idea", plugin = communityPlugin), record, labels)
   }
 
@@ -374,7 +374,7 @@ class DistPluginPlanFilesTest {
     // The community half renders its records through its index, so a record spells a community label as `//`.
     val records = neutralRecords(communityPlugin, library = "//libraries/c:c")
 
-    val (files, plans) = communityHalfPlans(records, sectionCall = "dev_dist_complex_plugin(descriptor = \"//plugins/c:d\")\n")
+    val (files, plans) = communityHalfPlans(records, sectionCall = "dist_complex_plugin(descriptor = \"//plugins/c:d\")\n")
 
     val home = files.home(communityPlugin)
     assertThat(home.directory).isEqualTo("plugins/c")
@@ -390,7 +390,7 @@ class DistPluginPlanFilesTest {
 
   @Test
   fun `the ultimate half reuses an equal plan file and call of the community half and writes nothing under community`() {
-    val call = "dev_dist_complex_plugin(descriptor = \"//plugins/c:d\")\n"
+    val call = "dist_complex_plugin(descriptor = \"//plugins/c:d\")\n"
     // The plan text names the input labels, so only a text whose labels both halves spell alike is equal.
     val (_, plans) = communityHalfPlans(neutralRecords(communityPlugin, library = "@lib//:c"), sectionCall = call)
     val records = neutralRecords(communityPlugin, library = "@lib//:c")
@@ -398,7 +398,7 @@ class DistPluginPlanFilesTest {
     val first = ultimateHalfPlans(records, plans)
     val planTexts = first.files.mapKeys { it.key.substringAfterLast('/') }
     val crossHalfCall = call.replace("\"//", "\"@community//")
-    assertThat(first.home(communityPlugin).directory).isEqualTo("build/dev-dist-descriptors/$communityPlugin")
+    assertThat(first.home(communityPlugin).directory).isEqualTo("build/dist-descriptors/$communityPlugin")
     assertThat(plans.acceptsUpstreamPlans(communityPlugin, planTexts, crossHalfCall)).isTrue()
     assertThat(plans.acceptsUpstreamPlans(communityPlugin, planTexts, crossHalfCall.replace(":d", ":e"))).isFalse()
 
@@ -411,12 +411,12 @@ class DistPluginPlanFilesTest {
     assertThat(labels.projection).isEqualTo("@community//plugins/c:$communityPlugin.dev-plan.json")
     reused.checkExecutionGraph(key, records.getValue(key), labels)
     assertThat(plans.acceptsCalls(communityPlugin, sectionCalls(call))).isTrue()
-    assertThat(plans.acceptsCalls(communityPlugin, sectionCalls("dev_dist_complex_plugin()\n"))).isFalse()
+    assertThat(plans.acceptsCalls(communityPlugin, sectionCalls("dist_complex_plugin()\n"))).isFalse()
   }
 
   @Test
   fun `the ultimate half reuses an equal plan file and call that name a download repository of the community calls`() {
-    val call = "dev_dist_complex_plugin(libraries = {\"@dev_launch_z//:z\": \"@dev_launch_z//:z\"}, " +
+    val call = "dist_complex_plugin(libraries = {\"@dev_launch_z//:z\": \"@dev_launch_z//:z\"}, " +
                "resource_inputs = {\"@jcef_{platform}//:files\": \"r\"})\n"
     val records = neutralRecords(communityPlugin, library = "@dev_launch_z//:z")
     val (_, plans) = communityHalfPlans(records, sectionCall = call)
@@ -434,7 +434,7 @@ class DistPluginPlanFilesTest {
   @Test
   fun `the ultimate half keeps an equal plan file that names a repository the community calls do not name`() {
     // The plan text names the download repository, but the calls do not. So the community module may not see it.
-    val call = "dev_dist_complex_plugin(descriptor = \"//plugins/c:d\")\n"
+    val call = "dist_complex_plugin(descriptor = \"//plugins/c:d\")\n"
     val records = neutralRecords(communityPlugin, library = "@dev_launch_z//:z")
     val (_, plans) = communityHalfPlans(records, sectionCall = call)
     val planTexts = ultimateHalfPlans(records, plans).files.mapKeys { it.key.substringAfterLast('/') }
@@ -443,21 +443,21 @@ class DistPluginPlanFilesTest {
     assertThat(plans.acceptsUpstreamPlans(communityPlugin, planTexts, crossHalfCall)).isFalse()
     assertThat(plans.upstreamHome(communityPlugin).callRepositories).isEmpty()
     // A call that names another download repository does not make this repository a repository of the community calls.
-    val otherCall = "dev_dist_complex_plugin(descriptor = \"//plugins/c:d\", resource_inputs = {\"@dev_launch_y//:files\": \"r\"})\n"
+    val otherCall = "dist_complex_plugin(descriptor = \"//plugins/c:d\", resource_inputs = {\"@dev_launch_y//:files\": \"r\"})\n"
     val (_, otherPlans) = communityHalfPlans(records, sectionCall = otherCall)
     assertThat(otherPlans.acceptsUpstreamPlans(communityPlugin, planTexts, otherCall.replace("\"//", "\"@community//"))).isFalse()
   }
 
   @Test
   fun `the ultimate half keeps a differing plan file in the product package of the plugin`() {
-    val (_, plans) = communityHalfPlans(neutralRecords(communityPlugin, library = "//libraries/c:c"), sectionCall = "dev_dist_complex_plugin()\n")
+    val (_, plans) = communityHalfPlans(neutralRecords(communityPlugin, library = "//libraries/c:c"), sectionCall = "dist_complex_plugin()\n")
     val records = neutralRecords(communityPlugin, library = "@ultimate_lib//:profiler")
 
     val files = ultimateHalfPlans(records, plans)
 
-    assertThat(plans.acceptsUpstreamPlans(communityPlugin, files.files.mapKeys { it.key.substringAfterLast('/') }, "dev_dist_complex_plugin()\n")).isFalse()
+    assertThat(plans.acceptsUpstreamPlans(communityPlugin, files.files.mapKeys { it.key.substringAfterLast('/') }, "dist_complex_plugin()\n")).isFalse()
     assertThat(createdPaths(files))
-      .containsExactly("build/dev-dist-descriptors/$communityPlugin/$communityPlugin.dev-plan.json")
+      .containsExactly("build/dist-descriptors/$communityPlugin/$communityPlugin.dev-plan.json")
   }
 
   @Test
@@ -482,10 +482,10 @@ class DistPluginPlanFilesTest {
   fun `the sweep deletes every plan file the run did not emit, in every package of its half`() {
     val stale = listOf(
       "plugins/x/intellij.x.linux_x64.dev-plan.json",
-      "build/dev-dist-descriptors/intellij.gone/intellij.gone.dev-plan.json",
+      "build/dist-descriptors/intellij.gone/intellij.gone.dev-plan.json",
     )
     // The ultimate half writes no community package, so it sweeps none there.
-    val kept = listOf("plugins/x/notes.json", "build/dev-dist-descriptors/intellij.gone/BUILD.bazel", "community/plugins/c/intellij.c.dev-plan.json")
+    val kept = listOf("plugins/x/notes.json", "build/dist-descriptors/intellij.gone/BUILD.bazel", "community/plugins/c/intellij.c.dev-plan.json")
     for (path in stale + kept) {
       val file = dir.resolve(path)
       Files.createDirectories(file.parent)
@@ -499,7 +499,7 @@ class DistPluginPlanFilesTest {
     val deleted = diffs.filter { it.changeType == FileChangeType.DELETE }.map { dir.relativize(it.path).toString().replace('\\', '/') }
     assertThat(deleted).containsExactlyInAnyOrderElementsOf(stale)
     val created = diffs.filter { it.changeType == FileChangeType.CREATE }.map { dir.relativize(it.path).toString().replace('\\', '/') }
-    assertThat(created).containsExactly("build/dev-dist-descriptors/intellij.c/intellij.c.dev-plan.json", "plugins/x/intellij.x.dev-plan.json")
+    assertThat(created).containsExactly("build/dist-descriptors/intellij.c/intellij.c.dev-plan.json", "plugins/x/intellij.x.dev-plan.json")
     files.updates.commit()
     for (path in stale) {
       assertThat(dir.resolve(path)).doesNotExist()

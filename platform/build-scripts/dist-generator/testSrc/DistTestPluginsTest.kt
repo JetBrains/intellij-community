@@ -12,7 +12,7 @@ import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.productModules
 import org.junit.jupiter.api.Test
 
-/** `DEV_DIST_TEST_PLUGINS`: the main modules of the test plugins in the component tiers of each product. */
+/** `DIST_TEST_PLUGINS`: the main modules of the test plugins in the component tiers of each product. */
 class DistTestPluginsTest {
   private val linuxX64 = PluginSymbolicVariant(
     id = "linux_x64",
@@ -71,7 +71,7 @@ class DistTestPluginsTest {
     )
     assertThat(renderTestPlugins(testPlugins)).isEqualTo(
       """
-      DEV_DIST_TEST_PLUGINS = {
+      DIST_TEST_PLUGINS = {
           "Rider": [
               "intellij.rider.test",
           ],
@@ -91,7 +91,7 @@ class DistTestPluginsTest {
       // A registry plugin has no component, so it is in no tier.
       request("idea", "intellij.registry.test", DistPluginTier.REGISTRY, isTestPlugin = true),
       request("idea", "intellij.additional.test", DistPluginTier.ADDITIONAL, isTestPlugin = true),
-      // `DEV_DIST_PLUGIN_COMPONENTS` states no bundled tier of a community product.
+      // `DIST_PLUGIN_COMPONENTS` states no bundled tier of a community product.
       request("Idea", "intellij.bundled.test", DistPluginTier.BUNDLED, isTestPlugin = true),
       request("Idea", "intellij.community.test", DistPluginTier.ADDITIONAL, isTestPlugin = true),
     )
