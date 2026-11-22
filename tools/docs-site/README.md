@@ -161,16 +161,18 @@ so no check runs twice there.
 
 ### The gate protocol
 
-A JUnit test runs `scripts/gate.ts` of a site on the bun that Bazel declares, `//build:bun`. The gate follows one
-protocol:
+A Rust test runs `scripts/gate.ts` of a site on the bun that Bazel declares, `//build:bun`. `scripts/gate.ts` of the
+kernel holds the protocol, and the gate of each site calls its `runGate`:
 
-- The first stdout line is the sentinel, `air-gate 1` or `build-gate 1`. The gate prints it before any check module
-  loads.
+- The first stdout line is the sentinel, `docs-gate 1`. The gate prints it before any check module loads.
 - Exit 0: the docs are valid. The records follow the sentinel, one per line, with tab-separated fields.
 - Exit 3: a check failed. The report follows the sentinel, and no record follows.
+- Exit 4: the gate could not finish, such as an OpenSpec CLI that gives no report. The report follows the sentinel.
 - Any other result, or no sentinel: an infrastructure failure, not a check failure.
 
-`air-architecture-model_test` of `plugins/air/tests/architecture-gate` runs the Air gate, and `DevDistDocsSiteTest` runs the build gate. The gate has no
+The crate `docs-gate` of `community/build/dev-dist-tools/crates` runs the gate and reads its output. Its test target
+takes `DOCS_GATE_DATA` and `DOCS_GATE_ENV` of `//tools/openspec:defs.bzl`. `air-architecture-model_test` of
+`plugins/air/tests/architecture-gate` runs the Air gate, and `//build/docs:docs-site_test` runs the build gate. The gate has no
 `node_modules`, so each module that it loads imports nothing from npm. `scripts/yamlCompat.ts` parses with
 `Bun.YAML` on bun, also on a machine that has the packages.
 
