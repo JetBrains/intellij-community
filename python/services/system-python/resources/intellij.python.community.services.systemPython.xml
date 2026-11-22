@@ -11,7 +11,6 @@
     <module name="intellij.python.community.impl.installer"/>
     <module name="intellij.python.community.services.internal.impl"/>
     <module name="intellij.python.community.services.shared"/>
-    <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.venv"/>
   </dependencies>

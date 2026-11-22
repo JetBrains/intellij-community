@@ -58,7 +58,7 @@ jvm_library(
         "//python/openapi:community",
         "//python/python-pytools/common",
         "//python/python-pytools/backend",
-        "//python/python-psi-api:psi",
+        "//python/python-parser:parser",
         "//platform/projectModel-impl",
         "//platform/util/jdom",
         "//platform/util-ex",

@@ -13,8 +13,8 @@
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.platform.workspace.storage"/>
+    <module name="intellij.python.parser"/>
     <module name="intellij.python.processOutput.common"/>
-    <module name="intellij.python.psi"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">

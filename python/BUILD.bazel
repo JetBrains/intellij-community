@@ -908,8 +908,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//python/python-psi-api:psi",
         "//platform/xdebugger-impl:debugger-impl",
+        "//platform/backend",
     ],
     deps = [
         # do not sort,

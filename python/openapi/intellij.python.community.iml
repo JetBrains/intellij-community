@@ -26,7 +26,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" exported="" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.python.psi" exported="" />
+    <orderEntry type="module" module-name="intellij.python.parser" exported="" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" scope="RUNTIME" />

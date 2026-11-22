@@ -41,6 +41,7 @@
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community.services.shared"/>
+    <module name="intellij.python.parser"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.pytools.common"/>
     <module name="intellij.python.requirements.backend"/>

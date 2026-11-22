@@ -32,7 +32,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["//python/python-syntax-core:syntax-core"],
+    exports = [
+        # do not sort,
+        "//python/python-psi-api:psi",
+        "//python/python-syntax-core:syntax-core",
+    ],
     runtime_deps = [
         # do not sort,
         "//platform/service-container",

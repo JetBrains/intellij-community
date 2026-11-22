@@ -49,7 +49,6 @@ jvm_library(
         "//platform/util",
         "//python/installer",
         "//python/python-venv:venv",
-        "//python/python-psi-impl:psi-impl",
         "//python/python-exec-service/execService.python",
     ],
 )
