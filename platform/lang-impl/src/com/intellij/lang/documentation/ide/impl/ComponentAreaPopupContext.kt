@@ -18,7 +18,6 @@ import com.intellij.util.Alarm
 import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.yield
-import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
@@ -35,15 +34,15 @@ internal class ComponentAreaPopupContext(
   project: Project,
   component: Component,
   private val areaWithinComponent: Rectangle,
-  private val onDocumentationSessionDone: Runnable?,
+  private var onDocumentationSessionDone: Runnable?,
   private val minHeight: Int,
   private val delay: Int,
 ) : DefaultPopupContext(project, null) {
 
-  private val myComponentReference = WeakReference(component)
-  private val boundsHandler = DocSessionPopupBoundsHandler()
+  private val myComponentReference: WeakReference<Component?> = WeakReference(component)
+  private val boundsHandler: DocSessionPopupBoundsHandler = DocSessionPopupBoundsHandler()
 
-  private var mouseMovementTracker = MouseMovementTracker()
+  private var mouseMovementTracker: MouseMovementTracker = MouseMovementTracker()
 
   val session: DocumentationManager.DocumentationOnHoverSession = object : DocumentationManager.DocumentationOnHoverSession {
     override fun mouseOutsideOfSourceArea() {
@@ -57,17 +56,21 @@ internal class ComponentAreaPopupContext(
     override fun tryFinishImmediately(): Boolean {
       return boundsHandler.tryFinishImmediately()
     }
-
   }
 
   override fun boundsHandler(): PopupBoundsHandler = boundsHandler
 
-  inner class DocSessionPopupBoundsHandler : PopupBoundsHandler {
+  fun finishSession() {
+    val callback = onDocumentationSessionDone
+    onDocumentationSessionDone = null
+    callback?.run()
+  }
 
-    private var mouseMoved = false
-    private var mouseInDocPopup = false
-    private var hideRequested = false
-    private var isMovingTowardsPopup = false
+  inner class DocSessionPopupBoundsHandler : PopupBoundsHandler {
+    private var mouseMoved: Boolean = false
+    private var mouseInDocPopup: Boolean = false
+    private var hideRequested: Boolean = false
+    private var isMovingTowardsPopup: Boolean = false
     private var clickedInside: Boolean = false
     private var popup: AbstractPopup? = null
     private var alarm: Alarm? = null
@@ -102,36 +105,33 @@ internal class ComponentAreaPopupContext(
         popup.show(position)
         relocatePopupIfNeeded(popup)
         val window = SwingUtilities.getWindowAncestor(popup.content)
-        getInstance().addDispatcher(object : IdeEventQueue.NonLockedEventDispatcher {
-
-          override fun dispatch(e: AWTEvent): Boolean {
-            if (e.source == window) {
-              when (e.id) {
-                MouseEvent.MOUSE_EXITED -> if (!clickedInside) {
-                  mouseLeftPopup()
-                }
-                MouseEvent.MOUSE_ENTERED -> if (!clickedInside) {
-                  mouseEnteredPopup()
-                }
-                MouseEvent.MOUSE_CLICKED -> clickedInside = true
+        getInstance().addDispatcher(IdeEventQueue.NonLockedEventDispatcher { e ->
+          if (e.source == window) {
+            when (e.id) {
+              MouseEvent.MOUSE_EXITED -> if (!clickedInside) {
+                mouseLeftPopup()
               }
-            }
-            else if (e.id == MouseEvent.MOUSE_CLICKED && clickedInside) {
-              if (SwingUtilities.getWindowAncestor(e.source.asSafely<Component>()) != window) {
-                mouseInDocPopup = false
-                clickedInside = false
-                alarm?.cancelAllRequests()
-                alarm = null
-                popup.cancel()
+              MouseEvent.MOUSE_ENTERED -> if (!clickedInside) {
+                mouseEnteredPopup()
               }
+              MouseEvent.MOUSE_CLICKED -> clickedInside = true
             }
-            if (e.id == MouseEvent.MOUSE_MOVED && e is MouseEvent) {
-              mouseMoved = true
-              val screenBounds = popup.consumedScreenBounds
-              isMovingTowardsPopup = mouseMovementTracker.isMovingTowards(e, screenBounds)
-            }
-            return false
           }
+          else if (e.id == MouseEvent.MOUSE_CLICKED && clickedInside) {
+            if (SwingUtilities.getWindowAncestor(e.source.asSafely<Component>()) != window) {
+              mouseInDocPopup = false
+              clickedInside = false
+              alarm?.cancelAllRequests()
+              alarm = null
+              popup.cancel()
+            }
+          }
+          if (e.id == MouseEvent.MOUSE_MOVED && e is MouseEvent) {
+            mouseMoved = true
+            val screenBounds = popup.consumedScreenBounds
+            isMovingTowardsPopup = mouseMovementTracker.isMovingTowards(e, screenBounds)
+          }
+          false
         }, popup)
       }, delay)
     }
@@ -161,7 +161,7 @@ internal class ComponentAreaPopupContext(
         popup?.cancel()
       }
       else {
-        onDocumentationSessionDone?.run()
+        finishSession()
       }
       return true
     }
@@ -182,7 +182,7 @@ internal class ComponentAreaPopupContext(
     private fun scheduleHide() {
       alarm?.let {
         if (it.isEmpty) {
-          it.addRequest(Runnable {
+          it.addRequest({
             if (isMovingTowardsPopup) {
               scheduleHide()
             }

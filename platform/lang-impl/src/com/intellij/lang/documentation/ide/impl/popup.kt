@@ -8,6 +8,7 @@ import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
 import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent.ContentUpdateKind
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -28,7 +29,9 @@ internal suspend fun showDocumentationPopup(
   project: Project,
   requests: List<DocumentationRequest>,
   popupContext: PopupContext,
-): Pair<AbstractPopup, DocumentationUI> {
+  popupDependencies: Disposable?,
+  documentationUiDependencies: Disposable?,
+): AbstractPopup {
   val browser = DocumentationBrowser.createBrowser(project, requests)
   try {
     // to avoid flickering: show popup after there is anything to show
@@ -44,6 +47,8 @@ internal suspend fun showDocumentationPopup(
   val documentationUi = DocumentationUI(project, browser, isPopup = true)
   val popupUI = DocumentationPopupUI(project, documentationUi)
   val popup = createDocumentationPopup(project, popupUI, popupContext)
+  popupDependencies?.let { Disposer.register(popup, it) }
+  documentationUiDependencies?.let { Disposer.register(documentationUi, it) }
   try {
     writeIntentReadAction {
       popupContext.setUpPopup(popup, popupUI)
@@ -97,7 +102,7 @@ internal suspend fun showDocumentationPopup(
       popup.setUiVisible(false)
     }
   }
-  return popup to documentationUi
+  return popup
 }
 
 private fun createDocumentationPopup(
