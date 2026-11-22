@@ -38,12 +38,15 @@ object ScopeUtilCore {
     if (element is PyAstExpressionCodeFragment) {
       // A fragment holds the text of an annotation or a type comment that a stub keeps. As in calculateScopeOwner, these are
       // resolved outside of the function, so a name such as `type` in `type: type` does not resolve to the parameter itself.
+      // A fragment of a class holds a text of the class header, such as a base or a keyword argument. It is also resolved
+      // outside of the class. A generic class stays the scope, so that its type parameters resolve.
       return when (val context = element.context) {
         is PyAstNamedParameter -> {
           val function = getScopeOwner(context)
           if (function is PyAstFunction && function.typeParameterList == null) getScopeOwner(function) else function
         }
         is PyAstFunction -> if (context.typeParameterList == null) getScopeOwner(context) else context
+        is PyAstClass -> if (context.typeParameterList == null) getScopeOwner(context) else context
         else -> context as? AstScopeOwner ?: getScopeOwner(context)
       }
     }

@@ -2929,6 +2929,9 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
       val containingFile = expression.containingFile
       val anchor = containingFile.context
+      if (containingFile is PyExpressionCodeFragment && anchor is PyClass && anchor.typeParameterList != null && qualifiedName != null) {
+        return PyResolveUtil.resolveQualifiedNameInGenericClassHeader(qualifiedName, anchor, context)
+      }
       val scopeOwner: ScopeOwner? = when {
         anchor == null -> pyFile
         // The scope owner of a fragment knows that a parameter or return annotation is resolved outside of the function

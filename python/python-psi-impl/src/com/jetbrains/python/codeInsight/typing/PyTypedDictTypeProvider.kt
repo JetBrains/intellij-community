@@ -455,7 +455,7 @@ private fun collectDeclaredFields(cls: PyClass, context: TypeEvalContext): TDFie
       else {
         val stubAnnotation = stub.annotation
         if (stubAnnotation != null) {
-          val annotation = PyUtil.createExpressionFromFragment(stubAnnotation, cls)
+          val annotation = PyUtil.createExpressionFromFragment(stubAnnotation, element)
           fields.add(Pair(stub.psi, checkTypeSpecification(annotation, context, totality)))
         }
       }
