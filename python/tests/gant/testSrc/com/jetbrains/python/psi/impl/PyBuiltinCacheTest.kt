@@ -14,6 +14,8 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.types.PyAnyType
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
@@ -56,6 +58,15 @@ class PyBuiltinCacheTest : PyCodeInsightTestCase() {
       assertNull(cache.getClass("frozendict"))
       assertNull(cache.getObjectType("frozendict"))
     }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93538"])
+  fun `a cache without builtins gives Unknown for str or unicode`() {
+    val cache = PyBuiltinCache.getInstance(null)
+    assertNull(cache.strType)
+
+    assertEquals(PyAnyType.unknown, cache.strOrUnicodeType)
   }
 
   private fun forceLanguageLevel(level: LanguageLevel, disposable: Disposable) {

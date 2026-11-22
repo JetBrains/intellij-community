@@ -120,7 +120,7 @@ object PyExpectedTypeJudgement {
 
       is PySliceItem -> {
         val cache = PyBuiltinCache.getInstance(expr)
-        return PyUnionType.unionOrUnknown(cache.intType, cache.noneType)
+        return PyUnionType.unionOrUnknown(cache.intType ?: PyAnyType.unknown, cache.noneTypeOrUnknown)
       }
 
       is PyStarExpression -> {

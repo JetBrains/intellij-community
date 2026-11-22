@@ -210,11 +210,11 @@ private fun buildGetMethodType(
 ): PyCallableType {
   val parameters = mutableListOf<PyCallableParameter>()
   val builtinCache = PyBuiltinCache.getInstance(referenceTarget)
-  parameters.add(PyCallableParameterImpl.nonPsi("key", builtinCache.strType))
+  parameters.add(PyCallableParameterImpl.nonPsi("key", builtinCache.strType ?: PyAnyType.unknown))
   parameters.add(PyCallableParameterImpl.nonPsi("default", PyAnyType.any, PyNames.NONE))
   val key = PyEvaluator.evaluate(callExpression.getArgument(0, "key", PyExpression::class.java), String::class.java)
   val defaultArgument = callExpression.getArgument(1, "default", PyExpression::class.java)
-  val default = if (defaultArgument != null) context.getType(defaultArgument) else builtinCache.noneType
+  val default = if (defaultArgument != null) context.getType(defaultArgument) else builtinCache.noneTypeOrUnknown
   val valueTypeAndTotality = typedDictType.fields(context)[key]
   return PyCallableTypeImpl(parameters,
                             when {

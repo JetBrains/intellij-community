@@ -66,9 +66,9 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
       val type = PyLiteralType.upcastLiteralToClass(context.getType(element)) ?: return false
       val builtinCache = PyBuiltinCache.getInstance(element)
-      val intType = builtinCache.intType
-      val floatType = builtinCache.floatType
-      val complexType = builtinCache.complexType
+      val intType = builtinCache.intType ?: return false
+      val floatType = builtinCache.floatType ?: return false
+      val complexType = builtinCache.complexType ?: return false
       return PyTypeChecker.match(
         PyUnionType.unionOrUnknown(listOf(intType, floatType, complexType)), type, context
       )

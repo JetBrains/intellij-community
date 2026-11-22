@@ -84,7 +84,7 @@ public final class PyDescriptorTypeUtil {
                                                                     @Nullable PyType setMethodType,
                                                                     @NotNull TypeEvalContext context) {
     PyExpression qualifier = expression.getQualifier();
-    PyType objectArgumentType = PyBuiltinCache.getInstance(expression).getNoneType();
+    PyType objectArgumentType = PyBuiltinCache.getInstance(expression).getNoneTypeOrUnknown();
     PyType valueArgumentType = PyAnyType.getUnknown(); // We don't use the actual type of value here as we want to match the overload by object type only
 
     if (qualifier != null) {

@@ -1692,7 +1692,7 @@ class PyTypeHintsInspection : PyInspection() {
             typeRef.derefOrUnknown()
           }
           is PyNoneLiteralExpression -> {
-            PyBuiltinCache.getInstance(node).noneType
+            PyBuiltinCache.getInstance(node).noneTypeOrUnknown
           }
           is PyEllipsisLiteralExpression if (
             node.isBuiltinTupleTypeForm(myTypeEvalContext) ||

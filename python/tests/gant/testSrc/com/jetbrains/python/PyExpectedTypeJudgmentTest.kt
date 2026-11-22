@@ -87,6 +87,15 @@ class PyExpectedTypeJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-93538"])
+  @TestCaseOptions(additionalSdkRoots = [SdkRoot("types/sdkWithoutNoneType", OrderRootTypeEnum.CLASSES)])
+  fun `Start index in slice when NoneType does not resolve`() = test("""
+    a: list[int]
+    a[start:] = [1]
+    #  └ EXPECTED_TYPE int | Unknown
+    """.trimIndent())
+
+  @Test
   fun `Tuple as argument`() = test("""
     from typing import Iterable
 
