@@ -16,7 +16,6 @@ import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.workspaceModel.core.fileIndex.impl.TraverseState
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSets
-import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -26,7 +25,6 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.function.Executable
 
 @TestApplication
 internal class NonIncrementalContributorsUrlTest {
@@ -89,7 +87,9 @@ internal class NonIncrementalContributorsUrlTest {
       roots
     }
     readAction {
-      assertAll(roots.map { root -> Executable { assertUrlRegistered(root) } })
+      for (root in roots) {
+        assertUrlRegistered(root)
+      }
     }
   }
 
