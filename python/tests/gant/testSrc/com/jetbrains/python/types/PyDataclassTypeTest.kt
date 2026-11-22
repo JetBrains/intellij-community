@@ -3,6 +3,7 @@ package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteAction
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.testFramework.junit5.TestDisposable
@@ -16,11 +17,13 @@ import com.jetbrains.python.codeInsight.PyDataclassParametersProvider
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassResolver
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibDataclassType
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyArgumentListInspection
 import com.jetbrains.python.inspections.PyDataclassInspection
 import com.jetbrains.python.inspections.PyStdlibDataclassInspection
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
@@ -1623,6 +1626,50 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
 
       a = Adapter()
       a.do(a.Command(1))
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class GeneratedMembers {
+    @Test
+    @TestFor(issues = ["PY-92943"])
+    fun `generated match args after a field type class is deleted`() = runInEdtAndWait {
+      val fieldTypeFile = myFixture.addFileToProject("other.py", "class B: ...").virtualFile
+      val file = myFixture.configureByText("main.py", """
+        from dataclasses import dataclass
+        from other import B
+
+        @dataclass
+        class A:
+            b: B
+
+        expr = A.__match_args__
+        """.trimIndent()) as PyFile
+      val expr = file.findTopLevelAttribute("expr")!!
+
+      fun matchArgsType(): String {
+        val context = TypeEvalContext.codeAnalysis(myFixture.project, file)
+        return PythonDocumentationProvider.getTypeName(context.getType(expr), context)
+      }
+
+      assertEquals("tuple[Literal[\"b\"]]", matchArgsType())
+      WriteAction.run<Throwable> { fieldTypeFile.delete(this) }
+      assertEquals("tuple[Literal[\"b\"]]", matchArgsType())
+    }
+
+    @Test
+    @TestFor(issues = ["PY-92943"])
+    fun `generated comparison methods of two parameterizations of a generic dataclass`() = test("""
+      from dataclasses import dataclass
+
+      @dataclass(order=True)
+      class Box[T]:
+          value: T
+
+      expr = Box[int].__lt__
+      # └ TYPE (self: Box[int], other: Box[int]) -> bool
+      expr = Box[str].__lt__
+      # └ TYPE (self: Box[str], other: Box[str]) -> bool
       """.trimIndent())
   }
 }

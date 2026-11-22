@@ -1,15 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.stdlib
 
-import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.PyCustomMember
 import com.jetbrains.python.codeInsight.parseDataclassParameters
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
@@ -20,6 +16,7 @@ import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.Optional
 
 private enum class ProvidedDataclassMember(val memberName: String) {
   DUNDER_SLOTS(PyDataclassNames.Dataclasses.DUNDER_SLOTS),
@@ -30,14 +27,15 @@ private enum class ProvidedDataclassMember(val memberName: String) {
   DUNDER_GT(PyNames.GT),
   DUNDER_GE(PyNames.GE);
 
-  val key: Key<CachedValue<PyCustomMember?>> = Key.create("py.dataclass.member.$memberName")
-
   companion object {
     private val byName = entries.associateBy { it.memberName }
 
     fun fromName(name: String): ProvidedDataclassMember? = byName[name]
   }
 }
+
+/** The question that [PyDataclassClassMembersProvider] answers for a class, and the key of its answer. */
+private data class MemberQuestion(val context: TypeEvalContext, val type: PyClassType, val member: ProvidedDataclassMember)
 
 /**
  * Adds members for dataclass-like classes.
@@ -58,10 +56,9 @@ class PyDataclassClassMembersProvider : PyClassMembersProviderBase() {
     }
 
   private fun getCachedCustomMember(type: PyClassType, member: ProvidedDataclassMember, context: TypeEvalContext): PyCustomMember? =
-    CachedValuesManager.getCachedValue(type.pyClass, member.key) {
-      val customMember = getCustomMember(type, member, context)
-      CachedValueProvider.Result.create(customMember, PsiModificationTracker.MODIFICATION_COUNT)
-    }
+    PyUtil.getParameterizedCachedValueOutsideRecursion(type.pyClass, MemberQuestion(context, type, member)) {
+      Optional.ofNullable(getCustomMember(it.type, it.member, it.context))
+    }.orElse(null)
 
   private fun getCustomMember(type: PyClassType, member: ProvidedDataclassMember, context: TypeEvalContext): PyCustomMember? {
     val pyClass = type.pyClass
