@@ -17,20 +17,84 @@ const AIR_PLUGIN_ID: &str = "com.intellij.air";
 pub(crate) const DEFAULT_TARGET: &str = "//build:idea_dist";
 
 /// The long help of `bench`: what a session does, the lock, and the age of an `AIR_VM_BIN` binary.
-pub(crate) const LONG_ABOUT: &str = "Measures the start-up of the IDE on this macOS host, from a staged copy of its dev \
-distribution, and takes no worker and no lease.
+pub(crate) const LONG_ABOUT: &str = "Measures the start-up of the IDE on this macOS host: its time, its memory, its classes and \
+the code that loads them. It starts the IDE from a staged copy of its dev distribution, and takes no worker and no lease.
 
-welcome, open-project and project build the self-contained distribution --target with the host Bazel build. They \
-stage it with its JBR as an immutable generation under the runtime root, keyed by its digest. Every IDE run starts \
+welcome, project and open-project start the IDE and write a session. ls, compare, classes, triggers, activities, trace \
+and replay read a session and start no IDE. gc removes old generations.
+
+A verb that starts the IDE builds the self-contained distribution --target with the host Bazel build. It stages the \
+distribution with its JBR as an immutable generation under the runtime root, keyed by its digest. Every IDE run starts \
 from that generation, never from bazel-out. The answer is the summary, also in <session>/summary.json, and a text digest.
 
-The IDE starts as its own responsible process of macOS. After the gate, a run writes <run>/memory.json: the physical \
-footprint and the resident size of the IDE, of its descendants, and of the WebKit processes whose responsible process \
-is the IDE. The digest shows them in the group `memory at the gate (MB)`. A failed sample is a note of the run.
+After the gate, a run writes <run>/memory.json: the physical footprint and the resident size of the IDE, of its \
+descendants, and of its WebKit processes. The digest shows them in the group `memory at the gate (MB)`. A failed sample \
+is a note of the run.
 
 A session holds a lock from its build to its summary, so a second session or a gc on this host is refused with \
 bench_busy. When AIR_VM_BIN names the vm binary, a session notes its age. A source under crates/ that is newer is a \
 warning of the session.";
+
+/// The guide under the long help of `bench`: the order of a class attribution, the measurement of a change, and the
+/// host. It is the one place that states how to use the verbs together, so a skill or a failure text only names
+/// `bench --help`. Each line is shorter than the wrap width of the help, so a command line stays one line.
+const GUIDE: &str = "Find what loads the classes of a plugin at start-up, here of Air (com.intellij.air):
+  1. Run one session of the arm that shows the plugin. A class count needs no quiet host.
+    ./community/tools/vm.cmd bench project markdown --arm empty-editor --runs 3 --hold 15s
+  2. Read the classes of each module of the plugin, and the rank of the plugin.
+    ./community/tools/vm.cmd bench classes latest --plugin com.intellij.air --at quit --kinds
+  3. Read the frame that woke each loader of the plugin.
+    ./community/tools/vm.cmd bench triggers latest --plugin com.intellij.air --at quit
+  4. Read the post-startup activities by class and by plugin.
+    ./community/tools/vm.cmd bench activities latest
+  5. Read the classes that one span loads, such as the build of the Air composer.
+    ./community/tools/vm.cmd bench classes latest --span air.emptyState.createContent --thread all
+
+The anchor decides the count:
+  - The default anchor is the main anchor of the arm, such as emptyStateBuilt of the empty-editor
+    arm.
+  - A test that counts when the IDE is idle counts later. The Air start-up class budget of the
+    suite startup-class-loading is such a test.
+  - For a count near the count of such a test, run the session with --hold 15s and read it with
+    --at quit.
+
+Measure a change:
+  - Two sessions: run one on the base commit and one on the change, then compare them. compare
+    tells whether the medians moved by more than the noise of the host.
+  - One session: --suppress-plugin or --with-property adds a twin of each arm. The runs of a twin
+    interleave with the runs of its arm.
+  - A/B/A: run A1 on the base and B on the change. Then run A2 over the generation of A1 with
+    --generation. The second line of the digest of A1 names the digest of that generation, and
+    so does ls. A2 against A1 is the noise of the host.
+    ./community/tools/vm.cmd bench welcome
+    ./community/tools/vm.cmd bench welcome --generation 5f1c0d9e2b7a
+    ./community/tools/vm.cmd bench compare aaaa1111 bbbb2222 cccc3333
+
+The host:
+  - A time needs a quiet host, and a class count does not.
+  - --max-load refuses a session on a busy host. A load below that limit still moves a time: on a
+    host of 20 cores, a load of 10 moved the medians of a 2 s start-up by 100 to 200 ms against a
+    load of 7. So compare sessions of one load.
+  - For a quiet host, run the session on another machine as one exclusive run of brd-host.
+    `brd-host run --help` states the option.
+  - Put the bench commands into the argv of that run. brd-host ships no file that git ignores,
+    such as a script under out/.
+  - A session stays on the host that ran it, so run the verbs that read it on that host too.";
+
+/// The text under the long help of `bench`: the guide, then the exit codes.
+pub(crate) fn after_long_help() -> String {
+    format!("{GUIDE}\n\n{EXIT_CODES}")
+}
+
+/// The examples under the long help of `bench project`. Each line is shorter than the wrap width of the help.
+pub(crate) const PROJECT_EXAMPLES: &str = "Examples:
+  The start-up to the built Air composer, with a hold for a class count at the quit:
+    ./community/tools/vm.cmd bench project markdown --arm empty-editor --runs 3 --hold 15s
+  The Find in Files searches of JetBrains Light on this checkout:
+    ./community/tools/vm.cmd bench project . --in-place --arm find-in-files \\
+      --target //build:jetbrains_light_all_plugins_dist \\
+      --context-plugins //platform/unified:performance_testing_plugin_dir \\
+      --query createSearcher --query FindModel --directory platform";
 
 /// The paragraph under the help of `bench`: the exit codes of every verb.
 pub(crate) const EXIT_CODES: &str = "Exit codes:
@@ -53,10 +117,6 @@ pub(crate) enum BenchVerb {
     /// The session writes a sandbox template and primes each arm once, unless --cold. Then it runs the measured runs
     /// with the arms interleaved. Each measured run starts from a copy of the primed sandbox.
     Welcome(WelcomeArgs),
-    /// Parses a finished session again and prints its digest. No IDE starts.
-    Replay(ReplayArgs),
-    /// Starts the IDE without a project, then opens <PROJECT> in the running IDE and measures its editor.
-    OpenProject(OpenProjectArgs),
     /// Starts the IDE on PROJECT and measures the time to the highlighted editor, or to the built Air composer of an
     /// empty editor area. No welcome screen.
     ///
@@ -78,24 +138,29 @@ pub(crate) enum BenchVerb {
     /// durations, and each span is a metric with its duration and its result count. The IDE needs the performance
     /// plugin: JetBrains Light gets it through --context-plugins. --in-place opens a large tree, such as a checkout,
     /// where it is.
+    #[command(after_long_help = PROJECT_EXAMPLES)]
     Project(ProjectArgs),
-    /// Removes the old generations: all except the --keep newest and those a session of the last 24 hours names.
-    Gc(GcArgs),
-    /// Prints the spans of one run that start in a window, with their start and end, and the anchors of the run. No
-    /// IDE starts.
+    /// Starts the IDE without a project, then opens <PROJECT> in the running IDE and measures its editor.
     ///
-    /// The default window starts at frameBecameVisible and ends at the welcome screen paint. A run without
-    /// frameBecameVisible, such as a modal run, has the window from the process start to the main anchor of its arm:
-    /// welcomeBecameVisible, the highlighted editor or the built composer. A missing end widens the window to the end of
-    /// the run. --overlap also keeps the spans that start before the window and run into it. A span over 4 s is marked
-    /// `waits`. A span that runs into the quit, `application.exit`, is marked `cut by the quit`.
-    Trace(TraceArgs),
-    /// Prints the post-startup activities of one run by class and by plugin. No IDE starts.
+    /// The verb reports no number yet. The IDE opens the second project without a trace span, and it writes
+    /// `editor highlighting completed` only once, in its start-up report. So each run fails with a named reason, and
+    /// the verb exits with 6. Use `project` for the time to the highlighted editor.
+    OpenProject(OpenProjectArgs),
+    /// Lists the sessions of this host, newest first, with their inputs and their medians. No IDE starts.
     ///
-    /// An activity is a `run activity` or a `run init activity <name>` span, without its helper twins. The default
-    /// window is the whole run. The first table holds the longest activities with their start and the marks of
-    /// `trace`. The second one holds the plugins by the sum of the durations of their activities.
-    Activities(ActivitiesArgs),
+    /// The order is the one of `latest`: by the mtime of `session.json`. A line holds the name, the time, the
+    /// command, the commit and the dist digest. Per arm it holds the valid runs and the median of its main metric from
+    /// `summary.json`. Each name is a session argument of the other verbs.
+    Ls(ListArgs),
+    /// Prints the medians of several sessions per arm, with the delta of each session to the first one. No IDE starts.
+    ///
+    /// The first session is A. A line tells whether the noise arm, the first arm both sessions have, moved from A by
+    /// more than twice the noise of A. The noise arm needs 3 valid runs with its main metric per session. The noise of
+    /// a session is 1.4826 times the median absolute deviation of the main metric of its noise arm. A session whose own
+    /// noise is above 20 % of the median of its noise arm is too noisy to compare, and the table still follows. A delta needs 3 valid runs per session. A later session of the distribution of A
+    /// is an A/A run, and its move is the noise of this host. A session of another measurement model than A, such as a
+    /// session from before the model, gets a line that names both models. A twin is never the noise arm.
+    Compare(CompareArgs),
     /// Prints the loaded classes of one arm by plugin and by module, as the JVM logged them, at an anchor of the run. No
     /// IDE starts.
     ///
@@ -112,6 +177,9 @@ pub(crate) enum BenchVerb {
     /// jvm.loadingTime of startup-stats.json, which puts the start about 100 ms too early, with a note.
     ///
     /// --span counts the class loads in the window of one span instead of before an anchor, on the EDT by default.
+    ///
+    /// The help of `bench` states the order of a class attribution: the session, then `classes`, `triggers`,
+    /// `activities` and --span.
     Classes(ClassesArgs),
     /// Prints the plugin loaders of one run by the frame that triggered each one. No IDE starts.
     ///
@@ -123,22 +191,28 @@ pub(crate) enum BenchVerb {
     /// an owner in plugin-classes.txt is a platform class. A row holds a trigger frame, its loaders, their classes and
     /// EDT ms before the anchor, and the first load of its earliest loader. The loaders of each trigger follow the
     /// table. A loader without a stack is in the row `(no activation stack)`.
+    ///
+    /// The help of `bench` states the order of a class attribution.
     Triggers(TriggersArgs),
-    /// Prints the medians of several sessions per arm, with the delta of each session to the first one. No IDE starts.
+    /// Prints the post-startup activities of one run by class and by plugin. No IDE starts.
     ///
-    /// The first session is A. A line tells whether the noise arm, the first arm both sessions have, moved from A by
-    /// more than twice the noise of A. The noise arm needs 3 valid runs with its main metric per session. The noise of
-    /// a session is 1.4826 times the median absolute deviation of the main metric of its noise arm. A session whose own
-    /// noise is above 20 % of the median of its noise arm is too noisy to compare, and the table still follows. A delta needs 3 valid runs per session. A later session of the distribution of A
-    /// is an A/A run, and its move is the noise of this host. A session of another measurement model than A, such as a
-    /// session from before the model, gets a line that names both models.
-    Compare(CompareArgs),
-    /// Lists the sessions of this host, newest first, with their inputs and their medians. No IDE starts.
+    /// An activity is a `run activity` or a `run init activity <name>` span, without its helper twins. The default
+    /// window is the whole run. The first table holds the longest activities with their start and the marks of
+    /// `trace`. The second one holds the plugins by the sum of the durations of their activities.
+    Activities(ActivitiesArgs),
+    /// Prints the spans of one run that start in a window, with their start and end, and the anchors of the run. No
+    /// IDE starts.
     ///
-    /// The order is the one of `latest`: by the mtime of `session.json`. A line holds the name, the time, the
-    /// command, the commit and the dist digest. Per arm it holds the valid runs and the median of its main metric from
-    /// `summary.json`. Each name is a session argument of the other verbs.
-    Ls(ListArgs),
+    /// The default window starts at frameBecameVisible and ends at the welcome screen paint. A run without
+    /// frameBecameVisible, such as a modal run, has the window from the process start to the main anchor of its arm:
+    /// welcomeBecameVisible, the highlighted editor or the built composer. A missing end widens the window to the end of
+    /// the run. --overlap also keeps the spans that start before the window and run into it. A span over 4 s is marked
+    /// `waits`. A span that runs into the quit, `application.exit`, is marked `cut by the quit`.
+    Trace(TraceArgs),
+    /// Parses a finished session again and prints its digest. No IDE starts.
+    Replay(ReplayArgs),
+    /// Removes the old generations: all except the --keep newest and those a session of the last 24 hours names.
+    Gc(GcArgs),
 }
 
 /// The run of a session that a verb reads.
@@ -221,7 +295,9 @@ pub(crate) struct ClassesArgs {
     pub(crate) plugins: Vec<String>,
     /// The anchor of the plugin table, of the module table and of the last total. The default is the main anchor of the arm:
     /// welcomeBecameVisible for a welcome arm, `editor highlighting completed` for the project arm and emptyStateBuilt
-    /// for the empty-editor arm. An arm without it takes its last anchor. `quit` is the start of application.exit.
+    /// for the empty-editor arm. An arm without it takes its last anchor. `quit` is the start of application.exit. A test
+    /// that counts when the IDE is idle counts later than the main anchor: for a count near its count, read `quit` of a
+    /// session that ran with --hold 15s.
     #[arg(long, value_name = "ANCHOR", value_parser = clap::builder::PossibleValuesParser::new(CLASS_ANCHORS))]
     pub(crate) at: Option<String>,
     /// Lists the first N classes of each plugin of the plugin table that the median run of the arm loaded before the
@@ -324,14 +400,17 @@ pub(crate) struct LaunchArgs {
     /// The Bazel label of the self-contained distribution. The IDE starts with the JBR inside the distribution.
     #[arg(long, value_name = "LABEL", default_value = DEFAULT_TARGET, value_parser = flag_value)]
     pub(crate) target: String,
-    /// The time to wait after the event of the gate, before the quit: `3s`, `500ms`, `1m` or `0`.
+    /// The time to wait after the event of the gate, before the quit: `3s`, `500ms`, `1m` or `0`. The quit cuts the
+    /// post-startup activities that still run. A longer hold, such as `15s`, lets them end, so the anchor `quit` counts
+    /// their classes.
     #[arg(long, value_name = "DURATION", default_value = DEFAULT_HOLD, value_parser = parse_hold)]
     pub(crate) hold: Duration,
     /// The session directory. The default is `<runtime root>/bench/runs/<actor id>`.
     #[arg(long, value_name = "DIR")]
     pub(crate) session: Option<PathBuf>,
     /// Refuses the session with host_busy before the build when the 1-minute load average of the host is above LOAD.
-    /// The default is the CPU count. A host without a load average passes.
+    /// The default is the CPU count. A host without a load average passes. A time needs a quiet host, and a class
+    /// count does not: the help of `bench` states what a load does to a time.
     #[arg(long, value_name = "LOAD", value_parser = parse_load)]
     pub(crate) max_load: Option<f64>,
     /// Runs the session over the staged generation whose digest starts with DIGEST, under

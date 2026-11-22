@@ -177,8 +177,10 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 
 `vm bench` measures the start-up of the IDE on a macOS host, and one search workload after the start-up: Find in
 Files. ADR 0193 records why the verb is in `vm`.
-`vm.cmd bench --help` states what a session does and the exit codes. `vm.cmd bench <verb> --help` states the grammar
-and the defaults of the verb.
+
+The help is the one guide to its use. `./community/tools/vm.cmd bench --help` states the verb for each question, the
+order of a class attribution, the measurement of a change, the host and the exit codes. The help of a verb states its
+grammar and its defaults. This section states only the measurement model and the files of a session.
 
 Every run is an integration test, as every run of the IDE Starter is, so a welcome run measures what the perf test of
 the welcome screen measures. `session.json` names this measurement model, and
@@ -193,13 +195,6 @@ the main class uses it. The record
 states why. A modal run opens no project, so the IDE writes its start-up report at the exit, and
 the record reads it after the quit. Its `totalDuration` is negative or missing, so it is a note of the run and no
 metric.
-
-`--suppress-plugin <id>` of `welcome` and `project` adds a twin after each arm, such as `project-without-<id>`. A
-run of a twin passes `-Didea.suppressed.plugins.id=<id>`, so the IDE loads no plugin of that id. `--with-property
-<name>=<value>` adds a twin such as `empty-editor-with-<name>=<value>`, whose runs pass `-D<name>=<value>` after the
-properties of the bench. A twin has its own prime run and sandbox, and its runs interleave with the runs of its arm.
-With both options, each arm has two twins. Every verb that reads a session takes a twin as an arm, and the noise check
-of `compare` uses the plain arms only.
 
 The IDE of a run starts as its own responsible process of macOS, as an app that Launch Services starts. After the
 gate and before the thread dump, the run writes `memory.json`. It holds the physical footprint and the resident size
@@ -245,21 +240,6 @@ about half a second of CPU. A full buffer stalls the logging thread and drops no
 The profile leaves out the stacks under `Profiler::dlopen_hook`, where async-profiler parses the symbols of each library
 that the JVM loads, and the digest notes how many samples it left out.
 
-| verb | the question it answers | its output |
-| --- | --- | --- |
-| `welcome` | How long does the IDE take to show the welcome screen, in the modal and the non-modal arm? | A session directory with its `summary.json`, and a text digest. |
-| `open-project <project>` | How long does a running IDE take to open a project and paint its editor? | A session with the open-project arm. |
-| `project <project>` | How long does the IDE take from its start on a project to the highlighted editor, or, with `--arm empty-editor`, to the built Air composer of an empty editor area? With `--arm cargo-sync` and `--target //build:rustrover_dist`, to the first Cargo sync, as the RustRover perf test measures it. With `--arm find-in-files` and `--query`, how long the Find in Files searches of each query take. `--cold` starts each empty-editor run with empty caches. | A session with the project arm, the empty-editor arm, both, or the cargo-sync arm. |
-| `replay <session>` | What does a finished session give when the controller parses it again? | A new `summary.json` and the digest, without an IDE. |
-| `trace <session>` | What runs between the frame and the welcome paint? | The anchors of one run, and one line per span in the window. |
-| `activities <session>` | Which post-startup activities run while the welcome panel paints? | One table by class and one table by plugin for one run. |
-| `classes <session>` | Which classes did the JVM load before an anchor, and which plugin and module own them? | The class totals of one arm, one table by plugin with its modules and its EDT and BG ms, and one table by module. `--plugin` adds the rank of a plugin. |
-| `classes <session> --span <name>` | Which classes did the EDT load inside a span? | The window of each run, the loads by plugin, by module and by package, and with `--timeline` the loads of each bucket. |
-| `triggers <session>` | Which code pulled each module of a plugin? | One row per trigger frame of one run, with its modules, their classes, their EDT ms and the first load, then the modules of each trigger. |
-| `compare <session> <session>...` | Did the change move the medians by more than the noise of the host? | The medians per arm with the delta to A, and one noise check per session. |
-| `ls` | Which sessions does this host have? | One line per session, newest first, with a name that the other verbs accept. |
-| `gc` | Which generations can go? | One line per removed generation, with its size. |
-
 A session stages a generation under `<runtime root>/bench/generations/<digest>/`. The generation holds the clone of
 the `.dist` directory, the dist config, `OpenedPackages.txt` and `bench-preferences.jar`, the in-memory Java preferences
 of `@community//tools/vm/bench-preferences`. The home in the `.dist` directory holds the JBR at
@@ -276,19 +256,8 @@ Rust plugin finds the toolchain in `~/.cargo` below it. The record
 [A bench run sees no account and no data of the host](docs/decisions/2026-11-22-a-bench-run-sees-no-account-and-no-data-of-the-host.md)
 states why.
 
-`--generation` takes the start of a digest and runs the session over that generation, with no build and no stage. The
-session names the commit that built the generation, so `ls` and `compare` show the commit of the measured bytes. An
-A/B/A run sets a change against the noise of this host: A1 measures the base, B the change, and A2 the bytes of A1
-again. The second line of the digest of A1 names its digest, and `bench ls` names each session:
-
-```bash
-./community/tools/vm.cmd bench welcome                             # A1, on the base commit
-./community/tools/vm.cmd bench welcome                             # B, after the change
-./community/tools/vm.cmd bench welcome --generation 5f1c0d9e2b7a   # A2, over the generation of A1
-./community/tools/vm.cmd bench compare aaaa1111 bbbb2222 cccc3333  # A1, B and A2 by a part of their names
-```
-
-`compare` sets B against A1, and A2 against A1 is the A/A run that tells the noise.
+A session with `--generation` runs over a generation that exists, with no build and no stage. It names the commit that
+built the generation, so `ls` and `compare` show the commit of the measured bytes.
 
 A session directory holds:
 
@@ -321,28 +290,10 @@ directory pass in the project directories skips the walk of the tree once accio 
 found for search", and the directory pass walks the whole tree of its directory. A run with that line in `idea.log` is
 not valid, and its reason names the property. Each search is a metric with its duration, and `<span> results` holds its
 result count, so a twin of `--with-property ijlight.accio.enabled=false` shows whether accio and the platform walk find
-the same. JetBrains Light does not bundle the performance plugin, so a session gives it with `--context-plugins
-//platform/unified:performance_testing_plugin_dir`. The session builds that pool from the working tree, also with
-`--generation`, and copies its plugin directories into the `plugins` directory of the template. `--in-place` opens a tree
-too large to copy, such as a checkout, where it is, and the IDE writes the `.idea` of that tree. Each run gets the
-environment of `vm.cmd`, so the accio of `PATH` answers the searches of the accio plugin. `--property accio.binary=<path>`
-and `--property accio.home=<dir>` name another accio and its index for every run. `--property` passes `-D<name>=<value>`
-to every run of a session, also to the prime runs, and its value can name a path, which a twin of `--with-property`
-cannot.
-
-```bash
-./community/tools/vm.cmd bench project . --in-place --target //build:jetbrains_light_all_plugins_dist \
-  --context-plugins //platform/unified:performance_testing_plugin_dir --arm find-in-files \
-  --query createSearcher --query FindModel --directory platform \
-  --property accio.binary=$HOME/.cargo/bin/accio --property accio.home=$PWD/out/bench-accio-home
-```
-
-What a session cannot measure yet:
-
-- `open-project` reports no number yet. The IDE opens the second project through the socket lock without a trace
-  span, and `editor highlighting completed` is only an instant event of the start-up report, which the IDE writes
-  once. So each run fails with a named reason, and the verb exits with 6. That is a gap of the product, not of the
-  verb.
+the same. The session builds the pool of `--context-plugins` from the working tree, also with `--generation`, and copies
+its plugin directories into the `plugins` directory of the template. Each run gets the environment of `vm.cmd`, so the
+accio of `PATH` answers the searches of the accio plugin. `--property accio.binary=<path>` and
+`--property accio.home=<dir>` name another accio and its index for every run.
 
 ## Verification
 

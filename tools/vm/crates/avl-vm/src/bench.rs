@@ -61,4 +61,4 @@ mod trace;
 mod triggers;
 
 pub(crate) use command::Bench;
-pub(crate) use options::{BenchVerb, EXIT_CODES, LONG_ABOUT};
+pub(crate) use options::{BenchVerb, EXIT_CODES, LONG_ABOUT, after_long_help};

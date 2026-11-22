@@ -108,10 +108,27 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
             "bench_busy",
             "AIR_VM_BIN",
             "memory.json",
-            "responsible process",
             "Exit codes:",
             "6   an arm has no run that passed the gate",
             "75  the host is busy, or a session runs",
+        ],
+    );
+    // The guide: the order of a class attribution, the anchor, the measurement of a change and the host. A command
+    // line is asserted whole, with its line end, because an agent copies it and a wrapped line does not run.
+    assert_contains(
+        &bench,
+        &[
+            &format!("{PROGRAM} bench project markdown --arm empty-editor --runs 3 --hold 15s\n"),
+            &format!("{PROGRAM} bench classes latest --plugin com.intellij.air --at quit --kinds\n"),
+            &format!("{PROGRAM} bench triggers latest --plugin com.intellij.air --at quit\n"),
+            &format!("{PROGRAM} bench activities latest\n"),
+            &format!("{PROGRAM} bench classes latest --span air.emptyState.createContent --thread all\n"),
+            &format!("{PROGRAM} bench welcome --generation 5f1c0d9e2b7a\n"),
+            "emptyStateBuilt",
+            "startup-class-loading",
+            "A/B/A",
+            "--max-load",
+            "brd-host",
         ],
     );
     let welcome = help_of(&root, &["welcome"]).await;
@@ -145,7 +162,15 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
             ],
         );
     }
-    assert_contains(&project, &["air.emptyState.createComponent"]);
+    assert_contains(
+        &project,
+        &[
+            "air.emptyState.createComponent",
+            "Examples:",
+            &format!("{PROGRAM} bench project . --in-place --arm find-in-files \\\n"),
+        ],
+    );
+    assert_contains(&open_project, &["reports", "number", "exits"]);
     for project_word in ["air.emptyState.createComponent", "restores"] {
         assert!(
             !welcome.contains(project_word),

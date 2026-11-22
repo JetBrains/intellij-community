@@ -528,6 +528,30 @@ fn every_option_the_help_names_is_declared_by_the_tree() {
     );
 }
 
+// Every example command of the help parses. An example is an indented line that starts with the wrapper, and a
+// trailing `\` joins the next line. An agent copies these lines, so one that the tree refuses is a defect of the help.
+#[test]
+fn every_example_command_of_the_help_parses() {
+    avl_affected::bridge::install_fixture();
+    let facts = TerminalFacts::default();
+    let mut examples = 0;
+    for text in every_long_help() {
+        let joined = text.replace("\\\n", " ");
+        for line in joined.lines().filter(|line| line.starts_with("  ")) {
+            let Some(arguments) = line.trim_start().strip_prefix(PROGRAM) else {
+                continue;
+            };
+            examples += 1;
+            let argv: Vec<&str> = arguments.split_whitespace().collect();
+            assert!(
+                matches!(parse_argv(&argv, &facts), Parsed::Invocation(_)),
+                "the help has an example that does not parse: {line:?}"
+            );
+        }
+    }
+    assert!(examples >= 9, "the scan found only {examples} example commands");
+}
+
 // --- the backend selection ---------------------------------------------------------------------------------------
 
 // One selection from one source, and a disagreement on either axis is a refusal rather than a merge.

@@ -157,7 +157,8 @@ this run acquires are released. It builds on the host first, and an interrupt ke
 #[command(
     name = "vm",
     bin_name = PROGRAM,
-    about = "The Air UI-lane controller: workers, leases, and runs of a UI lane in a worker's warm daemon.",
+    about = "The Air UI-lane controller: workers, leases, and runs of a UI lane in a worker's warm daemon. Its bench verb \
+             measures the start-up of the IDE on this host and needs no worker.",
     after_help = AFTER_HELP,
     disable_help_subcommand = true,
     args_override_self = true
@@ -275,8 +276,12 @@ pub(crate) enum Cmd {
     },
     /// Where the worker's VNC endpoint is; needs --lease-file, except on container-linux, whose pool has one worker.
     Vnc,
-    /// Measures the start-up of the IDE on this host, from a staged copy of its dev distribution.
-    #[command(long_about = crate::bench::LONG_ABOUT, after_help = crate::bench::EXIT_CODES)]
+    /// Measures the start-up of the IDE on this host: its time, its memory, its classes and the code that loads them.
+    #[command(
+        long_about = crate::bench::LONG_ABOUT,
+        after_help = crate::bench::EXIT_CODES,
+        after_long_help = crate::bench::after_long_help()
+    )]
     Bench {
         #[command(subcommand)]
         verb: BenchVerb,
