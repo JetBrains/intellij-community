@@ -73,6 +73,12 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private @NotNull UUID myUUID = UUID.randomUUID();
 
   private PyFlavorAndData<?, ?> myFlavorAndData;
+  /**
+   * The stored {@code FLAVOR_ID} and {@code FLAVOR_DATA} that no registered flavor has, such as the flavor of a plugin that is not
+   * loaded. While the flavor is {@link PythonSdkFlavor.UnknownFlavor}, {@link #save} writes them again.
+   */
+  private @Nullable String myUnresolvedFlavorId;
+  private @Nullable String myUnresolvedFlavorData;
   private String myAssociatedModulePath;
   private String myRequirementsFile;
   private Path myLegacyRequiredTxtPath;
@@ -250,8 +256,16 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
 
     rootElement.setAttribute(SDK_UUID_FIELD_NAME, myUUID.toString());
-    JDOMExternalizer.write(rootElement, FLAVOR_ID, myFlavorAndData.getFlavor().getUniqueId());
-    JDOMExternalizer.write(rootElement, FLAVOR_DATA, myGson.toJson(myFlavorAndData.getData(), myFlavorAndData.getDataClass()));
+    if (myUnresolvedFlavorId != null && myFlavorAndData.getFlavor() == PythonSdkFlavor.UnknownFlavor.INSTANCE) {
+      JDOMExternalizer.write(rootElement, FLAVOR_ID, myUnresolvedFlavorId);
+      if (myUnresolvedFlavorData != null) {
+        JDOMExternalizer.write(rootElement, FLAVOR_DATA, myUnresolvedFlavorData);
+      }
+    }
+    else {
+      JDOMExternalizer.write(rootElement, FLAVOR_ID, myFlavorAndData.getFlavor().getUniqueId());
+      JDOMExternalizer.write(rootElement, FLAVOR_DATA, myGson.toJson(myFlavorAndData.getData(), myFlavorAndData.getDataClass()));
+    }
   }
 
   private static void savePaths(Element rootElement, List<String> paths, String root, String element) {
@@ -278,6 +292,13 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     if (Objects.equals(myFlavorAndData, flavorAndData)) return;
     myFlavorAndData = flavorAndData;
     markMigrationRequired();
+  }
+
+  /** Takes the stored flavor of {@code source} that no registered flavor has, so that {@link #save} writes it again. */
+  @ApiStatus.Internal
+  protected final void copyUnresolvedFlavor(@NotNull PythonSdkAdditionalData source) {
+    myUnresolvedFlavorId = source.myUnresolvedFlavorId;
+    myUnresolvedFlavorData = source.myUnresolvedFlavorData;
   }
 
   @ApiStatus.Internal
@@ -336,6 +357,8 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myWorkingDirectory = EMPTY_WORKING_DIRECTORY;
     myWorkingDirectoryIsCanonical = true;
     myMigrationRequired = false;
+    myUnresolvedFlavorId = null;
+    myUnresolvedFlavorData = null;
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER), myAddedPaths);
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER), myExcludedPaths);
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER), myPathsToTransfer);
@@ -376,12 +399,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       }
       var flavorId = JDOMExternalizer.readString(element, FLAVOR_ID);
       if (flavorId != null) {
-        var flavorOpt = PythonSdkFlavor.getApplicableFlavors(true).stream().filter(f -> f.getUniqueId().equals(flavorId)).findFirst();
-        if (flavorOpt.isPresent()) {
-          setFlavorFromConfig(element, flavorOpt.get());
+        var flavor = PythonSdkFlavor.findFlavorById(flavorId);
+        if (flavor != null) {
+          setFlavorFromConfig(element, flavor);
         }
         else {
           myFlavorAndData = new PyFlavorAndData<>(PyFlavorData.Empty.INSTANCE, PythonSdkFlavor.UnknownFlavor.INSTANCE);
+          myUnresolvedFlavorId = flavorId;
+          myUnresolvedFlavorData = JDOMExternalizer.readString(element, FLAVOR_DATA);
         }
       }
       else {

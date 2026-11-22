@@ -72,7 +72,9 @@ open class PyTargetAwareAdditionalData private constructor(
   @ApiStatus.Internal
   constructor(additionalData: PythonSdkAdditionalData, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(
     additionalData.flavorAndData, additionalData.workingDirectory, targetEnvironmentConfiguration, additionalData.requirementsFile
-  )
+  ) {
+    copyUnresolvedFlavor(additionalData)
+  }
 
   override fun save(rootElement: Element) { // store "interpreter paths" (i.e. `PYTHONPATH` elements)
     super.save(rootElement) // store `INTERPRETER_PATH`, `HELPERS_PATH`, etc
