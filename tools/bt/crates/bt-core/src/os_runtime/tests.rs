@@ -667,7 +667,8 @@ fn a_checkout_without_an_accio_wrapper_is_refused() {
 }
 
 /// The resolver runtime refuses every spawn, and it still runs accio: in the checkout root, with its stdout as the
-/// answer and the tail of its stderr in the refusal of a failed call.
+/// answer. The refusal of a failed call names the tail of its stderr and the tail of its stdout, where accio writes its
+/// error, and a call without output says so.
 #[cfg(unix)]
 #[test]
 fn the_resolver_runtime_runs_the_accio_wrapper_in_the_checkout_root() {
@@ -676,7 +677,12 @@ fn the_resolver_runtime_runs_the_accio_wrapper_in_the_checkout_root() {
     std::fs::create_dir_all(wrapper.parent().expect("a parent")).expect("the tools directory");
     std::fs::write(
         &wrapper,
-        "if [ \"$1\" = fail ]; then echo 'no index' >&2; exit 3; fi\npwd -P\nprintf '%s\\n' \"$@\"\n",
+        concat!(
+            "if [ \"$1\" = fail ]; then echo 'no index' >&2; exit 3; fi\n",
+            "if [ \"$1\" = stdout ]; then echo 'Error: --project: No such file'; exit 1; fi\n",
+            "if [ \"$1\" = silent ]; then exit 1; fi\n",
+            "pwd -P\nprintf '%s\\n' \"$@\"\n",
+        ),
     )
     .expect("the wrapper");
     let runtime = OsRuntime::resolver(dir.path(), |_| {});
@@ -700,7 +706,19 @@ fn the_resolver_runtime_runs_the_accio_wrapper_in_the_checkout_root() {
         ]
     );
     let refused = runtime.accio(&["fail"]).expect_err("a refusal");
-    assert!(refused.message.ends_with("exited with 3:\nno index"), "{}", refused.message);
+    assert!(refused.message.ends_with("exited with 3\nstderr:\nno index"), "{}", refused.message);
+    let refused = runtime.accio(&["stdout"]).expect_err("a refusal");
+    assert!(
+        refused.message.ends_with("exited with 1\nstdout:\nError: --project: No such file"),
+        "{}",
+        refused.message
+    );
+    let refused = runtime.accio(&["silent"]).expect_err("a refusal");
+    assert!(
+        refused.message.ends_with("exited with 1, and printed nothing on stdout or stderr"),
+        "{}",
+        refused.message
+    );
 }
 
 /// A parent git, such as `git rebase --exec`, exports the variables that name its repository. A test that runs git

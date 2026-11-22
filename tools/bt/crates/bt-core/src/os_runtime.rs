@@ -248,10 +248,10 @@ pub fn accio_command(repo_root: &Path, platform: Platform, wrapper: &str, args: 
 
 /// Runs one accio command line in the checkout root, and answers its stdout.
 ///
-/// A command that cannot start, and a command that exits with another code than 0, is a refusal that names the tail
-/// of its stderr. accio builds or refreshes its index by itself, so the call has no retry.
+/// A command that cannot start, and a command that exits with another code than 0, is a refusal. The refusal names
+/// the tail of the stderr and the tail of the stdout of the command, because accio writes its error to stdout. accio
+/// builds or refreshes its index by itself, so the call has no retry.
 fn run_accio(repo_root: &Path, command: &[OsString]) -> Result<String, Refusal> {
-    const STDERR_LINES: usize = 20;
     let Some((program, args)) = command.split_first() else {
         return Err(accio_failed("nothing to run: the accio command line is empty"));
     };
@@ -262,16 +262,34 @@ fn run_accio(repo_root: &Path, command: &[OsString]) -> Result<String, Refusal> 
         .output()
         .map_err(|error| accio_failed(format!("cannot start {}: {error}", command_line(command))))?;
     if !ran.status.success() {
-        let stderr = String::from_utf8_lossy(&ran.stderr);
-        let lines: Vec<&str> = stderr.lines().collect();
-        let tail = lines[lines.len().saturating_sub(STDERR_LINES)..].join("\n");
+        let code = ran.status.code().map_or_else(|| "a signal".to_owned(), |code| code.to_string());
         return Err(accio_failed(format!(
-            "{} exited with {}:\n{tail}",
+            "{} exited with {code}{}",
             command_line(command),
-            ran.status.code().map_or_else(|| "a signal".to_owned(), |code| code.to_string())
+            failed_output(&ran.stdout, &ran.stderr)
         )));
     }
     Ok(String::from_utf8_lossy(&ran.stdout).into_owned())
+}
+
+/// The output of a failed accio call for its refusal: the last lines of the stderr, then the last lines of the stdout.
+/// An empty stream has no section. A call without output says so, so the refusal is never an empty text.
+fn failed_output(stdout: &[u8], stderr: &[u8]) -> String {
+    const TAIL_LINES: usize = 20;
+    let tail = |bytes: &[u8]| {
+        let text = String::from_utf8_lossy(bytes);
+        let lines: Vec<&str> = text.lines().filter(|line| !line.trim().is_empty()).collect();
+        lines[lines.len().saturating_sub(TAIL_LINES)..].join("\n")
+    };
+    let sections: Vec<String> = [("stderr", tail(stderr)), ("stdout", tail(stdout))]
+        .into_iter()
+        .filter(|(_, text)| !text.is_empty())
+        .map(|(stream, text)| format!("\n{stream}:\n{text}"))
+        .collect();
+    if sections.is_empty() {
+        return ", and printed nothing on stdout or stderr".to_owned();
+    }
+    sections.concat()
 }
 
 /// The controller's spawn: exit 127 with the argv it was asked to run.
