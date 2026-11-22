@@ -115,7 +115,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       if (resolvedMembers?.isNotEmpty() == true) {
         return null
       }
-      return listOf(PyTypeMember(null, PyBuiltinCache.getInstance(type.pyClass).noneType))
+      return listOf(PyTypeMember(null, PyBuiltinCache.getInstance(type.pyClass).noneTypeOrUnknown))
     }
     else {
       if (resolver != null && dataclassParameters.frozen == true) {

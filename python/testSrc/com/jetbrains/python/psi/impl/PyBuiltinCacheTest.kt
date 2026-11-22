@@ -8,7 +8,10 @@ import com.intellij.util.FileContentUtilCore
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.psi.types.PyAnyType
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 @Subsystems.CodeInsight
@@ -29,5 +32,14 @@ class PyBuiltinCacheTest : PyCodeInsightTestCase() {
       noneType.assertValid("NoneType")
       assertNotSame(oldTypesFile, noneType.pyClass.containingFile)
     }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93538"])
+  fun `a cache without builtins gives Unknown for str or unicode`() {
+    val cache = PyBuiltinCache.getInstance(null)
+    assertNull(cache.strType)
+
+    assertEquals(PyAnyType.unknown, cache.strOrUnicodeType)
   }
 }

@@ -463,7 +463,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
     if (!usedAttributes.isEmpty()) {
       final PyStructuralType structuralType = new PyStructuralType(usedAttributes, true);
-      return noneComparison.get() ? PyUnionType.unionOrUnknown(structuralType, PyBuiltinCache.getInstance(this).getNoneType()) : structuralType;
+      return noneComparison.get() ? PyUnionType.unionOrUnknown(structuralType, PyBuiltinCache.getInstance(this).getNoneTypeOrUnknown()) : structuralType;
     }
 
     return null;

@@ -3,18 +3,22 @@ package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateExpressionCondition
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyKeyValueExpressionImpl
 import com.jetbrains.python.psi.impl.PyMappingPatternImpl
@@ -23,7 +27,9 @@ import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl
 import com.jetbrains.python.psi.impl.PySequencePatternImpl
 import com.jetbrains.python.psi.impl.PyTypeAliasStatementImpl
 import com.jetbrains.python.psi.impl.PyTypeParameterImpl
+import com.jetbrains.python.psi.types.PyExpectedTypeJudgement
 import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -189,6 +195,23 @@ class PyTypesWithoutBuiltinsTest : PyCodeInsightTestCase() {
         def value(self): ...
     """.trimIndent(),
   )
+
+  @Test
+  @TestFor(issues = ["PY-93538"], classes = [PyExpectedTypeJudgement::class])
+  fun `start index of a slice`() = test("""
+    a[start:]
+    # └ EXPECTED_TYPE Unknown
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-93538"], classes = [PyPostfixTemplateExpressionCondition.PyNumberExpression::class])
+  fun `number condition of the postfix templates`() {
+    val file = myFixture.configureByText("a.py", "'a'")
+    runReadActionBlocking {
+      val literal = PsiTreeUtil.findChildOfType(file, PyStringLiteralExpression::class.java)!!
+      assertFalse(PyPostfixTemplateExpressionCondition.PyNumberExpression().value(literal))
+    }
+  }
 
   @Test
   @TestFor(classes = [PyTypeAliasStatementImpl::class])
