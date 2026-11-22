@@ -15,9 +15,11 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -207,8 +209,8 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
     return info;
   }
 
-  public @NotNull List<ASTNode> getInitialChildren() {
-    return new ArrayList<>(myInitialChildren);
+  public @NotNull @Unmodifiable List<ASTNode> getInitialChildren() {
+    return Collections.unmodifiableList(myInitialChildren);
   }
 
   @Override
