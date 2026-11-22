@@ -17,6 +17,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+import com.jetbrains.python.PydevBundle
 import com.jetbrains.python.console.PyConsoleIndentUtil
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyExpression
@@ -45,12 +46,11 @@ internal class PyDebuggerEvaluator(private val myProject: Project, private val m
       val isExpression = PyDebugSupportUtils.isExpression(myProject, expression)
       try {
         // todo: think on getting results from EXEC
-        val value = myDebugProcess.evaluate(expression, !isExpression, doTrunc)
-        if (value.isErrorOnEval) {
-          callback.errorOccurred("{" + value.type + "}" + value.value) //NON-NLS
-        }
-        else {
-          callback.evaluated(value)
+        val value: PyDebugValue? = myDebugProcess.evaluate(expression, !isExpression, doTrunc)
+        when {
+          value == null -> callback.errorOccurred(PydevBundle.message("pydev.session.finished"))
+          value.isErrorOnEval -> callback.errorOccurred("{" + value.type + "}" + value.value) //NON-NLS
+          else -> callback.evaluated(value)
         }
       }
       catch (e: PyDebuggerException) {
