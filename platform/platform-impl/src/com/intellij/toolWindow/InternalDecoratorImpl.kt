@@ -198,6 +198,9 @@ class InternalDecoratorImpl internal constructor(
     /** Checks if the tool window header should have a top border. */
     @JvmStatic
     internal fun headerNeedsTopBorder(header: ToolWindowHeader): Boolean {
+      if (ClientProperty.isTrue(header, ToolWindowHeader.IN_MAC_TITLE_BAR)) {
+        return false
+      }
       val decorator = findNearestDecorator(header) ?: return false
       return decorator.toolWindow.type == ToolWindowType.WINDOWED &&
           SideProperty.TOP_TOOL_WINDOW_EDGE in decorator.getSideProperties(decorator)

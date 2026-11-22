@@ -21,9 +21,9 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.foundation.MacUtil
+import com.intellij.ui.mac.macWindowButtonsGap
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
 import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.CoroutineScope
@@ -48,10 +48,6 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.JRootPane
 import kotlin.math.abs
-import kotlin.math.roundToInt
-
-// Fullscreen controls have fixed 52 points width and scalable 13 points left and right gaps
-private val GAP_FOR_BUTTONS: Int get() = 26 +  JBValue.Float(52f, true).unscaled.roundToInt()
 
 internal class MacToolbarFrameHeader(
   private val coroutineScope: CoroutineScope,
@@ -222,12 +218,7 @@ internal class MacToolbarFrameHeader(
   override fun getComponent(): JComponent = this
 
   private fun updateBorders() {
-    if (isFullScreen(rootPane) && !MacFullScreenControlsManager.enabled()) {
-      view.updateBorders(5, 0)
-    }
-    else {
-      view.updateBorders(GAP_FOR_BUTTONS, 0)
-    }
+    view.updateBorders(macWindowButtonsGap(isFullScreen(rootPane)), 0)
   }
 
   override fun doLayout() {
@@ -319,7 +310,7 @@ private class CompactHeaderView(panel: JPanel, frame: JFrame, isFullScreen: Bool
   private val headerTitle: SimpleCustomDecorationPath = SimpleCustomDecorationPath(frame)
 
   init {
-    headerTitle.add(panel, if (isFullScreen && !MacFullScreenControlsManager.enabled()) 0 else GAP_FOR_BUTTONS)
+    headerTitle.add(panel, if (isFullScreen && !MacFullScreenControlsManager.enabled()) 0 else macWindowButtonsGap(isFullScreen = false))
   }
 
   override fun updateBorders(left: Int, right: Int) {

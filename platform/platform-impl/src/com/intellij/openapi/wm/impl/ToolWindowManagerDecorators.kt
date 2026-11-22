@@ -95,7 +95,7 @@ internal class ToolWindowManagerDecorators(
 
     val id = entry.id
     val decorator = entry.toolWindow.getOrCreateDecoratorComponent()
-    val windowedDecorator = WindowedDecorator(manager.project, title = "${entry.toolWindow.stripeTitle} - ${manager.project.name}", component = decorator)
+    val windowedDecorator = WindowedDecorator(manager.project, title = "${entry.toolWindow.stripeTitle} - ${manager.project.name}", decorator = decorator)
     val window = windowedDecorator.getFrame()
 
     MnemonicHelper.init((window as RootPaneContainer).contentPane)
@@ -116,6 +116,7 @@ internal class ToolWindowManagerDecorators(
     finally {
       window.isAutoRequestFocus = true
     }
+    windowedDecorator.mergeHeaderIntoTitleBar()
 
     val rootPane = (window as RootPaneContainer).rootPane
     val rootPaneBounds = rootPane.bounds

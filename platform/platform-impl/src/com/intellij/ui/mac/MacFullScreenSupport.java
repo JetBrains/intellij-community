@@ -7,6 +7,7 @@ import com.apple.eawt.event.FullScreenEvent;
 import com.intellij.ui.FullScreenSupport;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.RootPaneContainer;
 import java.awt.Window;
@@ -22,6 +23,7 @@ import java.awt.Window;
 public final class MacFullScreenSupport implements FullScreenSupport {
   private FullScreenListener myListener;
   private boolean myIsFullScreen;
+  private @Nullable Runnable myChangeListener;
 
   @Override
   public boolean isFullScreen() {
@@ -33,25 +35,40 @@ public final class MacFullScreenSupport implements FullScreenSupport {
     myListener = new FullScreenListener() {
       @Override
       public void windowEnteringFullScreen(FullScreenEvent event) {
-        myIsFullScreen = true;
+        setFullScreen(true);
       }
 
       @Override
       public void windowEnteredFullScreen(FullScreenEvent event) {
-        myIsFullScreen = true;
+        setFullScreen(true);
       }
 
       @Override
       public void windowExitingFullScreen(FullScreenEvent event) {
-        myIsFullScreen = false;
+        setFullScreen(false);
       }
 
       @Override
       public void windowExitedFullScreen(FullScreenEvent event) {
-        myIsFullScreen = false;
+        setFullScreen(false);
       }
     };
     FullScreenUtilities.addFullScreenListenerTo(window, myListener);
+  }
+
+  /**
+   * Sets the listener that runs on the EDT each time the window enters or exits full screen.
+   */
+  public void setChangeListener(@Nullable Runnable listener) {
+    myChangeListener = listener;
+  }
+
+  private void setFullScreen(boolean value) {
+    myIsFullScreen = value;
+    Runnable listener = myChangeListener;
+    if (listener != null) {
+      listener.run();
+    }
   }
 
   @Override

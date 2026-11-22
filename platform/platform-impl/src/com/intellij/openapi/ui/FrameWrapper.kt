@@ -45,6 +45,7 @@ import com.intellij.ui.DisposableWindow
 import com.intellij.ui.FrameState
 import com.intellij.ui.FullScreenSupport
 import com.intellij.ui.ToolbarService
+import com.intellij.ui.mac.MacWindowTitleBar
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.ImageUtil
@@ -55,6 +56,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
@@ -293,6 +295,13 @@ open class FrameWrapper @JvmOverloads constructor(
 
   val isActive: Boolean
     get() = frame?.isActive == true
+
+  /**
+   * The title bar of macOS of the frame, or null in another OS, for a dialog, or before [createContents].
+   */
+  @get:ApiStatus.Internal
+  val macTitleBar: MacWindowTitleBar?
+    get() = frame?.let { MacWindowTitleBar.of(it) }
 
   protected open fun createJFrame(parent: IdeFrame): JFrame = MyJFrame(this, parent)
 

@@ -18,8 +18,19 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.MacUtil
+import com.intellij.util.ui.JBValue
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.JFrame
+import kotlin.math.roundToInt
+
+/**
+ * Returns the unscaled width that the window buttons of macOS take at the leading side of a title bar row.
+ * The full screen controls have a fixed width of 52 points and scalable gaps of 13 points at each side.
+ * In full screen without the new full screen controls, the row has no window buttons and keeps a small gap.
+ */
+internal fun macWindowButtonsGap(isFullScreen: Boolean, newFullScreenControls: Boolean = MacFullScreenControlsManager.enabled()): Int {
+  return if (isFullScreen && !newFullScreenControls) 5 else 26 + JBValue.Float(52f, true).unscaled.roundToInt()
+}
 
 /**
  * @author Alexander Lobas

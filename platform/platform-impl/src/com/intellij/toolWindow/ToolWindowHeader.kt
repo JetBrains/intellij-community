@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.impl.DockToolWindowAction
@@ -72,6 +73,11 @@ abstract class ToolWindowHeader internal constructor(
 
   @ApiStatus.Internal
   companion object {
+    /**
+     * Marks a header that shows in the title bar row of macOS, in one row with the window buttons.
+     */
+    internal val IN_MAC_TITLE_BAR: Key<Boolean> = Key.create("ToolWindowHeader.IN_MAC_TITLE_BAR")
+
     internal fun getUnscaledHeight() = if (ExperimentalUI.isNewUI()) {
       JBUI.CurrentTheme.ToolWindow.headerHeight()
     }
@@ -241,6 +247,11 @@ abstract class ToolWindowHeader internal constructor(
 
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
+        if (ClientProperty.isTrue(this@ToolWindowHeader, IN_MAC_TITLE_BAR)) {
+          // the window zooms on its own
+          return true
+        }
+
         val manager = toolWindow.toolWindowManager
         manager.setMaximized(this@ToolWindowHeader.toolWindow, !manager.isMaximized(this@ToolWindowHeader.toolWindow))
         return true
@@ -278,6 +289,28 @@ abstract class ToolWindowHeader internal constructor(
   }
 
   fun getToolbar(): ActionToolbar = toolbar
+
+  /**
+   * Returns true if a press on [deepest] in the header moves the window that shows the header in its title bar row.
+   * The empty space of the header, the tab panel, and the label with the name of the tool window move the window.
+   * Another component with a mouse listener, such as a tab or a button, takes the press.
+   */
+  internal fun isTitleBarArea(deepest: Component): Boolean {
+    var component: Component? = deepest
+    while (component != null) {
+      if (component === this || SwingUtilities.isDescendingFrom(this, component)) {
+        return true
+      }
+      if (component !== westPanel.component &&
+          component !== contentUi.tabComponent &&
+          !contentUi.currentLayout.isIdLabel(component) &&
+          (component.mouseListeners.isNotEmpty() || component.mouseMotionListeners.isNotEmpty())) {
+        return false
+      }
+      component = component.parent
+    }
+    return false
+  }
 
   fun getToolbarActions(): DefaultActionGroup = actionGroup
 

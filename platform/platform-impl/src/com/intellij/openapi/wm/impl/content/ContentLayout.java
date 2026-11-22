@@ -30,6 +30,13 @@ public abstract class ContentLayout {
 
   public abstract void init(@NotNull ContentManager contentManager);
 
+  /**
+   * Returns true if {@code component} is the label of this layout that shows the name of the tool window.
+   */
+  public boolean isIdLabel(@NotNull Component component) {
+    return component == idLabel;
+  }
+
   public abstract void reset();
 
   public abstract void layout();
