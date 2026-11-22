@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test
 class Py2TypeCheckerInspectionTest : PyCodeInsightTestCase() {
 
   @Test
-  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false)
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27)
   fun `str unicode`() = test("""
     def str_to_none(b):
         '''
@@ -72,7 +72,7 @@ class Py2TypeCheckerInspectionTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false)
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27)
   fun `typed generator calls`() = test("""
     def test():
         def gen(n):

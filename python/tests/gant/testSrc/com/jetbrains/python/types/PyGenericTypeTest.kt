@@ -295,7 +295,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35)
     fun `homogeneous tuple substitution`() = test("""
       from typing import TypeVar, Tuple
       T = TypeVar('T')
@@ -753,7 +753,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-20057"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `function returns type of instance`() = test("""
       from typing import Type, TypeVar
       
@@ -1167,7 +1166,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-36008", "PY-26061"])
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36)
     fun `unresolved generic replacement`() = test("""
       from typing import TypeVar, Generic
       
@@ -1233,7 +1232,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `TypeVar constraints with legacy syntax`() = test("""
       from typing import TypeVar
       
@@ -1251,7 +1249,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `TypeVar constraints with PEP695 syntax`() = test("""
       def concat[AnyStr: (str, bytes)](x: AnyStr, y: AnyStr) -> AnyStr:
           return x + y

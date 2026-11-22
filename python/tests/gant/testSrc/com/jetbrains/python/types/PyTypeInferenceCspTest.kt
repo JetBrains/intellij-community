@@ -115,10 +115,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestCaseOptions(
-    assertRecursionPrevention = false,
-    additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)],
-  )
+  @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
   fun `Attrs type per default`() = test("""
     from typing import Any, assert_type
     import attr

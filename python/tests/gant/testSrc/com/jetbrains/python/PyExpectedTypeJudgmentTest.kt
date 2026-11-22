@@ -1161,7 +1161,6 @@ class PyExpectedTypeJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestCaseOptions(assertRecursionPrevention = false)
   fun `Key in dict comprehension as argument`() = test("""
     def foo(d: dict[int, str]): ...
     foo({idx: str(idx) for idx in range(5)})
@@ -1169,7 +1168,6 @@ class PyExpectedTypeJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestCaseOptions(assertRecursionPrevention = false)
   fun `Value in dict comprehension as argument`() = test("""
     def foo(d: dict[int, str]): ...
     foo({i: str(i) for i in range(5)})
@@ -1177,7 +1175,6 @@ class PyExpectedTypeJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestCaseOptions(assertRecursionPrevention = false)
   fun `Key in dict comprehension assigned to typed target`() = test("""
     d: dict[int, str] = {idx: str(idx) for idx in range(5)}
     #                    └ EXPECTED_TYPE int

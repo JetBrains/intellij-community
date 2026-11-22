@@ -370,7 +370,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-10413"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `function parameter return type`() = test("""
       def func(f, seq):
           '''

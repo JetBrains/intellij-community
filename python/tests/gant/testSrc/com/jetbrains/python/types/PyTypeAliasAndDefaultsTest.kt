@@ -141,7 +141,6 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-84484"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `recursive type in dict`() = test("""
       from SpanQuery import SpanQuery
 

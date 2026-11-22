@@ -323,7 +323,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76659"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `types in loop compute fast`() = test("""
       def is_empty(x: int, y: int) -> bool:
           ...
@@ -825,7 +824,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON37, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON37)
     @TestFor(issues = ["PY-27913"])
     fun `dunder class getitem first parameter`() = test("""
       class Foo:
@@ -835,7 +834,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36)
     @TestFor(issues = ["PY-25545"])
     fun `dunder init subclass first parameter`() = test("""
       class Foo:
@@ -1281,7 +1280,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27)
     fun `except type with python2 comma syntax`() = test("""
       try:
           pass
@@ -1606,7 +1605,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-21408"])
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34)
     fun `class meta attrs against structural`() = test("""
       class B1(type):
           meta_attr = "meta_attr"
@@ -1775,7 +1774,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
   @Nested
   inner class BinaryOrContextManagerMiscInference {
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-9662"])
     fun `binary expression with annotated Any operand left`() = test("""
       from typing import Any
@@ -1785,7 +1783,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-9662"])
     fun `binary expression with annotated Any operand right`() = test("""
       from typing import Any
@@ -1795,7 +1792,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35)
     @TestFor(issues = ["PY-9662"])
     fun `binary expression with unknown parameter operand left`() = test("""
       def f(x):
@@ -1804,7 +1801,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35)
     @TestFor(issues = ["PY-9662"])
     fun `binary expression with unknown parameter operand right`() = test("""
       def f(x):
@@ -1970,7 +1967,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON311, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON311)
     fun `return type annotation overrides body`() = test("""
       def foo(x) -> list:
           return x
@@ -1979,7 +1976,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34)
     fun `type annotation on parameter`() = test("""
       def foo(x: str) -> list:
       #                  ^^^^ WARNING Expected type 'List[Unknown]', got 'None' instead
@@ -1991,7 +1988,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
   @Nested
   inner class TemplateStrings {
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON314, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON314)
     @TestFor(issues = ["PY-79967"])
     fun `interpolation expression type from template string`() = test("""
       name = "John"
@@ -2000,7 +1997,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
     @TestFor(issues = ["PY-79967"])
     fun `template string inferred as str before python314`() = test("""
       expr = t"template string"
@@ -2009,7 +2006,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON314, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON314)
     @TestFor(issues = ["PY-79967"])
     fun `template string inferred as Template at python314`() = test("""
       expr = t"template string"
@@ -2751,7 +2748,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87575"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `iter defined in metaclass`() = test("""
       from collections.abc import Iterator
       from typing import assert_type
@@ -2777,7 +2773,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76659"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `types in loop compute fast inspection`() = test("""
       def is_empty(xx: int, yy: int) -> bool:
           ...
@@ -3066,7 +3061,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `unknown reference`() = test("""
       expr = x
       #│     └ ERROR Unresolved reference 'x'
@@ -3074,7 +3068,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `unknown list`() = test("""
       expr = [x]
       #│      └ ERROR Unresolved reference 'x'
@@ -3082,7 +3075,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `unknown generator`() = test("""
       def f():
         a = yield x
@@ -3094,7 +3086,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `generic identity over unknown list`() = test("""
       def f[T](t: T) -> T: ...
 
@@ -3143,7 +3134,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestCaseOptions(assertRecursionPrevention = false)
   fun `NoneType and type of None`() = test("""
     from types import NoneType
 

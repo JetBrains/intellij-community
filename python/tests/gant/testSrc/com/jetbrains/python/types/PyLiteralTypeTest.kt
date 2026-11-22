@@ -697,7 +697,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27)
     fun `narrow literal union by legacy not equal operator`() = test("""
       from typing import Literal
       def foo(v: Literal["abba", "ab"]):

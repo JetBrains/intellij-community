@@ -575,7 +575,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-26354"])
-    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)], assertRecursionPrevention = false)
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
     fun `initializing attrs`() = test("""
       import attr
       import typing
@@ -1667,7 +1667,6 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-11977"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `metaclass instance members provided and no type check warning when pass into method use this members`() = test("""
       def expecting(p):
           print(p.meta_inst_lvl)
@@ -1746,7 +1745,6 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `generic instance variable access via class is ambiguous`() = test("""
       from typing import Self
 

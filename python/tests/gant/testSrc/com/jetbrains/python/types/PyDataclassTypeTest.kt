@@ -744,7 +744,6 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
   inner class InitArgumentTypeChecking {
     @Test
     @TestFor(issues = ["PY-27398"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     @TestInspections(disableInspections = [PyArgumentListInspection::class, PyStdlibDataclassInspection::class])
     fun `initializing dataclass checks generated init arguments`() = test("""
       import dataclasses

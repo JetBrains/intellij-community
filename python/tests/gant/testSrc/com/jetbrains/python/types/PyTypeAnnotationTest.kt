@@ -2151,7 +2151,6 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-36317"])
-  @TestCaseOptions(assertRecursionPrevention = false)
   fun `dict subscription not reported as parametrized generic`() = test(
     """
     keys_and_types = {

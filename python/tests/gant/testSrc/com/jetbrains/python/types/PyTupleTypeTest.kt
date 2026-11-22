@@ -862,7 +862,6 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-64359"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `tuple dict values`() = test("""
       def f(a: dict[str, int]):
           b: tuple[int, ...] = tuple(a.values())
@@ -1233,7 +1232,6 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-23138"])
-  @TestCaseOptions(assertRecursionPrevention = false)
   fun `homogeneous tuple plus heterogeneous tuple with the same elements type`() =
     test("""
     A = tuple(sorted([1, 4, 2]))
