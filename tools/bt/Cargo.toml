@@ -124,7 +124,7 @@ verbose_file_reads = "warn"
 # named here. A crate lists a dependency with `.workspace = true`, with one exception. The Air UI-lane workspace,
 # `community/tools/vm`, links `bt-junit` and `bt-core` through path dependencies, and rules_rs reads
 # their `[dependencies]` without this workspace. Those two crates spell each normal dependency inline, with the version
-# and the features of this table. `bt-core` links `checkout-files` and `distpath` of the dev-dist tools through path
+# and the features of this table. `bt-core` links `checkout-files` and `distpath` of the distribution tools through path
 # dependencies, and `defs.bzl` maps them to their community targets.
 [workspace.dependencies]
 # Workspace crates.

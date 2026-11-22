@@ -114,7 +114,7 @@ module.
 - The stale report names each name that no registry duplicates any more.
 - Neither report names a product. Many products share one registry, so a product name would say nothing.
 - The rule joins the `commitChanges` guard beside `collectPluginVariantOverlaps`, so a red rule blocks the
-  dev-distribution plan write and every XML write of the run.
+  distribution plan write and every XML write of the run.
 
 ## Auto-fix
 

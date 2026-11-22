@@ -10,11 +10,11 @@ load("//build/rust-tools:defs.bzl", "rust_tool_crate", "rust_tool_hub")
 _LINTS = Label("//tools/bt:lints")
 
 # The crates of another workspace that a crate here links through a path dependency, by Cargo package name:
-# `checkout-files` and `distpath` of the dev-dist tools. `@bt` would build such a crate a second time, without its lint policy, so the crate links the
+# `checkout-files` and `distpath` of the distribution tools. `@bt` would build such a crate a second time, without its lint policy, so the crate links the
 # target of this module instead.
 _CROSS_MODULE_CRATES = {
-    "checkout-files": "//build/dev-dist-tools/crates/checkout-files",
-    "distpath": "//build/dev-dist-tools/crates/distpath",
+    "checkout-files": "//build/dist-tools/crates/checkout-files",
+    "distpath": "//build/dist-tools/crates/distpath",
 }
 
 _HUB = rust_tool_hub(

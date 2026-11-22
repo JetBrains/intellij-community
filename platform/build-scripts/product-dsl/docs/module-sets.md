@@ -322,7 +322,7 @@ Read the two decision sections above before you add a set.
 
 3. Regenerate from the repository root. The first generator run writes the new XML. The converter then adds
    it to the `exports_files` list of its `BUILD.bazel`. The second generator run reads that export into the
-   dev-dist descriptor files. The check fails without the second run.
+   distribution descriptor files. The check fails without the second run.
 
    ```bash
    bazel run //platform/buildScripts:plugin-model-tool

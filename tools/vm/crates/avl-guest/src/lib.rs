@@ -21,7 +21,7 @@
 //! This crate is dispatch plus the verbs. The documents that cross to the host, and every verb's name, are declared
 //! in `avl-wire`, where the host reads the same declaration; the pack report is `avl-trace-tools`'. Of the crates of
 //! this workspace it depends on `avl-wire` and `avl-trace-tools` alone, never on `avl-base`, so the agent links no
-//! controller code. `dev-launch` of the dev-dist tools composes the argument file of the lane IDE, the same composer
+//! controller code. `dev-launch` of the distribution tools composes the argument file of the lane IDE, the same composer
 //! that writes the argument file of a dev launch row.
 
 mod cli;

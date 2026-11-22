@@ -40,7 +40,7 @@ object SnapshotBuildNumber {
  * when the result is a nightly.
  *
  * `BuildContextImpl.pluginBuildNumber` is the one Kotlin reader. The descriptor writer (`stamps` of
- * `community/build/dev-dist-tools/bins/plugin-descriptor-writer`) ports this rule, and its tests guard the version string.
+ * `community/build/dist-tools/bins/plugin-descriptor-writer`) ports this rule, and its tests guard the version string.
  */
 internal fun computePluginBuildNumber(buildNumber: String): String {
   var value = buildNumber

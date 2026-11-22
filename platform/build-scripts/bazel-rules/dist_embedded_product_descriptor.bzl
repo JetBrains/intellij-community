@@ -82,7 +82,7 @@ def _dist_embedded_product_descriptor_impl(ctx):
     args.add_all(declared.descriptor_jar_args, format_each = "--descriptor-in-jar=%s")
     args.add_all(ctx.attr.separate_jar, format_each = "--separate-jar=%s")
     ctx.actions.run(
-        mnemonic = "DevDistEmbeddedProductDescriptor",
+        mnemonic = "DistEmbeddedProductDescriptor",
         inputs = declared.inputs,
         outputs = [output],
         executable = ctx.executable._resolver,

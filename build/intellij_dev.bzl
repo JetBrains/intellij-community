@@ -417,7 +417,7 @@ runs that command, writes a copy of the vmoptions file with its debug options, a
         "env": attr.string_dict(doc = "Environment variables `bazel run` sets for the IDE."),
         "data": attr.label_list(allow_files = True, doc = "Extra runfiles of the launch target."),
         "program_args": attr.string_list(doc = "The program arguments of the row, which come before the arguments of `bazel run`. Each value is one argument; `$(location)` and make variables expand, and `${BUILD_WORKSPACE_DIRECTORY}` and `${HOME}` resolve at analysis. The first one can select a custom command."),
-        "_dev_home": attr.label(default = Label("//build/dev-dist-tools/bins/dev-home:dev-home_opt"), executable = True, cfg = "target"),
+        "_dev_home": attr.label(default = Label("//build/dist-tools/bins/dev-home:dev-home_opt"), executable = True, cfg = "target"),
         "_linux": attr.label(default = Label("@platforms//os:linux")),
         "_macos": attr.label(default = Label("@platforms//os:macos")),
         "_windows": attr.label(default = Label("@platforms//os:windows")),

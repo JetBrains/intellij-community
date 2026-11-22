@@ -110,7 +110,7 @@ def _dist_runtime_module_repository_impl(ctx):
     layout_args.add(ctx.file.runtime_module_facts, format = "--module-facts=%s")
     layout_args.add(selected_facts, format = "--selected-facts=%s")
     ctx.actions.run(
-        mnemonic = "DevDistRuntimeLayout",
+        mnemonic = "DistRuntimeLayout",
         executable = ctx.executable._runtime_layout,
         tools = dist_tool_inputs(ctx.attr._runtime_layout),
         inputs = depset(parts + frontend_parts + inputs + [ctx.file.bazel_targets_json, ctx.file.runtime_module_facts]),
@@ -131,7 +131,7 @@ def _dist_runtime_module_repository_impl(ctx):
     args.add_all(ctx.files.ide_properties, format_each = "--ide-properties=%s")
     args.add("--output-dir=" + ctx.outputs.compact.dirname.removesuffix("/modules"))
     ctx.actions.run(
-        mnemonic = "DevDistRuntimeModuleRepository",
+        mnemonic = "DistRuntimeModuleRepository",
         executable = ctx.executable._generator,
         inputs = depset([selected_facts, layout] + inputs + ctx.files.ide_properties),
         outputs = [ctx.outputs.compact, ctx.outputs.jar],
@@ -162,7 +162,7 @@ def _dist_runtime_module_facts_impl(ctx):
     args.add("--project-dir=" + project_tree.path)
     args.add(output, format = "--output=%s")
     ctx.actions.run(
-        mnemonic = "DevDistRuntimeModuleFacts",
+        mnemonic = "DistRuntimeModuleFacts",
         executable = ctx.executable._writer,
         inputs = [project_tree],
         outputs = [output],

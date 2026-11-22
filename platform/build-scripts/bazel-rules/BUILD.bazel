@@ -22,7 +22,7 @@ bool_flag(
     visibility = ["//visibility:public"],
 )
 
-# Whether a dev-distribution fragment writes out the packaging recipe it executed, beside its own outputs.
+# Whether a distribution fragment writes out the packaging recipe it executed, beside its own outputs.
 #
 # A sibling of `trace_spans` rather than a reuse of it, with the same shape and the same off-means-absent rule.
 # Separate because the two answer different questions and are wanted at different times: `trace_spans` measures a
@@ -43,43 +43,43 @@ bool_flag(
 # `cfg = "exec"`, never the `rust_binary` itself. See `dist_tool`.
 dist_tool(
     name = "content_module_packer",
-    tool = "//build/dev-dist-tools/bins/content-module-packer",
+    tool = "//build/dist-tools/bins/content-module-packer",
     visibility = ["//visibility:public"],
 )
 
 dist_tool(
     name = "dist_collector",
-    tool = "//build/dev-dist-tools/bins/dev-dist-collector",
+    tool = "//build/dist-tools/bins/dist-collector",
     visibility = ["//visibility:public"],
 )
 
 dist_tool(
     name = "dist_composer",
-    tool = "//build/dev-dist-tools/bins/dev-dist-composer",
+    tool = "//build/dist-tools/bins/dist-composer",
     visibility = ["//visibility:public"],
 )
 
 dist_tool(
     name = "plugin_descriptor_writer",
-    tool = "//build/dev-dist-tools/bins/plugin-descriptor-writer",
+    tool = "//build/dist-tools/bins/plugin-descriptor-writer",
     visibility = ["//visibility:public"],
 )
 
 dist_tool(
     name = "plugin_remainder_packer",
-    tool = "//build/dev-dist-tools/bins/plugin-remainder-packer",
+    tool = "//build/dist-tools/bins/plugin-remainder-packer",
     visibility = ["//visibility:public"],
 )
 
 dist_tool(
     name = "product_files",
-    tool = "//build/dev-dist-tools/bins/product-files",
+    tool = "//build/dist-tools/bins/product-files",
     visibility = ["//visibility:public"],
 )
 
 dist_tool(
     name = "runtime_layout",
-    tool = "//build/dev-dist-tools/bins/runtime-layout",
+    tool = "//build/dist-tools/bins/runtime-layout",
     visibility = ["//visibility:public"],
 )
 
@@ -98,7 +98,7 @@ test_suite(
         ":dist_platform_jar_order_tests",
         ":dist_product_content_tests",
         ":java_glob_tests",
-        "//build/dev-dist-tools/bins/plugin-descriptor-writer:descriptor_rule_tests",
+        "//build/dist-tools/bins/plugin-descriptor-writer:descriptor_rule_tests",
         "//platform/build-scripts/bazel-rules/context-plugin-dir-tests:context_plugin_dir_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests:dev_plugin_remainder_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-tests:dev_plugin_tests",

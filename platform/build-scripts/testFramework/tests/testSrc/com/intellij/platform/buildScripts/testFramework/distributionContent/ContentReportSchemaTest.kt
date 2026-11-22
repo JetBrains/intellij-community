@@ -135,7 +135,7 @@ private val EXECUTED_PLAN_ENTRY = NarrowSchema(
     "os" to "one plan is one target platform, so this is constant over its rows",
     "arch" to "one plan is one target platform, so this is constant over its rows",
     "libc" to "one plan is one target platform, so this is constant over its rows",
-    // The packer's half of the recipe. `./build/dev-dist.cmd replay` packs a fragment's own source list again and
+    // The packer's half of the recipe. `./build/dist.cmd replay` packs a fragment's own source list again and
     // compares the bytes, so the ordered list already has a gate; this comparison covers the other half.
     "sources" to "the executed ordered source list, which the replay gate reproduces byte for byte",
     // Membership facts a content target needs and a jar's identity does not. A jar name plus its two module lists is

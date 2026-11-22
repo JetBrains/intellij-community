@@ -38,7 +38,7 @@ data class FileEntry(
    * is no source list to give, and saying so is the point - a recipe that listed only jars would report the rest as
    * absent rather than as unexplained.
    *
-   * Set only by the executed-recipe report of a dev-distribution fragment, so it is absent from every checked-in
+   * Set only by the executed-recipe report of a distribution fragment, so it is absent from every checked-in
    * content report. A packaging report says only what landed where; a recipe has to say how.
    */
   @JvmField val kind: String? = null,
@@ -51,7 +51,7 @@ data class FileEntry(
    * cache keys on the merged list rather than on the three. This is the field that can state it, and it states
    * something the other three do not: which *input* each source is, rather than which member it belongs to.
    *
-   * Set only by the executed-recipe report of a dev-distribution fragment; empty in every checked-in report.
+   * Set only by the executed-recipe report of a distribution fragment; empty in every checked-in report.
    */
   @JvmField val sources: List<RecipeSource> = emptyList(),
 ) {

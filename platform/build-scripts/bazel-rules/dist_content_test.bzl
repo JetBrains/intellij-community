@@ -42,7 +42,7 @@ def _empty_tree(ctx, tree):
         arguments = ["x", archive.path, "-d", tree.path],
         inputs = [archive],
         outputs = [tree],
-        mnemonic = "DevDistContentTestEmptyTree",
+        mnemonic = "DistContentTestEmptyTree",
     )
 
 def _fake_module_impl(ctx):
@@ -372,7 +372,7 @@ def _runtime_module_repository_test_impl(ctx):
 
     # The assembly reads the part, bazel-targets.json and the module facts, and writes the layout and the selected facts.
     # The generator reads the layout, the selected facts and the core descriptor, and writes the two predeclared files.
-    assemblies = [action for action in actions if action.mnemonic == "DevDistRuntimeLayout"]
+    assemblies = [action for action in actions if action.mnemonic == "DistRuntimeLayout"]
     asserts.equals(env, 1, len(assemblies))
     layout = target[OutputGroupInfo].runtime_module_repository_layout.to_list()
     asserts.equals(env, 2, len(layout))
@@ -381,7 +381,7 @@ def _runtime_module_repository_test_impl(ctx):
         asserts.true(env, "--module-facts=" + ctx.file.module_facts.path in assemblies[0].argv)
         asserts.true(env, ctx.file.module_facts in assemblies[0].inputs.to_list())
         asserts.equals(env, layout, assemblies[0].outputs.to_list())
-    generators = [action for action in actions if action.mnemonic == "DevDistRuntimeModuleRepository"]
+    generators = [action for action in actions if action.mnemonic == "DistRuntimeModuleRepository"]
     asserts.equals(env, 1, len(generators))
     if generators:
         asserts.equals(env, ["module-descriptors.dat", "module-descriptors.jar"], [file.basename for file in generators[0].outputs.to_list()])
@@ -432,7 +432,7 @@ def _distribution_groups_test_impl(ctx):
     groups = target[OutputGroupInfo]
     expected_production = [component[OutputGroupInfo].dist_plugin_outputs.to_list()[0] for component in ctx.attr.production]
     asserts.equals(env, sorted(expected_production), sorted(groups.dist_plugin_outputs.to_list()))
-    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevDistCompose"]
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDistCompose"]
     asserts.equals(env, 1, len(actions))
     return analysistest.end(env)
 
@@ -467,7 +467,7 @@ def _sibling_vm_options_test_impl(ctx):
 
     # The provider and the composer get the home prefix. The composer gets no option for the output itself.
     asserts.equals(env, ctx.attr.home_prefix, info.home_prefix)
-    composes = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevDistCompose"]
+    composes = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDistCompose"]
     asserts.equals(env, 1, len(composes), "one action composes the export")
     if composes:
         prefixes = [argument for argument in composes[0].argv if argument.startswith("--home-prefix")]

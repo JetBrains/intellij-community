@@ -14,7 +14,7 @@ def _ide(platform_set_prefix, images, plugin_xml, application_info, extra_projec
     read.
     """
     return struct(
-        platform_set = platform_set_prefix + "_dev_platform",
+        platform_set = platform_set_prefix + "_platform",
         extra_project_files = [images, plugin_xml, application_info] + extra_project_files,
     )
 

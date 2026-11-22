@@ -1,4 +1,4 @@
-// The protocol of the docs gate of a site. The Rust crate `docs-gate` (community/build/dev-dist-tools/crates) runs the
+// The protocol of the docs gate of a site. The Rust crate `docs-gate` (community/build/dist-tools/crates) runs the
 // gate script of a site on the bun that Bazel declares, and reads its output:
 //   - stdout starts with the `docs-gate 1` sentinel line, printed before any check module loads, so wrapper or
 //     bootstrap noise cannot be mistaken for it.

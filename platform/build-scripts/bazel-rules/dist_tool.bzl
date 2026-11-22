@@ -28,7 +28,7 @@ def _dist_tool_impl(ctx):
         arguments = ["--flagfile=" + flag_file.path, "--output=" + identity.path],
         inputs = files + [flag_file],
         outputs = [identity],
-        mnemonic = "DevDistToolIdentity",
+        mnemonic = "DistToolIdentity",
         progress_message = "Writing the identity of %s" % tool.basename,
     )
     return [
@@ -59,10 +59,10 @@ this file, see `community/build/bazel_scrubbing.cfg`.""",
         tool = attr.label(mandatory = True, executable = True, cfg = "target", doc = "The tool binary."),
         _allowlist_function_transition = attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
         _identity_writer = attr.label(
-            default = "//build/dev-dist-tools/bins/tool-identity",
+            default = "//build/dist-tools/bins/tool-identity",
             executable = True,
             cfg = "exec",
         ),
-        _manifests = attr.label(default = "//build/dev-dist-tools:tool_identity_manifests"),
+        _manifests = attr.label(default = "//build/dist-tools:tool_identity_manifests"),
     ),
 )

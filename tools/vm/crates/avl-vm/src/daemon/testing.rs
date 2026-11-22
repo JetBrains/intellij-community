@@ -498,7 +498,7 @@ pub(crate) fn fixture_descriptor_for(jbr_platform: &str) -> Value {
         "schemaVersion": avl_wire::runtime::SCHEMA_VERSION,
         "kind": "air-ui-daemon-runtime",
         "staticJvmFlags": ["-Xmx1g", "-Dflag=<v>"],
-        "devDist": {
+        "dist": {
             "config": file("_main/dist/x.ide.config"),
             "fingerprint": file("_main/dist/fingerprint.txt"),
             "home": file("_main/dist/home"),

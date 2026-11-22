@@ -38,7 +38,7 @@ import kotlin.system.exitProcess
  */
 fun main(args: Array<String>) {
   val options = parseCommandLineOptions(args)
-  runDevDistJob(traceFile = options.optionalPath(TRACE_FILE_OPTION), jobName = "assemble dev distribution") {
+  runDevDistJob(traceFile = options.optionalPath(TRACE_FILE_OPTION), jobName = "assemble distribution") {
     assembleDevDistribution(options)
   }
   // the build uses thread pools and Netty/Ktor selectors that may outlive the last coroutine

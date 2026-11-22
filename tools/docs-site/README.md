@@ -170,7 +170,7 @@ kernel holds the protocol, and the gate of each site calls its `runGate`:
 - Exit 4: the gate could not finish, such as an OpenSpec CLI that gives no report. The report follows the sentinel.
 - Any other result, or no sentinel: an infrastructure failure, not a check failure.
 
-The crate `docs-gate` of `community/build/dev-dist-tools/crates` runs the gate and reads its output. Its test target
+The crate `docs-gate` of `community/build/dist-tools/crates` runs the gate and reads its output. Its test target
 takes `DOCS_GATE_DATA` and `DOCS_GATE_ENV` of `//tools/openspec:defs.bzl`. `air-architecture-model_test` of
 `plugins/air/tests/architecture-gate` runs the Air gate, and `//build/docs:docs-site_test` runs the build gate. The gate has no
 `node_modules`, so each module that it loads imports nothing from npm. `scripts/yamlCompat.ts` parses with

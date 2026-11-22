@@ -906,7 +906,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
     layout_arguments.add(classpath_descriptor.path, format = "--descriptor=%s")
     layout_arguments.add(runtime_layout, format = "--output=%s")
     ctx.actions.run(
-        mnemonic = "DevDistRuntimeLayoutPart",
+        mnemonic = "DistRuntimeLayoutPart",
         executable = ctx.executable._runtime_layout,
         tools = dist_tool_inputs(ctx.attr._runtime_layout),
         inputs = layout_inputs,

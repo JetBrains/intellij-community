@@ -499,7 +499,7 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.equals(env, ["true" if ctx.attr.separate_classpath_descriptor else "false"], classpath_reserialize)
     asserts.equals(env, [] if ctx.attr.separate_classpath_descriptor else [classpath_descriptor], reserialized_output)
     actions = analysistest.target_actions(env)
-    asserts.equals(env, ["PackDevPluginRemainder", "DevDistRuntimeLayoutPart"], [action.mnemonic for action in actions])
+    asserts.equals(env, ["PackDevPluginRemainder", "DistRuntimeLayoutPart"], [action.mnemonic for action in actions])
     action = actions[0]
     asserts.equals(env, ctx.attr.graph[0].label, remainder.graph.label)
     asserts.equals(env, graph.execution_version, remainder.execution_version)
@@ -647,7 +647,7 @@ _split_part_test = analysistest.make(_split_part_test_impl, config_settings = _P
 def _split_chain_remainder_test_impl(ctx):
     """The chain of a split remainder packs nothing. It derives only its runtime layout part."""
     env = analysistest.begin(ctx)
-    asserts.equals(env, ["DevDistRuntimeLayoutPart"], [action.mnemonic for action in analysistest.target_actions(env)])
+    asserts.equals(env, ["DistRuntimeLayoutPart"], [action.mnemonic for action in analysistest.target_actions(env)])
     return analysistest.end(env)
 
 _split_chain_remainder_test = analysistest.make(_split_chain_remainder_test_impl, config_settings = _PRODUCT_CONFIG)

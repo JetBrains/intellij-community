@@ -137,7 +137,7 @@ pub(crate) fn read(args: &LaneDaemonArgs) -> Result<LaunchInputs, AgentRefusal> 
 pub(crate) fn from_descriptor(descriptor: &RuntimeDescriptor, args: &LaneDaemonArgs) -> Result<LaunchInputs, AgentRefusal> {
     let root = &args.runfiles_root;
     let runfile = |file: &runtime::RuntimeFile| runtime::runtime_file_path(root, file);
-    let ide_config = runfile(&descriptor.dev_dist.config);
+    let ide_config = runfile(&descriptor.dist.config);
     let dist_home = distribution_home(&ide_config)?;
     let java_home = distribution_java_home(&dist_home)?;
     let runtimes = declared_runtimes(&descriptor.static_jvm_flags, root)?;
@@ -182,9 +182,9 @@ fn trace_inputs(flags: &[String], runfiles_root: &Path) -> TraceInputs {
     }
 }
 
-/// The home of the distribution, which the `DevIdeConfig` file names, see [`runtime::dev_dist_home`].
+/// The home of the distribution, which the `DevIdeConfig` file names, see [`runtime::dist_home`].
 fn distribution_home(ide_config: &Path) -> Result<PathBuf, AgentRefusal> {
-    runtime::dev_dist_home(ide_config).map_err(refused)
+    runtime::dist_home(ide_config).map_err(refused)
 }
 
 /// The Java home of the JBR of `dist_home`: `jbr`, and `jbr/Contents/Home` on macOS. A missing `bin/java` is a refusal,

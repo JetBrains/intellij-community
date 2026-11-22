@@ -21,7 +21,7 @@ def _dist_frontend_application_info_impl(ctx):
     args.add(ctx.file.client_application_info, format = "--client-application-info=%s")
     args.add(ctx.file.product_application_info, format = "--product-application-info=%s")
     ctx.actions.run(
-        mnemonic = "DevDistFrontendApplicationInfo",
+        mnemonic = "DistFrontendApplicationInfo",
         inputs = [ctx.file.client_application_info, ctx.file.product_application_info],
         outputs = [output],
         executable = ctx.executable._resolver,

@@ -66,13 +66,13 @@ fun TaskScope.forkDistHalves(
   var communityTask: Subtask<DistBazelComputes>? = null
   // The community half renders first, and the half of this run reads its upstream summary.
   if (distPlanInputExists(projectRoot)) {
-    val upstreamTask = fork("generate community dev-distribution plan") {
-      buildSpan("generate community dev-distribution plan") {
+    val upstreamTask = fork("generate community distribution plan") {
+      buildSpan("generate community distribution plan") {
         computeCommunityDistFiles(projectRoot = projectRoot, verifyPlanUnits = verifyPlanUnits)
       }
     }
     communityTask = upstreamTask
-    bazelTask = fork("generate dev-distribution build sections and plan") {
+    bazelTask = fork("generate distribution build sections and plan") {
       computeDistBazelFiles(
         half = half,
         root = root,
@@ -224,7 +224,7 @@ internal fun computeDistBazelFiles(
     planPackageIsCommunity = half.writesCommunityPackages,
   )
   val files = DistBuildFiles(index)
-  val walk = buildSpan("walk dev-distribution descriptors") {
+  val walk = buildSpan("walk distribution descriptors") {
     walkDescriptors(
       projectRoot = root,
       outputProvider = outputProvider,
@@ -232,7 +232,7 @@ internal fun computeDistBazelFiles(
       generatedModuleSetDescriptors = half.generatedModuleSetDescriptors,
     )
   }
-  val sections = buildSpan("generate dev-distribution build sections") {
+  val sections = buildSpan("generate distribution build sections") {
     val inputs = DistSectionInputs.compute(
       outputProvider = outputProvider,
       products = products,
@@ -254,17 +254,17 @@ internal fun computeDistBazelFiles(
   else {
     distCommunityProducts(distProductClasses(products).filterKeys { it in half.splitProducts }, upstream.productClasses)
   }
-  val executions = buildSpan("generate dev-distribution plugin executions") {
+  val executions = buildSpan("generate distribution plugin executions") {
     computeDistPluginExecutions(
       sections = sections,
       upstreamPackagePlans = upstream?.ownPackagePlans,
       communityProducts = communityProducts,
     )
   }
-  val sectionFiles = buildSpan("write dev-distribution build sections") {
+  val sectionFiles = buildSpan("write distribution build sections") {
     writeDistBuildSectionFiles(projectRoot = root, sections = sections, index = index, files = files, writesPackage = half::ownsPackage)
   }
-  val plan = buildSpan("generate dev-distribution plan") {
+  val plan = buildSpan("generate distribution plan") {
     computeDistPlan(
       half = half,
       outputProvider = outputProvider,

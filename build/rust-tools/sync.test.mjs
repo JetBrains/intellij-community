@@ -49,7 +49,7 @@ const sources = {
 
 // An added clippy source of the community workspace, so that the tests cover one whatever `clippyAdditions` holds.
 const added = {"more.toml": "# More.\ndisallowed-methods = [\n  { path = \"more::h\" },\n]\n"}
-const communityAdditions = {"community/build/dev-dist-tools/Cargo.toml": ["more.toml"]}
+const communityAdditions = {"community/build/dist-tools/Cargo.toml": ["more.toml"]}
 
 function manifestWith(inner) {
   const head = ["[workspace]", "members = [\"crates/*\"]", ""]
@@ -149,7 +149,7 @@ describe("workspaceCopy", () => {
   const readSource = (name) => ({...sources, ...added})[name]
 
   it("gives the added sources of a manifest to its clippy.toml only", () => {
-    const path = "community/build/dev-dist-tools/Cargo.toml"
+    const path = "community/build/dist-tools/Cargo.toml"
     equal(
       workspaceCopy(path, "clippy.toml", readSource, communityAdditions),
       renderCopy("clippy.toml", bans, [{name: "more.toml", text: added["more.toml"]}]),
@@ -192,14 +192,14 @@ describe("detectRoots and resolveManifests", () => {
     const files = new Set(["/repo/MODULE.bazel", "/repo/bazel.cmd"])
     deepEqual(detectRoots("/repo/community", (file) => files.has(file)), {community: "/repo/community", ultimate: "/repo"})
     const manifests = resolveManifests({community: "/repo/community", ultimate: "/repo"})
-    equal(manifests[0].file, "/repo/community/build/dev-dist-tools/Cargo.toml")
-    equal(manifests[1].file, "/repo/build/dev-dist-tools/Cargo.toml")
+    equal(manifests[0].file, "/repo/community/build/dist-tools/Cargo.toml")
+    equal(manifests[1].file, "/repo/build/dist-tools/Cargo.toml")
   })
 
   it("has no ultimate root in a community checkout", () => {
     deepEqual(detectRoots("/community", () => false), {community: "/community", ultimate: null})
     const manifests = resolveManifests({community: "/community", ultimate: null})
-    equal(manifests[0].file, "/community/build/dev-dist-tools/Cargo.toml")
+    equal(manifests[0].file, "/community/build/dist-tools/Cargo.toml")
     equal(manifests[1].file, null)
   })
 })
@@ -223,8 +223,8 @@ describe("runCli", () => {
       }
       // The community workspace has a stale table, a drifted rustfmt.toml and no clippy.toml. The ultimate one is in sync.
       // The controller workspace has the tables, no rustfmt.toml, and a clippy.toml of its own, which `skips` keeps.
-      const communityDir = join(community, "build/dev-dist-tools")
-      const ultimateDir = join(root, "build/dev-dist-tools")
+      const communityDir = join(community, "build/dist-tools")
+      const ultimateDir = join(root, "build/dist-tools")
       const vmDir = join(community, "tools/vm")
       const communityManifest = join(communityDir, "Cargo.toml")
       const ultimateManifest = join(ultimateDir, "Cargo.toml")
@@ -252,9 +252,9 @@ describe("runCli", () => {
       equal(readFileSync(join(communityDir, "rustfmt.toml"), "utf8"), "max_width = 100\n")
       equal(existsSync(join(communityDir, "clippy.toml")), false)
       const text = err.join("\n")
-      match(text, /community\/build\/dev-dist-tools\/Cargo.toml differs from lints.toml/)
-      match(text, /community\/build\/dev-dist-tools\/rustfmt.toml differs from rustfmt.toml/)
-      match(text, /community\/build\/dev-dist-tools\/clippy.toml is missing/)
+      match(text, /community\/build\/dist-tools\/Cargo.toml differs from lints.toml/)
+      match(text, /community\/build\/dist-tools\/rustfmt.toml differs from rustfmt.toml/)
+      match(text, /community\/build\/dist-tools\/clippy.toml is missing/)
       match(text, /community\/tools\/vm\/rustfmt.toml is missing/)
       match(text, /skipped community\/tools\/vm\/clippy.toml: the test keeps its own copy/)
       match(text, /skipped community\/tools\/bt\/Cargo.toml: not in this checkout/)
@@ -270,9 +270,9 @@ describe("runCli", () => {
       const {io, out} = createIo()
       equal(runCli([], {io, roots, sourceDir, skippedCopies}), 0)
       deepEqual(out, [
-        "updated community/build/dev-dist-tools/Cargo.toml",
-        "updated community/build/dev-dist-tools/rustfmt.toml",
-        "updated community/build/dev-dist-tools/clippy.toml",
+        "updated community/build/dist-tools/Cargo.toml",
+        "updated community/build/dist-tools/rustfmt.toml",
+        "updated community/build/dist-tools/clippy.toml",
         "updated community/tools/vm/rustfmt.toml",
       ])
       equal(readFileSync(join(vmDir, "rustfmt.toml"), "utf8"), renderCopy("rustfmt.toml", sources["rustfmt.toml"]))
@@ -298,7 +298,7 @@ describe("runCli", () => {
       // Without the added source, the copy differs from `clippy.toml`.
       const {io, err} = createIo()
       equal(runCli(["--check"], {io, ...options, clippyAdditions: {}}), checkFailedExitCode)
-      match(err.join("\n"), /community\/build\/dev-dist-tools\/clippy.toml differs from clippy.toml/)
+      match(err.join("\n"), /community\/build\/dist-tools\/clippy.toml differs from clippy.toml/)
     })
   })
 
@@ -309,7 +309,7 @@ describe("runCli", () => {
       try {
         const out = join(outDir, "clippy.toml")
         const {io, out: printed, err} = createIo()
-        equal(runCli(["--render", "community/build/dev-dist-tools/Cargo.toml", "clippy.toml", out], {io, ...options}), 0)
+        equal(runCli(["--render", "community/build/dist-tools/Cargo.toml", "clippy.toml", out], {io, ...options}), 0)
         deepEqual([printed, err], [[], []])
         equal(existsSync(join(communityDir, "clippy.toml")), false)
         equal(readFileSync(communityManifest, "utf8"), manifestWith(["stale = \"allow\""]))

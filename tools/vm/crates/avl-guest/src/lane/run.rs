@@ -389,7 +389,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
             })
         })
         .collect::<Result<Vec<_>, AgentRefusal>>()?;
-    let fingerprint = runfile(&descriptor.dev_dist.fingerprint);
+    let fingerprint = runfile(&descriptor.dist.fingerprint);
     let product_stamp = sha256_hex(
         &fs::read(&fingerprint)
             .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot read {}: {error}", fingerprint.display())))?,

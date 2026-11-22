@@ -36,7 +36,7 @@ def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
     is keyed by the container target that groups its jars (`DistContentInfo.library_jars` in `dist_content.bzl`) and a
     multi-jar library has several, in an order the packer depends on. The manifest still holds one line per file, which
     is what keeps `wc -l` counting files for `dist_unused_inputs_test.bzl`. The origin sidecar stays one line per
-    *key* and is read as a lookup rather than positionally (`tally_origins` in `//build/dev-dist-tools/bins/dev-dist`
+    *key* and is read as a lookup rather than positionally (`tally_origins` in `//build/dist-tools/bins/dist`
     keeps the manifest as a list of pairs and the origins as a `HashMap`), so a repeated key resolves to the one origin
     it was recorded under.
 
@@ -265,7 +265,7 @@ def _declare_side_output(flag, ctx, args, base, suffix, option):
     extra argument - and with the flag off there is neither. That is what lets a request for one of these files leave
     every action key, argument list and declared output set exactly as it was.
 
-    **Append the returned file to `outputs`; never prepend it.** `dev-dist trace` joins a span file to its action by the
+    **Append the returned file to `outputs`; never prepend it.** `dist trace` joins a span file to its action by the
     action's *primary* output, which is the first entry of the list handed to `ctx.actions.run`. A side output put first
     re-points the profile's `out` at that file, and then no output in the build matches any span file: every one comes
     back as "no action in this profile produced that output" with no other symptom - a report of nothing, from a build
@@ -460,7 +460,7 @@ def _fragment_impl(ctx):
         # `modules/`.
         args.add("--runtime-module-repository")
 
-        # The layout the repository is generated from, the reference of `./build/dev-dist.cmd runtime-repo`. Not in the
+        # The layout the repository is generated from, the reference of `./build/dist.cmd runtime-repo`. Not in the
         # home, so no distribution composes it.
         runtime_module_repository_layout = ctx.actions.declare_file(ctx.label.name + ".runtime-module-repository-layout.json")
         args.add("--runtime-module-repository-layout=" + runtime_module_repository_layout.path)
@@ -496,7 +496,7 @@ def _fragment_impl(ctx):
     )
     return [
         DefaultInfo(files = depset([home])),
-        # The three files `./build/dev-dist.cmd inputs` joins, in one group: declared keys with their paths, the
+        # The three files `./build/dist.cmd inputs` joins, in one group: declared keys with their paths, the
         # ones the assembly never resolved, and which half of the declaration asked for each. Requesting the group runs
         # the assembly, which is the point - `used` is only knowable from a real assembly.
         OutputGroupInfo(
@@ -562,7 +562,7 @@ def _collect_component(ctx, files, collection_args, inputs, mnemonic, progress_m
     if main_class:
         args.add("--main-class=" + main_class)
 
-    # The manifest is the primary output, so it is also what names the span file: `dev-dist trace` joins a span file to
+    # The manifest is the primary output, so it is also what names the span file: `dist trace` joins a span file to
     # its action by the primary output's stem, and `X.component.json`'s stem is `X.component`.
     spans = _declare_spans(ctx, args, ctx.label.name + ".component")
 
@@ -1012,8 +1012,8 @@ def _compose(ctx, fragment_targets):
         # exist, the local disk cache is the only intended cache.
         execution_requirements = {"no-remote-cache": "1"},
         resource_set = _composer_resources,
-        mnemonic = "IntellijDevLaunchMetadata" if local_launch else "IntellijDevDistCompose",
-        progress_message = "Composing dev launch metadata %s" % ctx.label if local_launch else "Composing dev distribution %s" % ctx.label,
+        mnemonic = "IntellijDevLaunchMetadata" if local_launch else "IntellijDistCompose",
+        progress_message = "Composing dev launch metadata %s" % ctx.label if local_launch else "Composing distribution %s" % ctx.label,
     )
     return [
         DefaultInfo(

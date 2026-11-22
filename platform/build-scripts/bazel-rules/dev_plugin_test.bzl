@@ -445,7 +445,7 @@ def _classpath_descriptor_test_impl(ctx):
     classpath = analysistest.target_under_test(env)[DistPluginClasspathDescriptorInfo]
     leaf = ctx.attr.leaf[DistPluginDescriptorInfo]
     group = ctx.attr.descriptor_group
-    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "DevDistPluginClasspathDescriptor"]
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "DistPluginClasspathDescriptor"]
     asserts.equals(env, "", classpath.stamp_class)
     asserts.equals(env, classpath.descriptor.owner, leaf.classpath_descriptor.owner)
     asserts.equals(env, classpath.descriptor.basename, leaf.classpath_descriptor.basename)
@@ -752,7 +752,7 @@ def dev_plugin_test_suite(name):
     for case, files, file_prefixes, executables, message in [
         ("many_files", {"bin/helper": resources_token}, {}, [], "copies one file"),
         ("jar_collision", {"lib/x.jar": helper_token}, {}, [], "is both stated in `jars` and copied by `files`"),
-        ("executable_outside_the_subset", {"bin/helper.sh": helper_token}, {}, ["bin/helper.s?"], "glob \"bin/helper.s?\": the dev-dist plan supports only *, ** and {a,b}, but the pattern has '?' at 12"),
+        ("executable_outside_the_subset", {"bin/helper.sh": helper_token}, {}, ["bin/helper.s?"], "glob \"bin/helper.s?\": the distribution plan supports only *, ** and {a,b}, but the pattern has '?' at 12"),
         ("executable_nested_group", {"bin/helper.sh": helper_token}, {}, ["bin/{a,{b}}"], "the pattern has a nested '{' at 7"),
         ("empty_directory", {"helpers": resources_token}, {"helpers": "nowhere/at/all"}, [], "has no declared File below nowhere/at/all"),
         ("file_under_directory", {"helpers": resources_token, "helpers/extra.txt": helper_token}, {"helpers": resources_prefix}, [], "is below 'helpers', which `file_prefixes` copies as a whole"),

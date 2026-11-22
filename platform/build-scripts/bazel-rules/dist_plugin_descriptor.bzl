@@ -534,7 +534,7 @@ def _dist_plugin_descriptor_impl(ctx):
         descriptor,
         ctx.attr._writer,
         # One mnemonic for every plugin descriptor, so a strategy or an execution-info override reaches all of them.
-        mnemonic = "DevDistPluginDescriptor",
+        mnemonic = "DistPluginDescriptor",
         progress_message = "Patching the plugin descriptor of %{label}",
         reserialized_output = classpath_descriptor if ctx.attr.embed_content_modules else None,
     )
@@ -735,7 +735,7 @@ def _dist_plugin_classpath_descriptor_impl(ctx):
         request,
         classpath_descriptor,
         ctx.attr._writer,
-        mnemonic = "DevDistPluginClasspathDescriptor",
+        mnemonic = "DistPluginClasspathDescriptor",
         progress_message = "Embedding the classpath descriptor of %{label}",
     )
     platforms = _resolved_platforms(ctx)

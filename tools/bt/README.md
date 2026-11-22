@@ -19,7 +19,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 `bt_rust_crate` in `defs.bzl` declares each crate: its library or binary, its `<crate>_test` and its `<crate>-clippy`.
 It binds `rust_tool_crate`, the shared macro core in `community/build/rust-tools/defs.bzl`, to the `@bt` hub. bt-core
 takes the slash-path rules from `distpath` and the file listing of a checkout from `checkout-files`, two crates of the
-dev-dist tools, through path dependencies. `_CROSS_MODULE_CRATES` in `defs.bzl` maps them to their targets in this
+distribution tools, through path dependencies. `_CROSS_MODULE_CRATES` in `defs.bzl` maps them to their targets in this
 module, so Bazel builds each once.
 `optimized_binary` of the core declares a shipped binary: one file, and always optimized. `defs.bzl` re-exports it for
 the Air UI-lane workspace. The spec of a Rust tool workspace is `community/build/rust-tools/README.md`.

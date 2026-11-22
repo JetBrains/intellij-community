@@ -259,7 +259,7 @@ use_repo(
 # community checkout too.
 bazel_dep(name = "rules_go", version = "0.63.0")
 
-# Rust, for the dev-distribution tools in //build/dev-dist-tools. rules_rs supplies the Rust toolchains and the
+# Rust, for the distribution tools in //build/dist-tools. rules_rs supplies the Rust toolchains and the
 # `@rules_rust` facade. The ultimate root declares the same `bazel_dep`, override and toolchain tag.
 # `BazelProjectStructureTest` requires identical dependencies, overrides and patch files in both roots.
 bazel_dep(name = "rules_rs", version = "0.2.2")
@@ -306,17 +306,17 @@ register_toolchains(
     dev_dependency = True,
 )
 
-# The crates of //build/dev-dist-tools, resolved from its `Cargo.lock`. The name is short on purpose. It becomes part
+# The crates of //build/dist-tools, resolved from its `Cargo.lock`. The name is short on purpose. It becomes part
 # of every dependency path, and a long name breaks the build on Windows. The tools run only on the host, so the
 # triples are the hosts that run Bazel here, plus the two Linux musl triples of the guest agent. A host without a
 # triple fails to resolve the crates.
 crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
 crate.from_cargo(
-    name = "ddt",
-    cargo_config = "//build/dev-dist-tools:.cargo/config.toml",
-    cargo_lock = "//build/dev-dist-tools:Cargo.lock",
-    cargo_toml = "//build/dev-dist-tools:Cargo.toml",
-    # Renders `[workspace.lints]` as `@ddt//:workspace_cargo_lints`, the lint policy of every crate.
+    name = "dt",
+    cargo_config = "//build/dist-tools:.cargo/config.toml",
+    cargo_lock = "//build/dist-tools:Cargo.lock",
+    cargo_toml = "//build/dist-tools:Cargo.toml",
+    # Renders `[workspace.lints]` as `@dt//:workspace_cargo_lints`, the lint policy of every crate.
     generate_lint_config = True,
     platform_triples = [
         "aarch64-apple-darwin",
@@ -325,14 +325,14 @@ crate.from_cargo(
         "x86_64-pc-windows-msvc",
         "aarch64-unknown-linux-gnu",
         "x86_64-unknown-linux-gnu",
-        # No dev-dist tool runs on the two Linux musl triples. The guest agent links `dev-launch` and its crates, and
+        # No distribution tool runs on the two Linux musl triples. The guest agent links `dev-launch` and its crates, and
         # `:vm-guest-agent-linux-*` builds them for both. The closure checks of `vm` and `air-trace` analyze bt-core for
         # x86_64 Linux musl, and through bt-core `distpath` and its `anyhow`.
         "aarch64-unknown-linux-musl",
         "x86_64-unknown-linux-musl",
     ],
 )
-use_repo(crate, "ddt")
+use_repo(crate, "dt")
 
 # The crates of //tools/bt, resolved from its `Cargo.lock`. The name is short for the same reason. BT runs on every
 # host. The Air UI-lane workspace links BT's crates into `vm` and `air-trace`, and their closure checks configure the

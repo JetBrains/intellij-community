@@ -26,7 +26,7 @@ mod tests;
 
 /// The version of the descriptor this controller reads. Unrelated to [`crate::daemon::PROTOCOL_VERSION`]: one
 /// describes a build artifact, the other a running process. Bump it with `_SCHEMA_VERSION` in the `.bzl`.
-pub const SCHEMA_VERSION: u32 = 11;
+pub const SCHEMA_VERSION: u32 = 12;
 
 /// What the descriptor must declare itself to be.
 ///
@@ -116,13 +116,13 @@ pub struct RuntimeFile {
 /// `fingerprint` is the whole identity of the distribution: the composer derives it from the component
 /// manifests, the plugin classpath, the core classpath and the launch metadata.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct DevDist {
+pub struct Dist {
     pub config: RuntimeFile,
     pub fingerprint: RuntimeFile,
     pub home: RuntimeFile,
 }
 
-/// The guest of the descriptor. The lane IDE runs on the JBR of the distribution, below [`DevDist::home`].
+/// The guest of the descriptor. The lane IDE runs on the JBR of the distribution, below [`Dist::home`].
 ///
 /// `platform` names the JBR and the distribution of one guest, such as `linux_aarch64`. Each reader refuses a
 /// descriptor of another guest; see [`parse_runtime_descriptor`].
@@ -226,7 +226,7 @@ pub struct RuntimeDescriptor {
     pub schema_version: u32,
     pub kind: String,
     pub static_jvm_flags: Vec<String>,
-    pub dev_dist: DevDist,
+    pub dist: Dist,
     pub jbr: Jbr,
     pub ide: IdeSection,
     pub data: Vec<RuntimeFile>,
@@ -239,7 +239,7 @@ pub struct RuntimeDescriptor {
 struct DescriptorFields {
     static_jvm_flags: Vec<String>,
     #[serde(deserialize_with = "object_only")]
-    dev_dist: DevDist,
+    dist: Dist,
     #[serde(deserialize_with = "object_only")]
     jbr: Jbr,
     #[serde(deserialize_with = "object_only")]
@@ -373,7 +373,7 @@ pub fn parse_runtime_descriptor(
         schema_version: SCHEMA_VERSION,
         kind: DESCRIPTOR_KIND.to_owned(),
         static_jvm_flags: fields.static_jvm_flags,
-        dev_dist: fields.dev_dist,
+        dist: fields.dist,
         jbr: fields.jbr,
         ide: fields.ide,
         data: fields.data,
@@ -427,9 +427,9 @@ pub fn parse_runtime_descriptor(
         .data
         .iter()
         .chain([
-            &descriptor.dev_dist.config,
-            &descriptor.dev_dist.fingerprint,
-            &descriptor.dev_dist.home,
+            &descriptor.dist.config,
+            &descriptor.dist.fingerprint,
+            &descriptor.dist.home,
             &descriptor.ide.flags_file,
             &descriptor.ide.project_archive,
         ])
@@ -466,9 +466,9 @@ fn labelled_files(descriptor: &RuntimeDescriptor) -> Vec<(String, &RuntimeFile)>
     }
     let mut labelled = listed_in("data", &descriptor.data);
     labelled.extend([
-        ("devDist.config".to_owned(), &descriptor.dev_dist.config),
-        ("devDist.fingerprint".to_owned(), &descriptor.dev_dist.fingerprint),
-        ("devDist.home".to_owned(), &descriptor.dev_dist.home),
+        ("dist.config".to_owned(), &descriptor.dist.config),
+        ("dist.fingerprint".to_owned(), &descriptor.dist.fingerprint),
+        ("dist.home".to_owned(), &descriptor.dist.home),
         ("ide.flagsFile".to_owned(), &descriptor.ide.flags_file),
         ("ide.projectArchive".to_owned(), &descriptor.ide.project_archive),
     ]);
@@ -540,7 +540,7 @@ pub const HOME_PATH_KEY: &str = "home.path";
 /// The home is the `.dist` directory, or its `Contents` child for a macOS app. The file is a properties file that the
 /// dev distribution rule writes, one `key=value` line each and no escape. So it is read by hand: a crate for it would
 /// grow the closure of the guest agent.
-pub fn dev_dist_home(ide_config: &Path) -> Result<PathBuf, String> {
+pub fn dist_home(ide_config: &Path) -> Result<PathBuf, String> {
     let text = fs::read_to_string(ide_config).map_err(|error| format!("cannot read the IDE config {}: {error}", ide_config.display()))?;
     let home = text
         .lines()

@@ -1,9 +1,0 @@
-# Keep cargo output out of the checkout. `out/` is ignored by git and by Bazel in both checkout layouts.
-[build]
-target-dir = "../../out/cargo-target/dev-dist-tools"
-
-# On macOS the debug info of a unit stays in its rlib instead of in object files beside it: the dev default `unpacked`
-# keeps every object of a unit in the target dir, also the objects of the incremental sessions that rustc deleted.
-# Windows MSVC refuses `off`, so this is not a profile key.
-[target.'cfg(target_os = "macos")']
-rustflags = ["-Csplit-debuginfo=off"]

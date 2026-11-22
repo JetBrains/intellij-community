@@ -8,7 +8,7 @@ describe('SOURCE_PATH_PATTERN', () => {
       'community/build/intellij_dev.bzl',
       'build/BUILD.bazel',
       'MODULE.bazel',
-      'community/build/dev-dist-tools/crates/fscopy/src/lib.rs',
+      'community/build/dist-tools/crates/fscopy/src/lib.rs',
       './build/jpsModelToBazel.cmd',
       'build/docs/scripts/harvest.ts',
       'bin/idea.properties',

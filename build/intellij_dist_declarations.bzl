@@ -364,7 +364,7 @@ def _plan(tables, product):
     community = _community_product(tables, product)
     plan = (community.plans if community != None else tables.plans).get(product)
     if plan == None:
-        fail("No generated dev-distribution plan for product '%s'" % product)
+        fail("No generated distribution plan for product '%s'" % product)
     return plan
 
 def _product_mode(tables, product):
@@ -426,7 +426,7 @@ def _platform_fragments(tables, product, runtime_module_repository = False, plat
     fragment_names = [entry.fragment_name for entry in layout]
     if runtime_module_repository or _modular_loader(tables, product):
         if not _has_runtime_module_repository(tables, product):
-            fail("The generated dev-distribution plan of '%s' has no runtime module repository fragment: no run configuration of the product asks for one" % product)
+            fail("The generated distribution plan of '%s' has no runtime module repository fragment: no run configuration of the product asks for one" % product)
         fragments.append("%s:%s_%s" % (build_package, platform_set, _fragment_suffix(tables.runtime_module_repository_fragment)))
         fragment_names.append(tables.runtime_module_repository_fragment)
     return struct(
@@ -798,7 +798,7 @@ def _check_plan(tables, name, product):
     the product fails in the distribution macro.
     """
     if _community_product(tables, product) == None and product not in tables.plans:
-        fail("%s: product '%s' has no generated dev-distribution plan; add it to the split distributions of its generator half and run plugin-model-tool" % (name, product))
+        fail("%s: product '%s' has no generated distribution plan; add it to the split distributions of its generator half and run plugin-model-tool" % (name, product))
 
 def _distribution_groups(rows):
     """The rows of `DEV_RUN_CONFIGURATIONS` grouped by the distribution they share.

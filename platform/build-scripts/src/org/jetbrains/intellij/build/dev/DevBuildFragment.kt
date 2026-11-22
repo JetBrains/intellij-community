@@ -80,7 +80,7 @@ data class PlatformJarSelector(
     /**
      * Only [jars], and nothing else.
      *
-     * What the reference target of `./build/dev-dist.cmd jars` assembles: the same jars the other producer
+     * What the reference target of `./build/dist.cmd jars` assembles: the same jars the other producer
      * packs, packed the way `JarPackager` packs them, so the two can be compared byte for byte. It is composed into no
      * distribution.
      */

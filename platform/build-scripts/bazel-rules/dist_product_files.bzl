@@ -161,7 +161,7 @@ def _dist_product_files_impl(ctx):
         arguments = [args],
         inputs = inputs,
         outputs = outputs,
-        mnemonic = "DevDistProductFiles",
+        mnemonic = "DistProductFiles",
         progress_message = "Rendering the launch files of %{label}",
     )
     return [DefaultInfo(files = depset(outputs))]

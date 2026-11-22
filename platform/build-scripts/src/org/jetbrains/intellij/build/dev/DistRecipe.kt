@@ -130,9 +130,9 @@ object DistRecipe {
     file.parent?.createDirectories()
     Files.writeString(
       file,
-      "# The packaging recipe the '$fragment' dev-distribution fragment executed, in the checked-in content-report" +
+      "# The packaging recipe the '$fragment' distribution fragment executed, in the checked-in content-report" +
       " schema (com.intellij.platform.distributionContent.FileEntry).\n" +
-      "# Written by DevDistRecipe; ${entries.size} outputs.\n" +
+      "# Written by DistRecipe; ${entries.size} outputs.\n" +
       serializeContentEntries(entries),
     )
   }

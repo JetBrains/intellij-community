@@ -51,7 +51,7 @@ internal fun runDevDistJob(traceFile: Path?, jobName: String, block: () -> Unit)
       // calling this block - so the first touch has to happen inside. Anything reading `TraceManager` earlier in
       // `main` would bind it to the default processor, leave `withTracer`'s `TraceFileSpanExporter` writing a file
       // nothing flushes, and make this call flush a processor with no spans in it. The failure is not silent - the
-      // trace file arrives with no root and `dev-dist trace` reports it as unusable rather than joining it - but it
+      // trace file arrives with no root and `dist trace` reports it as unusable rather than joining it - but it
       // is remote from its cause, so: do not read `TraceManager` before `runDevDistJob`.
       TraceManager.flush()
     }

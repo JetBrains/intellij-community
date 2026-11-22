@@ -9,7 +9,7 @@ import java.nio.file.Path
  * The frontend application info states the keymap fact of the host product.
  *
  * The client and the expected text are the `keymap` fixture of the Rust twin
- * (`community/build/dev-dist-tools/bins/plugin-descriptor-writer/testdata/application_info`).
+ * (`community/build/dist-tools/bins/plugin-descriptor-writer/testdata/application_info`).
  */
 class ApplicationInfoKeymapOverrideTest {
   @Test

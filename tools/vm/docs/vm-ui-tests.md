@@ -410,7 +410,7 @@ route exists. No lane time is measured for this route.
 The runtime descriptor of the lanes names everything a run needs, and its runfiles carry it. The lane test of each
 lane, such as `//plugins/air/tests/integration/ui:ui_lane_test`, runs the descriptor
 `//plugins/air/tests/integration/ui:ui_daemon` on the host, through the `lane-run` verb of the guest agent. The IDE arrives as an already-assembled distribution: `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` on
-the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. The field `devDist.config`
+the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. The field `dist.config`
 of the descriptor names the file of that distribution's `_ide_config` companion target, not the distribution itself.
 The field `ide.flagsFile` names the IDE flags file. The guest agent reads both from these fields. Of the static flags,
 it reads only `-Dair.trace.recorder`, `-Dair.flow.trace=off`, `-Dair.flow.trace.screen=on` and

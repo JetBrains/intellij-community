@@ -6,7 +6,7 @@ GOTO :CMDSCRIPT
 # Shared runner: build one Bazel target, then run it.
 #
 # A caller is a thin `.cmd` that sets the variables below and then hands control to this file.
-# `build/dev-dist.cmd` is the caller. The split copies `bun.cmd` plus `tool-wrapper.*`: the per-tool file holds only
+# `build/dist.cmd` is the caller. The split copies `bun.cmd` plus `tool-wrapper.*`: the per-tool file holds only
 # the facts, and one implementation holds the mechanics.
 #
 # Built and then run, rather than `bazel run`: the caller runs Bazel itself, and `bazel run` holds the
@@ -15,10 +15,10 @@ GOTO :CMDSCRIPT
 # Variable contract, set by the caller:
 #
 #   BAZEL_RUN_TARGET        Required. The Bazel label, with no repository prefix. Example:
-#                          `//build/dev-dist-tools/bins/dev-dist:dev-dist_opt`. This file adds `@community` when it is
+#                          `//build/dist-tools/bins/dist:dist_opt`. This file adds `@community` when it is
 #                          needed.
 #   BAZEL_RUN_BINARY        Required. The path of the built binary below `out/bazel-bin`. Use `/` separators and no
-#                          file extension. Example: `build/dev-dist-tools/bins/dev-dist/dev-dist_opt/dev-dist`. The
+#                          file extension. Example: `build/dist-tools/bins/dist/dist_opt/dist`. The
 #                          Windows half swaps the separators and appends `.exe`, so one value serves both halves.
 #   BAZEL_RUN_IN_COMMUNITY  Optional. Set it to `1` when the target lives below `community/`. Both the label and the
 #                          output path change in an Ultimate checkout. See "Two checkout layouts" below.

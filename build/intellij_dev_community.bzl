@@ -43,7 +43,7 @@ _PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT = "platform_runtime_module_reposito
 def _platform_lib_payload(product):
     info = DIST_PRODUCT_INFO.get(product)
     if info == None:
-        fail("No generated dev-distribution product info for product '%s', so its product mode is unknown" % product)
+        fail("No generated distribution product info for product '%s', so its product mode is unknown" % product)
     return dist_packed_labels(DIST_FRAGMENT_INPUTS, DIST_MODULE_SETS, product, info.mode)
 
 def _product_mode(product):
@@ -112,7 +112,7 @@ def intellij_project_model_tree_community():
             extra_project_files[file] = True
     intellij_project_model_tree(
         name = _PROJECT_MODEL_TREE.split(":")[1],
-        materializer = "//build/dev-dist-tools/bins/project-model-tree",
+        materializer = "//build/dist-tools/bins/project-model-tree",
         mode = "community",
         project_model_files = ["//build:community_project_model_files"],
         extra_project_files = COMMUNITY_EXTRA_PROJECT_FILES + extra_project_files.keys(),

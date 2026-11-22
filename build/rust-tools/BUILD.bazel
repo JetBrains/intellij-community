@@ -6,7 +6,7 @@
 load("@avl//:data.bzl", AVL = "DEP_DATA")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@bt//:data.bzl", BT = "DEP_DATA")
-load("@ddt//:data.bzl", DDT = "DEP_DATA")
+load("@dt//:data.bzl", DT = "DEP_DATA")
 load("//tools/jscpd-test:defs.bzl", "code_gates")
 load(":defs.bzl", "COMMUNITY_WORKSPACE_LINTS", "NOT_ON_WINDOWS", "rust_lints_equal_check", "rust_tool_sources")
 
@@ -29,7 +29,7 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-# The lint tables of the community workspaces, as Bazel reads them. `//build/dev-dist-tools:lints_equal_check` of the
+# The lint tables of the community workspaces, as Bazel reads them. `//build/dist-tools:lints_equal_check` of the
 # ultimate root checks the same tables from that root. The test makes `bazel test --build_tests_only` analyze the check
 # too.
 rust_lints_equal_check(
@@ -50,7 +50,7 @@ build_test(
 code_gates(
     name = "rust-tools",
     size = "small",
-    srcs = rust_tool_sources(AVL, BT, DDT) + [
+    srcs = rust_tool_sources(AVL, BT, DT) + [
         "//build/rust-tools/libtest-junit-wrapper:libtest-junit-wrapper_sources",
         "//build/rust-tools/libtest-junit-wrapper/e2e:e2e_sources",
         "//tools/jscpd-test:jscpd-test_sources",
@@ -65,7 +65,7 @@ code_gates(
     unused_scopes = [
         "../../tools/bt",
         "../../tools/vm",
-        "../dev-dist-tools",
+        "../dist-tools",
         ".",
         "../../tools/jscpd-test",
         "!**/vm/aom/config/**",

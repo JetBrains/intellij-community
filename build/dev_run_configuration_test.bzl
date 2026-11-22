@@ -33,15 +33,15 @@ _FRAGMENT_NAMES = [
 ]
 
 _IDEA_FRAGMENTS = [
-    "//build:idea_community_dev_platform_resources",
-    "//build:idea_community_dev_platform_platform_packed_content_modules",
-    "//build:idea_community_dev_platform_assets",
+    "//build:idea_community_platform_resources",
+    "//build:idea_community_platform_platform_packed_content_modules",
+    "//build:idea_community_platform_assets",
 ]
 
 _ANDROID_STUDIO_FRAGMENTS = [
-    "//build:android_studio_dev_platform_resources",
-    "//build:android_studio_dev_platform_platform_packed_content_modules",
-    "//build:android_studio_dev_platform_assets",
+    "//build:android_studio_platform_resources",
+    "//build:android_studio_platform_platform_packed_content_modules",
+    "//build:android_studio_platform_assets",
 ]
 
 def _check_plan_test_impl(ctx):

@@ -7,7 +7,7 @@ A target of its own, next to the `jvm_library` whose module it is named after - 
 attributes until the packer moved into this module, and the reason it could not be a target then was the reason the whole
 thing was wired through a flag: `jvm_library` belongs to `rules_jvm`, which may not name a label in a repository that
 consumes it, so the tool had to be pushed in from a `.bazelrc` against a default that failed at execution time. With the
-packer in `@community//build/dev-dist-tools/bins/content-module-packer` the rule can name it directly, and a rule of its
+packer in `@community//build/dist-tools/bins/content-module-packer` the rule can name it directly, and a rule of its
 own is then simply the better shape.
 
 Three things the attribute form got wrong and this does not:
@@ -24,7 +24,7 @@ Three things the attribute form got wrong and this does not:
 
 The point of packing here at all is what the action declares: the jars it merges, and nothing else. A reference that
 packs these jars evaluates the whole product layout, so it declares the shared project-model tree, and any `.iml` edit
-re-keys it. No component packs these jars through a layout. The reference that `./build/dev-dist.cmd jars` builds
+re-keys it. No component packs these jars through a layout. The reference that `./build/dist.cmd jars` builds
 packs them only to compare this packer with `JarPackager` byte for byte.
 
 **Source order is load-bearing.** The packer resolves an entry name offered by more than one source to the first source
@@ -185,7 +185,7 @@ def declare_spans(ctx, name):
     Public because every rule that calls `pack_jar` declares its span file the same way.
 
     Named after what the caller states rather than after the jar, because two targets may write a jar of one name and a
-    target name is unique in its package. `dev-dist trace` joins a span file to an action through the action's primary
+    target name is unique in its package. `dist trace` joins a span file to an action through the action's primary
     output, so the jar and this file must not disagree about which action wrote them.
     """
     if not ctx.attr._trace_spans[BuildSettingInfo].value:
@@ -243,7 +243,7 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
         args.add(spans, format = "trace-file=%s")
 
         # Appended, never prepended: the jar stays this action's primary output, which is both its identity in a Bazel
-        # profile and the key `dev-dist trace` joins this file by.
+        # profile and the key `dist trace` joins this file by.
         outputs.append(spans)
     outputs.extend(extra_outputs)
 

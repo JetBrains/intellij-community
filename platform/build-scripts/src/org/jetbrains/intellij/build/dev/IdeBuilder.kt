@@ -127,7 +127,7 @@ data class BuildRequest(
 
   /**
    * Where the runtime module repository fragment also writes the `RuntimeModuleRepositoryLayout` it generates the
-   * repository from, or `null` for none. `./build/dev-dist.cmd runtime-repo` reads it.
+   * repository from, or `null` for none. `./build/dist.cmd runtime-repo` reads it.
    */
   @JvmField val runtimeModuleRepositoryLayoutFile: Path? = null,
 

@@ -56,7 +56,7 @@ class MacSigningInputsTest {
 }
 
 private val MAC_BINARY_VECTORS: Path =
-  COMMUNITY_ROOT.communityRoot.resolve("build/dev-dist-tools/crates/filemeta/testdata/mac-binary-vectors.json")
+  COMMUNITY_ROOT.communityRoot.resolve("build/dist-tools/crates/filemeta/testdata/mac-binary-vectors.json")
 
 /** The header of a thin 64-bit arm64 executable with no load commands. */
 private fun machOHeader(): ByteArray {

@@ -16,7 +16,7 @@ def _local_launch_test_impl(ctx):
         asserts.equals(env, [], staged_payload, "The metadata action must not stage the component artifacts.")
     runfiles = {file.path: True for file in target[DefaultInfo].default_runfiles.files.to_list()}
     asserts.equals(env, [], [path for path in runtime_paths if path not in runfiles], "Every component artifact must be a runfile.")
-    asserts.equals(env, [], [action.mnemonic for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevDistCompose"])
+    asserts.equals(env, [], [action.mnemonic for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDistCompose"])
     return analysistest.end(env)
 
 dist_local_launch_test = analysistest.make(_local_launch_test_impl)

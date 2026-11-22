@@ -89,7 +89,7 @@ A crate exists when two binaries share it, or when it is the frozen-bytes engine
 `avl-report` writes the bytes an agent reads. Code that one binary uses is a module of that binary. So the `vm`
 controller holds the modules `bench`, `console`, `daemon`, `lane`, `report` and `worker`, and `air-trace` holds `serve`,
 `plan` and `publish`.
-`build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the dev-dist tools.
+`build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the distribution tools.
 The crates form a DAG with the contracts at the bottom. `avl-wire`,
 `avl-trace`, `avl-control` and `avl-testkit` depend on no sibling, and `avl-trace-tools` and `avl-bridge` stand on `avl-trace` alone.
 `avl-junit` stands on `avl-wire` and on `serde`, `serde_json` and `jiff`, which the guest agent links already. So the guest agent can write the JUnit XML and the IJ Perf file.
@@ -102,12 +102,12 @@ so they send one token header and follow one deadline rule.
 which takes the class pattern of BT from it. The tests of `avl-junit` read back its XML with it. The agent links no
 crate of BT. `bt-core` is linked by `avl-affected` and by the
 two crates that resolve a lane or a selector, `avl-vm` and `air-trace`.
-`avl-host-sys`, `avl-trace-tools`, `air-trace` and `avl-vm` link `fscopy` of the dev-dist tools for the
+`avl-host-sys`, `avl-trace-tools`, `air-trace` and `avl-vm` link `fscopy` of the distribution tools for the
 real path. `refusal` of BT's workspace holds the refusal type, and `avl-base`, `avl-affected`, `air-trace` and
-`avl-guest` link it. `avl-affected` also links `distpath` of the dev-dist tools for the slash paths of BT, and `checkout-files` of the
-dev-dist tools, which `bt-core` links for the file listing of a checkout. rules_rs finds the path of such a crate
+`avl-guest` link it. `avl-affected` also links `distpath` of the distribution tools for the slash paths of BT, and `checkout-files` of the
+distribution tools, which `bt-core` links for the file listing of a checkout. rules_rs finds the path of such a crate
 only in a dependency of a member of this workspace, so `avl-affected` names it. `avl-guest`
-links `dev-launch` of the dev-dist tools, which composes the argument file of the lane IDE. Through it the agent links
+links `dev-launch` of the distribution tools, which composes the argument file of the lane IDE. Through it the agent links
 `java-properties` and a regex engine.
 `avl.bzl` maps each of these seven crates to its label in the community module
 (`_CROSS_MODULE_CRATES`), so Bazel builds it once. That build links the community module's `serde` and `regex`, so a value crosses as JSON text, and
@@ -385,7 +385,7 @@ The extension watches only the workspace `Cargo.toml` and `Cargo.lock`. A depend
 `Cargo.toml`, for example with a comment line, and run the command again.
 
 A member names a crate of another workspace by path: `bt-core`, `bt-junit` and `refusal` of BT, and `dev-launch`,
-`distpath` and `fscopy` of the dev-dist tools. rules_rs finds such a path only from a direct dependency of a member, so each member
+`distpath` and `fscopy` of the distribution tools. rules_rs finds such a path only from a direct dependency of a member, so each member
 that uses the crate names it. rules_rs also reads the `Cargo.toml` of the crate without its own workspace. So that
 crate spells its `[package]` values inline, with no `.workspace = true`. A fetch of its repository proves it:
 

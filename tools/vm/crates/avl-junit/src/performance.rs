@@ -45,7 +45,7 @@ pub const BUILD_TXT: &str = "build.txt";
 const MACOS_APP_HOME: &str = "Contents";
 
 /// The [`BUILD_TXT`] of the IDE home `home` of the guest `platform`, such as `linux_aarch64`. `home.path` of the IDE
-/// config names the home, see [`avl_wire::runtime::dev_dist_home`].
+/// config names the home, see [`avl_wire::runtime::dist_home`].
 ///
 /// Production puts the file in `Resources/` of a macOS app home, which is the `Contents` directory. It puts the file at
 /// the root of every other home, also of a macOS language server.

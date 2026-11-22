@@ -182,7 +182,7 @@ fn lane_runfiles(root: &std::path::Path) -> (PathBuf, PathBuf) {
             "-Dair.test.codex.runtime=${RUNFILES_ROOT}/_main/tools/codex/runtime.properties",
             "-Dair.test.pi.runtime=${RUNFILES_ROOT}/_main/tools/pi/runtime.properties",
         ],
-        "devDist": {"config": file("_main/dist/ide.properties"), "fingerprint": file("_main/dist/fingerprint.txt"), "home": file("_main/dist/home")},
+        "dist": {"config": file("_main/dist/ide.properties"), "fingerprint": file("_main/dist/fingerprint.txt"), "home": file("_main/dist/home")},
         "jbr": {"platform": guest_platform()},
         "ide": {
             "fakeAgent": file("_main/acp-fake-agent"),

@@ -323,11 +323,11 @@ pub(crate) fn declared_input(
 /// The build of the IDE of `descriptor`: the `build.txt` of its distribution without the product code, or why it cannot
 /// be read. The IDE config names the home, and [`performance::build_txt`] states where the home holds the file.
 fn ide_build(runfiles: &HostRunfiles, descriptor: &RuntimeDescriptor) -> Result<String, String> {
-    let config = &descriptor.dev_dist.config.logical_path;
+    let config = &descriptor.dist.config.logical_path;
     let config = runfiles
         .host_path(config)
         .ok_or_else(|| format!("the runfiles hold no IDE config {config}"))?;
-    let home = runtime::dev_dist_home(&config)?;
+    let home = runtime::dist_home(&config)?;
     let path = performance::build_txt(&home, &descriptor.jbr.platform);
     performance::ide_build(&path, fs::read_to_string(&path))
 }
@@ -384,8 +384,8 @@ fn stamp(
         });
     }
     let distribution = digest::product_identity(&ProductIdentityInput {
-        fingerprint: file(&descriptor.dev_dist.fingerprint)?.identity,
-        config: file(&descriptor.dev_dist.config)?.identity,
+        fingerprint: file(&descriptor.dist.fingerprint)?.identity,
+        config: file(&descriptor.dist.config)?.identity,
     });
     let product_digest = digest::path_sensitive_digest(&[
         PathDigest::new("@distribution", &distribution),

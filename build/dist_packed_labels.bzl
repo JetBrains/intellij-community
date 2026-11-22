@@ -30,10 +30,10 @@ def dist_packed_labels(fragment_inputs, module_sets, product, product_mode):
     """
     inputs = fragment_inputs.get(product)
     if inputs == None:
-        fail("No generated dev-distribution fragment inputs for product '%s'" % product)
+        fail("No generated distribution fragment inputs for product '%s'" % product)
     payload = inputs.get(_PLATFORM_LIB_FRAGMENT)
     if payload == None:
-        fail("The generated dev-distribution fragment inputs of '%s' have no '%s' payload" % (product, _PLATFORM_LIB_FRAGMENT))
+        fail("The generated distribution fragment inputs of '%s' have no '%s' payload" % (product, _PLATFORM_LIB_FRAGMENT))
 
     packed = {label: True for label in getattr(payload, "packed_content_module_jars", [])}
     module_system_loaded = {label: True for label in getattr(payload, "module_system_loaded", [])}
@@ -69,5 +69,5 @@ def dist_packed_labels(fragment_inputs, module_sets, product, product_mode):
     if frontier:
         fail("Module set nesting did not settle for the '%s' payload of product '%s'" % (_PLATFORM_LIB_FRAGMENT, product))
     if stale:
-        fail("The dev-distribution plan of '%s' references unknown module sets: %s. Regenerate the tables with the converter and the Generate Product Layouts run configuration." % (product, ", ".join(sorted(stale))))
+        fail("The distribution plan of '%s' references unknown module sets: %s. Regenerate the tables with the converter and the Generate Product Layouts run configuration." % (product, ", ".join(sorted(stale))))
     return struct(packed = sorted(packed.keys()), module_system_loaded = sorted(module_system_loaded.keys()))

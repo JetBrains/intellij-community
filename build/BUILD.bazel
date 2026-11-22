@@ -209,7 +209,7 @@ java_binary(
     runtime_deps = [":build"],
 )
 
-# The community binary of the dev-dist generator. It regenerates the distribution files of the community half:
+# The community binary of the distribution generator. It regenerates the distribution files of the community half:
 # `bazel run //build:dist_generator` in `community/`, or `bazel run @community//build:dist_generator` in the
 # monorepo root. `--check` writes nothing and fails when a file is out of sync.
 java_binary(

@@ -1,0 +1,6 @@
+load("//build/dist-tools:defs.bzl", "dist_rust_crate")
+
+dist_rust_crate(
+    name = "project-model-tree",
+    closure = True,
+)

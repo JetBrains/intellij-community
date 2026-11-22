@@ -1,0 +1,863 @@
+//! The compilation of a plan file into the execution contract of one chain. The contract holds the recipe, the asset
+//! rows, the plugin classpath record and the remainder catalogue.
+
+use std::collections::{HashMap, HashSet};
+
+use anyhow::{Context as _, Result, bail};
+
+use crate::classpath;
+use crate::contract::{
+    self, Artifact, ArtifactKind, AssetKind, Catalogue, Filter, LayoutAssets, Library, Manifest, Recipe, Reference, Source, TREE_VERSION,
+    VERSION,
+};
+use crate::plan::{Asset, DEFAULT_MODE, JarRecipe, LayoutFormat, ManifestPolicy, Operation, PlanFile, SourceKind, module_jar_recipe};
+
+/// The prefix of a module that holds only a library. Such a module is no meaningful jar source.
+const LIBRARY_PREFIX: &str = "intellij.libraries.";
+
+/// The input of the native tree of a reused `content_module_jar`: `native-tree:<module>`.
+const NATIVE_TREE_INPUT_PREFIX: &str = "native-tree:";
+
+/// The execution contract of one chain, derived from the plan file. The catalogue is the input catalogue without its
+/// libraries. The derivation expands every library into its files, so the remainder input set holds only files and
+/// directories.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Derivation {
+    pub recipe: Recipe,
+    pub assets: Vec<contract::Asset>,
+    pub class_path: Vec<u8>,
+    pub catalogue: Catalogue,
+}
+
+/// Compiles the plan file for the packer. `catalogue` is the Starlark input catalogue of the chain.
+/// `plugin_directory` is `plugins/<name>`, and `descriptor` is the classpath descriptor in its final byte form.
+/// `execution_version` is the version that the chain declares. It must equal the version of the file and of its assets.
+///
+/// `independent_modules` names the modules whose jar the chain reuses from a `content_module_jar` target. An asset in
+/// the shape of such a module jar is independent, and its artifact is the module name. The generator has matched the
+/// whole recipe against the target before it names the module.
+///
+/// `refused_modules` names the content modules that the product mode of the chain refuses. An asset whose every module
+/// is refused is omitted, see [`omitted_assets`]: the packer does not write it, and no asset row, classpath jar or
+/// operation names it. The catalogue of the derivation drops the inputs that only an omitted asset reads.
+pub fn derive(
+    file: &PlanFile,
+    catalogue: &Catalogue,
+    plugin_directory: &str,
+    descriptor: &[u8],
+    execution_version: u32,
+    independent_modules: &[String],
+    refused_modules: &[String],
+) -> Result<Derivation> {
+    let Some(plugin_dir_name) = plugin_directory
+        .strip_prefix("plugins/")
+        .filter(|name| !matches!(*name, "" | "." | "..") && !name.contains(['/', '\\']))
+    else {
+        bail!("the plugin directory {plugin_directory:?} is not plugins/<name>");
+    };
+    let version = execution_version_of(&file.assets);
+    if file.version != version || execution_version != version {
+        bail!(
+            "plugin {:?} has a stale execution version: file={} declared={execution_version} required={version}; regenerate the distribution declarations",
+            file.plugin,
+            file.version
+        );
+    }
+    let plugin_context = |error: anyhow::Error| error.context(format!("plugin {:?}", file.plugin));
+    let omitted = omitted_assets(file, refused_modules).map_err(plugin_context)?;
+    let mut compiler = Compiler::new(file, independent_modules, omitted);
+    compiler.plan().map_err(plugin_context)?;
+    compiler.bind_operations().map_err(plugin_context)?;
+    compiler.index_catalogue(catalogue).map_err(plugin_context)?;
+    compiler.resolve_operation_inputs().map_err(plugin_context)?;
+    let assets = compiler.asset_rows();
+    let operations = compiler.operations().map_err(plugin_context)?;
+    let class_path = classpath::record(plugin_dir_name, descriptor, &compiler.class_path_jars())?;
+    Ok(Derivation {
+        recipe: Recipe {
+            version,
+            plugin: file.plugin.clone(),
+            assets: assets.clone(),
+            operations,
+        },
+        assets,
+        class_path,
+        catalogue: Catalogue {
+            version: catalogue.version,
+            artifacts: compiler.executed_artifacts(catalogue),
+            libraries: Vec::new(),
+        },
+    })
+}
+
+/// The plan file without the assets of `excluded`, by their destinations, and without the operations that only they
+/// consume, with the catalogue of its remaining inputs. The neutral part of a split remainder derives this plan for
+/// [`descriptor_assets`], so its catalogue needs no descriptor. The asset rows and the classpath record of such a plan are
+/// not the ones of the plugin.
+pub fn without_assets(file: &PlanFile, catalogue: &Catalogue, excluded: &[String]) -> Result<(PlanFile, Catalogue)> {
+    for destination in excluded {
+        if !file.assets.iter().any(|asset| asset.destination == *destination) {
+            bail!(
+                "plugin {:?}: the excluded asset {destination:?} is no asset of the plan",
+                file.plugin
+            );
+        }
+    }
+    let assets: Vec<Asset> = file
+        .assets
+        .iter()
+        .filter(|asset| !excluded.contains(&asset.destination))
+        .cloned()
+        .collect();
+    let operations: Vec<Operation> = file
+        .operations
+        .iter()
+        .filter(|operation| assets.iter().any(|asset| asset.inputs.contains(&operation.output)))
+        .cloned()
+        .collect();
+    let mut inputs: HashSet<&str> = assets.iter().flat_map(|asset| asset.inputs.iter().map(String::as_str)).collect();
+    inputs.extend(
+        operations
+            .iter()
+            .flat_map(|operation| operation.inputs.iter().map(|reference| reference.artifact.as_str())),
+    );
+    let libraries: Vec<Library> = catalogue
+        .libraries
+        .iter()
+        .filter(|library| inputs.contains(library.id.as_str()))
+        .cloned()
+        .collect();
+    let mut kept: HashSet<&str> = inputs.clone();
+    kept.extend(
+        libraries
+            .iter()
+            .flat_map(|library| library.files.iter().map(|reference| reference.artifact.as_str())),
+    );
+    let artifacts = catalogue
+        .artifacts
+        .iter()
+        .filter(|artifact| kept.contains(artifact.id.as_str()))
+        .cloned()
+        .collect();
+    let plan = PlanFile {
+        assets,
+        operations,
+        ..file.clone()
+    };
+    Ok((
+        plan,
+        Catalogue {
+            version: catalogue.version,
+            artifacts,
+            libraries,
+        },
+    ))
+}
+
+/// The prefix of the catalogue artifact of a produced descriptor: `descriptor:<main module>`.
+pub const DESCRIPTOR_INPUT_PREFIX: &str = "descriptor:";
+
+/// The destinations of the assets that read a produced descriptor, in plan order: an asset with a `descriptor:` input,
+/// directly or through a preparation operation. Only these assets depend on the stamp class of the chain.
+pub fn descriptor_assets(file: &PlanFile) -> Vec<&str> {
+    let reads_descriptor = |input: &str| {
+        input.starts_with(DESCRIPTOR_INPUT_PREFIX)
+            || file
+                .operations
+                .iter()
+                .find(|operation| operation.id == input)
+                .is_some_and(|operation| {
+                    operation
+                        .inputs
+                        .iter()
+                        .any(|reference| reference.artifact.starts_with(DESCRIPTOR_INPUT_PREFIX))
+                })
+    };
+    file.assets
+        .iter()
+        .filter(|asset| asset.inputs.iter().any(|input| reads_descriptor(input)))
+        .map(|asset| asset.destination.as_str())
+        .collect()
+}
+
+/// The modules of one asset: the `module` sources of its recipe and the module of a reused native tree. A library jar,
+/// a file copy, a layout tree and a prepared source have none.
+fn asset_modules(asset: &Asset) -> Vec<&str> {
+    if let Some(module) = native_tree_module(asset) {
+        return vec![module];
+    }
+    let Some(recipe) = &asset.recipe else {
+        return Vec::new();
+    };
+    let mut modules = Vec::new();
+    for source in &recipe.sources {
+        if source.kind == SourceKind::Module {
+            push_new(&mut modules, &source.input);
+        }
+    }
+    modules
+}
+
+/// Whether each asset of `file`, in plan order, is omitted for a product mode that refuses `refused_modules`.
+///
+/// An asset is omitted when it has at least one module and every one of them is refused. An asset that merges a refused
+/// module with a kept one stays whole: the run time refuses the module, and the class loader fence keeps its packages
+/// out of reach. A refused module that no asset merges is a stale declaration and fails, as an unmatched independent
+/// module does. The packer and the runtime layout tool both read this answer, so the two cannot drift.
+pub fn omitted_assets(file: &PlanFile, refused_modules: &[String]) -> Result<Vec<bool>> {
+    let mut refused = HashSet::with_capacity(refused_modules.len());
+    for module in refused_modules {
+        if module.is_empty() {
+            bail!("a refused module requires a name");
+        }
+        if !refused.insert(module.as_str()) {
+            bail!("refused module {module:?} is named twice");
+        }
+    }
+    let mut matched = HashSet::new();
+    let mut omitted = Vec::with_capacity(file.assets.len());
+    for asset in &file.assets {
+        let modules = asset_modules(asset);
+        for module in &modules {
+            if refused.contains(module) {
+                matched.insert(*module);
+            }
+        }
+        omitted.push(!modules.is_empty() && modules.iter().all(|module| refused.contains(module)));
+    }
+    if let Some(module) = refused_modules.iter().find(|module| !matched.contains(module.as_str())) {
+        bail!("refused module {module:?} matches no asset of the plan; regenerate the distribution declarations");
+    }
+    Ok(omitted)
+}
+
+/// `pluginPackingExecutionVersion`: 2 with a tree, else 1. A native tree is a tree, so it gives 2.
+fn execution_version_of(assets: &[Asset]) -> u32 {
+    if assets.iter().any(|asset| asset.kind == AssetKind::Tree) {
+        TREE_VERSION
+    } else {
+        VERSION
+    }
+}
+
+/// The module whose jar the recipe packs in the shape of a `content_module_jar` target. Such a recipe has the module
+/// output first and then only library containers. It has the default writer and mode. The generator states the rest of
+/// the equality, so this function does not compare the libraries.
+fn reusable_module_jar(recipe: &JarRecipe, mode: u32) -> Option<&str> {
+    let mut writer = recipe.writer.clone();
+    writer.native_lib.clear();
+    if mode != DEFAULT_MODE || writer != module_jar_recipe("").writer {
+        return None;
+    }
+    let (owner, libraries) = recipe.sources.split_first()?;
+    (owner.kind == SourceKind::Module && libraries.iter().all(|source| source.kind == SourceKind::Library)).then_some(&owner.input)
+}
+
+/// The module whose reused natives jar writes the tree of the asset: a tree with the one input `native-tree:<module>`.
+fn native_tree_module(asset: &Asset) -> Option<&str> {
+    match asset.inputs.as_slice() {
+        [input] if asset.kind == AssetKind::Tree => input.strip_prefix(NATIVE_TREE_INPUT_PREFIX).filter(|module| !module.is_empty()),
+        _ => None,
+    }
+}
+
+fn valid_id(value: &str) -> bool {
+    !value.is_empty() && value.trim() == value && !value.contains(['\0', '\r', '\n'])
+}
+
+fn push_new<'a>(values: &mut Vec<&'a str>, value: &'a str) {
+    if !values.contains(&value) {
+        values.push(value);
+    }
+}
+
+struct PlannedAsset<'a> {
+    asset: &'a Asset,
+    /// The module of an independent asset, or `None` for a remainder asset.
+    artifact: Option<&'a str>,
+    /// Whether the product mode of the chain refuses every module of the asset, see [`omitted_assets`].
+    omitted: bool,
+}
+
+impl PlannedAsset<'_> {
+    /// Whether the packer writes the asset: a remainder asset that is not omitted.
+    const fn executed(&self) -> bool {
+        self.artifact.is_none() && !self.omitted
+    }
+}
+
+/// The plan file, the ownership rows and the catalogue index of one derivation.
+struct Compiler<'a> {
+    file: &'a PlanFile,
+    independent_modules: &'a [String],
+    /// The omission of each asset of the file, in plan order.
+    omitted: Vec<bool>,
+    assets: Vec<PlannedAsset<'a>>,
+    /// The operations of the remainder assets in first use order.
+    required: Vec<&'a Operation>,
+    /// The operations by output.
+    producers: HashMap<&'a str, &'a Operation>,
+    /// The raw inputs of the remainder assets and of their operations in first use order.
+    required_raw: Vec<&'a str>,
+    artifacts: HashMap<&'a str, &'a Artifact>,
+    libraries: HashMap<&'a str, &'a Library>,
+    /// The packer-executed operations by output. The catalogue resolution replaces each one with its resolved copy.
+    go_executed: HashMap<&'a str, Operation>,
+}
+
+impl<'a> Compiler<'a> {
+    fn new(file: &'a PlanFile, independent_modules: &'a [String], omitted: Vec<bool>) -> Self {
+        Self {
+            file,
+            independent_modules,
+            omitted,
+            assets: Vec::new(),
+            required: Vec::new(),
+            producers: HashMap::new(),
+            required_raw: Vec::new(),
+            artifacts: HashMap::new(),
+            libraries: HashMap::new(),
+            go_executed: HashMap::new(),
+        }
+    }
+
+    /// `planPluginPacking`: the asset rules, the ownership match and the required operations.
+    fn plan(&mut self) -> Result<()> {
+        let file = self.file;
+        if file.plugin.is_empty() {
+            bail!("a plugin plan requires a plugin");
+        }
+        for asset in &file.assets {
+            validate_asset(asset)?;
+        }
+        let mut independent = HashSet::with_capacity(self.independent_modules.len());
+        for module in self.independent_modules {
+            if module.is_empty() {
+                bail!("an independent module requires a name");
+            }
+            if !independent.insert(module.as_str()) {
+                bail!("independent module {module:?} is named twice");
+            }
+        }
+        // A reused natives jar leaves its native entries out, and the tree of its native files is the jar's own output.
+        let mut native_jars = HashSet::new();
+        for asset in &file.assets {
+            if let Some(recipe) = &asset.recipe
+                && !recipe.writer.native_lib.is_empty()
+            {
+                match reusable_module_jar(recipe, asset.mode) {
+                    Some(module) if independent.contains(module) => {
+                        native_jars.insert(module);
+                    }
+                    _ => bail!(
+                        "{}: a jar with a native library must be a reused content_module_jar",
+                        asset.destination
+                    ),
+                }
+            }
+        }
+        let mut used = HashSet::new();
+        for (asset, &omitted) in file.assets.iter().zip(&self.omitted) {
+            // The native tree of a reused natives jar lies below the plugin directory, next to the jar.
+            if let Some(module) = native_tree_module(asset) {
+                if !native_jars.contains(module) {
+                    bail!(
+                        "{}: the native tree of {module:?} requires its reused natives jar",
+                        asset.destination
+                    );
+                }
+                used.insert(module);
+                self.assets.push(PlannedAsset {
+                    asset,
+                    artifact: Some(module),
+                    omitted,
+                });
+                continue;
+            }
+            let artifact = asset
+                .recipe
+                .as_ref()
+                .and_then(|recipe| reusable_module_jar(recipe, asset.mode))
+                .filter(|module| independent.contains(module));
+            if let Some(module) = artifact {
+                used.insert(module);
+            }
+            self.assets.push(PlannedAsset { asset, artifact, omitted });
+        }
+        if let Some(module) = self.independent_modules.iter().find(|module| !used.contains(module.as_str())) {
+            bail!("independent module {module:?} matches no module jar asset; regenerate the distribution declarations");
+        }
+        let mut seen = HashSet::with_capacity(file.operations.len());
+        for operation in &file.operations {
+            if !seen.insert(operation.id.as_str())
+                || operation.id.is_empty()
+                || operation.inputs.iter().any(|reference| reference.artifact.is_empty())
+            {
+                bail!("invalid or repeated operation {:?}", operation.id);
+            }
+            let output = operation.output.as_str();
+            if output.is_empty() || self.producers.contains_key(output) {
+                bail!("conflicting operation output {output:?}");
+            }
+            self.producers.insert(output, operation);
+        }
+        for operation in &file.operations {
+            if let Some(reference) = operation
+                .inputs
+                .iter()
+                .find(|reference| self.producers.contains_key(reference.artifact.as_str()))
+            {
+                bail!(
+                    "operation {:?} reads the output {:?} of an operation; the packer executes no operation chain",
+                    operation.id,
+                    reference.artifact
+                );
+            }
+        }
+        for asset in &file.assets {
+            let Some(recipe) = &asset.recipe else {
+                continue;
+            };
+            for source in &recipe.sources {
+                if source.kind == SourceKind::Prepared && !self.producers.contains_key(source.input.as_str()) {
+                    bail!(
+                        "prepared source {:?} of {:?} has no producer in the plan file",
+                        source.input,
+                        asset.destination
+                    );
+                }
+            }
+        }
+        let mut required_ids = HashSet::new();
+        for planned in self.assets.iter().filter(|planned| planned.artifact.is_none()) {
+            let asset: &'a Asset = planned.asset;
+            for input in &asset.inputs {
+                let Some(&operation) = self.producers.get(input.as_str()) else {
+                    push_new(&mut self.required_raw, input);
+                    continue;
+                };
+                if required_ids.insert(operation.id.as_str()) {
+                    self.required.push(operation);
+                    for reference in &operation.inputs {
+                        push_new(&mut self.required_raw, &reference.artifact);
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Checks every operation against its consumers. An operation that no remainder asset requires is refused.
+    fn bind_operations(&mut self) -> Result<()> {
+        let required: HashSet<&str> = self.required.iter().map(|operation| operation.id.as_str()).collect();
+        for operation in &self.file.operations {
+            if !required.contains(operation.id.as_str()) {
+                bail!("unexpected operation {:?}", operation.id);
+            }
+            self.validate_consumers(operation)?;
+            self.go_executed.insert(&operation.output, operation.clone());
+        }
+        Ok(())
+    }
+
+    /// Applies the consumer rules of the Kotlin generator. A tree output has one tree asset at its root. An entries
+    /// output is a prepared jar source.
+    fn validate_consumers(&self, operation: &Operation) -> Result<()> {
+        let mut consumers = Vec::new();
+        for planned in &self.assets {
+            if planned.asset.inputs.contains(&operation.output) {
+                if planned.artifact.is_some() {
+                    bail!(
+                        "output {:?} of operation {:?} is consumed by an independent asset",
+                        operation.output,
+                        operation.id
+                    );
+                }
+                consumers.push(planned.asset);
+            }
+        }
+        let layout = &operation.layout_assets;
+        if layout.format == LayoutFormat::Tree {
+            if !matches!(consumers.as_slice(), [consumer] if consumer.kind == AssetKind::Tree && consumer.destination == layout.root) {
+                bail!(
+                    "layout asset preparation {:?} requires one tree asset at {:?}",
+                    operation.id,
+                    layout.root
+                );
+            }
+            return Ok(());
+        }
+        for consumer in consumers {
+            let prepared = consumer.recipe.as_ref().is_some_and(|recipe| {
+                recipe
+                    .sources
+                    .iter()
+                    .any(|source| source.kind == SourceKind::Prepared && source.input == operation.output)
+            });
+            if !prepared {
+                bail!(
+                    "output {:?} of operation {:?} requires a prepared jar source at {:?}",
+                    operation.output,
+                    operation.id,
+                    consumer.destination
+                );
+            }
+        }
+        Ok(())
+    }
+
+    /// Checks the input catalogue against the required raw inputs.
+    fn index_catalogue(&mut self, catalogue: &'a Catalogue) -> Result<()> {
+        if catalogue.version != VERSION {
+            bail!("unsupported artifact catalogue version {}", catalogue.version);
+        }
+        let mut raw: HashSet<&str> = HashSet::new();
+        for artifact in &catalogue.artifacts {
+            if self.artifacts.contains_key(artifact.id.as_str()) || !valid_id(&artifact.id) {
+                bail!("invalid or duplicate artifact ID {:?}", artifact.id);
+            }
+            self.artifacts.insert(&artifact.id, artifact);
+            raw.insert(&artifact.id);
+        }
+        for library in &catalogue.libraries {
+            if self.libraries.contains_key(library.id.as_str())
+                || !valid_id(&library.id)
+                || raw.contains(library.id.as_str())
+                || library.files.is_empty()
+            {
+                bail!("invalid or duplicate library {:?}", library.id);
+            }
+            let mut seen = HashSet::with_capacity(library.files.len());
+            for reference in &library.files {
+                let is_file = self
+                    .artifacts
+                    .get(reference.artifact.as_str())
+                    .is_some_and(|artifact| artifact.kind == ArtifactKind::File);
+                if !is_file || !reference.path.is_empty() || !seen.insert(reference) {
+                    bail!("library {:?} requires distinct file artifacts", library.id);
+                }
+                raw.insert(&reference.artifact);
+            }
+            self.libraries.insert(&library.id, library);
+            raw.insert(&library.id);
+        }
+        for operation in &self.file.operations {
+            if raw.contains(operation.output.as_str()) {
+                bail!(
+                    "operation {:?} output {:?} aliases a raw catalogue ID",
+                    operation.id,
+                    operation.output
+                );
+            }
+        }
+        let mut expected: Vec<&str> = Vec::new();
+        for input in &self.required_raw {
+            match self.libraries.get(input) {
+                Some(library) => expected.extend(library.files.iter().map(|reference| reference.artifact.as_str())),
+                None => expected.push(input),
+            }
+        }
+        if let Some(id) = expected.iter().find(|id| !self.artifacts.contains_key(*id)) {
+            bail!("stale preparation inputs: the catalogue lacks {id:?}");
+        }
+        let expected: HashSet<&str> = expected.into_iter().collect();
+        if let Some(artifact) = catalogue.artifacts.iter().find(|artifact| !expected.contains(artifact.id.as_str())) {
+            bail!(
+                "stale preparation inputs: the catalogue artifact {:?} is not an input of the plan",
+                artifact.id
+            );
+        }
+        if let Some(library) = catalogue
+            .libraries
+            .iter()
+            .find(|library| !self.required_raw.contains(&library.id.as_str()))
+        {
+            bail!(
+                "stale preparation inputs: the catalogue library {:?} is not an input of the plan",
+                library.id
+            );
+        }
+        Ok(())
+    }
+
+    /// Replaces a library ID in the inputs of every layout-assets operation with the references of its member files.
+    /// The plan names the version-free library, and the catalogue names its files. An input stands for every member in
+    /// catalogue order, and the sources of each layout asset follow the expanded positions. The plan file keeps its
+    /// text.
+    fn resolve_operation_inputs(&mut self) -> Result<()> {
+        let file = self.file;
+        for operation in &file.operations {
+            if operation.inputs.is_empty() {
+                continue;
+            }
+            let context = |error: anyhow::Error| error.context(format!("operation {:?}", operation.id));
+            let mut positions: Vec<Vec<usize>> = Vec::with_capacity(operation.inputs.len());
+            let mut inputs = Vec::new();
+            for reference in &operation.inputs {
+                let members = self.resolve_reference(reference).map_err(context)?;
+                positions.push((inputs.len()..inputs.len() + members.len()).collect());
+                inputs.extend_from_slice(members);
+            }
+            let mut resolved = operation.clone();
+            resolved.inputs = inputs;
+            for asset in &mut resolved.layout_assets.assets {
+                let mut sources = Vec::with_capacity(asset.sources.len());
+                for &source in &asset.sources {
+                    let Some(expanded) = positions.get(source) else {
+                        bail!(
+                            "operation {:?}: layout asset {:?} names the input {source}, which the operation lacks",
+                            operation.id,
+                            asset.destination
+                        );
+                    };
+                    sources.extend_from_slice(expanded);
+                }
+                asset.sources = sources;
+            }
+            self.go_executed.insert(&operation.output, resolved);
+        }
+        Ok(())
+    }
+
+    /// The references of the member files of a library in catalogue order, or the reference itself when it names no
+    /// library.
+    fn resolve_reference<'r>(&self, reference: &'r Reference) -> Result<&'r [Reference]>
+    where
+        'a: 'r,
+    {
+        let Some(library) = self.libraries.get(reference.artifact.as_str()) else {
+            return Ok(std::slice::from_ref(reference));
+        };
+        if !reference.path.is_empty() {
+            bail!(
+                "library {:?} is not a directory: the input names the path {:?} in it",
+                reference.artifact,
+                reference.path
+            );
+        }
+        Ok(&library.files)
+    }
+
+    fn library(&self, id: &str) -> Result<&'a Library> {
+        match self.libraries.get(id) {
+            Some(library) => Ok(library),
+            None => bail!("unknown library {id:?}"),
+        }
+    }
+
+    /// The catalogue artifacts that an executed operation reads, in catalogue order. The Starlark catalogue lists every
+    /// input of the plan, an input of an omitted asset too. The plan step requires every artifact of its catalogue to be
+    /// used, so the artifacts that only an omitted asset reads leave the catalogue of the derivation.
+    fn executed_artifacts(&self, catalogue: &Catalogue) -> Vec<Artifact> {
+        let mut raw: Vec<&str> = Vec::new();
+        for planned in self.assets.iter().filter(|planned| planned.executed()) {
+            for input in &planned.asset.inputs {
+                match self.producers.get(input.as_str()) {
+                    Some(operation) => operation
+                        .inputs
+                        .iter()
+                        .for_each(|reference| push_new(&mut raw, &reference.artifact)),
+                    None => push_new(&mut raw, input),
+                }
+            }
+        }
+        let mut expected: HashSet<&str> = HashSet::new();
+        for input in raw {
+            match self.libraries.get(input) {
+                Some(library) => expected.extend(library.files.iter().map(|reference| reference.artifact.as_str())),
+                None => {
+                    expected.insert(input);
+                }
+            }
+        }
+        catalogue
+            .artifacts
+            .iter()
+            .filter(|artifact| expected.contains(artifact.id.as_str()))
+            .cloned()
+            .collect()
+    }
+
+    /// `deriveDevPluginExecutionAssets`: the producer of every asset in plan order. A default is absent from the row, the
+    /// way the Kotlin encoder omits it.
+    fn asset_rows(&self) -> Vec<contract::Asset> {
+        self.assets
+            .iter()
+            .filter(|planned| !planned.omitted)
+            .map(|planned| {
+                let asset = planned.asset;
+                let row = match planned.artifact {
+                    Some(artifact) => contract::Asset::independent(&asset.destination, artifact),
+                    None => contract::Asset::remainder(&asset.destination),
+                };
+                contract::Asset {
+                    kind: asset.kind,
+                    class_path: (!asset.class_path).then_some(false),
+                    ..row
+                }
+            })
+            .collect()
+    }
+
+    /// The classpath jars directly under `lib/`, in plan order.
+    fn class_path_jars(&self) -> Vec<&'a str> {
+        self.assets
+            .iter()
+            .filter(|planned| !planned.omitted)
+            .map(|planned| planned.asset)
+            .filter(|asset| {
+                let destination = asset.destination.as_str();
+                asset.class_path
+                    && asset.kind == AssetKind::File
+                    && destination.starts_with("lib/")
+                    && destination.matches('/').count() == 1
+                    && destination.ends_with(".jar")
+            })
+            .map(|asset| asset.destination.as_str())
+            .collect()
+    }
+
+    /// Compiles one remainder operation per remainder asset.
+    fn operations(&self) -> Result<Vec<contract::Operation>> {
+        let mut operations = Vec::new();
+        for planned in self.assets.iter().filter(|planned| planned.executed()) {
+            let asset = planned.asset;
+            let destination = asset.destination.clone();
+            let operation = if asset.kind == AssetKind::Tree {
+                let input = asset.inputs[0].as_str();
+                if let Some(operation) = self.go_executed.get(input) {
+                    contract::Operation::LayoutTree {
+                        destination,
+                        layout: LayoutAssets {
+                            inputs: operation.inputs.clone(),
+                            assets: operation.layout_assets.assets.clone(),
+                        },
+                    }
+                } else {
+                    if self
+                        .artifacts
+                        .get(input)
+                        .is_none_or(|artifact| artifact.kind != ArtifactKind::Directory)
+                    {
+                        bail!("tree {:?} requires a directory artifact", asset.destination);
+                    }
+                    contract::Operation::CopyTree {
+                        destination,
+                        input: Reference::artifact(input),
+                    }
+                }
+            } else if let Some(recipe) = &asset.recipe {
+                contract::Operation::Jar {
+                    destination,
+                    mode: asset.mode,
+                    sources: self.compile_sources(recipe).with_context(|| asset.destination.clone())?,
+                    merge_entities: recipe.writer.merge_entities,
+                }
+            } else {
+                let [input] = asset.inputs.as_slice() else {
+                    bail!("completed asset {:?} requires one declared file", asset.destination);
+                };
+                contract::Operation::Copy {
+                    destination,
+                    mode: asset.mode,
+                    input: Reference::artifact(input.as_str()),
+                }
+            };
+            operations.push(operation);
+        }
+        Ok(operations)
+    }
+
+    /// Turns the recipe sources into the sources the packer reads. A prepared source of a packer-executed operation
+    /// becomes the layout source.
+    fn compile_sources(&self, recipe: &JarRecipe) -> Result<Vec<Source>> {
+        let mut meaningful = 0usize;
+        for source in &recipe.sources {
+            meaningful += match source.kind {
+                SourceKind::Prepared if recipe.writer.manifest == ManifestPolicy::SingleMeaningfulSource => {
+                    bail!("prepared sources require an explicit manifest policy")
+                }
+                SourceKind::Module if source.input.starts_with(LIBRARY_PREFIX) => 0,
+                SourceKind::Library => self.library(&source.input)?.files.len(),
+                _ => 1,
+            };
+        }
+        let manifest = match recipe.writer.manifest {
+            ManifestPolicy::SingleMeaningfulSource if meaningful == 1 => Manifest::Keep,
+            ManifestPolicy::SingleMeaningfulSource | ManifestPolicy::Drop => Manifest::Drop,
+            ManifestPolicy::Keep => Manifest::Keep,
+        };
+        let mut sources = Vec::with_capacity(recipe.sources.len());
+        for source in &recipe.sources {
+            let input = Reference::artifact(source.input.as_str());
+            match source.kind {
+                SourceKind::Prepared => {
+                    let Some(operation) = self.go_executed.get(source.input.as_str()) else {
+                        bail!("prepared source {:?} has no Go-executed producer in the plan file", source.input);
+                    };
+                    sources.push(go_executed_source(operation)?);
+                }
+                SourceKind::Library => {
+                    for reference in &self.library(&source.input)?.files {
+                        sources.push(self.archive_source(reference.clone(), Filter::Library, manifest)?);
+                    }
+                }
+                SourceKind::File => sources.push(Source::Patch {
+                    entry: source.entry.clone(),
+                    input,
+                    manifest,
+                }),
+                kind @ (SourceKind::Module | SourceKind::Archive) => {
+                    if self.libraries.contains_key(source.input.as_str()) {
+                        bail!(
+                            "archive source {:?} names a library; a library source merges its members",
+                            source.input
+                        );
+                    }
+                    let filter = if kind == SourceKind::Module {
+                        Filter::Module
+                    } else {
+                        Filter::Library
+                    };
+                    sources.push(self.archive_source(input, filter, manifest)?);
+                }
+            }
+        }
+        Ok(sources)
+    }
+
+    fn archive_source(&self, input: Reference, filter: Filter, manifest: Manifest) -> Result<Source> {
+        if !self.artifacts.contains_key(input.artifact.as_str()) {
+            bail!("unresolved input {:?}", input.artifact);
+        }
+        Ok(Source::Archive { input, filter, manifest })
+    }
+}
+
+fn validate_asset(asset: &Asset) -> Result<()> {
+    let destination = asset.destination.as_str();
+    if destination.is_empty() && asset.kind != AssetKind::Tree {
+        bail!("only a declared tree can target the plugin root");
+    }
+    if asset.inputs.iter().any(String::is_empty) {
+        bail!("asset {destination:?} has an empty input");
+    }
+    if asset.kind == AssetKind::Tree
+        && (asset.inputs.len() != 1 || asset.recipe.is_some() || asset.class_path || asset.mode != DEFAULT_MODE)
+    {
+        bail!("plugin tree {destination:?} requires one directory input, no jar recipe, no classpath, and no mode override");
+    }
+    Ok(())
+}
+
+/// The jar source that the packer executes in place of the prepared output of a packer-executed operation.
+fn go_executed_source(operation: &Operation) -> Result<Source> {
+    let layout = &operation.layout_assets;
+    if layout.format != LayoutFormat::Entries {
+        bail!("prepared source {:?} requires a layout-assets entries operation", operation.output);
+    }
+    Ok(Source::Layout(LayoutAssets {
+        inputs: operation.inputs.clone(),
+        assets: layout.assets.clone(),
+    }))
+}

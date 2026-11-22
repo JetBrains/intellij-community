@@ -21,8 +21,8 @@ export const configFiles = ["rustfmt.toml", "clippy.toml"]
  * copy of every file of `configFiles`.
  */
 export const manifestPaths = [
-  "community/build/dev-dist-tools/Cargo.toml",
-  "build/dev-dist-tools/Cargo.toml",
+  "community/build/dist-tools/Cargo.toml",
+  "build/dist-tools/Cargo.toml",
   "community/tools/bt/Cargo.toml",
   "community/tools/vm/Cargo.toml",
   "docs/ij-void/portal-server/Cargo.toml",

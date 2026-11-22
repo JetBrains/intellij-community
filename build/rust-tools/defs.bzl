@@ -53,11 +53,11 @@ rust_lints_as_errors = rule(
     },
 )
 
-# The rendered `[workspace.lints]` of the community workspaces: the dev-dist tools (`@ddt`), BT (`@bt`) and the Air
+# The rendered `[workspace.lints]` of the community workspaces: the distribution tools (`@dt`), BT (`@bt`) and the Air
 # UI-lane controller (`@avl`). A `Label` resolves each hub through the repository mapping of this module, so the
 # ultimate root can name them too.
 COMMUNITY_WORKSPACE_LINTS = [
-    Label("@ddt//:workspace_cargo_lints"),
+    Label("@dt//:workspace_cargo_lints"),
     Label("@bt//:workspace_cargo_lints"),
     Label("@avl//:workspace_cargo_lints"),
 ]
@@ -102,7 +102,7 @@ def rust_tool_hub(aliases, all_crate_deps, crate_name, edition, lint_config, wor
       edition: `edition` of the hub.
       lint_config: `lint_config` of the hub.
       workspace_lints: what the hub names as the `lint_config` of a crate with `[lints] workspace = true`, such as
-        `"@ddt//:workspace_cargo_lints"`.
+        `"@dt//:workspace_cargo_lints"`.
       dep_data: `DEP_DATA` of `@<hub>//:data.bzl`. Only `cross_module_crates` of `rust_tool_crate` reads it.
 
     Returns:
@@ -368,7 +368,7 @@ def rust_tool_crate(
       clippy_config: the `clippy.toml` copy of the workspace, for a workspace whose copy has the added bans of
         `clippyAdditions` of `sync.mjs`. Every target gets it, so its clippy reads the bans that cargo reads. When
         unset, the clippy aspect reads the `clippy.toml` that `.bazelrc` names.
-      bins_prefix: the package prefix of the binaries, such as `"build/dev-dist-tools/bins/"`. When unset, every
+      bins_prefix: the package prefix of the binaries, such as `"build/dist-tools/bins/"`. When unset, every
         crate is a library.
       cross_module_crates: `{package name: label}` of the crates of another workspace that the crate links through a
         path dependency. The hub would build such a crate a second time, without the lint policy. The label names the

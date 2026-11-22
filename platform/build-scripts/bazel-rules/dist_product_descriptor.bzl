@@ -30,7 +30,7 @@ def _dist_product_descriptor_impl(ctx):
     args.add(ctx.outputs.plugin_classpath_prefix, format = "--plugin-classpath-prefix=%s")
     args.add(ctx.outputs.classpath_descriptor, format = "--classpath-descriptor=%s")
     ctx.actions.run(
-        mnemonic = "DevDistProductDescriptor",
+        mnemonic = "DistProductDescriptor",
         inputs = declared.inputs,
         outputs = [output, ctx.outputs.plugin_classpath_prefix, ctx.outputs.classpath_descriptor],
         executable = ctx.executable._resolver,
@@ -99,7 +99,7 @@ def _dist_product_application_info_impl(ctx):
     args.add(ctx.file.source, format = "--source=%s")
     args.add_all(ctx.attr.replacements, format_each = "--replacement=%s")
     ctx.actions.run(
-        mnemonic = "DevDistProductApplicationInfo",
+        mnemonic = "DistProductApplicationInfo",
         inputs = [ctx.file.source],
         outputs = [output],
         executable = ctx.executable._resolver,

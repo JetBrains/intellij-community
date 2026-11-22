@@ -89,7 +89,7 @@ Three pieces, in the order they have to happen.
 
 ### 1. A linux-aarch64 lane distribution — done
 
-The dev-distribution fragment macros take one `target_platform` that selects both OS and architecture,
+The distribution fragment macros take one `target_platform` that selects both OS and architecture,
 `preloaded_downloads_for_platform` names that platform's archives without a host `select`, and
 `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` puts the two together. `ui_lane_ide.bzl` selects the pair on
 `--define=air_lane_guest_os=linux` on a macOS host. On a Linux x86_64 host the same define selects the

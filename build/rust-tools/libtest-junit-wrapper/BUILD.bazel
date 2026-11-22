@@ -5,10 +5,10 @@ load("//build/rust-tools:defs.bzl", "rust_tool_binary")
 rust_tool_binary(
     name = "libtest-junit-wrapper",
     edition = "2021",
-    lints = "//build/dev-dist-tools:lints",
+    lints = "//build/dist-tools:lints",
     deps = [
-        "@ddt//:serde",
-        "@ddt//:serde_json",
+        "@dt//:serde",
+        "@dt//:serde_json",
         "@rules_rust//tools/runfiles",
     ],
 )

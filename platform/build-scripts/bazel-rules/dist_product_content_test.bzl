@@ -290,7 +290,7 @@ def _stripped(arguments):
 
 def _product_content_form_test_impl(ctx):
     env = analysistest.begin(ctx)
-    arguments = _writer_arguments(env, "DevDistProductDescriptor")
+    arguments = _writer_arguments(env, "DistProductDescriptor")
     asserts.equals(env, "--product-descriptor", arguments[0])
     asserts.true(env, arguments[1].startswith("--out="), arguments[1])
     asserts.equals(env, [
@@ -326,7 +326,7 @@ _product_content_form_test = analysistest.make(_product_content_form_test_impl)
 
 def _embedded_content_form_test_impl(ctx):
     env = analysistest.begin(ctx)
-    arguments = _writer_arguments(env, "DevDistEmbeddedProductDescriptor")
+    arguments = _writer_arguments(env, "DistEmbeddedProductDescriptor")
     asserts.equals(env, "--embedded-product", arguments[0])
     asserts.true(env, arguments[1].startswith("--out="), arguments[1])
     asserts.equals(env, [

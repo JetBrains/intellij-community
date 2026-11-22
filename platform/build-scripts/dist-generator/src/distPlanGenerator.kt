@@ -407,7 +407,7 @@ internal fun computeDistPlan(
   val projectRoot = index.projectRoot
   val splitProducts = half.registrySplitProducts(products.map { it.name })
   val runConfigurations = runConfigurationRows
-  val collected = buildSpan("dev-distribution plan: collect descriptor files") {
+  val collected = buildSpan("distribution plan: collect descriptor files") {
     collectDescriptorFiles(
       half = half,
       index = index,
@@ -465,14 +465,14 @@ internal fun computeDistPlan(
     ))
   }
   val indexProducts = distIndexProducts(plannedIndexProducts, communityProducts, upstreamIndexProducts)
-  val fileContents = buildSpan("dev-distribution plan: render files") { renderSpan ->
+  val fileContents = buildSpan("distribution plan: render files") { renderSpan ->
     val contents = buildList {
       add(DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files, half))
       add(DIST_PRODUCT_INFO_RELATIVE_PATH to renderProductInfo(collected.pluginDescriptorPlans.filter { it.platformPrefix !in communityProducts }, half))
       add(DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half, communityProducts))
       if (DistCapability.REFERENCE_PLAN in half.capabilities) {
         add(DIST_REFERENCE_PLAN_RELATIVE_PATH to renderReferencePlan(sortedProducts, half))
-        val referenceInputs = buildSpan("dev-distribution plan: resolve reference inputs") {
+        val referenceInputs = buildSpan("distribution plan: resolve reference inputs") {
           resolveDistReferenceInputs(
             products = sortedProducts.map(::referenceProduct),
             model = referenceInputModel(targets, outputProvider),
@@ -504,7 +504,7 @@ internal fun computeDistPlan(
     contents
   }
   // A half writes only into its own packages, see `DistHalf.ownsPackage`.
-  val files = buildSpan("dev-distribution plan: compare files") {
+  val files = buildSpan("distribution plan: compare files") {
     fileContents.map { (relativePath, newContent) ->
       half.requireWritable(relativePath)
       DistPlanFileResult(
@@ -514,7 +514,7 @@ internal fun computeDistPlan(
     }
   }
   pluginPlans.updates.results.forEach { half.requireWritable(it.relativePath) }
-  buildSpan("dev-distribution plan: sweep stale files") {
+  buildSpan("distribution plan: sweep stale files") {
     // The run deletes every descriptor package on disk that it does not write, see `CrossHalfDescriptorPackages.stale`.
     val stalePackages = crossHalfDescriptorPackages.stale(projectRoot, crossHalfPluginTargets, crossHalfPluginCalls)
     for (relativePath in stalePackages) {
