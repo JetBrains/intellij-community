@@ -116,13 +116,18 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
       for (ASTNode child = myParent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         newChildren.add(child);
       }
-      Set<ASTNode> oldSet = new ReferenceOpenHashSet<>(myInitialChildren);
-      Set<ASTNode> newSet = new ReferenceOpenHashSet<>(newChildren);
-      int oldIndex = 0;
+      addMiddleChanges(0, myInitialChildren.size(), newChildren);
+      return result;
+    }
+
+    private void addMiddleChanges(int oldStart, int oldEnd, @NotNull List<ASTNode> newMiddle) {
+      Set<ASTNode> oldSet = new ReferenceOpenHashSet<>(myInitialChildren.subList(oldStart, oldEnd));
+      Set<ASTNode> newSet = new ReferenceOpenHashSet<>(newMiddle);
+      int oldIndex = oldStart;
       int newIndex = 0;
-      while (oldIndex < myInitialChildren.size() || newIndex < newChildren.size()) {
-        ASTNode oldChild = oldIndex < myInitialChildren.size() ? myInitialChildren.get(oldIndex) : null;
-        ASTNode newChild = newIndex < newChildren.size() ? newChildren.get(newIndex) : null;
+      while (oldIndex < oldEnd || newIndex < newMiddle.size()) {
+        ASTNode oldChild = oldIndex < oldEnd ? myInitialChildren.get(oldIndex) : null;
+        ASTNode newChild = newIndex < newMiddle.size() ? newMiddle.get(newIndex) : null;
         if (oldChild == newChild) {
           addSameChild(oldIndex++);
           newIndex++;
@@ -146,7 +151,6 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
           }
         }
       }
-      return result;
     }
 
     /** Handles an old child that is also a current child at the same place. */
