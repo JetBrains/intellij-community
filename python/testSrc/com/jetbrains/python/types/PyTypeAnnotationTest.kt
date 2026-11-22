@@ -2514,7 +2514,6 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-92893"])
-  @TestCaseOptions(assertRecursionPrevention = false)
   fun `new-style default that refers to itself`() = test("""
     class Itself[T = T]: ...
     #                └ WARNING Default type of type parameter 'T' refers to itself
@@ -2524,6 +2523,9 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                └ WARNING Default type of type parameter 'T' refers to itself
     type AItself[T = T] = list[T]
     #                └ WARNING Default type of type parameter 'T' refers to itself
+    x: Itself
+    y: SelfNested
+    z: AItself
     """.trimIndent())
 
   @Test
@@ -2539,18 +2541,27 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-92893"])
-  @TestCaseOptions(assertRecursionPrevention = false)
   fun `new-style defaults that refer to each other`() = test("""
     class Mutual[T = U, U = T]: ...
     #                └ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    x: Mutual
     """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-92893"])
-  @TestCaseOptions(assertRecursionPrevention = false)
   fun `new-style bound that refers to its own type parameter`() = test("""
     class SelfBound[T: T]: ...
     #                  └ ERROR Generic types are not allowed inside constraints and bounds of type parameters
+    x: SelfBound[int]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-94318"])
+  fun `new-style bounds that refer to each other`() = test("""
+    class MutualBound[T: U, U: T]: ...
+    #                    │     └ ERROR Generic types are not allowed inside constraints and bounds of type parameters
+    #                    └ ERROR Generic types are not allowed inside constraints and bounds of type parameters
+    x: MutualBound[int, str]
     """.trimIndent())
 
   @Test

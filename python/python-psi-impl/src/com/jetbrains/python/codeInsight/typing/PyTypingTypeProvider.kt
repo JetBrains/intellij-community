@@ -85,6 +85,7 @@ import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyTypeCommentOwner
 import com.jetbrains.python.psi.PyTypeParameter
+import com.jetbrains.python.psi.PyTypeParameterList
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.PyWithAncestors
@@ -1421,10 +1422,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (unpackedType != null) {
           return Ref(unpackedType)
         }
-        // The default or the bound of a type parameter can refer to the type parameter itself
         val typeParameterType: PyType? = (resolved as? PyTypeParameter)?.let { typeParameter ->
-          RecursionManager.doPreventingRecursion(typeParameter, false) {
-            getTypeParameterTypeFromTypeParameter(typeParameter, context)
+          if (isSelfOrForwardTypeParameterReference(typeHint, typeParameter)) {
+            getTypeParameterTypeFromTypeParameter(typeParameter, context, withDefaultAndBound = false)
+          }
+          else {
+            RecursionManager.doPreventingRecursion(typeParameter, false) {
+              getTypeParameterTypeFromTypeParameter(typeParameter, context)
+            }
           }
         }
         if (typeParameterType != null) {
@@ -2359,9 +2364,36 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       }
     }
 
+    /**
+     * Returns true if [typeHint] is in the default or the bound of a type parameter of a list.
+     * [typeParameter] must also be that type parameter or a later one of the same list.
+     * Such a reference is invalid. A reference to an earlier type parameter is valid in a default.
+     */
+    private fun isSelfOrForwardTypeParameterReference(typeHint: PsiElement, typeParameter: PyTypeParameter): Boolean {
+      val referringTypeParameter = PsiTreeUtil.getContextOfType(typeHint, PyTypeParameter::class.java, false) ?: return false
+      val typeParameters = (referringTypeParameter.parent as? PyTypeParameterList)?.typeParameters ?: return false
+      val index = typeParameters.indexOf(typeParameter)
+      return index >= 0 && index >= typeParameters.indexOf(referringTypeParameter)
+    }
+
+    /** Whether [type] contains [typeParameter] or a later type parameter of the same list. */
+    private fun containsSelfOrForwardTypeParameter(type: PyType?, typeParameter: PyTypeParameter, context: TypeEvalContext): Boolean {
+      val typeParameters = (typeParameter.parent as? PyTypeParameterList)?.typeParameters ?: return false
+      val index = typeParameters.indexOf(typeParameter)
+      if (index < 0) return false
+      return with(PyTypeChecker) { type.collectGenerics(context) }.allTypeParameters.any {
+        typeParameters.indexOf(it.declarationElement as? PyTypeParameter) >= index
+      }
+    }
+
+    /**
+     * The type of the type parameter [element].
+     * Without [withDefaultAndBound], the type has no default, no bound and no constraints.
+     */
     private fun getTypeParameterTypeFromTypeParameter(
       element: PsiElement,
       context: Context,
+      withDefaultAndBound: Boolean = true,
     ): PyTypeParameterType? {
       if (element !is PyTypeParameter) return null
       val name = element.name ?: return null
@@ -2369,7 +2401,8 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val typeParameterOwner = ScopeUtil.getScopeOwner(element)
       val scopeOwner: PyQualifiedNameOwner? = typeParameterOwner as? PyQualifiedNameOwner
 
-      val defaultExpression = element.defaultExpressionText?.let { PyUtil.createExpressionFromFragment(it, element) }
+      val defaultExpression = element.defaultExpressionText?.takeIf { withDefaultAndBound }
+        ?.let { PyUtil.createExpressionFromFragment(it, element) }
       val defaultType = defaultExpression?.let {
         val defaultExprWithoutParens = PyPsiUtils.flattenParens(it)
         if (defaultExprWithoutParens != null) {
@@ -2378,10 +2411,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         else Ref<PyType?>(PyAnyType.unknown)
       }
 
-      val boundExpression = element.boundExpressionText?.let { boundExpressionText ->
+      val boundExpression = element.boundExpressionText?.takeIf { withDefaultAndBound }?.let { boundExpressionText ->
         PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(boundExpressionText, element))
       }
-      val (boundType, constraints) = when (boundExpression) {
+      val (declaredBoundType, declaredConstraints) = when (boundExpression) {
         null -> PyAnyType.unknown to emptyList()
 
         is PyTupleExpression -> PyAnyType.unknown to boundExpression.elements.map {
@@ -2390,6 +2423,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
         else -> getTypePreventingRecursion(boundExpression, context).derefOrUnknown() to emptyList()
       }
+      val isInvalidBound = (declaredConstraints + declaredBoundType).any {
+        containsSelfOrForwardTypeParameter(it, element, context.typeContext)
+      }
+      val boundType = if (isInvalidBound) PyAnyType.unknown else declaredBoundType
+      val constraints = if (isInvalidBound) emptyList() else declaredConstraints
 
       val variance =
         if (scopeOwner is PyFunction) PyVariance.INVARIANT else PyVariance.INFER_VARIANCE
