@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.testFramework.GlobalState;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.UITestUtil;
@@ -112,7 +113,9 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
       });
 
       // testNothingPerformance
-      System.out.println(Timings.getStatistics());
+      if (TeamCityLogger.isUnderTC) {
+        System.out.println(Timings.getStatistics());
+      }
 
       // testFileEncoding
       catchExceptionAndReportAsTestIfFailed(_FirstInSuiteTestPrefix + "testFileEncoding" + testProcessName + buildConfName, () -> {
