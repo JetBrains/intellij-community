@@ -248,14 +248,15 @@ pub(crate) struct RunPlan<'a> {
 }
 
 impl RunPlan<'_> {
-    /// The script of the `find-in-files` arm: the queries, and the directory of the second pass below the project
-    /// directory of this run. `None` for another arm, and for a run without a project.
+    /// The script of the `find-in-files` arm: the project directory of this run, the queries, and the directory of the
+    /// second pass below the project directory. `None` for another arm, and for a run without a project.
     pub(crate) fn find_script(&self) -> Option<FindScript> {
         if self.arm.kind != ArmKind::FindInFiles {
             return None;
         }
         let project = self.project.as_ref()?;
         Some(FindScript {
+            project: Some(project.dir.display().to_string()),
             queries: self.queries.to_vec(),
             directory: self.directory.map(|directory| {
                 // `.` is the project directory itself, without a trailing `/.` that the IDE would keep in the scope

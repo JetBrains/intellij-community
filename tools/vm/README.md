@@ -297,14 +297,22 @@ A session directory holds:
 The lock of a session and of `gc` is `<runtime root>/bench/session.lock`.
 
 A run of the find-in-files arm writes the script `find-in-files.ijperf` of the performance plugin into its run
-directory. The script is the line `%findInFiles -headless <query>;<query>`, and `-Dtestscript.filename` names it.
-`-Dperformance.execute.script.right.after.ide.opened=true` runs it once the project opened: JetBrains Light holds the
-dumb mode, and the plugin would wait for the smart mode. `-headless` runs each search to its last usage without the
-popup, because the popup search of JetBrains Light does not finish in a bench run. The gate is the span `findInFiles#search: <query>` of each query. The metric
-`findInFiles.search` is the sum of the searches. `--directory <dir>` adds a second pass over that directory of the
-project, with its subdirectories: the line `%findInFiles -headless -directory=<path> <query>;<query>`, the spans
-`findInFiles#searchInDirectory: <query>` and their sum `findInFiles.searchInDirectory`. The two passes take two paths
-through Find in Files, and the digest shows both. Each search is a metric with its duration, and `<span> results` holds its
+directory. The script is the line `%findInFiles -headless -project=<project> <query>;<query>`, and
+`-Dtestscript.filename` names it. `-Dperformance.execute.script.right.after.ide.opened=true` runs it once the first
+project opened: JetBrains Light holds the dumb mode, and the plugin would wait for the smart mode. `-headless` runs each
+search to its last usage without the popup, because the popup search of JetBrains Light does not finish in a bench run.
+`-project=<project>` runs the searches in the project of the project directory, after it opened and its
+`FindInProjectDirectoriesProvider` gave its directories. JetBrains Light opens the project as a member project of a
+workspace, because the workspace feature is on by default. It opens the host project of the workspace first, and the
+script starts there, but the frame gives the member project to Find in Files. The gate is the span
+`findInFiles#search: <query>` of each query. The metric `findInFiles.search` is the sum of the searches. `--directory
+<dir>` adds a second pass over that directory of the project, with its subdirectories: the line `%findInFiles -headless
+-project=<project> -directory=<path> <query>;<query>`, the spans `findInFiles#searchInDirectory: <query>` and their sum
+`findInFiles.searchInDirectory`. The two passes take two paths through Find in Files, and the digest shows both. A
+directory pass in the project directories skips the walk of the tree once accio covered all candidates. With
+`--property ijlight.workspace.enabled=false`, the project opens outside a workspace, the IDE logs "No project directory
+found for search", and the directory pass walks the whole tree of its directory. A run with that line in `idea.log` is
+not valid, and its reason names the property. Each search is a metric with its duration, and `<span> results` holds its
 result count, so a twin of `--with-property ijlight.accio.enabled=false` shows whether accio and the platform walk find
 the same. JetBrains Light does not bundle the performance plugin, so a session gives it with `--context-plugins
 //platform/unified:performance_testing_plugin_dir`. The session builds that pool from the working tree, also with

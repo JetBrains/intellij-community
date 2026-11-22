@@ -1009,6 +1009,7 @@ fn find_in_files_run(
     avl_testkit::traces::copy_tree(&session.join("project-run-01"), &run);
     let queries: Vec<String> = queries.iter().map(|query| (*query).to_owned()).collect();
     let script = FindScript {
+        project: Some("/work/idea".to_owned()),
         queries,
         directory: directory.map(str::to_owned),
     };
@@ -1096,16 +1097,50 @@ fn a_find_in_files_run_without_a_search_or_its_script_is_invalid() {
     assert_eq!(record.reason.as_deref(), Some("no find-in-files.ijperf, so the run has no queries"));
 }
 
-/// The script holds one `%findInFiles` line with the queries in their order, and a second one with the directory, and
-/// it reads back to the same script.
+/// A find-in-files run whose `idea.log` says that the IDE gave no project directory is not valid: its searches took
+/// another path than in the product, and the reason names the property that causes it.
+#[test]
+fn a_find_in_files_run_without_a_project_directory_is_invalid() {
+    use super::NO_PROJECT_DIRECTORY_LOG_LINE;
+    let (_dir, session) = fixture_session();
+    let run = find_in_files_run(
+        &session,
+        &["FindModel"],
+        Some("/work/idea"),
+        &[
+            ("findInFiles#search: FindModel", 3100, 250),
+            ("findInFiles#searchInDirectory: FindModel", 3600, 1600),
+        ],
+        3,
+    );
+    let log = run.join("log").join("idea.log");
+    let mut text = std::fs::read_to_string(&log).expect("a log");
+    text.push_str(&format!(
+        "2026-11-22 10:00:05,000 [   5000]   WARN - #c.i.f.i.FindInProjectTask - {NO_PROJECT_DIRECTORY_LOG_LINE} in Project(name=idea)\n"
+    ));
+    std::fs::write(&log, text).expect("a log");
+    let record = collect(&run, &id(Arm::FIND_IN_FILES), LaunchFacts::default());
+    assert!(!record.valid);
+    let reason = record.reason.expect("a reason");
+    assert!(
+        reason.starts_with(&format!("log/idea.log holds \"{NO_PROJECT_DIRECTORY_LOG_LINE}\""))
+            && reason.contains("ijlight.workspace.enabled=false"),
+        "{reason}"
+    );
+    assert!(record.metrics.is_empty(), "a failed run reports no number");
+}
+
+/// The script holds one `%findInFiles` line with the project and the queries in their order, and a second one with the
+/// directory, and it reads back to the same script. A script of a session before the project option reads back too.
 #[test]
 fn the_find_in_files_script_reads_back_to_its_queries_and_its_directory() {
     use super::FindScript;
     let project = FindScript {
+        project: Some("/work/idea".to_owned()),
         queries: vec!["FindModel".to_owned(), "a b".to_owned()],
         directory: None,
     };
-    assert_eq!(project.text(), "%findInFiles -headless FindModel;a b\n");
+    assert_eq!(project.text(), "%findInFiles -headless -project=/work/idea FindModel;a b\n");
     assert_eq!(FindScript::parse(&project.text()), Some(project.clone()));
     let both = FindScript {
         directory: Some("/work/idea/platform".to_owned()),
@@ -1113,9 +1148,21 @@ fn the_find_in_files_script_reads_back_to_its_queries_and_its_directory() {
     };
     assert_eq!(
         both.text(),
-        "%findInFiles -headless FindModel;a b\n%findInFiles -headless -directory=/work/idea/platform FindModel;a b\n"
+        "%findInFiles -headless -project=/work/idea FindModel;a b\n\
+         %findInFiles -headless -project=/work/idea -directory=/work/idea/platform FindModel;a b\n"
     );
-    assert_eq!(FindScript::parse(&both.text()), Some(both));
+    assert_eq!(FindScript::parse(&both.text()), Some(both.clone()));
+    let before_the_project = FindScript { project: None, ..both };
+    assert_eq!(
+        FindScript::parse("%findInFiles -headless FindModel;a b\n%findInFiles -headless -directory=/work/idea/platform FindModel;a b\n"),
+        Some(before_the_project),
+        "a script of a session before -project"
+    );
+    assert_eq!(
+        FindScript::parse("%findInFiles -headless -directory=/work/idea FindModel\n"),
+        None,
+        "a directory in the line of the project scope"
+    );
     assert_eq!(FindScript::parse("%findInFiles -headless \n"), None, "an empty query");
     assert_eq!(FindScript::parse("%openFile a\n"), None, "another command");
 }

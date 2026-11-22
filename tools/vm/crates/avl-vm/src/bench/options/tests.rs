@@ -380,14 +380,14 @@ fn project_takes_a_directory_of_the_find_in_files_arm_and_session_properties() {
         "--property",
         "accio.binary=/opt/accio/bin/accio",
         "--property",
-        "ijlight.workspace.enabled=false",
+        "accio.home=/opt/accio/home",
     ]) else {
         panic!("expected project");
     };
     assert_eq!(args.directory, Some(PathBuf::from("platform/lang-impl")));
     assert_eq!(
         args.launch.properties.iter().map(ToString::to_string).collect::<Vec<_>>(),
-        ["accio.binary=/opt/accio/bin/accio", "ijlight.workspace.enabled=false"]
+        ["accio.binary=/opt/accio/bin/accio", "accio.home=/opt/accio/home"]
     );
     let BenchVerb::Project(args) = verb(&["project", "idea", "--directory", "platform"]) else {
         panic!("expected project");

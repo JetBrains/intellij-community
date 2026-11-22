@@ -301,7 +301,7 @@ fn every_run_of_the_empty_editor_arm_opens_the_project_without_a_file() {
 }
 
 /// Every run of the find-in-files arm opens the project directory alone, and an in-place project is the same directory
-/// in every sandbox. The wait for its last search has a limit of its own, and the ceiling of the process grows with it.
+/// in every sandbox. The script searches in the project of that directory. The wait for its last search has a limit of its own, and the ceiling of the process grows with it.
 #[test]
 fn the_find_in_files_arm_opens_its_project_where_it_is_and_waits_longer() {
     let first = Sandbox::new("/s/find-in-files-sandbox");
@@ -325,7 +325,7 @@ fn the_find_in_files_arm_opens_its_project_where_it_is_and_waits_longer() {
     let script = plan.find_script().expect("a script");
     assert_eq!(
         script.text(),
-        "%findInFiles -headless FindModel\n%findInFiles -headless -directory=/work/idea/platform FindModel\n"
+        "%findInFiles -headless -project=/work/idea FindModel\n%findInFiles -headless -project=/work/idea -directory=/work/idea/platform FindModel\n"
     );
     assert_eq!(script.last_span(), "findInFiles#searchInDirectory: FindModel");
     let root = RunPlan {

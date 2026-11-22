@@ -235,6 +235,12 @@ const FIND_DIRECTORY_OPTION: &str = "-directory=";
 /// JetBrains Light does not finish in a bench run, and the headless search runs the same search engines.
 const FIND_HEADLESS_OPTION: &str = "-headless";
 
+/// The option of [`FIND_COMMAND`] that searches in the open project whose base path is `<path>`, and waits for it to
+/// open. The script starts in the first project that opens. JetBrains Light opens a folder as a member project of a
+/// workspace after the host project, and the frame gives the member project to Find in Files. The first space ends the
+/// path.
+const FIND_PROJECT_OPTION: &str = "-project=";
+
 /// The span of [`FIND_COMMAND`] that opens the dialog with an empty query before the searches.
 pub(crate) const FIND_DIALOG_SPAN: &str = "findInFiles#openDialog";
 
@@ -250,6 +256,13 @@ pub(crate) const FIND_IN_DIRECTORY: &str = "findInFiles.searchInDirectory";
 /// The milliseconds from the process start to the end of the last search span, on the clock of the anchors.
 pub(crate) const FIND_IN_FILES_END: &str = "findInFiles.end";
 
+/// The warning of `FindInProjectTask` in `idea.log` when a `FindInProjectDirectoriesProvider` gives no directory for
+/// the project. Find in Files then takes another path than in the product: the project pass does not walk the project
+/// directories, and the directory pass walks the whole tree of its directory. JetBrains Light gives the directories of
+/// a project of a workspace. With `ijlight.workspace.enabled=false`, it opens the project outside a workspace and
+/// gives none.
+pub(crate) const NO_PROJECT_DIRECTORY_LOG_LINE: &str = "No project directory found for search";
+
 /// The metric key of the result count of the search span `span`, such as `findInFiles#search: FindModel results`.
 pub(crate) fn find_results(span: &str) -> String {
     format!("{span} results")
@@ -259,6 +272,10 @@ pub(crate) fn find_results(span: &str) -> String {
 /// `directory` when the run has one.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct FindScript {
+    /// The absolute project directory: the searches run in the open project with this base path, see
+    /// [`FIND_PROJECT_OPTION`]. A script of a session before the option has none, and searched in the project of the
+    /// script.
+    pub(crate) project: Option<String>,
     pub(crate) queries: Vec<String>,
     /// The absolute directory of the second pass, with its subdirectories.
     pub(crate) directory: Option<String>,
@@ -266,14 +283,16 @@ pub(crate) struct FindScript {
 
 impl FindScript {
     /// The text of [`FIND_SCRIPT_FILE`]: one line of [`FIND_COMMAND`] for the project scope, and one with
-    /// [`FIND_DIRECTORY_OPTION`] for the directory, each with [`FIND_HEADLESS_OPTION`].
+    /// [`FIND_DIRECTORY_OPTION`] for the directory, each with [`FIND_HEADLESS_OPTION`] and [`FIND_PROJECT_OPTION`].
     pub(crate) fn text(&self) -> String {
         let queries = self.queries.join(&FIND_QUERY_SEPARATOR.to_string());
-        let mut text = format!("{FIND_COMMAND} {FIND_HEADLESS_OPTION} {queries}\n");
+        let mut options = format!("{FIND_COMMAND} {FIND_HEADLESS_OPTION}");
+        if let Some(project) = &self.project {
+            options.push_str(&format!(" {FIND_PROJECT_OPTION}{project}"));
+        }
+        let mut text = format!("{options} {queries}\n");
         if let Some(directory) = &self.directory {
-            text.push_str(&format!(
-                "{FIND_COMMAND} {FIND_HEADLESS_OPTION} {FIND_DIRECTORY_OPTION}{directory} {queries}\n"
-            ));
+            text.push_str(&format!("{options} {FIND_DIRECTORY_OPTION}{directory} {queries}\n"));
         }
         text
     }
@@ -281,8 +300,10 @@ impl FindScript {
     /// The script of a text of [`FIND_SCRIPT_FILE`], or `None` for a text of another shape.
     pub(crate) fn parse(text: &str) -> Option<Self> {
         let mut lines = text.lines();
-        let headless = format!(" {FIND_HEADLESS_OPTION} ");
-        let queries = lines.next()?.strip_prefix(FIND_COMMAND)?.strip_prefix(headless.as_str())?;
+        let (project, directory, queries) = Self::parse_line(lines.next()?)?;
+        if directory.is_some() {
+            return None;
+        }
         let queries: Vec<String> = queries.split(FIND_QUERY_SEPARATOR).map(str::to_owned).collect();
         if queries.iter().any(String::is_empty) {
             return None;
@@ -290,14 +311,36 @@ impl FindScript {
         let directory = match lines.next() {
             None => None,
             Some(line) => {
-                let option = line
-                    .strip_prefix(FIND_COMMAND)?
-                    .strip_prefix(headless.as_str())?
-                    .strip_prefix(FIND_DIRECTORY_OPTION)?;
-                Some(option.split_once(' ')?.0.to_owned())
+                let (line_project, directory, _) = Self::parse_line(line)?;
+                if line_project != project {
+                    return None;
+                }
+                Some(directory?)
             }
         };
-        Some(Self { queries, directory })
+        Some(Self {
+            project,
+            queries,
+            directory,
+        })
+    }
+
+    /// One line of [`FIND_COMMAND`] with [`FIND_HEADLESS_OPTION`]: the path of [`FIND_PROJECT_OPTION`], the path of
+    /// [`FIND_DIRECTORY_OPTION`] and the queries, in the order that [`Self::text`] writes them.
+    fn parse_line(line: &str) -> Option<(Option<String>, Option<String>, &str)> {
+        let mut rest = line
+            .strip_prefix(FIND_COMMAND)?
+            .strip_prefix(' ')?
+            .strip_prefix(FIND_HEADLESS_OPTION)?
+            .strip_prefix(' ')?;
+        let mut option = |prefix: &str| -> Option<String> {
+            let (path, after) = rest.strip_prefix(prefix)?.split_once(' ')?;
+            rest = after;
+            Some(path.to_owned())
+        };
+        let project = option(FIND_PROJECT_OPTION);
+        let directory = option(FIND_DIRECTORY_OPTION);
+        Some((project, directory, rest))
     }
 
     /// The prefix of the search spans of each pass, and the metric of its sum.
@@ -991,14 +1034,22 @@ fn span_gate(trace: Option<&Trace>, name: &str, missing: &str) -> Result<(), Str
 }
 
 /// The find-in-files gate: a search span for each query of [`FIND_SCRIPT_FILE`] in each pass, none with an error and
-/// each before the quit. It adds the duration and the result count of each search, the sum of each pass,
-/// [`FIND_IN_FILES`] and [`FIND_IN_DIRECTORY`], the end of the last search [`FIND_IN_FILES_END`] and the duration of
-/// [`FIND_DIALOG_SPAN`].
+/// each before the quit, and no [`NO_PROJECT_DIRECTORY_LOG_LINE`] in `log/idea.log`. It adds the duration and the result
+/// count of each search, the sum of each pass, [`FIND_IN_FILES`] and [`FIND_IN_DIRECTORY`], the end of the last search
+/// [`FIND_IN_FILES_END`] and the duration of [`FIND_DIALOG_SPAN`].
 fn find_in_files_gate(run_dir: &Path, trace: Option<&Trace>, metrics: &mut BTreeMap<String, f64>) -> Result<(), String> {
     let script = files::read_optional(&run_dir.join(FIND_SCRIPT_FILE))
         .map_err(|error| format!("{error:#}"))?
         .ok_or_else(|| format!("no {FIND_SCRIPT_FILE}, so the run has no queries"))?;
     let script = FindScript::parse(&script).ok_or_else(|| format!("{FIND_SCRIPT_FILE} holds no {FIND_COMMAND} line"))?;
+    let log = files::read_optional(&run_dir.join("log").join("idea.log")).map_err(|error| format!("{error:#}"))?;
+    if log.is_some_and(|log| log.contains(NO_PROJECT_DIRECTORY_LOG_LINE)) {
+        return Err(format!(
+            "log/idea.log holds \"{NO_PROJECT_DIRECTORY_LOG_LINE}\": the IDE gave no project directory, so Find in Files \
+             took another path than in the product; JetBrains Light gives them for a project of a workspace, so do not \
+             pass ijlight.workspace.enabled=false"
+        ));
+    }
     let Some(trace) = trace else {
         return Err(format!("no {TRACE_FILE}, so no search span"));
     };
