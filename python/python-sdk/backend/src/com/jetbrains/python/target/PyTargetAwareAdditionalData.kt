@@ -10,6 +10,7 @@ import com.intellij.execution.target.loadTargetConfiguration
 import com.intellij.execution.target.saveTargetBasedSdkAdditionalData
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.remote.RemoteSdkPropertiesHolder
@@ -100,6 +101,19 @@ open class PyTargetAwareAdditionalData private constructor(
     }
 
     targetEnvironmentConfiguration = loadedConfiguration
+    if (loadedConfiguration != null) {
+      askForMigrationIfSaveChanges(element)
+    }
+  }
+
+  /** Asks for a migration when [save] does not write [element] again without a change, and logs both forms. */
+  private fun askForMigrationIfSaveChanges(element: Element) {
+    val stored = JDOMUtil.write(element)
+    val saved = JDOMUtil.write(Element(element.name).also { save(it) })
+    if (stored == saved) return
+
+    LOG.info("The data of the target SDK $interpreterPath needs a migration. Stored:\n$stored\nSaved:\n$saved")
+    markMigrationRequired()
   }
 
   /**
