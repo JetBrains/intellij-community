@@ -158,7 +158,7 @@ internal class KotlinCompilerConfigurableUi(private val onCopyRuntimeFilesCheckB
                     }
                 }).align(AlignX.FILL)
                     .component
-            }
+            }.enabledIf(generateSourceMapsCheckBox.selected)
             row {
                 cell(copyRuntimeFilesCheckBox)
             }
