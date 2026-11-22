@@ -309,6 +309,27 @@ public final class PyResolveUtil {
     return ContainerUtil.mapNotNull(results, RatedResolveResult::getElement);
   }
 
+  /**
+   * Resolves a name of the header of a generic class, such as a base or a keyword argument, in a stub-safe way.
+   * <p>
+   * The header sees the type parameters of the class, but no other name of the class body. Other names resolve in the
+   * scope that holds the class, as {@link #scopeCrawlUp(PsiScopeProcessor, PsiElement, String, PsiElement)} does for the AST.
+   */
+  @ApiStatus.Internal
+  public static @NotNull List<PsiElement> resolveQualifiedNameInGenericClassHeader(@NotNull QualifiedName qualifiedName,
+                                                                                   @NotNull PyClass pyClass,
+                                                                                   @NotNull TypeEvalContext context) {
+    final String firstName = qualifiedName.getFirstComponent();
+    if (firstName != null && qualifiedName.getComponentCount() == 1) {
+      final List<RatedResolveResult> typeParameters = resolveTypeParameters(pyClass, firstName);
+      if (!typeParameters.isEmpty()) {
+        return ContainerUtil.mapNotNull(typeParameters, RatedResolveResult::getElement);
+      }
+    }
+    final ScopeOwner enclosingScope = ScopeUtil.getScopeOwner(pyClass);
+    return enclosingScope != null ? resolveQualifiedNameInScope(qualifiedName, enclosingScope, context) : Collections.emptyList();
+  }
+
   @ApiStatus.Internal
   public static @NotNull List<RatedResolveResult> resolveQualifiedNameInScopeNew(@NotNull QualifiedName qualifiedName,
                                                                                  @NotNull ScopeOwner scopeOwner,

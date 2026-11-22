@@ -742,7 +742,10 @@ public final class PyUtil {
    * {@link #getFragmentContextAwareParent} skips these parentheses.
    *
    * @param expressionText text of the expression
-   * @param context        context element used to resolve symbols in the expression
+   * @param context        context element used to resolve symbols in the expression.
+   *                       A class means a text of the class header, such as a base or a keyword argument.
+   *                       Such a text resolves in the scope that holds the class, and it sees only the type parameters of the class.
+   *                       For a text of the class body, pass a member of the class.
    * @return instance of {@link PyExpression} as described
    * @see PyExpressionCodeFragment
    */
