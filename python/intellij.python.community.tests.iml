@@ -196,7 +196,6 @@
     <orderEntry type="module" module-name="intellij.python.requirements.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.packaging" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.community.impl" />
 </module>

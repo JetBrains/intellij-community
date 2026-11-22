@@ -201,6 +201,7 @@ jvm_library(
         "//platform/scratch/plugin",
         "//python/python-packaging:packaging",
         "//python:python-community-tests_test_lib",
+        "//platform/service-container",
     ],
 )
 ### auto-generated section `build intellij.python.community.tests.gant` end
