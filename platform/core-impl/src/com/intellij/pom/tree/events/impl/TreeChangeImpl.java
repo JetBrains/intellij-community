@@ -8,6 +8,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,7 @@ import java.util.Set;
 /**
  * Tracks changes to the direct children of a single AST parent node.
  * <p>
- * On construction, snapshots the parent's current children and their text lengths.
+ * On construction, snapshots the parent's current children and their text lengths in two lists.
  * When the change set is queried, {@link ChildrenDiff} lazily diffs the snapshot against
  * the parent's current children to produce a {@link ChangeInfoImpl} for each
  * added, removed, replaced, or content-changed child.
@@ -36,7 +37,9 @@ import java.util.Set;
 public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   private final @NotNull ASTNode myParent;
   private final @NotNull List<ASTNode> mySuperParents;
-  private final @NotNull LinkedHashMap<ASTNode, Integer> myInitialLengths = new LinkedHashMap<>();
+  private final @NotNull List<ASTNode> myInitialChildren = new ArrayList<>();
+  /** The text length of each child of {@link #myInitialChildren} at the snapshot, at the same index. */
+  private final @NotNull IntList myInitialLengths = new IntArrayList();
   /**
    * The children with a change inside them. The value is the sum of the length changes of the child before the snapshot.
    * The old length of the child is its length at the snapshot minus this sum.
@@ -50,7 +53,8 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
     assert myParent.getPsi() != null : myParent.getElementType() + " of " + myParent.getClass();
     mySuperParents = JBIterable.generate(parent.getTreeParent(), ASTNode::getTreeParent).toList();
     for (ASTNode child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      myInitialLengths.put(child, child.getTextLength());
+      myInitialChildren.add(child);
+      myInitialLengths.add(child.getTextLength());
     }
   }
 
@@ -100,68 +104,59 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
     return changes;
   }
 
-  private class ChildrenDiff {
-    Set<ASTNode> oldSet = new ReferenceOpenHashSet<>(myInitialLengths.keySet());
-    Set<ASTNode> newSet;
-    Iterator<ASTNode> itOld = myInitialLengths.keySet().iterator();
-    Iterator<ASTNode> itNew;
-    ASTNode oldChild, newChild;
-    int oldOffset = 0;
-    LinkedHashMap<ASTNode, ChangeInfoImpl> result = new LinkedHashMap<>();
-
-    void advanceOld() {
-      oldOffset += oldChild == null ? 0 : getOldLength(oldChild);
-      oldChild = itOld.hasNext() ? itOld.next() : null;
-    }
-
-    void advanceNew() {
-      newChild = itNew.hasNext() ? itNew.next() : null;
-    }
+  /**
+   * Compares {@link #myInitialChildren} with the current children of {@link #myParent}.
+   */
+  private final class ChildrenDiff {
+    private final LinkedHashMap<ASTNode, ChangeInfoImpl> result = new LinkedHashMap<>();
+    private int oldOffset;
 
     Map<ASTNode, ChangeInfoImpl> calcChanges() {
       List<ASTNode> newChildren = new ArrayList<>();
       for (ASTNode child = myParent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         newChildren.add(child);
       }
-      newSet = new ReferenceOpenHashSet<>(newChildren);
-      itNew = newChildren.iterator();
-      advanceOld();
-      advanceNew();
-
-      while (oldChild != null || newChild != null) {
+      Set<ASTNode> oldSet = new ReferenceOpenHashSet<>(myInitialChildren);
+      Set<ASTNode> newSet = new ReferenceOpenHashSet<>(newChildren);
+      int oldIndex = 0;
+      int newIndex = 0;
+      while (oldIndex < myInitialChildren.size() || newIndex < newChildren.size()) {
+        ASTNode oldChild = oldIndex < myInitialChildren.size() ? myInitialChildren.get(oldIndex) : null;
+        ASTNode newChild = newIndex < newChildren.size() ? newChildren.get(newIndex) : null;
         if (oldChild == newChild) {
           if (!myContentChanges.isEmpty() && myContentChanges.containsKey(oldChild)) {
-            addChange(new ChangeInfoImpl(oldChild, oldChild, oldOffset, getOldLength(oldChild)));
+            addChange(new ChangeInfoImpl(oldChild, oldChild, oldOffset, getOldLength(oldIndex)));
           }
-          advanceOld();
-          advanceNew();
+          oldOffset += getOldLength(oldIndex);
+          oldIndex++;
+          newIndex++;
         }
         else {
           boolean oldDisappeared = oldChild != null && !newSet.contains(oldChild);
           boolean newAppeared = newChild != null && !oldSet.contains(newChild);
-          ChangeInfoImpl change = new ChangeInfoImpl(
+          int oldLength = oldDisappeared ? getOldLength(oldIndex) : 0;
+          addChange(new ChangeInfoImpl(
             /*oldChild =*/ oldDisappeared ? oldChild : null,
             /*newChild =*/ newAppeared ? newChild : null,
             /*offset = */ oldOffset,
-            /*oldLength =*/ oldDisappeared ? getOldLength(oldChild) : 0);
-          addChange(change);
+            /*oldLength =*/ oldLength));
 
           if (oldDisappeared) {
-            advanceOld();
+            oldOffset += oldLength;
+            oldIndex++;
           }
           if (newAppeared) {
-            advanceNew();
+            newIndex++;
           }
         }
       }
-
       return result;
     }
 
-    private int getOldLength(@NotNull ASTNode oldChild) {
-      int length = myInitialLengths.get(oldChild);
+    private int getOldLength(int oldIndex) {
+      int length = myInitialLengths.getInt(oldIndex);
       if (myContentChanges.isEmpty()) return length;
-      return length - myContentChanges.getInt(oldChild);
+      return length - myContentChanges.getInt(myInitialChildren.get(oldIndex));
     }
 
     private void addChange(ChangeInfoImpl change) {
@@ -202,7 +197,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   }
 
   public @NotNull List<ASTNode> getInitialChildren() {
-    return new ArrayList<>(myInitialLengths.keySet());
+    return new ArrayList<>(myInitialChildren);
   }
 
   @Override
