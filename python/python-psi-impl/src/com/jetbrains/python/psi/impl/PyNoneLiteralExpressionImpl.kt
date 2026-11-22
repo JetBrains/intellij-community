@@ -19,13 +19,12 @@ import com.intellij.lang.ASTNode
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyInstantTypeProvider
 import com.jetbrains.python.psi.PyNoneLiteralExpression
-import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyNoneLiteralExpressionImpl(astNode: ASTNode) : PyElementImpl(astNode), PyNoneLiteralExpression, PyInstantTypeProvider {
   override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyType? {
-    return PyBuiltinCache.getInstance(this).noneType ?: PyAnyType.unknown
+    return PyBuiltinCache.getInstance(this).noneTypeOrUnknown
   }
 
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
