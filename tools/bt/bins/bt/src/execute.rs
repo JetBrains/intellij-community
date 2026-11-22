@@ -470,7 +470,9 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     }
 
     let class_time_budget_violations = if let (Some(budget), Some(baseline)) = (class_time_budget, class_time_budget_baseline.as_ref()) {
-        let mut current_plan = recorded_plan;
+        // Only the times of this run count. A failed target has no timing, and its recorded times can name classes that
+        // no longer exist.
+        let mut current_plan = ShardPlan::default();
         for timing in &result.timings {
             current_plan.record(timing);
         }

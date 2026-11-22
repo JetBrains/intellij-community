@@ -419,6 +419,22 @@ fn a_full_lane_allows_a_class_over_the_budget_when_the_baseline_has_a_reason() {
 }
 
 #[test]
+fn a_failed_target_is_not_judged_by_its_recorded_class_times() {
+    let fake = class_time_budget_tree("");
+    fake.put_absolute(SHARD_PLAN, &format!("default\t2\nclass\t{CORE_LABEL}\tcom.air.GoneTest\t120.000\n"));
+    one_attempt(
+        &fake,
+        "FAILED",
+        r#"<testsuites><testsuite name="com.air.NewTest" tests="1" failures="1" time="1.0"/></testsuites>"#,
+    );
+
+    let outcome = run(&["--lane", "fast"], &fake);
+
+    assert_eq!(outcome.exit_code, exit::TEST_FAILED, "{}", outcome.text);
+    assert!(!outcome.text.contains("class-time budget"), "{}", outcome.text);
+}
+
+#[test]
 fn a_full_lane_with_explicit_shards_still_enforces_its_class_time_budget() {
     let fake = class_time_budget_tree("");
     one_attempt(
