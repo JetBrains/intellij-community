@@ -31,7 +31,7 @@ fun addLoadLazyImportLink(debugValue: PyDebugValue, valueNode: XValueNodeEx) {
 fun launchLazyImportLoad(scope: CoroutineScope, frameAccessor: PyFrameAccessor, value: PyDebugValue, session: XDebugSession) {
   scope.launch(Dispatchers.IO) {
     try {
-      val result = frameAccessor.evaluate(value.evaluationExpression, false, true)
+      val result = frameAccessor.evaluate(value.evaluationExpression, false, true) ?: return@launch
       if (result.isErrorOnEval) {
         session.reportMessage(result.value.orEmpty(), MessageType.ERROR)
       }

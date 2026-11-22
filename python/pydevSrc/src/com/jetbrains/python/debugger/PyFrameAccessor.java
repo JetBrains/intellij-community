@@ -44,6 +44,10 @@ public interface PyFrameAccessor {
     return null;
   }
 
+  /**
+   * @return null when the session ends before the evaluation gives a value
+   */
+  @Nullable
   PyDebugValue evaluate(final String expression, final boolean execute, boolean doTrunc) throws PyDebuggerException;
 
   /**
