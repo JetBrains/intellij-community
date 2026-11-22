@@ -4,9 +4,12 @@ package com.jetbrains.performancePlugin.commands;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.GlobalInspectionContextEx;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectListener;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.actions.ExportToXMLAction;
@@ -27,6 +30,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -35,9 +39,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.performancePlugin.LogDirHandler;
 import com.jetbrains.performancePlugin.PerformanceTestingBundle;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
+import com.jetbrains.performancePlugin.utils.DataDumper;
 import com.jetbrains.performancePlugin.utils.ResultsToFileProcessor;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
@@ -55,6 +61,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,6 +76,7 @@ import static com.intellij.openapi.util.Predicates.nonNull;
  */
 public class InspectionCommandEx extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "InspectCodeEx";
+  private static final String INSPECTION_RUNS_FILE_NAME = "inspection-runs.json";
   private static final Logger LOGGER = Logger.getInstance(InspectionCommandEx.class);
 
   private final Options myOptions = new Options();
@@ -132,6 +141,22 @@ public class InspectionCommandEx extends AbstractCommand {
       analysisScope = new AnalysisScope(project);
     }
 
+    Map<String, InspectionRun> inspectionRuns = new ConcurrentHashMap<>();
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(GlobalInspectionContextEx.INSPECT_TOPIC, new InspectListener() {
+      @Override
+      public void inspectionFinished(long duration,
+                                     long threadId,
+                                     int problemsCount,
+                                     @NotNull InspectionToolWrapper<?, ?> tool,
+                                     @NotNull InspectionKind kind,
+                                     @Nullable PsiFile file,
+                                     @NotNull Project project) {
+        // -1 means the inspection threw
+        inspectionRuns.merge(tool.getShortName(), new InspectionRun(duration, Math.max(problemsCount, 0)), InspectionRun::plus);
+      }
+    });
+
     @SuppressWarnings("TestOnlyProblems")
     GlobalInspectionContextImpl inspectionContext = new GlobalInspectionContextImpl(project, inspectionManagerEx.getContentManager()) {
 
@@ -147,6 +172,13 @@ public class InspectionCommandEx extends AbstractCommand {
       @Override
       protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
         super.notifyInspectionsFinished(scope);
+        connection.disconnect();
+        try {
+          DataDumper.dump(inspectionRuns, LogDirHandler.currentLogDir().resolve(INSPECTION_RUNS_FILE_NAME));
+        }
+        catch (RuntimeException e) {
+          LOGGER.error(e);
+        }
 
         context.message(PerformanceTestingBundle.message("command.inspection.finish"), getLine());
         if (enabledInspectionTools.size() == 1 && !myOptions.hideResults) {
@@ -209,6 +241,16 @@ public class InspectionCommandEx extends AbstractCommand {
     inspectionContext.setExternalProfile(profile);
     inspectionContext.doInspections(analysisScope);
     return Promises.toPromise(actionCallback);
+  }
+
+  /**
+   * Totals of one inspection over a run. {@code ms} sums the per-file times, each truncated to whole milliseconds, over
+   * all threads, so it is not the time of the inspection alone; an AggregateResultsInspection child gets its parent's.
+   */
+  record InspectionRun(long ms, int problems) {
+    InspectionRun plus(@NotNull InspectionRun other) {
+      return new InspectionRun(ms + other.ms, problems + other.problems);
+    }
   }
 
   private static void saveArtifact(@NotNull Path path, @NotNull String identifier) {
