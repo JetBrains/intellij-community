@@ -308,7 +308,7 @@ fn rendered_files_of_one_model() {
     );
 }
 
-/// The goldens hold the bytes of each test model on each host platform. `DevDistProductLaunchModelTest` checks the tool
+/// The goldens hold the bytes of each test model on each host platform. `DistProductLaunchModelTest` checks the tool
 /// against the production writers.
 #[test]
 fn product_info_matches_the_recorded_bytes_on_every_platform() {

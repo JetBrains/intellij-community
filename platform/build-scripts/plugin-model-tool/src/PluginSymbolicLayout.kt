@@ -4,15 +4,15 @@ package com.intellij.platform.buildScripts.pluginModelTool
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
-import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
-import org.jetbrains.intellij.build.devDist.JarSourceRecipe
-import org.jetbrains.intellij.build.devDist.JarWriterRecipe
-import org.jetbrains.intellij.build.devDist.NATIVE_TREE_INPUT_PREFIX
-import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.PluginPackingProjection
-import org.jetbrains.intellij.build.devDist.ReusableJarArtifact
-import org.jetbrains.intellij.build.devDist.planPluginPacking
-import org.jetbrains.intellij.build.devDist.pluginPackingExecutionVersion
+import org.jetbrains.intellij.build.dist.CanonicalJarRecipe
+import org.jetbrains.intellij.build.dist.JarSourceRecipe
+import org.jetbrains.intellij.build.dist.JarWriterRecipe
+import org.jetbrains.intellij.build.dist.NATIVE_TREE_INPUT_PREFIX
+import org.jetbrains.intellij.build.dist.PluginPackingAsset
+import org.jetbrains.intellij.build.dist.PluginPackingProjection
+import org.jetbrains.intellij.build.dist.ReusableJarArtifact
+import org.jetbrains.intellij.build.dist.planPluginPacking
+import org.jetbrains.intellij.build.dist.pluginPackingExecutionVersion
 import org.jetbrains.intellij.build.impl.SupportedDistribution
 import org.jetbrains.intellij.build.impl.assembleOrderedJarSources
 

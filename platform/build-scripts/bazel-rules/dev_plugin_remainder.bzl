@@ -1400,7 +1400,7 @@ def _dict_for_platform(values, platform, what):
     return result
 
 # The repositories whose jar-file labels the generator records for a library jar, as `isRecordedJarFileLabel` of
-# `devDistPluginBuildPlan.kt` lists them. The empty name is the checkout, which a label without `//` names too.
+# `distPluginBuildPlan.kt` lists them. The empty name is the checkout, which a label without `//` names too.
 _LIBRARY_JAR_REPOSITORIES = ["", "@community", "@lib", "@ultimate_lib"]
 
 def _is_library_jar_label(label):

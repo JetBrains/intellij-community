@@ -1935,7 +1935,7 @@ private fun exportDescriptorFiles(module: ModuleDescriptor, buildFile: BuildFile
       // root, and Bazel therefore leaves the subtree out of the main repository's execroot symlink farm:
       // `//:community/<path>` analyses, and an action that declares it gets a symlink to nothing. The label an action
       // can read is `@community//<package>:<path>`, which only the community package can export - see
-      // `containingBazelPackageLabel` in `devDistPluginDescriptorPlan.kt`.
+      // `containingBazelPackageLabel` in `distPluginDescriptorPlan.kt`.
       if (relative.startsWith("../")) {
         continue
       }

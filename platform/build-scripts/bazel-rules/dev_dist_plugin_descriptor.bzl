@@ -648,7 +648,7 @@ an operating system alone. It names the output's directory, so two variants of o
 Stated only by a layout whose bundling restriction no variant token spells. No layout of this product states one, so no
 generator writes it, and it is kept on purpose: the variant token cannot spell every restriction a layout may take.
 `dev_dist_plugin_descriptor_platforms` answers the four shapes a token has, and `layoutVariant` of
-`devDistPluginDescriptorPlan.kt` is the authority both mirror.""",
+`distPluginDescriptorPlan.kt` is the authority both mirror.""",
         ),
         "markers": attr.string_list(
             doc = """The layout's raw text patch as marker-table rows, in the order it applies them.
@@ -820,7 +820,7 @@ _DEV_DESCRIPTOR_SUFFIX = "_dev_descriptor"
 def dev_dist_plugin_descriptor_platforms(variant):
     """Which `HOST_PLATFORMS` entries one layout variant serves - `"darwin"` gives the two macOS platforms.
 
-    A variant has four shapes, and `layoutVariant` of `devDistPluginDescriptorPlan.kt` is the authority this mirrors.
+    A variant has four shapes, and `layoutVariant` of `distPluginDescriptorPlan.kt` is the authority this mirrors.
     The empty variant serves every platform. An operating-system token serves that operating system on every
     architecture. An architecture token serves that architecture on every operating system. A `HOST_PLATFORMS` entry
     serves itself alone.
@@ -854,7 +854,7 @@ def dev_dist_plugin_descriptor_os_arch_stamps(variant):
 
     Both are mechanical. The row states the `<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->` replacement, whose text
     `osArchDescriptorMarker` owns, and a plugin bundled for one platform states that platform in its version. So the
-    plan states neither, and `osArchStamps` of `devDistPluginDescriptorPlan.kt` verifies the layout against the same
+    plan states neither, and `osArchStamps` of `distPluginDescriptorPlan.kt` verifies the layout against the same
     pair. A layout that disagrees is held out by name, which is why deriving both here is safe.
 
     The spellings come from `DEV_DIST_MARKETPLACE_NAMES`: `OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed

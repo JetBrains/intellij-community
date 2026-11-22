@@ -6,12 +6,12 @@ one against the other. The binary `content-report` of the ultimate workspace pri
 
 ## File format
 
-`DevDistRecipe.kt` writes `<fragment>.plan.yaml`: two head comment lines, then one YAML document. kaml writes the
+`DistRecipe.kt` writes `<fragment>.plan.yaml`: two head comment lines, then one YAML document. kaml writes the
 document through `serializeContentEntries` with `encodeDefaults = false`. The document is a block list of `FileEntry`.
 
 ```
 # The packaging recipe the '<fragment>' dev-distribution fragment executed, in the checked-in content-report schema (...).
-# Written by DevDistRecipe; <n> outputs.
+# Written by DistRecipe; <n> outputs.
 - name: lib/a.jar
   modules:
   - name: intellij.a
@@ -29,7 +29,7 @@ fields of `RecipeSource`: `kind`, `label`, `path`, `file`, `module`, `prefix`, `
 
 ## The subset rule
 
-The crate reads only what `DevDistRecipe` writes. It refuses every other input with an error that names the file, the
+The crate reads only what `DistRecipe` writes. It refuses every other input with an error that names the file, the
 line and the field. The column "Former behavior" states what the former reader did with the input.
 
 `testdata/corpus/` holds the three plan files of one flag-on build of `//build:idea_air_dist`: 504 outputs and 824
@@ -43,7 +43,7 @@ has no fixture.
 | a plan without the two head comment lines, also a blank file | the fragment is the file stem, and no count check | `the head comment names no fragment`, `states no output count` |
 | a plan with no YAML document, or with more than one | no outputs, or the first document | `the plan holds <n> YAML documents` |
 | a root that is not a sequence, or an entry, a member or a source that is not a mapping | a scalar is a one-element list, and a non-mapping has no fields | `is <shape>, want a sequence` or `a mapping` |
-| an entry key outside the five, such as `os`, `library`, `module`, `files`, `reason` or `projectLibraries` | ignored, and `module` is the library owner | `an entry holds <key>, which DevDistRecipe does not write` |
+| an entry key outside the five, such as `os`, `library`, `module`, `files`, `reason` or `projectLibraries` | ignored, and `module` is the library owner | `an entry holds <key>, which DistRecipe does not write` |
 | a member key other than `name`, such as `size`, `reason` or `libraries` | ignored | `a member of <list> holds <key>` |
 | a source key outside the 13 | ignored | `a source holds <key>` |
 | an entry without `name` or `kind`, a member without `name`, a source without `kind` | empty, and the row `(no kind)` | `states no <key>` |

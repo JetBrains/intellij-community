@@ -13,7 +13,7 @@ _BUILD_SCRIPTS = ["//platform/build-scripts:build-scripts"]
 
 _PLUGIN_MODEL_TOOL = [
     "//platform/build-scripts/plugin-model-tool",
-    "//platform/build-scripts/dev-dist-generator",
+    "//platform/build-scripts/dist-generator",
 ]
 
 genquery(

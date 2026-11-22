@@ -193,7 +193,7 @@ def _plugin_components(target_platform, entries, selected_modules = None):
     )
 
 # The `DevMainKt` property of a run configuration that asks for the runtime module repository. A row states it as an
-# attribute, because the row composes another distribution. The plan generator (`devDistRunConfigurations.kt`) takes
+# attribute, because the row composes another distribution. The plan generator (`distRunConfigurations.kt`) takes
 # it out of `jvm_flags`.
 _GENERATE_RUNTIME_MODULE_REPOSITORY_FLAG = "-Dintellij.build.generate.runtime.module.repository=true"
 
@@ -203,7 +203,7 @@ _GENERATE_RUNTIME_MODULE_REPOSITORY_FLAG = "-Dintellij.build.generate.runtime.mo
 _ROOT_MODULE_OVERRIDE_FLAG_PREFIX = "-Didea.jbclient.root.module.override="
 
 # The JPS output directories below `out/` of the two halves. A dev launch builds no JPS output, so a launcher flag that
-# names one names a file that no build writes. `devDistRunConfigurations.kt` refuses the same directories in a row.
+# names one names a file that no build writes. `distRunConfigurations.kt` refuses the same directories in a row.
 _JPS_OUTPUT_DIRECTORIES = ["classes", "production", "test"]
 _WORKSPACE_OUT = "{BUILD_WORKSPACE_DIRECTORY}/out/"
 

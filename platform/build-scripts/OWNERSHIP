@@ -3,11 +3,11 @@ owner 'IJ Build Scripts Maintainers'
 /src/org/jetbrains/intellij/build/productLayout/**
 owner 'IJPL'
 
-/dev-dist-generator/**
+/dist-generator/**
 /product-dsl/**
 /bazel-rules/dev_dist_*.bzl
-/src/org/jetbrains/intellij/build/devDist/**
-/tests/testSrc/org/jetbrains/intellij/build/devDist/**
-/plugin-preparation/src/devDist/**
+/src/org/jetbrains/intellij/build/dist/**
+/tests/testSrc/org/jetbrains/intellij/build/dist/**
+/plugin-preparation/src/dist/**
 # review-class: self-approve
 owner 'IJ Build Scripts Maintainers'

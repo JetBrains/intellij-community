@@ -95,7 +95,7 @@ fn file<'a>(files: &'a [(String, String)], relative_path: &str) -> &'a str {
 }
 
 /// The goldens hold `Info.plist` and every strings file of the EAP test product on `darwin_aarch64`.
-/// `DevDistProductLaunchModelTest` checks the renderer against the production writer for every split product.
+/// `DistProductLaunchModelTest` checks the renderer against the production writer for every split product.
 #[test]
 fn the_bundle_matches_the_recorded_bytes() {
     let files = render(&mac_model(), &application_info("idea"), "darwin_aarch64");

@@ -4,7 +4,7 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.devDist.PluginPackingPlan
+import org.jetbrains.intellij.build.dist.PluginPackingPlan
 
 /** The recipe format of every generated operation. [validatePreparationOperation] accepts only this version. */
 @ApiStatus.Internal

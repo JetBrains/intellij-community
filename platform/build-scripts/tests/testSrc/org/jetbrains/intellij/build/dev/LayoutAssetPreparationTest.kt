@@ -3,11 +3,11 @@ package org.jetbrains.intellij.build.dev
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
-import org.jetbrains.intellij.build.devDist.JarSourceRecipe
-import org.jetbrains.intellij.build.devDist.JarWriterRecipe
-import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.planPluginPacking
+import org.jetbrains.intellij.build.dist.CanonicalJarRecipe
+import org.jetbrains.intellij.build.dist.JarSourceRecipe
+import org.jetbrains.intellij.build.dist.JarWriterRecipe
+import org.jetbrains.intellij.build.dist.PluginPackingAsset
+import org.jetbrains.intellij.build.dist.planPluginPacking
 import org.junit.jupiter.api.Test
 
 /**

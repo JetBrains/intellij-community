@@ -8,9 +8,9 @@ import org.jdom.Namespace
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
-import org.jetbrains.intellij.build.devDist.JarSourceRecipe
-import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.isNativeTreeAsset
+import org.jetbrains.intellij.build.dist.JarSourceRecipe
+import org.jetbrains.intellij.build.dist.PluginPackingAsset
+import org.jetbrains.intellij.build.dist.isNativeTreeAsset
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
 import org.jetbrains.intellij.build.impl.LibraryPackMode

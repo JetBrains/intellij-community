@@ -219,22 +219,22 @@ java_binary(
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
     ],
-    main_class = "com.intellij.platform.buildScripts.devDistGenerator.CommunityDevDistGenerator",
-    runtime_deps = ["//platform/build-scripts/dev-dist-generator"],
+    main_class = "com.intellij.platform.buildScripts.distGenerator.CommunityDistGenerator",
+    runtime_deps = ["//platform/build-scripts/dist-generator"],
 )
 
 # The tests of the community binary. The identity of the two renders of the community half is a test of the monorepo,
-# `DevDistCommunityHalfIdentityTest` in `//build:ultimate-build-tests_test`, because only the monorepo has both JSON files.
+# `DistCommunityHalfIdentityTest` in `//build:ultimate-build-tests_test`, because only the monorepo has both JSON files.
 jps_test(
     name = "dev_dist_generator_identity_test",
     data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
     env = {
-        "JB_TEST_JUNIT5_FILTERS": "include-classname=com.intellij.platform.buildScripts.devDistGenerator.CommunityDevDistGeneratorTest",
+        "JB_TEST_JUNIT5_FILTERS": "include-classname=com.intellij.platform.buildScripts.distGenerator.CommunityDistGeneratorTest",
     },
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
     ],
-    runtime_deps = ["//platform/build-scripts/dev-dist-generator:buildScripts-devDistGenerator-tests_test_lib"],
+    runtime_deps = ["//platform/build-scripts/dist-generator:buildScripts-distGenerator-tests_test_lib"],
 )
 
 java_binary(

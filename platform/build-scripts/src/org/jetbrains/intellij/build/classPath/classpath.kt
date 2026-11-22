@@ -212,7 +212,7 @@ fun platformLibraryJarDestination(library: ProjectLibraryData): String {
  *
  * The result is what [generateClassPathByLayoutReport] gives for these jars. It has no `nio-fs.jar` when [skipNioFs] is
  * set. The leading jars come first, then the other names in sorted order. The tool `product-files` applies the same rule
- * to the core classpath of the distribution, and `DevDistProductLaunchModelTest` compares the two.
+ * to the core classpath of the distribution, and `DistProductLaunchModelTest` compares the two.
  */
 @ApiStatus.Internal
 fun launchBootClassPathJarNames(coreClassPathJarNames: Collection<String>, skipNioFs: Boolean): List<String> {

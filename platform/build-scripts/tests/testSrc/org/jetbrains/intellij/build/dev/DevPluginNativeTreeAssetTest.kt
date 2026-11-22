@@ -5,11 +5,11 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.jetbrains.intellij.build.devDist.NATIVE_TREE_INPUT_PREFIX
-import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.PluginPackingProjection
-import org.jetbrains.intellij.build.devDist.planPluginPacking
-import org.jetbrains.intellij.build.devDist.pluginPackingExecutionVersion
+import org.jetbrains.intellij.build.dist.NATIVE_TREE_INPUT_PREFIX
+import org.jetbrains.intellij.build.dist.PluginPackingAsset
+import org.jetbrains.intellij.build.dist.PluginPackingProjection
+import org.jetbrains.intellij.build.dist.planPluginPacking
+import org.jetbrains.intellij.build.dist.pluginPackingExecutionVersion
 import org.junit.jupiter.api.Test
 
 internal class DevPluginNativeTreeAssetTest {

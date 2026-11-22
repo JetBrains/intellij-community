@@ -9,7 +9,7 @@
 //! of the product code. The tool reads the rest from the application info of the product and from `build.txt`, so an
 //! edit of the version, the suffix or the release date changes no generated file. A classic-loader launch also reads the
 //! core classpath of the distribution for its boot class path. The files must be the files that the production writers
-//! of the build scripts write, byte for byte. `DevDistProductLaunchModelTest` checks that for every split product and
+//! of the build scripts write, byte for byte. `DistProductLaunchModelTest` checks that for every split product and
 //! every host platform.
 
 mod mac;

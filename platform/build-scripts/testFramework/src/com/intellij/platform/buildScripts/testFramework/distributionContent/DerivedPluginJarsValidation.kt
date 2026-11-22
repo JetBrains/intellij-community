@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
-import com.intellij.platform.buildScripts.pluginModelTool.DEV_DIST_ON_DEMAND_PLUGIN_MODULES
+import com.intellij.platform.buildScripts.pluginModelTool.DIST_ON_DEMAND_PLUGIN_MODULES
 import com.intellij.platform.buildScripts.pluginModelTool.DerivedPluginJars
 import com.intellij.platform.buildScripts.pluginModelTool.ProductDerivation
 import com.intellij.platform.distributionContent.FileEntry
@@ -61,7 +61,7 @@ private fun validateDerivedPluginJars(
   content: ParsedContentReport,
   derivation: ProductDerivation,
 ): List<PackagingCheckFailure> {
-  val records = derivedJarsOf(derivation.pluginJars(DEV_DIST_ON_DEMAND_PLUGIN_MODULES))
+  val records = derivedJarsOf(derivation.pluginJars(DIST_ON_DEMAND_PLUGIN_MODULES))
   val reports = content.bundled + content.nonBundled
   val failures = ArrayList<PackagingCheckFailure>()
 
@@ -119,7 +119,7 @@ private const val DIVERGENCE_TABLE_REPAIR =
 
 private const val POPULATION_REPAIR =
   "The source-derived population must include all bundled, published, compatible, and on-demand plugins. " +
-  "Check the product declarations and source descriptors, then repair deriveDevDistPlatformJars or derivePluginPopulation."
+  "Check the product declarations and source descriptors, then repair deriveDistPlatformJars or derivePluginPopulation."
 
 /**
  * The jars this target's build is known to pack differently from what the derivation states.

@@ -29,7 +29,7 @@ import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
-import org.jetbrains.intellij.build.dev.DevDistRecipe
+import org.jetbrains.intellij.build.dev.DistRecipe
 import org.jetbrains.intellij.build.dev.syntheticTestPluginModuleName
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.getLibraryRoots
@@ -798,7 +798,7 @@ private fun buildAsset(
   // The merged list, not the two collections it came from: this is the order the jar writer and the jar cache use, so
   // it is the only order a recipe of this run can state. Recorded before the early return below, because an output with
   // no sources is a fact about the run too.
-  DevDistRecipe.record(
+  DistRecipe.record(
     outputFile = asset.file,
     sources = sources,
     includedModules = includedModules.keys,

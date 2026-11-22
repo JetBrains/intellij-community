@@ -43,7 +43,7 @@ object PythonCommunityPluginModules {
           resourcePath = "",
           relativeOutputPath = "bundledPyiStubs",
         )
-        spec.withDevDistSourceTree(pydevSourceTree)
+        spec.withDistSourceTree(pydevSourceTree)
       }
 
       // required for "Python Console" in PythonCore plugin

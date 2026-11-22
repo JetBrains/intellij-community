@@ -118,10 +118,10 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
   /**
    * The checkout directories of modules that a distribution target of another layout reads, see
-   * [PluginLayoutSpec.withDevDistSourceTree]. Production packs none of them.
+   * [PluginLayoutSpec.withDistSourceTree]. Production packs none of them.
    */
   @Internal
-  var devDistSourceTrees: PersistentList<LayoutAssetSource.ModuleDirectory> = persistentListOf()
+  var distSourceTrees: PersistentList<LayoutAssetSource.ModuleDirectory> = persistentListOf()
     private set
 
   /**
@@ -432,9 +432,9 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * filegroup of the directory in the package of the module. Production packs nothing for it.
      */
     @Internal
-    fun withDevDistSourceTree(tree: LayoutAssetSource.ModuleDirectory) {
+    fun withDistSourceTree(tree: LayoutAssetSource.ModuleDirectory) {
       require(tree.exclusions.isEmpty()) { "A distribution source tree states no exclusions: $tree" }
-      layout.devDistSourceTrees += tree
+      layout.distSourceTrees += tree
     }
 
     /** Copies a module resource tree through the same declaration in production and development. */

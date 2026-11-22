@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
-import org.jetbrains.intellij.build.dev.DevDistRecipe
+import org.jetbrains.intellij.build.dev.DistRecipe
 import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.impl.BazelBuildInputs
@@ -34,7 +34,7 @@ import kotlin.system.exitProcess
  * complete target platform.
  *
  * [TRACE_FILE_OPTION] writes this process's spans out as a side output; without it nothing is written.
- * `--plan` does the same for the packaging recipe this assembly executed. See [DevDistRecipe].
+ * `--plan` does the same for the packaging recipe this assembly executed. See [DistRecipe].
  */
 fun main(args: Array<String>) {
   val options = parseCommandLineOptions(args)
@@ -92,7 +92,7 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   options.checkNoUnknownOptions()
 
   if (planFile != null) {
-    DevDistRecipe.start(distRoot = outputDir, projectHome = projectDir, scratchDir = scratchDir)
+    DistRecipe.start(distRoot = outputDir, projectHome = projectDir, scratchDir = scratchDir)
   }
 
   val build = buildProductInProcess(
@@ -118,7 +118,7 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   dropEmptyTempDir(runDir)
 
   planFile?.let {
-    DevDistRecipe.write(file = it, fragment = fragment.name)
+    DistRecipe.write(file = it, fragment = fragment.name)
   }
 
   println("Distribution fragment '$fragment' assembled into $runDir (main class: $mainClassName)")

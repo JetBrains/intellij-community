@@ -3,7 +3,7 @@
 
 package com.intellij.platform.buildScripts.pluginModelTool
 
-import com.intellij.platform.distributionContent.DevDistPlatformJars
+import com.intellij.platform.distributionContent.DistPlatformJars
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.ProductProperties
@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 class ProductDerivation internal constructor(
   @JvmField val products: List<DiscoveredProduct>,
-  @JvmField val platformJars: DevDistPlatformJars,
+  @JvmField val platformJars: DistPlatformJars,
   private val outputProvider: ModuleOutputProvider,
 ) {
   /** The products that have a `ProductProperties` class, in discovery order. */
@@ -59,7 +59,7 @@ fun deriveProducts(projectRoot: Path, outputProvider: ModuleOutputProvider): Pro
     span.setAttribute("productCount", products.size.toLong())
     ProductDerivation(
       products = products,
-      platformJars = deriveDevDistPlatformJars(products = products, outputProvider = outputProvider),
+      platformJars = deriveDistPlatformJars(products = products, outputProvider = outputProvider),
       outputProvider = outputProvider,
     )
   }

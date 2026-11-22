@@ -80,7 +80,7 @@ A change with no ticket, with a Branch Deck prefix:
 
 QD-16701 added -Dqodana.build.date=<yyyyMMddHHmm> to the qodana command of the production product-info.json.
 `computeProductLaunchModel` gave no date to `QodanaProductProperties`, so the dev dist model had no such argument.
-`DevDistProductLaunchModelTest` compares both files byte for byte, and it failed.
+`DistProductLaunchModelTest` compares both files byte for byte, and it failed.
 
 The model now states the token @@build_date@@, next to @@build_number@@. product-files replaces it with the date
 of --build-date-seconds, which the action already receives. A test exclusion would hide a real difference
