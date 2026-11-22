@@ -124,11 +124,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
         ASTNode oldChild = oldIndex < myInitialChildren.size() ? myInitialChildren.get(oldIndex) : null;
         ASTNode newChild = newIndex < newChildren.size() ? newChildren.get(newIndex) : null;
         if (oldChild == newChild) {
-          if (!myContentChanges.isEmpty() && myContentChanges.containsKey(oldChild)) {
-            addChange(new ChangeInfoImpl(oldChild, oldChild, oldOffset, getOldLength(oldIndex)));
-          }
-          oldOffset += getOldLength(oldIndex);
-          oldIndex++;
+          addSameChild(oldIndex++);
           newIndex++;
         }
         else {
@@ -151,6 +147,17 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
         }
       }
       return result;
+    }
+
+    /** Handles an old child that is also a current child at the same place. */
+    private void addSameChild(int oldIndex) {
+      ASTNode child = myInitialChildren.get(oldIndex);
+      int oldLength = myInitialLengths.getInt(oldIndex);
+      if (!myContentChanges.isEmpty() && myContentChanges.containsKey(child)) {
+        oldLength -= myContentChanges.getInt(child);
+        addChange(new ChangeInfoImpl(child, child, oldOffset, oldLength));
+      }
+      oldOffset += oldLength;
     }
 
     private int getOldLength(int oldIndex) {
