@@ -56,8 +56,9 @@ A class name or an FQN resolves in the whole repository, through the pinned acci
 
 The filter is `<FQN>[#method]`. The runner finds an `@Nested` class only through its outer class, so a nested class
 without a method runs through its outer class, and a `note` line says so. bt passes no `--no-build`, so accio builds
-or refreshes its index by itself. A failed call of accio is exit 6 with the code `accio_failed`. Its message names the
-last lines of the stderr and of the stdout of accio, because accio writes its error to stdout.
+or refreshes its index by itself. bt sets `ACCIO_WAIT` to 1800 s, because the 90 s default of accio is too short for a
+slot without an index under a high load. A failed call of accio is exit 6 with the code `accio_failed`. Its message
+names the last lines of the stderr and of the stdout of accio, because accio writes its error to stdout.
 
 A package is no selector, and neither is a JPS module name: both are dotted lower-case words. Run a package with
 `--module <module> --filter <package>`.

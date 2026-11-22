@@ -668,7 +668,7 @@ fn a_checkout_without_an_accio_wrapper_is_refused() {
 
 /// The resolver runtime refuses every spawn, and it still runs accio: in the checkout root, with its stdout as the
 /// answer. The refusal of a failed call names the tail of its stderr and the tail of its stdout, where accio writes its
-/// error, and a call without output says so.
+/// error, and a call without output says so. Each call may wait [`ACCIO_WAIT_SECS`] for the index.
 #[cfg(unix)]
 #[test]
 fn the_resolver_runtime_runs_the_accio_wrapper_in_the_checkout_root() {
@@ -681,6 +681,7 @@ fn the_resolver_runtime_runs_the_accio_wrapper_in_the_checkout_root() {
             "if [ \"$1\" = fail ]; then echo 'no index' >&2; exit 3; fi\n",
             "if [ \"$1\" = stdout ]; then echo 'Error: --project: No such file'; exit 1; fi\n",
             "if [ \"$1\" = silent ]; then exit 1; fi\n",
+            "if [ \"$1\" = wait ]; then echo \"$ACCIO_WAIT\"; exit 0; fi\n",
             "pwd -P\nprintf '%s\\n' \"$@\"\n",
         ),
     )
@@ -713,6 +714,7 @@ fn the_resolver_runtime_runs_the_accio_wrapper_in_the_checkout_root() {
         "{}",
         refused.message
     );
+    assert_eq!(runtime.accio(&["wait"]).expect("an answer").trim(), ACCIO_WAIT_SECS.to_string());
     let refused = runtime.accio(&["silent"]).expect_err("a refusal");
     assert!(
         refused.message.ends_with("exited with 1, and printed nothing on stdout or stderr"),

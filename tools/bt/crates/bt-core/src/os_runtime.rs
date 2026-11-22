@@ -246,17 +246,25 @@ pub fn accio_command(repo_root: &Path, platform: Platform, wrapper: &str, args: 
     command
 }
 
+/// The seconds that one accio call of bt may wait for the index of the checkout, as `ACCIO_WAIT`.
+///
+/// accio builds a missing index in the background and waits for it up to 90 s by default. That default fits the
+/// shell timeout of a coding agent. bt has no such timeout, and the run after the call takes minutes anyway. A host
+/// slot or a lease without an index under a high load needs more than 90 s, and past the budget accio exits 1.
+pub const ACCIO_WAIT_SECS: u32 = 1800;
+
 /// Runs one accio command line in the checkout root, and answers its stdout.
 ///
 /// A command that cannot start, and a command that exits with another code than 0, is a refusal. The refusal names
 /// the tail of the stderr and the tail of the stdout of the command, because accio writes its error to stdout. accio
-/// builds or refreshes its index by itself, so the call has no retry.
+/// builds or refreshes its index by itself and waits for it up to [`ACCIO_WAIT_SECS`], so the call has no retry.
 fn run_accio(repo_root: &Path, command: &[OsString]) -> Result<String, Refusal> {
     let Some((program, args)) = command.split_first() else {
         return Err(accio_failed("nothing to run: the accio command line is empty"));
     };
     let ran = isolated_command(program)
         .args(args)
+        .env("ACCIO_WAIT", ACCIO_WAIT_SECS.to_string())
         .current_dir(repo_root)
         .stdin(Stdio::null())
         .output()
