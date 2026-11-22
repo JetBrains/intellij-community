@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ObjectUtilsRt
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Virtual file-backed marker state shared by marker handles and a live document without retaining either the document or its
@@ -20,10 +19,10 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class VirtualFileMarkerRoot private constructor(
   internal val file: VirtualFile,
-  initialRootReference: AtomicReference<PMarkerRoot>,
+  initialRootReference: PMarkerRootReference,
 ) : MarkerRootUpdater(), DocumentListener {
   @Volatile
-  private var rootReference: AtomicReference<PMarkerRoot> = initialRootReference
+  private var rootReference: PMarkerRootReference = initialRootReference
 
   @Volatile
   private var documentReference: WeakReference<DocumentImpl>? = null
@@ -34,7 +33,7 @@ class VirtualFileMarkerRoot private constructor(
   override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<*> =
     SnapshotMarkerReference.create(marker, retainStrong)
 
-  override fun currentRootReference(): AtomicReference<PMarkerRoot> {
+  override fun currentRootReference(): PMarkerRootReference {
     val observedDocumentReference = documentReference ?: return rootReference
     val document = observedDocumentReference.get() ?: return rootReference
     val currentRootReference = markerRoot(document)
@@ -116,7 +115,7 @@ class VirtualFileMarkerRoot private constructor(
     }
 
     private fun getOrCreate(file: VirtualFile, document: DocumentImpl?): VirtualFileMarkerRoot {
-      val initialRootReference = document?.let(::markerRoot) ?: AtomicReference(PMarkerRoot.empty())
+      val initialRootReference = document?.let(::markerRoot) ?: PMarkerRootReference(PMarkerRoot.empty(), null)
 
       while (true) {
         val oldReference = file.getUserData(FILE_MARKER_ROOT_REF_KEY)
@@ -152,7 +151,7 @@ class VirtualFileMarkerRoot private constructor(
       return fileRoot
     }
 
-    private fun markerRoot(document: DocumentImpl): AtomicReference<PMarkerRoot> {
+    private fun markerRoot(document: DocumentImpl): PMarkerRootReference {
       val store = document.rangeMarkers.rootStore()
       return store.currentRootCache.get()?.reference ?: store.rootReference(document.core.snapshot())
     }

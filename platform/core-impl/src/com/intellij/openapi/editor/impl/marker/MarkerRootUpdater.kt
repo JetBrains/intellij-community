@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.util.ObjectUtilsRt
 import java.lang.ref.WeakReference
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Updates immutable marker roots through atomic references.
@@ -54,7 +53,7 @@ abstract class MarkerRootUpdater {
    * Returns the atomic reference for the current document state.
    * Successive calls can return different references as the document state changes.
    */
-  internal abstract fun currentRootReference(): AtomicReference<PMarkerRoot>
+  internal abstract fun currentRootReference(): PMarkerRootReference
 
   /**
    * Applies [update] to the current root with this updater's publication protocol.
@@ -73,7 +72,7 @@ abstract class MarkerRootUpdater {
    * @return the root published by this call, or `null` if it publishes no new root
    */
   internal fun updateRootAtomically(
-    rootReference: AtomicReference<PMarkerRoot>,
+    rootReference: PMarkerRootReference,
     update: (PMarkerRoot) -> PMarkerRoot,
   ): PMarkerRoot? {
     while (true) {
@@ -82,5 +81,9 @@ abstract class MarkerRootUpdater {
       if (newRoot === oldRoot) return null
       if (rootReference.compareAndSet(oldRoot, newRoot)) return newRoot
     }
+  }
+
+  /** Runs after each successful write to a [PMarkerRootReference] that this updater owns. */
+  internal open fun onRootPublished(rootReference: PMarkerRootReference) {
   }
 }

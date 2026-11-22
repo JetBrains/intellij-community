@@ -10,7 +10,6 @@ import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * A range marker whose offsets are stored in immutable snapshot roots.
@@ -217,9 +216,9 @@ open class SnapshotRangeMarkerImpl private constructor(
   private var cachedResolution: CachedResolution? = null
 
   private fun cachedCurrentResolution(): Long {
-    val root = currentRootReference().get()
+    val identity = currentRootCache?.rootIdentity ?: currentRootReference().get().resolutionCacheIdentity
     val cached = cachedResolution
-    return if (cached != null && cached.identity === root.resolutionCacheIdentity) cached.resolution else PMarkerResolution.UNRESOLVED
+    return if (cached != null && cached.identity === identity) cached.resolution else PMarkerResolution.UNRESOLVED
   }
 
   private fun currentRange(): Long {
@@ -266,7 +265,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     return rootStorage.updateCurrentRoot(update) != null
   }
 
-  fun currentRootReference(): AtomicReference<PMarkerRoot> = currentRootCache?.reference ?: rootStorage.currentRootReference()
+  fun currentRootReference(): PMarkerRootReference = currentRootCache?.reference ?: rootStorage.currentRootReference()
 
   override fun toString(): String = "SnapshotRangeMarker(id=$id" +
                                     (if (isDisposed()) ", disposed" else "") +

@@ -167,7 +167,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
    * Returns the shared atomic reference for [snapshot], creating a root entry from [initialRoot] when necessary.
    * The existing entry takes precedence over [initialRoot]. A lookup can cache the reference when [snapshot] is current.
    */
-  fun rootReference(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot = emptyRoot): AtomicReference<PMarkerRoot> {
+  fun rootReference(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot = emptyRoot): PMarkerRootReference {
     val cache = currentRootCache.get()
     cache?.get(snapshot)?.let { return it }
     processQueue()
@@ -181,7 +181,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
    * Fills [cache] only while this store is active and [snapshot] is current, outside publication.
    * The registry's monitor protects the check and update.
    */
-  private fun cacheCurrentRoot(cache: CurrentRootCache?, snapshot: DocumentSnapshot, reference: AtomicReference<PMarkerRoot>) {
+  private fun cacheCurrentRoot(cache: CurrentRootCache?, snapshot: DocumentSnapshot, reference: PMarkerRootReference) {
     val document = documentReference.get()
     if (document != null && cache != null) {
       val markerStores = document.snapshotMarkerStores
@@ -197,7 +197,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   internal fun isCurrentSnapshot(snapshot: DocumentSnapshot): Boolean = !disposed && documentReference.get()?.core?.snapshot() === snapshot
 
   /** Returns the root reference for the current document snapshot, creating the root entry when necessary. */
-  override fun currentRootReference(): AtomicReference<PMarkerRoot> {
+  override fun currentRootReference(): PMarkerRootReference {
     val document = documentReference.get()
     return rootReference(document!!.core.snapshot())
   }
@@ -249,7 +249,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
     while (true) {
       processQueue()
       val snapshot = document.core.snapshot()
-      val reference: AtomicReference<PMarkerRoot>
+      val reference: PMarkerRootReference
       val oldRoot: PMarkerRoot
       synchronized(markerStores) {
         if (disposed) return null
@@ -281,6 +281,10 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   /** Replaces the root for [snapshot] with [root]. */
   internal fun restoreRoot(snapshot: DocumentSnapshot, root: PMarkerRoot) {
     rootReference(snapshot, root).set(root)
+  }
+
+  override fun onRootPublished(rootReference: PMarkerRootReference) {
+    currentRootCache.get()?.syncRootIdentity(rootReference)
   }
 
   /**
@@ -319,7 +323,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
       invalidatedMarkerConsumer,
       affectedMarkerConsumer,
     )
-    return RootState(afterRoot, invalidatedMarkers ?: emptyList(), affectedMarkers ?: emptyList())
+    return RootState(this, afterRoot, invalidatedMarkers ?: emptyList(), affectedMarkers ?: emptyList())
   }
 
   /**
@@ -346,13 +350,13 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
       metadataRoots == null -> markerRoots.rootReference.get()
       else -> markerRoots.rootReference.get().mergeValidMarkersFrom(metadataRoots.rootReference.get())
     }
-    val newState = RootState(mergedRoot)
+    val newState = RootState(this, mergedRoot)
     roots.putIfAbsent(mergedSnapshot, newState)
   }
 
   /** Returns the existing state for [snapshot], or atomically creates one from [initialRoot]. */
   private fun rootState(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot): RootState {
-    return roots[snapshot] ?: roots.computeIfAbsent(snapshot) { RootState(initialRoot) }
+    return roots[snapshot] ?: roots.computeIfAbsent(snapshot) { RootState(this, initialRoot) }
   }
 
   /**
@@ -391,15 +395,39 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
    */
   internal class CurrentRootCache(val store: SnapshotMarkerRootStore<*>) {
     @Volatile
-    var reference: AtomicReference<PMarkerRoot>? = null
+    var reference: PMarkerRootReference? = null
+      private set
+
+    /**
+     * The [PMarkerRoot.resolutionCacheIdentity] of the root in [reference], or null when it is unknown.
+     * Each root publication in [reference] updates it before the publishing call returns.
+     */
+    @Volatile
+    var rootIdentity: Any? = null
       private set
 
     @Volatile
     var state: State? = null
       set(value) {
-        reference = value?.reference
-        field = value
+        synchronized(this) {
+          rootIdentity = null
+          reference = value?.reference
+          field = value
+          rootIdentity = value?.reference?.get()?.resolutionCacheIdentity
+        }
       }
+
+    /**
+     * Copies the identity of the root in [changed] to [rootIdentity] when [changed] is the cached reference.
+     * Reads the root under the lock, so the last publication always sets the identity.
+     */
+    fun syncRootIdentity(changed: PMarkerRootReference) {
+      if (reference !== changed) return
+      synchronized(this) {
+        val current = reference
+        if (current === changed) rootIdentity = current.get().resolutionCacheIdentity
+      }
+    }
 
     /**
      * Captures the root state and root instance for [snapshot] without creating an entry.
@@ -408,12 +436,12 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
     fun captureRoot(snapshot: DocumentSnapshot): CapturedRoot = CapturedRoot(this, store.roots[snapshot])
 
     /** Returns the cached reference for this exact [snapshot] instance, or `null` on a cache miss. */
-    fun get(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot>? {
+    fun get(snapshot: DocumentSnapshot): PMarkerRootReference? {
       val state = state ?: return null
       return if (state.snapshot === snapshot) state.reference else null
     }
 
-    class State(val snapshot: DocumentSnapshot, val reference: AtomicReference<PMarkerRoot>)
+    class State(val snapshot: DocumentSnapshot, val reference: PMarkerRootReference)
   }
 
   internal class CapturedRoot(
@@ -438,20 +466,23 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   }
 
   internal class RootState private constructor(
+    private val updater: MarkerRootUpdater,
     root: PMarkerRoot,
     private val notificationsReference: AtomicReference<Notifications?>?,
   ) {
     constructor(
+      updater: MarkerRootUpdater,
       root: PMarkerRoot,
       invalidatedMarkers: List<SnapshotMarkerReference<*>> = emptyList(),
       affectedMarkers: List<SnapshotMarkerReference<*>> = emptyList(),
     ) : this(
+      updater,
       root,
       if (invalidatedMarkers.isEmpty() && affectedMarkers.isEmpty()) null
       else AtomicReference<Notifications?>(Notifications(invalidatedMarkers, affectedMarkers)),
     )
 
-    val rootReference: AtomicReference<PMarkerRoot> = AtomicReference(root)
+    val rootReference: PMarkerRootReference = PMarkerRootReference(root, updater.weakReference)
 
     val invalidatedMarkers: List<SnapshotMarkerReference<*>>
       get() = notificationsReference?.get()?.invalidatedMarkers ?: emptyList()
@@ -463,7 +494,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
      * Creates a separate root reference for [root] and shares pending notifications with this state.
      * Releasing either state's notifications clears them for both states.
      */
-    fun inherit(root: PMarkerRoot): RootState = RootState(root, notificationsReference)
+    fun inherit(root: PMarkerRoot): RootState = RootState(updater, root, notificationsReference)
 
     /** Clears the pending notifications, including those shared through [inherit]. */
     fun releaseNotifications() {
