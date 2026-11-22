@@ -293,7 +293,9 @@ result count, so a twin of `--with-property ijlight.accio.enabled=false` shows w
 the same. The session builds the pool of `--context-plugins` from the working tree, also with `--generation`, and copies
 its plugin directories into the `plugins` directory of the template. Each run gets the environment of `vm.cmd`, so the
 accio of `PATH` answers the searches of the accio plugin. `--property accio.binary=<path>` and
-`--property accio.home=<dir>` name another accio and its index for every run.
+`--property accio.home=<dir>` name another accio and its index for every run. For numbers that compare across
+sessions, pass `accio.home` and index it before the session with `ACCIO_HOME=<dir> <accio> index --project <project>`,
+so every session searches with an index that is ready.
 
 ## Verification
 
