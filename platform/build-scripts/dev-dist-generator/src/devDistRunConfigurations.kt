@@ -410,7 +410,7 @@ const val RUN_CONFIGURATIONS_DIRECTORY: String = ".idea/runConfigurations"
 
 /**
  * [DevDistRunConfigurations.modulesByProduct] over the modules [named] per product. [moduleReason] returns the reason a module
- * cannot become a plugin of a dev distribution, or null. A module with a reason stops the run, and the message names
+ * cannot become a plugin of the distribution, or null. A module with a reason stops the run, and the message names
  * every such module of every product, like a bundled plugin the plan cannot state.
  */
 @ApiStatus.Internal
@@ -428,7 +428,7 @@ fun devDistRunConfigurationModules(
     result.put(product, java.util.List.copyOf(modules))
   }
   check(rejected.isEmpty()) {
-    "The dev-server run configurations name modules that cannot become a plugin of a dev distribution: $rejected." +
+    "The dev-server run configurations name modules that cannot become a plugin of the distribution: $rejected." +
     " Fix the module, or remove it from -Dadditional.modules."
   }
   return Collections.unmodifiableMap(result)
@@ -649,7 +649,7 @@ fun renderDevServerRunConfigurations(
   val sortedRows = rows.sortedBy { it.name }
   for (row in sortedRows) {
     check(row.product in splitProducts) {
-      "${row.xmlFileName}: product '${row.product}' has no dev-distribution plan; add it to the split distributions of its half"
+      "${row.xmlFileName}: product '${row.product}' has no distribution plan; add it to the split distributions of its half"
     }
     for ((property, instead) in refusedProperties) {
       check(row.jvmFlags.none { it.startsWith("-D$property=") }) {

@@ -516,7 +516,7 @@ def _fragment_impl(ctx):
     ]
 
 intellij_dev_fragment = rule(
-    doc = """A reference fragment: files of a dev distribution that the reference assembler packs a second time for a
+    doc = """A reference fragment: files of the distribution that the reference assembler packs a second time for a
     gate.
 
     It publishes `IntellijDevReferenceInfo`, so no distribution can compose it. What the fragment owns is a selector

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 //! `project-model-tree` lays the declared JPS project model files out as a checkout-shaped tree, for the
-//! dev-distribution actions that load the project model.
+//! distribution actions that load the project model.
 //!
 //! A Bazel action has no checkout. It names every model file that it depends on in a manifest, and this tool copies
 //! them to the paths that the model loader expects. Rows are tab-separated:

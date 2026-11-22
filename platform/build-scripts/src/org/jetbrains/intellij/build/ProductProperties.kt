@@ -419,7 +419,7 @@ abstract class ProductProperties {
    * Registers product-specific runtime files for complete dev builds and production packaging.
    *
    * The files a downloaded dependency contributes are not registered here. They are declared on the platform layout with
-   * [PlatformLayout.withDistFiles], so that the dev distribution packs them from the same declaration.
+   * [PlatformLayout.withDistFiles], so that the distribution packs them from the same declaration.
    * Source-only derivation and split fragments do not call this hook.
    */
   open fun registerDistFiles(context: BuildContext) { }
@@ -427,7 +427,7 @@ abstract class ProductProperties {
   /**
    * The additional OS- and arch-specific files of the product, as data.
    *
-   * [copyAdditionalOsSpecificFiles] copies them. A split dev distribution places the same files without build code,
+   * [copyAdditionalOsSpecificFiles] copies them. A split distribution places the same files without build code,
    * so a product declares its files here instead of copying them.
    */
   open fun additionalOsSpecificFiles(os: OsFamily, arch: JvmArchitecture): List<OsSpecificDistFile> = emptyList()
@@ -435,7 +435,7 @@ abstract class ProductProperties {
   /**
    * Copies the [additionalOsSpecificFiles] into [runDir].
    *
-   * A split dev distribution does not call this method, so the dev distribution plan generator refuses a product that
+   * A split distribution does not call this method, so the distribution plan generator refuses a product that
    * overrides it.
    */
   open fun copyAdditionalOsSpecificFiles(runDir: Path, os: OsFamily, arch: JvmArchitecture, context: BuildContext) {

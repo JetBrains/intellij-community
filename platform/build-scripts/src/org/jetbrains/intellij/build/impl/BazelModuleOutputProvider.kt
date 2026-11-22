@@ -650,7 +650,7 @@ class BazelModuleOutputProvider(
 /** Where a build reads the Bazel outputs from. The mode decides how a label resolves to a file, and what fixes an absent file. */
 @Internal
 enum class BazelOutputMode {
-  /** An explicit input manifest lists the inputs of a dev build fragment. */
+  /** An explicit input manifest lists the inputs of a distribution fragment. */
   INPUT_MANIFEST,
 
   /** `bazel run` or `bazel test` gives the runfiles of the target. */
@@ -755,7 +755,7 @@ internal class MissingBazelOutputs(private val mode: BazelOutputMode) {
             append(buildCommand(labels = labels, labelFileDirectory = labelFileDirectory))
           }
           if (starterHint) {
-            append("\nFor an IDE Starter test, you can build the dev distribution of the product instead, for example ")
+            append("\nFor an IDE Starter test, you can build the distribution of the product instead, for example ")
             append("`./bazel.cmd build //build:idea_dist`. Then give the test JVM ")
             append("`-Didea.ide.config.path=<absolute path of out/bazel-bin/build/idea_dist.ide.config>`, ")
             append("and the test runs on that distribution.")

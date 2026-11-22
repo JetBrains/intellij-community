@@ -135,7 +135,7 @@ data class ProductGenerationResult(
 )
 
 /**
- * Result of generating a single dev-distribution plan file.
+ * Result of generating a single distribution plan file.
  */
 data class DevDistPlanFileResult(
   /** Relative path from project root */
@@ -145,9 +145,9 @@ data class DevDistPlanFileResult(
 ) : HasFileChangeStatus
 
 /**
- * Result of generating all dev-distribution plan files.
+ * Result of generating all distribution plan files.
  *
- * The plan holds every file the dev-distribution fragments read: the cache partition, the declared inputs, the module
+ * The plan holds every file the distribution fragments read: the cache partition, the declared inputs, the module
  * sets, the content sets, and the descriptor tables. The list holds the unchanged files too, so the summary can state
  * how many files it covers.
  */
@@ -306,14 +306,14 @@ data class GenerationStats(
   @JvmField val productResult: ProductGenerationResult?,
   @JvmField val testPluginResult: TestPluginGenerationResult? = null,
   @JvmField val suppressionConfigStats: SuppressionConfigStats? = null,
-  /** Result of the dev-distribution plan generation. `null` means the run did not evaluate the plan. */
+  /** Result of the distribution plan generation. `null` means the run did not evaluate the plan. */
   @JvmField val devDistPlanResult: DevDistPlanGenerationResult? = null,
   @JvmField val durationMs: Long,
   /** All file diffs from DeferredFileUpdater. The pipeline owns these files. See [hasChanges] for the rest. */
   @JvmField val fileUpdaterDiffs: List<FileDiff> = emptyList(),
 ) {
   /**
-   * Central file tracking, plus the dev-distribution plan.
+   * Central file tracking, plus the distribution plan.
    *
    * The plan generator writes outside [fileUpdaterDiffs], so that list alone cannot answer this. A summary that reads
    * only the updater reports `All files unchanged` after a run rewrote a plan file.

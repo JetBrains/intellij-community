@@ -1,4 +1,4 @@
-"""Declares one crate of the dev-distribution tools, the Cargo workspace in this directory."""
+"""Declares one crate of the distribution tools, the Cargo workspace in this directory."""
 
 load("@ddt//:defs.bzl", "aliases", "all_crate_deps", "crate_name", "edition", "lint_config")
 load("//build/rust-tools:defs.bzl", "rust_tool_crate", "rust_tool_hub")

@@ -24,7 +24,7 @@ fn application_info_request(output: &Path, client: &str, product: &str) -> Vec<S
 }
 
 /// The expected files hold the bytes that the Kotlin tool wrote before its removal, without a final newline. The build
-/// markers stay in them, because a dev distribution stamps no build number.
+/// markers stay in them, because a distribution that Bazel builds stamps no build number.
 ///
 /// The prefixed case finds the elements of the application-info namespace by URI, whatever prefix a file binds to it.
 /// Its expected file is the Kotlin output without `branchName`, because only a refused override adds that attribute.

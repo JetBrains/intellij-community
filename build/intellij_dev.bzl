@@ -11,7 +11,7 @@ load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "IntellijDevD
 DEV_IDE_CONFIG_PATH_PROPERTY = "idea.ide.config.path"
 
 def intellij_dev_dist_config(name, dist, visibility = None):
-    """A single-file label for an assembled dev distribution's config file, for `$(rlocationpath ...)`.
+    """A single-file label for the config file of an assembled distribution, for `$(rlocationpath ...)`.
 
     That expansion takes a label naming exactly one file, which a dist target - two outputs, one of them declared rather
     than predeclared - is not. Its `ide_config` output group is how it gets one.
@@ -31,7 +31,7 @@ def intellij_dev_dist_config(name, dist, visibility = None):
     )
 
 def dev_dist_build_test(name, targets, tags = [], **kwargs):
-    """A skylib `build_test` that gates the build of dev distribution targets, kept out of an IDE sync.
+    """A skylib `build_test` that gates the build of distribution targets, kept out of an IDE sync.
 
     A "Build and Resync" of the Bazel plugin builds the generated `srcs` of every `genrule` below a sync target. The
     genrules of a `build_test` have the gated targets as `srcs`, so a sync would compose each gated distribution. The
@@ -376,7 +376,7 @@ def _intellij_dev_java_launcher_impl(ctx):
     return _native_launch(ctx, os, dist, placement, flags, program_args)
 
 intellij_dev_java_launcher = rule(
-    doc = """Starts a composed dev distribution, `bazel run //<package>:<name>`.
+    doc = """Starts a composed distribution, `bazel run //<package>:<name>`.
 
 The executable is a stub. It runs `dev-home`, which materializes the generation of the distribution: a home of hard
 links outside the output base, keyed by the fingerprint. So no IDE runs from a file that Bazel owns, and Bazel can
@@ -437,7 +437,7 @@ def intellij_dev_java_launcher_binary(
         program_args = [],
         data = [],
         visibility = None):
-    """The launch target of a composed dev distribution.
+    """The launch target of a composed distribution.
 
     `dist` is the `_dist_launch` target of the distribution. `vm_options`, `product_info` and `launcher` map each OS token to the destination of the main vmoptions
     file, of `product-info.json` and of the native launcher in the home. `env_var_base_name` and

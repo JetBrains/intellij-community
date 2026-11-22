@@ -14,7 +14,7 @@ import java.nio.file.Path
  * @param validationFilter If non-null, only runs validation rules with matching names
  * @param logFilter If non-null, enables debug output. Empty set = all debug, non-empty = only matching tags.
  * @param traceFile If non-null, the run writes an OpenTelemetry trace of itself into this file in the Jaeger JSON format
- * @param verifyPlanUnits If true, the dev-distribution plan also computes the plan of every request and checks it against its plan unit
+ * @param verifyPlanUnits If true, the distribution plan also computes the plan of every request and checks it against its plan unit
  * @param unusedInputsFile If non-null, the run writes the declared Bazel inputs that it did not read into this file
  */
 data class GeneratorRunOptions(

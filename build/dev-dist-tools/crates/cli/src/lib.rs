@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The command line of the dev-distribution tools: the options `--key=value` and `--flag`, and the positional
+//! The command line of the distribution tools: the options `--key=value` and `--flag`, and the positional
 //! arguments.
 //!
 //! A Bazel rule writes the command line of an action tool. So an option has one form, and a tool refuses every other

@@ -1,4 +1,4 @@
-//! The xxh3 hashes of the dev-distribution tools. Each one gives the value that hash4j gives in the platform and in the
+//! The xxh3 hashes of the distribution tools. Each one gives the value that hash4j gives in the platform and in the
 //! Kotlin build.
 //!
 //! All are XXH3-64 with seed 0 and the default secret. They differ in the input bytes. `PackageIndexBuilder` hashes a

@@ -1,6 +1,6 @@
 # javaglob
 
-Matches a jar entry name against a `java.nio` `glob:` pattern of the subset that the dev-dist plan uses. Rustdoc states
+Matches a jar entry name against a `java.nio` `glob:` pattern of the subset that the distribution plan uses. Rustdoc states
 `JavaGlob::compile` and `JavaGlob::matches`.
 
 ## Supported subset

@@ -1,6 +1,6 @@
 # filemeta
 
-The file metadata of the dev-distribution tools: inventory JSON version 2. The path and link rules are in `distpath`.
+The file metadata of the distribution tools: inventory JSON version 2. The path and link rules are in `distpath`.
 The content hash of a file is `xxh3::hash_file` of the `xxh3` crate. `macho::hash_file` gives the same hash and the
 Mach-O kind of the file in one read. Rustdoc states each public item and its contract.
 

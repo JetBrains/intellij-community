@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /**
- * Pins the dev-distribution plan report in the generation summary.
+ * Pins the distribution plan report in the generation summary.
  *
  * The summary reads the plan result off [GenerationStats]. A summary that receives no plan result cannot name a plan
  * file the run rewrote, and it reports `All files unchanged` instead.
@@ -27,7 +27,7 @@ class GenerationSummaryPrinterTest {
       committed = true,
     )
 
-    assertThat(text).contains("Dev-Dist Plan")
+    assertThat(text).contains("Distribution Plan")
     assertThat(text).contains("dev_dist_fragment_inputs.bzl")
     assertThat(text).contains("Commit the change")
     assertThat(text).doesNotContain("All files unchanged")
@@ -44,7 +44,7 @@ class GenerationSummaryPrinterTest {
     )
 
     assertThat(text).contains("All files unchanged")
-    assertThat(text).contains("Dev-dist plan:")
+    assertThat(text).contains("Distribution plan:")
     assertThat(text).doesNotContain("Commit the change")
   }
 
@@ -64,7 +64,7 @@ class GenerationSummaryPrinterTest {
 }
 
 /**
- * Builds a [GenerationStats] that holds only a dev-distribution plan result. Every other result stays empty, so a test
+ * Builds a [GenerationStats] that holds only a distribution plan result. Every other result stays empty, so a test
  * reads as one fact about the plan report.
  */
 private fun devDistPlanStats(vararg files: DevDistPlanFileResult): GenerationStats {

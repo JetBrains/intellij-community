@@ -1,4 +1,4 @@
-"""The declarations of a split dev distribution: the platform set, the distribution and the launcher of a row.
+"""The declarations of a split distribution: the platform set, the distribution and the launcher of a row.
 
 Each half of the repository calls `intellij_dev_dist_declarations` once with its own tables and re-exports the macros
 of the result. The code here reads no table directly, so it names no target of the other half.
@@ -1055,7 +1055,7 @@ _RUN_CONFIGURATION_ATTRS = {
 }
 
 def intellij_dev_dist_declarations(tables):
-    """Binds the declarations of a split dev distribution to the generated tables of one half.
+    """Binds the declarations of a split distribution to the generated tables of one half.
 
     Call it once at load time of a `.bzl` file, and assign each macro of the result to a global of that file. Bazel
     names the symbolic macro `run_configuration` after that global.

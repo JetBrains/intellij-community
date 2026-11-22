@@ -216,7 +216,7 @@ class DevDistSimplePackagingTest {
       spec.withExecutable("bin/tool")
       // A Windows build applies no executable pattern of a plugin.
       spec.withExecutable("bin/helper.exe", SUPPORTED_DISTRIBUTIONS.filter { it.os == OsFamily.WINDOWS })
-      // No asset places a file below `selfcontained`, as for a resource that the dev distribution omits.
+      // No asset places a file below `selfcontained`, as for a resource that the distribution omits.
       spec.withExecutable("selfcontained/bin/Xvfb", SUPPORTED_DISTRIBUTIONS.filter { it.os == OsFamily.LINUX })
       spec.withExecutable("lib/*.so")
     }

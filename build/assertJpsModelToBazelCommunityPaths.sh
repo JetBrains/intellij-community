@@ -12,7 +12,7 @@ echo "Bazel output base: $output_base"
 
 ./build/jpsModelToBazelCommunityOnly.cmd
 ./bazel-build-all-community.cmd
-# The dev-distribution files of the community half must match the community model.
+# The distribution files of the community half must match the community model.
 ./bazel.cmd run //build:dev_dist_generator -- --check
 
 cd "$script_dir/../platform/build-scripts/bazel"

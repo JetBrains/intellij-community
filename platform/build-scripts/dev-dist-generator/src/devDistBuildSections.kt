@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
- * The facts the tool decides for the dev distribution, which the plan reads as labels.
+ * The facts the tool decides for the distribution, which the plan reads as labels.
  *
  * [contentModuleJarLabels] records each owner label with its jar artifact and recipe. The artifact is the owner's
  * default output, `<label>/<module>.jar`.
@@ -74,7 +74,7 @@ internal data class DevDistModuleJarArtifact(
 )
 
 /**
- * The dev-distribution statements of every module's `BUILD.bazel`, rendered as the JPS-to-Bazel converter renders them.
+ * The distribution statements of every module's `BUILD.bazel`, rendered as the JPS-to-Bazel converter renders them.
  *
  * [contentModuleJarCalls] holds the `content_module_jar(...)` call of every module that gets one, keyed by module name.
  * Each call is one [Target.render], so it ends with one newline. [devSections] holds the body of the `dev <main module>`

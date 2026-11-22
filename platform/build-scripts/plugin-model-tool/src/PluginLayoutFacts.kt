@@ -9,7 +9,7 @@ import java.util.TreeMap
 import java.util.TreeSet
 
 /**
- * The `PluginLayout` facts of one plugin, as the dev-distribution derivation reads them.
+ * The `PluginLayout` facts of one plugin, as the distribution derivation reads them.
  *
  * Every field is the value of one layout accessor. No field is a difference against a build. The derivation reads
  * these facts beside the project model and answers the jar of every member itself. [pluginLayoutFacts] builds the

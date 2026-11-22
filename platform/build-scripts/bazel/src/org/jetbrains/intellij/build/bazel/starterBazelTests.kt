@@ -171,7 +171,7 @@ private fun StarterBazelTests.nearestProduct(module: String, graph: StarterTestM
 
 /**
  * The content of `build/starter-bazel-tests.generated.json`: the context plugins of each product, the union of
- * [StarterTestTarget.contextPlugins] of [targets], sorted. The dev distribution generator gives each of them a component.
+ * [StarterTestTarget.contextPlugins] of [targets], sorted. The distribution generator gives each of them a component.
  */
 internal fun renderStarterBazelTestsGenerated(targets: Collection<StarterTestTarget>): String {
   val contextPlugins = TreeMap<String, TreeSet<String>>()

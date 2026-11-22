@@ -4,8 +4,8 @@
 //! default value, so a field with a Kotlin default takes that default here. A field without a Kotlin default is
 //! required, because the encoder always writes it.
 //!
-//! The model has no `jbr17`, `xBootClassPathJarNames` or `cdsArchiveFileName`, because no dev-dist model sets them.
-//! Thus the parser refuses a model that sets one as an unknown field.
+//! The model has no `jbr17`, `xBootClassPathJarNames` or `cdsArchiveFileName`, because no launch model of the
+//! distribution sets them. Thus the parser refuses a model that sets one as an unknown field.
 //!
 //! The model states each product fact once, and it states no fact of the application info and no build number. The
 //! tool reads them from the declared sources, so the parser also refuses a model that states `version`, `versionSuffix`

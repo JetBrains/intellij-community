@@ -1,4 +1,4 @@
-//! The slash-path rules of the dev-distribution tools.
+//! The slash-path rules of the distribution tools.
 //!
 //! A path inside a distribution, a jar entry name and a link target are text in slash form. The functions of this crate
 //! check and rewrite such text without file system access. A host path is not text here: the tools that read the file

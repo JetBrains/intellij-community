@@ -4,7 +4,7 @@ package com.intellij.platform.buildScripts.devDistGenerator
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * A layout fact the dev-distribution plan cannot state, found by the layout bindings or the descriptor plan.
+ * A layout fact the distribution plan cannot state, found by the layout bindings or the descriptor plan.
  *
  * The run stops on it for a bundled and an additional plugin alike. The message names the plugin and the fact.
  */

@@ -332,7 +332,7 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
 def _compatible_build_range(ctx):
     """The since and until range of the leaf: the stated one, `EXACT` for an exact version, else `NEWER_WITH_SAME_BASELINE`.
 
-    A dev distribution bundles every plugin, and the run time checks no range of a bundled plugin. So the EAP flag of
+    The distribution bundles every plugin, and the run time checks no range of a bundled plugin. So the EAP flag of
     the product selects no range here, and one leaf serves an EAP and a release product.
     """
     if ctx.attr.compatible_build_range:
@@ -602,7 +602,7 @@ def _resolved_platforms(ctx):
     return ctx.attr.platforms
 
 _dev_dist_plugin_descriptor = rule(
-    doc = """Patches one plugin's `META-INF/plugin.xml` the way a dev-distribution assembly does.
+    doc = """Patches one plugin's `META-INF/plugin.xml` the way the legacy engine does.
 
 The incoming `dev_dist_stamp_class_transition` keeps only the stamp class of the leaf, so a group and a component
 reach one configured leaf per stamp class.""",

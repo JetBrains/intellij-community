@@ -1,4 +1,4 @@
-//! The copy and path helpers of the dev-distribution tools.
+//! The copy and path helpers of the distribution tools.
 //!
 //! Every copy goes through [`clone_or_copy`]. An error names the paths and keeps the [`io::ErrorKind`] of the cause.
 

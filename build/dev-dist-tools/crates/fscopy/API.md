@@ -1,6 +1,6 @@
 # fscopy
 
-The copy and path helpers of the dev-distribution tools. All functions return `io::Result`. An error message names the
+The copy and path helpers of the distribution tools. All functions return `io::Result`. An error message names the
 paths, and the `io::ErrorKind` of the cause stays the same.
 
 Every copy goes through `clone_or_copy`, which uses `std::fs::copy`. On macOS it clones the file with `fclonefileat` on

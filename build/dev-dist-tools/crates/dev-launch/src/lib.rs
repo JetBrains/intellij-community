@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! `dev-launch` composes the `java` command line of a dev distribution and the text of its argument file.
+//! `dev-launch` composes the `java` command line of a distribution and the text of its argument file.
 //!
 //! The guest agent of `community/tools/vm` runs it on the OS that the IDE runs on, and writes the argument file of the
 //! lane IDE. No launch target of Bazel runs it, because a launch target starts the native launcher. The steps are:

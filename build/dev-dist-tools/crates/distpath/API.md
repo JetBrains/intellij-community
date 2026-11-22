@@ -1,6 +1,6 @@
 # distpath
 
-The slash-path rules of the dev-distribution tools: the path inside a distribution, the jar entry name, the link target,
+The slash-path rules of the distribution tools: the path inside a distribution, the jar entry name, the link target,
 and the lexical functions `clean`, `dir` and `join`. The functions read no file and have no dependency except `anyhow`.
 A host path is not in this crate, except for the input of `slash_path`.
 

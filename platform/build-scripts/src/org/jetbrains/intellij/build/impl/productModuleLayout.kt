@@ -269,7 +269,7 @@ internal fun isModuleCloseSource(moduleName: String, context: CompilationContext
   return isModuleCloseSource(moduleName = moduleName, outputProvider = context.outputProvider, communityHomeDir = context.paths.communityHomeDir)
 }
 
-/** [isModuleCloseSource] with no build context, for the dev-distribution plan generator. */
+/** [isModuleCloseSource] with no build context, for the distribution plan generator. */
 @ApiStatus.Internal
 fun isModuleCloseSource(moduleName: String, outputProvider: ModuleOutputProvider, communityHomeDir: Path): Boolean {
   if (moduleName.endsWith(".resources") || moduleName.endsWith(".icons") || moduleName.startsWith(LIB_MODULE_PREFIX)) {

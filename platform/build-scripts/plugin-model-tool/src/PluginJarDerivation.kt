@@ -358,7 +358,7 @@ private fun autoLayoutResidue(mainModule: String, mainJarName: String, children:
 }
 
 /**
- * The producer of a plugin's dev-distribution content, from the project model.
+ * The producer of a plugin's distribution content, from the project model.
  *
  * The members come from the plugin's own resolved `<content>` plus the layout members of [residue]. The jar of each
  * member comes from [candidacy], which holds the one derivation of that question.

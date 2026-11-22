@@ -1,4 +1,4 @@
-"""The runtime module repository of a dev distribution, `modules/module-descriptors.dat` and `.jar`, from Bazel facts.
+"""The runtime module repository of the distribution, `modules/module-descriptors.dat` and `.jar`, from Bazel facts.
 
 The layout of the repository is derived in Bazel. The platform payload states what each platform jar merges, and each
 plugin component states the layout part of its own jars, see `DevDistRuntimeLayoutInfo`. The plan generator states
@@ -192,7 +192,7 @@ project model re-runs the repository action of a product only when a fact of one
 )
 
 dev_dist_runtime_module_repository = rule(
-    doc = """Writes `modules/module-descriptors.dat` and `modules/module-descriptors.jar` of a dev distribution.
+    doc = """Writes `modules/module-descriptors.dat` and `modules/module-descriptors.jar` of the distribution.
 
 The two files are predeclared outputs, `<name>.home/modules/module-descriptors.dat` and `.jar`, so a component places
 them by label. The output group `runtime_module_repository_layout` holds the layout and the selected module facts that

@@ -28,7 +28,7 @@ pub enum Source {
         manifest: Option<ManifestMode>,
     },
     /// The bytes of one file as the entry `name`. A source of one entry has nothing to select, so it has no filter. The
-    /// produced plugin descriptor of the dev distribution is this kind.
+    /// produced plugin descriptor of the distribution is this kind.
     File {
         name: String,
         path: PathBuf,

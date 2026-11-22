@@ -63,7 +63,7 @@ internal class PluginDescriptorPlan(
 )
 
 /**
- * The platforms a dev distribution is ever assembled for, as `host_platforms.bzl`'s `HOST_PLATFORMS` spells
+ * The platforms the distribution is ever assembled for, as `host_platforms.bzl`'s `HOST_PLATFORMS` spells
  * them.
  *
  * A plugin whose descriptor differs by OS or architecture gets one plan entry per layout variant, and every entry
@@ -308,7 +308,7 @@ internal data class ProductDescriptorPlan(
 
   /**
    * Whether the product has the application info action. A product without [replacements] patches its application info
-   * source as it is, because a dev distribution stamps no build number.
+   * source as it is, because the distribution stamps no build number.
    */
   val hasApplicationInfo: Boolean
     get() = replacements.isNotEmpty()
@@ -438,7 +438,7 @@ internal fun collectPluginDescriptorPlan(
   // them under that mode, and the run time excludes them. The product filter stays for the product descriptor.
   val pluginContentModuleFilter = pluginContentModuleFilter(properties, contentModuleFilter)
   val modeContentModuleFilters = refusingModes.associateTo(TreeMap()) { mode -> mode.id to createProductModeContentModuleFilter(project, mode) }
-  // A dev distribution keeps `BuildOptions.enableEmbeddedFrontend` at its default `true`. So the only question left
+  // The distribution keeps `BuildOptions.enableEmbeddedFrontend` at its default `true`. So the only question left
   // is whether the product declares an embedded frontend root module, and `BuildOptions` is never read here. A frontend
   // product takes the same filter, so it plans every plugin as its monolith does.
   val frontendModuleFilter = when {
@@ -653,7 +653,7 @@ private fun collectProductDescriptor(
   /** The case-safe name of the product, which names the two targets. */
   name: String,
 ): CollectedProductContent<ProductDescriptorPlan> {
-  val spec = requireNotNull(properties.getProductContentDescriptor()) { "Split dev distribution '$platformPrefix' declares no Product DSL content" }
+  val spec = requireNotNull(properties.getProductContentDescriptor()) { "Split distribution '$platformPrefix' declares no Product DSL content" }
   val mainModule = properties.applicationInfoModule
   val module = outputProvider.findRequiredModule(mainModule)
   val sourceFile = requireNotNull(
@@ -763,10 +763,10 @@ private class LayoutVariant(
 
 /** What [layoutVariant] answers about one layout variant. */
 private sealed interface VariantResult {
-  /** A variant a dev distribution selects on the platforms it states. */
+  /** A variant the distribution selects on the platforms it states. */
   class Selected(@JvmField val variant: LayoutVariant) : VariantResult
 
-  /** A variant no dev distribution ever selects, so it contributes no plan entry. */
+  /** A variant no distribution ever selects, so it contributes no plan entry. */
   object NotSelected : VariantResult
 
   /** A restriction no [HOST_PLATFORMS] subset states. The caller stops generation for this result. */

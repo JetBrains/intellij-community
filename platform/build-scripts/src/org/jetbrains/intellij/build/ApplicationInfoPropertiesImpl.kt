@@ -104,7 +104,7 @@ internal class ApplicationInfoPropertiesImpl(
                               ?: buildTag.getAttributeValue("majorReleaseDate"))?.takeIf { it.isNotEmpty() }
       when {
         isEAP -> {
-          // A dev distribution stamps no build date at all (see `computeAppInfoXml`), so its `buildDateInSeconds` -
+          // A launched-only distribution stamps no build date at all (see `computeAppInfoXml`), so its `buildDateInSeconds` -
           // pinned for reproducible archive entries - says nothing about whether the IDE will start.
           if (!buildOptions.isDevDistribution) {
             eapBuildExpirationProblem(
@@ -158,13 +158,13 @@ internal fun computeAppInfoXml(appInfo: ApplicationInfoProperties, context: Buil
   var patchedAppInfo = BuildUtils.replaceAll(
     text = Files.readString(appInfoXmlPath),
     replacements = buildMap {
-      // A dev distribution deliberately stamps no build date. It is launched rather than shipped, and it is reused for as
+      // A launched-only distribution deliberately stamps no build date. It is launched rather than shipped, and it is reused for as
       // long as its inputs are unchanged - so any date written here is a countdown to the day the IDE refuses to start:
       // an EAP build is expired both when it is older than `EAPProfile.getExpirationPeriodDays()` and when its date is
       // more than a day in the future (see `com.intellij.ide.license.impl.UnifiedLicenseManager.initLicenses`).
       // Leaving the placeholder is the platform's own "this build has no build date": `ApplicationInfoImpl.readBuildInfo`
-      // skips it and `getBuildTime()` answers the startup time, so a dev IDE is always inside its budget.
-      // A dev distribution stamps no build number either. `BuildNumber.fromString` treats `__BUILD__` and
+      // skips it and `getBuildTime()` answers the startup time, so such an IDE is always inside its budget.
+      // Such a distribution stamps no build number either. `BuildNumber.fromString` treats `__BUILD__` and
       // `__BUILD_NUMBER__` as placeholders and reads the number from `build.txt` of the IDE home.
       if (!context.options.isDevDistribution) {
         put("BUILD_NUMBER", "${appInfo.productCode}-${context.buildNumber}")
@@ -270,9 +270,9 @@ internal fun applyApplicationInfoOverrides(
 }
 
 /**
- * The application-info scalars of a dev distribution of [productProperties], with no build context.
+ * The application-info scalars of the distribution of [productProperties], with no build context.
  *
- * The dev-distribution descriptor plan stamps `release_date`, `release_version` and the EAP flag into every produced
+ * The distribution descriptor plan stamps `release_date`, `release_version` and the EAP flag into every produced
  * plugin descriptor, and the assembly stamps the same three from [BuildContext.applicationInfo]. One reader, so the
  * two cannot disagree.
  *
@@ -288,7 +288,7 @@ fun loadDevDistributionApplicationInfo(
   return ApplicationInfoPropertiesImpl(
     project = project,
     productProperties = productProperties,
-    // `isDevDistribution` holds back the EAP expiration report: a dev distribution stamps no build date, so a pinned
+    // `isDevDistribution` holds back the EAP expiration report: a distribution launched from Bazel stamps no build date, so a pinned
     // one that is months old says nothing about whether the IDE starts.
     buildOptions = BuildOptions(buildDateInSeconds = buildDateInSeconds, isDevDistribution = true),
   )

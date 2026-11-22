@@ -7,7 +7,7 @@ use std::fmt;
 
 use anyhow::{Result, bail};
 
-/// The OS family of a native entry, spelled as the dev-dist variant spells it.
+/// The OS family of a native entry, spelled as a platform id of the distribution spells it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Family {
     Windows,
@@ -307,7 +307,7 @@ pub fn select<S: AsRef<str>>(entries: &[S], family: Family, arch: Arch) -> Resul
     Ok(matches)
 }
 
-/// Reads a dev-dist platform id, `<os>_<arch>` with `darwin` for macOS, into its family and architecture.
+/// Reads a platform id of the distribution, `<os>_<arch>` with `darwin` for macOS, into its family and architecture.
 pub fn parse_variant(variant: &str) -> Result<(Family, Arch)> {
     let separator = variant.rfind('_');
     let Some(separator) = separator.filter(|&separator| separator > 0 && separator != variant.len() - 1) else {

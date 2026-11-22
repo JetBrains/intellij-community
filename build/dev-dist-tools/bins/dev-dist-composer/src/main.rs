@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! `dev-dist-composer` assembles the components of a dev distribution into one tree, or into launch metadata only.
+//! `dev-dist-composer` assembles the components of a distribution into one tree, or into launch metadata only.
 //! Then it writes the files that start the IDE.
 //!
 //! The rule `intellij_dev_fragments_dist` runs it with `--composition-spec`, `--output-dir`, `--ide-config`,

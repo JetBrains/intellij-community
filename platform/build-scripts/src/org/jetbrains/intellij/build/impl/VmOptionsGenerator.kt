@@ -73,7 +73,7 @@ internal fun multiRoutingFileSystemVmOptions(platformPrefix: String?): List<Stri
 /**
  * Inserts the line that an EAP build adds: before `-ea`, else before the first `-D` line, else at the end.
  *
- * The tool `product-files` ports this rule, because the dev-dist launch model states no EAP flag.
+ * The tool `product-files` ports this rule, because the launch model of the distribution states no EAP flag.
  */
 internal fun insertEapVmOptions(vmOptions: MutableList<String>) {
   var index = vmOptions.indexOf("-ea")

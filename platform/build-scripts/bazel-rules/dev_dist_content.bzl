@@ -1,4 +1,4 @@
-"""The content boundary of a dev distribution, expressed as a Bazel provider.
+"""The content boundary of the distribution, expressed as a Bazel provider.
 
 `DevDistContentInfo` carries the module and library jars one slice of a distribution reads, and
 `intellij_dev_build_inputs` turns them into manifest entries. It has two producers. `dev_dist_platform_payload` is the
@@ -10,7 +10,7 @@ load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPlatformJarInfo"
 load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS", "dev_dist_stamp_class_consumer_transition")
 
 DevDistContentInfo = provider(
-    doc = "The module and library jars one slice of a dev distribution is made of.",
+    doc = "The module and library jars one slice of the distribution is made of.",
     fields = {
         # Bare `File`s, because the only consumer - `intellij_dev_build_inputs` - keys a module jar by
         # `str(file.owner) + ".jar"` and needs nothing else from the target that produced it.

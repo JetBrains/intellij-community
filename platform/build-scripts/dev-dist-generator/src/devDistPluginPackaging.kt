@@ -107,7 +107,7 @@ internal fun derivedPluginDirectoryName(mainModule: String): String {
   return mainModule.removePrefix("intellij.").removeSuffix(".plugin").replace('.', '-')
 }
 
-/** The writer every dev-distribution jar takes: entities merged, and a library manifest kept only for one meaningful source. */
+/** The writer every distribution jar takes: entities merged, and a library manifest kept only for one meaningful source. */
 private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
 
 /**
@@ -297,7 +297,7 @@ private const val GLOB_CHARACTERS = "*?[]{},\\"
  *
  * Only a macOS or a Linux build applies the patterns of a plugin, so a Windows distribution adds none. A pattern stays
  * only when one of [assets] can place a file that it matches: a file asset at a matching destination, or a tree asset
- * that the pattern can reach into. So an asset that the dev distribution omits takes its patterns with it. The collector
+ * that the pattern can reach into. So an asset that the distribution omits takes its patterns with it. The collector
  * fails for a stated pattern that matches no file.
  */
 internal fun pluginExecutables(layout: PluginLayout, distribution: SupportedDistribution?, assets: List<PluginPackingAsset>): List<String> {

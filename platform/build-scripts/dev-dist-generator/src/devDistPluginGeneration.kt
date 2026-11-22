@@ -797,14 +797,14 @@ internal fun mergeGeneratedPreparationFacts(
 }
 
 /**
- * The dev distribution has no module filter. A directory that a module jar must not carry lives outside the resource
+ * The distribution has no module filter. A directory that a module jar must not carry lives outside the resource
  * root, and the layout copies it from there, see ADR 0026.
  */
 private fun requireNoModuleExcludes(layout: PluginLayout) {
   val (module, excludes) = layout.moduleExcludes.entries.firstOrNull { it.value.isNotEmpty() } ?: return
   throw DevDistUnplannableLayoutException(
     "Plugin '${layout.mainModule}' excludes $excludes from the module '$module'. " +
-    "The dev distribution has no module filter: move the directory out of the resource root and copy it with withResource."
+    "The distribution has no module filter: move the directory out of the resource root and copy it with withResource."
   )
 }
 

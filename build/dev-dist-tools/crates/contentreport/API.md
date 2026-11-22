@@ -1,6 +1,6 @@
 # contentreport API
 
-The crate reads the executed packaging recipe of a dev-distribution fragment, reads a built distribution, and weighs the
+The crate reads the executed packaging recipe of a distribution fragment, reads a built distribution, and weighs the
 one against the other. The binary `content-report` of the ultimate workspace prints the result. The crate depends on
 `anyhow`, `saphyr` and `walkdir`.
 

@@ -1,4 +1,4 @@
-"""The split dev distributions and launchers of the community products.
+"""The split distributions and launchers of the community products.
 
 The file binds `intellij_dev_dist_declarations` to the generated tables of the community half and re-exports its
 macros. `build/intellij_dev_ultimate.bzl` of the ultimate checkout is the twin of this file.

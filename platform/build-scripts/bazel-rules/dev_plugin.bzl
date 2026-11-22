@@ -1,4 +1,4 @@
-"""Packs one simple plugin of a dev distribution directly, with no plan file and no Kotlin preparation.
+"""Packs one simple plugin of the distribution directly, with no plan file and no Kotlin preparation.
 
 A simple plugin is a plugin whose every asset is a jar or a plain copy. Each jar merges module outputs, library jars and,
 for the jar of the main module, the patched descriptor. A plain copy places one file, every file of a source tree, or

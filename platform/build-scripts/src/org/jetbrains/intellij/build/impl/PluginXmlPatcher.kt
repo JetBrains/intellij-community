@@ -75,7 +75,7 @@ internal class PluginDescriptorPatchRequest(
  * Applies the descriptor patch and returns the text the plugin's main jar receives.
  *
  * This body has one caller, the assembly. The descriptor writer of `dev_dist_plugin_descriptor` is a port of it and produces
- * the same text for the dev distribution.
+ * the same text for the distribution.
  *
  * @param embedContentModules the content-module stage. It is not data: it runs over the element this body parsed, and
  *   the assembly decides which `<module/>` survives with a filter that reads the JPS project model.

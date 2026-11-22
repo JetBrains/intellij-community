@@ -12,9 +12,9 @@ const SNAPSHOT_VERSION_SEGMENT: &str = "99999999";
 
 /// `CompatibleBuildRange` (`community/platform/build-scripts/src/org/jetbrains/intellij/build/CompatibleBuildRange.kt`).
 ///
-/// `ANY_WITH_SAME_BASELINE` is deprecated in the platform, and no plugin of this population states it. A dev
-/// distribution stamps no `RESTRICTED_TO_SAME_RELEASE`, because the rule states the range of every plugin. So both are
-/// absent here and not ported as unreachable values.
+/// `ANY_WITH_SAME_BASELINE` is deprecated in the platform, and no plugin of this population states it. A distribution
+/// that Bazel builds stamps no `RESTRICTED_TO_SAME_RELEASE`, because the rule states the range of every plugin. So both
+/// are absent here and not ported as unreachable values.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum CompatibleBuildRange {
     /// The plugin is compatible with this build number alone.
@@ -81,7 +81,7 @@ fn digit_dot_digit_shape(build_number: &str) -> bool {
     build_number_shape(build_number) && build_number.matches('.').count() == 1
 }
 
-/// The `release-version` that a dev distribution stamps on a retained `product-descriptor`.
+/// The `release-version` that a distribution that Bazel builds stamps on a retained `product-descriptor`.
 ///
 /// The baseline of the build number names the release: `271` is the release 2027.1. The value has the shape of
 /// `ApplicationInfo.release_version_for_licensing` of the `appinfo` crate, the major version, the main part of the
@@ -95,7 +95,8 @@ pub(crate) fn release_version_for_licensing(build_number: &str) -> Result<String
     Ok(format!("20{}{}00", &baseline[..2], &baseline[2..]))
 }
 
-/// Whether a dev distribution stamps `eap` on a retained `product-descriptor`: exactly for a `.SNAPSHOT` build number.
+/// Whether a distribution that Bazel builds stamps `eap` on a retained `product-descriptor`: exactly for a `.SNAPSHOT`
+/// build number.
 pub(crate) fn is_eap(build_number: &str) -> bool {
     build_number.ends_with(SNAPSHOT_SUFFIX)
 }

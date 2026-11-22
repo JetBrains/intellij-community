@@ -1251,7 +1251,7 @@ internal fun setLastModifiedTime(directory: Path, context: BuildContext) {
  * Registers the dist files the platform layout declares with a [PlatformDistFilePlacement.RegisteredDistFiles]
  * placement, once per declaration and in declaration order. Production packaging and a complete dev build call it
  * before they copy dist files. A split fragment does not: its distribution gets the same files from the component
- * the dev-distribution plan derives from the declarations.
+ * the distribution plan derives from the declarations.
  */
 internal fun registerPlatformDistFiles(platformLayout: PlatformLayout, context: BuildContext) {
   for (declarations in platformLayout.distFileDeclarations.values) {

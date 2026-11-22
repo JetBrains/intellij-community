@@ -1,4 +1,4 @@
-//! `dev-dist-collector` writes the manifest of one dev-distribution component. The manifest names each file where
+//! `dev-dist-collector` writes the manifest of one distribution component. The manifest names each file where
 //! Bazel already put it. The collector copies nothing, and it reads a payload only to hash a file without metadata.
 //!
 //! Three modes exist. `intellij_dev_packed_jars_component` (`intellij_dev_dist.bzl`) uses `--jars-file` with

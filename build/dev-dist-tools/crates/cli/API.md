@@ -1,6 +1,6 @@
 # cli
 
-The command line of the dev-distribution tools. Every tool reads its arguments through this crate, so every tool
+The command line of the distribution tools. Every tool reads its arguments through this crate, so every tool
 accepts one form and refuses the rest with one text. The crate prints an error, and each tool keeps its exit codes.
 
 ## Supported subset

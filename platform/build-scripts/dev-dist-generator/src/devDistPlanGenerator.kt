@@ -215,7 +215,7 @@ internal data class DescriptorFile(
 }
 
 /**
- * The dev-distribution plan files, and what the run did to each one.
+ * The distribution plan files, and what the run did to each one.
  *
  * [files] always holds every plan file, the unchanged ones included, so the generation summary can state how many
  * files it covers. [diffs] is empty on a committing run, because a write is the requested outcome of that run and not
@@ -227,7 +227,7 @@ internal class DevDistPlanResult(
 )
 
 /**
- * The rendered dev-distribution plan, before the run decides to write it.
+ * The rendered distribution plan, before the run decides to write it.
  *
  * The render reads the product model only, so it runs beside the generation pipeline. The write decision reads the
  * pipeline's errors, so [finish] takes it afterwards.
@@ -362,7 +362,7 @@ internal fun computeDevDistPluginExecutions(
 }
 
 /**
- * Renders every dev-distribution file into a deferred writer, and writes nothing.
+ * Renders every distribution file into a deferred writer, and writes nothing.
  *
  * The result holds every plan file, the unchanged ones included, so the generation summary can state how many files it
  * covers. [walk] is the one descriptor walk of the run, which the dev sections read first. [sections] gives the plan
@@ -888,7 +888,7 @@ internal fun collectPluginDescriptorPlans(
   // The products plan beside each other. The collector memos take concurrent callers, and the closure walks read the
   // finished flat walk.
   val plans = products.mapConcurrent { product ->
-    // A product with no split dev distribution has no plan.
+    // A product with no split distribution has no plan.
     if (product.name !in half.splitDistributions) return@mapConcurrent null
     val properties = product.properties as? ProductProperties ?: return@mapConcurrent null
     collectPluginDescriptorPlan(
@@ -1543,7 +1543,7 @@ private fun collectFragmentPlan(
 ): ProductFragmentPlan? {
   val config = half.splitDistributions.get(product.name) ?: return null
   val properties = product.properties as? ProductProperties
-                   ?: error("Split dev distribution '${product.name}' has no ProductProperties")
+                   ?: error("Split distribution '${product.name}' has no ProductProperties")
   val productToken = devDistProductToken(projectHome = index.projectRoot, productProperties = properties)
 
   // One fragment owns `lib/`, minus the jars another producer packs - which it is told by name, see the `except`
@@ -1566,7 +1566,7 @@ private fun collectFragmentPlan(
     }
   }
   check(platformJarRows > 0) {
-    "The source layout of split dev distribution '${product.name}' has no platform jars for '$productToken'"
+    "The source layout of split distribution '${product.name}' has no platform jars for '$productToken'"
   }
   // A `[platform_libraries]` row names a project library or a module library, and only the project model tells which.
   // The module that owns a module library declares it, so the payload takes the project libraries alone.
@@ -1595,7 +1595,7 @@ private fun collectFragmentPlan(
   platformPayload.modules.add(properties.applicationInfoModule)
   for (moduleName in config.runtimeClasspathModules) {
     checkNotNull(outputProvider.findModule(moduleName)) {
-      "Split dev distribution '${product.name}' loads the runtime classpath of module '$moduleName', which the project does not have"
+      "Split distribution '${product.name}' loads the runtime classpath of module '$moduleName', which the project does not have"
     }
     platformPayload.runtimeClasspathModules.add(moduleName)
   }
@@ -1617,7 +1617,7 @@ private fun collectFragmentPlan(
     val pluginsWithIdeaClassloader = bundledPluginsWithIdeaClassloader(properties, outputProvider)
     check(pluginsWithIdeaClassloader.isEmpty()) {
       "${product.name}: the bundled plugins $pluginsWithIdeaClassloader set use-idea-classloader. Production puts their jars on " +
-      "the boot class path of the launch, but the dev distribution renders that list from the jars of lib/ alone."
+      "the boot class path of the launch, but the distribution renders that list from the jars of lib/ alone."
     }
   }
   // The entries a layout patcher of the product writes, keyed by the patched module, in the order the patchers write
@@ -1711,7 +1711,7 @@ private fun collectFragmentPlan(
         properties.productMode == com.intellij.platform.productMode.ProductMode.FRONTEND ||
         properties.applicationInfoModule !in contentModules
       ) {
-        "Split dev distribution '${product.name}' declares its application-info module '${properties.applicationInfoModule}'" +
+        "Split distribution '${product.name}' declares its application-info module '${properties.applicationInfoModule}'" +
         " as a content module. The jar of that module carries the product descriptor, so a content module jar cannot pack it." +
         " Move the content module descriptor to a module of its own."
       }
@@ -1745,7 +1745,7 @@ private fun collectFragmentPlan(
     run {
       // A `content_module_jar` is packed once for every product, with its natives mode from the shared map.
       check(properties.presignedNativeLibs == PRESIGNED_NATIVE_LIBS) {
-        "${product.name}: the dev distribution packs natives by PRESIGNED_NATIVE_LIBS, " +
+        "${product.name}: the distribution packs natives by PRESIGNED_NATIVE_LIBS, " +
         "but the product maps ${properties.presignedNativeLibs}"
       }
       val residual = LinkedHashMap<String, ResidualPlatformJar>()
@@ -2217,7 +2217,7 @@ private fun collectLibraryOnlyJars(
 }
 
 /**
- * The native signing mode of a dev distribution. `intellij_dev_dist.bzl` assembles unscrambled builds only, and the
+ * The native signing mode of the distribution. `intellij_dev_dist.bzl` assembles unscrambled builds only, and the
  * packer writes a native tree as the unsigned bytes of the library jar. The plugin side states the same mode in
  * its native policy.
  */
@@ -2364,7 +2364,7 @@ internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductPr
     "copyAdditionalOsSpecificFiles", Path::class.java, OsFamily::class.java, JvmArchitecture::class.java, BuildContext::class.java,
   )
   check(copyMethod.declaringClass == ProductProperties::class.java) {
-    "${copyMethod.declaringClass.name} overrides copyAdditionalOsSpecificFiles, which a split dev distribution does not call." +
+    "${copyMethod.declaringClass.name} overrides copyAdditionalOsSpecificFiles, which a split distribution does not call." +
     " Declare the files with additionalOsSpecificFiles instead."
   }
   val communityRoot = index.communityRoot
@@ -2571,7 +2571,7 @@ private fun readZipEntry(jar: Path, entry: String): ByteArray? {
  * is what widens that to the module's dependencies in `DescriptorSearchPass.MODULE_OUTPUT`. This is the two together,
  * and it answers the jar as well as the bytes - the plan needs the jar, and the walk needs the bytes.
  *
- * A test dependency is not walked, and neither is a library of one: a dev distribution packs production output.
+ * A test dependency is not walked, and neither is a library of one: the distribution packs production output.
  */
 internal fun findDescriptorInLibraryJars(
   module: JpsModule,
@@ -3320,7 +3320,7 @@ private fun renderDescriptors(files: List<DescriptorFile>, half: DevDistHalf): S
 private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHalf, communityProducts: Set<String>): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
-  append("# The plan of every split product: the facts that its dev distribution reads. Bazel consumes this plan directly\n")
+  append("# The plan of every split product: the facts that its distribution reads. Bazel consumes this plan directly\n")
   append("# and fails when the requested product is absent.\n")
   append("#\n")
   if (half.writesCommunityPackages) {

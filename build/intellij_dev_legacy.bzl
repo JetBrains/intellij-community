@@ -1,6 +1,6 @@
 """The legacy dev-mode test macro: it assembles the product in the test JVM through the build scripts.
 
-The dev-mode tests are the last Bazel path that runs `JUnitDevMainKt`. Every dev launcher runs from a split dev
+The dev-mode tests are the last Bazel path that runs `JUnitDevMainKt`. Every dev launcher runs from a split
 distribution and the launcher in `intellij_dev.bzl`.
 """
 

@@ -12,7 +12,7 @@ import java.nio.file.Path
 import kotlin.system.exitProcess
 
 /**
- * The community binary: it regenerates the dev-distribution files of the community half.
+ * The community binary: it regenerates the distribution files of the community half.
  *
  * Run `bazel run //build:dev_dist_generator` in `community/`, or `bazel run @community//build:dev_dist_generator` in the
  * monorepo root. Both runs find one community root, see [findCommunityRoot], so both write the same bytes.
@@ -39,7 +39,7 @@ object CommunityDevDistGenerator {
         println("out of sync: ${communityRoot.relativize(diff.path)} (${diff.changeType})")
       }
       val changed = if (options.commit) "${result.files.count { it.status != FileChangeStatus.UNCHANGED }} changed" else "${result.diffs.size} out of sync"
-      println("Community half $communityRoot: ${result.files.size} dev-distribution files, $changed")
+      println("Community half $communityRoot: ${result.files.size} distribution files, $changed")
       outOfSync = !options.commit && result.diffs.isNotEmpty()
     }
     if (outOfSync) {

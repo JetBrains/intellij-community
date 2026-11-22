@@ -349,7 +349,7 @@ fn natives_reservation_packs_the_natives_mode_jar_and_no_tree() {
 #[test]
 fn natives_mode_lays_the_tree_out_per_library() {
     // jna files go under the JVM architecture directory and not under their own. The tree key the metadata records for
-    // the dev distribution is `native/aarch64/libjnidispatch.jnilib`.
+    // the distribution is `native/aarch64/libjnidispatch.jnilib`.
     let scratch = Scratch::new();
     let jna = write_zip_jar(
         &scratch,

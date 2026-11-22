@@ -48,7 +48,7 @@ data class PluginPackingProjection(
     )
     val usedModules = result.assets.mapNotNull { it.artifact?.module }.toSet()
     require(reusableArtifacts.size == usedModules.size && reusableArtifacts.map(ReusableJarArtifact::module).toSet() == usedModules) {
-      "Plugin '$plugin' has duplicate or unused reusable artifacts. Regenerate the dev distribution declarations."
+      "Plugin '$plugin' has duplicate or unused reusable artifacts. Regenerate the distribution declarations."
     }
     return result
   }

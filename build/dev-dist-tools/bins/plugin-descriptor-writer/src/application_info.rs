@@ -42,10 +42,10 @@ pub(crate) fn resolve_application_info(parsed: &ApplicationInfoRequest) -> Resul
     Ok(descriptorxml::write(client.root()))
 }
 
-/// The replacement map of `computeAppInfoXml` for the client template of a dev distribution.
+/// The replacement map of `computeAppInfoXml` for the client template of a distribution that Bazel builds.
 ///
-/// A dev distribution stamps no build number and no build date. The run time reads the build number from `build.txt`.
-/// A dev distribution has no artifact server, so `BUILTIN_PLUGINS_URL` is empty.
+/// A distribution that Bazel builds stamps no build number and no build date. The run time reads the build number from
+/// `build.txt`. A distribution that Bazel builds has no artifact server, so `BUILTIN_PLUGINS_URL` is empty.
 pub(crate) fn application_info_replacements() -> [Replacement; 1] {
     [Replacement::new("BUILTIN_PLUGINS_URL", "")]
 }

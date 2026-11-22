@@ -26,7 +26,7 @@ import java.nio.file.Path
 import java.util.TreeSet
 
 /**
- * Starts the dev-distribution renders of one generator run beside the product-model pipeline: the plan of the
+ * Starts the distribution renders of one generator run beside the product-model pipeline: the plan of the
  * community half, and then the plugin packings, the `dev` sections and the plan of [half].
  *
  * Each half writes the generated files of its own packages, see [DevDistHalf.ownsPackage]. The community half renders
@@ -99,7 +99,7 @@ fun TaskScope.forkDevDistHalves(
   )
 }
 
-/** The dev-distribution renders that [forkDevDistHalves] started. */
+/** The distribution renders that [forkDevDistHalves] started. */
 @ApiStatus.Internal
 class DevDistHalvesRun internal constructor(
   private val half: DevDistHalf,
@@ -144,7 +144,7 @@ class DevDistHalvesRun internal constructor(
   }
 }
 
-/** The dev-distribution files of one run and, for a run that does not write them, their diffs. */
+/** The distribution files of one run and, for a run that does not write them, their diffs. */
 @ApiStatus.Internal
 class DevDistHalvesFiles(
   @JvmField val files: List<DevDistPlanFileResult>,
@@ -152,7 +152,7 @@ class DevDistHalvesFiles(
 )
 
 /**
- * The two dev-distribution outputs that need `bazel-targets.json`: the `BUILD.bazel` dev sections and the plan.
+ * The two distribution outputs that need `bazel-targets.json`: the `BUILD.bazel` dev sections and the plan.
  *
  * [upstream] is what the half that renders second reads of this half. The computation of the sections is not part of
  * the result, so it is unreachable once [computeDevDistBazelFiles] returns.
@@ -362,7 +362,7 @@ internal fun devDistProductClasses(products: List<DiscoveredProduct>): Map<Strin
  */
 internal fun computeCommunityDevDistFiles(projectRoot: Path, verifyPlanUnits: Boolean): DevDistBazelComputes {
   check(devDistPlanInputExists(projectRoot)) {
-    "The dev-distribution plan needs ${ArchivedCompilationContextUtil.getBazelTargetsJsonPath(projectRoot)}. Run ./build/jpsModelToBazel.cmd first."
+    "The distribution plan needs ${ArchivedCompilationContextUtil.getBazelTargetsJsonPath(projectRoot)}. Run ./build/jpsModelToBazel.cmd first."
   }
   val communityRoot = CommunityDevDistHalf.root(projectRoot)
   val project = loadGeneratorJpsProject(communityRoot)

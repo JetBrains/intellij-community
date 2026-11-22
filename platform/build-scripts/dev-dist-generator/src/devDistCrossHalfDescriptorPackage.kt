@@ -290,7 +290,7 @@ private fun renderCrossHalfPackage(
   append("#\n")
   when {
     product == null -> {
-      append("# The dev-distribution targets of one plugin, in a package of its own.\n")
+      append("# The distribution targets of one plugin, in a package of its own.\n")
       append("#\n")
       append("# A bundled plugin normally declares these targets in its own `BUILD.bazel`. This plugin cannot: its `dev`\n")
       append("# section holds no production descriptor, or it is a community plugin whose descriptor patch, packaging or\n")
@@ -299,7 +299,7 @@ private fun renderCrossHalfPackage(
       append("# would put the most edited plugins of this repository into one merge-conflict domain.\n")
     }
     else -> {
-      append("# The dev-distribution targets of one plugin for the product `").append(product).append("` and every product that\n")
+      append("# The distribution targets of one plugin for the product `").append(product).append("` and every product that\n")
       append("# states the plugin like it, in a package of its own.\n")
       append("#\n")
       append("# These products state the plugin's descriptor differently from the baseline product, and one leaf produces one\n")

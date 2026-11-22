@@ -5,7 +5,7 @@
 //! The assembly computes the first two with `computePluginBuildNumber` and `getCompatiblePlatformVersionRange`, and
 //! this module is their port. A disagreement here moves the `<version>` and the `<idea-version>` of every plugin. The
 //! fragment that reads the produced file refuses that in `checkProducedPluginDescriptor`. The release version and the
-//! EAP flag of a retained `product-descriptor` are dev distribution rules.
+//! EAP flag of a retained `product-descriptor` are rules of a distribution that Bazel builds.
 
 use super::{CompatibleBuildRange, compatible_platform_version_range, is_eap, plugin_build_number, release_version_for_licensing};
 

@@ -202,8 +202,8 @@ struct PluginRequest {
 /// What the stamps of a retained `product-descriptor` read besides the build number. Only
 /// `--retain-product-descriptor=true` states it.
 ///
-/// A dev distribution reads no application info here. So one descriptor serves every product, and no product is in the
-/// configuration of the leaf. See [`retained_product_stamps`].
+/// A distribution that Bazel builds reads no application info here. So one descriptor serves every product, and no
+/// product is in the configuration of the leaf. See [`retained_product_stamps`].
 #[derive(Debug, PartialEq, Eq)]
 struct RetainedProduct {
     /// The pinned build date, which is the release date.
@@ -302,11 +302,11 @@ fn patch(parsed: &PluginRequest) -> Result<String> {
     Ok(descriptorxml::write(&element))
 }
 
-/// The stamps of a retained `product-descriptor` in a dev distribution.
+/// The stamps of a retained `product-descriptor` in a distribution that Bazel builds.
 ///
 /// The release date is the pinned build date, the release version comes from the baseline of the build number, and
 /// `eap` is set for a `.SNAPSHOT` build number. A bundled plugin is released with its product, so production stamps
-/// the facts of the product here. Every product of a dev distribution has the same facts, so the writer derives them
+/// the facts of the product here. Every product of such a distribution has the same facts, so the writer derives them
 /// from what every leaf reads.
 fn retained_product_stamps(build_number: &str, product: &RetainedProduct) -> Result<stamps::ProductDescriptorStamps> {
     Ok(stamps::ProductDescriptorStamps {
@@ -374,8 +374,9 @@ fn parse_plugin_request(mut options: cli::Options) -> Result<PluginRequest> {
     Ok(request)
 }
 
-/// Reads the range that the rule states. A dev distribution stamps `NEWER_WITH_SAME_BASELINE`, and a layout with an
-/// exact version stamps `EXACT`. No rule states `RESTRICTED_TO_SAME_RELEASE`, so it is refused like an unknown name.
+/// Reads the range that the rule states. A distribution that Bazel builds stamps `NEWER_WITH_SAME_BASELINE`, and a
+/// layout with an exact version stamps `EXACT`. No rule states `RESTRICTED_TO_SAME_RELEASE`, so it is refused like an
+/// unknown name.
 fn parse_compatible_build_range(value: &str) -> Result<CompatibleBuildRange> {
     match value {
         "EXACT" => Ok(CompatibleBuildRange::Exact),

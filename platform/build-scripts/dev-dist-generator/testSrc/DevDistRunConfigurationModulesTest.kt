@@ -490,7 +490,7 @@ class DevDistRunConfigurationModulesTest {
       )
     }
       .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("product 'community' has no dev-distribution plan")
+      .hasMessageContaining("product 'community' has no distribution plan")
   }
 
   @Test

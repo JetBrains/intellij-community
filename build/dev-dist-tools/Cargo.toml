@@ -1,4 +1,4 @@
-# The Rust workspace of the dev-distribution tools. One crate per concern that two tools share, one binary per Bazel tool.
+# The Rust workspace of the distribution tools. One crate per concern that two tools share, one binary per Bazel tool.
 # Bazel builds the binaries through rules_rs; `cargo` serves the edit-test loop and rust-analyzer.
 # Bazel reads only this file and `Cargo.lock`. A dependency that moves inside a member manifest needs an edit here and a
 # hub refresh (README).

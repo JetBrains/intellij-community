@@ -82,7 +82,7 @@ sealed class BaseLayout {
   /**
    * The project libraries this layout declares, with the out path a `withProjectLibrary(name, jarName)` call states.
    *
-   * The dev-distribution layout tables need the path and not only the name: a library packed into a jar of its own
+   * The distribution layout tables need the path and not only the name: a library packed into a jar of its own
    * leaves every member jar that declares it, and the derivation has to know which jar the layout named.
    */
   @ApiStatus.Internal
@@ -224,7 +224,7 @@ sealed class BaseLayout {
    * @param relativeOutputPath target path relative to the plugin root directory
    *
    * The path stays inside the Bazel package of the module, the directory that holds its `BUILD.bazel`. It uses no `..`
-   * and crosses no nested package. The dev-distribution generator derives `//<package>:dev_dist_resources` from the
+   * and crosses no nested package. The distribution generator derives `//<package>:dev_dist_resources` from the
    * declaration and refuses a layout that breaks the rule. Declare a resource against the module whose package holds it.
    */
   fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {

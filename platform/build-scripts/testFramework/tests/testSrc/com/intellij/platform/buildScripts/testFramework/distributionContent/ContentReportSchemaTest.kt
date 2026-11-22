@@ -11,7 +11,7 @@ import org.junit.jupiter.api.assertAll
 
 /**
  * One canonical class states what a build packs: [FileEntry] states one file of a distribution. The executed plan a
- * dev-distribution fragment writes comes from it.
+ * distribution fragment writes comes from it.
  *
  * The JPS-to-Bazel converter reads it back through a narrow schema of its own: `ExecutedPlanEntry` in
  * `community/platform/build-scripts/bazel/src/org/jetbrains/intellij/build/bazel/devDistPluginJarPlan.kt` mirrors
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.assertAll
  *
  * The narrow schemas decode with `recipeYaml`, which sets `strictMode = false`. A field a narrow schema fails to declare
  * is dropped in silence instead of reported. That is how `module:` once went missing from the converter's view of a
- * plugin's members. The converter then under-declared the dev-distribution input manifest, and `//build:idea_air_dist`
+ * plugin's members. The converter then under-declared the distribution input manifest, and `//build:idea_air_dist`
  * failed at assembly time.
  *
  * This test is the enforcement for that asymmetry. It fails, and it names the field, as soon as a canonical class and its
@@ -120,9 +120,9 @@ private val PROJECT_LIBRARY_ENTRY = NarrowSchema(
   ),
 )
 
-// The narrow schema over `FileEntry`, for a dev-distribution fragment's executed `<fragment>.plan.yaml`. Its question is
+// The narrow schema over `FileEntry`, for a distribution fragment's executed `<fragment>.plan.yaml`. Its question is
 // where a jar went and whose module output it holds, so it declares `kind` and ignores the membership detail a content
-// target gets from the dev-dist tables.
+// target gets from the distribution tables.
 private val EXECUTED_PLAN_ENTRY = NarrowSchema(
   canonical = FileEntry.serializer(),
   canonicalName = "FileEntry",

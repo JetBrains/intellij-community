@@ -156,7 +156,7 @@ object CommunityKotlinPluginBuilder : KotlinPluginBuilder()
 /**
  * The Kotlin plugin's version: the IDE build version, then the plugin kind.
  *
- * A class and not a lambda, so that the dev-distribution descriptor plan can state [versionSuffix] as data. [evaluate]
+ * A class and not a lambda, so that the distribution descriptor plan can state [versionSuffix] as data. [evaluate]
  * keeps the two branches a released build needs. A `kotlin.plugin.since` and `kotlin.plugin.until` pair states a
  * compatibility range of its own, and a build version that already holds `IJ` takes the kind spliced in rather than
  * appended. A Bazel dev fragment sets no such property and stamps a build version of the `<baseline>.<date>.<counter>`

@@ -35,7 +35,7 @@ pub(crate) fn run(options: cli::Options) -> i32 {
     })
 }
 
-/// `computeAppInfoXml` (`ApplicationInfoPropertiesImpl.kt`) for a dev distribution.
+/// `computeAppInfoXml` (`ApplicationInfoPropertiesImpl.kt`) for a distribution that Bazel builds.
 ///
 /// The mode replaces the markers of the product replacements and no other marker. `__BUILD__`, `__BUILD_NUMBER__` and
 /// `__BUILD_DATE__` stay, and the run time reads the build number from `build.txt`. The markers are replaced in the

@@ -126,9 +126,9 @@ data class BuildOptions(
    * the single owner of the dev overrides, so both dev paths - the in-process assembly and the one nested in a real
    * build - agree on it.
    *
-   * It decides two things. The build date stamped into `ApplicationInfo.xml`: a dev distribution stamps none, so that
+   * It decides two things. The build date stamped into `ApplicationInfo.xml`: such a build stamps none, so that
    * the IDE resolves its build time at startup and no EAP expiration period can run out on it. And the layout callbacks
-   * of a plugin: a dev distribution skips a callback whose `LayoutAssetSpec.runsInClassicDev` is false.
+   * of a plugin: such a build skips a callback whose `LayoutAssetSpec.runsInClassicDev` is false.
    */
   @JvmField internal val isDevDistribution: Boolean = false,
 

@@ -28,7 +28,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
- * Writes out the packaging recipe a dev-distribution assembly just executed: for every output the assembly produced,
+ * Writes out the packaging recipe a distribution assembly just executed: for every output the assembly produced,
  * how it produced it and which sources, in which order, went into it.
  *
  * ### Why this is a report of an executed run and not of a layout

@@ -1,6 +1,6 @@
-//! The component contract that the dev-distribution collector and composer share.
+//! The component contract that the distribution collector and composer share.
 //!
-//! A component is a manifest that names each file of one part of a dev distribution where the file already is. The
+//! A component is a manifest that names each file of one part of a distribution where the file already is. The
 //! collector writes the manifest, and the composer reads the manifests of all components. Then it writes a
 //! self-contained distribution or launch metadata only.
 

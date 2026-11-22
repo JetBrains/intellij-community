@@ -23,7 +23,7 @@ fn stamp_request(output: &Path, source: &str) -> Vec<String> {
 /// ultimate root. The replacements are the ones that `LanguageServerProperties` states for `KotlinServer`.
 ///
 /// The expected text is the plain replacement of the product markers. `ILS-__BUILD__` and `__BUILD_DATE__` stay, because
-/// a dev distribution stamps no build number and no build date.
+/// a distribution that Bazel builds stamps no build number and no build date.
 #[test]
 fn stamp_application_info_replaces_the_product_markers() {
     let dir = TempDir::new();

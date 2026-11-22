@@ -836,7 +836,7 @@ private fun jSerialCommLayoutAssetSpec(): LayoutAssetSpec {
 }
 
 /**
- * Declares the restart helper at `bin/restarter` for every target platform. The dev distribution packs it out of
+ * Declares the restart helper at `bin/restarter` for every target platform. The Bazel engine packs it out of
  * the `restarter` archive; production and a complete dev build copy it beside the other `bin` files, where the
  * cross-platform zip leaves it out and the mac signing pass covers it.
  */
@@ -876,8 +876,8 @@ private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibra
 }
 
 /**
- * The dev distribution omits the Ant distribution of the Ant plugin. The plugin is a marketplace plugin that no
- * dev-distribution product includes, and it finds `community/lib/ant` itself when it runs from sources.
+ * The distribution omits the Ant distribution of the Ant plugin. The plugin is a marketplace plugin that no
+ * distribution product includes, and it finds `community/lib/ant` itself when it runs from sources.
  */
 private val ANT_DISTRIBUTION_DEV_SPEC: LayoutAssetSpec = LayoutAssetSpec.OMITTED
 

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.ModuleItem
 
 /**
- * Which independently cacheable slice of a dev distribution one assembly produces.
+ * Which independently cacheable slice of the distribution one assembly produces.
  *
  * A complete distribution is [COMPLETE] - one assembly, everything in it. Anything else is a fragment. No
  * distribution composes a fragment now: the fragments are the references of the `jars`, `replay` and `runtime-repo`

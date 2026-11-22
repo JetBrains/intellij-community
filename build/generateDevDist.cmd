@@ -3,7 +3,7 @@
 GOTO :CMDSCRIPT
 ::CMDLITERAL
 
-# Regenerates the dev-distribution files of the community half: the community converter first, then the community
+# Regenerates the distribution files of the community half: the community converter first, then the community
 # binary. `--check` passes through to the binary, which then writes nothing and fails when a file is out of sync.
 
 set -eu

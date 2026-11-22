@@ -8,7 +8,7 @@ import org.jetbrains.intellij.build.telemetry.withTracer
 import java.nio.file.Path
 
 /**
- * The option every dev-distribution producer takes to write the spans of its own process out, in the Jaeger JSON shape
+ * The option every distribution producer takes to write the spans of its own process out, in the Jaeger JSON shape
  * [org.jetbrains.intellij.build.telemetry.TraceFileSpanExporter] produces.
  *
  * A trace file is a pure side output: nothing reads it while the build runs, so a producer that is not given one must

@@ -81,7 +81,7 @@ sealed interface LayoutAssetSource {
   ) : LayoutAssetSource
 
   /**
-   * A directory below `out/bundle-plugins` that a local backend build may create. The dev distribution declares its
+   * A directory below `out/bundle-plugins` that a local backend build may create. The distribution declares its
    * files when present and writes an empty tree when absent. Both states have different action keys.
    */
   data class OptionalLocalDirectory(
@@ -158,7 +158,7 @@ enum class ClassicDevRun {
  * Declares one callback's development layout as data.
  * Source indices refer to [sources] and preserve their declaration order.
  *
- * An [omitted] slot has no files in the dev distribution. [classicDev] states whether the classic dev build runs the
+ * An [omitted] slot has no files in the distribution. [classicDev] states whether the classic dev build runs the
  * callback, see [runsInClassicDev].
  */
 @ApiStatus.Internal

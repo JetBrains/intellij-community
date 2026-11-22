@@ -1,4 +1,4 @@
-"""Analysis tests for direct dev distribution packaging."""
+"""Analysis tests for direct distribution packaging."""
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")

@@ -55,7 +55,7 @@ internal fun partitionPluginsByBuildingMethod(pluginLayouts: Collection<PluginLa
   val pluginsToBuildByBazel = ArrayList<PluginBuiltByBazelDescriptor>()
   for (layout in pluginLayouts) {
     val bazelTargetDescription = outputProvider.findPluginDistributionTargetDescription(layout.mainModule)
-    // An entry with no `target` is one that only records the plugin's dev-distribution content target, which says
+    // An entry with no `target` is one that only records the plugin's distribution content target, which says
     // nothing about whether Bazel can package the plugin - `ij_plugin` is what does, and it is opt-in per descriptor.
     if (bazelTargetDescription != null && bazelTargetDescription.target.isNotEmpty()) {
       pluginsToBuildByBazel.add(PluginBuiltByBazelDescriptor(layout.mainModule, bazelTargetDescription.target, buildContext.paths.projectHome.resolve(bazelTargetDescription.distributionDirectory)))

@@ -213,7 +213,7 @@ internal fun buildProductFromProject(
  */
 internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: Path, lifetime: BuildLifetime) -> BuildContext): DevBuildResult {
   check(request.fragment.isComplete || request.scrambleTool == null) {
-    "Split dev distribution assembly does not support scrambling"
+    "Split distribution assembly does not support scrambling"
   }
   val buildDir = request.runDirOverride?.let { prepareOverriddenRunDir(it) } ?: prepareDevRunDir(request)
   request.scratchDir?.let { prepareScratchDir(it) }

@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
 
 /**
- * The plugins the split dev distribution of IDEA Ultimate offers on demand without bundling them.
+ * The plugins the split distribution of IDEA Ultimate offers on demand without bundling them.
  *
  * The plan generator states the same list in its split-distribution config. The list is here too, so that a reader
  * without the tool's module derives the same population.
@@ -168,7 +168,7 @@ class DerivedPluginJars(
 }
 
 /**
- * The plugins the dev distribution states content for: the population of the derivation.
+ * The plugins the distribution states content for: the population of the derivation.
  *
  * The population includes bundled plugins, published plugins, and [extraPopulation].
  * [platformJars] supplies compatible published plugins from source derivation. Names absent from the project are excluded.

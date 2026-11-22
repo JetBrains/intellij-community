@@ -12,7 +12,7 @@ fun devDistHostPlatformOs(os: OsFamily): String = when (os) {
   OsFamily.MACOS -> "darwin"
   OsFamily.LINUX -> "linux"
   OsFamily.WINDOWS -> "windows"
-  OsFamily.OHOS -> error("There is no dev distribution for OHOS")
+  OsFamily.OHOS -> error("The Bazel engine builds no distribution for OHOS")
 }
 
 /** How the same list spells [arch]: `aarch64` or `x64`. */
@@ -22,7 +22,7 @@ fun devDistHostPlatformArch(arch: JvmArchitecture): String = when (arch) {
 }
 
 /**
- * The `HOST_PLATFORMS` entry of a dev distribution for [os] and [arch], such as `darwin_aarch64`. A layout names it
+ * The `HOST_PLATFORMS` entry of the distribution for [os] and [arch], such as `darwin_aarch64`. A layout names it
  * in `LayoutAsset.hostPlatforms` when an asset serves one host platform only.
  */
 fun devDistHostPlatform(os: OsFamily, arch: JvmArchitecture): String = "${devDistHostPlatformOs(os)}_${devDistHostPlatformArch(arch)}"

@@ -1,7 +1,7 @@
 //! The reader of the executed packaging recipe, the reader of a built distribution, and the purity weighing of the one
 //! against the other.
 //!
-//! A dev-distribution fragment writes its executed packaging recipe as `<fragment>.plan.yaml`. The file is in the
+//! A distribution fragment writes its executed packaging recipe as `<fragment>.plan.yaml`. The file is in the
 //! content-report schema: `serializeContentEntries` of `intellij.platform.distributionContent` writes a list of
 //! `FileEntry`, and `DevDistRecipe` sets `kind` and `sources` on each entry. The unit of the weighing is the output
 //! and its bytes, not the source.

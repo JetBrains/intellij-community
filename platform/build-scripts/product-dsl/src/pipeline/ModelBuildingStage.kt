@@ -1174,7 +1174,7 @@ internal object ModelBuildingStage {
   /**
    * The plugin main modules to seed into the graph, read off the module sources.
    *
-   * @param contentPluginPopulation the plugin main modules the dev distribution states content for; see
+   * @param contentPluginPopulation the plugin main modules the distribution states content for; see
    * [org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig.contentPluginPopulation].
    */
   internal fun discoverPluginDescriptorsFromSources(

@@ -10,7 +10,7 @@ import java.nio.file.Path
 import kotlin.io.path.readText
 
 /**
- * The product token of the `ProductProperties` class [className] in the dev-distribution tables.
+ * The product token of the `ProductProperties` class [className] in the distribution tables.
  *
  * The token is the first key of `build/dev-build.json`, in file order, whose product has the class. The file names one
  * class under several keys, such as `community` and `Idea`, and marks no key as the alias, so the file order decides.
@@ -22,7 +22,7 @@ import kotlin.io.path.readText
 @Internal
 fun devDistProductToken(registry: ProductConfigurationRegistry, className: String): String {
   return registry.products.entries.firstOrNull { it.value.className == className }?.key
-         ?: error("No product of `$PRODUCT_REGISTRY_PATH` has the class `$className`, so no token names this product in the dev-distribution tables")
+         ?: error("No product of `$PRODUCT_REGISTRY_PATH` has the class `$className`, so no token names this product in the distribution tables")
 }
 
 /** The product token of [productProperties], resolved from the `build/dev-build.json` under [projectHome]. */

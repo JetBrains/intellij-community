@@ -16,7 +16,7 @@ load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeli
 load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
 load(":tests-options.bzl", "jps_test")
 
-# The macOS app icons that the `platform_resources` component of a split dev distribution places in
+# The macOS app icons that the `platform_resources` component of a split distribution places in
 # `Contents/Resources`. The plan generator names each file. The export precedes every rule that names the files.
 exports_files(
     [
@@ -123,7 +123,7 @@ jps_to_bazel_targets_json(
         constraint_values = constraints,
         # The select axis of every per-platform dependency set, in this repository and in ultimate. A setting matches
         # the target platform of the configuration, which is the host platform unless `--platforms` states another.
-        # No dev-dist rule transitions the target platform. A cross distribution passes its `target_platform` to the
+        # No distribution rule transitions the target platform. A cross distribution passes its `target_platform` to the
         # tools only as the `--os` and `--arch` arguments, so a setting still matches the host there. Under an exec
         # transition, the target platform is the exec platform.
         visibility = ["//visibility:public"],
@@ -209,7 +209,7 @@ java_binary(
     runtime_deps = [":build"],
 )
 
-# The community binary of the dev-dist generator. It regenerates the dev-distribution files of the community half:
+# The community binary of the dev-dist generator. It regenerates the distribution files of the community half:
 # `bazel run //build:dev_dist_generator` in `community/`, or `bazel run @community//build:dev_dist_generator` in the
 # monorepo root. `--check` writes nothing and fails when a file is out of sync.
 java_binary(

@@ -4,7 +4,7 @@
 //! vmoptions file, `product-info.json` and, for a product with an embedded frontend, the vmoptions file of the frontend.
 //! On macOS, a product whose model states a `macBundle` also gets `Info.plist` and the `InfoPlist.strings` files of its app.
 //!
-//! The input is the launch model that the dev distribution plan generator writes for the product (`ProductLaunchModel`
+//! The input is the launch model that the distribution plan generator writes for the product (`ProductLaunchModel`
 //! in `community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/productInfo`). The model states the facts
 //! of the product code. The tool reads the rest from the application info of the product and from `build.txt`, so an
 //! edit of the version, the suffix or the release date changes no generated file. A classic-loader launch also reads the
@@ -35,7 +35,7 @@ struct Options {
     application_info: PathBuf,
     /// `community/build.txt`. Its text without surrounding whitespace is the build number.
     build_number: PathBuf,
-    /// The build date that the dev distribution pins. An EAP product without a release date takes it.
+    /// The build date that the distribution pins. An EAP product without a release date takes it.
     build_date_seconds: i64,
     opened_packages: PathBuf,
     idea_properties: PathBuf,

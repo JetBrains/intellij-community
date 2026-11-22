@@ -41,14 +41,14 @@ pub(crate) struct Request {
     pub since_build: String,
     /// The `until-build` of the pair that `getCompatiblePlatformVersionRange` returns.
     pub until_build: String,
-    /// The stamps of a retained `product-descriptor`, or `None` to detach the element. A dev distribution publishes no
-    /// plugin, so `pluginsToPublish` of the platform is empty and `retainProductDescriptorForBundledPlugin` alone
-    /// decides.
+    /// The stamps of a retained `product-descriptor`, or `None` to detach the element. A distribution that Bazel builds
+    /// publishes no plugin, so `pluginsToPublish` of the platform is empty and
+    /// `retainProductDescriptorForBundledPlugin` alone decides.
     pub product_descriptor: Option<ProductDescriptorStamps>,
 }
 
-/// The three facts that a retained `product-descriptor` takes. A dev distribution derives them from the build number
-/// and the pinned build date, and reads no application info. See `retained_product_stamps` of `main.rs`.
+/// The three facts that a retained `product-descriptor` takes. A distribution that Bazel builds derives them from the
+/// build number and the pinned build date, and reads no application info. See `retained_product_stamps` of `main.rs`.
 #[derive(Clone, Debug, Default)]
 pub(crate) struct ProductDescriptorStamps {
     pub release_date: String,

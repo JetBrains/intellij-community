@@ -55,8 +55,8 @@ fun commonExecutableFilePatterns(os: OsFamily): List<String> {
  * The native files of `community/bin` that the `bin` directory of a distribution for [os] and [arch] takes, sorted by
  * name within each directory.
  *
- * [OsSpecificDistributionBuilder.copyNativeBinFiles] copies them. The dev distribution plan names the same files, so a
- * split dev distribution places them without build code. [macFileFilter] is `MacDistributionCustomizer.binFilesFilter`.
+ * [OsSpecificDistributionBuilder.copyNativeBinFiles] copies them. The distribution plan names the same files, so a
+ * split distribution places them without build code. [macFileFilter] is `MacDistributionCustomizer.binFilesFilter`.
  * A file whose name starts with a dot is no native file.
  */
 @Internal

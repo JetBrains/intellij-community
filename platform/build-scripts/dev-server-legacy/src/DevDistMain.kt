@@ -22,7 +22,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.system.exitProcess
 
 /**
- * Assembles a reference fragment of a dev distribution into a caller-specified output directory. A reference is the
+ * Assembles a reference fragment of the distribution into a caller-specified output directory. A reference is the
  * second producer of the `jars`, `replay` and `runtime-repo` gates, and no distribution composes it.
  *
  * Unlike `DevMainImpl`, which builds and launches in the same process from an IDE run configuration, this entry point only
@@ -121,7 +121,7 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
     DevDistRecipe.write(file = it, fragment = fragment.name)
   }
 
-  println("Dev distribution fragment '$fragment' assembled into $runDir (main class: $mainClassName)")
+  println("Distribution fragment '$fragment' assembled into $runDir (main class: $mainClassName)")
   if (cleanScratchOnSuccess) {
     scratchDir.deleteRecursively()
     Files.createDirectories(scratchDir)

@@ -1,6 +1,6 @@
 # xxh3
 
-The xxh3 hashes of the dev-distribution tools, with the values of hash4j. The crate has no first-party dependency, so a
+The xxh3 hashes of the distribution tools, with the values of hash4j. The crate has no first-party dependency, so a
 tool that needs a hash links no other crate for it.
 
 ## Frozen values

@@ -15,7 +15,7 @@ import java.util.TreeSet
 /**
  * The derived plugin jars, in main module order, and the source-derived platform rows.
  *
- * The dev-distribution build sections and the plan read one derivation, so the two state one packing per plugin.
+ * The distribution build sections and the plan read one derivation, so the two state one packing per plugin.
  */
 internal class PluginPackingDerivation(
   @JvmField val plugins: List<DerivedPlugin>,
@@ -42,7 +42,7 @@ internal class PluginPackingDerivation(
 )
 
 /**
- * The plugins the dev distribution states content for: the population of the dev sections.
+ * The plugins the distribution states content for: the population of the dev sections.
  *
  * [derivePluginPopulation] uses the discovered products, the extra plugins of [DevDistHalf.extraPopulation] of [half],
  * and source-derived platform rows. [root] is the root of [half], whose run configurations the population reads.

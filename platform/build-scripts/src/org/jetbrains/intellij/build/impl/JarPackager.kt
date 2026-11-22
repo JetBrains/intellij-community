@@ -70,7 +70,7 @@ private fun isJarPreSigned(file: Path, context: BuildContext): Boolean {
 /**
  * Selects the jars an assembly actually writes, out of everything the layout put in them.
  *
- * A split dev-distribution fragment lays the whole layout out - that part is metadata, and cheap - and then packs only
+ * A split distribution fragment lays the whole layout out - that part is metadata, and cheap - and then packs only
  * the jars it owns, so that reading and zipping is what the split divides. Ownership is decided per jar name against
  * an explicit generated set (see `org.jetbrains.intellij.build.dev.PlatformJarSelector`): a name is all a filter sees,
  * because a jar as a whole belongs to one producer regardless of what the layout put into it.

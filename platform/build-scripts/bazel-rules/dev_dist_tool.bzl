@@ -1,4 +1,4 @@
-"""A dev-dist tool binary that every product shares."""
+"""A tool binary of the distribution build that every product shares."""
 
 load("//build/rust-tools:defs.bzl", "RUST_TOOLCHAIN_TYPE", "RUST_TOOL_IDENTITY_ATTRS", "rust_tool_identity_inputs")
 load(":dev_dist_plugin_descriptor.bzl", "dev_dist_neutral_product_transition")

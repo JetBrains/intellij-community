@@ -1,6 +1,6 @@
 # dev-dist-tools
 
-This Cargo workspace holds the tools that build the split dev distribution. Each binary under `bins/` is one Bazel
+This Cargo workspace holds the tools that build the split distribution. Each binary under `bins/` is one Bazel
 tool. A crate under `crates/` exists when two tools share it, or when it is the frozen-bytes engine of one tool with its
 own goldens. Code that one tool uses lives in that tool. Bazel builds every binary through `rules_rs`, and `cargo`
 serves the edit-test loop and rust-analyzer.
@@ -27,7 +27,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/cli` | The command line of every tool: the options `--key=value` and `--flag`, the positional arguments, the refusal of every other form, and the `ERROR:` line of a failure. | `@community//build/dev-dist-tools/crates/cli:cli_test` |
 | `crates/component` | The component contract of the collector and the composer: the manifest, the types and the reader of the local layout, the core classpath order, and the host paths. | `@community//build/dev-dist-tools/crates/component:component_test` |
 | `crates/contentreport` | The reader of an executed packaging recipe and of a built distribution, for `dev-dist` and `content-report`. | `@community//build/dev-dist-tools/crates/contentreport:contentreport_test` |
-| `crates/dev-launch` | The `java` command line of a dev distribution: the distribution properties, the class path, the main class, the custom command, and the text of the argument file. The guest agent of `community/tools/vm` links it, and no Bazel action runs it. It links no other crate of this workspace, and its `Cargo.toml` spells the `[package]` values inline, so a crate of another workspace can link it by path. | `@community//build/dev-dist-tools/crates/dev-launch:dev-launch_test` |
+| `crates/dev-launch` | The `java` command line of a distribution: the distribution properties, the class path, the main class, the custom command, and the text of the argument file. The guest agent of `community/tools/vm` links it, and no Bazel action runs it. It links no other crate of this workspace, and its `Cargo.toml` spells the `[package]` values inline, so a crate of another workspace can link it by path. | `@community//build/dev-dist-tools/crates/dev-launch:dev-launch_test` |
 | `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the lexical path functions `clean`, `dir` and `join`. | `@community//build/dev-dist-tools/crates/distpath:distpath_test` |
 | `crates/filemeta` | Inventory JSON version 1, the hash of a link target, and the directory creation with the mode 0755. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |
 | `crates/fscopy` | The copy that clones where the volume supports it, the mode helpers, and the path helpers. | `@community//build/dev-dist-tools/crates/fscopy:fscopy_test` |

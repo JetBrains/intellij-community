@@ -1,7 +1,7 @@
-"""The per-product facts a split dev distribution's platform set needs, for the community products.
+"""The per-product facts that the platform set of a split distribution needs, for the community products.
 
 A product is keyed by its `community/build/dev-build.json` key, the same key `DEV_DIST_PLANS` uses. One entry per
-product whose dev launchers run from a split dev distribution. Data only: this file loads nothing, so a unit test can
+product whose dev launchers run from a split distribution. Data only: this file loads nothing, so a unit test can
 read it without analysis. `build/dev_dist_products.bzl` of the ultimate checkout is the twin of this file.
 """
 

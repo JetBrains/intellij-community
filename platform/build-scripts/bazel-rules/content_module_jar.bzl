@@ -1,4 +1,4 @@
-"""Packs one independently reusable module or platform jar of a dev distribution.
+"""Packs one independently reusable module or platform jar of the distribution.
 
 `content_module_jar` packs a jar after its owner module. `dev_dist_platform_jar` packs a generated residual platform
 jar. A plugin remainder uses the model-driven batch rule instead of a jar-specific rule.
@@ -563,7 +563,7 @@ def _dev_dist_platform_jar_impl(ctx):
     ]
 
 dev_dist_platform_jar = rule(
-    doc = """Packs one generated residual platform jar of a dev distribution.
+    doc = """Packs one generated residual platform jar of the distribution.
 
 One `PackContentModuleJar` action writes the jar at `<target>/<relative_output_file>` and its metadata. A jar with a
 module member holds no native file. A library-only jar merges no module and keeps the native files of its libraries. The
@@ -600,7 +600,7 @@ def content_module_jar(module, name = None, tags = [], visibility = ["//visibili
     `dev_dist_plugin_descriptor` derives its own from `main_module`; and `manual` is added, because the jar is this
     target's `DefaultInfo` and `bazel build //...` would otherwise pack all of them. Under the attribute form the jar sat
     in an output group and a wildcard build packed nothing; `manual` is what keeps that exactly true. Explicit labels and
-    `bazel query` still see these targets, which is all a dev distribution needs.
+    `bazel query` still see these targets, which is all the distribution needs.
 
     Args:
         module: the module whose jar this is - see the rule's own `module`.

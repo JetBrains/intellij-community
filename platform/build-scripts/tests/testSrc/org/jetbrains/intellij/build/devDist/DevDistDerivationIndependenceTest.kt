@@ -38,7 +38,7 @@ class DevDistDerivationIndependenceTest {
     val violations = sources.flatMap { file -> findViolations(file, root) }
     assertThat(violations)
       .withFailMessage {
-        "The dev-dist derivation must not use the placement code of the distribution build (ADR 0008):\n" +
+        "The derivation must not use the placement code of the distribution build (ADR 0008):\n" +
         violations.joinToString(separator = "\n")
       }
       .isEmpty()

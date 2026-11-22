@@ -2,9 +2,9 @@
 
 //! The reader of the application-info facts that `product-info.json` states.
 //!
-//! It ports the constructor of `ApplicationInfoPropertiesImpl` (`ApplicationInfoPropertiesImpl.kt:63-138`) for a dev
-//! distribution. A line reference below names a line of that file. The port supports no system-property override,
-//! because a dev distribution sets none.
+//! It ports the constructor of `ApplicationInfoPropertiesImpl` (`ApplicationInfoPropertiesImpl.kt:63-138`) for a
+//! distribution that Bazel builds. A line reference below names a line of that file. The port supports no
+//! system-property override, because a distribution that Bazel builds sets none.
 
 use std::path::Path;
 
@@ -82,7 +82,7 @@ impl ApplicationInfo {
     /// Reads the facts of the application info `path` of a product: the markers first, then the XML.
     ///
     /// A frontend passes the application info of its host product as `host`. A value of the host takes precedence, and
-    /// the host text gets no marker replacement. `pinned_build_date_seconds` is the build date that the dev distribution
+    /// the host text gets no marker replacement. `pinned_build_date_seconds` is the build date that the distribution
     /// pins. An EAP product without a `majorReleaseDate` takes the date of it.
     pub fn load(path: &Path, replacements: &[Replacement], host: Option<&Path>, pinned_build_date_seconds: i64) -> Result<Self> {
         let content = replace_markers(&read_text(path)?, replacements);
@@ -177,7 +177,8 @@ fn read_facts(content: &str, file: &Path, host: Option<&HostOverride>, pinned_bu
         .map(str::to_owned);
 
     // Lines 101-123. The release check of lines 117-119 is left out. A release build takes the date from a system
-    // property, and a dev distribution sets none, so a product without a date takes the pinned build date.
+    // property, and a distribution that Bazel builds sets none, so a product without a date takes the pinned build
+    // date.
     let build = required_child("build")?;
     let raw_release_date = match host.and_then(|host| host.major_release_date.clone()) {
         Some(value) => Some(value),

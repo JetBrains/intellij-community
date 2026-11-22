@@ -1,4 +1,4 @@
-//! The file metadata of the dev-distribution tools.
+//! The file metadata of the distribution tools.
 //!
 //! The file metadata (the inventory JSON, version 2) lists the files, directories and symbolic links of a payload
 //! directory. The packers write it, and the collector reads it. See `API.md`.

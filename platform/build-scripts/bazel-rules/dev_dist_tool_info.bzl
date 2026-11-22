@@ -1,4 +1,4 @@
-"""The identity of a dev-dist tool, which every action of the tool reads. This file loads nothing."""
+"""The identity of a distribution tool, which every action of the tool reads. This file loads nothing."""
 
 DevDistToolInfo = provider(
     doc = "The identity of a `dev_dist_tool`.",
@@ -8,7 +8,7 @@ DevDistToolInfo = provider(
 )
 
 def dev_dist_tool_inputs(tool):
-    """Returns the inputs that every action of a dev-dist tool declares besides its own: the identity of the tool.
+    """Returns the inputs that every action of a distribution tool declares besides its own: the identity of the tool.
 
     The remote cache key of the action omits the binary and the runfiles of the tool, see
     `community/build/bazel_scrubbing.cfg`. The identity takes their place. A tool that is no `dev_dist_tool`, such as

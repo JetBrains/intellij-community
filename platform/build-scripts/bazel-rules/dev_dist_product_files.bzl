@@ -209,7 +209,7 @@ dev_dist_product_files = rule(
         "build_number": attr.label(
             allow_single_file = True,
             default = Label("@community//:build.txt"),
-            doc = "The file whose text is the build number of the dev distribution.",
+            doc = "The file whose text is the build number of the distribution.",
         ),
         "opened_packages": attr.label(
             allow_single_file = True,

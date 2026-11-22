@@ -16,7 +16,7 @@ import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import java.nio.file.Path
 
 /**
- * The facts of one repository half that the dev-distribution generator reads.
+ * The facts of one repository half that the distribution generator reads.
  *
  * The generator code is the same for both halves. A half states its root, its tables, the sources that its binder can
  * bind, and what it can plan beyond the common facts. The generator refuses a fact that the half cannot plan, and the

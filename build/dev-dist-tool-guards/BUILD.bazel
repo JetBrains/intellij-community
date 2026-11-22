@@ -4,7 +4,7 @@ load("//build:dev_server_run_configurations.bzl", "DEV_RUN_CONFIGURATIONS")
 
 # The twin of `//build/dev-dist-tool-guards` of the ultimate checkout, for the community launchers.
 #
-# No community dev distribution and no community launcher may reach the build scripts or the plugin-model-tool
+# No community distribution and no community launcher may reach the build scripts or the plugin-model-tool
 # generator: an edit there would re-run the actions of every distribution. The query keeps the implicit dependencies,
 # because an exec tool that reaches the build scripts re-runs actions too.
 _DEV_DISTRIBUTIONS = ["//build:%s" % row for row in DEV_RUN_CONFIGURATIONS]

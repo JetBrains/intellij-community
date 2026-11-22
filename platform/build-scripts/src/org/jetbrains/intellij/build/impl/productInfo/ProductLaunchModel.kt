@@ -43,7 +43,7 @@ import kotlin.io.path.name
  * The launch facts of one product: what `build.txt`, `bin/idea.properties`, the vmoptions file and
  * `product-info.json` of a distribution state, for every OS and architecture.
  *
- * It needs no build context. [computeProductLaunchModel] derives it. The dev distribution plan generator writes the
+ * It needs no build context. [computeProductLaunchModel] derives it. The distribution plan generator writes the
  * model of each split product as JSON, and the tool `product-files` renders the files of one OS and architecture from
  * it. A product with an embedded frontend has a fifth file, the vmoptions file of the frontend. The files must be the
  * files that the production writers write, byte for byte.
@@ -487,7 +487,7 @@ internal fun productJvmArguments(product: ProductLaunchInputs, bundledRuntimeVer
 }
 
 /**
- * The launch model of [properties] as the split dev distribution lays it out, with no build context.
+ * The launch model of [properties] as the split distribution lays it out, with no build context.
  *
  * It reads what the `platform_resources` fragment of that distribution reads: the development build options, a
  * build number from `build.txt`, and an embedded frontend whose context generates the runtime module repository.
@@ -546,7 +546,7 @@ private fun hasMacAppIcons(customizer: MacDistributionCustomizer, properties: Pr
 }
 
 /**
- * The icons of the macOS app of [properties] in a split dev distribution, keyed by file name, see [macAppIcons].
+ * The icons of the macOS app of [properties] in a split distribution, keyed by file name, see [macAppIcons].
  *
  * [isEap] picks the EAP variant of an icon. The embedded frontend follows the default build options, which enable it.
  */

@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! Matches an entry name against a `java.nio` `glob:` pattern of the subset that the dev-dist plan uses.
+//! Matches an entry name against a `java.nio` `glob:` pattern of the subset that the distribution plan uses.
 //!
 //! The subset has literals, `*`, `**` and `{a,b}` groups, with the JDK meaning of each. `*` matches zero or more
 //! characters other than `/`. `**` matches zero or more characters across `/`, but no line terminator, as the JDK `.*`

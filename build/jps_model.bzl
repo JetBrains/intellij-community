@@ -112,7 +112,7 @@ def _join_project_relative_path(directory, relative):
     return directory + "/" + relative if directory else relative
 
 def _find_descriptor_rel_paths(project_root, module_name, resource_roots, extra_rel_paths):
-    """Every descriptor a dev-distribution assembly reads out of this module's production resources.
+    """Every descriptor that the assembly of a distribution reads out of this module's production resources.
 
     A content module's descriptor is `<moduleName>.xml` at a production resource root, and a plugin's descriptor is
     `META-INF/plugin.xml`. Almost every descriptor follows that convention, and it is derived here.

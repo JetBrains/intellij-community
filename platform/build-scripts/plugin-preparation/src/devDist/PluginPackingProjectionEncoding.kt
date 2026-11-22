@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 /*
  * The compact projection encoding.
  *
- * A module's own jar is the commonest asset by far: one `module-v1` source, the dev-distribution writer, the module as
+ * A module's own jar is the commonest asset by far: one `module-v1` source, the distribution writer, the module as
  * the one input, and `lib/modules/<module>.jar` as the destination. The compact form states it as `{"module": "<m>"}`.
  * Any other asset leaves `inputs` out when the list repeats the recipe sources. The full form stays readable, and a
  * decoded projection equals the encoded one.

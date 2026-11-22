@@ -34,7 +34,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * The rejection sites of the dev-distribution plan over synthetic layouts: each stops the run, for a bundled and an
+ * The rejection sites of the distribution plan over synthetic layouts: each stops the run, for a bundled and an
  * additional plugin alike. The layout bindings drop a rejected registry layout and keep the run. Also the divergence
  * rule: two products that plan one plugin share one home or give the later product a product home.
  */
@@ -58,7 +58,7 @@ class DevDistUnplannablePluginsTest {
 
   private fun plainLayout(mainModule: String): PluginLayout = PluginLayout.pluginWithCustomLayout(mainModule) { }
 
-  /** A layout that excludes a directory from its module jar. The dev distribution has no module filter, so no binding states it. */
+  /** A layout that excludes a directory from its module jar. The distribution has no module filter, so no binding states it. */
   private fun layoutWithModuleExcludes(mainModule: String = "intellij.filtered"): PluginLayout {
     return PluginLayout.pluginWithCustomLayout(mainModule) { it.excludeFromModule(mainModule, "server/**") }
   }
@@ -130,7 +130,7 @@ class DevDistUnplannablePluginsTest {
         .isInstanceOf(DevDistUnplannableLayoutException::class.java)
         .hasMessage(
           "Plugin 'intellij.filtered' excludes [server/**] from the module 'intellij.filtered'. " +
-          "The dev distribution has no module filter: move the directory out of the resource root and copy it with withResource."
+          "The distribution has no module filter: move the directory out of the resource root and copy it with withResource."
         )
     }
   }

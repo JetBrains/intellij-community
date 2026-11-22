@@ -606,7 +606,7 @@ fn render_refusals() {
         let error = parse_platform(name).unwrap_err();
         assert_eq!(error.to_string(), format!("{name:?} is not a host platform such as darwin_aarch64"));
     }
-    // The dev-dist models set none of these fields, so the model has no field for them.
+    // The launch models of the distribution set none of these fields, so the model has no field for them.
     for (field, name) in [
         (r#""jbr17": true"#, "jbr17"),
         (
@@ -1166,7 +1166,7 @@ fn the_tool_applies_the_replacements() {
 }
 
 /// A release product without a release date takes the pinned build date, as an EAP product does. A release build
-/// takes the date from a system property, and a dev distribution sets none.
+/// takes the date from a system property, and a distribution that Bazel builds sets none.
 #[test]
 fn the_tool_accepts_a_release_without_a_release_date() {
     let tool = ToolRun::new();
