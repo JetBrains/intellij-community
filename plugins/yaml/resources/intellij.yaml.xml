@@ -35,6 +35,8 @@
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
     <registryKey key="yaml.reparse.leaves" defaultValue="true"
                  description="Gives a YAML text, quoted text or comment leaf the new text without a reparse of the file, if the tokens stay the same"/>
+    <registryKey key="yaml.reparse.collections" defaultValue="true"
+                 description="Reparses only a changed YAML block mapping or block sequence, not the full file, if the change stays in it"/>
     <fileType name="YAML" implementationClass="org.jetbrains.yaml.YAMLFileType" fieldName="YML" language="yaml"
               extensions="yaml;yml"/>
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>

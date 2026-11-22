@@ -17,8 +17,11 @@ object YamlSyntaxElementTypes {
   @JvmField val ARRAY: SyntaxElementType = SyntaxElementType("Array")
   @JvmField val SEQUENCE_ITEM: SyntaxElementType = SyntaxElementType("Sequence item")
   @JvmField val COMPOUND_VALUE: SyntaxElementType = SyntaxElementType("Compound value")
-  @JvmField val MAPPING: SyntaxElementType = SyntaxElementType("Mapping")
-  @JvmField val SEQUENCE: SyntaxElementType = SyntaxElementType("Sequence")
+  /** A block mapping. It reparses alone after a change, see [prepareYamlBlockReparse]. */
+  @JvmField val MAPPING: SyntaxElementType = SyntaxElementType("Mapping", lazyParser = YamlBlockLazyParser)
+
+  /** A block sequence. It reparses alone after a change, see [prepareYamlBlockReparse]. */
+  @JvmField val SEQUENCE: SyntaxElementType = SyntaxElementType("Sequence", lazyParser = YamlBlockLazyParser)
   @JvmField val SCALAR_LIST_VALUE: SyntaxElementType = SyntaxElementType("Scalar list value")
   @JvmField val SCALAR_TEXT_VALUE: SyntaxElementType = SyntaxElementType("Scalar text value")
   @JvmField val SCALAR_PLAIN_VALUE: SyntaxElementType = SyntaxElementType("Scalar plain style")

@@ -3,6 +3,7 @@ package org.jetbrains.yaml;
 
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.yaml.syntax.YamlSyntaxElementTypes;
 
 import static org.jetbrains.yaml.YamlFileElementTypeKt.YAML_FILE;
 
@@ -15,8 +16,8 @@ public interface YAMLElementTypes {
   YAMLElementType ARRAY = new YAMLElementType("Array");
   YAMLElementType SEQUENCE_ITEM = new YAMLElementType("Sequence item");
   YAMLElementType COMPOUND_VALUE = new YAMLElementType("Compound value");
-  YAMLElementType MAPPING = new YAMLElementType("Mapping");
-  YAMLElementType SEQUENCE = new YAMLElementType("Sequence");
+  YAMLElementType MAPPING = new YamlBlockCollectionType("Mapping", YamlSyntaxElementTypes.MAPPING);
+  YAMLElementType SEQUENCE = new YamlBlockCollectionType("Sequence", YamlSyntaxElementTypes.SEQUENCE);
   YAMLElementType SCALAR_LIST_VALUE = new YAMLElementType("Scalar list value");
   YAMLElementType SCALAR_TEXT_VALUE = new YAMLElementType("Scalar text value");
   YAMLElementType SCALAR_PLAIN_VALUE = new YAMLElementType("Scalar plain style");

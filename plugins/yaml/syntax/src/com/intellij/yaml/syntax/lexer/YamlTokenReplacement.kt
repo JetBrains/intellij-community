@@ -119,7 +119,7 @@ private fun isCloseBrace(char: Char): Boolean = char == ']' || char == '}'
  * Both texts must start at a line start or after an indent.
  * [charAfter] is the first char after the text, which a backslash at the end of the text can escape.
  */
-private fun keepsUnclosedQuotes(oldText: CharSequence, newText: CharSequence, charAfter: Char): Boolean {
+internal fun keepsUnclosedQuotes(oldText: CharSequence, newText: CharSequence, charAfter: Char): Boolean {
   val old = QuoteScan.of(oldText, charAfter)
   val new = QuoteScan.of(newText, charAfter)
   if (!old.hasSingleQuote && new.hasSingleQuote) return false

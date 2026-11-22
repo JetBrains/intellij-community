@@ -13,6 +13,13 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
 
   private val stopTokensStack = ArrayDeque<SyntaxElementTypeSet>()
 
+  /**
+   * True after a block statement that starts in the line of the statement before it, as `e: t` in `[a] e: t`.
+   * Such a statement takes the indent of its block, not the indent of its line.
+   */
+  internal var statementInLineOfPreviousSeen: Boolean = false
+    private set
+
   fun parse() {
     val fileMarker = mark()
     parseFile()
@@ -72,9 +79,25 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
   }
 
   /**
-   * Parses the content of a block node.
-   * Returns the type of the node, or null if the content is not one block mapping, block sequence or compound value.
+   * Parses the content of a block mapping or a block sequence when the builder starts at this content.
+   * A reparse of one such node uses it, see [YamlBlockReparse].
+   *
+   * The node starts after the indent of its first line or at a line start.
+   * The parse ends before the first token of the next node.
+   *
+   * @param firstLineIndent the indent of the first line of the node
+   * @param indent the smallest indent of a line of the node
+   * @param insideSequence true if the node is the value of a sequence item
+   * @return the type of the node, or null if the text is not one block mapping, block sequence or compound value
    */
+  fun parseBlockCollection(firstLineIndent: Int, indent: Int, insideSequence: Boolean): SyntaxElementType? {
+    wasEolSeen = true
+    currentIndent = firstLineIndent
+    val nodeType = parseBlockNodeContent(indent, insideSequence)
+    dropEolMarker()
+    return nodeType
+  }
+
   private fun parseBlockNodeContent(indent: Int, insideSequence: Boolean): SyntaxElementType? {
     passJunk()
 
@@ -103,6 +126,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
         break
       }
 
+      if (numberOfItems > 0 && !wasEolSeen) statementInLineOfPreviousSeen = true
       numberOfItems++
       val parsedTokenType = parseSingleStatement(
         if (wasEolSeen) currentIndent else indent,

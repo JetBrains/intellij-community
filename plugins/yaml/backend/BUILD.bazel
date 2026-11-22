@@ -167,6 +167,8 @@ jvm_library(
         "//libraries/junit4",
         "//plugins/yaml/syntax",
         "//platform/syntax/syntax-psi:psi",
+        "//platform/syntax/syntax-api:syntax",
+        "//platform/syntax/syntax-tree:tree",
         "//platform/syntax/syntax-util:util",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5/codeInsight",
