@@ -26,8 +26,11 @@ internal class SnapshotHighlighterStorage(
   @Volatile
   private var disposed: Boolean = false
 
-  /** A positive value prevents structural changes during iteration on the current thread. */
-  private val iteratorDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
+  /**
+   * Counts the active iterations on the current thread. A positive count prevents structural changes.
+   * The counter stays in the thread after an iteration, so an iteration does not change the thread-local map.
+   */
+  private val iteratorDepth: ThreadLocal<IntArray> = ThreadLocal.withInitial { IntArray(1) }
 
   /** A positive value prevents nested changes during before-removal notifications on the current thread. */
   private val removalDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
@@ -116,7 +119,7 @@ internal class SnapshotHighlighterStorage(
     if (removalDepth.get() > 0) {
       throw IncorrectOperationException("Cannot change range highlighters during removal")
     }
-    if (iteratorDepth.get() > 0) {
+    if (iteratorDepth.get()[0] > 0) {
       throw IllegalStateException("Cannot change range highlighters during iteration")
     }
   }
@@ -150,14 +153,7 @@ internal class SnapshotHighlighterStorage(
     val roots = rootStore.root(currentSnapshot()) as? CompoundPMarkerRoot ?: return true
     var start = startOffset.coerceIn(0, document.textLength)
     var end = endOffset.coerceIn(start, document.textLength)
-    if (!roots.exactRangeRoot.isEmpty() && !roots.linesInRangeRoot.isEmpty()) {
-      overlappingIterator(start, end, 0).use { iterator ->
-        while (iterator.hasNext()) {
-          if (!processor.process(iterator.next())) return false
-        }
-      }
-      return true
-    }
+    if (!roots.exactRangeRoot.isEmpty() && !roots.linesInRangeRoot.isEmpty()) return processMerged(roots, start, end, processor)
     val root = if (roots.linesInRangeRoot.isEmpty()) roots.exactRangeRoot
     else {
       val lineRange = MarkupModelImpl.roundToLineBoundaries(document, start, end)
@@ -165,7 +161,7 @@ internal class SnapshotHighlighterStorage(
       end = lineRange.endOffset
       roots.linesInRangeRoot
     }
-    iteratorDepth.set(iteratorDepth.get() + 1)
+    iteratorDepth.get()[0]++
     try {
       return root.processRangeMarkersOverlappingWith(start, end, 0) { entry ->
         val marker = entry.marker
@@ -173,8 +169,49 @@ internal class SnapshotHighlighterStorage(
       }
     }
     finally {
-      val depth = iteratorDepth.get() - 1
-      if (depth == 0) iteratorDepth.remove() else iteratorDepth.set(depth)
+      iteratorDepth.get()[0]--
+    }
+  }
+
+  /**
+   * Processes both roots in the order of [overlappingIterator] without an iterator.
+   * Collects the line highlighters first and processes each one before the first exact highlighter that does not start before it.
+   */
+  private fun processMerged(
+    roots: CompoundPMarkerRoot,
+    startOffset: Int,
+    endOffset: Int,
+    processor: Processor<in RangeHighlighterEx>,
+  ): Boolean {
+    val lineRange = MarkupModelImpl.roundToLineBoundaries(document, startOffset, endOffset)
+    iteratorDepth.get()[0]++
+    try {
+      val lines = ArrayList<SnapshotRangeHighlighterImpl>()
+      roots.linesInRangeRoot.processRangeMarkersOverlappingWith(lineRange.startOffset, lineRange.endOffset, 0) { entry ->
+        val marker = entry.marker
+        if (marker is SnapshotRangeHighlighterImpl && marker.isValid) lines.add(marker)
+        true
+      }
+      var nextLine = 0
+      var nextLineStart = if (lines.isEmpty()) Int.MAX_VALUE else lines[0].affectedAreaStartOffset
+      val completed = roots.exactRangeRoot.processRangeMarkersOverlappingWith(startOffset, endOffset, 0) { entry ->
+        val marker = entry.marker
+        if (marker !is SnapshotRangeHighlighterImpl || !marker.isValid) return@processRangeMarkersOverlappingWith true
+        val markerStart = marker.affectedAreaStartOffset
+        while (nextLineStart <= markerStart) {
+          if (!processor.process(lines[nextLine++])) return@processRangeMarkersOverlappingWith false
+          nextLineStart = if (nextLine < lines.size) lines[nextLine].affectedAreaStartOffset else Int.MAX_VALUE
+        }
+        processor.process(marker)
+      }
+      if (!completed) return false
+      while (nextLine < lines.size) {
+        if (!processor.process(lines[nextLine++])) return false
+      }
+      return true
+    }
+    finally {
+      iteratorDepth.get()[0]--
     }
   }
 
@@ -226,7 +263,7 @@ internal class SnapshotHighlighterStorage(
   ): MarkupIterator<RangeHighlighterEx> {
     val entries = root.overlappingIterator(startOffset, endOffset, tastePreference.toInt())
     val first = nextSnapshotHighlighter(entries) ?: return MarkupIterator.emptyIterator()
-    iteratorDepth.set(iteratorDepth.get() + 1)
+    iteratorDepth.get()[0]++
     return object : MarkupIterator<RangeHighlighterEx> {
       private var nextHighlighter: RangeHighlighterEx? = first
       private var disposed = false
@@ -234,13 +271,7 @@ internal class SnapshotHighlighterStorage(
       override fun dispose() {
         if (disposed) return
         disposed = true
-        val depth = iteratorDepth.get() - 1
-        if (depth == 0) {
-          iteratorDepth.remove()
-        }
-        else {
-          iteratorDepth.set(depth)
-        }
+        iteratorDepth.get()[0]--
       }
 
       override fun peek(): RangeHighlighterEx {
