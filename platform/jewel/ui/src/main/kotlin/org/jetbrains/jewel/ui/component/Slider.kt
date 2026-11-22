@@ -151,7 +151,7 @@ public fun Slider(
 
     BoxWithConstraints(
         modifier
-            .requiredSizeIn(minWidth = thumbSize.height * 2, minHeight = minHeight)
+            .requiredSizeIn(minWidth = thumbSize.width * 2, minHeight = minHeight)
             .sliderSemantics(value, enabled, onValueChange, onValueChangeFinished, valueRange, steps)
             .focusRequester(focusRequester)
             .focusable(enabled, interactionSource)
@@ -292,7 +292,7 @@ private fun Track(
     with(LocalDensity.current) {
         trackStrokeWidthPx = style.metrics.trackHeight.toPx()
         thumbWidthPx = style.metrics.thumbSize.width.toPx()
-        trackYPx = style.metrics.thumbSize.width.toPx() / 2 + style.metrics.thumbBorderWidth.toPx()
+        trackYPx = style.metrics.thumbSize.height.toPx() / 2 + style.metrics.thumbBorderWidth.toPx()
         stepLineHeightPx = style.metrics.stepLineHeight.toPx()
         stepLineWidthPx = style.metrics.stepLineWidth.toPx()
         trackToMarkersGapPx = style.metrics.trackToStepSpacing.toPx()
