@@ -37,6 +37,32 @@ class DiffTreeTextCompareTest {
   }
 
   @Test
+  fun `a flat tree with a changed child reads the text in a few bulk copies`() {
+    val oldString = flatText(FLAT_CHILDREN)
+    val middle = oldString.indexOf("child-${FLAT_CHILDREN / 2};")
+    val newString = oldString.substring(0, middle) + "x" + oldString.substring(middle)
+    val oldText = CountingText(oldString)
+    val newText = CountingText(newString)
+
+    val events = diff(flat(oldString), oldText, flat(newString), newText)
+
+    assertEquals(listOf("REPLACED: leaf xchild-${FLAT_CHILDREN / 2};"), events)
+    assertTrue(oldText.reads <= 32) { "old text: ${oldText.reads} reads for ${oldString.length} chars" }
+    assertTrue(newText.reads <= 32) { "new text: ${newText.reads} reads for ${newString.length} chars" }
+  }
+
+  @Test
+  fun `a flat tree with an inserted child reports the insertion`() {
+    val oldString = flatText(FLAT_CHILDREN)
+    val middle = oldString.indexOf("child-${FLAT_CHILDREN / 2};")
+    val newString = oldString.substring(0, middle) + "new-child;" + oldString.substring(middle)
+
+    val events = diff(flat(oldString), CountingText(oldString), flat(newString), CountingText(newString))
+
+    assertEquals(listOf("INSERTED: item at ${FLAT_CHILDREN / 2}"), events)
+  }
+
+  @Test
   fun `a duplicated child keeps the old node at its old offset`() {
     val oldString = "first;dup;last;"
     val newString = "first;dup;dup;last;"
@@ -76,6 +102,11 @@ class DiffTreeTextCompareTest {
     assertEquals(listOf("REPLACED: leaf =;", "REPLACED: expr"), events)
   }
 }
+
+private const val FLAT_CHILDREN = 2_000
+
+/** Returns [count] children of the form `child-N;`. */
+private fun flatText(count: Int): String = (0 until count).joinToString("") { "child-$it;" }
 
 /** Builds a root with one item for each `;`-terminated part of [text], and one leaf in each item. The type of a leaf holds its text. */
 private fun flat(text: String): Node {
@@ -197,10 +228,15 @@ private class CountingText(private val text: String) : CharArrayExternalizable {
   var readChars: Int = 0
     private set
 
+  /** The number of reads: a char read and a bulk copy each count as one. */
+  var reads: Int = 0
+    private set
+
   override val length: Int get() = text.length
 
   override fun get(index: Int): Char {
     readChars++
+    reads++
     return text[index]
   }
 
@@ -208,6 +244,7 @@ private class CountingText(private val text: String) : CharArrayExternalizable {
 
   override fun getChars(start: Int, end: Int, dest: CharArray, destPos: Int) {
     readChars += end - start
+    reads++
     text.toCharArray(dest, destPos, start, end)
   }
 

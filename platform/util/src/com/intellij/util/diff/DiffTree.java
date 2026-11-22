@@ -29,7 +29,6 @@ public final class DiffTree<OldNode, NewNode> {
   private final int myNewTreeStart;
   private char[] myOldChunk;
   private char[] myNewChunk;
-  private final int myOldRootLength;
 
   /**
    * The old text from {@code myMatchedOldStart} to {@code myMatchedOldEnd} is equal to the new text that starts {@code myMatchedShift} chars later.
@@ -39,10 +38,19 @@ public final class DiffTree<OldNode, NewNode> {
   private int myMatchedOldEnd;
   private int myMatchedShift;
 
-  /** The old and the new root texts are equal up to this offset. It grows only when a node asks for it. */
+  /**
+   * The first {@code myEqualPrefix} chars of the old root text and of the new root text are equal.
+   * The diff extends this prefix only when a node asks for it, and then by at least one chunk.
+   * So it reads each char at most once, and at most one chunk more than the nodes ask for.
+   * {@code myPrefixEnded} is true when the compare found a mismatch or the end of a text.
+   */
   private int myEqualPrefix;
-  /** The equal prefix ends at {@code myEqualPrefix}: the next chars differ, or one text ends there. */
   private boolean myPrefixEnded;
+
+  /** The last {@code myEqualSuffix} chars of the old root text and of the new root text are equal. */
+  private int myEqualSuffix;
+  private boolean mySuffixEnded;
+  private final int myOldRootLength;
 
   private DiffTree(@NotNull FlyweightCapableTreeStructure<OldNode> oldTree,
                    @NotNull FlyweightCapableTreeStructure<NewNode> newTree,
@@ -358,23 +366,6 @@ public final class DiffTree<OldNode, NewNode> {
   }
 
   /**
-   * Returns true if the text up to {@code end} is in the equal prefix of the root texts.
-   * Extends the equal prefix up to {@code end} if necessary.
-   */
-  private boolean isInEqualPrefix(int end) {
-    int textEnd = Math.min(myOldText.length(), myNewText.length());
-    while (myEqualPrefix < end && !myPrefixEnded) {
-      if (myEqualPrefix == textEnd || myOldText.charAt(myEqualPrefix) != myNewText.charAt(myEqualPrefix)) {
-        myPrefixEnded = true;
-      }
-      else {
-        myEqualPrefix++;
-      }
-    }
-    return end <= myEqualPrefix;
-  }
-
-  /**
    * Compares the children of two nodes only if the nodes have the same text.
    * When the texts match, the comparison goes all the way down.
    */
@@ -384,7 +375,9 @@ public final class DiffTree<OldNode, NewNode> {
     int newStart = myNewTree.getStartOffset(newChild) - myNewTreeStart;
     int newEnd = myNewTree.getEndOffset(newChild) - myNewTreeStart;
     if (oldEnd - oldStart != newEnd - newStart) return CompareResult.NOT_EQUAL;
-    if (oldStart >= myMatchedOldStart && oldEnd <= myMatchedOldEnd && newStart - oldStart == myMatchedShift) {
+    if (oldStart >= myMatchedOldStart && oldEnd <= myMatchedOldEnd && newStart - oldStart == myMatchedShift ||
+        isInEqualPrefix(oldStart, oldEnd, newStart) ||
+        isInEqualSuffix(oldStart, oldEnd, newStart)) {
       return build(oldChild, newChild, level + 1, emptyConsumer());
     }
     if (!regionMatches(oldStart, newStart, oldEnd - oldStart)) return CompareResult.NOT_EQUAL;
@@ -403,6 +396,68 @@ public final class DiffTree<OldNode, NewNode> {
       myMatchedOldEnd = outerEnd;
       myMatchedShift = outerShift;
     }
+  }
+
+  /**
+   * Returns true if the node from {@code oldStart} to {@code oldEnd} has no shift and is in the equal prefix of the root texts.
+   * Extends the equal prefix past {@code oldEnd} if necessary.
+   */
+  private boolean isInEqualPrefix(int oldStart, int oldEnd, int newStart) {
+    return newStart == oldStart && isInEqualPrefix(oldEnd);
+  }
+
+  /**
+   * Returns true if the text up to {@code end} is in the equal prefix of the root texts.
+   * Extends the equal prefix past {@code end} if necessary.
+   */
+  private boolean isInEqualPrefix(int end) {
+    if (end > myEqualPrefix && !myPrefixEnded) {
+      int textEnd = Math.min(myOldRootLength, myNewText.length());
+      int limit = Math.min(Math.max(end, myEqualPrefix + CHUNK_LENGTH), textEnd);
+      myEqualPrefix += matchingLength(myEqualPrefix, myEqualPrefix, limit - myEqualPrefix, 1);
+      if (myEqualPrefix < limit || limit == textEnd) myPrefixEnded = true;
+    }
+    return end <= myEqualPrefix;
+  }
+
+  /**
+   * Returns true if the node from {@code oldStart} to {@code oldEnd} has the shift of the root end and is in the equal suffix of the root texts.
+   * Extends the equal suffix past {@code oldStart} if necessary.
+   */
+  private boolean isInEqualSuffix(int oldStart, int oldEnd, int newStart) {
+    int shift = myNewText.length() - myOldRootLength;
+    if (newStart - oldStart != shift) return false;
+    int needed = myOldRootLength - oldStart;
+    if (needed > myEqualSuffix && !mySuffixEnded) {
+      int textEnd = Math.min(myOldRootLength, myNewText.length());
+      int limit = Math.min(Math.max(needed, myEqualSuffix + CHUNK_LENGTH), textEnd);
+      myEqualSuffix += matchingLength(myOldRootLength - myEqualSuffix, myNewText.length() - myEqualSuffix, limit - myEqualSuffix, -1);
+      if (myEqualSuffix < limit || limit == textEnd) mySuffixEnded = true;
+    }
+    return needed <= myEqualSuffix;
+  }
+
+  /**
+   * Returns how many chars are equal, from {@code oldOffset} and {@code newOffset} forward if {@code step} is 1,
+   * or from the chars before {@code oldOffset} and {@code newOffset} backward if {@code step} is -1.
+   * Compares at most {@code length} chars, in chunks.
+   */
+  private int matchingLength(int oldOffset, int newOffset, int length, int step) {
+    ensureChunks();
+    int matched = 0;
+    while (matched < length) {
+      int chunkLength = Math.min(CHUNK_LENGTH, length - matched);
+      int oldChunkStart = step > 0 ? oldOffset + matched : oldOffset - matched - chunkLength;
+      int newChunkStart = step > 0 ? newOffset + matched : newOffset - matched - chunkLength;
+      CharArrayUtil.getChars(myOldText, myOldChunk, oldChunkStart, 0, chunkLength);
+      CharArrayUtil.getChars(myNewText, myNewChunk, newChunkStart, 0, chunkLength);
+      for (int i = 0; i < chunkLength; i++) {
+        int index = step > 0 ? i : chunkLength - 1 - i;
+        if (myOldChunk[index] != myNewChunk[index]) return matched + i;
+      }
+      matched += chunkLength;
+    }
+    return matched;
   }
 
   private void ensureChunks() {
