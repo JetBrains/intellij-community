@@ -94,7 +94,7 @@ impl ArmKind {
 
 /// One arm of a session: a start-up variant, and the change of its twin. An arm with a twin change is the twin of the
 /// arm of its kind. On the command line and in a run directory, an arm is its [`Arm::label`], such as `project`,
-/// `project-without-com.intellij.air` or `project-with-air.apps.native.webview=true`. In `summary.json`, it is its
+/// `project-without-com.intellij.air` or `project-with-air.native.webview=true`. In `summary.json`, it is its
 /// [`Arm::key`].
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(into = "String", try_from = "String")]

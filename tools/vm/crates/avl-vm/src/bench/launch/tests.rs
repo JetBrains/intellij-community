@@ -133,10 +133,10 @@ fn a_twin_arm_with_a_property_passes_it_after_the_properties_of_the_bench() {
     let sandbox = Sandbox::new("/s/sandbox");
     let run = Path::new("/s/run");
     let plain = measure_options(run, &sandbox, &Arm::EMPTY_EDITOR, None).expect("the options");
-    let property = Property::parse("air.apps.native.webview=true").expect("a property");
+    let property = Property::parse("air.native.webview=true").expect("a property");
     let twin = measure_options(run, &sandbox, &Arm::EMPTY_EDITOR.with(&property), None).expect("the options");
     let mut expected = plain;
-    expected.push("-Dair.apps.native.webview=true".to_owned());
+    expected.push("-Dair.native.webview=true".to_owned());
     assert_eq!(twin, expected);
     let integration = Property::parse("idea.is.integration.test=false").expect("a property");
     let options = measure_options(run, &sandbox, &Arm::PROJECT.with(&integration), None).expect("the options");

@@ -130,11 +130,11 @@ fn a_twin_refuses_a_plugin_id_that_it_cannot_name() {
 /// read back, also with a value that holds `-without-` or `=`. It sorts after the twin without a plugin.
 #[test]
 fn a_twin_is_the_arm_of_its_kind_with_one_property() {
-    let property = Property::parse("air.apps.native.webview=true").expect("a property");
+    let property = Property::parse("air.native.webview=true").expect("a property");
     assert_eq!(
         property,
         Property {
-            name: "air.apps.native.webview".to_owned(),
+            name: "air.native.webview".to_owned(),
             value: "true".to_owned()
         }
     );
@@ -146,8 +146,8 @@ fn a_twin_is_the_arm_of_its_kind_with_one_property() {
     assert_eq!(
         (twin.key(), twin.label()),
         (
-            "emptyEditor-with-air.apps.native.webview=true".to_owned(),
-            "empty-editor-with-air.apps.native.webview=true".to_owned()
+            "emptyEditor-with-air.native.webview=true".to_owned(),
+            "empty-editor-with-air.native.webview=true".to_owned()
         )
     );
     assert_eq!(Arm::from_label(&twin.label()), Some(twin.clone()));

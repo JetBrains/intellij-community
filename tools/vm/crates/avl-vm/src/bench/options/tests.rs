@@ -642,14 +642,14 @@ fn a_window_bound_is_a_finite_number_of_milliseconds() {
 /// property. A value without `=` is a usage refusal.
 #[test]
 fn with_property_adds_an_interleaved_twin_to_each_arm() {
-    let webview = Property::parse("air.apps.native.webview=true").expect("a property");
+    let webview = Property::parse("air.native.webview=true").expect("a property");
     let BenchVerb::Project(args) = verb(&[
         "project",
         "markdown",
         "--arm",
         "empty-editor",
         "--with-property",
-        "air.apps.native.webview=true",
+        "air.native.webview=true",
     ]) else {
         panic!("expected project");
     };
@@ -663,16 +663,16 @@ fn with_property_adds_an_interleaved_twin_to_each_arm() {
         "--suppress-plugin",
         kotlin,
         "--with-property",
-        "air.apps.native.webview=true",
+        "air.native.webview=true",
     ]) else {
         panic!("expected welcome");
     };
     assert_eq!(args.arms(), vec![Arm::MODAL, Arm::MODAL.without(kotlin), Arm::MODAL.with(&webview)]);
-    let BenchVerb::Classes(args) = verb(&["classes", "s", "--arm", "empty-editor-with-air.apps.native.webview=true"]) else {
+    let BenchVerb::Classes(args) = verb(&["classes", "s", "--arm", "empty-editor-with-air.native.webview=true"]) else {
         panic!("expected classes");
     };
     assert_eq!(args.arm, Some(Arm::EMPTY_EDITOR.with(&webview)));
-    match parsed(&["project", "markdown", "--with-property", "air.apps.native.webview"]) {
+    match parsed(&["project", "markdown", "--with-property", "air.native.webview"]) {
         Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage"),
         other => panic!("expected a usage refusal, got {other:?}"),
     }
