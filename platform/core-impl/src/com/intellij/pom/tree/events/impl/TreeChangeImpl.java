@@ -8,19 +8,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Tracks changes to the direct children of a single AST parent node.
@@ -37,7 +36,12 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   private final @NotNull ASTNode myParent;
   private final @NotNull List<ASTNode> mySuperParents;
   private final @NotNull LinkedHashMap<ASTNode, Integer> myInitialLengths = new LinkedHashMap<>();
-  private final @NotNull Set<ASTNode> myContentChangeChildren = new HashSet<>();
+  /**
+   * The children with a change inside them. The value is the sum of the length changes of the child before the snapshot.
+   * The old length of the child is its length at the snapshot minus this sum.
+   */
+  @SuppressWarnings("SSBasedInspection")
+  private final @NotNull Object2IntOpenHashMap<ASTNode> myContentChanges = new Object2IntOpenHashMap<>();
   private @Nullable Map<ASTNode, ChangeInfoImpl> myChanges; // cached value
 
   public TreeChangeImpl(@NotNull ASTNode parent) {
@@ -108,7 +112,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
     LinkedHashMap<ASTNode, ChangeInfoImpl> result = new LinkedHashMap<>();
 
     void advanceOld() {
-      oldOffset += oldChild == null ? 0 : myInitialLengths.get(oldChild);
+      oldOffset += oldChild == null ? 0 : getOldLength(oldChild);
       oldChild = itOld.hasNext() ? itOld.next() : null;
     }
 
@@ -122,8 +126,8 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
 
       while (oldChild != null || newChild != null) {
         if (oldChild == newChild) {
-          if (myContentChangeChildren.contains(oldChild)) {
-            addChange(new ChangeInfoImpl(oldChild, oldChild, oldOffset, myInitialLengths.get(oldChild)));
+          if (!myContentChanges.isEmpty() && myContentChanges.containsKey(oldChild)) {
+            addChange(new ChangeInfoImpl(oldChild, oldChild, oldOffset, getOldLength(oldChild)));
           }
           advanceOld();
           advanceNew();
@@ -135,7 +139,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
             /*oldChild =*/ oldDisappeared ? oldChild : null,
             /*newChild =*/ newAppeared ? newChild : null,
             /*offset = */ oldOffset,
-            /*oldLength =*/ oldDisappeared ? myInitialLengths.get(oldChild) : 0);
+            /*oldLength =*/ oldDisappeared ? getOldLength(oldChild) : 0);
           addChange(change);
 
           if (oldDisappeared) {
@@ -148,6 +152,12 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
       }
 
       return result;
+    }
+
+    private int getOldLength(@NotNull ASTNode oldChild) {
+      int length = myInitialLengths.get(oldChild);
+      if (myContentChanges.isEmpty()) return length;
+      return length - myContentChanges.getInt(oldChild);
     }
 
     private void addChange(ChangeInfoImpl change) {
@@ -197,15 +207,14 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   }
 
   void appendChanges(@NotNull TreeChangeImpl next) {
-    myContentChangeChildren.addAll(next.myContentChangeChildren);
+    for (ASTNode child : next.myContentChanges.keySet()) {
+      myContentChanges.putIfAbsent(child, 0);
+    }
     clearCache();
   }
 
   public void markChildChanged(@NotNull ASTNode child, int lengthDelta) {
-    myContentChangeChildren.add(child);
-    if (lengthDelta != 0) {
-      myInitialLengths.computeIfPresent(child, (c, oldLength) -> oldLength - lengthDelta);
-    }
+    myContentChanges.addTo(child, lengthDelta);
     clearCache();
   }
 }
