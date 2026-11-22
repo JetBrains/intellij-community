@@ -108,17 +108,44 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
 
   /**
    * Compares {@link #myInitialChildren} with the current children of {@link #myParent}.
+   * <p>
+   * A node occurs at most once in each list, and the common nodes keep their order.
+   * So the diff first walks the common prefix and the common suffix by identity, without a lookup.
+   * Only the children between them go into sets for the membership tests.
    */
   private final class ChildrenDiff {
     private final LinkedHashMap<ASTNode, ChangeInfoImpl> result = new LinkedHashMap<>();
     private int oldOffset;
 
     Map<ASTNode, ChangeInfoImpl> calcChanges() {
-      List<ASTNode> newChildren = new ArrayList<>();
-      for (ASTNode child = myParent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        newChildren.add(child);
+      int oldCount = myInitialChildren.size();
+
+      int oldStart = 0;
+      ASTNode newStart = myParent.getFirstChildNode();
+      while (oldStart < oldCount && newStart == myInitialChildren.get(oldStart)) {
+        addSameChild(oldStart++);
+        newStart = newStart.getTreeNext();
       }
-      addMiddleChanges(0, myInitialChildren.size(), newChildren);
+
+      // A node of the prefix has an old index below oldStart, so the suffix cannot reach into the prefix.
+      int oldEnd = oldCount;
+      ASTNode newEnd = null; // the first node of the common suffix in the current children
+      for (ASTNode last = myParent.getLastChildNode();
+           oldEnd > oldStart && last != null && last == myInitialChildren.get(oldEnd - 1);
+           last = last.getTreePrev()) {
+        oldEnd--;
+        newEnd = last;
+      }
+
+      List<ASTNode> newMiddle = new ArrayList<>();
+      for (ASTNode child = newStart; child != newEnd; child = child.getTreeNext()) {
+        newMiddle.add(child);
+      }
+      addMiddleChanges(oldStart, oldEnd, newMiddle);
+
+      for (int i = oldEnd; i < oldCount; i++) {
+        addSameChild(i);
+      }
       return result;
     }
 
