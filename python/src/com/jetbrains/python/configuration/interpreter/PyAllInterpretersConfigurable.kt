@@ -166,14 +166,17 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
       brokenSdksRow = row {
         cell(brokenSdksBanner).align(Align.FILL).resizableColumn()
       }.visible(false)
-      row {
-        text(hintText) { event ->
-          if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return@text
-          when (event.description) {
-            HINT_LINK_WORKSPACE -> navigateToWorkspaceStructure()
-            HINT_LINK_PACKAGES -> closeDialogAndFocusPackagesToolWindow()
-          }
-        }.align(Align.FILL).resizableColumn()
+      // The default project has no tool windows and no Workspace Structure page, so the hint links have no target there.
+      if (!project.isDefault) {
+        row {
+          text(hintText) { event ->
+            if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return@text
+            when (event.description) {
+              HINT_LINK_WORKSPACE -> navigateToWorkspaceStructure()
+              HINT_LINK_PACKAGES -> closeDialogAndFocusPackagesToolWindow()
+            }
+          }.align(Align.FILL).resizableColumn()
+        }
       }
 
       row {
@@ -196,13 +199,8 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   }
 
   private fun closeDialogAndFocusPackagesToolWindow() {
-    // `PY_PACKAGES_TOOL_WINDOW_ID` is registered by this plugin's own `<toolWindow>` in
-    // `intellij.python.community.impl.xml`, so the lookup is null only when the plugin XML
-    // is broken (missing registration, renamed id) — a real bug, not a graceful state. `!!` fails
-    // loudly so the invariant break surfaces in the exception reporter instead of silently
-    // dropping the "focus packages tool window" action.
     val toolWindow = ToolWindowManager.getInstance(project)
-      .getToolWindow(PyPackagingToolWindowPanel.PY_PACKAGES_TOOL_WINDOW_ID)!!
+      .getToolWindow(PyPackagingToolWindowPanel.PY_PACKAGES_TOOL_WINDOW_ID) ?: return
     SwingUtilities.getWindowAncestor(rootComponent)?.dispose()
     PyPackageCoroutine.launch(project) {
       withContext(Dispatchers.EDT) {
