@@ -1,13 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX;
 
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Same as the base test, but detects the presence of JavaFX using imports and FXMLs, not artifacts
@@ -15,20 +21,24 @@ import java.io.IOException;
 public class JavaFxFieldToPropertyNoArtifactTest extends JavaFxFieldToPropertyTest {
 
   @Override
+  @Test
   public void testArtifactPresenceFieldToProperty() {
-    configureByFiles(null, getTestName(false) + ".java");
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    fixture.configureByFiles(null, fixture.getTestName(false) + ".java");
     final IntentionAction intentionAction = getIntentionAction();
     // no artifact, no fxml, no javafx.* imports: the intention shouldn't be available
     assertNull(intentionAction);
   }
 
+  @Test
   public void testAddRemoveFxmlFile() {
-    final VirtualFile sourceRootDir = configureByFiles(null, getTestName(false) + ".java");
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    final VirtualFile sourceRootDir = fixture.configureByFiles(null, fixture.getTestName(false) + ".java");
     IntentionAction intentionAction = getIntentionAction();
     assertNull(intentionAction);
 
     final Ref<VirtualFile> fileRef = new Ref<>();
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.runAndWait(() -> {
       try {
         VirtualFile file = sourceRootDir.createChildData(this, "sample.fxml");
         VfsUtil.saveText(file, "<?import javafx.scene.layout.VBox?>\n<VBox/>");
@@ -40,9 +50,9 @@ public class JavaFxFieldToPropertyNoArtifactTest extends JavaFxFieldToPropertyTe
     });
 
     intentionAction = getIntentionAction();
-    assertNotNull("when created", intentionAction);
+    assertNotNull(intentionAction, "when created");
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.runAndWait(() -> {
       try {
         fileRef.get().delete(this);
       }
@@ -52,7 +62,7 @@ public class JavaFxFieldToPropertyNoArtifactTest extends JavaFxFieldToPropertyTe
     });
 
     intentionAction = getIntentionAction();
-    assertNull("when deleted", intentionAction);
+    assertNull(intentionAction, "when deleted");
   }
 
   @Override

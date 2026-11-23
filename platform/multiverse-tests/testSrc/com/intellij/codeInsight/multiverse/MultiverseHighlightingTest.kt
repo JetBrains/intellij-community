@@ -3,14 +3,17 @@ package com.intellij.codeInsight.multiverse
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewContextVisibility
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.heavyJavaCodeInsightSubFixture
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase
+import com.intellij.codeInsight.daemon.ProductionDaemonTestUtil
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider.Answer
 import com.intellij.codeInspection.DefaultInspectionToolResultExporter
 import com.intellij.codeInspection.LocalInspectionTool
@@ -22,8 +25,10 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.multiverse.LibraryContextImpl
 import com.intellij.multiverse.ModuleContextImpl
 import com.intellij.multiverse.SdkContextImpl
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -37,51 +42,88 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorWithTextEditors
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.module.JavaModuleType
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.project.stateStore
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createGlobalContextForTool
-import com.intellij.testFramework.enableInspectionTools
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.Processors
-import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.time.Duration.Companion.minutes
 
+@TestApplication
 @CanChangeDocumentDuringHighlighting
-class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
+class MultiverseHighlightingTest {
+  private val daemonFixture = heavyJavaCodeInsightSubFixture("multiverseDaemonAnalyzerFixture") { MultiverseDaemonAnalyzerFixture(it) }
+  private val fixture: DaemonAnalyzerFixture get() = daemonFixture.get()
+  private val project: Project get() = fixture.project
+  private val module: Module get() = fixture.module
+  private val editor: Editor get() = fixture.editor!!
+  private val myFile: PsiFile get() = fixture.file!!
+  private val testRootDisposable: Disposable get() = fixture.testRootDisposable
+  private val psiManager: PsiManager get() = PsiManager.getInstance(project)
+  private val myDaemonCodeAnalyzer: DaemonCodeAnalyzerImpl get() = fixture.daemonCodeAnalyzer
+  private val myTestDaemonCodeAnalyzer: TestDaemonCodeAnalyzerImpl get() = fixture.testDaemonCodeAnalyzer
+
+  /** The name of the test method. The main module has this name too. */
+  private lateinit var name: String
+
+  /** Set it on the EDT. */
   private var context: CodeInsightContext? = null
+    @RequiresEdt
     set(value) {
       field = value
       if (value != null) {
-        if (myFile != null) {
-          myFile = psiManager.findFile(virtualFile, value)
+        if (fixture.file != null) {
+          fixture.file = psiManager.findFile(virtualFile, value)
         }
         else {
           // using random context
-          myFile = psiManager.findFile(virtualFile)
+          fixture.file = psiManager.findFile(virtualFile)
         }
 
-        if (editor != null) {
+        if (fixture.editor != null) {
           EditorContextManager.getInstance(project).setEditorContext(editor, SingleEditorContext(value))
         }
       }
@@ -89,309 +131,331 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
 
   private val virtualFile get() = myFile.virtualFile
 
-  override fun setUp() {
-    super.setUp()
-    context = null
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    name = testInfo.testMethod.get().name
   }
 
-  override fun tearDown() {
-    try {
-      context = null
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
+  /**
+   * Runs [testBody] in the debug mode of the daemon progress indicators.
+   */
+  private fun runTest(testBody: suspend CoroutineScope.() -> Unit) {
+    DaemonProgressIndicator.runInDebugMode<Throwable> {
+      timeoutRunBlocking(2.minutes, action = testBody)
     }
   }
 
-  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable?>) {
-    DaemonProgressIndicator.runInDebugMode<Exception> {
-      super.runTestRunnable(testRunnable)
-    }
-  }
-
-  fun testLocalInspectionInSeveralContexts() {
-    enableInspectionTools(project, testRootDisposable, FileLevelInspection(), CommentInspection())
+  @Test
+  fun testLocalInspectionInSeveralContexts(): Unit = runTest {
+    fixture.enableInspectionTools(FileLevelInspection(), CommentInspection())
 
     @Language("JAVA")
     val text = """
       // comment
     """
-    configureByText(JavaFileType.INSTANCE, text)
+    fixture.configureByText(JavaFileType.INSTANCE, text)
 
-    val root = module.rootManager.contentRoots[0]
+    val root = readAction { module.rootManager.contentRoots[0] }
     PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", root)
 
     val contexts = getContexts()
-    assertSize(2, contexts)
+    assertThat(contexts).hasSize(2)
 
     assertEquals("module2", contexts[0].getModule()!!.name)
     assertEquals("testLocalInspectionInSeveralContexts", contexts[1].getModule()!!.name)
 
     // highlighting in "module2" context
-    this.context = contexts[0]
-    val infos2 = doHighlighting()
-    assertOrderedEquals(infos2.map { it.description },
-                        "file-level module-context module2",
-                        "Comment warning module-context module2",
+    withContext(Dispatchers.EDT) { context = contexts[0] }
+    val infos2 = fixture.doHighlighting()
+    assertThat(infos2.map { it.description }).containsExactly(
+      "file-level module-context module2",
+      "Comment warning module-context module2",
     )
 
-    val allInfosBefore = getAllDocumentHighlights()
-    assertOrderedEquals(allInfosBefore.map { it.description },
-                        "file-level module-context module2",
-                        "Comment warning module-context module2",
+    val allInfosBefore = readAction { getAllDocumentHighlights() }
+    assertThat(allInfosBefore.map { it.description }).containsExactly(
+      "file-level module-context module2",
+      "Comment warning module-context module2",
     )
 
     // highlighting in "testLocalInspectionInSeveralContexts" context
-    this.context = contexts[1]
-    val infos1 = doHighlighting()
-    assertOrderedEquals(infos1.map { it.description },
-                        "file-level module-context testLocalInspectionInSeveralContexts",
-                        "Comment warning module-context testLocalInspectionInSeveralContexts",
+    withContext(Dispatchers.EDT) { context = contexts[1] }
+    val infos1 = fixture.doHighlighting()
+    assertThat(infos1.map { it.description }).containsExactly(
+      "file-level module-context testLocalInspectionInSeveralContexts",
+      "Comment warning module-context testLocalInspectionInSeveralContexts",
     )
 
-    val allInfos = getAllDocumentHighlights()
-    assertOrderedEquals(allInfos.map { it.description },
-                        "file-level module-context module2",
-                        "file-level module-context testLocalInspectionInSeveralContexts",
-                        "Comment warning module-context module2",
-                        "Comment warning module-context testLocalInspectionInSeveralContexts",
+    val allInfos = readAction { getAllDocumentHighlights() }
+    assertThat(allInfos.map { it.description }).containsExactly(
+      "file-level module-context module2",
+      "file-level module-context testLocalInspectionInSeveralContexts",
+      "Comment warning module-context module2",
+      "Comment warning module-context testLocalInspectionInSeveralContexts",
     )
   }
 
-  fun testBatchInspectionInPreferredContextOnly() {
+  @Test
+  fun testBatchInspectionInPreferredContextOnly(): Unit = runTest {
     val descriptions = runBatchCommentInspectionInTwoModules().problemElements.values.map { it.descriptionTemplate }
-    assertEquals("the file must be inspected only in its preferred context: $descriptions", 1, descriptions.size)
+    assertEquals(1, descriptions.size, "the file must be inspected only in its preferred context: $descriptions")
   }
 
-  fun testBatchInspectionInAllContexts() {
-    Registry.get("batch.inspections.inspect.all.code.insight.contexts").setValue(true, testRootDisposable)
+  @Test
+  @RegistryKey(key = "batch.inspections.inspect.all.code.insight.contexts", value = "true")
+  fun testBatchInspectionInAllContexts(): Unit = runTest {
     val descriptions = runBatchCommentInspectionInTwoModules().problemElements.values.map { it.descriptionTemplate }
-    assertSameElements("the file must be inspected in each of its contexts",
-                       descriptions,
-                       listOf("Comment warning module-context module2", "Comment warning module-context $name"))
+    assertThat(descriptions)
+      .describedAs("the file must be inspected in each of its contexts")
+      .containsExactlyInAnyOrderElementsOf(listOf("Comment warning module-context module2", "Comment warning module-context $name"))
   }
 
-  fun testBatchInspectionInAllContextsReportsProblemsOnFileOfEachContext() {
-    Registry.get("batch.inspections.inspect.all.code.insight.contexts").setValue(true, testRootDisposable)
+  @Test
+  @RegistryKey(key = "batch.inspections.inspect.all.code.insight.contexts", value = "true")
+  fun testBatchInspectionInAllContextsReportsProblemsOnFileOfEachContext(): Unit = runTest {
     val refFiles = runBatchCommentInspectionInTwoModules().problemElements.keys()
-    assertSameElements("each context must have its own reference element",
-                       refFiles.map { (it as RefFile).psiElement.codeInsightContext },
-                       getContexts())
+    val refFileContexts = readAction {
+      refFiles.map { (it as RefFile).psiElement.codeInsightContext }
+    }
+    assertThat(refFileContexts)
+      .describedAs("each context must have its own reference element")
+      .containsExactlyInAnyOrderElementsOf(getContexts())
   }
 
-  private fun runBatchCommentInspectionInTwoModules(): DefaultInspectionToolResultExporter {
+  private suspend fun runBatchCommentInspectionInTwoModules(): DefaultInspectionToolResultExporter {
     @Language("JAVA")
     val text = """
       // comment
     """
-    configureByText(JavaFileType.INSTANCE, text)
+    fixture.configureByText(JavaFileType.INSTANCE, text)
 
-    val root = module.rootManager.contentRoots[0]
+    val root = readAction { module.rootManager.contentRoots[0] }
     PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", root)
     val contexts = getContexts()
-    assertEquals("the file must have a context for each module: $contexts", 2, contexts.size)
+    assertEquals(2, contexts.size, "the file must have a context for each module: $contexts")
 
     val toolWrapper = LocalInspectionToolWrapper(CommentInspection())
     val scope = AnalysisScope(project)
     val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
+    withContext(Dispatchers.EDT) {
+      InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
+    }
     return globalContext.getPresentation(toolWrapper) as DefaultInspectionToolResultExporter
   }
 
   // CPP-24696: a file restart dirties every context, but the daemon re-runs only the context of the editor
-  fun testAnalysisFinishesAfterEditorSwitchesContext() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
-    PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", module.rootManager.contentRoots[0])
+  @Test
+  fun testAnalysisFinishesAfterEditorSwitchesContext(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
+    PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", readAction { module.rootManager.contentRoots[0] })
     val contexts = getContexts()
-    assertSize(2, contexts)
+    assertThat(contexts).hasSize(2)
     val (first, second) = contexts
     val fileStatusMap = myDaemonCodeAnalyzer.fileStatusMap
 
-    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(false, myDaemonCodeAnalyzer) {
-      EditorTracker.getInstance(project).setActiveEditorsInTests(listOf(editor))
-      context = first
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
-      assertTrue("precondition: analysis under the first context finishes", myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile))
+    withContext(Dispatchers.EDT) {
+      ProductionDaemonTestUtil.runTestInProduction(false, myDaemonCodeAnalyzer) {
+        EditorTracker.getInstance(project).setActiveEditorsInTests(listOf(editor))
+        context = first
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+        assertTrue(myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile), "precondition: analysis under the first context finishes")
 
-      context = second
-      myDaemonCodeAnalyzer.restart(myFile, "test")
-      assertFalse("the restart dirties the context the editor left", fileStatusMap.allDirtyScopesAreNullFor(editor.document, first))
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
-      assertFalse("nothing re-analyzes the context the editor left", fileStatusMap.allDirtyScopesAreNullFor(editor.document, first))
-      assertTrue("analysis under the second context finishes", myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile))
-      val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
-      assertTrue("the editor reports its highlighting as completed", DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, project))
+        context = second
+        myDaemonCodeAnalyzer.restart(myFile, "test")
+        assertFalse(fileStatusMap.allDirtyScopesAreNullFor(editor.document, first), "the restart dirties the context the editor left")
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+        assertFalse(fileStatusMap.allDirtyScopesAreNullFor(editor.document, first), "nothing re-analyzes the context the editor left")
+        assertTrue(myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile), "analysis under the second context finishes")
+        val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
+        assertTrue(DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, project), "the editor reports its highlighting as completed")
+      }
     }
   }
 
   // Two split editors show one document in different contexts, and the daemon must highlight each editor in its context
-  fun testEditHighlightsBothEditorsWithDifferentContexts() {
-    enableInspectionTools(project, testRootDisposable, CommentInspection())
+  @Test
+  fun testEditHighlightsBothEditorsWithDifferentContexts(): Unit = runTest {
+    fixture.enableInspectionTools(CommentInspection())
     val (first, second) = configureCommentInTwoModules()
     val document = editor.document
-    val editor2 = EditorFactory.getInstance().createEditor(document, project)
-    Disposer.register(testRootDisposable) { EditorFactory.getInstance().releaseEditor(editor2) }
-    context = first
-    EditorContextManager.getInstance(project).setEditorContext(editor2, SingleEditorContext(second))
     val fileStatusMap = myDaemonCodeAnalyzer.fileStatusMap
 
-    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(false, myDaemonCodeAnalyzer) {
-      EditorTracker.getInstance(project).setActiveEditorsInTests(listOf(editor, editor2))
-      repeat(10) { i ->
-        WriteCommandAction.runWriteCommandAction(project) {
-          document.insertString(document.text.indexOf("comment") + "comment".length, "x")
-        }
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+    withContext(Dispatchers.EDT) {
+      val editor2 = EditorFactory.getInstance().createEditor(document, project)
+      Disposer.register(testRootDisposable) { EditorFactory.getInstance().releaseEditor(editor2) }
+      context = first
+      EditorContextManager.getInstance(project).setEditorContext(editor2, SingleEditorContext(second))
 
-        assertTrue("edit $i: the daemon analyzes the context of the first editor", fileStatusMap.allDirtyScopesAreNullFor(document, first))
-        assertTrue("edit $i: the daemon analyzes the context of the second editor", fileStatusMap.allDirtyScopesAreNullFor(document, second))
-        assertOrderedEquals("edit $i: both contexts have a warning",
-                            getAllDocumentHighlights().map { it.description },
-                            "Comment warning module-context module2",
-                            "Comment warning module-context $name")
+      ProductionDaemonTestUtil.runTestInProduction(false, myDaemonCodeAnalyzer) {
+        EditorTracker.getInstance(project).setActiveEditorsInTests(listOf(editor, editor2))
+        repeat(10) { i ->
+          WriteCommandAction.runWriteCommandAction(project) {
+            document.insertString(document.text.indexOf("comment") + "comment".length, "x")
+          }
+          PsiDocumentManager.getInstance(project).commitAllDocuments()
+          myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+
+          assertTrue(fileStatusMap.allDirtyScopesAreNullFor(document, first), "edit $i: the daemon analyzes the context of the first editor")
+          assertTrue(fileStatusMap.allDirtyScopesAreNullFor(document, second), "edit $i: the daemon analyzes the context of the second editor")
+          assertThat(getAllDocumentHighlights().map { it.description })
+            .describedAs("edit $i: both contexts have a warning")
+            .containsExactly("Comment warning module-context module2",
+                             "Comment warning module-context $name")
+        }
       }
     }
   }
 
   // Two editors of one file with an Unknown context must not merge in the dedup of the tab editors
-  fun testDaemonHighlightsEachEditorWithUnknownContext() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testDaemonHighlightsEachEditorWithUnknownContext(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val document = editor.document
-    val embeddedEditors = List(2) { createEditor(document) }
     // Other subsystems resolve the context of a new editor in the background, so drop the contexts right before the daemon reads them.
     // The daemon reads the embedded editors right before it computes their dedup keys.
     var dropContexts = true
-    openInEditorWithTextEditors(embeddedEditors) {
-      if (dropContexts) {
-        project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
+    withContext(Dispatchers.EDT) {
+      val embeddedEditors = List(2) { createEditor(document) }
+      openInEditorWithTextEditors(embeddedEditors) {
+        if (dropContexts) {
+          project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
+        }
       }
-    }
-    val startedEditors = collectStartedEditors()
-    project.messageBus.connect(testRootDisposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
-      override fun daemonStarting(fileEditors: Collection<FileEditor>) {
-        dropContexts = false
-      }
-    })
+      val startedEditors = collectStartedEditors()
+      project.messageBus.connect(testRootDisposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
+        override fun daemonStarting(fileEditors: Collection<FileEditor>) {
+          dropContexts = false
+        }
+      })
 
-    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(false, myDaemonCodeAnalyzer) {
-      EditorTracker.getInstance(project).setActiveEditorsInTests(emptyList())
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
-      assertSameElements("the daemon highlights each editor", startedEditors.distinct(), embeddedEditors)
+      ProductionDaemonTestUtil.runTestInProduction(false, myDaemonCodeAnalyzer) {
+        EditorTracker.getInstance(project).setActiveEditorsInTests(emptyList())
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+        assertThat(startedEditors.distinct()).describedAs("the daemon highlights each editor").containsExactlyInAnyOrderElementsOf(embeddedEditors)
+      }
     }
   }
 
   // An invalid embedded editor must not claim the dedup key of a valid editor in the same context
-  fun testInvalidEmbeddedEditorDoesNotMaskValidEditor() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testInvalidEmbeddedEditorDoesNotMaskValidEditor(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val document = editor.document
-    val context = CodeInsightContextManager.getInstance(project).getPreferredContext(virtualFile)
-    val invalidEditor = EditorFactory.getInstance().createEditor(document, project)
-    val validEditor = createEditor(document)
-    for (embeddedEditor in listOf(invalidEditor, validEditor)) {
-      EditorContextManager.getInstance(project).setEditorContext(embeddedEditor, SingleEditorContext(context))
-    }
-    EditorFactory.getInstance().releaseEditor(invalidEditor)
-    openInEditorWithTextEditors(listOf(invalidEditor, validEditor))
-    val startedEditors = collectStartedEditors()
+    val context = getPreferredContext()
+    withContext(Dispatchers.EDT) {
+      val invalidEditor = EditorFactory.getInstance().createEditor(document, project)
+      val validEditor = createEditor(document)
+      for (embeddedEditor in listOf(invalidEditor, validEditor)) {
+        EditorContextManager.getInstance(project).setEditorContext(embeddedEditor, SingleEditorContext(context))
+      }
+      EditorFactory.getInstance().releaseEditor(invalidEditor)
+      openInEditorWithTextEditors(listOf(invalidEditor, validEditor))
+      val startedEditors = collectStartedEditors()
 
-    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(false, myDaemonCodeAnalyzer) {
-      EditorTracker.getInstance(project).setActiveEditorsInTests(emptyList())
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
-      assertSameElements("the daemon highlights the valid editor only", startedEditors.distinct(), listOf(validEditor))
+      ProductionDaemonTestUtil.runTestInProduction(false, myDaemonCodeAnalyzer) {
+        EditorTracker.getInstance(project).setActiveEditorsInTests(emptyList())
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+        assertThat(startedEditors.distinct()).describedAs("the daemon highlights the valid editor only").containsExactly(validEditor)
+      }
     }
   }
 
   // A context switch must schedule the highlighting of the new context without an explicit restart.
   // setEditorContext requires the write lock, and the daemon restarts when the write action finishes.
-  fun testContextSwitchRestartsDaemon() {
+  @Test
+  fun testContextSwitchRestartsDaemon(): Unit = runTest {
     val (first, second) = configureCommentInTwoModules()
     val document = editor.document
     val fileStatusMap = myDaemonCodeAnalyzer.fileStatusMap
-    context = first
 
-    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(false, myDaemonCodeAnalyzer) {
-      EditorTracker.getInstance(project).setActiveEditorsInTests(listOf(editor))
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
-      assertTrue("precondition: the daemon analyzes the first context", fileStatusMap.allDirtyScopesAreNullFor(document, first))
-      assertFalse("precondition: the second context is not analyzed", fileStatusMap.allDirtyScopesAreNullFor(document, second))
+    withContext(Dispatchers.EDT) {
+      context = first
 
-      WriteAction.run<Throwable> { EditorContextManager.getInstance(project).setEditorContext(editor, SingleEditorContext(second)) }
-      // the restart goes through the file status queue before it schedules the update runnable
-      myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests()
-      assertTrue("the context switch restarts the daemon", myDaemonCodeAnalyzer.isRunningOrPending)
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
-      assertTrue("the daemon analyzes the second context", fileStatusMap.allDirtyScopesAreNullFor(document, second))
+      ProductionDaemonTestUtil.runTestInProduction(false, myDaemonCodeAnalyzer) {
+        EditorTracker.getInstance(project).setActiveEditorsInTests(listOf(editor))
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+        assertTrue(fileStatusMap.allDirtyScopesAreNullFor(document, first), "precondition: the daemon analyzes the first context")
+        assertFalse(fileStatusMap.allDirtyScopesAreNullFor(document, second), "precondition: the second context is not analyzed")
+
+        WriteAction.run<Throwable> { EditorContextManager.getInstance(project).setEditorContext(editor, SingleEditorContext(second)) }
+        // the restart goes through the file status queue before it schedules the update runnable
+        myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests()
+        assertTrue(myDaemonCodeAnalyzer.isRunningOrPending, "the context switch restarts the daemon")
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+        assertTrue(fileStatusMap.allDirtyScopesAreNullFor(document, second), "the daemon analyzes the second context")
+      }
     }
   }
 
   // The Problems View hides a context with stale highlighters that no editor shows, until the daemon analyzes that context again
-  fun testProblemsViewHidesStaleHiddenContext() {
-    enableInspectionTools(project, testRootDisposable, CommentInspection())
+  @Test
+  fun testProblemsViewHidesStaleHiddenContext(): Unit = runTest {
+    fixture.enableInspectionTools(CommentInspection())
     val (hidden, shown) = configureCommentInTwoModules()
     val document = editor.document
     val fileStatusMap = myDaemonCodeAnalyzer.fileStatusMap
 
-    context = hidden
-    doHighlighting()
-    context = shown
-    doHighlighting()
-    assertEmpty("the view shows both analyzed contexts", findHiddenContexts(hidden, shown))
+    withContext(Dispatchers.EDT) { context = hidden }
+    fixture.doHighlighting()
+    withContext(Dispatchers.EDT) { context = shown }
+    fixture.doHighlighting()
+    assertThat(findHiddenContexts(hidden, shown)).describedAs("the view shows both analyzed contexts").isEmpty()
 
     editCommentAndAssertHiddenCommentIsInvalid(hidden)
-    doHighlighting()
-    assertFalse("precondition: the edit dirties the context that the editor left", fileStatusMap.allDirtyScopesAreNullFor(document, hidden))
-    assertTrue("precondition: the daemon analyzes the context of the editor", fileStatusMap.allDirtyScopesAreNullFor(document, shown))
-    assertEquals("the view hides the stale context that no editor shows", setOf(hidden), findHiddenContexts(hidden, shown))
+    fixture.doHighlighting()
+    assertFalse(fileStatusMap.allDirtyScopesAreNullFor(document, hidden), "precondition: the edit dirties the context that the editor left")
+    assertTrue(fileStatusMap.allDirtyScopesAreNullFor(document, shown), "precondition: the daemon analyzes the context of the editor")
+    assertEquals(setOf(hidden), findHiddenContexts(hidden, shown), "the view hides the stale context that no editor shows")
 
-    context = hidden
-    assertEmpty("the view shows the context of the editor at once", findHiddenContexts(hidden, shown))
-    doHighlighting()
-    assertEmpty("the view shows the analyzed context", findHiddenContexts(hidden, shown))
+    withContext(Dispatchers.EDT) { context = hidden }
+    assertThat(findHiddenContexts(hidden, shown)).describedAs("the view shows the context of the editor at once").isEmpty()
+    fixture.doHighlighting()
+    assertThat(findHiddenContexts(hidden, shown)).describedAs("the view shows the analyzed context").isEmpty()
   }
 
   // The daemon does not highlight an editor that is not active or selected, so the context of such an editor can be stale
-  fun testProblemsViewHidesStaleContextOfEditorThatDaemonDoesNotHighlight() {
-    enableInspectionTools(project, testRootDisposable, CommentInspection())
+  @Test
+  fun testProblemsViewHidesStaleContextOfEditorThatDaemonDoesNotHighlight(): Unit = runTest {
+    fixture.enableInspectionTools(CommentInspection())
     val (hidden, shown) = configureCommentInTwoModules()
     val document = editor.document
-    context = hidden
-    doHighlighting()
-    context = shown
-    doHighlighting()
-    val notHighlightedEditor = createEditor(document)
-    EditorContextManager.getInstance(project).setEditorContext(notHighlightedEditor, SingleEditorContext(hidden))
-    assertFalse("precondition: the daemon does not highlight the second editor",
-                myDaemonCodeAnalyzer.selectedEditors.any { (it as? TextEditor)?.editor == notHighlightedEditor })
+    withContext(Dispatchers.EDT) { context = hidden }
+    fixture.doHighlighting()
+    withContext(Dispatchers.EDT) { context = shown }
+    fixture.doHighlighting()
+    withContext(Dispatchers.EDT) {
+      val notHighlightedEditor = createEditor(document)
+      EditorContextManager.getInstance(project).setEditorContext(notHighlightedEditor, SingleEditorContext(hidden))
+      assertFalse(myDaemonCodeAnalyzer.selectedEditors.any { (it as? TextEditor)?.editor == notHighlightedEditor },
+                  "precondition: the daemon does not highlight the second editor")
+    }
 
     editCommentAndAssertHiddenCommentIsInvalid(hidden)
-    doHighlighting()
-    assertFalse("precondition: the edit dirties the context of the second editor",
-                myDaemonCodeAnalyzer.fileStatusMap.allDirtyScopesAreNullFor(document, hidden))
+    fixture.doHighlighting()
+    assertFalse(myDaemonCodeAnalyzer.fileStatusMap.allDirtyScopesAreNullFor(document, hidden),
+                "precondition: the edit dirties the context of the second editor")
 
-    assertEquals("the view hides the stale context of an editor that the daemon does not highlight",
-                 setOf(hidden), findHiddenContexts(hidden, shown))
+    assertEquals(setOf(hidden), findHiddenContexts(hidden, shown),
+                 "the view hides the stale context of an editor that the daemon does not highlight")
   }
 
   // The Problems View shows one context only when the owner of the file does not support simultaneous rendering.
   // Both contexts are analyzed, so only the second rule hides a context.
-  fun testProblemsViewShowsOneContextOfProviderWithoutSimultaneousRendering() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testProblemsViewShowsOneContextOfProviderWithoutSimultaneousRendering(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val first = FakeContext("first")
     val second = FakeContext("second")
     registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)), supportsSimultaneousRendering = false)
     markAnalyzed(first)
     markAnalyzed(second)
 
-    fun findHiddenContexts() = findHiddenContexts(first, second, supportsSimultaneousRendering = false)
+    suspend fun findHiddenContexts() = findHiddenContexts(first, second, supportsSimultaneousRendering = false)
 
-    context = first
-    assertEquals("the view shows the context of the editor only", setOf(second), findHiddenContexts())
-    context = second
-    assertEquals("the view follows the context of the editor", setOf(first), findHiddenContexts())
+    withContext(Dispatchers.EDT) { context = first }
+    assertEquals(setOf(second), findHiddenContexts(), "the view shows the context of the editor only")
+    withContext(Dispatchers.EDT) { context = second }
+    assertEquals(setOf(first), findHiddenContexts(), "the view follows the context of the editor")
   }
 
   /**
@@ -399,14 +463,14 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
    * [supportsSimultaneousRendering] is the answer of the owner of the file. The root reads it in a background read action,
    * and `ProblemsViewHighlightingFileRootContextsTest` covers that read.
    */
-  private fun findHiddenContexts(
+  private suspend fun findHiddenContexts(
     vararg contexts: CodeInsightContext,
     supportsSimultaneousRendering: Boolean = true,
-  ): Set<CodeInsightContext> {
+  ): Set<CodeInsightContext> = withContext(Dispatchers.EDT) {
     val document = editor.document
-    val preferredContext = if (supportsSimultaneousRendering) null else getPreferredContext()
+    val preferredContext = if (supportsSimultaneousRendering) null else CodeInsightContextManager.getInstance(project).getPreferredContext(virtualFile)
     val visibility = ProblemsViewContextVisibility.compute(project, document, supportsSimultaneousRendering, preferredContext)
-    return contexts.filterTo(HashSet()) { context ->
+    contexts.filterTo(HashSet()) { context ->
       !visibility.isVisible(context) { ProblemsViewContextVisibility.isAnalyzed(project, document, it) }
     }
   }
@@ -415,16 +479,22 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     myDaemonCodeAnalyzer.fileStatusMap.markFileUpToDateForAllPasses(editor.document, context)
   }
 
-  private fun editCommentAndAssertHiddenCommentIsInvalid(hidden: CodeInsightContext) {
-    val hiddenComment = PsiTreeUtil.findChildOfType(psiManager.findFile(virtualFile, hidden), PsiComment::class.java)!!
+  private suspend fun editCommentAndAssertHiddenCommentIsInvalid(hidden: CodeInsightContext) {
+    val hiddenComment = readAction {
+      PsiTreeUtil.findChildOfType(psiManager.findFile(virtualFile, hidden), PsiComment::class.java)!!
+    }
     val document = editor.document
     WriteCommandAction.runWriteCommandAction(project) {
       document.insertString(document.text.indexOf("comment") + "comment".length, "x")
     }
-    PsiDocumentManager.getInstance(project).commitAllDocuments()
-    assertFalse("precondition: the edit must invalidate the comment in the hidden context", hiddenComment.isValid)
+    withContext(Dispatchers.EDT) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+    }
+    assertFalse(readAction { hiddenComment.isValid },
+                "precondition: the edit must invalidate the comment in the hidden context")
   }
 
+  @RequiresEdt
   private fun createEditor(document: Document): Editor {
     val editor = EditorFactory.getInstance().createEditor(document, project)
     Disposer.register(testRootDisposable) { EditorFactory.getInstance().releaseEditor(editor) }
@@ -432,6 +502,7 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
   }
 
   /** Reopens the file in the tab of a [FileEditorWithTextEditors] that embeds [embeddedEditors] */
+  @RequiresEdt
   private fun openInEditorWithTextEditors(embeddedEditors: List<Editor>, onEmbeddedEditorsQueried: () -> Unit = {}) {
     val file = virtualFile
     val fileEditorManager = FileEditorManager.getInstance(project)
@@ -453,19 +524,20 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
   }
 
   /** @return the "module2" context, then the context of the test module */
-  private fun configureCommentInTwoModules(): List<ModuleContext> {
+  private suspend fun configureCommentInTwoModules(): List<ModuleContext> {
     @Language("JAVA")
     val text = """
       // comment
     """
-    configureByText(JavaFileType.INSTANCE, text)
-    PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", module.rootManager.contentRoots[0])
+    fixture.configureByText(JavaFileType.INSTANCE, text)
+    PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", readAction { module.rootManager.contentRoots[0] })
     val contexts = getContexts()
-    assertSize(2, contexts)
+    assertThat(contexts).hasSize(2)
     assertEquals("module2", contexts[0].getModule()!!.name)
     return contexts
   }
 
+  @RequiresReadLock
   private fun getAllDocumentHighlights(): List<HighlightInfo> {
     val allInfos = mutableListOf<HighlightInfo>()
     val document = editor.getDocument()
@@ -488,26 +560,29 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
   // to DefaultContext even after the real (library/module) context becomes available, while the
   // FileViewProvider for the same file is correctly inferred to its real context -> the contexts
   // diverge and highlighting logs the error.
-  fun testDefaultContextOfFilelessDocumentIsNotCached() {
-    assertTrue("multiverse support must be enabled for this test", isSharedSourceSupportEnabled(project))
+  @Test
+  fun testDefaultContextOfFilelessDocumentIsNotCached(): Unit = runTest {
+    assertTrue(isSharedSourceSupportEnabled(project), "multiverse support must be enabled for this test")
 
-    val factory = EditorFactory.getInstance()
-    val document = factory.createDocument("class C {}")
-    val fileLessEditor = factory.createEditor(document, project)
-    try {
-      assertNull("precondition: the document must not be backed by a VirtualFile",
-                 FileDocumentManager.getInstance().getFile(document))
+    withContext(Dispatchers.EDT) {
+      val factory = EditorFactory.getInstance()
+      val document = factory.createDocument("class C {}")
+      val fileLessEditor = factory.createEditor(document, project)
+      try {
+        assertNull(FileDocumentManager.getInstance().getFile(document),
+                   "precondition: the document must not be backed by a VirtualFile")
 
-      // The editor context resolves to the default fallback because the file is unknown...
-      assertEquals(defaultContext(), EditorContextManager.getEditorContext(fileLessEditor, project))
+        // The editor context resolves to the default fallback because the file is unknown...
+        assertEquals(defaultContext(), EditorContextManager.getEditorContext(fileLessEditor, project))
 
-      // ...but this fallback must NOT be cached: otherwise the editor stays pinned to DefaultContext
-      // and later highlighting of a real-context file fails the editor-vs-file context check.
-      assertNull("the default fallback for a file-less document must not be cached",
-                 EditorContextManager.getCachedEditorContext(fileLessEditor, project))
-    }
-    finally {
-      factory.releaseEditor(fileLessEditor)
+        // ...but this fallback must NOT be cached: otherwise the editor stays pinned to DefaultContext
+        // and later highlighting of a real-context file fails the editor-vs-file context check.
+        assertNull(EditorContextManager.getCachedEditorContext(fileLessEditor, project),
+                   "the default fallback for a file-less document must not be cached")
+      }
+      finally {
+        factory.releaseEditor(fileLessEditor)
+      }
     }
   }
 
@@ -519,33 +594,35 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
   // file's context for the same module compare unequal and triggered
   // "PsiFile's context does not match the context of the editor" with two ModuleContextImpl values
   // that differed only by EntityPointer id. Keying on the symbolic id makes them generation-stable.
+  @Test
   fun testProjectModelContextsAreIdentifiedBySymbolicId() {
     val module = ModuleContextImpl(ModuleId("m"), project)
     val sameModule = ModuleContextImpl(ModuleId("m"), project)
     assertEquals(module, sameModule)
     assertEquals(module.hashCode(), sameModule.hashCode())
-    assertFalse("different modules must not be equal", module == ModuleContextImpl(ModuleId("other"), project))
+    assertFalse(module == ModuleContextImpl(ModuleId("other"), project), "different modules must not be equal")
 
     val tableId = LibraryTableId.ProjectLibraryTableId
     val library = LibraryContextImpl(LibraryId("lib", tableId), project)
     val sameLibrary = LibraryContextImpl(LibraryId("lib", tableId), project)
     assertEquals(library, sameLibrary)
     assertEquals(library.hashCode(), sameLibrary.hashCode())
-    assertFalse("different libraries must not be equal", library == LibraryContextImpl(LibraryId("other", tableId), project))
+    assertFalse(library == LibraryContextImpl(LibraryId("other", tableId), project), "different libraries must not be equal")
 
     val sdk = SdkContextImpl(SdkId("sdk", "JavaSDK"), project)
     val sameSdk = SdkContextImpl(SdkId("sdk", "JavaSDK"), project)
     assertEquals(sdk, sameSdk)
     assertEquals(sdk.hashCode(), sameSdk.hashCode())
-    assertFalse("different SDKs must not be equal", sdk == SdkContextImpl(SdkId("other", "JavaSDK"), project))
+    assertFalse(sdk == SdkContextImpl(SdkId("other", "JavaSDK"), project), "different SDKs must not be equal")
   }
 
   // A file's contexts come from the first provider, in registration order, that claims it.
 
-  fun testOwningProviderPreemptsPlatformContext() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testOwningProviderPreemptsPlatformContext(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     // Precondition: with no test provider, the file carries the platform module context.
-    assertTrue(getRawContexts().toString(), getRawContexts().any { it is ModuleContext })
+    assertTrue(getRawContexts().any { it is ModuleContext }, getRawContexts().toString())
 
     val fake = FakeContext("hi")
     registerOwningProvider(virtualFile, Answer.Contexts(listOf(fake)))
@@ -554,110 +631,125 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     assertEquals(listOf<CodeInsightContext>(fake), getRawContexts())
   }
 
-  fun testUnclaimedProviderFallsThroughToNextOwner() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testUnclaimedProviderFallsThroughToNextOwner(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     registerOwningProvider(virtualFile, Answer.NotOwned)
 
     val contexts = getRawContexts()
-    assertTrue("must fall through to the platform module context", contexts.any { it is ModuleContext })
-    assertFalse("no fake context is contributed for this file", contexts.any { it is FakeContext })
+    assertTrue(contexts.any { it is ModuleContext }, "must fall through to the platform module context")
+    assertFalse(contexts.any { it is FakeContext }, "no fake context is contributed for this file")
   }
 
-  fun testDefaultContextAnswerKeepsTheFileAndShowsDefaultContext() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testDefaultContextAnswerKeepsTheFileAndShowsDefaultContext(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     registerOwningProvider(virtualFile, Answer.DefaultContext)
 
     val contexts = getRawContexts()
     assertEquals(listOf(defaultContext()), contexts)
-    assertFalse("an owned file must not fall through to the platform module context", contexts.any { it is ModuleContext })
+    assertFalse(contexts.any { it is ModuleContext }, "an owned file must not fall through to the platform module context")
   }
 
   // getPreferredContext lets the owning provider nominate its default context, honored only if it is among the file's
   // contexts (else the platform falls back to the first).
 
-  fun testProviderPicksPreferredContextInsteadOfFirst() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testProviderPicksPreferredContextInsteadOfFirst(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val first = FakeContext("first")
     val second = FakeContext("second")
     registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)), preferred = second)
     assertEquals(second, getPreferredContext())
   }
 
-  fun testPreferredContextDefaultsToFirstWithoutNomination() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testPreferredContextDefaultsToFirstWithoutNomination(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val first = FakeContext("first")
     val second = FakeContext("second")
     registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)))
     assertEquals(first, getPreferredContext())
   }
 
-  fun testPerFileDropKeepsTheEditorContextOfAnotherFile() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testPerFileDropKeepsTheEditorContextOfAnotherFile(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val first = FakeContext("first")
     val second = FakeContext("second")
     val provider = registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)), preferred = second)
     // The test provider does not claim it, so it carries the platform module context.
     val otherFile = createOtherJavaFile()
-    val editorFactory = EditorFactory.getInstance()
-    val otherEditor = editorFactory.createEditor(FileDocumentManager.getInstance().getDocument(otherFile)!!, project)
-    try {
-      val editorContextManager = EditorContextManager.getInstance(project)
-      editorContextManager.getEditorContexts(editor)
-      val otherContext = editorContextManager.getEditorContexts(otherEditor).mainContext
-      val changes = recordPerFileChanges()
+    withContext(Dispatchers.EDT) {
+      val editorFactory = EditorFactory.getInstance()
+      val otherEditor = editorFactory.createEditor(FileDocumentManager.getInstance().getDocument(otherFile)!!, project)
+      try {
+        val editorContextManager = EditorContextManager.getInstance(project)
+        editorContextManager.getEditorContexts(editor)
+        val otherContext = editorContextManager.getEditorContexts(otherEditor).mainContext
+        val changes = recordPerFileChanges()
 
-      val third = FakeContext("third")
-      provider.answer = Answer.Contexts(listOf(first, second, third))
-      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+        val third = FakeContext("third")
+        provider.answer = Answer.Contexts(listOf(first, second, third))
+        CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
 
-      assertEquals(listOf(setOf(virtualFile)), changes)
-      assertEquals(listOf(first, second, third), getRawContexts())
-      assertNull("the editor of the dropped file infers its context again", editorContextManager.getCachedEditorContexts(editor))
-      assertEquals(otherContext, editorContextManager.getCachedEditorContexts(otherEditor)?.mainContext)
-    }
-    finally {
-      editorFactory.releaseEditor(otherEditor)
+        assertEquals(listOf(setOf(virtualFile)), changes)
+        assertEquals(listOf(first, second, third), CodeInsightContextManager.getInstance(project).getCodeInsightContexts(virtualFile))
+        assertNull(editorContextManager.getCachedEditorContexts(editor), "the editor of the dropped file infers its context again")
+        assertEquals(otherContext, editorContextManager.getCachedEditorContexts(otherEditor)?.mainContext)
+      }
+      finally {
+        editorFactory.releaseEditor(otherEditor)
+      }
     }
   }
 
-  fun testPerFileDropKeepsTheCachedAnswerOfAnotherFile() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testPerFileDropKeepsTheCachedAnswerOfAnotherFile(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val provider = registerOwningProvider(virtualFile, Answer.Contexts(listOf(FakeContext("first"))))
     val otherFile = createOtherJavaFile()
     val otherFirst = FakeContext("other first")
     val otherProvider = registerOwningProvider(otherFile, Answer.Contexts(listOf(otherFirst)))
     val manager = CodeInsightContextManager.getInstance(project)
     getRawContexts()
-    assertEquals(listOf(otherFirst), manager.getCodeInsightContexts(otherFile))
+    assertEquals(listOf(otherFirst), readAction { manager.getCodeInsightContexts(otherFile) })
 
     // The request names only the first file, so only a dropped answer can show this.
     otherProvider.answer = Answer.Contexts(listOf(FakeContext("other second")))
     val second = FakeContext("second")
     provider.answer = Answer.Contexts(listOf(second))
-    CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+    withContext(Dispatchers.EDT) {
+      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+    }
 
     assertEquals(listOf(second), getRawContexts())
-    assertEquals("the other file keeps its cached answer", listOf(otherFirst), manager.getCodeInsightContexts(otherFile))
+    assertEquals(listOf(otherFirst), readAction { manager.getCodeInsightContexts(otherFile) },
+                 "the other file keeps its cached answer")
   }
 
   // A recheck builds the answer again and drops only a changed answer, so an unchanged one costs no write action.
 
-  fun testRecheckOfUnchangedAnswerKeepsTheEditorContext() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testRecheckOfUnchangedAnswerKeepsTheEditorContext(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val second = FakeContext("second")
     registerOwningProvider(virtualFile, Answer.Contexts(listOf(FakeContext("first"), second)), preferred = second)
     val editorContextManager = EditorContextManager.getInstance(project)
-    assertEquals(second, editorContextManager.getEditorContexts(editor).mainContext)
+    assertEquals(second, readAction { editorContextManager.getEditorContexts(editor).mainContext })
     val changes = recordPerFileChanges()
 
-    CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+    withContext(Dispatchers.EDT) {
+      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+    }
 
-    assertEmpty(changes)
+    assertThat(changes).isEmpty()
     assertEquals(second, editorContextManager.getCachedEditorContexts(editor)?.mainContext)
   }
 
-  fun testRecheckOfChangedPreferredContextDropsTheFile() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testRecheckOfChangedPreferredContextDropsTheFile(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val first = FakeContext("first")
     val second = FakeContext("second")
     val provider = registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)), preferred = second)
@@ -665,46 +757,59 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     val changes = recordPerFileChanges()
 
     provider.preferred = first
-    CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+    withContext(Dispatchers.EDT) {
+      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+    }
 
     assertEquals(listOf(setOf(virtualFile)), changes)
     assertEquals(first, getPreferredContext())
   }
 
   // The GC can clear a cached answer while the editor still uses its contexts, so the recheck cannot skip such a file.
-  fun testRecheckOfFileWithNoCachedAnswerDropsTheFile() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
-    registerOwningProvider(virtualFile, Answer.Contexts(listOf(FakeContext("first"))))
-    val changes = recordPerFileChanges()
+  @Test
+  fun testRecheckOfFileWithNoCachedAnswerDropsTheFile(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
+    val changes = withContext(Dispatchers.EDT) {
+      registerOwningProvider(virtualFile, Answer.Contexts(listOf(FakeContext("first"))))
+      val changes = recordPerFileChanges()
 
-    CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+      changes
+    }
 
     assertEquals(listOf(setOf(virtualFile)), changes)
   }
 
   // A file with no cached answer counts as changed in a recheck, so the recheck shows that the call cached nothing.
-  fun testContextsWithoutCachingDoNotCacheTheAnswer() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testContextsWithoutCachingDoNotCacheTheAnswer(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val first = FakeContext("first")
-    registerOwningProvider(virtualFile, Answer.Contexts(listOf(first)))
     val manager = CodeInsightContextManagerImpl.getInstanceImpl(project)
+    val changes = withContext(Dispatchers.EDT) {
+      registerOwningProvider(virtualFile, Answer.Contexts(listOf(first)))
 
-    assertEquals(listOf(first), manager.getCodeInsightContextsWithoutCaching(virtualFile))
-    val changes = recordPerFileChanges()
-    manager.requestInvalidationNow(setOf(virtualFile))
+      assertEquals(listOf(first), manager.getCodeInsightContextsWithoutCaching(virtualFile))
+      val changes = recordPerFileChanges()
+      manager.requestInvalidationNow(setOf(virtualFile))
+      changes
+    }
 
     assertEquals(listOf(setOf(virtualFile)), changes)
   }
 
-  fun testContextsWithoutCachingReturnTheCachedAnswer() {
-    configureByText(JavaFileType.INSTANCE, "class C {}")
+  @Test
+  fun testContextsWithoutCachingReturnTheCachedAnswer(): Unit = runTest {
+    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val first = FakeContext("first")
     val provider = registerOwningProvider(virtualFile, Answer.Contexts(listOf(first)))
     assertEquals(listOf(first), getRawContexts())
 
     provider.answer = Answer.Contexts(listOf(FakeContext("second")))
 
-    assertEquals(listOf(first), CodeInsightContextManagerImpl.getInstanceImpl(project).getCodeInsightContextsWithoutCaching(virtualFile))
+    assertEquals(listOf(first), readAction {
+      CodeInsightContextManagerImpl.getInstanceImpl(project).getCodeInsightContextsWithoutCaching(virtualFile)
+    })
   }
 
   private fun recordPerFileChanges(): List<Set<VirtualFile>> {
@@ -719,37 +824,56 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     return changes
   }
 
-  private fun createOtherJavaFile(): VirtualFile = runWriteAction {
+  private fun createOtherJavaFile(): VirtualFile = WriteAction.computeAndWait<VirtualFile, Throwable> {
     val file = virtualFile.parent.createChildData(this, "D.java")
     VfsUtil.saveText(file, "class D {}")
     file
   }
 
-  private fun getRawContexts(): List<CodeInsightContext> =
+  private suspend fun getRawContexts(): List<CodeInsightContext> = readAction {
     CodeInsightContextManager.getInstance(project).getCodeInsightContexts(virtualFile)
+  }
 
-  private fun getPreferredContext(): CodeInsightContext =
+  private suspend fun getPreferredContext(): CodeInsightContext = readAction {
     CodeInsightContextManager.getInstance(project).getPreferredContext(virtualFile)
+  }
 
-  private fun registerOwningProvider(
+  private suspend fun registerOwningProvider(
     targetFile: VirtualFile,
     answer: Answer,
     preferred: CodeInsightContext? = null,
     supportsSimultaneousRendering: Boolean = true,
   ): OwningTestContextProvider {
     val provider = OwningTestContextProvider(targetFile, answer, preferred, supportsSimultaneousRendering)
-    CodeInsightContextManager.getInstance(project).registerTestOnlyCodeInsightContextProvider(provider, testRootDisposable)
+    withContext(Dispatchers.EDT) {
+      CodeInsightContextManager.getInstance(project).registerTestOnlyCodeInsightContextProvider(provider, testRootDisposable)
+    }
     return provider
   }
 
-  private fun getContexts(): List<ModuleContext> {
-    val contexts = CodeInsightContextManager.getInstance(project).getCodeInsightContexts(virtualFile)
-    assertTrue(contexts.toString(), contexts.all { it is ModuleContext })
+  private suspend fun getContexts(): List<ModuleContext> {
+    val contexts = getRawContexts()
+    assertTrue(contexts.all { it is ModuleContext }, contexts.toString())
     @Suppress("UNCHECKED_CAST")
     return (contexts as List<ModuleContext>)
       .sortedBy { it.getModule()!!.name }
   }
 }
+
+/**
+ * A [DaemonAnalyzerFixture] whose main module has the name of the test method, as the main module of a JUnit 3 heavy test has.
+ */
+private class MultiverseDaemonAnalyzerFixture(context: Context) : DaemonAnalyzerFixture(context, "", LocalInspectionTool.EMPTY_ARRAY) {
+  override fun createMainModule(): Module {
+    val moduleFile = project.stateStore.projectBasePath.resolve("test" + getTestName(false) + ".iml")
+    val module = WriteAction.computeAndWait<Module, RuntimeException> {
+      ModuleManager.getInstance(project).newModule(moduleFile, JavaModuleType.getModuleType().id)
+    }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    return module
+  }
+}
+
 
 private class EditorWithTextEditorsProvider(
   private val file: VirtualFile,

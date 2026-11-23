@@ -69,6 +69,8 @@ jvm_library(
         "//platform/util:util-ui",
         "//libraries/asm",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     ],
 )
