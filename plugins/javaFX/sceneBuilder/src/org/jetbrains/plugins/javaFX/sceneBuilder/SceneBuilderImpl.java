@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -367,8 +366,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   private static boolean isBuiltInComponent(PsiClass psiClass) {
     final VirtualFile file = PsiUtilCore.getVirtualFile(psiClass);
     if (file == null) return false;
-    final List<OrderEntry> entries = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex().getOrderEntriesForFile(file);
-    return ContainerUtil.exists(entries, entry -> entry instanceof JdkOrderEntry);
+    return !ProjectFileIndex.getInstance(psiClass.getProject()).findContainingSdks(file).isEmpty();
   }
 
   private static boolean isCompatibleLanguageLevel(@NotNull PsiClass aClass, @Nullable LanguageLevel targetLevel) {
