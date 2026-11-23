@@ -109,18 +109,19 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
 
   @Override
   default @Nullable PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
-    return isRightOperator(resolvedCallee) ? getRightExpression() : getChainedComparisonAwareLeftExpression();
+    return isRightOperator(resolvedCallee) ? getRightExpression() : getChainedComparisonAwareLeftExpression(this);
   }
 
   @Override
   default @NotNull List<@NotNull PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
-    PyAstExpression operand = isRightOperator(resolvedCallee) ? getChainedComparisonAwareLeftExpression() : getRightExpression();
+    PyAstExpression operand = isRightOperator(resolvedCallee) ? getChainedComparisonAwareLeftExpression(this) : getRightExpression();
     return ContainerUtil.createMaybeSingletonList(operand);
   }
 
-  private @Nullable PyAstExpression getChainedComparisonAwareLeftExpression() {
-    final PyAstExpression leftOperand = getLeftExpression();
-    if (PyTokenTypes.COMPARISON_OPERATIONS.contains(getOperator())) {
+  @ApiStatus.Internal
+  static @Nullable PyAstExpression getChainedComparisonAwareLeftExpression(@NotNull PyAstBinaryExpression expression) {
+    final PyAstExpression leftOperand = expression.getLeftExpression();
+    if (PyTokenTypes.COMPARISON_OPERATIONS.contains(expression.getOperator())) {
       final PyAstBinaryExpression leftBinaryExpr = ObjectUtils.tryCast(leftOperand, PyAstBinaryExpression.class);
       if (leftBinaryExpr != null && PyTokenTypes.COMPARISON_OPERATIONS.contains(leftBinaryExpr.getOperator())) {
         return leftBinaryExpr.getRightExpression();

@@ -909,7 +909,7 @@ object PyTypeUtil {
    *  - `Ref(narrowedType)` with the kept members (the wrapped type may be `null`, meaning unknown);
    *  - `null` if no member is kept, i.e. the value can never be [keepTruthy].
    *
-   * Used to infer the type of `or`/`and` expressions: in `a or b` the value is `a` only when `a`
+   * Used to infer the type of `or`/`and` expressions and of chained comparisons: in `a or b` the value is `a` only when `a`
    * is truthy, and in `a and b` it is `a` only when `a` is falsy.
    */
   @JvmStatic
