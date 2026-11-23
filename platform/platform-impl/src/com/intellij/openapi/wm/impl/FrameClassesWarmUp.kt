@@ -8,13 +8,16 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.StringReader
+import javax.swing.text.html.HTMLEditorKit
+import javax.swing.text.html.StyleSheet
 
 private val LOG = logger<FrameClassesWarmUp>()
 
 /**
  * Loads in the background, at start-up, the classes that the EDT otherwise loads while it creates the first frame:
  * the project frame with its root pane, header, tool window pane and status bar, the modal welcome frame with its project tree,
- * and the recent project tree of the non-modal welcome screen.
+ * the recent project tree of the non-modal welcome screen, the first Kotlin UI DSL panel and the first Swing HTML text.
  *
  * The activity loads the classes without initialization: it starts before the look and feel and the UI scale are set,
  * and some static initializers read them. [initializeFrameClasses] initializes them once the look and feel is installed.
@@ -29,12 +32,22 @@ internal class FrameClassesWarmUp : ApplicationActivity {
 }
 
 /**
- * Initializes the frame classes, except [LOAD_ONLY_FRAME_CLASS_NAMES]. `ApplicationLoader` calls it once the look and feel is installed.
+ * Initializes the frame classes, except [LOAD_ONLY_FRAME_CLASS_NAMES], and parses one HTML text.
+ * `ApplicationLoader` calls it once the look and feel is installed.
  * The other static initializers create companions, keys, loggers, icons and theme colors, or read the UI scale and the UI defaults.
+ * The CSS defaults of the start-up initialize `javax.swing.text.html.HTML` on the EDT before this call.
+ * `HTML` and `HTML.Tag` need each other in their static initializers, so an earlier call can deadlock with the EDT.
  */
 @Internal
 fun initializeFrameClasses() {
   warmUpFrameClasses(initialize = true)
+  try {
+    warmUpHtmlParser()
+  }
+  catch (e: Throwable) {
+    rethrowControlFlowException(e)
+    LOG.warn("Cannot warm up the HTML parser", e)
+  }
 }
 
 /** Loads the frame classes without initialization, for a frame that is shown before the look and feel is installed. */
@@ -63,6 +76,16 @@ internal fun warmUpFrameClasses(initialize: Boolean) {
   }
 }
 
+/**
+ * Parses one HTML text into a document that no component shows, so the parser loads its DTD and the CSS classes off the EDT.
+ */
+@VisibleForTesting
+internal fun warmUpHtmlParser() {
+  val editorKit = OwnStyleSheetHtmlEditorKit()
+  val document = editorKit.createDefaultDocument()
+  editorKit.read(StringReader("<html><body><p>a <b>b</b></p></body></html>"), document, 0)
+}
+
 @VisibleForTesting
 internal fun frameClassNamesOfCurrentOs(): List<String> {
   return COMMON_FRAME_CLASS_NAMES + if (SystemInfoRt.isMac) MAC_FRAME_CLASS_NAMES else OTHER_OS_FRAME_CLASS_NAMES
@@ -71,6 +94,7 @@ internal fun frameClassNamesOfCurrentOs(): List<String> {
 /**
  * The classes of every OS, from the class loading logs of the frame creation, of the modal welcome frame, and of the recent project
  * tree of the non-modal welcome screen. The packages come in the order of their first use, and so do the names in a package.
+ * The last packages hold the classes that the first `panel {}` loads, and the views of the first HTML label.
  */
 @VisibleForTesting
 internal val COMMON_FRAME_CLASS_NAMES: List<String> = listOf(
@@ -568,6 +592,49 @@ internal val COMMON_FRAME_CLASS_NAMES: List<String> = listOf(
     "com.intellij.util.text.",
     "Matcher",
   ),
+  classNames(
+    "com.intellij.openapi.ui.",
+    "DialogPanel",
+  ),
+  classNames(
+    "com.intellij.ui.dsl.builder.",
+    "BuilderKt", "IntelliJSpacingConfiguration", "SpacingConfigurationKt", "EmptySpacingConfiguration", "DslComponentProperty",
+    "RowLayout", "LabelPosition", "RightGap", "TopGap", "BottomGap", "HyperlinkEventAction", "AlignKt", "AlignBoth",
+    "AlignX\$FILL", "AlignX\$LEFT", "AlignX\$CENTER", "AlignX\$RIGHT", "AlignY\$FILL", "AlignY\$TOP", "AlignY\$CENTER", "AlignY\$BOTTOM",
+  ),
+  classNames(
+    "com.intellij.ui.dsl.builder.impl.",
+    "KotlinUiDslServiceImpl", "KotlinUiDslServiceImplKt", "DialogPanelConfig", "Context", "PanelImpl", "PanelContext", "RowImpl",
+    "CellImpl", "PlaceholderImpl", "PlaceholderCellData", "PanelBuilder", "CellValidationImpl", "OnChangeManager", "UtilsKt",
+    "InternalUtilsKt", "DslComponentPropertyInternal", "DslGridFormKt", "GridFormKt", "GridFormRow", "GridFormComponentCell",
+    "GridFormPanelCell", "GridFormDeferredCell",
+  ),
+  classNames(
+    "com.intellij.ui.dsl.builder.components.",
+    "DslLabel", "DslLabelKt", "DslLabelType",
+  ),
+  classNames(
+    "com.intellij.ui.dsl.gridLayout.",
+    "GridLayout", "GridLayoutComponentProperty", "Constraints", "HorizontalAlign", "VerticalAlign", "UnscaledGapsKt", "UnscaledGapsImpl",
+    "UnscaledGapsXKt", "UnscaledGapsXImpl", "UnscaledGapsYKt", "UnscaledGapsYImpl",
+  ),
+  classNames(
+    "com.intellij.ui.dsl.gridLayout.builders.",
+    "RowsGridBuilder",
+  ),
+  classNames(
+    "com.intellij.ui.dsl.gridLayout.impl.",
+    "GridImpl", "GridImplKt", "LayoutData", "ColumnsSizeCalculator", "ColumnsSizeCalculatorKt", "BaselineData", "RowBaselineData",
+    "Gaps", "ComponentCell", "GridCell", "PreCalculationData", "LayoutCellData", "ColumnInfo", "SizeInfo", "SizeConstrainsData",
+  ),
+  classNames(
+    "javax.swing.plaf.basic.",
+    "BasicHTML", "BasicHTML\$BasicEditorKit", "BasicHTML\$BasicDocument", "BasicHTML\$Renderer",
+  ),
+  classNames(
+    "javax.swing.text.html.",
+    "BlockView", "ParagraphView", "InlineView", "ImageView", "HTMLEditorKit\$HTMLFactory",
+  ),
 ).flatten()
 
 /**
@@ -712,3 +779,14 @@ internal val LOAD_ONLY_FRAME_CLASS_NAMES: Set<String> = listOf(
 ).flatten().toHashSet() + OTHER_OS_FRAME_CLASS_NAMES
 
 private fun classNames(packagePrefix: String, vararg simpleNames: String): List<String> = simpleNames.map { packagePrefix + it }
+
+/**
+ * Keeps the warm-up away from the default style sheet, which all HTML kits share.
+ * The JDK publishes that sheet before it loads the rules, and the IDE replaces it on the EDT at start-up,
+ * so a first use from the warm-up could race with the replacement.
+ */
+private class OwnStyleSheetHtmlEditorKit : HTMLEditorKit() {
+  private val ownStyleSheet = StyleSheet()
+
+  override fun getStyleSheet(): StyleSheet = ownStyleSheet
+}

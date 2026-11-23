@@ -3591,7 +3591,6 @@ com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotSta
 sun.awt.X11.XExposeEvent
 com.intellij.openapi.vfs.impl.ArchiveHandler$1
 com.intellij.openapi.util.io.BufferExposingByteArrayInputStream
-com.intellij.ide.ui.UiDslAndHtmlClassesWarmUp
 com.intellij.openapi.vfs.impl.GenericZipFile
 com.intellij.util.containers.LinkedCustomHashMap$Entry
 com.intellij.openapi.vfs.impl.ZipHandlerBase$InputStreamWrapper
@@ -3602,7 +3601,6 @@ com.intellij.ide.IdeTooltipManager
 com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OsSpecificState
 sun.security.ssl.SSLCipher$T13GcmWriteCipherGenerator
 com.intellij.psi.stubs.StubSerializationHelper
-com.intellij.ide.ui.UiDslAndHtmlClassesWarmUpKt
 sun.security.ssl.SSLCipher$T12CC20P1305ReadCipherGenerator
 com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
 com.intellij.psi.stubs.StubTreeSerializerBase
