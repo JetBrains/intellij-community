@@ -64,7 +64,12 @@ sealed class PythonInterpreter {
    */
   abstract val ownerDir: Path
 
-  /** The project whose registry built this interpreter. */
+  /**
+   * The project whose registry built this interpreter.
+   *
+   * The interpreter holds a strong reference to [project]. Do not keep an interpreter after its project closes. A cache
+   * that holds something for an interpreter must end with [lifetime], or live in a holder of [project].
+   */
   val project: Project
 
   /**
