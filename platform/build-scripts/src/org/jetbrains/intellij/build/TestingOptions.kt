@@ -224,4 +224,10 @@ open class TestingOptions {
    * This may be required as a workaround for the blocked TeamCity agent stdout.
    */
   val redirectStdOutToFile: Boolean = getBooleanProperty(REDIRECT_STDOUT_TO_FILE, false)
+
+  /**
+   * If `true`, the class path of each test process goes to the build log.
+   * Otherwise, on TeamCity it goes to a build artifact, and the build log names the artifact.
+   */
+  val printTestClasspath: Boolean = getBooleanProperty("intellij.build.test.print.classpath", false)
 }
