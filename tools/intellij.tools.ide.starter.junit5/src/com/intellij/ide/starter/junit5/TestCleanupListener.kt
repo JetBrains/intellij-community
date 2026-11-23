@@ -5,6 +5,7 @@ import com.intellij.ide.starter.config.coroutineScopesCancellationTimeout
 import com.intellij.ide.starter.coroutine.CommonScope.perClassSupervisorScope
 import com.intellij.ide.starter.coroutine.CommonScope.perTestSupervisorScope
 import com.intellij.ide.starter.coroutine.CommonScope.testSuiteSupervisorScope
+import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.tools.ide.util.common.logError
 import kotlinx.coroutines.CancellationException
@@ -20,15 +21,20 @@ import org.junit.platform.engine.support.descriptor.ClassSource
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.TestPlan
+import org.kodein.di.DI
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * The listener do the following:
  * * Cancels [perTestSupervisorScope], [perClassSupervisorScope] and [testSuiteSupervisorScope]
  * * Drops all subscriptions to StarterBus
  * * Resets configuration storage
+ * * Restores the [di] of the start of each test class when the class finishes, so a class does not change the [di] of the next ones
  *
  */
 open class TestCleanupListener : TestExecutionListener {
+  private val diAtClassStart = ConcurrentHashMap<String, DI>()
+
   fun cancelPerTestSupervisorScope(testIdentifier: TestIdentifier, message: String? = null) {
     if (!testIdentifier.isTest) return
 
@@ -36,11 +42,18 @@ open class TestCleanupListener : TestExecutionListener {
     ConfigurationStorage.instance().resetToDefault()
   }
 
+  override fun executionStarted(testIdentifier: TestIdentifier) {
+    if (testIdentifier.isClassContainer()) {
+      diAtClassStart[testIdentifier.uniqueId] = di
+    }
+  }
+
   override fun executionFinished(testIdentifier: TestIdentifier, testExecutionResult: TestExecutionResult) {
     val message = "Test `${testIdentifier.displayName}` execution is finished"
     cancelPerTestSupervisorScope(testIdentifier, message)
     if (testIdentifier.isClassContainer()) {
       cancelSupervisorScopeChildren(perClassSupervisorScope, message)
+      diAtClassStart.remove(testIdentifier.uniqueId)?.let { if (di !== it) di = it }
     }
   }
 
