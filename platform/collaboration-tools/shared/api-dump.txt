@@ -274,8 +274,6 @@ f:com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadComment
 - f:createUnfoldComponent(I,kotlin.jvm.functions.Function1):javax.swing.JComponent
 com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - a:getAvatarUrl():java.lang.String
-f:com.intellij.collaboration.ui.util.popup.PopupAwaitingKt
-- sf:awaitClose(com.intellij.openapi.ui.popup.JBPopup,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.collaboration.util.ChangesSelectionKt
 - sf:getSelectedChange(com.intellij.collaboration.util.ChangesSelection):com.intellij.openapi.vcs.changes.RefComparisonChange
 - sf:withLocation(com.intellij.collaboration.util.ChangesSelection$Precise,kotlin.Pair):com.intellij.collaboration.util.ChangesSelection$Precise

@@ -757,6 +757,8 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):V
 - sf:bindTooltipTextIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindVisibilityIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
+*f:com.intellij.collaboration.ui.util.popup.PopupAwaitingKt
+- sf:awaitClose(com.intellij.openapi.ui.popup.JBPopup,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.collaboration.util.ChangesSelection
 - a:getChanges():java.util.List
 - a:getSelectedIdx():I
