@@ -578,6 +578,24 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
         return isNullOrEmpty(defaultResult, element) ? result : defaultResult;
       }
 
+      /**
+       * A {@code null} quick result keeps the current text, so the default value does not replace it.
+       */
+      @Override
+      public @Nullable Result calculateQuickResult(ExpressionContext context) {
+        Result result = expression.calculateQuickResult(context);
+        if (result == null) return null;
+        PsiElement element = context.getPsiElementAtStartOffset();
+        if (!isNullOrEmpty(result, element)) return result;
+        Result defaultResult = defaultValue.calculateQuickResult(context);
+        return isNullOrEmpty(defaultResult, element) ? result : defaultResult;
+      }
+
+      @Override
+      public boolean requiresCommittedPSI() {
+        return expression.requiresCommittedPSI() || defaultValue.requiresCommittedPSI();
+      }
+
       @Override
       public LookupElement @Nullable [] calculateLookupItems(ExpressionContext context) {
         return expression.calculateLookupItems(context);

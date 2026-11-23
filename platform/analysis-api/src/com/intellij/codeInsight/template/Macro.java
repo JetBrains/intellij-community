@@ -33,8 +33,15 @@ public abstract class Macro {
 
   public abstract @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context);
 
+  /**
+   * Calculates the live preview of the variable after each typing command in the template.
+   * Keep it cheap: avoid a resolve and an index access.
+   * Return {@code null} to keep the current text until the next full calculation.
+   * <p>
+   * The default implementation calls {@link #calculateResult}.
+   */
   public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
-    return null;
+    return calculateResult(params, context);
   }
 
   public LookupElement @Nullable [] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {

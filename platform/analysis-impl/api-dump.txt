@@ -373,6 +373,7 @@ com.intellij.codeInsight.template.TemplateManagerListener
 c:com.intellij.codeInsight.template.impl.MacroCallNode
 - <init>(com.intellij.codeInsight.template.Macro):V
 - addParameter(com.intellij.codeInsight.template.Expression):V
+- calculateQuickResult(com.intellij.codeInsight.template.ExpressionContext):com.intellij.codeInsight.template.Result
 f:com.intellij.codeInsight.template.impl.MacroParser
 - s:parse(java.lang.String):com.intellij.codeInsight.template.Expression
 com.intellij.codeInsight.template.impl.ModCommandAwareTemplateOptionalProcessor

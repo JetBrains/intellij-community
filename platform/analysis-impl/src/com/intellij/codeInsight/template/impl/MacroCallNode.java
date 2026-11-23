@@ -35,6 +35,12 @@ public class MacroCallNode extends Expression {
   }
 
   @Override
+  public Result calculateQuickResult(ExpressionContext context) {
+    Expression[] parameters = myParameters.toArray(new Expression[0]);
+    return getMacro().calculateQuickResult(parameters, context);
+  }
+
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     Expression[] parameters = myParameters.toArray(new Expression[0]);
     return getMacro().calculateLookupItems(parameters, context);
