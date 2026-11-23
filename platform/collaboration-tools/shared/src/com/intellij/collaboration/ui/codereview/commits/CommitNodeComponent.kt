@@ -21,13 +21,13 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 open class CommitNodeComponent : JComponent() {
 
-  var type = SINGLE
+  var type: Type = SINGLE
 
   init {
     isOpaque = false
   }
 
-  override fun getPreferredSize() = JBDimension(
+  override fun getPreferredSize(): JBDimension = JBDimension(
     PaintParameters.getElementWidth(PaintParameters.ROW_HEIGHT).toInt(),
     PaintParameters.ROW_HEIGHT
   )
@@ -63,7 +63,7 @@ open class CommitNodeComponent : JComponent() {
     g.fill(circle)
   }
 
-  protected open fun calcRadius(rect: Rectangle) = PaintParameters.getCircleRadius(rect.height).toInt()
+  protected open fun calcRadius(rect: Rectangle): Int = PaintParameters.getCircleRadius(rect.height).toInt()
 
   private fun drawEdgeUp(g: Graphics2D, rect: Rectangle) {
     val y1 = 0.0
@@ -84,7 +84,7 @@ open class CommitNodeComponent : JComponent() {
     g.fill(line)
   }
 
-  protected open fun calcLineThickness(rect: Rectangle) = PaintParameters.getLineThickness(rect.height).toFloat()
+  protected open fun calcLineThickness(rect: Rectangle): Float = PaintParameters.getLineThickness(rect.height).toFloat()
 
   enum class Type {
     SINGLE, FIRST, MIDDLE, LAST

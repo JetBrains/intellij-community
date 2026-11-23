@@ -29,15 +29,16 @@ abstract class ComplexPathVirtualFileWithoutContent(protected val sessionId: Str
     isWritable = false
   }
 
-  override fun enforcePresentableName() = true
+  override fun enforcePresentableName(): Boolean = true
 
   abstract override fun getFileSystem(): ComplexPathVirtualFileSystem<*>
   override fun getFileType(): FileType = FileTypes.UNKNOWN
 
-  override fun getLength() = 0L
-  override fun contentsToByteArray() = throw UnsupportedOperationException()
-  override fun getInputStream() = throw UnsupportedOperationException()
-  override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long) = throw UnsupportedOperationException()
+  override fun getLength(): Long = 0L
+  override fun contentsToByteArray(): Nothing = throw UnsupportedOperationException()
+  override fun getInputStream(): Nothing = throw UnsupportedOperationException()
+  override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): Nothing =
+    throw UnsupportedOperationException()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

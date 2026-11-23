@@ -24,7 +24,7 @@ abstract class CodeReviewDiffVirtualFile(sourceId: String)
   abstract override fun getPath(): String
   abstract override fun getPresentablePath(): String
 
-  final override fun enforcePresentableName() = true
+  final override fun enforcePresentableName(): Boolean = true
 
   abstract override fun isValid(): Boolean
 

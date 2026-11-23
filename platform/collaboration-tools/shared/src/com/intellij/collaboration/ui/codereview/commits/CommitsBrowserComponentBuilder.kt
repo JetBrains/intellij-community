@@ -172,6 +172,6 @@ class CommitsBrowserComponentBuilder(private val project: Project,
   }
 
   companion object {
-    val COMMITS_LIST_KEY = Key.create<JList<VcsCommitMetadata>>("COMMITS_LIST")
+    val COMMITS_LIST_KEY: Key<JList<VcsCommitMetadata>> = Key.create("COMMITS_LIST")
   }
 }
