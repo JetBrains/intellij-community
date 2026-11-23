@@ -1,0 +1,14 @@
+// INLINE_METHOD_THIS: true
+
+class A {
+    operator fun plus(other: A): Int {
+        println("plus")
+        return 1
+    }
+}
+
+fun calculate(a: A): Int = (a + a) + 1
+
+fun use(a: A) {
+    (a + a) + 1
+}

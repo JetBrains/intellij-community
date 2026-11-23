@@ -2030,6 +2030,49 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inline/namedFunction/operatorSideEffects")
+        public static class OperatorSideEffects extends AbstractKotlinFirInlineTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractArrayAccess.kt")
+            public void testAbstractArrayAccess() throws Exception {
+                runTest("testData/inline/namedFunction/operatorSideEffects/abstractArrayAccess.kt");
+            }
+
+            @TestMetadata("customExtension.kt")
+            public void testCustomExtension() throws Exception {
+                runTest("testData/inline/namedFunction/operatorSideEffects/customExtension.kt");
+            }
+
+            @TestMetadata("nestedOperator.kt")
+            public void testNestedOperator() throws Exception {
+                runTest("testData/inline/namedFunction/operatorSideEffects/nestedOperator.kt");
+            }
+
+            @TestMetadata("repeatedArgument.kt")
+            public void testRepeatedArgument() throws Exception {
+                runTest("testData/inline/namedFunction/operatorSideEffects/repeatedArgument.kt");
+            }
+
+            @TestMetadata("stdlibOperators.kt")
+            public void testStdlibOperators() throws Exception {
+                runTest("testData/inline/namedFunction/operatorSideEffects/stdlibOperators.kt");
+            }
+
+            @TestMetadata("unusedArgument.kt")
+            public void testUnusedArgument() throws Exception {
+                runTest("testData/inline/namedFunction/operatorSideEffects/unusedArgument.kt");
+            }
+
+            @TestMetadata("unusedReceiver.kt")
+            public void testUnusedReceiver() throws Exception {
+                runTest("testData/inline/namedFunction/operatorSideEffects/unusedReceiver.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inline/namedFunction/returnAtEnd")
         public static class ReturnAtEnd extends AbstractKotlinFirInlineTest {
             private void runTest(String testDataFilePath) throws Exception {

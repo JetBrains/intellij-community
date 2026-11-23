@@ -127,6 +127,7 @@ internal class ValueParameterInliner(
 
             val parameterName = parameter.name()
             val expression: KtExpression = argument.expression.apply {
+                markSideEffects(this)
                 putCopyableUserData(PARAMETER_VALUE_KEY, parameterName)
             }
 

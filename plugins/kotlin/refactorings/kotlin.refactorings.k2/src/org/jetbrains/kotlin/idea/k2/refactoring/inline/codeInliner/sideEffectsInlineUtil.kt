@@ -33,6 +33,7 @@ internal fun KtExpression?.shouldKeepValue(usageCount: Int): Boolean {
         is KtSimpleNameExpression -> false
         is KtQualifiedExpression -> receiverExpression.shouldKeepValue(usageCount) || selectorExpression.shouldKeepValue(usageCount)
         is KtUnaryExpression -> operationToken in setOf(KtTokens.PLUSPLUS, KtTokens.MINUSMINUS) ||
+                getCopyableUserData(InlineDataKeys.SIDE_EFFECTS) == true ||
                 baseExpression.shouldKeepValue(usageCount)
 
         is KtStringTemplateExpression -> entries.any {
@@ -49,6 +50,7 @@ internal fun KtExpression?.shouldKeepValue(usageCount: Int): Boolean {
 
         is KtBinaryExpression -> !sideEffectOnly ||
                 operationToken == KtTokens.IDENTIFIER ||
+                getCopyableUserData(InlineDataKeys.SIDE_EFFECTS) == true ||
                 left.shouldKeepValue(usageCount) ||
                 right.shouldKeepValue(usageCount)
 

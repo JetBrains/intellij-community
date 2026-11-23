@@ -477,6 +477,7 @@ class CodeInliner(
         }
 
         if (receiver != null) {
+            markSideEffects(receiver)
             receiver.putCopyableUserData(RECEIVER_VALUE_KEY, Unit)
             for (instanceExpression in codeToInline.collectDescendantsOfType<KtInstanceExpressionWithLabel> {
                 it is KtThisExpression

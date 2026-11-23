@@ -1,14 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_NAME
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeToInlineBuilder
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.SIDE_EFFECTS
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
@@ -17,11 +18,12 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.resolve.ImportPath
 
 open class CodeToInlineBuilder(
@@ -72,26 +74,23 @@ internal fun markSideEffects(mainExpression: KtExpression?) {
         mainExpression,
         false,
         KtArrayAccessExpression::class.java,
-        KtCallExpression::class.java
+        KtCallExpression::class.java,
+        KtBinaryExpression::class.java,
+        KtUnaryExpression::class.java
     ).forEach { call ->
-        if (call is KtArrayAccessExpression) {
-            if (call.isCustomOperator()) {
-                call.putCopyableUserData(SIDE_EFFECTS, true)
-            }
-        } else if (call is KtCallExpression) {
+        if (call is KtCallExpression) {
             if (call.isContextOfCall()) {
                 call.putCopyableUserData(SIDE_EFFECTS, false)
             }
+        } else {
+            call.putCopyableUserData(SIDE_EFFECTS, call.isCustomOperator())
         }
     }
 }
 
-private fun KtArrayAccessExpression.isCustomOperator(): Boolean = analyze(this) {
-    when (val function = resolveSuccessfulExpressionSymbol()?.psi) {
-        is KtDeclarationWithBody -> (function.navigationElement as? KtDeclarationWithBody)?.hasBody() == true
-        is PsiMethod -> function.body != null
-        else -> false
-    }
+private fun KtExpression.isCustomOperator(): Boolean = analyze(this) {
+    val function = resolveSuccessfulExpressionSymbol() as? KaCallableSymbol ?: return@analyze false
+    function.callableId?.packageName?.startsWith(BUILT_INS_PACKAGE_NAME) != true
 }
 
 private fun KtCallExpression.isContextOfCall(): Boolean {

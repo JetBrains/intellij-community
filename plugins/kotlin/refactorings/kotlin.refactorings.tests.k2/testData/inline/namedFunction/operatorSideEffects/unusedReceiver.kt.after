@@ -1,0 +1,14 @@
+// INLINE_METHOD_THIS: true
+
+class A {
+    operator fun unaryMinus(): Int {
+        println("unaryMinus")
+        return 1
+    }
+}
+
+fun Int.ignore() {}
+
+fun use(a: A) {
+    (-a)
+}

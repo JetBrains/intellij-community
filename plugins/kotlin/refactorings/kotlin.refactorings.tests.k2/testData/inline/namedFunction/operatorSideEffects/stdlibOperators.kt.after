@@ -1,0 +1,7 @@
+// INLINE_METHOD_THIS: true
+
+fun calculate(value: Int, text: String, values: List<Int>): Boolean =
+    (value + value in values) && (-value < value) && (text + text == text)
+
+fun use(value: Int, text: String, values: List<Int>) {
+}
