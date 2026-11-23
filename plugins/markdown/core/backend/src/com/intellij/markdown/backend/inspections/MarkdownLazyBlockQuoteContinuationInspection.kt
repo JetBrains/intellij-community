@@ -16,6 +16,7 @@ import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
+import org.intellij.plugins.markdown.lang.isAirPrompt
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
 import org.intellij.plugins.markdown.lang.supportsMarkdown
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 class MarkdownLazyBlockQuoteContinuationInspection : LocalInspectionTool() {
   override fun isAvailableForFile(file: PsiFile): Boolean {
     // An Air prompt quotes chat messages with `>`, so text after a quote is intentional there
-    return file.supportsMarkdown() && !file.viewProvider.virtualFile.name.startsWith("AirPrompt")
+    return file.supportsMarkdown() && !file.viewProvider.virtualFile.isAirPrompt()
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

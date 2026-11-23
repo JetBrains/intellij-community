@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.softwrap.CompositeSoftWrapPainter
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getIntellisenseLimit
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -24,6 +25,7 @@ import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.isAirPrompt
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 import java.awt.Graphics
@@ -167,10 +169,12 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
       EditorSettingsState::myIsVirtualSpace,
     )
 
-    /** Returns null for a disposed editor, and for an editor whose settings are not [SettingsImpl]. */
+    /** Returns null for a disposed editor, and for an editor whose settings are not [SettingsImpl]. Air keeps its own look as well. */
     @RequiresEdt
     fun getOrCreate(editor: EditorEx): MarkdownLivePreviewEditorAppearance? {
       if (editor.isDisposed) return null
+      val file = FileDocumentManager.getInstance().getFile(editor.document)
+      if (file != null && file.isAirPrompt()) return null
       editor.getUserData(KEY)?.let { return it }
       val settings = editor.settings as? SettingsImpl ?: return null
       return MarkdownLivePreviewEditorAppearance(editor, settings).also {

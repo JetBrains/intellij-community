@@ -2,7 +2,6 @@ package org.intellij.plugins.markdown.lang
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
@@ -12,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
 fun Language.isMarkdownLanguage(): Boolean {
   return this == MarkdownLanguage.INSTANCE
@@ -45,4 +45,10 @@ fun FileType.isMarkdownType(): Boolean {
 
 fun VirtualFile.hasMarkdownType(): Boolean {
   return FileTypeRegistry.getInstance().isFileOfType(this, MarkdownFileType.INSTANCE)
+}
+
+/** Air names the document of each chat prompt with the `AirPrompt` prefix. */
+@ApiStatus.Internal
+fun VirtualFile.isAirPrompt(): Boolean {
+  return name.startsWith("AirPrompt")
 }
