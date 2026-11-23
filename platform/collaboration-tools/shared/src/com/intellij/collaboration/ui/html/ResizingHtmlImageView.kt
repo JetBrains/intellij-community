@@ -28,6 +28,7 @@ import java.net.URL
 import java.util.Base64
 import javax.swing.Icon
 import javax.swing.event.DocumentEvent
+import javax.swing.text.AttributeSet
 import javax.swing.text.BadLocationException
 import javax.swing.text.Element
 import javax.swing.text.FlowView
@@ -72,6 +73,7 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
     }
 
   private var cachedContainer: Container? = null
+  private var cachedAttributes: AttributeSet? = null
   private var lastPaintedRectangle: Rectangle? = null
 
   override fun getPreferredSpan(axis: Int): Float =
@@ -119,6 +121,9 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
   override fun getAlignment(axis: Int): Float =
     if (axis == Y_AXIS) getImageVerticalAlignment() else super.getAlignment(axis)
 
+  override fun getAttributes(): AttributeSet =
+    cachedAttributes ?: (document as HTMLDocument).styleSheet.getViewAttributes(this).also { cachedAttributes = it }
+
   override fun paint(g: Graphics, allocation: Shape) {
     val rect = if (allocation is Rectangle) allocation else allocation.bounds
     val currentLoader = loader
@@ -131,6 +136,7 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
   }
 
   override fun changedUpdate(e: DocumentEvent?, a: Shape?, f: ViewFactory?) {
+    cachedAttributes = null
     // ignore if it does not have relevant changes
     if (e?.getChange(element) == null) return
     super.changedUpdate(e, a, f)
@@ -139,6 +145,7 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
   }
 
   override fun setParent(parent: View?) {
+    cachedAttributes = null
     super.setParent(parent)
     cachedContainer = parent?.container
   }

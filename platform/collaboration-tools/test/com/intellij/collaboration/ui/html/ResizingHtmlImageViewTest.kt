@@ -20,7 +20,10 @@ import java.awt.image.MemoryImageSource
 import java.util.Hashtable
 import javax.swing.JEditorPane
 import javax.swing.text.GlyphView
+import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.View
+import javax.swing.text.html.CSS
+import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.StyleSheet
 import kotlin.math.roundToInt
 
@@ -78,6 +81,21 @@ internal class ResizingHtmlImageViewTest {
   }
 
   @Test
+  fun `middle alignment follows a font change after the first layout`(): Unit = timeoutRunBlocking {
+    val initial = renderImage(Dimension(40, 80), attributes = "class='badge'")
+    val updated = renderImage(Dimension(40, 80), attributes = "class='badge'", afterFirstLayout = { pane ->
+      val document = pane.document as HTMLDocument
+      val attributes = SimpleAttributeSet()
+      document.styleSheet.addCSSAttribute(attributes, CSS.Attribute.FONT_SIZE, "32pt")
+      document.setParagraphAttributes(0, document.length, attributes, false)
+    })
+
+    val initialOffset = initial.textBaselines.first() - initial.image.centerY
+    val updatedOffset = updated.textBaselines.first() - updated.image.centerY
+    assertThat(updatedOffset).isGreaterThan(initialOffset)
+  }
+
+  @Test
   fun `image alignment stays local to the image`(): Unit = timeoutRunBlocking {
     for (attributes in listOf("style='vertical-align: top'", "style='vertical-align: middle'", "align='middle'")) {
       val layout = renderImage(Dimension(16, 16), body = { "<table><tr><td $attributes>before $it after</td></tr></table>" })
@@ -126,6 +144,7 @@ internal class ResizingHtmlImageViewTest {
 
   private suspend fun renderImage(
     imageSize: Dimension, paneWidth: Int = 400, attributes: String = "", image: Image? = null,
+    afterFirstLayout: ((JEditorPane) -> Unit)? = null,
     body: (String) -> String = { "<p>before $it after</p>" },
   ): Layout {
     val requested = CompletableDeferred<Unit>()
@@ -147,6 +166,10 @@ internal class ResizingHtmlImageViewTest {
 
     return withContext(Dispatchers.UI) {
       pane.render()
+      afterFirstLayout?.let {
+        it(pane)
+        pane.render()
+      }
       var imageBounds: Rectangle? = null
       val baselines = ArrayList<Int>()
       val textTops = ArrayList<Int>()
