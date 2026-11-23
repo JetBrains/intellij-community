@@ -57,6 +57,7 @@ intellij.debugger.jvm.advanced.java.tests
 intellij.debugger.jvm.advanced.kotlin.tests
 intellij.debugger.jvm.advanced.kotlin.tests.java
 intellij.debugger.jvm.advanced.mcpServer.tests
+intellij.debugger.lambdaDebuggerTests.java
 intellij.debugger.logpoints.frontend.tests
 intellij.debugger.logpoints.java.tests
 intellij.debuggerMcp.tests
@@ -200,6 +201,7 @@ intellij.platform.core.impl.tests
 intellij.platform.core.nio.fs.tests
 intellij.platform.coverage.tests
 intellij.platform.credentialStore.impl.tests
+intellij.platform.daemon.lambdaTests
 intellij.platform.debugger.impl.frontend.tests
 intellij.platform.debugger.impl.tests
 intellij.platform.debugger.impl.ui.tests
@@ -269,6 +271,7 @@ intellij.platform.searchEverywhere.backend.tests
 intellij.platform.searchEverywhere.frontend.tests
 intellij.platform.serviceContainer.tests
 intellij.platform.settings.local.tests
+intellij.platform.settings.v2.lambdaTests
 intellij.platform.settings.v2.test
 intellij.platform.smRunner.tests
 intellij.platform.sqlite.tests
@@ -330,6 +333,7 @@ intellij.python.requirements.tests
 intellij.python.ruff.tests
 intellij.python.test.env.junit5
 intellij.python.venv.tests
+intellij.rdct.lambdaTestsUi
 intellij.regexp.tests
 intellij.relaxng.tests
 intellij.remoteControl.tests
