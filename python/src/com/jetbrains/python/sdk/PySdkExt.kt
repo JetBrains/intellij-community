@@ -1,35 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.remoteSourcesLocalPath
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.nio.file.Path
-
-@Internal
-fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
-  val basePath = module?.baseDir?.path
-  val associatedPath = associatedModulePath
-  if (basePath != null && associatedPath == basePath) return true
-  if (isAssociatedWithAnotherModule(module)) return false
-  return (module != null && isLocatedInsideModule(module)) || containsModuleName(module)
-}
-
-@Internal
-fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
-  val basePath = module?.baseDir?.path ?: return false
-  val associatedPath = associatedModulePath ?: return false
-  return basePath != associatedPath
-}
 
 /**
  * The interpreter of the main Python project, for a caller that cannot suspend and runs after startup, such as a
@@ -47,32 +28,14 @@ fun Project.mainPythonInterpreterIfReady(): PythonInterpreter? = findMainEvoPyPr
 @Deprecated(
   "An interpreter belongs to a Python project. Use the interpreter of the PyProject, or findMainPythonInterpreter for the main one.",
   ReplaceWith("mainPythonInterpreterIfReady()?.getSdkAPI()", "com.intellij.python.sdk.backend.getSdkAPI"),
+  DeprecationLevel.ERROR
 )
 val Project.pythonSdk: Sdk?
-  @ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("An interpreter belongs to a Python project. Use the interpreter of the PyProject.")
   @Suppress("DEPRECATION") // It still answers an SDK.
   get() = mainPythonInterpreterIfReady()?.getSdkAPI()
 
-
-internal val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = pySdkAdditionalData.flavor
-
-private fun Sdk.isLocatedInsideModule(module: Module): Boolean {
-  val moduleDir = module.baseDir
-  val sdkDir = homeDirectory
-  return moduleDir != null && sdkDir != null && VfsUtil.isAncestor(moduleDir, sdkDir, true)
-}
-
-
-private fun Sdk.containsModuleName(module: Module?): Boolean {
-  val path = homePath ?: return false
-  val name = module?.name ?: return false
-  return path.contains(name, true)
-}
-
-
-@JvmName("getOrCreateAdditionalData")
-fun getOrCreateAdditionalDataOld(sdk: Sdk): PythonSdkAdditionalData = sdk.pySdkAdditionalData
 
 /**
  * Where a "remote_sources" folder for certain SDK is stored

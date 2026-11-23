@@ -2,7 +2,6 @@
 package com.jetbrains.python.packaging.pip
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PipPackageManagerEngine(
-  private val project: Project,
   private val interpreter: PythonInterpreter,
 ) : PythonPackageManagerEngine {
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {

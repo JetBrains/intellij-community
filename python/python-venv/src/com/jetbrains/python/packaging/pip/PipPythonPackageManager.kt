@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.python.sdk.backend.languageLevel
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
 import com.intellij.psi.PsiFile
@@ -51,7 +50,7 @@ open class PipPythonPackageManager(interpreter: PythonInterpreter) : PythonPacka
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> =
     listOf(PythonManagerCliSpec("pip", { localPythonBinary() }, runAsModule = true))
 
-  private val engine = PipPackageManagerEngine(project, interpreter)
+  private val engine = PipPackageManagerEngine(interpreter)
 
   /** The Python binary of a native interpreter. A CLI on an Eel machine cannot run the binary of a target. */
   private fun localPythonBinary(): Path? = when (val interpreter = interpreter) {

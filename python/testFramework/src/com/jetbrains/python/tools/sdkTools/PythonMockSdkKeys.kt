@@ -1,11 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools.sdkTools
 
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.python.sdk.backend.PythonMockInterpreterKeys
 import org.jetbrains.annotations.TestOnly
-import java.nio.file.Path
 
 /**
  * The data of a mock SDK of a test, see [PythonMockSdk]. A mock SDK cannot run, so its facts come from here, see
@@ -25,13 +23,4 @@ object PythonMockSdkKeys {
   @JvmField
   val MARKER: Key<Boolean> = PythonMockInterpreterKeys.MARKER
 
-  /** Whether [sdk] is a mock SDK of a test. */
-  @JvmStatic
-  fun isMock(sdk: Sdk): Boolean =
-    sdk.getUserData(VERSION) != null || sdk.getUserData(SYS_PATH) != null || sdk.getUserData(MARKER) != null
-
-  /** The `sys.path` of the mock [sdk]: its [SYS_PATH], else the directory of its home path. */
-  @JvmStatic
-  fun sysPath(sdk: Sdk): List<String> =
-    sdk.getUserData(SYS_PATH) ?: listOf(Path.of(requireNotNull(sdk.homePath) { "No home path for $sdk" }).parent.toString())
 }

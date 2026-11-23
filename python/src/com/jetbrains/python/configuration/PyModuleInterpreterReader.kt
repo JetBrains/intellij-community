@@ -10,7 +10,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.pythonInterpretersIfReady
 import com.intellij.python.sdk.backend.getSdkAPI
 import org.jetbrains.annotations.ApiStatus
@@ -40,24 +39,6 @@ fun findModuleInterpreterIfReady(module: Module?): PythonInterpreter? = module?.
 @ApiStatus.Internal
 fun hasModuleInterpreterIfReady(module: Module?): Boolean = findModuleInterpreterIfReady(module) != null
 
-/** [findModuleSdkIfReady] for the main Python project of [project], for a Java caller that has no module. */
-@ApiStatus.Internal
-fun findMainSdkIfReady(project: Project): Sdk? {
-  @Suppress("DEPRECATION") // The Java callers still take an SDK.
-  return project.findMainEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
-}
-
-/** The module of the main Python project of [project], read from the snapshot, for a Java caller. */
-@ApiStatus.Internal
-fun findMainModuleIfReady(project: Project): Module? = project.findMainEvoPyProjectIfReady()?.pyProject?.residesOnModule
-
-/** The SDKs of every interpreter of the snapshot of [project]. Empty before the first snapshot. */
-@ApiStatus.Internal
-fun findAllSdksIfReady(project: Project): List<Sdk> {
-  @Suppress("DEPRECATION") // The callers still take an SDK.
-  return project.pythonInterpretersIfReady().orEmpty().map { it.getSdkAPI() }.distinct()
-}
-
 /** Every interpreter of the snapshot of [project]. Empty before the first snapshot. */
 @ApiStatus.Internal
-fun findAllInterpretersIfReady(project: Project): Set<PythonInterpreter> = project.pythonInterpretersIfReady().orEmpty()
+fun findAllInterpretersIfReady(project: Project): Set<PythonInterpreter> = project.pythonInterpretersIfReady().orEmpty() //

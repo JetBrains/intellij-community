@@ -58,7 +58,7 @@ class CondaPackageManager(interpreter: PythonInterpreter) : PythonPackageManager
     )
 
   private val condaPackageEngine = CondaPackageManagerEngine(interpreter)
-  private val pipPackageEngine = PipPackageManagerEngine(project, interpreter)
+  private val pipPackageEngine = PipPackageManagerEngine(interpreter)
 
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
     PythonManagerCliSpec("conda", { loadPythonCondaPath(eelApi.descriptor) }),
