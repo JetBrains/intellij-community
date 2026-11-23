@@ -64,18 +64,25 @@ final class DefaultUpdateRequestParametersProvider {
       }
     }
 
-    int consent = consentBit(ConsentOptions.condUsageStatsConsent())
-                  | consentBit(ConsentOptions.condAiDataCollectionConsent()) << 1
-                  | consentBit(ConsentOptions.condEAAutoReportConsent()) << 2
-                  | consentBit(ConsentOptions.condEAPFeedbackConsent()) << 3;
+    int consent = consentBitAcceptedConfirmed(ConsentOptions.condUsageStatsConsent())
+                  | consentBitAcceptedConfirmed(ConsentOptions.condAiDataCollectionConsent()) << 1
+                  | consentBitAcceptedOnly(ConsentOptions.condEAAutoReportConsent()) << 2 // error reporting ignores needs reconfirm
+                  | consentBitAcceptedConfirmed(ConsentOptions.condEAPFeedbackConsent()) << 3;
     parameters.put("consent", String.valueOf(consent));
   }
 
-  private static int consentBit(@NotNull Predicate<Consent> predicate) {
+  private static int consentBitAcceptedConfirmed(@NotNull Predicate<Consent> predicate) {
     Pair<List<Consent>, Boolean> result = ConsentOptions.getInstance().getConsents(predicate);
     List<Consent> consents = result.getFirst();
     boolean needsReconfirm = Boolean.TRUE.equals(result.getSecond());
     Consent consent = consents.isEmpty() ? null : consents.getFirst();
     return consent != null && consent.isAccepted() && !needsReconfirm ? 1 : 0;
+  }
+
+  private static int consentBitAcceptedOnly(@NotNull Predicate<Consent> predicate) {
+    Pair<List<Consent>, Boolean> result = ConsentOptions.getInstance().getConsents(predicate);
+    List<Consent> consents = result.getFirst();
+    Consent consent = consents.isEmpty() ? null : consents.getFirst();
+    return consent != null && consent.isAccepted() ? 1 : 0;
   }
 }

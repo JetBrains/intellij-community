@@ -10,31 +10,28 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import java.util.function.Predicate
 
 internal class ConsentUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("user.consents", 1)
+  private val GROUP = EventLogGroup("user.consents", 3)
 
-  private val USAGE_STATS = EventFields.Boolean("usage_stats", "User accepted sending anonymous usage statistics")
-  private val AI_DATA = EventFields.Boolean("ai_data", "User accepted AI data collection and use policy")
-  private val EA_AUTO_REPORT = EventFields.Boolean("ea_auto_report", "User accepted automatic error report sending")
-  private val EAP_FEEDBACK = EventFields.Boolean("eap_feedback", "User accepted sending EAP feedback")
+  private val CONSENT_ID = EventFields.Enum<ConsentId>("id", "Tracked user consent") { it.fieldValue }
+  private val ACCEPTED = EventFields.Boolean("accepted", "User accepted the consent")
+  private val NEEDS_RECONFIRM = EventFields.Boolean("needs_reconfirm", "The consent needs reconfirmation")
 
-  private val STATE = GROUP.registerVarargEvent("state", USAGE_STATS, AI_DATA, EA_AUTO_REPORT, EAP_FEEDBACK)
+  private val STATE = GROUP.registerEvent("state", CONSENT_ID, ACCEPTED, NEEDS_RECONFIRM)
 
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(): Set<MetricEvent> {
-    return setOf(
-      STATE.metric(
-        USAGE_STATS with accepted(ConsentOptions.condUsageStatsConsent()),
-        AI_DATA with accepted(ConsentOptions.condAiDataCollectionConsent()),
-        EA_AUTO_REPORT with accepted(ConsentOptions.condEAAutoReportConsent()),
-        EAP_FEEDBACK with accepted(ConsentOptions.condEAPFeedbackConsent()),
-      )
-    )
+    return ConsentId.entries.mapNotNullTo(LinkedHashSet()) { id ->
+      val (consents, needsReconfirm) = ConsentOptions.getInstance().getConsents(id.predicate())
+      val consent = consents.firstOrNull() ?: return@mapNotNullTo null
+      STATE.metric(id, consent.isAccepted, needsReconfirm)
+    }
   }
 
-  private fun accepted(predicate: Predicate<Consent>): Boolean {
-    val (consents, needsReconfirm) = ConsentOptions.getInstance().getConsents(predicate)
-    val consent = consents.firstOrNull() ?: return false
-    return consent.isAccepted && !needsReconfirm
+  private enum class ConsentId(val fieldValue: String, val predicate: () -> Predicate<Consent>) {
+    USAGE_STATS("usage_stats", ConsentOptions::condUsageStatsConsent),
+    AI_DATA("ai_data", ConsentOptions::condAiDataCollectionConsent),
+    EA_AUTO_REPORT("ea_auto_report", ConsentOptions::condEAAutoReportConsent),
+    EAP_FEEDBACK("eap_feedback", ConsentOptions::condEAPFeedbackConsent),
   }
 }
