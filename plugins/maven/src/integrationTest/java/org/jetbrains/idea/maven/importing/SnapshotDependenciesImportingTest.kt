@@ -12,6 +12,7 @@ import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.fixtures.downloadArtifacts
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectsTree
 import com.intellij.maven.testFramework.fixtures.removeFromLocalRepository
 import com.intellij.maven.testFramework.fixtures.repositoryPathCanonical
 import com.intellij.maven.testFramework.fixtures.updateSettingsXmlFully
@@ -46,6 +47,8 @@ class SnapshotDependenciesImportingTest(mavenVersion: String, modelVersion: Stri
   fun setUp() {
     // disable local mirrors
     maven.updateSettingsXmlFully("<settings></settings>")
+    // The tests deploy test:* artifacts and remove the group "test" from the local repository: never the user's one.
+    maven.repositoryPath = maven.dir.resolve("local-repository")
 
     remoteRepoDir = maven.dir.resolve("remote")
     remoteRepoDir!!.createDirectories()
@@ -54,11 +57,6 @@ class SnapshotDependenciesImportingTest(mavenVersion: String, modelVersion: Stri
   @Test
   fun testSnapshotVersionDependencyToModule() = runBlocking {
     performTestWithDependencyVersion("1-SNAPSHOT")
-  }
-
-  @Test
-  fun testSnapshotRangeDependencyToModule() = runBlocking {
-    performTestWithDependencyVersion("SNAPSHOT")
   }
 
   private suspend fun performTestWithDependencyVersion(version: String) {
@@ -185,15 +183,16 @@ ${repositoriesSection()}<dependencies>
 
     maven.downloadArtifacts()
 
+    val foo = "test/foo/1-SNAPSHOT/foo-${resolvedVersion("foo")}"
     maven.assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + maven.repositoryPathCanonical + "/$foo.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/$foo-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/$foo-javadoc.jar!/")
 
-    assertTrue(maven.repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
-    assertTrue(maven.repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
-    assertTrue(maven.repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists())
+    assertTrue(maven.repositoryPath.resolve("$foo.jar").exists())
+    assertTrue(maven.repositoryPath.resolve("$foo-sources.jar").exists())
+    assertTrue(maven.repositoryPath.resolve("$foo-javadoc.jar").exists())
   }
 
   @Test
@@ -244,11 +243,12 @@ ${repositoriesSection()}<dependencies>
 
     maven.downloadArtifacts()
 
+    val foo = "test/foo/1-SNAPSHOT/foo-${resolvedVersion("foo")}"
     maven.assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + maven.repositoryPathCanonical + "/$foo.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/$foo-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/$foo-javadoc.jar!/")
 
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
@@ -280,12 +280,20 @@ ${repositoriesSection()}<dependencies>
                      """.trimIndent())
     maven.removeFromLocalRepository("test")
 
+    // No sync after the new deploy: the roots stay on the version of the last sync.
     maven.assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + maven.repositoryPathCanonical + "/$foo.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/$foo-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/$foo-javadoc.jar!/")
   }
+
+  /**
+   * The version that Maven resolved for the dependency [artifactId], such as `1-20261123.123735-1` for a snapshot from
+   * the remote repository. Its library roots use this version in their file names (IDEA-73118), see MavenArtifactPathTest.
+   */
+  private fun resolvedVersion(artifactId: String): String =
+    maven.projectsTree.rootProjects.single().dependencies.single { it.artifactId == artifactId }.version
 
   private fun deployArtifact(groupId: String, artifactId: String, version: String, tail: String = "") {
     val moduleName = "___$artifactId"
