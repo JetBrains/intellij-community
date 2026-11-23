@@ -324,6 +324,7 @@ public final class DiffTree<OldNode, NewNode> {
    * <p>
    * The offsets of a child come from the offsets of the parent or of an earlier child and the lengths of the children between them.
    * The structure computes an offset with a walk up to the root, so a match reads it only when it knows no offset yet.
+   * When the offsets of a child are known and its range is equal in both texts, the comparator does not compare the texts again.
    */
   private int match(@NotNull OldNode oldParent,
                     OldNode[] oldChildren,
@@ -370,7 +371,7 @@ public final class DiffTree<OldNode, NewNode> {
         int oldStart = step > 0 ? oldCursor : oldCursor - oldLength;
         int newStart = step > 0 ? newCursor : newCursor - newLength;
         if (c11 == null) {
-          c11 = looksEqual(oldChild, newChild);
+          c11 = looksEqual(oldChild, newChild, oldLength == newLength && isTextEqual(oldStart, oldStart + oldLength, newStart));
         }
         if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
           if (step < 0 && newStart != oldStart && haveSameStart(oldParent, oldParentStart, newParent, newParentStart) &&
@@ -535,8 +536,17 @@ public final class DiffTree<OldNode, NewNode> {
 
   private @NotNull CompareResult looksEqual(@Nullable OldNode oldChild1,
                                             @Nullable NewNode newChild1) {
+    return looksEqual(oldChild1, newChild1, false);
+  }
+
+  /**
+   * @param textEqual true if the old child and the new child are known to have the same text
+   */
+  private @NotNull CompareResult looksEqual(@Nullable OldNode oldChild1,
+                                            @Nullable NewNode newChild1,
+                                            boolean textEqual) {
     if (oldChild1 == null || newChild1 == null || !myComparator.typesEqual(oldChild1, newChild1)) return CompareResult.NOT_EQUAL;
-    ThreeState ret = myComparator.deepEqual(oldChild1, newChild1);
+    ThreeState ret = textEqual ? myComparator.deepEqualWithEqualText(oldChild1, newChild1) : myComparator.deepEqual(oldChild1, newChild1);
     if (ret == ThreeState.YES) return CompareResult.EQUAL;
     if (ret == ThreeState.UNSURE) return CompareResult.DRILL_DOWN_NEEDED;
     return CompareResult.TYPE_ONLY;

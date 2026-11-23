@@ -67,6 +67,19 @@ class DiffTreeTextCompareTest {
   }
 
   @Test
+  fun `a flat tree with a changed child does not compare the leaf texts of the equal ranges`() {
+    val oldString = flatText(FLAT_CHILDREN)
+    val middle = oldString.indexOf("child-${FLAT_CHILDREN / 2};")
+    val newString = oldString.substring(0, middle) + "x" + oldString.substring(middle)
+    val comparator = LeafComparator()
+
+    val events = diff(Structure(flat(oldString), CountingText(oldString)), Structure(flat(newString), CountingText(newString)), comparator)
+
+    assertEquals(listOf("REPLACED: leaf xchild-${FLAT_CHILDREN / 2};"), events)
+    assertTrue(comparator.leafTextCompares <= 4) { "${comparator.leafTextCompares} leaf text compares for $FLAT_CHILDREN children" }
+  }
+
+  @Test
   fun `a flat tree with an inserted child reports the insertion`() {
     val oldString = flatText(FLAT_CHILDREN)
     val middle = oldString.indexOf("child-${FLAT_CHILDREN / 2};")
@@ -189,7 +202,7 @@ private fun chain(text: String): Node {
 private fun diff(oldRoot: Node, oldText: CountingText, newRoot: Node, newText: CountingText): List<String> =
   diff(Structure(oldRoot, oldText), Structure(newRoot, newText))
 
-private fun diff(oldStructure: Structure, newStructure: Structure): List<String> {
+private fun diff(oldStructure: Structure, newStructure: Structure, comparator: ShallowNodeComparator<Node, Node> = Comparator): List<String> {
   val events = ArrayList<String>()
   val builder = object : DiffTreeChangeBuilder<Node, Node> {
     override fun nodeReplaced(oldChild: Node, newChild: Node) {
@@ -204,7 +217,7 @@ private fun diff(oldStructure: Structure, newStructure: Structure): List<String>
       events.add("INSERTED: ${newNode.type} at $pos")
     }
   }
-  DiffTree.diff(oldStructure, newStructure, Comparator, builder, oldStructure.text)
+  DiffTree.diff(oldStructure, newStructure, comparator, builder, oldStructure.text)
   return events
 }
 
@@ -279,4 +292,25 @@ private class CountingText(private val text: String) : CharArrayExternalizable {
   }
 
   override fun toString(): String = text
+}
+
+/** Like a PSI builder comparator, compares the text of each leaf in [deepEqual], and counts these compares. */
+private class LeafComparator : ShallowNodeComparator<Node, Node> {
+  var leafTextCompares: Int = 0
+    private set
+
+  override fun deepEqual(oldNode: Node, newNode: Node): ThreeState {
+    if (oldNode.children.isNotEmpty() || newNode.children.isNotEmpty()) return ThreeState.UNSURE
+    leafTextCompares++
+    return if (oldNode.text == newNode.text) ThreeState.YES else ThreeState.NO
+  }
+
+  override fun deepEqualWithEqualText(oldNode: Node, newNode: Node): ThreeState {
+    if (oldNode.children.isNotEmpty() || newNode.children.isNotEmpty()) return ThreeState.UNSURE
+    return ThreeState.YES
+  }
+
+  override fun typesEqual(oldNode: Node, newNode: Node): Boolean = oldNode.type == newNode.type
+
+  override fun hashCodesEqual(oldNode: Node, newNode: Node): Boolean = oldNode.text == newNode.text
 }
