@@ -813,9 +813,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     );
 
-    CodeStyleSettingsListener codeStyleSettingsListener = e -> {
-      codeStyleSettingsChanged(e);
-    };
+    CodeStyleSettingsListener codeStyleSettingsListener = this::codeStyleSettingsChanged;
     CodeStyleSettingsManager.getInstance(myProject).subscribe(codeStyleSettingsListener, myDisposable);
 
     myState.addPropertyChangeListener((event) -> {
@@ -1007,9 +1005,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void queueErrorStipeRepaintRequest(int start, int end) {
     long requested = TextRangeScalarUtil.toScalarRange(start, end);
     // merge existing request with the new
-    myErrorStripeNeedsRepaintRange.accumulateAndGet(requested,
-                                                    (existing, added) -> existing == -1 ? added
-                                                                                        : TextRangeScalarUtil.union(existing, added));
+    myErrorStripeNeedsRepaintRange.accumulateAndGet(
+      requested,
+      (existing, added) -> existing == -1 ? added : TextRangeScalarUtil.union(existing, added)
+    );
     // Throttle rather than debounce: the range above is what the repaint reads when it fires, so re-arming the alarm
     // carries no extra information and only pushes the repaint out. A burst of highlighter changes - highlighting every
     // match of a search over a big file adds tens of thousands - would otherwise cancel and relaunch a coroutine per
@@ -1141,7 +1140,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getPrefixTextWidthInPixels() {
-    return EditorThreading.compute(() -> myView.getPrefixTextWidthInPixels()).intValue();
+    return EditorThreading.compute(myView::getPrefixTextWidthInPixels).intValue();
   }
 
   @RequiresEdt
@@ -1758,7 +1757,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public @NotNull ActionCallback type(@NotNull String text) {
     ActionCallback result = new ActionCallback();
-
     for (int i = 0; i < text.length(); i++) {
       myLastTypedActionTimestamp = System.currentTimeMillis();
       char c = text.charAt(i);
@@ -1768,9 +1766,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return result;
       }
     }
-
     result.setDone();
-
     return result;
   }
 
@@ -1794,9 +1790,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return false;
       }
     }
-
     DataContext context = getDataContext();
-
     Graphics graphics = GraphicsUtil.safelyGetGraphics(myEditorComponent);
     if (graphics != null) {
       PaintUtil.use(graphics, g -> {
@@ -1807,12 +1801,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       // the editor component is not showing
     }
-
     ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, context);
     EditorUIUtil.hideCursorInEditor(this);
     processKeyTypedNormally(c, context);
     ActionManagerEx.getInstanceEx().fireAfterEditorTyping(c, context);
-
     return true;
   }
 
@@ -1831,9 +1823,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   public void processKeyTypedNormally(char c, @NotNull DataContext dataContext) {
     EditorActionManager.getInstance();
-    EditorThreading.runWritable(() -> {
-      TypedAction.getInstance().actionPerformed(this, c, dataContext);
-    });
+    EditorThreading.runWritable(() -> TypedAction.getInstance().actionPerformed(this, c, dataContext));
   }
 
   private void fireFocusLost(@NotNull FocusEvent event) {
@@ -1942,7 +1932,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void isColumnModeChanged(ObservableStateListener.PropertyChangeEvent event) {
     assertIsDispatchThread();
-
     Object oldValue = extractOldValueOrLog(event, false);
     myPropertyChangeSupport.firePropertyChange(PROP_COLUMN_MODE, oldValue, event.getNewValue());
   }
@@ -2959,7 +2948,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public Insets getInsets() {
-    return EditorThreading.compute(() -> myScrollPane.getInsets());
+    return EditorThreading.compute(myScrollPane::getInsets);
   }
 
   @Override
@@ -2975,7 +2964,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * minus the number of folded lines.
    */
   public int getVisibleLineCount() {
-    return EditorThreading.compute(() -> myView.getVisibleLineCount());
+    return EditorThreading.compute(myView::getVisibleLineCount);
   }
 
   @Override
@@ -3174,14 +3163,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void runMouseDraggedCommand(@NotNull MouseEvent e) {
-    if (myCommandProcessor == null || e.isConsumed() || myMousePressedEvent != null && myMousePressedEvent.isConsumed()) {
+    if (myCommandProcessor == null ||
+        e.isConsumed() ||
+        (myMousePressedEvent != null && myMousePressedEvent.isConsumed())) {
       return;
     }
-    EditorThreading.runWritable(() -> {
-      myCommandProcessor.executeCommand(myProject, () -> mouseDragHandler.mouseDragged(e), "",
-                                        MOUSE_DRAGGED_COMMAND_GROUP,
-                                        UndoConfirmationPolicy.DEFAULT, getDocument());
-    });
+    EditorThreading.runWritable(
+      () -> myCommandProcessor.executeCommand(
+        myProject,
+        () -> mouseDragHandler.mouseDragged(e),
+        "",
+        MOUSE_DRAGGED_COMMAND_GROUP,
+        UndoConfirmationPolicy.DEFAULT,
+        getDocument()
+      )
+    );
   }
 
   private void processMouseDragged(@NotNull MouseEvent e) {
@@ -4266,12 +4262,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return inlay != null && (inlay.getPlacement() == Inlay.Placement.ABOVE_LINE || inlay.getPlacement() == Inlay.Placement.BELOW_LINE);
   }
 
-  private static final class EditorInputMethodListener implements InputMethodListener {
-
-    private final MyInputMethodHandler myHandler;
-
-    private EditorInputMethodListener(@NotNull MyInputMethodHandler handler) {
-      myHandler = handler;
+  private record EditorInputMethodListener(MyInputMethodHandler myHandler) implements InputMethodListener {
+    EditorInputMethodListener(@NotNull MyInputMethodHandler myHandler) {
+      this.myHandler = myHandler;
     }
 
     @Override
@@ -5410,11 +5403,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static final class EditorHighlighterElfCandidate implements PrioritizedDocumentListener {
-    private final EditorHighlighter myHighlighter;
-
-    private EditorHighlighterElfCandidate(@NotNull EditorHighlighter highlighter) {
-      myHighlighter = highlighter;
+  private record EditorHighlighterElfCandidate(EditorHighlighter myHighlighter) implements PrioritizedDocumentListener {
+    private EditorHighlighterElfCandidate(@NotNull EditorHighlighter myHighlighter) {
+      this.myHighlighter = myHighlighter;
     }
 
     @Override
