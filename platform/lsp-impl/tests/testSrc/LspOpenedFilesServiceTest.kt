@@ -1,5 +1,9 @@
 package com.intellij.platform.lsp
 
+import com.intellij.idea.TestFor
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -12,6 +16,7 @@ import com.intellij.platform.lsp.common.FakeLspClientDescriptor
 import com.intellij.platform.lsp.common.FakeLspConfig
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.extensionPointFixture
@@ -20,13 +25,17 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -38,11 +47,12 @@ internal class LspOpenedFilesServiceTest {
     private val project by projectFixture
     private val tempDir by tempDirFixture
 
-    @Suppress("unused")
     private val moduleFixture = projectFixture.moduleFixture(tempDirFixture, addPathToSourceRoot = true)
+    private val module by moduleFixture
   }
 
   private val provider by extensionPointFixture(LspIntegrationProvider.EP_NAME) { CoveredFileLspProvider() }
+  private val outsideDir by tempPathFixture()
 
   @Test
   fun `a file covered by a running server does not suppress the start for the next file`() = timeoutRunBlocking(2.minutes) {
@@ -144,8 +154,36 @@ internal class LspOpenedFilesServiceTest {
     stopClientsAndWait(manager)
   }
 
-  private fun createLocalFile(name: String): VirtualFile {
-    val path = tempDir.resolve(name)
+  @Test
+  @TestFor(issues = ["IJPL-262657"])
+  fun `a root change reports no unsaved file outside the project content`() = timeoutRunBlocking(2.minutes) {
+    val marker = createLocalFile("unsaved-marker.txt")
+    val outside = createLocalFile("unsaved-outside.txt", outsideDir)
+    val excluded = createLocalFile("roots-change/excluded.txt").parent
+    val manager = LspClientManagerImpl.getInstanceImpl(project)
+    val documents = listOf(marker, outside).map { file -> readAction { FileDocumentManager.getInstance().getDocument(file)!! } }
+    try {
+      edtWriteAction { documents.forEach { it.setText(it.text + " changed") } }
+
+      // the marker starts the client
+      awaitRunningClient(manager) { edtWriteAction { PsiTestUtil.addExcludedRoot(module, excluded) } }
+      val openedFiles = provider.openedFiles.value
+      assertTrue(marker in openedFiles, "fileOpened must get the unsaved file of the project: $openedFiles")
+      // one batch reports the marker and the outside file, so a report of the outside file would be here by now
+      assertFalse(outside in openedFiles, "fileOpened must not get an unsaved file outside the project content: $openedFiles")
+    }
+    finally {
+      edtWriteAction {
+        PsiTestUtil.removeExcludedRoot(module, excluded)
+        documents.forEach { FileDocumentManager.getInstance().saveDocument(it) }
+      }
+      stopClientsAndWait(manager)
+    }
+  }
+
+  private fun createLocalFile(name: String, dir: Path = tempDir): VirtualFile {
+    val path = dir.resolve(name)
+    Files.createDirectories(path.parent)
     Files.writeString(path, "content")
     // the file is created behind the VFS's back: refresh brings it in
     val file = StandardFileSystems.local().refreshAndFindFileByPath(path.toString().replace('\\', '/'))
@@ -173,7 +211,7 @@ internal class LspOpenedFilesServiceTest {
     }
   }
 
-  private suspend fun awaitRunningClient(manager: LspClientManagerImpl, action: () -> Unit) {
+  private suspend fun awaitRunningClient(manager: LspClientManagerImpl, action: suspend () -> Unit) {
     val running = CompletableDeferred<Unit>()
     val disposable = Disposer.newDisposable("LspOpenedFilesServiceTest")
     try {
@@ -194,8 +232,10 @@ internal class LspOpenedFilesServiceTest {
 /** Starts a server that covers only `covered.txt`, and reports a [fileOpened] call for any other file. */
 private class CoveredFileLspProvider : LspIntegrationProvider {
   val uncoveredFileOpened = CompletableDeferred<VirtualFile>()
+  val openedFiles = MutableStateFlow<List<VirtualFile>>(emptyList())
 
   override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) {
+    openedFiles.update { it + file }
     clientStarter.ensureClientStarted(
       FakeLspClientDescriptor(project, FakeLspConfig(isSupportedFile = { it.name == "covered.txt" })))
     if (file.name != "covered.txt") uncoveredFileOpened.complete(file)

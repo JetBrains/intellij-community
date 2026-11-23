@@ -422,7 +422,11 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
     readAction {
       val openedFiles = FileEditorManager.getInstance(project).openFiles.filterNotNull()
-      val unsavedFiles = FileDocumentManager.getInstance().unsavedDocuments.mapNotNull { FileDocumentManager.getInstance().getFile(it) }
+      // the unsaved documents belong to all open projects
+      val fileIndex = ProjectFileIndex.getInstance(project)
+      val unsavedFiles = FileDocumentManager.getInstance().unsavedDocuments
+        .mapNotNull { FileDocumentManager.getInstance().getFile(it) }
+        .filter { fileIndex.isInContent(it) }
       LspOpenedFilesService.getInstance(project).processOpenedFiles(unsavedFiles + openedFiles)
     }
     LspOpenedFilesService.getInstance(project).scheduleClosingFilesThatAreNotOfInterest()
