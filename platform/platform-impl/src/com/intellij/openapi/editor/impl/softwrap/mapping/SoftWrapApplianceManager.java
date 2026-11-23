@@ -316,7 +316,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     // Check if we need to recalculate soft wraps due to visible area width change.
     int currentVisibleAreaWidth = myAvailableWidth;
     if (!indentChanged && myVisibleAreaWidth == currentVisibleAreaWidth) {
-      return recalculateSoftWraps(reason + " (indent and width unchanged)"); // Recalculate existing dirty regions if any.
+      return recalculateSoftWraps(reason); // Recalculate existing dirty regions if any.
     }
 
     // We experienced the following situation:
