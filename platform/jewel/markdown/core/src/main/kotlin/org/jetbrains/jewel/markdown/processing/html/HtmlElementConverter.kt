@@ -60,6 +60,7 @@ internal class MarkdownHtmlConverter {
     fun convert(
         processor: MarkdownProcessor,
         htmlElement: MarkdownHtmlNode,
+        listDepth: Int = 0,
         transform: (MarkdownBlock, IntRange) -> MarkdownBlock,
     ): MarkdownBlock? {
         return when (htmlElement) {
@@ -68,12 +69,15 @@ internal class MarkdownHtmlConverter {
             }
             is MarkdownHtmlNode.Element -> {
                 val converter = provideConverter(processor, htmlElement.tag) ?: return null
+                val childListDepth = if (htmlElement.isList()) listDepth + 1 else listDepth
                 val convertedBlock =
-                    converter.convert(
-                        htmlElement,
-                        { convertChildren(processor, transform) },
-                        { convert(processor, htmlElementsToInlines(processor, it)) },
-                    ) ?: return null
+                    converter
+                        .convert(
+                            htmlElement,
+                            { convertChildren(processor, transform, childListDepth) },
+                            { convert(processor, htmlElementsToInlines(processor, it)) },
+                        )
+                        ?.withListItemLevel(htmlElement, listDepth) ?: return null
                 val transformedBlock = transform(convertedBlock, htmlElement.lineRange)
 
                 if (htmlElement.attributes.isEmpty()) {
@@ -88,9 +92,19 @@ internal class MarkdownHtmlConverter {
         }
     }
 
+    private fun MarkdownHtmlNode.Element.isList() = tag == "ul" || tag == "ol"
+
+    private fun MarkdownBlock.withListItemLevel(htmlElement: MarkdownHtmlNode.Element, listDepth: Int): MarkdownBlock =
+        if (htmlElement.tag == "li" && this is MarkdownBlock.ListItem) {
+            MarkdownBlock.ListItem(children, level = (listDepth - 1).coerceAtLeast(0))
+        } else {
+            this
+        }
+
     private fun MarkdownHtmlNode.Element.convertChildren(
         processor: MarkdownProcessor,
         transform: (MarkdownBlock, IntRange) -> MarkdownBlock,
+        listDepth: Int,
     ): List<MarkdownBlock> {
         // Some HTML elements may make up a block (e.g., nested list), but some can be pure inlines.
         // For example, `<li><p>Hello</p></li>` is a block inside ListItem, but `<li><b>Hello<b></li>` is not.
@@ -107,7 +121,7 @@ internal class MarkdownHtmlConverter {
                     }
                     ?.let { blocks.add(it) }
 
-                convert(processor, child, transform)?.let { blocks.add(it) }
+                convert(processor, child, listDepth, transform)?.let { blocks.add(it) }
 
                 currentLine = child.lineRange.last
             } else {
