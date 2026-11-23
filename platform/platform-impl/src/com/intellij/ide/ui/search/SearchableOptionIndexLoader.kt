@@ -20,6 +20,7 @@ import com.intellij.util.ResourceUtil
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -45,6 +46,12 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
   private val cache = HashSet<String>()
   @JvmField val storage: MutableMap<String, LongArray> = HashMap()
   @JvmField val identifierTable: IndexedCharsInterner = IndexedCharsInterner()
+
+  /**
+   * The packed options of the searchable options files of the plugins, see [putIndexedOption].
+   * It has no options of [SearchableOptionContributor] extensions and no synonyms.
+   */
+  @JvmField val indexedOptions: LongOpenHashSet = LongOpenHashSet()
 
   override fun addOptions(
     text: String,
@@ -99,7 +106,22 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
     return result
   }
 
-  internal fun putOptionWithHelpId(words: Iterable<String>, id: String, groupName: String?, hit: String?, path: String?) {
+  /**
+   * Adds an option of a searchable options file of a plugin, and keeps it in [indexedOptions].
+   */
+  internal fun putIndexedOption(words: Iterable<String>, id: String, groupName: String?, hit: String?, path: String?) {
+    if (putOptionWithHelpId(words = words, id = id, groupName = groupName, hit = hit, path = path)) {
+      indexedOptions.add(packSearchableOptions(id = id, hit = hit, path = path, groupName = groupName, identifierTable = identifierTable))
+    }
+  }
+
+  /**
+   * Adds the option to the word index for each of [words].
+   *
+   * @return `true` when the word index got the option for at least one word.
+   */
+  internal fun putOptionWithHelpId(words: Iterable<String>, id: String, groupName: String?, hit: String?, path: String?): Boolean {
+    var isAdded = false
     for (word in words) {
       if (stopWords.contains(word)) {
         continue
@@ -118,7 +140,9 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
       else if (!configs.contains(packed)) {
         storage.put(word, configs + packed)
       }
+      isAdded = true
     }
+    return isAdded
   }
 }
 
@@ -321,7 +345,7 @@ private fun doRegisterIndex(
 
   for (entry in item.entries) {
     val hit = getMessageByCoordinate(s = entry.hit, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT) ?: continue
-    processor.putOptionWithHelpId(
+    processor.putIndexedOption(
       words = Iterable {
         val h1 = getMessageByCoordinate(entry.hit, classLoader, Locale.ROOT)?.lowercase(Locale.ROOT) ?: return@Iterable emptyIterator()
         val s1 = splitToWordsWithoutStemmingAndStopWords(h1)
@@ -361,7 +385,7 @@ private fun readInXml(root: XmlElement, processor: MySearchableOptionProcessor) 
 
     for (optionElement in configurable.children("option")) {
       val text = optionElement.getAttributeValue("hit") ?: continue
-      processor.putOptionWithHelpId(
+      processor.putIndexedOption(
         words = listOfNotNull(optionElement.getAttributeValue("name")),
         id = id,
         groupName = name,

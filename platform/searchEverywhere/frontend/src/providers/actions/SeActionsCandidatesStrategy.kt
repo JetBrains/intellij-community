@@ -4,6 +4,8 @@ package com.intellij.platform.searchEverywhere.frontend.providers.actions
 import com.intellij.featureStatistics.ActionsLocalSummary
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.RegistryManager
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -17,6 +19,11 @@ private const val STRATEGY_REGISTRY_KEY: String = "search.everywhere.actions.ran
 private const val RECIPROCAL_RANK_OFFSET: Int = 60
 
 /**
+ * The maximum part of the candidates of one [SeActionsCandidatesStrategy.POPULARITY] call that the settings options can take.
+ */
+private const val MAX_OPTIONS_SHARE: Double = 0.25
+
+/**
  * Decides which candidates each [SeActionsRankerSession.rank] call gets
  * when there are more candidates than [SeActionsRankerSession.maxCandidates].
  *
@@ -24,9 +31,12 @@ private const val RECIPROCAL_RANK_OFFSET: Int = 60
  */
 internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
   /**
-   * Sends only the most popular candidates to the ranker in one call.
+   * Sends the best settings options and the most popular actions to the ranker in one call.
    *
-   * It merges two orders with the reciprocal rank fusion:
+   * The options take up to [MAX_OPTIONS_SHARE] of the candidates.
+   * They are the options that match the most query words, see [selectOptionsByQueryWords].
+   * The actions take the other candidates.
+   * The strategy merges two orders of the actions with the reciprocal rank fusion:
    * the share of all users who use the action, and the number of times the current user used it.
    */
   POPULARITY("popularity") {
@@ -35,7 +45,15 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
       query: String,
       candidates: List<SeActionsRankerCandidate>,
     ): List<SeActionsRankerMatch> {
-      return session.rank(query, selectPopular(candidates, session.maxCandidates))
+      val limit = maxCandidates(session)
+      val (options, actions) = candidates.partition { it.isOption }
+      val selectedOptions = selectOptionsByQueryWords(query, options, (limit * MAX_OPTIONS_SHARE).toInt())
+      val selectedActions = selectPopular(actions, limit - selectedOptions.size)
+      SeRankerActionsProvider.LOG.debug {
+        "$registryOption: 1 ranker call with ${selectedActions.size} of ${actions.size} actions " +
+        "and ${selectedOptions.size} of ${options.size} options"
+      }
+      return session.rank(query, selectedActions + selectedOptions)
     }
   },
 
@@ -52,12 +70,14 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
       val limit = maxCandidates(session)
       val partCount = Math.ceilDiv(candidates.size, limit)
       val partSize = Math.ceilDiv(candidates.size, partCount)
+      SeRankerActionsProvider.LOG.debug { "$registryOption: $partCount parallel ranker calls with up to $partSize of ${candidates.size} candidates each" }
       val partResults = coroutineScope {
         candidates.chunked(partSize).map { part -> async { session.rank(query, part) } }.awaitAll()
       }
 
       val finalistsPerPart = (limit / partCount).coerceAtLeast(1)
       val finalistIds = partResults.flatMapTo(HashSet()) { matches -> matches.take(finalistsPerPart).map { it.id } }
+      SeRankerActionsProvider.LOG.debug { "$registryOption: ${finalistIds.size} finalists for the next round, up to $finalistsPerPart of each part" }
       if (finalistIds.isEmpty()) return emptyList()
 
       // The next round has fewer candidates. When they are still more than the limit, it splits them again.
@@ -75,6 +95,7 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
       query: String,
       candidates: List<SeActionsRankerCandidate>,
     ): List<SeActionsRankerMatch> {
+      SeRankerActionsProvider.LOG.debug { "$registryOption: 1 ranker call with ${candidates.size} candidates over the limit of ${maxCandidates(session)}" }
       return session.rank(query, candidates)
     }
   };
@@ -85,7 +106,10 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
    * @return the matching candidates, the best match first.
    */
   suspend fun rank(session: SeActionsRankerSession, query: String, candidates: List<SeActionsRankerCandidate>): List<SeActionsRankerMatch> {
-    if (candidates.size <= maxCandidates(session)) return session.rank(query, candidates)
+    if (candidates.size <= maxCandidates(session)) {
+      SeRankerActionsProvider.LOG.debug { "$registryOption: 1 ranker call with ${candidates.size} candidates within the limit" }
+      return session.rank(query, candidates)
+    }
 
     return rankOverLimit(session, query, candidates)
   }

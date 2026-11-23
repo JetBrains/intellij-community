@@ -16,6 +16,7 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
 import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.util.DefaultBundleService
+import com.intellij.util.gotoByName.FindActionSearchableOptionsFilter
 import com.intellij.util.text.Matcher
 import com.intellij.util.text.matching.MatchingMode
 import org.jetbrains.annotations.ApiStatus
@@ -35,6 +36,23 @@ fun getGroupName(@NotNull description: OptionDescription): @Nls @NotNull String 
   val groupName: String? = description.groupName
   val settings: String = LangBundle.message("group.settings")
   return if (groupName == null || groupName == description.hit) settings else "$settings > $groupName"
+}
+
+/**
+ * Returns the filter of the [com.intellij.ide.ui.search.SearchableOptionsRegistrar] options that the action search shows.
+ *
+ * The filter drops the actions of the keymap page and the options that a [FindActionSearchableOptionsFilter] hides.
+ * It also drops the inspections while the `go.to.action.filter.out.inspections` registry key is on.
+ */
+@ApiStatus.Internal
+fun createFindActionOptionsFilter(): (OptionDescription) -> Boolean {
+  val filterOutInspections = Registry.`is`("go.to.action.filter.out.inspections", true)
+  val filters = FindActionSearchableOptionsFilter.EP_NAME.extensionList
+  return { description ->
+    @Suppress("HardCodedStringLiteral")
+    val isHiddenByPage = description.path == "ActionManager" || filterOutInspections && description.groupName == "Inspections"
+    !isHiddenByPage && filters.all { it.isAvailable(description) }
+  }
 }
 
 /**

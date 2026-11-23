@@ -12,7 +12,7 @@ private const val RANKER_REGISTRY_KEY: String = "search.everywhere.actions.ranke
 private const val DEFAULT_MAX_CANDIDATES: Int = 256
 
 /**
- * A remote model that orders IDE actions by how well they match a natural-language query.
+ * A remote model that orders IDE actions and settings options by how well they match a natural-language query.
  *
  * The `search.everywhere.actions.ranker` registry key selects one ranker by its [id].
  * [SeRankerActionsProvider] opens a [SeActionsRankerSession] of the selected ranker for each Search Everywhere popup.
@@ -86,16 +86,25 @@ interface SeActionsRankerSession : Disposable {
 }
 
 /**
- * The data that [SeActionsRanker] sends to a remote model for one action.
+ * The data that [SeActionsRanker] sends to a remote model for one action or one settings option.
  *
- * It holds only the action id, and the name and the description of the action template.
- * [SeRankerActionsProvider] takes them only from actions that plugin descriptors declare, thus they are the same in each project and context.
- * It holds no code, paths, project names or user identifiers.
+ * For an action, it holds the action id, and the name and the description of the action template.
+ * [SeRankerActionsProvider] takes the actions only from the plugin descriptors.
+ * For an option, it holds the hit and the settings page of the option.
+ * The provider takes the options only from the searchable options files that the build generates, see [collectOptionCandidates].
+ * Thus the data is the same in each project and context.
+ * It holds no code, file paths, project names or user identifiers.
  *
- * @property id the action id in `ActionManager`.
+ * @property id the action id in `ActionManager`, or the id of the option, see [optionCandidateId].
+ * @property isOption `true` for a settings option, `false` for an action.
  */
 @Internal
-data class SeActionsRankerCandidate(val id: String, val name: @Nls String, val description: @Nls String?)
+data class SeActionsRankerCandidate(
+  val id: String,
+  val name: @Nls String,
+  val description: @Nls String?,
+  val isOption: Boolean = false,
+)
 
 /**
  * One candidate that matches the query of a [SeActionsRankerSession.rank] call.

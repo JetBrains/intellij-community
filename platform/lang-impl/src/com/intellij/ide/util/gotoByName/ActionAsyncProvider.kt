@@ -35,7 +35,6 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.CollectConsumer
-import com.intellij.util.gotoByName.FindActionSearchableOptionsFilter
 import com.intellij.util.text.Matcher
 import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.CancellationException
@@ -528,18 +527,12 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     val registrarDescriptionsPromise: Deferred<Collection<OptionDescription>?> = async {
       val registrar = serviceAsync<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl
       val words = registrar.getProcessedWords(pattern)
-      val filterOutInspections = Registry.`is`("go.to.action.filter.out.inspections", true)
+      val isShown = createFindActionOptionsFilter()
       var registrarDescriptions: MutableSet<OptionDescription>? = null
       registrar.initialize()
       for (word in words) {
         val descriptions = registrar.findAcceptableDescriptions(word)
-          ?.filter {
-            @Suppress("HardCodedStringLiteral")
-            !(it.path == "ActionManager" || filterOutInspections && it.groupName == "Inspections")
-          }
-          ?.filter { description ->
-            FindActionSearchableOptionsFilter.EP_NAME.extensionList.all { findActionFilter -> findActionFilter.isAvailable(description) }
-          }
+          ?.filter(isShown)
           ?.toHashSet()
         if (descriptions.isNullOrEmpty()) {
           registrarDescriptions = null

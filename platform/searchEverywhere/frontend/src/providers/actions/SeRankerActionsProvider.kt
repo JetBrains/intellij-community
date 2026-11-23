@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
@@ -17,10 +18,12 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
+import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.util.coroutines.mapNotNullConcurrent
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
@@ -37,10 +40,8 @@ import kotlin.time.measureTimedValue
 private const val MAX_QUERY_LENGTH: Int = 200
 private val RANKER_TIMEOUT: Duration = 3.seconds
 
-private val LOG = logger<SeRankerActionsProvider>()
-
 /**
- * Finds actions for a natural-language query with the selected [SeActionsRanker].
+ * Finds actions and settings options for a natural-language query with the selected [SeActionsRanker].
  * It opens one [SeActionsRankerSession] of the ranker for the popup.
  *
  * This provider is not a part of the ML ranking of the Search Everywhere results.
@@ -49,6 +50,7 @@ private val LOG = logger<SeRankerActionsProvider>()
  *
  * The provider uses [actionsProvider] for the item selection, the extended action and the item data.
  * It takes the actions and their presentations from the action model of [actionsProvider].
+ * It takes the settings options from the searchable options files, see [collectOptionCandidates].
  * The [candidatesStrategy] decides which candidates each ranker call gets.
  *
  * Search Everywhere starts a search on each keystroke and cancels the previous one.
@@ -96,7 +98,7 @@ class SeRankerActionsProvider internal constructor(
     for ((index, match) in matches.withIndex()) {
       val candidate = candidatesById[match.id] ?: continue
       val diagnostics = rankerDiagnostics(ranker.diagnosticName, match)
-      val item = createItem(candidate.actionWrapper, matches.size - index, params.inputQuery, diagnostics)
+      val item = createItem(candidate, matches.size - index, params.inputQuery, diagnostics)
       if (!collector.put(item)) return
     }
   }
@@ -121,15 +123,18 @@ class SeRankerActionsProvider internal constructor(
   }
 
   /**
-   * Selects the actions to send to the ranker: the actions that are enabled and visible in the current context.
+   * Selects the candidates to send to the ranker:
+   * the settings options, and the actions that are enabled and visible in the current context.
    * When [includeDisabled] is `true`, it also selects the other actions, as the standard actions search does.
    */
   private suspend fun selectCandidates(includeDisabled: Boolean): List<Candidate> {
-    return getAllCandidates().filter { includeDisabled || it.actionWrapper.isAvailable }
+    return getAllCandidates().filter { includeDisabled || it.isAvailable }
   }
 
   /**
-   * Returns all actions that can be candidates, with their presentations in the current context. See [createCandidate].
+   * Returns all actions and settings options that can be candidates.
+   * The actions come with their presentations in the current context, see [createCandidate].
+   * The options come after the actions, see [collectOptionCandidates].
    *
    * The provider collects the list on the first query and reuses it, because the context does not change while the popup is open.
    * When the first query is cancelled, the next query collects the list again.
@@ -139,14 +144,25 @@ class SeRankerActionsProvider internal constructor(
   }
 
   private suspend fun collectAllCandidates(): List<Candidate> = coroutineScope {
+    val options = async {
+      collectOptionCandidates().map { Candidate(it.rankerCandidate, it.description, MatchedValueType.OPTION, isAvailable = true) }
+    }
+
     actionModel.buildGroupMappings()
     val actionManager = serviceAsync<ActionManager>()
 
-    runUpdateSessionForActionSearch(actionModel.updateSession) { presentationProvider ->
+    val actions = runUpdateSessionForActionSearch(actionModel.updateSession) { presentationProvider ->
       actionManager.getActionIdList("")
         .mapNotNullConcurrent { actionId -> createCandidate(actionManager, actionId, presentationProvider) }
         .sortedBy { it.rankerCandidate.id }
     }.await()
+
+    val initializedOptions = options.await()
+    val combinedActions = actions + initializedOptions
+
+    LOG.debug("Collected ${combinedActions.size} candidates: ${actions.size} registered actions and ${initializedOptions.size} options")
+
+    combinedActions
   }
 
   /**
@@ -174,16 +190,48 @@ class SeRankerActionsProvider internal constructor(
     val presentation = presentationProvider(action)
     if (presentation.text.isNullOrBlank()) return null
 
+    val actionWrapper = ActionWrapper(action, groupMapping, MatchMode.NAME, presentation)
     return Candidate(SeActionsRankerCandidate(actionId, name, template.description),
-                     ActionWrapper(action, groupMapping, MatchMode.NAME, presentation))
+                     actionWrapper,
+                     MatchedValueType.ACTION,
+                     actionWrapper.isAvailable)
   }
 
-  private fun createItem(actionWrapper: ActionWrapper, weight: Int, searchText: String, diagnostics: @NonNls String?): SeActionItem {
-    val matchedValue = MatchedValue(actionWrapper, searchText, MatchedValueType.ACTION)
-    return actionsProvider.createItem(matchedValue, weight, searchText, SearchEverywhereSpellCheckResult.NoCorrection, diagnostics)
+  private fun createItem(candidate: Candidate, weight: Int, searchText: String, diagnostics: @NonNls String?): SeActionItem {
+    val matchedValue = MatchedValue(candidate.value, searchText, candidate.type)
+    val effectiveSearchText = (candidate.value as? OptionDescription)?.hit ?: searchText
+    return actionsProvider.createItem(matchedValue, weight, effectiveSearchText, SearchEverywhereSpellCheckResult.NoCorrection,
+                                      diagnostics)
   }
 
-  private class Candidate(val rankerCandidate: SeActionsRankerCandidate, val actionWrapper: ActionWrapper)
+  /**
+   * Runs the selected [item] with its effective search text instead of [searchText], see [createItem].
+   *
+   * The settings dialog of a settings option filters its pages by this text.
+   * A natural-language query often matches no page there, but the hit of the option matches its page.
+   */
+  override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
+    val effectiveSearchText = (item as? SeActionItem)?.effectiveSearchText ?: searchText
+    return actionsProvider.itemSelected(item, modifiers, effectiveSearchText)
+  }
+
+  /**
+   * One candidate of the ranker, and the item data of its result.
+   *
+   * @property value an [ActionWrapper] of an action, or an [com.intellij.ide.ui.search.OptionDescription] of a settings option.
+   * See [MatchedValue.value].
+   * @property isAvailable `false` for an action that is disabled or not visible in the current context.
+   */
+  private class Candidate(
+    val rankerCandidate: SeActionsRankerCandidate,
+    val value: Any,
+    val type: MatchedValueType,
+    val isAvailable: Boolean,
+  )
+
+  companion object {
+    internal val LOG = logger<SeRankerActionsProvider>()
+  }
 }
 
 /**

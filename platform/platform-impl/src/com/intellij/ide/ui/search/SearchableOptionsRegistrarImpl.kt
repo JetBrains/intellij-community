@@ -55,6 +55,10 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
   @Volatile
   private var identifierTable: IndexedCharsInterner? = null
 
+  // array of packed OptionDescriptor, see getIndexedOptionDescriptions
+  @Volatile
+  private var indexedOptions: LongArray? = null
+
   init {
     val app = ApplicationManager.getApplication()
     if (app.isCommandLine() || app.isHeadlessEnvironment()) {
@@ -81,6 +85,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     storage?.cancel()
     storage = null
     identifierTable = null
+    indexedOptions = null
     highlightOptionToSynonym = emptyMap()
   }
 
@@ -133,6 +138,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
 
       highlightOptionToSynonym = processor.computeHighlightOptionToSynonym()
       identifierTable = processor.identifierTable
+      indexedOptions = processor.indexedOptions.toLongArray()
 
       return processor.storage
     }
@@ -152,6 +158,22 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
   fun getStorage(): Sequence<Pair<String, Sequence<OptionDescription>>> {
     val storage = storage?.takeIf { it.isCompleted }?.getCompleted() ?: return emptySequence()
     return storage.asSequence().map { (k, v) -> k to v.asSequence().map { unpack(it)} }
+  }
+
+  /**
+   * Returns the options of the searchable options files, which the build generates from the settings pages of each plugin.
+   *
+   * The result has no options of [SearchableOptionContributor] extensions, because such an option can hold user data.
+   * For example, a contributor adds the keys of the live templates of the user.
+   * The result also has no synonyms.
+   *
+   * Returns an empty list until the registrar is initialized, see [initialize].
+   */
+  @ApiStatus.Internal
+  fun getIndexedOptionDescriptions(): List<OptionDescription> {
+    if (storage?.isCompleted != true) return emptyList()
+    val indexedOptions = indexedOptions ?: return emptyList()
+    return indexedOptions.map { unpack(it) }
   }
 
   @Suppress("LocalVariableName")

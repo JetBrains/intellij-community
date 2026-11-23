@@ -80,11 +80,11 @@
     <registryKey key="search.everywhere.actions.ranker"
                  defaultValue=""
                  restartRequired="false"
-                 description="The id of the ranker that finds actions for natural-language queries in the Actions tab of Search Everywhere. An empty value turns the ranker off. The value 'decisions' selects the OpenAI Decision API. The value 'jev' selects a Jev model of TypeSafe. The value 'mock' selects a local ranker for development."/>
+                 description="The id of the ranker that finds actions and settings options for natural-language queries in the Actions tab of Search Everywhere. An empty value turns the ranker off. The value 'decisions' selects the OpenAI Decision API. The value 'jev' selects a Jev model of TypeSafe. The value 'mock' selects a local ranker for development."/>
     <registryKey key="search.everywhere.actions.ranker.candidates"
                  defaultValue="[popularity*|splitAndMerge|unlimited]"
                  restartRequired="false"
-                 description="How the actions ranker of Search Everywhere gets the candidates when there are more candidates than the ranker accepts. 'popularity' sends only the most popular actions. 'splitAndMerge' ranks all actions in parts, then ranks the best actions of all parts again. 'unlimited' sends all actions in one call."/>
+                 description="How the actions ranker of Search Everywhere gets the candidates when there are more candidates than the ranker accepts. 'popularity' sends the most popular actions, and the settings options that match the most query words in up to a quarter of the candidates. 'splitAndMerge' ranks all candidates in parts, then ranks the best candidates of all parts again. 'unlimited' sends all candidates in one call."/>
     <registryKey key="search.everywhere.actions.ranker.debounce.ms"
                  defaultValue="400"
                  restartRequired="false"
