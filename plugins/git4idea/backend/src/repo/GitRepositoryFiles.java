@@ -5,10 +5,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,10 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
-
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
  * Stores paths to Git service files that are used by IDEA, and provides test-methods to check if a file
@@ -63,6 +64,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String LOGS = "logs";
   private static final @NonNls String STASH = "stash";
   private static final @NonNls String WORKTREES_DIR = "worktrees";
+  private static final @NonNls String COMMONDIR = "commondir";
   public static final @NotNull String SUBMODULES_FILE = ".gitmodules";
 
   private static final @NonNls String SEQUENCER_TODO = "sequencer/todo";
@@ -152,22 +154,19 @@ public final class GitRepositoryFiles {
    * Worktree's ".git" file references {@code <main-project>/.git/worktrees/<worktree-name>}
    */
   private static @Nullable VirtualFile getMainGitDirForWorktree(@NotNull VirtualFile gitDir) {
-    File gitDirFile = virtualToIoFile(gitDir);
-    File commonDir = new File(gitDirFile, "commondir");
-    if (!commonDir.exists()) return null;
+    VirtualFile commonDirFile = VfsUtil.refreshAndFindChild(gitDir, COMMONDIR);
+    if (commonDirFile == null) return null;
     String pathToMain;
     try {
-      pathToMain = FileUtil.loadFile(commonDir).trim();
+      pathToMain = VfsUtilCore.loadText(commonDirFile).trim();
     }
     catch (IOException e) {
-      LOG.error("Couldn't load " + commonDir, e);
+      LOG.error("Couldn't load " + commonDirFile.getPath(), e);
       return null;
     }
-    String mainDir = FileUtil.toCanonicalPath(gitDirFile.getPath() + File.separator + pathToMain, true);
-    VirtualFileSystem lfs = StandardFileSystems.local();
-    VirtualFile mainDirVF = lfs.refreshAndFindFileByPath(mainDir);
-    if (mainDirVF != null) return mainDirVF;
-    return lfs.refreshAndFindFileByPath(pathToMain); // absolute path is also possible
+    Path mainDir = GitUtil.findRealRepositoryDir(gitDir.toNioPath(), pathToMain);
+    if (mainDir == null) return null;
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(mainDir);
   }
 
   private static @NotNull String slash(@NotNull String s) {

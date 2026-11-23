@@ -166,7 +166,8 @@ public final class GitUtil {
     return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
   }
 
-  private static @Nullable Path findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
+  @ApiStatus.Internal
+  public static @Nullable Path findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
     EelPath rootPathEel = EelNioBridgeServiceKt.asEelPath(rootPath);
     EelPath eelResolved;
     try {
