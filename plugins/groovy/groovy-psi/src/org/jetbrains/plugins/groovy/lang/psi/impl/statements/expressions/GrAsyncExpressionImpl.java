@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -33,7 +34,17 @@ public final class GrAsyncExpressionImpl extends GrExpressionImpl implements GrA
 
   @Override
   public @NotNull PsiType getType() {
-    return TypesUtil.createTypeByFQClassName("groovy.concurrent.Awaitable", this);
+    GrFunctionalExpression body = getBody();
+    if (body != null) {
+      PsiType returnType = body.getReturnType();
+      if (PsiTypes.nullType().equals(returnType)) {
+        return TypesUtil.createGenericType("groovy.concurrent.Awaitable", this, TypesUtil.createTypeByFQClassName("java.lang.Void", this));
+      }
+      if (returnType != null) {
+        return TypesUtil.createGenericType("groovy.concurrent.Awaitable", this, returnType);
+      }
+    }
+    return TypesUtil.createTypeByFQClassName("groovy.concurrent.Awaitable<?>", this);
   }
 
   @Override
