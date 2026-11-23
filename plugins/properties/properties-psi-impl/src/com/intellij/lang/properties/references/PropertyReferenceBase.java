@@ -9,7 +9,6 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -159,7 +158,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return false;
     ProjectFileIndex index = ProjectFileIndex.getInstance(file.getProject());
-    return ContainerUtil.exists(index.getOrderEntriesForFile(vFile), e -> e instanceof JdkOrderEntry);
+    return !index.findContainingSdks(vFile).isEmpty();
   }
 
   protected abstract @Nullable List<PropertiesFile> getPropertiesFiles();
