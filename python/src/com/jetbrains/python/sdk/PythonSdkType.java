@@ -2,17 +2,12 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
@@ -23,7 +18,6 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -50,7 +44,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.impl.SdkInternalUtilKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -69,9 +62,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.Icon;
-import javax.swing.JComponent;
-import java.awt.Component;
-import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -79,7 +69,6 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.platform.ide.progress.TasksKt.runWithModalProgressBlocking;
@@ -92,7 +81,6 @@ public final class PythonSdkType extends SdkType {
 
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
 
-  private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
 
 
   public static PythonSdkType getInstance() {
@@ -240,41 +228,13 @@ public final class PythonSdkType extends SdkType {
   }
 
   /**
-   * In the interpreter library flow, the SDK combos do not offer to add a Python SDK, and they do not list the detected
-   * ones. A module names its interpreter by its interpreter library entry, see
-   * {@link PyInterpreterLibraryFlowKt#isInterpreterLibraryFlowEnabled()}.
+   * The SDK of a module or a project is never a Python SDK, so the SDK UI of the platform does not offer to add one, and
+   * it does not list the detected ones. A module names its interpreter by its interpreter library entry, see
+   * {@link PyInterpreterLibraryFlowKt#isInterpreterLibraryFlowEnabled()}. The interpreter UI of Python adds an interpreter.
    */
   @Override
   public boolean allowCreationByUser() {
-    return !PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled();
-  }
-
-  @Override
-  public boolean supportsCustomCreateUI() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public void showCustomCreateUI(@NotNull SdkModel sdkModel,
-                                 @NotNull JComponent parentComponent,
-                                 @Nullable Sdk selectedSdk,
-                                 @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
-    DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    // Every interpreter belongs to a module. The generic SDK UI may have none, and then there is nothing to add to.
-    Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
-    if (project == null || module == null) {
-      Messages.showInfoMessage(parentComponent, PyBundle.message("python.sdk.add.python.interpreter.no.module"),
-                               PyBundle.message("python.sdk.add.python.interpreter.title"));
-      return;
-    }
-    PyAddSdkDialog.show(project, module, interpreter -> {
-      // The SDK UI of the platform takes an SDK back, so this is the place where the interpreter becomes one.
-      Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
-      sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
-      sdkCreatedCallback.accept(sdk);
-    });
+    return false;
   }
 
   /**

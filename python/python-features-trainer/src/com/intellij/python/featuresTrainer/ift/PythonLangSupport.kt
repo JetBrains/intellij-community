@@ -7,10 +7,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.projectCreation.createVenvAndSdk
@@ -68,16 +66,18 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ErrorSink())
     ProjectUtils.simpleInstallAndOpenLearningProject(contentRoot, this, openProjectTask, postInitCallback)
   }
 
+  /**
+   * Creates the venv of the learning project and sets it as the interpreter of its Python project. The SDK of a project
+   * is never a Python SDK, so it returns `null`.
+   */
   @Throws(NoSdkException::class)
   @RequiresEdt
-  override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk = runWithSdkConfigurationLock(project) {
-    when (val r = createVenvAndSdk(ModuleOrProject.ProjectOnly(project))) {
-      is Result.Failure -> {
-        errorSink.emit(r.error, project)
-        null
-      }
-      is Result.Success -> r.result.getSdkAPI()
-    } ?: throw NoSdkException()
+  override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
+    val created = runWithSdkConfigurationLock(project) {
+      createVenvAndSdk(ModuleOrProject.ProjectOnly(project)).also { result -> result.errorOrNull?.let { errorSink.emit(it, project) } }
+    }
+    created.successOrNull ?: throw NoSdkException()
+    return null
   }
 
 
