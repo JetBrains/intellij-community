@@ -487,15 +487,19 @@ context. A run that is not finished refuses the remount as `daemon_remount_ide_r
 
 The lane `ui-light` runs JetBrains Light, not IDEA. Its suites check the frame model of Air in a workspace host frame of
 JetBrains Light. Use it for a change of `plugins/air/frontend/session/unifiedIde/`,
-`plugins/air/frontend/session/toolwindow.unifiedIde/` or `platform/unified/workspace/`. `vm.cmd suites` maps these
-paths to its suites.
+`plugins/air/frontend/session/toolwindow.unifiedIde/` or `platform/unified/workspace/`. The suite `light-accio` checks
+Go to File and Find in Files of the accio plugin against the accio of the guest, so use the lane for a change of
+`platform/unified/accio-plugin/` too. `vm.cmd suites` maps these paths to its suites.
 
 The lane has two descriptors of its own: `//plugins/air/tests/integration/ui:ui_daemon_linux_guest_light` on the
 default guest and `:ui_daemon_light` on a macOS guest. They name the distribution
 `//plugins/air/tests/integration/ide:light_air_lane_dist_linux` and `:light_air_lane_dist`. JetBrains Light does not
 bundle the performance plugin, which the bridge needs for its robot. So the IDE context gets that plugin beside the
-bridge. The lane document turns the registry key `ijlight.workspace.enabled` on, so the driven project opens as a member
-of a workspace host frame.
+bridge. The distribution holds the accio plugin, which JetBrains Light publishes and does not bundle. The descriptors
+declare the accio that `community/tools/accio.cmd` pins as a CLI runtime, so the guest puts it on the PATH of the IDE.
+The lane document turns the registry key `ijlight.workspace.enabled` on, so the driven project opens as a member of a
+workspace host frame. It also sets `ijlight.accio.test.any.mode`, the test switch that keeps the accio plugin on in the
+product mode `monolith` of the lane IDE.
 
 One build names one distribution. So a run that reaches `ui-light` and another lane is refused with
 `light_lane_beside_other_lanes`. Run the selection twice, once with `--lane ui-light`. The lane test is `manual`, so
