@@ -2,21 +2,23 @@
 package com.jetbrains.python.configuration
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.classRoots
+import com.intellij.python.sdk.backend.writePathMappings
+import com.intellij.util.PathMappingSettings
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.updateInterpreterFacts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,76 +29,61 @@ import org.jetbrains.annotations.ApiStatus
  *
  * [PythonPathDialog] and [PythonPathEditor] are package-private to `com.jetbrains.python.configuration`,
  * so other packages, such as the All Interpreters page (PY-89840), cannot instantiate them directly. This wrapper runs
- * the flow `reset → showAndGet → apply → commitChanges → reload`, so the caller does not repeat it.
+ * the flow `reset → showAndGet → write the facts → reload`, so the caller does not repeat it. The dialog edits the
+ * facts of the interpreter, see [PythonInterpreterDetails], and no SDK.
  */
 @ApiStatus.Internal
 object PyInterpreterPathsDialogLauncher {
   /**
-   * `PythonPathDialog` is a Swing `DialogWrapper`, so the show / edit phase runs on the EDT. The
-   * commit uses `edtWriteAction` — the coroutine-friendly EDT write helper — and the follow-up
-   * `PythonInterpreterUpdater` call hops onto `Dispatchers.Default` so the caller's coroutine unblocks the
-   * EDT the moment the dialog closes.
+   * `PythonPathDialog` is a Swing `DialogWrapper`, so the show / edit phase runs on the EDT. The facts are written
+   * after the dialog closes, and the `PythonInterpreterUpdater` call follows, so the caller's coroutine unblocks the EDT
+   * the moment the dialog closes.
    */
   suspend fun open(project: Project, interpreter: PythonInterpreter, onPathsChanged: () -> Unit = {}): Boolean {
-    // The editor of the dialog is a platform SDK editor, so it edits the SDK of the interpreter.
-    @Suppress("DEPRECATION")
-    val sdk = interpreter.getSdkAPI()
-    val strategy = PathEditorStrategy.forSdk(sdk)
-    val [added, excluded] = withContext(Dispatchers.EDT) {
-      val editor = strategy.createEditor(project, sdk)
-      editor.setModuleSourceRoots(PythonInterpreterRoots.getInstance(project).sourceRoots(interpreter))
+    val facts = PythonInterpreterDetails.getInstance(project).facts(interpreter)
+    val fileManager = VirtualFileManager.getInstance()
+    val classRoots = interpreter.classRoots.toList()
+    val added = facts.addedPaths.mapNotNullTo(LinkedHashSet()) { fileManager.findFileByNioPath(it) }
+    val excluded = facts.excludedPaths.mapNotNullTo(LinkedHashSet()) { fileManager.findFileByNioPath(it) }
+    val sourceRoots = PythonInterpreterRoots.getInstance(project).sourceRoots(interpreter)
+    val edit = withContext(Dispatchers.EDT) {
+      // A target interpreter maps a path that the user adds on the target to a local copy.
+      val remoteEditor = when (interpreter) {
+        is NativePythonInterpreter -> null
+        is TargetPythonInterpreter -> PyRemotePathEditor(project, interpreter)
+      }
+      val editor = remoteEditor ?: PythonPathEditor(
+        PyBundle.message("python.sdk.configuration.tab.title"),
+        OrderRootType.CLASSES,
+        FileChooserDescriptorFactory.createAllButJarContentsDescriptor(),
+      )
+      editor.setModuleSourceRoots(sourceRoots)
       // Wire the "Reload paths" toolbar action inside the paths editor to a full interpreter
-      // re-detection: `PythonInterpreterUpdater` walks the SDK binary again and refreshes version +
+      // re-detection: `PythonInterpreterUpdater` walks the binary again and refreshes version +
       // site-packages / typeshed roots. Without this callback the toolbar button would only
       // refresh the editor's view of already-known roots, not re-scan the interpreter itself.
       editor.addReloadPathsActionCallback { PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = true, background = false)) }
-      val sdkModificator = sdk.sdkModificator
       val dialog = PythonPathDialog(project, editor)
-      editor.reset(sdkModificator)
+      editor.reset(classRoots, added, excluded)
       if (!dialog.showAndGet()) return@withContext null
       if (!editor.isModified) return@withContext null
-      editor.apply(sdkModificator)
-      edtWriteAction { sdkModificator.commitChanges() }
       // Copies: the editor keeps its sets on the EDT.
-      editor.addedPaths.toList() to editor.excludedPaths.toList()
+      PathsEdit(editor.addedPaths.toList(), editor.excludedPaths.toList(), remoteEditor?.takeIf { it.isPathMappingsChanged }?.pathMappings)
     } ?: return false
-    writeUserPaths(project, interpreter, added, excluded)
+    writeUserPaths(project, interpreter, edit.added, edit.excluded)
+    edit.pathMappings?.let { interpreter.writePathMappings(it) }
     updateInterpreterFacts(interpreter, project)
     onPathsChanged()
     return true
   }
 }
 
-/**
- * Which [PythonPathEditor] to build for an SDK — local vs remote. Two concrete impls avoid a
- * per-call `isRemote(sdk)` check spreading across the launcher's own body and any future helper.
- */
-private sealed interface PathEditorStrategy {
-  fun createEditor(project: Project, sdk: Sdk): PythonPathEditor
-
-  object Local : PathEditorStrategy {
-    override fun createEditor(project: Project, sdk: Sdk): PythonPathEditor =
-      PythonPathEditor(
-        PyBundle.message("python.sdk.configuration.tab.title"),
-        OrderRootType.CLASSES,
-        FileChooserDescriptorFactory.createAllButJarContentsDescriptor(),
-      )
-  }
-
-  object Remote : PathEditorStrategy {
-    override fun createEditor(project: Project, sdk: Sdk): PythonPathEditor = PyRemotePathEditor(project, sdk)
-  }
-
-  companion object {
-    fun forSdk(sdk: Sdk): PathEditorStrategy = if (PythonSdkUtil.isRemote(sdk)) Remote else Local
-  }
-}
-
+/** What the user changed in the paths dialog: the added and excluded paths, and the path mappings of a target, if new. */
+private class PathsEdit(val added: List<VirtualFile>, val excluded: List<VirtualFile>, val pathMappings: PathMappingSettings?)
 
 /**
  * Writes [added] and [excluded], the paths that the user set in the paths dialog, as facts of [interpreter], see
- * [PythonInterpreterDetails.writeAddedPaths]. The SDK commit of the dialog keeps what is SDK data, such as the path
- * mappings of a remote interpreter.
+ * [PythonInterpreterDetails.writeAddedPaths].
  */
 @ApiStatus.Internal
 suspend fun writeUserPaths(project: Project, interpreter: PythonInterpreter, added: Collection<VirtualFile>, excluded: Collection<VirtualFile>) {

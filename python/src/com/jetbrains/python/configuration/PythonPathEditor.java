@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -10,7 +9,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.NlsContexts;
@@ -27,14 +25,11 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import java.awt.Component;
@@ -56,41 +51,25 @@ class PythonPathEditor extends SdkPathEditor {
                    @NotNull OrderRootType orderRootType,
                    @NotNull FileChooserDescriptor descriptor) {
     super(displayName, orderRootType, descriptor);
-    myPathListModel = new PathListModel(orderRootType, getListModel());
+    myPathListModel = new PathListModel();
   }
 
   /**
    * Sets the paths of {@code sys.path} that are source roots of the module instead of roots of the interpreter, see
    * {@code PythonInterpreterDetails.sourceRoots}. The list shows them, so the user can remove one, which excludes it.
-   * Call it before {@link #reset}.
+   * Call it before {@link #reset(Collection, Set, Set)}.
    */
   void setModuleSourceRoots(@NotNull Collection<VirtualFile> roots) {
     myPathListModel.setModuleSourceRoots(roots);
   }
 
-  @Override
-  public void reset(@Nullable SdkModificator modificator) {
-    if (modificator != null) {
-      List<VirtualFile> list = ImmutableList.copyOf(modificator.getRoots(getOrderRootType()));
-      resetPath(myPathListModel.reset(list, modificator));
-    }
-    else {
-      setEnabled(false);
-    }
-  }
-
-  @Override
-  public void apply(SdkModificator sdkModificator) {
-    sdkModificator.removeRoots(getOrderRootType());
-    // add all items
-    for (int i = 0; i < myPathListModel.getRowCount(); i++) {
-      VirtualFile path = myPathListModel.getValueAt(i);
-      if (!myPathListModel.isExcluded(path) && !myPathListModel.isModuleSourceRoot(path)) {
-        sdkModificator.addRoot(path, getOrderRootType());
-      }
-    }
-    setModified(false);
-    myPathListModel.apply(sdkModificator);
+  /**
+   * Shows the class roots of an interpreter, see {@code PythonInterpreter.classRoots}, with the paths that the user
+   * added and excluded, see {@code PythonInterpreterDetails.facts}. The editor writes nothing: read the result with
+   * {@link #getAddedPaths()} and {@link #getExcludedPaths()}.
+   */
+  void reset(@NotNull Collection<VirtualFile> classRoots, @NotNull Set<VirtualFile> added, @NotNull Set<VirtualFile> excluded) {
+    resetPath(myPathListModel.reset(classRoots, added, excluded));
   }
 
   /** The paths that the user added in this editor, see {@code PythonInterpreterDetails.writeAddedPaths}. */
@@ -162,25 +141,9 @@ class PythonPathEditor extends SdkPathEditor {
 
   private static class PathListModel {
     private final Set<VirtualFile> myFoundFiles = new HashSet<>();
-    private final List<VirtualFile> myFilteredOut = new ArrayList<>();
-    private final DefaultListModel<VirtualFile> myListModel;
-    private final OrderRootType myOrderRootType;
     private Set<VirtualFile> myAdded = new HashSet<>();
     private Set<VirtualFile> myExcluded = new HashSet<>();
     private final Set<VirtualFile> myModuleSourceRoots = new LinkedHashSet<>();
-
-    PathListModel(OrderRootType orderRootType, DefaultListModel<VirtualFile> listModel) {
-      myOrderRootType = orderRootType;
-      myListModel = listModel;
-    }
-
-    private int getRowCount() {
-      return myListModel.getSize();
-    }
-
-    private VirtualFile getValueAt(int row) {
-      return myListModel.get(row);
-    }
 
     public boolean add(@NotNull List<VirtualFile> files) {
       for (VirtualFile file : files) {
@@ -217,20 +180,6 @@ class PythonPathEditor extends SdkPathEditor {
       return ArrayUtil.toIntArray(toRemove);
     }
 
-    /**
-     * Applies the roots that this list hides back to the SDK. The paths that the user added and excluded are facts of the
-     * interpreter: the dialog writes them through {@code writeUserPaths}, and not into the SDK data.
-     */
-    public void apply(@NotNull SdkModificator sdkModificator) {
-      addFilteredOutRoots(sdkModificator);
-    }
-
-    private void addFilteredOutRoots(SdkModificator sdkModificator) {
-      for (VirtualFile file : myFilteredOut) {
-        sdkModificator.addRoot(file, myOrderRootType);
-      }
-    }
-
     public void setAdded(Set<VirtualFile> added) {
       myAdded = Sets.newHashSet(added);
     }
@@ -257,47 +206,38 @@ class PythonPathEditor extends SdkPathEditor {
       myModuleSourceRoots.addAll(roots);
     }
 
-    boolean isModuleSourceRoot(VirtualFile file) {
-      return myModuleSourceRoots.contains(file);
-    }
-
-    public @NotNull List<VirtualFile> reset(@NotNull List<VirtualFile> list, @NotNull SdkModificator modificator) {
-      myFilteredOut.clear();
-      List<VirtualFile> result = filterOutStubs(list, myFilteredOut);
+    /**
+     * The rows for {@code classRoots}, without the stubs. The class roots hold the added paths, so the list shows the
+     * other roots first, then the excluded paths, then the added ones.
+     */
+    public @NotNull List<VirtualFile> reset(@NotNull Collection<VirtualFile> classRoots,
+                                            @NotNull Set<VirtualFile> added,
+                                            @NotNull Set<VirtualFile> excluded) {
+      List<VirtualFile> measured = new ArrayList<>();
+      for (VirtualFile root : classRoots) {
+        if (!added.contains(root)) measured.add(root);
+      }
+      List<VirtualFile> result = filterOutStubs(measured);
 
       myFoundFiles.clear();
-      myFoundFiles.addAll(list);
+      myFoundFiles.addAll(measured);
       // A path of sys.path that is a source root of the module is no root of the interpreter, so the list adds it.
       for (VirtualFile root : myModuleSourceRoots) {
         if (myFoundFiles.add(root)) result.add(root);
       }
 
-      if (modificator.getSdkAdditionalData() instanceof PythonSdkAdditionalData data) {
-        setAdded(data.getAddedPathFiles());
-        setExcluded(data.getExcludedPathFiles());
-        result.addAll(myExcluded);
-        result.addAll(myAdded);
-      }
-      else if (modificator.getSdkAdditionalData() == null) {
-        myAdded.clear();
-        myExcluded.clear();
-      }
+      setAdded(added);
+      setExcluded(excluded);
+      result.addAll(myExcluded);
+      result.addAll(myAdded);
       return result;
     }
 
-    public boolean isExcluded(VirtualFile path) {
-      return myExcluded.contains(path);
-    }
-
-    private static @NotNull List<VirtualFile> filterOutStubs(@NotNull List<VirtualFile> list, @NotNull List<VirtualFile> filteredOut) {
+    private static @NotNull List<VirtualFile> filterOutStubs(@NotNull List<VirtualFile> list) {
       List<VirtualFile> result = new ArrayList<>();
-      filteredOut.clear();
       for (VirtualFile file : list) {
         if (!isStubPath(file)) {
           result.add(file);
-        }
-        else {
-          filteredOut.add(file);
         }
       }
       return result;

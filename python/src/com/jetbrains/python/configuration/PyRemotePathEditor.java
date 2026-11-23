@@ -1,18 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.remote.RemoteSdkProperties;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.TargetPythonInterpreter;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
@@ -20,37 +17,50 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.remote.PyRemoteSourceItem;
-import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The path editor of a target interpreter. A path that the user adds is a path on the target: the editor maps it to a
+ * local copy in the remote sources of the interpreter, and keeps the new mapping, see {@link #getPathMappings()}.
+ */
 @ApiStatus.Internal
 final class PyRemotePathEditor extends PythonPathEditor {
   private static final Logger LOG = Logger.getInstance(PyRemotePathEditor.class);
-  private final RemoteSdkProperties myRemoteSdkData;
   private final @NotNull Project myProject;
-  private final @NotNull Sdk mySdk;
+  private final @NotNull TargetPythonInterpreter myInterpreter;
+  /** The path mappings of the interpreter, with the mappings of the paths that the user added here. */
+  private final @NotNull PathMappingSettings myPathMappings;
+  private boolean myMappingsChanged;
 
-  private final List<PathMappingSettings.PathMapping> myNewMappings = new ArrayList<>();
-
-  PyRemotePathEditor(@NotNull Project project, @NotNull Sdk sdk) {
+  PyRemotePathEditor(@NotNull Project project, @NotNull TargetPythonInterpreter interpreter) {
     super(PyBundle.message("python.sdk.configuration.tab.title"), OrderRootType.CLASSES,
           FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
     myProject = project;
-    mySdk = sdk;
-    myRemoteSdkData = (RemoteSdkProperties)mySdk.getSdkAdditionalData();
+    myInterpreter = interpreter;
+    PathMappingSettings stored = PythonInterpreterExtKt.getPathMappings(interpreter);
+    myPathMappings = new PathMappingSettings(stored != null ? new ArrayList<>(stored.getPathMappings()) : new ArrayList<>());
+  }
+
+  /** The path mappings of the interpreter with the new ones, see {@code PythonInterpreterDetails.writePathMappings}. */
+  @NotNull PathMappingSettings getPathMappings() {
+    return myPathMappings;
+  }
+
+  /** Whether the user added a path, so the path mappings have a new mapping. */
+  boolean isPathMappingsChanged() {
+    return myMappingsChanged;
   }
 
   @Override
   protected String getPresentablePath(VirtualFile value) {
-    String path = value.getPath();
-    return myRemoteSdkData.getPathMappings().convertToRemote(path);
+    return myPathMappings.convertToRemote(value.getPath());
   }
 
   @Override
@@ -74,17 +84,17 @@ final class PyRemotePathEditor extends PythonPathEditor {
   protected VirtualFile[] doAddItems() {
     try {
       String[] files = chooseRemoteFiles();
-
-      final String sourcesLocalPath = PySdkExtKt.getRemoteSourcesLocalPath(mySdk).toString();
+      Path sourcesLocalPath = PythonInterpreterExtKt.getRemoteSourcesLocalPath(myInterpreter);
+      if (sourcesLocalPath == null) return VirtualFile.EMPTY_ARRAY;
 
       VirtualFile[] vFiles = new VirtualFile[files.length];
 
       int i = 0;
       for (String file : files) {
-        String localRoot = PyRemoteSourceItem.localPathForRemoteRoot(sourcesLocalPath, file);
+        String localRoot = PyRemoteSourceItem.localPathForRemoteRoot(sourcesLocalPath.toString(), file);
 
-        myNewMappings.add(new PathMappingSettings.PathMapping(localRoot, file));
-        myRemoteSdkData.getPathMappings().addMappingCheckUnique(localRoot, file);
+        myPathMappings.addMappingCheckUnique(localRoot, file);
+        myMappingsChanged = true;
 
         if (!new File(localRoot).exists()) {
           new File(localRoot).mkdirs();
@@ -107,31 +117,8 @@ final class PyRemotePathEditor extends PythonPathEditor {
     return VirtualFile.EMPTY_ARRAY;
   }
 
-  private String @NotNull [] chooseRemoteFiles() throws ExecutionException, InterruptedException {
-    SdkAdditionalData sdkAdditionalData = mySdk.getSdkAdditionalData();
-    if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
-      var dialog = new ManualPathEntryDialog(myProject,
-                                             ((PyTargetAwareAdditionalData)sdkAdditionalData).getTargetEnvironmentConfiguration());
-      if (dialog.showAndGet()) {
-        return new String[]{dialog.getPath()};
-      }
-      else {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
-      }
-    }
-    else {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-  }
-
-  @Override
-  public void apply(SdkModificator sdkModificator) {
-    if (sdkModificator.getSdkAdditionalData() instanceof RemoteSdkProperties) {
-      for (PathMappingSettings.PathMapping mapping : myNewMappings) {
-        ((RemoteSdkProperties)sdkModificator.getSdkAdditionalData()).getPathMappings()
-          .addMappingCheckUnique(mapping.getLocalRoot(), mapping.getRemoteRoot());
-      }
-    }
-    super.apply(sdkModificator);
+  private String @NotNull [] chooseRemoteFiles() {
+    var dialog = new ManualPathEntryDialog(myProject, myInterpreter.getTargetConfiguration());
+    return dialog.showAndGet() ? new String[]{dialog.getPath()} : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }
