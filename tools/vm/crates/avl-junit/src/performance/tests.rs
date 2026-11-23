@@ -303,11 +303,47 @@ fn the_passes_of_a_scenario_write_one_file_with_their_median() {
         })
         .collect();
     let files = files(&plan, &events, GENERATED);
-    assert_eq!(files.len(), 1, "one file for the series of the three passes");
+    assert_eq!(files.len(), 4, "one file for the series of the three passes, and one for each pass");
     let document: Value = serde_json::from_str(&files[0].text).unwrap();
+    assert_eq!(files[0].artifact_path, "air-long-session/M");
     assert_eq!(document["project"], "air/long-session/M");
     assert_eq!(
         document["metrics"],
         json!([{"n": "answer.M.streamEndToSettledMs", "d": 410, "v": 410}])
     );
+    let passes: Vec<(String, Value)> = files[1..]
+        .iter()
+        .map(|file| (file.artifact_path.clone(), serde_json::from_str(&file.text).unwrap()))
+        .collect();
+    assert_eq!(
+        passes.iter().map(|(path, _)| path.as_str()).collect::<Vec<_>>(),
+        [
+            "air-long-session/M/pass-1",
+            "air-long-session/M/pass-2",
+            "air-long-session/M/pass-3"
+        ]
+    );
+    assert_eq!(passes[1].1["project"], "air/long-session/M/passes");
+    assert_eq!(
+        passes[1].1["metrics"],
+        json!([{"n": "answer.M.streamEndToSettledMs", "d": 557, "v": 557}, {"n": "pass", "c": 2, "v": 2}])
+    );
+}
+
+#[test]
+fn a_series_of_one_pass_writes_no_file_of_a_pass() {
+    let plan = Plan {
+        ide_build: "271.1".to_owned(),
+        series: vec![series("AirLongSessionPerformanceUiTest", "M", "air-long-session/M")],
+    };
+    let line = r#"{"event":"testFinished","timestamp":"2026-11-19T03:00:00Z","id":"M","displayName":"M","className":"AirLongSessionPerformanceUiTest","status":"SUCCESSFUL","durationMs":5,"report":{"metrics":{"answer.M.streamEndToSettledMs":410}}}"#;
+    let events = vec![decode_run_event(line.as_bytes()).unwrap()];
+    assert_eq!(files(&plan, &events, GENERATED).len(), 1);
+}
+
+#[test]
+fn a_pass_number_comes_from_the_name_of_its_case() {
+    assert_eq!(pass_number("a session of size M opens"), 1);
+    assert_eq!(pass_number("a session of size M opens, pass 3 of 5"), 3);
+    assert_eq!(pass_number("a session, pass x of 5"), 1);
 }

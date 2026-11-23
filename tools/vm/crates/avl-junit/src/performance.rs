@@ -11,7 +11,10 @@
 //!
 //! The lane can run a scenario more than once: each pass is a case of its own, and the lane document names one series
 //! for each pass, all with the same artifact path. The file of a series holds the median of each metric over its passes
-//! ([`median_of_passes`]), so one noisy run does not move the series.
+//! ([`median_of_passes`]), so one noisy run does not move the series. Each pass also gets a file of its own values, at
+//! `<artifactPath>/pass-<k>/`, whose project is the project of the series with [`PASS_PROJECT_SUFFIX`]. The charts and
+//! the detector of IJ Perf read the project of the series, so the values of the passes stay out of them, and the
+//! spread of a night stays in IJ Perf.
 //!
 //! The format is `PerformanceMetricsDto` of `intellij.tools.ide.metrics.collector`, version 1, as the JVM host wrote it.
 //! A metric whose name starts with `growth.` is a ratio, and it is the counter `<name>.x100` of its value times 100,
@@ -34,6 +37,12 @@ mod tests;
 
 /// The name of the file in the artifact directory of its series, which the dashboard collects.
 pub const FILE_NAME: &str = "metrics.performance.json";
+
+/// The end of the project of the file of one pass. The project of the series comes before it.
+pub const PASS_PROJECT_SUFFIX: &str = "/passes";
+
+/// The counter of the file of one pass that names the pass: 1 for the first pass.
+pub const PASS_METRIC: &str = "pass";
 
 /// The `event` of the journal record of a [`Plan`].
 pub const PLAN_EVENT: &str = "performancePlan";
@@ -138,7 +147,8 @@ impl File {
 }
 
 /// The files of the iteration that streamed `events`, written at `generated`, an RFC 1123 time ([`rfc_1123`]): one for
-/// each series in `plan` that a case reported a metric for, with the median of its passes.
+/// each series in `plan` that a case reported a metric for, with the median of its passes, and for a series of more
+/// than one pass, one file for each pass that reported a metric.
 pub fn files(plan: &Plan, events: &[RunEvent], generated: &str) -> Vec<File> {
     let mut passes: Vec<(&PerformanceSeries, Vec<StreamCase>)> = Vec::new();
     for case in crate::cases::cases(events)
@@ -153,13 +163,53 @@ pub fn files(plan: &Plan, events: &[RunEvent], generated: &str) -> Vec<File> {
             None => passes.push((series, vec![case])),
         }
     }
-    passes
-        .into_iter()
-        .map(|(series, cases)| File {
+    let mut files = Vec::new();
+    for (series, cases) in passes {
+        files.push(File {
             artifact_path: series.artifact_path.clone(),
             text: render(series, &plan.ide_build, generated, &median_of_passes(&cases)),
-        })
-        .collect()
+        });
+        let planned = plan
+            .series
+            .iter()
+            .filter(|known| known.artifact_path == series.artifact_path)
+            .count();
+        if planned < 2 {
+            continue;
+        }
+        let pass_series = PerformanceSeries {
+            project: format!("{}{PASS_PROJECT_SUFFIX}", series.project),
+            ..series.clone()
+        };
+        for case in last_attempts(&cases) {
+            let number = pass_number(&case.name);
+            let mut metrics = case.report.metrics.clone();
+            metrics.insert(PASS_METRIC.to_owned(), serde_json::Number::from(number));
+            files.push(File {
+                artifact_path: format!("{}/pass-{number}", series.artifact_path),
+                text: render(&pass_series, &plan.ide_build, generated, &metrics),
+            });
+        }
+    }
+    files
+}
+
+/// The number of the pass that `name` names: `k` of a name that ends with `, pass <k> of <n>`, else 1, the first pass.
+pub fn pass_number(name: &str) -> u32 {
+    name.rsplit_once(", pass ")
+        .and_then(|(_, rest)| rest.split_once(" of "))
+        .and_then(|(number, _)| number.parse().ok())
+        .unwrap_or(1)
+}
+
+/// The last attempt of each pass of `cases`, in stream order: a rerun repeats the name of its scenario.
+fn last_attempts(cases: &[StreamCase]) -> Vec<&StreamCase> {
+    let mut last: Vec<&StreamCase> = Vec::new();
+    for case in cases {
+        last.retain(|known| known.name != case.name);
+        last.push(case);
+    }
+    last
 }
 
 /// The metrics of a series from the `cases` of its passes, in stream order: the median of each metric.
@@ -168,11 +218,7 @@ pub fn files(plan: &Plan, events: &[RunEvent], generated: &str) -> Vec<File> {
 /// failed pass can stop in the middle of its measurement. When no pass passed, every pass counts, as the one pass of a
 /// failed scenario did before passes existed. A metric that a pass did not report takes the median of the others.
 pub fn median_of_passes(cases: &[StreamCase]) -> BTreeMap<String, serde_json::Number> {
-    let mut last: Vec<&StreamCase> = Vec::new();
-    for case in cases {
-        last.retain(|known| known.name != case.name);
-        last.push(case);
-    }
+    let last = last_attempts(cases);
     let passed: Vec<&StreamCase> = last.iter().copied().filter(|case| case.outcome == CaseOutcome::Passed).collect();
     let counted = if passed.is_empty() { last } else { passed };
     let mut values: BTreeMap<&str, Vec<f64>> = BTreeMap::new();
