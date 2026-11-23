@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
+import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexTumbler
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import org.jetbrains.annotations.ApiStatus
@@ -39,6 +40,8 @@ class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
       switcher.turnOff()
       try {
         IndexLayoutPersistentSettings.setCustomLayout(indexStorage.bean)
+        //tumbler on/off doesn't invalidate all the indexing parts, so be on a safe side:
+        FileBasedIndex.getInstance().invalidateCaches()
       }
       finally {
         switcher.turnOn(null)

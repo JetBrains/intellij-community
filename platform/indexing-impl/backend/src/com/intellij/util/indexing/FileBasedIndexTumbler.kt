@@ -147,6 +147,8 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
                                           "This probably means that DynamicPluginListener.plugin[Un]Loaded event was fired without corresponding 'before' event")
     if (nestedLevelCount == 0) {
       try {
+        // loadIndexes() or other initialization parts can consume the marker
+        val invalidationRequestedBeforeReload = CorruptionMarker.requireInvalidation()
         fileBasedIndex.loadIndexes()
         if (DumbServiceImpl.isSynchronousTaskExecution) {
           fileBasedIndex.waitUntilIndicesAreInitialized()
@@ -157,7 +159,8 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
         }
         dumbModeSemaphore.up()
 
-        val runRescanning = lightweight || CorruptionMarker.requireInvalidation() || (Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
+        val runRescanning = lightweight || invalidationRequestedBeforeReload || CorruptionMarker.requireInvalidation() ||
+                            (Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
                             snapshot is FbiSnapshot.RebuildRequired ||
                             FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture()))
         if (runRescanning) {

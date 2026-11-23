@@ -6,6 +6,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.runInEdtAndGet
@@ -13,6 +14,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -71,7 +73,24 @@ class FileBasedIndexTumblerTest {
     }
   }
 
-  private fun withIndexOff(block: () -> Unit) {
+  @Test
+  @RegistryKey(key = "run.index.rescanning.on.plugin.load.unload", value = "false")
+  fun `index invalidation while index is off starts rescan`() {
+    var rescanStarted = false
+    val previousForceDumbQueueTasks = System.getProperty(DumbServiceImpl.IDEA_FORCE_DUMB_QUEUE_TASKS)
+    try {
+      withIndexOff(beforeIndexTasksStarted = { rescanStarted = true }) {
+        FileBasedIndex.getInstance().invalidateCaches()
+        System.setProperty(DumbServiceImpl.IDEA_FORCE_DUMB_QUEUE_TASKS, "false")
+      }
+    }
+    finally {
+      SystemProperties.setProperty(DumbServiceImpl.IDEA_FORCE_DUMB_QUEUE_TASKS, previousForceDumbQueueTasks)
+    }
+    assertTrue(rescanStarted, "Index invalidation must start a rescan even when general restart rescanning is disabled")
+  }
+
+  private fun withIndexOff(beforeIndexTasksStarted: Runnable? = null, block: () -> Unit) {
     runBlocking { IndexingTestUtil.suspendUntilIndexesAreReady(project) }
     val tumbler = FileBasedIndexTumbler("FileBasedIndexTumblerTest")
     runInEdtAndWait { tumbler.turnOff() }
@@ -82,7 +101,7 @@ class FileBasedIndexTumblerTest {
     }
     finally {
       runInEdtAndWait {
-        WriteIntentReadAction.run { tumbler.turnOn() }
+        WriteIntentReadAction.run { tumbler.turnOn(beforeIndexTasksStarted) }
       }
       runBlocking { IndexingTestUtil.suspendUntilIndexesAreReady(project) }
     }
