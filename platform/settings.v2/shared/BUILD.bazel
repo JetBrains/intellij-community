@@ -36,7 +36,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/protobuf",
-        "//platform/lang-impl",
         "//platform/analysis-api:analysis",
         "//platform/progress/shared:ide-progress",
         "//platform/ide-core",
