@@ -71,7 +71,6 @@ import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.flavor
 import com.intellij.python.sdk.backend.getPythonInfo
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.python.sdk.common.PyEnvRef
 import com.intellij.python.sdk.common.PyInterpreterRef
