@@ -2059,6 +2059,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return 1.0f;
   }
 
+  @ApiStatus.Internal
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
     return myView.findNearestDirectionBoundary(offset, lookForward);
   }
