@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PropertyUtil
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.analysis.api.resolution.symbols
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -23,6 +24,10 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
+import org.jetbrains.kotlin.name.JvmStandardClassIds
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtParameter
@@ -48,16 +53,17 @@ internal class RedundantDestructuringUnderscoreInspection : AbstractKotlinInspec
         val isShortFormAvailable =
             declaration.languageVersionSettings.supportsFeature(LanguageFeature.EnableNameBasedDestructuringShortForm)
 
-        val removableEntries = declaration.entries.filter { entry ->
-            entry.isSingleUnderscore && (entry.ownValOrVarKeyword != null || isShortFormAvailable) && isSafeToRemove(entry)
-        }
-        val allowBatch = removableEntries.size < declaration.entries.size
-        for (entry in removableEntries) {
+        val entriesWithSafety = declaration.entries
+            .filter { it.isSingleUnderscore && (it.ownValOrVarKeyword != null || isShortFormAvailable) }
+            .associateWith { isSafeToRemove(it) }
+        val allowBatch = entriesWithSafety.count { it.value } < declaration.entries.size
+
+        for ((entry, isSafe) in entriesWithSafety) {
             holder.registerProblem(
                 entry,
                 KotlinBundle.message("inspection.redundant.destructuring.underscore"),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                RemoveRedundantDestructuringUnderscoreFix(allowBatch)
+                RemoveRedundantDestructuringUnderscoreFix(allowBatch && isSafe, mayChangeSemantics = !isSafe)
             )
         }
     }
@@ -69,12 +75,20 @@ internal class RedundantDestructuringUnderscoreInspection : AbstractKotlinInspec
             when (symbol) {
                 is KaSyntheticJavaPropertySymbol -> {
                     val getter = symbol.javaGetterSymbol.psi as? PsiMethod
-                    getter != null && PropertyUtil.getFieldOfGetter(getter) != null
+                    getter != null && !PsiUtil.canBeOverridden(getter) && PropertyUtil.getFieldOfGetter(getter) != null
                 }
 
                 is KaPropertySymbol -> {
                     val isLateinit = symbol is KaKotlinPropertySymbol && symbol.isLateInit
-                    !isLateinit && !symbol.isDelegated && symbol.getter?.isNotDefault != true
+
+                    val fieldAnnotations = symbol.backingFieldSymbol?.annotations
+                    val isVolatile = fieldAnnotations?.contains(JvmStandardClassIds.VOLATILE_ANNOTATION_CLASS_ID) == true
+                            || fieldAnnotations?.contains(StandardClassIds.Annotations.Volatile) == true
+                    val isSynchronized = symbol.getter?.annotations?.contains(JvmStandardClassIds.SYNCHRONIZED_ANNOTATION_CLASS_ID) == true
+
+                    val declaration = symbol.psi as? KtDeclaration ?: return@analyze false
+                    !declaration.isOverridable() && !isLateinit && !isVolatile && !isSynchronized
+                            && !symbol.isDelegated && symbol.getter?.isNotDefault != true
                 }
 
                 is KaJavaFieldSymbol -> true
@@ -84,10 +98,18 @@ internal class RedundantDestructuringUnderscoreInspection : AbstractKotlinInspec
     }
 }
 
-private class RemoveRedundantDestructuringUnderscoreFix(private val allowBatch: Boolean) : PsiUpdateModCommandQuickFix() {
+private class RemoveRedundantDestructuringUnderscoreFix(
+    private val allowBatch: Boolean,
+    private val mayChangeSemantics: Boolean
+) : PsiUpdateModCommandQuickFix() {
 
     override fun getFamilyName(): @IntentionName String =
         KotlinBundle.message("remove.redundant.destructuring.underscore")
+
+    override fun getName(): @IntentionName String {
+        val suffix = if (mayChangeSemantics) KotlinBundle.message("quickfix.text.suffix.may.change.semantics") else ""
+        return familyName + suffix
+    }
 
     override fun availableInBatchMode(): Boolean = allowBatch
 

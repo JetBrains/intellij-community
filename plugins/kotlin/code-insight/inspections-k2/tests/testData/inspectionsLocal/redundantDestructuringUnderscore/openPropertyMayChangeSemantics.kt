@@ -1,0 +1,14 @@
+// FIX: Remove redundant underscore entry (may change semantics)
+// PROBLEM: Underscore entry is redundant
+// HIGHLIGHT: NOT_USED_ELEMENT_ATTRIBUTES
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+
+open class Named(open val title: String, val n: Int)
+
+class Impl : Named("t", 1) {
+    override val title: String get() = error("side effect")
+}
+
+fun test(x: Named) {
+    (val <caret>_ = title, val n) = x
+}

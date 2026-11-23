@@ -1,0 +1,16 @@
+// FIX: Remove redundant underscore entry
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+
+interface Named {
+    val title: String
+    val n: Int
+}
+
+class Impl : Named {
+    override val title: String = "t"
+    override val n: Int = 1
+}
+
+fun test(x: Impl) {
+    (val <caret>_ = title, val n) = x
+}

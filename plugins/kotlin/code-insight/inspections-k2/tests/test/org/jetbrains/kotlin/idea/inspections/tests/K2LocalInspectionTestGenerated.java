@@ -20111,14 +20111,29 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            @TestMetadata("customGetterNoWarn.kt")
-            public void testCustomGetterNoWarn() throws Exception {
-                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/customGetterNoWarn.kt");
+            @TestMetadata("customGetterMayChangeSemantics.kt")
+            public void testCustomGetterMayChangeSemantics() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/customGetterMayChangeSemantics.kt");
             }
 
-            @TestMetadata("delegatedNoWarn.kt")
-            public void testDelegatedNoWarn() throws Exception {
-                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/delegatedNoWarn.kt");
+            @TestMetadata("delegatedMayChangeSemantics.kt")
+            public void testDelegatedMayChangeSemantics() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/delegatedMayChangeSemantics.kt");
+            }
+
+            @TestMetadata("enumPropertyMayChangeSemantics.kt")
+            public void testEnumPropertyMayChangeSemantics() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/enumPropertyMayChangeSemantics.kt");
+            }
+
+            @TestMetadata("finalClassOverride.kt")
+            public void testFinalClassOverride() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/finalClassOverride.kt");
+            }
+
+            @TestMetadata("finalProperty.kt")
+            public void testFinalProperty() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/finalProperty.kt");
             }
 
             @TestMetadata("forLoopNoWarn.kt")
@@ -20136,14 +20151,24 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/fullFormNoRename.kt");
             }
 
-            @TestMetadata("lateinitNoWarn.kt")
-            public void testLateinitNoWarn() throws Exception {
-                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/lateinitNoWarn.kt");
+            @TestMetadata("interfacePropertyMayChangeSemantics.kt")
+            public void testInterfacePropertyMayChangeSemantics() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/interfacePropertyMayChangeSemantics.kt");
+            }
+
+            @TestMetadata("lateinitMayChangeSemantics.kt")
+            public void testLateinitMayChangeSemantics() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/lateinitMayChangeSemantics.kt");
             }
 
             @TestMetadata("multipleUnderscores.kt")
             public void testMultipleUnderscores() throws Exception {
                 runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/multipleUnderscores.kt");
+            }
+
+            @TestMetadata("openPropertyMayChangeSemantics.kt")
+            public void testOpenPropertyMayChangeSemantics() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/openPropertyMayChangeSemantics.kt");
             }
 
             @TestMetadata("positionalFormNoWarn.kt")
@@ -20169,6 +20194,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("singleEntryNoWarn.kt")
             public void testSingleEntryNoWarn() throws Exception {
                 runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/singleEntryNoWarn.kt");
+            }
+
+            @TestMetadata("synchronizedGetterMayChangeSemantics.kt")
+            public void testSynchronizedGetterMayChangeSemantics() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/synchronizedGetterMayChangeSemantics.kt");
+            }
+
+            @TestMetadata("volatileMayChangeSemantics.kt")
+            public void testVolatileMayChangeSemantics() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/volatileMayChangeSemantics.kt");
             }
         }
 

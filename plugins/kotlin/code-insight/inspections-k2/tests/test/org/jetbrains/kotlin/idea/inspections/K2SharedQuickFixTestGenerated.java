@@ -71,6 +71,11 @@ public abstract class K2SharedQuickFixTestGenerated extends AbstractK2SharedQuic
                 runTest("testData/quickfix/redundantDestructuringUnderscore/allUnderscoresSingleFix.kt");
             }
 
+            @TestMetadata("concurrentVolatileFixAll.kt")
+            public void testConcurrentVolatileFixAll() throws Exception {
+                runTest("testData/quickfix/redundantDestructuringUnderscore/concurrentVolatileFixAll.kt");
+            }
+
             @TestMetadata("mixedDeclarationsFixAll.kt")
             public void testMixedDeclarationsFixAll() throws Exception {
                 runTest("testData/quickfix/redundantDestructuringUnderscore/mixedDeclarationsFixAll.kt");
@@ -79,6 +84,21 @@ public abstract class K2SharedQuickFixTestGenerated extends AbstractK2SharedQuic
             @TestMetadata("mixedSafetyFixAll.kt")
             public void testMixedSafetyFixAll() throws Exception {
                 runTest("testData/quickfix/redundantDestructuringUnderscore/mixedSafetyFixAll.kt");
+            }
+
+            @TestMetadata("synchronizedGetterFixAll.kt")
+            public void testSynchronizedGetterFixAll() throws Exception {
+                runTest("testData/quickfix/redundantDestructuringUnderscore/synchronizedGetterFixAll.kt");
+            }
+
+            @TestMetadata("unsafeFixAll.kt")
+            public void testUnsafeFixAll() throws Exception {
+                runTest("testData/quickfix/redundantDestructuringUnderscore/unsafeFixAll.kt");
+            }
+
+            @TestMetadata("volatileFixAll.kt")
+            public void testVolatileFixAll() throws Exception {
+                runTest("testData/quickfix/redundantDestructuringUnderscore/volatileFixAll.kt");
             }
         }
 
