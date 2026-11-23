@@ -24,6 +24,9 @@ object SurefireReportParser {
 
   const val SUREFIRE_REPORTS_PATH = "target/surefire-reports"
 
+  /** The service message that gives the root node of the test tree the name [name]. */
+  fun rootNameMessage(name: String): String = "##teamcity[rootName name='${escape(name)}']"
+
   fun collectMessages(testModuleDirectory: Path, reportSuffix: String? = null): List<String> {
     val reportsDir = testModuleDirectory.resolve(SUREFIRE_REPORTS_PATH)
     if (!reportsDir.exists() || !reportsDir.isDirectory()) return emptyList()

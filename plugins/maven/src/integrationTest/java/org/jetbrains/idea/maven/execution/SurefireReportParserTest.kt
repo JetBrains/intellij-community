@@ -405,4 +405,11 @@ line2</failure>
     val msgs = messages()
     assertTrue(msgs.any { "com.example.Good" in it })
   }
+
+  // ── root name ────────────────────────────────────────────────────────────
+
+  @Test
+  fun `root name message escapes the name`() {
+    assertEquals("##teamcity[rootName name='Tests in |'probe|' |[1|]']", SurefireReportParser.rootNameMessage("Tests in 'probe' [1]"))
+  }
 }

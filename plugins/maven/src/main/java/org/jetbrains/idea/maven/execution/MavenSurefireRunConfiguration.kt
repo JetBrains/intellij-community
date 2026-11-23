@@ -108,7 +108,7 @@ class SurefireTestRunProfileState(
     val mavenResult = delegate.execute(executor, runner) ?: return null
     val mavenHandler = (mavenResult as? DefaultExecutionResult)?.processHandler ?: return mavenResult
 
-    val proxy = SurefireProcessProxy(mavenHandler, testModuleDirectory, configuration.reportSuffix)
+    val proxy = SurefireProcessProxy(mavenHandler, testModuleDirectory, configuration.reportSuffix, configuration.name)
     val properties = SurefireTestConsoleProperties(configuration, this.executor)
     val console = SMTestRunnerConnectionUtil.createConsole(properties)
     console.attachToProcess(proxy)
@@ -125,7 +125,8 @@ class SurefireTestRunProfileState(
 /**
  * Wraps the Maven [ProcessHandler] to present a unified lifecycle to the SM test runner console.
  *
- * - `startNotify()` starts the proxy AND the Maven handler so output begins to flow.
+ * - `startNotify()` starts the proxy AND the Maven handler so output begins to flow, and gives the root node of the
+ *   test tree the name [rootName].
  * - On Maven termination, surefire reports are parsed and fed as TC service messages before the
  *   proxy signals its own termination.  This keeps everything in a single Run toolwindow tab.
  * - `destroyProcess()` / `detachProcess()` delegate to the Maven handler so the Stop button works.
@@ -136,6 +137,7 @@ private class SurefireProcessProxy(
   private val mavenHandler: ProcessHandler,
   private val testModuleDirectory: String,
   private val reportSuffix: String?,
+  private val rootName: String,
 ) : ProcessHandler() {
 
   // Filters out [IJ]-... Maven spy protocol messages (normally consumed by MavenHandlerFilterSpyWrapper).
@@ -185,6 +187,9 @@ private class SurefireProcessProxy(
       }
     }
     super.startNotify()           // fires startNotified on proxy listeners (SM console)
+    // The Maven output goes to the root node, and a test history entry (TestResultsXmlFormatter) keeps the output of
+    // the root node only when the root has a name (IDEA-395942).
+    notifyTextAvailable(SurefireReportParser.rootNameMessage(rootName) + "\n", ProcessOutputTypes.STDOUT)
     mavenHandler.startNotify()    // starts event dispatching on the Maven process
   }
 
