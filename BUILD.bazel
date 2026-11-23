@@ -726,6 +726,7 @@ jvm_library(
         "//plugins/groovy/property-tests:propertyBased-tests_test_lib",
         "//plugins/search-everywhere-ml:searchEverywhereMl-tests_test_lib",
         "//platform/lsp-impl/tests:tests_test_lib",
+        "//platform/lsp-impl/problems/tests:tests_test_lib",
         "//plugins/mermaid:mermaid-tests_test_lib",
         "//platform/discoverability:discoverability-tests_test_lib",
         "//plugins/dev/intellij.dev.leakDetection:leakDetection-tests_test_lib",
