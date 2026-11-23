@@ -3,33 +3,39 @@ package com.jetbrains.env.python.conda
 
 import com.google.gson.Gson
 import com.intellij.execution.processTools.getBareExecutionResult
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.binaryPathString
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.configureBuilderToRunPythonOnTarget
+import com.intellij.python.sdk.backend.detectedHomePath
+import com.intellij.python.sdk.backend.flavor
+import com.intellij.python.sdk.backend.targetEnvironmentRequest
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.jetbrains.env.getPythonBinaryPath
 import com.jetbrains.env.getPythonVersion
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.conda.condaIdentityOf
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
-import com.jetbrains.python.sdk.pySdkAdditionalData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.Assert
@@ -137,15 +143,15 @@ internal class PyCondaSdkTest {
   @Test
   fun testExecuteCommandOnSdk(): Unit = timeoutRunBlocking(60.seconds) {
     val condaEnv = getOwnBaseEnv()
-    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
+    val interpreter = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
       moduleOrProject = ModuleOrProject.ProjectOnly(projectRule.project),
       condaIdentity = condaEnv.envIdentity,
       workingDirectory = projectRule.project.basePath?.toNioPathOrNull()!!,
-    ).getOrThrow().getSdkAPI()
+    ).getOrThrow()
     val request = LocalTargetEnvironmentRequest()
 
     repeat(10) { // To measure time to compare legacy and local
-      val version = getPythonVersion(sdk, request)
+      val version = pythonVersionOf(interpreter, request)
       Assert.assertNotNull("No version returned", version)
     }
   }
@@ -153,32 +159,33 @@ internal class PyCondaSdkTest {
   @Test
   fun createSdkByFile() = timeoutRunBlocking(120.seconds) {
     val newCondaInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath, emptyList())
-    val sdk = condaRule.condaCommand.createCondaSdkAlongWithNewEnv(
+    val interpreter = condaRule.condaCommand.createCondaSdkAlongWithNewEnv(
       ModuleOrProject.ProjectOnly(projectRule.project),
       newCondaInfo,
       projectRule.project.basePath?.toNioPathOrNull()!!,
-    ).getOrThrow().getSdkAPI()
-    val env = (sdk.pySdkAdditionalData.flavorAndData.data as PyCondaFlavorData).env
-    val namedEnv = env.envIdentity as PyCondaEnvIdentity.NamedEnv
+    ).getOrThrow()
+    // The ref of a conda interpreter names its environment.
+    val namedEnv = condaIdentityOf(interpreter.ref.env.envRef) as PyCondaEnvIdentity.NamedEnv
     Assert.assertEquals("Wrong env name", yamlRule.envName, namedEnv.envName)
-    ensureHomePathCorrect(sdk)
+    ensureHomePathCorrect(interpreter)
   }
 
   @Test
   fun testCreateFromExisting(): Unit = timeoutRunBlocking(10.minutes) {
     val env = getOwnBaseEnv()
-    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
+    val interpreter = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
       moduleOrProject = ModuleOrProject.ProjectOnly(projectRule.project),
       condaIdentity = env.envIdentity,
       workingDirectory = projectRule.project.basePath?.toNioPathOrNull()!!,
-    ).getOrThrow().getSdkAPI()
+    ).getOrThrow()
 
-    Assert.assertEquals(CondaEnvSdkFlavor, sdk.pySdkAdditionalData.flavor)
-    Assert.assertTrue(env.toString(), getPythonVersion(sdk, LocalTargetEnvironmentRequest())?.isNotBlank() == true)
+    Assert.assertEquals(CondaEnvSdkFlavor, interpreter.flavor)
+    Assert.assertTrue(env.toString(), pythonVersionOf(interpreter, LocalTargetEnvironmentRequest())?.isNotBlank() == true)
 
-    Assert.assertTrue("Bad home path", Files.isExecutable(Path.of(sdk.homePath!!)))
-    ensureHomePathCorrect(sdk)
-    Assert.assertEquals("Wrong name", Path.of(env.envIdentity.userReadableName), Path.of(sdk.name))
+    Assert.assertTrue("Bad home path", Files.isExecutable(Path.of(interpreter.binaryPathString)))
+    ensureHomePathCorrect(interpreter)
+    // The base env has no name: conda names it by its directory, which is the home of the environment.
+    Assert.assertEquals("Wrong environment", Path.of(env.envIdentity.userReadableName), interpreter.detectedHomePath)
   }
 
   /**
@@ -195,8 +202,24 @@ internal class PyCondaSdkTest {
         }
       }
 
-  private suspend fun ensureHomePathCorrect(sdk: Sdk) {
-    val homePath = Path.of(sdk.homePath!!)
-    Assert.assertEquals("Wrong home path", homePath, Path.of(sdk.getPythonBinaryPath(projectRule.project).getOrThrow()))
+  /** The version that the Python of [interpreter] prints, run in [request]. */
+  private suspend fun pythonVersionOf(interpreter: PythonInterpreter, request: TargetEnvironmentRequest): String? {
+    val commandLineBuilder = TargetedCommandLineBuilder(request)
+    withContext(Dispatchers.IO) { interpreter.configureBuilderToRunPythonOnTarget(commandLineBuilder) }
+    return getPythonVersion(commandLineBuilder, interpreter.flavor, request)
+  }
+
+  /** Checks that the binary of [interpreter] is the `sys.executable` that its Python reports. */
+  private suspend fun ensureHomePathCorrect(interpreter: PythonInterpreter) {
+    val request = interpreter.targetEnvironmentRequest().targetEnvironmentRequest
+    val commandLineBuilder = TargetedCommandLineBuilder(request)
+    val output = withContext(Dispatchers.IO) {
+      interpreter.configureBuilderToRunPythonOnTarget(commandLineBuilder)
+      commandLineBuilder.addParameter("-c")
+      commandLineBuilder.addParameter("import sys; print(sys.executable)")
+      request.prepareEnvironment(TargetProgressIndicator.EMPTY).createProcess(commandLineBuilder.build()).getBareExecutionResult()
+    }
+    Assert.assertEquals(output.stdErr.decodeToString(), 0, output.exitCode)
+    Assert.assertEquals("Wrong home path", Path.of(interpreter.binaryPathString), Path.of(output.stdOut.decodeToString().trim()))
   }
 }
