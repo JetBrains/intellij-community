@@ -43,6 +43,18 @@ object ListUtils {
       getListItemAtLine(lineNumber, document)
     else null
 
+  fun PsiFile.getListItemContentIndent(lineNumber: Int, document: Document): String? {
+    val item = getListItemAtLine(lineNumber, document) ?: return null
+    val marker = item.markerElement ?: return null
+    if (item.children.isEmpty()) return null
+    val lineIndent = document.getLineIndentSpaces(lineNumber, this).orEmpty()
+    return when (lineNumber) {
+      document.getLineNumber(item.textRange.startOffset) ->
+        lineIndent + " ".repeat(marker.textRange.endOffset - document.getLineIndentRange(lineNumber).endOffset)
+      else -> lineIndent
+    }
+  }
+
 
   /** Returns the range from withing the start of the [lineNumber]
    * that may be copied to the next line to create a subsequent list item there */

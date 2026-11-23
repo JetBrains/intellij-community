@@ -8,9 +8,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
-import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
-import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
-import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemContentIndent
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
@@ -49,16 +47,7 @@ internal class MarkdownListShiftEnterHandler(private val baseHandler: EditorActi
       return false
     }
     val line = document.getLineNumber(currentCaret.offset)
-    val item = file.getListItemAt(currentCaret.offset, document) ?: return false
-    if (item.children.isEmpty()) {
-      return false
-    }
-    val itemLine = document.getLineNumber(item.textRange.startOffset)
-    val lineIndent = document.getLineIndentSpaces(line, file).orEmpty()
-    val contentIndent = when (line) {
-      itemLine -> lineIndent + " ".repeat(item.normalizedMarker.length)
-      else -> lineIndent
-    }
+    val contentIndent = file.getListItemContentIndent(line, document) ?: return false
 
     currentCaret.removeSelection()
     val lineEndOffset = document.getLineEndOffset(line)

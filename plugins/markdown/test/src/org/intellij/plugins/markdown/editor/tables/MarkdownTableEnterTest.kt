@@ -242,6 +242,28 @@ class MarkdownTableEnterTest {
     }
   }
 
+  @Test
+  fun `test insert table inside list item starts a new indented line`(): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", "1. fo<caret>o\n2. bar")
+
+    withContext(Dispatchers.EDT) {
+      insertTable()
+
+      myFixture.checkResult("1. foo\n   |<caret>   |   |\n   |---|---|\n   |   |   |\n2. bar")
+    }
+  }
+
+  @Test
+  fun `test insert table inside list item with two spaces after the marker`(): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", "1.  A paragraph<caret>\n    with two lines.")
+
+    withContext(Dispatchers.EDT) {
+      insertTable()
+
+      myFixture.checkResult("1.  A paragraph\n    |<caret>   |   |\n    |---|---|\n    |   |   |\n    with two lines.")
+    }
+  }
+
   private fun doTest(content: String, expected: String, count: Int = 1, shift: Boolean = false): Unit = timeoutRunBlocking {
     myFixture.configureByText("some.md", content)
     withContext(Dispatchers.EDT) {

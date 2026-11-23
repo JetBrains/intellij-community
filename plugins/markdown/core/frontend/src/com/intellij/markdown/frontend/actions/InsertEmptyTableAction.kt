@@ -24,6 +24,7 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemContentIndent
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import org.intellij.plugins.markdown.editor.tables.buildEmptyTable
@@ -97,22 +98,24 @@ class InsertEmptyTableAction : DumbAwareAction() {
       executeCommand(project) {
         val caret = editor.caretModel.currentCaret
         val document = editor.document
-        val caretOffset = caret.offset
+        val documentManager = PsiDocumentManager.getInstance(project)
+        documentManager.commitDocument(document)
         val currentLine = document.getLineNumber(caret.offset)
-        val insertNewLine = currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1)
-        val lineStart = document.getLineStartOffset(currentLine)
-        val blockQuotePrefix = findBlockQuotePrefix(file, document, lineStart)
-        val tableText = if (blockQuotePrefix.isEmpty()) {
-          buildEmptyTable(rows, columns, cellWidth = 3, getTableStyle(file))
-        } else {
-          buildEmptyTable(rows, columns, cellWidth = 3, getTableStyle(file))
-            .replace("\n", "\n$blockQuotePrefix")
-            .removeSuffix(blockQuotePrefix)
+        val itemIndent = file.getListItemContentIndent(currentLine, document)
+        val prefix = itemIndent ?: findBlockQuotePrefix(file, document, document.getLineStartOffset(currentLine))
+        var tableText = buildEmptyTable(rows, columns, cellWidth = 3, getTableStyle(file))
+          .replace("\n", "\n$prefix")
+          .removeSuffix(prefix)
+        val insertNewLine = itemIndent != null || currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1)
+        if (itemIndent != null) {
+          caret.moveToOffset(document.getLineEndOffset(currentLine))
+          tableText = tableText.removeSuffix("\n")
         }
-        val content = if (insertNewLine) "\n$blockQuotePrefix$tableText" else tableText
-        EditorModificationUtilEx.insertStringAtCaret(editor, content)
-        PsiDocumentManager.getInstance(project).commitDocument(document)
-        val table = TableUtils.findTable(file, caretOffset)
+        val lineBreak = if (insertNewLine) "\n$prefix" else ""
+        val tableOffset = caret.offset + lineBreak.length
+        EditorModificationUtilEx.insertStringAtCaret(editor, lineBreak + tableText)
+        documentManager.commitDocument(document)
+        val table = TableUtils.findTable(file, tableOffset)
         val offsetToMove = table?.let { PsiTreeUtil.findChildOfType(it, MarkdownTableCell::class.java) }?.startOffset
         if (offsetToMove != null) {
           caret.moveToOffset(offsetToMove)
