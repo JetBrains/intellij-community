@@ -3,18 +3,16 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.test.env.common.PredefinedPyEnvironments;
 import com.intellij.python.test.env.core.PyEnvironmentFactory;
 import com.intellij.python.test.env.core.PythonVersionKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +76,7 @@ public class PyEnvTaskRunner {
 
     for (PyTestEnvironment environment : environments) {
       final String envDescription = environment.getDescription();
-      Sdk registeredSdk = null;
+      PythonInterpreter registeredInterpreter = null;
 
       LOG.warn(String.format("Running on environment: %s", envDescription));
 
@@ -86,12 +84,12 @@ public class PyEnvTaskRunner {
         testTask.setUp(testName);
         wasExecuted = true;
 
-        // Prepare SDK for this environment
-        final Sdk sdk = environment.prepareSdk(testTask.getProject());
-        registeredSdk = sdk;
+        // Prepare the interpreter for this environment
+        final PythonInterpreter interpreter = environment.prepareInterpreter(testTask.getProject());
+        registeredInterpreter = interpreter;
 
         if (skipOnFlavors != null) {
-          final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+          final PythonSdkFlavor<?> flavor = PythonInterpreterExtKt.getFlavor(interpreter);
           if (ContainerUtil.exists(skipOnFlavors, o -> o.isInstance(flavor))) {
             LOG.warn("Skipping flavor " + flavor.toString());
             continue;
@@ -101,7 +99,7 @@ public class PyEnvTaskRunner {
         /*
           Skipping test if {@link PyTestTask} reports it does not support this language level
          */
-        final LanguageLevel languageLevel = PySdkUtil.getLanguageLevelForSdk(sdk);
+        final LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(environment.getPythonVersion().toString());
         if (testTask.isLanguageLevelSupported(languageLevel)) {
 
           if (myLoggingRule != null) {
@@ -112,7 +110,7 @@ public class PyEnvTaskRunner {
             }
           }
 
-          testTask.runTestOn(sdk.getHomePath(), sdk);
+          testTask.runTestOn(PythonInterpreterExtKt.getBinaryPathString(interpreter), interpreter);
 
           passedEnvironments.add(envDescription);
         }
@@ -139,7 +137,9 @@ public class PyEnvTaskRunner {
         }
 
         try {
-          removeRegisteredSdk(registeredSdk);
+          if (registeredInterpreter != null) {
+            environment.removeInterpreter(testTask.getProject(), registeredInterpreter);
+          }
         }
         finally {
           // Teardown should be called on the main thread because fixture teardown checks for
@@ -168,17 +168,6 @@ public class PyEnvTaskRunner {
       .map(e -> new ProviderTestEnvironment(myFactory, e.getSpec(), PredefinedPyEnvironments.Companion.getENVIRONMENTS_TO_TAGS().get(e)))
       .filter(e -> myPythonVersionFilter == null || PythonVersionKt.matches(e.getPythonVersion(), myPythonVersionFilter))
       .toList();
-  }
-
-  private static void removeRegisteredSdk(@Nullable Sdk sdk) {
-    if (sdk == null) {
-      return;
-    }
-    WriteAction.run(() -> {
-      if (ContainerUtil.exists(ProjectJdkTable.getInstance().getAllJdks(), existingSdk -> existingSdk == sdk)) {
-        ProjectJdkTable.getInstance().removeJdk(sdk);
-      }
-    });
   }
 
   /**

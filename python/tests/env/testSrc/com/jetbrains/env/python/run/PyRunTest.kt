@@ -12,9 +12,9 @@ import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
 import com.jetbrains.env.PyTestTask
@@ -80,14 +80,13 @@ private class TestDslBuilder(private val executor: (PyTestTask) -> Unit) {
 
     // Execute the same scenario as input redirection test, but honoring the DSL
     val task = object : PyExecutionFixtureTestTask("/runConfig/inputRedirection") {
-      override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
+      override fun runTestOn(sdkHome: String, interpreter: PythonInterpreter?) {
         val project = project
         val settings = RunManager.getInstance(project).createConfiguration("test-missing-env", PythonConfigurationType::class.java)
 
         val runConfiguration = settings.configuration as PythonRunConfiguration
         runConfiguration.apply {
-          @Suppress("DEPRECATION") // The test environment gives an SDK.
-          setSdk(existingSdk)
+          pythonInterpreter = interpreter
           scriptName = "inputRedirection.py"
           workingDirectory = myFixture.tempDirPath
           // Input redirection: use DSL value if provided, default to true and input.txt (to keep older tests working)

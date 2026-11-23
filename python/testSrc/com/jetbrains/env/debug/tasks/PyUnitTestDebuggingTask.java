@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.debug.tasks;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
@@ -60,7 +60,7 @@ public class PyUnitTestDebuggingTask extends PyCustomConfigDebuggerTask {
   }
 
   @Override
-  protected AbstractPythonRunConfiguration<?> createRunConfiguration(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
+  protected AbstractPythonRunConfiguration<?> createRunConfiguration(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) {
     ConfigurationFactory factory = getRunConfigurationFactory();
     Assert.assertNotNull("There is no test run configuration with name '" + getRunConfigurationFactoryClass().getName() + "'.", factory);
     mySettings = RunManager.getInstance(getProject()).createConfiguration(getFullTargetName() + getClass().getName()
@@ -70,7 +70,7 @@ public class PyUnitTestDebuggingTask extends PyCustomConfigDebuggerTask {
     PyDebugRunner runner = (PyDebugRunner)ProgramRunner.getRunner(getExecutorId(), runConfiguration);
     Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
 
-    runConfiguration.setSdk(existingSdk);
+    runConfiguration.setPythonInterpreter(interpreter);
     runConfiguration.setModule(myFixture.getModule());
     runConfiguration.setWorkingDirectory(myFixture.getTempDirPath());
     runConfiguration.getTarget().setTarget(getFullTargetName());

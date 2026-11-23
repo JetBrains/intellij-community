@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessListener;
@@ -11,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -44,7 +44,7 @@ public abstract class ProcessWithConsoleRunner implements Disposable {
    * @param tempWorkingPath path to {@link CodeInsightTestFixture#getTempDirFixture()}. Will be used as working dir.
    */
   abstract void runProcess(@NotNull String sdkPath,
-                           @Nullable Sdk sdk,
+                           @Nullable PythonInterpreter interpreter,
                            @NotNull Project project,
                            @NotNull ProcessListener processListener,
                            @NotNull String tempWorkingPath)

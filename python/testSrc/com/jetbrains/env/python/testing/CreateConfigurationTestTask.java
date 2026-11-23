@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.testing;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
@@ -47,12 +47,12 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
   }
 
   @Override
-  public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable PythonInterpreter interpreter) throws InvalidSdkException {
     // Set as default runner to check
     if (myTestRunnerName != null) {
       TestRunnerService.getInstance(myFixture.getModule()).setProjectConfiguration(myTestRunnerName);
     }
-    super.runTestOn(sdkHome, existingSdk);
+    super.runTestOn(sdkHome, interpreter);
   }
 
   /**
@@ -67,11 +67,11 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
     }
 
     @Override
-    public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) {
+    public void runTestOn(@NotNull final String sdkHome, @Nullable PythonInterpreter interpreter) {
       final T configuration =
         createFactory().createTemplateConfiguration(getProject());
       configuration.setModule(myFixture.getModule());
-      configuration.setSdk(existingSdk);
+      configuration.setPythonInterpreter(interpreter);
       myConfiguration = configuration;
     }
 
@@ -92,8 +92,8 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
    */
   abstract static class PyConfigurationValidationTask<T extends PyAbstractTestConfiguration> extends PyConfigurationCreationTask<T> {
     @Override
-    public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) {
-      super.runTestOn(sdkHome, existingSdk);
+    public void runTestOn(@NotNull final String sdkHome, @Nullable PythonInterpreter interpreter) {
+      super.runTestOn(sdkHome, interpreter);
       validateConfiguration();
     }
 

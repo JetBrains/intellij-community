@@ -2,7 +2,7 @@
 package com.jetbrains.env.python
 
 import com.intellij.idea.TestFor
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
@@ -28,7 +28,7 @@ class PyStringConversionWithoutDunderMethodEnvTest : PyEnvTestCase() {
     runPythonTest(object : PyExecutionFixtureTestTask("/stringConversion/") {
       override fun getTags(): Set<String> = setOf("skeletons")
 
-      override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
+      override fun runTestOn(sdkHome: String, interpreter: PythonInterpreter?) {
         createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS)
         myFixture.enableInspections(PyStringConversionWithoutDunderMethodInspection::class.java)
         runInEdtAndWait {

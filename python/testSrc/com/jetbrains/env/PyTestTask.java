@@ -4,8 +4,8 @@ package com.jetbrains.env;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Ref;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.util.Producer;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -39,13 +39,13 @@ public abstract class PyTestTask {
   }
 
   /**
-   * Run test on certain SDK path.
-   * To create SDK from path, use {@link PyExecutionFixtureTestTask#createTempSdk(String, sdkTools.SdkCreationType)}
+   * Runs the test on the Python binary at {@code sdkHome}.
+   * To create an interpreter from the path, use {@link PyExecutionFixtureTestTask#createTempSdk(String, sdkTools.SdkCreationType)}.
    *
-   * @param sdkHome     sdk path
-   * @param existingSdk If sdk exists already you are encouraged to reuse it. Create one using sdkHome otherwise.
+   * @param sdkHome     the path of the Python binary
+   * @param interpreter the interpreter of the environment, if it exists already. Reuse it when it is not {@code null}.
    */
-  public abstract void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception;
+  public abstract void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) throws Exception;
 
   /**
    * The project the SDK of this task belongs to. A task without a project of its own uses the default project.

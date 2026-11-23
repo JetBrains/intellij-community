@@ -1,5 +1,6 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.google.common.collect.ImmutableList;
 import java.util.Objects;
 import com.jetbrains.python.packaging.PyPackage;
@@ -194,7 +195,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   public void testDeserialization() {
     runPythonTest(new PyExecutionFixtureTestTask("testRunner/env/pytest/config/") {
       @Override
-      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) throws Exception {
         final PyTestConfiguration configuration = configureByFile("MyConfig.xml");
         assertEquals("Wrong target type", new ConfigurationTarget("foo.py", PyRunTargetVariant.PATH), configuration.getTarget());
         assertEquals("Wrong keywords", "keywords", configuration.getKeywords());
@@ -767,8 +768,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       }
 
       @Override
-      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
-        super.runTestOn(sdkHome, existingSdk);
+      public void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) {
+        super.runTestOn(sdkHome, interpreter);
         myFixture.copyDirectoryToProject("testRunner/env/createConfigurationTest/configurationByContext/foo", "");
         final PyAbstractTestConfiguration configuration = getConfiguration();
         configuration.getTarget().setTargetType(PyRunTargetVariant.PYTHON);
@@ -792,9 +793,9 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       private static final String FOLDER_NAME = "test";
 
       @Override
-      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
+      public void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) throws InvalidSdkException {
         markFolderAsTestRoot(FOLDER_NAME);
-        super.runTestOn(sdkHome, existingSdk);
+        super.runTestOn(sdkHome, interpreter);
       }
 
       @Override
@@ -822,9 +823,9 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       private static final String FOLDER_NAME = "same_names";
 
       @Override
-      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
+      public void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) throws InvalidSdkException {
         markFolderAsTestRoot(FOLDER_NAME);
-        super.runTestOn(sdkHome, existingSdk);
+        super.runTestOn(sdkHome, interpreter);
       }
 
       @Override
@@ -927,7 +928,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   public void testFixturePyTestAutoDetected() {
     runPythonTest(new PyExecutionFixtureTestTask(PyTestFixtureAndParametrizedTest.testSubfolder) {
       @Override
-      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException, ExecutionException {
+      public void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) throws InvalidSdkException, ExecutionException {
         Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
         PyEnvTestPackages.reloadInstalledPackages(myFixture.getProject(), PythonInterpreterTestSupportKt.buildInterpreterOrThrowForTests(sdk, myFixture.getProject()));
         var runnerService = TestRunnerService.getInstance(myFixture.getModule());
@@ -967,8 +968,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       }
 
       @Override
-      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
-        super.runTestOn(sdkHome, existingSdk);
+      public void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) {
+        super.runTestOn(sdkHome, interpreter);
         PyTestConfiguration configuration = getConfiguration();
         configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
         configuration.getTarget().setTarget("test_sample.py");
@@ -1005,8 +1006,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       }
 
       @Override
-      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
-        super.runTestOn(sdkHome, existingSdk);
+      public void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) {
+        super.runTestOn(sdkHome, interpreter);
         PyTestConfiguration configuration = getConfiguration();
         configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
         configuration.getTarget().setTarget("");

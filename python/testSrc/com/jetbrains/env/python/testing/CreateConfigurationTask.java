@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python.testing;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -10,7 +11,6 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -45,7 +45,7 @@ public abstract class CreateConfigurationTask<T extends AbstractPythonRunConfigu
   }
 
   @Override
-  public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable PythonInterpreter interpreter) throws InvalidSdkException {
 
     createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
     ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {

@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.project.Project;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.util.text.SemVer;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,12 +26,16 @@ public interface PyTestEnvironment extends AutoCloseable {
   Set<String> getTags();
 
   /**
-   * Prepare the environment and add its SDK to [project] for running tests.
+   * Prepares the environment and adds its interpreter to the registry of {@code project}, for running tests. Remove it
+   * with {@link #removeInterpreter}.
    *
-   * @return the SDK to use for running tests
+   * @return the interpreter to use for running tests
    */
   @NotNull
-  Sdk prepareSdk(@NotNull Project project);
+  PythonInterpreter prepareInterpreter(@NotNull Project project);
+
+  /** Removes an interpreter that {@link #prepareInterpreter} added to {@code project}. */
+  void removeInterpreter(@NotNull Project project, @NotNull PythonInterpreter interpreter);
 
   /**
    * Clean up resources associated with this environment.

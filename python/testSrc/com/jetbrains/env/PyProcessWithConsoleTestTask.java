@@ -15,6 +15,8 @@
  */
 package com.jetbrains.env;
 
+import com.intellij.python.sdk.backend.PythonInterpreterTestSupportKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -22,17 +24,12 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
@@ -88,7 +85,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
   }
 
   @Override
-  public void runTestOn(@NotNull final String sdkHome, @Nullable final Sdk existingSdk) throws Exception {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable final PythonInterpreter interpreter) throws Exception {
 
     //Since this task uses I/O pooled thread, it needs to register such threads as "known offenders" (one that may leak)
     // Generally, this should be done in thread tracker itself, but since ApplicationManager.getApplication() may return null on TC,
@@ -98,24 +95,20 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
                                                "ApplicationImpl pooled thread ", ProcessIOExecutorService.POOLED_THREAD_PREFIX);
 
 
-    if (existingSdk == null) {
+    if (interpreter == null) {
       createTempSdk(sdkHome, myRequiredSdkType);
     }
     else {
       final Module module = myFixture.getModule();
       if (PyProjectStructureTestUtilKt.findPythonInterpreterForTests(module) == null) {
-        // If sdk is provided and not set for module -- use it
-        EdtTestUtil.runInEdtAndWait(() -> WriteAction.run(() -> {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-          model.setSdk(existingSdk);
-          model.commit();
-        }));
+        // The module gets the given interpreter, as PyProject.setPythonInterpreter sets it.
+        PythonInterpreterTestSupportKt.setPythonSdkForTests(module, interpreter);
       }
     }
     prepare();
     final T runner = createProcessRunner();
     do {
-      executeRunner(sdkHome, existingSdk, runner);
+      executeRunner(sdkHome, interpreter, runner);
     }
     while (runner.shouldRunAgain());
     Disposer.dispose(runner);
@@ -132,7 +125,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     Assert.fail("Exception thrown, see logs for details: " + e.getMessage());
   }
 
-  private void executeRunner(final String sdkHome, @Nullable Sdk sdk, final T runner) throws InterruptedException {
+  private void executeRunner(final String sdkHome, @Nullable PythonInterpreter interpreter, final T runner) throws InterruptedException {
     // Semaphore to wait end of process
     final Semaphore processStartedSemaphore = new Semaphore(1);
     processStartedSemaphore.acquire();
@@ -168,7 +161,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     // Invoke runner
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        runner.runProcess(sdkHome, sdk, getProject(), processListener, myFixture.getTempDirPath());
+        runner.runProcess(sdkHome, interpreter, getProject(), processListener, myFixture.getTempDirPath());
       }
       catch (final Throwable e) {
         failed.set(true);

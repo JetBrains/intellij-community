@@ -5,7 +5,7 @@ import com.intellij.execution.RunManager.Companion.getInstance
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.testFramework.UsefulTestCase
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyTestTask
@@ -92,13 +92,12 @@ class PythonDoctestDebuggingTest : PyEnvTestCase() {
       Assert.assertFalse(output().contains(PYDEV_WARNING))
     }
 
-    override fun createRunConfiguration(sdkHome: String, existingSdk: Sdk?): AbstractPythonRunConfiguration<*> {
+    override fun createRunConfiguration(sdkHome: String, interpreter: PythonInterpreter?): AbstractPythonRunConfiguration<*> {
       val factory: ConfigurationFactory = PythonTestConfigurationType.getInstance().docTestFactory
       val runConfiguration = PythonDocTestRunConfiguration(project, factory)
       val runner = ProgramRunner.getRunner(executorId, runConfiguration) as PyDebugRunner?
       val executor = DefaultDebugExecutor.getDebugExecutorInstance()
-      @Suppress("DEPRECATION") // The test environment gives an SDK.
-      runConfiguration.setSdk(existingSdk)
+      runConfiguration.pythonInterpreter = interpreter
       runConfiguration.module = myFixture.module
       runConfiguration.workingDirectory = myFixture.tempDirPath
       runConfiguration.scriptName = scriptName

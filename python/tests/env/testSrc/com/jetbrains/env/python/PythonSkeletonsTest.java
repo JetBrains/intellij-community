@@ -137,7 +137,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
 
     @Override
-    public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+    public void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter envInterpreter) throws Exception {
       final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS);
       runTestOn(sdk);
     }

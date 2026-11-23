@@ -1,13 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pythonPackageManager
 
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.sdk.backend.buildInterpreterForTestsBlocking
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -15,7 +16,6 @@ import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.pip.PipManagementInstaller
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -60,18 +60,17 @@ class PythonPackageManagerManagementInstallationTest : PyEnvTestCase() {
 
 open class PythonPackageManagerManagementInstallationTask(private val pkgToInstall: PythonRepositoryPackageSpecification) : PyExecutionFixtureTestTask("") {
 
-  override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
-    requireNotNull(existingSdk) { "Sdk should be not bull" }
+  override fun runTestOn(sdkHome: String, interpreter: PythonInterpreter?) {
+    requireNotNull(interpreter) { "The interpreter should not be null" }
 
-    val sdk = existingSdk
-    val manager = PythonPackageManager.forPythonInterpreter(sdk.buildInterpreterForTestsBlocking(myFixture.project).orThrow())
+    val manager = PythonPackageManager.forPythonInterpreter(interpreter)
     val managementInstaller = PipManagementInstaller(manager)
 
     runBlocking {
       manager.reloadPackages()
       uninstallManagement(manager)
 
-      if (sdk.version > LanguageLevel.PYTHON27) {
+      if (interpreter.getPythonInfo().getOrThrow().languageLevel > LanguageLevel.PYTHON27) {
         assertTrue("Management packages should be uninstalled", !managementInstaller.hasManagement())
       }
 

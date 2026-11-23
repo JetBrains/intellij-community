@@ -3,9 +3,9 @@ package com.jetbrains.env.python
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.buildInterpreterForTestsBlocking
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ThrowableRunnable
@@ -29,7 +29,7 @@ class PyTensorFlowTest : PyEnvTestCase() {
   }
 
   private class TensorFlowModulesTask : PyExecutionFixtureTestTask("packages/tensorflow") {
-    override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
+    override fun runTestOn(sdkHome: String, interpreter: PythonInterpreter?) {
       val sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS)
       val packages = reloadInstalledPackages(myFixture.project, sdk.buildInterpreterForTestsBlocking(myFixture.project).getOrThrow())
       assertNotNull(packages.find { it.name.equals("tensorflow", ignoreCase = true) })

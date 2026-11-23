@@ -136,7 +136,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
     runPythonTest(new PyExecutionFixtureTestTask(null) {
       @Override
-      public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+      public void runTestOn(@NotNull final String sdkHome, @Nullable PythonInterpreter envInterpreter) throws Exception {
         final Project project = myFixture.getProject();
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         final PythonInterpreter interpreter = PythonInterpreterTestSupportKt.buildInterpreterOrThrowForTests(sdk, project);
@@ -871,11 +871,11 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 
         @Override
-        public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
+        public void runTestOn(@NotNull final String sdkHome, @Nullable PythonInterpreter interpreter) throws InvalidSdkException {
           // Set default working directory to some random location before actual exection
           final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()));
           templateConfiguration.setWorkingDirectory(SOME_RANDOM_DIR);
-          super.runTestOn(sdkHome, existingSdk);
+          super.runTestOn(sdkHome, interpreter);
           templateConfiguration.setWorkingDirectory("");
         }
 

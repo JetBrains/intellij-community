@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.debug.tasks;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -45,11 +45,11 @@ public class PyDebuggerTask extends PyCustomConfigDebuggerTask {
   }
 
   @Override
-  protected AbstractPythonRunConfiguration createRunConfiguration(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
+  protected AbstractPythonRunConfiguration createRunConfiguration(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) {
     ConfigurationFactory factory = PythonConfigurationType.getInstance().getConfigurationFactories()[0];
     mySettings = RunManager.getInstance(getProject()).createConfiguration("test", factory);
     PythonRunConfiguration runConfiguration = (PythonRunConfiguration)mySettings.getConfiguration();
-    runConfiguration.setSdk(existingSdk);
+    runConfiguration.setPythonInterpreter(interpreter);
     runConfiguration.setScriptName(getScriptName());
     runConfiguration.setWorkingDirectory(myFixture.getTempDirPath());
     runConfiguration.setScriptParameters(getScriptParameters());

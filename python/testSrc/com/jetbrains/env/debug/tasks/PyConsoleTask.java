@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.debug.tasks;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
@@ -15,7 +16,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,7 +26,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PydevConsoleCommunication;
-import com.intellij.python.sdk.backend.PythonInterpreterSdkBoundaryKt;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevConsoleRunnerImpl;
 import com.jetbrains.python.console.PythonConsoleExecuteActionHandler;
@@ -205,7 +204,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable PythonInterpreter interpreter) throws Exception {
     if (!reportThreadLeaks()) {
       // `com.intellij.execution.process.ProcessWaitFor` creates a thread named after the command line,
       // i.e. `Thread[/path/to/python /path/to/pydevconsole.py <args>]` in the case of Python Console process.
@@ -218,9 +217,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     PydevConsoleRunner consoleRunner = PythonConsoleStarter.createConsoleRunnerForTest(getProject(), myFixture.getModule());
 
-    // The env tests give an SDK. The registry holds its interpreter, see `ProviderTestEnvironment.prepareSdk`.
-    consoleRunner.setPythonInterpreter(
-      existingSdk != null ? PythonInterpreterSdkBoundaryKt.findPythonInterpreterIfReady(getProject(), existingSdk) : null);
+    // The env tests give the interpreter that the registry holds, see `ProviderTestEnvironment.prepareInterpreter`.
+    consoleRunner.setPythonInterpreter(interpreter);
 
     before();
 

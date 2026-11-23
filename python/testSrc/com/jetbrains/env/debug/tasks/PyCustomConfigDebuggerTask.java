@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.debug.tasks;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
@@ -16,7 +17,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.testFramework.common.ThreadLeakTracker;
@@ -54,20 +54,20 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
   }
 
   protected abstract AbstractPythonRunConfiguration<? extends AbstractPythonRunConfiguration<?>> createRunConfiguration(
-    @NotNull String sdkHome, @Nullable Sdk existingSdk);
+    @NotNull String sdkHome, @Nullable PythonInterpreter interpreter);
 
   @Override
-  public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+  public void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) throws Exception {
     myThreadLeakDisposable = Disposer.newDisposable();
     ThreadLeakTracker.longRunningThreadCreated(myThreadLeakDisposable, "");
     myPausedSemaphore = new Semaphore(0);
     myTerminateSemaphore = new Semaphore(0);
-    runTestAsProd(sdkHome, existingSdk);
+    runTestAsProd(sdkHome, interpreter);
   }
 
-  private void runTestAsProd(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+  private void runTestAsProd(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) throws Exception {
     Project project = getProject();
-    createConfiguration(sdkHome, existingSdk);
+    createConfiguration(sdkHome, interpreter);
     myRunner = getRunner();
     myRunner.resetProcess();
     Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
@@ -227,8 +227,8 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
     };
   }
 
-  private void createConfiguration(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
-    myRunConfiguration = createRunConfiguration(sdkHome, existingSdk);
+  private void createConfiguration(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) {
+    myRunConfiguration = createRunConfiguration(sdkHome, interpreter);
 
     WriteAction.runAndWait(() -> {
       RunManager runManager = RunManager.getInstance(getProject());

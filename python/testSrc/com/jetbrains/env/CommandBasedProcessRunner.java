@@ -15,12 +15,12 @@
  */
 package com.jetbrains.env;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.commandInterface.command.Command;
 import com.intellij.commandInterface.command.SimpleCommand;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +59,7 @@ public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
 
   @Override
   void runProcess(@NotNull final String sdkPath,
-                  @Nullable Sdk sdk,
+                  @Nullable PythonInterpreter interpreter,
                   @NotNull final Project project,
                   @NotNull final ProcessListener processListener,
                   @NotNull final String tempWorkingPath) {

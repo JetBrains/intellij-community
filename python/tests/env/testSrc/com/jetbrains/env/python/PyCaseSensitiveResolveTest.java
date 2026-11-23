@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -27,7 +27,7 @@ public final class PyCaseSensitiveResolveTest extends PyEnvTestCase {
       }
 
       @Override
-      public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+      public void runTestOn(@NotNull final String sdkHome, @Nullable PythonInterpreter interpreter) throws Exception {
         createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
         ApplicationManager.getApplication().invokeAndWait(() -> {
           myFixture.copyDirectoryToProject("", "");

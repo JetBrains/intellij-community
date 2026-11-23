@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.debug.tests
 
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.debug.tasks.PyDebuggerTask
@@ -40,8 +40,8 @@ class PythonDebuggerSuspendThreadsTest : PyEnvTestCase() {
   @Test
   fun testSuspendAllThreadsResume() {
     runPythonTest(object : PyDebuggerTask("/debug", "test_two_threads_resume.py") {
-      override fun createRunConfiguration(sdkHome: String, existingSdk: Sdk?): AbstractPythonRunConfiguration<*> {
-        val runConfiguration = super.createRunConfiguration(sdkHome, existingSdk) as PythonRunConfiguration
+      override fun createRunConfiguration(sdkHome: String, interpreter: PythonInterpreter?): AbstractPythonRunConfiguration<*> {
+        val runConfiguration = super.createRunConfiguration(sdkHome, interpreter) as PythonRunConfiguration
         runConfiguration.envs["PYDEVD_USE_CYTHON"] = "NO"
         return runConfiguration
       }

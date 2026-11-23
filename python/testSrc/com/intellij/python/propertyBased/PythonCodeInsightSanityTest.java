@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.python.propertyBased;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -97,7 +97,7 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
     final String subfolder = "sanity";
     runPythonTest(new PyExecutionFixtureTestTask(subfolder) {
       @Override
-      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
+      public void runTestOn(@NotNull String sdkHome, @Nullable PythonInterpreter interpreter) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           final Pair<String, CodeInsightTestFixture> pathAndFixture =
             Pair.create(new File(myFixture.getTestDataPath(), subfolder).getPath(), myFixture);

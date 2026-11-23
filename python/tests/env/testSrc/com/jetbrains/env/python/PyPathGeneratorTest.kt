@@ -4,10 +4,10 @@ package com.jetbrains.env.python
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.buildInterpreterForTestsBlocking
 import com.intellij.python.sdk.backend.setPythonSdkForTests
 import com.intellij.testFramework.UsefulTestCase
@@ -25,10 +25,10 @@ internal class PyPathGeneratorTest : PyEnvTestCase() {
   @Test
   fun `test only source dirs are added to PYTHONPATH`() {
     runPythonTest(object : PyExecutionFixtureTestTask(null) {
-      override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
-        val sdk = existingSdk ?: createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK)
+      override fun runTestOn(sdkHome: String, interpreter: PythonInterpreter?) {
         val module = myFixture.module
-        module.setPythonSdkForTests(sdk)
+        val pythonInterpreter = interpreter ?: createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK).buildInterpreterForTestsBlocking(myFixture.project).getOrThrow()
+        module.setPythonSdkForTests(pythonInterpreter)
 
         var myFile: VirtualFile? = null
         var myDir: VirtualFile? = null
@@ -66,7 +66,7 @@ internal class PyPathGeneratorTest : PyEnvTestCase() {
 
         // New (target) API
         val env = LocalTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY)
-        paths = collectPythonPath(myFixture.project, module, sdk.buildInterpreterForTestsBlocking(myFixture.project).getOrThrow(), null, true, true)
+        paths = collectPythonPath(myFixture.project, module, pythonInterpreter, null, true, true)
           .map { it.apply(env) }
         assertContains(expected = false, paths = paths, file = myFile)
         assertContains(paths = paths, file = myDir)
