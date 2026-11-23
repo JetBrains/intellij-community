@@ -8,7 +8,6 @@ import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.python.sdk.backend.addMockPythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -37,9 +36,7 @@ internal class PySdkUsageTest {
     val registry = PythonInterpreterRegistry.getInstance(project)
     val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
     try {
-      @Suppress("DEPRECATION") // The snapshot checks an SDK.
-      val sdk = interpreter.getSdkAPI()
-      assertThat(EvoPyProjectModel.getInstance(project).snapshot().usesSdk(sdk)).isFalse()
+      assertThat(EvoPyProjectModel.getInstance(project).snapshot().interpreters).doesNotContain(interpreter)
     }
     finally {
       registry.remove(interpreter)
@@ -54,9 +51,7 @@ internal class PySdkUsageTest {
     val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
     try {
       pyProject.setPythonInterpreter(interpreter)
-      @Suppress("DEPRECATION") // The snapshot checks an SDK.
-      val sdk = interpreter.getSdkAPI()
-      assertThat(EvoPyProjectModel.getInstance(project).snapshot().usesSdk(sdk)).isTrue()
+      assertThat(EvoPyProjectModel.getInstance(project).snapshot().interpreters).contains(interpreter)
     }
     finally {
       pyProject.setPythonInterpreter(null)
@@ -108,10 +103,8 @@ internal class PySdkUsageTest {
       pyProject.setPythonInterpreter(first)
       pyProject.setPythonInterpreter(second)
       val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
-      @Suppress("DEPRECATION") // The snapshot checks an SDK.
-      assertThat(snapshot.usesSdk(first.getSdkAPI())).isFalse()
-      @Suppress("DEPRECATION") // The snapshot checks an SDK.
-      assertThat(snapshot.usesSdk(second.getSdkAPI())).isTrue()
+      assertThat(snapshot.interpreters).doesNotContain(first)
+      assertThat(snapshot.interpreters).contains(second)
     }
     finally {
       pyProject.setPythonInterpreter(null)
