@@ -958,7 +958,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
       l = lambda: (yield from gen1()) or (yield from gen2())
       expr = l()
-      # └ TYPE Generator[int | Literal["str"], str | Unknown, bool | Literal[True]]
+      # └ TYPE Generator[int | Literal["str"], str | Unknown, Literal[True]]
       """.trimIndent())
 
     @TestFor(issues = ["PY-6702"])

@@ -1447,6 +1447,16 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       expr = C().foo
       # └ TYPE Unknown | None
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94326"])
+    fun `and of comparisons with an unknown operand keeps the weak type`() = test("""
+      def f(x):
+          expr = x >= 0
+      #   └ TYPE bool | Unknown
+          expr = x >= 0 and x <= 9
+      #   └ TYPE bool | Unknown
+      """.trimIndent())
   }
 
   @Nested
