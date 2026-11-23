@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -28,22 +27,9 @@ import kotlin.time.Duration.Companion.milliseconds
 @Service
 class EdtScheduler(@JvmField val coroutineScope: CoroutineScope) {
   companion object {
-    @Volatile
-    private var instance: EdtScheduler? = null
-
+    /** Not cached: a static cache would outlive its application's scope where applications change without a reset. */
     @JvmStatic
-    fun getInstance(): EdtScheduler {
-      var r = instance
-      if (r == null) {
-        r = service()
-        instance = r
-      }
-      return r
-    }
-
-    init {
-      ApplicationManager.registerCleaner { instance = null }
-    }
+    fun getInstance(): EdtScheduler = service()
   }
 
   fun schedule(delayMillis: Int, kind: UiDispatcherKind, task: Runnable): Job {
