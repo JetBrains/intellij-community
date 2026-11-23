@@ -344,21 +344,38 @@ public final class ObjectTree {
 
   @TestOnly
   public @Nullable String printParentChainToRoot(@NotNull Disposable disposable) {
+    List<Disposable> chain = getParentChainToRoot(disposable);
+    if (chain == null) {
+      return null;
+    }
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < chain.size(); i++) {
+      Disposable p = chain.get(i);
+      sb.append(i == 0 ? "  " : "\n    <- ").append(p).append(" (").append(p.getClass().getName()).append(')');
+    }
+    sb.append("\n    <- ROOT");
+    return sb.toString();
+  }
+
+  /**
+   * Returns {@code disposable} and its parents up to the root, without the root.
+   * Returns {@code null} when {@code disposable} is not in the tree.
+   */
+  @TestOnly
+  public @Nullable List<Disposable> getParentChainToRoot(@NotNull Disposable disposable) {
     synchronized (getTreeLock()) {
       ObjectNode parentNode = myObject2ParentNode.get(disposable);
       if (parentNode == null && myRootNode.findChildNode(disposable) == null) {
         return null;
       }
-      StringBuilder sb = new StringBuilder();
-      sb.append("  ").append(disposable).append(" (").append(disposable.getClass().getName()).append(')');
+      List<Disposable> chain = new ArrayList<>();
+      chain.add(disposable);
       for (ObjectNode current = parentNode;
            current != null && current != myRootNode;
            current = myObject2ParentNode.get(current.getObject())) {
-        Disposable p = current.getObject();
-        sb.append("\n    <- ").append(p).append(" (").append(p.getClass().getName()).append(')');
+        chain.add(current.getObject());
       }
-      sb.append("\n    <- ROOT");
-      return sb.toString();
+      return chain;
     }
   }
 

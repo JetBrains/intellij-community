@@ -32,7 +32,7 @@ internal class LeakedInstanceException(message: String) : RuntimeException(messa
 
 /**
  * Runs [ProjectLeakDetector] after `dev.leak.detection.idleDelayMinutes` without user activity, and reports each leak as a [LeakedInstanceException].
- * The exception message has the form of [LeakReporter.buildReport]. Leaks with the same retention path share one exception.
+ * The exception message has the form of [LeakReporter.buildIdleReport]. Leaks with the same retention path share one exception.
  *
  * The first project open starts the idle watch, once per application.
  * The run does not force a GC. User activity cancels the wait or the run, and the wait starts again.
@@ -68,7 +68,7 @@ internal class IdleLeakDetectionService(private val coroutineScope: CoroutineSco
       val leaks = ProjectLeakDetector().detect(forceGc = false)
       val reporter = LeakReporter(coroutineScope)
       for (group in selectNotReported(leaks)) {
-        LOG.error(LeakedInstanceException(reporter.buildReport(group)))
+        LOG.error(LeakedInstanceException(reporter.buildIdleReport(group)))
       }
     }
     catch (e: Throwable) {

@@ -29,18 +29,6 @@ class LeakCandidateRegistry {
   fun register(project: Project): Unit = synchronized(lock) { projects.add(project) }
   fun register(editor: Editor): Unit = synchronized(lock) { editors.add(editor) }
 
-  /** Returns the names of the projects that are not collected yet. */
-  fun projectNames(): List<String> = synchronized(lock) {
-    projects.mapNotNull {
-      try {
-        it.name
-      }
-      catch (_: Exception) {
-        null
-      }
-    }
-  }
-
   fun hasRetainedDisposedInstances(): Boolean = synchronized(lock) {
     projects.any { it.isDisposed } || editors.any { it.isDisposed }
   }

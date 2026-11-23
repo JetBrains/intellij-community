@@ -36,7 +36,7 @@ internal class LeakDetectionRunner(private val coroutineScope: CoroutineScope) {
       }
 
       withContext(Dispatchers.UI) {
-        reporter().report(project, leaks)
+        reporter().reportInteractive(project, leaks)
       }
     }
 

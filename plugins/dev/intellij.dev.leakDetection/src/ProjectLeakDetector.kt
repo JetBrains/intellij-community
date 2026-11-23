@@ -54,10 +54,24 @@ data class LeakInfo(
   val creationTrace: String?,
   /** For editors: how long the editor has been retained after disposal. */
   val staleForMs: Long?,
-  /** A strong-reference path from a GC root to the leaked instance. */
-  val referencePath: String,
-  /** The Disposer parent chain of the first Disposable on [referencePath] that is in the Disposer tree. */
-  val disposerParentChain: String? = null,
+  /** A strong-reference path from the leaked instance to a GC root. */
+  val referencePath: List<ReferenceStep>,
+  /** The Disposer parent chain of the first Disposable on [referencePath] that is in the Disposer tree, up to the root. */
+  val disposerParentChain: List<ObjectRendering>? = null,
+)
+
+/** The class name and the `toString()` of an object. */
+@ApiStatus.Internal
+data class ObjectRendering(val className: String, val text: String)
+
+/** A step of [LeakInfo.referencePath]: the field or the array index that refers to [target]. */
+@ApiStatus.Internal
+data class ReferenceStep(
+  /** The field as `Class.field`, the array index as `[i]`, or ` (root)` for the GC root. */
+  val field: String,
+  val target: ObjectRendering,
+  /** For the GC root: the description of the root. */
+  val rootDescription: String? = null,
 )
 
 /**
@@ -120,7 +134,7 @@ class ProjectLeakDetector(
       DebugReflectionUtil.walkObjects(MAX_DEPTH, MAX_QUEUE_SIZE, roots, ProjectImpl::class.java, cancellableExamination(),
                                       PairProcessor { project, backLink ->
                                         if (project.isDisposed && !project.isDefault && !project.isLight) {
-                                          result.add(projectLeak(project, backLink))
+                                          result.add(projectLeak(project, roots, backLink))
                                         }
                                         true
                                       })
@@ -131,7 +145,7 @@ class ProjectLeakDetector(
                                         if (disposedAtNanos != 0L) {
                                           val staleMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - disposedAtNanos)
                                           if (staleMs >= editorStaleThresholdMs) {
-                                            result.add(editorLeak(editor, staleMs, backLink))
+                                            result.add(editorLeak(editor, staleMs, roots, backLink))
                                           }
                                         }
                                         true
@@ -251,7 +265,7 @@ class ProjectLeakDetector(
 
   // ProjectEx.getCreationTrace() is @TestOnly; it is best-effort here (usually empty outside unit tests) and only enriches the report.
   @Suppress("TestOnlyProblems")
-  private fun projectLeak(project: ProjectImpl, backLink: DebugReflectionUtil.BackLink<*>): LeakInfo =
+  private fun projectLeak(project: ProjectImpl, roots: Map<Any, String>, backLink: DebugReflectionUtil.BackLink<*>): LeakInfo =
     LeakInfo(
       kind = LeakKind.PROJECT,
       className = project.javaClass.name,
@@ -259,11 +273,14 @@ class ProjectLeakDetector(
       description = safeToString(project),
       creationTrace = (project as ProjectEx).creationTrace,
       staleForMs = null,
-      referencePath = backLink.toString(),
+      referencePath = referencePath(backLink, roots),
       disposerParentChain = disposerParentChain(backLink),
     )
 
-  private fun editorLeak(editor: EditorImpl, staleForMs: Long, backLink: DebugReflectionUtil.BackLink<*>): LeakInfo =
+  private fun editorLeak(editor: EditorImpl,
+                         staleForMs: Long,
+                         roots: Map<Any, String>,
+                         backLink: DebugReflectionUtil.BackLink<*>): LeakInfo =
     LeakInfo(
       kind = LeakKind.EDITOR,
       className = editor.javaClass.name,
@@ -271,19 +288,19 @@ class ProjectLeakDetector(
       description = safeToString(editor),
       creationTrace = null,
       staleForMs = staleForMs,
-      referencePath = backLink.toString(),
+      referencePath = referencePath(backLink, roots),
       disposerParentChain = disposerParentChain(backLink),
     )
 
   /** Returns the parent chain of the first Disposable in the tree, from the leaked instance to the root, as `LeakHunter` does. */
   @Suppress("TestOnlyProblems")
-  private fun disposerParentChain(start: DebugReflectionUtil.BackLink<*>): String? {
+  private fun disposerParentChain(start: DebugReflectionUtil.BackLink<*>): List<ObjectRendering>? {
     val tree = Disposer.getTree()
     var link: DebugReflectionUtil.BackLink<*>? = start
     while (link != null) {
       val value = link.value
       if (value is Disposable) {
-        tree.printParentChainToRoot(value)?.let { return it }
+        tree.getParentChainToRoot(value)?.let { chain -> return chain.map { ObjectRendering(it.javaClass.name, safeToString(it)) } }
       }
       link = link.prev()
     }
@@ -302,3 +319,13 @@ class ProjectLeakDetector(
     if (JBR.isSystemUtilsSupported()) JBR.getSystemUtils().fullGC() else System.gc()
   }
 }
+
+/** Converts a [DebugReflectionUtil.BackLink] chain into [ReferenceStep]s. Takes the root description from [roots]. */
+private fun referencePath(backLink: DebugReflectionUtil.BackLink<*>, roots: Map<Any, String>): List<ReferenceStep> =
+  generateSequence(backLink) { it.prev() }
+    .map { link ->
+      ReferenceStep(field = link.fieldName,
+                    target = ObjectRendering(link.value.javaClass.name, link.valueText),
+                    rootDescription = if (link.prev() == null) roots[link.value] else null)
+    }
+    .toList()

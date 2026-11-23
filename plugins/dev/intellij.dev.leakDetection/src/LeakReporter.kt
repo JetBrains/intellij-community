@@ -56,33 +56,26 @@ private const val UPLOADS_URL = "https://uploads.jetbrains.com"
 // Action contributed by the performanceTesting plugin; invoked by id so we don't depend on that plugin's module.
 private const val CAPTURE_MEMORY_SNAPSHOT_ACTION_ID = "CaptureMemorySnapShot"
 
-// Volatile parts of a reference-path rendering ignored when deciding whether two paths are the same retention chain
-private val VALUE_REGEX = Regex("""; Value: '.*' of """)
-private val IDENTITY_HASH_REGEX = Regex("@[0-9a-fA-F]+")
+// Volatile parts of a field or a class name ignored when deciding whether two paths are the same retention chain
 private val ARRAY_INDEX_REGEX = Regex("""\[\d+]""")
 private val LAMBDA_ADDRESS_REGEX = Regex("""/0x[0-9a-fA-F]+""")
-private val IDE_FRAME_REGEX = Regex("""IdeFrameImpl\[frame[0-9]""")
 
 /**
  * Identifies a retention chain of a leak by the fields and the classes on its reference path.
- * Two leaks with equal signatures differ only in the field values, identity hashes, array indices and lambda addresses.
+ * Two leaks with equal signatures differ only in the field values, array indices and lambda addresses.
  */
 internal fun leakSignature(leak: LeakInfo): String {
-  val path = leak.referencePath.lineSequence().joinToString("\n") { line ->
-    line
-      .replace(VALUE_REGEX, " of ")
-      .replace(IDENTITY_HASH_REGEX, "@")
-      .replace(ARRAY_INDEX_REGEX, "[]")
-      .replace(LAMBDA_ADDRESS_REGEX, "/")
-      .replace(IDE_FRAME_REGEX, "IdeFrameImpl[")
-  }
+  val path = leak.referencePath.joinToString("\n") { "${stableName(it.field)} ${stableName(it.target.className)}" }
   return "${leak.kind}\n${leak.className}\n$path"
 }
+
+private fun stableName(name: String): String = name.replace(ARRAY_INDEX_REGEX, "[]").replace(LAMBDA_ADDRESS_REGEX, "/")
 
 /** Surfaces [ProjectLeakDetector] results: a balloon notification (with actions) plus a `LOG.error` so Diogen collects them. */
 @ApiStatus.Internal
 class LeakReporter(private val coroutineScope: CoroutineScope) {
-  fun report(project: Project?, leaks: List<LeakInfo>) {
+  /** Logs the [buildInteractiveReport] of [leaks] and shows a notification with it. */
+  fun reportInteractive(project: Project?, leaks: List<LeakInfo>) {
     val group = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
     if (leaks.isEmpty()) {
       group.createNotification(DevLeakDetectionBundle.message("notification.title.no.leaks"),
@@ -92,7 +85,7 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
       return
     }
 
-    val report = buildReport(leaks)
+    val report = buildInteractiveReport(leaks)
     // Logged at error level on purpose: this is how the results are collected from internal builds (Diogen).
     LOG.error(report)
 
@@ -121,18 +114,21 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
     notification.notify(project)
   }
 
-  /** Builds the leak report. The report has [projectNameHash] in place of each project name. */
-  fun buildReport(leaks: List<LeakInfo>): String {
-    val report = buildString {
-      append("IDE state: ").append(ideStateInfo()).append('\n')
-      append("OS: ").append(osInfo()).append("\n\n")
-      append("```\n")
-      append(ideInfo()).append("\n\n")
-      append(buildLeaksReport(leaks).trimEnd('\n')).append("\n```")
-    }
-    val knownNames = ProjectUtilCore.getOpenProjects().map { it.name } + LeakCandidateRegistry.getInstance().projectNames()
-    return maskProjectNames(report, knownNames)
+  /**
+   * Builds the leak report.
+   */
+  fun buildInteractiveReport(leaks: List<LeakInfo>): String = buildString {
+    append("IDE state: ").append(ideStateInfo()).append('\n')
+    append("OS: ").append(osInfo()).append("\n\n")
+    append("```\n")
+    append(ideInfo()).append("\n\n")
+    append(buildLeaksReport(leaks, masked = false).trimEnd('\n')).append("\n```")
   }
+
+  /**
+   * Builds the leak report of the idle run: the leak entries of [buildInteractiveReport] without the IDE, OS and JVM header and without the Markdown fence.
+   */
+  fun buildIdleReport(leaks: List<LeakInfo>): String = buildLeaksReport(leaks, true).trimEnd('\n')
 
   private fun ideStateInfo(): String {
     val openProjects = ProjectUtilCore.getOpenProjects()
@@ -168,7 +164,7 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun buildLeaksReport(leaks: List<LeakInfo>): String {
+  private fun buildLeaksReport(leaks: List<LeakInfo>, masked: Boolean): String {
     // Squash leaks that share the same structural reference path (ignoring identity hashes and array indices), so a
     // report with many near-identical retention chains stays readable: each distinct path is printed only once.
     val groups = LinkedHashMap<String, MutableList<LeakInfo>>()
@@ -189,26 +185,53 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
       sb.append('#').append(index + 1).append(' ').append(representative.kind).append(' ').append(representative.className)
       if (group.size == 1) {
         sb.append('@').append(Integer.toHexString(representative.identityHashCode)).append('\n')
-        sb.append("  instance: ").append(representative.description).append('\n')
+        if (!masked) {
+          sb.append("  instance: ").append(representative.description).append('\n')
+        }
         representative.staleForMs?.let { sb.append("  retained for: ").append(it).append(" ms after disposal\n") }
-        representative.creationTrace?.let { sb.append("  created at: ").append(it).append('\n') }
+        if (!masked) {
+          representative.creationTrace?.let { sb.append("  created at: ").append(it).append('\n') }
+        }
       }
       else {
         sb.append(" — ").append(group.size).append(" instances sharing this path\n")
         sb.append("  instances:\n")
         for (leak in group) {
-          sb.append("    @").append(Integer.toHexString(leak.identityHashCode)).append(' ').append(leak.description)
+          sb.append("    @").append(Integer.toHexString(leak.identityHashCode))
+          if (!masked) {
+            sb.append(' ').append(leak.description)
+          }
           leak.staleForMs?.let { sb.append(" (retained ").append(it).append(" ms after disposal)") }
           sb.append('\n')
         }
       }
-      sb.append("  reference path:\n").append(representative.referencePath.trimEnd().prependIndent("    ")).append('\n')
+      sb.append("  reference path:\n").append(renderReferencePath(representative.referencePath, masked).prependIndent("    ")).append('\n')
       representative.disposerParentChain?.let {
-        sb.append("  Disposer parent chain:\n").append(it.trimEnd().prependIndent("  ")).append('\n')
+        sb.append("  Disposer parent chain:\n").append(renderDisposerParentChain(it, masked).prependIndent("    ")).append('\n')
       }
       sb.append('\n')
     }
     return sb.toString()
+  }
+
+  private fun renderReferencePath(path: List<ReferenceStep>, masked: Boolean): String {
+    return path.joinToString("\n") { step ->
+      buildString {
+        append("via '").append(step.field).append('\'')
+        if (!masked) {
+          append("; Value: '").append(step.target.text).append('\'')
+        }
+        append(" of class ").append(step.target.className)
+        if (!masked) {
+          step.rootDescription?.let { append("\n (from ").append(it).append(')') }
+        }
+      }
+    }
+  }
+
+  private fun renderDisposerParentChain(chain: List<ObjectRendering>, masked: Boolean): String {
+    val lines = chain.map { if (masked) it.className else "${it.text} (${it.className})" } + "ROOT"
+    return lines.withIndex().joinToString("\n") { (index, line) -> if (index == 0) line else "  <- $line" }
   }
 
   private fun copyToClipboard(report: String) {

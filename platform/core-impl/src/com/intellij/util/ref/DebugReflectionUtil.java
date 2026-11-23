@@ -304,11 +304,15 @@ public final class DebugReflectionUtil {
       return value;
     }
 
-    String getFieldName() {
+    /** Returns the field as {@code Class.field}, the array index as {@code [i]}, or {@code " (root)"} for a root. */
+    @ApiStatus.Internal
+    public @NotNull String getFieldName() {
       return arrayIndex==-2 ?" (root)" : arrayIndex != -1 ? "["+arrayIndex+"]" : field.getDeclaringClass().getName() + "." + field.getName();
     }
 
-    void print(@NotNull StringBuilder result) {
+    /** Returns the {@code toString()} of the value, at most 200 characters on one line. */
+    @ApiStatus.Internal
+    public @NotNull String getValueText() {
       String valueStr;
       Object value = this.value;
       try {
@@ -325,8 +329,11 @@ public final class DebugReflectionUtil {
       catch (Throwable e) {
         valueStr = "(" + e.getMessage() + " while computing .toString())";
       }
+      return valueStr;
+    }
 
-      result.append("via '").append(getFieldName()).append("'; Value: '").append(valueStr).append("' of ").append(value.getClass())
+    void print(@NotNull StringBuilder result) {
+      result.append("via '").append(getFieldName()).append("'; Value: '").append(getValueText()).append("' of ").append(value.getClass())
         .append("\n");
     }
   }
