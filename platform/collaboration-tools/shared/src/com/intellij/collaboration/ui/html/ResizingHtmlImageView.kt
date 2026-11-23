@@ -84,13 +84,14 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
     }.toFloat()
 
   override fun getBreakWeight(axis: Int, pos: Float, len: Float): Int {
-    if (axis != X_AXIS || loader.state !is ImageLoader.State.Loaded) return BadBreakWeight
+    if (axis != X_AXIS) return BadBreakWeight
+    val size = (loader.state as? ImageLoader.State.Loaded)?.dimension ?: return BadBreakWeight
 
     var view = parent
     while (view != null && view !is FlowView) view = view.parent
-    val availableWidth = (view as? FlowView)?.getFlowSpan(0)?.toFloat() ?: len
+    val availableWidth = view?.getFlowSpan(0)?.toFloat() ?: len
 
-    return if (getPreferredSpan(X_AXIS) > availableWidth || getPreferredSpan(Y_AXIS) > JBUI.scale(MAX_IMAGE_HEIGHT)) ForcedBreakWeight
+    return if (size.width > availableWidth || size.height.toFloat() > JBUI.scale(MAX_IMAGE_HEIGHT)) ForcedBreakWeight
     else BadBreakWeight
   }
 
@@ -206,7 +207,9 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
     }
 
     override fun getAlignment(axis: Int): Float =
-      this@ResizingHtmlImageView.getAlignment(axis)
+      if (axis == Y_AXIS) getImageVerticalAlignment() else super.getAlignment(axis)
+
+    override fun getAttributes(): AttributeSet = this@ResizingHtmlImageView.attributes
 
     override fun modelToView(pos: Int, a: Shape, b: Position.Bias?): Shape =
       this@ResizingHtmlImageView.modelToView(pos, a, b)

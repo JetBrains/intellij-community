@@ -117,6 +117,15 @@ internal class ResizingHtmlImageViewTest {
   }
 
   @Test
+  fun `CSS top aligns a resized image with the text top`(): Unit = timeoutRunBlocking {
+    val layout = renderImage(Dimension(200, 2000), attributes = "style='vertical-align: top'")
+
+    assertThat(layout.image.height).isEqualTo(500)
+    assertThat(layout.textTops).hasSize(2)
+    assertThat(layout.image.y).isEqualTo(layout.textTops.first())
+  }
+
+  @Test
   fun `buffered raster uses image coordinates for layout`(): Unit = timeoutRunBlocking {
     for (scale in listOf(1.0, 1.5, 2.0)) {
       val raster = BufferedImage((17 * scale).roundToInt(), (13 * scale).roundToInt(), BufferedImage.TYPE_INT_ARGB)
