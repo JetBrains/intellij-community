@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.project.Project;
@@ -154,9 +154,9 @@ public final class TypesUtil implements TypeConstants {
                                                     @NotNull PsiType actualType,
                                                     @NotNull PsiElement context,
                                                     @NotNull Position position) {
-    if (actualType instanceof PsiIntersectionType) {
+    if (actualType instanceof PsiIntersectionType intersectionType) {
       ConversionResult min = ConversionResult.ERROR;
-      for (PsiType child : ((PsiIntersectionType)actualType).getConjuncts()) {
+      for (PsiType child : intersectionType.getConjuncts()) {
         final ConversionResult result = canAssign(targetType, child, context, position);
         if (result.ordinal() < min.ordinal()) {
           min = result;
@@ -168,9 +168,9 @@ public final class TypesUtil implements TypeConstants {
       return min;
     }
 
-    if (targetType instanceof PsiIntersectionType) {
+    if (targetType instanceof PsiIntersectionType intersectionType) {
       ConversionResult max = ConversionResult.OK;
-      for (PsiType child : ((PsiIntersectionType)targetType).getConjuncts()) {
+      for (PsiType child : intersectionType.getConjuncts()) {
         final ConversionResult result = canAssign(child, actualType, context, position);
         if (result.ordinal() > max.ordinal()) {
           max = result;
@@ -221,11 +221,11 @@ public final class TypesUtil implements TypeConstants {
                                                                 @NotNull PsiType actualType,
                                                                 @NotNull PsiElement context,
                                                                 @NotNull Position position) {
-    if (!(context instanceof GroovyPsiElement)) return null;
+    if (!(context instanceof GroovyPsiElement element)) return null;
     if (targetType.equals(actualType)) return ConversionResult.OK;
     for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
       if (!converter.isApplicableTo(position)) continue;
-      final ConversionResult result = converter.isConvertible(targetType, actualType, position, (GroovyPsiElement)context);
+      final ConversionResult result = converter.isConvertible(targetType, actualType, position, element);
       if (result != null) {
         return result;
       }
@@ -240,8 +240,8 @@ public final class TypesUtil implements TypeConstants {
       return !(lType instanceof PsiPrimitiveType);
     }
 
-    if (rType instanceof GrTraitType) {
-      for (PsiType type : ((GrTraitType)rType).getConjuncts()) {
+    if (rType instanceof GrTraitType traitType) {
+      for (PsiType type : traitType.getConjuncts()) {
         if (isAssignableWithoutConversions(lType, type)) return true;
       }
       return false;
@@ -384,8 +384,8 @@ public final class TypesUtil implements TypeConstants {
     else if (checkEmptyListAndList(type2, type1)) {
       return genNewListBy(type1, manager);
     }
-    else if (type1 instanceof GrMapType && type2 instanceof GrMapType) {
-      return GrMapType.merge(((GrMapType)type1), ((GrMapType)type2));
+    else if (type1 instanceof GrMapType mapType1 && type2 instanceof GrMapType mapType2) {
+      return GrMapType.merge(mapType1, mapType2);
     }
     else if (checkEmptyMapAndMap(type1, type2)) {
       return genNewMapBy(type2, manager);
@@ -398,8 +398,8 @@ public final class TypesUtil implements TypeConstants {
       List<GrSignature> signatures2 = clType2.getSignatures();
 
       if (signatures1.size() == 1 && signatures2.size() == 1) {
-        final GrSignature signature1 = signatures1.get(0);
-        final GrSignature signature2 = signatures2.get(0);
+        final GrSignature signature1 = signatures1.getFirst();
+        final GrSignature signature2 = signatures2.getFirst();
         if (signature1.getParameterCount() == signature2.getParameterCount()) {
           final GrSignature signature = GrImmediateClosureSignatureImpl.getLeastUpperBound(signature1, signature2, manager);
           if (signature != null) {
@@ -436,8 +436,8 @@ public final class TypesUtil implements TypeConstants {
   }
 
   private static boolean checkEmptyListAndList(PsiType type1, PsiType type2) {
-    if (type1 instanceof GrTupleType) {
-      List<PsiType> types = ((GrTupleType)type1).getComponentTypes();
+    if (type1 instanceof GrTupleType tupleType) {
+      List<PsiType> types = tupleType.getComponentTypes();
       if (types.isEmpty() && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_LIST)) return true;
     }
 
@@ -453,8 +453,8 @@ public final class TypesUtil implements TypeConstants {
   }
 
   private static boolean checkEmptyMapAndMap(PsiType type1, PsiType type2) {
-    if (type1 instanceof GrMapType) {
-      if (((GrMapType)type1).isEmpty() && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_MAP)) return true;
+    if (type1 instanceof GrMapType mapType) {
+      if (mapType.isEmpty() && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_MAP)) return true;
     }
 
     return false;
@@ -469,17 +469,6 @@ public final class TypesUtil implements TypeConstants {
     final PsiType key = PsiUtil.substituteTypeParameter(genericOwner, CommonClassNames.JAVA_UTIL_MAP, 0, false);
     final PsiType value = PsiUtil.substituteTypeParameter(genericOwner, CommonClassNames.JAVA_UTIL_MAP, 1, false);
     return factory.createType(map, key, value);
-  }
-
-  public static @Nullable PsiType getPsiType(PsiElement context, IElementType elemType) {
-    if (elemType == GroovyTokenTypes.kNULL) {
-      return PsiTypes.nullType();
-    }
-    final String typeName = getBoxedTypeName(elemType);
-    if (typeName != null) {
-      return createTypeByFQClassName(typeName, context);
-    }
-    return null;
   }
 
   public static @Nullable String getBoxedTypeName(IElementType elemType) {
@@ -538,9 +527,7 @@ public final class TypesUtil implements TypeConstants {
     return createJavaLangClassType(type, context.getProject(), context.getResolveScope());
   }
 
-  public static @Nullable PsiType createJavaLangClassType(@Nullable PsiType type,
-                                                          Project project,
-                                                          GlobalSearchScope resolveScope) {
+  public static @Nullable PsiType createJavaLangClassType(@Nullable PsiType type, Project project, GlobalSearchScope resolveScope) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     PsiType result = null;
     PsiClass javaLangClass = facade.findClass(CommonClassNames.JAVA_LANG_CLASS, resolveScope);
@@ -621,37 +608,36 @@ public final class TypesUtil implements TypeConstants {
   public static @Nullable PsiType getItemType(@Nullable PsiType containerType) {
     if (containerType == null) return null;
 
-    if (containerType instanceof PsiArrayType) return ((PsiArrayType)containerType).getComponentType();
+    if (containerType instanceof PsiArrayType arrayType) return arrayType.getComponentType();
     return PsiUtil.extractIterableTypeParameter(containerType, false);
   }
 
-  public static @Nullable PsiType inferAnnotationMemberValueType(final GrAnnotationMemberValue value) {
-    if (value instanceof GrExpression) {
-      return ((GrExpression)value).getType();
+  public static @Nullable PsiType inferAnnotationMemberValueType(GrAnnotationMemberValue value) {
+    if (value instanceof GrExpression expression) {
+      return expression.getType();
     }
 
-    else if (value instanceof GrAnnotation) {
-      final PsiElement resolved = ((GrAnnotation)value).getClassReference().resolve();
-      if (resolved instanceof PsiClass) {
-        return JavaPsiFacade.getElementFactory(value.getProject()).createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
+    else if (value instanceof GrAnnotation annotation) {
+      final PsiElement resolved = annotation.getClassReference().resolve();
+      if (resolved instanceof PsiClass aClass) {
+        return JavaPsiFacade.getElementFactory(value.getProject()).createType(aClass, PsiSubstitutor.EMPTY);
       }
 
       return null;
     }
 
-    else if (value instanceof GrAnnotationArrayInitializer) {
-      return getTupleByAnnotationArrayInitializer((GrAnnotationArrayInitializer)value);
+    else if (value instanceof GrAnnotationArrayInitializer initializer) {
+      return getTupleByAnnotationArrayInitializer(initializer);
     }
 
     return null;
   }
 
-  public static PsiType getTupleByAnnotationArrayInitializer(final GrAnnotationArrayInitializer value) {
+  public static PsiType getTupleByAnnotationArrayInitializer(GrAnnotationArrayInitializer value) {
     return new GrTupleType(value.getResolveScope(), JavaPsiFacade.getInstance(value.getProject())) {
       @Override
       protected @NotNull List<PsiType> inferComponents() {
-        final GrAnnotationMemberValue[] initializers = value.getInitializers();
-        return ContainerUtil.map(initializers, TypesUtil::inferAnnotationMemberValueType);
+        return ContainerUtil.map(value.getInitializers(), TypesUtil::inferAnnotationMemberValueType);
       }
 
       @Override
@@ -662,21 +648,21 @@ public final class TypesUtil implements TypeConstants {
   }
 
   public static boolean resolvesTo(PsiType type, String fqn) {
-    if (type instanceof PsiClassType) {
-      final PsiClass resolved = ((PsiClassType)type).resolve();
+    if (type instanceof PsiClassType classType) {
+      final PsiClass resolved = classType.resolve();
       return resolved != null && fqn.equals(resolved.getQualifiedName());
     }
     return false;
   }
 
   public static @Nullable PsiType rawSecondGeneric(PsiType type, Project project) {
-    if (!(type instanceof PsiClassType)) return null;
+    if (!(type instanceof PsiClassType classType)) return null;
 
-    final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+    final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
     final PsiClass element = result.getElement();
     if (element == null) return null;
 
-    final PsiType[] parameters = ((PsiClassType)type).getParameters();
+    final PsiType[] parameters = classType.getParameters();
 
     boolean changed = false;
     final PsiType[] newParameters = new PsiType[parameters.length];
@@ -732,19 +718,17 @@ public final class TypesUtil implements TypeConstants {
   }
 
   public static boolean isPsiClassTypeToClosure(PsiType type) {
-    if (!(type instanceof PsiClassType)) return false;
+    if (!(type instanceof PsiClassType classType)) return false;
 
-    final PsiClass psiClass = ((PsiClassType)type).resolve();
-    if (psiClass == null) return false;
-
-    return GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
+    final PsiClass psiClass = classType.resolve();
+    return psiClass != null && GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
   }
 
   public static @Nullable @NlsSafe String getQualifiedName(@Nullable PsiType type) {
-    if (type instanceof PsiClassType) {
-      PsiClass resolved = ((PsiClassType)type).resolve();
-      if (resolved instanceof PsiAnonymousClass) {
-        return "anonymous " + getQualifiedName(((PsiAnonymousClass)resolved).getBaseClassType());
+    if (type instanceof PsiClassType classType) {
+      PsiClass resolved = classType.resolve();
+      if (resolved instanceof PsiAnonymousClass anonymousClass) {
+        return "anonymous " + getQualifiedName(anonymousClass.getBaseClassType());
       }
       if (resolved != null) {
         return resolved.getQualifiedName();
@@ -758,8 +742,8 @@ public final class TypesUtil implements TypeConstants {
   }
 
   public static boolean isEnum(PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClass resolved = ((PsiClassType)type).resolve();
+    if (type instanceof PsiClassType classType) {
+      final PsiClass resolved = classType.resolve();
       return resolved != null && resolved.isEnum();
     }
     return false;

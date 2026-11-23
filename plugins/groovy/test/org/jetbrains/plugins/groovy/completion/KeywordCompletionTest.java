@@ -31,184 +31,95 @@ public class KeywordCompletionTest {
 
   private boolean oldAutoInsert;
 
-  @Test
-  public void testBr1() { doTest(); }
-  @Test
-  public void testCase_return() { doTest(); }
-  @Test
-  public void testClass1() { doTest(); }
-  @Test
-  public void testClass2() { doTest(); }
-  @Test
-  public void testClass3() { doTest(); }
-  @Test
-  public void testClass4() { doTest(); }
-  @Test
-  public void testExpr1() { doTest(); }
-  @Test
-  public void testExpr2() { doTest(); }
-  @Test
-  public void testFile11() { doTest(); }
-  @Test
-  public void testFile12() { doTest(); }
-  @Test
-  public void testFin() { doTest(); }
-  @Test
-  public void testFin2() { doTest(); }
-  @Test
-  public void testGRVY1064() { doTest(); }
-  @Test
-  public void testGrvy1404() { doTest(); }
-  @Test
-  public void testImp1() { doTest(); }
-  @Test
-  public void testImp2() { doTest(); }
-  @Test
-  public void testImp3() { doTest(); }
-  @Test
-  public void testIns1() { doTest(); }
-  @Test
-  public void testIns2() { doTest(); }
-  @Test
-  public void testIns3() { doTest(); }
-  @Test
-  public void testInt1() { doTest(); }
-  @Test
-  public void testLocal1() { doTest(); }
-  @Test
-  public void testMod1() { doTest(); }
-  @Test
-  public void testMod10() { doTest(); }
-  @Test
-  public void testMod11() { doTest(); }
-  @Test
-  public void testMod2() { doTest(); }
-  @Test
-  public void testMod3() { doTest(); }
-  @Test
-  public void testMod4() { doTest(); }
-  @Test
-  public void testMod5() { doTest(); }
-  @Test
-  public void testMod6() { doTest(); }
-  @Test
-  public void testMod7() { doTest(); }
-  @Test
-  public void testMod8() { doTest(); }
-  @Test
-  public void testMod9() { doTest(); }
-  @Test
-  public void testPack1() { doTest(); }
-  @Test
-  public void testSt1() { doTest(); }
-  @Test
-  public void testSwit1() { doTest(); }
-  @Test
-  public void testSwit13() { doTest(); }
-  @Test
-  public void testSwit14() { doTest(); }
-  @Test
-  public void testSwit2() { doTest(); }
-  @Test
-  public void testSwit3() { doTest(); }
-  @Test
-  public void testSwit4() { doTest(); }
-  @Test
-  public void testSwit5() { doTest(); }
-  @Test
-  public void testTag1() { doTest(); }
-  @Test
-  public void testTag2() { doTest(); }
-  @Test
-  public void testTag3() { doTest(); }
-  @Test
-  public void testTag4() { doTest(); }
-  @Test
-  public void testTh1() { doTest(); }
-  @Test
-  public void testTh2() { doTest(); }
-  @Test
-  public void testVar1() { doTest(); }
-  @Test
-  public void testVar10() { doTest(); }
-  @Test
-  public void testVar13() { doTest(); }
-  @Test
-  public void testVar2() { doTest(); }
-  @Test
-  public void testVar3() { doTest(); }
-  @Test
-  public void testVar4() { doTest(); }
-  @Test
-  public void testVar5() { doTest(); }
-  @Test
-  public void testVar6() { doTest(); }
-  @Test
-  public void testVar7() { doTest(); }
-  @Test
-  public void testVar8() { doTest(); }
-  @Test
-  public void testWhile55() { doTest(); }
-  @Test
-  public void testDefInsideCase() { doTest(); }
-  @Test
-  public void testThrows1() { doTest(); }
-  @Test
-  public void testThrows2() { doTest(); }
-  @Test
-  public void testThrows3() { doTest(); }
-  @Test
-  public void testPrimitiveTypes() { doTest(); }
-  @Test
-  public void testIncompleteConstructor() { doTest(); }
-  @Test
-  public void testAtInterface() { doTest(); }
-  @Test
-  public void testInstanceOf() { doTest(); }
-  @Test
-  public void testAssert() { doTest(); }
-  @Test
-  public void testReturn() { doTest(); }
-  @Test
-  public void testAssertInClosure() { doTest(); }
-  @Test
-  public void testAfterLabel() { doTest(); }
-  @Test
-  public void testKeywordsInParentheses() { doTest(); }
-  @Test
-  public void testCompletionInTupleVar() { doTest(); }
-  @Test
-  public void testAnnotationArg() { doTest(); }
-  @Test
-  public void testDefaultAnnotationArg() { doTest(); }
-  @Test
-  public void testDefaultInAnnotation() { doTest(); }
-  @Test
-  public void testElse1() { doTest(); }
-  @Test
-  public void testElse2() { doTest(); }
-  @Test
-  public void testElse3() { doTest(); }
-  @Test
-  public void testClassAfterAnnotation() { doTest(); }
-  @Test
-  public void testClassAfterAnno2() { doTest(); }
-  @Test
-  public void testExtends() { doTest(); }
-  @Test
-  public void testImplements() { doTest(); }
-  @Test
-  public void testAfterNumberLiteral() { doTest(); }
-  @Test
-  public void testDoWhile() { doTest(); }
-  @Test
-  public void testDoWhile2() { doTest(); }
-  @Test
-  public void testNoVarInFrontOfMethod() { doTest(); }
-  @Test
-  public void testNoVarInFrontOfMethod2() { doTest(); }
-  @Test
-  public void testImportAlias() { doTest(); }
+  @Test public void testBr1() { doTest(); }
+  @Test public void testCase_return() { doTest(); }
+  @Test public void testClass1() { doTest(); }
+  @Test public void testClass2() { doTest(); }
+  @Test public void testClass3() { doTest(); }
+  @Test public void testClass4() { doTest(); }
+  @Test public void testExpr1() { doTest(); }
+  @Test public void testExpr2() { doTest(); }
+  @Test public void testFile11() { doTest(); }
+  @Test public void testFile12() { doTest(); }
+  @Test public void testFin() { doTest(); }
+  @Test public void testFin2() { doTest(); }
+  @Test public void testGRVY1064() { doTest(); }
+  @Test public void testGrvy1404() { doTest(); }
+  @Test public void testImp1() { doTest(); }
+  @Test public void testImp2() { doTest(); }
+  @Test public void testImp3() { doTest(); }
+  @Test public void testIns1() { doTest(); }
+  @Test public void testIns2() { doTest(); }
+  @Test public void testIns3() { doTest(); }
+  @Test public void testInt1() { doTest(); }
+  @Test public void testLocal1() { doTest(); }
+  @Test public void testMod1() { doTest(); }
+  @Test public void testMod10() { doTest(); }
+  @Test public void testMod11() { doTest(); }
+  @Test public void testMod2() { doTest(); }
+  @Test public void testMod3() { doTest(); }
+  @Test public void testMod4() { doTest(); }
+  @Test public void testMod5() { doTest(); }
+  @Test public void testMod6() { doTest(); }
+  @Test public void testMod7() { doTest(); }
+  @Test public void testMod8() { doTest(); }
+  @Test public void testMod9() { doTest(); }
+  @Test public void testPack1() { doTest(); }
+  @Test public void testSt1() { doTest(); }
+  @Test public void testSwit1() { doTest(); }
+  @Test public void testSwit13() { doTest(); }
+  @Test public void testSwit14() { doTest(); }
+  @Test public void testSwit2() { doTest(); }
+  @Test public void testSwit3() { doTest(); }
+  @Test public void testSwit4() { doTest(); }
+  @Test public void testSwit5() { doTest(); }
+  @Test public void testTag1() { doTest(); }
+  @Test public void testTag2() { doTest(); }
+  @Test public void testTag3() { doTest(); }
+  @Test public void testTag4() { doTest(); }
+  @Test public void testTh1() { doTest(); }
+  @Test public void testTh2() { doTest(); }
+  @Test public void testVar1() { doTest(); }
+  @Test public void testVar10() { doTest(); }
+  @Test public void testVar13() { doTest(); }
+  @Test public void testVar2() { doTest(); }
+  @Test public void testVar3() { doTest(); }
+  @Test public void testVar4() { doTest(); }
+  @Test public void testVar5() { doTest(); }
+  @Test public void testVar6() { doTest(); }
+  @Test public void testVar7() { doTest(); }
+  @Test public void testVar8() { doTest(); }
+  @Test public void testWhile55() { doTest(); }
+  @Test public void testDefInsideCase() { doTest(); }
+  @Test public void testThrows1() { doTest(); }
+  @Test public void testThrows2() { doTest(); }
+  @Test public void testThrows3() { doTest(); }
+  @Test public void testPrimitiveTypes() { doTest(); }
+  @Test public void testIncompleteConstructor() { doTest(); }
+  @Test public void testAtInterface() { doTest(); }
+  @Test public void testInstanceOf() { doTest(); }
+  @Test public void testAssert() { doTest(); }
+  @Test public void testReturn() { doTest(); }
+  @Test public void testAssertInClosure() { doTest(); }
+  @Test public void testAfterLabel() { doTest(); }
+  @Test public void testKeywordsInParentheses() { doTest(); }
+  @Test public void testCompletionInTupleVar() { doTest(); }
+  @Test public void testAnnotationArg() { doTest(); }
+  @Test public void testDefaultAnnotationArg() { doTest(); }
+  @Test public void testDefaultInAnnotation() { doTest(); }
+  @Test public void testElse1() { doTest(); }
+  @Test public void testElse2() { doTest(); }
+  @Test public void testElse3() { doTest(); }
+  @Test public void testClassAfterAnnotation() { doTest(); }
+  @Test public void testClassAfterAnno2() { doTest(); }
+  @Test public void testExtends() { doTest(); }
+  @Test public void testImplements() { doTest(); }
+  @Test public void testAfterNumberLiteral() { doTest(); }
+  @Test public void testDoWhile() { doTest(); }
+  @Test public void testDoWhile2() { doTest(); }
+  @Test public void testNoVarInFrontOfMethod() { doTest(); }
+  @Test public void testNoVarInFrontOfMethod2() { doTest(); }
+  @Test public void testImportAlias() { doTest(); }
 
   @BeforeEach
   void setUp() {
