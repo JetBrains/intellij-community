@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ui.OptPaneUtils;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
@@ -48,6 +49,7 @@ import com.intellij.modcommand.ModRegisterTabOut;
 import com.intellij.modcommand.ModShowConflicts;
 import com.intellij.modcommand.ModStartRename;
 import com.intellij.modcommand.ModStartTemplate;
+import com.intellij.modcommand.ModTriggerFeatureUsed;
 import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.modcommand.ModUpdateReferences;
@@ -217,6 +219,10 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     }
     if (command instanceof ModLaunchEditorAction action) {
       return executeLaunchEditorAction(project, action, editor);
+    }
+    if (command instanceof ModTriggerFeatureUsed(String id)) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(id);
+      return true;
     }
     throw new IllegalArgumentException("Unknown command: " + command);
   }

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.options.OptMultiSelector.OptElement;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.IdeBundle;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -15,6 +16,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModEditOptions;
+import com.intellij.modcommand.ModTriggerFeatureUsed;
 import com.intellij.modcommand.Presentation;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
@@ -110,12 +112,14 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
                              JavaCodeStyleSettings.getInstance(container.file()).INSERT_OVERRIDE_ANNOTATION;
     boolean javadocVisible = container.file().getLanguage().is(JavaLanguage.INSTANCE);
     PsiElement classOrEnumConst = target.element();
-    return ModCommand.editOptions(
-      classOrEnumConst,
-      JavaOverrideImplementMemberChooser.getChooserTitle(myToImplement, container.merge()),
-      () -> new OverrideImplementOptions(members, container.overrideVisible(), javadocVisible, preselection, false, false, insertOverride),
-      true,
-      (element, options) -> generate(element, members, options));
+    return new ModTriggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT)
+      .andThen(ModCommand.editOptions(
+        classOrEnumConst,
+        JavaOverrideImplementMemberChooser.getChooserTitle(myToImplement, container.merge()),
+        () -> new OverrideImplementOptions(members, container.overrideVisible(), javadocVisible, preselection, false, false,
+                                           insertOverride),
+        true,
+        (element, options) -> generate(element, members, options)));
   }
 
   private @NotNull ModCommand generate(@NotNull PsiElement element,

@@ -14,6 +14,7 @@ import com.intellij.modcommand.ModNavigate
 import com.intellij.modcommand.ModOpenUrl
 import com.intellij.modcommand.ModRegisterTabOut
 import com.intellij.modcommand.ModStartRename
+import com.intellij.modcommand.ModTriggerFeatureUsed
 import com.intellij.modcommand.ModUpdateFileText
 import com.intellij.modcommand.ModUpdateReferences
 import com.intellij.openapi.diagnostic.debug
@@ -78,6 +79,8 @@ fun RpcModCommand.toModCommand(): ModCommand? {
     is RpcLaunchEditorAction -> ModLaunchEditorAction(actionId, optional)
 
     is RpcOpenUrl -> ModOpenUrl(url)
+
+    is RpcTriggerFeatureUsed -> ModTriggerFeatureUsed(featureId)
 
     // VirtualFile-based types
     is RpcDeleteFile -> {

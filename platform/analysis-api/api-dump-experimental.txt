@@ -257,6 +257,13 @@ com.intellij.modcommand.ModPsiUpdater
 com.intellij.modcommand.ModTemplateBuilder
 - *a:field(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,java.lang.String):com.intellij.modcommand.ModTemplateBuilder
 - *a:field(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,Z):com.intellij.modcommand.ModTemplateBuilder
+*f:com.intellij.modcommand.ModTriggerFeatureUsed
+- java.lang.Record
+- com.intellij.modcommand.ModCommand
+- <init>(java.lang.String):V
+- f:equals(java.lang.Object):Z
+- featureId():java.lang.String
+- f:hashCode():I
 *f:com.intellij.modcommand.ModUpdateReferences
 - java.lang.Record
 - com.intellij.modcommand.ModCommand

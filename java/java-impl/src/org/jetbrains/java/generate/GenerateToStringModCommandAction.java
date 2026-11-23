@@ -18,6 +18,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModEditOptions;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModTriggerFeatureUsed;
 import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;

@@ -13,6 +13,7 @@ import com.intellij.codeInspection.options.OptStringList;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.FutureVirtualFile;
@@ -35,6 +36,7 @@ import com.intellij.modcommand.ModRegisterTabOut;
 import com.intellij.modcommand.ModShowConflicts;
 import com.intellij.modcommand.ModStartRename;
 import com.intellij.modcommand.ModStartTemplate;
+import com.intellij.modcommand.ModTriggerFeatureUsed;
 import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.modcommand.ModUpdateReferences;
@@ -161,6 +163,10 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
         case ERROR -> new Error(text);
         case INFORMATION -> Result.INTERACTIVE;
       };
+      case ModTriggerFeatureUsed(String id) -> {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(id);
+        yield Result.SUCCESS;
+      }
       default -> throw new IllegalArgumentException("Unknown command: " + command);
     };
   }
