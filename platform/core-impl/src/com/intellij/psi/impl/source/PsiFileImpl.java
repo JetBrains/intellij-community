@@ -261,6 +261,19 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     InternalPsiVersioning.assertReadAccessOrVersionedEnvironment();
   }
 
+  /**
+   * Does the check of {@link #assertReadAccessAllowed()} and {@link InternalPsiVersioning#isInsideVersioningButNotLocks()}
+   * with one check of the lock state.
+   *
+   * @return {@code true} if the current computation runs in a versioned environment without locks
+   */
+  private boolean isInsideVersioningElseAssertReadAccess() {
+    if (myViewProvider.getVirtualFile() instanceof ReadOnlyLightVirtualFile) {
+      return InternalPsiVersioning.isInsideVersioningButNotLocks();
+    }
+    return InternalPsiVersioning.isInsideVersioningElseSoftAssertReadAccess();
+  }
+
   private @NotNull FileElement loadTreeElement() {
     assertReadAccessAllowed();
 
@@ -783,18 +796,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
    */
   @Deprecated
   public final @Nullable StubTree getGreenStubTree() {
-    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+    if (isInsideVersioningElseAssertReadAccess()) {
       // as of now, we do not allow working with stubs inside versioned environment, as stubs are not represented as a versioned structure
       // so the green stub functionality is disabled.
       return null;
     }
-    assertReadAccessAllowed();
 
     StubTree deref = derefStub();
     if (deref != null) {
       return deref;
     }
-    return getStubTreeOrFileElement().first;
+    return getStubTreeOrFileElement(false).first;
   }
 
   /**
@@ -816,8 +828,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     Function<S, T> stubProcessor,
     Function<FileElement, T> astProcessor
   ) {
-    Pair<@Nullable StubTree, @Nullable FileElement> result = getStubTreeOrFileElement();
-    StubElement<?> stubElement = result.first != null && !InternalPsiVersioning.isInsideVersioningButNotLocks() ? result.first.getRoot() : null;
+    boolean insideVersioning = isInsideVersioningElseAssertReadAccess();
+    Pair<@Nullable StubTree, @Nullable FileElement> result = getStubTreeOrFileElement(insideVersioning);
+    StubElement<?> stubElement = result.first != null && !insideVersioning ? result.first.getRoot() : null;
     if (stubElement != null && !stubClass.isAssignableFrom(stubElement.getClass())) {
       LanguageStubDescriptor descriptor = getStubDescriptor();
       String elementTypeName = descriptor != null ? descriptor.getFileElementSerializer().getExternalId() : null;
@@ -839,8 +852,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     Function<StubTree, T> stubProcessor,
     Function<FileElement, T> astProcessor
   ) {
-    Pair<@Nullable StubTree, @Nullable FileElement> result = getStubTreeOrFileElement();
-    if (result.first != null && !InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+    boolean insideVersioning = isInsideVersioningElseAssertReadAccess();
+    Pair<@Nullable StubTree, @Nullable FileElement> result = getStubTreeOrFileElement(insideVersioning);
+    if (result.first != null && !insideVersioning) {
       return stubProcessor.apply(result.first);
     }
     FileElement fileElement = result.second;
@@ -857,7 +871,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
    */
   @Override
   public @Nullable StubTree getStubTree() {
-    assertReadAccessAllowed();
+    boolean insideVersioning = isInsideVersioningElseAssertReadAccess();
 
     StubTree deref = derefStub();
     FileElement treeElement = getTreeElement();
@@ -867,13 +881,18 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (deref != null) {
       return deref;
     }
-    Pair<StubTree, FileElement> result = getStubTreeOrFileElement();
+    Pair<StubTree, FileElement> result = getStubTreeOrFileElement(insideVersioning);
     return result.second == null ? result.first : null;
   }
 
   public @NotNull Pair<@Nullable StubTree, @Nullable FileElement> getStubTreeOrFileElement() {
-    assertReadAccessAllowed();
+    return getStubTreeOrFileElement(isInsideVersioningElseAssertReadAccess());
+  }
 
+  /**
+   * @param insideVersioning the result of {@link #isInsideVersioningElseAssertReadAccess()}, which the caller has already computed
+   */
+  private @NotNull Pair<@Nullable StubTree, @Nullable FileElement> getStubTreeOrFileElement(boolean insideVersioning) {
     StubTree deref = derefStub();
     FileElement treeElement = getTreeElement();
     if (deref != null || treeElement != null) {
@@ -886,7 +905,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     VirtualFile vFile = getVirtualFile();
 
-    ObjectStubTree<?> tree = InternalPsiVersioning.isInsideVersioningButNotLocks() ? null : StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
+    ObjectStubTree<?> tree = insideVersioning ? null : StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return Pair.empty();
     FileViewProvider viewProvider = getViewProvider();
     List<Pair<LanguageStubDescriptor, PsiFile>> roots = StubTreeBuilder.getStubbedRootDescriptors(viewProvider);

@@ -138,12 +138,18 @@ object InternalPsiVersioning {
     if (ApplicationManager.getApplication().isReadAccessAllowed) {
       return null
     }
-    val writeVersion = currentThreadContext()[PsiVersionWriteContextElement.Key]
+    return getVersionFromThreadContext()
+  }
+
+  private fun getVersionFromThreadContext(): Long? {
+    // the retrieval of the thread context is expensive, so we do it only once
+    val context = currentThreadContext()
+    val writeVersion = context[PsiVersionWriteContextElement.Key]
     if (writeVersion != null) {
       // the case where we are in currently running write action
       return writeVersion.version
     }
-    return currentThreadContext()[PsiVersionFreezeMarker.Key]?.version
+    return context[PsiVersionFreezeMarker.Key]?.version
   }
 
   /**
@@ -168,10 +174,30 @@ object InternalPsiVersioning {
    */
   @JvmStatic
   fun assertReadAccessOrVersionedEnvironment() {
-    if (isInsideVersioningButNotLocks()) {
-      return
+    isInsideVersioningElseSoftAssertReadAccess()
+  }
+
+  /**
+   * Low-level function that allows to bypass a number of calls to `assertReadAccess`.
+   *
+   * @return `true` if the current computation runs in a versioned environment without locks.
+   * Otherwise, it reports a missing read access as [ThreadingAssertions.softAssertReadAccess] does, and returns `false`.
+   */
+  @JvmStatic
+  fun isInsideVersioningElseSoftAssertReadAccess(): Boolean {
+    val application = ApplicationManager.getApplication()
+    if (application.isReadAccessAllowed) {
+      if (application.lockProhibitedAdvice != null) {
+        // the read access is a violation when locks are forbidden; let the assertion report it
+        ThreadingAssertions.softAssertReadAccess()
+      }
+      return false
+    }
+    if (getVersionFromThreadContext() != null) {
+      return true
     }
     ThreadingAssertions.softAssertReadAccess()
+    return false
   }
 
   /**
