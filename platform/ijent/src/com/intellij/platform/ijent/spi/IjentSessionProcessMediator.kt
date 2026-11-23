@@ -20,6 +20,7 @@ import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.asyncSafeInParent
 import com.intellij.platform.ijent.coroutineNameAppended
+import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.Companion.TRANSPORT_CLOSE_AFTER_EXIT_TIMEOUT
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.CHECK_CODE
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.NORMAL
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.TRANSPORT_CLOSED_BY_IJENT
@@ -45,6 +46,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.FilterInputStream
 import java.io.FilterOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -375,17 +377,17 @@ private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSes
 
   try {
     IjentLogger.LIFETIME_LOG.debug { "Closing stdin of $ijentLabel" }
-    runCatching { process.stdin.close(null) }
+    val stdinClosed = closeStdin(process, PROCESS_SHUTDOWN_STEP_TIMEOUT)
 
     // On Windows process.destroy() is an abrupt kill, so if ijent can react to stdin EOF, let's wait for a bit before destroying
-    if (!process.destroyIsGraceful && mediator.exitsOnStdinEof) {
-      awaitProcessExit(process, 1.5.seconds)
+    if (stdinClosed && !process.destroyIsGraceful && mediator.exitsOnStdinEof) {
+      awaitProcessExit(process, PROCESS_SHUTDOWN_STEP_TIMEOUT)
       if (!process.isAlive) return
     }
 
     process.destroy()
 
-    awaitProcessExit(process, 1.5.seconds)
+    awaitProcessExit(process, PROCESS_SHUTDOWN_STEP_TIMEOUT)
 
     if (process.isAlive) {
       IjentLogger.LIFETIME_LOG.warn("The process $ijentLabel is still alive, it will be killed")
@@ -483,6 +485,31 @@ private class ExitDrainedReceiveChannel(
 
   override val prefersDirectBuffers: Boolean
     get() = raw.prefersDirectBuffers
+}
+
+// We chose 1.5 seconds at random to give the process a brief chance to close stdin or exit cleanly.
+// You can change this value freely.
+private val PROCESS_SHUTDOWN_STEP_TIMEOUT: Duration = 1.5.seconds
+
+/**
+ * Closes the stdin of [process] in a background coroutine and waits up to [timeout].
+ *
+ * On Windows, closing a pipe `FileChannel` blocks until any pending `WriteFile` on that pipe finishes.
+ * A hung process never drains its stdin, so the finalizer must proceed to `destroy` after [timeout].
+ */
+@OptIn(DelicateCoroutinesApi::class)
+private suspend fun closeStdin(process: IjentSessionProcessMediator.ProcessFacade, timeout: Duration): Boolean {
+  val closeJob = GlobalScope.launch(IjentThreadPool.coroutineContext) {
+    try {
+      process.stdin.close(null)
+    }
+    catch (_: IOException) {
+      // We don't care.
+    }
+  }
+  return null != withTimeoutOrNull(timeout) {
+    closeJob.join()
+  }
 }
 
 private suspend fun awaitProcessExit(process: IjentSessionProcessMediator.ProcessFacade, timeout: Duration) {

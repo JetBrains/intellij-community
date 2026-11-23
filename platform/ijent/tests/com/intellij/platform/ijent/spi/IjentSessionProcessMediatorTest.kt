@@ -6,6 +6,7 @@ import com.intellij.platform.eel.EelUnavailableException.IntendedExit
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelSendApi
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.PeekableEelReceiveChannel
 import com.intellij.platform.eel.channels.peekable
@@ -183,6 +184,32 @@ class IjentSessionProcessMediatorTest {
     }
   }
 
+  @Test
+  fun `finalizer destroys the process when closing stdin hangs`(): Unit = runBlocking {
+    withParentScope { parent, uncaught ->
+      val ijentScope = ParentOfIjentScopes(parent).createIjentScope("test-session")
+      val stdinCloseEntered = CompletableDeferred<Unit>()
+      val process = HangingStdinProcess(stdinCloseEntered)
+      IjentSessionProcessMediator.create(ParentOfIjentScopes(parent), ijentScope, process, "test-session")
+
+      try {
+        ijentScope.destroy(IntendedExit("Session closed", null))
+        // We chose 5 seconds at random above the 1.5-second stdin close timeout to avoid test flakiness.
+        // You can change this value freely as long as it stays above the finalizer timeout.
+        withTimeout(5.seconds) {
+          stdinCloseEntered.await()
+          process.exitCode.await() shouldBe 143
+          ijentScope.s.coroutineContext.job.join()
+        }
+        parent.coroutineContext.job.children.toList().joinAll()
+        uncaught.shouldBeEmpty()
+      }
+      finally {
+        process.unblockStdinClose()
+      }
+    }
+  }
+
   /** Runs [body] with a supervisor scope that collects the errors that the IJent scope reports to the application. */
   private suspend fun withParentScope(body: suspend (CoroutineScope, List<Throwable>) -> Unit): Unit = coroutineScope {
     val uncaught = Collections.synchronizedList(mutableListOf<Throwable>())
@@ -220,6 +247,53 @@ private class FakeIjentProcess : IjentSessionProcessMediator.ProcessFacade {
   suspend fun exitWithoutClosingStdout(code: Int) {
     stderrPipe.sink.close(null)
     exitCodeImpl.complete(code)
+  }
+
+  override suspend fun destroyForcibly() {
+    exit(137)
+  }
+
+  override suspend fun destroy() {
+    exit(143)
+  }
+}
+
+private class HangingStdinProcess(
+  private val stdinCloseEntered: CompletableDeferred<Unit>,
+) : IjentSessionProcessMediator.ProcessFacade {
+  private val stdoutPipe = EelPipe("hanging IJent stdout", prefersDirectBuffers = false)
+  private val stderrPipe = EelPipe("hanging IJent stderr", prefersDirectBuffers = false)
+  private val exitCodeImpl = CompletableDeferred<Int>()
+  private val stdinCloseUnblocked = CompletableDeferred<Unit>()
+
+  override val stdin: EelSendChannel = object : EelSendChannel {
+    override val isClosed: Boolean = false
+    override val prefersDirectBuffers: Boolean = false
+
+    @EelSendApi
+    override suspend fun send(src: ByteBuffer) {
+      src.position(src.limit())
+    }
+
+    override suspend fun close(err: Throwable?) {
+      stdinCloseEntered.complete(Unit)
+      stdinCloseUnblocked.await()
+    }
+  }
+  override val stdout: PeekableEelReceiveChannel = stdoutPipe.source.peekable()
+  override val stderr: EelReceiveChannel = stderrPipe.source
+  override val exitCode: SafeDeferred<Int> = SafeDeferred(exitCodeImpl)
+  override val destroyIsGraceful: Boolean = false
+
+  fun unblockStdinClose() {
+    stdinCloseUnblocked.complete(Unit)
+  }
+
+  private suspend fun exit(code: Int) {
+    stdoutPipe.sink.close(null)
+    stderrPipe.sink.close(null)
+    exitCodeImpl.complete(code)
+    stdinCloseUnblocked.complete(Unit)
   }
 
   override suspend fun destroyForcibly() {
