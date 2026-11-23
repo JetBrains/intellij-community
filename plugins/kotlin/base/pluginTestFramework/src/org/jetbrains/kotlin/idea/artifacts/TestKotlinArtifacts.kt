@@ -130,7 +130,7 @@ object TestKotlinArtifacts {
         // See docs about this process:
         // https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/docs/cooperative-development/environment-setup.md
         val fileInCache = if (labelUrl.toString().contains("255-dev-255")) {
-            val relativePath = labelUrl.path.substringAfter("/intellij-dependencies/")
+            val relativePath = labelUrl.path.substringAfter("/ultimate-public/")
             val file = KotlinTestsDependenciesUtil.kotlinCompilerSnapshotPath.resolve(relativePath)
             if (!Files.exists(file)) {
                 error("File $file doesn't exist in cooperative repo ${KotlinTestsDependenciesUtil.kotlinCompilerSnapshotPath}. " +
@@ -138,7 +138,7 @@ object TestKotlinArtifacts {
             }
             file
         } else {
-            val relativePath = labelUrl.path.substringAfter("/intellij-dependencies/")
+            val relativePath = labelUrl.path.substringAfter("/ultimate-public/")
             val fileInM2Folder = Path.of(JpsMavenSettings.getMavenRepositoryPath()).resolve(relativePath)
             if (Files.exists(fileInM2Folder)) {
                 val onDiskSha256 = DigestUtil.sha256Hex(fileInM2Folder.readBytes())

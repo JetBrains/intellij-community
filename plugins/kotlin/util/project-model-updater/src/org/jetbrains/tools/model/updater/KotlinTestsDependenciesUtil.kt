@@ -167,7 +167,7 @@ object KotlinTestsDependenciesUtil {
                 // Handle special case for kt-master.
                 // On TeamCity compilation and tests use Kotlin compiler dependencies from a build chain placed into the agent .m2 folder.
                 if (response.statusCode() == 404 && isUnderTeamcity) {
-                    val fileInTeamcityM2Folder = teamcityM2Location.resolve(url.substringAfterLast("/intellij-dependencies/"))
+                    val fileInTeamcityM2Folder = teamcityM2Location.resolve(url.substringAfterLast("/ultimate-public/"))
                     if (fileInTeamcityM2Folder.exists()) {
                         println("File not found in by URL, but found in teamcity m2 folder: $fileInTeamcityM2Folder")
                         digest.update(fileInTeamcityM2Folder.readBytes())
