@@ -32,10 +32,16 @@ class WebTypesDefinitionsEP : CustomLoadingExtensionPointBean<WebTypes>() {
 
     /**
      * Force loading of extensions to prepare them outside of read action.
+     * A failed load does not stop the loading of the other extensions.
+     * [com.intellij.polySymbols.webTypes.WebTypesEmbeddedDefinitionsLoader] reports the failure.
      */
     fun ensureLoaded() {
       EP_NAME.extensionList.forEach {
-        it.instance
+        try {
+          it.loadWebTypes()
+        }
+        catch (_: PluginException) {
+        }
       }
     }
   }
@@ -48,9 +54,34 @@ class WebTypesDefinitionsEP : CustomLoadingExtensionPointBean<WebTypes>() {
   @JvmField
   var enableByDefault: Boolean? = null
 
+  @Volatile
+  private var loadResult: Result<WebTypes>? = null
+
   override fun getImplementationClassName(): String? = null
 
-  override fun createInstance(componentManager: ComponentManager, pluginDescriptor: PluginDescriptor): WebTypes {
+  override fun createInstance(componentManager: ComponentManager, pluginDescriptor: PluginDescriptor): WebTypes =
+    loadWebTypes()
+
+  /**
+   * Returns the Web Types from [source] and loads them on the first call.
+   * Concurrent callers share one load and wait for it with `checkCanceled`.
+   * A failed load is also kept, and each later call throws the same [PluginException].
+   * Use it instead of [getInstance], because [getInstance] holds the monitor of the bean during the load.
+   */
+  fun loadWebTypes(): WebTypes {
+    loadResult?.let { return it.getOrThrow() }
+    val result = try {
+      Result.success(readWebTypes())
+    }
+    catch (e: PluginException) {
+      Result.failure(e)
+    }
+    loadResult = result
+    return result.getOrThrow()
+  }
+
+  private fun readWebTypes(): WebTypes {
+    val pluginDescriptor = pluginDescriptor
     try {
       val webTypes = loader.accessDiskWithCheckCanceled(WebTypesSource(pluginDescriptor, source!!))
       if (webTypes.name == null) {
