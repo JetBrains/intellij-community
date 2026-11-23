@@ -10,6 +10,8 @@ targets:
   - ../src/com/intellij/platform/settings/v2/LayerProvider.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultImpl.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsAppLifecycleListener.kt
+  - ../shared/src/com/intellij/platform/settings/v2/impl/ShutdownSaver.kt
+  - ../shared/essential/src/com/intellij/platform/settings/v2/impl/ModalShutdownSaver.kt
   - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/SettingsProjectListener.kt
 ---
 
@@ -125,6 +127,15 @@ A batch applies several writes and slot operations as one atomic change.
 - A flush of a project must also save the file configs under that project.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFlushTest.kt
 - The platform must flush the application scope before the application closes.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsShutdownSaveTest.kt
+- The save at the application close must run through the shutdown saver when the product has one. The shutdown
+  saver is an optional service that decides how the save runs. The saver of
+  `intellij.platform.settings.v2.shared.essential` runs the save under a modal progress that the user cannot cancel.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsShutdownSaveTest.kt
+- With no shutdown saver, the save at the application close must run with a blocking call on the thread of the
+  close, with no progress. A product that has only the `core.platform` modules has no saver. Such a product must
+  be headless. In a product that is not headless, the vault must log an error before the save.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsShutdownSaveTest.kt
 - The platform must flush a project before the project closes.
 
 ## Error Handling
@@ -133,13 +144,12 @@ A batch applies several writes and slot operations as one atomic change.
 - A write of an invalid value fails with `SettingsValidationException`.
 - A write of a slotted key with no pinned slot fails with `UnpinnedDiscriminatorException`.
 - A write of a key whose identity another key holds fails. See [Key Registry](key-registry.spec.md).
+- A failure of the save at the application close is logged, and the close continues.
 
 ## Open Questions / Risks
 
 - A mutation while a project opens, before the platform lists the project as open, is dropped. See
   [ADR 0155](../adr/0155-a-mutation-at-a-context-of-a-project-that-is-not-open-is-dropped.md).
-- No test proves the flush before the application closes. The debounced save usually writes the file first, so a
-  test passes without the flush.
 - A write that climbs past a refusing layer silently widens its scope. It is not settled whether it should fail
   instead.
 - An external edit of a config file while a save is pending is lost.

@@ -9,6 +9,8 @@ targets:
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsCacheInvalidator.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultImpl.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsAppLifecycleListener.kt
+  - ../shared/src/com/intellij/platform/settings/v2/impl/ShutdownSaver.kt
+  - ../shared/essential/src/com/intellij/platform/settings/v2/impl/ModalShutdownSaver.kt
   - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/ProjectSettingsCacheService.kt
   - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/ProjectSettingsLoadActivity.kt
   - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/SettingsProjectListener.kt

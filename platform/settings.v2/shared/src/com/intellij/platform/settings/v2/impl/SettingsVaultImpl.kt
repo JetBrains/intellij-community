@@ -227,7 +227,7 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
     migrationRunner.watchExtensionPoints()
   }
 
-  /** Writes the application snapshot cache if it has pending changes. [SettingsAppLifecycleListener] calls it at the close. */
+  /** Writes the application snapshot cache if it has pending changes. [saveAppSettingsAndCache] calls it at the close. */
   internal suspend fun saveAppCacheIfDirty() {
     appCache?.saveIfDirty()
   }
