@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performanceTesting.lsp
 
+import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
+import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.annotation.HighlightSeverity
@@ -145,6 +148,33 @@ internal class LspWaitForInlayHintCommand(text: String, line: Int) : PlaybackCom
 }
 
 /**
+ * Waits until a code lens with the given title shows in the given line of the selected editor, or with `false`,
+ * until none with that title shows there. Lines start with 1, as in `%goto`. The client shows a code lens
+ * as a Code Vision entry, so the command takes the text entries of Code Vision, except for its placeholders.
+ * The title names the expected answer: the server can send a lens for the line before it knows the whole project.
+ *
+ * Syntax: `%lspWaitForCodeLens <line> <true|false> <the title of the lens>`
+ */
+internal class LspWaitForCodeLensCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+  companion object {
+    const val PREFIX: String = CMD_PREFIX + "lspWaitForCodeLens"
+  }
+
+  override suspend fun doExecute(context: PlaybackContext) {
+    val args = extractCommandArgument(PREFIX).trim().split(Regex("\\s+"), limit = 3)
+    require(args.size == 3) { "Expected: $PREFIX <line> <true|false> <the title of the lens>, got: '$text'" }
+    val line = args[0].toInt()
+    val present = args[1].toBooleanStrict()
+    val title = args[2]
+    val what = if (present) "a code lens '$title' in line $line" else "rid of the code lens '$title' in line $line"
+    awaitEditorState(context.project, what, stateForFailure = { "It shows: ${it.codeLenses()}" }) { editor ->
+      editor.requireLine(line)
+      editor.codeLenses().any { it.line == line && it.title == title } == present
+    }
+  }
+}
+
+/**
  * Waits until a fold region starts in the given line of the selected editor, or with `false` at the end,
  * until none starts there. Lines start with 1, as in `%goto`. The command takes no column: a folding range
  * of LSP names its lines, and without its optional start character, the fold region starts at the end of the line.
@@ -233,11 +263,32 @@ private fun Editor.documentHighlightList(): String {
   return "$highlights, and the caret is at ${positionOf(caretModel.offset)}"
 }
 
+private data class CodeLens(val line: Int, val title: String) {
+  override fun toString(): String = "$line: $title"
+}
+
+/** The text entries of Code Vision in the editor, with the lines of their inlays. */
+private fun Editor.codeLenses(): List<CodeLens> {
+  val end = document.textLength
+  val inlays = inlayModel.getBlockElementsInRange(0, end) +
+               inlayModel.getInlineElementsInRange(0, end) +
+               inlayModel.getAfterLineEndElementsInRange(0, end)
+  return inlays.flatMap { inlay ->
+    val entries = inlay.getUserData(CodeVisionListData.KEY)?.visibleLens.orEmpty()
+    val line = document.getLineNumber(inlay.offset) + 1
+    entries.filterIsInstance<TextCodeVisionEntry>().filter { it !is PlaceholderCodeVisionEntry }.map { CodeLens(line, it.text) }
+  }
+}
+
 private fun Editor.foldRegionList(): List<String> =
   foldingModel.allFoldRegions.filter { it.isValid }.map { positionOf(it.startOffset) }
 
 /** The offsets of the line, which starts with 1, from its start to its end. */
 private fun Editor.lineRange(line: Int): IntRange {
-  require(line in 1..document.lineCount) { "Line $line is out of the ${document.lineCount} lines of ${virtualFile?.name}" }
+  requireLine(line)
   return document.getLineStartOffset(line - 1)..document.getLineEndOffset(line - 1)
+}
+
+private fun Editor.requireLine(line: Int) {
+  require(line in 1..document.lineCount) { "Line $line is out of the ${document.lineCount} lines of ${virtualFile?.name}" }
 }

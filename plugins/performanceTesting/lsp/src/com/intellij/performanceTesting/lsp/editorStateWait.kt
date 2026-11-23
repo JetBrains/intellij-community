@@ -76,6 +76,11 @@ internal suspend fun awaitEditorState(
         override fun onRemoved(inlay: Inlay<*>) {
           changes.trySend(Unit)
         }
+
+        // Code Vision reuses its inlay when the entries of a line change
+        override fun onUpdated(inlay: Inlay<*>, changeFlags: Int) {
+          changes.trySend(Unit)
+        }
       }, listeners)
       (editor.foldingModel as FoldingModelEx).addListener(object : FoldingListener {
         override fun onFoldRegionStateChange(region: FoldRegion) {

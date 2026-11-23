@@ -12,6 +12,7 @@ internal class LspCommandProvider : CommandProvider {
     LspWaitForDocumentHighlightCommand.PREFIX to CreateCommand(::LspWaitForDocumentHighlightCommand),
     LspWaitForInlayHintCommand.PREFIX to CreateCommand(::LspWaitForInlayHintCommand),
     LspWaitForFoldRegionCommand.PREFIX to CreateCommand(::LspWaitForFoldRegionCommand),
+    LspWaitForCodeLensCommand.PREFIX to CreateCommand(::LspWaitForCodeLensCommand),
     LspFindUsagesCommand.PREFIX to CreateCommand(::LspFindUsagesCommand),
     LspHoverCommand.PREFIX to CreateCommand(::LspHoverCommand),
   )
