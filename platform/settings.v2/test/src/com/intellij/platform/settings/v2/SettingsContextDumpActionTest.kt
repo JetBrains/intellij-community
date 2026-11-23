@@ -9,7 +9,8 @@ import org.junit.jupiter.api.Test
 
 /**
  * Checks that the internal action that dumps the settings context takes its text from the shared settings bundle.
- * The descriptor of `intellij.platform.settings.v2.shared` points its actions at `messages.SettingsV2Bundle`.
+ * The descriptor of `intellij.platform.settings.v2.shared.essential` points its actions at `messages.SettingsV2Bundle`,
+ * which is in `intellij.platform.settings.v2.shared`.
  */
 @TestApplication
 class SettingsContextDumpActionTest {

@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="intellij.platform.settings.v2.backend" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.settings.v2.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.settings.v2.shared.essential" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings.v2" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />

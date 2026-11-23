@@ -37,6 +37,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/settings.v2/shared",
+        "//platform/settings.v2/shared/essential",
         "//libraries/jetbrains/annotations",
         "//platform/settings.v2",
         "//platform/core-api:core",

@@ -26,6 +26,9 @@ import javax.swing.JComponent
  *
  * The roots come from [fileContextRootUrls], so the report shows the roots of the side that runs the action.
  * A split session shows the action of each side in the client, as [ActionRemoteBehaviorSpecification.Duplicated] says.
+ *
+ * Registered as an internal action in `intellij.platform.settings.v2.shared.essential.xml`. Its text is in
+ * `messages.SettingsV2Bundle` of `intellij.platform.settings.v2.shared`.
  */
 internal class SettingsContextDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

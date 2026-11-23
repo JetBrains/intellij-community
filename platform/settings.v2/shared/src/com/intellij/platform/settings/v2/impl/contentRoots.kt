@@ -38,8 +38,9 @@ fun Project.topmostContentRoots(): List<VirtualFile> {
  * @param project the project whose roots to return
  * @return the root urls, or an empty list when the project has no roots
  */
+@ApiStatus.Internal
 @RequiresReadLock
-internal fun fileContextRootUrls(project: Project): List<String> {
+fun fileContextRootUrls(project: Project): List<String> {
   val provider = SettingsContentRootsProvider.EP_NAME.extensionList.firstOrNull()
                  ?: return listOfNotNull(project.basePath?.let(VfsUtilCore::pathToUrl))
   return provider.rootUrls(project)

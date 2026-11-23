@@ -1,2 +1,17 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.settings.v2"/>
+    <module name="intellij.platform.settings.v2.shared"/>
+  </dependencies>
+  <!-- endregion -->
+  <actions resource-bundle="messages.SettingsV2Bundle">
+    <action id="internal.settings.v2.DumpSettingsContext" internal="true"
+            class="com.intellij.platform.settings.v2.impl.SettingsContextDumpAction"/>
+  </actions>
 </idea-plugin>
