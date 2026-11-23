@@ -1,4 +1,5 @@
 load("@community//build:jps_module.bzl", "jps_module")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:core.bzl", "kt_plugin_cfg")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -72,3 +73,59 @@ jps_module(
     target = "showcase",
 )
 ### auto-generated section `iml intellij.platform.jewel.samples.showcase` end
+
+### auto-generated section `build intellij.platform.jewel.samples.showcase.tests` start
+create_kotlinc_options(
+    name = "custom_jewel-samples-showcase-tests",
+    opt_in = [
+        "androidx.compose.ui.ExperimentalComposeUiApi",
+        "androidx.compose.foundation.ExperimentalFoundationApi",
+        "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+        "org.jetbrains.jewel.foundation.InternalJewelApi",
+    ],
+    x_context_parameters = True,
+    x_explicit_api_mode = "strict",
+)
+
+jvm_library(
+    name = "jewel-samples-showcase-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "src/test/kotlin/**/*.kt",
+            "src/test/kotlin/**/*.java",
+            "src/test/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//platform/jewel/samples/showcase"],
+    kotlinc_opts = ":custom_jewel-samples-showcase-tests",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/jewel/foundation",
+        "//platform/jewel/ui",
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+        "//libraries/compose-runtime-desktop",
+        "//libraries/compose-foundation-desktop",
+        "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+        "//libraries/junit4",
+    ],
+)
+### auto-generated section `build intellij.platform.jewel.samples.showcase.tests` end
+
+### auto-generated section `iml intellij.platform.jewel.samples.showcase.tests` start
+jps_module(
+    name = "intellij.platform.jewel.samples.showcase.tests",
+    resources = False,
+    target = "jewel-samples-showcase-tests_test_lib",
+)
+### auto-generated section `iml intellij.platform.jewel.samples.showcase.tests` end
+
+### auto-generated section `test intellij.platform.jewel.samples.showcase.tests` start
+jps_test(
+    name = "jewel-samples-showcase-tests_test",
+    runtime_deps = [":jewel-samples-showcase-tests_test_lib"],
+)
+### auto-generated section `test intellij.platform.jewel.samples.showcase.tests` end

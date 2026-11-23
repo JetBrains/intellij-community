@@ -44,6 +44,19 @@ f:org.jetbrains.jewel.samples.showcase.ShowcaseIcons$ProgrammingLanguages
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.ShowcaseIcons$ProgrammingLanguages
 - f:getKotlin():org.jetbrains.jewel.ui.icon.PathIconKey
+f:org.jetbrains.jewel.samples.showcase.ShowcaseShortcuts
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.samples.showcase.ShowcaseShortcuts
+- f:definitions(Z):java.util.List
+- f:getDemoPing():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getDemoReformat():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getDemoSelectAll():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getNavigateComponents():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getNavigateMarkdown():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getNavigateShortcuts():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getNavigateWelcome():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getNextSection():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getPreviousSection():org.jetbrains.jewel.foundation.shortcut.JewelAction
 f:org.jetbrains.jewel.samples.showcase.components.BadgesKt
 - sf:Badges(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.BannersKt
@@ -99,6 +112,8 @@ f:org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel
 - <init>(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible,org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling):V
 - f:getCurrentView():org.jetbrains.jewel.samples.showcase.views.ViewInfo
 - f:getViews():androidx.compose.runtime.snapshots.SnapshotStateList
+- f:selectNextView():V
+- f:selectPreviousView():V
 - f:setCurrentView(org.jetbrains.jewel.samples.showcase.views.ViewInfo):V
 f:org.jetbrains.jewel.samples.showcase.views.KeyBinding
 - sf:$stable:I
@@ -112,6 +127,8 @@ f:org.jetbrains.jewel.samples.showcase.views.KeyBinding
 - f:getWindows():java.util.Set
 - hashCode():I
 f:org.jetbrains.jewel.samples.showcase.views.KeyBinding$Companion
+f:org.jetbrains.jewel.samples.showcase.views.ShortcutTesterViewKt
+- sf:ShortcutTesterView(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.views.ViewInfo
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.samples.showcase.views.ViewInfo$Companion

@@ -18,7 +18,8 @@ import org.jetbrains.jewel.e2e.ShowcaseAutomator
  */
 internal class AttachedShowcaseAutomator(
     private val attached: AttachedAutomator,
-    private val pressOsKey: (keyCode: Int) -> Unit,
+    private val pressOsKey: (keyCode: Int, modifiers: Int) -> Unit,
+    private val typeOsText: (text: String) -> Unit,
 ) : ShowcaseAutomator {
     override suspend fun isPresent(tag: String): Boolean = attached.findByTestTag(tag).isNotEmpty()
 
@@ -34,9 +35,29 @@ internal class AttachedShowcaseAutomator(
         attached.scrollWheel(node.key, wheelClicks)
     }
 
-    override suspend fun pressKey(keyCode: Int) {
-        pressOsKey(keyCode)
+    override suspend fun pressKey(keyCode: Int, modifiers: Int) {
+        pressOsKey(keyCode, modifiers)
     }
+
+    override suspend fun typeText(text: String) {
+        typeOsText(text)
+    }
+
+    override suspend fun textOf(tag: String): String? {
+        val node = attached.findByTestTag(tag).firstOrNull() ?: return null
+        return node.texts.joinToString(" ").ifEmpty { null }
+    }
+
+    override suspend fun editableTextOf(tag: String): String? =
+        attached.findByTestTag(tag).firstOrNull()?.editableText
+
+    override suspend fun isEnabled(tag: String): Boolean {
+        val node = attached.findByTestTag(tag).firstOrNull() ?: return false
+        return !node.isDisabled
+    }
+
+    override suspend fun isSelected(tag: String): Boolean =
+        attached.findByTestTag(tag).firstOrNull()?.isSelected == true
 
     override suspend fun waitForIdle() {
         attached.waitForIdle()

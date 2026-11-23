@@ -1,14 +1,35 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.component
 
+import androidx.compose.foundation.ContextMenuState
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import java.awt.Panel
+import java.awt.Shape
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent as AwtKeyEvent
 import javax.swing.KeyStroke
+import org.jetbrains.jewel.foundation.JewelFlags
+import org.jetbrains.jewel.foundation.shortcut.InMemoryJewelKeymap
+import org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState
+import org.jetbrains.jewel.foundation.shortcut.ProvideJewelShortcutHost
+import org.jetbrains.jewel.foundation.shortcut.toComposeKeyEvent
 import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
+import org.jetbrains.jewel.ui.MenuItemShortcutProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -389,5 +410,248 @@ class MenuContentShortcutRegistrationTest {
         assertEquals("New manager should not clear on its first composition", 0, newFakeMenuController.clearCount)
         assertEquals("New manager should have the shortcut registered", 1, newFakeMenuController.registeredActions.size)
         assertNotNull(newFakeMenuController.registeredActions[copyKeyStroke])
+    }
+
+    @Test
+    fun `updating parent menu items while a submenu is open keeps the submenu shortcut scope on top`() {
+        val shortcutHost = JewelShortcutHostState { InMemoryJewelKeymap("menu-scope-order") }
+        var parentPasteEnabled by mutableStateOf(true)
+        var submenuOpen by mutableStateOf(false)
+        var parentCopyRuns = 0
+        var submenuCopyRuns = 0
+
+        rule.setContent {
+            IntUiTheme {
+                ProvideJewelShortcutHost(shortcutHost) {
+                    CompositionLocalProvider(
+                        LocalMenuController provides fakeMenuController,
+                        LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
+                    ) {
+                        MenuContent(
+                            content =
+                                createMenuContentLambda(
+                                    listOf(
+                                        MenuSelectableItem(
+                                            itemOptionAction = copyAction,
+                                            onClick = { parentCopyRuns++ },
+                                            isSelected = false,
+                                            isEnabled = true,
+                                            iconKey = null,
+                                            content = {},
+                                        ),
+                                        MenuSelectableItem(
+                                            itemOptionAction = pasteAction,
+                                            onClick = {},
+                                            isSelected = false,
+                                            isEnabled = parentPasteEnabled,
+                                            iconKey = null,
+                                            content = {},
+                                        ),
+                                    )
+                                )
+                        )
+                        if (submenuOpen) {
+                            MenuContent(
+                                content =
+                                    createMenuContentLambda(
+                                        listOf(
+                                            MenuSelectableItem(
+                                                itemOptionAction = copyAction,
+                                                onClick = { submenuCopyRuns++ },
+                                                isSelected = false,
+                                                isEnabled = true,
+                                                iconKey = null,
+                                                content = {},
+                                            )
+                                        )
+                                    )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Open submenu so its MenuShortcutScope sits on top of the parent's scope, then mutate a parent item.
+        submenuOpen = true
+        rule.waitForIdle()
+        parentPasteEnabled = false
+        rule.waitForIdle()
+
+        val copyEvent =
+            AwtKeyEvent(
+                    Panel(),
+                    AwtKeyEvent.KEY_PRESSED,
+                    0L,
+                    copyKeyStroke.modifiers,
+                    copyKeyStroke.keyCode,
+                    AwtKeyEvent.CHAR_UNDEFINED,
+                )
+                .toComposeKeyEvent()
+        rule.runOnIdle { assertTrue(shortcutHost.onPreviewKeyEvent(copyEvent)) }
+
+        assertEquals("submenu shortcut must still win after parent menu items update", 1, submenuCopyRuns)
+        assertEquals("parent menu scope must not jump ahead of open submenu", 0, parentCopyRuns)
+    }
+
+    private class CapturingPopupRenderer : PopupRenderer {
+        var capturedOnKeyEvent: ((KeyEvent) -> Boolean)? = null
+
+        @Composable
+        override fun Popup(
+            popupPositionProvider: PopupPositionProvider,
+            properties: PopupProperties,
+            onDismissRequest: ((inputMode: InputMode) -> Unit)?,
+            onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
+            onKeyEvent: ((KeyEvent) -> Boolean)?,
+            cornerSize: CornerSize,
+            windowShape: ((IntSize) -> Shape)?,
+            content: @Composable () -> Unit,
+        ) {
+            capturedOnKeyEvent = onKeyEvent
+            content()
+        }
+
+        @Suppress("OVERRIDE_DEPRECATION")
+        @Composable
+        override fun Popup(
+            popupPositionProvider: PopupPositionProvider,
+            properties: PopupProperties,
+            onDismissRequest: (() -> Unit)?,
+            onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
+            onKeyEvent: ((KeyEvent) -> Boolean)?,
+            cornerSize: CornerSize,
+            content: @Composable () -> Unit,
+        ) {
+            capturedOnKeyEvent = onKeyEvent
+            content()
+        }
+    }
+
+    @Test
+    fun `unrepresentable release and AltGraph menu shortcuts remain reachable via ContextMenu fallback with a host`() {
+        val releaseStroke = KeyStroke.getKeyStroke(AwtKeyEvent.VK_C, 0, true)
+        val altGraphStroke = KeyStroke.getKeyStroke(AwtKeyEvent.VK_V, InputEvent.ALT_GRAPH_DOWN_MASK)
+        val customProvider =
+            object : MenuItemShortcutProvider {
+                override fun getShortcutKeyStroke(actionType: ContextMenuItemOptionAction): KeyStroke? =
+                    when (actionType) {
+                        ContextMenuItemOptionAction.CopyMenuItemOptionAction -> releaseStroke
+                        ContextMenuItemOptionAction.PasteMenuItemOptionAction -> altGraphStroke
+                        else -> null
+                    }
+            }
+        val shortcutHost = JewelShortcutHostState { InMemoryJewelKeymap("fallback") }
+        var copyRuns = 0
+        var pasteRuns = 0
+        val capturingRenderer = CapturingPopupRenderer()
+
+        val previousCustomRenderer = JewelFlags.useCustomPopupRenderer
+        JewelFlags.useCustomPopupRenderer = true
+        try {
+            rule.setContent {
+                IntUiTheme {
+                    ProvideJewelShortcutHost(shortcutHost) {
+                        CompositionLocalProvider(
+                            LocalPopupRenderer provides capturingRenderer,
+                            LocalMenuItemShortcutProvider provides customProvider,
+                        ) {
+                            val menuState = remember {
+                                ContextMenuState().apply { status = ContextMenuState.Status.Open(Rect.Zero) }
+                            }
+                            ContextMenuRepresentation.Representation(menuState) {
+                                listOf(
+                                    ContextMenuItemOption(
+                                        label = "Copy",
+                                        action = { copyRuns++ },
+                                        actionType = copyAction,
+                                    ),
+                                    ContextMenuItemOption(
+                                        label = "Paste",
+                                        action = { pasteRuns++ },
+                                        actionType = pasteAction,
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            rule.waitForIdle()
+
+            val onKeyEvent =
+                checkNotNull(capturingRenderer.capturedOnKeyEvent) { "ContextMenu must install onKeyEvent handler" }
+            val releaseEvent =
+                AwtKeyEvent(Panel(), AwtKeyEvent.KEY_RELEASED, 0L, 0, AwtKeyEvent.VK_C, AwtKeyEvent.CHAR_UNDEFINED)
+                    .toComposeKeyEvent()
+            val altGraphEvent =
+                AwtKeyEvent(
+                        Panel(),
+                        AwtKeyEvent.KEY_PRESSED,
+                        0L,
+                        InputEvent.ALT_GRAPH_DOWN_MASK,
+                        AwtKeyEvent.VK_V,
+                        AwtKeyEvent.CHAR_UNDEFINED,
+                    )
+                    .toComposeKeyEvent()
+            assertTrue("ContextMenu onKeyEvent must execute release-only fallback shortcut", onKeyEvent(releaseEvent))
+            assertTrue("ContextMenu onKeyEvent must execute AltGraph fallback shortcut", onKeyEvent(altGraphEvent))
+            assertEquals("release-only menu shortcut must remain reachable via ContextMenu fallback", 1, copyRuns)
+            assertEquals("AltGraph menu shortcut must remain reachable via ContextMenu fallback", 1, pasteRuns)
+        } finally {
+            JewelFlags.useCustomPopupRenderer = previousCustomRenderer
+        }
+    }
+
+    @Test
+    fun `unrepresentable release-only menu shortcut remains reachable in PopupMenu with a host`() {
+        val releaseStroke = KeyStroke.getKeyStroke(AwtKeyEvent.VK_C, 0, true)
+        val customProvider =
+            object : MenuItemShortcutProvider {
+                override fun getShortcutKeyStroke(actionType: ContextMenuItemOptionAction): KeyStroke? =
+                    if (actionType == ContextMenuItemOptionAction.CopyMenuItemOptionAction) releaseStroke else null
+            }
+        val shortcutHost = JewelShortcutHostState { InMemoryJewelKeymap("popup-menu-fallback") }
+        var copyRuns = 0
+        val capturingRenderer = CapturingPopupRenderer()
+
+        val previousCustomRenderer = JewelFlags.useCustomPopupRenderer
+        JewelFlags.useCustomPopupRenderer = true
+        try {
+            rule.setContent {
+                IntUiTheme {
+                    ProvideJewelShortcutHost(shortcutHost) {
+                        CompositionLocalProvider(
+                            LocalPopupRenderer provides capturingRenderer,
+                            LocalMenuItemShortcutProvider provides customProvider,
+                        ) {
+                            PopupMenu(
+                                onDismissRequest = { true },
+                                horizontalAlignment = androidx.compose.ui.Alignment.Start,
+                            ) {
+                                selectableItemWithActionType(
+                                    selected = false,
+                                    onClick = { copyRuns++ },
+                                    actionType = copyAction,
+                                ) {
+                                    Text("Copy")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            rule.waitForIdle()
+
+            val onKeyEvent =
+                checkNotNull(capturingRenderer.capturedOnKeyEvent) { "PopupMenu must install onKeyEvent handler" }
+            val releaseEvent =
+                AwtKeyEvent(Panel(), AwtKeyEvent.KEY_RELEASED, 0L, 0, AwtKeyEvent.VK_C, AwtKeyEvent.CHAR_UNDEFINED)
+                    .toComposeKeyEvent()
+            assertTrue("PopupMenu onKeyEvent must execute release-only fallback shortcut", onKeyEvent(releaseEvent))
+            assertEquals("release-only menu shortcut must run in PopupMenu", 1, copyRuns)
+        } finally {
+            JewelFlags.useCustomPopupRenderer = previousCustomRenderer
+        }
     }
 }

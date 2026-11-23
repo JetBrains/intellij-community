@@ -44,4 +44,18 @@ internal object ShowcaseTestTags {
 
     const val SCROLLBARS_LAZY_COLUMN_FIRST_ITEM: String = "showcase.scrollbars.lazyColumn.firstItem"
     const val SCROLLBARS_LAZY_COLUMN_FOURTH_ITEM: String = "showcase.scrollbars.lazyColumn.fourthItem"
+
+    const val SHORTCUT_TESTER_OUTER: String = "ShortcutTester.Outer"
+    const val SHORTCUT_TESTER_OUTER_COUNTER: String = "ShortcutTester.OuterCounter"
+    const val SHORTCUT_TESTER_EDITOR: String = "ShortcutTester.Editor"
+    const val SHORTCUT_TESTER_EDITOR_COUNTER: String = "ShortcutTester.EditorCounter"
+    const val SHORTCUT_TESTER_PING: String = "ShortcutTester.Ping"
+    const val SHORTCUT_TESTER_PING_COUNTER: String = "ShortcutTester.PingCounter"
+    const val SHORTCUT_TESTER_CLAIMER: String = "ShortcutTester.Claimer"
+    const val SHORTCUT_TESTER_CLAIMER_COUNTER: String = "ShortcutTester.ClaimerCounter"
+    const val SHORTCUT_TESTER_CLAIM_ACTIVE: String = "ShortcutTester.ClaimActive"
+    const val SHORTCUT_TESTER_TEXT_FIELD: String = "ShortcutTester.TextField"
+    const val SHORTCUT_TESTER_MACRO_COUNTER: String = "ShortcutTester.MacroCounter"
+    const val SHORTCUT_TESTER_REFORMAT: String = "ShortcutTester.Reformat"
+    const val SHORTCUT_TESTER_REFORMAT_STATUS: String = "ShortcutTester.ReformatStatus"
 }

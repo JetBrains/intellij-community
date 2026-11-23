@@ -4,6 +4,7 @@
 package org.jetbrains.jewel.bridge.e2e
 
 import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.ui.keyboard.RemoteKeyboard
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForProjectOpen
@@ -18,6 +19,8 @@ import com.intellij.tools.ide.starter.product.idea.community.IdeaCommunity
 import dev.sebastiano.spectre.agent.AgentAttach
 import dev.sebastiano.spectre.agent.AttachOptions
 import dev.sebastiano.spectre.agent.ExperimentalSpectreAgentApi
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -27,6 +30,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jewel.e2e.PopupScenarios
 import org.jetbrains.jewel.e2e.ScrollbarScenarios
+import org.jetbrains.jewel.e2e.ShortcutScenarios
 import org.junit.jupiter.api.Test
 
 /**
@@ -72,18 +76,19 @@ class JewelBridgeShowcaseE2ETest {
             // none, because the IDE has not loaded Compose yet. So wait for the Jewel panel first. This only reads the
             // component tree; the pointer targeting that the driver gets wrong for Compose is never used.
             //
-            // The action is retried because the IDE drops it when the frame cannot supply a project yet, which
-            // happens on a slow machine right after the project opens. A dropped invocation never opens a dialog
-            // later, so retrying cannot open two.
+            // The action is retried because the IDE rejects or drops it when the frame cannot supply a project yet,
+            // which happens on a slow machine right after the project opens. A rejected or dropped invocation never
+            // opens a dialog later, so retrying cannot open two.
             val opened =
                 (1..SHOWCASE_OPEN_ATTEMPTS).any {
-                    invokeAction("JewelComponentShowcaseDialog", now = false)
                     runCatching {
+                            invokeAction("JewelComponentShowcaseDialog", now = false)
                             waitFor("the showcase dialog is up", 30.seconds) {
                                 ui.xx { byClass("JewelComposePanelWrapper") }.list().isNotEmpty()
                             }
                         }
                         .isSuccess
+                        .also { ok -> if (!ok) Thread.sleep(500) }
                 }
             check(opened) { "The showcase dialog did not open after $SHOWCASE_OPEN_ATTEMPTS attempts" }
 
@@ -95,16 +100,38 @@ class JewelBridgeShowcaseE2ETest {
             AgentAttach.attach(idePid, AttachOptions(agentJarPath = agentRuntimeJar())).use { attached ->
                 // Keys go through the driver's robot; see AttachedShowcaseAutomator.
                 val automator =
-                    AttachedShowcaseAutomator(attached, pressOsKey = { keyCode -> ui.keyboard { key(keyCode) } })
+                    AttachedShowcaseAutomator(
+                        attached,
+                        pressOsKey = { keyCode, modifiers -> ui.keyboard { pressWithModifiers(keyCode, modifiers) } },
+                        typeOsText = { text -> ui.keyboard { typeText(text, delayBetweenCharsInMs = 50) } },
+                    )
                 runBlocking {
                     PopupScenarios.runAll(automator, failures)
                     ScrollbarScenarios.runAll(automator, failures)
+                    ShortcutScenarios.runAll(automator, failures)
                 }
             }
         }
 
         assertEquals(emptyList(), failures, "The showcase misbehaved in the IDE")
     }
+}
+
+private fun RemoteKeyboard.pressWithModifiers(keyCode: Int, modifiers: Int) {
+    val modifierKeys = buildList {
+        if (modifiers and InputEvent.CTRL_DOWN_MASK != 0) add(KeyEvent.VK_CONTROL)
+        if (modifiers and InputEvent.ALT_DOWN_MASK != 0) add(KeyEvent.VK_ALT)
+        if (modifiers and InputEvent.SHIFT_DOWN_MASK != 0) add(KeyEvent.VK_SHIFT)
+        if (modifiers and InputEvent.META_DOWN_MASK != 0) add(KeyEvent.VK_META)
+    }
+    fun pressRemaining(index: Int) {
+        if (index >= modifierKeys.size) {
+            key(keyCode)
+        } else {
+            pressing(modifierKeys[index]) { pressRemaining(index + 1) }
+        }
+    }
+    pressRemaining(0)
 }
 
 /**

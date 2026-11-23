@@ -18,10 +18,13 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
-
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.jewel.bridge.codeFenceLanguageResolver"
                     interface="org.jetbrains.jewel.bridge.code.highlighting.codefence.CodeFenceLanguageResolver"
                     dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <actionPromoter implementation="org.jetbrains.jewel.bridge.actionSystem.JewelActionPromoter"/>
+  </extensions>
 </idea-plugin>

@@ -1,16 +1,19 @@
 package org.jetbrains.jewel.samples.standalone
 
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isAltPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.application
 import org.jetbrains.compose.resources.decodeToSvgPainter
+import org.jetbrains.jewel.foundation.shortcut.ProvideJewelShortcutHost
+import org.jetbrains.jewel.foundation.shortcut.shortcut
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.markdown.standalone.ProvideMarkdownStyling
@@ -24,6 +27,7 @@ import org.jetbrains.jewel.intui.window.decoratedWindow
 import org.jetbrains.jewel.intui.window.styling.dark
 import org.jetbrains.jewel.intui.window.styling.light
 import org.jetbrains.jewel.intui.window.styling.lightWithLightHeader
+import org.jetbrains.jewel.samples.showcase.ShowcaseShortcuts
 import org.jetbrains.jewel.samples.standalone.view.TitleBarView
 import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel
 import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel.currentView
@@ -68,46 +72,39 @@ public fun main() {
                     ),
             swingCompatMode = MainViewModel.swingCompat,
         ) {
+            val shortcutHost = ShowcaseShortcutHost.state
             DecoratedWindow(
                 onCloseRequest = { exitApplication() },
                 title = "Jewel standalone sample",
                 icon = icon,
-                onKeyEvent = { keyEvent ->
-                    processKeyShortcuts(keyEvent = keyEvent, onNavigateTo = MainViewModel::onNavigateTo)
-                },
+                // The AWT-level pre-scene hook: sees KEY_TYPED, which typed suppression requires.
+                onPreviewKeyEvent = shortcutHost::onPreviewKeyEvent,
                 content = {
                     TitleBarView()
-                    ProvideMarkdownStyling { currentView.content() }
+                    ProvideJewelShortcutHost(shortcutHost) {
+                        val windowFocus = remember { FocusRequester() }
+                        Box(
+                            shortcutHost.resolverRootModifier
+                                .fillMaxSize()
+                                // Ambient, window-wide commands: active while focus is anywhere below.
+                                .shortcut(ShowcaseShortcuts.NavigateWelcome) { MainViewModel.onNavigateTo("Welcome") }
+                                .shortcut(ShowcaseShortcuts.NavigateComponents) {
+                                    MainViewModel.onNavigateTo("Components")
+                                }
+                                .shortcut(ShowcaseShortcuts.NavigateMarkdown) { MainViewModel.onNavigateTo("Markdown") }
+                                .shortcut(ShowcaseShortcuts.NavigateShortcuts) {
+                                    MainViewModel.onNavigateTo("Shortcuts")
+                                }
+                                .focusRequester(windowFocus)
+                                .focusable()
+                        ) {
+                            LaunchedEffect(Unit) { windowFocus.requestFocus() }
+                            ProvideMarkdownStyling { currentView.content() }
+                        }
+                    }
                 },
             )
         }
-    }
-}
-
-/*
-   Alt + W -> Welcome
-   Alt + M -> Markdown
-   Alt + C -> Components
-*/
-private fun processKeyShortcuts(keyEvent: KeyEvent, onNavigateTo: (String) -> Unit): Boolean {
-    if (!keyEvent.isAltPressed || keyEvent.type != KeyEventType.KeyDown) return false
-    return when (keyEvent.key) {
-        Key.W -> {
-            onNavigateTo("Welcome")
-            true
-        }
-
-        Key.M -> {
-            onNavigateTo("Markdown")
-            true
-        }
-
-        Key.C -> {
-            onNavigateTo("Components")
-            true
-        }
-
-        else -> false
     }
 }
 

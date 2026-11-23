@@ -123,6 +123,7 @@ public class ComponentsViewModel(
                 iconKey = ShowcaseIcons.Components.onOffButton,
                 content = { OnOffButtons() },
             ),
+            ViewInfo(title = "Shortcuts", iconKey = ShowcaseIcons.terminal, content = { ShortcutTesterView() }),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())
@@ -133,5 +134,17 @@ public class ComponentsViewModel(
     /** Sets [view] as the currently selected component showcase view. */
     public fun setCurrentView(view: ViewInfo) {
         _currentView = view
+    }
+
+    /** Selects the next component showcase view, wrapping at the end. */
+    public fun selectNextView() {
+        val index = views.indexOf(_currentView)
+        _currentView = views[(index + 1).mod(views.size)]
+    }
+
+    /** Selects the previous component showcase view, wrapping at the start. */
+    public fun selectPreviousView() {
+        val index = views.indexOf(_currentView)
+        _currentView = views[(index - 1).mod(views.size)]
     }
 }

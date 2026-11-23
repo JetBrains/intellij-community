@@ -22,6 +22,8 @@ public class RootDataProviderNode : Modifier.Node(), UiDataProvider {
     override fun uiDataSnapshot(sink: DataSink) {
         val context = DataProviderDataSinkContext(sink)
         sink[PlatformDataKeys.PASTE_PROVIDER] = ComposePasteProvider()
+        sink[PlatformDataKeys.COPY_PROVIDER] = ComposeCopyProvider()
+        sink[PlatformDataKeys.CUT_PROVIDER] = ComposeCutProvider()
 
         @Suppress("DEPRECATION")
         traverseDescendants(DataProviderNode) { dp ->

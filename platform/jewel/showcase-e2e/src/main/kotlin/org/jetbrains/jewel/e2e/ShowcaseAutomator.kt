@@ -41,8 +41,23 @@ public interface ShowcaseAutomator {
     /** Scrolls the mouse wheel over the centre of the node with [tag]. */
     public suspend fun scrollWheel(tag: String, wheelClicks: Int)
 
-    /** Presses and releases [keyCode], an [java.awt.event.KeyEvent] `VK_` constant. */
-    public suspend fun pressKey(keyCode: Int)
+    /** Presses and releases [keyCode], an [java.awt.event.KeyEvent] `VK_` constant, with optional AWT [modifiers]. */
+    public suspend fun pressKey(keyCode: Int, modifiers: Int = 0)
+
+    /** Types supported ASCII [text] via key events so claimed printable keys participate in dispatch. */
+    public suspend fun typeText(text: String)
+
+    /** Returns the primary display text of the node with [tag], or `null` when absent or empty. */
+    public suspend fun textOf(tag: String): String?
+
+    /** Returns the editable text of a text-input node with [tag], or `null` when absent. */
+    public suspend fun editableTextOf(tag: String): String?
+
+    /** Returns whether a node with [tag] is present and enabled. */
+    public suspend fun isEnabled(tag: String): Boolean
+
+    /** Returns whether a node with [tag] is present and selected. */
+    public suspend fun isSelected(tag: String): Boolean
 
     /** Waits for the UI to settle, so a check does not race a recomposition or an animation. */
     public suspend fun waitForIdle()

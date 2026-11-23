@@ -14,6 +14,7 @@ private val composeVersion
 
 dependencies {
     api("org.jetbrains.compose.foundation:foundation-desktop:$composeVersion")
+    api(project(":jb-icons-api"))
 
     testImplementation(projects.bazelRunfiles)
     testImplementation(compose.desktop.uiTestJUnit4)

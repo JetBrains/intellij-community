@@ -107,6 +107,52 @@ package org.jetbrains.jewel.bridge {
 
 }
 
+package org.jetbrains.jewel.bridge.actionSystem {
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public class DumbAwareJewelActionBridgeAction extends org.jetbrains.jewel.bridge.actionSystem.JewelActionBridgeAction implements com.intellij.openapi.project.DumbAware {
+    ctor public DumbAwareJewelActionBridgeAction();
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public class JewelActionBridgeAction extends com.intellij.openapi.actionSystem.AnAction implements com.intellij.openapi.actionSystem.ActionPromoter {
+    ctor public JewelActionBridgeAction();
+    method public void actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent event);
+  }
+
+  public final class JewelActionBridgeActionKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState? findJewelShortcutHost(java.awt.Component? component);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class JewelActionMappings {
+    method public String? ideActionIdFor(String jewelActionId);
+    method public void installStandardMappings();
+    method public AutoCloseable map(String jewelActionId, String ideActionId);
+    field public static final org.jetbrains.jewel.bridge.actionSystem.JewelActionMappings INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class JewelBridgeActionInvoker implements org.jetbrains.jewel.foundation.shortcut.ActionInvoker {
+    ctor public JewelBridgeActionInvoker(java.awt.Component hostComponent);
+    ctor public JewelBridgeActionInvoker(java.awt.Component hostComponent, com.intellij.openapi.actionSystem.ActionManager actionManager);
+    method public org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult invoke(org.jetbrains.jewel.foundation.shortcut.JewelAction action, org.jetbrains.jewel.foundation.shortcut.ActionTrigger trigger);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class JewelBridgeActionRegistry implements org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry {
+    ctor public JewelBridgeActionRegistry();
+    ctor public JewelBridgeActionRegistry(com.intellij.openapi.actionSystem.ActionManager actionManager);
+    ctor public JewelBridgeActionRegistry(com.intellij.openapi.actionSystem.ActionManager actionManager, java.awt.Component? hostComponent);
+    ctor public JewelBridgeActionRegistry(java.awt.Component? hostComponent);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition? definition(String id);
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition> definitions();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionRegistration register(org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition definition);
+    method public org.jetbrains.jewel.foundation.shortcut.ActionPresentation? sampledPresentation(String id);
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> shortcutsFor(String id);
+  }
+
+  public final class JewelBridgeActionRegistryKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static <T extends java.lang.AutoCloseable> T closeWith(T, com.intellij.openapi.Disposable parent);
+  }
+
+}
+
 package org.jetbrains.jewel.bridge.code.highlighting {
 
   @com.intellij.openapi.components.Service(com.intellij.openapi.components.Service.Level.PROJECT) public final class CodeHighlighterFactory {

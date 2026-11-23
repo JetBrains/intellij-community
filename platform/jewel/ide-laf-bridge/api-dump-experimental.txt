@@ -8,6 +8,48 @@ f:org.jetbrains.jewel.bridge.JewelComposePanelWrapperKt
 - *bs:JewelComposeNoThemePanel$default(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - *sf:composeWithoutTheme(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - *bs:composeWithoutTheme$default(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+*c:org.jetbrains.jewel.bridge.actionSystem.DumbAwareJewelActionBridgeAction
+- org.jetbrains.jewel.bridge.actionSystem.JewelActionBridgeAction
+- com.intellij.openapi.project.DumbAware
+- sf:$stable:I
+- <init>():V
+*c:org.jetbrains.jewel.bridge.actionSystem.JewelActionBridgeAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.actionSystem.ActionPromoter
+- sf:$stable:I
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- suppress(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:org.jetbrains.jewel.bridge.actionSystem.JewelActionBridgeActionKt
+- *sf:findJewelShortcutHost(java.awt.Component):org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState
+*f:org.jetbrains.jewel.bridge.actionSystem.JewelActionMappings
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.bridge.actionSystem.JewelActionMappings
+- f:ideActionIdFor-ffnWhyY(java.lang.String):java.lang.String
+- f:installStandardMappings():V
+- f:map-nwx-PhA(java.lang.String,java.lang.String):java.lang.AutoCloseable
+*f:org.jetbrains.jewel.bridge.actionSystem.JewelBridgeActionInvoker
+- org.jetbrains.jewel.foundation.shortcut.ActionInvoker
+- sf:$stable:I
+- <init>(java.awt.Component):V
+- <init>(java.awt.Component,com.intellij.openapi.actionSystem.ActionManager):V
+- invoke(org.jetbrains.jewel.foundation.shortcut.JewelAction,org.jetbrains.jewel.foundation.shortcut.ActionTrigger):org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult
+*f:org.jetbrains.jewel.bridge.actionSystem.JewelBridgeActionRegistry
+- org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry
+- sf:$stable:I
+- <init>():V
+- <init>(com.intellij.openapi.actionSystem.ActionManager):V
+- <init>(com.intellij.openapi.actionSystem.ActionManager,java.awt.Component):V
+- <init>(java.awt.Component):V
+- definition-ffnWhyY(java.lang.String):org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition
+- definitions():java.util.List
+- register(org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition):org.jetbrains.jewel.foundation.shortcut.ActionRegistration
+- sampledPresentation-ffnWhyY(java.lang.String):org.jetbrains.jewel.foundation.shortcut.ActionPresentation
+- shortcutsFor-ffnWhyY(java.lang.String):java.util.List
+f:org.jetbrains.jewel.bridge.actionSystem.JewelBridgeActionRegistryKt
+- *sf:closeWith(java.lang.AutoCloseable,com.intellij.openapi.Disposable):java.lang.AutoCloseable
 f:org.jetbrains.jewel.bridge.component.HostPopupResizeKt
 - *sf:resizeHostOnContentSizeChange(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.Modifier
 f:org.jetbrains.jewel.bridge.theme.IntUiBridgeTextKt

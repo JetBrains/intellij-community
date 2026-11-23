@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -50,6 +51,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.semantics
@@ -59,11 +61,17 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import com.intellij.platform.icons.IconDescriptor
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.thenIf
+import org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke
+import org.jetbrains.jewel.foundation.shortcut.LocalJewelShortcutHost
+import org.jetbrains.jewel.foundation.shortcut.MenuShortcutScope
+import org.jetbrains.jewel.foundation.shortcut.swingKeyStrokeToJewelKeyStroke
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused
@@ -425,10 +433,11 @@ private fun PopupMenuImpl(
 ) {
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
-    val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
+    val currentOnDismissRequest by rememberUpdatedState(onDismissRequest)
+    val menuController = remember { DefaultMenuController(onDismissRequest = { currentOnDismissRequest(it) }) }
 
     PopupContainer(
-        onDismissRequest = { inputMode -> onDismissRequest(inputMode) },
+        onDismissRequest = { inputMode -> currentOnDismissRequest(inputMode) },
         horizontalAlignment = Alignment.Start,
         modifier = modifier,
         maxHeight = maxHeight,
@@ -436,7 +445,6 @@ private fun PopupMenuImpl(
         style = popupContainerStyle,
         popupProperties = popupProperties,
         popupPositionProvider = popupPositionProvider,
-        onPreviewKeyEvent = { false },
         onKeyEvent = {
             val currentFocusManager = focusManager ?: return@PopupContainer false
             val currentInputModeManager = inputModeManager ?: return@PopupContainer false
@@ -480,7 +488,7 @@ private fun MenuContentImpl(
 
     val selectableItems = remember(items) { items.filterIsInstance<MenuSelectableItem>() }
 
-    val anyItemHasIcon = remember(selectableItems) { selectableItems.any { it.iconKey != null } }
+    val anyItemHasIcon = remember(selectableItems) { selectableItems.any { it.iconKey != null || it.icon != null } }
     val anyItemHasKeybinding =
         remember(selectableItems) {
             selectableItems.any { it.keybinding?.isNotEmpty() == true || it.itemOptionAction != null }
@@ -490,18 +498,50 @@ private fun MenuContentImpl(
     val localInputModeManager = LocalInputModeManager.current
     val localMenuItemShortcutProvider = LocalMenuItemShortcutProvider.current
     val focusManager = LocalFocusManager.current
+    val shortcutHost = LocalJewelShortcutHost.current
 
-    DisposableEffect(selectableItems, localMenuController, localMenuItemShortcutProvider, localInputModeManager) {
+    // With a shortcut host installed, menu-local shortcuts are absorbed into the host's dispatch (a
+    // menu scope resolved ahead of ordinary dispatch), so the menu and the host resolver can never race
+    // on the same stroke; the MenuController map remains the standalone-legacy path only.
+    // Scope lifetime is keyed on `shortcutHost` alone (not `selectableItems`) so updating a parent menu's
+    // items while a submenu is open refreshes entries in place without re-pushing the parent scope above
+    // the submenu's scope.
+    val hostMenuScopeHolder = remember(shortcutHost) { arrayOfNulls<MenuShortcutScope>(1) }
+    DisposableEffect(shortcutHost) {
+        val scope = shortcutHost?.openMenuShortcutScope()
+        hostMenuScopeHolder[0] = scope
+        onDispose {
+            hostMenuScopeHolder[0] = null
+            scope?.close()
+        }
+    }
+
+    DisposableEffect(
+        selectableItems,
+        localMenuController,
+        localMenuItemShortcutProvider,
+        localInputModeManager,
+        shortcutHost,
+    ) {
+        val hostMenuScope = hostMenuScopeHolder[0]
+        val scopeEntries = LinkedHashMap<JewelKeyStroke, () -> Unit>()
         selectableItems.forEach { item ->
             if (item.isEnabled && item.itemOptionAction != null) {
                 localMenuItemShortcutProvider.getShortcutKeyStroke(item.itemOptionAction)?.let { keyStroke ->
-                    localMenuController.registerShortcutAction(keyStroke) {
+                    val invoke = {
                         item.onClick()
                         localMenuController.closeAll(localInputModeManager.inputMode, true)
+                    }
+                    val jewelStroke = if (hostMenuScope != null) swingKeyStrokeToJewelKeyStroke(keyStroke) else null
+                    if (hostMenuScope != null && jewelStroke != null) {
+                        scopeEntries[jewelStroke] = invoke
+                    } else {
+                        localMenuController.registerShortcutAction(keyStroke, invoke)
                     }
                 }
             }
         }
+        hostMenuScope?.replaceAll(scopeEntries)
 
         onDispose { localMenuController.clearShortcutActions() }
     }
@@ -573,11 +613,14 @@ private fun MenuItem(
                     selected = item.isSelected,
                     onClick = item.onClick,
                     iconKey = item.iconKey,
+                    icon = item.icon,
                     keybinding = item.keybinding,
                     canShowIcon = showIcons,
                     canShowKeybinding = showKeybindings,
                     enabled = item.isEnabled,
                     style = style,
+                    accessibilityRole = item.accessibilityRole,
+                    keepMenuOpenOnClick = item.keepMenuOpenOnClick,
                     content = {
                         LaunchedEffect(it.isHovered) { if (it.isHovered) deselectSubmenu() }
                         item.content()
@@ -676,6 +719,33 @@ public interface MenuScope {
     )
 
     /**
+     * Adds a menu item with explicit accessibility semantics and dismiss behavior, for action-bound menus.
+     *
+     * [role] chooses the semantics exposed to accessibility services: [MenuItemAccessibilityRole.Checkbox] for toggle
+     * actions and [MenuItemAccessibilityRole.RadioButton] for radio groups; plain items keep default menu-item
+     * semantics. With [keepMenuOpenOnClick] the click does not dismiss the menu — the consumer-side realization of a
+     * keep-popup-on-perform policy.
+     *
+     * The default implementation ignores [role] and [keepMenuOpenOnClick] and delegates to [selectableItem], so
+     * external [MenuScope] implementations keep compiling; Jewel's own menus honor both.
+     */
+    @ApiStatus.Experimental
+    @ExperimentalJewelApi
+    public fun actionItem(
+        selected: Boolean,
+        role: MenuItemAccessibilityRole = MenuItemAccessibilityRole.Item,
+        iconKey: IconKey? = null,
+        icon: IconDescriptor? = null,
+        keybinding: Set<String>? = null,
+        keepMenuOpenOnClick: Boolean = false,
+        onClick: () -> Unit,
+        enabled: Boolean = true,
+        content: @Composable () -> Unit,
+    ) {
+        selectableItem(selected, iconKey, keybinding, onClick, enabled, content)
+    }
+
+    /**
      * Adds a submenu item that opens a nested menu when hovered or clicked.
      *
      * Creates a menu item that displays a nested menu when the user interacts with it. The submenu can have its own
@@ -703,6 +773,20 @@ public interface MenuScope {
      * @param content The custom content to be displayed in the menu item
      */
     public fun passiveItem(content: @Composable () -> Unit)
+}
+
+/** The accessibility semantics of a menu item created via [MenuScope.actionItem]. */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+public enum class MenuItemAccessibilityRole {
+    /** Plain clickable menu item. */
+    Item,
+
+    /** Toggleable menu item with checkbox semantics. */
+    Checkbox,
+
+    /** Mutually exclusive menu item with radio button semantics. */
+    RadioButton,
 }
 
 /**
@@ -795,6 +879,32 @@ private fun (MenuScope.() -> Unit).asList() = buildList {
                 )
             }
 
+            override fun actionItem(
+                selected: Boolean,
+                role: MenuItemAccessibilityRole,
+                iconKey: IconKey?,
+                icon: IconDescriptor?,
+                keybinding: Set<String>?,
+                keepMenuOpenOnClick: Boolean,
+                onClick: () -> Unit,
+                enabled: Boolean,
+                content: @Composable () -> Unit,
+            ) {
+                add(
+                    MenuSelectableItem(
+                        isSelected = selected,
+                        isEnabled = enabled,
+                        iconKey = iconKey,
+                        icon = icon,
+                        keybinding = keybinding,
+                        onClick = onClick,
+                        accessibilityRole = role,
+                        keepMenuOpenOnClick = keepMenuOpenOnClick,
+                        content = content,
+                    )
+                )
+            }
+
             override fun passiveItem(content: @Composable () -> Unit) {
                 add(MenuPassiveItem(content))
             }
@@ -832,6 +942,15 @@ public class MenuSelectableItem(
     public val keybinding: Set<String>? = emptySet(),
     /** Called when the item is clicked. */
     public val onClick: () -> Unit = {},
+    /** The accessibility role this item exposes to assistive technologies. */
+    public val accessibilityRole: MenuItemAccessibilityRole = MenuItemAccessibilityRole.Item,
+    /** Whether performing this item leaves the menu open instead of dismissing it. */
+    public val keepMenuOpenOnClick: Boolean = false,
+    /**
+     * Optional cross-frontend icon descriptor, used when the item's icon comes from an action rather than from a
+     * statically known [IconKey]. Takes precedence over [iconKey] when both are present.
+     */
+    public val icon: IconDescriptor? = null,
     /** The composable content displayed inside this menu item. */
     override val content: @Composable () -> Unit,
 ) : MenuItem {
@@ -844,9 +963,12 @@ public class MenuSelectableItem(
         if (isSelected != other.isSelected) return false
         if (isEnabled != other.isEnabled) return false
         if (iconKey != other.iconKey) return false
+        if (icon != other.icon) return false
         if (itemOptionAction != other.itemOptionAction) return false
         if (keybinding != other.keybinding) return false
         if (onClick != other.onClick) return false
+        if (accessibilityRole != other.accessibilityRole) return false
+        if (keepMenuOpenOnClick != other.keepMenuOpenOnClick) return false
         if (content != other.content) return false
 
         return true
@@ -855,10 +977,13 @@ public class MenuSelectableItem(
     override fun hashCode(): Int {
         var result = isSelected.hashCode()
         result = 31 * result + isEnabled.hashCode()
-        result = 31 * result + iconKey.hashCode()
-        result = 31 * result + itemOptionAction.hashCode()
-        result = 31 * result + keybinding.hashCode()
+        result = 31 * result + (iconKey?.hashCode() ?: 0)
+        result = 31 * result + (icon?.hashCode() ?: 0)
+        result = 31 * result + (itemOptionAction?.hashCode() ?: 0)
+        result = 31 * result + (keybinding?.hashCode() ?: 0)
         result = 31 * result + onClick.hashCode()
+        result = 31 * result + accessibilityRole.hashCode()
+        result = 31 * result + keepMenuOpenOnClick.hashCode()
         result = 31 * result + content.hashCode()
         return result
     }
@@ -868,9 +993,12 @@ public class MenuSelectableItem(
             "isSelected=$isSelected, " +
             "isEnabled=$isEnabled, " +
             "iconKey=$iconKey, " +
+            "icon=$icon, " +
             "itemOptionAction=$itemOptionAction, " +
             "keybinding=$keybinding, " +
             "onClick=$onClick, " +
+            "accessibilityRole=$accessibilityRole, " +
+            "keepMenuOpenOnClick=$keepMenuOpenOnClick, " +
             "content=$content" +
             ")"
     }
@@ -933,11 +1061,14 @@ private fun MenuItem(
     selected: Boolean,
     onClick: () -> Unit,
     iconKey: IconKey?,
+    icon: IconDescriptor?,
     keybinding: Set<String>?,
     canShowIcon: Boolean,
     canShowKeybinding: Boolean,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    accessibilityRole: MenuItemAccessibilityRole = MenuItemAccessibilityRole.Item,
+    keepMenuOpenOnClick: Boolean = false,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
     content: @Composable (itemState: MenuItemState) -> Unit,
@@ -946,6 +1077,7 @@ private fun MenuItem(
         selected = selected,
         onClick = onClick,
         iconKey = iconKey,
+        icon = icon,
         canShowIcon = canShowIcon,
         canShowKeybinding = canShowKeybinding,
         keybindingHint =
@@ -956,6 +1088,8 @@ private fun MenuItem(
             },
         modifier = modifier,
         enabled = enabled,
+        accessibilityRole = accessibilityRole,
+        keepMenuOpenOnClick = keepMenuOpenOnClick,
         interactionSource = interactionSource,
         style = style,
         content = content,
@@ -977,7 +1111,10 @@ internal fun MenuItemBase(
     canShowKeybinding: Boolean,
     keybindingHint: String,
     modifier: Modifier = Modifier,
+    icon: IconDescriptor? = null,
     enabled: Boolean = true,
+    accessibilityRole: MenuItemAccessibilityRole = MenuItemAccessibilityRole.Item,
+    keepMenuOpenOnClick: Boolean = false,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
     content: @Composable (itemState: MenuItemState) -> Unit,
@@ -994,20 +1131,47 @@ internal fun MenuItemBase(
         }
     }
 
-    Box(
-        modifier =
-            modifier
-                .focusRequester(focusRequester)
-                .selectable(
+    val performClick = {
+        onClick()
+        if (!keepMenuOpenOnClick) menuController.closeAll(localInputModeManager.inputMode, true)
+    }
+    val interactionModifier =
+        when (accessibilityRole) {
+            // Checkbox semantics come from toggleable: it exposes the ToggleableState accessibility
+            // services expect from a checkable menu item, which selectable's Selected state does not.
+            MenuItemAccessibilityRole.Checkbox ->
+                Modifier.toggleable(
+                    value = selected,
+                    onValueChange = { performClick() },
+                    enabled = enabled,
+                    role = Role.Checkbox,
+                    interactionSource = interactionSource,
+                    indication = null,
+                )
+            MenuItemAccessibilityRole.RadioButton ->
+                Modifier.selectable(
                     selected = selected,
-                    onClick = {
-                        onClick()
-                        menuController.closeAll(localInputModeManager.inputMode, true)
-                    },
+                    onClick = performClick,
+                    enabled = enabled,
+                    role = Role.RadioButton,
+                    interactionSource = interactionSource,
+                    indication = null,
+                )
+            MenuItemAccessibilityRole.Item ->
+                Modifier.selectable(
+                    selected = selected,
+                    onClick = performClick,
                     enabled = enabled,
                     interactionSource = interactionSource,
                     indication = null,
                 )
+        }
+
+    Box(
+        modifier =
+            modifier
+                .focusRequester(focusRequester)
+                .then(interactionModifier)
                 .semantics { isHovered = itemState.isHovered } // For testing purposes
                 .fillMaxWidth()
     ) {
@@ -1020,6 +1184,7 @@ internal fun MenuItemBase(
             itemState = itemState,
             style = style,
             iconKey = iconKey,
+            icon = icon,
             canShowIcon = canShowIcon,
             enabled = enabled,
             trailingContent =
@@ -1128,6 +1293,7 @@ internal fun MenuItemLayout(
     modifier: Modifier = Modifier,
     style: MenuStyle = JewelTheme.menuStyle,
     iconKey: IconKey? = null,
+    icon: IconDescriptor? = null,
     canShowIcon: Boolean = true,
     enabled: Boolean = true,
     trailingContent: (@Composable () -> Unit)? = null,
@@ -1155,14 +1321,22 @@ internal fun MenuItemLayout(
         ) {
             if (canShowIcon) {
                 val iconModifier = Modifier.size(itemMetrics.iconSize)
-                if (iconKey != null) {
-                    Icon(
-                        key = iconKey,
-                        contentDescription = null,
-                        modifier = iconModifier.thenIf(!enabled) { disabledAppearance() },
-                    )
-                } else {
-                    Box(modifier = iconModifier)
+                when {
+                    // An action-supplied descriptor wins: it is the icon the action itself declares.
+                    icon != null ->
+                        Icon(
+                            iconDescriptor = icon,
+                            contentDescription = null,
+                            modifier = iconModifier.thenIf(!enabled) { disabledAppearance() },
+                        )
+                    iconKey != null ->
+                        Icon(
+                            key = iconKey,
+                            contentDescription = null,
+                            modifier = iconModifier.thenIf(!enabled) { disabledAppearance() },
+                        )
+                    // Reserve the gutter so labels stay aligned with siblings that do have icons.
+                    else -> Box(modifier = iconModifier)
                 }
             }
 
@@ -1224,8 +1398,9 @@ internal fun Submenu(
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
     val parentMenuController = LocalMenuController.current
+    val currentOnDismissRequest by rememberUpdatedState(onDismissRequest)
     val menuController =
-        remember(parentMenuController, onDismissRequest) { parentMenuController.submenuController(onDismissRequest) }
+        remember(parentMenuController) { parentMenuController.submenuController { currentOnDismissRequest(it) } }
 
     PopupContainer(
         onDismissRequest = { inputMode -> menuController.closeAll(inputMode, false) },
@@ -1234,7 +1409,6 @@ internal fun Submenu(
         useIntrinsicWidth = true,
         popupProperties = PopupProperties(focusable = true, consumePointerInputOutside = false),
         popupPositionProvider = popupPositionProvider,
-        onPreviewKeyEvent = { false },
         onKeyEvent = {
             val currentFocusManager = focusManager ?: return@PopupContainer false
             val currentInputModeManager = inputModeManager ?: return@PopupContainer false

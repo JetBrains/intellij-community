@@ -709,6 +709,12 @@ f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcherKt
 - sf:filter(java.lang.Iterable,org.jetbrains.jewel.foundation.search.SpeedSearchMatcher):java.util.List
 - sf:filter(java.lang.Iterable,org.jetbrains.jewel.foundation.search.SpeedSearchMatcher,kotlin.jvm.functions.Function1):java.util.List
 - sf:matches(java.lang.CharSequence,org.jetbrains.jewel.foundation.search.SpeedSearchMatcher):Z
+f:org.jetbrains.jewel.foundation.shortcut.ActionPresentationKt
+f:org.jetbrains.jewel.foundation.shortcut.ActionPresentationSchedulerKt
+f:org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostKt
+f:org.jetbrains.jewel.foundation.shortcut.JewelShortcutLocalsKt
+f:org.jetbrains.jewel.foundation.shortcut.ShortcutModifiersKt
+f:org.jetbrains.jewel.foundation.shortcut.ShortcutSemanticsKt
 f:org.jetbrains.jewel.foundation.state.CommonStateBitMask
 - sf:$stable:I
 - sf:FIRST_AVAILABLE_OFFSET:I

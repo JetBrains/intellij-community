@@ -82,6 +82,8 @@ f:org.jetbrains.jewel.bridge.ToolWindowExtensionsKt
 - bs:addComposeTab$default(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
 org.jetbrains.jewel.bridge.ToolWindowScope
 - a:getToolWindow():com.intellij.openapi.wm.ToolWindow
+f:org.jetbrains.jewel.bridge.actionSystem.JewelActionBridgeActionKt
+f:org.jetbrains.jewel.bridge.actionSystem.JewelBridgeActionRegistryKt
 f:org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory$Companion

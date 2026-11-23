@@ -29,6 +29,7 @@ jvm_library(
         "//plugins/performanceTesting/core:performanceTesting",
         "//platform/remote-driver/model",
         "//platform/platform-api:ide",
+        "//platform/platform-impl:ide-impl",
         "//platform/compose",
         "//platform/core-ui",
         "//platform/util:util-ui",

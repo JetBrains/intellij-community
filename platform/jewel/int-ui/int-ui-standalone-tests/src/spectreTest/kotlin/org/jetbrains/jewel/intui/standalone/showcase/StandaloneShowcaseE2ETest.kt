@@ -2,10 +2,13 @@
 
 package org.jetbrains.jewel.intui.standalone.showcase
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -18,18 +21,25 @@ import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 import org.jetbrains.jewel.e2e.PopupScenarios
 import org.jetbrains.jewel.e2e.ScrollbarScenarios
+import org.jetbrains.jewel.e2e.ShortcutScenarios
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
+import org.jetbrains.jewel.foundation.shortcut.DefaultJewelActionRegistry
+import org.jetbrains.jewel.foundation.shortcut.InMemoryJewelKeymap
+import org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState
+import org.jetbrains.jewel.foundation.shortcut.ProvideJewelShortcutHost
 import org.jetbrains.jewel.intui.standalone.awaitWindow
 import org.jetbrains.jewel.intui.standalone.stopApplicationWindow
 import org.jetbrains.jewel.intui.standalone.styling.default
 import org.jetbrains.jewel.intui.standalone.styling.macOs
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.window.Window as JewelWindow
+import org.jetbrains.jewel.samples.showcase.ShowcaseShortcuts
 import org.jetbrains.jewel.samples.showcase.views.ComponentsView
 import org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
+import org.jetbrains.skiko.hostOs
 import org.junit.jupiter.api.Test
 
 /**
@@ -52,6 +62,7 @@ class StandaloneShowcaseE2ETest {
                 SpectreShowcaseAutomator(ComposeAutomator.inProcess(RobotDriver.synthetic(app.awaitWindow())))
             PopupScenarios.runAll(automator, failures)
             ScrollbarScenarios.runAll(automator, failures)
+            ShortcutScenarios.runAll(automator, failures)
         } finally {
             app.stop()
         }
@@ -71,9 +82,23 @@ private class ShowcaseApplication {
             thread(name = "spectre-showcase-window", isDaemon = true) {
                 application(exitProcessOnExit = false) {
                     exitApplication.set(::exitApplication)
-                    JewelWindow(onCloseRequest = ::exitApplication, title = "Jewel showcase") {
+                    val shortcutHost = remember {
+                        val registry = DefaultJewelActionRegistry()
+                        ShowcaseShortcuts.definitions(useMacModifiers = hostOs.isMacOS).forEach(registry::register)
+                        val keymap = InMemoryJewelKeymap.fromDefaults("showcase-e2e", registry)
+                        JewelShortcutHostState(registry) { keymap }
+                    }
+                    JewelWindow(
+                        onCloseRequest = ::exitApplication,
+                        title = "Jewel showcase",
+                        onPreviewKeyEvent = shortcutHost::onPreviewKeyEvent,
+                    ) {
                         this@ShowcaseApplication.window.compareAndSet(null, window)
-                        IntUiTheme { Showcase() }
+                        IntUiTheme {
+                            ProvideJewelShortcutHost(shortcutHost) {
+                                Box(shortcutHost.resolverRootModifier.fillMaxSize()) { Showcase() }
+                            }
+                        }
                     }
                 }
             }
