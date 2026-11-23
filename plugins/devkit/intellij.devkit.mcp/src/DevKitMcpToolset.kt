@@ -197,6 +197,23 @@ class DevKitMcpToolset : McpToolset {
     return ThreadingRequirements(reqs.map { ThreadingRequirementUsage(it.first, it.second) }, timeout)
   }
 
+  @McpTool
+  @McpDescription(
+    """
+      |Resolves the source archives attached to the IntelliJ Platform dependencies of the project.
+      |Use this tool to find the source code of the IntelliJ Platform and of its bundled plugins and libraries.
+      |Supports a project that uses the IntelliJ Platform Gradle Plugin 2.x.
+      |Returns every distinct archive with its absolute path, its kind, and the IntelliJ Platform versions that use it.
+      |Possible kinds are `PLATFORM`, `API`, and `LIBRARY`.
+      |Note: the archives are ZIP files outside the project directory.
+      |Note: the tool does not download sources. When the IntelliJ Platform sources are not attached, the result has a hint.
+    """
+  )
+  @Suppress("unused", "FunctionName")
+  suspend fun resolve_intellij_platform_sources(): IntelliJPlatformSources {
+    return resolveIntelliJPlatformSources(currentCoroutineContext().project)
+  }
+
   private suspend fun <T> runSourceRequirementSearch(
     filePath: String,
     line: Int,
@@ -337,5 +354,36 @@ class DevKitMcpToolset : McpToolset {
     val description: String,
     @property:McpDescription("Quick-fix family names available in batch mode.")
     val quickFixes: List<String>,
+  )
+
+  enum class IntelliJPlatformSourceArchiveKind {
+    PLATFORM, API, LIBRARY
+  }
+
+  @Serializable
+  data class IntelliJPlatformSources(
+    @property:McpDescription("Distinct source archives attached to the IntelliJ Platform dependencies of the project.")
+    val archives: List<IntelliJPlatformSourceArchive>,
+    @property:McpDescription(
+      "Tells how to get the missing sources, or null when every IntelliJ Platform in the project has its IntelliJ Platform sources."
+    )
+    val hint: String?,
+  )
+
+  @Serializable
+  data class IntelliJPlatformSourceArchive(
+    @property:McpDescription("Absolute path to the source archive.")
+    val path: String,
+    @property:McpDescription(
+      "Archive kind. `PLATFORM` is the IntelliJ Platform sources. " +
+      "`API` is the API sources of a bundled plugin from the `lib/src` directory of the IntelliJ Platform. " +
+      "`LIBRARY` is any other sources, usually of a third-party library bundled with the IntelliJ Platform."
+    )
+    val kind: IntelliJPlatformSourceArchiveKind,
+    @property:McpDescription(
+      "IntelliJ Platform versions that use the archive, as `<product code>-<build number>` when the IntelliJ Platform is known, " +
+      "otherwise as the version of the dependency."
+    )
+    val platformVersions: List<String>,
   )
 }

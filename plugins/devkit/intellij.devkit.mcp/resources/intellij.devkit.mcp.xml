@@ -5,6 +5,7 @@
     <plugin id="com.intellij.mcpServer"/>
     <module name="intellij.devkit.core"/>
     <module name="intellij.devkit.scaffolding"/>
+    <module name="intellij.java"/>
     <module name="intellij.java.psi"/>
   </dependencies>
   <!-- endregion -->
