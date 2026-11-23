@@ -50,8 +50,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -80,6 +78,8 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiDocumentManager;
@@ -123,6 +123,8 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.workspaceModel.ide.LibraryEntities;
+import com.intellij.workspaceModel.ide.SdkEntities;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -1756,16 +1758,21 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       );
     }
     else {
-      return fileIndex.getOrderEntriesForFile(vfile).stream()
-        .filter(it -> it instanceof LibraryOrderEntry || it instanceof JdkOrderEntry)
-        .findFirst()
-        .map(it -> HtmlChunk.fragment(
-          HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.PpLibFolder"),
-          HtmlChunk.nbsp(),
-          HtmlChunk.text(it.getPresentableName())
-        ))
-        .orElse(null);
+      String name = getLibraryOrSdkPresentableName(fileIndex, vfile);
+      if (name == null) return null;
+      return HtmlChunk.fragment(
+        HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.PpLibFolder"),
+        HtmlChunk.nbsp(),
+        HtmlChunk.text(name)
+      );
     }
+  }
+
+  private static @Nullable String getLibraryOrSdkPresentableName(@NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile file) {
+    LibraryEntity library = ContainerUtil.getFirstItem(fileIndex.findContainingLibraries(file));
+    if (library != null) return LibraryEntities.getPresentableName(library);
+    SdkEntity sdk = ContainerUtil.getFirstItem(fileIndex.findContainingSdks(file));
+    return sdk == null ? null : SdkEntities.getPresentableName(sdk);
   }
 
   @Internal
