@@ -31,12 +31,12 @@ abstract class LazyLoadingAccountsDetailsProvider<A : Account, D : AccountDetail
   private val defaultAvatarIcon: Icon
 ) : LoadingAccountsDetailsProvider<A, D> {
 
-  final override val loadingState = MutableStateFlow(false)
+  final override val loadingState: MutableStateFlow<Boolean> = MutableStateFlow(false)
   private var loadingCount by observable(0) { _, _, newValue ->
     loadingState.value = newValue > 0
   }
 
-  final override val loadingCompletionFlow = MutableSharedFlow<A>()
+  final override val loadingCompletionFlow: MutableSharedFlow<A> = MutableSharedFlow()
 
   private val requestsMap = ConcurrentHashMap<A, Deferred<Result<D>>>()
   private val resultsMap = ConcurrentHashMap<A, Result<D>>()

@@ -14,11 +14,11 @@ abstract class MutableAccountsListModel<A : Account, Cred>
       accountsListModel.add(value.toList())
     }
   override var selectedAccount: A? = null
-  override val newCredentials = mutableMapOf<A, Cred>()
+  override val newCredentials: MutableMap<A, Cred> = mutableMapOf()
 
-  override val accountsListModel = CollectionListModel<A>()
+  override val accountsListModel: CollectionListModel<A> = CollectionListModel()
 
-  override fun clearNewCredentials() = newCredentials.clear()
+  override fun clearNewCredentials(): Unit = newCredentials.clear()
 
   fun add(account: A, cred: Cred) {
     accountsListModel.add(account)

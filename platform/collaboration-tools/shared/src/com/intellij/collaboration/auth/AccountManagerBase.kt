@@ -3,11 +3,8 @@ package com.intellij.collaboration.auth
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
