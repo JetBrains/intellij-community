@@ -222,11 +222,13 @@ public class GroovyHighlightingTest {
   public void testBuiltInTypeInstantiation() { highlighting.get().doTest(); }
 
   @Test
-  public void testVoidArrayType() {
+  public void testVoidType() {
     highlighting.get().doTestHighlighting("""
-                         <error descr="Illegal type: 'void'">void</error>[] foo() {}
-                         <error descr="Illegal type: 'void'">void</error>[] bar = foo()
-                         """);
+                                            <error descr="Illegal type: 'void'">void</error>[] foo() {}
+                                            <error descr="Illegal type: 'void'">void</error>[] bar = foo()
+                                            <error descr="Illegal type: 'void'">void</error> x
+                                            def method(<error descr="Illegal type: 'void'">void</error> x) {}
+                                            """);
   }
 
   @Test

@@ -1078,16 +1078,21 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitTypeElement(@NotNull GrTypeElement typeElement) {
-    if (!(typeElement.getParent() instanceof GrMethod method)) return;
-
-    if (method instanceof GrAnnotationMethod) {
-      checkAnnotationAttributeType(typeElement, myHolder);
+    PsiElement parent = typeElement.getParent();
+    if ((parent instanceof GrVariable || parent instanceof GrVariableDeclaration) && PsiTypes.voidType().equals(typeElement.getType())) {
+      String message = GroovyBundle.message("illegal.type.void");
+      myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(typeElement).create();
     }
-    else if (method.isConstructor()) {
-      myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("constructors.cannot.have.return.type")).create();
-    }
-    else {
-      checkMethodReturnType(method, typeElement, myHolder);
+    if (parent instanceof GrMethod method) {
+      if (method instanceof GrAnnotationMethod) {
+        checkAnnotationAttributeType(typeElement, myHolder);
+      }
+      else if (method.isConstructor()) {
+        myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("constructors.cannot.have.return.type")).create();
+      }
+      else {
+        checkMethodReturnType(method, typeElement, myHolder);
+      }
     }
   }
 
