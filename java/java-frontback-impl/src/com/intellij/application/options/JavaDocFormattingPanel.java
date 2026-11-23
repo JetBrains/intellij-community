@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.panels.ListLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.awt.event.ActionListener;
 
 public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   private JCheckBox myEnableCheckBox;
+  private JCheckBox myPreferMarkdownCommentsCheckBox;
 
   private final JPanel myJavaDocPanel = new JPanel(new BorderLayout());
 
@@ -46,10 +48,14 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
         update();
       }
     });
+    myPreferMarkdownCommentsCheckBox = new JCheckBox(JavaFrontbackBundle.message("checkbox.prefer.markdown.comments"));
 
     myPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0));
     myJavaDocPanel.add(BorderLayout.CENTER, myPanel);
-    myJavaDocPanel.add(myEnableCheckBox, BorderLayout.NORTH);
+    JPanel checkBoxesPanel = new JPanel(ListLayout.vertical(0, ListLayout.Alignment.START, ListLayout.GrowPolicy.NO_GROW));
+    checkBoxesPanel.add(myEnableCheckBox);
+    checkBoxesPanel.add(myPreferMarkdownCommentsCheckBox);
+    myJavaDocPanel.add(checkBoxesPanel, BorderLayout.NORTH);
   }
 
   @Override
@@ -63,7 +69,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   }
 
   private void update() {
-    setEnabled(getPanel(), myEnableCheckBox.isSelected());
+    setEnabled(myPanel, myEnableCheckBox.isSelected());
     myEnableCheckBox.setEnabled(true);
   }
 
@@ -131,19 +137,22 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   public void apply(@NotNull CodeStyleSettings settings) {
     super.apply(settings);
     settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING = myEnableCheckBox.isSelected();
+    settings.getCommonSettings(JavaLanguage.INSTANCE).DOCUMENTATION_LINE_COMMENT_PREFERRED = myPreferMarkdownCommentsCheckBox.isSelected();
   }
 
   @Override
   protected void resetImpl(@NotNull CodeStyleSettings settings) {
     super.resetImpl(settings);
     myEnableCheckBox.setSelected(settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING);
+    myPreferMarkdownCommentsCheckBox.setSelected(settings.getCommonSettings(JavaLanguage.INSTANCE).DOCUMENTATION_LINE_COMMENT_PREFERRED);
     update();
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
     return super.isModified(settings) ||
-           myEnableCheckBox.isSelected() != settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING;
+           myEnableCheckBox.isSelected() != settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING ||
+           myPreferMarkdownCommentsCheckBox.isSelected() != settings.getCommonSettings(JavaLanguage.INSTANCE).DOCUMENTATION_LINE_COMMENT_PREFERRED;
   }
 
   @Override

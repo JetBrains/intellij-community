@@ -186,7 +186,9 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
     langSettings.LINE_COMMENT_ADD_SPACE = myLineCommentAddSpaceCb.isSelected();
     langSettings.LINE_COMMENT_ADD_SPACE_ON_REFORMAT = myLineCommentAddSpaceOnReformatCb.isSelected();
     langSettings.BLOCK_COMMENT_ADD_SPACE = myBlockCommentAddSpaceCb.isSelected();
-    langSettings.DOCUMENTATION_LINE_COMMENT_PREFERRED = myDocumentationLineCommentPrefered.isSelected();
+    if (myDocumentationLineCommentPrefered.isVisible()) {
+      langSettings.DOCUMENTATION_LINE_COMMENT_PREFERRED = myDocumentationLineCommentPrefered.isSelected();
+    }
   }
 
   public boolean isModified(@NotNull CodeStyleSettings settings) {
@@ -196,7 +198,8 @@ public final class CommenterForm implements CodeStyleSettingsCustomizable {
            || myLineCommentAddSpaceCb.isSelected() != langSettings.LINE_COMMENT_ADD_SPACE
            || myBlockCommentAddSpaceCb.isSelected() != langSettings.BLOCK_COMMENT_ADD_SPACE
            || myLineCommentAddSpaceOnReformatCb.isSelected() != langSettings.LINE_COMMENT_ADD_SPACE_ON_REFORMAT
-           || myDocumentationLineCommentPrefered.isSelected() != langSettings.DOCUMENTATION_LINE_COMMENT_PREFERRED
+           || (myDocumentationLineCommentPrefered.isVisible() &&
+               myDocumentationLineCommentPrefered.isSelected() != langSettings.DOCUMENTATION_LINE_COMMENT_PREFERRED)
       ;
   }
 

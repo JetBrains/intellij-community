@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
@@ -349,8 +350,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
         "LINE_COMMENT_ADD_SPACE_ON_REFORMAT",
         "LINE_COMMENT_AT_FIRST_COLUMN",
         "BLOCK_COMMENT_AT_FIRST_COLUMN",
-        "BLOCK_COMMENT_ADD_SPACE",
-        "DOCUMENTATION_LINE_COMMENT_PREFERRED"
+        "BLOCK_COMMENT_ADD_SPACE"
       );
     }
     else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {
@@ -421,6 +421,22 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
   protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings,
                                    CommonCodeStyleSettings.@NotNull IndentOptions indentOptions) {
     commonSettings.DOCUMENTATION_LINE_COMMENT_PREFERRED = true;
+  }
+
+  @Override
+  public Set<String> getSupportedFields(SettingsType type) {
+    var supportedFields = super.getSupportedFields(type);
+    if (type == SettingsType.COMMENTER_SETTINGS) {
+      supportedFields.add("DOCUMENTATION_LINE_COMMENT_PREFERRED");
+    }
+    return supportedFields;
+  }
+
+  @Override
+  public Set<String> getSupportedFields() {
+    var supportedFields = super.getSupportedFields();
+    supportedFields.add("DOCUMENTATION_LINE_COMMENT_PREFERRED");
+    return supportedFields;
   }
 
   @Override
