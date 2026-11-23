@@ -24,13 +24,20 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.kotlin-scripting-common">
+      <library name="kotlinc.kotlin-scripting-common" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.5.20-dev-5671">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.20-dev-5671/kotlin-scripting-common-2.5.20-dev-5671.jar">
+              <sha256sum>6fa2736164bfc3b068e2e5d8c72cad3d979e87aeb691d491f1ea2060491735ae</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-common/2.5.255-dev-255/kotlin-scripting-common-2.5.255-dev-255.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.20-dev-5671/kotlin-scripting-common-2.5.20-dev-5671.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-common/2.5.255-dev-255/kotlin-scripting-common-2.5.255-dev-255-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.20-dev-5671/kotlin-scripting-common-2.5.20-dev-5671-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

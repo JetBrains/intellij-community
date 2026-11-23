@@ -8,13 +8,20 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.js-plain-objects-compiler-plugin">
+      <library name="kotlinc.js-plain-objects-compiler-plugin" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:js-plain-objects-compiler-plugin-for-ide:2.5.20-dev-5671">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.20-dev-5671/js-plain-objects-compiler-plugin-for-ide-2.5.20-dev-5671.jar">
+              <sha256sum>311b87b43f60d75fb6ec266a74c0a1e9685d51a17dc62e8992a0d8e0cde506bc</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.255-dev-255/js-plain-objects-compiler-plugin-for-ide-2.5.255-dev-255.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.20-dev-5671/js-plain-objects-compiler-plugin-for-ide-2.5.20-dev-5671.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.255-dev-255/js-plain-objects-compiler-plugin-for-ide-2.5.255-dev-255-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.20-dev-5671/js-plain-objects-compiler-plugin-for-ide-2.5.20-dev-5671-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
