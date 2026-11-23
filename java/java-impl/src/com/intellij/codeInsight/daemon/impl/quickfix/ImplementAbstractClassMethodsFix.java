@@ -6,7 +6,6 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.OverrideOrImplementOptions;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -90,13 +89,6 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
         implementNewMethods(project, editor, startElement, selectedElements, options);
       });
     });
-  }
-
-  @Override
-  public @Nullable ModCommandAction getFallbackModCommandAction() {
-    // Superclass ModCommandAction is not suitable here; a separate one could be implemented if necessary
-    // but probably this fix is not very important anyway.
-    return null;
   }
 
   @Override

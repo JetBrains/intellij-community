@@ -71,11 +71,13 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.PsiTypes;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
@@ -162,7 +164,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
     if (targetClass.isRecord() && superMethod.getParameterList().isEmpty()) {
       PsiMethod method = targetClass.findMethodBySignature(superMethod, false);
-      if (method != null && !method.isPhysical()) return false;
+      if (method instanceof SyntheticElement) return false;
     }
     if (PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, targetClass)) return true;
     PsiClass superClass = superMethod.getContainingClass();
@@ -765,7 +767,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       if (name != null) {
         MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, prevBaseMethod.getParameterList(), prevBaseMethod.getTypeParameterList(), substitutor, prevBaseMethod.isConstructor());
         PsiMethod prevMethod = MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
-        if (prevMethod != null && prevMethod.isPhysical()){
+        if (prevMethod != null && isSourceMethod(prevMethod)){
           return prevMethod.getNextSibling();
         }
       }
@@ -778,7 +780,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       if (name != null) {
         MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, nextBaseMethod.getParameterList(), nextBaseMethod.getTypeParameterList(), substitutor, nextBaseMethod.isConstructor());
         PsiMethod nextMethod = MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
-        if (nextMethod != null && nextMethod.isPhysical()){
+        if (nextMethod != null && isSourceMethod(nextMethod)){
           return nextMethod;
         }
       }
@@ -786,6 +788,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
 
     return null;
+  }
+
+  private static boolean isSourceMethod(@NotNull PsiMethod method) {
+    return !(method instanceof SyntheticElement) && !(method instanceof LightElement);
   }
 
   public static @NotNull List<PsiGenerationInfo<PsiMethod>> overrideOrImplement(@NotNull PsiClass psiClass, @NotNull PsiMethod baseMethod) throws IncorrectOperationException {
