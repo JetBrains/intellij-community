@@ -17,6 +17,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
   <vendor url="https://www.jetbrains.com/pycharm/">JetBrains</vendor>
 
+  <resource-bundle>messages.PythonPluginBundle</resource-bundle>
+  <technology id="python"/>
+
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.python-core-capable"/>

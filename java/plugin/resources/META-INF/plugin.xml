@@ -7,7 +7,9 @@
 
   <vendor>JetBrains</vendor>
   <category>Languages</category>
-  <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <resource-bundle>messages.JavaPluginBundle</resource-bundle>
+
+  <technology id="jvm"/>
 
   <!--other dependencies inside java.backend plugin-->
   <dependencies>
