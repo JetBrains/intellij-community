@@ -4,7 +4,6 @@ package com.intellij.maven.groovy;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -93,8 +92,7 @@ public class MavenGroovyPomScriptType extends GroovyRunnableScriptType {
       for (VirtualFile virtualFile : library.getFiles(OrderRootType.CLASSES)) {
         if (GroovyConfigUtils.GROOVY_JAR_PATTERN.matcher(virtualFile.getName()).matches() ||
             GroovyConfigUtils.matchesGroovyAll(virtualFile.getName())) {
-          List<OrderEntry> orderEntries = ProjectFileIndex.getInstance(project).getOrderEntriesForFile(virtualFile);
-          if (!orderEntries.isEmpty()) {
+          if (!ProjectFileIndex.getInstance(project).findContainingLibraries(virtualFile).isEmpty()) {
             return true;
           }
         }
