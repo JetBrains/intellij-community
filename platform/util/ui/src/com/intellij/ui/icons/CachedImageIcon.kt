@@ -269,9 +269,8 @@ open class CachedImageIcon private constructor(
   @Internal
   fun getObjScale(): Double? = scaleContext?.getScale(ScaleType.OBJ_SCALE)
 
-  fun scale(scaleContext: ScaleContext): Icon {
-    return iconCache.getOrScaleIcon(host = this, scaleContext = scaleContext, attributes = getEffectiveAttributes())
-  }
+  /** This icon at [scaleContext]. The current path patch of the theme applies, as for [getIconWidth] and a paint. */
+  fun scale(scaleContext: ScaleContext): Icon = resolveActualIcon(scaleContext)
 
   fun scale(scale: Float, ancestor: Component? = null, isDark: Boolean? = null): CachedImageIcon {
     if (scale == 1.0f && ancestor == null) {

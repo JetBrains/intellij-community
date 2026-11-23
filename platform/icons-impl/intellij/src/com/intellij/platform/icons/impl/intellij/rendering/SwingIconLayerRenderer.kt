@@ -8,6 +8,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.DeferredIconListener
+import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -20,6 +21,10 @@ import com.intellij.platform.icons.rendering.LayerPaintingContext
 import com.intellij.platform.icons.impl.layers.SwingIconLayer
 import com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
 import com.intellij.platform.icons.impl.rendering.layers.LayerLayout
+import com.intellij.platform.icons.impl.rendering.layers.compoundSize
+import com.intellij.platform.icons.impl.intellij.rendering.images.cachedImageIcon
+import com.intellij.platform.icons.impl.intellij.rendering.images.legacySize
+import com.intellij.platform.icons.design.dp
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 import kotlin.coroutines.resume
@@ -31,11 +36,47 @@ class SwingIconLayerRenderer(
   private val deferredIcon = layer.legacyIcon as? DeferredIcon?
   private var isDone = deferredIcon?.isDone ?: false
   override var image: ImageResource = createImageResource()
-  override var layout: LayerLayout = applyLayout(image)
+
+  /** The IDE zoom of [layout]. A legacy icon that is no `CachedImageIcon` can change its logical size with the zoom. */
+  private var layoutZoom = JBUIScale.scale(1f)
+
+  override var layout: LayerLayout = legacyLayout()
+    get() {
+      refreshForZoom()
+      return field
+    }
+
+  /**
+   * Reads the size of a legacy icon again when the IDE zoom changed. The design size of a `CachedImageIcon` does not
+   * depend on the zoom, so its image and its layout are kept, together with the size variants that the image found.
+   */
+  private fun refreshForZoom() {
+    val zoom = JBUIScale.scale(1f)
+    if (zoom == layoutZoom) return
+    layoutZoom = zoom
+    if (layer.legacyIcon.cachedImageIcon() != null) return
+    image = createImageResource()
+    layout = legacyLayout()
+  }
+
+  /**
+   * The layout of the legacy icon at its size, see [legacySize]. The renderer applies the IDE zoom to a design size. A
+   * logical size already contains the zoom, so the renderer takes the zoom of its context out of it: an icon of a fixed
+   * odd size keeps that size.
+   */
+  private fun legacyLayout(): LayerLayout {
+    val size = legacySize(layer.legacyIcon)
+    if (size.width <= 0 || size.height <= 0) return applyLayout(image)
+    val width = size.width.dp.compoundSize()
+    val height = size.height.dp.compoundSize()
+    if (size.isLogical) return applyLayout(layer.modifier, width.withoutZoom(), height.withoutZoom())
+    return applyLayout(layer.modifier, width, height)
+  }
   private val isPending = AtomicBoolean(false)
 
   override fun render(paintingContext: LayerPaintingContext) {
     checkForUpdatesIfNeeded()
+    refreshForZoom()
     super.render(paintingContext)
   }
 
@@ -48,14 +89,14 @@ class SwingIconLayerRenderer(
               suspendUntilDeferredIconIsDone()
               isDone = true
               image = createImageResource()
-              layout = applyLayout(image)
+              layout = legacyLayout()
               renderingContext.updateFlow.triggerUpdate()
             }
           }
         } else {
           isDone = true
           image = createImageResource()
-          layout = applyLayout(image)
+          layout = legacyLayout()
         }
       }
     }

@@ -2,20 +2,33 @@
 package com.intellij.platform.icons.impl.intellij.rendering.images
 
 import com.intellij.platform.icons.impl.intellij.rendering.IntelliJImageModifiers
-import com.intellij.ui.icons.LoadIconParameters
-import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.SVGLoader
 import com.intellij.platform.icons.impl.intellij.rendering.toAwtFilter
 import com.intellij.platform.icons.impl.intellij.rendering.toIJPatcher
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
+import com.intellij.platform.icons.impl.rendering.PaintedSize
+import com.intellij.platform.icons.modifiers.SizeVariantPolicy
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.ImageModifiers
+import com.intellij.ui.icons.LoadIconParameters
+import com.intellij.ui.scale.ScaleContext
+import java.awt.Component
 import java.awt.Image
 import java.awt.image.ImageFilter
 
 internal interface SwingImageResourceHolder {
-  fun getImage(scale: ScaleContext, imageModifiers: ImageModifiers?): Image?
+  /**
+   * The image rasterized at the pixel scale of [scale].
+   *
+   * @param painted the logical size that the image is painted at, which selects a `@WxH` size variant; `null` for no variant
+   * @param component the component the image is painted in, if known; passed to a legacy icon that paints the image
+   */
+  fun getImage(scale: ScaleContext, painted: PaintedSize?, imageModifiers: ImageModifiers?, component: Component? = null): Image?
+  /**
+   * The design size of the image with [imageModifiers], without the IDE zoom: the renderer applies the zoom. The
+   * modifiers can select an artwork of another size, for example the dark one.
+   */
   fun getExpectedDimensions(imageModifiers: ImageModifiers?): Dimensions
 }
 
@@ -46,3 +59,6 @@ internal fun ImageModifiers?.toLoadParameters(): LoadIconParameters {
     isStroke = isStroke
   )
 }
+/** The size-variant policy resolved for the image ([SizeVariantPolicy.Exact] if the modifiers do not say). */
+internal fun ImageModifiers?.sizeVariantPolicy(): SizeVariantPolicy =
+  (this as? DefaultImageModifiers)?.sizeVariantPolicy ?: SizeVariantPolicy.Exact

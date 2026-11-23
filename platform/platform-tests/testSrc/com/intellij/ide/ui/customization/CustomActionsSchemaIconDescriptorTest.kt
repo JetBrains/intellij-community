@@ -11,12 +11,17 @@ import com.intellij.platform.icons.imageIconDescriptor
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.scale.JBUIScale
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import javax.swing.Icon
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -58,6 +63,19 @@ class CustomActionsSchemaIconDescriptorTest {
     return file
   }
 
+  /** A jar in [dir] with an SVG image of 16x16 for each of [entries]. */
+  private fun jar(name: String, vararg entries: String): Path {
+    val file = dir.resolve(name)
+    ZipOutputStream(Files.newOutputStream(file)).use { zip ->
+      for (entry in entries) {
+        zip.putNextEntry(ZipEntry(entry))
+        zip.write("""<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="#FF0000"/></svg>""".toByteArray())
+        zip.closeEntry()
+      }
+    }
+    return file
+  }
+
   private fun customize(target: AnAction, iconPath: String, actionSupplier: (String) -> AnAction? = { null }) {
     val schema = CustomActionsSchema(null)
     schema.addIconCustomization("target", iconPath)
@@ -92,6 +110,43 @@ class CustomActionsSchemaIconDescriptorTest {
     assertTrue("FileImageResourceLocation(path='${file.invariantSeparatorsPathString}')" in text, "the descriptor must load the file, was: $text")
     assertFalse("SwingIconLayer" in text, "the custom icon must not be bridged from a Swing icon, was: $text")
     assertFalse(target.isDefaultIcon)
+  }
+
+  @Test
+  fun `a custom icon larger than 18x18 is fitted into it, a smaller one keeps its size`() {
+    // like the legacy doLoadCustomIcon: users may choose an image of any size
+    fun customIcon(size: Int): Icon {
+      val target = action(descriptor = imageIconDescriptor("expui/general/copy.svg", AllIcons::class.java.classLoader))
+      customize(target, svg("custom$size.svg", size).toString())
+      return assertNotNull(target.templatePresentation.icon)
+    }
+
+    val large = customIcon(36)
+    assertEquals(JBUIScale.scale(18), large.iconWidth)
+    assertEquals(JBUIScale.scale(18), large.iconHeight)
+
+    val small = customIcon(16)
+    assertEquals(JBUIScale.scale(16), small.iconWidth)
+    assertEquals(JBUIScale.scale(16), small.iconHeight)
+  }
+
+  @Test
+  fun `at 125 percent IDE zoom a custom icon of 16px keeps its zoomed size, and a larger one is fitted into the zoomed 18px`() {
+    fun customIcon(size: Int): Icon {
+      val target = action(descriptor = imageIconDescriptor("expui/general/copy.svg", AllIcons::class.java.classLoader))
+      customize(target, svg("custom$size.svg", size).toString())
+      return assertNotNull(target.templatePresentation.icon)
+    }
+    val previous = JBUIScale.scale(1f)
+    JBUIScale.setUserScaleFactorForTest(1.25f)
+    try {
+      // like the legacy doLoadCustomIcon, which compares with EmptyIcon.ICON_18 at the current zoom
+      assertEquals(JBUIScale.scale(16), customIcon(16).iconWidth)
+      assertEquals(JBUIScale.scale(18), customIcon(36).iconWidth)
+    }
+    finally {
+      JBUIScale.setUserScaleFactorForTest(previous)
+    }
   }
 
   @Test
@@ -194,13 +249,39 @@ class CustomActionsSchemaIconDescriptorTest {
   }
 
   @Test
-  fun `a chosen dark variant in a jar is kept, because the base entry cannot be checked`() {
+  fun `a chosen dark variant in a jar loads the base entry, so that the variant follows the theme`() {
+    val jar = jar("icons.jar", "custom.svg", "custom_dark.svg")
     val target = action(descriptor = imageIconDescriptor("expui/general/copy.svg", AllIcons::class.java.classLoader))
 
-    customize(target, "jar:file:/icons/icons.jar!/custom_dark.svg")
+    customize(target, "jar:${jar.toUri()}!/custom_dark.svg")
 
     val text = assertNotNull(target.templatePresentation.iconDescriptor).toString()
-    assertTrue("jar:file:/icons/icons.jar!/custom_dark.svg" in text, "the chosen entry must be loaded, was: $text")
+    assertTrue("!/custom.svg'" in text, "the base entry must be loaded, was: $text")
+  }
+
+  @Test
+  fun `a custom icon in a jar that or whose entry does not exist keeps the originally declared descriptor`() {
+    val originalDescriptor = imageIconDescriptor("expui/general/copy.svg", AllIcons::class.java.classLoader)
+    val jar = jar("icons.jar", "other.svg")
+    for (path in listOf("jar:${jar.toUri()}!/custom.svg", "jar:${dir.resolve("missing.jar").toUri()}!/custom.svg")) {
+      val target = action(descriptor = originalDescriptor)
+
+      customize(target, path)
+
+      assertSame(originalDescriptor, target.templatePresentation.iconDescriptor, "$path must keep the declared icon")
+      assertTrue(target.isDefaultIcon, "the declared icon is shown for $path")
+    }
+  }
+
+  @Test
+  fun `a chosen dark variant in a jar is kept when there is no base entry`() {
+    val jar = jar("icons.jar", "custom_dark.svg")
+    val target = action(descriptor = imageIconDescriptor("expui/general/copy.svg", AllIcons::class.java.classLoader))
+
+    customize(target, "jar:${jar.toUri()}!/custom_dark.svg")
+
+    val text = assertNotNull(target.templatePresentation.iconDescriptor).toString()
+    assertTrue("!/custom_dark.svg'" in text, "the chosen entry must be loaded, was: $text")
   }
 
   @Test

@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.icon
 
+import androidx.compose.ui.geometry.Size
+import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
+import com.intellij.platform.icons.impl.rendering.DefaultScalingContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -56,6 +59,25 @@ internal class PathImageResourceLocationTest {
 
         assertFalse(resolved.isAuthoredStrokeVariant)
         assertEquals(contentOf("icons/strokeVariant.svg"), resolved.data.decodeToString())
+    }
+
+    @Test
+    fun `a dark size variant without its own dark file takes the light file`() {
+        // `lightSizeVariant@20x20.svg` has no `_dark` file, as in the legacy icons, which then draw the light file
+        val resource =
+            ComposeImageResourceProvider()
+                .loadImage(location("icons/lightSizeVariant.svg"), DefaultImageModifiers(isDark = true))
+                as ComposePainterImageResource
+
+        // 16 * 1.25 = 20 at density 2
+        assertEquals(Size(20f, 20f), resource.painterFor(40, 40, DefaultScalingContext(2f, 1.25f)).intrinsicSize)
+    }
+
+    @Test
+    fun `a dark size variant reads its own dark file`() {
+        val resolved = location("icons/search@20x20.svg").resolveOrBase(DefaultImageModifiers(isDark = true))
+
+        assertEquals(contentOf("icons/search@20x20_dark.svg"), resolved.data.decodeToString())
     }
 
     private fun location(path: String) = PathImageResourceLocation(path, javaClass.classLoader)

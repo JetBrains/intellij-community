@@ -6,6 +6,8 @@ import com.intellij.platform.icons.impl.FileImageResourceLocation
 import com.intellij.platform.icons.impl.UrlImageResourceLocation
 import com.intellij.platform.icons.impl.design.DefaultSRGB
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
+import com.intellij.platform.icons.impl.rendering.DefaultScalingContext
+import com.intellij.platform.icons.modifiers.SizeVariantPolicy
 import com.intellij.platform.icons.rendering.ImageModifiers
 import java.io.File
 import org.junit.Assert.assertEquals
@@ -121,6 +123,20 @@ internal class UrlImageResourceVariantTest {
             )
 
         assertEquals(Size(20f, 20f), (resource as ComposePainterImageResource).painter.intrinsicSize)
+    }
+
+    @Test
+    fun `an image at a URL has no size variants, as legacy icons`() {
+        val base = svg("custom.svg", 16)
+        svg("custom@20x20.svg", 20)
+        val resource =
+            provider.loadImage(
+                UrlImageResourceLocation(base.toURI().toString()),
+                DefaultImageModifiers(sizeVariantPolicy = SizeVariantPolicy.Fitting),
+            ) as ComposePainterImageResource
+
+        // 16 * 1.25 = 20 at density 2: a class loader resource takes its @20x20 variant here
+        assertEquals(Size(16f, 16f), resource.painterFor(40, 40, DefaultScalingContext(2f, 1.25f)).intrinsicSize)
     }
 
     private fun svg(name: String, size: Int): File =

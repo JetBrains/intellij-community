@@ -6,6 +6,7 @@ import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
 import com.intellij.platform.icons.impl.rendering.layers.CompoundDimensions
 import com.intellij.platform.icons.impl.rendering.layers.IconLayerManager
 import com.intellij.platform.icons.impl.rendering.layers.IconLayerRenderer
+import com.intellij.platform.icons.impl.rendering.layers.LayerLayout
 import com.intellij.platform.icons.impl.rendering.layers.maxCompoundSize
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.IconRenderer
@@ -43,6 +44,13 @@ class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, privat
   }
 
     internal fun consumedSpace(): CompoundDimensions = layers().maxCompoundSize { it.layout.consumedSpace() }
+
+    /**
+     * The current layouts of the layers. A theme change creates the layers again, and a layer can change its layout, for
+     * example a deferred icon in it when it resolves. See `NestedIconLayerRenderer.layout`.
+     */
+    internal val layerLayouts: List<LayerLayout>
+        get() = layers().map { it.layout }
 
     override fun calculateUsedDimensions(scaling: ScalingContext): Dimensions = usedDimensions(layers(), scaling)
 

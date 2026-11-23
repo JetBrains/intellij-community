@@ -79,7 +79,7 @@ class IntelliJIconManager : DefaultIconManager() {
 
   override fun toIconDescriptor(swingIcon: Icon): IconDescriptor {
     // the identity scale is no scale: an update() that sets the icon of Presentation.getIcon() back keeps its descriptor
-    if (swingIcon is SwingIcon && swingIcon.scale.isIdentity()) return swingIcon.iconDescriptor
+    if (swingIcon is SwingIcon && swingIcon.iconScale.isIdentity()) return swingIcon.iconDescriptor
     return if (swingIcon is SwingIcon) {
       unpackSwingIcon(swingIcon)
     } else {
@@ -103,12 +103,12 @@ class IntelliJIconManager : DefaultIconManager() {
   }
 
   private fun unpackSwingIcon(swingIcon: SwingIcon): IconDescriptor {
-    return if (swingIcon.scale != null) {
+    return if (swingIcon.iconScale != null) {
       iconDescriptor {
         addSwingLayer(
           this,
           swingIcon,
-          IconModifier.scale(swingIcon.scale)
+          IconModifier.scale(swingIcon.iconScale)
         )
       }
     } else swingIcon.iconDescriptor

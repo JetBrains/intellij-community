@@ -19,7 +19,12 @@ internal class DefaultDeferredIconRenderer(
   val renderingContext: RenderingContext,
 ) : IconRenderer, DeferredIconEventHandler {
     private var isDone = false
+    @Volatile
     private var renderer = iconDescriptor.placeholder?.createRenderer(renderingContext)
+
+    /** The renderer of the placeholder, or of the resolved icon when it is done. */
+    internal val currentRenderer: IconRenderer?
+        get() = renderer
 
     override fun whenDone(deferredIcon: DeferredIconDescriptor, resolvedIconDescriptor: IconDescriptor) {
         renderer = resolvedIconDescriptor.createRenderer(renderingContext)

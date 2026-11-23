@@ -189,6 +189,16 @@ f:com.intellij.platform.icons.modifiers.MarginIconModifierKt
 - bs:margin$default(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,I,java.lang.Object):com.intellij.platform.icons.modifiers.IconModifier
 f:com.intellij.platform.icons.modifiers.ScaleModifierKt
 - sf:scale(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.SizeVariantModifierKt
+- sf:sizeVariants(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.modifiers.SizeVariantPolicy):com.intellij.platform.icons.modifiers.IconModifier
+e:com.intellij.platform.icons.modifiers.SizeVariantPolicy
+- java.lang.Enum
+- sf:Exact:com.intellij.platform.icons.modifiers.SizeVariantPolicy
+- sf:Fitting:com.intellij.platform.icons.modifiers.SizeVariantPolicy
+- sf:None:com.intellij.platform.icons.modifiers.SizeVariantPolicy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.icons.modifiers.SizeVariantPolicy
+- s:values():com.intellij.platform.icons.modifiers.SizeVariantPolicy[]
 f:com.intellij.platform.icons.modifiers.StrokeModifierKt
 - sf:stroke(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.Color):com.intellij.platform.icons.modifiers.IconModifier
 f:com.intellij.platform.icons.modifiers.SvgPatcherModifierKt
@@ -208,8 +218,10 @@ com.intellij.platform.icons.scale.FillAreaScale
 - a:getWidth():com.intellij.platform.icons.design.IconUnit
 com.intellij.platform.icons.scale.FitAreaScale
 - com.intellij.platform.icons.scale.IconScale
+- getDownscale():Z
 - a:getHeight():com.intellij.platform.icons.design.IconUnit
 - a:getRelative():Z
+- getUpscale():Z
 - a:getWidth():com.intellij.platform.icons.design.IconUnit
 com.intellij.platform.icons.scale.IconScale
 - sf:Companion:com.intellij.platform.icons.scale.IconScale$Companion
@@ -222,8 +234,10 @@ f:com.intellij.platform.icons.scale.IconScaleKt
 - sf:factor(F):com.intellij.platform.icons.scale.FactorScale
 - sf:fillArea(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z):com.intellij.platform.icons.scale.FillAreaScale
 - bs:fillArea$default(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z,I,java.lang.Object):com.intellij.platform.icons.scale.FillAreaScale
-- sf:fitArea(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z):com.intellij.platform.icons.scale.FitAreaScale
+- bsf:fitArea(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z):com.intellij.platform.icons.scale.FitAreaScale
+- sf:fitArea(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z,Z,Z):com.intellij.platform.icons.scale.FitAreaScale
 - bs:fitArea$default(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z,I,java.lang.Object):com.intellij.platform.icons.scale.FitAreaScale
+- bs:fitArea$default(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z,Z,Z,I,java.lang.Object):com.intellij.platform.icons.scale.FitAreaScale
 f:com.intellij.platform.icons.swing.AwtColorKt
 - sf:toAwtColor(com.intellij.platform.icons.design.Color):java.awt.Color
 com.intellij.platform.icons.swing.ScalableSwingIcon

@@ -15,6 +15,7 @@ import com.intellij.platform.icons.impl.patchers.authoredStrokeSvgPatcher
 import com.intellij.platform.icons.impl.patchers.strokeSvgPatcher
 import com.intellij.platform.icons.impl.patchers.writeSvgAttribute
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
+import com.intellij.platform.icons.impl.rendering.SizeVariants
 import com.intellij.platform.icons.rendering.ImageModifiers
 import com.intellij.platform.icons.rendering.ImageResource
 import com.intellij.platform.icons.rendering.ImageResourceProvider
@@ -36,7 +37,10 @@ import org.w3c.dom.Element
 public class ComposeImageResourceProvider : ImageResourceProvider {
     override fun loadImage(location: ImageResourceLocation, imageModifiers: ImageModifiers?): ImageResource {
         return when (location) {
-            is PathImageResourceLocation -> load(location.path, location.resolve(imageModifiers), imageModifiers)
+            is PathImageResourceLocation ->
+                load(location.path, location.resolve(imageModifiers), imageModifiers) { width, height ->
+                    pathVariant(location, width, height, imageModifiers)
+                }
             is UrlImageResourceLocation -> loadUrl(location.url, imageModifiers)
             // the path is resolved only here, so a relative path is kept as it is in the location
             is FileImageResourceLocation -> loadFile(location, imageModifiers)
@@ -63,25 +67,68 @@ public class ComposeImageResourceProvider : ImageResourceProvider {
             return ComposePainterImageResource(EmptyPainter, imageModifiers)
         }
         // the file is chosen by the user, so it can be any file: draw nothing instead of failing the draw
+        // only a class loader resource has `@WxH` size variants, as for legacy icons
         return try {
-            load(urlPath(url), resolved, imageModifiers)
+            load(urlPath(url), resolved, imageModifiers, variantLoader = null)
         } catch (e: Exception) {
             JewelLogger.getInstance("ComposeImageResourceProvider").warn("Cannot decode the image at $url", e)
             ComposePainterImageResource(EmptyPainter, imageModifiers)
         }
     }
 
-    private fun load(path: String, resolved: ResolvedImageResource, imageModifiers: ImageModifiers?): ImageResource =
+    /**
+     * The image at [path], read from [resolved]. [variantLoader] loads the `@WxH` size variants of an SVG image; `null`
+     * for an image without size variants.
+     */
+    private fun load(
+        path: String,
+        resolved: ResolvedImageResource,
+        imageModifiers: ImageModifiers?,
+        variantLoader: ((width: Int, height: Int) -> Painter?)?,
+    ): ImageResource =
         when (path.substringAfterLast(".").lowercase()) {
             "svg" ->
                 ComposePainterImageResource(
                     patchSvg(imageModifiers, resolved).decodeToSvgPainter(Density(1f)),
                     imageModifiers,
+                    variantLoader,
                 )
             // "xml" -> loader.loadData().decodeToImageVector()
             else -> ComposeBitmapImageResource(resolved.data.decodeToImageBitmap())
         }
 }
+
+/**
+ * The painter of the `@WxH` size variant of the SVG image at [location], or `null` if it does not exist. A dark variant
+ * without its own `_dark` file takes the light file, as the Swing renderer and the legacy icons do.
+ */
+private fun pathVariant(
+    location: PathImageResourceLocation,
+    width: Int,
+    height: Int,
+    imageModifiers: ImageModifiers?,
+): Painter? {
+    val path = SizeVariants.variantPath(location.path, width, height) ?: return null
+    val variant = PathImageResourceLocation(path, location.classLoader)
+    if (!variant.exists()) return null
+    return decodeVariant(path, imageModifiers) { variant.resolveOrBase(imageModifiers) }
+}
+
+/**
+ * The painter of the SVG image that [resolve] reads, patched for [imageModifiers], or `null` if it cannot be decoded.
+ */
+@Suppress("TooGenericExceptionCaught") // the decoders throw various exceptions for bad data
+private fun decodeVariant(
+    source: String,
+    imageModifiers: ImageModifiers?,
+    resolve: () -> ResolvedImageResource?,
+): Painter? =
+    try {
+        resolve()?.let { patchSvg(imageModifiers, it).decodeToSvgPainter(Density(1f)) }
+    } catch (e: Exception) {
+        JewelLogger.getInstance("ComposeImageResourceProvider").warn("Cannot decode the size variant at $source", e)
+        null
+    }
 
 /**
  * Reads the image at [url], picking its variant like [PathImageResourceLocation.resolve]: a stroked image prefers its

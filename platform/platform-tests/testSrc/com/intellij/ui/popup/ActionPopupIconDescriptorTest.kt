@@ -15,9 +15,9 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.imageIconDescriptor
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
-import com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
 import com.intellij.platform.icons.swing.ScalableSwingIcon
 import com.intellij.platform.icons.swing.createSwingIcon
+import com.intellij.platform.icons.swing.toIconDescriptor
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
@@ -69,9 +69,9 @@ class ActionPopupIconDescriptorTest {
 
     val icons = calcRawIcons(presentation)
 
-    val icon = assertIs<SwingIcon>(icons.first)
+    val icon = assertIs<ScalableSwingIcon>(icons.first)
     assertNull(icons.second)
-    assertSame(presentation.iconDescriptor, icon.iconDescriptor, "the popup row did not use the bridged descriptor")
+    assertSame(presentation.iconDescriptor, icon.toIconDescriptor(), "the popup row did not use the bridged descriptor")
   }
 
   @Test

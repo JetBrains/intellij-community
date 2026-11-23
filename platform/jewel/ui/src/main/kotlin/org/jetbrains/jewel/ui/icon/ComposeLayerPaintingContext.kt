@@ -15,6 +15,7 @@ import com.intellij.platform.icons.design.Color
 import com.intellij.platform.icons.design.px
 import com.intellij.platform.icons.filters.ColorFilter
 import com.intellij.platform.icons.impl.rendering.DefaultScalingContext
+import com.intellij.platform.icons.impl.rendering.nested
 import com.intellij.platform.icons.rendering.BitmapImageResource
 import com.intellij.platform.icons.rendering.DrawMode
 import com.intellij.platform.icons.rendering.ImageResource
@@ -67,7 +68,7 @@ public class ComposeLayerPaintingContext(
             slotHeight,
             overrideColorFilter ?: this.overrideColorFilter,
             alpha * this.alpha,
-            DefaultScalingContext(scaling.displayDensity, scaling.contextScale * scale),
+            scaling.nested(scale),
         )
     }
 
@@ -201,8 +202,9 @@ public class ComposeLayerPaintingContext(
         if (width == 0 || height == 0) return
         if (srcWidth == 0 || srcHeight == 0) return
         val targetSize = IntSize(width ?: image.width, height ?: image.height)
+        val painter = image.painterFor(targetSize.width, targetSize.height, scaling)
         drawScope.translate(x.toFloat(), y.toFloat()) {
-            with(image.painter) {
+            with(painter) {
                 draw(
                     Size(targetSize.width.toFloat(), targetSize.height.toFloat()),
                     alpha * this@ComposeLayerPaintingContext.alpha,
