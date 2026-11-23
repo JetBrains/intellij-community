@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
 
 internal object DestructuringRenameFactory {
     val renameToMatchParameterName = KotlinQuickFixFactory.IntentionBased { d: KaFirDiagnostic.DestructuringShortFormNameMismatch -> createFix(d.psi) }
@@ -32,7 +33,7 @@ internal object DestructuringRenameFactory {
 
     private fun KtDestructuringDeclarationEntry.hasNameMismatch(expectedName: Name): Boolean {
         val currentName = nameAsName ?: return false
-        return currentName.asString() != "_" && currentName != expectedName
+        return !isSingleUnderscore && currentName != expectedName
     }
 
     context(_: KaSession)
