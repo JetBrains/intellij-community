@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.options.CustomComponentExtension;
+import com.intellij.codeInspection.options.OptComponent;
 import com.intellij.codeInspection.options.OptCustom;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptString;
@@ -19,6 +20,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.text.JTextComponent;
+import java.util.List;
 
 @ApiStatus.Experimental
 public final class OptPaneUtils {
@@ -38,7 +40,23 @@ public final class OptPaneUtils {
     if (rootPane.equals(OptPane.EMPTY)) {
       throw new IllegalArgumentException("OptPane is not defined for " + data.getClass().getName());
     }
+    OptPane fallbackPane = data.getFallbackOptionsPane();
+    if (fallbackPane != null && !canRender(rootPane.components())) {
+      rootPane = fallbackPane;
+    }
     editOptions(project, data, rootPane, title, onSuccess);
+  }
+
+  private static boolean canRender(@NotNull List<? extends @NotNull OptComponent> components) {
+    for (OptComponent component : components) {
+      if (component instanceof OptCustom customCtl &&
+          //see com.intellij.codeInspection.ui.UiDslOptPaneRenderer.renderOptCell
+          !(CustomComponentExtension.find(customCtl.componentId()) instanceof CustomComponentExtensionWithSwingRenderer<?>)) {
+        return false;
+      }
+      if (!canRender(component.children())) return false;
+    }
+    return true;
   }
 
   /**

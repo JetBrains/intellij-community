@@ -69,6 +69,26 @@ class ModPlanOptionValues private constructor(values: Map<String, Any?>) {
     return with(option, lines.joinToString("\n"))
   }
 
+  /**
+   * A new answer about [askedKeys] replaces the earlier one, such as the answer of a multi-selector. The answers about the other keys stay.
+   *
+   * @param askedKeys  the keys that the question asked about
+   * @param chosenKeys the asked keys that were chosen
+   * @return a copy of these options in which [option] holds the other answered keys and [askedKeys]: the chosen ones, and the others as
+   * not chosen
+   */
+  fun withChosenKeys(option: ModPlanOption<String>, askedKeys: Collection<String>, chosenKeys: Collection<String>): ModPlanOptionValues {
+    val earlierChosenKeys = chosenKeys(option)
+    val lines = LinkedHashSet<String>()
+    for (key in answeredKeys(option)) {
+      if (key !in askedKeys) lines.add(if (key in earlierChosenKeys) key else NOT_CHOSEN + key)
+    }
+    for (key in askedKeys) {
+      lines.add(if (key in chosenKeys) key else NOT_CHOSEN + key)
+    }
+    return with(option, lines.joinToString("\n"))
+  }
+
   private fun keysOf(option: ModPlanOption<String>): Set<String> {
     return StringUtil.split(get(option), "\n").map { it.trim() }.filterTo(LinkedHashSet()) { it.isNotEmpty() }
   }

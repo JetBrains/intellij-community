@@ -4,6 +4,7 @@ package com.intellij.refactoring.modplan;
 import com.intellij.codeInspection.options.OptControl;
 import com.intellij.codeInspection.options.OptCustom;
 import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionContainer;
@@ -22,9 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -86,14 +86,25 @@ public sealed interface ModPlanQuestion {
                                 answers -> nextCommand.apply((ModPlanOptionValues)answers.getOptionController().getOption(Custom.ANSWERS_BIND_ID)));
   }
 
-  /** @return the options of the dialog of {@code question}: the question itself, and the answers so far, which its UI replaces */
+  /**
+   * @return the options of the dialog of {@code question}: the question itself, and the answers so far, which its UI replaces.
+   * The controls of the {@linkplain Custom#fallback() fallback form} bind to the ids of its options. The fallback form starts with the
+   * values that its {@linkplain Form#storage() storage} loads, as the dialog of a form does.
+   */
   private static @NotNull OptionContainer customAnswers(@NotNull Custom question, @NotNull ModPlanOptionValues currentValues) {
+    Form fallback = question.fallback();
     return new OptionContainer() {
       private @NotNull ModPlanOptionValues myValues = currentValues;
+      private boolean myFallbackValuesLoaded;
 
       @Override
       public @NotNull OptPane getOptionsPane() {
         return OptPane.pane(new OptCustom(Custom.COMPONENT_ID));
+      }
+
+      @Override
+      public @Nullable OptPane getFallbackOptionsPane() {
+        return fallback == null ? null : fallback.pane();
       }
 
       @Override
@@ -105,15 +116,40 @@ public sealed interface ModPlanQuestion {
         return switch (bindId) {
           case Custom.QUESTION_BIND_ID -> question;
           case Custom.ANSWERS_BIND_ID -> myValues;
-          default -> throw new IllegalArgumentException("Unknown option: " + bindId);
+          default -> {
+            Form form = fallbackForm(bindId);
+            yield Form.answerOf(form, bindId, fallbackValues(form));
+          }
         };
       }
 
       private void setValue(@NotNull String bindId, Object value) {
-        if (!Custom.ANSWERS_BIND_ID.equals(bindId) || !(value instanceof ModPlanOptionValues answers)) {
+        if (Custom.ANSWERS_BIND_ID.equals(bindId) && value instanceof ModPlanOptionValues answers) {
+          myValues = answers;
+        }
+        else {
+          Form form = fallbackForm(bindId);
+          myValues = Form.withAnswer(form, bindId, value, fallbackValues(form));
+        }
+      }
+
+      /** @return the answers so far, with the values that the storage of {@code form} loads at the first use of the fallback form */
+      private @NotNull ModPlanOptionValues fallbackValues(@NotNull Form form) {
+        if (!myFallbackValuesLoaded) {
+          myFallbackValuesLoaded = true;
+          Storage storage = form.storage();
+          if (storage != null) {
+            myValues = storage.load(myValues);
+          }
+        }
+        return myValues;
+      }
+
+      private @NotNull Form fallbackForm(@NotNull String bindId) {
+        if (fallback == null) {
           throw new IllegalArgumentException("Unknown option: " + bindId);
         }
-        myValues = answers;
+        return fallback;
       }
     };
   }
@@ -154,6 +190,17 @@ public sealed interface ModPlanQuestion {
     }
 
     /**
+     * @param option  the answer of the question
+     * @param yesText the text of the answer that sets {@code option} to true
+     * @param noText  the text of the answer that sets {@code option} to false
+     * @return the form of a yes-or-no question: a dropdown of the two answers, so that each answer is a full sentence
+     */
+    public static @NotNull Form yesNo(@NotNull ModPlanOption<Boolean> option, @Nls @NotNull String yesText, @Nls @NotNull String noText) {
+      OptPane pane = OptPane.pane(OptPane.dropdown(option.getId(), "", OptPane.option("true", yesText), OptPane.option("false", noText)));
+      return new Form(pane, List.of(option), null);
+    }
+
+    /**
      * @return the control of {@code option}: it binds to the id of the option and shows its description. A boolean option is a checkbox, a
      * text option an edit box, an enum option a dropdown
      */
@@ -182,21 +229,17 @@ public sealed interface ModPlanQuestion {
 
     /** The options of the dialog of a form: the controls of its pane bind to the ids of the options. */
     private static final class Answers implements OptionContainer {
-      private final @NotNull OptPane myPane;
-      private final @NotNull Map<String, ModPlanOption<?>> myOptionsById = new LinkedHashMap<>();
+      private final @NotNull Form myForm;
       private @NotNull ModPlanOptionValues myValues;
 
       private Answers(@NotNull Form form, @NotNull ModPlanOptionValues initialValues) {
-        myPane = form.pane();
-        for (ModPlanOption<?> option : form.options()) {
-          myOptionsById.put(option.getId(), option);
-        }
+        myForm = form;
         myValues = initialValues;
       }
 
       @Override
       public @NotNull OptPane getOptionsPane() {
-        return myPane;
+        return myForm.pane();
       }
 
       @Override
@@ -205,25 +248,78 @@ public sealed interface ModPlanQuestion {
       }
 
       private Object getAnswer(@NotNull String id) {
-        return myValues.get(optionOf(id));
+        return answerOf(myForm, id, myValues);
       }
 
       private void setAnswer(@NotNull String id, Object value) {
-        myValues = with(myValues, optionOf(id), value);
+        myValues = withAnswer(myForm, id, value, myValues);
       }
+    }
 
-      private @NotNull ModPlanOption<?> optionOf(@NotNull String id) {
-        ModPlanOption<?> option = myOptionsById.get(id);
-        if (option == null) {
-          throw new IllegalArgumentException("Unknown option: " + id);
-        }
-        return option;
+    /**
+     * @return the value of the control {@code id} of {@code form}: the chosen {@link Choice}s for a multi-selector, else the value of
+     * the option
+     */
+    private static @NotNull Object answerOf(@NotNull Form form, @NotNull String id, @NotNull ModPlanOptionValues values) {
+      ModPlanOption<?> option = form.optionOf(id);
+      if (form.pane().findControl(id) instanceof OptMultiSelector selector && option.getType() == String.class) {
+        @SuppressWarnings("unchecked") Set<String> keys = values.chosenKeys((ModPlanOption<String>)option);
+        return new ArrayList<>(ContainerUtil.filter(selector.elements(),
+                                                    element -> element instanceof Choice choice && keys.contains(choice.key())));
       }
+      return values.get(option);
+    }
 
-      private static <T> @NotNull ModPlanOptionValues with(@NotNull ModPlanOptionValues optionValues, @NotNull ModPlanOption<T> option, Object value) {
-        T typedValue = option.fromRaw(value);
-        return typedValue == null ? optionValues : optionValues.with(option, typedValue);
+    /**
+     * @return {@code values} with the value of the control {@code id} of {@code form}. A multi-selector answers about the keys of all its
+     * {@link Choice}s, as {@link ModPlanOptionValues#withChosenKeys} does, and keeps the answers about other keys of the option.
+     */
+    @SuppressWarnings("unchecked")
+    private static @NotNull ModPlanOptionValues withAnswer(@NotNull Form form, @NotNull String id, Object value,
+                                                           @NotNull ModPlanOptionValues values) {
+      ModPlanOption<?> option = form.optionOf(id);
+      if (form.pane().findControl(id) instanceof OptMultiSelector selector && option.getType() == String.class &&
+          value instanceof List<?> elements) {
+        List<String> askedKeys = ContainerUtil.mapNotNull(selector.elements(), element -> element instanceof Choice choice ? choice.key() : null);
+        List<String> chosenKeys = ContainerUtil.mapNotNull(elements, element -> element instanceof Choice choice ? choice.key() : null);
+        return values.withChosenKeys((ModPlanOption<String>)option, askedKeys, chosenKeys);
       }
+      return with(values, option, value);
+    }
+
+    private @NotNull ModPlanOption<?> optionOf(@NotNull String id) {
+      ModPlanOption<?> option = ContainerUtil.find(options, o -> o.getId().equals(id));
+      if (option == null) {
+        throw new IllegalArgumentException("Unknown option: " + id);
+      }
+      return option;
+    }
+
+    private static <T> @NotNull ModPlanOptionValues with(@NotNull ModPlanOptionValues optionValues, @NotNull ModPlanOption<T> option,
+                                                         Object value) {
+      T typedValue = option.fromRaw(value);
+      return typedValue == null ? optionValues : optionValues.with(option, typedValue);
+    }
+  }
+
+  /**
+   * An element of a multi-selector in a {@link Form}. The multi-selector binds to a text option, and the option keeps the keys of the
+   * chosen elements, one per line, see {@link ModPlanOptionValues#chosenKeys}.
+   *
+   * @param key           the key of the element in the option
+   * @param text          the text of the element
+   * @param secondaryText the additional text of the element, or null
+   */
+  record Choice(@NotNull @NonNls String key, @NotNull @Nls String text, @Nullable @Nls String secondaryText)
+    implements OptMultiSelector.OptElement {
+    @Override
+    public @NotNull String getText() {
+      return text;
+    }
+
+    @Override
+    public @Nullable String getSecondaryText() {
+      return secondaryText;
     }
   }
 
@@ -300,5 +396,16 @@ public sealed interface ModPlanQuestion {
      */
     @RequiresEdt
     @Nullable ModPlanOptionValues ask(@NotNull Project project, @NotNull ModPlanOptionValues currentValues);
+
+    /**
+     * A client without the Swing UI of {@link #ask}, such as LSP, shows this form instead. Batch execution takes the current values.
+     * The form starts with the values that its {@link Form#storage() storage} loads; the request gets them only after the user accepts
+     * the form.
+     *
+     * @return the form of some or all of {@link #options()}; null if such a client takes the current values
+     */
+    default @Nullable Form fallback() {
+      return null;
+    }
   }
 }

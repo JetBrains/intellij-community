@@ -262,7 +262,8 @@ class ModPlanRenameEngineTest : BasePlatformTestCase() {
         val form = question as ModPlanQuestion.Form
         val ids = form.options().map { it.id }
         // The engine asks the standard options of the rename for the target. The tests look at the questions of the fake provider.
-        if (ids != listOf(ModPlanRenameOptions.SEARCH_IN_COMMENTS.id) && ids != listOf(ModPlanRenameOptions.SEARCH_TEXT_OCCURRENCES.id)) {
+        val searchIds = setOf(ModPlanRenameOptions.SEARCH_IN_COMMENTS.id, ModPlanRenameOptions.SEARCH_TEXT_OCCURRENCES.id)
+        if (!searchIds.containsAll(ids)) {
           asked.add(ids)
         }
         form.options().fold(currentValues) { values, option ->

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.modplan.rename
 
+import com.intellij.codeInspection.options.OptMultiSelector
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.model.SymbolPointer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
@@ -9,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.modplan.ModPlan
@@ -128,7 +131,8 @@ internal fun addRelatedRenames(
   if (renamers.isEmpty()) return chainBuilder.passValue(elements)
   val questionsToAsk = renamers.filter { it.hasAnythingToRename() }.mapIndexed { index, renamer ->
     val elementKeys = renamer.elements.filter { renamer.getNewName(it) != null }.mapNotNull { ModPlanRenameOptions.keyOf(it) }
-    RelatedRenamesQuestion(elementKeys) { currentValues ->
+    val choices = renamer.elements.mapNotNull { element -> renamer.getNewName(element)?.let { relatedRenameChoice(element, it) } }
+    RelatedRenamesQuestion(elementKeys, renamer.dialogDescription, choices, renamer.isSelectedByDefault) { currentValues ->
       renamersOf(ModPlanChain.withOptionValues(request, currentValues), elements, searches)
         .filter { it.hasAnythingToRename() }.getOrNull(index)
     }
@@ -260,7 +264,13 @@ private fun elementsThatRenamersRenameWithChoice(
  * that it has no new name for, or an empty one, keeps its name.
  */
 private fun applyChoiceOfRelatedRenamesToRenamer(renamer: AutomaticRenamer, options: ModPlanOptionValues) {
-  if (!options.get(ModPlanRenameOptions.CHOOSE_RELATED)) return
+  val choosesRelated = if (options.has(ModPlanRenameOptions.CHOOSE_RELATED)) {
+    options.get(ModPlanRenameOptions.CHOOSE_RELATED)
+  }
+  else {
+    options.has(ModPlanRenameOptions.RELATED_RENAMES)
+  }
+  if (!choosesRelated) return
   val chosenRenames = ModPlanRenameOptions.relatedRenames(options.get(ModPlanRenameOptions.RELATED_RENAMES))
   for (element in renamer.elements) {
     if (renamer.getNewName(element) == null) continue
@@ -275,6 +285,18 @@ private fun applyChoiceOfRelatedRenamesToRenamer(renamer: AutomaticRenamer, opti
 }
 
 /**
+ * @return the element of the fallback form of [RelatedRenamesQuestion] that renames [element] to [newName]: its key is the line of
+ * [ModPlanRenameOptions.RELATED_RENAMES]; null if the element has no file
+ */
+@RequiresReadLock
+private fun relatedRenameChoice(element: PsiElement, newName: String): ModPlanQuestion.Choice? {
+  val line = ModPlanRenameOptions.relatedRename(element, newName) ?: return null
+  val oldName = (element as? PsiNamedElement)?.name.orEmpty()
+  return ModPlanQuestion.Choice(line, RefactoringBundle.message("modplan.rename.related.rename.0.to.1", oldName, newName),
+                                element.containingFile?.name)
+}
+
+/**
  * The choice of what one renamer renames, with the dialog of the legacy rename. The answer adds a line to
  * [ModPlanRenameOptions.RELATED_RENAMES] for every element of the renamer: its new name, or an empty one for an element that keeps its
  * name. A cancelled dialog renames none of them, as in the legacy rename, which goes on.
@@ -283,17 +305,40 @@ private fun applyChoiceOfRelatedRenamesToRenamer(renamer: AutomaticRenamer, opti
  * uses the usages of the searches of the chain, and searches again only if PSI changed since them.
  *
  * @property elementKeys the keys of the elements that the renamer suggests a new name for
+ * @property description the description of the dialog of the renamer, the label of the fallback form
+ * @property choices the suggested renames of the renamer, for the fallback form
+ * @property selectedByDefault whether the fallback form starts with all [choices] chosen, as [AutomaticRenamingDialog] does
  */
 private class RelatedRenamesQuestion(
   private val elementKeys: List<String>,
+  private val description: @NlsContexts.Label String,
+  private val choices: List<ModPlanQuestion.Choice>,
+  private val selectedByDefault: Boolean,
   private val findRenamer: (ModPlanOptionValues) -> AutomaticRenamer?,
 ) : ModPlanQuestion.Custom {
   override fun options(): List<ModPlanOption<*>> = listOf(ModPlanRenameOptions.CHOOSE_RELATED, ModPlanRenameOptions.RELATED_RENAMES)
 
   /** Answered if the answers decide about every element of the renamer, as another renamer answers the same options. */
   override fun isAnswered(currentValues: ModPlanOptionValues): Boolean {
-    return currentValues.has(ModPlanRenameOptions.CHOOSE_RELATED) &&
-           ModPlanRenameOptions.relatedRenames(currentValues.get(ModPlanRenameOptions.RELATED_RENAMES)).keys.containsAll(elementKeys)
+    val answeredElementKeys = currentValues.answeredKeys(ModPlanRenameOptions.RELATED_RENAMES).map { it.substringBeforeLast('	') }
+    return (currentValues.has(ModPlanRenameOptions.CHOOSE_RELATED) || currentValues.has(ModPlanRenameOptions.RELATED_RENAMES)) &&
+           answeredElementKeys.containsAll(elementKeys)
+  }
+
+  /** A multi-selector of the suggested renames: the chosen ones are made, the others keep their names. */
+  override fun fallback(): ModPlanQuestion.Form {
+    val selector = OptPane.multiSelector(ModPlanRenameOptions.RELATED_RENAMES.id, choices, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY)
+    val storage = if (selectedByDefault) { SelectAllChoices(choices.map { it.key }) } else { null }
+    return ModPlanQuestion.Form(OptPane.pane(OptPane.group(description, selector)), listOf(ModPlanRenameOptions.RELATED_RENAMES), storage)
+  }
+
+  /** The start values of the fallback form: every one of [keys] is chosen. Nothing is remembered between runs. */
+  private class SelectAllChoices(private val keys: List<String>) : ModPlanQuestion.Storage {
+    override fun load(optionValues: ModPlanOptionValues): ModPlanOptionValues =
+      optionValues.withChosenKeys(ModPlanRenameOptions.RELATED_RENAMES, keys, keys)
+
+    override fun store(answers: ModPlanOptionValues) {
+    }
   }
 
   @RequiresEdt

@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A container that contains inspection options, which can be read or written, somewhat similar to a 'JavaBean'.
@@ -64,5 +66,17 @@ public interface OptionContainer {
    */
   default @NotNull OptPane getOptionsPane() {
     return OptPane.EMPTY;
+  }
+
+  /**
+   * A client that cannot render {@link #getOptionsPane()} shows this pane instead.
+   * For example, a client without the renderer of an {@link OptCustom} component shows it.
+   * The controls of this pane bind to the options of the same container.
+   *
+   * @return the pane of plain controls to edit this container, or {@code null} if the container has no such pane
+   */
+  @ApiStatus.Experimental
+  default @Nullable OptPane getFallbackOptionsPane() {
+    return null;
   }
 }

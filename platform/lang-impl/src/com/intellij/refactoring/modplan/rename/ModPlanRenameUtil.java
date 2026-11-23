@@ -57,8 +57,8 @@ public final class ModPlanRenameUtil {
   /**
    * @param searchStorage keeps the answers about the search in comments and in text occurrences, as the rename dialog does; null if no
    *                      setting keeps them
-   * @return the standard questions of the rename of {@code target}, as the rename dialog shows them: the search in comments, and in text
-   * occurrences where they can be searched; then, if a factory renames something with the target, the general switch of the related
+   * @return the standard questions of the rename of {@code target}, as the rename dialog shows them: one form of the search in comments,
+   * and in text occurrences where they can be searched; then, if a factory renames something with the target, the general switch of the related
    * renames and one switch for the factories of one option, kept in their settings. Which elements a renamer renames, the engine asks
    * later, with one {@code RelatedRenamesQuestion} for each renamer
    */
@@ -66,10 +66,10 @@ public final class ModPlanRenameUtil {
   public static @NotNull @Unmodifiable List<ModPlanQuestion> renameQuestions(@NotNull PsiElement target,
                                                                             @Nullable ModPlanQuestion.Storage searchStorage) {
     List<ModPlanQuestion> questions = new ArrayList<>();
-    questions.add(ModPlanQuestion.Form.of(List.of(ModPlanRenameOptions.SEARCH_IN_COMMENTS), searchStorage));
-    if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(target)) {
-      questions.add(ModPlanQuestion.Form.of(List.of(ModPlanRenameOptions.SEARCH_TEXT_OCCURRENCES), searchStorage));
-    }
+    List<ModPlanOption<?>> searchOptions = TextOccurrencesUtil.isSearchTextOccurrencesEnabled(target)
+                                           ? List.of(ModPlanRenameOptions.SEARCH_IN_COMMENTS, ModPlanRenameOptions.SEARCH_TEXT_OCCURRENCES)
+                                           : List.of(ModPlanRenameOptions.SEARCH_IN_COMMENTS);
+    questions.add(ModPlanQuestion.Form.of(searchOptions, searchStorage));
     DumbService dumbService = DumbService.getInstance(target.getProject());
     List<AutomaticRenamerFactory> applicableFactories = ContainerUtil.filter(
       AutomaticRenamerFactory.EP_NAME.getExtensionList(), factory -> dumbService.isUsableInCurrentContext(factory) && factory.isApplicable(target));

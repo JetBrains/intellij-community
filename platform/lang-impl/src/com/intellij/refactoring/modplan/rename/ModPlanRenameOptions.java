@@ -51,13 +51,15 @@ public final class ModPlanRenameOptions {
     ModPlanOption.bool("renameRelated", false, RefactoringBundle.messagePointer("rename.related.elements.option.name"));
   /**
    * The answer of the choice of the related renames, such as the variables named after a renamed class: on, only the ones of
-   * {@link #RELATED_RENAMES} are made; off, every suggested one is, as the legacy rename does in a unit test.
+   * {@link #RELATED_RENAMES} are made; off, every suggested one is, as the legacy rename does in a unit test. With no explicit value, a
+   * value of {@link #RELATED_RENAMES} turns it on: the fallback form of a client such as LSP sets only that option.
    */
   public static final @NotNull ModPlanOption<Boolean> CHOOSE_RELATED =
     ModPlanOption.bool("chooseRelated", false, RefactoringBundle.messagePointer("automatic.renaming.dialog.rename.selected.title"));
   /**
    * The chosen related renames, one per line: {@link #relatedRename} of the element and its new name, empty for an element that keeps its
-   * name. Set by a custom question, see {@link #CHOOSE_RELATED}.
+   * name. A line with the prefix {@code -} also keeps the name, see {@link ModPlanOptionValues#withChosenKeys}. Set by a custom question,
+   * see {@link #CHOOSE_RELATED}.
    */
   public static final @NotNull ModPlanOption<String> RELATED_RENAMES =
     ModPlanOption.text("relatedRenames", "", RefactoringBundle.messagePointer("automatic.renamer.rename.to.column"));

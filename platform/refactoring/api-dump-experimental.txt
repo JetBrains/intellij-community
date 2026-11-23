@@ -320,14 +320,27 @@
 - hashCode():I
 - f:with(com.intellij.refactoring.modplan.ModPlanOption,java.lang.Object):com.intellij.refactoring.modplan.ModPlanOptionValues
 - f:withAnswers(com.intellij.refactoring.modplan.ModPlanOption,java.util.Collection,java.util.Collection):com.intellij.refactoring.modplan.ModPlanOptionValues
+- f:withChosenKeys(com.intellij.refactoring.modplan.ModPlanOption,java.util.Collection,java.util.Collection):com.intellij.refactoring.modplan.ModPlanOptionValues
 *f:com.intellij.refactoring.modplan.ModPlanOptionValues$Companion
 *:com.intellij.refactoring.modplan.ModPlanQuestion
 - s:askCommand(java.lang.String,com.intellij.refactoring.modplan.ModPlanQuestion,com.intellij.refactoring.modplan.ModPlanOptionValues,java.util.function.Function):com.intellij.modcommand.ModCommand
 - a:isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - storage():com.intellij.refactoring.modplan.ModPlanQuestion$Storage
+*f:com.intellij.refactoring.modplan.ModPlanQuestion$Choice
+- java.lang.Record
+- com.intellij.codeInspection.options.OptMultiSelector$OptElement
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- getSecondaryText():java.lang.String
+- getText():java.lang.String
+- f:hashCode():I
+- key():java.lang.String
+- secondaryText():java.lang.String
+- text():java.lang.String
 *:com.intellij.refactoring.modplan.ModPlanQuestion$Custom
 - com.intellij.refactoring.modplan.ModPlanQuestion
 - a:ask(com.intellij.openapi.project.Project,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
+- fallback():com.intellij.refactoring.modplan.ModPlanQuestion$Form
 - isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - a:options():java.util.List
 *f:com.intellij.refactoring.modplan.ModPlanQuestion$Form
@@ -341,6 +354,7 @@
 - options():java.util.List
 - pane():com.intellij.codeInspection.options.OptPane
 - storage():com.intellij.refactoring.modplan.ModPlanQuestion$Storage
+- s:yesNo(com.intellij.refactoring.modplan.ModPlanOption,java.lang.String,java.lang.String):com.intellij.refactoring.modplan.ModPlanQuestion$Form
 *:com.intellij.refactoring.modplan.ModPlanQuestion$Storage
 - a:load(com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
 - a:store(com.intellij.refactoring.modplan.ModPlanOptionValues):V
