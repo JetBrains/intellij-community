@@ -9,7 +9,7 @@ def download_file(name, url, sha256):
 kotlincRepositoryUrl = "https://cache-redirector.jetbrains.com/maven/ultimate-public"
 jpsPluginRepositoryUrl = "https://cache-redirector.jetbrains.com/maven/ultimate-public"
 
-kotlinCompilerCliVersion = "2.5.20-dev-5671"
+kotlinCompilerCliVersion = "2.5.255-dev-255"
 kotlincKotlinJpsPluginTestsVersion = "2.4.21"
 
 # The two pinned Build Tools API implementations of the Kotlin JPS builder tests; see KotlinJpsBuilderTestArtifacts
