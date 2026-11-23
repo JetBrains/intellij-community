@@ -16,6 +16,8 @@ import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.components.elements.PopupMenuUiComponent.Companion.POPUP_MENU_CLASS
+import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent.Companion.LUX_POPUP_CLASS
+import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent.Companion.POPUP_CLASS
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
@@ -23,18 +25,32 @@ import com.intellij.driver.sdk.waitForOne
 import org.intellij.lang.annotations.Language
 import javax.swing.JPopupMenu
 
+@Deprecated("Search the popup from its owner window or from UiRobot. Use WindowUiComponent.popup or UiRobot.popup.")
 fun Finder.popup(@Language("xpath") xpath: String? = null) =
   x(xpath ?: "//div[@class='HeavyWeightWindow']", PopupUiComponent::class.java)
 
+@Deprecated("Search the popup from its owner window or from UiRobot. Use WindowUiComponent.popupLux or UiRobot.popupLux.")
 fun Finder.popupLux(@Language("xpath") xpath: String? = null) =
   x(xpath ?: "//div[@class='LuxFrontendWindow']", PopupUiComponent::class.java)
 
+@Deprecated("Search the popups from their owner window. Use WindowUiComponent.popups.")
 fun Finder.popups(): UIComponentsList<UiComponent> = xx("//div[@class='HeavyWeightWindow']")
 
 @Deprecated("Search the menu from its owner window, from UiRobot or from the parent menu. " +
             "Use WindowUiComponent.popupMenu, UiRobot.popupMenu or PopupMenuUiComponent.popupMenu.")
 fun Finder.popupMenu(locator: QueryBuilder.() -> String = { byClass("MyMenu") }): PopupMenuUiComponent =
   onPopupMenu(locator)
+
+fun WindowUiComponent.popup(locator: QueryBuilder.() -> String = { byType(POPUP_CLASS) }): PopupUiComponent = onPopup(locator)
+
+fun UiRobot.popup(locator: QueryBuilder.() -> String = { byType(POPUP_CLASS) }): PopupUiComponent = onPopup(locator)
+
+fun WindowUiComponent.popupLux(locator: QueryBuilder.() -> String = { byType(LUX_POPUP_CLASS) }): PopupUiComponent =
+  onPopupLux(locator)
+
+fun UiRobot.popupLux(locator: QueryBuilder.() -> String = { byType(LUX_POPUP_CLASS) }): PopupUiComponent = onPopupLux(locator)
+
+fun WindowUiComponent.popups(): UIComponentsList<PopupUiComponent> = xx(PopupUiComponent::class.java) { byType(POPUP_CLASS) }
 
 fun WindowUiComponent.popupMenu(locator: QueryBuilder.() -> String = { byType(POPUP_MENU_CLASS) }): PopupMenuUiComponent =
   onPopupMenu(locator)
@@ -43,6 +59,10 @@ fun UiRobot.popupMenu(locator: QueryBuilder.() -> String = { byType(POPUP_MENU_C
 
 fun PopupMenuUiComponent.popupMenu(locator: QueryBuilder.() -> String = { byType(JPopupMenu::class.java) }): PopupMenuUiComponent =
   onPopupMenu(locator)
+
+private fun Finder.onPopup(locator: QueryBuilder.() -> String): PopupUiComponent = x(PopupUiComponent::class.java, locator)
+
+private fun Finder.onPopupLux(locator: QueryBuilder.() -> String): PopupUiComponent = x(PopupUiComponent::class.java, locator)
 
 private fun Finder.onPopupMenu(locator: QueryBuilder.() -> String): PopupMenuUiComponent =
   x(xQuery(locator), PopupMenuUiComponent::class.java)
@@ -150,6 +170,11 @@ open class PopupUiComponent(data: ComponentData) : WindowUiComponent(data) {
           rdTarget = RdTarget.BACKEND)
   private interface RemoteDriverHostService {
     fun hasBeControl(dataId: Int): Boolean
+  }
+
+  companion object {
+    const val POPUP_CLASS = "javax.swing.Popup\$HeavyWeightWindow"
+    const val LUX_POPUP_CLASS = "com.jetbrains.thinclient.lux.swing.LuxFrontendWindow"
   }
 }
 
