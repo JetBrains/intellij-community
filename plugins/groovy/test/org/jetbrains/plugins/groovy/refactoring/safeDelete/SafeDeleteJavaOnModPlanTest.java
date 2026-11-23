@@ -13,19 +13,23 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.modplan.ModPlan;
 import com.intellij.refactoring.modplan.ModPlanAnalysisResult;
 import com.intellij.refactoring.modplan.ModPlanCommandAction;
+import com.intellij.refactoring.modplan.ModPlanOption;
 import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.refactoring.modplan.ModPlanRequest;
 import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteRefactoring;
 import com.intellij.refactoring.modplan.safeDelete.impl.ModPlanSafeDeleteFlow;
+import com.intellij.refactoring.safeDelete.ModPlanJavaSafeDeleteOptions;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.junit5.RegistryKey;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -40,6 +44,19 @@ public class SafeDeleteJavaOnModPlanTest extends SafeDeleteJavaTest {
   @BeforeEach
   public void failOnLegacyFlow() {
     ModPlanSafeDeleteFlow.INSTANCE.failOnLegacyInTests(testDisposable);
+  }
+
+  @Override
+  protected @NotNull Map<ModPlanOption<?>, Object> defaultAnswers() {
+    return legacyUnitTestAnswers();
+  }
+
+  /**
+   * @return the answers of the legacy unit-test mode, which the ModPlan flows do not give by themselves: all the unused callees are
+   * deleted, and the parameter is deleted in all the callers that only pass it on
+   */
+  static @NotNull Map<ModPlanOption<?>, Object> legacyUnitTestAnswers() {
+    return Map.of(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, true, ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, true);
   }
 
   @Test
