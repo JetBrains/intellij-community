@@ -405,6 +405,13 @@ public final class DiffTree<OldNode, NewNode> {
     }
   }
 
+  private void ensureChunks() {
+    if (myOldChunk == null) {
+      myOldChunk = new char[CHUNK_LENGTH];
+      myNewChunk = new char[CHUNK_LENGTH];
+    }
+  }
+
   /**
    * Compares the old text at {@code oldStart} with the new text at {@code newStart}.
    * A long range is copied in chunks, because each char read of a rope text, such as a document text, walks the rope.
@@ -413,10 +420,7 @@ public final class DiffTree<OldNode, NewNode> {
     if (length < MIN_CHUNKED_LENGTH) {
       return CharArrayUtil.regionMatches(myOldText, oldStart, oldStart + length, myNewText, newStart, newStart + length);
     }
-    if (myOldChunk == null) {
-      myOldChunk = new char[CHUNK_LENGTH];
-      myNewChunk = new char[CHUNK_LENGTH];
-    }
+    ensureChunks();
     for (int offset = 0; offset < length; offset += CHUNK_LENGTH) {
       int chunkLength = Math.min(CHUNK_LENGTH, length - offset);
       CharArrayUtil.getChars(myOldText, myOldChunk, oldStart + offset, 0, chunkLength);
