@@ -90,15 +90,22 @@ class DefaultImportPerformer: ImportPerformer {
     logger.info("Installing plugins")
     val installedPlugins = PluginManagerCore.plugins.map { it.pluginId.idString }.toSet()
     val pluginsToInstall = pluginIds.filter { !installedPlugins.contains(it.idString) }.toSet()
+    if (pluginsToInstall.isEmpty()) {
+      logger.info("All required plugins are already installed: $pluginIds")
+      return PluginInstallationState.NoPlugins
+    }
 
     val installAndEnableTask = getInstallAndEnableTask(project, pluginsToInstall, false, false, pi.modalityState) {}
     installAndEnableTask.loadPlugins()
 
-    val plugins = installAndEnableTask.getPlugins()
-    val customPlugins = installAndEnableTask.getCustomPlugins().map { it.getDescriptor() as PluginNode }
-    if (plugins.isEmpty() && customPlugins.isEmpty()) return PluginInstallationState.NoPlugins
+    val resolvedPluginsToInstall = installAndEnableTask.getPlugins()
+    val customRepositoryPlugins = installAndEnableTask.getCustomPlugins().map { it.getDescriptor() as PluginNode }
+    if (resolvedPluginsToInstall.isEmpty()) {
+      logger.info("No plugins found for: $pluginsToInstall")
+      return PluginInstallationState.NoPlugins
+    }
     val restartRequiringPlugins = AtomicInteger()
-    val installStatus = doInstallPlugins(project, plugins, customPlugins, pi, restartRequiringPlugins)
+    val installStatus = doInstallPlugins(project, resolvedPluginsToInstall, customRepositoryPlugins, pi, restartRequiringPlugins)
 
     logger.info("Finished installing plugins, result: $installStatus")
     return if (restartRequiringPlugins.get() > 0) PluginInstallationState.RestartRequired else PluginInstallationState.Done
@@ -134,23 +141,23 @@ class DefaultImportPerformer: ImportPerformer {
 
 private suspend fun doInstallPlugins(
   project: Project?,
-  plugins: Collection<PluginDownloader>,
-  customPlugins: List<PluginNode>,
+  resolvedPluginsToInstall: Collection<PluginDownloader>,
+  customRepositoryPlugins: List<PluginNode>,
   pi: ProgressIndicator,
   restartRequiringPlugins: AtomicInteger): Boolean = coroutineScope {
   val scope = this
 
   fun createInstaller(finished: CompletableDeferred<Boolean>) =
-    object : PluginsAdvertiserDialogPluginInstaller(project, plugins, customPlugins, finished::complete) {
-      override fun downloadPlugins(plugins: MutableList<PluginNode>,
-                                   customPlugins: MutableCollection<PluginNode>,
+    object : PluginsAdvertiserDialogPluginInstaller(project, resolvedPluginsToInstall, customRepositoryPlugins, finished::complete) {
+      override fun downloadPlugins(pluginsToInstall: MutableList<PluginNode>,
+                                   customRepositoryPlugins: MutableCollection<PluginNode>,
                                    onSuccess: Runnable?,
                                    modalityState: ModalityState,
                                    function: Consumer<Boolean>?) {
         scope.launch {
           var success = false
           try {
-            success = doDownloadPlugins(plugins, customPlugins, modalityState, pi, restartRequiringPlugins)
+            success = doDownloadPlugins(pluginsToInstall, customRepositoryPlugins, modalityState, pi, restartRequiringPlugins)
           } finally {
             if (function != null) {
               withContext(Dispatchers.EDT + pi.modalityState.asContextElement()) {
@@ -178,13 +185,13 @@ private suspend fun doInstallPlugins(
 }
 
 private suspend fun doDownloadPlugins(
-  plugins: MutableList<PluginNode>,
-  customPlugins: MutableCollection<PluginNode>,
+  pluginsToInstall: MutableList<PluginNode>,
+  customRepositoryPlugins: MutableCollection<PluginNode>,
   modalityState: ModalityState,
   pi:ProgressIndicator,
   restartRequiringPlugins: AtomicInteger): Boolean {
   var success: Boolean
-  val operation = PluginInstallOperation(plugins, customPlugins, PluginEnabler.HEADLESS, pi)
+  val operation = PluginInstallOperation(pluginsToInstall, customRepositoryPlugins, PluginEnabler.HEADLESS, pi)
   operation.setAllowInstallWithoutRestart(true)
   withContext(Dispatchers.IO) {
     operation.run()

@@ -92,6 +92,9 @@ public class PluginsAdvertiserDialogPluginInstaller {
       }
       catch (IOException e) {
         LOG.error(e);
+        if (myFinishFunction != null) {
+          myFinishFunction.accept(false);
+        }
       }
     }
     else if (!pluginsToEnable.isEmpty()) {
@@ -102,6 +105,9 @@ public class PluginsAdvertiserDialogPluginInstaller {
       if (myFinishFunction != null) {
         myFinishFunction.accept(enabled);
       }
+    }
+    else if (myFinishFunction != null) {
+      myFinishFunction.accept(false);
     }
     return true;
   }
