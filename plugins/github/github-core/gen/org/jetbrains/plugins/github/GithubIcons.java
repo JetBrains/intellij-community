@@ -21,8 +21,9 @@ public final class GithubIcons {
   /** 16x16 */ public static final @NotNull Icon IssueClosed = load("org/jetbrains/plugins/github/issueClosed.svg", 1057810441, 0);
   /** 16x16 */ public static final @NotNull Icon IssueOpened = load("org/jetbrains/plugins/github/issueOpened.svg", 1115233377, 0);
   /** 16x16 */ public static final @NotNull Icon LocalBranch = load("org/jetbrains/plugins/github/localBranch.svg", -549668610, 2);
-  /** 16x16 */ public static final @NotNull Icon PullRequestDraft = load("org/jetbrains/plugins/github/pullRequestDraft.svg", -1818110574, 0);
-  /** 16x16 */ public static final @NotNull Icon PullRequestMerged = load("org/jetbrains/plugins/github/pullRequestMerged.svg", -1216177352, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestDraft = load("org/jetbrains/plugins/github/expui/pullRequestDraft.svg", "org/jetbrains/plugins/github/pullRequestDraft.svg", -1818110574, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestMerged = load("org/jetbrains/plugins/github/expui/pullRequestMerged.svg", "org/jetbrains/plugins/github/pullRequestMerged.svg", -1216177352, 0);
+  /** 30x30 */ public static final @NotNull Icon PullRequestMergedTimeline = load("org/jetbrains/plugins/github/pullRequestMergedTimeline.svg", 105786255, 0);
   /** 13x13 */ public static final @NotNull Icon PullRequestsToolWindow = load("org/jetbrains/plugins/github/expui/pullRequests.svg", "org/jetbrains/plugins/github/pullRequestsToolWindow.svg", -679752252, 2);
   /** 16x16 */ public static final @NotNull Icon Review = load("org/jetbrains/plugins/github/review.svg", -1588546357, 0);
   /** 16x16 */ public static final @NotNull Icon ReviewAccepted = load("org/jetbrains/plugins/github/reviewAccepted.svg", 536493489, 0);
