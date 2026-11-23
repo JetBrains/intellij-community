@@ -20,8 +20,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup id="Project Leak Detection" displayType="STICKY_BALLOON"
                        bundle="messages.DevLeakDetectionBundle" key="notification.group.name"/>
-    <registryKey key="dev.leak.detection.runOnWelcomeScreen" defaultValue="false"
-                 description="Auto-run disposed Project/Editor leak detection when the Welcome Screen is shown (internal builds only)."/>
     <registryKey key="dev.leak.detection.runOnIdle" defaultValue="true" restartRequired="true"
                  description="Run disposed Project/Editor leak detection without a GC after dev.leak.detection.idleDelayMinutes without user activity."/>
     <registryKey key="dev.leak.detection.idleDelayMinutes" defaultValue="30"
@@ -34,11 +32,6 @@
     <postStartupActivity implementation="com.intellij.dev.leakDetection.LeakCandidateProjectListener"/>
     <backgroundPostStartupActivity implementation="com.intellij.dev.leakDetection.IdleLeakDetectionStarter"/>
   </extensions>
-
-  <applicationListeners>
-    <listener class="com.intellij.dev.leakDetection.LeakDetectionWelcomeScreenListener"
-              topic="com.intellij.ide.AppLifecycleListener"/>
-  </applicationListeners>
 
   <actions resource-bundle="messages.DevLeakDetectionBundle">
     <action id="DetectProjectLeaks"
