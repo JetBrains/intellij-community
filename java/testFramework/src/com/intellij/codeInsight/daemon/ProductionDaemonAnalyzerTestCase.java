@@ -18,7 +18,10 @@ import java.util.List;
  * A {@link DaemonAnalyzerTestCase} which uses only production methods of the daemon and waits for its completion via e.g.
  * {@link com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl#waitForDaemonToFinish} methods
  * and prohibits explicitly manipulating daemon state via e.g. {@link CodeInsightTestFixtureImpl#instantiateAndRun}
+ *
+ * @deprecated For a JUnit 6 test, use {@link ProductionDaemonAnalyzerFixture#productionDaemonAnalyzerFixture}.
  */
+@Deprecated
 public abstract class ProductionDaemonAnalyzerTestCase extends DaemonAnalyzerTestCase {
   private String myMLProperty;
   @Override

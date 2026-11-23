@@ -25,7 +25,7 @@ public final class JavaTestUtil {
       var testDataPath = BazelTestUtil.getFileFromBazelRuntime(JAVA_TEST_DATA_LABEL).toAbsolutePath();
       return testDataPath.toAbsolutePath().toString();
     } else {
-      return PathManagerEx.getTestDataPath();
+      return PathManagerEx.getTestDataPath(JavaTestUtil.class);
     }
   }
 
