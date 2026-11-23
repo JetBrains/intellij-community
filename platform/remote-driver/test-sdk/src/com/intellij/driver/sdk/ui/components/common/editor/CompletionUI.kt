@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components.common.editor
 
+import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
 import com.intellij.driver.sdk.ui.components.elements.list
@@ -11,6 +12,13 @@ import kotlin.time.Duration.Companion.seconds
 fun IdeaFrameUI.completionList(@Language("xpath") xpath: String? = null, action: JListUiComponent.() -> Unit = {}): JListUiComponent {
   return list(xpath ?: "//div[@class='HeavyWeightWindow']//div[@class='LookupList']").apply(action)
 }
+
+/**
+ * The lookup list in a lightweight or a heavyweight popup, for example the name suggestions of a refactoring.
+ * [completionList] finds only a heavyweight one.
+ */
+fun Finder.lookupList(action: JListUiComponent.() -> Unit = {}): JListUiComponent =
+  list { byJavaClass($$"com.intellij.codeInsight.lookup.impl.LookupImpl$LookupList") }.apply(action)
 
 /** Waits until each of [fragments] is a part of at least one item of the list, and returns the items. On a timeout, the message names the missing fragments. */
 fun JListUiComponent.waitItemsContain(fragments: List<String>, timeout: Duration = 30.seconds): List<String> {

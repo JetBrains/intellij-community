@@ -164,6 +164,11 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     driver.invokeAction("ExpandAllRegions", component = component)
   }
 
+  /** Starts the rename refactoring of the element at the caret. */
+  fun renameElement() {
+    driver.invokeAction("RenameElement", component = component)
+  }
+
   fun scrollHorizontally(scrollTo: Int) {
     interact { editor.getScrollingModel().scrollHorizontally(scrollTo) }
   }
