@@ -293,17 +293,3 @@ fun Sdk.pythonInterpreterOrThrow(project: Project, forceRefresh: Boolean = false
 @Throws(InvalidSdkException::class)
 fun Sdk.pythonInterpreter(project: Project, forceRefresh: Boolean = false): PythonInterpreter = pythonInterpreterOrThrow(project, forceRefresh)
 
-/** [Sdk.pythonInterpreter] for a caller that can suspend. */
-@Deprecated("Handle a broken SDK", ReplaceWith("pythonInterpreterResultAsync(project, forceRefresh)"))
-suspend fun Sdk.pythonInterpreterAsync(project: Project, forceRefresh: Boolean = false): PythonInterpreter =
-  pythonInterpreterResultAsync(project, forceRefresh).getOr { throw InvalidSdkException(it.error.message) }
-
-/** The detected environment, see [NativePythonInterpreter.pythonEnvironment]. `null` for a target. */
-@Deprecated("Use detectedEnvironment", ReplaceWith("detectedEnvironment"))
-val PythonInterpreter.pythonEnvironment: PythonEnvironment?
-  get() = detectedEnvironment
-
-/** The detected Python binary, see [NativePythonInterpreter.pythonBinaryPath]. `null` for a target. */
-@Deprecated("Use detectedEnvironment", ReplaceWith("detectedEnvironment?.pythonBinaryPath"))
-val PythonInterpreter.pythonBinaryPath: PythonBinary?
-  get() = detectedEnvironment?.pythonBinaryPath
