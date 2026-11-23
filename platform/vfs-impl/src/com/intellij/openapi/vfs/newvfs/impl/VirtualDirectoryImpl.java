@@ -243,7 +243,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       VirtualFileSystemEntry existingChild = findInCachedChildren(name, isCaseSensitive);
       if (existingChild != null) return existingChild; // including NULL_VIRTUAL_FILE
       if (allChildrenLoaded()) {
-        return null;//all children loaded, but child not found -> not exist
+        //all children loaded, but child not found => cached as absent, as in findChildImpl(): refreshAndFindChild() checks the disk
+        return NULL_VIRTUAL_FILE;
       }
 
       PersistentFSImpl pFS = vfsData.owningPersistentFS();
