@@ -4,7 +4,6 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfoRt
@@ -206,7 +205,6 @@ private class HeaderColorfulPanel(component: JComponent, private val isColored: 
       isOpaque = false
       layout = BorderLayout()
       add(component, BorderLayout.CENTER)
-      repaintWhenProjectGradientOffsetChanged(this)
     }
 
   override fun getPreferredSize(): Dimension? {

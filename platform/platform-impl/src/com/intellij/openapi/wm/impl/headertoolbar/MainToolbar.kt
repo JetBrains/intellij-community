@@ -6,7 +6,6 @@ package com.intellij.openapi.wm.impl.headertoolbar
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
@@ -193,7 +192,6 @@ class MainToolbar(
         }
       }
     }
-    repaintWhenProjectGradientOffsetChanged(this)
   }
 
   fun calculatePreferredWidth(): Int {

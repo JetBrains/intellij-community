@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -210,7 +209,6 @@ internal class ToolbarFrameHeader(
         }
       }
     }
-    repaintWhenProjectGradientOffsetChanged(this)
 
     getAccessibleContext().accessibleName = "" // The main toolbar will provide the accessible name instead
   }

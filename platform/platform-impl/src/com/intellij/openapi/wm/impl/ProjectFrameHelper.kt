@@ -6,6 +6,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -149,6 +150,8 @@ abstract class ProjectFrameHelper internal constructor(
 
     val rootPane = IdeRootPane()
     rootPane.setProjectFrameTypeId(projectFrameTypeId)
+    // the Islands gradient also covers the frame below the header
+    repaintWhenProjectGradientOffsetChanged(rootPane)
     centerComponent = createCenterComponent()
     contentPane = createContentPane()
     rootPane.contentPane = contentPane
