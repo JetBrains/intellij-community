@@ -2,29 +2,25 @@
 package com.jetbrains.python.sdk.skeletons;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.python.sdk.backend.PythonInterpreterKt;
-import com.intellij.python.community.execService.BinaryToExec;
+import com.intellij.python.sdk.backend.PythonEnvironmentContext;
+import com.intellij.python.sdk.backend.PythonEnvironmentFacts;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.SdkExtKt;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
-import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +35,7 @@ import static com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import static com.intellij.openapi.util.NlsContexts.ProgressText;
 
 /**
- * Handles a refresh of SDK's skeletons.
+ * Handles a refresh of the skeletons of one environment, see {@link PythonEnvironmentContext}.
  * Does all the heavy lifting calling skeleton generator, managing blacklists, etc.
  * One-time, non-reusable instances.
  * <br/>
@@ -51,7 +47,8 @@ public final class PySkeletonRefresher {
 
   private final @Nullable Project myProject;
   private final @Nullable ProgressIndicator myIndicator;
-  private final @NotNull Sdk mySdk;
+  private final @NotNull PythonEnvironmentContext myContext;
+  private final @NotNull PythonEnvironmentFacts myFacts;
   private Path mySkeletonsPath;
   private List<String> myExtraSyspath;
   private final PySkeletonGenerator mySkeletonsGenerator;
@@ -71,7 +68,7 @@ public final class PySkeletonRefresher {
       Files.createDirectories(skeletonsPath);
     }
     catch (IOException e) {
-      throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", mySdk.getHomePath()), e);
+      throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", myContext.getKey().getPath()), e);
     }
 
     indicate(PyBundle.message("sdk.gen.launching.generator"));
@@ -98,39 +95,45 @@ public final class PySkeletonRefresher {
   }
 
   /**
-   * Creates a new object that refreshes skeletons of given SDK.
+   * Creates a new object that refreshes the skeletons of the environment of {@code context}.
    *
-   * @param sdk           a Python SDK
-   * @param binary        the Python of the environment, which the generator runs
-   * @param skeletonsPath if known; null means 'determine and create as needed'.
+   * @param project       the project whose daemon restarts after the refresh, or null for none
+   * @param facts         the version and the {@code sys.path} of the environment
+   * @param skeletonsPath if known; null means the directory of the environment, see {@link PythonEnvironmentContext#getSkeletonsDirectory()}
    * @param indicator     to report progress of long operations
+   * @param folder        the directory where the generator searches for binary modules, or null
    */
   public PySkeletonRefresher(@Nullable Project project,
-                             @NotNull Sdk sdk,
-                             @NotNull BinaryToExec binary,
+                             @NotNull PythonEnvironmentContext context,
+                             @NotNull PythonEnvironmentFacts facts,
                              @Nullable Path skeletonsPath,
                              @Nullable ProgressIndicator indicator,
                              @Nullable String folder)
     throws InvalidSdkException {
     myProject = project;
     myIndicator = indicator;
-    mySdk = sdk;
+    myContext = context;
+    myFacts = facts;
     mySkeletonsPath = skeletonsPath;
-    mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), mySdk, folder, myProject, binary);
+    mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), myContext, folder);
   }
 
   /**
-   * Creates if needed all path(s) used to store skeletons of its SDK.
+   * Creates the skeletons directory of the environment if needed.
    *
-   * @return path name of skeleton dir for the SDK, guaranteed to be already created.
+   * @return the skeletons directory, guaranteed to be already created.
    */
   public @NotNull Path getSkeletonsPath() throws InvalidSdkException {
     if (mySkeletonsPath == null) {
+      final Path directory = myContext.getSkeletonsDirectory();
+      if (directory == null) {
+        throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", myContext.getKey().getPath()));
+      }
       try {
-        mySkeletonsPath = SdkExtKt.createSkeletonsRootDirectory(mySdk);
+        mySkeletonsPath = Files.createDirectories(directory);
       }
       catch (IOException e) {
-        throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", mySdk.getHomePath()), e);
+        throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", myContext.getKey().getPath()), e);
       }
     }
     return Objects.requireNonNull(mySkeletonsPath);
@@ -152,24 +155,21 @@ public final class PySkeletonRefresher {
     }
   }
 
-  private static List<String> calculateExtraSysPath(final @NotNull Sdk sdk, final @Nullable Path skeletonsPath) {
-    final String skeletonsPathStr = skeletonsPath != null ? skeletonsPath.toString() : null;
-
-    final VirtualFile remoteSourcesDir = PythonSdkUtil.findAnyRemoteLibrary(sdk);
-    final String remoteSourcesStr = remoteSourcesDir != null ? remoteSourcesDir.getPath() : null;
-
-    return ContainerUtil.mapNotNull(PythonSdkUtil.getPythonClassRoots(sdk), file -> {
-      if (file.isInLocalFileSystem()) {
-        // We compare normalized paths, not raw strings, because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
-        final String path = file.getPath();
-        if (Files.exists(Path.of(path)) &&
-            !FileUtil.pathsEqual(path, skeletonsPathStr) &&
-            !PyTypeShed.INSTANCE.isInside(file) &&
-            !FileUtil.pathsEqual(path, remoteSourcesStr)) {
-          return path;
-        }
-      }
-      return null;
+  /**
+   * The local paths of {@code sys.path} of the environment that exist, without the skeletons and the local copies of the
+   * remote sources of a target.
+   */
+  private static List<String> calculateExtraSysPath(final @NotNull PythonEnvironmentFacts facts,
+                                                    final @Nullable Path skeletonsPath,
+                                                    final @Nullable Path remoteSourcesDirectory) {
+    final List<String> sysPath = facts.getSysPath();
+    if (sysPath == null) return List.of();
+    return ContainerUtil.filter(sysPath, path -> {
+      // We compare normalized paths, not raw strings, because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
+      final Path normalized = Path.of(path).normalize();
+      return Files.exists(normalized) &&
+             (skeletonsPath == null || !normalized.equals(skeletonsPath.normalize())) &&
+             (remoteSourcesDirectory == null || !normalized.startsWith(remoteSourcesDirectory.normalize()));
     });
   }
 
@@ -179,7 +179,7 @@ public final class PySkeletonRefresher {
     final PySkeletonGenerator.Builder builder = mySkeletonsGenerator
       .commandBuilder()
       .extraSysPath(getExtraSyspath());
-    final List<String> stdlibStubs = PyTypeShed.INSTANCE.findStdlibModuleNames(PythonSdkType.getLanguageLevelForSdk(mySdk));
+    final List<String> stdlibStubs = PyTypeShed.INSTANCE.findStdlibModuleNames(getLanguageLevel());
     if (!stdlibStubs.isEmpty()) {
       builder.extraArgs("--stdlib-stubs", String.join(",", stdlibStubs));
     }
@@ -188,42 +188,25 @@ public final class PySkeletonRefresher {
     return result;
   }
 
-  @RequiresBackgroundThread(generateAssertion = false)
-  public static void refreshSkeletonsOfSdk(@Nullable Project project,
-                                           @Nullable Path skeletonsPath,
-                                           @NotNull Sdk sdk,
-                                           @NotNull BinaryToExec binary)
-    throws InvalidSdkException, ExecutionException {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final String homePath = sdk.getHomePath();
-    if (skeletonsPath == null) {
-      LOG.info("Could not find skeletons path for SDK path " + homePath);
-    }
-    else {
-      // An update runs one generation for each environment at a time, see PythonEnvironments.
-      generateSkeletons(project, skeletonsPath, sdk, binary, indicator);
-    }
-  }
-
   /**
-   * {@link #refreshSkeletonsOfSdk} for a caller that has a project. The interpreter of {@code sdk} in {@code project} gives
-   * the Python to run.
+   * Generates the skeletons of the environment of {@code context} in its skeletons directory, see
+   * {@link PythonEnvironmentContext#getSkeletonsDirectory()}.
+   *
+   * @param project the project whose daemon restarts after the refresh, or null for none
    */
   @RequiresBackgroundThread(generateAssertion = false)
-  public static void refreshSkeletonsInProject(@NotNull Project project, @Nullable Path skeletonsPath, @NotNull Sdk sdk)
+  public static void refreshSkeletonsOfEnvironment(@Nullable Project project,
+                                                   @NotNull PythonEnvironmentContext context,
+                                                   @NotNull PythonEnvironmentFacts facts)
     throws InvalidSdkException, ExecutionException {
-    final BinaryToExec binary = PyTargetsSkeletonGeneratorKt.skeletonBinaryOf(PythonInterpreterKt.pythonInterpreterOrThrow(sdk, project, false));
-    refreshSkeletonsOfSdk(project, skeletonsPath, sdk, binary);
-  }
-
-  private static void generateSkeletons(@Nullable Project project,
-                                        @NotNull Path skeletonsPath,
-                                        @NotNull Sdk sdk,
-                                        @NotNull BinaryToExec binary,
-                                        @Nullable ProgressIndicator indicator)
-    throws InvalidSdkException, ExecutionException {
-    LOG.info("Refreshing skeletons for " + sdk.getHomePath());
-    final PySkeletonRefresher refresher = new PySkeletonRefresher(project, sdk, binary, skeletonsPath, indicator, null);
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (context.getSkeletonsDirectory() == null) {
+      LOG.info("Could not find skeletons path for " + context.getKey().getPath());
+      return;
+    }
+    // An update runs one generation for each environment at a time, see PythonEnvironments.
+    LOG.info("Refreshing skeletons for " + context.getKey().getPath());
+    final PySkeletonRefresher refresher = new PySkeletonRefresher(project, context, facts, null, indicator, null);
 
     changeGeneratingSkeletons(1);
     try {
@@ -271,7 +254,7 @@ public final class PySkeletonRefresher {
         if (PyNames.INIT_DOT_PY.equals(itemName) && isEmptyFile(item)) continue; // these are versionless
         if (PySkeletonGenerator.BLACKLIST_FILE_NAME.equals(itemName)) continue; // don't touch the blacklist
         if (PySkeletonGenerator.STATE_MARKER_FILE.equals(itemName)) continue;
-        if (PySkeletonUtil.getBuiltinsFileName(mySdk).equals(itemName)) {
+        if (PyBuiltinCache.getBuiltinsFileName(getLanguageLevel()).equals(itemName)) {
           continue;
         }
         final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(item);
@@ -324,9 +307,16 @@ public final class PySkeletonRefresher {
 
   private List<String> getExtraSyspath() {
     if (myExtraSyspath == null) {
-      myExtraSyspath = calculateExtraSysPath(mySdk, mySkeletonsPath);
+      myExtraSyspath = calculateExtraSysPath(myFacts, mySkeletonsPath, myContext.getRemoteSourcesDirectory());
     }
     return myExtraSyspath;
+  }
+
+  /** The language level of the version of the environment, or the default one when no version is known. */
+  private @NotNull LanguageLevel getLanguageLevel() {
+    final String version = myFacts.getVersion();
+    final LanguageLevel level = version != null ? LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(version) : null;
+    return level != null ? level : LanguageLevel.getDefault();
   }
 
   public @NotNull PySkeletonGenerator getGenerator() {

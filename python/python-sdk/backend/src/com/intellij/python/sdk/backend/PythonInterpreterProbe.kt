@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execute
@@ -20,9 +22,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.impl.asBinToExecuteImpl
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 /**
  * Reads the version and the `sys.path` of a Python environment by running its binary, see [PythonEnvironmentFacts].
@@ -44,22 +44,24 @@ object PythonInterpreterProbe {
   @RequiresReadLockAbsence(generateAssertion = false)
   fun probeLegacySdkBlocking(sdk: Sdk): PyResult<Unit> = runBlockingMaybeCancellable {
     val binary = sdk.asBinToExecuteImpl().getOr { return@runBlockingMaybeCancellable PyResult.failure(it.error) }
-    val facts = read(binary, sdk).getOr { return@runBlockingMaybeCancellable it }
+    val facts = read(binary).getOr { return@runBlockingMaybeCancellable it }
     PythonInterpreterDetails.writeLegacySdk(sdk, facts.version, facts.sysPath.orEmpty())
     PyResult.success(Unit)
   }
 
-  /** The facts of the environment that [binary] runs. [sdk] tells a target. */
-  internal suspend fun read(binary: BinaryToExec, sdk: Sdk): PyResult<PythonEnvironmentFacts> {
+  /** The facts of the environment that [binary] runs. A target gets only its version. */
+  internal suspend fun read(binary: BinaryToExec): PyResult<PythonEnvironmentFacts> {
     val version = ExecService().execute(binary, Args(PYTHON_VERSION_ARG), processOutputTransformer = ZeroCodeVersionStringTransformer)
       .getOr { return it }
-    if (sdk.sdkAdditionalData is PyTargetAwareAdditionalData) return PyResult.success(PythonEnvironmentFacts(version, null))
+    val path = when (binary) {
+      is BinOnEel -> binary.path
+      is BinOnTarget -> return PyResult.success(PythonEnvironmentFacts(version, null))
+    }
 
     val start = System.currentTimeMillis()
     val output = ExecService().executeHelper(binary, PyHelper(SYSPATH_HELPER)).getOr { return it }
-    LOG.info("Reading sys.path of ${sdk.homePath} took ${System.currentTimeMillis() - start} ms")
-    val eelDescriptor = Path.of(requireNotNull(sdk.homePath) { "No home path for $sdk" }).getEelDescriptor()
-    val sysPath = localSysPathOf(output.lines().filter { it.isNotBlank() }, eelDescriptor)
+    LOG.info("Reading sys.path of $path took ${System.currentTimeMillis() - start} ms")
+    val sysPath = localSysPathOf(output.lines().filter { it.isNotBlank() }, path.getEelDescriptor())
     return PyResult.success(PythonEnvironmentFacts(version, sysPath))
   }
 
@@ -74,7 +76,7 @@ internal class PythonEnvironmentProbeStep : PythonEnvironmentStep {
   override val awaited: Boolean get() = true
 
   override suspend fun update(context: PythonEnvironmentContext, facts: PythonEnvironmentFacts): PythonEnvironmentFacts =
-    when (val read = PythonInterpreterProbe.read(context.binary, context.sdk)) {
+    when (val read = PythonInterpreterProbe.read(context.binary)) {
       is Result.Success -> facts.copy(version = read.result.version ?: facts.version, sysPath = read.result.sysPath ?: facts.sysPath)
       is Result.Failure -> facts.copy(awaitedError = read.error)
     }
@@ -94,7 +96,7 @@ internal class PythonInterpreterFactsStep : PythonInterpreterUpdateStep {
     request: PythonInterpreterUpdateRequest,
     failure: (PyError) -> Unit,
   ): Boolean {
-    val facts = PythonEnvironments.getInstance().update(interpreter.sdk).getOr {
+    val facts = PythonEnvironments.getInstance().update(interpreter).getOr {
       failure(it.error)
       return true
     }
@@ -116,7 +118,7 @@ internal class PythonInterpreterBackgroundFactsStep : PythonInterpreterUpdateSte
     request: PythonInterpreterUpdateRequest,
     failure: (PyError) -> Unit,
   ): Boolean {
-    val facts = PythonEnvironments.getInstance().updateInBackground(interpreter.sdk).getOr {
+    val facts = PythonEnvironments.getInstance().updateInBackground(interpreter).getOr {
       failure(it.error)
       return true
     }

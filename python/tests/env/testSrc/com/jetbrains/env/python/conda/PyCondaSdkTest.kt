@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.sdk.backend.binaryPathString
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -106,19 +107,19 @@ internal class PyCondaSdkTest {
     val nonBaseEnv = condaEnvs.firstOrNull { it.envIdentity is PyCondaEnvIdentity.NamedEnv } ?: createCondaEnv()
 
     for (condaEnv in arrayOf(nonBaseEnv, baseEnv)) {
-      val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
+      val condaInterpreter = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
         moduleOrProject = ModuleOrProject.ProjectOnly(projectRule.project),
         condaIdentity = condaEnv.envIdentity,
         workingDirectory = projectRule.project.basePath?.toNioPathOrNull()!!,
-      ).getOrThrow().getSdkAPI()
+      ).getOrThrow()
       val request = LocalTargetEnvironmentRequest()
       val targetEnvironment = LocalTargetEnvironment(request)
 
       val commandLine = PythonScriptExecution().apply {
         pythonScriptPath = TargetEnvironmentFunction { script.path }
-      }.buildTargetedCommandLine(targetEnvironment, condaSdk, emptyList())
+      }.buildTargetedCommandLine(targetEnvironment, condaInterpreter, emptyList())
 
-      val sdkHomePath = Path.of(condaSdk.homePath!!)
+      val sdkHomePath = Path.of(condaInterpreter.binaryPathString)
       val execResult = targetEnvironment.createProcess(commandLine).getBareExecutionResult()
       Assert.assertTrue("Error: ${execResult.stdErr.decodeToString()}", execResult.stdErr.isEmpty())
       val envVarsAsJson = execResult.stdOut.decodeToString()

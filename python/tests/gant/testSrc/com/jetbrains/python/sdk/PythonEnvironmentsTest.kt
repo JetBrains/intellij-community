@@ -7,12 +7,15 @@ import com.intellij.python.sdk.backend.PythonEnvironmentFacts
 import com.intellij.python.sdk.backend.PythonEnvironmentKey
 import com.intellij.python.sdk.backend.PythonEnvironmentStep
 import com.intellij.python.sdk.backend.PythonEnvironments
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
@@ -29,6 +32,12 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class PythonEnvironmentsTest {
   @TestDisposable
   private lateinit var disposable: Disposable
+
+  private val projectFixture = projectFixture()
+
+  /** The interpreter of a new mock SDK. Each mock SDK has one home path, so all of them run one environment. */
+  private suspend fun mockInterpreter(): PythonInterpreter =
+    PythonMockSdk.create().pythonInterpreterResultAsync(projectFixture.get()).getOrThrow()
 
   /** The environments that [CountingStep] updated, in their order. */
   private val updated = CopyOnWriteArrayList<PythonEnvironmentKey>()
@@ -69,8 +78,8 @@ internal class PythonEnvironmentsTest {
 
   @Test
   fun `a background update runs after an awaited one and shares its facts`(): Unit = timeoutRunBlocking {
-    val first = PythonMockSdk.create()
-    val second = PythonMockSdk.create()
+    val first = mockInterpreter()
+    val second = mockInterpreter()
 
     val facts = PythonEnvironments.getInstance().updateInBackground(first).getOrThrow()
     PythonEnvironments.getInstance().updateInBackground(second).getOrThrow()
@@ -81,9 +90,9 @@ internal class PythonEnvironmentsTest {
   }
 
   @Test
-  fun `two SDKs of one environment share one update`(): Unit = timeoutRunBlocking {
-    val first = PythonMockSdk.create()
-    val second = PythonMockSdk.create()
+  fun `two interpreters of one environment share one update`(): Unit = timeoutRunBlocking {
+    val first = mockInterpreter()
+    val second = mockInterpreter()
     started = CompletableDeferred()
     release = CompletableDeferred()
 
@@ -104,10 +113,10 @@ internal class PythonEnvironmentsTest {
 
   @Test
   fun `requests one after another update each time`(): Unit = timeoutRunBlocking {
-    val sdk = PythonMockSdk.create()
+    val interpreter = mockInterpreter()
 
-    PythonEnvironments.getInstance().update(sdk)
-    PythonEnvironments.getInstance().update(sdk)
+    PythonEnvironments.getInstance().update(interpreter)
+    PythonEnvironments.getInstance().update(interpreter)
 
     assertThat(updated).hasSize(2)
   }

@@ -2,8 +2,6 @@
 package com.jetbrains.python.sdk.skeletons
 
 import com.intellij.execution.ExecutionException
-import com.intellij.python.sdk.backend.PythonInterpreter
-import org.jetbrains.annotations.ApiStatus
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetEnvironment
@@ -17,9 +15,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.pathSeparator
@@ -40,41 +35,42 @@ import com.intellij.python.community.execService.RelativePath
 import com.intellij.python.community.execService.impl.processLaunchers.uploadMeasureTime
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
+import com.intellij.python.sdk.backend.PythonEnvironmentContext
+import com.intellij.python.sdk.backend.PythonEnvironmentFacts
+import com.intellij.python.sdk.backend.PythonEnvironments
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.MessageError
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.PythonEnvUtil
-import com.jetbrains.python.sdk.asBinToExecute
 import com.jetbrains.python.sdk.eelNativeMode
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.div
 import kotlin.io.path.exists
+import kotlin.io.path.pathString
 import kotlin.io.path.setPosixFilePermissions
 import kotlin.time.Duration
 
-/** [binary] is the Python of the environment. The Eel builder runs it, so the skeletons need no interpreter of a project. */
+/** Generates the skeletons of the environment of [context] with its binary. It needs no interpreter of a project. */
 internal class PyTargetsSkeletonGenerator(
   skeletonPath: Path,
-  pySdk: Sdk,
+  context: PythonEnvironmentContext,
   currentFolder: String?,
-  project: Project?,
-  private val binary: BinaryToExec,
-) : PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
-  private val pyRequest: HelpersAwareTargetEnvironmentRequest = checkNotNull(
-    // TODO Get rid of the dependency on the default project
-    PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, project ?: ProjectManager.getInstance().defaultProject)
-  )
+) : PySkeletonGenerator(skeletonPath, context, currentFolder) {
+  private val binary: BinaryToExec = context.binary
+  private val pyRequest: HelpersAwareTargetEnvironmentRequest = context.newTargetRequest()
 
   private companion object Args {
     const val SKELETOR_DIR_ARG = "-d"
@@ -95,7 +91,7 @@ internal class PyTargetsSkeletonGenerator(
       EelBuilder(mySkeletonsPath)
     }
     else {
-      TargetedBuilder(mySdk, mySkeletonsPath)
+      TargetedBuilder(myContext, mySkeletonsPath)
     }
     if (Registry.`is`("python.skeleton.generator.use.process.pool", false)) {
       LOG.info("Using `--use-worker-process-pool` for skeleton generation")
@@ -106,10 +102,10 @@ internal class PyTargetsSkeletonGenerator(
   }
 
   /**
-   * Note that [mySdk] and [mySkeletonsPath] cannot be accessed directly in [TargetedBuilder]. In the other case [IllegalAccessError] is
+   * Note that [myContext] and [mySkeletonsPath] cannot be accessed directly in [TargetedBuilder]. In the other case [IllegalAccessError] is
    * thrown by access control according to [JVM specification](https://docs.oracle.com/javase/specs/jvms/se16/html/jvms-5.html#jvms-5.4.4).
    */
-  private inner class TargetedBuilder(private val sdk: Sdk, private val skeletonsLocalRootPath: Path) : Builder() {
+  private inner class TargetedBuilder(private val context: PythonEnvironmentContext, private val skeletonsLocalRootPath: Path) : Builder() {
     @RequiresBackgroundThread(generateAssertion = false)
     override fun runProcessWithLineOutputListener(listener: LineWiseProcessOutputListener): ProcessOutput = doRunProcess(listener)
 
@@ -185,7 +181,7 @@ internal class PyTargetsSkeletonGenerator(
         // XXX Make it automatic
         targetEnvironment.uploadVolumes.values.forEach { it.uploadMeasureTime(".", TargetProgressIndicator.EMPTY, "skeleton") }
 
-        val targetedCommandLine = generatorScriptExecution.buildTargetedCommandLine(targetEnvironment, sdk, emptyList())
+        val targetedCommandLine = generatorScriptExecution.buildTargetedCommandLine(targetEnvironment, context, emptyList())
         val process = targetEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
         val commandPresentation = targetedCommandLine.getCommandPresentation(targetEnvironment)
         val capturingProcessHandler = CapturingProcessHandler(process, targetedCommandLine.charset, commandPresentation)
@@ -303,11 +299,19 @@ internal class PyTargetsSkeletonGenerator(
 }
 
 /**
- * The Python of [interpreter] for [PySkeletonRefresher], for a caller that generates the skeletons of one interpreter.
+ * A refresher of the skeletons of the environment of [interpreter], for a caller that generates the skeletons of one
+ * interpreter, such as a quick fix. The version and `sys.path` are the facts that the project of [interpreter] keeps.
+ * [skeletonsPath], [indicator] and [folder] are as in [PySkeletonRefresher].
  *
- * @throws InvalidSdkException when the interpreter has no binary to run
+ * @throws InvalidSdkException when the interpreter names no environment or no binary
  */
 @ApiStatus.Internal
+@RequiresBackgroundThread(generateAssertion = false)
 @Throws(InvalidSdkException::class)
-fun skeletonBinaryOf(interpreter: PythonInterpreter): BinaryToExec =
-  interpreter.asBinToExecute().getOr { throw InvalidSdkException(it.error.message) }
+fun skeletonRefresherOf(interpreter: PythonInterpreter, skeletonsPath: Path?, indicator: ProgressIndicator?, folder: String?): PySkeletonRefresher {
+  val context = runBlockingMaybeCancellable { PythonEnvironments.getInstance().contextOf(interpreter) }
+    .getOr { throw InvalidSdkException(it.error.message) }
+  val facts = PythonInterpreterDetails.getInstance(interpreter.project).facts(interpreter)
+  val environmentFacts = PythonEnvironmentFacts(version = facts.version, sysPath = facts.sysPath.map { it.pathString })
+  return PySkeletonRefresher(interpreter.project, context, environmentFacts, skeletonsPath, indicator, folder)
+}

@@ -2,6 +2,7 @@
 package com.intellij.python.sdk.backend
 
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -14,12 +15,22 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.resolveEelMachine
 import com.intellij.platform.util.annotations.paths.OsPath
 import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.activationEnvironmentBlocking
+import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.impl.asBinToExecuteImpl
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.remoteInterpreterLocalRoots
+import com.jetbrains.python.sdk.skeletonsPath
+import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
@@ -40,14 +51,17 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @ApiStatus.Internal
 sealed interface PythonEnvironmentKey {
+  /** The path of the binary of the environment on its machine. */
+  val path: String
+
   /**
    * A binary at [path] on the eel machine [machine]. The path is the one inside the machine, and no [EelPath]: an eel
    * path keeps its descriptor, and two descriptors of one machine name one environment.
    */
-  data class Native(val machine: String, val path: @OsPath String) : PythonEnvironmentKey
+  data class Native(val machine: String, override val path: @OsPath String) : PythonEnvironmentKey
 
   /** A binary at [path] on the target configuration [targetId]. */
-  data class Target(val targetId: String, val path: FullPathOnTarget) : PythonEnvironmentKey
+  data class Target(val targetId: String, override val path: FullPathOnTarget) : PythonEnvironmentKey
 
   companion object {
     /**
@@ -110,18 +124,64 @@ data class PythonEnvironmentFacts(
   val backgroundError: Exception? = null,
 )
 
-/** What a step of an environment update gets, see [PythonEnvironmentStep]. */
+/**
+ * What a step of an environment update gets, see [PythonEnvironmentStep]. The backend builds it from an interpreter that
+ * runs the environment, see [PythonEnvironments.contextOf]. Several projects can run one environment: the context comes
+ * from the interpreter of the project that asked first.
+ */
 @ApiStatus.Internal
-class PythonEnvironmentContext(
+class PythonEnvironmentContext internal constructor(
   val key: PythonEnvironmentKey,
   /** The binary of the environment, for `ExecService`. */
   val binary: BinaryToExec,
+  /** The directory of the generated skeletons of the environment, or `null` when the environment has none. */
+  val skeletonsDirectory: Path?,
   /**
-   * The SDK of an interpreter that runs the environment, from the project that asked first. Only the skeleton generator
-   * needs it, for the skeletons path and the request of a target. It runs [binary].
+   * The local roots of the path mappings of a remote environment, or `null` for an environment that is not remote. The
+   * skeleton generation copies the remote `sys.path` there.
    */
-  val sdk: Sdk,
-)
+  val remoteRoots: List<String>?,
+  /** The directory of the local copies of the remote sources of a target, or `null` for an environment on no target. */
+  val remoteSourcesDirectory: Path?,
+  /** The paths that the user added to the interpreter on its target. */
+  val targetUserPaths: List<String>,
+  private val targetRequest: () -> HelpersAwareTargetEnvironmentRequest,
+  private val pythonOnTarget: (TargetedCommandLineBuilder) -> Unit,
+  private val activation: () -> Map<String, String>?,
+) {
+  /**
+   * A new request for the machine of the environment, which uploads the PyCharm helpers there. The target of a target
+   * environment comes from the project that asked first.
+   */
+  fun newTargetRequest(): HelpersAwareTargetEnvironmentRequest = targetRequest()
+
+  /** Sets the Python binary of the environment, and what its flavor needs, such as a conda activation, on [builder]. */
+  @RequiresBackgroundThread
+  fun configureBuilderToRunPython(builder: TargetedCommandLineBuilder): Unit = pythonOnTarget(builder)
+
+  /** The variables that the activation of the environment sets, such as `VIRTUAL_ENV`, or `null` when the read failed. */
+  @RequiresBackgroundThread
+  fun activationEnvironmentBlocking(): Map<String, String>? = activation()
+
+  override fun toString(): String = "PythonEnvironmentContext($key)"
+}
+
+/** The context of the environment of [interpreter] with the [key] and the [binary] of that environment. */
+private fun environmentContextOf(key: PythonEnvironmentKey, interpreter: PythonInterpreter, binary: BinaryToExec): PythonEnvironmentContext {
+  val sdk = interpreter.sdk
+  val targetData = sdk.targetAdditionalData
+  return PythonEnvironmentContext(
+    key = key,
+    binary = binary,
+    skeletonsDirectory = sdk.skeletonsPath,
+    remoteRoots = if (PythonSdkUtil.isRemote(sdk)) sdk.remoteInterpreterLocalRoots else null,
+    remoteSourcesDirectory = targetData?.let(::remoteSourcesLocalPath),
+    targetUserPaths = targetData?.pathsAddedByUser?.map { it.value }.orEmpty(),
+    targetRequest = { PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, interpreter.project) },
+    pythonOnTarget = { sdk.configureBuilderToRunPythonOnTarget(it) },
+    activation = { sdk.activationEnvironmentBlocking().successOrNull },
+  )
+}
 
 /**
  * One step of an environment update. The steps run in their order: the awaited steps first, then the others, see
@@ -193,44 +253,53 @@ class PythonEnvironments {
   private val permits = Semaphore(MAX_UPDATES)
 
   /**
-   * Runs the awaited steps for the environment of [sdk], unless an update that started after this call covers them,
-   * and returns its facts. The update runs with the binary of [sdk]: any SDK of the environment runs the same binary.
+   * Runs the awaited steps for the environment of [interpreter], unless an update that started after this call covers
+   * them, and returns its facts. The update runs with the binary of [interpreter]: any interpreter of the environment
+   * runs the same binary.
    */
-  suspend fun update(sdk: Sdk): PyResult<PythonEnvironmentFacts> =
-    run(sdk) { key, environment -> environment.awaited.runOrJoin { runSteps(key, sdk, environment, awaited = true) } }
+  suspend fun update(interpreter: PythonInterpreter): PyResult<PythonEnvironmentFacts> =
+    run(interpreter) { context, environment -> environment.awaited.runOrJoin { runSteps(context, environment, awaited = true) } }
 
   /**
-   * Runs the steps that are not awaited for the environment of [sdk], such as the skeleton generation, after an update
-   * of the awaited steps, and returns its facts. Like [update], it joins a run that started after this call.
+   * Runs the steps that are not awaited for the environment of [interpreter], such as the skeleton generation, after an
+   * update of the awaited steps, and returns its facts. Like [update], it joins a run that started after this call.
    */
-  suspend fun updateInBackground(sdk: Sdk): PyResult<PythonEnvironmentFacts> =
-    run(sdk) { key, environment ->
-      environment.awaited.runOrJoin { runSteps(key, sdk, environment, awaited = true) }
-      environment.background.runOrJoin { runSteps(key, sdk, environment, awaited = false) }
+  suspend fun updateInBackground(interpreter: PythonInterpreter): PyResult<PythonEnvironmentFacts> =
+    run(interpreter) { context, environment ->
+      environment.awaited.runOrJoin { runSteps(context, environment, awaited = true) }
+      environment.background.runOrJoin { runSteps(context, environment, awaited = false) }
     }
 
   /** The facts of the last update of the environment [key], or `null` when none ran. It does not wait. */
   fun factsIfReady(key: PythonEnvironmentKey): PythonEnvironmentFacts? = environments[key]?.facts
 
+  /**
+   * The context of the environment of [interpreter], for a caller that runs a step of its own, such as the generation of
+   * the skeletons of one module. A failure when [interpreter] names no environment or no binary.
+   */
+  suspend fun contextOf(interpreter: PythonInterpreter): PyResult<PythonEnvironmentContext> {
+    val key = PythonEnvironmentKey.of(interpreter) ?: return brokenConfiguration(interpreter)
+    val binary = interpreter.sdk.asBinToExecuteImpl().getOr { return PyResult.failure(it.error) }
+    return PyResult.success(environmentContextOf(key, interpreter, binary))
+  }
+
   private suspend fun run(
-    sdk: Sdk,
-    body: suspend (PythonEnvironmentKey, Environment) -> Unit,
+    interpreter: PythonInterpreter,
+    body: suspend (PythonEnvironmentContext, Environment) -> Unit,
   ): PyResult<PythonEnvironmentFacts> {
-    val key = PythonEnvironmentKey.of(sdk)
-              ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", sdk.name))
+    val key = PythonEnvironmentKey.of(interpreter) ?: return brokenConfiguration(interpreter)
     val environment = environments.computeIfAbsent(key) { Environment() }
-    body(key, environment)
+    val binary = interpreter.sdk.asBinToExecuteImpl().getOr { failure ->
+      LOG.warn("No update of $key: ${failure.error.message}")
+      return PyResult.success(environment.facts)
+    }
+    body(environmentContextOf(key, interpreter, binary), environment)
     return PyResult.success(environment.facts)
   }
 
-  private suspend fun runSteps(key: PythonEnvironmentKey, sdk: Sdk, environment: Environment, awaited: Boolean) {
+  private suspend fun runSteps(context: PythonEnvironmentContext, environment: Environment, awaited: Boolean) {
     val steps = PythonEnvironmentStep.EP_NAME.extensionList.filter { it.awaited == awaited }
     if (steps.isEmpty()) return
-    val binary = sdk.asBinToExecuteImpl().getOr { failure ->
-      LOG.warn("No update of $key: ${failure.error.message}")
-      return
-    }
-    val context = PythonEnvironmentContext(key, binary, sdk)
     // The steps read the environment for the IDE, and for no command that a user ran, so their processes are background
     // ones, also when a dialog waits for the facts.
     withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
@@ -242,6 +311,9 @@ class PythonEnvironments {
       }
     }
   }
+
+  private fun <T> brokenConfiguration(interpreter: PythonInterpreter): PyResult<T> =
+    PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", interpreter.sdk.name))
 
   companion object {
     private val LOG = logger<PythonEnvironments>()

@@ -11,7 +11,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.python.sdk.backend.PythonEnvironmentContext;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,19 +59,19 @@ public abstract class PySkeletonGenerator {
 
   private static final Gson ourGson = new GsonBuilder().create();
 
-  protected final @NotNull Sdk mySdk;
+  protected final @NotNull PythonEnvironmentContext myContext;
   protected final @Nullable String myCurrentFolder;
   protected final @NotNull Path mySkeletonsPath;
 
   /**
    * @param skeletonPath  path where skeletons should be generated
-   * @param pySdk         SDK
+   * @param context       the environment whose skeletons are generated
    * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
    */
   // TODO get rid of skeletonPath and currentFolder parameters and configure generator explicitly with builder
-  public PySkeletonGenerator(@NotNull Path skeletonPath, final @NotNull Sdk pySdk, final @Nullable String currentFolder) {
+  public PySkeletonGenerator(@NotNull Path skeletonPath, final @NotNull PythonEnvironmentContext context, final @Nullable String currentFolder) {
     mySkeletonsPath = skeletonPath;
-    mySdk = pySdk;
+    myContext = context;
     myCurrentFolder = currentFolder;
   }
 
@@ -211,7 +211,7 @@ public abstract class PySkeletonGenerator {
   }
 
   protected final @NotNull @NlsSafe String formatGeneratorFailureMessage(@NotNull ProcessOutput process) {
-    final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(mySdk.getHomePath());
+    final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(myContext.getKey());
     if (process.isTimeout()) {
       sb.append(": timed out.");
     }

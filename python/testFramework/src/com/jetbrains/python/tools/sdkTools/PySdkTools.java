@@ -2,6 +2,7 @@
 package com.jetbrains.python.tools.sdkTools;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +23,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
-import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import com.jetbrains.python.sdk.skeletons.PyTargetsSkeletonGeneratorKt;
 import com.jetbrains.python.sdk.targetsFacade.PyTargetsIntrospectionFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +121,8 @@ public final class PySdkTools {
 
     final SdkModificator modificator = sdk.getSdkModificator();
 
-    for (final String path : PyTargetsIntrospectionFacade.create(PythonInterpreterKt.pythonInterpreterOrThrow(sdk, project, false)).getInterpreterPaths()) {
+    final PythonInterpreter interpreter = PythonInterpreterKt.pythonInterpreterOrThrow(sdk, project, false);
+    for (final String path : PyTargetsIntrospectionFacade.create(interpreter).getInterpreterPaths()) {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {
@@ -133,8 +135,7 @@ public final class PySdkTools {
 
     commitChangesObeyWriteAction(modificator);
 
-    PySkeletonRefresher
-      .refreshSkeletonsInProject(project, Path.of(skeletonsPath), sdk);
+    PyTargetsSkeletonGeneratorKt.skeletonRefresherOf(interpreter, Path.of(skeletonsPath), null, null).regenerateSkeletons();
   }
 
   /**

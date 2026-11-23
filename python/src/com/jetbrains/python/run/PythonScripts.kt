@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.python.sdk.backend.PythonEnvironmentContext
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.activationEnvironmentBlocking
 import com.intellij.python.sdk.backend.configureBuilderToRunPythonOnTarget
@@ -46,9 +47,7 @@ import com.jetbrains.python.run.target.PathPythonHelpersMapping
 import com.jetbrains.python.run.target.tryResolveAsPythonHelperDir
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -73,20 +72,20 @@ fun PythonExecution.buildTargetedCommandLine(
   activateEnvironment = { PythonSdkType.applyActivationEnvironment(it, interpreter.activationEnvironmentBlocking().successOrNull) },
 )
 
-/** [buildTargetedCommandLine] for a caller that still holds an [Sdk]. */
+/** The command line that runs this execution with the Python of the environment of [context] in [targetEnvironment]. */
 @JvmOverloads
 @ApiStatus.Internal
 fun PythonExecution.buildTargetedCommandLine(
   targetEnvironment: TargetEnvironment,
-  sdk: Sdk,
+  context: PythonEnvironmentContext,
   interpreterParameters: List<String>,
   isUsePty: Boolean = false,
   runTool: PyRunToolParameters? = null,
 ): TargetedCommandLine = buildTargetedCommandLine(
   targetEnvironment, interpreterParameters, isUsePty, runTool,
-  configurePython = { sdk.configureBuilderToRunPythonOnTarget(it) },
-  userPaths = sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }.orEmpty(),
-  activateEnvironment = { PythonSdkType.patchEnvironmentVariablesForVirtualenv(it, sdk) },
+  configurePython = { context.configureBuilderToRunPython(it) },
+  userPaths = context.targetUserPaths,
+  activateEnvironment = { PythonSdkType.applyActivationEnvironment(it, context.activationEnvironmentBlocking()) },
 )
 
 private fun PythonExecution.buildTargetedCommandLine(

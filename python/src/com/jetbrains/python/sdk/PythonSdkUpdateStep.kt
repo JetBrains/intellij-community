@@ -2,10 +2,6 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
-import com.intellij.python.sdk.backend.isDisposed
-import com.intellij.python.sdk.backend.isOnTarget
-import com.intellij.python.sdk.backend.asItem
-import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -13,7 +9,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.python.sdk.backend.PythonEnvironmentContext
@@ -25,19 +20,20 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateStep
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
+import com.intellij.python.sdk.backend.asItem
 import com.intellij.python.sdk.backend.detectedEnvironment
+import com.intellij.python.sdk.backend.isDisposed
+import com.intellij.python.sdk.backend.isOnTarget
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.reloadPackagesBlocking
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher
 import com.jetbrains.python.sdk.targetsFacade.PyTargetsIntrospectionFacade
 import com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.Companion.REFRESH_SKELETONS_FAILED
 import com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.Companion.REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE
-import java.io.IOException
 
 // The steps of an interpreter update that this plugin gives, see PythonInterpreterUpdater. They run in the order of the
 // registration in the plugin descriptor.
@@ -73,7 +69,7 @@ internal class PythonSdkSourcesStep : PythonInterpreterUpdateStep {
 internal class PythonEnvironmentSkeletonsStep : PythonEnvironmentStep {
   override suspend fun update(context: PythonEnvironmentContext, facts: PythonEnvironmentFacts): PythonEnvironmentFacts =
     try {
-      val localRoots = coroutineToIndicator { indicator -> generateSkeletons(context.sdk, context.binary, indicator) }
+      val localRoots = coroutineToIndicator { indicator -> generateSkeletons(context, facts, indicator) }
       if (localRoots != null) facts.copy(sysPath = localRoots) else facts
     }
     catch (e: UnsupportedPythonSdkTypeException) {
@@ -87,25 +83,18 @@ internal class PythonEnvironmentSkeletonsStep : PythonEnvironmentStep {
     }
 
   /**
-   * Generates the skeletons of the environment of [sdk] with its Python [binary], and returns the local copies of the remote roots of a target,
-   * or `null` for a local environment, which reads its `sys.path` with the probe.
+   * Generates the skeletons of the environment of [context] with the [facts] of its awaited steps, and returns the local
+   * copies of the remote roots of a remote environment, or `null` for a local environment, which reads its `sys.path`
+   * with the probe.
    */
   @RequiresBackgroundThread
   @Throws(InvalidSdkException::class, ExecutionException::class)
-  private fun generateSkeletons(sdk: Sdk, binary: BinaryToExec, indicator: ProgressIndicator): List<String>? {
-    try {
-      sdk.createSkeletonsRootDirectory()
-    }
-    catch (e: IOException) {
-      logger<PythonEnvironmentSkeletonsStep>().warn("Failed to create skeletons directory ${sdk.skeletonsPath}", e)
-    }
-    // The SDK's own name and path, not its presentation: building one runs the interpreter, which is far too much
-    // work for a log line.
-    logger<PythonEnvironmentSkeletonsStep>().info("Performing background update of skeletons for SDK ${sdk.name} (${sdk.homePath})")
+  private fun generateSkeletons(context: PythonEnvironmentContext, facts: PythonEnvironmentFacts, indicator: ProgressIndicator): List<String>? {
+    logger<PythonEnvironmentSkeletonsStep>().info("Performing background update of skeletons for ${context.key.path}")
     indicator.text = PyBundle.message("python.sdk.updating.skeletons")
     // The skeletons belong to the environment, and no project: the daemon restart is up to each project.
-    PySkeletonRefresher.refreshSkeletonsOfSdk(null, sdk.skeletonsPath, sdk, binary)
-    return if (PythonSdkUtil.isRemote(sdk)) sdk.remoteInterpreterLocalRoots else null
+    PySkeletonRefresher.refreshSkeletonsOfEnvironment(null, context, facts)
+    return context.remoteRoots
   }
 }
 

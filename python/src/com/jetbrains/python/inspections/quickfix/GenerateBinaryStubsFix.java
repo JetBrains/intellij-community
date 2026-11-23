@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Lists;
-import com.jetbrains.python.sdk.skeletons.PyTargetsSkeletonGeneratorKt;
+import com.intellij.python.sdk.backend.PythonEnvironment;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreterKt;
-import com.intellij.python.community.execService.BinaryToExec;
+import com.jetbrains.python.sdk.skeletons.PyTargetsSkeletonGeneratorKt;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.execution.ExecutionException;
@@ -19,7 +21,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.Task.Backgroundable;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -31,7 +32,6 @@ import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportStatementBase;
-import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
@@ -44,6 +44,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 @ApiStatus.Internal
@@ -51,7 +52,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(GenerateBinaryStubsFix.class);
 
   private final String myQualifiedName;
-  private final Sdk mySdk;
+  private final @Nullable PythonInterpreter myInterpreter;
 
   /**
    * Generates pack of fixes available for some unresolved import statement.
@@ -81,7 +82,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
    */
   private GenerateBinaryStubsFix(final @NotNull PyImportStatementBase importStatementBase, final @NotNull String qualifiedName) {
     myQualifiedName = qualifiedName;
-    mySdk = getPythonSdk(importStatementBase);
+    myInterpreter = getPythonInterpreter(importStatementBase);
   }
 
   @Override
@@ -121,10 +122,10 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
+        if (myInterpreter == null) return;
 
         try {
-          final BinaryToExec binary = PyTargetsSkeletonGeneratorKt.skeletonBinaryOf(PythonInterpreterKt.pythonInterpreterOrThrow(mySdk, project, false));
-          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, mySdk, binary, null, null, folder);
+          final PySkeletonRefresher refresher = PyTargetsSkeletonGeneratorKt.skeletonRefresherOf(myInterpreter, null, null, folder);
 
           if (isFromGiRepository(myQualifiedName)) {
             if (!generateSkeletonsForGiRepository(refresher, indicator, folder)) return;
@@ -151,10 +152,12 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
   private boolean generateSkeletonsForGiRepository(@NotNull PySkeletonRefresher refresher,
                                                    @NotNull ProgressIndicator indicator,
                                                    @Nullable String currentBinaryFilesPath) throws InvalidSdkException, ExecutionException {
-    final String homePath = mySdk.getHomePath();
-    if (homePath == null) return false;
+    // The helper runs on this machine, so only a detected environment of a native interpreter can run it.
+    final PythonEnvironment environment = PythonInterpreterKt.getDetectedEnvironment(Objects.requireNonNull(myInterpreter));
+    if (environment == null) return false;
+    final String homePath = environment.getPythonBinaryPath().toString();
     GeneralCommandLine cmd = PythonHelper.EXTRA_SYSPATH.newCommandLine(homePath, Lists.newArrayList(myQualifiedName));
-    final Map<String, String> activation = SdkExtKt.activationEnvironmentBlocking(mySdk).getSuccessOrNull();
+    final Map<String, String> activation = PythonInterpreterExtKt.activationEnvironmentBlocking(myInterpreter).getSuccessOrNull();
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd,
                                                                new File(homePath).getParent(),
                                                                activation != null ? activation : Map.of(), 5000
@@ -203,8 +206,8 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
     return false;
   }
 
-  private static @Nullable Sdk getPythonSdk(final @NotNull PsiElement element) {
+  private static @Nullable PythonInterpreter getPythonInterpreter(final @NotNull PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    return PyModuleInterpreterReader.findModuleSdkIfReady(module);
+    return PyModuleInterpreterReader.findModuleInterpreterIfReady(module);
   }
 }
