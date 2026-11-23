@@ -11,6 +11,9 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Register a workspace service with `<workspaceService>` or `@Service(Service.Level.WORKSPACE)`
  * in a module that depends on `intellij.platform.frontend`.
+ * A shared module can also declare a workspace service when the UI of the service runs on the backend in split mode.
+ * A shared module can also declare a workspace service when it owns the UI classes of the service.
+ * An example is the file editor manager in `intellij.platform.ide.impl`.
  * Constructors of workspace services, listeners, and extensions can take a [ProjectWorkspace], a `CoroutineScope`, or both in that order.
  *
  * When the last project closes, the platform disposes its project services before the workspace services.
