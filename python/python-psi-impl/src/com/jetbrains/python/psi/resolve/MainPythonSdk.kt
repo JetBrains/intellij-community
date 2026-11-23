@@ -4,13 +4,11 @@ package com.jetbrains.python.psi.resolve
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.skeletonsDirectory
 
 /**
@@ -37,10 +35,6 @@ internal fun Module.pythonInterpreterIfReady(): PythonInterpreter? = findEvoPyPr
 /** [pythonInterpreterIfReady] for the module of this element. */
 internal fun PsiElement.pythonInterpreterIfReady(): PythonInterpreter? =
   ModuleUtilCore.findModuleForPsiElement(this)?.pythonInterpreterIfReady()
-
-/** The SDK of [pythonInterpreterIfReady], only for the deprecated `PythonSdkUtil.findPythonSdk`. */
-@Suppress("DEPRECATION")
-internal fun Module.pythonSdkIfReady(): Sdk? = pythonInterpreterIfReady()?.getSdkAPI()
 
 /** Whether the file of [element] is in the skeletons of the interpreter of its module, see [pythonInterpreterIfReady]. */
 internal fun isElementInSkeletons(element: PsiElement): Boolean {
