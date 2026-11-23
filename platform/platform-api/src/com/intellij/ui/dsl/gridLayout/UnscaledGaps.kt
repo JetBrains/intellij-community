@@ -14,6 +14,22 @@ interface UnscaledGaps {
   companion object {
     @JvmField
     val EMPTY: UnscaledGaps = EmptyGaps
+
+    // a private nested class, so that only the static initializer of UnscaledGaps initializes it
+    private object EmptyGaps : UnscaledGaps {
+      override val top: Int = 0
+      override val left: Int = 0
+      override val bottom: Int = 0
+      override val right: Int = 0
+
+      override fun copy(top: Int, left: Int, bottom: Int, right: Int): UnscaledGaps {
+        return UnscaledGapsImpl(top, left, bottom, right)
+      }
+
+      override fun toString(): String {
+        return "top = 0, left = 0, bottom = 0, right = 0"
+      }
+    }
   }
 
   val top: Int
@@ -49,21 +65,6 @@ fun UnscaledGaps.toJBEmptyBorder(): JBEmptyBorder {
 @ApiStatus.Internal
 fun UnscaledGaps.toInsets(): JBInsets {
   return JBInsets(top, left, bottom, right)
-}
-
-private object EmptyGaps : UnscaledGaps {
-  override val top: Int = 0
-  override val left: Int = 0
-  override val bottom: Int = 0
-  override val right: Int = 0
-
-  override fun copy(top: Int, left: Int, bottom: Int, right: Int): UnscaledGaps {
-    return UnscaledGapsImpl(top, left, bottom, right)
-  }
-
-  override fun toString(): String {
-    return "top = 0, left = 0, bottom = 0, right = 0"
-  }
 }
 
 private class UnscaledGapsImpl(private val _top: Int,

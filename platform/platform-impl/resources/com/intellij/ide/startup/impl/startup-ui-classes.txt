@@ -8575,7 +8575,7 @@ com.intellij.openapi.application.LambdaToRunnable
 com.intellij.openapi.application.RunnableToLambda
 com.intellij.openapi.Disposable
 com.intellij.openapi.wm.impl.InternalDecorator
-com.intellij.ui.dsl.gridLayout.EmptyGaps
+com.intellij.ui.dsl.gridLayout.UnscaledGaps$Companion$EmptyGaps
 com.intellij.ui.dsl.gridLayout.UnscaledGapsImpl
 com.intellij.ui.dsl.gridLayout.UnscaledGapsXImpl
 com.intellij.util.WalkingState
@@ -8585,8 +8585,8 @@ org.h2.mvstore.SingleFileStore
 tools.jackson.core.io.NumberInput
 com.intellij.core.rwmutex.WritePermit
 com.intellij.platform.locking.impl.NestedLocksThreadingSupportKt
-com.intellij.ui.dsl.gridLayout.EmptyGapsX
-com.intellij.ui.dsl.gridLayout.EmptyGapsY
+com.intellij.ui.dsl.gridLayout.UnscaledGapsX$Companion$EmptyGapsX
+com.intellij.ui.dsl.gridLayout.UnscaledGapsY$Companion$EmptyGapsY
 com.intellij.ui.dsl.gridLayout.UnscaledGapsYImpl
 com.intellij.ui.dsl.gridLayout.impl.BaselineData
 com.intellij.ui.dsl.gridLayout.impl.Cell

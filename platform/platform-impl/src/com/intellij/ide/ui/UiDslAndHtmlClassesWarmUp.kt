@@ -75,7 +75,7 @@ internal val UI_DSL_AND_HTML_CLASS_NAMES: List<String> = classNames(
 ) + classNames(
   "com.intellij.ui.dsl.gridLayout.",
   "GridLayout", "GridLayoutComponentProperty", "Constraints", "HorizontalAlign", "VerticalAlign", "UnscaledGapsKt", "UnscaledGapsImpl",
-  "EmptyGaps", "UnscaledGapsXKt", "UnscaledGapsXImpl", "EmptyGapsX", "UnscaledGapsYKt", "UnscaledGapsYImpl", "EmptyGapsY",
+  "UnscaledGapsXKt", "UnscaledGapsXImpl", "UnscaledGapsYKt", "UnscaledGapsYImpl",
 ) + classNames(
   "com.intellij.ui.dsl.gridLayout.builders.", "RowsGridBuilder",
 ) + classNames(
