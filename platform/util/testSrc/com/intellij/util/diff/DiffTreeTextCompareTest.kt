@@ -37,6 +37,36 @@ class DiffTreeTextCompareTest {
   }
 
   @Test
+  fun `a duplicated child keeps the old node at its old offset`() {
+    val oldString = "first;dup;last;"
+    val newString = "first;dup;dup;last;"
+
+    val events = diff(flat(oldString), CountingText(oldString), flat(newString), CountingText(newString))
+
+    assertEquals(listOf("INSERTED: item at 2"), events)
+  }
+
+  @Test
+  fun `a deleted duplicate child keeps the first old node at its old offset`() {
+    val oldString = "first;dup;dup;last;"
+    val newString = "first;dup;last;"
+
+    val events = diff(flat(oldString), CountingText(oldString), flat(newString), CountingText(newString))
+
+    assertEquals(listOf("DELETED: item dup; at 10"), events)
+  }
+
+  @Test
+  fun `a child inserted before a node keeps the children of the shifted node`() {
+    val old = classes("A" to "{x;}")
+    val new = classes("B" to "{}", "A" to "{x;}")
+
+    val events = diff(old, CountingText(old.text), new, CountingText(new.text))
+
+    assertEquals(listOf("INSERTED: class at 0"), events)
+  }
+
+  @Test
   fun `a replaced child before a changed child of the same type keeps the changed child`() {
     val old = parts("open" to listOf("{"), "decl" to listOf("int a", "=1;"), "ws" to listOf(" "), "decl" to listOf("int b", "=a;"), "close" to listOf("}"))
     val new = parts("open" to listOf("{"), "expr" to listOf("x;"), "ws" to listOf(" "), "decl" to listOf("int b", "=;"), "close" to listOf("}"))
@@ -45,6 +75,18 @@ class DiffTreeTextCompareTest {
 
     assertEquals(listOf("REPLACED: leaf =;", "REPLACED: expr"), events)
   }
+}
+
+/** Builds a root with one item for each `;`-terminated part of [text], and one leaf in each item. The type of a leaf holds its text. */
+private fun flat(text: String): Node {
+  val items = ArrayList<Node>()
+  var start = 0
+  while (start < text.length) {
+    val end = text.indexOf(';', start) + 1
+    items.add(Node("item", start, end, text, listOf(Node("leaf ${text.substring(start, end)}", start, end, text))))
+    start = end
+  }
+  return Node("root", 0, text.length, text, items)
 }
 
 /** Builds a root with one child of each type in [parts], and one leaf for each text of a child. The type of a leaf holds its text. */
@@ -56,6 +98,28 @@ private fun parts(vararg parts: Pair<String, List<String>>): Node {
     val childStart = start
     val leaves = leafTexts.map { leafText -> Node("leaf $leafText", start, start + leafText.length, text).also { start += leafText.length } }
     children.add(Node(type, childStart, start, text, leaves))
+  }
+  return Node("root", 0, text.length, text, children)
+}
+
+/**
+ * Builds a root with one class for each name and body in [classes], like `class A{x;}`.
+ * A class has an empty modifier list, a keyword leaf, a name leaf, and a body with one leaf.
+ */
+private fun classes(vararg classes: Pair<String, String>): Node {
+  val text = classes.joinToString("") { (name, body) -> "class $name$body" }
+  var start = 0
+  val children = classes.map { (name, body) ->
+    val classStart = start
+    val nameStart = classStart + "class ".length
+    val bodyStart = nameStart + name.length
+    start = bodyStart + body.length
+    Node("class", classStart, start, text, listOf(
+      Node("modifiers", classStart, classStart, text, emptyList()),
+      Node("leaf class ", classStart, nameStart, text),
+      Node("leaf $name", nameStart, bodyStart, text),
+      Node("body", bodyStart, start, text, listOf(Node("leaf $body", bodyStart, start, text))),
+    ))
   }
   return Node("root", 0, text.length, text, children)
 }
@@ -84,11 +148,11 @@ private fun diff(oldRoot: Node, oldText: CountingText, newRoot: Node, newText: C
     }
 
     override fun nodeDeleted(oldParent: Node, oldNode: Node) {
-      events.add("DELETED: ${oldNode.type}")
+      events.add("DELETED: ${oldNode.type} ${oldNode.text} at ${oldNode.start}")
     }
 
     override fun nodeInserted(oldParent: Node, newNode: Node, pos: Int) {
-      events.add("INSERTED: ${newNode.type}")
+      events.add("INSERTED: ${newNode.type} at $pos")
     }
   }
   DiffTree.diff(Structure(oldRoot, oldText), Structure(newRoot, newText), Comparator, builder, oldText)

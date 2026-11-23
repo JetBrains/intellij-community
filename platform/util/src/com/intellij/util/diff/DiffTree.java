@@ -38,6 +38,11 @@ public final class DiffTree<OldNode, NewNode> {
   private int myMatchedOldEnd;
   private int myMatchedShift;
 
+  /** The old and the new root texts are equal up to this offset. It grows only when a node asks for it. */
+  private int myEqualPrefix;
+  /** The equal prefix ends at {@code myEqualPrefix}: the next chars differ, or one text ends there. */
+  private boolean myPrefixEnded;
+
   private DiffTree(@NotNull FlyweightCapableTreeStructure<OldNode> oldTree,
                    @NotNull FlyweightCapableTreeStructure<NewNode> newTree,
                    @NotNull ShallowNodeComparator<? super OldNode, ? super NewNode> comparator,
@@ -137,10 +142,10 @@ public final class DiffTree<OldNode, NewNode> {
     }
     else {
       int minSize = Math.min(oldChildrenSize, newChildrenSize);
-      int suffixLength = match(oldChildren, oldChildrenSize - 1, newChildren, newChildrenSize - 1, level, -1, minSize);
+      int suffixLength = match(oldNode, oldChildren, oldChildrenSize - 1, newNode, newChildren, newChildrenSize - 1, level, -1, minSize);
       // for equal size old and new children we have to compare one element less because it was already checked in (unsuccessful) suffix match
       int maxPrefixLength = minSize - suffixLength - (oldChildrenSize == newChildrenSize && suffixLength < minSize ? 1 : 0);
-      int prefixLength = match(oldChildren, 0, newChildren, 0, level, 1, maxPrefixLength);
+      int prefixLength = match(oldNode, oldChildren, 0, newNode, newChildren, 0, level, 1, maxPrefixLength);
 
       if (oldChildrenSize == newChildrenSize && suffixLength + prefixLength == oldChildrenSize) {
         result = CompareResult.EQUAL;
@@ -299,8 +304,10 @@ public final class DiffTree<OldNode, NewNode> {
    * tries to match as many nodes as possible from the beginning (if step=1) of from the end (if step =-1)
    * returns number of nodes matched
    */
-  private int match(OldNode[] oldChildren,
+  private int match(@NotNull OldNode oldParent,
+                    OldNode[] oldChildren,
                     int oldIndex,
+                    @NotNull NewNode newParent,
                     NewNode[] newChildren,
                     int newIndex,
                     int level,
@@ -314,6 +321,10 @@ public final class DiffTree<OldNode, NewNode> {
       CompareResult c11 = looksEqual(oldChild, newChild);
 
       if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
+        if (step < 0 && isShiftedInEqualPrefix(oldParent, oldChild, newParent, newChild)) {
+          // the prefix match keeps the child at the same offset
+          break;
+        }
         c11 = drillDownIfTextMatches(oldChild, newChild, level);
         assert c11 != CompareResult.DRILL_DOWN_NEEDED;
       }
@@ -323,6 +334,41 @@ public final class DiffTree<OldNode, NewNode> {
       delta += step;
     }
     return delta * step;
+  }
+
+  /**
+   * Returns true if the old and the new child have different offsets, the old and the new parent start at the same offset,
+   * and the old or the new child ends in the equal prefix of the root texts.
+   * In a parent with a shift, the prefix match cannot keep a child at its offset.
+   */
+  private boolean isShiftedInEqualPrefix(@NotNull OldNode oldParent,
+                                         @NotNull OldNode oldChild,
+                                         @NotNull NewNode newParent,
+                                         @NotNull NewNode newChild) {
+    int oldStart = myOldTree.getStartOffset(oldChild) - myOldTreeStart;
+    int newStart = myNewTree.getStartOffset(newChild) - myNewTreeStart;
+    if (oldStart == newStart) return false;
+    if (myOldTree.getStartOffset(oldParent) - myOldTreeStart != myNewTree.getStartOffset(newParent) - myNewTreeStart) return false;
+    int oldEnd = myOldTree.getEndOffset(oldChild) - myOldTreeStart;
+    int newEnd = myNewTree.getEndOffset(newChild) - myNewTreeStart;
+    return isInEqualPrefix(Math.min(oldEnd, newEnd));
+  }
+
+  /**
+   * Returns true if the text up to {@code end} is in the equal prefix of the root texts.
+   * Extends the equal prefix up to {@code end} if necessary.
+   */
+  private boolean isInEqualPrefix(int end) {
+    int textEnd = Math.min(myOldText.length(), myNewText.length());
+    while (myEqualPrefix < end && !myPrefixEnded) {
+      if (myEqualPrefix == textEnd || myOldText.charAt(myEqualPrefix) != myNewText.charAt(myEqualPrefix)) {
+        myPrefixEnded = true;
+      }
+      else {
+        myEqualPrefix++;
+      }
+    }
+    return end <= myEqualPrefix;
   }
 
   /**
