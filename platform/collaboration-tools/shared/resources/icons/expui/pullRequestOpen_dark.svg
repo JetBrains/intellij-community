@@ -1,11 +1,9 @@
 <!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<svg fill="none" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-  <g stroke="#57965C" stroke-width="1.11">
-    <circle transform="scale(1,-1)" cx="3.97" cy="-12.4" r="2.22"/>
-    <circle transform="scale(1,-1)" cx="3.91" cy="-3.58" r="2.22"/>
-    <path d="m8.07 3.62h1.8c1.23 0 2.22 0.995 2.22 2.22v4.32"/>
-    <path d="m3.97 9.64v-3.73" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle transform="scale(1,-1)" cx="12.1" cy="-12.4" r="2.22"/>
-    <path d="m10.1 5.87-2.22-2.22 2.22-2.22" stroke-linecap="round"/>
-  </g>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12.25" cy="12" r="2" stroke="#57965C" color-stroke-key="icon-green-stroke"/>
+<path d="M12.25 10L12.25 5.6C12.25 4.716 11.534 4 10.65 4L8 4" stroke="#57965C" color-stroke-key="icon-green-stroke"/>
+<path d="M9.75 6L7.75 4L9.75 2" stroke="#57965C" color-stroke-key="icon-green-stroke" stroke-linecap="round"/>
+<circle cx="3.75" cy="12" r="2" stroke="#57965C" color-stroke-key="icon-green-stroke"/>
+<path d="M3.75 6L3.75 10" stroke="#57965C" color-stroke-key="icon-green-stroke"/>
+<circle cx="3.75" cy="4" r="2" stroke="#57965C" color-stroke-key="icon-green-stroke"/>
 </svg>

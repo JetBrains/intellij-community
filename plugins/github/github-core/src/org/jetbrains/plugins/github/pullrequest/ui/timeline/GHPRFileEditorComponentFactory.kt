@@ -257,7 +257,7 @@ internal class GHPRFileEditorComponentFactory(
   private fun createMergedTimelineItem(detailsVm: GHPRDetailsTimelineViewModel): JComponent {
     return CodeReviewChatItemUIUtil.build(
       type = CodeReviewChatItemUIUtil.ComponentType.FULL,
-      iconProvider = { iconSize -> IconUtil.resizeSquared(GithubIcons.PullRequestMerged, iconSize) },
+      iconProvider = { iconSize -> IconUtil.resizeSquared(GithubIcons.PullRequestMergedTimeline, iconSize) },
       content = HorizontalListPanel(gap = 4).apply {
         add(SimpleHtmlPane(addBrowserListener = false).apply {
           addHyperlinkListener { e ->
