@@ -120,12 +120,18 @@ pub(crate) const FIDELITY_FLAG: &str = "-da";
 pub(crate) const INTEGRATION_TEST_PROPERTY: &str = "idea.is.integration.test=true";
 
 /// The properties of every measured start, whatever its arm. With [`INTEGRATION_TEST_PROPERTY`], a welcome run starts
-/// the IDE that the perf test of the welcome screen starts.
-const MEASURE_PROPERTIES: [&str; 8] = [
+/// the IDE that the perf test of the welcome screen starts. The run keeps the Java preferences in memory, so no
+/// accepted version of an agreement survives a run. The agreement properties are those of `disableStartupDialogs` of
+/// the IDE Starter: a policy text of the version 999.999 counts as accepted, so no agreement dialog stops a start.
+const MEASURE_PROPERTIES: [&str; 12] = [
     "idea.record.classpath.info=true",
     "idea.record.classloading.stats=true",
     "nosplash=true",
     "jb.consents.confirmation.enabled=false",
+    "jb.privacy.policy.text=<!--999.999-->",
+    "jb.privacy.policy.ai.assistant.text=<!--999.999-->",
+    "marketplace.eula.reviewed.and.accepted=true",
+    "writerside.eula.reviewed.and.accepted=true",
     "ide.newUsersOnboarding=false",
     "idea.initially.ask.config=never",
     "fus.internal.test.mode=true",

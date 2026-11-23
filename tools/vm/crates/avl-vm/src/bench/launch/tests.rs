@@ -71,6 +71,26 @@ fn a_run_takes_the_home_of_its_sandbox_and_the_preferences_in_its_memory() {
     );
 }
 
+/// The run keeps the Java preferences in memory, so every start sees no accepted agreement. A policy text of the
+/// version 999.999 counts as accepted, so no agreement dialog stops a run.
+#[test]
+fn every_arm_starts_without_an_agreement_dialog() {
+    let sandbox = Sandbox::new("/s/sandbox");
+    for arm in Arm::ALL {
+        let options = measure_options(Path::new("/s/run"), &sandbox, &arm, None).expect("the options");
+        for property in [
+            "-Djb.privacy.policy.text=<!--999.999-->",
+            "-Djb.privacy.policy.ai.assistant.text=<!--999.999-->",
+            "-Djb.consents.confirmation.enabled=false",
+        ] {
+            assert!(
+                options.iter().any(|option| option == property),
+                "{arm:?}: no {property} in {options:?}"
+            );
+        }
+    }
+}
+
 /// Every arm is an integration test, as every run of the IDE Starter is, and only a project start trusts its project.
 #[test]
 fn every_arm_is_an_integration_test_and_a_project_start_trusts_its_project() {
