@@ -62,6 +62,14 @@ public class TypeExpression extends Expression {
     };
   }
 
+  /**
+   * The result does not depend on the other template variables. So the quick recalculation keeps the current text.
+   */
+  @Override
+  public Result calculateQuickResult(ExpressionContext context) {
+    return null;
+  }
+
   @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     if (myItems.size() <= 1) return null;

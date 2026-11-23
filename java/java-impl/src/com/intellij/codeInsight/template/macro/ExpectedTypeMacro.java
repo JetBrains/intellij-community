@@ -46,6 +46,11 @@ public final class ExpectedTypeMacro extends Macro {
   }
 
   @Override
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+    return null;
+  }
+
+  @Override
   public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length < 2) return null;

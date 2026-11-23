@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -45,18 +45,19 @@ public final class SubtypesMacro extends Macro {
   @Override
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length == 0) return null;
-    return params[0].calculateQuickResult(context);
+    return params[0].calculateResult(context);
   }
 
   @Override
   public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
-    return calculateResult(params, context);
+    if (params.length == 0) return null;
+    return params[0].calculateQuickResult(context);
   }
 
   @Override
   public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length == 0) return LookupElement.EMPTY_ARRAY;
-    Result paramResult = params[0].calculateQuickResult(context);
+    Result paramResult = params[0].calculateResult(context);
     if (paramResult instanceof PsiTypeResult) {
       return suggestSubTypes(context, ((PsiTypeResult)paramResult).getType());
     }

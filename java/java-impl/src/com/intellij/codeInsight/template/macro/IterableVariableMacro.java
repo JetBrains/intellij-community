@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
@@ -32,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,6 +45,11 @@ public final class IterableVariableMacro extends VariableTypeMacroBase {
   @Override
   public String getName() {
     return "iterableVariable";
+  }
+
+  @Override
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+    return null;
   }
 
   @Override

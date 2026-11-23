@@ -92,12 +92,8 @@ public final class DescendantClassesEnumMacro extends Macro {
   }
 
   @Override
-  public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
-    final List<PsiClass> classes = findDescendants(context, params);
-    if (classes == null || classes.isEmpty()) return null;
-    Result[] results = calculateResults(classes);
-
-    return results[0];
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+    return null;
   }
 
   @Override

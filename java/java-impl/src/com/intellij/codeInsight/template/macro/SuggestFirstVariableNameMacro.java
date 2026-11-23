@@ -17,8 +17,11 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,6 +48,12 @@ public final class SuggestFirstVariableNameMacro extends VariableOfTypeMacro {
       }
     }
     return PsiUtilCore.toPsiElementArray(result);
+  }
+
+  @SuppressWarnings("RedundantMethodOverride") // protection against non-trivial implementation in the super class
+  @Override
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+    return null;
   }
 }
 

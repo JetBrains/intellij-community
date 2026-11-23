@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
@@ -37,7 +37,7 @@ public final class TypeOfVariableMacro extends Macro {
     if (params.length == 0) return null;
 
     final Project project = context.getProject();
-    Result result = params[0].calculateQuickResult(context);
+    Result result = params[0].calculateResult(context);
     if (result instanceof PsiElementResult elementResult) {
       final PsiElement element = elementResult.getElement();
       if (element instanceof PsiVariable variable) {
@@ -58,7 +58,7 @@ public final class TypeOfVariableMacro extends Macro {
 
   @Override
   public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
-    return calculateResult(params, context);
+    return null;
   }
 
   @Override

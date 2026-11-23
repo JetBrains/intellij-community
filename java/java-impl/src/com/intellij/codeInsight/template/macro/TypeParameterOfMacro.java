@@ -91,6 +91,11 @@ public final class TypeParameterOfMacro extends Macro {
   }
 
   @Override
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+    return null;
+  }
+
+  @Override
   public boolean isAcceptableInContext(TemplateContextType context) {
     return context instanceof JavaCodeContextType;
   }

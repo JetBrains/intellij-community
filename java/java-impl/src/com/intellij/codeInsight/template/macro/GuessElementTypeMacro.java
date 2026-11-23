@@ -48,6 +48,11 @@ public final class GuessElementTypeMacro extends Macro {
   }
 
   @Override
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+    return null;
+  }
+
+  @Override
   public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length < 2) return null;

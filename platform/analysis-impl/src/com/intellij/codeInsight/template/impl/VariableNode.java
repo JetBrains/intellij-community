@@ -20,7 +20,7 @@ public class VariableNode extends Expression {
   @Override
   public Result calculateResult(ExpressionContext context) {
     if (myInitialValue != null){
-      return myInitialValue.calculateQuickResult(context);
+      return myInitialValue.calculateResult(context);
     }
     return context.getVariableValue(getName());
   }

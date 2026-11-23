@@ -40,4 +40,9 @@ public final class ExpressionTypeMacro extends Macro {
 
     return null;
   }
+
+  @Override
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+    return null;
+  }
 }

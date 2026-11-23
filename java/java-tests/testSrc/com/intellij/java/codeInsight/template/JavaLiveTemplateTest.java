@@ -19,11 +19,13 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.TextExpression;
+import com.intellij.codeInsight.template.macro.ArrayVariableMacro;
 import com.intellij.codeInsight.template.macro.BaseCompleteMacro;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
 import com.intellij.codeInsight.template.macro.MethodNameMacro;
 import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro;
+import com.intellij.codeInsight.template.macro.TypeOfVariableMacro;
 import com.intellij.codeInsight.template.macro.VariableOfTypeMacro;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -269,6 +271,50 @@ public class JavaLiveTemplateTest {
       lt.get().startTemplate("iter", "Java");
       myFixture.performEditorAction("NextTemplateVariable");
       checkResult();
+    });
+  }
+
+  @Test
+  public void testIterTypingKeepsDependentVariablesUntilNextTab() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
+    myFixture.configureByText("a.java", """
+      import java.util.List;
+      class A {
+        void foo(List<String> names, List<Integer> numbers) {
+          <caret>
+        }
+      }""");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate("iter", "Java");
+      myFixture.checkResult("""
+        import java.util.List;
+        class A {
+          void foo(List<String> names, List<Integer> numbers) {
+              for (String name : names) {
+                 \s
+              }
+          }
+        }""");
+      myFixture.type("numbers");
+      myFixture.checkResult("""
+        import java.util.List;
+        class A {
+          void foo(List<String> names, List<Integer> numbers) {
+              for (String name : numbers) {
+                 \s
+              }
+          }
+        }""");
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> lt.get().getState().nextTab());
+      myFixture.checkResult("""
+        import java.util.List;
+        class A {
+          void foo(List<String> names, List<Integer> numbers) {
+              for (Integer number : numbers) {
+                 \s
+              }
+          }
+        }""");
     });
   }
 
@@ -574,6 +620,27 @@ public class JavaLiveTemplateTest {
     EdtTestUtil.runInEdtAndWait(() -> {
       lt.get().startTemplate(template);
       assertTrue(myFixture.getEditor().getDocument().getText().contains("List<Map.Entry<String, Integer>> result;"));
+    });
+  }
+
+  @Test
+  public void testTypeOfVariableOfNestedArrayVariableCallGivesArrayType() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
+    myFixture.configureByText("a.java", """
+      class A {
+        void foo(String[] names) {
+          <caret>
+        }
+      }""");
+    Template template = lt.get().getTemplateManager().createTemplate("t", "user", "$T$ x = null;");
+    MacroCallNode macro = new MacroCallNode(new TypeOfVariableMacro());
+    macro.addParameter(new MacroCallNode(new ArrayVariableMacro()));
+    template.addVariable("T", macro, new EmptyNode(), true);
+
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      String line = ContainerUtil.find(myFixture.getEditor().getDocument().getText().lines().toList(), it -> it.contains("x = null;"));
+      assertEquals("String[] x = null;", line.trim());
     });
   }
 
@@ -1196,6 +1263,23 @@ public class JavaLiveTemplateTest {
                                     .<caret>
                                   }
                                  }""", template));
+  }
+
+  @Test
+  public void testNamedMacroCallInExpressionGivesFullResultOfMacro() {
+    LightJavaCodeInsightTestFixture myFixture = lt.get().getFixture();
+    myFixture.configureByText("a.java", "class A {\n  void foo(String[] names) {\n    <caret>\n  }\n}");
+    Template template = lt.get().getTemplateManager().createTemplate("t", "user", "$T$.length;");
+    template.addVariable("T", "V=arrayVariable()", "", true);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      lt.get().startTemplate(template);
+      String line = myFixture.getEditor().getDocument().getText().lines()
+        .filter(it -> it.contains(".length;"))
+        .findFirst()
+        .orElseThrow()
+        .trim();
+      assertEquals("names.length;", line);
+    });
   }
 
 }

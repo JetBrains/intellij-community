@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public final class MethodReturnTypeMacro extends Macro {
@@ -41,6 +42,11 @@ public final class MethodReturnTypeMacro extends Macro {
       place = place.getParent();
     }
 
+    return null;
+  }
+
+  @Override
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     return null;
   }
 

@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterListOwner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,11 @@ public final class MethodParameterTypesMacro extends Macro {
       }
       place = place.getParent();
     }
+    return null;
+  }
+
+  @Override
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     return null;
   }
 

@@ -18,6 +18,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public final class RightSideTypeMacro extends Macro {
@@ -46,6 +47,11 @@ public final class RightSideTypeMacro extends Macro {
       if (type == null) return null;
       return new PsiTypeResult(type, project);
     }
+    return null;
+  }
+
+  @Override
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     return null;
   }
 

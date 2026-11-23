@@ -58,6 +58,11 @@ public class VariableOfTypeMacro extends Macro {
   }
 
   @Override
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+    return null;
+  }
+
+  @Override
   public LookupElement[] calculateLookupItems(Expression @NotNull [] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
