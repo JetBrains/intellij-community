@@ -97,7 +97,7 @@ fun updateFromSources(project: Project, beforeRestart: () -> Unit, restartAutoma
   }
 
   if (isBazelUpdateEnabled()) {
-    return runDevDistUpdate(project, devIdeaHome, workIdeHome, state.buildDisabledPlugins, restartAutomatically, beforeRestart)
+    return runBazelUpdate(project, devIdeaHome, workIdeHome, state.buildDisabledPlugins, restartAutomatically, beforeRestart)
   }
 
   val bundledPluginDirsToSkip: List<String>
@@ -173,10 +173,10 @@ private fun enabledNonBundledPluginDirs(): List<String> {
 }
 
 /**
- * Builds and stages the dev distribution, so the build never changes [workIdeHome].
+ * Builds and stages the Bazel distribution, so the build never changes [workIdeHome].
  * For the running home, the restart applies the staged home. For another work home, a short second process applies it.
  */
-private fun runDevDistUpdate(
+private fun runBazelUpdate(
   project: Project,
   devIdeaHome: Path,
   workIdeHome: Path,
@@ -187,7 +187,7 @@ private fun runDevDistUpdate(
   val outDir = devIdeaHome.resolve("out/update-from-sources")
   val logFile = outDir.resolve("update.log")
   val resultFile = outDir.resolve("result.json")
-  val commandLine = createDevDistUpdateCommandLine(
+  val commandLine = createBazelUpdateCommandLine(
     devIdeaHome = devIdeaHome,
     workIdeHome = workIdeHome,
     pluginDirs = if (buildDisabledPlugins) emptyList() else enabledNonBundledPluginDirs(),
@@ -208,7 +208,7 @@ private fun runDevDistUpdate(
     stopProcessOnCancel = true,
   ) {
     val result = try {
-      parseDevDistUpdateResult(resultFile.readText())
+      parseBazelUpdateResult(resultFile.readText())
     }
     catch (e: Exception) {
       rethrowControlFlowException(e)
@@ -219,7 +219,7 @@ private fun runDevDistUpdate(
     }
 
     if (result.skippedPlugins.isNotEmpty()) {
-      LOG.warn("The dev distribution has no build of these plugins: ${result.skippedPlugins}")
+      LOG.warn("The Bazel distribution has no build of these plugins: ${result.skippedPlugins}")
       Notification(
         "Update from Sources",
         DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.title"),
@@ -555,11 +555,11 @@ private fun createUpdateFromSourcesCommandLine(
 }
 
 /**
- * The command that builds the dev distribution and stages it next to [workIdeHome].
- * The command writes a [DevDistUpdateResult] to [resultFile], and the `apply` command of the result replaces the home.
+ * The command that builds the Bazel distribution and stages it next to [workIdeHome].
+ * The command writes a [BazelUpdateResult] to [resultFile], and the `apply` command of the result replaces the home.
  * [allPlugins] builds every plugin, so [pluginDirs] must be empty with it.
  */
-internal fun createDevDistUpdateCommandLine(
+internal fun createBazelUpdateCommandLine(
   devIdeaHome: Path,
   workIdeHome: Path,
   pluginDirs: List<String>,
@@ -570,7 +570,7 @@ internal fun createDevDistUpdateCommandLine(
   require(!allPlugins || pluginDirs.isEmpty()) { "allPlugins and pluginDirs exclude each other" }
   val script = devIdeaHome.resolve("build/dist.cmd")
   require(script.isRegularFile()) {
-    "Dev distribution script not found at ${script.toAbsolutePath()}"
+    "Distribution script not found at ${script.toAbsolutePath()}"
   }
 
   val commandLine = GeneralCommandLine()
@@ -599,10 +599,10 @@ private fun toolPath(path: Path): String = path.toAbsolutePath().normalize().pat
  * @property apply the command that replaces the home with the staged home
  * @property repository the absolute path of the `plugins.xml` file of the local plugin repository, or `null` if no plugin is built.
  *   The zips are relative to the directory of this file, and [restartWithCommand] reads `plugins.xml` from that directory.
- * @property skippedPlugins the plugin directories that the dev distribution does not build
+ * @property skippedPlugins the plugin directories that the Bazel distribution does not build
  */
 @Serializable
-internal data class DevDistUpdateResult(
+internal data class BazelUpdateResult(
   val version: Int,
   val apply: List<String>,
   val repository: String? = null,
@@ -610,10 +610,10 @@ internal data class DevDistUpdateResult(
   val fingerprint: String? = null,
 )
 
-private val devDistResultJson = Json { ignoreUnknownKeys = true }
+private val bazelResultJson = Json { ignoreUnknownKeys = true }
 
-internal fun parseDevDistUpdateResult(text: String): DevDistUpdateResult {
-  val result = devDistResultJson.decodeFromString<DevDistUpdateResult>(text)
+internal fun parseBazelUpdateResult(text: String): BazelUpdateResult {
+  val result = bazelResultJson.decodeFromString<BazelUpdateResult>(text)
   require(result.version == 1) { "Unsupported result version ${result.version}" }
   require(result.apply.isNotEmpty()) { "The result has no apply command" }
   return result

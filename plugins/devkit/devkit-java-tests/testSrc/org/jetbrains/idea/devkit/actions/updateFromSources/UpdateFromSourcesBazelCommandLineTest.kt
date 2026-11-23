@@ -10,7 +10,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.pathString
 
-internal class UpdateFromSourcesDevDistCommandLineTest {
+internal class UpdateFromSourcesBazelCommandLineTest {
   @TempDir
   lateinit var tempDir: Path
 
@@ -27,7 +27,7 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
     val resultFile = devIdeaHome.resolve("out/update-from-sources/result.json")
     val logFile = devIdeaHome.resolve("out/update-from-sources/update.log")
 
-    val commandLine = createDevDistUpdateCommandLine(
+    val commandLine = createBazelUpdateCommandLine(
       devIdeaHome = devIdeaHome,
       workIdeHome = workIdeHome,
       pluginDirs = listOf("fullLine", "my plugin"),
@@ -56,7 +56,7 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
     val resultFile = devIdeaHome.resolve("out/update-from-sources/result.json")
     val logFile = devIdeaHome.resolve("out/update-from-sources/update.log")
 
-    val commandLine = createDevDistUpdateCommandLine(
+    val commandLine = createBazelUpdateCommandLine(
       devIdeaHome = devIdeaHome,
       workIdeHome = workIdeHome,
       pluginDirs = emptyList(),
@@ -78,7 +78,7 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
   @Test
   fun `each path option is absolute and normalized`() {
     val devIdeaHome = devIdeaHome()
-    val commandLine = createDevDistUpdateCommandLine(
+    val commandLine = createBazelUpdateCommandLine(
       devIdeaHome = devIdeaHome,
       workIdeHome = tempDir.resolve("a/../work/."),
       pluginDirs = emptyList(),
@@ -97,22 +97,22 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
   }
 
   @Test
-  fun `a checkout without the dev dist script is refused`() {
+  fun `a checkout without the dist script is refused`() {
     assertThatThrownBy {
-      createDevDistUpdateCommandLine(tempDir, tempDir.resolve("work"), emptyList(), false, tempDir.resolve("result.json"), tempDir.resolve("update.log"))
+      createBazelUpdateCommandLine(tempDir, tempDir.resolve("work"), emptyList(), false, tempDir.resolve("result.json"), tempDir.resolve("update.log"))
     }.isInstanceOf(IllegalArgumentException::class.java)
   }
 
   @Test
   fun `all plugins together with plugin directories are refused`() {
     assertThatThrownBy {
-      createDevDistUpdateCommandLine(devIdeaHome(), tempDir.resolve("work"), listOf("fullLine"), true, tempDir.resolve("result.json"), tempDir.resolve("update.log"))
+      createBazelUpdateCommandLine(devIdeaHome(), tempDir.resolve("work"), listOf("fullLine"), true, tempDir.resolve("result.json"), tempDir.resolve("update.log"))
     }.isInstanceOf(IllegalArgumentException::class.java)
   }
 
   @Test
   fun `the result gives the apply command, the repository and the skipped plugins`() {
-    val result = parseDevDistUpdateResult("""
+    val result = parseBazelUpdateResult("""
       {
         "version": 1,
         "apply": ["/tmp/IDEA.app.dist", "update-ide", "--apply-staged", "--home=/tmp/IDEA.app/Contents"],
@@ -131,7 +131,7 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
 
   @Test
   fun `a result without a repository has a null repository and no skipped plugins`() {
-    val result = parseDevDistUpdateResult("""{"version":1,"apply":["x"],"repository":null,"skippedPlugins":[],"fingerprint":"v5:abc"}""")
+    val result = parseBazelUpdateResult("""{"version":1,"apply":["x"],"repository":null,"skippedPlugins":[],"fingerprint":"v5:abc"}""")
 
     assertThat(result.repository).isNull()
     assertThat(result.skippedPlugins).isEmpty()
@@ -139,9 +139,9 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
 
   @Test
   fun `a result of another version or without an apply command is refused`() {
-    assertThatThrownBy { parseDevDistUpdateResult("""{"version":2,"apply":["x"]}""") }
+    assertThatThrownBy { parseBazelUpdateResult("""{"version":2,"apply":["x"]}""") }
       .isInstanceOf(IllegalArgumentException::class.java)
-    assertThatThrownBy { parseDevDistUpdateResult("""{"version":1,"apply":[]}""") }
+    assertThatThrownBy { parseBazelUpdateResult("""{"version":1,"apply":[]}""") }
       .isInstanceOf(IllegalArgumentException::class.java)
   }
 }
