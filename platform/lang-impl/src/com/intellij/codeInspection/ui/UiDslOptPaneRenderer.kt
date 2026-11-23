@@ -566,10 +566,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
    * @return the groups, or null if all elements are in one group
    */
   private fun groupByName(elements: List<OptMultiSelector.OptElement>): List<Pair<@Nls String?, List<OptMultiSelector.OptElement>>>? {
-    val groups = LinkedHashMap<@Nls String?, MutableList<OptMultiSelector.OptElement>>()
-    for (element in elements) {
-      groups.getOrPut(element.groupName) { ArrayList() }.add(element)
-    }
+    val groups = elements.groupBy { it.groupName }
     if (groups.size < 2) return null
     return groups.toList()
   }
