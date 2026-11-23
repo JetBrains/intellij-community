@@ -47,6 +47,7 @@ import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.sdk.skeletonsPath
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.io.IOException
@@ -79,6 +80,16 @@ fun PythonInterpreter.findToolExecutable(tool: PyTool, executableName: String = 
     }
     is TargetPythonInterpreter -> null
   }
+
+/**
+ * The [Sdk] behind this interpreter, only for the deprecated APIs that external plugins still call:
+ * `com.jetbrains.python.sdk.PythonSdkUtil.findPythonSdk` and `Project.pythonSdk`. They return an `Sdk` by contract.
+ *
+ * Do not add a caller. Every other code uses the extensions of this file, and only this module reads the SDK.
+ */
+@ApiStatus.Internal
+@Deprecated("Only for the deprecated APIs that return an Sdk to external plugins. Use PythonInterpreter extensions instead.")
+fun PythonInterpreter.getSdkAPI(): Sdk = sdk
 
 /**
  * What this interpreter is, from what is already recorded about it.

@@ -974,6 +974,8 @@ f:com.jetbrains.python.sdk.PreferredSdkComparator
 - sf:INSTANCE:com.jetbrains.python.sdk.PreferredSdkComparator
 - <init>():V
 - compare(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.Sdk):I
+f:com.jetbrains.python.sdk.PySdkExtKt
+- sf:getPythonSdk(com.intellij.openapi.project.Project):com.intellij.openapi.projectRoots.Sdk
 f:com.jetbrains.python.sdk.PySdkPopupFactory
 - sf:Companion:com.jetbrains.python.sdk.PySdkPopupFactory$Companion
 - <init>(com.intellij.openapi.module.Module):V

@@ -2933,6 +2933,7 @@ a:com.jetbrains.python.refactoring.introduce.IntroduceValidator
 - s:isDefinedInScope(java.lang.String,com.intellij.psi.PsiElement):Z
 - isNameValid(java.lang.String,com.intellij.openapi.project.Project):Z
 f:com.jetbrains.python.sdk.PythonSdkUtil
+- s:findPythonSdk(com.intellij.openapi.module.Module):com.intellij.openapi.projectRoots.Sdk
 - s:findSkeletonsDir(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.vfs.VirtualFile
 - s:getAllSdks():java.util.List
 - s:getPythonExecutable(java.lang.String):java.lang.String

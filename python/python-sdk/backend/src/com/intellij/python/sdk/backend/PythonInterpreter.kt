@@ -74,8 +74,8 @@ sealed class PythonInterpreter {
   val project: Project
 
   /**
-   * The SDK of this interpreter. The registry replaces it when it adopts an existing SDK. Only this module reads it:
-   * code outside it uses the extensions in `PythonInterpreterExt.kt`.
+   * The SDK of this interpreter. The registry replaces it when it adopts an existing SDK. Code outside this module uses
+   * the extensions in `PythonInterpreterExt.kt`. Only the deprecated APIs for external plugins reach it, see [getSdkAPI].
    */
   internal var sdk: Sdk
 
