@@ -575,7 +575,7 @@ internal class GhosttyTerminalEmulator(
   }
 
   override val usingAlternateScreen: Boolean
-    get() = terminalGetU16(GhosttyTerminalData.ACTIVE_SCREEN) == 1
+    get() = terminalGetInt(GhosttyTerminalData.ACTIVE_SCREEN) == 1
 
   override val applicationCursorKeys: Boolean get() = modeEnabled(GhosttyMode.DECCKM)
   override val applicationKeypad: Boolean get() = modeEnabled(GhosttyMode.KEYPAD_KEYS)
@@ -1441,6 +1441,21 @@ internal class GhosttyTerminalEmulator(
       throw IllegalStateException("ghostty_terminal_get($dataKind) returned $result")
     }
     return scratchOut.get(C_SHORT, 0L).toInt() and 0xFFFF
+  }
+
+  private fun terminalGetInt(dataKind: GhosttyTerminalData): Int {
+    ensureOpen()
+    scratchOut.set(C_INT, 0L, 0)
+    val result = try {
+      LibGhosttyVt.terminalGet(terminal, dataKind.code, scratchOut)
+    }
+    catch (t: Throwable) {
+      throw RuntimeException("ghostty_terminal_get($dataKind) failed", t)
+    }
+    if (result != GhosttyResult.SUCCESS) {
+      throw IllegalStateException("ghostty_terminal_get($dataKind) returned $result")
+    }
+    return scratchOut.get(C_INT, 0L)
   }
 
   private fun terminalGetBool(dataKind: GhosttyTerminalData): Boolean {

@@ -116,6 +116,7 @@ internal enum class GhosttyTerminalData(val code: Int) {
   ROWS(2),
   CURSOR_X(3),
   CURSOR_Y(4),
+  /** Reads a `GhosttyTerminalScreen`, a C `int` enum. The value 1 is the alternate screen. */
   ACTIVE_SCREEN(6),
   CURSOR_VISIBLE(7),
   /** Reads a `uint8_t` bitmask of `GHOSTTY_KITTY_KEY_*`, the Kitty keyboard protocol flags in effect. */
