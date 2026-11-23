@@ -398,9 +398,7 @@ public final class DiffTree<OldNode, NewNode> {
                                                        int level) {
     if (oldLength != newLength) return CompareResult.NOT_EQUAL;
     int oldEnd = oldStart + oldLength;
-    if (oldStart >= myMatchedOldStart && oldEnd <= myMatchedOldEnd && newStart - oldStart == myMatchedShift ||
-        isInEqualPrefix(oldStart, oldEnd, newStart) ||
-        isInEqualSuffix(oldStart, oldEnd, newStart)) {
+    if (isTextEqual(oldStart, oldEnd, newStart)) {
       return build(oldChild, newChild, level + 1, emptyConsumer(), oldStart, newStart);
     }
     if (!regionMatches(oldStart, newStart, oldEnd - oldStart)) return CompareResult.NOT_EQUAL;
@@ -419,6 +417,16 @@ public final class DiffTree<OldNode, NewNode> {
       myMatchedOldEnd = outerEnd;
       myMatchedShift = outerShift;
     }
+  }
+
+  /**
+   * Returns true if the old text from {@code oldStart} to {@code oldEnd} is known to be equal to the new text at {@code newStart},
+   * without a compare of the texts of this range.
+   */
+  private boolean isTextEqual(int oldStart, int oldEnd, int newStart) {
+    return oldStart >= myMatchedOldStart && oldEnd <= myMatchedOldEnd && newStart - oldStart == myMatchedShift ||
+           isInEqualPrefix(oldStart, oldEnd, newStart) ||
+           isInEqualSuffix(oldStart, oldEnd, newStart);
   }
 
   /**
