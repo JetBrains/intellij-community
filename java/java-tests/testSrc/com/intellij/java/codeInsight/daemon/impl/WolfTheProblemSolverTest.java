@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver;
 import com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl;
@@ -13,6 +14,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -24,16 +26,23 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.ProblemListener;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,30 +51,34 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import static com.intellij.codeInsight.daemon.DaemonAnalyzerFixture.daemonAnalyzerFixture;
 import static java.util.Collections.emptySet;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
+@TestApplication
+public class WolfTheProblemSolverTest {
+  private static final Logger LOG = Logger.getInstance(WolfTheProblemSolverTest.class);
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/projectWide";
+  private final TestFixture<DaemonAnalyzerFixture> daemonFixture = daemonAnalyzerFixture(JavaTestUtil.getJavaTestDataPath());
   private MockWolfTheProblemSolver myWolfTheProblemSolver;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myWolfTheProblemSolver = prepareWolf(myProject, getTestRootDisposable());
+  @BeforeEach
+  void setUp() {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    myWolfTheProblemSolver = prepareWolf(fixture.getProject(), fixture.getTestRootDisposable());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myWolfTheProblemSolver = null;
-    super.tearDown();
-  }
-
-  public void testHighlighting() throws Exception {
+  @Test
+  public void testHighlighting() {
     VirtualFile root = configureRoot();
     VirtualFile x = root.findFileByRelativePath("x/X.java");
     VirtualFile y = root.findFileByRelativePath("y/Y.java");
-    assertNotEmpty(highlightErrors(x));
-    assertNotEmpty(highlightErrors(y));
+    assertThat(highlightErrors(x)).isNotEmpty();
+    assertThat(highlightErrors(y)).isNotEmpty();
 
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
@@ -73,43 +86,45 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     deleteMethodWithProblem(x);
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
-    assertEmpty(highlightErrors(x));
+    assertThat(highlightErrors(x)).isEmpty();
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
 
     deleteMethodWithProblem(y);
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
-    assertEmpty(highlightErrors(y));
+    assertThat(highlightErrors(y)).isEmpty();
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertFalse(myWolfTheProblemSolver.isProblemFile(y));
   }
 
   private void deleteMethodWithProblem(VirtualFile virtualFile) {
-    PsiJavaFile psiX = (PsiJavaFile)myPsiManager.findFile(virtualFile);
-    final PsiClass xClass = psiX.getClasses()[0];
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
+    Project project = daemonFixture.get().getProject();
+    final PsiClass xClass = ReadAction.computeBlocking(() -> ((PsiJavaFile)PsiManager.getInstance(project).findFile(virtualFile)).getClasses()[0]);
+    EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().executeCommand(project, () -> WriteCommandAction.runWriteCommandAction(null, () -> {
       try {
         xClass.getMethods()[0].delete();
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }), null, null);
+    }), null, null));
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
   }
 
-  public void testRemoveFile() throws Exception {
+  @Test
+  public void testRemoveFile() {
     VirtualFile root = configureRoot();
     VirtualFile x = root.findFileByRelativePath("x/X.java");
     VirtualFile y = root.findFileByRelativePath("y/Y.java");
-    assertNotEmpty(highlightErrors(x));
-    assertNotEmpty(highlightErrors(y));
+    assertThat(highlightErrors(x)).isNotEmpty();
+    assertThat(highlightErrors(y)).isNotEmpty();
 
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
-    final PsiJavaFile psiX = (PsiJavaFile)myPsiManager.findFile(x);
-    PsiJavaFile psiY = (PsiJavaFile)myPsiManager.findFile(y);
+    PsiManager psiManager = PsiManager.getInstance(daemonFixture.get().getProject());
+    final PsiJavaFile psiX = ReadAction.computeBlocking(() -> (PsiJavaFile)psiManager.findFile(x));
+    PsiJavaFile psiY = ReadAction.computeBlocking(() -> (PsiJavaFile)psiManager.findFile(y));
     assertNotNull(psiY);
 
     WriteCommandAction.runWriteCommandAction(null, psiX::delete);
@@ -118,16 +133,18 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
   }
 
-  public void testExcludedFile() throws Exception {
+  @Test
+  public void testExcludedFile() {
     VirtualFile root = configureRoot();
     VirtualFile x = root.findFileByRelativePath("x/X.java");
-    assertNotEmpty(highlightErrors(x));
+    assertThat(highlightErrors(x)).isNotEmpty();
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
 
-    ExcludeEntryDescription description = new ExcludeEntryDescription(x, false, true, getTestRootDisposable());
-    CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
-    FileStatusManager.getInstance(myProject).fileStatusesChanged();
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    ExcludeEntryDescription description = new ExcludeEntryDescription(x, false, true, fixture.getTestRootDisposable());
+    CompilerConfiguration.getInstance(fixture.getProject()).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
+    FileStatusManager.getInstance(fixture.getProject()).fileStatusesChanged();
+    EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
 
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
@@ -146,27 +163,31 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
 
   }
 
-  private VirtualFile configureRoot() throws Exception {
-    configureByFile(BASE_PATH + "/x/X.java", BASE_PATH);
-    return ModuleRootManager.getInstance(myModule).getContentRoots()[0];
+  private VirtualFile configureRoot() {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    fixture.configureByFile(BASE_PATH + "/x/X.java", BASE_PATH);
+    return ModuleRootManager.getInstance(fixture.getModule()).getContentRoots()[0];
   }
 
-  public void testEvents() throws Exception {
+  @Test
+  public void testEvents() {
     VirtualFile root = configureRoot();
     MyProblemListener handler = new MyProblemListener();
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProblemListener.TOPIC, handler);
+    daemonFixture.get().getProject().getMessageBus().connect(daemonFixture.get().getTestRootDisposable()).subscribe(ProblemListener.TOPIC, handler);
 
     VirtualFile x = root.findFileByRelativePath("x/X.java");
     VirtualFile y = root.findFileByRelativePath("y/Y.java");
-    assertNotEmpty(highlightErrors(x));
+    assertThat(highlightErrors(x)).isNotEmpty();
     handler.verifyEvents(Collections.singleton(x), emptySet(), emptySet());
     assertTrue(myWolfTheProblemSolver.hasSyntaxErrors(x));
 
-    assertNotEmpty(highlightErrors(y));
+    assertThat(highlightErrors(y)).isNotEmpty();
     handler.verifyEvents(Collections.singleton(y), emptySet(), emptySet());
     assertFalse(myWolfTheProblemSolver.hasSyntaxErrors(y));
 
-    final PsiJavaFile psiX = (PsiJavaFile)myPsiManager.findFile(x);
+    Project project = daemonFixture.get().getProject();
+    PsiManager psiManager = PsiManager.getInstance(project);
+    final PsiJavaFile psiX = ReadAction.computeBlocking(() -> (PsiJavaFile)psiManager.findFile(x));
     WriteCommandAction.runWriteCommandAction(null, () -> {
               psiX.getClasses()[0].replace(psiX.getClasses()[0]);
 
@@ -175,10 +196,10 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     handler.verifyEvents(emptySet(), Collections.singleton(x), emptySet());
     assertFalse(myWolfTheProblemSolver.hasSyntaxErrors(y));
 
-    PsiJavaFile psiY = (PsiJavaFile)myPsiManager.findFile(y);
+    PsiJavaFile psiY = ReadAction.computeBlocking(() -> (PsiJavaFile)psiManager.findFile(y));
     assertNotNull(psiY);
-    final PsiClass newX = myJavaFacade.getElementFactory().createClassFromText("",null);
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    final PsiClass newX = ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(project).createClassFromText("",null));
+    EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         psiX.getClasses()[0].replace(newX);
       }
@@ -186,16 +207,17 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
         LOG.error(e);
       }
 
-    }), null, null);
-    assertEmpty(highlightErrors(x));
+    }), null, null));
+    assertThat(highlightErrors(x)).isEmpty();
     handler.verifyEvents(emptySet(), emptySet(), Collections.singleton(x));
     assertFalse(myWolfTheProblemSolver.hasSyntaxErrors(x));
   }
 
+  @Test
   public void testExternalSources() throws Exception {
     VirtualFile root = configureRoot();
     MyProblemListener handler = new MyProblemListener();
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProblemListener.TOPIC, handler);
+    daemonFixture.get().getProject().getMessageBus().connect(daemonFixture.get().getTestRootDisposable()).subscribe(ProblemListener.TOPIC, handler);
 
     VirtualFile t = root.findFileByRelativePath("foo.java");
     Object source1 = new Object();
@@ -204,7 +226,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     handler.verifyEvents(Collections.singleton(t), emptySet(), emptySet());
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
     assertTrue(myWolfTheProblemSolver.isProblemFile(t));
-    assertTrue(myWolfTheProblemSolver.hasProblemFilesBeneath(myModule));
+    assertTrue(myWolfTheProblemSolver.hasProblemFilesBeneath(daemonFixture.get().getModule()));
 
     reportExternalProblem(source2, t);
     handler.verifyEvents(emptySet(), Collections.singleton(t), emptySet());
@@ -220,21 +242,22 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     ReadAction.nonBlocking(() -> myWolfTheProblemSolver.clearProblemsFromExternalSource(t, source2)).submit(AppExecutorUtil.getAppExecutorService()).get();
   }
 
+  @Test
   public void testRegularAndExternalProblems() throws Exception {
     VirtualFile root = configureRoot();
     MyProblemListener handler = new MyProblemListener();
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProblemListener.TOPIC, handler);
+    daemonFixture.get().getProject().getMessageBus().connect(daemonFixture.get().getTestRootDisposable()).subscribe(ProblemListener.TOPIC, handler);
 
     Object source1 = new Object();
     VirtualFile x = root.findFileByRelativePath("x/X.java");
     reportExternalProblem(source1, x);
     handler.verifyEvents(Collections.singleton(x), emptySet(), emptySet());
 
-    assertNotEmpty(highlightErrors(x));
+    assertThat(highlightErrors(x)).isNotEmpty();
     handler.verifyEvents(emptySet(), Collections.singleton(x), emptySet());
 
     deleteMethodWithProblem(x);
-    assertEmpty(highlightErrors(x));
+    assertThat(highlightErrors(x)).isEmpty();
     handler.verifyEvents(emptySet(), Collections.singleton(x), emptySet());
   }
 
@@ -244,34 +267,33 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
 
   @NotNull
   private List<HighlightInfo> highlightErrors(@NotNull VirtualFile virtualFile) {
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
-    documentManager.commitAllDocuments();
-    FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(getProject()).openFile(virtualFile, false)[0];
-    Editor editor = ((TextEditor)fileEditor).getEditor();
-    PsiFile psiFile = documentManager.getPsiFile(editor.getDocument());
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(daemonFixture.get().getProject());
+    Editor editor = EdtTestUtil.runInEdtAndGet(() -> {
+      documentManager.commitAllDocuments();
+      FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(daemonFixture.get().getProject()).openFile(virtualFile, false)[0];
+      return ((TextEditor)fileEditor).getEditor();
+    });
+    PsiFile psiFile = ReadAction.computeBlocking(() -> documentManager.getPsiFile(editor.getDocument()));
 
     List<HighlightInfo> infos = CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, new int[0], false);
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
-    return filter(infos, HighlightSeverity.ERROR);
+    return DaemonAnalyzerFixture.filter(infos, HighlightSeverity.ERROR);
   }
 
+  @Test
   public void testChangeInsideBlock() {
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-      try {
-        configureByFile(BASE_PATH + "/pack/InsideBlock.java");
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }, null, null);
-    final VirtualFile virtualFile = myFile.getVirtualFile();
-    List<HighlightInfo> errors = highlightErrors();
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().executeCommand(fixture.getProject(), () -> {
+      fixture.configureByFile(BASE_PATH + "/pack/InsideBlock.java");
+    }, null, null));
+    final VirtualFile virtualFile = fixture.getFile().getVirtualFile();
+    List<HighlightInfo> errors = fixture.highlightErrors();
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
     assertTrue(myWolfTheProblemSolver.isProblemFile(virtualFile));
-    assertSize(1, errors);
-    type(';');
-    errors = highlightErrors();
-    assertEmpty(errors);
+    assertThat(errors).hasSize(1);
+    fixture.type(';');
+    errors = fixture.highlightErrors();
+    assertThat(errors).isEmpty();
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
     assertFalse(myWolfTheProblemSolver.isProblemFile(virtualFile));
   }

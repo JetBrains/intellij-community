@@ -5,18 +5,27 @@ import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.HeavyJavaCodeInsightFixture
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.InspectionToolProvider
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.ide.startup.impl.StartupManagerImpl
+import com.intellij.lang.ExternalAnnotatorsFilter
+import com.intellij.lang.LanguageAnnotators
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.lang.xml.XMLLanguage
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
@@ -29,8 +38,13 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.search.IndexPatternBuilder
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
+import com.intellij.psi.xml.XmlFileNSInfoProvider
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.FileTreeAccessFilter
+import com.intellij.testFramework.HighlightTestInfo
+import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.StartupActivityTestUtil
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.configureInspections
@@ -39,6 +53,7 @@ import com.intellij.testFramework.enableInspectionTools
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.xml.XmlSchemaProvider
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Function
 import java.util.function.Supplier
@@ -72,6 +87,24 @@ open class DaemonAnalyzerFixture(
    */
   var isExternalValidation: Boolean = true
 
+  /**
+   * When `true`, [doHighlighting] runs only the external tools pass and the passes that it needs.
+   * It is `forceExternalValidation()` of [DaemonAnalyzerTestCase].
+   */
+  var isForceExternalValidation: Boolean = false
+
+  /**
+   * The daemon of [project].
+   */
+  val daemonCodeAnalyzer: DaemonCodeAnalyzerImpl
+    get() = DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl
+
+  /**
+   * The test helper of the daemon of [project]. It is one instance for the test, so a setting on it, for example
+   * `mustWaitForSmartModeByDefault`, stays for the later calls, as `myTestDaemonCodeAnalyzer` of [DaemonAnalyzerTestCase] did.
+   */
+  val testDaemonCodeAnalyzer: TestDaemonCodeAnalyzerImpl by lazy { TestDaemonCodeAnalyzerImpl(project) }
+
   private val virtualFileFilter = FileTreeAccessFilter()
 
   override fun setUp() {
@@ -81,6 +114,24 @@ open class DaemonAnalyzerFixture(
       TestDaemonCodeAnalyzerImpl(project).prepareForTest()
       DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled = false
     }
+    if (isStressTest) {
+      preloadClassesForStressTest()
+    }
+  }
+
+  private fun preloadClassesForStressTest() {
+    IntentionManager.getInstance().availableIntentions // hack to avoid slowdowns in PyExtensionFactory
+    PathManagerEx.guessTestDataLookupStrategy() // to cache stuff; the ultimate repository has no shared testData root, so do not resolve the path itself
+    ReferenceProvidersRegistry.getInstance() // pre-load tons of classes
+    InjectedLanguageManager.getInstance(project) // zillion of Dom Sem classes
+    LanguageAnnotators.INSTANCE.allForLanguage(JavaLanguage.INSTANCE) // pile of annotator classes loads
+    LanguageAnnotators.INSTANCE.allForLanguage(XMLLanguage.INSTANCE)
+    ProblemHighlightFilter.EP_NAME.extensions
+    ImplicitUsageProvider.EP_NAME.extensionList
+    XmlSchemaProvider.EP_NAME.extensionList
+    XmlFileNSInfoProvider.EP_NAME.extensionList
+    ExternalAnnotatorsFilter.EXTENSION_POINT_NAME.extensionList
+    IndexPatternBuilder.EP_NAME.extensionList
   }
 
   override fun tearDown() {
@@ -200,6 +251,13 @@ open class DaemonAnalyzerFixture(
     if (!isExternalValidation) {
       toIgnore.add(Pass.EXTERNAL_TOOLS)
     }
+    if (isForceExternalValidation) {
+      toIgnore.add(Pass.LINE_MARKERS)
+      toIgnore.add(Pass.SLOW_LINE_MARKERS)
+      toIgnore.add(Pass.LOCAL_INSPECTIONS)
+      toIgnore.add(Pass.POPUP_HINTS)
+      toIgnore.add(Pass.UPDATE_ALL)
+    }
     val canChange = isCanChangeDocumentDuringHighlighting
     val psiFile = file!!
     val currentEditor = editor!!
@@ -246,6 +304,21 @@ open class DaemonAnalyzerFixture(
     virtualFileFilter.allowTreeAccessForAllFiles()
   }
 
+  /**
+   * Returns a highlighting test of [filePaths], as `testFile` of [DaemonAnalyzerTestCase].
+   * Its `test()` configures the files and checks the highlighting of [file] with [JavaExpectedHighlightingData].
+   */
+  fun testFile(vararg filePaths: String): HighlightTestInfo =
+    object : HighlightTestInfo(testRootDisposable, *filePaths) {
+      override fun doTest(): HighlightTestInfo {
+        configureByFiles(projectRoot, *filePaths)
+        val data = JavaExpectedHighlightingData(editor!!.document, checkWarnings, checkWeakWarnings, checkInfos)
+        if (checkSymbolNames) data.checkSymbolNames()
+        checkHighlighting(data)
+        return this
+      }
+    }
+
   companion object {
     /**
      * Creates a [DaemonAnalyzerFixture] with a new project for each test. Declare it as an instance field.
@@ -265,6 +338,13 @@ open class DaemonAnalyzerFixture(
         DaemonAnalyzerFixture(context, testDataPath, localInspectionTools.get())
       }
 
+    /**
+     * Creates an instance of each local inspection class of [providers].
+     */
+    @JvmStatic
+    fun createLocalInspectionTools(vararg providers: InspectionToolProvider): Array<LocalInspectionTool> =
+      providers.flatMap { provider -> provider.inspectionClasses.map { InspectionTestUtil.instantiateTool(it) } }.toTypedArray()
+
     @JvmStatic
     fun filter(infos: List<HighlightInfo>, minSeverity: HighlightSeverity): List<HighlightInfo> = DaemonAnalyzerTestCase.filter(infos, minSeverity)
 
@@ -281,6 +361,14 @@ open class DaemonAnalyzerFixture(
                                                     "HighlightInfos: [" + infos.joinToString(", ") + "]")
       CodeInsightTestFixtureImpl.invokeIntention(intentionAction, psiFile, editor)
     }
+
+    /**
+     * Returns the action [intentionActionName] of the intentions at the caret and of the quick fixes of [infos], or `null`.
+     * Call it on the EDT.
+     */
+    @JvmStatic
+    fun findIntentionAction(infos: Collection<HighlightInfo>, intentionActionName: String, editor: Editor, psiFile: PsiFile): IntentionAction? =
+      LightQuickFixTestCase.findActionWithText(getIntentionActions(infos, editor, psiFile), intentionActionName)
 
     /**
      * Returns the intentions at the caret and the available quick fixes of [infos]. Call it on the EDT.

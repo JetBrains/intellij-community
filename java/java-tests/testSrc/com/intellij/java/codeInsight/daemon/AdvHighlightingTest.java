@@ -4,7 +4,6 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.PackagesScopesProvider;
 import com.intellij.application.options.colors.ScopeAttributesUtil;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -21,63 +20,76 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.io.File;
 import java.util.Collection;
-import java.util.concurrent.ExecutionException;
+
+import static com.intellij.java.codeInsight.daemon.JdkDaemonAnalyzerFixture.jdkDaemonAnalyzerFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * This class intended for "heavy-loaded" tests only, e.g. those need to setup separate project directory structure to run.
  * For "lightweight" tests use LightAdvHighlightingTest.
  */
-public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
+@TestApplication
+public class AdvHighlightingTest {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    setLanguageLevel(LanguageLevel.JDK_1_4);
-    return IdeaTestUtil.getMockJdk14();
-  }
+  private final TestFixture<JdkDaemonAnalyzerFixture> daemonFixture =
+    jdkDaemonAnalyzerFixture(JavaTestUtil.getJavaTestDataPath(), () -> IdeaTestUtil.getMockJdk14());
 
   private EditorColorsScheme cloneColorSchema() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme globalScheme = manager.getGlobalScheme();
     EditorColorsScheme scheme = (EditorColorsScheme)globalScheme.clone();
-    manager.addColorScheme(scheme);
-    manager.setGlobalScheme(scheme);
-    Disposer.register(getTestRootDisposable(), () -> manager.setGlobalScheme(globalScheme));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      manager.addColorScheme(scheme);
+      manager.setGlobalScheme(scheme);
+    });
+    Disposer.register(daemonFixture.get().getTestRootDisposable(), () -> manager.setGlobalScheme(globalScheme));
     return scheme;
   }
 
+  @Test
   public void testScopeBased() {
     NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.Scope.SOURCE, null));
     NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.Scope.LIBRARY, null));
-    NamedScopeManager scopeManager = NamedScopeManager.getInstance(getProject());
+    NamedScopeManager scopeManager = NamedScopeManager.getInstance(daemonFixture.get().getProject());
     scopeManager.addScope(xScope);
     scopeManager.addScope(utilScope);
 
@@ -91,17 +103,18 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     scheme.setAttributes(utilKey, utilAttributes);
 
     try {
-      testFile(BASE_PATH + "/scopeBased/x/X.java").projectRoot(BASE_PATH + "/scopeBased").checkSymbolNames().test();
+      daemonFixture.get().testFile(BASE_PATH + "/scopeBased/x/X.java").projectRoot(BASE_PATH + "/scopeBased").checkSymbolNames().test();
     }
     finally {
       scopeManager.removeAllSets();
     }
   }
 
+  @Test
   public void testSharedScopeBased() {
     NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.Scope.ANY, null));
     NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.Scope.LIBRARY, null));
-    NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(getProject());
+    NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(daemonFixture.get().getProject());
     scopeManager.addScope(xScope);
     scopeManager.addScope(utilScope);
 
@@ -114,79 +127,89 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     TextAttributes utilAttributes = new TextAttributes(Color.gray, Color.magenta, Color.orange, EffectType.STRIKEOUT, Font.BOLD);
     scheme.setAttributes(utilKey, utilAttributes);
 
-    NamedScope projectScope = PackagesScopesProvider.getInstance(myProject).getProjectProductionScope();
+    NamedScope projectScope = PackagesScopesProvider.getInstance(daemonFixture.get().getProject()).getProjectProductionScope();
     TextAttributesKey projectKey = ScopeAttributesUtil.getScopeTextAttributeKey(projectScope.getScopeId());
     TextAttributes projectAttributes = new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.ITALIC);
     scheme.setAttributes(projectKey, projectAttributes);
 
     try {
-      testFile(BASE_PATH + "/scopeBased/x/Shared.java").projectRoot(BASE_PATH + "/scopeBased").checkSymbolNames().test();
+      daemonFixture.get().testFile(BASE_PATH + "/scopeBased/x/Shared.java").projectRoot(BASE_PATH + "/scopeBased").checkSymbolNames().test();
     }
     finally {
       scopeManager.removeAllSets();
     }
   }
 
+  @Test
   public void testVisibilityBased() {
     EditorColorsScheme scheme = cloneColorSchema();
     TextAttributesKey xKey = JavaHighlightingColors.PRIVATE_REFERENCE_ATTRIBUTES;
     TextAttributes xAttributes = new TextAttributes(null, null, Color.orange, EffectType.BOXED, Font.PLAIN);
     scheme.setAttributes(xKey, xAttributes);
-    testFile(BASE_PATH + "/visibility/Simple.java").projectRoot(BASE_PATH + "/visibility").checkSymbolNames().test();
+    daemonFixture.get().testFile(BASE_PATH + "/visibility/Simple.java").projectRoot(BASE_PATH + "/visibility").checkSymbolNames().test();
   }
 
+  @Test
   public void testMultiJDKConflict() {
-    String path = JavaTestUtil.getJavaTestDataPath() + BASE_PATH + "/" + getTestName(true);
+    JdkDaemonAnalyzerFixture fixture = daemonFixture.get();
+    String path = JavaTestUtil.getJavaTestDataPath() + BASE_PATH + "/" + fixture.getTestName(true);
     VirtualFile root = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     assert root != null : path;
-    loadAllModulesUnder(root);
+    fixture.loadAllModulesUnder(root);
 
-    ModuleManager moduleManager = ModuleManager.getInstance(getProject());
+    ModuleManager moduleManager = ModuleManager.getInstance(fixture.getProject());
     Module java4 = moduleManager.findModuleByName("java4");
     Module java5 = moduleManager.findModuleByName("java5");
     Sdk jdk17 = IdeaTestUtil.getMockJdk17("java 1.4");
-    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk17, getTestRootDisposable()));
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk17, fixture.getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(java4, jdk17);
     Sdk jdk171 = IdeaTestUtil.getMockJdk17("java 1.5");
-    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk171, getTestRootDisposable()));
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk171, fixture.getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(java5, jdk171);
     ModuleRootModificationUtil.addDependency(java5, java4);
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    IndexingTestUtil.waitUntilIndexesAreReady(fixture.getProject());
 
-    configureByExistingFile(root.findFileByRelativePath("moduleJava5/com/Java5.java"));
-    Collection<HighlightInfo> infos = highlightErrors();
-    assertEmpty(infos);
+    fixture.configureByExistingFile(root.findFileByRelativePath("moduleJava5/com/Java5.java"));
+    Collection<HighlightInfo> infos = fixture.highlightErrors();
+    assertThat(infos).isEmpty();
   }
 
+  @Test
   public void testSameFQNClasses() {
-    String path = JavaTestUtil.getJavaTestDataPath() + BASE_PATH + "/" + getTestName(true);
+    JdkDaemonAnalyzerFixture fixture = daemonFixture.get();
+    String path = JavaTestUtil.getJavaTestDataPath() + BASE_PATH + "/" + fixture.getTestName(true);
     VirtualFile root = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     assert root != null : path;
-    loadAllModulesUnder(root);
+    fixture.loadAllModulesUnder(root);
 
-    configureByExistingFile(root.findFileByRelativePath("client/src/BugTest.java"));
-    Collection<HighlightInfo> infos = highlightErrors();
-    assertEmpty(infos);
+    fixture.configureByExistingFile(root.findFileByRelativePath("client/src/BugTest.java"));
+    Collection<HighlightInfo> infos = fixture.highlightErrors();
+    assertThat(infos).isEmpty();
   }
 
+  @Test
   public void testSameClassesInSourceAndLib() {
-    String path = JavaTestUtil.getJavaTestDataPath() + BASE_PATH + "/" + getTestName(true);
+    JdkDaemonAnalyzerFixture fixture = daemonFixture.get();
+    String path = JavaTestUtil.getJavaTestDataPath() + BASE_PATH + "/" + fixture.getTestName(true);
     VirtualFile root = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     assert root != null : path;
-    loadAllModulesUnder(root);
+    fixture.loadAllModulesUnder(root);
 
-    configureByExistingFile(root.findFileByRelativePath("src/ppp/SomeClass.java"));
-    PsiField field = ((PsiJavaFile)myFile).getClasses()[0].findFieldByName("f", false);
-    assert field != null;
-    PsiClass aClass = ((PsiClassType)field.getType()).resolve();
-    assert aClass != null;
-    assertEquals("ppp.BadClass", aClass.getQualifiedName());
-    //lies in source
-    VirtualFile vFile1 = myFile.getVirtualFile();
-    VirtualFile vFile2 = aClass.getContainingFile().getVirtualFile();
-    assert vFile1 != null;
-    assert vFile2 != null;
-    assertEquals(vFile1.getParent(), vFile2.getParent());
+    fixture.configureByExistingFile(root.findFileByRelativePath("src/ppp/SomeClass.java"));
+    PsiFile myFile = fixture.getFile();
+    ReadAction.runBlocking(() -> {
+      PsiField field = ((PsiJavaFile)myFile).getClasses()[0].findFieldByName("f", false);
+      assert field != null;
+      PsiClass aClass = ((PsiClassType)field.getType()).resolve();
+      assert aClass != null;
+      assertEquals("ppp.BadClass", aClass.getQualifiedName());
+      //lies in source
+      VirtualFile vFile1 = myFile.getVirtualFile();
+      VirtualFile vFile2 = aClass.getContainingFile().getVirtualFile();
+      assert vFile1 != null;
+      assert vFile2 != null;
+      assertEquals(vFile1.getParent(), vFile2.getParent());
+    });
   }
 
   // todo[r.sh] IDEA-91596 (probably PJCRE.resolve() should be changed to qualifier-first model)
@@ -194,41 +217,50 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   //  doTest(BASE_PATH + "/packageClassClash3/test/Test.java", BASE_PATH + "/packageClassClash3", false, false);
   //}
 
-  public void testUnusedPublicMethodReferencedViaSubclass() throws Exception {
+  @Test
+  public void testUnusedPublicMethodReferencedViaSubclass() {
+    JdkDaemonAnalyzerFixture fixture = daemonFixture.get();
     UnusedDeclarationInspectionBase deadCodeInspection = new UnusedDeclarationInspectionBase(true);
-    enableInspectionTool(deadCodeInspection);
-    allowTreeAccessForAllFiles();
+    fixture.enableInspectionTool(deadCodeInspection);
+    fixture.allowTreeAccessForAllFiles();
 
-    doTest(BASE_PATH + "/unusedPublicMethodRefViaSubclass/x/I.java", BASE_PATH + "/unusedPublicMethodRefViaSubclass", true, false);
+    fixture.doTest(BASE_PATH + "/unusedPublicMethodRefViaSubclass/x/I.java", BASE_PATH + "/unusedPublicMethodRefViaSubclass", true, false);
   }
 
-  public void testJavaFileOutsideSourceRootsMustNotContainErrors() throws ExecutionException, InterruptedException {
-    VirtualFile root = createVirtualDirectoryForContentFile();
-    VirtualFile virtualFile = createChildData(root, "A.java");
+  @Test
+  public void testJavaFileOutsideSourceRootsMustNotContainErrors() throws Exception {
+    JdkDaemonAnalyzerFixture fixture = daemonFixture.get();
+    Project project = fixture.getProject();
+    VirtualFile root = fixture.createTempVirtualDir();
     @Language("JAVA")
     String text = "class A { String f; }";
-    setFileText(virtualFile, text);
+    VirtualFile virtualFile = WriteAction.computeAndWait(() -> {
+      VirtualFile file = root.createChildData(root, "A.java");
+      VfsUtil.saveText(file, text);
+      return file;
+    });
 
     assertEquals(JavaFileType.INSTANCE, virtualFile.getFileType());
-    PsiFile psiFile = getPsiManager().findFile(virtualFile);
-    assertTrue(String.valueOf(psiFile), psiFile instanceof PsiJavaFile);
-    assertFalse(ProblemHighlightFilter.shouldHighlightFile(psiFile));
+    PsiFile psiFile = ReadAction.computeBlocking(() -> PsiManager.getInstance(project).findFile(virtualFile));
+    assertInstanceOf(PsiJavaFile.class, psiFile, String.valueOf(psiFile));
+    assertFalse(ReadAction.computeBlocking(() -> ProblemHighlightFilter.shouldHighlightFile(psiFile)));
 
-    configureByExistingFile(virtualFile);
+    fixture.configureByExistingFile(virtualFile);
 
-    TrafficLightRenderer renderer = ReadAction.nonBlocking(()->new TrafficLightRenderer(getProject(), getEditor())).submit(
+    TrafficLightRenderer renderer = ReadAction.nonBlocking(()->new TrafficLightRenderer(project, fixture.getEditor())).submit(
       AppExecutorUtil.getAppExecutorService()).get();
-    Disposer.register(getTestRootDisposable(), renderer);
+    Disposer.register(fixture.getTestRootDisposable(), renderer);
     while (true) {
       TrafficLightRenderer.DaemonCodeAnalyzerStatus status = ReadAction.nonBlocking(() -> renderer.getDaemonCodeAnalyzerStatus()).submit(AppExecutorUtil.getAppExecutorService()).get();
       assertNotNull(status.reasonWhyDisabled);
       if (status.errorAnalyzingFinished) {
         break;
       }
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
     }
-    Collection<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getDocument(psiFile), null, getProject());
-    assertEmpty(infos);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    Collection<HighlightInfo> infos = ReadAction.computeBlocking(
+      () -> DaemonCodeAnalyzerImpl.getHighlights(fixture.getDocument(psiFile), null, project));
+    assertThat(infos).isEmpty();
+    EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
   }
 }

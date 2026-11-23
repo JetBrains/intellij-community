@@ -2,187 +2,243 @@
 
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LossyEncodingInspection;
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import static org.junit.Assert.assertNotEquals;
+import static com.intellij.codeInsight.daemon.DaemonAnalyzerFixture.daemonAnalyzerFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class LossyEncodingTest extends DaemonAnalyzerTestCase {
+@TestApplication
+public class LossyEncodingTest {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lossyEncoding";
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new LossyEncodingInspection()};
+  private final TestFixture<DaemonAnalyzerFixture> daemonFixture = daemonAnalyzerFixture(
+    JavaTestUtil.getJavaTestDataPath(), () -> new LocalInspectionTool[]{new LossyEncodingInspection()});
+
+  @AfterEach
+  void tearDown() {
+    // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
+    EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
-  public void testText() throws Exception {
+  @Test
+  public void testText() {
     doTest("Text.txt");
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
     Charset ascii = StandardCharsets.US_ASCII;
-    VirtualFile myVFile = myFile.getVirtualFile();
-    FileDocumentManager.getInstance().saveAllDocuments();
-    EncodingProjectManager.getInstance(getProject()).setEncoding(myVFile, ascii);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // wait for reload requests to bubble up
+    VirtualFile myVFile = fixture.getFile().getVirtualFile();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      EncodingProjectManager.getInstance(fixture.getProject()).setEncoding(myVFile, ascii);
+      dispatchUntilVfsEventsAreProcessed(); // wait for reload requests to bubble up
+    });
     assertEquals(ascii, myVFile.getCharset());
-    int start = myEditor.getCaretModel().getOffset();
-    type((char)0x445);
-    type((char)0x438);
-    int end = myEditor.getCaretModel().getOffset();
+    int start = caretOffset(fixture);
+    fixture.type((char)0x445);
+    fixture.type((char)0x438);
+    int end = caretOffset(fixture);
 
-    Collection<HighlightInfo> infos = doHighlighting();
-    HighlightInfo info = assertOneElement(infos);
+    Collection<HighlightInfo> infos = fixture.doHighlighting();
+    assertThat(infos).hasSize(1);
+    HighlightInfo info = infos.iterator().next();
     assertEquals("Unsupported characters for the charset 'US-ASCII'", info.getDescription());
     assertEquals(start, info.startOffset);
     assertEquals(end, info.endOffset);
 
-    backspace();
-    backspace();
+    fixture.backspace();
+    fixture.backspace();
 
-    doDoTest(true, false);
+    fixture.doDoTest(true, false);
   }
 
+  @Test
   public void testNativeConversion() {
-    configureByText(PropertiesFileType.INSTANCE, "a=<caret>v");
-    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();  //reload files
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    fixture.configureByText(PropertiesFileType.INSTANCE, "a=<caret>v");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      EncodingProjectManager.getInstance(fixture.getProject()).setNative2AsciiForPropertiesFiles(null, true);
+      dispatchUntilVfsEventsAreProcessed();  //reload files
+    });
 
-    type('\\');
-    type('\\');
+    fixture.type('\\');
+    fixture.type('\\');
 
-    Collection<HighlightInfo> infos = doHighlighting();
+    Collection<HighlightInfo> infos = fixture.doHighlighting();
     assertEquals(0, infos.size());
   }
 
-  public void testTyping() throws Exception {
+  @Test
+  public void testTyping() {
     doTest("Simple.xml");
-    type("US-ASCII");
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    fixture.type("US-ASCII");
 
-    Collection<HighlightInfo> infos = doHighlighting();
-    HighlightInfo info = assertOneElement(infos);
+    Collection<HighlightInfo> infos = fixture.doHighlighting();
+    assertThat(infos).hasSize(1);
+    HighlightInfo info = infos.iterator().next();
 
     assertEquals("Unsupported characters for the charset 'US-ASCII'", info.getDescription());
   }
 
-  public void testMultipleRanges() throws Exception {
-    configureByFile(BASE_PATH + "/" + "MultipleRanges.xml");
-    type("US-ASCII");
+  @Test
+  public void testMultipleRanges() {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    fixture.configureByFile(BASE_PATH + "/" + "MultipleRanges.xml");
+    fixture.type("US-ASCII");
 
-    doDoTest(true, false);
+    fixture.doDoTest(true, false);
   }
 
-  private void doTest(@NonNls String filePath) throws Exception {
-    doTest(BASE_PATH + "/" + filePath, true, false);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+  private void doTest(@NonNls String filePath) {
+    daemonFixture.get().doTest(BASE_PATH + "/" + filePath, true, false);
+    EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
   }
 
-  public void testNativeEncoding() throws Exception {
-    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    configureByFile(BASE_PATH + "/" + "NativeEncoding.properties");
-
-    doDoTest(true, false);
+  /**
+   * Dispatches the EDT events until the async VFS events of a charset change are applied.
+   * The daemon of the test does not wait for the event processing, and a VFS change during the highlighting fails the test.
+   */
+  private static void dispatchUntilVfsEventsAreProcessed() {
+    do {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    }
+    while (RefreshQueueImpl.isRefreshInProgress() || RefreshQueueImpl.isEventProcessingInProgress());
   }
 
+  private static int caretOffset(DaemonAnalyzerFixture fixture) {
+    return ReadAction.computeBlocking(() -> fixture.getEditor().getCaretModel().getOffset());
+  }
+
+  @Test
+  public void testNativeEncoding() {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      EncodingProjectManager.getInstance(fixture.getProject()).setNative2AsciiForPropertiesFiles(null, true);
+      dispatchUntilVfsEventsAreProcessed();
+    });
+    fixture.configureByFile(BASE_PATH + "/" + "NativeEncoding.properties");
+
+    fixture.doDoTest(true, false);
+  }
+
+  @Test
   public void testDetectWrongEncoding() {
-    VirtualFile virtualFile = findVirtualFile(BASE_PATH + "/Win1251.txt");
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    VirtualFile virtualFile = fixture.findVirtualFile(BASE_PATH + "/Win1251.txt");
     virtualFile.setCharset(StandardCharsets.UTF_8);
-    configureByExistingFile(virtualFile);
-    Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(virtualFile));
+    fixture.configureByExistingFile(virtualFile);
+    Document document = Objects.requireNonNull(ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(virtualFile)));
 
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
     assertEquals(StandardCharsets.UTF_8, virtualFile.getCharset());
 
-    doHighlighting();
-    List<HighlightInfo> infos = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(getProject())).getFileLevelHighlights(getProject(), getFile());
-    HighlightInfo info = assertOneElement(infos);
-    assertEquals("The file was loaded in a wrong encoding: 'UTF-8'", info.getDescription());
+    fixture.doHighlighting();
+    List<HighlightInfo> infos = fileLevelHighlights(fixture);
+    assertThat(infos).hasSize(1);
+    assertEquals("The file was loaded in a wrong encoding: 'UTF-8'", infos.getFirst().getDescription());
   }
 
+  @Test
   public void testReloadInNativeEncodingWhenJvmUsesUtf8() throws Exception {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
     PlatformTestUtil.withSystemProperty("sun.jnu.encoding", "UTF-8", () -> {
       PlatformTestUtil.withSystemProperty("sun.jnu.encoding.sys", "windows-31j", () -> {
         var charset = Charset.forName("windows-31j");
         var text = "日本語\n";
-        var encodingManager = EncodingProjectManager.getInstance(getProject());
+        var encodingManager = EncodingProjectManager.getInstance(fixture.getProject());
         encodingManager.setDefaultCharsetName(StandardCharsets.UTF_8.name());
-        var virtualFile = createTempVirtualFile("Japanese.txt", null, text, charset);
+        Path ioFile = fixture.createTempVirtualDir().toNioPath().resolve("Japanese.txt");
+        Files.writeString(ioFile, text, charset);
+        var virtualFile = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile));
         virtualFile.setCharset(StandardCharsets.UTF_8);
-        configureByExistingFile(virtualFile);
-        var document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(virtualFile));
+        fixture.configureByExistingFile(virtualFile);
+        var document = Objects.requireNonNull(ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(virtualFile)));
         assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
         assertEquals(StandardCharsets.UTF_8, virtualFile.getCharset());
         assertNotEquals(text, document.getText());
 
-        doHighlighting();
-        var infos = myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile());
-        var info = assertOneElement(infos);
-        assertEquals("The file was loaded in a wrong encoding: 'UTF-8'", info.getDescription());
+        fixture.doHighlighting();
+        var infos = fileLevelHighlights(fixture);
+        assertThat(infos).hasSize(1);
+        assertEquals("The file was loaded in a wrong encoding: 'UTF-8'", infos.getFirst().getDescription());
         var reloadAction = "Reload in 'windows-31j'";
-        assertNotNull(findIntentionAction(infos, reloadAction, getEditor(), getFile()));
-        assertNotNull(findIntentionAction(infos, "Set project encoding to 'windows-31j'", getEditor(), getFile()));
+        EdtTestUtil.runInEdtAndWait(() -> {
+          assertNotNull(DaemonAnalyzerFixture.findIntentionAction(infos, reloadAction, fixture.getEditor(), fixture.getFile()));
+          assertNotNull(DaemonAnalyzerFixture.findIntentionAction(infos, "Set project encoding to 'windows-31j'", fixture.getEditor(), fixture.getFile()));
+        });
 
-        findAndInvokeIntentionAction(infos, reloadAction, getEditor(), getFile());
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        fixture.findAndInvokeIntentionAction(infos, reloadAction);
+        EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
 
         assertEquals(charset, virtualFile.getCharset());
         assertEquals(text, document.getText());
         assertEquals(StandardCharsets.UTF_8, encodingManager.getDefaultCharset());
-        doHighlighting();
-        assertEmpty(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+        fixture.doHighlighting();
+        assertThat(fileLevelHighlights(fixture)).isEmpty();
       });
     });
   }
 
+  @Test
   public void testSurrogateUTF8() {
-    VirtualFile virtualFile = findVirtualFile(BASE_PATH + "/" + "surrogate.txt");
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    VirtualFile virtualFile = fixture.findVirtualFile(BASE_PATH + "/" + "surrogate.txt");
     virtualFile.setCharset(StandardCharsets.UTF_8);
-    configureByExistingFile(virtualFile);
-    final Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(virtualFile));
+    fixture.configureByExistingFile(virtualFile);
+    final Document document = Objects.requireNonNull(ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(virtualFile)));
 
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
     assertEquals(StandardCharsets.UTF_8, virtualFile.getCharset());
 
-    assertEmpty(doHighlighting());
+    assertThat(fixture.doHighlighting()).isEmpty();
   }
 
+  @Test
   public void testInconsistentLineSeparators() {
-    VirtualFile virtualFile = findVirtualFile(BASE_PATH + "/" + getTestName(false) + ".txt");
-    configureByExistingFile(virtualFile);
-    FileDocumentManager.getInstance().saveAllDocuments();
-    final Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(virtualFile));
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    VirtualFile virtualFile = fixture.findVirtualFile(BASE_PATH + "/" + fixture.getTestName(false) + ".txt");
+    fixture.configureByExistingFile(virtualFile);
+    EdtTestUtil.runInEdtAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
+    final Document document = Objects.requireNonNull(ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(virtualFile)));
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
-    doHighlighting();
-    List<HighlightInfo> infos = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(getProject())).getFileLevelHighlights(getProject(), getFile());
-    assertEmpty(infos);
+    fixture.doHighlighting();
+    assertThat(fileLevelHighlights(fixture)).isEmpty();
+  }
+
+  private static List<HighlightInfo> fileLevelHighlights(DaemonAnalyzerFixture fixture) {
+    return ReadAction.computeBlocking(
+      () -> ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(fixture.getProject())).getFileLevelHighlights(fixture.getProject(), fixture.getFile()));
   }
 }

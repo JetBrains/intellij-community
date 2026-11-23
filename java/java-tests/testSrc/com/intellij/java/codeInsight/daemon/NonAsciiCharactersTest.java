@@ -1,33 +1,33 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.NonAsciiCharactersInspection;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.DaemonAnalyzerFixture.daemonAnalyzerFixture;
+
+@TestApplication
+public class NonAsciiCharactersTest {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/nonAsciiCharacters";
-  private NonAsciiCharactersInspection myInspection = new NonAsciiCharactersInspection();
+  private final NonAsciiCharactersInspection myInspection = new NonAsciiCharactersInspection();
+  private final TestFixture<DaemonAnalyzerFixture> daemonFixture =
+    daemonAnalyzerFixture(JavaTestUtil.getJavaTestDataPath(), () -> new LocalInspectionTool[]{myInspection});
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{myInspection};
+  private void doTest(String extension) {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    fixture.doTest(BASE_PATH + "/" + fixture.getTestName(false) + extension, true, false);
+    EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myInspection = null;
-    super.tearDown();
-  }
-
-  private void doTest(String extension) throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + extension, true, false);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-  }
-
-  public void testNotAsciiJavaInVariousContexts() throws Exception {
+  @Test
+  public void testNotAsciiJavaInVariousContexts() {
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = false;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = false;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS = false;
@@ -39,7 +39,8 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     myInspection.CHECK_FOR_FILES_CONTAINING_BOM = false;
     doTest(".java");
   }
-  public void testNotAsciiJavaInAnyWord() throws Exception {
+  @Test
+  public void testNotAsciiJavaInAnyWord() {
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = false;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = false;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS = false;
@@ -52,7 +53,8 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     doTest(".java");
   }
 
-  public void testMixedLanguagesJavaInAnyWord() throws Exception {
+  @Test
+  public void testMixedLanguagesJavaInAnyWord() {
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS = true;
@@ -65,7 +67,8 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     doTest(".java");
   }
 
-  public void testMixedLanguagesXMLInAnyWord() throws Exception {
+  @Test
+  public void testMixedLanguagesXMLInAnyWord() {
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS = true;
@@ -77,7 +80,8 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     myInspection.CHECK_FOR_FILES_CONTAINING_BOM = false;
     doTest(".xml");
   }
-  public void testMixedLanguagesXMLInAnyWordExceptString() throws Exception {
+  @Test
+  public void testMixedLanguagesXMLInAnyWordExceptString() {
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS = true;
@@ -90,7 +94,8 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     doTest(".xml");
   }
 
-  public void testMixedLanguagesJavaInVariousContexts() throws Exception {
+  @Test
+  public void testMixedLanguagesJavaInVariousContexts() {
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = false;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS = true;
@@ -103,7 +108,8 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     doTest(".java");
   }
 
-  public void testGroovy() throws Exception {
+  @Test
+  public void testGroovy() {
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS = true;
@@ -116,7 +122,8 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     doTest(".groovy");
   }
 
-  public void testMixedLanguagesPlainTextInAnyWord() throws Exception {
+  @Test
+  public void testMixedLanguagesPlainTextInAnyWord() {
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS = true;
@@ -129,7 +136,8 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     doTest(".txt");
   }
 
-  public void testRegexNamedGroupWithNonAscii() throws Exception {
+  @Test
+  public void testRegexNamedGroupWithNonAscii() {
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = false;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = false;
     myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS = false;

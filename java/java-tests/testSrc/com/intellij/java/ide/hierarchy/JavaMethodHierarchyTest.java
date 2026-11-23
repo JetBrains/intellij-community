@@ -6,88 +6,89 @@ import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.method.MethodHierarchyTreeStructure;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestBase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
-  @Override
-  protected @NotNull LanguageLevel getProjectLanguageLevel() {
-    return LanguageLevel.JDK_1_8; // default methods are needed
-  }
+import static com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewFixture.hierarchyViewFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return IdeaTestUtil.getMockJdk18();
-  }
+@TestApplication
+public class JavaMethodHierarchyTest {
+  private final TestFixture<HierarchyViewFixture> hierarchyFixture =
+    hierarchyViewFixture(JavaTestUtil.getJavaTestDataPath(), "ide/hierarchy/method", () -> IdeaTestUtil.getMockJdk18(),
+                         LanguageLevel.JDK_1_8); // default methods are needed
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "ide/hierarchy/method/" + getTestName(false);
-  }
-
+  @Test
   public void testNoHierarchy() {
     doTest("A", "foo", "A.java");
   }
 
+  @Test
   public void testOnlyUp() {
     doTest("Z", "m", "X.java");
   }
 
+  @Test
   public void testOnlyDown() {
     doTest("X", "m", "X.java");
   }
 
+  @Test
   public void testOnlyDownHide() {
     doTestHideIrrelevantClasses("foo.X", "m", "X.java");
   }
 
+  @Test
   public void testUpAndDown() {
     doTestHideIrrelevantClasses("Y", "foo", "X.java");
   }
 
+  @Test
   public void testObjectMethod() {
     doTest("Foo", "hashCode", "X.java");
   }
 
+  @Test
   public void testInterfaceInheritance() {
     doTest("E", "bar", "X.java");
   }
 
+  @Test
   public void testCyclicInheritance() {
     doTest("D", "foo", "X.java");
   }
 
+  @Test
   public void testExtendsImplementsChain() {
     doTest("C", "foo", "X.java");
   }
 
+  @Test
   public void testTwoParentsPreferClass() {
     doTest("C3", "m", "X.java");
   }
 
   private void doTest(final String classFqn, final String methodName, final String... fileNames) {
-    doHierarchyTest(() -> {
-      final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
+    HierarchyViewFixture fixture = hierarchyFixture.get();
+    Project project = fixture.getProject();
+    fixture.doHierarchyTest(() -> {
+      final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(classFqn, ProjectScope.getProjectScope(project));
       final PsiMethod method = psiClass.findMethodsByName(methodName, false) [0];
-      return new MethodHierarchyTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }, JavaHierarchyUtil.getComparator(myProject), fileNames);
+      return new MethodHierarchyTreeStructure(project, method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, JavaHierarchyUtil.getComparator(project), fileNames);
   }
 
   private void doTestHideIrrelevantClasses(String classFqn, String methodName, String... fileNames) {
-    HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myProject).getState();
+    HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(hierarchyFixture.get().getProject()).getState();
     assertNotNull(state);
     state.HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED = true;
     try {

@@ -2,7 +2,8 @@
 package com.intellij.java.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
+import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture.Companion.daemonAnalyzerFixture
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInspection.GlobalInspectionTool
 import com.intellij.codeInspection.InspectionEP
@@ -36,82 +37,93 @@ import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.enableInspectionTool
 import com.intellij.testFramework.enableInspectionTools
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
+@TestApplication
 @CanChangeDocumentDuringHighlighting
-class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
-  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable?>) {
+class LocalInspectionsInDumbModeTest {
+  private val fixture by daemonAnalyzerFixture(JavaTestUtil.getJavaTestDataPath())
+
+  private fun runTest(test: () -> Unit) {
     DaemonProgressIndicator.runInDebugMode<Exception> {
-      super.runTestRunnable(testRunnable)
+      test()
     }
   }
 
-  fun testLocalInspectionInDumbMode() {
-    enableInspectionTools(project, testRootDisposable, DumbInspection(), SmartInspection())
+  @Test
+  fun testLocalInspectionInDumbMode(): Unit = runTest {
+    enableInspectionTools(fixture.project, fixture.testRootDisposable, DumbInspection(), SmartInspection())
 
     @Language("JAVA")
     val text = """
       // comment
     """
-    configureByText(JavaFileType.INSTANCE, text)
+    fixture.configureByText(JavaFileType.INSTANCE, text)
 
     // only dumb inspection runs in dumb mode
     val dumbInfos = doHighlightingInDumbMode()
-    assertOneElement(dumbInfos)
+    assertThat(dumbInfos).hasSize(1)
     assertExistsInfo(dumbInfos, "Dumb0")
 
-    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false))
+    DaemonCodeAnalyzerEx.getInstanceEx(fixture.project).restart(fixture.getTestName(false))
     // dumb and smart inspections run in dumb mode
-    val smartInfos = doHighlighting()
-    assertSize(2, smartInfos)
+    val smartInfos = fixture.doHighlighting()
+    assertThat(smartInfos).hasSize(2)
     assertExistsInfo(smartInfos, "Dumb1")
     assertExistsInfo(smartInfos, "Smart0")
 
-    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false))
+    DaemonCodeAnalyzerEx.getInstanceEx(fixture.project).restart(fixture.getTestName(false))
     // only dumb inspection runs in dumb mode, but the results of smart inspection are frozen from the previous run
     val dumbInfos2 = doHighlightingInDumbMode()
-    assertSize(2, dumbInfos2)
+    assertThat(dumbInfos2).hasSize(2)
     assertExistsInfo(dumbInfos2, "Dumb2")
     assertExistsInfo(dumbInfos2, "Smart0")
   }
 
-  fun testLocalInspectionsInSmartModeThenInDumbMode() {
-    enableInspectionTools(project, testRootDisposable, DumbInspection(), SmartInspection())
+  @Test
+  fun testLocalInspectionsInSmartModeThenInDumbMode(): Unit = runTest {
+    enableInspectionTools(fixture.project, fixture.testRootDisposable, DumbInspection(), SmartInspection())
 
     @Language("JAVA")
     val text = """
       // comment
     """
-    configureByText(JavaFileType.INSTANCE, text)
+    fixture.configureByText(JavaFileType.INSTANCE, text)
 
     // dumb and smart inspections run in dumb mode
-    val smartInfos = doHighlighting()
-    assertSize(2, smartInfos)
+    val smartInfos = fixture.doHighlighting()
+    assertThat(smartInfos).hasSize(2)
     assertExistsInfo(smartInfos, "Dumb0")
     assertExistsInfo(smartInfos, "Smart0")
 
-    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false))
+    DaemonCodeAnalyzerEx.getInstanceEx(fixture.project).restart(fixture.getTestName(false))
     // only dumb inspection runs in dumb mode, but the results of smart inspection are frozen from the previous run
     val dumbInfos = doHighlightingInDumbMode()
-    assertSize(2, dumbInfos)
+    assertThat(dumbInfos).hasSize(2)
     assertExistsInfo(dumbInfos, "Dumb1")
     assertExistsInfo(dumbInfos, "Smart0")
   }
 
-  fun testLocalInspectionInDumbModeDontInitializeUnrelatedTools() {
-    enableInspectionTools(project, testRootDisposable, DumbInspection(), SmartInspection())
+  @Test
+  fun testLocalInspectionInDumbModeDontInitializeUnrelatedTools(): Unit = runTest {
+    enableInspectionTools(fixture.project, fixture.testRootDisposable, DumbInspection(), SmartInspection())
 
     val unrelatedToolWrapper = createUnrelatedToolWrapper()
-    enableInspectionTool(project, unrelatedToolWrapper, testRootDisposable)
+    enableInspectionTool(fixture.project, unrelatedToolWrapper, fixture.testRootDisposable)
     InspectionProfileWrapper.runWithNoDuplicateCheckInTests {
       @Language("JAVA")
       val text = """
       // comment
     """
-      configureByText(JavaFileType.INSTANCE, text)
+      fixture.configureByText(JavaFileType.INSTANCE, text)
 
       doHighlightingInDumbMode()
 
@@ -119,94 +131,100 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     }
   }
 
-  fun testLocalInspectionDontInitializeUnrelatedTools() {
-    enableInspectionTools(project, testRootDisposable, DumbInspection(), SmartInspection())
+  @Test
+  fun testLocalInspectionDontInitializeUnrelatedTools(): Unit = runTest {
+    enableInspectionTools(fixture.project, fixture.testRootDisposable, DumbInspection(), SmartInspection())
 
     val unrelatedToolWrapper = createUnrelatedToolWrapper()
-    enableInspectionTool(project, unrelatedToolWrapper, testRootDisposable)
+    enableInspectionTool(fixture.project, unrelatedToolWrapper, fixture.testRootDisposable)
     InspectionProfileWrapper.runWithNoDuplicateCheckInTests {
       @Language("JAVA")
       val text = """
       // comment
     """
-      configureByText(JavaFileType.INSTANCE, text)
+      fixture.configureByText(JavaFileType.INSTANCE, text)
 
-      doHighlighting()
+      fixture.doHighlighting()
 
       assertFalse(unrelatedToolWrapper.isToolInstantiated())
     }
   }
 
-  fun testLocalInspectionDontInitializeUnrelatedGlobalTools() {
-    enableInspectionTools(project, testRootDisposable, DumbInspection(), SmartInspection())
+  @Test
+  fun testLocalInspectionDontInitializeUnrelatedGlobalTools(): Unit = runTest {
+    enableInspectionTools(fixture.project, fixture.testRootDisposable, DumbInspection(), SmartInspection())
 
     val unrelatedToolWrapper = createGlobalToolWrapper("UnrelatedGlobal", "TEXT")
-    enableInspectionTool(project, unrelatedToolWrapper, testRootDisposable)
+    enableInspectionTool(fixture.project, unrelatedToolWrapper, fixture.testRootDisposable)
     InspectionProfileWrapper.runWithNoDuplicateCheckInTests {
       @Language("JAVA")
       val text = """
       // comment
     """
-      configureByText(JavaFileType.INSTANCE, text)
+      fixture.configureByText(JavaFileType.INSTANCE, text)
 
-      doHighlighting()
+      fixture.doHighlighting()
 
       assertFalse(unrelatedToolWrapper.isToolInstantiated())
     }
   }
 
-  fun testIntentionsDontInitializeUnrelatedDoNotShowGlobalTool() {
+  @Test
+  fun testIntentionsDontInitializeUnrelatedDoNotShowGlobalTool(): Unit = runTest {
     val unrelatedToolWrapper =
       createGlobalToolWrapper("UnrelatedDoNotShowGlobal", "TEXT", HighlightDisplayLevel.DO_NOT_SHOW)
-    enableInspectionTool(project, unrelatedToolWrapper, testRootDisposable)
+    enableInspectionTool(fixture.project, unrelatedToolWrapper, fixture.testRootDisposable)
     InspectionProfileWrapper.runWithNoDuplicateCheckInTests {
       @Language("JAVA")
       val text = """
       // comment
     """
-      configureByText(JavaFileType.INSTANCE, text)
+      fixture.configureByText(JavaFileType.INSTANCE, text)
 
-      doHighlighting()
+      fixture.doHighlighting()
 
       assertFalse(unrelatedToolWrapper.isToolInstantiated())
     }
   }
 
-  fun testIntentionsInitializeApplicableDoNotShowGlobalTool() {
+  @Test
+  fun testIntentionsInitializeApplicableDoNotShowGlobalTool(): Unit = runTest {
     val globalToolWrapper = createGlobalToolWrapper("ApplicableDoNotShowGlobal", "JAVA", HighlightDisplayLevel.DO_NOT_SHOW)
-    enableInspectionTool(project, globalToolWrapper, testRootDisposable)
+    enableInspectionTool(fixture.project, globalToolWrapper, fixture.testRootDisposable)
     InspectionProfileWrapper.runWithNoDuplicateCheckInTests {
       @Language("JAVA")
       val text = """
       // comment
     """
-      configureByText(JavaFileType.INSTANCE, text)
+      fixture.configureByText(JavaFileType.INSTANCE, text)
 
-      doHighlighting()
+      fixture.doHighlighting()
 
       assertTrue(globalToolWrapper.isToolInstantiated())
     }
   }
 
-  fun testLocalInspectionInitializesApplicableGlobalToolOnFirstPass() {
+  @Test
+  fun testLocalInspectionInitializesApplicableGlobalToolOnFirstPass(): Unit = runTest {
     val globalToolWrapper = createGlobalToolWrapper("ApplicableGlobal", "JAVA")
-    enableInspectionTool(project, globalToolWrapper, testRootDisposable)
+    enableInspectionTool(fixture.project, globalToolWrapper, fixture.testRootDisposable)
     InspectionProfileWrapper.runWithNoDuplicateCheckInTests {
       @Language("JAVA")
       val text = """
       // comment
     """
-      configureByText(JavaFileType.INSTANCE, text)
+      fixture.configureByText(JavaFileType.INSTANCE, text)
 
-      val infos = doHighlighting()
+      val infos = fixture.doHighlighting()
 
       assertTrue(globalToolWrapper.isToolInstantiated())
       assertExistsInfo(infos, "Global")
     }
   }
 
-  fun testJavaSuppressor() {
-    enableInspectionTools(project, testRootDisposable, RedundantSuppressInspection(), StringInspection())
+  @Test
+  fun testJavaSuppressor(): Unit = runTest {
+    enableInspectionTools(fixture.project, fixture.testRootDisposable, RedundantSuppressInspection(), StringInspection())
 
     val javaRedundantSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(JavaLanguage.INSTANCE)
       .filterIsInstance<RedundantSuppressionDetector>()
@@ -223,21 +241,22 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
         }
       }
     """
-    configureByText(JavaFileType.INSTANCE, text)
+    fixture.configureByText(JavaFileType.INSTANCE, text)
 
     // smart infos don't contain String because Suppressor works in smart mode and suppresses it
-    val smartInfos = doHighlighting()
-    assertDoesntContain(smartInfos.map { it.description }, "String")
+    val smartInfos = fixture.doHighlighting()
+    assertThat(smartInfos.map { it.description }).doesNotContain("String")
 
     if (Registry.`is`("ide.dumb.mode.check.awareness")) {
       // dumb infos contain String because Suppressor does not work in dumb mode
       val dumbInfos = doHighlightingInDumbMode()
-      assertContainsElements(dumbInfos.map { it.description }, "String")
+      assertThat(dumbInfos.map { it.description }).contains("String")
     }
   }
 
-  fun testRedundantJavaSuppression() {
-    enableInspectionTools(project, testRootDisposable, RedundantSuppressInspection(), StringInspection())
+  @Test
+  fun testRedundantJavaSuppression(): Unit = runTest {
+    enableInspectionTools(fixture.project, fixture.testRootDisposable, RedundantSuppressInspection(), StringInspection())
 
     val javaRedundantSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(JavaLanguage.INSTANCE)
       .filterIsInstance<RedundantSuppressionDetector>()
@@ -253,27 +272,28 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
         }
       }
     """
-    configureByText(JavaFileType.INSTANCE, text)
+    fixture.configureByText(JavaFileType.INSTANCE, text)
 
     if (Registry.`is`("ide.dumb.mode.check.awareness")) {
       // dumb infos contain a redundant suppression because it's not removed as java suppressor does not work in dumb mode
       val initialDumbInfos = doHighlightingInDumbMode().map { it.description }
-      assertDoesntContain(initialDumbInfos, "Redundant suppression")
+      assertThat(initialDumbInfos).doesNotContain("Redundant suppression")
     }
 
     // smart infos contain a redundant suppression, because suppression is in fact redundant,
     // and redundant suppressor for Java works in smart mode
-    val smartInfos = doHighlighting().map { it.description }
-    assertContainsElements(smartInfos, "Redundant suppression")
+    val smartInfos = fixture.doHighlighting().map { it.description }
+    assertThat(smartInfos).contains("Redundant suppression")
 
     // dumb infos contain a redundant suppression because it's not removed as java suppressor does not work in dumb mode
     val dumbInfos = doHighlightingInDumbMode().map { it.description }
-    assertContainsElements(dumbInfos, "Redundant suppression")
+    assertThat(dumbInfos).contains("Redundant suppression")
   }
 
 
-  fun testSuppressorInDumbMode2() {
-    enableInspectionTools(project, testRootDisposable, RedundantSuppressInspection(), StringInspection())
+  @Test
+  fun testSuppressorInDumbMode2(): Unit = runTest {
+    enableInspectionTools(fixture.project, fixture.testRootDisposable, RedundantSuppressInspection(), StringInspection())
 
     @Language("JAVA")
     val text = """
@@ -283,10 +303,10 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
         }
       }
     """
-    configureByText(JavaFileType.INSTANCE, text)
+    fixture.configureByText(JavaFileType.INSTANCE, text)
 
     val dumbInfos = doHighlightingInDumbMode()
-    assertDoesntContain(dumbInfos, "String")
+    assertFalse((dumbInfos as List<*>).contains("String"))
   }
 
   private fun assertExistsInfo(infos: List<HighlightInfo>, text: String) {
@@ -297,10 +317,10 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
 
   private fun doHighlightingInDumbMode(): List<HighlightInfo> {
     var result: List<HighlightInfo>? = null
-    DumbModeTestUtils.runInDumbModeSynchronously(project) {
-      Disposer.newDisposable(testRootDisposable).use { disposable ->
+    DumbModeTestUtils.runInDumbModeSynchronously(fixture.project) {
+      Disposer.newDisposable(fixture.testRootDisposable).use { disposable ->
         CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, disposable)
-        result = doHighlighting()
+        result = fixture.doHighlighting()
       }
     }
     return result!!

@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.find;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindManagerTestUtils;
 import com.intellij.find.FindModel;
@@ -11,10 +12,20 @@ import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.testFramework.junit5.StressTestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.util.concurrent.TimeUnit;
+
+import static com.intellij.codeInsight.daemon.DaemonAnalyzerFixture.daemonAnalyzerFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Guards the cost of searching comments and string literals, which used to restart the lexer once per occurrence -- for
@@ -26,22 +37,17 @@ import java.util.concurrent.TimeUnit;
  * occurrences spread over ordinary markup, and walking {@code IN_STRING_LITERALS} over the latter held a thread for 6.3 s.
  * Collecting the occurrences in a single pass brought them all under 10 ms.
  */
+@StressTestApplication
 @PerformanceUnitTest
-public class FindInCommentsAndLiteralsPerformanceTest extends DaemonAnalyzerTestCase {
+public class FindInCommentsAndLiteralsPerformanceTest {
   private static final int OCCURRENCES = 8000;
 
+  private final TestFixture<DaemonAnalyzerFixture> daemonFixture = daemonAnalyzerFixture(JavaTestUtil.getJavaTestDataPath());
   private FindManager myFindManager;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFindManager = FindManager.getInstance(myProject);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    myFindManager = null;
-    super.tearDown();
+  @BeforeEach
+  void setUp() {
+    myFindManager = FindManager.getInstance(daemonFixture.get().getProject());
   }
 
   /** Every occurrence inside one attribute value, so they all share a single lexer token. */
@@ -83,10 +89,12 @@ public class FindInCommentsAndLiteralsPerformanceTest extends DaemonAnalyzerTest
     }).start();
   }
 
+  @Test
   public void testExceptLiteralsWhenAllOccurrencesShareOneToken() {
     benchmarkFindString("find except literals, all occurrences in one token", oneHugeLiteral());
   }
 
+  @Test
   public void testExceptLiteralsWhenLexerNeverReturnsToInitialState() {
     benchmarkFindString("find except literals, one element spanning the file", oneGiantTag());
   }
@@ -126,10 +134,12 @@ public class FindInCommentsAndLiteralsPerformanceTest extends DaemonAnalyzerTest
     return findModel;
   }
 
+  @Test
   public void testInLiteralsWhenAllOccurrencesShareOneToken() {
     benchmarkFindAll("find all in literals, all occurrences in one token", oneHugeLiteral());
   }
 
+  @Test
   public void testInLiteralsWhenLexerNeverReturnsToInitialState() {
     benchmarkFindAll("find all in literals, one element spanning the file", oneGiantTag());
   }
@@ -139,13 +149,14 @@ public class FindInCommentsAndLiteralsPerformanceTest extends DaemonAnalyzerTest
    * made four times as many of them cost ~14 times as much (130 ms at 1000, 1895 ms at 4000), where one pass over the
    * file is proportional to its size.
    */
+  @Test
   public void testFindAllInLiteralsScalesWithOccurrenceCount() {
     millisOfFindAll(1000); // warms up the JIT and whatever the highlighter and the file type resolve to
 
     long thousand = millisOfFindAll(1000);
     long fourThousand = millisOfFindAll(4000);
-    assertTrue("4000 occurrences took " + fourThousand + " ms against " + thousand + " ms for 1000",
-               fourThousand <= 6 * thousand + 100);
+    assertTrue(fourThousand <= 6 * thousand + 100,
+               "4000 occurrences took " + fourThousand + " ms against " + thousand + " ms for 1000");
   }
 
   private long millisOfFindAll(int occurrences) {
@@ -167,21 +178,24 @@ public class FindInCommentsAndLiteralsPerformanceTest extends DaemonAnalyzerTest
    * what {@link com.intellij.find.impl.livePreview.LivePreviewController#updateInBackground} gives it, and what makes
    * everything the search caches be collected again per update.
    */
-  private void benchmarkLivePreviewUpdate(String name, FindModel.SearchContext context, int expectedMatches) {
-    configureByText(XmlFileType.INSTANCE, oneHugeLiteral());
+  private void benchmarkLivePreviewUpdate(String testMethodName, String name, FindModel.SearchContext context, int expectedMatches) {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    fixture.configureByText(XmlFileType.INSTANCE, oneHugeLiteral());
 
-    SearchResults searchResults = new SearchResults(getEditor(), getProject());
-    LivePreviewController controller = new LivePreviewController(searchResults, null, getTestRootDisposable());
-    FindModel findModel = FindManagerTestUtils.configureFindModel("needle");
-    findModel.setSearchContext(context);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      SearchResults searchResults = new SearchResults(fixture.getEditor(), fixture.getProject());
+      LivePreviewController controller = new LivePreviewController(searchResults, null, fixture.getTestRootDisposable());
+      FindModel findModel = FindManagerTestUtils.configureFindModel("needle");
+      findModel.setSearchContext(context);
 
-    controller.on();
-    Benchmark.newBenchmark(name, () -> {
-      for (int i = 0; i < 3; i++) {
-        controller.updateInBackground(findModel, false);
-        assertEquals(expectedMatches, searchResults.getMatchesCount());
-      }
-    }).start();
+      controller.on();
+      Benchmark.newBenchmark(name, () -> {
+        for (int i = 0; i < 3; i++) {
+          controller.updateInBackground(findModel, false);
+          assertEquals(expectedMatches, searchResults.getMatchesCount());
+        }
+      }).start(testMethodName);
+    });
   }
 
   /**
@@ -189,14 +203,16 @@ public class FindInCommentsAndLiteralsPerformanceTest extends DaemonAnalyzerTest
    * walks past all {@value #OCCURRENCES} of them to hand out the single match it can keep -- only
    * {@code <tail>needle</tail>} is outside the literal.
    */
-  public void testLivePreviewUpdateWhenAllOccurrencesShareOneToken() {
-    benchmarkLivePreviewUpdate("live preview update except literals, all occurrences in one token",
+  @Test
+  public void testLivePreviewUpdateWhenAllOccurrencesShareOneToken(TestInfo testInfo) {
+    benchmarkLivePreviewUpdate(getClass().getName() + "." + testInfo.getTestMethod().orElseThrow().getName(), "live preview update except literals, all occurrences in one token",
                                FindModel.SearchContext.EXCEPT_STRING_LITERALS, 1);
   }
 
   /** The update IJPL-252883 was reported for: the profile it came with has one of these holding a thread for 6.3 s. */
-  public void testLivePreviewUpdateInLiteralsWhenAllOccurrencesShareOneToken() {
-    benchmarkLivePreviewUpdate("live preview update in literals, all occurrences in one token",
+  @Test
+  public void testLivePreviewUpdateInLiteralsWhenAllOccurrencesShareOneToken(TestInfo testInfo) {
+    benchmarkLivePreviewUpdate(getClass().getName() + "." + testInfo.getTestMethod().orElseThrow().getName(), "live preview update in literals, all occurrences in one token",
                                FindModel.SearchContext.IN_STRING_LITERALS, OCCURRENCES);
   }
 }

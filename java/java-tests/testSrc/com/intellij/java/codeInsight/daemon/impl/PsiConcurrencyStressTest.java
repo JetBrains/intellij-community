@@ -2,17 +2,21 @@
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -25,10 +29,14 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.junit5.StressTestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,41 +45,46 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.codeInsight.daemon.DaemonAnalyzerFixture.daemonAnalyzerFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @SuppressWarnings("ResultOfMethodCallIgnored")
 @SkipSlowTestLocally
-public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
+@StressTestApplication
+public class PsiConcurrencyStressTest {
+  private static final Logger LOG = Logger.getInstance(PsiConcurrencyStressTest.class);
+  private final TestFixture<DaemonAnalyzerFixture> daemonFixture = daemonAnalyzerFixture(JavaTestUtil.getJavaTestDataPath());
   private volatile PsiJavaFile myFile;
   private volatile boolean writeActionInProgress;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_5);
+  @BeforeEach
+  void setUp() {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    IdeaTestUtil.setProjectLanguageLevel(fixture.getProject(), LanguageLevel.JDK_1_5);
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/src";
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    createTestProjectStructure( root);
+    PsiTestUtil.removeAllRoots(fixture.getModule(), IdeaTestUtil.getMockJdk17());
+    fixture.createTestProjectStructure( root);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myFile = null;
-    super.tearDown();
-  }
-
+  @Test
   public void testStress() throws Exception {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    Project myProject = fixture.getProject();
     int numOfThreads = Runtime.getRuntime().availableProcessors();
     int iterations = Timings.adjustAccordingToMySpeed(20, true);
     LOG.debug("iterations = " + iterations);
     final int readIterations = iterations * 3;
 
     synchronized (this) {
-      PsiClass myClass = myJavaFacade.findClass("StressClass", GlobalSearchScope.allScope(myProject));
+      PsiClass myClass = ReadAction.computeBlocking(() -> JavaPsiFacade.getInstance(myProject).findClass("StressClass", GlobalSearchScope.allScope(myProject)));
       assertNotNull(myClass);
-      myFile = (PsiJavaFile)myClass.getContainingFile();
+      myFile = ReadAction.computeBlocking(() -> (PsiJavaFile)myClass.getContainingFile());
     }
 
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
 
     final CountDownLatch reads = new CountDownLatch(numOfThreads);
     final Random random = new Random();
@@ -79,24 +92,24 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     List<Future<?>> threads = ContainerUtil.map(Collections.nCopies(numOfThreads, ""), i ->
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         for (int i1 = 0; i1 < readIterations; i1++) {
-          if (myPsiManager == null) return;
+          if (myProject.isDisposed()) return;
           ProgressManager.getInstance().runProcess(() -> ApplicationManager.getApplication().runReadAction(() -> {
             assertFalse(writeActionInProgress);
-            readStep(random);
+            readStep(myProject, random);
           }), new DaemonProgressIndicator());
         }
 
         reads.countDown();
       }));
 
-    final Document document = documentManager.getDocument(myFile);
+    final Document document = ReadAction.computeBlocking(() -> documentManager.getDocument(myFile));
 
     for (int i = 0; i < iterations; i++) {
       Thread.sleep(100);
       WriteCommandAction.writeCommandAction(myProject, myFile).run(() -> {
         writeActionInProgress = true;
         documentManager.commitAllDocuments();
-        writeStep(random);
+        writeStep(myProject, random);
         documentManager.commitAllDocuments();
         assertEquals(document.getText(), myFile.getText());
         writeActionInProgress = false;
@@ -104,7 +117,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     }
 
     boolean finished = reads.await(5, TimeUnit.MINUTES);
-    assertTrue("Timed out: " + ThreadDumper.dumpThreadsToString(), finished);
+    assertTrue(finished, () -> "Timed out: " + ThreadDumper.dumpThreadsToString());
     ConcurrencyUtil.getAll(threads);
   }
 
@@ -120,11 +133,11 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     return psiClass;
   }
 
-  private synchronized void writeStep(final Random random) throws IncorrectOperationException {
+  private synchronized void writeStep(Project project, final Random random) throws IncorrectOperationException {
     switch (random.nextInt(2)) {
       case 0 -> {
         mark("+");
-        getPsiClass().add(myJavaFacade.getElementFactory().createMethod("foo" + System.currentTimeMillis(), PsiTypes.floatType()));
+        getPsiClass().add(JavaPsiFacade.getElementFactory(project).createMethod("foo" + System.currentTimeMillis(), PsiTypes.floatType()));
       }
       case 1 -> {
         mark("-");
@@ -136,7 +149,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private void readStep(final Random random) {
+  private void readStep(Project project, final Random random) {
     PsiClass aClass = getPsiClass();
     switch (random.nextInt(4)) {
       case 0 -> {
@@ -152,7 +165,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
       }
       case 2 -> {
         mark("h");
-        for (HighlightVisitor visitor : HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(getProject())) {
+        for (HighlightVisitor visitor : HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(project)) {
           HighlightVisitor v = visitor.clone(); // to avoid race for com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.myAnnotationHolder
           if (!v.suitableForFile(myFile)) continue;
           final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);

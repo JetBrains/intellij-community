@@ -7,77 +7,77 @@ import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.type.SubtypesHierarchyTreeStructure;
 import com.intellij.ide.hierarchy.type.SupertypesHierarchyTreeStructure;
 import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestBase;
+import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class JavaTypeHierarchyTest extends HierarchyViewTestBase {
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return IdeaTestUtil.getMockJdk18();
-  }
+import static com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewFixture.hierarchyViewFixture;
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+@TestApplication
+public class JavaTypeHierarchyTest {
+  private final TestFixture<HierarchyViewFixture> hierarchyFixture =
+    hierarchyViewFixture(JavaTestUtil.getJavaTestDataPath(), "ide/hierarchy/type", () -> IdeaTestUtil.getMockJdk18());
 
-  @Override
-  protected String getBasePath() {
-    return "ide/hierarchy/type/" + getTestName(false);
-  }
-
+  @Test
   public void testClassTypeHierarchy() {
     doTypeHierarchyTest("C");
   }
 
+  @Test
   public void testClassSubtypesHierarchy() {
     doSubtypesHierarchyTest("B2");
   }
 
+  @Test
   public void testClassSupertypesHierarchy() {
     doSupertypesHierarchyTest("C");
   }
 
+  @Test
   public void testInterfaceTypeHierarchy() {
     doTypeHierarchyTest("C");
   }
 
+  @Test
   public void testInterfaceSubtypesHierarchy() {
     doSubtypesHierarchyTest("C");
   }
 
+  @Test
   public void testInterfaceSupertypesHierarchy() {
     doSupertypesHierarchyTest("C");
   }
 
+  @Test
   public void testNestedNamesHierarchy() {
     doTypeHierarchyTest("com.mypackage.Outer.Middle.Nested");
   }
 
   private void doTypeHierarchyTest(@NotNull String classFqn) {
-    doHierarchyTest(() -> {
-      PsiClass psiClass = findClass(classFqn);
-      return new TypeHierarchyTreeStructure(getProject(), psiClass, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }, JavaHierarchyUtil.getComparator(myProject), "X.java");
+    HierarchyViewFixture fixture = hierarchyFixture.get();
+    fixture.doHierarchyTest(() -> {
+      PsiClass psiClass = fixture.findClass(classFqn);
+      return new TypeHierarchyTreeStructure(fixture.getProject(), psiClass, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, JavaHierarchyUtil.getComparator(fixture.getProject()), "X.java");
   }
 
   private void doSubtypesHierarchyTest(@NotNull String classFqn) {
-    doHierarchyTest(() -> {
-      PsiClass psiClass = findClass(classFqn);
-      return new SubtypesHierarchyTreeStructure(getProject(), psiClass, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }, JavaHierarchyUtil.getComparator(myProject), "X.java");
+    HierarchyViewFixture fixture = hierarchyFixture.get();
+    fixture.doHierarchyTest(() -> {
+      PsiClass psiClass = fixture.findClass(classFqn);
+      return new SubtypesHierarchyTreeStructure(fixture.getProject(), psiClass, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, JavaHierarchyUtil.getComparator(fixture.getProject()), "X.java");
   }
 
   private void doSupertypesHierarchyTest(@NotNull String classFqn) {
-    doHierarchyTest(() -> {
-      PsiClass psiClass = findClass(classFqn);
-      return new SupertypesHierarchyTreeStructure(getProject(), psiClass);
-    }, JavaHierarchyUtil.getComparator(myProject), "X.java");
+    HierarchyViewFixture fixture = hierarchyFixture.get();
+    fixture.doHierarchyTest(() -> {
+      PsiClass psiClass = fixture.findClass(classFqn);
+      return new SupertypesHierarchyTreeStructure(fixture.getProject(), psiClass);
+    }, JavaHierarchyUtil.getComparator(fixture.getProject()), "X.java");
   }
 }

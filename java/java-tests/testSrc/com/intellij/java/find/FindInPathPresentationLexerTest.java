@@ -1,15 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.find;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindManagerTestUtils;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.TextChunk;
@@ -17,10 +21,16 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.codeInsight.daemon.DaemonAnalyzerFixture.daemonAnalyzerFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The rows the occurrences Find in Path found become are built one after another, in the order they were found, and they
@@ -28,7 +38,9 @@ import java.util.List;
  * per row, which is what keeps a file whose text is one long token from being lexed once per occurrence. So the rows
  * have to be lexed once between them all -- and each of them still has to show what it shows on its own.
  */
-public class FindInPathPresentationLexerTest extends DaemonAnalyzerTestCase {
+@TestApplication
+public class FindInPathPresentationLexerTest {
+  private final TestFixture<DaemonAnalyzerFixture> daemonFixture = daemonAnalyzerFixture(JavaTestUtil.getJavaTestDataPath());
 
   private static final String NEEDLE = "needle";
 
@@ -48,6 +60,7 @@ public class FindInPathPresentationLexerTest extends DaemonAnalyzerTestCase {
    * the file for the row after it, and reaching that one merged token again means reading the whole value again -- which
    * the character sequence the rows are presented over can count.
    */
+  @Test
   public void testRowsInsideOneMergedTokenAreLexedOnceBetweenThemAll() {
     int rowCount = 200;
     String text = oneAttributeValuePerLine(rowCount);
@@ -55,21 +68,25 @@ public class FindInPathPresentationLexerTest extends DaemonAnalyzerTestCase {
     assertEquals(rowCount, rows.size());
 
     CountingText chars = new CountingText(text);
-    ChunkExtractor extractor = ChunkExtractor.getExtractor(getFile());
-    Document document = getEditor().getDocument();
-    for (UsageInfo2UsageAdapter row : rows) {
-      int line = document.getLineNumber(row.getUsageInfo().getNavigationOffset());
-      extractor.appendTextChunks(row, chars, document.getLineStartOffset(line), document.getLineEndOffset(line),
-                                 true, new ArrayList<>());
-    }
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    ReadAction.runBlocking(() -> {
+      ChunkExtractor extractor = ChunkExtractor.getExtractor(fixture.getFile());
+      Document document = fixture.getEditor().getDocument();
+      for (UsageInfo2UsageAdapter row : rows) {
+        int line = document.getLineNumber(row.getUsageInfo().getNavigationOffset());
+        extractor.appendTextChunks(row, chars, document.getLineStartOffset(line), document.getLineEndOffset(line),
+                                   true, new ArrayList<>());
+      }
+    });
 
     // Resuming reads the file a handful of times over: once lexing it, and once more per row for the fragment it shows.
     // Restarting per row reads all of it for every one of them, which for 200 rows is two orders of magnitude more.
-    assertTrue("presenting " + rowCount + " rows read " + chars.reads() + " characters of a " + text.length() +
-               " character file, which is more than a few passes over it",
-               chars.reads() <= 10L * text.length());
+    assertTrue(chars.reads() <= 10L * text.length(),
+               "presenting " + rowCount + " rows read " + chars.reads() + " characters of a " + text.length() +
+               " character file, which is more than a few passes over it");
   }
 
+  @Test
   public void testRowsShowTheSameWhicheverOrderTheyAreBuiltIn() {
     assertRowsReadTheSameForwardsAndBackwards(OCCURRENCES_IN_DIFFERENT_TOKENS);
   }
@@ -79,6 +96,7 @@ public class FindInPathPresentationLexerTest extends DaemonAnalyzerTestCase {
    * by character and {@code MergingLexerAdapter} merges into a single token however long the value is. Every row has to
    * be highlighted as that one token whether it was reached by resuming the lexer or by restarting it.
    */
+  @Test
   public void testRowsInsideOneMergedTokenShowTheSameWhicheverOrderTheyAreBuiltIn() {
     assertRowsReadTheSameForwardsAndBackwards(oneAttributeValuePerLine(20));
   }
@@ -87,11 +105,14 @@ public class FindInPathPresentationLexerTest extends DaemonAnalyzerTestCase {
    * The other reader of the tokens, which stops on the first one it has seen enough of and so leaves the lexer in the
    * middle of the row it was asked about: the type it derives still has to be the one its own token carries.
    */
+  @Test
   public void testUsageTypeOfEachRowComesFromItsOwnToken() {
     List<UsageInfo2UsageAdapter> rows = rowsOf(OCCURRENCES_IN_DIFFERENT_TOKENS);
-    for (UsageInfo2UsageAdapter row : rows) {
-      row.updateCachedPresentation();
-    }
+    ReadAction.runBlocking(() -> {
+      for (UsageInfo2UsageAdapter row : rows) {
+        row.updateCachedPresentation();
+      }
+    });
 
     assertEquals(List.of(UsageType.COMMENT_USAGE, UsageType.LITERAL_USAGE, UsageType.UNCLASSIFIED, UsageType.UNCLASSIFIED),
                  ContainerUtil.map(rows, UsageInfo2UsageAdapter::getUsageType));
@@ -116,10 +137,10 @@ public class FindInPathPresentationLexerTest extends DaemonAnalyzerTestCase {
     List<String> backwards = presentedRows(text, true);
     List<String> forwards = presentedRows(text, false);
 
-    assertFalse("nothing was found to present", forwards.isEmpty());
+    assertFalse(forwards.isEmpty(), "nothing was found to present");
     assertEquals(backwards.size(), forwards.size());
     for (int row = 0; row < forwards.size(); row++) {
-      assertEquals("row " + row, backwards.get(row), forwards.get(row));
+      assertEquals(backwards.get(row), forwards.get(row), "row " + row);
     }
   }
 
@@ -130,10 +151,12 @@ public class FindInPathPresentationLexerTest extends DaemonAnalyzerTestCase {
     if (backwards) {
       Collections.reverse(order);
     }
-    for (UsageInfo2UsageAdapter row : order) {
-      row.updateCachedPresentation();
-    }
-    return ContainerUtil.map(rows, FindInPathPresentationLexerTest::render);
+    return ReadAction.computeBlocking(() -> {
+      for (UsageInfo2UsageAdapter row : order) {
+        row.updateCachedPresentation();
+      }
+      return ContainerUtil.map(rows, FindInPathPresentationLexerTest::render);
+    });
   }
 
   /** Everything a chunk carries that a lexer left in the wrong token would change: the text, the colour, the boldness. */
@@ -155,20 +178,23 @@ public class FindInPathPresentationLexerTest extends DaemonAnalyzerTestCase {
    * shows the first time it is asked to, off the extractor the rows share.
    */
   private List<UsageInfo2UsageAdapter> rowsOf(String text) {
-    configureByText(XmlFileType.INSTANCE, text);
-    PsiFile psiFile = getFile();
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    fixture.configureByText(XmlFileType.INSTANCE, text);
+    PsiFile psiFile = fixture.getFile();
     FindModel findModel = FindManagerTestUtils.configureFindModel(NEEDLE);
-    FindManager findManager = FindManager.getInstance(myProject);
+    FindManager findManager = FindManager.getInstance(fixture.getProject());
 
-    List<UsageInfo2UsageAdapter> rows = new ArrayList<>();
-    int offset = 0;
-    while (offset < text.length()) {
-      FindResult found = findManager.findString(text, offset, findModel, psiFile.getVirtualFile());
-      if (!found.isStringFound()) break;
-      rows.add(new UsageInfo2UsageAdapter(new UsageInfo(psiFile, found.getStartOffset(), found.getEndOffset())));
-      offset = found.getEndOffset() == offset ? offset + 1 : found.getEndOffset();
-    }
-    return rows;
+    return ReadAction.computeBlocking(() -> {
+      List<UsageInfo2UsageAdapter> rows = new ArrayList<>();
+      int offset = 0;
+      while (offset < text.length()) {
+        FindResult found = findManager.findString(text, offset, findModel, psiFile.getVirtualFile());
+        if (!found.isStringFound()) break;
+        rows.add(new UsageInfo2UsageAdapter(new UsageInfo(psiFile, found.getStartOffset(), found.getEndOffset())));
+        offset = found.getEndOffset() == offset ? offset + 1 : found.getEndOffset();
+      }
+      return rows;
+    });
   }
 
   /** The text the rows are presented over, counting every character the lexing of it reads. */

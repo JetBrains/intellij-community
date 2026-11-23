@@ -1,15 +1,24 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.find;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindManagerTestUtils;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInsight.daemon.DaemonAnalyzerFixture.daemonAnalyzerFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Pins down every occurrence {@code findString} reports for the comments/literals search contexts.
@@ -18,19 +27,14 @@ import java.util.List;
  * ({@link #oneGiantTag}) or where all the occurrences live in a single token ({@link #oneHugeLiteral}) — those used to
  * make the {@code EXCEPT_*} skip-range build quadratic, because it restarted the lexer once per occurrence.
  */
-public class FindInCommentsAndLiteralsTest extends DaemonAnalyzerTestCase {
+@TestApplication
+public class FindInCommentsAndLiteralsTest {
+  private final TestFixture<DaemonAnalyzerFixture> daemonFixture = daemonAnalyzerFixture(JavaTestUtil.getJavaTestDataPath());
   private FindManager myFindManager;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFindManager = FindManager.getInstance(myProject);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    myFindManager = null;
-    super.tearDown();
+  @BeforeEach
+  void setUp() {
+    myFindManager = FindManager.getInstance(daemonFixture.get().getProject());
   }
 
   private static String multiLine(int n) {
@@ -91,10 +95,11 @@ public class FindInCommentsAndLiteralsTest extends DaemonAnalyzerTestCase {
   }
 
   private void assertOccurrences(List<String> expected, String text, FindModel.SearchContext context) {
-    assertEquals(context + ", plain", expected, occurrences(text, context, false, false));
-    assertEquals(context + ", regexp", expected, occurrences(text, context, true, false));
+    assertEquals(expected, occurrences(text, context, false, false), context + ", plain");
+    assertEquals(expected, occurrences(text, context, true, false), context + ", regexp");
   }
 
+  @Test
   public void testMultiLine() {
     String text = multiLine(6);
     assertOccurrences(List.of("19-25", "36-42", "63-69", "80-86", "107-113", "124-130", "151-157", "168-174",
@@ -108,6 +113,7 @@ public class FindInCommentsAndLiteralsTest extends DaemonAnalyzerTestCase {
     assertOccurrences(List.of(), text, FindModel.SearchContext.IN_COMMENTS);
   }
 
+  @Test
   public void testAllOccurrencesInOneToken() {
     String text = oneHugeLiteral(6);
     assertOccurrences(List.of("21-27", "30-36", "39-45", "48-54", "57-63", "66-72", "87-93"),
@@ -117,6 +123,7 @@ public class FindInCommentsAndLiteralsTest extends DaemonAnalyzerTestCase {
                       text, FindModel.SearchContext.IN_STRING_LITERALS);
   }
 
+  @Test
   public void testLexerNeverReturnsToInitialState() {
     String text = oneGiantTag(6);
     assertOccurrences(List.of("27-33", "52-58", "77-83", "102-108", "127-133", "152-158", "178-184"),
@@ -126,6 +133,7 @@ public class FindInCommentsAndLiteralsTest extends DaemonAnalyzerTestCase {
                       text, FindModel.SearchContext.IN_STRING_LITERALS);
   }
 
+  @Test
   public void testComments() {
     String text = comments(6);
     assertOccurrences(List.of("177-183"), text, FindModel.SearchContext.EXCEPT_COMMENTS);
@@ -142,6 +150,7 @@ public class FindInCommentsAndLiteralsTest extends DaemonAnalyzerTestCase {
    * the way the per-occurrence {@code findStringLoop} does. In {@code id="needle0"} the match is followed by a digit
    * and is therefore not a whole word; in {@code name="a needle here"} it is.
    */
+  @Test
   public void testWholeWordsOnly() {
     String text = multiLine(6);
     assertEquals(List.of("36-42", "80-86", "124-130", "168-174", "212-218", "256-262", "279-285"),
@@ -156,6 +165,7 @@ public class FindInCommentsAndLiteralsTest extends DaemonAnalyzerTestCase {
    * A repeated Find Previous through occurrences that all share one token: the whole file is collected on the first of
    * these calls and every one of them is answered from that, so the walk they used to cost each is gone.
    */
+  @Test
   public void testBackwardSearchInOneHugeLiteral() {
     String text = oneHugeLiteral(6);
     FindModel model = FindManagerTestUtils.configureFindModel("needle");
@@ -175,6 +185,7 @@ public class FindInCommentsAndLiteralsTest extends DaemonAnalyzerTestCase {
     assertEquals(List.of("66-72", "57-63", "48-54", "39-45", "30-36", "21-27"), result);
   }
 
+  @Test
   public void testBackwardSearch() {
     String text = multiLine(3);
     FindModel model = FindManagerTestUtils.configureFindModel("needle");
