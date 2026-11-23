@@ -10,7 +10,6 @@ import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ExperimentalUI
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Insets
@@ -65,10 +64,8 @@ object ReviewDetailsUIUtil {
   private const val LEFT_GAP_OLD_UI = 14
   private const val RIGHT_GAP = 14
 
-  @get:ApiStatus.Internal
-  val topGap: Int get() = if (ExperimentalUI.isNewUI()) TOP_GAP else TOP_GAP_OLD_UI
-  @get:ApiStatus.Internal
-  val bottomGap: Int get() = if (ExperimentalUI.isNewUI()) BOTTOM_GAP else BOTTOM_GAP_OLD_UI
+  internal val topGap: Int get() = if (ExperimentalUI.isNewUI()) TOP_GAP else TOP_GAP_OLD_UI
+  internal val bottomGap: Int get() = if (ExperimentalUI.isNewUI()) BOTTOM_GAP else BOTTOM_GAP_OLD_UI
   internal val leftGap: Int get() = if (ExperimentalUI.isNewUI()) LEFT_GAP else LEFT_GAP_OLD_UI
   internal val rightGap: Int get() = if (ExperimentalUI.isNewUI()) RIGHT_GAP else 0
 
