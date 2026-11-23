@@ -2,14 +2,12 @@
 package com.intellij.build.output
 
 import com.intellij.build.FilePosition
-import com.intellij.build.eventBuilders.MessageEventBuilder
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.OutputId
 import com.intellij.build.events.StartId
 import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
@@ -191,12 +189,6 @@ class KotlincOutputParser : BuildOutputLineParserBridge() {
         .filter { it.isNotBlank() }
         .joinToString()
     )
-
-  private fun MessageEventBuilder.withDescription(line: BuildOutputText, isSingleFlow: Boolean): MessageEventBuilder =
-    when (isSingleFlow) {
-      true -> withOutputIds(line.ids)
-      else -> withDescription(line.text)
-    }
 
   private fun String.isNextMessage(): Boolean {
     val colonIndex1 = indexOf(COLON)

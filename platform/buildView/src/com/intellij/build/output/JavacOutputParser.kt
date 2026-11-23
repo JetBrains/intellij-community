@@ -2,7 +2,6 @@
 package com.intellij.build.output
 
 import com.intellij.build.FilePosition
-import com.intellij.build.eventBuilders.MessageEventBuilder
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartId
@@ -258,11 +257,5 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
           .filter { it.isNotBlank() }
           .joinToString(separator = separator) { it }
       )
-
-    private fun MessageEventBuilder.withDescription(line: BuildOutputText, isSingleFlow: Boolean): MessageEventBuilder =
-      when (isSingleFlow) {
-        true -> withOutputIds(line.ids)
-        else -> withDescription(line.text)
-      }
   }
 }

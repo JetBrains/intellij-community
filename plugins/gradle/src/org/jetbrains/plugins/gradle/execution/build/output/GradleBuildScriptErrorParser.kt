@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.FilePosition
-import com.intellij.build.eventBuilders.MessageEventBuilder
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartId
 import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
 import com.intellij.build.output.BuildOutputMulticaster
 import com.intellij.build.output.BuildOutputReplayableLineReader
 import com.intellij.build.output.BuildOutputText
+import com.intellij.build.output.withDescription
 import java.nio.file.Path
 
 private const val SINGLE_FAILURE_HEADER = "FAILURE: Build failed with an exception."
@@ -154,10 +154,4 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
       )
     }
   }
-
-  private fun MessageEventBuilder.withDescription(lines: List<BuildOutputText>, isSingleFlow: Boolean): MessageEventBuilder =
-    when (isSingleFlow) {
-      true -> withOutputIds(lines.flatMap { it.ids })
-      else -> withDescription(lines.joinToString("\n") { it.text }) //NON-NLS
-    }
 }

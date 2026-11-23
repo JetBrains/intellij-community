@@ -2,7 +2,6 @@
 package com.intellij.build.output
 
 import com.intellij.build.FilePosition
-import com.intellij.build.eventBuilders.MessageEventBuilder
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartId
 import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
@@ -71,10 +70,4 @@ class GroovycOutputParser : BuildOutputLineParserBridge() {
     )
     return true
   }
-
-  private fun MessageEventBuilder.withDescription(line: BuildOutputText, isSingleFlow: Boolean): MessageEventBuilder =
-    when (isSingleFlow) {
-      true -> withOutputIds(line.ids)
-      else -> withDescription(line.text)
-    }
 }
