@@ -88,10 +88,10 @@ Set-StrictMode -Version 3.0; ^
   $Web_client = New-Object System.Net.WebClient; ^
   $Web_client.DownloadFile($BazeliskUrl, $tmpFile); ^
   ^
-  try { Move-Item -Path $tmpFile -Destination \"%BAZELISK_TARGET_FILE%\" -Force } ^
-  catch { if (-not (Test-Path \"%BAZELISK_TARGET_FILE%\")) { throw } } ^
+  try { [IO.File]::Move($tmpFile, \"%BAZELISK_TARGET_FILE%\") } ^
+  catch { if (-not (Test-Path -LiteralPath \"%BAZELISK_TARGET_FILE%\")) { throw } } ^
  } finally { ^
-  Remove-Item -Path $tmpFile -Force -ErrorAction SilentlyContinue ^
+  Remove-Item -LiteralPath $tmpFile -Force -ErrorAction SilentlyContinue ^
  }
 
 IF NOT EXIST "%BAZELISK_TARGET_FILE%" "%POWERSHELL%" -nologo -noprofile -Command %POWERSHELL_COMMAND% >&2
