@@ -4,7 +4,8 @@ Date: 2026-10-15
 
 ## Status
 
-Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
+Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)). Amended by
+[ADR 0182](./0182-the-api-module-is-embedded-in-core-platform-and-the-vault-module-is-a-content-module-of-the-same-set.md).
 
 ## Context
 

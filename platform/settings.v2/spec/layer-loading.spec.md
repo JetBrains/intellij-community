@@ -44,6 +44,7 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
   [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/SettingsVaultStartTest.kt
 - The vault must start in every product that has the `core.platform` module set, also in a product without the
   `essential` module set. A module of `core.platform` must be able to read a key there.
+  See [ADR 0182](../adr/0182-the-api-module-is-embedded-in-core-platform-and-the-vault-module-is-a-content-module-of-the-same-set.md).
   [@test] ../../build-scripts/tests/testSrc/org/jetbrains/intellij/build/SettingsV2CoreDependenciesTest.kt
 - A caller that uses the vault before `SettingsVaultInitializer` runs must get a working vault. The vault then
   starts at that use.

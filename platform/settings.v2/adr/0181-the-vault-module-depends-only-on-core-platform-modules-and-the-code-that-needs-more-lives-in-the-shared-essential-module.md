@@ -48,8 +48,9 @@ module lives in `intellij.platform.settings.v2.shared.essential`, a module of th
   only `core.platform` saves the last writes at the close. Its EDT does not process events during the save.
 - The essential module loads on both sides of a split session, as the vault module does. So the dump action of
   each side still shows in the client.
-- The move of a module into `core.platform` is a separate step. This decision only makes the vault module ready
-  for it.
+- The vault module can be a module of `core.platform`.
+  [ADR 0182](./0182-the-api-module-is-embedded-in-core-platform-and-the-vault-module-is-a-content-module-of-the-same-set.md)
+  places it there.
 - The resulting behavior is in the [settings writes spec](../spec/settings-writes.spec.md) and in the
   [frontend file contexts spec](../spec/frontend-file-contexts.spec.md).
 
