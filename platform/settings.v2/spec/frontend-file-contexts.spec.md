@@ -3,7 +3,7 @@ name: Frontend File Contexts
 description: Requirements for building a file context on a remote-dev frontend from the backend content roots.
 style: plain-1
 targets:
-  - ../shared/src/com/intellij/platform/settings/v2/impl/rpc/SettingsContentRootsApi.kt
+  - ../shared/essential/src/com/intellij/platform/settings/v2/impl/rpc/SettingsContentRootsApi.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/contentRoots.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsContextFactory.kt
   - ../../../../remote-dev/settings/v2/backend/split/src/com/intellij/platform/settings/v2/impl/rpc/BackendContentRootsApi.kt

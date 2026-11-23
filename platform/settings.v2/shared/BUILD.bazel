@@ -41,9 +41,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/core-ui",
-        "//platform/kernel/rpc.lite",
-        "//platform/project/shared:project",
-        "//fleet/util/core",
     ],
 )
 ### auto-generated section `build intellij.platform.settings.v2.shared` end

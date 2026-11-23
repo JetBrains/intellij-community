@@ -34,6 +34,12 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/ide-core",
         "//platform/platform-api:ide",
+        "//platform/project/shared:project",
+        "//platform/kernel/rpc.lite",
+        "//fleet/util/core",
+        "//libraries/jetbrains/annotations",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
     ],
 )
 ### auto-generated section `build intellij.platform.settings.v2.shared.essential` end
