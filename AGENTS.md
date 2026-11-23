@@ -3,13 +3,12 @@
 ## Project Invariants
 
 - `*.iml` files are the source of truth. They generate the `BUILD.bazel` files. Keep an `*.iml` in the canonical form that the IDE writes: no comment, no reformat or whitespace change, no trailing newline, and no added, removed or reordered element or attribute.
-- Register a new or edited JPS module `.iml` with `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof`, then run `./build/jpsModelToBazelCommunityOnly.cmd`. Never edit `.idea/modules.xml` by hand. The command keeps `modules.xml` in canonical order.
+- Register a new or edited JPS module `.iml` with `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof`, then run `./build/jpsModelToBazelCommunityOnly.cmd`. Never edit `.idea/modules.xml` by hand.
 - User-visible strings belong in `*.properties` for localization.
 
 ## Language
 
-- Read [Code Style](./.agents/skills/code-style/SKILL.md) before writing or reviewing Kotlin or Java.
-- Read [Rust Code Style](./.agents/skills/rust-code-style/SKILL.md) before writing or reviewing Rust.
+Before you write or review code, read [Code Style](./.agents/skills/code-style/SKILL.md) for Kotlin or Java and [Rust Code Style](./.agents/skills/rust-code-style/SKILL.md) for Rust.
 
 ## Writing
 
@@ -31,40 +30,32 @@ Before you plan, edit or review a change of a file, read every `AGENTS.md` betwe
 
 ### Before the First Edit
 
-This repository is too large for an ad hoc Git worktree or clone. Create one only on an explicit user request. This rule applies also without Branch Deck.
+Create a Git worktree or a clone of this repository only on an explicit user request. The repository is too large for an ad hoc copy.
 
-Branch Deck is optional. First check for the `branch-deck` skill: the skill list of the agent names it, or `~/.agents/skills/branch-deck/SKILL.md` exists.
-
-- With the skill, follow it before the first edit, build or commit. This applies to every agent. Run `brd workspace -C <repo>` and follow its output.
-- When `lease.on` is true, run `brd lease get` and edit, build and commit only in the lease `path`.
-- A plan does not replace this check. With the skill, each plan that edits code starts with a workspace stage.
-- Without the skill, work in the current checkout. The plan then has no workspace stage.
+The `branch-deck` skill is optional. The skill list of the agent names it, or `~/.agents/skills/branch-deck/SKILL.md` exists. With the skill, run `brd workspace -C <repo>` before the first edit, build or commit, and follow its output. When `lease.on` is true, edit, build and commit only in the `path` of `brd lease get`. Each plan that edits code then starts with a workspace stage. Without the skill, work in the current checkout.
 
 ### After Code Changes
 
-- **Run the affected tests:** `./tools/bt.cmd --module <module> --filter <FQN>`, or `node --test <file>` for a `*.test.mjs` file. An FQN is required. Always name the test module. When bt refuses the module, run the first command that the refusal prints. Neither runner needs a separate `bazel build` step. A module rule can override the runner. Skip this when the plugin has no tests. See [TESTING](./.agents/skills/testing/SKILL.md).
+- **Run the affected tests:** `./tools/bt.cmd --module <module> --filter <FQN>`, or `node --test <file>` for a `*.test.mjs` file. Always name the module and an FQN. When bt refuses the module, run the first command of the refusal. Neither runner needs a `bazel build` first, and a module rule can override the runner. Skip this when the plugin has no tests. See [TESTING](./.agents/skills/testing/SKILL.md).
 - **Bazel compilation without tests:** run `./bazel.cmd build <target>` for the affected modules. Skip this when you changed only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files.
-- After you change a Bazel or Starlark source (`BUILD`, `BUILD.bazel`, `MODULE.bazel`, `WORKSPACE`, `WORKSPACE.bazel`, or `*.bzl`), run `./bazel.cmd run //:format.check`. If it reports a diff, run `./bazel.cmd run //:format`, inspect the changes, and run the check again.
+- After you change a `BUILD*`, `MODULE.bazel`, `WORKSPACE*` or `*.bzl` file, run `./bazel.cmd run //:format.check`. If it reports a diff, run `./bazel.cmd run //:format`, inspect the changes, and run the check again.
 - After you change an `*.iml`, a `BUILD.bazel`, or a `.idea/` file, run `./build/jpsModelToBazelCommunityOnly.cmd`.
 
 ### Before a Commit
 
-- Read the [commits](./.agents/skills/commits/SKILL.md) skill before each commit, amend or reword. It holds the subject form that SafePush checks and the form of the body.
-- With a Branch Deck prefix, the subject is `(branch) ` and then the form of the `commits` skill: `(dev-dist-cache) setup build: <sentence>`. Branch Deck removes the prefix at the push, and SafePush checks the rest.
+Read the [commits](./.agents/skills/commits/SKILL.md) skill before each commit, amend or reword. It holds the subject form that SafePush checks and the form of the body. A Branch Deck prefix goes before that form: `(dev-dist-cache) setup build: <sentence>`. The push removes the prefix.
 
 ## Tools
 
-Search the repository with `./tools/accio.cmd`, not with the `search_*` tools of an IDE MCP server. It answers from the working tree of the current checkout, a lease included. An answer that is not `exact` and `complete` is a lead: read the code it points to. Do not cut or filter the output of a search with `head`, `tail`, `grep`, `sed`, `awk`, `cut` or a similar tool. A cut output cannot prove that a match does not exist. For a log, build output, or a path outside the repository, use `./tools/rg.cmd` or `./tools/fd.cmd`. The `Glob` and `Grep` tools, `find`, a recursive `grep`, and `git grep` are denied. A rename or a move is a search too: `accio locate '<regex>' --mode regex --files` lists the files to change.
+Search the repository with `./tools/accio.cmd`, also in a lease, not with the `search_*` tools of an IDE MCP server. An answer that is not `exact` and `complete` is a lead: read the code it points to. Never cut a search output with `head`, `grep` or a similar tool, because a cut output proves no absence. The `Glob` and `Grep` tools, `find`, a recursive `grep`, and `git grep` are denied. For a log, build output, or a path outside the repository, use `./tools/rg.cmd` or `./tools/fd.cmd`. For a rename or a move, `accio locate '<regex>' --mode regex --files` lists the files to change.
 
-When JetBrains MCP is available, check the changed files with `lint_files` and fix the warnings of your change, and use `rename_refactoring` instead of a search and replace. An IDE answers from the project that it has open, not from a lease.
+When JetBrains MCP is available, use `rename_refactoring` instead of a search and replace. An IDE answers from the project that it has open, not from a lease.
 
-Shell is allowed where this guide documents it, and for git, build, and test. Outside the working copy, read only what the task names. The accio commands are in the `accio` skill. The allowlist, the Windows rules, and the tool inventory: [Tools Reference](./.ai/tools.md).
+Shell is allowed where this guide documents it, and for git, build, and test. Outside the working copy, read only what the task names. The allowlist, the Windows rules, and the tool inventory: [Tools Reference](./.ai/tools.md).
 
 ### Skills
 
-Before you improvise a procedure, look for a skill that covers it in the index:
-
-- Skill index: [`.agents/skills/INDEX.md`](./.agents/skills/INDEX.md)
+Before you improvise a procedure, look for a skill that covers it in [`.agents/skills/INDEX.md`](./.agents/skills/INDEX.md).
 
 Before a plan that adds a responsibility, run the owner check of the `duplicate-and-dead-code` skill. Run it before you write the plan, not as a step of the plan.
 
