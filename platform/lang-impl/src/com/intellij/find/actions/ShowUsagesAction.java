@@ -51,6 +51,7 @@ import com.intellij.openapi.actionSystem.PopupAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -274,6 +275,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   }
 
   @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     FindUsagesInFileAction.updateFindUsagesAction(e);
 
@@ -315,7 +321,13 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                   : popupFactory.guessBestPopupLocation(dataContext);
     SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName());
     ReadAction.nonBlocking(() -> ResolverKt.allTargets(dataContext))
-      .expireWith(project).finishOnUiThread(ModalityState.nonModal(), variants -> showUsages(project, variants, popupPosition, editor, searchScope))
+      .expireWith(project).finishOnUiThread(ModalityState.nonModal(), variants -> {
+        if (variants.isEmpty() && DumbService.isDumb(project)) {
+          ActionUtil.showDumbModeWarning(project, ActionManager.getInstance().getAction(ID), e);
+          return;
+        }
+        showUsages(project, variants, popupPosition, editor, searchScope);
+      })
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -32,6 +33,7 @@ import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.find.actions.ResolverKt.allTargets;
+import static com.intellij.find.actions.SearchTargetVariantsDataRuleKt.targetVariantsInSmartMode;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_HIGHLIGHT_USAGES_IN_FILE;
 
 public final class FindUsagesInFileAction extends AnAction implements PossiblyDumbAware {
@@ -93,14 +95,17 @@ public final class FindUsagesInFileAction extends AnAction implements PossiblyDu
     updateFindUsagesAction(event);
   }
 
-  private static boolean isEnabled(DataContext dataContext) {
+  private static boolean isEnabled(DataContext dataContext, boolean inSmartMode) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null ||
         EditorGutter.KEY.getData(dataContext) != null ||
         Boolean.TRUE.equals(dataContext.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       return false;
     }
-    return canFindUsages(project, dataContext) ||
+    if (inSmartMode) {
+      return canFindUsages(project, dataContext) || !targetVariantsInSmartMode(dataContext).isEmpty();
+    }
+    return !DumbService.isDumb(project) && canFindUsages(project, dataContext) ||
            !allTargets(dataContext).isEmpty();
   }
 
@@ -123,10 +128,11 @@ public final class FindUsagesInFileAction extends AnAction implements PossiblyDu
   public static void updateFindUsagesAction(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    boolean enabled = isEnabled(dataContext);
     Project project = event.getProject();
     boolean dumbMode = project != null && DumbService.isDumb(project);
-    presentation.setVisible(enabled || !event.isFromContextMenu() || dumbMode);
+    boolean enabled = isEnabled(dataContext, false) ||
+                      dumbMode && !IdeProductMode.isLight() && !event.isFromContextMenu() && isEnabled(dataContext, true);
+    presentation.setVisible(enabled || !IdeProductMode.isLight() && (!event.isFromContextMenu() || dumbMode));
     presentation.setEnabled(enabled);
   }
 }

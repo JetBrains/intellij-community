@@ -55,6 +55,15 @@ internal fun <R : Any> searchers(parameters: SearchParameters<R>): List<Searcher
   return searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
 }
 
+/**
+ * Whether the search of [parameters] can use [searcher] now.
+ * Dumb-aware parameters do not wait for the smart mode, so in the dumb mode they use only the dumb-aware searchers.
+ * The dumb mode can start during the search, so call this function right before each use of a searcher.
+ */
+internal fun isSearcherUsable(parameters: SearchParameters<*>, searcher: Searcher<*, *>): Boolean {
+  return !DumbService.isDumbAware(parameters) || DumbService.getInstance(parameters.project).isUsableInCurrentContext(searcher)
+}
+
 @Internal
 @TestOnly
 fun registerSearcherForTesting(key: Class<*>, searcher: Searcher<*, *>, parentDisposable: Disposable) {
@@ -127,15 +136,20 @@ private fun <B, R> handleParamRequest(progress: ProgressIndicator,
   }
 }
 
+/** Dumb-aware parameters do not wait for the smart mode. In the dumb mode, their search runs only the dumb-aware searchers. */
 private fun <R : Any> collectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
-  return DumbService.getInstance(parameters.project).runReadActionInSmartMode(Computable {
+  val collect = Computable {
     if (parameters.areValid()) {
       doCollectSearchRequests(parameters)
     }
     else {
       emptyList()
     }
-  })
+  }
+  if (DumbService.isDumbAware(parameters)) {
+    return ApplicationManager.getApplication().runReadAction(collect)
+  }
+  return DumbService.getInstance(parameters.project).runReadActionInSmartMode(collect)
 }
 
 private fun <R : Any> doCollectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
@@ -144,6 +158,7 @@ private fun <R : Any> doCollectSearchRequests(parameters: SearchParameters<R>): 
   val searchers = searchers(parameters)
   for (searcher: Searcher<SearchParameters<R>, R> in searchers) {
     ProgressManager.checkCanceled()
+    if (!isSearcherUsable(parameters, searcher)) continue
     queries += searcher.collectSearchRequests(parameters)
   }
   return queries

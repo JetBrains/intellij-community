@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -21,6 +22,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -49,6 +51,11 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   }
 
   @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
+  @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
@@ -57,7 +64,12 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
 
     HierarchyProvider provider = getProvider(e);
-    if (provider == null) return;
+    if (provider == null) {
+      if (DumbService.isDumb(project)) {
+        ActionUtil.showDumbModeWarning(project, this, e);
+      }
+      return;
+    }
     PsiElement target = provider.getTarget(dataContext);
     if (target == null) return;
     createAndAddToPanel(project, provider, target);
@@ -109,8 +121,11 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      boolean enabled = isEnabled(e);
-      if (e.isFromContextMenu()) {
+      Project project = e.getProject();
+      boolean enabled = isEnabled(e) ||
+                        project != null && DumbService.isDumb(project) && !IdeProductMode.isLight() && !e.isFromContextMenu() &&
+                        getProvider(e, false) != null;
+      if (e.isFromContextMenu() || IdeProductMode.isLight()) {
         e.getPresentation().setVisible(enabled);
       }
       else {
@@ -134,16 +149,29 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   }
 
   private @Nullable HierarchyProvider getProvider(@NotNull AnActionEvent e) {
-    return findProvider(myExtension, e.getData(CommonDataKeys.PSI_ELEMENT), e.getData(CommonDataKeys.PSI_FILE), e.getDataContext());
+    return getProvider(e, true);
+  }
+
+  private @Nullable HierarchyProvider getProvider(@NotNull AnActionEvent e, boolean usableOnly) {
+    PsiElement psiElement = e.getData(CommonDataKeys.PSI_ELEMENT);
+    return findProvider(myExtension, psiElement, e.getData(CommonDataKeys.PSI_FILE), e.getDataContext(), usableOnly);
   }
 
   public static @Nullable HierarchyProvider findProvider(@NotNull LanguageExtension<HierarchyProvider> extension,
                                                          @Nullable PsiElement psiElement,
                                                          @Nullable PsiFile psiFile,
                                                          @NotNull DataContext dataContext) {
-    HierarchyProvider provider = findBestHierarchyProvider(extension, psiElement, dataContext);
+    return findProvider(extension, psiElement, psiFile, dataContext, true);
+  }
+
+  private static @Nullable HierarchyProvider findProvider(@NotNull LanguageExtension<HierarchyProvider> extension,
+                                                          @Nullable PsiElement psiElement,
+                                                          @Nullable PsiFile psiFile,
+                                                          @NotNull DataContext dataContext,
+                                                          boolean usableOnly) {
+    HierarchyProvider provider = findBestHierarchyProvider(extension, psiElement, dataContext, usableOnly);
     if (provider == null) {
-      return findBestHierarchyProvider(extension, psiFile, dataContext);
+      return findBestHierarchyProvider(extension, psiFile, dataContext, usableOnly);
     }
     return provider;
   }
@@ -151,6 +179,17 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   public static @Nullable HierarchyProvider findBestHierarchyProvider(LanguageExtension<HierarchyProvider> extension,
                                                                       @Nullable PsiElement element,
                                                                       DataContext dataContext) {
+    return findBestHierarchyProvider(extension, element, dataContext, true);
+  }
+
+  /**
+   * @param usableOnly whether to skip the providers that are not dumb-aware in the dumb mode.
+   *                   Without it, the method does not ask a provider for its target: the target can need the indexes.
+   */
+  private static @Nullable HierarchyProvider findBestHierarchyProvider(LanguageExtension<HierarchyProvider> extension,
+                                                                       @Nullable PsiElement element,
+                                                                       DataContext dataContext,
+                                                                       boolean usableOnly) {
     if (element == null) return null;
     List<HierarchyProvider> providers;
     if (element instanceof PsiFile) {
@@ -159,6 +198,12 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     else {
       providers = extension.allForLanguage(element.getLanguage());
     }
+    if (!usableOnly) {
+      return ContainerUtil.getFirstItem(providers);
+    }
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    DumbService dumbService = DumbService.getInstance(project != null ? project : element.getProject());
+    providers = ContainerUtil.filter(providers, dumbService::isUsableInCurrentContext);
     for (HierarchyProvider provider : providers) {
       PsiElement target = provider.getTarget(dataContext);
       if (target != null) {

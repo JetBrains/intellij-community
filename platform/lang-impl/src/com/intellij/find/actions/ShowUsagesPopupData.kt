@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.usages.UsageView
 import com.intellij.usages.impl.UsageViewStatisticsCollector.logOpenInFindToolWindow
@@ -30,7 +31,9 @@ internal class ShowUsagesPopupData(
 
   @JvmField
   val header: ShowUsagesHeader = ShowUsagesHeader(createPinButton(parameters.project, popupRef, pinGroup, table, actionHandler::findUsages),
-                     actionHandler.presentation.searchTargetString).apply { if (DumbService.isDumb(parameters.project)) this.showAnalyzingIcon() }
+                     actionHandler.presentation.searchTargetString).apply {
+                       if (DumbService.isDumb(parameters.project) && !IdeProductMode.isLight) this.showAnalyzingIcon()
+                     }
 
   private fun createPinButton(
     project: Project,

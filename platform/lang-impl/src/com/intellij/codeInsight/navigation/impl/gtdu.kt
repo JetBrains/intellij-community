@@ -10,6 +10,7 @@ import com.intellij.find.usages.impl.symbolSearchTarget
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.TargetData
 import com.intellij.model.psi.impl.declaredReferencedData
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
@@ -87,6 +88,12 @@ private class ShowUsagesGTDUActionData(private val project: Project, private val
 }
 
 private fun searchTargetVariants(project: Project, data: TargetData): List<TargetVariant> {
+  if (DumbService.isDumb(project)) {
+    // the find usages handler of a PSI element needs the indexes
+    return data.targets.mapNotNullTo(SmartList()) { (symbol, _) ->
+      symbolSearchTarget(project, symbol)?.takeIf { DumbService.isDumbAware(it) }?.let(::SearchTargetVariant)
+    }
+  }
   return data.targets.mapNotNullTo(SmartList()) { (symbol, _) ->
     val psi: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
     if (psi == null) {

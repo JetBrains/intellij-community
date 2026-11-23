@@ -12,9 +12,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiDocumentManager;
@@ -49,6 +51,11 @@ public class FindUsagesAction extends AnAction {
     return ActionUpdateThread.BGT;
   }
 
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
   protected boolean toShowDialog() {
     return false;
   }
@@ -71,21 +78,26 @@ public class FindUsagesAction extends AnAction {
                                   : popupFactory.guessBestPopupLocation(dataContext);
     ReadAction.nonBlocking(() -> allTargets(dataContext))
       .expireWith(project)
-      .finishOnUiThread(ModalityState.nonModal(),
-                        allTargets -> findShowUsages(project, editor, popupLocation, allTargets, FindBundle.message("find.usages.ambiguous.title"),
-        new UsageVariantHandler() {
-
-          @Override
-          public void handleTarget(@NotNull SearchTarget target) {
-            findUsages(toShowDialog(), project, searchScope, target);
-          }
-
-          @Override
-          public void handlePsi(@NotNull PsiElement element) {
-            startFindUsages(element);
-          }
+      .finishOnUiThread(ModalityState.nonModal(), allTargets -> {
+        if (allTargets.isEmpty() && DumbService.isDumb(project)) {
+          ActionUtil.showDumbModeWarning(project, this, e);
+          return;
         }
-      ))
+        findShowUsages(project, editor, popupLocation, allTargets, FindBundle.message("find.usages.ambiguous.title"),
+          new UsageVariantHandler() {
+
+            @Override
+            public void handleTarget(@NotNull SearchTarget target) {
+              findUsages(toShowDialog(), project, searchScope, target);
+            }
+
+            @Override
+            public void handlePsi(@NotNull PsiElement element) {
+              startFindUsages(element);
+            }
+          }
+        );
+      })
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 

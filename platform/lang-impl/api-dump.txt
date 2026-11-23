@@ -2153,6 +2153,7 @@ c:com.intellij.find.actions.FindUsagesAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- isDumbAware():Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.find.actions.FindUsagesInFileAction
 - com.intellij.openapi.actionSystem.AnAction
@@ -2164,6 +2165,7 @@ f:com.intellij.find.actions.ShowUsagesAction
 - com.intellij.openapi.actionSystem.PopupAction
 - <init>():V
 - s:getUsagesPageSize():I
+- isDumbAware():Z
 com.intellij.find.actions.ShowUsagesActionHandler
 - afterOpen(com.intellij.ui.popup.AbstractPopup):V
 - beforeClose(java.lang.String):V
@@ -2867,6 +2869,7 @@ f:com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction
 - <init>():V
 a:com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase
 - com.intellij.openapi.actionSystem.AnAction
+- isDumbAware():Z
 c:com.intellij.ide.highlighter.custom.CustomFileHighlighter
 - com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 - <init>(com.intellij.ide.highlighter.custom.SyntaxTable):V

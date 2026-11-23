@@ -3,6 +3,7 @@ package com.intellij.model.search.impl
 
 import com.intellij.model.search.SearchParameters
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.psi.impl.search.isSearcherUsable
 import com.intellij.psi.impl.search.searchers
 import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
@@ -20,6 +21,7 @@ internal class SearchersQuery<R : Any>(
   private fun processInReadAction(consumer: Processor<in R>): Boolean {
     val searchers = searchers(parameters)
     for (searcher in searchers) {
+      if (!isSearcherUsable(parameters, searcher)) continue
       val immediateResults = searcher.collectImmediateResults(parameters)
       for (result in immediateResults) {
         if (!consumer.process(result)) {

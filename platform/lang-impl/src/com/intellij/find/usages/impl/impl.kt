@@ -17,6 +17,8 @@ import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
 import com.intellij.model.search.impl.buildTextUsageQuery
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.psi.PsiFile
@@ -113,7 +115,7 @@ fun buildQuery(
   if (options.isUsages) {
     queries += SearchService.getInstance().searchParameters(DefaultUsageSearchParameters(project, target, options.searchScope))
   }
-  if (textSearch == true) {
+  if (textSearch == true && !isDumbSearch(project, target)) {
     target.textSearchRequests.mapTo(queries) { searchRequest ->
       buildTextUsageQuery(project, searchRequest, options.searchScope, textSearchContexts).mapping(::PlainTextUsage)
     }
@@ -121,13 +123,21 @@ fun buildQuery(
   return SearchService.getInstance().merge(queries)
 }
 
+/**
+ * The search of a dumb-aware target in the dumb mode does not wait for the indexes.
+ * So it skips the text search, which needs the word index.
+ */
+private fun isDumbSearch(project: Project, target: SearchTarget): Boolean = DumbService.isDumbAware(target) && DumbService.isDumb(project)
+
 @ApiStatus.Experimental
 class DefaultUsageSearchParameters(
   private val project: Project,
   target: SearchTarget,
   override val searchScope: SearchScope
-) : UsageSearchParameters {
+) : UsageSearchParameters, PossiblyDumbAware {
   private val pointer: Pointer<out SearchTarget> = target.createPointer()
+  private val dumbAware: Boolean = DumbService.isDumbAware(target)
+  override fun isDumbAware(): Boolean = dumbAware
   override fun areValid(): Boolean = pointer.dereference() != null
   override fun getProject(): Project = project
   override val target: SearchTarget get() = requireNotNull(pointer.dereference())
