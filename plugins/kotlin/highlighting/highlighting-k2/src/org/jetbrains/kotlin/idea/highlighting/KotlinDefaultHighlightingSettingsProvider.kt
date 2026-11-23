@@ -31,6 +31,7 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
         val psiFile = file.toPsiFile(project) ?: return null
 
         return when {
+            InjectedLanguageManager.getInstance(project).shouldInspectionsBeLenient(psiFile) -> SKIP_INSPECTION
             psiFile is KtFile ->
                 when {
                     psiFile.isScript() -> FORCE_HIGHLIGHTING
@@ -38,22 +39,13 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
                     !KotlinSupportAvailability.isSupported(psiFile) -> SKIP_HIGHLIGHTING
                     RootKindFilter.libraryFiles.matches(project, file) -> SKIP_INSPECTION
                     psiFile.notUnderContentRoot() -> SKIP_INSPECTION
-                    InjectedLanguageManager.getInstance(project).shouldInspectionsBeLenient(psiFile) -> SKIP_INSPECTION
                     else -> {
                         null
                     }
                 }
 
             file.isKotlinDecompiledFile -> SKIP_HIGHLIGHTING
-            else -> {
-                val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
-                val injectionHost = injectedLanguageManager.getInjectionHost(psiFile)
-                if (injectionHost is KDocElement && injectedLanguageManager.shouldInspectionsBeLenient(psiFile)) {
-                    SKIP_INSPECTION
-                } else {
-                    null
-                }
-            }
+            else -> null
         }
     }
 }

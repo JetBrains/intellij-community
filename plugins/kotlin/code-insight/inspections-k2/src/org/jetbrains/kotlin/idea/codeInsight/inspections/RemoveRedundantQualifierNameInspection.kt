@@ -42,8 +42,6 @@ import org.jetbrains.kotlin.psi.KtUserType
  * There is a separate inspection for this - see [RedundantContextSensitiveResolutionQualifierInspection].
  */
 internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
-    override fun isAvailableForFile(file: PsiFile): Boolean =
-        !InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(file.viewProvider)
 
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         if (file !is KtFile) return null

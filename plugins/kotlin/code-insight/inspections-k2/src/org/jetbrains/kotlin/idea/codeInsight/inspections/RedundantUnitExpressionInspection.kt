@@ -20,8 +20,6 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.referenceExpressionVisitor
 
 class RedundantUnitExpressionInspection : KotlinApplicableInspectionBase.Simple<KtReferenceExpression, Unit>(), CleanupLocalInspectionTool {
-    override fun isAvailableForFile(file: PsiFile): Boolean =
-        !InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(file.viewProvider)
 
     override fun isApplicableByPsi(element: KtReferenceExpression): Boolean =
         element.isUnitLiteral()
