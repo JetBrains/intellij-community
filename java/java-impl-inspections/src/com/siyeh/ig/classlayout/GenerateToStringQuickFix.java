@@ -15,8 +15,9 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.LocalQuickFixWithModCommandFallback;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -24,15 +25,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.GenerateToStringActionHandler;
+import org.jetbrains.java.generate.GenerateToStringModCommandAction;
 
 /**
  * Quick fix to run Generate toString() to fix any code inspection problems.
  */
-public final class GenerateToStringQuickFix implements LocalQuickFix {
+public final class GenerateToStringQuickFix implements LocalQuickFixWithModCommandFallback {
 
   public static final GenerateToStringQuickFix INSTANCE = new GenerateToStringQuickFix();
 
   private GenerateToStringQuickFix() {}
+
+  @Override
+  public @NotNull ModCommandAction getFallbackModCommandAction() {
+    return new GenerateToStringModCommandAction();
+  }
 
   public static GenerateToStringQuickFix getInstance() {
     return INSTANCE;
