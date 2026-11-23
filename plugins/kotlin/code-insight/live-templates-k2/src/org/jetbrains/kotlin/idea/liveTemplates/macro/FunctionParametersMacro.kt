@@ -14,6 +14,13 @@ class FunctionParametersMacro : KotlinMacro() {
     override fun getName() = "functionParameters"
     override fun getPresentableName() = "functionParameters()"
 
+    override fun calculateQuickResult(
+        params: Array<out Expression?>,
+        context: ExpressionContext?
+    ): Result? {
+        return null
+    }
+
     override fun calculateResult(params: Array<Expression>, context: ExpressionContext): Result? {
         val project = context.project
         val templateStartOffset = context.templateStartOffset

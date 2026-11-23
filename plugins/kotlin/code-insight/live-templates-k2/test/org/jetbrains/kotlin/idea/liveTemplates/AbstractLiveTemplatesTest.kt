@@ -219,6 +219,21 @@ abstract class AbstractLiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestC
         checkAfter()
     }
 
+    @TestMetadata("iter_TypingKeepsVariableNameUntilNextTab.kt")
+    fun testIter_TypingKeepsVariableNameUntilNextTab() {
+        start()
+        assertLoopHeader("for (string in names)")
+
+        type("numbers")
+        assertLoopHeader("for (string in numbers)")
+
+        nextTab()
+        assertLoopHeader("for (i in numbers)")
+        nextTab()
+
+        checkAfter()
+    }
+
     @TestMetadata("anonymous_1.kt")
     fun testAnonymous_1() {
         start()
@@ -300,6 +315,11 @@ abstract class AbstractLiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestC
     private fun checkAfter() {
         assertNull(templateState)
         myFixture.checkContentByExpectedPath(".exp")
+    }
+
+    private fun assertLoopHeader(expected: String) {
+        val header = myFixture.editor.document.text.lines().map { it.trim() }.firstOrNull { it.startsWith("for (") }
+        assertEquals("$expected {", header)
     }
 
     private fun typeAndNextTab(s: String) {

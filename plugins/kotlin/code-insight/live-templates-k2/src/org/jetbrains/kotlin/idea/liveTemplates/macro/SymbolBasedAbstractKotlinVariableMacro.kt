@@ -40,6 +40,13 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
         }
     }
 
+    /**
+     * A quick result can run without a lock, inside [com.intellij.psi.PsiDocumentManager.allowIsolatedCommits].
+     * There it can commit the document, but it must not run a heavy index-based analysis.
+     * Each candidate needs such an analysis.
+     */
+    override fun calculateQuickResult(params: Array<out Expression>, context: ExpressionContext): Result? = null
+
     override fun calculateLookupItems(params: Array<out Expression>, context: ExpressionContext): Array<LookupElement>? {
         if (params.isNotEmpty()) {
             return emptyArray()

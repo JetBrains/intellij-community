@@ -20,6 +20,13 @@ abstract class AbstractSuggestVariableNameMacro : KotlinMacro() {
         return findAppropriateNames(context).firstOrNull()?.let(::TextResult)
     }
 
+    /**
+     * A quick result can run without a lock, inside [com.intellij.psi.PsiDocumentManager.allowIsolatedCommits].
+     * There it can commit the document, but it must not run a heavy index-based analysis.
+     * Each suggested name needs such an analysis.
+     */
+    override fun calculateQuickResult(params: Array<out Expression>, context: ExpressionContext): Result? = null
+
     override fun calculateLookupItems(params: Array<out Expression>, context: ExpressionContext): Array<out LookupElement>? {
         return findAppropriateNames(context)
             .takeIf { it.size >= 2 }

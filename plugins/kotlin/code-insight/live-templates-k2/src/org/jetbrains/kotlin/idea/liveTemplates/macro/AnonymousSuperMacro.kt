@@ -29,6 +29,13 @@ abstract class AbstractAnonymousSuperMacro : KotlinMacro() {
         return KotlinPsiElementResult(supertype)
     }
 
+    /**
+     * A quick result can run without a lock, inside [com.intellij.psi.PsiDocumentManager.allowIsolatedCommits].
+     * There it can commit the document, but it must not run a heavy index-based analysis.
+     * The supertypes need such an analysis.
+     */
+    override fun calculateQuickResult(params: Array<Expression>, context: ExpressionContext): Result? = null
+
     override fun calculateLookupItems(params: Array<Expression>, context: ExpressionContext): Array<LookupElement>? {
         return getSupertypes(params, context)
             .takeIf { it.size >= 2 }
