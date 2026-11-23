@@ -1,7 +1,9 @@
 package org.intellij.plugins.markdown.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.intellij.plugins.markdown.lang.references.MarkdownTextReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +15,12 @@ public class MarkdownTableCell extends MarkdownCompositePsiElementBase {
   @Override
   public String getPresentableTagName() {
     return "td";
+  }
+
+  @Override
+  public PsiReference @NotNull [] getReferences() {
+    PsiReference[] references = MarkdownTextReferenceProvider.getReferencesFor(this);
+    return references != null ? references : PsiReference.EMPTY_ARRAY;
   }
 
   public int getColumnIndex() {

@@ -2,15 +2,26 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.markdown"/>
+    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <ignoredFileProvider implementation="com.intellij.markdown.vcs.MarkdownIgnoredFileProvider"/>
+    <platform.backend.documentation.psiTargetProvider implementation="com.intellij.markdown.vcs.GitCommitDocumentationTargetProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <textReferenceProvider implementation="com.intellij.markdown.vcs.GitCommitTextReferenceProvider"/>
   </extensions>
 </idea-plugin>

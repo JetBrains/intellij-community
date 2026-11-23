@@ -71,6 +71,8 @@ public interface MarkdownTokenTypeSets extends MarkdownElementTypes {
 
   TokenSet LINKS = TokenSet.orSet(AUTO_LINKS, TokenSet.create(INLINE_LINK, AUTOLINK));
 
+  TokenSet EMPHASIS_LIKE_ELEMENTS = TokenSet.create(EMPH, STRONG, STRIKETHROUGH, HIGHLIGHT);
+
   TokenSet INLINE_HOLDING_ELEMENT_PARENTS_TYPES =
     TokenSet.create(MarkdownTokenTypes.ATX_HEADER,
                     MarkdownTokenTypes.SETEXT_1,

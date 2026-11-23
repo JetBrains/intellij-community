@@ -26,6 +26,7 @@ import org.intellij.plugins.markdown.editor.toc.TableOfContentsMarkers
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
+import org.intellij.plugins.markdown.lang.references.MarkdownTextReferenceProvider
 import org.intellij.plugins.markdown.lang.psi.util.children
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.lang.psi.util.hasType
@@ -77,7 +78,10 @@ class MarkdownHeader: MarkdownHeaderImpl {
   }
 
   override fun getReferences(): Array<PsiReference?> {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this)
+    val references = arrayListOf<PsiReference?>()
+    references.addAll(ReferenceProvidersRegistry.getReferencesFromProviders(this))
+    references.addAll(MarkdownTextReferenceProvider.getReferencesFor(this) ?: emptyArray())
+    return references.toTypedArray()
   }
 
   override fun getPresentation(): ItemPresentation {

@@ -4,9 +4,15 @@ package org.intellij.plugins.markdown.lang.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiReference
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
+import org.intellij.plugins.markdown.lang.references.MarkdownTextReferenceProvider
 
 class MarkdownParagraph(node: ASTNode): MarkdownCompositePsiElementBase(node), PsiExternalReferenceHost {
+  override fun getReferences(): Array<PsiReference> {
+    return MarkdownTextReferenceProvider.getReferencesFor(this) ?: PsiReference.EMPTY_ARRAY
+  }
+
   override fun accept(visitor: PsiElementVisitor) {
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitParagraph(this)

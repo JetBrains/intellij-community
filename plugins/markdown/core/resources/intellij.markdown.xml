@@ -72,6 +72,9 @@
     <extensionPoint qualifiedName="org.intellij.markdown.browserPreviewExtensionProvider"
                     interface="org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension$Provider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.textReferenceProvider"
+                    interface="org.intellij.plugins.markdown.lang.references.MarkdownTextReferenceProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownExportProvider"
                     interface="org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider"
                     dynamic="true"/>

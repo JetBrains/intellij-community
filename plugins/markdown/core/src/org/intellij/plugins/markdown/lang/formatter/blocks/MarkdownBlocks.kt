@@ -55,7 +55,7 @@ internal object MarkdownBlocks {
         node, settings, spacing, align(node),
         wrap ?: if (shouldWrapLinkLikeElement(node, settings)) Wrap.createWrap(WrapType.NORMAL, false) else null
       )
-      in emphasisLikeElements -> EmphasisFormattingBlock(settings, spacing, node, align(node), wrap)
+      in MarkdownTokenTypeSets.EMPHASIS_LIKE_ELEMENTS -> EmphasisFormattingBlock(settings, spacing, node, align(node), wrap)
       MarkdownElementTypes.PARAGRAPH -> when {
         isInsideBlockquote(node) && !shouldWrapText(node, settings) -> MarkdownFormattingBlock(node, settings, spacing, align(node), wrap)
         else -> MarkdownWrappingFormattingBlock(settings, spacing, node, align(node), wrap)
@@ -97,13 +97,6 @@ internal object MarkdownBlocks {
     // Dirty hack cause for some reason Markdown parser thinks that `>`, `:` are whitespaces
     || (it.elementType in MarkdownTokenTypeSets.WHITE_SPACES && it.text.any { char -> !StringUtil.isWhiteSpace(char) })
   }
-
-  private val emphasisLikeElements = TokenSet.create(
-    MarkdownElementTypes.EMPH,
-    MarkdownElementTypes.STRONG,
-    MarkdownElementTypes.STRIKETHROUGH,
-    MarkdownElementTypes.HIGHLIGHT
-  )
 
   private val linkLikeElements = TokenSet.orSet(
     MarkdownTokenTypeSets.LINKS,
