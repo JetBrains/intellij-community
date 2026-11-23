@@ -80,6 +80,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @deprecated For a JUnit 6 test, use {@link DaemonAnalyzerFixture#daemonAnalyzerFixture}.
+ */
+@Deprecated
 public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
   protected DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;

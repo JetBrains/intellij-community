@@ -15,6 +15,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @deprecated For a JUnit 6 test, use {@link HeavyJavaCompletionFixture#heavyJavaCompletionFixture}.
+ */
+@Deprecated
 @HeavyPlatformTestCase.WrapInCommand
 public abstract class JavaCompletionTestCase extends DaemonAnalyzerTestCase {
   protected String myPrefix;

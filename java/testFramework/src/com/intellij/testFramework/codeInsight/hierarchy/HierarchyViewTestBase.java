@@ -18,7 +18,10 @@ import java.util.function.Supplier;
 
 /**
  * Checks tree structure for Type Hierarchy (Ctrl+H), Call Hierarchy (Ctrl+Alt+H), Method Hierarchy (Ctrl+Shift+H).
+ *
+ * @deprecated For a JUnit 6 test, use {@link HierarchyViewFixture#hierarchyViewFixture}.
  */
+@Deprecated
 public abstract class HierarchyViewTestBase extends DaemonAnalyzerTestCase {
   protected abstract String getBasePath();
 
