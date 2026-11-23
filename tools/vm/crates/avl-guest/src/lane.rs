@@ -8,6 +8,7 @@
 pub(crate) mod build_log;
 pub(crate) mod channel;
 pub(crate) mod context;
+pub(crate) mod early_stop;
 pub(crate) mod evidence;
 pub(crate) mod host_ids;
 pub(crate) mod ide;

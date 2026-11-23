@@ -598,6 +598,8 @@ struct Setup {
     session_logs: Vec<StagedLog>,
     /// The rerun of a `lane-run`, or `None` for the lane daemon.
     rerun: Option<Rerun>,
+    /// The baseline of the early stop of the passes, or `None` when every pass runs.
+    baseline: Option<crate::lane::early_stop::Baseline>,
 }
 
 impl Default for Setup {
@@ -611,6 +613,7 @@ impl Default for Setup {
             document: lane_document(),
             session_logs: Vec::new(),
             rerun: None,
+            baseline: None,
         }
     }
 }
@@ -626,6 +629,7 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
         document,
         session_logs,
         rerun,
+        baseline,
     } = setup;
     let (slow_step, margin, active) = (*slow_step, *margin, *active);
     let iteration = TempDir::new().unwrap();
@@ -653,6 +657,7 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
                 .with_instruction_margin(margin)
                 .with_session_logs(session_logs.clone())
                 .with_rerun(rerun.clone())
+                .with_early_stop(baseline.clone().map(EarlyStop::new))
                 .run(suites);
             watch.completed(&stream);
         });
@@ -2468,4 +2473,72 @@ fn a_recycle_that_fails_before_the_rerun_leaves_the_failure() {
         notes[1].starts_with("lane-run reruns no failed scenario: the recycle before the rerun failed: lane_ide_not_ready"),
         "{notes:?}"
     );
+}
+
+// The passes of a performance scenario after the first two are skipped when the first two are in the band of the nights
+// before, and each skipped pass says why.
+#[test]
+fn a_quiet_night_skips_the_passes_after_the_first_two() {
+    let fake = Fake::new(Script {
+        answers: BTreeMap::from([(
+            "action/authored-step".to_owned(),
+            json!({"values": {}, "report": {"notes": [], "metrics": {"open.M.gestureToTabMs": 551}}}),
+        )]),
+        ..Script::default()
+    });
+    let names = ["M opens", "M opens, pass 2 of 4", "M opens, pass 3 of 4", "M opens, pass 4 of 4"];
+    let profiles: Vec<Value> = names
+        .iter()
+        .map(|name| {
+            json!({"name": name, "key": "m", "method": "longSession", "fixture": "authored", "flags": {}, "flagKeys": [],
+                "requiredExecutables": [], "setups": [], "steps": [],
+                "program": [{"action": "authored-step", "args": {"part": "measure", "scenario": "m", "suite": "long-session", "timeoutMs": 300_000},
+                    "uses": {"takes": [], "answers": []}}]})
+        })
+        .collect();
+    let actions = json!({"authored-step": authored_step("long-session", "m", &["measure"])});
+    let document = authored_document("long-session", "acp", "AirLongSessionPerformanceUiTest", &actions, &json!(profiles));
+    let mut lane = lane_document();
+    lane.performance_series = names
+        .iter()
+        .map(|name| avl_wire::program::lane::PerformanceSeries {
+            test_class_name: "com.intellij.air.integration.acp.AirLongSessionPerformanceUiTest".to_owned(),
+            scenario: (*name).to_owned(),
+            project: "air/long-session/M".to_owned(),
+            method: "AirLongSessionPerformanceUiTest#longSession".to_owned(),
+            artifact_path: "air-long-session/M".to_owned(),
+        })
+        .collect();
+    let baseline = serde_json::from_value(json!({"minPasses": 2, "series": {"air/long-session/M": {"open.M.gestureToTabMs": {
+        "values": [560, 532, 548, 571, 540, 555, 566, 538, 549, 561], "relative": 25, "absolute": 30, "noise": 5}}}}))
+    .unwrap();
+    let ran = run_set(
+        &fake,
+        &[suite_of(&document)],
+        &Setup {
+            document: lane,
+            baseline: Some(baseline),
+            ..Setup::default()
+        },
+    );
+    let finished: Vec<&Value> = ran.events("testFinished");
+    assert_eq!(
+        finished
+            .iter()
+            .map(|record| record["displayName"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        ["M opens", "M opens, pass 2 of 4"]
+    );
+    let skipped = ran.events("testSkipped");
+    assert_eq!(skipped.len(), 2);
+    assert_eq!(skipped[0]["displayName"], "M opens, pass 3 of 4");
+    assert!(
+        skipped[0]["reason"]
+            .as_str()
+            .unwrap()
+            .starts_with("the 2 passes so far of air/long-session/M are in the band of the nights before"),
+        "{}",
+        skipped[0]["reason"]
+    );
+    assert_eq!(fake.bodies("action/authored-step").len(), 2, "the skipped passes send no request");
 }

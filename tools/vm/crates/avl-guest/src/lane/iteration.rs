@@ -25,6 +25,7 @@ use serde_json::{Value, json};
 
 use super::channel::{Daemon, log};
 use super::context::option_files_digest;
+use super::early_stop::{self, EarlyStop};
 use super::evidence;
 use super::ide::{AgentFiles, ContextPlugin, KillTarget, LaneLaunch, Records, Relaunch, RelaunchParts};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
@@ -604,9 +605,15 @@ fn execute_selection(
             .name(WATCHDOG_THREAD.to_owned())
             .spawn_scoped(scope, || watchdog::watch(&watch, stream, &daemon_lane, iteration_dir))
             .expect("the watchdog thread starts");
+        let mut notes = Vec::new();
+        let early_stop = EarlyStop::from_variable(std::env::var(early_stop::BASELINE_VARIABLE).ok(), &mut notes);
+        for note in notes {
+            stream.note(note);
+        }
         Runner::new(&daemon_lane, stream, &watch, &selection.lane, iteration_dir, trace)
             .with_session_logs(staged.logs.clone())
             .with_rerun(rerun.cloned())
+            .with_early_stop(early_stop)
             .run(&selection.suites);
         watch.completed(stream);
     });

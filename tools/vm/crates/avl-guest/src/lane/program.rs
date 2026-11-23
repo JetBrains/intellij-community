@@ -53,6 +53,7 @@ use serde::Deserialize;
 use serde_json::value::RawValue;
 use serde_json::{Map, Value, json};
 
+use super::early_stop::EarlyStop;
 use super::host_ids::{self, HostId, HostSide, ServiceControl};
 use super::ide::{Relaunch, RelaunchPart, RelaunchParts};
 use super::readiness::{READY_TIMEOUT, request};
@@ -372,6 +373,8 @@ pub(crate) struct Runner<'r, 's> {
     clean_handover: Cell<bool>,
     /// How many relaunches of the IDE ran, so a scenario can tell that its `reset:after` recycled the IDE.
     relaunches: Cell<u32>,
+    /// The early stop of the passes of a performance scenario, or `None` when every pass runs.
+    early_stop: Option<EarlyStop>,
 }
 
 impl<'r, 's> Runner<'r, 's> {
@@ -401,12 +404,19 @@ impl<'r, 's> Runner<'r, 's> {
             rerunning: Cell::new(false),
             clean_handover: Cell::new(false),
             relaunches: Cell::new(0),
+            early_stop: None,
         }
     }
 
     /// The same runner with the rerun `rerun` of a `lane-run`.
     pub(crate) fn with_rerun(mut self, rerun: Option<Rerun>) -> Self {
         self.rerun = rerun;
+        self
+    }
+
+    /// The same runner with the early stop `early_stop` of the passes of a performance scenario.
+    pub(crate) fn with_early_stop(mut self, early_stop: Option<EarlyStop>) -> Self {
+        self.early_stop = early_stop;
         self
     }
 
@@ -835,6 +845,12 @@ impl<'r, 's> Runner<'r, 's> {
             self.stream.skipped(&case, never_ran(&profile.name, &reason));
             return None;
         }
+        let early_stop = self.early_stop.as_ref().filter(|_| !self.rerunning.get());
+        if let Some(reason) = early_stop.and_then(|stop| stop.skip_reason(&self.document.performance_series, &case.class_name, &case.name))
+        {
+            self.stream.skipped(&case, reason);
+            return None;
+        }
         let started = self.start_case(suite, profile, &case)?;
         self.trace()
             .open_scenario(scenario_command(suite, profile, raw, self.lane.recorder_bridge()));
@@ -911,6 +927,9 @@ impl<'r, 's> Runner<'r, 's> {
             Some(_) => CaseStatus::Failed,
         };
         let report = self.report.take();
+        if let Some(stop) = self.early_stop.as_ref().filter(|_| status == CaseStatus::Successful) {
+            stop.record(&self.document.performance_series, &case.class_name, &case.name, &report.metrics);
+        }
         self.stream
             .finished(case, status, started.elapsed(), failure.as_ref().map(Failure::typed), report);
         self.watch.execution_finished(self.stream);
