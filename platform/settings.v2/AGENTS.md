@@ -7,12 +7,18 @@ layers supply the values. The vault resolves and stores them.
 |-----------------------------------------|------------|
 | `intellij.platform.settings.v2` (API)   | `src/`     |
 | `intellij.platform.settings.v2.shared`  | `shared/`  |
+| `intellij.platform.settings.v2.shared.essential` | `shared/essential/` |
 | `intellij.platform.settings.v2.backend.baseline` | `backend/baseline/` |
 | `intellij.platform.settings.v2.backend` | `backend/` |
 | `intellij.platform.settings.v2.vcs` | `vcs/` |
 | `intellij.platform.settings.v2.test`    | `test/`    |
 | `intellij.platform.settings.v2.testKeys` | `testKeys/` |
 | `intellij.platform.settings.v2.testKeys.plugin` | `testKeys/plugin/` |
+
+The vault module, `intellij.platform.settings.v2.shared`, depends only on modules of the `core.platform` module set
+and of the boot jars. `SettingsV2CoreDependenciesTest` checks it. Code of the vault that needs another module goes to
+`intellij.platform.settings.v2.shared.essential`. See
+[ADR 0181](adr/0181-the-vault-module-depends-only-on-core-platform-modules-and-the-code-that-needs-more-lives-in-the-shared-essential-module.md).
 
 Some modules of the feature live outside `community/`. Their own `AGENTS.md` points here, and `spec/` and `adr/`
 cover them too.

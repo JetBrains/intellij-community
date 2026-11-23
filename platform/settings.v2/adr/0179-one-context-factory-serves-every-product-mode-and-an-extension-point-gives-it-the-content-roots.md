@@ -32,9 +32,11 @@ project is the only root.**
 - The frontend registers an extension that holds the roots from the backend.
 - A light product mode registers nothing. The answer for it is plain code in the shared module.
 - The first extension always answers. No product mode loads two extensions, so there is no pass to a next one.
-- The context factory and the context dump action live in the shared module. The roots cache lives in the backend
-  module, because it reads the project model. The other project-scoped machinery stays in the backend baseline
-  module, as [ADR 0166](./0166-the-light-compatible-backend-code-lives-in-the-backend-baseline-module.md) says.
+- The context factory lives in the shared module. The context dump action lives in the shared essential module,
+  because its dialog needs a module outside `core.platform`
+  ([ADR 0181](./0181-the-vault-module-depends-only-on-core-platform-modules-and-the-code-that-needs-more-lives-in-the-shared-essential-module.md)).
+  The roots cache lives in the backend module, because it reads the project model. The other project-scoped
+  machinery stays in the backend baseline module, as [ADR 0166](./0166-the-light-compatible-backend-code-lives-in-the-backend-baseline-module.md) says.
 - A file matches a root by path. A file of an archive file system, such as a file inside a jar, is under no root.
 
 ## Consequences
@@ -47,8 +49,8 @@ project is the only root.**
 - A client light session has no backend, so its anchor is a url of its own. The rule that a frontend anchors on the
   backend root url ([ADR 0127](./0127-a-file-context-anchors-on-the-backend-root-url-on-both-sides.md)) holds for a
   frontend with a backend.
-- The context dump action reads the roots through the same lookup. So one action in the shared module serves every
-  product mode, and a split session shows the action of each side.
+- The context dump action reads the roots through the same lookup. So one action in the shared essential module serves
+  every product mode, and a split session shows the action of each side.
 - A switch of the product mode only adds an extension. The roots of a file context change with it. A context that
   a caller built before the switch keeps its old anchor.
 - The match by path serves every side. A frontend file has another protocol than the backend root urls. A backend

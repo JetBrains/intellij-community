@@ -131,6 +131,7 @@ A batch applies several writes and slot operations as one atomic change.
 - The save at the application close must run through the shutdown saver when the product has one. The shutdown
   saver is an optional service that decides how the save runs. The saver of
   `intellij.platform.settings.v2.shared.essential` runs the save under a modal progress that the user cannot cancel.
+  See [ADR 0181](../adr/0181-the-vault-module-depends-only-on-core-platform-modules-and-the-code-that-needs-more-lives-in-the-shared-essential-module.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsShutdownSaveTest.kt
 - With no shutdown saver, the save at the application close must run with a blocking call on the thread of the
   close, with no progress. A product that has only the `core.platform` modules has no saver. Such a product must
