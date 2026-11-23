@@ -637,13 +637,6 @@ f:com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider$Companio
 - f:bindProjectName(com.intellij.ui.dsl.builder.Cell,com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
 - f:bindProjectName(com.intellij.ui.dsl.builder.Cell,com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider,kotlin.reflect.KMutableProperty0,kotlin.text.Regex):com.intellij.ui.dsl.builder.Cell
 - bs:bindProjectName$default(com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider$Companion,com.intellij.ui.dsl.builder.Cell,com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider,kotlin.reflect.KMutableProperty0,kotlin.text.Regex,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-f:com.jetbrains.python.packaging.PyPackageManagerUI
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk,com.jetbrains.python.packaging.PyPackageManagerUI$Listener):V
-- install(java.util.List,java.util.List):V
-- uninstall(java.util.List):V
-com.jetbrains.python.packaging.PyPackageManagerUI$Listener
-- a:finished(java.util.List):V
-- a:started():V
 f:com.jetbrains.python.reflection.Properties
 - <init>(java.util.List,java.lang.Object):V
 - f:copyTo(com.jetbrains.python.reflection.Properties):V
