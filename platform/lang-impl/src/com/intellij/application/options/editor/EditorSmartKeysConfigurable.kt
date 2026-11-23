@@ -105,13 +105,23 @@ internal const val ID: String = "editor.preferences.smartKeys"
 private val EP_NAME = ExtensionPointName<EditorSmartKeysConfigurableEP>("com.intellij.editorSmartKeysConfigurable")
 
 /**
- * To provide additional options in Editor | Smart Keys section register implementation of {@link com.intellij.openapi.options.UnnamedConfigurable} in the plugin.xml:
- * <p/>
- * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
- * &nbsp;&nbsp;&lt;editorSmartKeysConfigurable instance="class-name"/&gt;<br>
- * &lt;/extensions&gt;
- * <p>
- * A new instance of the specified class will be created each time then the Settings dialog is opened
+ * The Editor | General | Smart Keys page.
+ *
+ * A plugin adds options to this page with the `com.intellij.editorSmartKeysConfigurable` extension point:
+ * ```xml
+ * <extensions defaultExtensionNs="com.intellij">
+ *   <editorSmartKeysConfigurable instance="class-name"/>
+ * </extensions>
+ * ```
+ *
+ * A class that is a [Configurable] is a child page in the settings tree.
+ * A child page must declare a label in `plugin.xml` to stay lazy while the settings tree is built.
+ * The settings tree creates a child page with no label to read its name.
+ *
+ * Any other [UnnamedConfigurable] is a panel part, and this page shows it in its own panel.
+ * The page creates its panel parts on first use, and creates them again after each close.
+ *
+ * @see EditorSmartKeysConfigurableEP
  */
 @ApiStatus.Internal
 class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
@@ -218,14 +228,26 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
     ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.SMART_KEYS_CONFIGURABLE_TOPIC).changesApplied()
   }
 
-  private val allConfigurables: List<UnnamedConfigurable> by lazy { ConfigurableWrapper.createConfigurables(EP_NAME) }
+  private val configurablePages: List<Configurable> by lazy {
+    EP_NAME.extensionList
+      .filterNot(::isPanelPart)
+      .mapNotNull { ConfigurableWrapper.wrapConfigurable(it) as? Configurable }
+  }
 
   override fun createConfigurables(): List<UnnamedConfigurable> {
-    return allConfigurables.filterNot { it is Configurable }
+    return EP_NAME.extensionList
+      .filter(::isPanelPart)
+      .mapNotNull { ConfigurableWrapper.wrapConfigurable(it) }
   }
 
   override fun getConfigurables(): Array<Configurable> {
-    return allConfigurables.filterIsInstance<Configurable>().toTypedArray()
+    return configurablePages.toTypedArray()
+  }
+
+  private fun isPanelPart(ep: EditorSmartKeysConfigurableEP): Boolean {
+    if (ep.displayName != null || ep.key != null || ep.parentId != null || ep.groupId != null) return false
+    val configurableType = ep.configurableType ?: return false
+    return !Configurable::class.java.isAssignableFrom(configurableType)
   }
 
   override fun hasOwnContent(): Boolean = true

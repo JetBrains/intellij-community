@@ -12,7 +12,8 @@ import com.intellij.openapi.options.UnnamedConfigurable;
  * &nbsp;&nbsp;&lt;editorSmartKeysConfigurable instance="class-name"/&gt;<br>
  * &lt;/extensions&gt;
  * <p>
- * A new instance of the specified class will be created each time then the Settings dialog is opened
+ * A new instance of the specified class is created each time the Settings dialog opens.
+ * A child page must declare a label in {@code plugin.xml} to stay lazy while the settings tree is built.
  */
 public final class EditorSmartKeysConfigurableEP extends ConfigurableEP<UnnamedConfigurable> {
 }
