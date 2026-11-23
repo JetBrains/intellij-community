@@ -28,6 +28,8 @@ import com.intellij.task.ProjectTaskNotification
 import com.intellij.task.ProjectTaskResult
 import com.intellij.task.ProjectTaskRunner
 import com.intellij.task.impl.JpsProjectTaskRunner
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
@@ -159,6 +161,16 @@ private fun buildModules(
 ) {
   if (moduleBuildTasks.isEmpty()) return
 
+  runBatch(project, mavenBuildCommands(project, moduleBuildTasks), callback)
+}
+
+/**
+ * The Maven runs of a delegated build of [moduleBuildTasks], one run for each root project. When the tasks have more
+ * than one module of a root project, the run builds the root POM. Else it builds the POM of the module.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+fun mavenBuildCommands(project: Project, moduleBuildTasks: Collection<ModuleBuildTask>): MutableList<MavenRunnerParameters> {
   val mavenProjectsManager = MavenProjectsManager.getInstance(project)
 
   val explicitProfiles = mavenProjectsManager.explicitProfiles
@@ -171,7 +183,7 @@ private fun buildModules(
 
     buildOnlyResources = buildOnlyResources || moduleBuildTask is ModuleResourcesBuildTask
     val rootProject = mavenProjectsManager.findRootProject(mavenProject)
-    rootProjectsToModules.computeIfAbsent(rootProject) { mutableListOf(mavenProject) }
+    rootProjectsToModules.getOrPut(rootProject) { mutableListOf() }.add(mavenProject)
   }
 
   val clean = moduleBuildTasks.any { it !is ModuleFilesBuildTask && !it.isIncrementalBuild() }
@@ -208,8 +220,7 @@ private fun buildModules(
       )
     )
   }
-
-  runBatch(project, commands, callback)
+  return commands
 }
 
 private fun getPhase(buildOnlyResources: Boolean, compileOnly: Boolean): String {
