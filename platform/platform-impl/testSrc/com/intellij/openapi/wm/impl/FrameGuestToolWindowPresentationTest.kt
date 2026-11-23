@@ -841,6 +841,63 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `the balloon of a frame guest closes when the guest closes`() = onEdt {
+    val managers = createManagers()
+    managers.register(first)
+    managers.register(second)
+    val presenting = managers.owner.getEntry(ID)!!
+    managers.of(first).notifyByBalloon(balloonOptions())
+    val balloon = presenting.balloon!!
+
+    managers.of(first).projectClosing()
+
+    assertThat(balloon.isDisposed).isTrue()
+    assertThat(presenting.balloon).isNull()
+    assertThat(managers.owner.getEntry(ID)).describedAs("the tool window of the frame owner presents the second guest").isSameAs(presenting)
+  }
+
+  @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `the balloon of a frame guest closes when the guest unregisters its tool window`() = onEdt {
+    val managers = createManagers()
+    managers.register(first)
+    managers.register(second)
+    val presenting = managers.owner.getEntry(ID)!!
+    managers.of(first).notifyByBalloon(balloonOptions())
+    val balloon = presenting.balloon!!
+
+    managers.of(first).doUnregisterToolWindow(ID)
+
+    assertThat(balloon.isDisposed).isTrue()
+    assertThat(presenting.balloon).isNull()
+    assertThat(managers.owner.getEntry(ID)).isSameAs(presenting)
+  }
+
+  @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `a frame guest that leaves keeps the newer balloon of another guest`() = onEdt {
+    val managers = createManagers()
+    managers.register(first)
+    managers.register(second)
+    val presenting = managers.owner.getEntry(ID)!!
+    managers.of(first).notifyByBalloon(balloonOptions())
+    val firstBalloon = presenting.balloon!!
+    managers.of(second).notifyByBalloon(balloonOptions())
+    val secondBalloon = presenting.balloon!!
+    assertThat(firstBalloon.isDisposed).describedAs("the newer balloon takes the place of the older one").isTrue()
+
+    managers.of(first).doUnregisterToolWindow(ID)
+
+    assertThat(secondBalloon.isDisposed).isFalse()
+    assertThat(presenting.balloon).isSameAs(secondBalloon)
+  }
+
+  private fun balloonOptions(): ToolWindowBalloonShowOptions {
+    return ToolWindowBalloonShowOptions(toolWindowId = ID, type = MessageType.INFO, htmlBody = "Done")
+  }
+
+  @Test
   fun `a balloon of a windowed tool window points at the content of the frame guest that it shows`() = onEdt {
     val managers = createManagers()
     val firstToolWindow = managers.register(first)
@@ -1422,6 +1479,10 @@ internal class FrameGuestToolWindowPresentationTest {
         if (frameOwnerPresentation == null) {
           // a headless manager has no pane for a balloon, so the test records the request of a project with a frame
           shownBalloons.add(project.name)
+          // the entry gets the balloon as in the IDE, and nothing shows it
+          val entry = getEntry(options.toolWindowId) ?: return
+          entry.balloon?.let(Disposer::dispose)
+          ToolWindowManagerNotifications(this).createBalloon(options, entry)
         }
         else {
           super.notifyByBalloon(options)

@@ -258,7 +258,8 @@ internal class ToolWindowManagerNotifications(
     }
   }
 
-  private fun createBalloon(options: ToolWindowBalloonShowOptions, entry: ToolWindowEntry): Balloon {
+  @VisibleForTesting
+  fun createBalloon(options: ToolWindowBalloonShowOptions, entry: ToolWindowEntry): Balloon {
     val listenerWrapper = BalloonHyperlinkListener(options.listener)
 
     var foreground = options.type.titleForeground

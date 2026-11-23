@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.MultiProjectToolWindowFactory
@@ -148,11 +149,15 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
    *
    * The decorator of [toolWindow] leaves the frame now, before the guest disposes it. When [toolWindow] was the shown one,
    * the tool window of the frame owner selects another project in a later event, see [resolveLater].
+   * The balloon that the frame owner shows for [toolWindow] closes, see [guestBalloonShown].
    */
   fun detach(toolWindow: ToolWindowImpl) {
     ThreadingAssertions.assertEventDispatchThread()
     val slot = toolWindow.presentingSlot ?: return
     toolWindow.presentingSlot = null
+    if (slot.guestBalloonSource === toolWindow) {
+      slot.guestBalloon?.let(Disposer::dispose)
+    }
     if (!slot.guests.remove(toolWindow) || isDisposed || slots.get(toolWindow.id) !== slot) {
       return
     }
@@ -685,6 +690,25 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     updateUi(slot)
   }
 
+  /**
+   * The frame owner shows a balloon for the presented tool window [toolWindow] of a frame guest, see
+   * [ToolWindowManagerImpl.notifyByBalloon]. The balloon closes when [toolWindow] detaches. A newer balloon takes its place
+   * in the entry of the frame owner, and the detach of [toolWindow] keeps that balloon.
+   */
+  fun guestBalloonShown(toolWindow: ToolWindowImpl) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val slot = toolWindow.presentingSlot ?: return
+    val balloon = manager.getEntry(slot.presenting.id)?.balloon ?: return
+    slot.guestBalloon = balloon
+    slot.guestBalloonSource = toolWindow
+    Disposer.register(balloon) {
+      if (slot.guestBalloon === balloon) {
+        slot.guestBalloon = null
+        slot.guestBalloonSource = null
+      }
+    }
+  }
+
   /** The presented tool window [toolWindow] of a frame guest has a new icon, see [updatePlaceholderIcon]. */
   fun iconChanged(toolWindow: ToolWindowImpl) {
     ThreadingAssertions.assertEventDispatchThread()
@@ -778,6 +802,12 @@ internal class PresentingSlot(
   /** The stripe title that a frame guest gave [presenting] last, for the time when no frame guest has the id, see [isPlaceholder]. */
   var lastGuestStripeTitle: @NlsContexts.TabTitle String? = null
 
+  /** The balloon that the frame owner shows for [guestBalloonSource], see `ToolWindowManagerPresentation.guestBalloonShown`. */
+  var guestBalloon: Balloon? = null
+
+  /** The presented tool window whose balloon [guestBalloon] is. */
+  var guestBalloonSource: ToolWindowImpl? = null
+
   /** The selector of the project. It exists from the first time [presenting] has a choice of projects. */
   var selector: ToolWindowProjectSelector? = null
 
@@ -796,6 +826,7 @@ internal class PresentingSlot(
       toolWindow.presentingSlot = null
     }
     guests.clear()
+    guestBalloonSource = null
     selector?.update(emptyList(), null)
   }
 }

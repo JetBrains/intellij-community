@@ -1987,7 +1987,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val target = options.copy(toolWindowId = notifications.resolveNotificationTarget(options.toolWindowId))
     // The frame owner has the stripe button and the pane of a presented tool window. The pane of a frame guest is in no frame,
     // so a balloon there shows nothing to the user.
-    if (forwardToFrameOwner(target.toolWindowId) { notifyByBalloon(target) }) {
+    val source = idToEntry.get(target.toolWindowId)?.toolWindow
+    if (forwardToFrameOwner(source) { notifyByBalloon(target) }) {
+      frameOwnerPresentation?.guestBalloonShown(source!!)
       return
     }
     notifications.notifyByBalloon(target)
