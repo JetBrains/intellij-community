@@ -350,13 +350,22 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
         val path = getProjectPath(project)?.invariantSeparatorsPathString ?: continue
         val info = state.additionalInfo.get(path) ?: continue
         info.opened = true
-        info.displayName = getProjectDisplayName(project)
+        info.recordName(path, project)
       }
       modCounter.increment()
     }
   }
 
   protected open fun getProjectDisplayName(project: Project): String? = null
+
+  /**
+   * Records the display name of the open [project] at [path], and its name in [nameCache]. A row without a display name
+   * shows the cached name, so a cache from an earlier open must not outlive a rename.
+   */
+  private fun RecentProjectMetaInfo.recordName(path: String, project: Project) {
+    displayName = getProjectDisplayName(project)
+    nameCache.put(path, project.name)
+  }
 
   fun getProjectIcon(path: Path, isProjectValid: Boolean): Icon {
     return projectIconHelper.getProjectIcon(path, isProjectValid)
@@ -404,7 +413,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       modCounter.increment()
 
       val appInfo = ApplicationInfoEx.getInstanceEx()
-      info.displayName = getProjectDisplayName(project)
+      info.recordName(path, project)
       info.projectWorkspaceId = project.stateStore.projectWorkspaceId
       ProjectFrameBounds.getInstance(project).frameInfoHelper.info?.let {
         info.frame = it
@@ -527,7 +536,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       val info = state.additionalInfo.computeIfAbsent(pathString) { RecentProjectMetaInfo() }
       info.activationTimestamp = timestamp
       info.opened = true
-      info.displayName = getProjectDisplayName(project)
+      info.recordName(pathString, project)
       state.lastOpenedProject = pathString
     }
     modCounter.increment()
@@ -558,7 +567,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       findAndRemoveNewlyClonedProject(projectPath)
       val info = markPathRecent(path = projectPathString, project = project)
       info.opened = true
-      info.displayName = getProjectDisplayName(project)
+      info.recordName(projectPathString, project)
       info.projectOpenTimestamp = openTimestamp
 
       state.lastOpenedProject = projectPathString
@@ -966,7 +975,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
             IDE_FRAME_EVENT_LOG.debug("Saved updated frame info ${info.frame} for project '${project.name}'")
           }
         }
-        info.displayName = getProjectDisplayName(project)
+        if (path == null) info.displayName = getProjectDisplayName(project) else info.recordName(path, project)
         info.customProjectName = project.name.takeIf { path == null || it != getProjectNameOnlyByPath(path) }
         info.projectWorkspaceId = workspaceId
         info.projectFrameTypeId = frameHelper.projectFrameTypeId
