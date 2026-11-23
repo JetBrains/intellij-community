@@ -82,13 +82,13 @@ object ExceptionAutoReportUtil {
   suspend fun isAutoReportAllowedByUser(): Boolean {
     if (isAutoReportForced) return true // set by provisioning
 
-    val (consents, needsReconfirm) = withContext(Dispatchers.IO) {
+    val (consents, _) = withContext(Dispatchers.IO) { // needs reconfirm is ignored, we notify users separately
       ConsentOptions.getInstance().getConsents(ConsentOptions.condEAAutoReportConsent())
     }
     thisLogger().assertTrue(consents.size <= 1) {
       "Consent is expected to be bundled; multiple consents: ${consents.joinToString(",")}"
     }
-    return consents.firstOrNull()?.isAccepted == true && !needsReconfirm
+    return consents.firstOrNull()?.isAccepted == true
   }
 
   /**
