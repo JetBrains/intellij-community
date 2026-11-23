@@ -13,10 +13,10 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class EmptyWorkspaceFileIndexData private constructor(private val debugName: String): WorkspaceFileIndexData {
+open class EmptyWorkspaceFileIndexData(private val version: Int, private val debugName: String = "reset ($version)"): WorkspaceFileIndexData {
   companion object {
-    val NOT_INITIALIZED: EmptyWorkspaceFileIndexData = EmptyWorkspaceFileIndexData("not initialized")
-    val RESET: EmptyWorkspaceFileIndexData = EmptyWorkspaceFileIndexData("reset")
+    const val NOT_INITIALIZED_VERSION: Int = 0
+    val NOT_INITIALIZED: EmptyWorkspaceFileIndexData = EmptyWorkspaceFileIndexData(NOT_INITIALIZED_VERSION, "not initialized")
   }
   
   override fun getFileInfo(

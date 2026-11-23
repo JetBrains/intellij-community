@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.impl.DirectoryIndexImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.vfs.VfsUtil.findFileByUrlIfCached
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -44,10 +43,12 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import com.intellij.workspaceModel.core.fileIndex.impl.EmptyWorkspaceFileIndexData.Companion.NOT_INITIALIZED_VERSION
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeUnit.MINUTES
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
@@ -75,6 +76,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
   }
 
   private val project: Project
+  private val changeCounter = AtomicInteger(NOT_INITIALIZED_VERSION)
   private val indexDataReference: AtomicReference<WorkspaceFileIndexData> =
     AtomicReference<WorkspaceFileIndexData>(EmptyWorkspaceFileIndexData.NOT_INITIALIZED)
   private val throttledLogger: ThrottledLogger = ThrottledLogger(thisLogger(), MINUTES.toMillis(1))
@@ -92,7 +94,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       }
     })
     LowMemoryWatcher.register({ indexData.onLowMemory() }, project)
-    EP_NAME.addChangeListener(coroutineScope) { indexData = EmptyWorkspaceFileIndexData.RESET }
+    EP_NAME.addChangeListener(coroutineScope) { indexDataReference.set(EmptyWorkspaceFileIndexData(changeCounter.incrementAndGet())) }
   }
 
   @NonInjectable
@@ -101,21 +103,8 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     indexDataReference.set(indexData)
   }
 
-  override var indexData: WorkspaceFileIndexData
+  override val indexData: WorkspaceFileIndexData
     get() = indexDataReference.get()
-    set(newValue) {
-      fun WorkspaceFileIndexData.dispose() {
-        if (this is Disposable) Disposer.dispose(this)
-      }
-
-      val current = indexDataReference.get()
-      if (indexDataReference.compareAndSet(current, newValue)) {
-        current.dispose()
-      }
-      else {
-        newValue.dispose()
-      }
-    }
 
   override fun isInWorkspace(file: VirtualFile): Boolean = findFileSet(
     file, honorExclusion = true, includeContentSets = true, includeContentNonIndexableSets = true, includeExternalSets = true,
@@ -413,25 +402,18 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
 
   override suspend fun initialize() {
     if (indexData is EmptyWorkspaceFileIndexData) {
-      val contributors = EP_NAME.extensionList
-      indexData = initWorkspaceFileIndexData(
-        contributorList = contributors,
-        project = project,
-      )
+      getMainIndexData(assertInitialized = false)
     }
   }
 
   override fun initializeBlocking() {
     if (indexData is EmptyWorkspaceFileIndexData) {
-      indexData = doInitializeBlocking()
+      getMainIndexData(assertInitialized = false)
     }
   }
 
   override val isInitialized: Boolean
     get() = indexData !== EmptyWorkspaceFileIndexData.NOT_INITIALIZED
-
-  private fun doInitializeBlocking(): WorkspaceFileIndexDataImpl =
-    blockingInitWorkspaceFileIndexData(project, contributorList = EP_NAME.extensionList)
 
   override fun <D : WorkspaceFileSetData> findFileSetWithCustomData(
     file: VirtualFile,
@@ -559,10 +541,11 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
 
   override fun getFilesByPackageName(packageName: String): Query<VirtualFile> = getMainIndexData().getFilesByPackageName(packageName)
 
-  private fun getMainIndexData(): WorkspaceFileIndexData {
-    val indexData = indexData
-    when (indexData) {
-      EmptyWorkspaceFileIndexData.NOT_INITIALIZED -> {
+  private fun getMainIndexData(assertInitialized: Boolean = true): WorkspaceFileIndexData {
+    while (true) {
+      val currentData = indexData
+      if (currentData !is EmptyWorkspaceFileIndexData) return currentData
+      if (assertInitialized && currentData == EmptyWorkspaceFileIndexData.NOT_INITIALIZED) {
         if (project.isDefault) {
           throttledLogger.warn("WorkspaceFileIndex must not be queried for the default project", Throwable())
         }
@@ -575,14 +558,14 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
           )
         }
       }
-      EmptyWorkspaceFileIndexData.RESET -> {
-        return doInitializeBlocking().also { this.indexData = it }
+      val newData = blockingInitWorkspaceFileIndexData(project, contributorList = EP_NAME.extensionList)
+      if (indexDataReference.compareAndSet(currentData, newData)) {
+        return newData
       }
     }
-    return indexData
   }
 
   override fun reset() {
-    indexData = EmptyWorkspaceFileIndexData.RESET
+    indexDataReference.set(EmptyWorkspaceFileIndexData(changeCounter.incrementAndGet()))
   }
 }
