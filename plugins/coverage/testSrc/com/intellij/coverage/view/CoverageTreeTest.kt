@@ -8,7 +8,9 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.tree.StructureTreeModel
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.concurrency.Invoker
+import com.intellij.util.ui.tree.TreeModelAdapter
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -19,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import javax.swing.JTree
+import javax.swing.tree.TreePath
 
 @RunWith(JUnit4::class)
 class CoverageTreeTest : CoverageIntegrationBaseTest() {
@@ -59,6 +62,32 @@ class CoverageTreeTest : CoverageIntegrationBaseTest() {
            UncoveredClass
            BarClass
       """.trimIndent())
+
+  @Test
+  fun `test listener receives the loaded coverage root`() = runBlocking {
+    val suite = loadFullSuite()
+    openSuiteAndWait(suite)
+    try {
+      withContext(Dispatchers.EDT) {
+        val model = CoverageTableModel(suite, project, CoverageViewTreeStructure(project, suite))
+        try {
+          val root = requireNotNull(model.accept { TreeVisitor.Action.INTERRUPT }.await())
+          val updates = mutableListOf<TreePath>()
+          model.addTreeModelListenerWithCurrentRoot(TreeModelAdapter.create { event, type ->
+            assertEquals(TreeModelAdapter.EventType.StructureChanged, type)
+            updates.add(event.treePath)
+          })
+          assertEquals(listOf(root), updates)
+        }
+        finally {
+          Disposer.dispose(model)
+        }
+      }
+    }
+    finally {
+      closeSuite(suite)
+    }
+  }
 
   private fun loadFullSuite() = loadIJSuite(emptyArray(), SIMPLE_FULL_IJ_REPORT_PATH)
 
