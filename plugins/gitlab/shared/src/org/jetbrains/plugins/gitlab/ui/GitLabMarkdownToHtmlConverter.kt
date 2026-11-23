@@ -15,6 +15,7 @@ import org.intellij.markdown.MarkdownElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
+import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.findChildOfType
 import org.intellij.markdown.ast.getParentOfType
 import org.intellij.markdown.ast.getTextInNode
@@ -126,15 +127,15 @@ class GitLabMarkdownToHtmlConverter(
                                                                          absolutizeAnchorLinks,
                                                                          linkProcessor).makeXssSafe(useSafeLinks)
       val inlineLinkProvider = GitLabLinkGeneratingProvider(linkProcessor).makeXssSafe(useSafeLinks)
+      val imageProvider = GitLabImageWithSettingsGeneratingProvider(linkMap,
+                                                                    baseURI,
+                                                                    projectApiUri,
+                                                                    absolutizeAnchorLinks,
+                                                                    inlineLinkProvider,
+                                                                    referenceLinkProvider)
       return map + hashMapOf(
-        MarkdownElementTypes.IMAGE to
-          GitLabImageWithSettingsGeneratingProvider(linkMap,
-                                                    baseURI,
-                                                    projectApiUri,
-                                                    absolutizeAnchorLinks,
-                                                    inlineLinkProvider,
-                                                    referenceLinkProvider)
-            .makeXssSafe(useSafeLinks),
+        MarkdownElementTypes.PARAGRAPH to GitLabParagraphGeneratingProvider(map.getValue(MarkdownElementTypes.PARAGRAPH), imageProvider),
+        MarkdownElementTypes.IMAGE to imageProvider.makeXssSafe(useSafeLinks),
         GFMElementTypes.STRIKETHROUGH to SimpleInlineTagProvider("strike", 2, -2),
         MarkdownElementTypes.CODE_FENCE to CodeFenceSyntaxHighlighterGeneratingProvider(htmlSyntaxHighlighter),
         MarkdownElementTypes.INLINE_LINK to inlineLinkProvider,
@@ -333,24 +334,56 @@ class GitLabMarkdownToHtmlConverter(
       return null
     }
 
+    /**
+     * Returns the text that follows the settings block of the image [node] with no space, such as `other` in `{width=10}other`.
+     */
+    fun textAfterSettings(text: String, node: ASTNode): CharSequence {
+      val settings = node.findChildOfType(MARKDOWN_IMAGE_SETTINGS)?.getTextInNode(text) ?: return ""
+      val closingIndex = settings.indexOf('}')
+      return if (closingIndex > 0) settings.subSequence(closingIndex + 1, settings.length) else ""
+    }
+
     override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
       val linkInfo = getLinkRenderInfo(text, node)
       if (linkInfo == null) {
         super.renderLink(visitor, text, node, info)
         return
       }
-      visitor.consumeTagOpen(node, "p", """class="custom_image"""")
       visitor.consumeTagOpen(node, "a", "href=\"${makeAbsoluteUrl(linkInfo.destination)}\"")
       super.renderLink(visitor, text, node, info)
       visitor.consumeTagClose("a")
-      visitor.consumeTagClose("p")
-      node.findChildOfType(MARKDOWN_IMAGE_SETTINGS)?.let { linkNode ->
-        val textInNode = linkNode.getTextInNode(text)
-        val closingIndex = textInNode.indexOf('}')
-        if (closingIndex > 0 && closingIndex < textInNode.length - 1) {
-          visitor.consumeHtml(textInNode.substring(closingIndex + 1))
-        }
+      visitor.consumeHtml(textAfterSettings(text, node))
+    }
+  }
+
+  /**
+   * Renders a paragraph that holds only images as a block of its own for each image. Every other paragraph goes to [fallback],
+   * so an image in a sentence stays in the line. HTML does not allow a block in a paragraph, so the blocks replace the whole paragraph.
+   */
+  private class GitLabParagraphGeneratingProvider(
+    private val fallback: GeneratingProvider,
+    private val imageProvider: GitLabImageWithSettingsGeneratingProvider,
+  ) : GeneratingProvider {
+    override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
+      val parts = node.children.filterNot { it.type in SPACE_TYPES }
+      if (parts.isEmpty() || !parts.all { isStandaloneImage(text, it) }) {
+        fallback.processNode(visitor, text, node)
+        return
       }
+      for (image in parts) {
+        visitor.consumeTagOpen(image, "p", """class="custom_image"""")
+        image.accept(visitor)
+        visitor.consumeTagClose("p")
+      }
+    }
+
+    private fun isStandaloneImage(text: String, node: ASTNode): Boolean =
+      node.type == MarkdownElementTypes.IMAGE &&
+      imageProvider.getRenderInfo(text, node) != null &&
+      imageProvider.textAfterSettings(text, node).isEmpty()
+
+    private companion object {
+      val SPACE_TYPES = setOf(MarkdownTokenTypes.WHITE_SPACE, MarkdownTokenTypes.EOL, MarkdownTokenTypes.HARD_LINE_BREAK)
     }
   }
 
