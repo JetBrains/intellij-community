@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.parcelize-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:parcelize-compiler-plugin-for-ide:2.5.20-dev-4873">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:parcelize-compiler-plugin-for-ide:2.5.20-dev-5671">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.5.20-dev-4873/parcelize-compiler-plugin-for-ide-2.5.20-dev-4873.jar">
-              <sha256sum>e82e4aca2ac9f0f1cf02374a4b281edb2374499da883f0c57a86b5d214880487</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.5.20-dev-5671/parcelize-compiler-plugin-for-ide-2.5.20-dev-5671.jar">
+              <sha256sum>56b74d771e58f6685ee743ce4ee69a547932f5050bb4400f3204cc7a80006ccc</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.5.20-dev-4873/parcelize-compiler-plugin-for-ide-2.5.20-dev-4873.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.5.20-dev-5671/parcelize-compiler-plugin-for-ide-2.5.20-dev-5671.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.5.20-dev-4873/parcelize-compiler-plugin-for-ide-2.5.20-dev-4873-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.5.20-dev-5671/parcelize-compiler-plugin-for-ide-2.5.20-dev-5671-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

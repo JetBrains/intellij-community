@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-scripting-dependencies" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.5.20-dev-4873">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.5.20-dev-5671">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.20-dev-4873/kotlin-scripting-dependencies-2.5.20-dev-4873.jar">
-              <sha256sum>01b7084442dd082c9679e4dadb7caaf7c075935a6b234c8e196c04121f77a4d4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.20-dev-5671/kotlin-scripting-dependencies-2.5.20-dev-5671.jar">
+              <sha256sum>8c3cce9ba1330d3b8cf32cd7ca46601d3a56bcaa267b23bf9240b6a03fcebe90</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.20-dev-4873/kotlin-scripting-dependencies-2.5.20-dev-4873.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.20-dev-5671/kotlin-scripting-dependencies-2.5.20-dev-5671.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.20-dev-4873/kotlin-scripting-dependencies-2.5.20-dev-4873-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.20-dev-5671/kotlin-scripting-dependencies-2.5.20-dev-5671-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.lombok-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:lombok-compiler-plugin-for-ide:2.5.20-dev-4873">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:lombok-compiler-plugin-for-ide:2.5.20-dev-5671">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.5.20-dev-4873/lombok-compiler-plugin-for-ide-2.5.20-dev-4873.jar">
-              <sha256sum>3bdf58f731ff2f83085e15efbb486b42c1603f1bccc36bcc9bd738442f598924</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.5.20-dev-5671/lombok-compiler-plugin-for-ide-2.5.20-dev-5671.jar">
+              <sha256sum>c0a6b309efcbf1cab6d9bb403739bb75dce011fa042450aca6c7fd32d50f80f0</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.5.20-dev-4873/lombok-compiler-plugin-for-ide-2.5.20-dev-4873.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.5.20-dev-5671/lombok-compiler-plugin-for-ide-2.5.20-dev-5671.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.5.20-dev-4873/lombok-compiler-plugin-for-ide-2.5.20-dev-4873-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.5.20-dev-5671/lombok-compiler-plugin-for-ide-2.5.20-dev-5671-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

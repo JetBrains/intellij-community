@@ -7,19 +7,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-main-kts" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-main-kts:2.5.20-dev-4873">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-main-kts:2.5.20-dev-5671">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-4873/kotlin-main-kts-2.5.20-dev-4873.jar">
-              <sha256sum>d78ddc5b27a3cf6f9f60258b4ab39f1bbfa17e029ce939c21b7374839b594cab</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-5671/kotlin-main-kts-2.5.20-dev-5671.jar">
+              <sha256sum>bf6ef62b8a7b642f821ed221a56b25643ae845110e1ab2034a67ac799819e631</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-4873/kotlin-main-kts-2.5.20-dev-4873.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-5671/kotlin-main-kts-2.5.20-dev-5671.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-4873/kotlin-main-kts-2.5.20-dev-4873-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-5671/kotlin-main-kts-2.5.20-dev-5671-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

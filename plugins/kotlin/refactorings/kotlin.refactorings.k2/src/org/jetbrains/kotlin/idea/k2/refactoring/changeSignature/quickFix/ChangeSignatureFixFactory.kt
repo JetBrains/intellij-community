@@ -433,7 +433,7 @@ object ChangeSignatureFixFactory {
                 valueParameter(originalParameter.name, originalParameter.type)
             }
             returnType = functionType.returnType
-        }
+        } as? KaFunctionType
     }
 
     context(_: KaSession)
