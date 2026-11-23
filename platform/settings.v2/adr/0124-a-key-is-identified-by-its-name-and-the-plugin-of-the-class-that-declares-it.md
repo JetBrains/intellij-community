@@ -32,7 +32,8 @@ id. A second key with the same owner and name is a runtime error at its construc
 - `SettingsKey` is a platform class that plugins instantiate and do not extend. It is `@NonExtendable`, and its
   only subclass is `SettingsMapKey`.
 - On disk, a key appears as `prefix.name`. A key that a platform class declares has no owner and keeps its bare
-  name.
+  name. A platform class is a class of the platform (core) plugin, in an embedded module or in a content module.
+  A content module of the core plugin has a plugin class loader, but that loader still gives no owner.
 - The declaring class is the first stack frame that does not build the key. Only these frames build a key:
   - a constructor of `SettingsKey` or of a subclass;
   - a function of the file that holds the key factory functions.

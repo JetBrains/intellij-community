@@ -132,13 +132,17 @@ open class SettingsKey<T>(
   private var testPluginId: PluginId? = null
 
   /**
-   * The owning plugin, or `null` for a platform key.
+   * The owning plugin, or `null` for a platform key. A platform key is a key that a class of the platform (core)
+   * plugin declares, in an embedded module or in a content module.
    *
    * Taken from [declaringClassLoader], which knows its plugin. So a key belongs to whoever wrote it, and no plugin
    * can declare a key of another plugin. See [withTestPluginId] for what a test does.
    */
   val pluginId: PluginId?
-    get() = testPluginId ?: (declaringClassLoader as? PluginAwareClassLoader)?.pluginId
+    get() {
+      val owner = testPluginId ?: (declaringClassLoader as? PluginAwareClassLoader)?.pluginId
+      return owner.takeIf { it != CORE_PLUGIN_ID }
+    }
 
   private val storagePrefixResolution = lazy {
     val resolved = SettingsKeyPrefixBean.declaredPrefix(pluginId) ?: pluginId?.idString
@@ -151,7 +155,7 @@ open class SettingsKey<T>(
 
   /**
    * The prefix this key's [identity] carries: the one its plugin declared (see [SettingsKeyPrefixBean]), else
-   * the plugin id. `null` for a platform-core key that declares neither.
+   * the plugin id. `null` for a platform key, which a class of the platform (core) plugin declares.
    *
    * Resolved on first use, not at construction: a declaration comes from an extension point, and a key is often
    * declared in a static initializer, which can run before the application.
@@ -160,9 +164,9 @@ open class SettingsKey<T>(
   val storagePrefix: String? by storagePrefixResolution
 
   /**
-   * The storage identity of the key: `prefix.name`, or only [name] when the key has no prefix. Layer data is keyed
-   * by this string, not by the [SettingsKey] object, so a value survives while the owning key is not loaded. See
-   * [storagePrefix] for where the prefix comes from.
+   * The storage identity of the key: `prefix.name`, or only [name] when the key has no prefix. A platform key of the
+   * platform (core) plugin has no prefix. Layer data is keyed by this string, not by the [SettingsKey] object, so a
+   * value survives while the owning key is not loaded. See [storagePrefix] for where the prefix comes from.
    */
   open val identity: String by lazy { rawIdentity(storagePrefix, name) }
 
@@ -449,6 +453,12 @@ private fun isKeyConstruction(frame: StackWalker.StackFrame): Boolean =
   frame.methodName == CONSTRUCTOR_METHOD_NAME && SettingsKey::class.java.isAssignableFrom(frame.declaringClass)
 
 private const val CONSTRUCTOR_METHOD_NAME = "<init>"
+
+/**
+ * The id of the platform (core) plugin. A key of this plugin is a platform key with no owner. It is the same id as
+ * `PluginManagerCore.CORE_ID` of `intellij.platform.core.impl`, a module that the API module does not depend on.
+ */
+private val CORE_PLUGIN_ID: PluginId = PluginId.getId("com.intellij")
 
 /** The JVM class of this file. It holds the key factory functions and [declaringClass]. */
 private val KEY_FACTORY_FILE_CLASS: Class<*> = MethodHandles.lookup().lookupClass()

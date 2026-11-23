@@ -40,6 +40,10 @@ key identity is the name that the key has in storage. See [Setting Values](setti
 - The owner of a key must be the plugin of the class that declares it. A platform class gives no owner.
   See [ADR 0124](../adr/0124-a-key-is-identified-by-its-name-and-the-plugin-of-the-class-that-declares-it.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyOwnerTest.kt
+- A platform class is a class of the platform (core) plugin, in an embedded module or in a content module. Its key
+  must have no owner and the bare name as its identity. A prefix that the core plugin declares must not apply.
+  See [ADR 0124](../adr/0124-a-key-is-identified-by-its-name-and-the-plugin-of-the-class-that-declares-it.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyOwnerTest.kt
 - A key that a platform class declares must have no owner, also when a plugin class is the first to use the key.
   See [ADR 0124](../adr/0124-a-key-is-identified-by-its-name-and-the-plugin-of-the-class-that-declares-it.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyOwnerTest.kt

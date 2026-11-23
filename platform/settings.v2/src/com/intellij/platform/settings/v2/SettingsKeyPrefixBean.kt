@@ -24,6 +24,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *
  * A declared prefix lets two plugins hold one identity for one setting, which a feature split over a frontend
  * plugin and a backend plugin needs. See [SettingsKey.identity].
+ *
+ * A declaration of the platform (core) plugin has no effect. Its keys are platform keys, and they keep the bare name.
  */
 @Experimental
 class SettingsKeyPrefixBean : PluginAware {

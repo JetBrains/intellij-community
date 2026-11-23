@@ -2,6 +2,7 @@
 package com.intellij.platform.settings.v2
 
 import com.example.settingsowner.KeyDeclarer
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -62,6 +63,15 @@ class SettingsKeyOwnerTest {
 
     assertNull(key.pluginId)
     assertEquals("test.owner.platform", key.identity)
+  }
+
+  @Test
+  fun `a key a class of a content module of the core plugin declares belongs to no plugin`() {
+    val key = declareAsPlugin("test.owner.coreContentModule", PluginManagerCore.CORE_ID)
+
+    assertNull(key.pluginId)
+    assertNull(key.storagePrefix)
+    assertEquals("test.owner.coreContentModule", key.identity)
   }
 
   @Test
