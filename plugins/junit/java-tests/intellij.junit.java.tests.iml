@@ -58,5 +58,6 @@
     <orderEntry type="module" module-name="intellij.junit.v5.rt" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit.v6.rt" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.indexing" scope="TEST" />
   </component>
 </module>

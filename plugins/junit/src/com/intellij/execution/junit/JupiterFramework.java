@@ -47,6 +47,19 @@ public abstract class JupiterFramework extends JUnitTestFramework {
   }
 
   @Override
+  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
+    if (checkAbstract && element instanceof PsiMethod method) {
+      PsiClass containingClass = method.getContainingClass();
+      // The class check of the super method searches the inheritors of an abstract class. Here that search cannot change the result.
+      if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+          !callWithAlternateResolver(element.getProject(), () -> JUnitUtil.isJUnit5TestClass(containingClass, true), true)) {
+        return false;
+      }
+    }
+    return super.isTestMethod(element, checkAbstract);
+  }
+
+  @Override
   protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
     return findMethod(clazz, null, JUnitUtil.BEFORE_EACH_ANNOTATION_NAME);
   }
