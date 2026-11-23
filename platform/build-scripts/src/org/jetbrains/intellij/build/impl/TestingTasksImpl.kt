@@ -272,6 +272,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     ).forEach(::setPropertyFromPass)
 
     val modules = JpsJavaExtensionService.dependencies(mainModule).recursively().modules.toList()
+    val performanceTestFinder = if (options.isPerformanceTestsOnly) createPerformanceUnitTestFinder(modules) else null
     val hasTests = modules.mapConcurrent {
       if (rootExcludeCondition != null) {
         val contentRoot = it.contentRootsList.urls.firstOrNull()?.let(JpsPathUtil::urlToNioPath)
@@ -288,12 +289,29 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         }
 
         // same as `com.intellij.tests.JUnit5TeamCityRunner.CommonTestClassesFilter` and `com.intellij.tests.JUnit5TeamCityRunner.BucketingClassNameFilter`
-        if (classNames.any { TestCaseLoader.isClassNameIncluded(it) && TestCaseLoader.matchesCurrentBucket(it) }) return@mapConcurrent true
+        if (classNames.any { isTestOfCurrentRun(it, performanceTestFinder) }) return@mapConcurrent true
       }
 
       false
     }
     return modules.filterIndexed { index, _ -> hasTests[index] }.sortedBy { it.name }
+  }
+
+  /**
+   * The performance check runs before the bucket check.
+   * The bucket check logs a line for each class that the season does not know.
+   */
+  private fun isTestOfCurrentRun(className: String, performanceTestFinder: PerformanceUnitTestFinder?): Boolean {
+    return TestCaseLoader.isClassNameIncluded(className) &&
+           (performanceTestFinder == null || performanceTestFinder.hasPerformanceTest(className)) &&
+           TestCaseLoader.matchesCurrentBucket(className)
+  }
+
+  private fun createPerformanceUnitTestFinder(modules: List<JpsModule>): PerformanceUnitTestFinder {
+    val classpath = modules
+      .flatMap { context.getModuleRuntimeClasspath(module = it, forTests = true) }
+      .distinct()
+    return PerformanceUnitTestFinder(UrlClassLoader.build().files(classpath).get())
   }
 
   private fun runTestsFromGroupsAndPatterns(
