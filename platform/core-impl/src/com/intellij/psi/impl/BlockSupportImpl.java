@@ -5,7 +5,9 @@ package com.intellij.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -395,12 +397,37 @@ public final class BlockSupportImpl extends BlockSupport {
                                    @NotNull ProgressIndicator indicator,
                                    @NotNull CharSequence lastCommittedText) {
     ASTStructure oldTreeStructure = createInterruptibleASTStructure(oldRoot, indicator);
+    CharSequence oldRootText = getOldRootText(oldRoot, oldTreeStructure, lastCommittedText);
+    DiffTree.diff(oldTreeStructure, newTreeStructure, comparator, builder, oldRootText);
+  }
+
+  /**
+   * Returns the text of {@code oldRoot} in {@code lastCommittedText}, which is the text of the file or of the root.
+   * {@link DiffTree} trusts this text and does not compare the leaf texts in a range that it knows is equal.
+   * So this method checks the text against the old tree, and returns the text of the tree if they differ.
+   * The check compares the lengths. In the unit test mode, except in a stress test, it also compares the chars.
+   */
+  private static @NotNull CharSequence getOldRootText(@NotNull ASTNode oldRoot,
+                                                      @NotNull ASTStructure oldTreeStructure,
+                                                      @NotNull CharSequence lastCommittedText) {
     int oldRootStart = oldTreeStructure.getStartOffset(oldRoot);
     int oldRootEnd = oldTreeStructure.getEndOffset(oldRoot);
-    CharSequence oldRootText = oldRootEnd - oldRootStart == lastCommittedText.length()
-                               ? lastCommittedText
-                               : lastCommittedText.subSequence(oldRootStart, oldRootEnd);
-    DiffTree.diff(oldTreeStructure, newTreeStructure, comparator, builder, oldRootText);
+    int oldRootLength = oldRootEnd - oldRootStart;
+    CharSequence text = oldRootLength == lastCommittedText.length() ? lastCommittedText
+                        : oldRootEnd <= lastCommittedText.length() ? lastCommittedText.subSequence(oldRootStart, oldRootEnd)
+                        : null;
+    if (text != null && (!isFullTextCheckEnabled() || ((TreeElement)oldRoot).textMatches(text))) {
+      return text;
+    }
+    LOG.error("The last committed text does not match the old tree: old root " + oldRoot.getElementType() +
+              " from " + oldRootStart + " to " + oldRootEnd + ", last committed text length " + lastCommittedText.length() +
+              (text == null ? "" : ", the same length but other chars"));
+    return oldRoot.getText();
+  }
+
+  private static boolean isFullTextCheckEnabled() {
+    Application application = ApplicationManager.getApplication();
+    return application != null && application.isUnitTestMode() && !ApplicationManagerEx.isInStressTest();
   }
 
   private static @NotNull ASTStructure createInterruptibleASTStructure(@NotNull ASTNode oldRoot, @NotNull ProgressIndicator indicator) {

@@ -2,6 +2,7 @@
 package com.intellij.java.psi
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -9,9 +10,11 @@ import com.intellij.psi.impl.BlockSupportImpl
 import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.reparseFixture
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -44,6 +47,35 @@ class DiffTreeNodeReparseOldTextTest {
         "DiffTree read the old text outside the old root $oldRootRange '${oldRootRange.substring(oldText)}' at the file offsets " +
         "$outside: '${outside.map { oldText[it] }.joinToString("")}'"
       }
+    }
+  }
+
+  @Test
+  fun testStaleCommittedTextOfTheSameLengthDoesNotKeepAStaleLeaf() {
+    val astText = "class A {\n  void foo() {\n    int x = 1;\n    int b = 2;\n  }\n}\n"
+    val staleOffset = astText.indexOf("x =")
+    val lastCommittedText = astText.replaceRange(staleOffset, staleOffset + 1, "z")
+    val changeOffset = astText.indexOf("2;")
+    val newText = lastCommittedText.replaceRange(changeOffset, changeOffset + 1, "3")
+    lateinit var file: PsiFile
+    runInEdtAndWait {
+      file = reparseFixture.get().createDefaultDummyFile("A.java", astText)
+    }
+
+    lateinit var error: Throwable
+    runInEdtAndWait {
+      WriteCommandAction.runWriteCommandAction(reparseFixture.get().project) {
+        error = LoggedErrorProcessor.executeAndReturnLoggedError {
+          val result = BlockSupportImpl.reparse(file, file.node, TextRange(changeOffset, changeOffset + 1), newText,
+                                                EmptyProgressIndicator(), lastCommittedText)
+          result.log.doActualPsiChange(file)
+        }
+      }
+    }
+
+    assertTrue(error.message!!.startsWith("The last committed text does not match the old tree")) { "unexpected error: $error" }
+    ReadAction.runBlocking<RuntimeException> {
+      assertEquals(newText, file.text, "the reparsed tree must have the new text, not the stale text of the old tree")
     }
   }
 
