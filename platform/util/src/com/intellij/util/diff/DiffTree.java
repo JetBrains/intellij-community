@@ -80,7 +80,12 @@ public final class DiffTree<OldNode, NewNode> {
     TYPE_ONLY,
 
     /** 100% different */
-    NOT_EQUAL,
+    NOT_EQUAL;
+
+    /** The constants go from the best match to the worst. */
+    boolean isBetterThan(@NotNull CompareResult other) {
+      return ordinal() < other.ordinal();
+    }
   }
 
   private static @NotNull <OldNode, NewNode> DiffTreeChangeBuilder<OldNode, NewNode> emptyConsumer() {
@@ -228,8 +233,11 @@ public final class DiffTree<OldNode, NewNode> {
     OldNode oldChild3 = oldIndex < oldLimit - 2 ? oldChildren[oldIndex + 2] : null;
     NewNode newChild3 = newIndex < newLimit - 2 ? newChildren[newIndex + 2] : null;
 
-    if (looksEqual(oldChild1, newChild3) != CompareResult.NOT_EQUAL) return ThreeElementMatchResult.SKIP_NEW_2;
-    if (looksEqual(oldChild3, newChild1) != CompareResult.NOT_EQUAL) return ThreeElementMatchResult.SKIP_OLD_2;
+    // a skip of two children needs a better match than the match of the third children
+    CompareResult c13 = looksEqual(oldChild1, newChild3);
+    if (c13 != CompareResult.NOT_EQUAL && c13.isBetterThan(looksEqual(oldChild3, newChild3))) return ThreeElementMatchResult.SKIP_NEW_2;
+    CompareResult c31 = looksEqual(oldChild3, newChild1);
+    if (c31 != CompareResult.NOT_EQUAL && c31.isBetterThan(looksEqual(oldChild3, newChild3))) return ThreeElementMatchResult.SKIP_OLD_2;
 
     return ThreeElementMatchResult.NO_MATCH;
   }

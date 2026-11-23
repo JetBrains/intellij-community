@@ -35,6 +35,29 @@ class DiffTreeTextCompareTest {
 
     assertEquals(listOf("REPLACED: leaf2"), events)
   }
+
+  @Test
+  fun `a replaced child before a changed child of the same type keeps the changed child`() {
+    val old = parts("open" to listOf("{"), "decl" to listOf("int a", "=1;"), "ws" to listOf(" "), "decl" to listOf("int b", "=a;"), "close" to listOf("}"))
+    val new = parts("open" to listOf("{"), "expr" to listOf("x;"), "ws" to listOf(" "), "decl" to listOf("int b", "=;"), "close" to listOf("}"))
+
+    val events = diff(old, CountingText(old.text), new, CountingText(new.text))
+
+    assertEquals(listOf("REPLACED: leaf =;", "REPLACED: expr"), events)
+  }
+}
+
+/** Builds a root with one child of each type in [parts], and one leaf for each text of a child. The type of a leaf holds its text. */
+private fun parts(vararg parts: Pair<String, List<String>>): Node {
+  val text = parts.joinToString("") { it.second.joinToString("") }
+  val children = ArrayList<Node>()
+  var start = 0
+  for ((type, leafTexts) in parts) {
+    val childStart = start
+    val leaves = leafTexts.map { leafText -> Node("leaf $leafText", start, start + leafText.length, text).also { start += leafText.length } }
+    children.add(Node(type, childStart, start, text, leaves))
+  }
+  return Node("root", 0, text.length, text, children)
 }
 
 private const val DEPTH = 20
