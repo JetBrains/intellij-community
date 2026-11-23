@@ -132,7 +132,7 @@ open class ParagraphViewEx(elem: Element) : ParagraphView(elem) {
       // CSS top includes the space added above the text for line-height.
       for (index in 0 until viewCount) {
         val child = getView(index)
-        if (child.element.name == "img" && child.getImageCssAlignment(document as HTMLDocument) == "top") {
+        if (child.element.name == "img" && child.getImageCssAlignment(document as HTMLDocument).equals("top", ignoreCase = true)) {
           offsets[index] -= topInset
         }
       }

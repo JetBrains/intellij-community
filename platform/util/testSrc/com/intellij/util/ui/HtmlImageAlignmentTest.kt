@@ -16,30 +16,92 @@ import com.intellij.ui.svg.AdaptiveImageView
 import com.intellij.ui.svg.AdaptiveImagesManager
 import com.intellij.ui.svg.ImageDimension
 import com.intellij.ui.svg.ImageDimensions
+import com.intellij.util.ui.html.getImageVerticalAlignment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.spy
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import java.awt.Container
 import java.awt.Dimension
+import java.awt.Font
+import java.awt.FontMetrics
 import java.awt.Image
 import java.awt.Rectangle
 import java.awt.Shape
+import java.awt.font.FontRenderContext
+import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.net.URI
 import java.net.URL
 import java.util.Hashtable
+import javax.swing.text.Element
 import javax.swing.text.GlyphView
+import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.View
+import javax.swing.text.html.CSS
+import javax.swing.text.html.HTMLDocument
+import javax.swing.text.html.StyleSheet
 import kotlin.math.roundToInt
 
 @TestApplication
 internal class HtmlImageAlignmentTest {
+  @Test
+  fun `middle alignment shares glyph bounds and follows height font and rendering context changes`() {
+    val baseFont = Font(Font.DIALOG, Font.PLAIN, 17)
+    val font = spy(baseFont)
+    val metrics = mock<FontMetrics>()
+    val container = mock<Container>()
+    val document = mock<HTMLDocument>()
+    val styleSheet = mock<StyleSheet>()
+    val attributes = SimpleAttributeSet().apply { addAttribute(CSS.Attribute.VERTICAL_ALIGN, "middle") }
+    val resolvedAttributes = SimpleAttributeSet()
+    val element = mock<Element>()
+    whenever(element.attributes).thenReturn(attributes)
+    whenever(document.styleSheet).thenReturn(styleSheet)
+    whenever(styleSheet.getViewAttributes(any())).thenReturn(resolvedAttributes)
+    whenever(document.getFont(resolvedAttributes)).thenReturn(font)
+    whenever(container.getFontMetrics(any())).thenReturn(metrics)
+    whenever(metrics.fontRenderContext).thenReturn(FontRenderContext(null, false, false))
+
+    fun imageView(height: Float, viewAttributes: SimpleAttributeSet): View = mock<View>().also {
+      whenever(it.document).thenReturn(document)
+      whenever(it.element).thenReturn(element)
+      whenever(it.attributes).thenReturn(viewAttributes)
+      whenever(it.container).thenReturn(container)
+      whenever(it.getPreferredSpan(View.Y_AXIS)).thenReturn(height)
+    }
+
+    val first = imageView(40f, attributes)
+    val second = imageView(80f, resolvedAttributes)
+    val alignment = first.getImageVerticalAlignment()
+    assertThat(second.getImageVerticalAlignment() - 0.5f).isCloseTo((alignment - 0.5f) / 2, within(0.0001f))
+    whenever(first.getPreferredSpan(View.Y_AXIS)).thenReturn(80f)
+    assertThat(first.getImageVerticalAlignment()).isEqualTo(second.getImageVerticalAlignment())
+    verify(font, times(1)).createGlyphVector(any<FontRenderContext>(), eq("x"))
+
+    val context = FontRenderContext(AffineTransform.getScaleInstance(2.0, 2.0), true, true)
+    whenever(metrics.fontRenderContext).thenReturn(context)
+    val expected = 0.5f + baseFont.createGlyphVector(context, "x").visualBounds.height.toFloat() / 160
+    assertThat(first.getImageVerticalAlignment()).isCloseTo(expected, within(0.0001f))
+    verify(font, times(2)).createGlyphVector(any<FontRenderContext>(), eq("x"))
+
+    val largerFont = baseFont.deriveFont(32f)
+    whenever(document.getFont(resolvedAttributes)).thenReturn(largerFont)
+    val largerExpected = 0.5f + largerFont.createGlyphVector(context, "x").visualBounds.height.toFloat() / 160
+    assertThat(first.getImageVerticalAlignment()).isCloseTo(largerExpected, within(0.0001f)).isGreaterThan(expected)
+  }
+
   @ParameterizedTest
   @EnumSource(Renderer::class)
   fun `image bottom aligns with the text baseline by default`(renderer: Renderer): Unit = timeoutRunBlocking {
@@ -53,9 +115,11 @@ internal class HtmlImageAlignmentTest {
   @ParameterizedTest
   @EnumSource(Renderer::class)
   fun `legacy middle aligns the image centre with the text baseline`(renderer: Renderer): Unit = timeoutRunBlocking {
-    val layout = renderImage(renderer, "align='middle'")
+    for (alignment in listOf("middle", "MiDdLe")) {
+      val layout = renderImage(renderer, "align='$alignment'")
 
-    assertThat(layout.textBaselines).hasSize(2).containsOnly(layout.image.centerY.toInt())
+      assertThat(layout.textBaselines).hasSize(2).containsOnly(layout.image.centerY.toInt())
+    }
   }
 
   @ParameterizedTest
@@ -89,12 +153,12 @@ internal class HtmlImageAlignmentTest {
   @ParameterizedTest
   @EnumSource(Renderer::class)
   fun `CSS top and text-top position short and tall images`(renderer: Renderer): Unit = timeoutRunBlocking {
-    for (alignment in listOf("top", "text-top")) {
+    for (alignment in listOf("top", "text-top", "ToP", "TeXt-ToP")) {
       for (scale in listOf(1f, 1.5f, 2f)) {
         for (height in listOf(8, 24, 80)) {
           val layout = renderImage(renderer, "style='vertical-align: $alignment'", scale, imageSize = Dimension(40, height))
 
-          if (alignment == "top") assertThat(layout.image.y).isEqualTo(layout.row.y)
+          if (alignment.equals("top", ignoreCase = true)) assertThat(layout.image.y).isEqualTo(layout.row.y)
           else assertThat(layout.textTops).hasSize(2).containsOnly(layout.image.y)
         }
       }
@@ -201,9 +265,26 @@ internal class HtmlImageAlignmentTest {
   }
 
   @ParameterizedTest
+  @EnumSource(Renderer::class)
+  fun `CSS middle follows a font change after the first layout`(renderer: Renderer): Unit = timeoutRunBlocking {
+    val initial = renderImage(renderer, "class='badge'")
+    val updated = renderImage(renderer, "class='badge'", afterFirstLayout = { pane ->
+      val document = pane.document as HTMLDocument
+      val attributes = SimpleAttributeSet()
+      document.styleSheet.addCSSAttribute(attributes, CSS.Attribute.FONT_SIZE, "32pt")
+      document.setParagraphAttributes(0, document.length, attributes, false)
+    })
+
+    assertThat(updated.xHeight).isGreaterThan(initial.xHeight)
+    assertThat(updated.image.centerY).isCloseTo(updated.textBaselines.first() - updated.xHeight / 2, within(1.0))
+  }
+
+  @ParameterizedTest
   @EnumSource(Renderer::class, names = ["FIT_TO_WIDTH", "FIT_TO_WIDTH_ADAPTIVE"])
-  fun `CSS middle keeps automatic image resizing`(renderer: Renderer): Unit = timeoutRunBlocking {
-    val layout = renderImage(renderer, "class='badge'", imageSize = Dimension(800, 200), paneWidth = 160)
+  fun `CSS middle keeps automatic image resizing after the pane shrinks`(renderer: Renderer): Unit = timeoutRunBlocking {
+    val layout = renderImage(renderer, "class='badge'", imageSize = Dimension(800, 200), afterFirstLayout = { pane ->
+      pane.size = Dimension(160, 400)
+    })
 
     assertThat(layout.image.width).isBetween(1, 160)
     assertThat(layout.image.height).isBetween(1, 199)
@@ -215,6 +296,7 @@ internal class HtmlImageAlignmentTest {
     scale: Float = 1f,
     imageSize: Dimension = Dimension(40, 24),
     paneWidth: Int = 400,
+    afterFirstLayout: (JBHtmlPane) -> Unit = {},
     body: (String) -> String = { "<p>before $it after</p>" },
   ): Layout = withContext(Dispatchers.UI) {
     val originalScale = JBUIScale.sysScale()
@@ -237,9 +319,10 @@ internal class HtmlImageAlignmentTest {
         pane.size = Dimension(paneWidth, 400)
         val graphics = BufferedImage(pane.width, pane.height, BufferedImage.TYPE_INT_ARGB).createGraphics()
         try {
-          repeat(2) {
+          repeat(2) { pass ->
             pane.ui.getRootView(pane).setSize(pane.width.toFloat(), pane.height.toFloat())
             pane.paint(graphics)
+            if (pass == 0) afterFirstLayout(pane)
           }
         }
         finally {

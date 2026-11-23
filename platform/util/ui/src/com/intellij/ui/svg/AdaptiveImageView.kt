@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
+import javax.swing.text.AttributeSet
 import javax.swing.text.Document
 import javax.swing.text.Element
 import javax.swing.text.Position
@@ -45,6 +46,7 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
   private var myState: ViewState = ViewState.Idle()
   private var myCachedContainer: Container? = null
   private var myCachedDocument: Document? = null
+  private var myCachedAttributes: AttributeSet? = null
 
   private var myPreferredImageViewDimensions: FloatDimensions = FloatDimensions(DEFAULT_WIDTH.toFloat(), DEFAULT_HEIGHT.toFloat())
   private var myBorder: Int = 0
@@ -209,6 +211,7 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
   }
 
   override fun changedUpdate(e: DocumentEvent?, a: Shape?, f: ViewFactory?) {
+    myCachedAttributes = null
     super.changedUpdate(e, a, f)
     updateStateFromAttrs()
     preferenceChanged(null, true, true)
@@ -217,6 +220,9 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
   override fun getAlignment(axis: Int): Float {
     return if (axis == Y_AXIS) getImageVerticalAlignment() else super.getAlignment(axis)
   }
+
+  override fun getAttributes(): AttributeSet =
+    myCachedAttributes ?: (document as HTMLDocument).styleSheet.getViewAttributes(this).also { myCachedAttributes = it }
 
   private fun computeViewDimensions(defaultWidth: Float, defaultHeight: Float): FloatDimensions {
     val aspectRatio: Double = defaultWidth.toDouble() / defaultHeight
@@ -235,6 +241,7 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
   }
 
   override fun setParent(parent: View?) {
+    myCachedAttributes = null
     super.setParent(parent)
     myCachedContainer = container
     myCachedDocument = document
