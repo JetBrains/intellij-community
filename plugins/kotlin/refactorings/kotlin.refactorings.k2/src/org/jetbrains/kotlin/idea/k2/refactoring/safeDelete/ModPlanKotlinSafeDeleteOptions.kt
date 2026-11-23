@@ -20,7 +20,8 @@ object ModPlanKotlinSafeDeleteOptions {
 
     /**
      * The general answer of the question "the declaration overrides some, delete the base declarations instead?" for every deleted
-     * declaration: true deletes them, false keeps them. Only a request sets it; the dialog answers with [SUPER_DECLARATIONS_OF]. An explicit
+     * declaration: true deletes them, false keeps them. A request or the fallback form of a client such as LSP sets it; the dialog answers
+     * with [SUPER_DECLARATIONS_OF]. An explicit
      * value answers the question of every declaration. The keys of [SUPER_DECLARATIONS_OF] narrow a true; with no keys and no explicit
      * value, the declaration is deleted alone.
      */

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete
 
 import com.intellij.model.SymbolPointer
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.modplan.ModPlanOption
 import com.intellij.refactoring.modplan.ModPlanOptionValues
@@ -10,7 +11,9 @@ import com.intellij.refactoring.modplan.ModPlanQuestion
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
+import org.jetbrains.kotlin.idea.refactoring.rename.containingClassNameOf
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
@@ -19,11 +22,22 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
  * instead. It shows the dialog of the legacy flow, and the answer is the key of the declaration in
  * [ModPlanKotlinSafeDeleteOptions.SUPER_DECLARATIONS_OF], chosen for a yes and not chosen for a no. A declaration is asked about on its
  * own, so the answer of one declaration does not change the answer of another.
- * [ModPlanKotlinSafeDeleteOptions.DELETE_SUPER_DECLARATIONS] is the general answer of a request, and the dialog does not set it.
+ * [ModPlanKotlinSafeDeleteOptions.DELETE_SUPER_DECLARATIONS] is the general answer of a request or of the [fallback] form, and the
+ * dialog does not set it.
+ *
+ * @param overridden the declarations that [declaration] overrides; the fallback form names their classes
  */
-internal class KotlinSafeDeleteSuperDeclarationsQuestion(declaration: KtDeclaration) : ModPlanQuestion.Custom {
+internal class KotlinSafeDeleteSuperDeclarationsQuestion(
+    declaration: KtDeclaration,
+    overridden: List<PsiElement>,
+) : ModPlanQuestion.Custom {
     private val subject = SymbolPointer.of(declaration)
     private val key = declarationKey(declaration)
+    private val fallback = ModPlanQuestion.Form.yesNo(
+        ModPlanKotlinSafeDeleteOptions.DELETE_SUPER_DECLARATIONS,
+        KotlinBundle.message("delete.the.base.declarations.in.0", overridden.joinToString { containingClassNameOf(it) }),
+        KotlinBundle.message("delete.only.the.declaration.in.0", containingClassNameOf(declaration)),
+    )
 
     override fun options(): List<ModPlanOption<*>> = listOf(
         ModPlanKotlinSafeDeleteOptions.DELETE_SUPER_DECLARATIONS,
@@ -62,7 +76,11 @@ internal class KotlinSafeDeleteSuperDeclarationsQuestion(declaration: KtDeclarat
         val chosenKeys = if (chosenDeclarations != listOf(declaration)) { listOf(key) } else { emptyList() }
         return currentValues.withAnswers(ModPlanKotlinSafeDeleteOptions.SUPER_DECLARATIONS_OF, listOf(key), chosenKeys)
     }
+
+    /** The form of the general answer [ModPlanKotlinSafeDeleteOptions.DELETE_SUPER_DECLARATIONS]: it answers every declaration. */
+    override fun fallback(): ModPlanQuestion.Form = fallback
 }
+
 
 /** A name that tells [declaration] from the other declarations of one request: its fully qualified name and the text of its parameters. */
 internal fun declarationKey(declaration: KtDeclaration): String =

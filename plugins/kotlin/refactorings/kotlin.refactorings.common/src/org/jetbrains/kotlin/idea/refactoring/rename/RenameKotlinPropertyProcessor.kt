@@ -547,7 +547,7 @@ class ModPlanKotlinPropertyRenameProvider :
     if (callableDeclaration is KtProperty && callableDeclaration.isLocal) return emptyList()
     val deepestSuperDeclaration = processor.findDeepestOverriddenDeclaration(callableDeclaration)
     if (deepestSuperDeclaration == null || deepestSuperDeclaration == callableDeclaration) return emptyList()
-    return listOf(BasePropertyQuestion(subject))
+    return listOf(BasePropertyQuestion(subject, renameBaseDeclarationQuestion(callableDeclaration, listOf(deepestSuperDeclaration))))
   }
 
   /**
@@ -580,8 +580,15 @@ class ModPlanKotlinPropertyRenameProvider :
     processor.prepareRenaming(element, newName, renamed, scope, askUser = false, answers.get(ModPlanKotlinRenameOptions.RENAME_OTHER_ACCESSOR))
   }
 
-  /** The question "rename the base property instead?". Its answer is [ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION]. */
-  private inner class BasePropertyQuestion(private val subject: SymbolPointer) : ModPlanQuestion.Custom {
+  /**
+   * The question "rename the base property instead?". Its answer is [ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION].
+   *
+   * @property fallback the form for a client without the dialog of `chooseCallableToRename`
+   */
+  private inner class BasePropertyQuestion(
+    private val subject: SymbolPointer,
+    private val fallback: ModPlanQuestion.Form,
+  ) : ModPlanQuestion.Custom {
     override fun options(): List<ModPlanOption<*>> = listOf(ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION)
 
     /** Shows the dialog of `chooseCallableToRename`. A cancel cancels the rename. */
@@ -590,6 +597,8 @@ class ModPlanKotlinPropertyRenameProvider :
       val chosen = processor.chooseCallableToRename(callableDeclaration, askUser = true) ?: return null
       return currentValues.with(ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION, chosen != callableDeclaration)
     }
+
+    override fun fallback(): ModPlanQuestion.Form = fallback
   }
 
   /**
@@ -604,5 +613,11 @@ class ModPlanKotlinPropertyRenameProvider :
                                             RefactoringBundle.message("rename.title"), Messages.getQuestionIcon())
       return currentValues.with(ModPlanKotlinRenameOptions.RENAME_OTHER_ACCESSOR, answer == Messages.YES)
     }
+
+    override fun fallback(): ModPlanQuestion.Form = ModPlanQuestion.Form.yesNo(
+      ModPlanKotlinRenameOptions.RENAME_OTHER_ACCESSOR,
+      KotlinBundle.message("rename.0.as.well", accessorName),
+      KotlinBundle.message("keep.the.name.of.0", accessorName),
+    )
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.refactoring.modplan.ModPlanChain
 import com.intellij.refactoring.modplan.ModPlanChainBuilder
 import com.intellij.refactoring.modplan.ModPlanEdit
 import com.intellij.refactoring.modplan.ModPlanOptionValues
+import com.intellij.refactoring.modplan.ModPlanQuestion
 import com.intellij.refactoring.modplan.ModPlanRequest
 import com.intellij.refactoring.modplan.ModPlanUiInterpreter
 import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteOptions
@@ -455,15 +456,37 @@ private fun isPassThroughParameter(
 }
 
 /**
- * @return the text of the question whether to delete the expected declaration, or the parameter in it, together with the actual one;
- * null if [element] is not an actual declaration
+ * @return the question whether to delete the expected declaration, or the parameter in it, together with the actual one; null if
+ * [element] is not an actual declaration
  */
-private fun expectActualNote(element: PsiElement): @Nls String? = when {
+private fun expectActualQuestion(element: PsiElement): KotlinSafeDeleteConfirmationQuestion? = when {
     element !is KtDeclaration -> null
-    element.hasActualModifier() -> KotlinBundle.message("do.you.want.to.delete.expected.declaration.together.with.all.related.actual.ones")
-    element is KtParameter && element.ownerFunction?.hasActualModifier() == true ->
-        KotlinBundle.message("do.you.want.to.delete.this.parameter.in.expected.declaration.and.all.related.actual.ones")
+    element.hasActualModifier() -> expectActualConfirmation(
+        KotlinBundle.message("do.you.want.to.delete.expected.declaration.together.with.all.related.actual.ones"),
+        KotlinBundle.message("delete.the.expected.declaration.and.all.related.actual.ones"),
+        KotlinBundle.message("delete.only.this.actual.declaration"),
+    )
+    element is KtParameter && element.ownerFunction?.hasActualModifier() == true -> expectActualConfirmation(
+        KotlinBundle.message("do.you.want.to.delete.this.parameter.in.expected.declaration.and.all.related.actual.ones"),
+        KotlinBundle.message("delete.this.parameter.in.the.expected.declaration.and.all.related.actual.ones"),
+        KotlinBundle.message("delete.this.parameter.only.in.this.actual.declaration"),
+    )
     else -> null
+}
+
+/**
+ * @return the question of [ModPlanKotlinSafeDeleteOptions.DELETE_EXPECT_ACTUAL]: the IDE shows [message] in a yes-or-no dialog, a client
+ * such as LSP shows a dropdown of [yesText] and [noText]
+ */
+private fun expectActualConfirmation(
+    message: @Nls String,
+    yesText: @Nls String,
+    noText: @Nls String,
+): KotlinSafeDeleteConfirmationQuestion {
+    val option = ModPlanKotlinSafeDeleteOptions.DELETE_EXPECT_ACTUAL
+    return KotlinSafeDeleteConfirmationQuestion(option, ModPlanQuestion.Form.yesNo(option, yesText, noText)) { _ ->
+        Messages.showYesNoDialog(message, RefactoringBundle.message("safe.delete.title"), Messages.getQuestionIcon()) == Messages.YES
+    }
 }
 
 /**
@@ -524,7 +547,7 @@ private fun declarationsToSearch(
             chainBuilder.passValue(listOf(element))
         }
         else {
-            val superDeclarationsQuestion = KotlinSafeDeleteSuperDeclarationsQuestion(declaration)
+            val superDeclarationsQuestion = KotlinSafeDeleteSuperDeclarationsQuestion(declaration, overridden)
             val declarationSubject = SymbolPointer.of(declaration)
             val overriddenSubjects = overridden.map { SymbolPointer.of(it) }
             chainBuilder.ask(superDeclarationsQuestion) { answered ->
@@ -551,21 +574,12 @@ private fun withExpectedActuals(
     chainBuilder: ModPlanChainBuilder,
     elements: List<PsiElement>,
 ): ModPlanChain<List<PsiElement>> {
-    val expectActualMessage = elements.firstNotNullOfOrNull { expectActualNote(it) }
-    val expectActualQuestion = if (expectActualMessage == null) {
-        null
-    }
-    else {
-        KotlinSafeDeleteConfirmationQuestion(ModPlanKotlinSafeDeleteOptions.DELETE_EXPECT_ACTUAL) { _ ->
-            Messages.showYesNoDialog(expectActualMessage, RefactoringBundle.message("safe.delete.title"), Messages.getQuestionIcon()) ==
-                Messages.YES
-        }
-    }
+    val expectActualQuestion = elements.firstNotNullOfOrNull { expectActualQuestion(it) }
     val elementSubjects = elements.map { SymbolPointer.of(it) }
     return chainBuilder.ask(expectActualQuestion) { answered ->
         val deleteExpectActual = answered.request.optionValues().get(ModPlanKotlinSafeDeleteOptions.DELETE_EXPECT_ACTUAL)
         answered.passValue(ModPlanSafeDeleteUsageInfoUtil.elementsOf(elementSubjects).flatMap { declaration ->
-            if (declaration is KtDeclaration && (deleteExpectActual || expectActualNote(declaration) == null)) {
+            if (declaration is KtDeclaration && (deleteExpectActual || expectActualQuestion(declaration) == null)) {
                 ExpectActualUtils.withExpectedActuals(declaration)
             }
             else {

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.model.SymbolPointer
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -12,7 +13,9 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.refactoring.modplan.ModPlanOption
 import com.intellij.refactoring.modplan.ModPlanOptionValues
+import com.intellij.refactoring.modplan.ModPlanQuestion
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameDialog
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
@@ -20,6 +23,7 @@ import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -310,4 +314,32 @@ class ModPlanKotlinFunctionRenameProvider :
     /** As `substituteElementToRename` of the processor, with the answer to the base-declaration question instead of its dialog. */
     override fun substitute(element: PsiElement, answers: ModPlanOptionValues): PsiElement? =
         processor.substituteElementToRename(element, null, askUser = false, answers.get(ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION))
+
+    /** The base-declaration question with the dialog of the legacy rename; the form of the base provider is its fallback. */
+    override fun substitutionQuestions(subject: SymbolPointer, element: PsiElement): List<ModPlanQuestion> =
+        super.substitutionQuestions(subject, element).map { question ->
+            if (question is ModPlanQuestion.Form) { BaseFunctionQuestion(subject, question) } else { question }
+        }
+
+    /**
+     * The question "rename the base declarations instead?". Its answer is [ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION].
+     *
+     * @property fallback the form for a client without the dialog of `substituteElementToRename`
+     */
+    private inner class BaseFunctionQuestion(
+        private val subject: SymbolPointer,
+        private val fallback: ModPlanQuestion.Form,
+    ) : ModPlanQuestion.Custom {
+        override fun options(): List<ModPlanOption<*>> = listOf(ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION)
+
+        /** Shows the dialog of `substituteElementToRename`. A cancel of the dialog renames the function alone, as the legacy rename does. */
+        @RequiresEdt
+        override fun ask(project: Project, currentValues: ModPlanOptionValues): ModPlanOptionValues? {
+            val element = subject.element() ?: return currentValues
+            val substituted = processor.substituteElementToRename(element, null, askUser = true) ?: return null
+            return currentValues.with(ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION, substituted != element)
+        }
+
+        override fun fallback(): ModPlanQuestion.Form = fallback
+    }
 }

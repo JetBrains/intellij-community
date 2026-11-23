@@ -5,6 +5,7 @@ import com.intellij.model.SymbolPointer
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.refactoring.modplan.ModPlanAnalysisResult
@@ -39,11 +40,14 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtImportList
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -130,12 +134,10 @@ abstract class ModPlanKotlinRenameProvider<P : RenamePsiElementProcessor>(protec
      * legacy processors ask it in `substituteElementToRename` with a dialog, which the ModPlan path must not show.
      */
     override fun substitutionQuestions(subject: SymbolPointer, element: PsiElement): List<ModPlanQuestion> {
-        val isOverride = (element.unwrapped as? KtCallableDeclaration)?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true
-        return if (isOverride) {
-            listOf(ModPlanQuestion.Form.of(listOf(ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION), null))
-        } else {
-            emptyList()
-        }
+        val declaration = element.unwrapped as? KtCallableDeclaration
+        if (declaration?.hasModifier(KtTokens.OVERRIDE_KEYWORD) != true) return emptyList()
+        val baseDeclarations = KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
+        return listOf(renameBaseDeclarationQuestion(declaration, baseDeclarations))
     }
 
     /**
@@ -477,4 +479,27 @@ class ModPlanKotlinPlainRenameProvider : ModPlanKotlinRenameProvider<RenamePsiEl
     override fun processorAccepts(element: PsiElement): Boolean {
         return element.language == KotlinLanguage.INSTANCE && element.isPhysical && element is PsiNamedElement && element !is PsiFileSystemItem
     }
+}
+
+/**
+ * The question "the declaration overrides some, rename the base declarations instead?". Its answers name the classes of [baseDeclarations]
+ * and of [declaration], as the dialog of the legacy rename does. Its answer is [ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION].
+ */
+internal fun renameBaseDeclarationQuestion(declaration: KtCallableDeclaration, baseDeclarations: List<PsiElement>): ModPlanQuestion.Form {
+    return ModPlanQuestion.Form.yesNo(
+        ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION,
+        KotlinBundle.message("rename.the.base.declarations.in.0", baseDeclarations.joinToString { containingClassNameOf(it) }),
+        KotlinBundle.message("rename.only.the.declaration.in.0", containingClassNameOf(declaration)),
+    )
+}
+
+/** @return the qualified name of the class of the member [element], else its short name */
+@ApiStatus.Internal
+fun containingClassNameOf(element: PsiElement): String {
+    val name = when (val unwrapped = element.unwrapped) {
+        is KtDeclaration -> unwrapped.containingClassOrObject?.let { it.fqName?.asString() ?: it.name }
+        is PsiMember -> unwrapped.containingClass?.let { it.qualifiedName ?: it.name }
+        else -> null
+    }
+    return name.orEmpty()
 }

@@ -11,10 +11,12 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  * A yes-or-no question of the interactive safe delete that shows the message dialog of the legacy flow, such as whether to delete the
  * expected declaration together with the actual ones; the answer is [option].
  *
+ * @param fallback the form for a client without the dialog
  * @param confirm shows the dialog: true for yes, false for no
  */
 internal class KotlinSafeDeleteConfirmationQuestion(
     private val option: ModPlanOption<Boolean>,
+    private val fallback: ModPlanQuestion.Form,
     private val confirm: (Project) -> Boolean,
 ) : ModPlanQuestion.Custom {
     override fun options(): List<ModPlanOption<*>> = listOf(option)
@@ -23,4 +25,6 @@ internal class KotlinSafeDeleteConfirmationQuestion(
     override fun ask(project: Project, currentValues: ModPlanOptionValues): ModPlanOptionValues {
         return currentValues.with(option, confirm(project))
     }
+
+    override fun fallback(): ModPlanQuestion.Form = fallback
 }
