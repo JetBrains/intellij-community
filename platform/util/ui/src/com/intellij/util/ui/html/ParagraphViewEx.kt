@@ -4,6 +4,7 @@ package com.intellij.util.ui.html
 import com.intellij.util.asSafely
 import java.awt.Shape
 import java.awt.Toolkit
+import java.util.IdentityHashMap
 import javax.swing.SizeRequirements
 import javax.swing.text.AttributeSet
 import javax.swing.text.BoxView
@@ -82,6 +83,48 @@ open class ParagraphViewEx(elem: Element) : ParagraphView(elem) {
     ?: super.getToolTipText(x, y, allocation)
 
   inner class ParagraphRow internal constructor(elem: Element) : BoxView(elem, X_AXIS) {
+    private var inBaselinePass = false
+    private var imageAlignmentInputs: IdentityHashMap<View, ImageAlignmentInput>? = null
+    private var reusableImageAlignmentInputs: IdentityHashMap<View, ImageAlignmentInput>? = null
+    private var siblingBaselineOffset = Float.NaN
+
+    internal fun getImageAlignmentInput(view: View, document: HTMLDocument): ImageAlignmentInput? {
+      val inputs = imageAlignmentInputs ?: return null
+      return inputs.getOrPut(view) { ImageAlignmentInput(view.resolveImageAlignment(document)) }
+    }
+
+    internal fun getSiblingBaselineOffset(image: View, document: HTMLDocument, fontOffset: Float): Float {
+      if (!inBaselinePass) return calculateSiblingBaselineOffset(image, document)
+      if (imageAlignmentInputs == null) {
+        // Keep the inputs from the sibling scan for Swing's later alignment queries.
+        val inputs = if (viewCount <= MAX_REUSABLE_ALIGNMENT_VIEWS) {
+          reusableImageAlignmentInputs ?: IdentityHashMap<View, ImageAlignmentInput>(viewCount / 2).also {
+            reusableImageAlignmentInputs = it
+          }
+        }
+        else IdentityHashMap(viewCount / 2)
+        inputs[image] = ImageAlignmentInput(ImageAlignment.TOP, fontOffset)
+        imageAlignmentInputs = inputs
+        siblingBaselineOffset = calculateSiblingBaselineOffset(image, document)
+      }
+      return siblingBaselineOffset
+    }
+
+    // Share alignment inputs across Swing's queries in one measurement or layout pass.
+    // Nested calls use the same inputs. The outer pass clears them when it ends.
+    private inline fun <T> withImageAlignmentPass(action: () -> T): T {
+      if (inBaselinePass) return action()
+      inBaselinePass = true
+      try {
+        return action()
+      }
+      finally {
+        inBaselinePass = false
+        reusableImageAlignmentInputs?.clear()
+        imageAlignmentInputs = null
+        siblingBaselineOffset = Float.NaN
+      }
+    }
 
     override fun loadChildren(f: ViewFactory?) {
     }
@@ -125,21 +168,24 @@ open class ParagraphViewEx(elem: Element) : ParagraphView(elem) {
         .map { getView(it) }.maxOfOrNull { it.endOffset } ?: 0
 
     override fun layoutMinorAxis(targetSpan: Int, axis: Int, offsets: IntArray, spans: IntArray) {
-      baselineLayout(targetSpan, axis, offsets, spans)
-      val topInset = topInset.toInt()
-      if (topInset == 0) return
+      withImageAlignmentPass {
+        baselineLayout(targetSpan, axis, offsets, spans)
+        val topInset = topInset.toInt()
+        if (topInset == 0) return
 
-      // CSS top includes the space added above the text for line-height.
-      for (index in 0 until viewCount) {
-        val child = getView(index)
-        if (child.element.name == "img" && child.getImageCssAlignment(document as HTMLDocument).equals("top", ignoreCase = true)) {
-          offsets[index] -= topInset
+        // CSS top includes the space added above the text for line-height.
+        for (index in 0 until viewCount) {
+          val child = getView(index)
+          if (child.element.name != "img") continue
+          val document = document as HTMLDocument
+          val mode = imageAlignmentInputs?.get(child)?.mode ?: child.resolveImageAlignment(document)
+          if (mode == ImageAlignment.TOP) offsets[index] -= topInset
         }
       }
     }
 
     override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements =
-      baselineRequirements(axis, r)
+      withImageAlignmentPass { baselineRequirements(axis, r) }
 
     override fun getViewIndexAtPosition(pos: Int): Int {
       if (pos < startOffset || pos >= endOffset) return -1
@@ -183,3 +229,5 @@ open class ParagraphViewEx(elem: Element) : ParagraphView(elem) {
   }
 
 }
+
+private const val MAX_REUSABLE_ALIGNMENT_VIEWS = 16

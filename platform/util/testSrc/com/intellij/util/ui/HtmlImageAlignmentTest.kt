@@ -213,6 +213,45 @@ internal class HtmlImageAlignmentTest {
 
   @ParameterizedTest
   @EnumSource(Renderer::class)
+  fun `CSS top follows the current row after wrapping`(renderer: Renderer): Unit = timeoutRunBlocking {
+    val layout = renderImage(renderer, "style='vertical-align: top'", imageSize = Dimension(16, 8), afterFirstLayout = { pane ->
+      pane.setSize(93, pane.height)
+    }, body = {
+      "<p>before $it <span style='font-size: 32px'>after</span></p>"
+    })
+
+    assertThat(layout.image.y).isEqualTo(layout.row.y)
+    assertThat(layout.image.y).isCloseTo(layout.textTops.first(), within(1))
+    assertThat(layout.image.y + layout.image.height).isLessThan(layout.textTops.last())
+  }
+
+  @Test
+  fun `CSS top follows a sibling image that loads after the first layout`(): Unit = timeoutRunBlocking {
+    val layout = renderImage(
+      Renderer.ADAPTIVE, "style='vertical-align: top' width='16' height='8'", imageSize = Dimension(40, 80),
+      afterFirstLayout = { pane -> assertThat(pane.preferredSize.height).isLessThan(80) },
+      delayImageLoading = true,
+      body = { "<p>before $it <img src='https://example.invalid/image.png'> after</p>" },
+    )
+
+    assertThat(layout.otherImages.single().height).isEqualTo(80)
+    assertThat(layout.image.y).isEqualTo(layout.otherImages.single().y)
+    assertThat(layout.image.y).isLessThan(layout.textTops.first())
+  }
+
+  @ParameterizedTest
+  @EnumSource(Renderer::class)
+  fun `CSS alignment matches ID and ancestor selectors`(renderer: Renderer): Unit = timeoutRunBlocking {
+    val byId = renderImage(renderer, "id='middle-badge'")
+    val byAncestor = renderImage(renderer, body = { "<p class='badges'>before $it after</p>" })
+
+    listOf(byId, byAncestor).forEach { layout ->
+      assertThat(layout.image.centerY).isCloseTo(layout.textBaselines.first() - layout.xHeight / 2, within(1.0))
+    }
+  }
+
+  @ParameterizedTest
+  @EnumSource(Renderer::class)
   fun `CSS top and text-top account for line height spacing`(renderer: Renderer): Unit = timeoutRunBlocking {
     for (alignment in listOf("top", "text-top")) {
       val layout = renderImage(renderer, "style='vertical-align: $alignment'", imageSize = Dimension(40, 8), body = {
@@ -267,13 +306,16 @@ internal class HtmlImageAlignmentTest {
   @ParameterizedTest
   @EnumSource(Renderer::class)
   fun `CSS middle follows a font change after the first layout`(renderer: Renderer): Unit = timeoutRunBlocking {
-    val initial = renderImage(renderer, "class='badge'")
+    val body: (String) -> String = {
+      "<p>before $it <img src='https://example.invalid/image.png' width='16' height='8' style='vertical-align: top'> after</p>"
+    }
+    val initial = renderImage(renderer, "class='badge'", body = body)
     val updated = renderImage(renderer, "class='badge'", afterFirstLayout = { pane ->
       val document = pane.document as HTMLDocument
       val attributes = SimpleAttributeSet()
       document.styleSheet.addCSSAttribute(attributes, CSS.Attribute.FONT_SIZE, "32pt")
       document.setParagraphAttributes(0, document.length, attributes, false)
-    })
+    }, body = body)
 
     assertThat(updated.xHeight).isGreaterThan(initial.xHeight)
     assertThat(updated.image.centerY).isCloseTo(updated.textBaselines.first() - updated.xHeight / 2, within(1.0))
@@ -297,6 +339,7 @@ internal class HtmlImageAlignmentTest {
     imageSize: Dimension = Dimension(40, 24),
     paneWidth: Int = 400,
     afterFirstLayout: (JBHtmlPane) -> Unit = {},
+    delayImageLoading: Boolean = false,
     body: (String) -> String = { "<p>before $it after</p>" },
   ): Layout = withContext(Dispatchers.UI) {
     val originalScale = JBUIScale.sysScale()
@@ -307,14 +350,15 @@ internal class HtmlImageAlignmentTest {
       val image =
         BufferedImage((imageSize.width * scale).roundToInt(), (imageSize.height * scale).roundToInt(), BufferedImage.TYPE_INT_ARGB)
       val imageUrl = URI.create("https://example.invalid/image.png").toURL()
+      val pendingLoads = if (delayImageLoading) ArrayList<() -> Unit>() else null
       val configuration = JBHtmlPaneConfiguration {
         renderer.extension?.let { extensions(it) }
-        customStyleSheet("img.badge { vertical-align: middle; }")
+        customStyleSheet("img.badge, img#middle-badge, p.badges img { vertical-align: middle; }")
         imageResolverFactory { Hashtable<URL, Image>().apply { put(imageUrl, image) } }
       }
       val pane = JBHtmlPane(JBHtmlPaneStyleConfiguration.builder().build(), configuration)
       try {
-        pane.document.putProperty(AdaptiveImageView.ADAPTIVE_IMAGES_MANAGER_PROPERTY, imageManager(image, imageSize))
+        pane.document.putProperty(AdaptiveImageView.ADAPTIVE_IMAGES_MANAGER_PROPERTY, imageManager(image, imageSize, pendingLoads))
         pane.text = "<html><body>${body("<img src='$imageUrl' $attributes>")}</body></html>"
         pane.size = Dimension(paneWidth, 400)
         val graphics = BufferedImage(pane.width, pane.height, BufferedImage.TYPE_INT_ARGB).createGraphics()
@@ -322,7 +366,10 @@ internal class HtmlImageAlignmentTest {
           repeat(2) { pass ->
             pane.ui.getRootView(pane).setSize(pane.width.toFloat(), pane.height.toFloat())
             pane.paint(graphics)
-            if (pass == 0) afterFirstLayout(pane)
+            if (pass == 0) {
+              afterFirstLayout(pane)
+              pendingLoads?.forEach { it() }
+            }
           }
         }
         finally {
@@ -347,8 +394,9 @@ internal class HtmlImageAlignmentTest {
             val text = view.document.getText(view.startOffset, minOf(view.endOffset, view.document.length) - view.startOffset)
             if (text.contains("before") || text.contains("after")) {
               val metrics = pane.getFontMetrics(view.font)
-              baselines.add(allocation.bounds.y + metrics.ascent)
-              textTops.add(allocation.bounds.y)
+              val textTop = allocation.bounds.y
+              baselines.add(textTop + metrics.ascent)
+              textTops.add(textTop)
               xHeight = view.font.createGlyphVector(metrics.fontRenderContext, "x").visualBounds.height
             }
           }
@@ -369,7 +417,7 @@ internal class HtmlImageAlignmentTest {
     }
   }
 
-  private fun imageManager(image: BufferedImage, imageSize: Dimension): AdaptiveImagesManager {
+  private fun imageManager(image: BufferedImage, imageSize: Dimension, pendingLoads: MutableList<() -> Unit>?): AdaptiveImagesManager {
     val manager = mock<AdaptiveImagesManager>()
     whenever(manager.createRenderer(any<(AdaptiveImageRendererEvent) -> Unit>())).thenAnswer {
       val listener = it.getArgument<(AdaptiveImageRendererEvent) -> Unit>(0)
@@ -379,7 +427,12 @@ internal class HtmlImageAlignmentTest {
         val width = imageSize.width.toFloat()
         val height = imageSize.height.toFloat()
         val dimensions = ImageDimensions(width, ImageDimension.Unit.PX, height, ImageDimension.Unit.PX, width, height)
-        listener(AdaptiveImageRendererEvent.Loaded(dimensions, false))
+        if (pendingLoads == null) {
+          listener(AdaptiveImageRendererEvent.Loaded(dimensions, false))
+        }
+        else {
+          pendingLoads.add { listener(AdaptiveImageRendererEvent.Loaded(dimensions, false)) }
+        }
         null
       }.whenever(renderer).setOrigin(any())
       renderer
