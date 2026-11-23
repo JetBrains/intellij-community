@@ -22,56 +22,57 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.StressTestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 import com.intellij.xml.util.XmlDuplicatedIdInspection;
 import com.intellij.xml.util.XmlInvalidIdInspection;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-public class XmlStressTest extends DaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.DaemonAnalyzerFixture.daemonAnalyzerFixture;
+
+@StressTestApplication
+public class XmlStressTest {
   private static final Logger LOG = Logger.getInstance(XmlStressTest.class);
+  private static final String TEST_DATA_PATH = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
+
+  private final TestFixture<DaemonAnalyzerFixture> daemonFixture = daemonAnalyzerFixture(TEST_DATA_PATH, () -> new LocalInspectionTool[]{
+    new RequiredAttributesInspection(),
+    new XmlDuplicatedIdInspection(),
+    new XmlInvalidIdInspection(),
+    new CheckDtdReferencesInspection(),
+    new XmlUnboundNsPrefixInspection(),
+    new XmlPathReferenceInspection()
+  });
+
+  @Test
   public void testSchemaValidator() throws Exception {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
     for (int i = 0; i < 100; i++) {
-      doTest("xml/WsdlValidation.wsdl", false, false);
+      fixture.doTest("xml/WsdlValidation.wsdl", false, false);
       LOG.debug(String.valueOf(i));
     }
   }
 
   private static final String BASE_PATH = "/xml/";
 
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new RequiredAttributesInspection(),
-      new XmlDuplicatedIdInspection(),
-      new XmlInvalidIdInspection(),
-      new CheckDtdReferencesInspection(),
-      new XmlUnboundNsPrefixInspection(),
-      new XmlPathReferenceInspection()
-    };
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    enableInspectionTool(new CheckXmlFileWithXercesValidatorInspection());
+  @BeforeEach
+  void setUp() {
+    DaemonAnalyzerFixture fixture = daemonFixture.get();
+    fixture.enableInspectionTool(new CheckXmlFileWithXercesValidatorInspection());
 
     ExternalResourceManagerExBase.registerResourceTemporarily("http://schemas.xmlsoap.org/wsdl/",
-                                                              getTestDataPath() + BASE_PATH + "wsdl11.xsd",
-                                                              getTestRootDisposable());
+                                                              TEST_DATA_PATH + BASE_PATH + "wsdl11.xsd",
+                                                              fixture.getTestRootDisposable());
     ExternalResourceManagerExBase.registerResourceTemporarily("http://schemas.xmlsoap.org/wsdl/soap/",
-                                                              getTestDataPath() + BASE_PATH + "wsdl11_soapbinding.xsd",
-                                                              getTestRootDisposable());
+                                                              TEST_DATA_PATH + BASE_PATH + "wsdl11_soapbinding.xsd",
+                                                              fixture.getTestRootDisposable());
     ExternalResourceManagerExBase.registerResourceTemporarily("http://schemas.xmlsoap.org/soap/encoding/",
-                                                              getTestDataPath() + BASE_PATH + "soap-encoding.xsd",
-                                                              getTestRootDisposable());
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
+                                                              TEST_DATA_PATH + BASE_PATH + "soap-encoding.xsd",
+                                                              fixture.getTestRootDisposable());
   }
 }
