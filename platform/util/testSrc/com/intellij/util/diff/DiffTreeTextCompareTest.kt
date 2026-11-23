@@ -129,7 +129,27 @@ class DiffTreeTextCompareTest {
 
     assertEquals(listOf("REPLACED: leaf =;", "REPLACED: expr"), events)
   }
+
+  @Test
+  fun `a shifted node in the equal suffix stays equal when its children end in the equal prefix`() {
+    val oldString = "aaab"
+    val newString = "aaaab"
+    val oldP = Node("p", 1, 4, oldString, (1 until 4).map { wrapped(it, oldString) })
+    val newP = Node("p", 2, 5, newString, (2 until 5).map { wrapped(it, newString) })
+    val old = Node("root", 0, 4, oldString, listOf(wrapped(0, oldString), oldP))
+    val new = Node("root", 0, 5, newString, listOf(wrapped(0, newString), wrapped(1, newString), newP))
+    val comparator = LeafComparator()
+
+    val events = diff(Structure(old, CountingText(oldString)), Structure(new, CountingText(newString)), comparator)
+
+    assertEquals(listOf("INSERTED: wrap at 1"), events)
+    assertEquals(0, comparator.leafTextCompares) { "the equal suffix must keep the node p without a leaf text compare" }
+  }
 }
+
+/** Builds a composite node over the char at [offset] of [text], with one leaf in it. */
+private fun wrapped(offset: Int, text: String): Node =
+  Node("wrap", offset, offset + 1, text, listOf(Node("leaf ${text[offset]}", offset, offset + 1, text)))
 
 private const val FLAT_CHILDREN = 2_000
 
