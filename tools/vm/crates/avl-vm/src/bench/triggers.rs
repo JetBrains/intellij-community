@@ -21,15 +21,20 @@ use super::session::{self, SelectedRun};
 use super::trace::tenth;
 
 /// The class name prefixes of the frames that the search for a trigger skips. The runtime, the libraries of the
-/// language, the service container, the extension points and the message bus call a plugin class on behalf of another
-/// frame. A trigger in them would put most loaders in one row, such as `ComponentManagerImplKt.doLoadClass`.
-const SKIPPED_PREFIXES: [&str; 8] = [
+/// language, the class loaders, the service and instance containers and their accessors, the extension points and the message bus call a
+/// plugin class on behalf of another frame. A trigger in them would put most loaders in one row, such as
+/// `ComponentManagerImplKt.doLoadClass`, and the JVM stack of a supertype ends in `UrlClassLoader.consumeClassData`.
+const SKIPPED_PREFIXES: [&str; 12] = [
     "java.",
     "jdk.",
     "sun.",
     "kotlin.",
     "kotlinx.",
+    "com.intellij.util.lang.",
+    "com.intellij.ide.plugins.cl.",
     "com.intellij.serviceContainer.",
+    "com.intellij.platform.instanceContainer.",
+    "com.intellij.openapi.components.",
     "com.intellij.openapi.extensions.",
     "com.intellij.util.messages.",
 ];

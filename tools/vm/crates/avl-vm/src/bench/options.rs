@@ -192,8 +192,10 @@ pub(crate) enum BenchVerb {
     /// A loader is the main module or a content module of a plugin. The debug log of the plugin class loaders writes the
     /// stack of the first class of each loader. The trigger frame is the frame nearest to the top of that stack whose
     /// class has another owner than the loader. The search skips the frames of the runtime, the language libraries,
-    /// the service container, the extension points and the message bus: java., jdk., sun., kotlin., kotlinx.,
-    /// com.intellij.serviceContainer., com.intellij.openapi.extensions. and com.intellij.util.messages. A class without
+    /// the class loaders, the service and instance containers, the extension points and the message bus: java., jdk.,
+    /// sun., kotlin., kotlinx., com.intellij.util.lang., com.intellij.ide.plugins.cl., com.intellij.serviceContainer.,
+    /// com.intellij.platform.instanceContainer., com.intellij.openapi.components.,
+    /// com.intellij.openapi.extensions. and com.intellij.util.messages. A class without
     /// an owner in plugin-classes.txt is a platform class. A row holds a trigger frame, its loaders, their classes and
     /// EDT ms before the anchor, and the first load of its earliest loader. The loaders of each trigger follow the
     /// table. A loader without a stack is in the row `(no activation stack)`.
