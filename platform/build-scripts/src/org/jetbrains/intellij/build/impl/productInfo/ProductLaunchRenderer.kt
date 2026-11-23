@@ -101,8 +101,6 @@ fun renderAdditionalJvmArguments(
     result.add("--enable-native-access=ALL-UNNAMED")
   }
 
-  result.add("-XX:-UseBASE64Intrinsics")
-
   result.addAll(openedPackages)
 
   return result
