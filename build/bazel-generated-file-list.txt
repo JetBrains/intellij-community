@@ -1122,6 +1122,7 @@ platform/settings.v2 intellij.platform.settings.v2
 platform/settings.v2/backend intellij.platform.settings.v2.backend
 platform/settings.v2/backend/baseline intellij.platform.settings.v2.backend.baseline
 platform/settings.v2/shared intellij.platform.settings.v2.shared
+platform/settings.v2/shared/essential intellij.platform.settings.v2.shared.essential
 platform/settings.v2/test intellij.platform.settings.v2.test
 platform/settings.v2/testKeys intellij.platform.settings.v2.testKeys
 platform/settings.v2/testKeys/plugin intellij.platform.settings.v2.testKeys.plugin
