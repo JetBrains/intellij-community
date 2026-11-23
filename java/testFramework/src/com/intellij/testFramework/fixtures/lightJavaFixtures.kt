@@ -6,6 +6,7 @@ import com.intellij.facet.FacetManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
@@ -364,6 +365,11 @@ fun lightJavaCodeInsightFixture(
 
   initialized(codeInsightFixture) {
     runAllSuspend(
+      {
+        withContext(Dispatchers.EDT) {
+          NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        }
+      },
       { codeInsightFixture.tearDown() },
       { lightProject.deleteTestFiles() },
       { TestApplicationManager.cleanUpProjectForNextTest(project) },
